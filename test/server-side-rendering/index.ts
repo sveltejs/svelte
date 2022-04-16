@@ -84,7 +84,7 @@ describe('ssr', () => {
 
 				try {
 					if (config.withoutNormalizeHtml) {
-						assert.strictEqual(html.trim(), expectedHtml.trim().replace(/\r\n/g, '\n'));
+						assert.strictEqual(html.trim().replace(/\r\n/g, '\n'), expectedHtml.trim().replace(/\r\n/g, '\n'));
 					} else {
 						(compileOptions.preserveComments
 							? assert.htmlEqualWithComments

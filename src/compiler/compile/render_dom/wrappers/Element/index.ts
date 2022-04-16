@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { dimensions } from '../../../../utils/patterns';
+import { dimensions, start_newline } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -26,6 +26,7 @@ import Action from '../../../nodes/Action';
 import MustacheTagWrapper from '../MustacheTag';
 import RawMustacheTagWrapper from '../RawMustacheTag';
 import is_dynamic from '../shared/is_dynamic';
+import create_debugging_comment from '../shared/create_debugging_comment';
 import { push_array } from '../../../../utils/push_array';
 
 interface BindingGroup {
@@ -134,6 +135,8 @@ const events = [
 	}
 ];
 
+const CHILD_DYNAMIC_ELEMENT_BLOCK = 'child_dynamic_element';
+
 export default class ElementWrapper extends Wrapper {
 	node: Element;
 	fragment: FragmentWrapper;
@@ -147,6 +150,9 @@ export default class ElementWrapper extends Wrapper {
 	var: any;
 	void: boolean;
 
+	child_dynamic_element_block?: Block = null;
+	child_dynamic_element?: ElementWrapper = null;
+
 	constructor(
 		renderer: Renderer,
 		block: Block,
@@ -156,6 +162,24 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
+
+		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
+			this.child_dynamic_element_block = block.child({
+				comment: create_debugging_comment(node, renderer.component),
+				name: renderer.component.get_unique_name('create_dynamic_element'),
+				type: CHILD_DYNAMIC_ELEMENT_BLOCK
+			});
+			renderer.blocks.push(this.child_dynamic_element_block);
+			this.child_dynamic_element = new ElementWrapper(
+				renderer,
+				this.child_dynamic_element_block,
+				parent,
+				node,
+				strip_whitespace,
+				next_sibling
+			);
+		}
+
 		this.var = {
 			type: 'Identifier',
 			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
@@ -199,6 +223,8 @@ export default class ElementWrapper extends Wrapper {
 			block.add_animation();
 		}
 
+		block.add_dependencies(node.tag_expr.dependencies);
+
 		// add directive and handler dependencies
 		[node.animation, node.outro, ...node.actions, ...node.classes, ...node.styles].forEach(directive => {
 			if (directive && directive.expression) {
@@ -219,7 +245,9 @@ export default class ElementWrapper extends Wrapper {
 				node.classes.length > 0 ||
 				node.intro || node.outro ||
 				node.handlers.length > 0 ||
+				node.styles.length > 0 ||
 				this.node.name === 'option' ||
+				node.tag_expr.dynamic_dependencies().length ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
@@ -231,6 +259,110 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+		if (this.child_dynamic_element) {
+			this.render_dynamic_element(block, parent_node, parent_nodes);
+		} else {
+			this.render_element(block, parent_node, parent_nodes);
+		}
+	}
+
+	render_dynamic_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+		this.child_dynamic_element.render(
+			this.child_dynamic_element_block,
+			null,
+			(x`#nodes` as unknown) as Identifier
+		);
+
+		const previous_tag = block.get_unique_name('previous_tag');
+		const tag = this.node.tag_expr.manipulate(block);
+		block.add_variable(previous_tag, tag);
+
+		block.chunks.init.push(b`
+			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
+		`);
+
+		block.chunks.create.push(b`
+			if (${this.var}) ${this.var}.c();
+		`);
+
+		if (this.renderer.options.hydratable) {
+			block.chunks.claim.push(b`
+				if (${this.var}) ${this.var}.l(${parent_nodes});
+			`);
+		}
+
+		block.chunks.mount.push(b`
+			if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
+		`);
+
+		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+		const has_transitions = !!(this.node.intro || this.node.outro);
+		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+
+		block.chunks.update.push(b`
+			if (${tag}) {
+				if (!${previous_tag}) {
+					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${this.var}.c();
+					${has_transitions && b`@transition_in(${this.var})`}
+					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				} else if (${not_equal}(${previous_tag}, ${tag})) {
+					${this.var}.d(1);
+					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${this.var}.c();
+					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+				} else {
+					${this.var}.p(#ctx, #dirty);
+				}
+			} else if (${previous_tag}) {
+				${
+					has_transitions
+						? b`
+							@group_outros();
+							@transition_out(${this.var}, 1, 1, () => {
+								${this.var} = null;
+							});
+							@check_outros();
+						`
+						: b`
+							${this.var}.d(1);
+							${this.var} = null;
+						`
+				}
+			}
+			${previous_tag} = ${tag};
+		`);
+
+		if (this.child_dynamic_element_block.has_intros) {
+			block.chunks.intro.push(b`@transition_in(${this.var});`);
+		}
+
+		if (this.child_dynamic_element_block.has_outros) {
+			block.chunks.outro.push(b`@transition_out(${this.var});`);
+		}
+
+		block.chunks.destroy.push(b`if (${this.var}) ${this.var}.d(detaching)`);
+
+		if (this.node.animation) {
+			const measurements = block.get_unique_name('measurements');
+			block.add_variable(measurements);
+			block.chunks.measure.push(b`${measurements} = ${this.var}.r()`);
+			block.chunks.fix.push(b`${this.var}.f();`);
+			block.chunks.animate.push(b`
+				${this.var}.s(${measurements});
+				${this.var}.a()
+			`);
+		}
+	}
+
+	is_dom_node() {
+		return super.is_dom_node() && !this.child_dynamic_element;
+	}
+
+	render_element(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+
 		const { renderer } = this;
 
 		if (this.node.name === 'noscript') return;
@@ -248,7 +380,7 @@ export default class ElementWrapper extends Wrapper {
 		if (renderer.options.hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(parent_nodes)};
+					${node} = ${this.get_claim_statement(block, parent_nodes)};
 				`);
 
 				if (!this.void && this.node.children.length > 0) {
@@ -360,6 +492,8 @@ export default class ElementWrapper extends Wrapper {
 				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${this.node.start});`
 			);
 		}
+
+		block.renderer.dirty(this.node.tag_expr.dynamic_dependencies());
 	}
 
 	can_use_textcontent() {
@@ -367,7 +501,7 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	get_render_statement(block: Block) {
-		const { name, namespace } = this.node;
+		const { name, namespace, tag_expr } = this.node;
 
 		if (namespace === namespaces.svg) {
 			return x`@svg_element("${name}")`;
@@ -382,22 +516,32 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		return x`@element("${name}")`;
+		const reference = tag_expr.manipulate(block);
+		return x`@element(${reference})`;
 	}
 
-	get_claim_statement(nodes: Identifier) {
+	get_claim_statement(block: Block, nodes: Identifier) {
 		const attributes = this.attributes
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
 			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
-		const name = this.node.namespace
-			? this.node.name
-			: this.node.name.toUpperCase();
+		let reference;
+		if (this.node.tag_expr.node.type === 'Literal') {
+			if (this.node.namespace) {
+				reference = `"${this.node.tag_expr.node.value}"`;
+			} else {
+				reference = `"${(this.node.tag_expr.node.value as String || '').toUpperCase()}"`;
+			}
+		} else if (this.node.namespace) {
+			reference = x`${this.node.tag_expr.manipulate(block)}`;
+		} else {
+			reference = x`(${this.node.tag_expr.manipulate(block)} || 'null').toUpperCase()`;
+		}
 
 		if (this.node.namespace === namespaces.svg) {
-			return x`@claim_svg_element(${nodes}, "${name}", { ${attributes} })`;
+			return x`@claim_svg_element(${nodes}, ${reference}, { ${attributes} })`;
 		} else {
-			return x`@claim_element(${nodes}, "${name}", { ${attributes} })`;
+			return x`@claim_element(${nodes}, ${reference}, { ${attributes} })`;
 		}
 	}
 
@@ -850,6 +994,11 @@ export default class ElementWrapper extends Wrapper {
 			${rect} = ${this.var}.getBoundingClientRect();
 		`);
 
+		if (block.type === CHILD_DYNAMIC_ELEMENT_BLOCK) {
+			block.chunks.measure.push(b`return ${rect}`);
+			block.chunks.restore_measurements.push(b`${rect} = #measurement;`);
+		}
+
 		block.chunks.fix.push(b`
 			@fix_position(${this.var});
 			${stop_animation}();
@@ -943,7 +1092,7 @@ export default class ElementWrapper extends Wrapper {
 				if (should_cache) {
 					block.chunks.update.push(b`
 							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-								${updater}	
+								${updater}
 							}
 					`);
 				} else {
@@ -969,6 +1118,9 @@ export default class ElementWrapper extends Wrapper {
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
+			// Don't add the <pre>/<textare> newline logic here because pre/textarea.innerHTML
+			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
+
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';
 
 			const parent = wrapper.node.parent as Element;
@@ -996,22 +1148,16 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			// element
 			state.quasi.value.raw += `<${wrapper.node.name}`;
 
+			const is_empty_textarea = wrapper.node.name === 'textarea' && wrapper.fragment.nodes.length === 0;
+
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
+				if (is_empty_textarea && attr.node.name === 'value') {
+					// The value attribute of <textarea> renders as content.
+					return;
+				}
 				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
 
-				attr.node.chunks.forEach(chunk => {
-					if (chunk.type === 'Text') {
-						state.quasi.value.raw += escape_html(chunk.data);
-					} else {
-						literal.quasis.push(state.quasi);
-						literal.expressions.push(chunk.manipulate(block));
-
-						state.quasi = {
-							type: 'TemplateElement',
-							value: { raw: '' }
-						};
-					}
-				});
+				to_html_for_attr_value(attr, block, literal, state);
 
 				state.quasi.value.raw += '"';
 			});
@@ -1019,12 +1165,51 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';
 
+				if (wrapper.node.name === 'pre') {
+					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					const first = wrapper.fragment.nodes[0];
+					if (first && first.node.type === 'Text' && start_newline.test(first.node.data)) {
+						state.quasi.value.raw += '\n';
+					}
+				}
+
+				if (is_empty_textarea) {
+					// The <textarea> renders the value attribute as content because the content is stored in the value attribute.
+					const value_attribute = wrapper.attributes.find(attr => attr.node.name === 'value');
+					if (value_attribute) {
+						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+						const first = value_attribute.node.chunks[0];
+						if (first && first.type === 'Text' && start_newline.test(first.data)) {
+							state.quasi.value.raw += '\n';
+						}
+						to_html_for_attr_value(value_attribute, block, literal, state);
+					}
+				}
+
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
 				state.quasi.value.raw += `</${wrapper.node.name}>`;
 			} else {
 				state.quasi.value.raw += '/>';
 			}
+		}
+	});
+}
+
+function to_html_for_attr_value(attr: AttributeWrapper | StyleAttributeWrapper | SpreadAttributeWrapper, block: Block, literal: any, state: any) {
+	attr.node.chunks.forEach(chunk => {
+		if (chunk.type === 'Text') {
+			state.quasi.value.raw += escape_html(chunk.data);
+		} else {
+			literal.quasis.push(state.quasi);
+			literal.expressions.push(chunk.manipulate(block));
+
+			state.quasi = {
+				type: 'TemplateElement',
+				value: { raw: '' }
+			};
 		}
 	});
 }

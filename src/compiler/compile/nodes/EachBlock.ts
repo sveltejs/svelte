@@ -63,7 +63,7 @@ export default class EachBlock extends AbstractBlock {
 		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 
 		if (this.has_animation) {
-			this.children = this.children.filter(child => !isEmptyNode(child));
+			this.children = this.children.filter(child => !isEmptyNode(child) && !isCommentNode(child));
 
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
@@ -82,4 +82,7 @@ export default class EachBlock extends AbstractBlock {
 
 function isEmptyNode(node: INode) {
 	return node.type === 'Text' && node.data.trim() === '';
+}
+function isCommentNode(node: INode) {
+	return node.type === 'Comment';
 }

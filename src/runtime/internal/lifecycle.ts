@@ -27,27 +27,39 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-export function createEventDispatcher<
-	EventMap extends {} = any
->(): <EventKey extends Extract<keyof EventMap, string>>(type: EventKey, detail?: EventMap[EventKey]) => void {
+export interface DispatchOptions {
+	cancelable?: boolean;
+}
+
+export function createEventDispatcher<EventMap extends {} = any>(): <
+	EventKey extends Extract<keyof EventMap, string>
+>(
+	type: EventKey,
+	detail?: EventMap[EventKey],
+	options?: DispatchOptions
+) => boolean {
 	const component = get_current_component();
 
-	return (type: string, detail?: any) => {
+	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail);
+			const event = custom_event(type, detail, { cancelable });
 			callbacks.slice().forEach(fn => {
 				fn.call(component, event);
 			});
+			return !event.defaultPrevented;
 		}
+
+		return true;
 	};
 }
 
-export function setContext<T>(key, context: T) {
+export function setContext<T>(key, context: T): T {
 	get_current_component().$$.context.set(key, context);
+	return context;
 }
 
 export function getContext<T>(key): T {

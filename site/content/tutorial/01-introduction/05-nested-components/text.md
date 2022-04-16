@@ -2,9 +2,13 @@
 title: Nested components
 ---
 
-It would be impractical to put your entire app in a single component. Instead, we can import components from other files and include them as though we were including elements.
+It would be impractical to put your entire app in a single component. Instead, we can import components from other files and then use them as though we were including elements.
 
-Add a `<script>` tag that imports `Nested.svelte`...
+We now present you 2 files in the editor on the right (upper bar) to click on, `App.svelte` and `Nested.svelte`.
+
+Each `.svelte` file holds a component that is a reusable self-contained block of code that encapsulates HTML, CSS, and JavaScript that belong together.
+
+Let's add a `<script>` tag to `App.svelte` that imports the file (our component) `Nested.svelte` into our app...
 
 ```html
 <script>
@@ -12,7 +16,7 @@ Add a `<script>` tag that imports `Nested.svelte`...
 </script>
 ```
 
-...then add it to the markup:
+...then use component `Nested` in the app markup:
 
 ```html
 <p>This is a paragraph.</p>

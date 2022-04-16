@@ -27,10 +27,7 @@ export default class SlotTemplate extends Node {
 
 		this.validate_slot_template_placement();
 
-		const has_let = info.attributes.some((node) => node.type === 'Let');
-		if (has_let) {
-			scope = scope.child();
-		}
+		scope = scope.child();
 
 		info.attributes.forEach((node) => {
 			switch (node.type) {

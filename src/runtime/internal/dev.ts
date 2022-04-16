@@ -2,7 +2,7 @@ import { custom_event, append, append_hydration, insert, insert_hydration, detac
 import { SvelteComponent } from './Component';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -104,6 +104,12 @@ export function validate_slots(name, slot, keys) {
 		if (!~keys.indexOf(slot_key)) {
 			console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
 		}
+	}
+}
+
+export function validate_dynamic_element(tag: unknown) {
+	if (tag && typeof tag !== 'string') {
+		throw new Error('<svelte:element> expects "this" attribute to be a string.');
 	}
 }
 

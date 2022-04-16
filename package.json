@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.46.4",
+  "version": "3.47.0",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -16,7 +16,7 @@
     "transition",
     "easing",
     "motion",
-    "svelte",
+    "action",
     "README.md"
   ],
   "exports": {
@@ -38,6 +38,9 @@
       "types": "./types/compiler/index.d.ts",
       "import": "./compiler.mjs",
       "require": "./compiler.js"
+    },
+    "./action": {
+      "types": "./types/runtime/action/index.d.ts"
     },
     "./animate": {
       "types": "./types/runtime/animate/index.d.ts",
@@ -110,7 +113,7 @@
   "bugs": {
     "url": "https://github.com/sveltejs/svelte/issues"
   },
-  "homepage": "https://github.com/sveltejs/svelte#README",
+  "homepage": "https://svelte.dev",
   "devDependencies": {
     "@ampproject/remapping": "^0.3.0",
     "@rollup/plugin-commonjs": "^11.0.0",
