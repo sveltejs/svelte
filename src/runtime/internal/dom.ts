@@ -492,15 +492,8 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-export function claim_html_tag(nodes) {
-	return claim_tag(nodes, false);
-}
 
-export function claim_svg_tag(nodes) {
-	return claim_tag(nodes, true);
-}
-
-function claim_tag(nodes, is_svg: boolean) {
+export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
