@@ -4,7 +4,7 @@ import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithOptions: (actual, expected, options, message?) => void };
+export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual: string, expected: string, message?: string) => void, htmlEqualWithOptions: (actual: string, expected: string, options: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => void };
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -172,7 +172,7 @@ export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
 		);
 	};
 	// eslint-disable-next-line no-import-assign
-	assert.htmlEqualWithOptions = (actual, expected, { preserveComments, withoutNormalizeHtml }, message) => {
+	assert.htmlEqualWithOptions = (actual: string, expected: string, { preserveComments, withoutNormalizeHtml }: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => {
 		assert.deepEqual(
 			withoutNormalizeHtml
 				? normalizeNewline(actual).replace(/(\sdata-svelte="[^"]+")/g, options.removeDataSvelte ? '' : '$1')

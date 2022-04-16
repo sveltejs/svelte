@@ -19,7 +19,7 @@ export default class Tag extends Node {
 		);
 	}
 	is_dependencies_static() {
-		return this.expression.contextual_dependencies.size === 0 && this.expression.dynamic_dependencies().length === 0;
+		return this.expression.dynamic_contextual_dependencies().length === 0 && this.expression.dynamic_dependencies().length === 0;
 	}
 	check_if_content_dynamic() {
 		if (!this.is_dependencies_static()) {
