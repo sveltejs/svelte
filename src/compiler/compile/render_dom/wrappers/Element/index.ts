@@ -420,8 +420,12 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		// insert static children with textContent or innerHTML
+		// skip textcontent for <template>.  append nodes to TemplateElement.content instead
 		const can_use_textcontent = this.can_use_textcontent();
-		if (!this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
+		const is_template = this.node.name === 'template';
+		const is_template_with_text_content = is_template && can_use_textcontent;
+
+		if (!is_template_with_text_content && !this.node.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.fragment.nodes.length > 0) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				block.chunks.create.push(
 					b`${node}.textContent = ${string_literal((this.fragment.nodes[0] as TextWrapper).data)};`
@@ -452,7 +456,7 @@ export default class ElementWrapper extends Wrapper {
 			this.fragment.nodes.forEach((child: Wrapper) => {
 				child.render(
 					block,
-					this.node.name === 'template' ? x`${node}.content` : node,
+					is_template ? x`${node}.content` : node,
 					nodes
 				);
 			});
