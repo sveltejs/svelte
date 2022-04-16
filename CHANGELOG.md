@@ -8,6 +8,7 @@
 * Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function when called will also return a boolean depending on whether the event is cancelled ([#7064](https://github.com/sveltejs/svelte/pull/7064))
 * Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
 * Strip leading newline after `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
+* Fix local transition for `{#key}` block ([#5950](https://github.com/sveltejs/svelte/issues/5950))
 
 ## 3.47.0
 
