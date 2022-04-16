@@ -3,7 +3,7 @@ export default {
 		<div style="color: red;"></div>
 	`,
 
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		const div = target.querySelector('div');
 
 		const styles = window.getComputedStyle(div);
