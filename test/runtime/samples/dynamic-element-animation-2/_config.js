@@ -59,7 +59,7 @@ export default {
 			originalParagraphGetBoundingClientRect;
 	},
 
-	async test({ assert, component, target, raf }) {
+	async test({ assert, component, raf }) {
 		// switch tag and things at the same time
 		await component.update('p', [
 			{ id: 5, name: 'e' },

@@ -1,7 +1,7 @@
 export default {
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
-	
+
 		const clickEvent = new window.MouseEvent('click');
 
 		await btn2.dispatchEvent(clickEvent);
@@ -23,7 +23,7 @@ export default {
 			<hr>
 			foo!
 		`);
-		
+
 		await btn2.dispatchEvent(clickEvent);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Toggle foo</button>
@@ -33,7 +33,7 @@ export default {
 			<hr>
 			foo!
 		`);
-		
+
 		await btn1.dispatchEvent(clickEvent);
 		assert.htmlEqual(target.innerHTML, `
 			<button>Toggle foo</button>
