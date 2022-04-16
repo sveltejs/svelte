@@ -9,7 +9,7 @@ import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
 import { start_newline } from '../../../utils/patterns';
-import { Expression as ESExpression } from 'estree';
+import { Node, Expression as ESExpression } from 'estree';
 
 export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
@@ -23,6 +23,10 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		node.name !== 'input' &&
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
+
+	if (node.is_dynamic_element) {
+		renderer.push();
+	}
 
 	renderer.add_string('<');
 	add_tag_name();
@@ -192,8 +196,22 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				renderer.add_string('\n');
 			}
 		}
+		if (node.is_dynamic_element) renderer.push();
 		renderer.render(children, options);
+		if (node.is_dynamic_element) {
+			const children = renderer.pop();
+			renderer.add_expression(x`@is_void(#tag) ? '' : ${children}`);
+		}
 		add_close_tag();
+	}
+
+	if (node.is_dynamic_element) {
+		let content: Node = renderer.pop();
+		if (options.dev && node.children.length > 0) content = x`(() => { @validate_void_dynamic_element(#tag); return ${content}; })()`;
+		renderer.add_expression(x`((#tag) => {
+			${options.dev && x`@validate_dynamic_element(#tag)`}
+			return #tag ? ${content} : '';
+		})(${node.tag_expr.node})`);
 	}
 
 	function add_close_tag() {
@@ -205,7 +223,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			}
 			return;
 		}
-		renderer.add_expression(x`((tag) => @is_void(String(tag || '')) ? '' : \`</\${tag}>\`)(${node.tag_expr.node})`);
+		renderer.add_expression(x`@is_void(#tag) ? '' : \`</\${#tag}>\``);
 	}
 
 	function add_tag_name() {

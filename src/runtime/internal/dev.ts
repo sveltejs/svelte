@@ -108,13 +108,16 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-export function validate_dynamic_element(tag: unknown, has_children: boolean) {
+export function validate_dynamic_element(tag: unknown) {
 	const is_string = typeof tag === 'string';
 	if (tag && !is_string) {
 		throw new Error('<svelte:element> expects "this" attribute to be a string.');
 	}
-	if (is_string && is_void(tag as string) && has_children) {
-		throw new Error(`<${tag}> element is self-closing and cannot have content.`);
+}
+
+export function validate_void_dynamic_element(tag: undefined | string) {
+	if (tag && is_void(tag)) {
+		throw new Error(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
 	}
 }
 

@@ -5,5 +5,5 @@ export default {
 	props: {
 		tag: 'br'
 	},
-	error: '<br> element is self-closing and cannot have content.'
+	error: '<svelte:element this="br"> is self-closing and cannot have content.'
 };
