@@ -405,6 +405,14 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const snippet = this.node.expression.manipulate(block);
 
+			if (has_css_custom_properties) {
+				this.set_css_custom_properties(block, css_custom_properties_wrapper);
+			}
+
+			this.create_claim_chunk(block, parent_nodes, name, css_custom_properties_wrapper);
+
+			this.create_mount_chunk(block, parent_node, name, css_custom_properties_wrapper);
+
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
 
@@ -423,73 +431,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 			`);
 
-			if (has_css_custom_properties) {
-				block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
-				block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
-				this.node.css_custom_properties.forEach(attr => {
-					const dependencies = attr.get_dependencies();
-					const should_cache = attr.should_cache();
-					const last = should_cache && block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
-					if (should_cache) block.add_variable(last);
-					const value = attr.get_value(block);
-					const init = should_cache ? x`${last} = ${value}` : value;
-
-					block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`);
-					if (dependencies.length > 0) {
-						let condition = block.renderer.dirty(dependencies);
-						if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
-
-						block.chunks.update.push(b`
-							if (${condition}) {
-								@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
-							}
-						`);
-					}
-				});
-			}
-
 			block.chunks.create.push(
 				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
-
-			if (parent_nodes && this.renderer.options.hydratable) {
-				let nodes = parent_nodes;
-				if (has_css_custom_properties) {
-					nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
-					block.chunks.claim.push(b`
-						${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
-						var ${nodes} = @children(${css_custom_properties_wrapper});
-					`);
-				}
-				block.chunks.claim.push(
-					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
-				);
-			}
-
-			if (has_css_custom_properties) {
-				if (parent_node) {
-					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
-					if (is_head(parent_node)) {
-						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
-					}
-				} else {
-					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
-					// TODO we eventually need to consider what happens to elements
-					// that belong to the same outgroup as an outroing element...
-					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
-				}
-				block.chunks.mount.push(b`
-					if (${name}) {
-						@mount_component(${name}, ${css_custom_properties_wrapper}, ${parent_node ? 'null' : '#anchor'});
-					}
-				`);
-			} else {
-				block.chunks.mount.push(b`
-					if (${name}) {
-						@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
-					}
-				`);
-			}
 
 			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 			const update_mount_node = this.get_update_mount_node(anchor);
@@ -553,63 +497,13 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			if (has_css_custom_properties) {
-				block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
-				block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
-				this.node.css_custom_properties.forEach(attr => {
-					const dependencies = attr.get_dependencies();
-					const should_cache = attr.should_cache();
-					const last = should_cache && block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
-					if (should_cache) block.add_variable(last);
-					const value = attr.get_value(block);
-					const init = should_cache ? x`${last} = ${value}` : value;
-
-					block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`);
-					if (dependencies.length > 0) {
-						let condition = block.renderer.dirty(dependencies);
-						if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
-
-						block.chunks.update.push(b`
-							if (${condition}) {
-								@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
-							}
-						`);
-					}
-				});
+				this.set_css_custom_properties(block, css_custom_properties_wrapper);
 			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
-			if (parent_nodes && this.renderer.options.hydratable) {
-				let nodes = parent_nodes;
-				if (has_css_custom_properties) {
-					nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
-					block.chunks.claim.push(b`
-						${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
-						var ${nodes} = @children(${css_custom_properties_wrapper});
-					`);
-				}
-				block.chunks.claim.push(
-					b`@claim_component(${name}.$$.fragment, ${nodes});`
-				);
-			}
+			this.create_claim_chunk(block, parent_nodes, name, css_custom_properties_wrapper);
 
-			if (has_css_custom_properties) {
-				if (parent_node) {
-					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
-					if (is_head(parent_node)) {
-						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
-					}
-				} else {
-					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
-					// TODO we eventually need to consider what happens to elements
-					// that belong to the same outgroup as an outroing element...
-					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
-				}
-				block.chunks.mount.push(b`@mount_component(${name}, ${css_custom_properties_wrapper}, null);`);
-			} else {
-				block.chunks.mount.push(
-					b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
-				);
-			}
+			this.create_mount_chunk(block, parent_node, name, css_custom_properties_wrapper);
 
 			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);
@@ -630,5 +524,86 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`@transition_out(${name}.$$.fragment, #local);`
 			);
 		}
+	}
+
+	private create_mount_chunk(
+		block: Block,
+		parent_node: Identifier,
+		name: Identifier,
+		css_custom_properties_wrapper: Identifier | null
+	) {
+			if (css_custom_properties_wrapper) {
+				if (parent_node) {
+					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
+					if (is_head(parent_node)) {
+						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
+					}
+				} else {
+					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
+					// TODO we eventually need to consider what happens to elements
+					// that belong to the same outgroup as an outroing element...
+					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
+				}
+			}
+
+			const target = css_custom_properties_wrapper || parent_node || '#target';
+			const anchor = css_custom_properties_wrapper ? 'null' : (parent_node ? 'null' : '#anchor');
+			if (this.node.name === 'svelte:component') {
+				block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${target}, ${anchor});`);
+			} else {
+				block.chunks.mount.push(b`@mount_component(${name}, ${target}, ${anchor});`);
+			}
+	}
+
+	private create_claim_chunk(
+		block: Block,
+		parent_nodes: Identifier,
+		name: Identifier,
+		css_custom_properties_wrapper: Identifier | null
+	) {
+		if (parent_nodes && this.renderer.options.hydratable) {
+			let nodes = parent_nodes;
+			if (css_custom_properties_wrapper) {
+				nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+				block.chunks.claim.push(b`
+					${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
+					var ${nodes} = @children(${css_custom_properties_wrapper});
+				`);
+			}
+			if (this.node.name === 'svelte:component') {
+				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`);
+			} else {
+				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${nodes});`);
+			}
+		}
+	}
+
+	private set_css_custom_properties(
+		block: Block,
+		css_custom_properties_wrapper: Identifier
+	) {
+		block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
+		block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
+		this.node.css_custom_properties.forEach((attr) => {
+			const dependencies = attr.get_dependencies();
+			const should_cache = attr.should_cache();
+			const last = should_cache &&	block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
+			if (should_cache) block.add_variable(last);
+			const value = attr.get_value(block);
+			const init = should_cache ? x`${last} = ${value}` : value;
+
+			block.chunks.hydrate.push(
+				b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`
+			);
+			if (dependencies.length > 0) {
+				let condition = block.renderer.dirty(dependencies);
+				if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+				block.chunks.update.push(b`
+					if (${condition}) {
+						@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
+					}
+				`);
+			}
+		});
 	}
 }
