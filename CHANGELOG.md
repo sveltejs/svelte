@@ -10,6 +10,7 @@
 * Strip leading newline after `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
 * Fix local transition for `{#key}` block ([#5950](https://github.com/sveltejs/svelte/issues/5950))
 * Fix errorneous setting `textContent` for `<template>` element ([#7297](https://github.com/sveltejs/svelte/pull/7297))
+* Support svg namespace for `{@html}` ([#7450](https://github.com/sveltejs/svelte/issues/7450), [#7002](https://github.com/sveltejs/svelte/issues/7002))
 
 ## 3.47.0
 
