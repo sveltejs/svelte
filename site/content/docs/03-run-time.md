@@ -558,7 +558,7 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 ---
 
-The `store.stiffness`, `store.damping` and `store.precision` properties can be changed while the spring is in motion, and will take immediate effect.
+All of the options above can be changed while the spring is in motion, and will take immediate effect.
 
 ```js
 const size = spring(100);
