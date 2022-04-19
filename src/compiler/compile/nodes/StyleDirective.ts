@@ -10,6 +10,7 @@ export default class StyleDirective extends Node {
 	name: string;
 	expression: Expression;
 	should_cache: boolean;
+	important: boolean = false;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -30,10 +31,16 @@ export default class StyleDirective extends Node {
 			this.expression = new Expression(component, this, scope, identifier);
 			this.should_cache = false;
 		} else {
+			const last_chunk = info.value[info.value.length - 1];
+			if (last_chunk && last_chunk.type === 'Text' && /\s*!important\s*;?\s*$/.test(last_chunk.data)) {
+				this.important = true;
+				last_chunk.data = last_chunk.data.replace(/\s*!important\s*;?\s*$/, '');
+				if (!last_chunk.data) info.value.pop();
+			}
+
 			const raw_expression = nodes_to_template_literal(info.value);
 			this.expression = new Expression(component, this, scope, raw_expression);
 			this.should_cache = raw_expression.expressions.length > 0;
 		}
-
 	}
 }
