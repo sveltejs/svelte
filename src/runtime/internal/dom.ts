@@ -492,8 +492,7 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-
-export function claim_html_tag(nodes, is_svg: boolean) {
+export function claim_html_tag(nodes, html: string, is_svg: boolean) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
@@ -506,6 +505,17 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
+
+	let ssr_html = '';
+  for (const n of claimed_nodes) {
+    ssr_html += n.outerHTML;
+	}
+	if (ssr_html !== html) {
+		for (const n of claimed_nodes) {
+			detach(n);
+		}
+		return new HtmlTagHydration(undefined, is_svg);
+	}
 	for (const n of claimed_nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
