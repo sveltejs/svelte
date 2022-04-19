@@ -578,7 +578,12 @@ const coords = spring({ x: 50, y: 50 });
 // updates the value immediately
 coords.set({ x: 100, y: 200 }, { hard: true });
 // preserves existing momentum for 1s
-coords.update((target_coords, coords) => { return { x: target_coords.x, y: coords.y }; }, { soft: 1 });
+coords.update(
+	(target_coords, coords) => {
+		return { x: target_coords.x, y: coords.y };
+	},
+	{ soft: 1 }
+);
 ```
 
 [See a full example on the spring tutorial.](/tutorial/spring)
