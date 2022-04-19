@@ -44,7 +44,10 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	const style_expression_list = node.styles.map(style_directive => {
-		const { name, expression: { node: expression } } = style_directive;
+		let { name, important, expression: { node: expression } } = style_directive;
+		if (important) {
+			expression = x`${expression} + ' !important'`;
+		}
 		return p`"${name}": ${expression}`;
 	});
 

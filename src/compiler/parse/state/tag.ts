@@ -387,6 +387,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				end,
 				type,
 				name: directive_name,
+				modifiers,
 				value
 			};
 		}
