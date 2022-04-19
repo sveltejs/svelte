@@ -492,12 +492,13 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-export function claim_html_tag(nodes) {
+
+export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
-		return new HtmlTagHydration();
+		return new HtmlTagHydration(undefined, is_svg);
 	}
 
 	init_claim_info(nodes);
@@ -509,7 +510,7 @@ export function claim_html_tag(nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
 	}
-	return new HtmlTagHydration(claimed_nodes);
+	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
 export function set_data(text, data) {
@@ -645,16 +646,18 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 }
 
 export class HtmlTag {
+	private is_svg = false;
 	// parent for creating node
-	e: HTMLElement;
+	e: HTMLElement | SVGElement;
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement;
+	t: HTMLElement | SVGElement;
 	// anchor
-	a: HTMLElement;
+	a: HTMLElement | SVGElement;
 
-	constructor() {
+	constructor(is_svg: boolean = false) {
+		this.is_svg = is_svg;
 		this.e = this.n = null;
 	}
 
@@ -662,9 +665,14 @@ export class HtmlTag {
 		this.h(html);
 	}
 
-	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+	m(
+		html: string,
+		target: HTMLElement | SVGElement,
+		anchor: HTMLElement | SVGElement = null
+	) {
 		if (!this.e) {
-			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
+			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
+			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
 			this.t = target;
 			this.c(html);
 		}
@@ -698,8 +706,8 @@ export class HtmlTagHydration extends HtmlTag {
 	// hydration claimed nodes
 	l: ChildNode[] | void;
 
-	constructor(claimed_nodes?: ChildNode[]) {
-		super();
+	constructor(claimed_nodes?: ChildNode[], is_svg: boolean = false) {
+		super(is_svg);
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}
