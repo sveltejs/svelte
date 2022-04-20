@@ -2,7 +2,7 @@
 title: Updating arrays and objects
 ---
 
-Because Svelte's reactivity is triggered by assignments, using array methods that mutate the array alone, like `push` and `splice`, won't automatically cause updates. For example, clicking the button calls the `addNumber` function, but doesn't trigger the recalculation of `sum` and does not update the rendered page.
+Svelte's reactivity is triggered by assignments. Using array methods that mutate the array alone, like `push` and `splice`, won't automatically cause updates. For example, clicking the button calls the `addNumber` function, but doesn't trigger the recalculation of `sum` and does not update the rendered page.
 
 One way to fix that is to add an assignment that would otherwise be redundant:
 
