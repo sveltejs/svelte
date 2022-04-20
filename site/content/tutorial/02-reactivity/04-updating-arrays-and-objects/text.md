@@ -6,7 +6,7 @@ Svelte's reactivity is triggered by assignments. Methods that mutate arrays/obje
 
 In this example, clicking the "Add a number" button calls the `addNumber` function, which appends a number to the array but doesn't trigger the recalculation of `sum` and does not update the rendered page.
 
-One way to fix that would be to assign `numbers` to itself to tell the compiler it has changed:
+One way to fix that is to assign `numbers` to itself to tell the compiler it has changed:
 
 ```js
 function addNumber() {
