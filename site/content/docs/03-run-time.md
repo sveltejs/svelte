@@ -558,9 +558,33 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 ---
 
-As with [`tweened`](/docs#run-time-svelte-motion-tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+All of the options above can be changed while the spring is in motion, and will take immediate effect.
+
+```js
+const size = spring(100);
+size.stiffness = 0.3;
+size.damping = 0.4;
+size.precision = 0.005;
+```
+
+---
+
+As with [`tweened`](/docs#run-time-svelte-motion-tweened) stores, `set` and `update` return a Promise that resolves if the spring settles.
 
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
+
+```js
+const coords = spring({ x: 50, y: 50 });
+// updates the value immediately
+coords.set({ x: 100, y: 200 }, { hard: true });
+// preserves existing momentum for 1s
+coords.update(
+	(target_coords, coords) => {
+		return { x: target_coords.x, y: coords.y };
+	},
+	{ soft: 1 }
+);
+```
 
 [See a full example on the spring tutorial.](/tutorial/spring)
 
