@@ -51,4 +51,4 @@ quox(obj);
 
 ...won't trigger reactivity on `obj.foo.bar`, unless you follow it up with `obj = obj`.
 
-A simple rule of thumb: the name of the updated variable must directly appear on the left hand side of the assignment.
+A simple rule of thumb: the updated variable must directly appear on the left hand side of the assignment.
