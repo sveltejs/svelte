@@ -15,7 +15,7 @@ function addNumber() {
 }
 ```
 
-You can also get a similar result using the ES6 spread syntax:
+You could also write this more concisely using the ES6 spread syntax:
 
 ```js
 function addNumber() {
