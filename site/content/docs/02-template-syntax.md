@@ -1639,7 +1639,7 @@ The `<svelte:element>` element lets you render an element of a dynamically speci
 
 The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
 
-If `this` has a nullish value, element and its children are not displayed.
+If `this` has a nullish value, the element and its children will not be rendered.
 
 ```sv
 <script>
