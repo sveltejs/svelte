@@ -21,11 +21,13 @@ With yesterday's Svelte Summit behind us, we've got a lot of news to share! chec
 ## What's new in SvelteKit
 - Files and directories can now be named `__tests__` and `__test__` in the routes directory ([#4438](https://github.com/sveltejs/kit/pull/4438))
 - The `platform` parameter is now available for requests triggered by `fetch` in `load` during SSR ([#4599](https://github.com/sveltejs/kit/pull/4599))
+- Netlify Edge Functions ([#4657](https://github.com/sveltejs/kit/pull/4657)) and the Vercel build output API ([#4663](https://github.com/sveltejs/kit/pull/4663)) are now supported
+- Custom `load` dependencies, array of strings representing URLs the page depends on, are now available when loading routes ([Docs](https://kit.svelte.dev/docs/loading#output-dependencies), [#4536](https://github.com/sveltejs/kit/pull/4536))
 
 
 **Breaking Changes**
 - Validators are now called "matchers" ([Docs](https://kit.svelte.dev/docs/routing#advanced-routing-matching), [#4358](https://github.com/sveltejs/kit/pull/4358))
-- `__layout.reset` has been replaced by named layouts ([Docs](https://kit.svelte.dev/docs/layouts#named-layouts), [#4388](https://github.com/sveltejs/kit/pull/4388))
+- `__layout.reset` has been replaced by named layouts - which have much configurability for shared layout elements ([Docs](https://kit.svelte.dev/docs/layouts#named-layouts), [#4388](https://github.com/sveltejs/kit/pull/4388))
 - Prerendering is now skipped for `rel="external"` links ([#4545](https://github.com/sveltejs/kit/pull/4545))
 - `maxage` is now `cache` in `LoadOutput` ([#4690](https://github.com/sveltejs/kit/pull/4690))
 
@@ -79,7 +81,7 @@ _To Watch or Hear_
 - [svelte-pdf-simple](https://github.com/gspasov/svelte-pdf-simple) is a simple svelte library for displaying pdfs and giving you all the control
 - [persistent-svelte-store](https://github.com/omer-g/persistent-svelte-store) is a generic persistent writable store, built from scratch in TypeScript according to the Svelte store contract
 - [svelte-exmarkdown](https://github.com/ssssota/svelte-exmarkdown) is Svelte component to render markdown dynamically
-- [Bookit](https://github.com/leveluptuts/bookit) is a storybook-like component rendering environment - finely tuned to work directly within your Svelte Kit projects
+- [Bookit](https://github.com/leveluptuts/bookit) is a storybook-like component rendering environment - finely tuned to work directly within your SvelteKit projects
 
 Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs) to continue the conversation.
 
