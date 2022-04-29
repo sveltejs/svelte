@@ -333,8 +333,10 @@ export default function dom(
 		// $$props arg is still needed for unknown prop check
 		args.push(x`$$props`);
 	}
-
-	const has_create_fragment = component.compile_options.dev || block.has_content();
+	// fix: remove "component.compile_options.dev" condition, which
+	// will set has_create_fragment always be true in dev mode,
+  // inconsistent with the behavior in production mode.
+	const has_create_fragment = block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
 			function create_fragment(#ctx) {
@@ -593,7 +595,7 @@ export default function dom(
 				constructor(options) {
 					super(${options.dev && 'options'});
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
-					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
+					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: ${has_create_fragment  ? 'create_fragment.name' : 'this.name'} });`}
 
 					${dev_props_check}
 				}

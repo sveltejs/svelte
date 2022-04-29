@@ -428,13 +428,16 @@ export default class Block {
 	}
 
 	has_content(): boolean {
+		// exclude "ThrowStatment" type node
+		// as in dev mode, 'ThrowStatement' type node will always be added, which will make has_content() always return true in dev mode
+		const validClaims = this.chunks.claim.filter(i => Array.isArray(i) && i[0] && i[0].type !== 'ThrowStatement');
 		return !!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||
 			this.chunks.create.length > 0 ||
 			this.chunks.hydrate.length > 0 ||
-			this.chunks.claim.length > 0 ||
+			validClaims.length > 0 ||
 			this.chunks.mount.length > 0 ||
 			this.chunks.update.length > 0 ||
 			this.chunks.destroy.length > 0 ||
