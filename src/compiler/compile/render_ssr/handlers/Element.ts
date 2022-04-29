@@ -5,7 +5,7 @@ import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { p, x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
-import remove_whitespace_children from './utils/remove_whitespace_children';
+import { trim_text_nodes } from '../../utils/trim';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
 import { start_newline } from '../../../utils/patterns';
@@ -13,7 +13,7 @@ import { Expression as ESExpression } from 'estree';
 
 export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
-	const children = remove_whitespace_children(node.children, node.next);
+	const children = trim_text_nodes(node.children, node.next);
 
 	// awkward special case
 	let node_contents;

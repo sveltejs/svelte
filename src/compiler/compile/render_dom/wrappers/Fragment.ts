@@ -18,7 +18,7 @@ import Window from './Window';
 import { INode } from '../../nodes/interfaces';
 import Renderer from '../Renderer';
 import Block from '../Block';
-import { trim_start, trim_end } from '../../../utils/trim';
+import { trim_text_node, trim_first_text_node } from '../../utils/trim';
 import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
 
@@ -43,13 +43,6 @@ const wrappers = {
 	Window
 };
 
-function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
-	// Whitespace is trimmable if one of the following is true:
-	// The child and its sibling share a common nearest each block (not at an each block boundary)
-	// The next sibling's previous node is an each block
-	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
-}
-
 export default class FragmentWrapper {
 	nodes: Wrapper[];
 
@@ -64,7 +57,8 @@ export default class FragmentWrapper {
 		this.nodes = [];
 
 		let last_child: Wrapper;
-		let window_wrapper;
+    let wrapper: Wrapper;
+		let window_wrapper: Window;
 
 		let i = nodes.length;
 		while (i--) {
@@ -86,20 +80,10 @@ export default class FragmentWrapper {
 			}
 
 			if (child.type === 'Text') {
-				let { data } = child;
+        if (child.should_skip()) continue;
 
-				// We want to remove trailing whitespace inside an element/component/block,
-				// *unless* there is no whitespace between this node and its next sibling
-				if (this.nodes.length === 0) {
-					const should_trim = (
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
-					);
-
-					if (should_trim && !child.keep_space()) {
-						data = trim_end(data);
-						if (!data) continue;
-					}
-				}
+				const data = trim_text_node(child, this.nodes, next_sibling);
+				if (!data) continue;
 
 				// glue text nodes (which could e.g. be separated by comments) together
 				if (last_child && last_child.node.type === 'Text') {
@@ -107,37 +91,20 @@ export default class FragmentWrapper {
 					continue;
 				}
 
-				const wrapper = new Text(renderer, block, parent, child, data);
-				if (wrapper.skip) continue;
-
-				this.nodes.unshift(wrapper);
-
-				link(last_child, last_child = wrapper);
+				wrapper = new Text(renderer, block, parent, child, data);
 			} else {
 				const Wrapper = wrappers[child.type];
 				if (!Wrapper) continue;
 
-				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
-				this.nodes.unshift(wrapper);
-
-				link(last_child, last_child = wrapper);
+				wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
 			}
+
+      this.nodes.unshift(wrapper);
+      link(last_child, last_child = wrapper);
 		}
 
 		if (strip_whitespace) {
-			const first = this.nodes[0] as Text;
-
-			if (first && first.node.type === 'Text' && !first.node.keep_space()) {
-				first.data = trim_start(first.data);
-				if (!first.data) {
-					first.var = null;
-					this.nodes.shift();
-
-					if (this.nodes[0]) {
-						this.nodes[0].prev = null;
-					}
-				}
-			}
+			trim_first_text_node(this.nodes);
 		}
 
 		if (window_wrapper) {

@@ -1,6 +1,6 @@
 import Renderer, { RenderOptions } from '../Renderer';
 import SlotTemplate from '../../nodes/SlotTemplate';
-import remove_whitespace_children from './utils/remove_whitespace_children';
+import { trim_text_nodes } from '../../utils/trim';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import { get_const_tags } from './shared/get_const_tags';
@@ -9,7 +9,7 @@ export default function(node: SlotTemplate, renderer: Renderer, options: RenderO
 	slot_scopes: Map<any, any>;
 }) {
 	const parent_inline_component = node.parent as InlineComponent;
-	const children = remove_whitespace_children(node instanceof SlotTemplate ? node.children : [node], node.next);
+	const children = trim_text_nodes(node instanceof SlotTemplate ? node.children : [node], node.next);
 
 	renderer.push();
 	renderer.render(children, options);
