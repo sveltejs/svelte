@@ -8,7 +8,6 @@ import { Identifier } from 'estree';
 export default class TextWrapper extends Wrapper {
 	node: Text;
 	data: string;
-	skip: boolean;
 	var: Identifier;
 
 	constructor(
@@ -20,9 +19,8 @@ export default class TextWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.skip = this.node.should_skip();
 		this.data = data;
-		this.var = (this.skip ? null : x`t`) as unknown as Identifier;
+		this.var = x`t` as unknown as Identifier;
 	}
 
 	use_space() {
@@ -33,7 +31,6 @@ export default class TextWrapper extends Wrapper {
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		if (this.skip) return;
 		const use_space = this.use_space();
 
 		const string_literal = {
