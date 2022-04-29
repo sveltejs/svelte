@@ -8,7 +8,7 @@ authorURL: https://desandoval.net
 With yesterday's Svelte Summit behind us, we've got a lot of news to share! check out all of the recordings on the [Svelte Society YouTube Channel](https://www.youtube.com/sveltesociety) and the rest of this month's updates below...
 
 ## What's new in Svelte
-- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when rich text content from a CMS. If the tag is changed, the children will be preserved unless there's a transition attached to the element. Check out the [docs](https://svelte.dev/docs#template-syntax-svelte-element) or the [tutorial](https://svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
+- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when rich text content from a CMS. Check out the [docs](https://svelte.dev/docs#template-syntax-svelte-element) or the [tutorial](https://svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
 
 
 ## Language Tools updates
@@ -16,7 +16,7 @@ With yesterday's Svelte Summit behind us, we've got a lot of news to share! chec
 - Invalid Svelte import paths will now be automatically detected - see PR for getting back the old behavior ([#1448](https://github.com/sveltejs/language-tools/pull/1448))
 - `source.sortImports` lets you sort imports without deleting unused imports ([#1338](https://github.com/sveltejs/language-tools/issues/1338))
 - Hovering over HTML attributes will now show HTML hover info instead of the TS hover info - resulting in much more useful information ([#1447](https://github.com/sveltejs/language-tools/pull/1447))
-
+- In VS Code, you can now wrap existing blocks of code in control flow tags using the `Insert Snippet` command ([#1373](https://github.com/sveltejs/language-tools/pull/1373))
 
 ## What's new in SvelteKit
 - Files and directories can now be named `__tests__` and `__test__` in the routes directory ([#4438](https://github.com/sveltejs/kit/pull/4438))
@@ -45,7 +45,6 @@ With yesterday's Svelte Summit behind us, we've got a lot of news to share! chec
 - [ASM Editor](https://asm-editor.specy.app/) is an all in one web editor for M68K and MIPS
 - [Otium](https://github.com/alombi/otium) is a free and open source book manager and bookshelf organiser, that helps you managing your books and the ones you would like to read
 - [Sinwaver](https://github.com/Hugo-Dz/Sinwaver) is an SVG sine wave generator
-- 
 
 Want to contribute to a modern SvelteKit website? [Help build the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
