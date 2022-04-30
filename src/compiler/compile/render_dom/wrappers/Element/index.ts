@@ -750,7 +750,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		if (this.node.attributes.some(attr => attr.is_spread)) {
+		if (this.node.attributes.some(attr => attr.is_spread) || this.node.is_dynamic_element) {
 			this.add_spread_attributes(block);
 			return;
 		}
