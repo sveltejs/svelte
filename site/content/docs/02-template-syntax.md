@@ -465,16 +465,16 @@ The `{@const ...}` tag defines a local constant.
 
 ```sv
 <script>
-  export let boxes;
+	export let boxes;
 </script>
 
 {#each boxes as box}
-  {@const area = box.width * box.height}
+	{@const area = box.width * box.height}
 	{box.width} * {box.height} = {area}
 {/each}
 ```
 
-`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
+`{@const}` is only allowed as direct child of `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
 
 
 ### Element directives
