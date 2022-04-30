@@ -1,6 +1,7 @@
 import { set_current_component, current_component } from './lifecycle';
 import { run_all, blank_object } from './utils';
-import { boolean_attributes } from '../../compiler/compile/render_ssr/handlers/shared/boolean_attributes';
+import { boolean_attributes } from '../../shared/boolean_attributes';
+export { is_void } from '../../shared/utils/names';
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -19,7 +20,7 @@ export function spread(args, attrs_to_add) {
 				attributes.class += ' ' + classes_to_add;
 			}
 		}
-		
+
 		if (styles_to_add) {
 			if (attributes.style == null) {
 				attributes.style = style_object_to_string(styles_to_add);
@@ -55,7 +56,7 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 		if (!name) continue;
 		style_object[name] = value;
 	}
-	
+
 	for (const name in style_directive) {
 		const value = style_directive[name];
 		if (value) {

@@ -1,5 +1,6 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
+import { is_void } from '../../shared/utils/names';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -108,8 +109,15 @@ export function validate_slots(name, slot, keys) {
 }
 
 export function validate_dynamic_element(tag: unknown) {
-	if (tag && typeof tag !== 'string') {
+	const is_string = typeof tag === 'string';
+	if (tag && !is_string) {
 		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+	}
+}
+
+export function validate_void_dynamic_element(tag: undefined | string) {
+	if (tag && is_void(tag)) {
+		throw new Error(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
 	}
 }
 
