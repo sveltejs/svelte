@@ -260,7 +260,7 @@ export default {
 	},
 	invalid_const_placement: {
 		code: 'invalid-const-placement',
-		message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
+		message: '{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
 	},
 	invalid_const_declaration: (name: string) => ({
 		code: 'invalid-const-declaration',

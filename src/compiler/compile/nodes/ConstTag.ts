@@ -11,7 +11,7 @@ import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import get_object from '../utils/get_object';
 import compiler_errors from '../compiler_errors';
 
-const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate']);
+const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate', 'IfBlock', 'ElseBlock']);
 
 export default class ConstTag extends Node {
 	type: 'ConstTag';

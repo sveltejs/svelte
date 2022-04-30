@@ -72,6 +72,8 @@ export type INode = Action
 | Window;
 
 export type INodeAllowConstTag =
+| IfBlock
+| ElseBlock
 | EachBlock
 | CatchBlock
 | ThenBlock
