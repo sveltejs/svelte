@@ -1641,6 +1641,8 @@ The only supported binding is `bind:this`, since the element type specific bindi
 
 If `this` has a nullish value, the element and its children will not be rendered.
 
+If `this` is the name of a void tag (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
+
 ```sv
 <script>
 	let tag = 'div';
