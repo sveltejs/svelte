@@ -11,6 +11,7 @@
 * Remove extraneous leading newline inside `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
 * Fix erroneous setting of `textContent` for `<template>` elements ([#7297](https://github.com/sveltejs/svelte/pull/7297))
 * Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
+* Fix handling of boolean attributes in `<svelte:element>` ([#7478](https://github.com/sveltejs/svelte/issues/7478))
 * Add special style scoping handling of `[open]` selectors on `<dialog>` elements ([#7495](https://github.com/sveltejs/svelte/issues/7494))
 
 ## 3.47.0
