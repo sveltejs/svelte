@@ -21,7 +21,8 @@ enum NodeExist {
 }
 
 const whitelist_attribute_selector = new Map([
-	['details', new Set(['open'])]
+	['details', new Set(['open'])],
+	['dialog', new Set(['open'])]
 ]);
 
 export default class Selector {
