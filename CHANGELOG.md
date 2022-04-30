@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.48.0
 
 * Allow creating cancelable custom events with `createEventDispatcher` ([#4623](https://github.com/sveltejs/svelte/issues/4623))
 * Support `{@const}` tag in `{#if}` blocks [#7241](https://github.com/sveltejs/svelte/issues/7241)
