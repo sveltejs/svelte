@@ -2,15 +2,15 @@
 
 ## Unreleased
 
+* Allow creating cancelable custom events with `createEventDispatcher` ([#4623](https://github.com/sveltejs/svelte/issues/4623))
 * Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
-* Fix `{@const}` tag not working inside Component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
-* Ignore comments in `{#each}` blocks when containing elements with `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
-* Add a third parameter to the returned function of `createEventDispatcher` that allows passing an object of `{ cancelable: true }` to create a cancelable custom event. The returned function when called will also return a boolean depending on whether the event is cancelled ([#7064](https://github.com/sveltejs/svelte/pull/7064))
+* Allow comments inside `{#each}` blocks when using `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
+* Fix `|local` transitions in `{#key}` blocks ([#5950](https://github.com/sveltejs/svelte/issues/5950))
+* Support svg namespace for `{@html}` ([#7002](https://github.com/sveltejs/svelte/issues/7002), [#7450](https://github.com/sveltejs/svelte/issues/7450))
+* Fix `{@const}` tag not working inside a component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
+* Remove extraneous leading newline inside `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
+* Fix erroneous setting of `textContent` for `<template>` elements ([#7297](https://github.com/sveltejs/svelte/pull/7297))
 * Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
-* Strip leading newline after `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
-* Fix local transition for `{#key}` block ([#5950](https://github.com/sveltejs/svelte/issues/5950))
-* Fix errorneous setting `textContent` for `<template>` element ([#7297](https://github.com/sveltejs/svelte/pull/7297))
-* Support svg namespace for `{@html}` ([#7450](https://github.com/sveltejs/svelte/issues/7450), [#7002](https://github.com/sveltejs/svelte/issues/7002))
 
 ## 3.47.0
 
