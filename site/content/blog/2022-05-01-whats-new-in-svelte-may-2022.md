@@ -8,7 +8,7 @@ authorURL: https://desandoval.net
 With yesterday's Svelte Summit behind us, we've got a lot of news to share! Check out all of the recordings on the [Svelte Society YouTube Channel](https://www.youtube.com/sveltesociety) and the rest of this month's updates below...
 
 ## What's new in Svelte
-- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when rich text content from a CMS. Check out the [docs](https://svelte.dev/docs#template-syntax-svelte-element) or the [tutorial](https://svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
+- The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful, for example, when rendering rich text content from a CMS. Check out the [docs](https://svelte.dev/docs#template-syntax-svelte-element) or the [tutorial](https://svelte.dev/tutorial/svelte-element) for more info (**3.47.0**)!
 
 
 ## Language Tools updates
