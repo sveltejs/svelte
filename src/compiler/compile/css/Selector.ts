@@ -585,7 +585,7 @@ class Block {
 	host: boolean;
 	root: boolean;
 	combinator: CssNode;
-	selectors: CssNode[]
+	selectors: CssNode[];
 	start: number;
 	end: number;
 	should_encapsulate: boolean;
