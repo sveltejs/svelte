@@ -38,7 +38,7 @@ With yesterday's Svelte Summit behind us, we've got a lot of news to share! Chec
 **Apps & Sites built with Svelte**
 - [polySpectra AR](https://ar.polyspectra.com/) lets you prototype faster 3D Printing with seamless AR file handoffs ([video demo](https://www.youtube.com/watch?v=VhYCeVGcG3E))
 - [Pixel Art Together](https://github.com/liveblocks/pixel-art-together) is a free multiplayer pixel art editor powered by Liveblocks
-- [Tooling Manager](https://tooling-manager.netlify.app/) lets you compare your JavaScript Tech Stack against industry standard boilerplates
+- [Tooling Manager](https://tooling-manager.netlify.app/) lets you compare your JavaScript tech stack against industry standard boilerplates
 - [Easy Portfolio](https://easy-portfolio.com/) is a portfolio generator based on your GitHub Profile
 - [FLOAT](https://github.com/muttoni/float) is an attendance tracking program for events
 - [The Coin Perspective](https://thecoinperspective.com/) is a cryptocurrency price tracker and portfolio management tool
