@@ -77,7 +77,7 @@ _To Watch or Hear_
 - [Svelte MP3](https://www.npmjs.com/package/svelte-mp3) is a light blazingly fast yet simple minimalistic audio player for Svelte 
 - [SvelteUI](https://github.com/Brisklemonade/svelteui) is a component library for building fully functional & accessible web applications faster than ever 
 - [svelte-spotlight](https://github.com/beynar/svelte-spotlight) is a headless spotlight component to help you build your site's global search box in minutes
-- [svelte-pdf-simple](https://github.com/gspasov/svelte-pdf-simple) is a simple svelte library for displaying pdfs and giving you all the control
+- [svelte-pdf-simple](https://github.com/gspasov/svelte-pdf-simple) is a simple svelte library for displaying PDFs and giving you all the control
 - [persistent-svelte-store](https://github.com/omer-g/persistent-svelte-store) is a generic persistent writable store, built from scratch in TypeScript according to the Svelte store contract
 - [svelte-exmarkdown](https://github.com/ssssota/svelte-exmarkdown) is Svelte component to render markdown dynamically
 - [Bookit](https://github.com/leveluptuts/bookit) is a storybook-like component rendering environment - finely tuned to work directly within your SvelteKit projects
