@@ -3,18 +3,20 @@ export default {
 		componentName: 'Slider1'
 	},
 	html: `
-		<div style="display: contents; --rail-color:rgb(0, 0, 0); --track-color:rgb(255, 0, 0);">
-			<div id="component1">
-				<p class="svelte-17ay6rc">Slider1</p>
-				<span class="svelte-17ay6rc">Track</span>
+		<section>
+			<div style="display: contents; --rail-color:rgb(0, 0, 0); --track-color:rgb(255, 0, 0);">
+				<div id="component1">
+					<p class="svelte-17ay6rc">Slider1</p>
+					<span class="svelte-17ay6rc">Track</span>
+				</div>
 			</div>
-		</div>
-		<div style="display: contents; --rail-color:rgb(0, 255, 0); --track-color:rgb(0, 0, 255);">
-			<div id="component2">
-				<p class="svelte-17ay6rc">Slider1</p>
-				<span class="svelte-17ay6rc">Track</span>
+			<div style="display: contents; --rail-color:rgb(0, 255, 0); --track-color:rgb(0, 0, 255);">
+				<div id="component2">
+					<p class="svelte-17ay6rc">Slider1</p>
+					<span class="svelte-17ay6rc">Track</span>
+				</div>
 			</div>
-		</div>
+		</section>
 	`,
 	test({ target, window, assert, component }) {
 

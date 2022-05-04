@@ -3,7 +3,7 @@
 </script>
 
 <div {id}>
-  <p>Slider</p>
+  <p>Slider2</p>
   <span>Track</span>
 </div>
 
