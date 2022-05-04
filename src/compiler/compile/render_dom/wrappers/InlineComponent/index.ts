@@ -435,8 +435,24 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
-			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-			const update_mount_node = this.get_update_mount_node(anchor);
+			const tmp_anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const anchor = css_custom_properties_wrapper ? 'null' : tmp_anchor;
+			const update_mount_node = has_css_custom_properties ? css_custom_properties_wrapper : this.get_update_mount_node(tmp_anchor);
+
+			let css_custom_properties_wrapper_anchor = null;
+			if (has_css_custom_properties) {
+				if ((this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node())) {
+					css_custom_properties_wrapper_anchor = block.get_unique_name(`${this.var.name}_anchor`);
+					block.add_element(
+						css_custom_properties_wrapper_anchor,
+						x`@empty()`,
+						parent_nodes && x`@empty()`,
+						parent_node
+					);
+				} else {
+					css_custom_properties_wrapper_anchor = (this.next && this.next.var) || parent_node;
+				}
+			}
 
 			if (updates.length) {
 				block.chunks.update.push(b`
@@ -451,11 +467,13 @@ export default class InlineComponentWrapper extends Wrapper {
 						const old_component = ${name};
 						@transition_out(old_component.$$.fragment, 1, 0, () => {
 							@destroy_component(old_component, 1);
+							${has_css_custom_properties ? b`@detach(${update_mount_node})` : null}
 						});
 						@check_outros();
 					}
 
 					if (${switch_value}) {
+						${css_custom_properties_wrapper_anchor && b`@insert(${css_custom_properties_wrapper_anchor}.parentNode, ${css_custom_properties_wrapper}, ${css_custom_properties_wrapper_anchor});`}
 						${name} = new ${switch_value}(${switch_props}(#ctx));
 
 						${munged_bindings}
@@ -542,7 +560,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
 					// TODO we eventually need to consider what happens to elements
 					// that belong to the same outgroup as an outroing element...
-					block.chunks.destroy.push(b`if (detaching) @detach(${css_custom_properties_wrapper});`);
+					block.chunks.destroy.push(b`if (detaching && ${name}) @detach(${css_custom_properties_wrapper});`);
 				}
 			}
 
@@ -571,7 +589,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 			if (this.node.name === 'svelte:component') {
-				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`);
+				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${nodes});`);
 			} else {
 				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${nodes});`);
 			}
