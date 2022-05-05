@@ -2,7 +2,7 @@ import Renderer from '../../Renderer';
 import Element from '../../../nodes/Element';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { is_void } from '../../../../utils/names';
+import { is_void } from '../../../../../shared/utils/names';
 import FragmentWrapper from '../Fragment';
 import { escape_html, string_literal } from '../../../utils/stringify';
 import TextWrapper from '../Text';
@@ -279,6 +279,7 @@ export default class ElementWrapper extends Wrapper {
 
 		block.chunks.init.push(b`
 			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+			${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
 			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
 		`);
 
@@ -310,6 +311,7 @@ export default class ElementWrapper extends Wrapper {
 				} else if (${not_equal}(${previous_tag}, ${tag})) {
 					${this.var}.d(1);
 					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+					${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 					${this.var}.c();
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
@@ -750,7 +752,7 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 
-		if (this.node.attributes.some(attr => attr.is_spread)) {
+		if (this.node.attributes.some(attr => attr.is_spread) || this.node.is_dynamic_element) {
 			this.add_spread_attributes(block);
 			return;
 		}

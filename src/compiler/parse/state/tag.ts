@@ -1,7 +1,7 @@
 import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
 import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
 import fuzzymatch from '../../utils/fuzzymatch';
-import { is_void } from '../../utils/names';
+import { is_void } from '../../../shared/utils/names';
 import parser_errors from '../errors';
 import { Parser } from '../index';
 import read_expression from '../read/expression';

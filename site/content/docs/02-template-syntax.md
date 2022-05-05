@@ -465,16 +465,16 @@ The `{@const ...}` tag defines a local constant.
 
 ```sv
 <script>
-  export let boxes;
+	export let boxes;
 </script>
 
 {#each boxes as box}
-  {@const area = box.width * box.height}
+	{@const area = box.width * box.height}
 	{box.width} * {box.height} = {area}
 {/each}
 ```
 
-`{@const}` is only allowed as direct child of `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
+`{@const}` is only allowed as direct child of `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<Component />` or `<svelte:fragment />`.
 
 
 ### Element directives
@@ -1640,6 +1640,8 @@ The `<svelte:element>` element lets you render an element of a dynamically speci
 The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
+
+If `this` is the name of a void tag (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
 
 ```sv
 <script>

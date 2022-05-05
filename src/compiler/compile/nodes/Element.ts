@@ -1,4 +1,4 @@
-import { is_void } from '../../utils/names';
+import { is_void } from '../../../shared/utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
