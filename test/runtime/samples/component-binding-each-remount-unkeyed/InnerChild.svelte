@@ -1,14 +1,14 @@
 <script>
-    import { afterUpdate } from 'svelte';
+	import { afterUpdate } from 'svelte';
 
-    export let val = 1;
-    export let increment;
+	export let val = 1;
+	export let increment;
 
-    afterUpdate(() => {
-        increment();
-    });
+	afterUpdate(() => {
+		increment();
+	});
 </script>
 
 <inner>
-    {val}
+	{val}
 </inner>

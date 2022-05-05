@@ -1,35 +1,35 @@
 <script>
-    import { onMount } from 'svelte';
-    import Child from './Child.svelte';
+	import { onMount } from 'svelte';
+	import Child from './Child.svelte';
 
-    let updateCounter = 0;
-    let promiseResolve;
-    export const done = new Promise(resolve => {
-        promiseResolve = resolve;
-    });
-    export const getCounter = () => {
-        return updateCounter;
-    };
+	let updateCounter = 0;
+	let promiseResolve;
+	export const done = new Promise(resolve => {
+		promiseResolve = resolve;
+	});
+	export const getCounter = () => {
+		return updateCounter;
+	};
 
-    let vals = [1, 2, 3];
-    const instances = [];
-    let count = 3;
+	let vals = [1, 2, 3];
+	const instances = [];
+	let count = 3;
 
-    const increment = () => {
+	const increment = () => {
 		++updateCounter;
-    };
+	};
 
-    onMount(() => {
-        count = 2;
+	onMount(() => {
+		count = 2;
 
-        setTimeout(() => {
-            vals = vals.reverse();
+		setTimeout(() => {
+			vals = vals.reverse();
 
-            setTimeout(promiseResolve);
-        });
-    });
+			setTimeout(promiseResolve);
+		});
+	});
 </script>
 
 {#each vals as val, index (val)}
-    <Child bind:this={instances[index]} id={val} {count} {increment} />
+	<Child bind:this={instances[index]} id={val} {count} {increment} />
 {/each}
