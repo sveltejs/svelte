@@ -2,6 +2,7 @@ import { set_current_component, current_component } from './lifecycle';
 import { run_all, blank_object } from './utils';
 import { boolean_attributes } from '../../shared/boolean_attributes';
 export { is_void } from '../../shared/utils/names';
+import { normalize_style_value } from './style_manager';
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -186,14 +187,14 @@ export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : '';
 }
 
-function style_object_to_string(style_object) {
+function style_object_to_string(style_object: { [key: string]: unknown }): string {
 	return Object.keys(style_object)
 		.filter(key => style_object[key])
-		.map(key => `${key}: ${style_object[key]};`)
+		.map(key => `${key}: ${normalize_style_value(style_object[key])};`)
 		.join(' ');
 }
 
-export function add_styles(style_object) {
+export function add_styles(style_object: { [key: string]: unknown }): string {
   const styles = style_object_to_string(style_object);
 
   return styles ? ` style="${styles}"` : '';

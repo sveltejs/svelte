@@ -1,4 +1,5 @@
 import { has_prop } from './utils';
+import { normalize_style_value } from './style_manager';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -530,11 +531,11 @@ export function set_input_type(input, type) {
 	}
 }
 
-export function set_style(node, key, value, important) {
+export function set_style(node, key: string, value: unknown, important: boolean) {
 	if (value === null) {
 		node.style.removeProperty(key);
 	} else {
-		node.style.setProperty(key, value, important ? 'important' : '');
+		node.style.setProperty(key, normalize_style_value(value), important ? 'important' : '');
 	}
 }
 

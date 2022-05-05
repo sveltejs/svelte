@@ -79,3 +79,7 @@ export function clear_rules() {
 		managed_styles.clear();
 	});
 }
+
+export function normalize_style_value(value: unknown): unknown {
+	return (typeof value === 'string' && value.slice(-1) === ';') ? value.slice(0, -1) : value;
+}
