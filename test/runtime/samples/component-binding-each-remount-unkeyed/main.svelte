@@ -12,16 +12,14 @@
     };
 
     let vals = [1, 2, 3];
-    let instances = [];
+    const instances = [];
     let count = 3;
 
-    let increment = () => {
+    const increment = () => {
 		++updateCounter;
     };
 
     onMount(() => {
-        console.log(instances);
-
         count = 2;
 
         setTimeout(() => {
