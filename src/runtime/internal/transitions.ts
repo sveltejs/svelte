@@ -80,7 +80,7 @@ export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, ca
 
 		block.o(local);
 		// fix: destroy non-fragment element such as empty components.
-	} else if (typeof callback === 'function') {
+	} else if (callback) {
 		callback();
 	}
 }
