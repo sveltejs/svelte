@@ -146,6 +146,6 @@ export default {
 	},
 	avoid_mouse_events_on_document: {
 		code: 'avoid-mouse-events-on-document',
-		message: 'Mouse events on the document are not supported cross-browser and should be avoided'
+		message: 'Mouse events on the document are not supported in all browsers and should be avoided'
 	}
 };
