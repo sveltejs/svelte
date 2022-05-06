@@ -97,7 +97,7 @@ export function escape(html: string, is_attr = false) {
 }
 
 export function escape_attribute_value(value) {
-	return typeof value === 'string' ? escape(value) : value;
+	return typeof value === 'string' ? escape(value, true) : value;
 }
 
 export function escape_object(obj) {
