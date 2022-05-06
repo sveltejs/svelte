@@ -84,11 +84,11 @@ export function escape(html: string, is_attr = false) {
   while (pattern.test(html)) {
     const i = pattern.lastIndex - 1;
     const ch = html[i];
-    escaped += html.slice(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+    escaped += html.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
     last = i + 1;
   }
 
-	return escaped + html.slice(last);
+	return escaped + html.substring(last);
 }
 
 export function escape_attribute_value(value) {
