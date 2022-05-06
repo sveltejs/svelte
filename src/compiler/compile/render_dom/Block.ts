@@ -9,7 +9,6 @@ export interface Bindings {
 	property: Identifier;
 	snippet: Node;
 	store: string;
-	tail: Node;
 	modifier: (node: Node) => Node;
 }
 
@@ -39,6 +38,7 @@ export default class Block {
 	dependencies: Set<string> = new Set();
 
 	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
 
 	chunks: {
 		declarations: Array<Node | Node[]>;
@@ -48,6 +48,7 @@ export default class Block {
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -71,7 +72,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus: string;
+	autofocus?: { element_var: string, condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -96,6 +97,7 @@ export default class Block {
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
@@ -239,7 +241,11 @@ export default class Block {
 		}
 
 		if (this.autofocus) {
-			this.chunks.mount.push(b`${this.autofocus}.focus();`);
+			if (this.autofocus.condition_expression) {
+				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+			} else {
+				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
+			}
 		}
 
 		this.render_listeners();
@@ -322,6 +328,12 @@ export default class Block {
 				${this.chunks.measure}
 			}`;
 
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
+
 			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
@@ -375,6 +387,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},

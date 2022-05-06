@@ -3,7 +3,7 @@ export default {
 		<p>override default slot</p>
 	`,
 
-	test({ assert, component }) {
+	test({ component }) {
 		component.nested.foo = 'b';
 	}
 };

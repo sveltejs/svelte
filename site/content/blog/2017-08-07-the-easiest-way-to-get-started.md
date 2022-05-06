@@ -12,7 +12,9 @@ Because of that, getting started with it can be a little bit confusing at first.
 
 ## 1. Use the REPL
 
-The [Svelte REPL](repl) is the easiest way to begin. You can choose from a list of examples to get you started, and tweak them until they do what you want.
+The [Svelte REPL](/repl) (Read-Eval-Print Loop) is the easiest way to begin. This is an interactive environment that allows you to modify code and instantly see the result. 
+
+You can choose from a list of [examples](/examples/), click the [REPL](/repl) link, and then tweak them until they do what you want.
 
 <aside><p>You'll need to have <a href="https://nodejs.org/">Node.js</a> installed, and know how to use the terminal</p></aside>
 
@@ -31,8 +33,7 @@ npm install
 npm run dev
 ```
 
-This will serve your app on [localhost:5000](http://localhost:5000) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
-
+This will serve your app on [localhost:8080](http://localhost:8080) and rebuild it with [Rollup](https://rollupjs.org) every time you make a change to the files in `svelte-app/src`.
 
 ## 2. Use degit
 
@@ -43,11 +44,16 @@ In the terminal, you can instantly create a new project like so:
 ```bash
 npx degit sveltejs/template my-svelte-project
 cd my-svelte-project
+# to use TypeScript run:
+# node scripts/setupTypeScript.js
+
 npm install
 npm run dev
 ```
 
-This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:5000.
+This will create a new project in the `my-svelte-project` directory, install its dependencies, and start a server on http://localhost:8080.
+
+You can find more information about using TypeScript [here](/blog/svelte-and-typescript).
 
 Once you've tinkered a bit and understood how everything fits together, you can fork [sveltejs/template](https://github.com/sveltejs/template) and start doing this instead:
 
@@ -55,6 +61,6 @@ Once you've tinkered a bit and understood how everything fits together, you can 
 npx degit your-name/template my-new-project
 ```
 
-And that's it! Do `npm run build` to create a production-ready version of your app, and check the project template's [README](https://github.com/sveltejs/template/blob/master/README.md) for instructions on how to easily deploy your app to the web with [Now](https://zeit.co/now) or [Surge](http://surge.sh/).
+And that's it! Do `npm run build` to create a production-ready version of your app, and check the project template's [README](https://github.com/sveltejs/template/blob/master/README.md) for instructions on how to easily deploy your app to the web with [Vercel](https://vercel.com) or [Surge](http://surge.sh/).
 
 You're not restricted to using Rollup — there are also integrations for [webpack](https://github.com/sveltejs/svelte-loader), [Browserify](https://github.com/tehshrike/sveltify) and others, or you can use the [Svelte CLI](https://github.com/sveltejs/svelte-cli) (Update from 2019: with Svelte 3 the CLI was deprecated and we now use [sirv-cli](https://www.npmjs.com/package/sirv-cli) in our template. Feel free to use whatever tool you like!) or the [API](https://github.com/sveltejs/svelte/tree/v2#api) directly. If you make a project template using one of these tools, please share it with the [Svelte Discord chatroom](chat), or via [@sveltejs](https://twitter.com/sveltejs) on Twitter!

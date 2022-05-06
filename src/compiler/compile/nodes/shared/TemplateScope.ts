@@ -3,8 +3,10 @@ import ThenBlock from '../ThenBlock';
 import CatchBlock from '../CatchBlock';
 import InlineComponent from '../InlineComponent';
 import Element from '../Element';
+import SlotTemplate from '../SlotTemplate';
+import ConstTag from '../ConstTag';
 
-type NodeWithScope = EachBlock | ThenBlock | CatchBlock | InlineComponent | Element;
+type NodeWithScope = EachBlock | ThenBlock | CatchBlock | InlineComponent | Element | SlotTemplate | ConstTag;
 
 export default class TemplateScope {
 	names: Set<string>;
@@ -40,11 +42,16 @@ export default class TemplateScope {
 
 	is_let(name: string) {
 		const owner = this.get_owner(name);
-		return owner && (owner.type === 'Element' || owner.type === 'InlineComponent');
+		return owner && (owner.type === 'Element' || owner.type === 'InlineComponent' || owner.type === 'SlotTemplate');
 	}
 
 	is_await(name: string) {
 		const owner = this.get_owner(name);
 		return owner && (owner.type === 'ThenBlock' || owner.type === 'CatchBlock');
+	}
+
+	is_const(name: string) {
+		const owner = this.get_owner(name);
+		return owner && owner.type === 'ConstTag';
 	}
 }

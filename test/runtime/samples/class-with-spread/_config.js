@@ -8,7 +8,7 @@ export default {
 
 	html: '<div class="one two" role="button"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.myClass = 'one';
 		component.attributes = {
 			'aria-label': 'Test'

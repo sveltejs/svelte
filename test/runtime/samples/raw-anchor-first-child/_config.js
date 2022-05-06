@@ -8,5 +8,6 @@ export default {
 		assert.ok(!span.previousSibling);
 
 		component.raw = '<span>bar</span>';
+		assert.htmlEqual(target.innerHTML, '<div><span>bar</span></div>');
 	}
 };

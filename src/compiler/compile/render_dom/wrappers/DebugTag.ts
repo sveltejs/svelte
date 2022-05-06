@@ -56,12 +56,12 @@ export default class DebugTagWrapper extends Wrapper {
 
 			const contextual_identifiers = this.node.expressions
 				.filter(e => {
-					const variable = var_lookup.get(e.node.name);
+					const variable = var_lookup.get((e.node as Identifier).name);
 					return !(variable && variable.hoistable);
 				})
-				.map(e => e.node.name);
+				.map(e => (e.node as Identifier).name);
 
-			const logged_identifiers = this.node.expressions.map(e => p`${e.node.name}`);
+			const logged_identifiers = this.node.expressions.map(e => p`${(e.node as Identifier).name}`);
 
 			const debug_statements = b`
 				${contextual_identifiers.map(name => b`const ${name} = ${renderer.reference(name)};`)}

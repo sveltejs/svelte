@@ -31,23 +31,26 @@ describe('sourcemaps', () => {
 			const inputCode = fs.readFileSync(inputFile, 'utf-8');
 			const input = {
 				code: inputCode,
-				locate: getLocator(inputCode)
+				locate: getLocator(inputCode),
+				locate_1: getLocator(inputCode, { offsetLine: 1 })
 			};
 
 			const preprocessed = await svelte.preprocess(
 				input.code,
 				config.preprocess || {},
-				{
+				config.options || {
 					filename: 'input.svelte'
 				}
 			);
-	
+
 			const { js, css } = svelte.compile(
 				preprocessed.code, {
 				filename: 'input.svelte',
 				// filenames for sourcemaps
+				sourcemap: preprocessed.map,
 				outputFilename: `${outputName}.js`,
-				cssOutputFilename: `${outputName}.css`
+				cssOutputFilename: `${outputName}.css`,
+				...(config.compile_options || {})
 			});
 
 			js.code = js.code.replace(
@@ -82,14 +85,18 @@ describe('sourcemaps', () => {
 				);
 			}
 
-			assert.deepEqual(
-				js.map.sources.slice().sort(),
-				(config.js_map_sources || ['input.svelte']).sort()
-			);
+			if (js.map) {
+				assert.deepEqual(
+					js.map.sources.slice().sort(),
+					(config.js_map_sources || ['input.svelte']).sort(),
+					'js.map.sources is wrong'
+				);
+			}
 			if (css.map) {
 				assert.deepEqual(
 					css.map.sources.slice().sort(),
-					(config.css_map_sources || ['input.svelte']).sort()
+					(config.css_map_sources || ['input.svelte']).sort(),
+					'css.map.sources is wrong'
 				);
 			}
 
@@ -107,7 +114,7 @@ describe('sourcemaps', () => {
 			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
 			css.locate = getLocator(css.code || '');
 			css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
-			test({ assert, input, preprocessed, js, css });
+			await test({ assert, input, preprocessed, js, css });
 		});
 	});
 });

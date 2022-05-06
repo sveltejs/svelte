@@ -5,6 +5,10 @@ import flatten_reference from '../utils/flatten_reference';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Action from './Action';
+import Component from '../Component';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
+import compiler_errors from '../compiler_errors';
 
 const valid_bindings = [
 	'innerWidth',
@@ -22,7 +26,7 @@ export default class Window extends Node {
 	bindings: Binding[] = [];
 	actions: Action[] = [];
 
-	constructor(component, parent, scope, info) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		info.attributes.forEach(node => {
@@ -33,10 +37,7 @@ export default class Window extends Node {
 					const { parts } = flatten_reference(node.expression);
 
 					// TODO is this constraint necessary?
-					component.error(node.expression, {
-						code: 'invalid-binding',
-						message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
-					});
+					return component.error(node.expression, compiler_errors.invalid_binding_window(parts));
 				}
 
 				if (!~valid_bindings.indexOf(node.name)) {
@@ -46,18 +47,10 @@ export default class Window extends Node {
 								fuzzymatch(node.name, valid_bindings)
 					);
 
-					const message = `'${node.name}' is not a valid binding on <svelte:window>`;
-
 					if (match) {
-						component.error(node, {
-							code: 'invalid-binding',
-							message: `${message} (did you mean '${match}'?)`
-						});
+						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` (did you mean '${match}'?)`));
 					} else {
-						component.error(node, {
-							code: 'invalid-binding',
-							message: `${message} — valid bindings are ${list(valid_bindings)}`
-						});
+						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` — valid bindings are ${list(valid_bindings)}`));
 					}
 				}
 

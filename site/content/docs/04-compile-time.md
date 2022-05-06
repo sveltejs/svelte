@@ -2,11 +2,7 @@
 title: Compile time
 ---
 
-Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin:
-
-* [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) for users of [Rollup](https://rollupjs.org)
-* [svelte-loader](https://github.com/sveltejs/svelte-loader) for users of [webpack](https://webpack.js.org)
-* or one of the [community-maintained plugins](https://github.com/sveltejs/integrations#bundler-plugins)
+Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin. The bundler plugin that the Svelte team most recommends and invests in is [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte). The [SvelteKit](https://kit.svelte.dev/) framework provides a setup leveraging `vite-plugin-svelte` to build applications as well as a [tool for packaging Svelte component libraries](https://kit.svelte.dev/docs/packaging). Svelte Society maintains a list of [other bundler plugins](https://sveltesociety.dev/tools/#bundling) for additional tools like Rollup and Webpack.
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
@@ -44,7 +40,9 @@ The following options can be passed to the compiler. None are required:
 | `filename` | string | `null`
 | `name` | string | `"Component"`
 | `format` | `"esm"` or `"cjs"` | `"esm"`
-| `generate` | `"dom"` or `"ssr"` | `"dom"`
+| `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
+| `errorMode` | `"throw"` or `"warn"` | `"throw"`
+| `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
 | `dev` | boolean | `false`
 | `immutable` | boolean | `false`
 | `hydratable` | boolean | `false`
@@ -66,6 +64,8 @@ The following options can be passed to the compiler. None are required:
 | `name` | `"Component"` | `string` that sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
 | `format` | `"esm"` | If `"esm"`, creates a JavaScript module (with `import` and `export`). If `"cjs"`, creates a CommonJS module (with `require` and `module.exports`), which is useful in some server-side rendering situations or for testing.
 | `generate` | `"dom"` | If `"dom"`, Svelte emits a JavaScript class for mounting to the DOM. If `"ssr"`, Svelte emits an object with a `render` method suitable for server-side rendering. If `false`, no JavaScript or CSS is returned; just metadata.
+| `errorMode` | `"throw"` | If `"throw"`, Svelte throws when a compilation error occurred. If `"warn"`, Svelte will treat errors as warnings and add them to the warning report.
+| `varsReport` | `"strict"` | If `"strict"`, Svelte returns a variables report with only variables that are not globals nor internals. If `"full"`, Svelte returns a variables report with all detected variables. If `false`, no variables report is returned.
 | `dev` | `false` | If `true`, causes extra code to be added to components that will perform runtime checks and provide debugging information during development.
 | `immutable` | `false` | If `true`, tells the compiler that you promise not to mutate any objects. This allows it to be less conservative about checking whether values have changed.
 | `hydratable` | `false` | If `true` when generating DOM code, enables the `hydrate: true` runtime option, which allows a component to upgrade existing DOM rather than creating new DOM from scratch. When generating SSR code, this adds markers to `<head>` elements so that hydration knows which to replace.
@@ -73,14 +73,17 @@ The following options can be passed to the compiler. None are required:
 | `accessors` | `false` | If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
 | `customElement` | `false` | If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
 | `tag` | `null` | A `string` that tells Svelte what tag name to register the custom element with. It must be a lowercase alphanumeric string with at least one hyphen, e.g. `"my-element"`.
-| `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime. It's recommended that you set this to `false` and use the CSS that is statically generated, as it will result in smaller JavaScript bundles and better performance.
+| `css` | `true` | If `true`, styles will be included in the JavaScript class and injected at runtime for the components actually rendered. If `false`, the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `false` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+| `cssHash` | See right | A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS. It defaults to returning `svelte-${hash(css)}`
 | `loopGuardTimeout` | 0 | A `number` that tells Svelte to break the loop if it blocks the thread for more than `loopGuardTimeout` ms. This is useful to prevent infinite loops. **Only available when `dev: true`**
 | `preserveComments` | `false` | If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
 | `preserveWhitespace` | `false` | If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
+| `sourcemap` | `object \| string` | An initial sourcemap that will be merged into the final output sourcemap. This is usually the preprocessor sourcemap.
+| `enableSourcemap` | `boolean \| { js: boolean; css: boolean; }` | If `true`, Svelte generate sourcemaps for components. Use an object with `js` or `css` for more granular control of sourcemap generation. By default, this is `true`.
 | `outputFilename` | `null` | A `string` used for your JavaScript sourcemap.
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
-
+| `namespace` | `"html"` | The namespace of the element; e.g., `"mathml"`, `"svg"`, `"foreign"`.
 
 ---
 
@@ -171,7 +174,7 @@ ast: object = svelte.parse(
 
 ---
 
-The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it.
+The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 
 ```js
@@ -183,7 +186,7 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
-A number of [community-maintained preprocessing plugins](https://github.com/sveltejs/integrations#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 
@@ -198,11 +201,11 @@ result: {
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		script?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		script?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>,
-		style?: (input: { content: string, attributes: Record<string, string>, filename: string }) => Promise<{
+		style?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
 		}>
@@ -223,16 +226,24 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions may additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation. In current versions of Svelte it will be ignored, but future versions of Svelte may take account of preprocessor sourcemaps.
+> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
 const svelte = require('svelte/compiler');
+const MagicString = require('magic-string');
 
 const { code } = await svelte.preprocess(source, {
 	markup: ({ content, filename }) => {
+		const pos = content.indexOf('foo');
+		if(pos < 0) {
+			return { code: content }
+		}
+		const s = new MagicString(content, { filename })
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
 		return {
-			code: content.replace(/foo/g, 'bar')
-		};
+			code: s.toString(),
+			map: s.generateMap()
+		}
 	}
 }, {
 	filename: 'App.svelte'
@@ -241,7 +252,7 @@ const { code } = await svelte.preprocess(source, {
 
 ---
 
-The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively. In addition to `filename`, they get an object of the element's attributes.
+The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 

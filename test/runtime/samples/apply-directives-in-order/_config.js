@@ -9,11 +9,11 @@ export default {
 	`,
 
 	ssrHtml: `
-		<input>
+		<input value="">
 		<p></p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const input = target.querySelector('input');
 
 		const event = new window.Event('input');

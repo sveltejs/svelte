@@ -5,8 +5,14 @@ export default {
 		<input>
 		<button>click me</button>
 	`,
+	ssrHtml: `
+		<div></div>
+		<div>simple</div>
+		<input value="">
+		<button>click me</button>
+	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		const button = target.querySelector('button');
 
@@ -22,7 +28,7 @@ export default {
 		<input>
 		<button>click me</button>
 		`);
-		
+
 		await button.dispatchEvent(clickEvent);
 		assert.htmlEqual(target.innerHTML, `
 		<div>foo</div>

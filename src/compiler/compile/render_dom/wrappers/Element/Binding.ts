@@ -70,6 +70,30 @@ export default class BindingWrapper {
 		return dependencies;
 	}
 
+	get_update_dependencies() {
+		const object = this.object;
+		const dependencies = new Set<string>();
+		if (this.node.expression.template_scope.names.has(object)) {
+			this.node.expression.template_scope.dependencies_for_name
+				.get(object)
+				.forEach((name) => dependencies.add(name));
+		} else {
+			dependencies.add(object);
+		}
+
+		const result = new Set(dependencies);
+		dependencies.forEach((dependency) => {
+			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(dependency);
+			if (indirect_dependencies) {
+				indirect_dependencies.forEach(indirect_dependency => {
+					result.add(indirect_dependency);
+				});
+			}
+		});
+
+		return result;
+	}
+
 	is_readonly_media_attribute() {
 		return this.node.is_readonly_media_attribute();
 	}
@@ -116,11 +140,11 @@ export default class BindingWrapper {
 		switch (this.node.name) {
 			case 'group':
 			{
-				const { binding_group, is_context, contexts, index } = get_binding_group(parent.renderer, this.node, block);
+				const { binding_group, is_context, contexts, index, keypath } = get_binding_group(parent.renderer, this.node, block);
 
 				block.renderer.add_to_context('$$binding_groups');
 
-				if (is_context) {
+				if (is_context && !block.binding_group_initialised.has(keypath)) {
 					if (contexts.length > 1) {
 						let binding_group = x`${block.renderer.reference('$$binding_groups')}[${index}]`;
 						for (const name of contexts.slice(0, -1)) {
@@ -133,6 +157,7 @@ export default class BindingWrapper {
 					block.chunks.init.push(
 						b`${binding_group(true)} = [];`
 					);
+					block.binding_group_initialised.add(keypath);
 				}
 
 				block.chunks.hydrate.push(
@@ -257,8 +282,22 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 	let keypath = parts.join('.');
 
 	const contexts = [];
-
+	const contextual_dependencies = new Set<string>();
+	const { template_scope } = value.expression;
+	const add_contextual_dependency = (dep: string) => {
+		contextual_dependencies.add(dep);
+		const owner = template_scope.get_owner(dep);
+		if (owner.type === 'EachBlock') {
+			for (const dep of owner.expression.contextual_dependencies) {
+				add_contextual_dependency(dep);
+			}
+		}
+	};
 	for (const dep of value.expression.contextual_dependencies) {
+		add_contextual_dependency(dep);
+	}
+
+	for (const dep of contextual_dependencies) {
 		const context = block.bindings.get(dep);
 		let key;
 		let name;
@@ -302,7 +341,8 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 			},
 			is_context: contexts.length > 0,
 			contexts,
-			index
+			index,
+			keypath
 		});
 	}
 

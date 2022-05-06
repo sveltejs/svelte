@@ -23,7 +23,7 @@ The function takes two arguments — the node to which the transition is applied
 
 * `delay` — milliseconds before the transition begins
 * `duration` — length of the transition in milliseconds
-* `easing` — a `p => t` easing function (see the chapter on [tweening](tutorial/tweened))
+* `easing` — a `p => t` easing function (see the chapter on [tweening](/tutorial/tweened))
 * `css` — a `(t, u) => css` function, where `u === 1 - t`
 * `tick` — a `(t, u) => {...}` function that has some effect on the node
 
@@ -59,7 +59,7 @@ We can get a lot more creative though. Let's make something truly gratuitous:
 				return `
 					transform: scale(${eased}) rotate(${eased * 1080}deg);
 					color: hsl(
-						${~~(t * 360)},
+						${Math.trunc(t * 360)},
 						${Math.min(100, 1000 - 1000 * t)}%,
 						${Math.min(50, 500 - 500 * t)}%
 					);`

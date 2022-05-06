@@ -29,7 +29,7 @@ function create_fragment(ctx) {
 	};
 }
 
-let name = "world";
+let name = 'world';
 
 class Component extends SvelteComponent {
 	constructor(options) {

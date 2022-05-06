@@ -4,6 +4,7 @@ import full_char_code_at from './full_char_code_at';
 export const globals = new Set([
 	'alert',
 	'Array',
+	'BigInt',
 	'Boolean',
 	'clearInterval',
 	'clearTimeout',
@@ -21,9 +22,11 @@ export const globals = new Set([
 	'Event',
 	'EventSource',
 	'fetch',
+	'FormData',
 	'global',
 	'globalThis',
 	'history',
+	'HTMLElement',
 	'Infinity',
 	'InternalError',
 	'Intl',
@@ -36,8 +39,8 @@ export const globals = new Set([
 	'Math',
 	'NaN',
 	'navigator',
-	'Number',
 	'Node',
+	'Number',
 	'Object',
 	'parseFloat',
 	'parseInt',
@@ -52,11 +55,14 @@ export const globals = new Set([
 	'setInterval',
 	'setTimeout',
 	'String',
+	'SVGElement',
+	'Symbol',
 	'SyntaxError',
 	'TypeError',
 	'undefined',
 	'URIError',
 	'URL',
+	'URLSearchParams',
 	'window'
 ]);
 
@@ -110,12 +116,6 @@ export const reserved = new Set([
 	'with',
 	'yield'
 ]);
-
-const void_element_names = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;
-
-export function is_void(name: string) {
-	return void_element_names.test(name) || name.toLowerCase() === '!doctype';
-}
 
 export function is_valid(str: string): boolean {
 	let i = 0;

@@ -1,5 +1,5 @@
 ---
-title: What's new in Svelte: November 2020
+title: "What's new in Svelte: November 2020"
 description: Slot forwarding fixes, SvelteKit for faster local development, and more from Svelte Summit
 author: Daniel Sandoval
 authorURL: https://desandoval.net

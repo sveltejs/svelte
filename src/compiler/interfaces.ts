@@ -1,4 +1,4 @@
-import { Node, Program } from 'estree';
+import { AssignmentExpression, Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
 interface BaseNode {
@@ -20,14 +20,31 @@ export interface Text extends BaseNode {
 }
 
 export interface MustacheTag extends BaseNode {
-	type: 'MustacheTag';
+	type: 'MustacheTag' | 'RawMustacheTag';
 	expression: Node;
+}
+
+export interface Comment extends BaseNode {
+	type: 'Comment';
+	data: string;
+	ignores: string[];
+}
+
+export interface ConstTag extends BaseNode {
+	type: 'ConstTag';
+	expression: AssignmentExpression;
+}
+
+interface DebugTag extends BaseNode {
+	type: 'DebugTag';
+	identifiers: Node[]
 }
 
 export type DirectiveType = 'Action'
 | 'Animation'
 | 'Binding'
 | 'Class'
+| 'StyleDirective'
 | 'EventHandler'
 | 'Let'
 | 'Ref'
@@ -35,24 +52,52 @@ export type DirectiveType = 'Action'
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
+	name: string;
+}
+
+interface BaseExpressionDirective extends BaseDirective {
+	type: DirectiveType;
 	expression: null | Node;
 	name: string;
 	modifiers: string[];
 }
 
-export interface Transition extends BaseDirective{
+export interface Element extends BaseNode {
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
+	name: string;
+}
+
+export interface Attribute extends BaseNode {
+	type: 'Attribute';
+	name: string;
+	value: any[];
+}
+
+export interface SpreadAttribute extends BaseNode {
+	type: 'Spread';
+	expression: Node;
+}
+
+export interface Transition extends BaseExpressionDirective {
 	type: 'Transition';
 	intro: boolean;
 	outro: boolean;
 }
 
-export type Directive = BaseDirective | Transition;
+export type Directive = BaseDirective | BaseExpressionDirective | Transition;
 
 export type TemplateNode = Text
+| ConstTag
+| DebugTag
 | MustacheTag
 | BaseNode
+| Element
+| Attribute
+| SpreadAttribute
 | Directive
-| Transition;
+| Transition
+| Comment;
 
 export interface Parser {
 	readonly template: string;
@@ -86,9 +131,9 @@ export interface Style extends BaseNode {
 
 export interface Ast {
 	html: TemplateNode;
-	css: Style;
-	instance: Script;
-	module: Script;
+	css?: Style;
+	instance?: Script;
+	module?: Script;
 }
 
 export interface Warning {
@@ -104,12 +149,25 @@ export interface Warning {
 
 export type ModuleFormat = 'esm' | 'cjs';
 
+export type EnableSourcemap = boolean | { js: boolean; css: boolean };
+
+export type CssHashGetter = (args: {
+	name: string;
+	filename: string | undefined;
+	css: string;
+	hash: (input: string) => string;
+}) => string;
+
 export interface CompileOptions {
 	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;
+	errorMode?: 'throw' | 'warn';
+	varsReport?: 'full' | 'strict' | false;
 
+	sourcemap?: object | string;
+	enableSourcemap?: EnableSourcemap;
 	outputFilename?: string;
 	cssOutputFilename?: string;
 	sveltePath?: string;
@@ -123,6 +181,8 @@ export interface CompileOptions {
 	tag?: string;
 	css?: boolean;
 	loopGuardTimeout?: number;
+	namespace?: string;
+	cssHash?: CssHashGetter;
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
@@ -164,7 +224,7 @@ export interface Var {
 	imported?: boolean;
 }
 
-export interface CssResult { 
+export interface CssResult {
 	code: string;
 	map: SourceMap;
 }

@@ -4,7 +4,7 @@ question: How do I document my components?
 
 In editors which use the Svelte Language Server you can document Components, functions and exports using specially formatted comments.
 
-````svelte
+````sv
 <script>
 	/** What should we call the user? */
 	export let name = 'world';

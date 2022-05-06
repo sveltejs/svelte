@@ -5,6 +5,12 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import {dimensions} from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
+import { TemplateNode } from '../../interfaces';
+import Element from './Element';
+import InlineComponent from './InlineComponent';
+import Window from './Window';
+import { clone } from '../../utils/clone';
+import compiler_errors from '../compiler_errors';
 
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([
@@ -26,19 +32,17 @@ export default class Binding extends Node {
 	is_contextual: boolean;
 	is_readonly: boolean;
 
-	constructor(component: Component, parent, scope: TemplateScope, info) {
+	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
-			component.error(info, {
-				code: 'invalid-directive-value',
-				message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
-			});
+			component.error(info, compiler_errors.invalid_directive_value);
+			return;
 		}
 
 		this.name = info.name;
 		this.expression = new Expression(component, this, scope, info.expression);
-		this.raw_expression = JSON.parse(JSON.stringify(info.expression));
+		this.raw_expression = clone(info.expression);
 
 		const { name } = get_object(this.expression.node);
 
@@ -46,16 +50,15 @@ export default class Binding extends Node {
 
 		// make sure we track this as a mutable ref
 		if (scope.is_let(name)) {
-			component.error(this, {
-				code: 'invalid-binding',
-				message: 'Cannot bind to a variable declared with the let: directive'
-			});
+			component.error(this, compiler_errors.invalid_binding_let);
+			return;
 		} else if (scope.names.has(name)) {
 			if (scope.is_await(name)) {
-				component.error(this, {
-					code: 'invalid-binding',
-					message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
-				});
+				component.error(this, compiler_errors.invalid_binding_await);
+				return;
+			}
+			if (scope.is_const(name)) {
+				component.error(this, compiler_errors.invalid_binding_const);
 			}
 
 			scope.dependencies_for_name.get(name).forEach(name => {
@@ -68,32 +71,32 @@ export default class Binding extends Node {
 			const variable = component.var_lookup.get(name);
 
 			if (!variable || variable.global) {
-				component.error(this.expression.node, {
-					code: 'binding-undeclared',
-					message: `${name} is not declared`
-				});
+				component.error(this.expression.node as any, compiler_errors.binding_undeclared(name));
+				return;
 			}
 
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
 			if (info.expression.type === 'Identifier' && !variable.writable) {
-				component.error(this.expression.node, {
-					code: 'invalid-binding',
-					message: 'Cannot bind to a variable which is not writable'
-				});
+				component.error(this.expression.node as any, compiler_errors.invalid_binding_writibale);
+				return;
 			}
 		}
 
 		const type = parent.get_static_attribute_value('type');
 
-		this.is_readonly = (
+		this.is_readonly =
 			dimensions.test(this.name) ||
-			(parent.is_media_node && parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
-			(parent.name === 'input' && type === 'file') // TODO others?
-		);
+			(isElement(parent) &&
+				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
+					(parent.name === 'input' && type === 'file')) /* TODO others? */);
 	}
 
 	is_readonly_media_attribute() {
 		return read_only_media_attributes.has(this.name);
 	}
+}
+
+function isElement(node: Node): node is Element {
+	return !!(node as any).is_media_node;
 }

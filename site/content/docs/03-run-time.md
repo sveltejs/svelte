@@ -5,7 +5,7 @@ title: Run time
 
 ### `svelte`
 
-The `svelte` package exposes [lifecycle functions](tutorial/onmount) and the [context API](tutorial/context-api).
+The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [context API](/tutorial/context-api).
 
 #### `onMount`
 
@@ -20,7 +20,7 @@ onMount(callback: () => () => void)
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live *inside* the component; it can be called from an external module).
 
-`onMount` does not run inside a [server-side component](docs#Server-side_component_API).
+`onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
 
 ```sv
 <script>
@@ -84,6 +84,8 @@ afterUpdate(callback: () => void)
 
 Schedules a callback to run immediately after the component has been updated.
 
+> The first time the callback runs will be after the initial `onMount`
+
 ```sv
 <script>
 	import { afterUpdate } from 'svelte';
@@ -146,7 +148,7 @@ setContext(key: any, context: any)
 
 ---
 
-Associates an arbitrary `context` object with the current component and the specified `key`. The context is then available to children of the component (including slotted content) with `getContext`.
+Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
 
 Like lifecycle functions, this must be called during component initialisation.
 
@@ -178,17 +180,55 @@ Retrieves the context that belongs to the closest parent component with the spec
 </script>
 ```
 
-#### `createEventDispatcher`
+#### `hasContext`
 
 ```js
-dispatch: ((name: string, detail?: any) => void) = createEventDispatcher();
+hasContext: boolean = hasContext(key: any)
 ```
 
 ---
 
-Creates an event dispatcher that can be used to dispatch [component events](docs#on_component_event). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
 
-Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture) and are not cancellable with `event.preventDefault()`. The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+```sv
+<script>
+	import { hasContext } from 'svelte';
+
+	if (hasContext('answer')) {
+		// do something
+	}
+</script>
+```
+
+#### `getAllContexts`
+
+```js
+contexts: Map<any, any> = getAllContexts()
+```
+
+---
+
+Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
+
+```sv
+<script>
+	import { getAllContexts } from 'svelte';
+
+	const contexts = getAllContexts();
+</script>
+```
+
+#### `createEventDispatcher`
+
+```js
+dispatch: ((name: string, detail?: any, options?: DispatchOptions) => boolean) = createEventDispatcher();
+```
+
+---
+
+Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+
+Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture). The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
 
 ```sv
 <script>
@@ -214,21 +254,42 @@ Events dispatched from child components can be listened to in their parent. Any 
 <Child on:notify="{callbackFunction}"/>
 ```
 
+---
+
+Events can be cancelable by passing a third parameter to the dispatch function. The function returns `false` if the event is cancelled with `event.preventDefault()`, otherwise it returns `true`.
+
+```sv
+<script>
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	function notify() {
+		const shouldContinue = dispatch('notify', 'detail value', { cancelable: true });
+		if (shouldContinue) {
+			// no one called preventDefault
+		} else {
+			// a listener called preventDefault
+		}
+	}
+</script>
+```
+
 ### `svelte/store`
 
-The `svelte/store` module exports functions for creating [readable](docs#readable), [writable](docs#writable) and [derived](docs#derived) stores.
+The `svelte/store` module exports functions for creating [readable](/docs#run-time-svelte-store-readable), [writable](/docs#run-time-svelte-store-writable) and [derived](/docs#run-time-svelte-store-derived) stores.
 
-Keep in mind that you don't *have* to use these functions to enjoy the [reactive `$store` syntax](docs#4_Prefix_stores_with_$_to_access_their_values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](docs#derived).
+Keep in mind that you don't *have* to use these functions to enjoy the [reactive `$store` syntax](/docs#component-format-script-4-prefix-stores-with-$-to-access-their-values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](/docs#run-time-svelte-store-derived).
 
-This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](docs#Store_contract) to see what a correct implementation looks like.
+This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](/docs#component-format-script-4-prefix-stores-with-$-to-access-their-values-store-contract) to see what a correct implementation looks like.
 
 #### `writable`
 
 ```js
-store = writable(value: any)
+store = writable(value?: any)
 ```
 ```js
-store = writable(value: any, (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
@@ -274,17 +335,17 @@ const unsubscribe = count.subscribe(value => {
 unsubscribe(); // logs 'no more subscribers'
 ```
 
+Note that the value of a `writable` is lost when it is destroyed, for example when the page is refreshed. However, you can write your own logic to sync the value to for example the `localStorage`.
+
 #### `readable`
 
 ```js
-store = readable(value: any, (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
 
 ---
 
-Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value.
-
-The second argument to `readable` is the same as the second argument to `writable`, except that it is required with `readable` (since otherwise there would be no way to update the store value).
+Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
 import { readable } from 'svelte/store';
@@ -317,7 +378,7 @@ store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) =
 
 ---
 
-Derives a store from one or more other stores. Whenever those dependencies change, the callback runs.
+Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
 
 In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
@@ -405,8 +466,8 @@ store = tweened(value: any, options)
 Tweened stores update their values over a fixed duration. The following options are available:
 
 * `delay` (`number`, default 0) — milliseconds before starting
-* `duration` (`number`, default 400) — milliseconds the tween lasts
-* `easing` (`function`, default `t => t`) — an [easing function](docs#svelte_easing)
+* `duration` (`number` | `function`, default 400) — milliseconds the tween lasts
+* `easing` (`function`, default `t => t`) — an [easing function](/docs#run-time-svelte-easing)
 * `interpolate` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
@@ -493,15 +554,39 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 
 * `stiffness` (`number`, default `0.15`) — a value between 0 and 1 where higher means a 'tighter' spring
 * `damping` (`number`, default `0.8`) — a value between 0 and 1 where lower means a 'springier' spring
-* `precision` (`number`, default `0.001`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
+* `precision` (`number`, default `0.01`) — determines the threshold at which the spring is considered to have 'settled', where lower means more precise
 
 ---
 
-As with [`tweened`](docs#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles. The `store.stiffness` and `store.damping` properties can be changed while the spring is in motion, and will take immediate effect.
+All of the options above can be changed while the spring is in motion, and will take immediate effect.
+
+```js
+const size = spring(100);
+size.stiffness = 0.3;
+size.damping = 0.4;
+size.precision = 0.005;
+```
+
+---
+
+As with [`tweened`](/docs#run-time-svelte-motion-tweened) stores, `set` and `update` return a Promise that resolves if the spring settles.
 
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
-[See a full example on the spring tutorial.](tutorial/spring)
+```js
+const coords = spring({ x: 50, y: 50 });
+// updates the value immediately
+coords.set({ x: 100, y: 200 }, { hard: true });
+// preserves existing momentum for 1s
+coords.update(
+	(target_coords, coords) => {
+		return { x: target_coords.x, y: coords.y };
+	},
+	{ soft: 1 }
+);
+```
+
+[See a full example on the spring tutorial.](/tutorial/spring)
 
 ```sv
 <script>
@@ -525,7 +610,7 @@ $: $size = big ? 100 : 10;
 
 ### `svelte/transition`
 
-The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](docs#transition_fn).
+The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `slide`, `scale`, `draw` and `crossfade`. They are for use with Svelte [`transitions`](/docs#template-syntax-element-directives-transition-fn).
 
 #### `fade`
 
@@ -547,9 +632,9 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `linear`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `linear`) — an [easing function](/docs#run-time-svelte-easing)
 
-You can see the `fade` transition in action in the [transition tutorial](tutorial/transition).
+You can see the `fade` transition in action in the [transition tutorial](/tutorial/transition).
 
 ```sv
 <script>
@@ -583,7 +668,7 @@ Animates a `blur` filter alongside an element's opacity.
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 * `amount` (`number`, default 5) - the size of the blur in pixels
 
@@ -619,12 +704,12 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
 * `x` (`number`, default 0) - the x offset to animate out to and in from
 * `y` (`number`, default 0) - the y offset to animate out to and in from
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
-You can see the `fly` transition in action in the [transition tutorial](tutorial/adding-parameters-to-transitions).
+You can see the `fly` transition in action in the [transition tutorial](/tutorial/adding-parameters-to-transitions).
 
 ```sv
 <script>
@@ -659,7 +744,7 @@ Slides an element in and out.
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
 
 ```sv
 <script>
@@ -694,7 +779,7 @@ Animates the opacity and scale of an element. `in` transitions animate from an e
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
 * `start` (`number`, default 0) - the scale value to animate out to and in from
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
@@ -732,9 +817,9 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `speed` (`number`, default undefined) - the speed of the animation, see below.
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicInOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
 
-The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
+The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is a modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
 ```sv
 <script>
@@ -757,13 +842,41 @@ The `speed` parameter is a means of setting the duration of the transition relat
 ```
 
 
-<!-- Crossfade is coming soon... -->
+#### `crossfade`
 
+The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
+
+---
+
+`crossfade` accepts the following parameters:
+
+* `delay` (`number`, default 0) — milliseconds before starting
+* `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
+* `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
+* `fallback` (`function`) — A fallback [transition](/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent. 
+
+```sv
+<script>
+	import { crossfade } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
+
+	const [send, receive] = crossfade({
+		duration:1500,
+		easing: quintOut
+	});
+</script>
+
+{#if condition}
+	<h1 in:send={{key}} out:receive={{key}}>BIG ELEM</h1>
+{:else}
+	<small in:send={{key}} out:receive={{key}}>small elem</small>
+{/if}
+```
 
 
 ### `svelte/animate`
 
-The `svelte/animate` module exports one function for use with Svelte [animations](docs#animate_fn).
+The `svelte/animate` module exports one function for use with Svelte [animations](/docs#template-syntax-element-directives-animate-fn).
 
 #### `flip`
 
@@ -777,17 +890,17 @@ The `flip` function calculates the start and end position of an element and anim
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
-* `easing` (`function`, default `cubicOut`) — an [easing function](docs#svelte_easing)
+* `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
 
 
-`duration` can be be provided as either:
+`duration` can be provided as either:
 
 - a `number`, in milliseconds.
 - a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.
 
 ---
 
-You can see a full example on the [animations tutorial](tutorial/animate)
+You can see a full example on the [animations tutorial](/tutorial/animate)
 
 
 ```sv
@@ -811,7 +924,7 @@ You can see a full example on the [animations tutorial](tutorial/animate)
 
 Easing functions specify the rate of change over time and are useful when working with Svelte's built-in transitions and animations as well as the tweened and spring utilities. `svelte/easing` contains 31 named exports, a `linear` ease and 3 variants of 10 different easing functions: `in`, `out` and `inOut`.
 
-You can explore the various eases using the [ease visualiser](examples#easing) in the [examples section](examples).
+You can explore the various eases using the [ease visualiser](/examples/easing) in the [examples section](/examples).
 
 
 | ease | in | out | inOut |
@@ -881,9 +994,10 @@ The following initialisation options can be provided:
 
 | option | default | description |
 | --- | --- | --- |
-| `target` | **none** | An `HTMLElement` to render to. This option is required
+| `target` | **none** | An `HTMLElement` or `ShadowRoot` to render to. This option is required
 | `anchor` | `null` | A child of `target` to render the component immediately before
 | `props` | `{}` | An object of properties to supply to the component
+| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component
 | `hydrate` | `false` | See below
 | `intro` | `false` | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes
 
@@ -892,7 +1006,7 @@ Existing children of `target` are left where they are.
 
 ---
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](docs#svelte_compile). Hydration of `<head>` elements only works properly if the server-side rendering code was also compiled with `hydratable: true`, which adds a marker to each element in the `<head>` so that the component knows which elements it's responsible for removing during hydration.
+The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](/docs#compile-time-svelte-compile). Hydration of `<head>` elements only works properly if the server-side rendering code was also compiled with `hydratable: true`, which adds a marker to each element in the `<head>` so that the component knows which elements it's responsible for removing during hydration.
 
 Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
 
@@ -976,7 +1090,7 @@ app.count += 1;
 
 ---
 
-Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](docs#svelte_options).
+Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](/docs#template-syntax-svelte-options).
 
 ```sv
 <svelte:options tag="my-element" />
@@ -1013,7 +1127,7 @@ document.body.innerHTML = `
 
 ---
 
-By default, custom elements are compiled with `accessors: true`, which means that any [props](docs#Attributes_and_props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
+By default, custom elements are compiled with `accessors: true`, which means that any [props](/docs#template-syntax-attributes-and-props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
 
 To prevent this, add `accessors={false}` to `<svelte:options>`.
 
@@ -1050,7 +1164,7 @@ Unlike client-side components, server-side components don't have a lifespan afte
 
 A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
 
-You can import a Svelte component directly into Node using [`svelte/register`](docs#svelte_register).
+You can import a Svelte component directly into Node using [`svelte/register`](/docs#run-time-svelte-register).
 
 ```js
 require('svelte/register');
@@ -1060,4 +1174,30 @@ const App = require('./App.svelte').default;
 const { head, html, css } = App.render({
 	answer: 42
 });
+```
+
+---
+
+The `.render()` method accepts the following parameters:
+
+| parameter | default | description |
+| --- | --- | --- |
+| `props` | `{}` | An object of properties to supply to the component
+| `options` | `{}` | An object of options
+
+The `options` object takes in the following options:
+
+| option | default | description |
+| --- | --- | --- |
+| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component
+
+```js
+const { head, html, css } = App.render(
+	// props
+	{ answer: 42 },
+	// options
+	{
+		context: new Map([['context-key', 'context-value']])
+	}
+);
 ```

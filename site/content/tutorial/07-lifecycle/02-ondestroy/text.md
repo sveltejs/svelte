@@ -10,8 +10,8 @@ For example, we can add a `setInterval` function when our component initialises,
 <script>
 	import { onDestroy } from 'svelte';
 
-	let seconds = 0;
-	const interval = setInterval(() => seconds += 1, 1000);
+	let counter = 0;
+	const interval = setInterval(() => counter += 1, 1000);
 
 	onDestroy(() => clearInterval(interval));
 </script>
@@ -37,7 +37,9 @@ export function onInterval(callback, milliseconds) {
 <script>
 	import { onInterval } from './utils.js';
 
-	let seconds = 0;
-	onInterval(() => seconds += 1, 1000);
+	let counter = 0;
+	onInterval(() => counter += 1, 1000);
 </script>
 ```
+
+Open and close the timer a few times and make sure the counter keeps ticking and the CPU load increases. This is due to a memory leak as the previous timers are not deleted. Don't forget to refresh the page before solving the example.

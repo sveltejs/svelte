@@ -8,6 +8,22 @@ import Expression from '../../../nodes/shared/Expression';
 import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
+import { namespaces } from '../../../../utils/namespaces';
+
+const non_textlike_input_types = new Set([
+	'button',
+	'checkbox',
+	'color',
+	'date',
+	'datetime-local',
+	'file',
+	'hidden',
+	'image',
+	'radio',
+	'range',
+	'reset',
+	'submit'
+]);
 
 export class BaseAttributeWrapper {
 	node: Attribute;
@@ -67,15 +83,27 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			}
 		}
 
-		this.name = fix_attribute_casing(this.node.name);
-		this.metadata = this.get_metadata();
-		this.is_indirectly_bound_value = is_indirectly_bound_value(this);
-		this.property_name = this.is_indirectly_bound_value
-			? '__value'
-			: this.metadata && this.metadata.property_name;
-		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
-		this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+		if (this.parent.node.namespace == namespaces.foreign) {
+			// leave attribute case alone for elements in the "foreign" namespace
+			this.name = this.node.name;
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = false;
+			this.property_name = null;
+			this.is_select_value_attribute = false;
+			this.is_input_value = false;
+		} else {
+			this.name = fix_attribute_casing(this.node.name);
+			this.metadata = this.get_metadata();
+			this.is_indirectly_bound_value = is_indirectly_bound_value(this);
+			this.property_name = this.is_indirectly_bound_value
+				? '__value'
+				: this.metadata && this.metadata.property_name;
+			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
+			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+		}
+
+		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+		this.is_src = this.name === 'src' && (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
 
@@ -120,7 +148,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`);
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
-				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${this.last});`
+				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -157,8 +185,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		// special case – autofocus. has to be handled in a bit of a weird way
-		if (this.node.is_true && name === 'autofocus') {
-			block.autofocus = element.var;
+		if (name === 'autofocus') {
+			block.autofocus = {
+				element_var: element.var,
+				condition_expression: this.node.is_true ? undefined : value
+			};
 		}
 	}
 
@@ -181,14 +212,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (should_cache) {
 			condition = this.is_src
-				? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
 
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
-
-			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
+			if (type !== true && !non_textlike_input_types.has(type)) {
 				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 			}
 		}

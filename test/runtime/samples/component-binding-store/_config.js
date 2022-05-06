@@ -4,6 +4,11 @@ export default {
 		<input />
 		<div></div>
 	`,
+	ssrHtml: `
+		<input value=""/>
+		<input value=""/>
+		<div></div>
+	`,
 
 	async test({ assert, component, target, window }) {
 		let count = 0;

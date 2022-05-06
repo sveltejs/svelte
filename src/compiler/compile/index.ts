@@ -6,12 +6,17 @@ import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_name_from_filename from './utils/get_name_from_filename';
+import { valid_namespaces } from '../utils/namespaces';
 
 const valid_options = [
 	'format',
 	'name',
 	'filename',
+	'sourcemap',
+	'enableSourcemap',
 	'generate',
+	'errorMode',
+	'varsReport',
 	'outputFilename',
 	'cssOutputFilename',
 	'sveltePath',
@@ -21,15 +26,17 @@ const valid_options = [
 	'hydratable',
 	'legacy',
 	'customElement',
+	'namespace',
 	'tag',
 	'css',
 	'loopGuardTimeout',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'cssHash'
 ];
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
-	const { name, filename, loopGuardTimeout, dev } = options;
+	const { name, filename, loopGuardTimeout, dev, namespace } = options;
 
 	Object.keys(options).forEach(key => {
 		if (!valid_options.includes(key)) {
@@ -64,10 +71,19 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 			toString: () => message
 		});
 	}
+
+	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
+		const match = fuzzymatch(namespace, valid_namespaces);
+		if (match) {
+			throw new Error(`Invalid namespace '${namespace}' (did you mean '${match}'?)`);
+		} else {
+			throw new Error(`Invalid namespace '${namespace}'`);
+		}
+	}
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = Object.assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true }, options);
 
 	const stats = new Stats();
 	const warnings = [];

@@ -1,5 +1,5 @@
 export default {
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 		const click = new window.MouseEvent('click');
 
