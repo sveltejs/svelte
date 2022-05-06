@@ -76,8 +76,8 @@ const CONTENT_REGEX = /[&<]/g;
  * Note: this method is performance sensitive and has been optimized
  * https://github.com/sveltejs/svelte/pull/5701
  */
-export function escape(html: string, is_attr = false) {
-	if (typeof html !== 'string') return html;
+export function escape(value: unknown, is_attr = false) {
+	const str = String(value);
 
 	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
 	pattern.lastIndex = 0;
@@ -85,14 +85,14 @@ export function escape(html: string, is_attr = false) {
 	let escaped = '';
 	let last = 0;
 
-  while (pattern.test(html)) {
+  while (pattern.test(str)) {
     const i = pattern.lastIndex - 1;
-    const ch = html[i];
-    escaped += html.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+    const ch = str[i];
+    escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
     last = i + 1;
   }
 
-	return escaped + html.substring(last);
+	return escaped + str.substring(last);
 }
 
 export function escape_attribute_value(value) {
