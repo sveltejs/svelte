@@ -61,7 +61,7 @@ export default class EachBlockWrapper extends Wrapper {
 		fixed_length: number;
 		data_length: Node | number;
 		view_length: Node | number;
-	}
+	};
 
 	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
