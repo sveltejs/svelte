@@ -72,6 +72,10 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 const ATTR_REGEX = /[&"]/g;
 const CONTENT_REGEX = /[&<]/g;
 
+/**
+ * Note: this method is performance sensitive and has been optimized
+ * https://github.com/sveltejs/svelte/pull/5701
+ */
 export function escape(html: string, is_attr = false) {
 	if (typeof html !== 'string') return html;
 
