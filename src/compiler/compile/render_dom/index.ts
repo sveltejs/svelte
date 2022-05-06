@@ -333,10 +333,8 @@ export default function dom(
 		// $$props arg is still needed for unknown prop check
 		args.push(x`$$props`);
 	}
-	// fix: remove "component.compile_options.dev" condition, which
-	// will set has_create_fragment always be true in dev mode,
-  // inconsistent with the behavior in production mode.
-	const has_create_fragment = block.has_content();
+	// has_create_fragment is intentionally to be true in dev mode.
+	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
 			function create_fragment(#ctx) {
