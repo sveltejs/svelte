@@ -72,12 +72,6 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 const ATTR_REGEX = /[&"]/g;
 const CONTENT_REGEX = /[&<]/g;
 
-const escapes = {
-	'"': '&quot;',
-	'&': '&amp;',
-	'<': '&lt'
-};
-
 export function escape(html: string, is_attr = false) {
 	if (typeof html !== 'string') return html;
 
@@ -87,11 +81,12 @@ export function escape(html: string, is_attr = false) {
 	let escaped = '';
 	let last = 0;
 
-	while (pattern.test(html)) {
-		const i = pattern.lastIndex - 1;
-		escaped += html.slice(last, i) + escapes[html[i]];
-		last = i + 1;
-	}
+  while (pattern.test(html)) {
+    const i = pattern.lastIndex - 1;
+    const ch = html[i];
+    escaped += html.slice(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+    last = i + 1;
+  }
 
 	return escaped + html.slice(last);
 }
