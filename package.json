@@ -134,7 +134,7 @@
     "css-tree": "^1.1.2",
     "eslint": "^8.0.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-svelte3": "^3.2.1",
+    "eslint-plugin-svelte3": "^4.0.0",
     "estree-walker": "^3.0.0",
     "is-reference": "^3.0.0",
     "jsdom": "^15.2.1",
