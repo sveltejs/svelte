@@ -96,7 +96,9 @@ export function escape(value: unknown, is_attr = false) {
 }
 
 export function escape_attribute_value(value) {
-	return typeof value === 'string' ? escape(value, true) : value;
+	// keep booleans, null, and undefined for the sake of `spread`
+	const should_escape = typeof value === 'string' || (value && typeof value === 'object');
+	return should_escape ? escape(value, true) : value;
 }
 
 export function escape_object(obj) {
@@ -192,7 +194,7 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	const assignment = (boolean && value === true) ? '' : `="${escape_attribute_value(value.toString())}"`;
+	const assignment = (boolean && value === true) ? '' : `="${escape(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
