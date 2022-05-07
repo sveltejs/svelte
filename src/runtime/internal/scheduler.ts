@@ -5,7 +5,7 @@ export const dirty_components = [];
 export const intros = { enabled: false };
 
 export const binding_callbacks = [];
-const render_callbacks = [];
+let render_callbacks = [];
 const flush_callbacks = [];
 
 const resolved_promise = Promise.resolve();
@@ -106,4 +106,14 @@ function update($$) {
 
 		$$.after_update.forEach(add_render_callback);
 	}
+}
+
+// For example, execute remaining `afterUpdate` before execute `destroy` through this function.
+// Doing this will prevent to execute `afterUpdate` after execute `destroy`.
+export function flush_render_callbacks(fns: Function[]) {
+	const filtered = [];
+	const targets = [];
+	render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+	targets.forEach((c) => c());
+	render_callbacks = filtered;
 }
