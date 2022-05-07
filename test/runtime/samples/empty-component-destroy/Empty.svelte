@@ -1,8 +1,8 @@
 
 <script>
-	import { onMount } from 'svelte';
-
-	onMount(() => {
-		return () => console.log('destroy');
+  import { onDestroy } from 'svelte';
+	
+	onDestroy(() => {
+		console.log('destroy');
 	});
 </script>
