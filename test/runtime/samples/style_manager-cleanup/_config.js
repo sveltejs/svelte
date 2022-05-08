@@ -8,7 +8,7 @@ export default {
 		raf.tick(100);
 		component.visible = false;
 		raf.tick(200);
-		raf.tick(60);
+		raf.tick(0);
 
 		assert.htmlEqual(
 			window.document.head.innerHTML,
