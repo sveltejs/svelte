@@ -156,7 +156,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 
 export function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
 	append((node as Document).head || node, style);
-	return style.sheet;
+	return style.sheet as CSSStyleSheet;
 }
 
 export function append_hydration(target: NodeEx, node: NodeEx) {
