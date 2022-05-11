@@ -6,7 +6,7 @@
 export default {
 	custom_element_no_tag: {
 		code: 'custom-element-no-tag',
-		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'			
+		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'
 	},
 	unused_export_let: (component: string, property: string) => ({
 		code: 'unused-export-let',
@@ -143,5 +143,9 @@ export default {
 	redundant_event_modifier_passive: {
 		code: 'redundant-event-modifier',
 		message: 'The passive modifier only works with wheel and touch events'
-	}
+	},
+	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
+		code: 'invalid-rest-eachblock-binding',
+		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
+	})
 };
