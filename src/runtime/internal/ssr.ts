@@ -69,20 +69,34 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 	return style_object;
 }
 
-export const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
-};
+const ATTR_REGEX = /[&"]/g;
+const CONTENT_REGEX = /[&<]/g;
 
-export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+/**
+ * Note: this method is performance sensitive and has been optimized
+ * https://github.com/sveltejs/svelte/pull/5701
+ */
+export function escape(value: unknown, is_attr = false) {
+	const str = String(value);
+
+	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
+	pattern.lastIndex = 0;
+
+	let escaped = '';
+	let last = 0;
+
+  while (pattern.test(str)) {
+    const i = pattern.lastIndex - 1;
+    const ch = str[i];
+    escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+    last = i + 1;
+  }
+
+	return escaped + str.substring(last);
 }
 
 export function escape_attribute_value(value) {
-	return typeof value === 'string' ? escape(value) : value;
+	return typeof value === 'string' ? escape(value, true) : value;
 }
 
 export function escape_object(obj) {
