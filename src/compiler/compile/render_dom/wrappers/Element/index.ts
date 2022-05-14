@@ -1048,7 +1048,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			if (has_spread) {
+			if (has_spread || this.node.is_dynamic_element) {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
