@@ -106,6 +106,11 @@ export default class Renderer {
 			this.current = last.current;
 		}
 
+		// Optimize the TemplateLiteral to remove unnecessary nodes
+		// that both increase code size but also add additional and
+		// unnecessary string formatting at runtime.
+		collapse_literal(popped.literal)
+
 		return popped.literal;
 	}
 
@@ -120,4 +125,40 @@ export default class Renderer {
 			handler(node, this, options);
 		});
 	}
+}
+
+// Collapse string literals together
+function collapse_literal(literal: TemplateLiteral) {
+	if (literal.quasis.length) {
+		// flatMap() to produce an array containing [quasi, expr, quasi, expr, ..., quasi]
+		const zip = literal.quasis.reduce((acc, cur, index) => {
+			const expr = literal.expressions[index]
+			acc.push(cur)
+			if (expr) {
+				acc.push(expr)
+			}
+			return acc
+		}, []);
+
+		// If an expression is a simple string literal, combine it with its preceeding
+		// and following quasi
+		let curQuasi = zip[0]
+		const newZip = [curQuasi]
+		for (let i = 1; i < zip.length; i += 2) {
+			const expr = zip[i]
+			const nextQuasi = zip[i + 1]
+			if (expr.type === 'Literal' && typeof expr.value === 'string') {
+				curQuasi.value.raw += escape_template(expr.value) + nextQuasi.value.raw
+			} else {
+				newZip.push(expr)
+				newZip.push(nextQuasi)
+				curQuasi = nextQuasi
+			}
+		}
+
+		// Reconstitute the quasi and expressions arrays
+		literal.quasis = newZip.filter((_, index) => index % 2 === 0)
+		literal.expressions = newZip.filter((_, index) => index % 2 === 1)
+	}
+
 }
