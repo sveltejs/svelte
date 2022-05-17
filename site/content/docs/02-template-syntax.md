@@ -627,7 +627,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 ---
 
-If you're using `bind:` directives together with `on:` directives, their order can affect what value the bound variable has when the event handler is called.
+If you're using `bind:` directives together with `on:` directives, the order that they're defined in affects the value of the bound variable when the event handler is called.
 
 ```sv
 <script>
