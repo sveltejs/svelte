@@ -16,6 +16,7 @@ import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
 import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { collapse_template_literal } from '../utils/collapse_template_literal';
 import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
@@ -107,7 +108,7 @@ export default class Renderer {
 		}
 
 		// Optimize the TemplateLiteral to remove unnecessary nodes
-		collapse_literal(popped.literal);
+		collapse_template_literal(popped.literal);
 
 		return popped.literal;
 	}
@@ -125,37 +126,3 @@ export default class Renderer {
 	}
 }
 
-// Collapse string literals together
-function collapse_literal(literal: TemplateLiteral) {
-	if (literal.quasis.length) {
-		// flatMap() to produce an array containing [quasi, expr, quasi, expr, ..., quasi]
-		const zip = literal.quasis.reduce((acc, cur, index) => {
-			const expr = literal.expressions[index];
-			acc.push(cur);
-			if (expr) {
-				acc.push(expr);
-			}
-			return acc;
-		}, []);
-
-		// If an expression is a simple string literal, combine it with its preceeding
-		// and following quasi
-		let curQuasi = zip[0];
-		const newZip = [curQuasi];
-		for (let i = 1; i < zip.length; i += 2) {
-			const expr = zip[i];
-			const nextQuasi = zip[i + 1];
-			if (expr.type === 'Literal' && typeof expr.value === 'string') {
-				curQuasi.value.raw += escape_template(expr.value) + nextQuasi.value.raw;
-			} else {
-				newZip.push(expr);
-				newZip.push(nextQuasi);
-				curQuasi = nextQuasi;
-			}
-		}
-
-		// Reconstitute the quasi and expressions arrays
-		literal.quasis = newZip.filter((_, index) => index % 2 === 0);
-		literal.expressions = newZip.filter((_, index) => index % 2 === 1);
-	}
-}
