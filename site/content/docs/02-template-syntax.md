@@ -641,7 +641,7 @@ If you're using `bind:` directives together with `on:` directives, the order tha
 />
 ```
 
-Here we were binding to the value of a text input, which uses the `input` event internally. Bindings on other elements may use different events such as `change`.
+Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
 
 ##### Binding `<select>` value
 
