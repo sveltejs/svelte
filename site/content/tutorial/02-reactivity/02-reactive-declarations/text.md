@@ -2,9 +2,7 @@
 title: Declarations
 ---
 
-Svelte automatically updates the DOM when your component's state changes. Often, some parts of a component's state depends on *other* parts. For example, you may want to have `fullname` derived from `firstname` and `lastname` and also want to recompute `fullname` when `firstname` and/or `lastname` changes. 
-
-For these, we have *reactive declarations*. They look like this:
+Svelte's reactivity not only keeps the DOM in sync with your application's variables as shown in the previous section, it can also keep variables in sync with each other using reactive declarations. They look like this:
 
 ```js
 let count = 0;
