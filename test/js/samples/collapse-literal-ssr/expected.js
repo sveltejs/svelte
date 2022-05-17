@@ -15,9 +15,6 @@ const Component = create_ssr_component(($$result, $$props, $$bindings, slots) =>
 
 <div${add_attribute("class", const1, 0)}>-</div>
 <div${add_attribute("class", const1, 0)}>-</div>
-<div${add_attribute("class", const1, 0)}>-</div>
-<div${add_attribute("class", const1, 0)}>-</div>
-<div${add_attribute("class", const2, 0)}>-</div>
 
 
 <div class="${"class1 " + escape('class2', true)}">-</div>

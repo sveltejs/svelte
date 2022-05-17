@@ -13,9 +13,6 @@
 <!-- various forms of variable syntax -->
 <div class="{const1}">-</div>
 <div class={const1}>-</div>
-<div class="{const1}">-</div>
-<div class={const1}>-</div>
-<div class={const2}>-</div>
 
 <!-- mixed static string + expressions -->
 <div class="class1 {'class2'}">-</div>
