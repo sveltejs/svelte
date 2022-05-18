@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Faster SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
+* Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521))
 
 ## 3.48.0
 
