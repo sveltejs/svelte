@@ -121,6 +121,12 @@ export function validate_void_dynamic_element(tag: undefined | string) {
 	}
 }
 
+export function validate_svelte_component(component: any) {
+	if (!(component.prototype instanceof SvelteComponent)) {
+		throw new Error('this={...} of <svelte:component> should specify a Svelte component.');
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
