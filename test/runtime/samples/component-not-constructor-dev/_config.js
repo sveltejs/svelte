@@ -4,8 +4,5 @@ export default {
 	compileOptions: {
 		dev: true
 	},
-	props: {
-		selected: false
-	},
 	error: 'this={...} of <svelte:component> should specify a Svelte component.'
 };
