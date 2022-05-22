@@ -1,4 +1,7 @@
 export default {
+	compileOptions: {
+		dev: true
+	},
 	props: {
 		componentName: 'Sub'
 	},
@@ -10,7 +13,7 @@ export default {
 			component.componentName = 'banana';
 			throw new Error('Expected an error');
 		} catch (err) {
-			assert.equal(err.message, 'component is not a constructor');
+			assert.equal(err.message, 'this={...} of <svelte:component> should specify a Svelte component.');
 		}
 	}
 };

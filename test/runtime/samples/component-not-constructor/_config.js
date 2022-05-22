@@ -1,11 +1,8 @@
 export default {
 	skip_if_ssr: true,
 	skip_if_hydrate_from_ssr: true,
-	compileOptions: {
-		dev: true
-	},
 	props: {
 		selected: false
 	},
-	error: 'this={...} of <svelte:component> should specify a Svelte component.'
+	error: 'component is not a constructor'
 };
