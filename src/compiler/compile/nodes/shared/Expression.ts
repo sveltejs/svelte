@@ -90,7 +90,7 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) { // TODO should this be `!lazy` ?
+						if (!lazy) {
 							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
@@ -254,11 +254,17 @@ export default class Expression {
 					const declaration = b`const ${id} = ${node}`;
 
 					if (owner.type === 'ConstTag') {
+						let child_scope = scope;
 						walk(node, {
-							enter(node: Node) {
-								if (node.type === 'Identifier') {
+							enter(node: Node, parent: any) {
+								if (map.has(node)) child_scope = map.get(node);
+								if (node.type === 'Identifier' && is_reference(node, parent)) {
+									if (child_scope.has(node.name)) return;
 									this.replace(block.renderer.reference(node, ctx));
 								}
+							},
+							leave(node: Node) {
+								if (map.has(node)) child_scope = child_scope.parent;
 							}
 						});
 					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {

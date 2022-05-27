@@ -2,6 +2,8 @@
   export let a;
 </script>
 
-{#if a}
-  {@const b = a + 1}
-{/if}
+{#each a as i}
+  <div>
+    {@const b = i}
+  </div>
+{/each}

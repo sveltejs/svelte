@@ -11,6 +11,7 @@ import { walk } from 'estree-walker';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
 import { push_array } from '../../../utils/push_array';
+import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 
 function is_else_if(node: ElseBlock) {
 	return (
@@ -25,8 +26,10 @@ class IfBlockBranch extends Wrapper {
 	condition?: any;
 	snippet?: Node;
 	is_dynamic: boolean;
+	node: IfBlock | ElseBlock;
 
 	var = null;
+	get_ctx_name: Node | undefined;
 
 	constructor(
 		renderer: Renderer,
@@ -63,6 +66,8 @@ class IfBlockBranch extends Wrapper {
 			}
 		}
 
+		add_const_tags_context(renderer, this.node.const_tags);
+
 		this.block = block.child({
 			comment: create_debugging_comment(node, parent.renderer.component),
 			name: parent.renderer.component.get_unique_name(
@@ -74,6 +79,10 @@ class IfBlockBranch extends Wrapper {
 		this.fragment = new FragmentWrapper(renderer, this.block, node.children, parent, strip_whitespace, next_sibling);
 
 		this.is_dynamic = this.block.dependencies.size > 0;
+
+		if (node.const_tags.length > 0) {
+			this.get_ctx_name = parent.renderer.component.get_unique_name(is_else ? 'get_else_ctx' : 'get_if_ctx');
+		}
 	}
 }
 
@@ -190,6 +199,18 @@ export default class IfBlockWrapper extends Wrapper {
 		const has_outros = this.branches[0].block.has_outro_method;
 		const has_transitions = has_intros || has_outros;
 
+		this.branches.forEach(branch => {
+			if (branch.get_ctx_name) {
+				this.renderer.blocks.push(b`
+				function ${branch.get_ctx_name}(#ctx) {
+					const child_ctx = #ctx.slice();
+					${add_const_tags(block, branch.node.const_tags, 'child_ctx')}
+					return child_ctx;
+				}
+				`);
+			}
+		});
+
 		const vars = { name, anchor, if_exists_condition, has_else, has_transitions };
 
 		const detaching = parent_node && !is_head(parent_node) ? null : 'detaching';
@@ -260,9 +281,13 @@ export default class IfBlockWrapper extends Wrapper {
 	) {
 		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
 		const current_block_type = block.get_unique_name('current_block_type');
+		const need_select_block_ctx = this.branches.some(branch => branch.get_ctx_name);
+		const select_block_ctx = need_select_block_ctx ? block.get_unique_name('select_block_ctx') : null;
+		const if_ctx = select_block_ctx ? x`${select_block_ctx}(#ctx, ${current_block_type})` : x`#ctx`;
+
 		const get_block = has_else
-			? x`${current_block_type}(#ctx)`
-			: x`${current_block_type} && ${current_block_type}(#ctx)`;
+			? x`${current_block_type}(${if_ctx})`
+			: x`${current_block_type} && ${current_block_type}(${if_ctx})`;
 
 		if (this.needs_update) {
 			block.chunks.init.push(b`
@@ -271,10 +296,10 @@ export default class IfBlockWrapper extends Wrapper {
 						return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
 					})}
 					${this.branches.map(({ condition, snippet, block }) => condition
-					? b`
-						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
-						if (${condition}) return ${block.name};`
-					: b`return ${block.name};`
+						? b`
+								${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
+								if (${condition}) return ${block.name};`
+						: b`return ${block.name};`
 					)}
 				}
 			`);
@@ -282,10 +307,38 @@ export default class IfBlockWrapper extends Wrapper {
 			block.chunks.init.push(b`
 				function ${select_block_type}(#ctx, #dirty) {
 					${this.branches.map(({ condition, snippet, block }) => condition
-					? b`if (${snippet || condition}) return ${block.name};`
-					: b`return ${block.name};`)}
+				? b`if (${snippet || condition}) return ${block.name};`
+				: b`return ${block.name};`)}
 				}
 			`);
+		}
+
+		if (need_select_block_ctx) {
+			// if all branches needs create a context
+			if (this.branches.every(branch => branch.get_ctx_name)) {
+				block.chunks.init.push(b`
+					function ${select_block_ctx}(#ctx, #type) {
+						${this.branches.map(({ condition, get_ctx_name, block }) => {
+							return condition
+								? b`if (#type === ${block.name}) return ${get_ctx_name}(#ctx);`
+								: b`return ${get_ctx_name}(#ctx);`;
+						}).filter(Boolean)}
+					}
+				`);
+			} else {
+				// when not all branches need to create a new context,
+				// this code is simpler
+				block.chunks.init.push(b`
+					function ${select_block_ctx}(#ctx, #type) {
+						${this.branches.map(({ get_ctx_name, block }) => {
+							return get_ctx_name
+								? b`if (#type === ${block.name}) return ${get_ctx_name}(#ctx);`
+								: null;
+						}).filter(Boolean)}
+						return #ctx;
+					}
+				`);
+			}
 		}
 
 		block.chunks.init.push(b`
@@ -322,7 +375,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (dynamic) {
 				block.chunks.update.push(b`
 					if (${current_block_type} === (${current_block_type} = ${select_block_type}(#ctx, #dirty)) && ${name}) {
-						${name}.p(#ctx, #dirty);
+						${name}.p(${if_ctx}, #dirty);
 					} else {
 						${change_block}
 					}
@@ -336,9 +389,9 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		} else if (dynamic) {
 			if (if_exists_condition) {
-				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(${if_ctx}, #dirty);`);
 			} else {
-				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+				block.chunks.update.push(b`${name}.p(${if_ctx}, #dirty);`);
 			}
 		}
 
@@ -370,6 +423,9 @@ export default class IfBlockWrapper extends Wrapper {
 		const previous_block_index = block.get_unique_name('previous_block_index');
 		const if_block_creators = block.get_unique_name('if_block_creators');
 		const if_blocks = block.get_unique_name('if_blocks');
+		const need_select_block_ctx = this.branches.some(branch => branch.get_ctx_name);
+		const select_block_ctx = need_select_block_ctx ? block.get_unique_name('select_block_ctx') : null;
+		const if_ctx = select_block_ctx ? x`${select_block_ctx}(#ctx, ${current_block_type_index})` : x`#ctx`;
 
 		const if_current_block_type_index = has_else
 			? nodes => nodes
@@ -392,32 +448,60 @@ export default class IfBlockWrapper extends Wrapper {
 							return b`${snippet && dependencies.length > 0 ? b`if (${block.renderer.dirty(dependencies)}) ${condition} = null;` : null}`;
 						})}
 						${this.branches.map(({ condition, snippet }, i) => condition
-						? b`
-						${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
-						if (${condition}) return ${i};`
-						: b`return ${i};`)}
-						${!has_else && b`return -1;`}
-					}
-				`
+							? b`
+								${snippet && b`if (${condition} == null) ${condition} = !!${snippet}`}
+								if (${condition}) return ${i};`
+							: b`return ${i};`)}
+								${!has_else && b`return -1;`}
+							}
+						`
 				: b`
 					function ${select_block_type}(#ctx, #dirty) {
 						${this.branches.map(({ condition, snippet }, i) => condition
-						? b`if (${snippet || condition}) return ${i};`
-						: b`return ${i};`)}
+							? b`if (${snippet || condition}) return ${i};`
+							: b`return ${i};`)}
 						${!has_else && b`return -1;`}
 					}
 				`}
 		`);
 
+		if (need_select_block_ctx) {
+			// if all branches needs create a context
+			if (this.branches.every(branch => branch.get_ctx_name)) {
+				block.chunks.init.push(b`
+					function ${select_block_ctx}(#ctx, #index) {
+						${this.branches.map(({ condition, get_ctx_name }, i) => {
+							return condition
+								? b`if (#index === ${i}) return ${get_ctx_name}(#ctx);`
+								: b`return ${get_ctx_name}(#ctx);`;
+						}).filter(Boolean)}
+					}
+				`);
+			} else {
+				// when not all branches need to create a new context,
+				// this code is simpler
+				block.chunks.init.push(b`
+					function ${select_block_ctx}(#ctx, #index) {
+						${this.branches.map(({ get_ctx_name }, i) => {
+							return get_ctx_name
+								? b`if (#index === ${i}) return ${get_ctx_name}(#ctx);`
+								: null;
+						}).filter(Boolean)}
+						return #ctx;
+					}
+				`);
+			}
+		}
+
 		if (has_else) {
 			block.chunks.init.push(b`
 				${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()});
-				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
+				${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${if_ctx});
 			`);
 		} else {
 			block.chunks.init.push(b`
 				if (~(${current_block_type_index} = ${select_block_type}(#ctx, ${this.renderer.get_initial_dirty()}))) {
-					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${if_ctx});
 				}
 			`);
 		}
@@ -445,10 +529,10 @@ export default class IfBlockWrapper extends Wrapper {
 			const create_new_block = b`
 				${name} = ${if_blocks}[${current_block_type_index}];
 				if (!${name}) {
-					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](#ctx);
+					${name} = ${if_blocks}[${current_block_type_index}] = ${if_block_creators}[${current_block_type_index}](${if_ctx});
 					${name}.c();
 				} else {
-					${dynamic && b`${name}.p(#ctx, #dirty);`}
+					${dynamic && b`${name}.p(${if_ctx}, #dirty);`}
 				}
 				${has_transitions && b`@transition_in(${name}, 1);`}
 				${name}.m(${update_mount_node}, ${anchor});
@@ -480,7 +564,7 @@ export default class IfBlockWrapper extends Wrapper {
 			if (dynamic) {
 				block.chunks.update.push(b`
 					if (${current_block_type_index} === ${previous_block_index}) {
-						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(#ctx, #dirty);`)}
+						${if_current_block_type_index(b`${if_blocks}[${current_block_type_index}].p(${if_ctx}, #dirty);`)}
 					} else {
 						${change_block}
 					}
@@ -494,9 +578,9 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		} else if (dynamic) {
 			if (if_exists_condition) {
-				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(#ctx, #dirty);`);
+				block.chunks.update.push(b`if (${if_exists_condition}) ${name}.p(${if_ctx}, #dirty);`);
 			} else {
-				block.chunks.update.push(b`${name}.p(#ctx, #dirty);`);
+				block.chunks.update.push(b`${name}.p(${if_ctx}, #dirty);`);
 			}
 		}
 
@@ -514,11 +598,12 @@ export default class IfBlockWrapper extends Wrapper {
 		detaching
 	) {
 		const branch = this.branches[0];
+		const if_ctx = branch.get_ctx_name ? x`${branch.get_ctx_name}(#ctx)` : x`#ctx`;
 
 		if (branch.snippet) block.add_variable(branch.condition, branch.snippet);
 
 		block.chunks.init.push(b`
-			let ${name} = ${branch.condition} && ${branch.block.name}(#ctx);
+			let ${name} = ${branch.condition} && ${branch.block.name}(${if_ctx});
 		`);
 
 		const initial_mount_node = parent_node || '#target';
@@ -533,15 +618,14 @@ export default class IfBlockWrapper extends Wrapper {
 
 			const enter = b`
 				if (${name}) {
-					${dynamic && b`${name}.p(#ctx, #dirty);`}
-					${
-						has_transitions &&
+					${dynamic && b`${name}.p(${if_ctx}, #dirty);`}
+					${has_transitions &&
 						b`if (${block.renderer.dirty(branch.dependencies)}) {
-							@transition_in(${name}, 1);
-						}`
-					}
+									@transition_in(${name}, 1);
+								}`
+						}
 				} else {
-					${name} = ${branch.block.name}(#ctx);
+					${name} = ${branch.block.name}(${if_ctx});
 					${name}.c();
 					${has_transitions && b`@transition_in(${name}, 1);`}
 					${name}.m(${update_mount_node}, ${anchor});
@@ -578,7 +662,7 @@ export default class IfBlockWrapper extends Wrapper {
 			}
 		} else if (dynamic) {
 			block.chunks.update.push(b`
-				if (${branch.condition}) ${name}.p(#ctx, #dirty);
+				if (${branch.condition}) ${name}.p(${if_ctx}, #dirty);
 			`);
 		}
 

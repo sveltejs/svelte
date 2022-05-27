@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.46.4",
+  "version": "3.48.0",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -16,7 +16,7 @@
     "transition",
     "easing",
     "motion",
-    "svelte",
+    "action",
     "README.md"
   ],
   "exports": {
@@ -38,6 +38,9 @@
       "types": "./types/compiler/index.d.ts",
       "import": "./compiler.mjs",
       "require": "./compiler.js"
+    },
+    "./action": {
+      "types": "./types/runtime/action/index.d.ts"
     },
     "./animate": {
       "types": "./types/runtime/animate/index.d.ts",
@@ -110,7 +113,7 @@
   "bugs": {
     "url": "https://github.com/sveltejs/svelte/issues"
   },
-  "homepage": "https://github.com/sveltejs/svelte#README",
+  "homepage": "https://svelte.dev",
   "devDependencies": {
     "@ampproject/remapping": "^0.3.0",
     "@rollup/plugin-commonjs": "^11.0.0",
@@ -123,15 +126,15 @@
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.8.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
-    "@typescript-eslint/eslint-plugin": "^4.31.2",
-    "@typescript-eslint/parser": "^4.31.2",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
     "acorn": "^8.4.1",
     "agadoo": "^1.1.0",
     "code-red": "^0.2.5",
     "css-tree": "^1.1.2",
-    "eslint": "^7.32.0",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-svelte3": "^3.2.1",
+    "eslint": "^8.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-svelte3": "^4.0.0",
     "estree-walker": "^3.0.0",
     "is-reference": "^3.0.0",
     "jsdom": "^15.2.1",
