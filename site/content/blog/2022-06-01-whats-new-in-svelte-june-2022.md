@@ -22,11 +22,11 @@ Let's dive in!
 **Breaking Changes**
 - Node 14 is no longer supported ([Issue](https://github.com/sveltejs/kit/issues/4916))
 - Requests to `/favicon.ico` will no longer be suppressed and will instead be handled as a valid route ([PR](https://github.com/sveltejs/kit/pull/5046))
-- The AMP config option has been replaced by a more complete `amp.transform` helper function ([PR](https://github.com/sveltejs/kit/pull/4710))
+- AMP support has been moved to a separate `@sveltejs/amp` package ([Docs](https://kit.svelte.dev/docs/seo#manual-setup-amp), [PR](https://github.com/sveltejs/kit/pull/4710))
 - Generated types are now written to `_types` directories - update your imports accordingly ([PR](https://github.com/sveltejs/kit/pull/4705))
 - `%svelte.head%` and `%svelte.body%` are now `%sveltekit.head%` and `%sveltekit.body%` in `template.html` ([Docs](https://kit.svelte.dev/docs/migrating#project-files-src-template-html), [PR](https://github.com/sveltejs/kit/pull/5016/))
-- `data-hydrate` is now `data-sveltekit-hydrate`. `LoadInput` is now `LoadEvent`
-
+- `LoadInput` is now `LoadEvent`
+- Dropped support for Wrangler 1 in favor of Wrangler 2 ([PR}(https://github.com/sveltejs/kit/pull/4887))
 
 ---
 
