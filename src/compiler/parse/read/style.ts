@@ -1,4 +1,5 @@
-import parse from 'css-tree/lib/parser/index.js';
+// eslint-disable-next-line import/namespace
+import { parse } from 'css-tree';
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from 'estree';
