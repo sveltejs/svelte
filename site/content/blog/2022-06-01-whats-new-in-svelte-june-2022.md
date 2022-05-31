@@ -17,17 +17,17 @@ Let's dive in!
 
 ## What's new in SvelteKit
 - Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestone](https://github.com/vitejs/vite/milestone/5))
-- `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [Issue](https://github.com/sveltejs/kit/pull/4922))
+- `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [PR](https://github.com/sveltejs/kit/pull/4964))
 - Pages marked for prerendering will now fail during SSR at runtime ([PR](https://github.com/sveltejs/kit/pull/4812))
 
 **Breaking Changes**
-- Node 14 is no longer supported ([Issue](https://github.com/sveltejs/kit/issues/4916))
+- Node 14 is no longer supported ([PR](https://github.com/sveltejs/kit/pull/4922))
 - Requests to `/favicon.ico` will no longer be suppressed and will instead be handled as a valid route ([PR](https://github.com/sveltejs/kit/pull/5046))
 - AMP support has been moved to a separate `@sveltejs/amp` package ([Docs](https://kit.svelte.dev/docs/seo#manual-setup-amp), [PR](https://github.com/sveltejs/kit/pull/4710))
 - Generated types are now written to `_types` directories - update your imports accordingly ([PR](https://github.com/sveltejs/kit/pull/4705))
 - `%svelte.head%` and `%svelte.body%` are now `%sveltekit.head%` and `%sveltekit.body%` in `app.html` ([Docs](https://kit.svelte.dev/docs/migrating#project-files-src-template-html), [PR](https://github.com/sveltejs/kit/pull/5016/))
 - `LoadInput` is now `LoadEvent`
-- Dropped support for Wrangler 1 in favor of Wrangler 2 ([PR}(https://github.com/sveltejs/kit/pull/4887))
+- Dropped support for Wrangler 1 in favor of Wrangler 2 ([PR](https://github.com/sveltejs/kit/pull/4887))
 
 ---
 
