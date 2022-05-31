@@ -5,7 +5,7 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-With last month's [Svelte Summit](https://www.youtube.com/watch?v=qqj2cBockqE) behind us, we're ready to apply everything we learned to this new month of June! Also new this month are some quality-of-life changes to `createEventDispatcher`, `{#if}` blocks and tons of progress toward SvelteKit 1.0.
+With last month's [Svelte Summit](https://www.youtube.com/watch?v=qqj2cBockqE) behind us, we're ready to apply everything we learned in this new month of June! Also new this month are some quality-of-life changes to `createEventDispatcher`, `@const` declarations and tons of progress toward SvelteKit 1.0.
 
 Let's dive in!
 
@@ -16,7 +16,7 @@ Let's dive in!
 
 
 ## What's new in SvelteKit
-- Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestones](https://github.com/vitejs/vite/milestone/5))
+- Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestone](https://github.com/vitejs/vite/milestone/5))
 - `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [Issue](https://github.com/sveltejs/kit/pull/4922))
 - Pages marked for prerendering will now fail during SSR at runtime ([PR](https://github.com/sveltejs/kit/pull/4812))
 
@@ -44,7 +44,7 @@ Let's dive in!
 - [worker-kit-email](https://github.com/miunau/worker-kit-email) helps you develop transactional emails quickly using regular SvelteKit routes
 - [kaios-weather-svelte](https://github.com/cyan-2048/kaios-weather-svelte) is a very familiar looking weather app for KaiOS
 - [svelte-gantt](https://github.com/ANovokmet/svelte-gantt) is a lightweight and fast interactive gantt chart/resource booking component
-- [Miru](https://github.com/ThaUnknown/miru) is a Bittorrent streaming software for cats
+- [Miru](https://github.com/ThaUnknown/miru) is a BitTorrent streaming software for cats
 
 Looking for a great SvelteKit website to contribute to? [Help build the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
@@ -103,7 +103,7 @@ There were lots of Svelte stores released this month from a number of authors...
 
 - [svelte-mutable-store](https://github.com/feltcoop/svelte-mutable-store) is a Svelte store for mutable values with the `immutable` compiler option
 - [svelte-damped-store](https://github.com/aredridel/svelte-damped-store) is a derived writable store that can suspend updates while [svelte-lens-store](https://github.com/aredridel/svelte-lens-store) is a functional lens over Svelte stores
-- [svelte-persistent-store](https://github.com/furudean/svelte-persistent-store) is a writable svelte store that saves and loads data from Window.localStorage or Window.sessionStorage.
+- [svelte-persistent-store](https://github.com/furudean/svelte-persistent-store) is a writable svelte store that saves and loads data from `Window.localStorage` or `Window.sessionStorage`.
 
 
 Did we miss anything? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs) to add your voice.
