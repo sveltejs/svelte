@@ -12,10 +12,11 @@ Let's dive in!
 ## What's new in Svelte
 - Custom events can now be cancelled in the `createEventDispatcher` function (**3.48.0**, [Docs](https://svelte.dev/docs#run-time-svelte-createeventdispatcher), [PR](https://github.com/sveltejs/svelte/pull/7064))
 - The `{@const}` tag can now be used in `{#if}` blocks to conditionally define variables (**3.48.0**, [Docs](https://svelte.dev/docs#template-syntax-const), [PR](https://github.com/sveltejs/svelte/pull/7451))
-- Lots of bug fixes across `<svelte:element>`, animations and various DOM elements. Check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3480) for a deep
+- Lots of bug fixes across `<svelte:element>`, animations and various DOM elements. Check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3480) for a deeper dive!
 
 
 ## What's new in SvelteKit
+- Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestones](https://github.com/vitejs/vite/milestone/5))
 - `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [Issue](https://github.com/sveltejs/kit/pull/4922))
 - Pages marked for prerendering will now fail during SSR at runtime ([PR](https://github.com/sveltejs/kit/pull/4812))
 
@@ -24,7 +25,7 @@ Let's dive in!
 - Requests to `/favicon.ico` will no longer be suppressed and will instead be handled as a valid route ([PR](https://github.com/sveltejs/kit/pull/5046))
 - AMP support has been moved to a separate `@sveltejs/amp` package ([Docs](https://kit.svelte.dev/docs/seo#manual-setup-amp), [PR](https://github.com/sveltejs/kit/pull/4710))
 - Generated types are now written to `_types` directories - update your imports accordingly ([PR](https://github.com/sveltejs/kit/pull/4705))
-- `%svelte.head%` and `%svelte.body%` are now `%sveltekit.head%` and `%sveltekit.body%` in `template.html` ([Docs](https://kit.svelte.dev/docs/migrating#project-files-src-template-html), [PR](https://github.com/sveltejs/kit/pull/5016/))
+- `%svelte.head%` and `%svelte.body%` are now `%sveltekit.head%` and `%sveltekit.body%` in `app.html` ([Docs](https://kit.svelte.dev/docs/migrating#project-files-src-template-html), [PR](https://github.com/sveltejs/kit/pull/5016/))
 - `LoadInput` is now `LoadEvent`
 - Dropped support for Wrangler 1 in favor of Wrangler 2 ([PR}(https://github.com/sveltejs/kit/pull/4887))
 
@@ -42,7 +43,8 @@ Let's dive in!
 - [DashingOS](https://beta.dashingos.com/) is a tool (like Notion + CodeSandbox) to make it quick and easy to prototype and document your work all in one place
 - [worker-kit-email](https://github.com/miunau/worker-kit-email) helps you develop transactional emails quickly using regular SvelteKit routes
 - [kaios-weather-svelte](https://github.com/cyan-2048/kaios-weather-svelte) is a very familiar looking weather app for KaiOS
-- [svelte-gantt](https://github.com/ANovokmet/svelte-gantt) is a lightweight and fast interactive gantt chart/resource booking component 
+- [svelte-gantt](https://github.com/ANovokmet/svelte-gantt) is a lightweight and fast interactive gantt chart/resource booking component
+- [Miru](https://github.com/ThaUnknown/miru) is a Bittorrent streaming software for cats
 
 Looking for a great SvelteKit website to contribute to? [Help build the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
@@ -64,7 +66,10 @@ From Svelte Society:
 - [Persian Svelte Society](https://www.youtube.com/channel/UCfWH9lCsXN3j8oXq8dru82Q) is making Persian-language videos about Svelte
 - Svelte Sirens has been talking monthly to creators and contributors across the Svelte Community:
   - [SvelteKit + Sanity.io: a match made in heaven](https://www.youtube.com/watch?v=j0_1hfiEVWA&list=PL8bMgX1kyZThkJ_Rk6AAFI4eY24g5XKwK&index=5) on May 13
+  - [Slicing up your Svelte Sites with Prismic](https://www.youtube.com/watch?v=FUbHwwMALkk) on May 20
+  - [Rendering your Svelte apps on Render](https://www.youtube.com/watch?v=SnV_hMLVyqs) on May 24
   - [The story behind the (unofficial) Svelte newsletter](https://www.youtube.com/watch?v=aK0xXm3hPxk&list=PL8bMgX1kyZThkJ_Rk6AAFI4eY24g5XKwK&index=7) on May 27
+
 
 Across the Web:
 - [Building vite-plugin-svelte-inspector](https://www.youtube.com/watch?v=udYB24IMtsY), [What is Singleton?](https://www.youtube.com/watch?v=xhi0m1QZue0) and [What is Navigation?](https://www.youtube.com/watch?v=Ym-OnGUps2c) by lihautan
