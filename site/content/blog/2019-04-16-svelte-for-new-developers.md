@@ -56,7 +56,7 @@ To write code, you need a good editor. The most popular choice is [Visual Studio
 
 ## Creating a project
 
-We're going to use the [Svelte + Vite](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte) template. You don't have to use a project template, but it means you have to do a lot less setup work. You will need to have [Git](https://git-scm.com/) installed in order to use degit. (Eventually you'll probably have to learn [Git](https://git-scm.com/) itself, which most programmers use to manage their projects.)
+We're going to use the [Svelte + Vite](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte) template. You don't have to use a project template, but it means you have to do a lot less setup work.
 
 On the command line, navigate to where you want to create a new project, then type the following lines (you can paste the whole lot, but you'll develop better muscle memory if you get into the habit of writing each line out one at a time then running it):
 
