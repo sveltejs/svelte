@@ -56,36 +56,36 @@ To write code, you need a good editor. The most popular choice is [Visual Studio
 
 ## Creating a project
 
-We're going to follow the instructions in part two of [The easiest way to get started with Svelte](/blog/the-easiest-way-to-get-started).
-
-First, we'll use npx to run [degit](https://github.com/Rich-Harris/degit), a program for cloning project templates from [GitHub](https://github.com) and other code storage websites. You don't have to use a project template, but it means you have to do a lot less setup work. You will need to have [Git](https://git-scm.com/) installed in order to use degit. (Eventually you'll probably have to learn [Git](https://git-scm.com/) itself, which most programmers use to manage their projects.)
+We're going to use the [Svelte + Vite](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte) template. You don't have to use a project template, but it means you have to do a lot less setup work.
 
 On the command line, navigate to where you want to create a new project, then type the following lines (you can paste the whole lot, but you'll develop better muscle memory if you get into the habit of writing each line out one at a time then running it):
 
 ```bash
-npx degit sveltejs/template my-svelte-project
+npm init vite my-svelte-project -- --template svelte
 cd my-svelte-project
 npm install
 ```
 
-This creates a new directory, `my-svelte-project`, adds files from the [sveltejs/template](https://github.com/sveltejs/template) code repository, and installs a number of packages from npm. Open the directory in your text editor and take a look around. The app's 'source code' lives in the `src` directory, while the files your app can load are in `public`.
+> You can replace `--template svelte` with `--template svelte-ts`, if you prefer TypeScript.
 
-In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `start`. To launch your app in development mode, type the following:
+This creates a new directory, `my-svelte-project`, adds files from the [create-vite/template-svelte](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte) template, and installs a number of packages from npm. Open the directory in your text editor and take a look around. The app's 'source code' lives in the `src` directory, while the files your app can load are in `public`.
+
+In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `preview`. To launch your app in development mode, type the following:
 
 ```bash
 npm run dev
 ```
 
-Running the `dev` script starts a program called [Rollup](https://rollupjs.org/guide/en/). Rollup's job is to take your application's source files (so far, just `src/main.js` and `src/App.svelte`), pass them to other programs (including Svelte, in our case) and convert them into the code that will actually run when you open the application in a browser.
+Running the `dev` script starts a program called [Vite](https://vitejs.dev/). Vite's job is to take your application's source files, pass them to other programs (including Svelte, in our case) and convert them into the code that will actually run when you open the application in a browser.
 
-Speaking of which, open a browser and navigate to http://localhost:8080. This is your application running on a local *web server* (hence 'localhost') on port 8080.
+Speaking of which, open a browser and navigate to http://localhost:3000. This is your application running on a local *web server* (hence 'localhost') on port 3000.
 
-Try changing `src/App.svelte` and saving it. The application will reload with your changes.
+Try changing `src/App.svelte` and saving it. The application will update with your changes.
 
 
 ## Building your app
 
-In the last step, we were running the app in 'development mode'. In dev mode, Svelte adds extra code that helps with debugging, and Rollup skips the final step where your app's JavaScript is compressed using [Terser](https://terser.org/).
+In the last step, we were running the app in 'development mode'. In dev mode, Svelte adds extra code that helps with debugging, and Vite skips the final step where your app's JavaScript is compressed.
 
 When you share your app with the world, you want to build it in 'production mode', so that it's as small and efficient as possible for end users. To do that, use the `build` command:
 
@@ -93,15 +93,8 @@ When you share your app with the world, you want to build it in 'production mode
 npm run build
 ```
 
-Your `public` directory now contains a compressed `bundle.js` file containing your app's JavaScript. You can run it like so:
+Your `dist` directory now contains an optimised version of your app. You can run it like so:
 
 ```bash
-npm run start
+npm run preview
 ```
-
-This will run the app on http://localhost:8080.
-
-
-## Next steps
-
-To share your app with the world you'll need to *deploy* it. There are many ways to do so — some are listed in the `README.md` file inside your project.
