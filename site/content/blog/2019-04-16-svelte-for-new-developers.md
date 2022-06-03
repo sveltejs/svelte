@@ -66,6 +66,8 @@ cd my-svelte-project
 npm install
 ```
 
+> You can replace `--template svelte` with `--template svelte-ts`, if you prefer TypeScript.
+
 This creates a new directory, `my-svelte-project`, adds files from the [create-vite/template-svelte](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-svelte) template, and installs a number of packages from npm. Open the directory in your text editor and take a look around. The app's 'source code' lives in the `src` directory, while the files your app can load are in `public`.
 
 In the `package.json` file, there is a section called `"scripts"`. These scripts define shortcuts for working with your application — `dev`, `build` and `preview`. To launch your app in development mode, type the following:
