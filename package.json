@@ -151,13 +151,5 @@
     "tiny-glob": "^0.2.6",
     "tslib": "^2.0.3",
     "typescript": "^3.7.5"
-  },
-  "nyc": {
-    "include": [
-      "compiler/svelte.js",
-      "shared.js"
-    ],
-    "sourceMap": true,
-    "instrument": true
   }
 }
