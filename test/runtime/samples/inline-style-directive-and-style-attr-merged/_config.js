@@ -2,9 +2,8 @@ export default {
 	html: `
 		<p style="height: 40px; color: red;"></p>
 	`,
-	solo: true,
 
-	test({ assert, target, window, component }) {
+	test({ assert, target, window }) {
 		const p = target.querySelector("p");
 		const styles = window.getComputedStyle(p);
 		assert.equal(styles.color, "red");

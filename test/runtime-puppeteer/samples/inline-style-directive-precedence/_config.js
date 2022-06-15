@@ -2,7 +2,6 @@ export default {
 	html: `
 		<p style="font-size: 32px; color: red;"></p>
 	`,
-	solo: true,
 
 	test({ assert, target, window, component }) {
 		const p = target.querySelector("p");
