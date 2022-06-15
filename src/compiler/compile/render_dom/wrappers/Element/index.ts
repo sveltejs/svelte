@@ -151,6 +151,7 @@ export default class ElementWrapper extends Wrapper {
 	bindings: Binding[];
 	event_handlers: EventHandler[];
 	class_dependencies: string[];
+	dynamic_style_dependencies: Set<string>;
 
 	select_binding_dependencies?: Set<string>;
 
@@ -201,6 +202,16 @@ export default class ElementWrapper extends Wrapper {
 			// code, because it will be done again on the child_dynamic_element.
 			return;
 		}
+
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+		};
+
+		this.void = is_void(node.name);
+
+		this.class_dependencies = [];
+		this.dynamic_style_dependencies = new Set();
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
@@ -757,11 +768,19 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_attributes(block: Block) {
-		// Get all the class dependencies first
+		// Get all the class and style dependencies first
 		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
 				push_array(this.class_dependencies, dependencies);
+			} else if (attribute.node.name === 'style') {
+				// TODO Is there a better way to handle this?
+				const dependencies = attribute.node.get_dependencies();
+
+				for (const dep of dependencies) {
+					const variable = this.renderer.component.var_lookup.get(dep);
+					if (!variable || is_dynamic(variable)) this.dynamic_style_dependencies.add(dep);
+				}
 			}
 		});
 
@@ -1119,19 +1138,27 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			const dependencies = expression.dynamic_dependencies();
+			const dependencies = [
+				...this.dynamic_style_dependencies,
+				...expression.dynamic_dependencies(),
+			];
+
+			// Assume that style has changed through the spread attribute
 			if (has_spread) {
 				block.chunks.update.push(updater);
 			} else if (dependencies.length > 0) {
+				// Any dyn dep of this style directive or of the style attribute is dirty
+				const condition = block.renderer.dirty(dependencies);
+
 				if (should_cache) {
 					block.chunks.update.push(b`
-							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-								${updater}
-							}
+						if (${condition} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
+							${updater}
+						}
 					`);
 				} else {
 					block.chunks.update.push(b`
-						if (${block.renderer.dirty(dependencies)}) {
+						if (${condition}) {
 							${updater}
 						}
 					`);
