@@ -774,7 +774,8 @@ export default class ElementWrapper extends Wrapper {
 				const dependencies = attribute.node.get_dependencies();
 				push_array(this.class_dependencies, dependencies);
 			} else if (attribute.node.name === 'style') {
-				// TODO Is there a better way to handle this?
+				// TODO Is there a better way to get the dynamic dependencies
+				// of the style attribute?
 				const dependencies = attribute.node.get_dependencies();
 
 				for (const dep of dependencies) {
