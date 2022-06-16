@@ -1126,7 +1126,11 @@ export default class ElementWrapper extends Wrapper {
 	add_styles(block: Block) {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.styles.forEach((style_directive) => {
-			const { name, expression, should_cache, important } = style_directive;
+			
+			const { name, expression, important } = style_directive;
+
+			const should_cache =
+				style_directive.should_cache && !this.dynamic_style_dependencies.size;
 
 			const snippet = expression.manipulate(block);
 			let cached_snippet: Identifier | undefined;
@@ -1141,29 +1145,23 @@ export default class ElementWrapper extends Wrapper {
 
 			const dependencies = [
 				...this.dynamic_style_dependencies,
-				...expression.dynamic_dependencies(),
+				...expression.dynamic_dependencies()
 			];
 
 			// Assume that style has changed through the spread attribute
 			if (has_spread) {
 				block.chunks.update.push(updater);
 			} else if (dependencies.length > 0) {
-				// Any dyn dep of this style directive or of the style attribute is dirty
-				const condition = block.renderer.dirty(dependencies);
+				const is_dirty = block.renderer.dirty(dependencies);
+				const condition = should_cache
+					? x`${is_dirty} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))`
+					: is_dirty;
 
-				if (should_cache) {
-					block.chunks.update.push(b`
-						if (${condition} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-							${updater}
-						}
-					`);
-				} else {
-					block.chunks.update.push(b`
-						if (${condition}) {
-							${updater}
-						}
-					`);
-				}
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${updater}
+					}
+				`);
 			}
 		});
 	}
