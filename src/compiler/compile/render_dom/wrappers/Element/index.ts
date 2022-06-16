@@ -1104,7 +1104,7 @@ export default class ElementWrapper extends Wrapper {
 				block.add_variable(cached_snippet, snippet);
 			}
 
-			const updater = b`@set_style(${this.var}, "${name}", ${should_cache ? cached_snippet : snippet}, ${important ? 'true' : 'false'})`;
+			const updater = b`@set_style(${this.var}, "${name}", ${should_cache ? cached_snippet : snippet}, ${important ? 1 : null})`;
 
 			block.chunks.hydrate.push(updater);
 
