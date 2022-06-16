@@ -1130,7 +1130,9 @@ export default class ElementWrapper extends Wrapper {
 			const { name, expression, important } = style_directive;
 
 			const should_cache =
-				style_directive.should_cache && !this.dynamic_style_dependencies.size;
+				style_directive.should_cache &&
+				// Avoid caching if we have to override the style attribute
+				!this.dynamic_style_dependencies.size;
 
 			const snippet = expression.manipulate(block);
 			let cached_snippet: Identifier | undefined;
