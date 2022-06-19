@@ -9,7 +9,7 @@ Change the style attribute of the paragraph to the following:
 ```html
 <p 
 	style:color 
-	style:--opacity="{bgOpacity}"
+	style:opacity="{bgOpacity}"
 >
 ```
 
