@@ -1,0 +1,10 @@
+{
+	"code": "missing-whitespace",
+	"message": "Expected whitespace",
+	"start": {
+		"line": 1,
+		"column": 6,
+		"character": 6
+	},
+	"pos": 6
+}

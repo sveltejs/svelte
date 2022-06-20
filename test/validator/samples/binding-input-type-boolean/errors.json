@@ -1,0 +1,15 @@
+[{
+	"code": "missing-type",
+	"message": "'type' attribute must be specified",
+	"start": {
+		"line": 5,
+		"column": 24,
+		"character": 54
+	},
+	"end": {
+		"line": 5,
+		"column": 28,
+		"character": 58
+	},
+	"pos": 54
+}]

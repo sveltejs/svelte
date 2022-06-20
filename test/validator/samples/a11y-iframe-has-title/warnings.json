@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <iframe> element should have a title attribute",
+		"start": {
+			"line": 5,
+			"column": 0,
+			"character": 37
+		},
+		"end": {
+			"line": 5,
+			"column": 27,
+			"character": 64
+		},
+		"pos": 37
+	}
+]

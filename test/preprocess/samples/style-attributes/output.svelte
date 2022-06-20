@@ -1,0 +1,1 @@
+<style type='text/scss' data-foo="bar" bool>PROCESSED</style>

@@ -1,0 +1,1 @@
+<svelte:options namespace={ns}/>

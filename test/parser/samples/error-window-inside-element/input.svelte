@@ -1,0 +1,3 @@
+<div>
+	<svelte:window/>
+</div>

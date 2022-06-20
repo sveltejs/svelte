@@ -1,0 +1,11 @@
+<script>
+	export let items;
+</script>
+
+<ul>
+	{#each items as item (item.id)}
+		{#if item.id}
+			<li>{item.name}</li>
+		{/if}
+	{/each}
+</ul>

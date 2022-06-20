@@ -1,0 +1,1 @@
+<div slot='foo'>invalid</div>

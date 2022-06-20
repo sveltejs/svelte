@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-missing-attribute",
+		"end": {
+			"character": 211,
+			"column": 22,
+			"line": 8
+		},
+		"message": "A11y: <img> element should have an alt attribute",
+		"pos": 189,
+		"start": {
+			"character": 189,
+			"column": 0,
+			"line": 8
+		}
+	}
+]

@@ -1,0 +1,13 @@
+<script>
+	export let selected;
+</script>
+
+<p>selected: {selected}</p>
+
+<select bind:value={selected}>
+	<option>one</option>
+	<option>two</option>
+	<option>three</option>
+</select>
+
+<p>selected: {selected}</p>

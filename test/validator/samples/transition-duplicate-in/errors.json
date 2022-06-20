@@ -1,0 +1,15 @@
+[{
+	"code": "duplicate-transition",
+	"message": "An element can only have one 'in' directive",
+	"start": {
+		"line": 6,
+		"column": 12,
+		"character": 70
+	},
+	"end": {
+		"line": 6,
+		"column": 18,
+		"character": 76
+	},
+	"pos": 70
+}]

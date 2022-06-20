@@ -1,0 +1,25 @@
+{
+	"html": {
+		"start": 0,
+		"end": 15,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 15,
+				"type": "Element",
+				"name": "!doctype",
+				"attributes": [
+					{
+						"start": 10,
+						"end": 14,
+						"type": "Attribute",
+						"name": "html",
+						"value": true
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}

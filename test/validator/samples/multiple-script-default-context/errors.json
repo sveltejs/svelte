@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-script",
+	"message": "A component can only have one instance-level <script> element",
+	"pos": 30,
+	"start": {
+		"line": 5,
+		"column": 0,
+		"character": 30
+	},
+	"end": {
+		"line": 5,
+		"column": 0,
+		"character": 30
+	}
+}]

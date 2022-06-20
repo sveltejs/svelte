@@ -1,0 +1,81 @@
+{
+	"html": {
+		"start": 0,
+		"end": 34,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 34,
+				"type": "Element",
+				"name": "p",
+				"attributes": [],
+				"children": [
+					{
+						"start": 3,
+						"end": 4,
+						"type": "Text",
+						"raw": " ",
+						"data": " "
+					},
+					{
+						"start": 4,
+						"end": 16,
+						"type": "RawMustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 11,
+							"end": 15,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 11
+								},
+								"end": {
+									"line": 1,
+									"column": 15
+								}
+							},
+							"name": "raw1"
+						}
+					},
+					{
+						"start": 16,
+						"end": 17,
+						"type": "Text",
+						"raw": " ",
+						"data": " "
+					},
+					{
+						"start": 17,
+						"end": 29,
+						"type": "RawMustacheTag",
+						"expression": {
+							"type": "Identifier",
+							"start": 24,
+							"end": 28,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 24
+								},
+								"end": {
+									"line": 1,
+									"column": 28
+								}
+							},
+							"name": "raw2"
+						}
+					},
+					{
+						"start": 29,
+						"end": 30,
+						"type": "Text",
+						"raw": " ",
+						"data": " "
+					}
+				]
+			}
+		]
+	}
+}

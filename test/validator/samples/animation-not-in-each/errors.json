@@ -1,0 +1,15 @@
+[{
+	"code": "invalid-animation",
+	"message": "An element that uses the animate directive must be the immediate child of a keyed each block",
+	"start": {
+		"line": 5,
+		"column": 5,
+		"character": 44
+	},
+	"end": {
+		"line": 5,
+		"column": 16,
+		"character": 55
+	},
+	"pos": 44
+}]

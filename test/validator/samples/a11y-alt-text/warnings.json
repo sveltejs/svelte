@@ -1,0 +1,65 @@
+[
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <img> element should have an alt attribute",
+		"start": {
+			"line": 1,
+			"column": 0,
+			"character": 0
+		},
+		"end": {
+			"line": 1,
+			"column": 19,
+			"character": 19
+		},
+		"pos": 0
+	},
+
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <area> element should have an alt, aria-label or aria-labelledby attribute",
+		"start": {
+			"line": 4,
+			"column": 1,
+			"character": 28
+		},
+		"end": {
+			"line": 4,
+			"column": 7,
+			"character": 34
+		},
+		"pos": 28
+	},
+
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <object> element should have a title, aria-label or aria-labelledby attribute",
+		"start": {
+			"line": 7,
+			"column": 0,
+			"character": 43
+		},
+		"end": {
+			"line": 7,
+			"column": 17,
+			"character": 60
+		},
+		"pos": 43
+	},
+
+	{
+		"code": "a11y-missing-attribute",
+		"message": "A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute",
+		"start": {
+			"line": 9,
+			"column": 0,
+			"character": 62
+		},
+		"end": {
+			"line": 9,
+			"column": 20,
+			"character": 82
+		},
+		"pos": 62
+	}
+]

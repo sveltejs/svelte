@@ -1,0 +1,3 @@
+<style>
+	/* removed */
+</style>

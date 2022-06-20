@@ -1,0 +1,25 @@
+{
+	"html": {
+		"start": 0,
+		"end": 17,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 17,
+				"type": "Element",
+				"name": "span",
+				"attributes": [],
+				"children": [
+					{
+						"start": 6,
+						"end": 10,
+						"type": "Text",
+						"raw": "test",
+						"data": "test"
+					}
+				]
+			}
+		]
+	}
+}
