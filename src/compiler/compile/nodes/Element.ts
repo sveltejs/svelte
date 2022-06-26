@@ -1,4 +1,4 @@
-import { is_void } from '../../utils/names';
+import { is_void } from '../../../shared/utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -11,13 +11,16 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions } from '../../utils/patterns';
+import { dimensions, start_newline } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import Component from '../Component';
+import Expression from './shared/Expression';
+import { string_literal } from '../utils/stringify';
+import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 
@@ -190,14 +193,43 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
+	tag_expr: Expression;
+
+	get is_dynamic_element() {
+		return this.name === 'svelte:element';
+	}
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
+		if (info.name === 'svelte:element') {
+			if (typeof info.tag !== 'string') {
+				this.tag_expr = new Expression(component, this, scope, info.tag);
+			} else {
+				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+			}
+		} else {
+			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
+		}
+
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'pre' || this.name === 'textarea') {
+				const first = info.children[0];
+				if (first && first.type === 'Text') {
+					// The leading newline character needs to be stripped because of a qirk,
+					// it is ignored by browsers if the tag and its contents are set through
+					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
+					// Therefore strip it here but add it back in the appropriate
+					// places if there's another newline afterwards.
+					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					first.data = first.data.replace(start_newline, '');
+				}
+			}
+
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');

@@ -21,7 +21,8 @@ enum NodeExist {
 }
 
 const whitelist_attribute_selector = new Map([
-	['details', new Set(['open'])]
+	['details', new Set(['open'])],
+	['dialog', new Set(['open'])]
 ]);
 
 export default class Selector {
@@ -584,7 +585,7 @@ class Block {
 	host: boolean;
 	root: boolean;
 	combinator: CssNode;
-	selectors: CssNode[]
+	selectors: CssNode[];
 	start: number;
 	end: number;
 	should_encapsulate: boolean;

@@ -1,6 +1,7 @@
 import { set_current_component, current_component } from './lifecycle';
 import { run_all, blank_object } from './utils';
-import { boolean_attributes } from '../../compiler/compile/render_ssr/handlers/shared/boolean_attributes';
+import { boolean_attributes } from '../../shared/boolean_attributes';
+export { is_void } from '../../shared/utils/names';
 
 export const invalid_attribute_name_character = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
@@ -19,7 +20,7 @@ export function spread(args, attrs_to_add) {
 				attributes.class += ' ' + classes_to_add;
 			}
 		}
-		
+
 		if (styles_to_add) {
 			if (attributes.style == null) {
 				attributes.style = style_object_to_string(styles_to_add);
@@ -55,7 +56,7 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 		if (!name) continue;
 		style_object[name] = value;
 	}
-	
+
 	for (const name in style_directive) {
 		const value = style_directive[name];
 		if (value) {
@@ -68,20 +69,36 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 	return style_object;
 }
 
-export const escaped = {
-	'"': '&quot;',
-	"'": '&#39;',
-	'&': '&amp;',
-	'<': '&lt;',
-	'>': '&gt;'
-};
+const ATTR_REGEX = /[&"]/g;
+const CONTENT_REGEX = /[&<]/g;
 
-export function escape(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+/**
+ * Note: this method is performance sensitive and has been optimized
+ * https://github.com/sveltejs/svelte/pull/5701
+ */
+export function escape(value: unknown, is_attr = false) {
+	const str = String(value);
+
+	const pattern = is_attr ? ATTR_REGEX : CONTENT_REGEX;
+	pattern.lastIndex = 0;
+
+	let escaped = '';
+	let last = 0;
+
+	while (pattern.test(str)) {
+		const i = pattern.lastIndex - 1;
+		const ch = str[i];
+		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+		last = i + 1;
+	}
+
+	return escaped + str.substring(last);
 }
 
 export function escape_attribute_value(value) {
-	return typeof value === 'string' ? escape(value) : value;
+	// keep booleans, null, and undefined for the sake of `spread`
+	const should_escape = typeof value === 'string' || (value && typeof value === 'object');
+	return should_escape ? escape(value, true) : value;
 }
 
 export function escape_object(obj) {
@@ -177,7 +194,8 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	return ` ${name}${value === true && boolean_attributes.has(name) ? '' : `=${typeof value === 'string' ? JSON.stringify(escape(value)) : `"${value}"`}`}`;
+	const assignment = (boolean && value === true) ? '' : `="${escape(value, true)}"`;
+	return ` ${name}${assignment}`;
 }
 
 export function add_classes(classes) {

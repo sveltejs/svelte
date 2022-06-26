@@ -2,9 +2,46 @@
 
 ## Unreleased
 
-* Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+* Faster SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
+* Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521), [#7571](https://github.com/sveltejs/svelte/issues/7571))
+* Harden attribute escaping during ssr ([#7530](https://github.com/sveltejs/svelte/pull/7530))
+* Add `ComponentType` convenience type ([#6770](https://github.com/sveltejs/svelte/pull/6770))
+
+## 3.48.0
+
+* Allow creating cancelable custom events with `createEventDispatcher` ([#4623](https://github.com/sveltejs/svelte/issues/4623))
+* Support `{@const}` tag in `{#if}` blocks [#7241](https://github.com/sveltejs/svelte/issues/7241)
+* Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
+* Allow comments inside `{#each}` blocks when using `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
+* Fix `|local` transitions in `{#key}` blocks ([#5950](https://github.com/sveltejs/svelte/issues/5950))
+* Support svg namespace for `{@html}` ([#7002](https://github.com/sveltejs/svelte/issues/7002), [#7450](https://github.com/sveltejs/svelte/issues/7450))
+* Fix `{@const}` tag not working inside a component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
+* Remove extraneous leading newline inside `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
+* Fix erroneous setting of `textContent` for `<template>` elements ([#7297](https://github.com/sveltejs/svelte/pull/7297))
+* Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
+* Fix handling of void tags in `<svelte:element>` ([#7449](https://github.com/sveltejs/svelte/issues/7449))
+* Fix handling of boolean attributes in `<svelte:element>` ([#7478](https://github.com/sveltejs/svelte/issues/7478))
+* Add special style scoping handling of `[open]` selectors on `<dialog>` elements ([#7495](https://github.com/sveltejs/svelte/issues/7494))
+
+## 3.47.0
+
+* Add support for dynamic elements through `<svelte:element>` ([#2324](https://github.com/sveltejs/svelte/issues/2324))
+* Miscellaneous variable context fixes in `{@const}` ([#7222](https://github.com/sveltejs/svelte/pull/7222))
+* Fix `{#key}` block not being reactive when the key variable is not otherwise used ([#7408](https://github.com/sveltejs/svelte/issues/7408))
+* Add `Symbol` as a known global ([#7418](https://github.com/sveltejs/svelte/issues/7418))
+
+## 3.46.6
+
+* Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))
+
+## 3.46.5
+
 * Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
-* Add `SvelteComponentConstructor` convenience type ([#6770](https://github.com/sveltejs/svelte/pull/6770))
+* Do not generate `unused-export-let` warning inside `<script context="module">` blocks ([#7055](https://github.com/sveltejs/svelte/issues/7055))
+* Do not collapse whitespace-only CSS vars ([#7152](https://github.com/sveltejs/svelte/issues/7152))
+* Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+* Fix attribute escaping during SSR ([#7327](https://github.com/sveltejs/svelte/issues/7327))
+* Prevent `.innerHTML` optimization from being used when `style:` directive is present ([#7386](https://github.com/sveltejs/svelte/issues/7386))
 
 ## 3.46.4
 

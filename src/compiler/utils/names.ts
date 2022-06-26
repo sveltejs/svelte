@@ -56,6 +56,7 @@ export const globals = new Set([
 	'setTimeout',
 	'String',
 	'SVGElement',
+	'Symbol',
 	'SyntaxError',
 	'TypeError',
 	'undefined',
@@ -115,12 +116,6 @@ export const reserved = new Set([
 	'with',
 	'yield'
 ]);
-
-const void_element_names = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;
-
-export function is_void(name: string) {
-	return void_element_names.test(name) || name.toLowerCase() === '!doctype';
-}
 
 export function is_valid(str: string): boolean {
 	let i = 0;

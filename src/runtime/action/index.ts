@@ -3,10 +3,10 @@
  * - update: An action can have a parameter. This method will be called whenever that parameter changes,
  *   immediately after Svelte has applied updates to the markup.
  * - destroy: Method that is called after the element is unmounted
- * 
+ *
  * Example usage:
  * ```ts
- * export function myAction(node: HTMLElement, paramater: Parameter): ActionReturn<Parameter> {
+ * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter> {
  *   // ...
  *   return {
  *     update: (updatedParameter) => {...},
@@ -14,7 +14,7 @@
  *   };
  * }
  * ```
- * 
+ *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
 export interface ActionReturn<Parameter = any> {
@@ -34,7 +34,7 @@ export interface ActionReturn<Parameter = any> {
  * ```
  * You can return an object with methods `update` and `destroy` from the function.
  * See interface `ActionReturn` for more details.
- * 
+ *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
 export interface Action<Element = HTMLElement, Parameter = any> {
