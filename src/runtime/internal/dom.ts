@@ -315,9 +315,14 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	}
 }
 
+function kebab_case_to_camel_case(str: string): string {
+	return str.replace(/-./g, c => c[1].toUpperCase());
+}
+
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
-		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
+	const camelCaseProp = kebab_case_to_camel_case(prop);
+	if (camelCaseProp in node) {
+		node[camelCaseProp] = typeof node[camelCaseProp] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
 	}
@@ -728,7 +733,8 @@ export class HtmlTagHydration extends HtmlTag {
 export function attribute_to_object(attributes: NamedNodeMap) {
 	const result = {};
 	for (const attribute of attributes) {
-		result[attribute.name] = attribute.value;
+		const name = kebab_case_to_camel_case(attribute.name);
+		result[name] = attribute.value;
 	}
 	return result;
 }

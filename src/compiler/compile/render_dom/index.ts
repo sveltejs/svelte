@@ -558,7 +558,7 @@ export default function dom(
 				computed: false,
 				key: { type: 'Identifier', name: 'observedAttributes' },
 				value: x`function() {
-					return [${props.map(prop => x`"${prop.export_name}"`)}];
+					return [${props.map(prop => x`"${prop.export_name.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}"`)}];
 				}` as FunctionExpression
 			});
 		}

@@ -4,9 +4,13 @@
 	export let items = [];
 	export let flag1 = false;
 	export let flag2 = false;
+	export let flagWithHyphen1 = false;
+	export let flagWithHyphen2 = false;
 </script>
 
 <p>{items.length} items</p>
 <p>{items.join(', ')}</p>
 <p>{flag1 ? 'flagged (dynamic attribute)' : 'not flagged'}</p>
 <p>{flag2 ? 'flagged (static attribute)' : 'not flagged'}</p>
+<p>{flagWithHyphen1 ? 'flagged with hyphen (dynamic attribute)' : 'not flagged'}</p>
+<p>{flagWithHyphen2 ? 'flagged with hyphen (static attribute)' : 'not flagged'}</p>

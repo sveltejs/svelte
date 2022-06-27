@@ -198,7 +198,8 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		attributeChangedCallback(attr, _oldValue, newValue) {
-			this[attr] = newValue;
+			const camelCase = attr.replace(/-./g, c => c[1].toUpperCase());
+			this[camelCase] = newValue;
 		}
 
 		disconnectedCallback() {
