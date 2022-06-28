@@ -12,6 +12,6 @@ export {
 	tick,
 	createEventDispatcher,
 	SvelteComponentDev as SvelteComponent,
-	SvelteComponentTyped,
+	SvelteComponentTyped
 	// additional exports added through post-typegen.js
 } from 'svelte/internal';
