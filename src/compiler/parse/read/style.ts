@@ -1,4 +1,5 @@
-import parse from 'css-tree/lib/parser/index.js';
+// @ts-ignore
+import parse from 'css-tree/parser';
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from 'estree';
