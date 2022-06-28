@@ -268,7 +268,7 @@ export class SvelteComponentTyped<
  * Example:
  * ```html
  * <script lang="ts">
- * 	import { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
  * 	import Component1 from './Component1.svelte';
  * 	import Component2 from './Component2.svelte';
  * 
