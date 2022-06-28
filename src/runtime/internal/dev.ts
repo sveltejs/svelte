@@ -273,7 +273,7 @@ export class SvelteComponentTyped<
  * 	import Component2 from './Component2.svelte';
  * 
  * 	const component: ComponentType = someLogic() ? Component1 : Component2;
- * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{needsThisProp: string}>> = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
  * </script>
  * 
  * <svelte:element this={component} />
