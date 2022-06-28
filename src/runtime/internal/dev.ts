@@ -287,7 +287,7 @@ export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<
  * Convenience type to get the properties the given component expects. Example:
  * ```html
  * <script lang="ts">
- * 	import { ComponentProps } from 'svelte';
+ * 	import type { ComponentProps } from 'svelte';
  * 	import Component from './Component.svelte';
  * 
  * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
