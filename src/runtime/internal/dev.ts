@@ -128,7 +128,7 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
+export interface ComponentConstructorParams<Props extends Record<string, any> = Record<string, any>> {
 	target: Element | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
@@ -164,7 +164,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: ComponentConstructorParams) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -256,26 +256,47 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions<Props>) {
+	constructor(options: ComponentConstructorParams<Props>) {
 		super(options);
 	}
 }
 
 /**
- * Convenience-type to represent a Svelte component constructor.
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
+ * dynamic components and `<svelte:element>`.
  * 
  * Example:
- * ```ts
- import ASvelteComponent from './ASvelteComponent.svelte';
- const ComponentClass: SvelteComponentConstructor = ASvelteComponent;
- new ComponentClass(..);
- ```
+ * ```html
+ * <script lang="ts">
+ * 	import { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import Component1 from './Component1.svelte';
+ * 	import Component2 from './Component2.svelte';
+ * 
+ * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{needsThisProp: string}>> = someLogic() ? Component1 : Component2;
+ * </script>
+ * 
+ * <svelte:element this={component} />
+ * <svelte:element this={componentOfCertainSubType} needsThisProp="hello" />
+ * ```
  */
-export type SvelteComponentConstructor<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> = new (options: IComponentOptions<Props>) => SvelteComponentTyped<Props, Events, Slots>;
+export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
+	new (p: ComponentConstructorParams<T extends SvelteComponentTyped<infer X, any, any> ? X : any>) => T;
+
+/**
+ * Convenience type to get the properties the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ * 	import { ComponentProps } from 'svelte';
+ * 	import Component from './Component.svelte';
+ * 
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * </script>
+ * ```
+ */
+export type ComponentProps<T extends SvelteComponent> = T extends SvelteComponentTyped<infer Props>
+	? Props
+	: unknown;
 
 export function loop_guard(timeout) {
 	const start = Date.now();
