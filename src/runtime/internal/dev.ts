@@ -281,7 +281,7 @@ export class SvelteComponentTyped<
  * ```
  */
 export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
-	new (p: ComponentConstructorOptions<Component extends SvelteComponentTyped<infer Props, any, any> ? Props : any>) => Component;
+	new (options: ComponentConstructorOptions<Component extends SvelteComponentTyped<infer Props, any, any> ? Props : any>) => Component;
 
 /**
  * Convenience type to get the props the given component expects. Example:
