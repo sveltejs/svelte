@@ -283,6 +283,7 @@ export class SvelteComponentTyped<
 export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
 	new (p: ComponentConstructorParams<T extends SvelteComponentTyped<infer X, any, any> ? X : any>) => T;
 
+/**
  * Convenience type to get the props the given component expects. Example:
  * ```html
  * <script lang="ts">
