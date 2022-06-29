@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: July 2022"
-description: "Faster SSR, Language tools improvements and something special..."
+description: "Faster SSR, language tools improvements and something special..."
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
@@ -11,12 +11,12 @@ So let's dive in!
 
 ## OpenCollective funding drives Svelte forward
 
-Svelte supporters have donated approximately $80,000 to [the project on OpenCollective](https://opencollective.com/svelte). We're happy to share that the funds are being drawn on to move Svelte forward in a meaningful way. [@gtm-nayan](https://github.com/gtm-nayan) has begun triaging and fixing SvelteKit issues this past month as a paid contributor to the project to help us get SvelteKit to a 1.0 level of stability! @gtm-nayan has been an active member of the Svelte community for quite some time and is well known for writing the bot that helps keep our Discord server running. We're happy that this funding has allowed Svelte to get much more of his time.
+Svelte supporters have donated approximately $80,000 to [the project on OpenCollective](https://opencollective.com/svelte). We're happy to share that the funds are being drawn on to move Svelte forward in a meaningful way. [@gtm-nayan](https://github.com/gtm-nayan) has begun triaging and fixing SvelteKit issues this past month as a paid contributor to the project to help us get SvelteKit to a 1.0 level of stability! **@gtm-nayan** has been an active member of the Svelte community for quite some time and is well known for writing the bot that helps keep our Discord server running. We're happy that this funding has allowed Svelte to get much more of his time.
 
-We will also be utilizing OpenCollective funds to allow Svelte core maintainers to attend Svelte Summit in person this fall.
+We will also be utilizing OpenCollective funds to allow Svelte core maintainers to attend [Svelte Summit](https://www.sveltesummit.com/) in person this fall. Thanks to everyone who has donated, so far!
 
 ## What's new in Svelte & Language Tools
-- [learn.svelte.dev](https://learn.svelte.dev/) is a new way to learn Svelte and SvelteKit from the ground up that is currently in development!
+- [learn.svelte.dev](https://learn.svelte.dev/) is a new way to learn Svelte and SvelteKit from the ground up that is currently in development
 - Faster SSR is coming in the next Svelte release. A PR two years in the making, resulting in up to 3.05x faster in some tests! ([PR](https://github.com/sveltejs/svelte/pull/5701))
 - "Find File References" in the latest version of the Svelte extension shows where Svelte files have been imported ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29), [Demo](https://twitter.com/dummdidumm_/status/1532459709604716544/photo/1))
 - The Svelte extension now supports CSS path completion ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29))
@@ -26,7 +26,7 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 - Introduced `@sveltejs/kit/experimental/vite` which allows SvelteKit to interoperate with other tools in the Vite ecosystem like Vitest and Storybook ([#5094](https://github.com/sveltejs/kit/pull/5094)). Please [leave feedback](https://github.com/sveltejs/kit/issues/5184) as to whether the feature works and is helpful as we consider taking it out of experimental and making `vite.config.js` required for all users
 - Switched to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117)), which unblocks implementing streaming
 - Static assets can now be symlinked in development environments ([#5089](https://github.com/sveltejs/kit/pull/5089))
-- `server` and `prod` environment varaibles are now available as a correlary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
+- `server` and `prod` environment variables are now available as a correlary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
 
 ---
 
@@ -53,12 +53,12 @@ Want to contribute to a site using the latest SvelteKit features? [Help build th
 
 **Learning Resources**
 
-_To Watch_
-From/Featuring Svelte Society:
+_Featuring Svelte Society_
 - [Svelte Origins: A JavaScript Documentary](https://www.youtube.com/watch?v=kMlkCYL9qo0) by OfferZen Origins
 - [Full Stack Documentation (announcing learn.svelte.dev)](https://portal.gitnation.org/contents/full-stack-documentation) by Rich Harris @ JSNation 2022
+- [All About the Sirens](https://www.svelteradio.com/episodes/all-about-the-sirens) by Svelte Radio
 
-Across the Web:
+_To Watch_
 - [SvelteKit Page Endpoints](https://www.youtube.com/watch?v=yQRf2wmTu5w), [Named Layouts](https://www.youtube.com/watch?v=UHX9TJ0BxZY) and [Passing data from page component to layout component with $page.stuff](https://www.youtube.com/watch?v=CXaCstU5pcw) by lihautan
 - [🍞 & 🧈: Magically load data with SvelteKit Endpoints](https://www.youtube.com/watch?v=f6prqYlbTE4) by Johnny Magrippis
 - [Svelte for React developers](https://www.youtube.com/watch?v=7tsrwrx5HtQ) by frontendtier
@@ -74,9 +74,6 @@ _To Read_
 - [SvelteKit Content Security Policy: CSP for XSS Protection](https://rodneylab.com/sveltekit-content-security-policy/) by Rodney Lab
 - [SvelteKit Hooks. Everything You Need To Know](https://kudadam.com/blog/understanding-sveltekit-hooks) by Lucretius K. Biah
 - [3 tips for upgrading the performance of your Svelte stores](https://www.mathiaspicker.com/posts/3-tips-for-upgrading-the-performance-of-your-svelte-stores) by Mathias Picker
-
-_To Hear_
-- 
 
 
 **Libraries, Tools & Components**
