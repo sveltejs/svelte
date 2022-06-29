@@ -263,31 +263,31 @@ export class SvelteComponentTyped<
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
- * dynamic components and `<svelte:element>`.
+ * dynamic components using `<svelte:component>`.
  * 
  * Example:
  * ```html
  * <script lang="ts">
- * 	import { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
  * 	import Component1 from './Component1.svelte';
  * 	import Component2 from './Component2.svelte';
  * 
  * 	const component: ComponentType = someLogic() ? Component1 : Component2;
- * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{needsThisProp: string}>> = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
  * </script>
  * 
- * <svelte:element this={component} />
- * <svelte:element this={componentOfCertainSubType} needsThisProp="hello" />
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
 export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
 	new (p: ComponentConstructorOptions<Component extends SvelteComponentTyped<infer Props, any, any> ? Props : any>) => Component;
 
 /**
- * Convenience type to get the properties the given component expects. Example:
+ * Convenience type to get the props the given component expects. Example:
  * ```html
  * <script lang="ts">
- * 	import { ComponentProps } from 'svelte';
+ * 	import type { ComponentProps } from 'svelte';
  * 	import Component from './Component.svelte';
  * 
  * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
