@@ -10,4 +10,4 @@ execSync('tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emit
 // We can't use `export type` syntax either because the TS version we're on doesn't have this feature yet.
 const path = 'types/runtime/index.d.ts';
 const content = readFileSync(path, 'utf8');
-writeFileSync(path, content.replace('SvelteComponentTyped', 'SvelteComponentTyped, ComponentType, ComponentConstructorParams, ComponentProps'));
+writeFileSync(path, content.replace('SvelteComponentTyped', 'SvelteComponentTyped, ComponentType, ComponentConstructorOptions, ComponentProps'));

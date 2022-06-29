@@ -128,7 +128,7 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
-export interface ComponentConstructorParams<Props extends Record<string, any> = Record<string, any>> {
+export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
 	target: Element | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
@@ -164,7 +164,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: ComponentConstructorParams) {
+	constructor(options: ComponentConstructorOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -256,7 +256,7 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: ComponentConstructorParams<Props>) {
+	constructor(options: ComponentConstructorOptions<Props>) {
 		super(options);
 	}
 }
@@ -280,8 +280,8 @@ export class SvelteComponentTyped<
  * <svelte:element this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
-	new (p: ComponentConstructorParams<T extends SvelteComponentTyped<infer X, any, any> ? X : any>) => T;
+export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
+	new (p: ComponentConstructorOptions<Component extends SvelteComponentTyped<infer Props, any, any> ? Props : any>) => Component;
 
 /**
  * Convenience type to get the properties the given component expects. Example:
@@ -294,9 +294,9 @@ export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<
  * </script>
  * ```
  */
-export type ComponentProps<T extends SvelteComponent> = T extends SvelteComponentTyped<infer Props>
+export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentTyped<infer Props>
 	? Props
-	: unknown;
+	: never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();
