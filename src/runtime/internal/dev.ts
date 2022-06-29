@@ -263,7 +263,7 @@ export class SvelteComponentTyped<
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
- * dynamic components and `<svelte:element>`.
+ * dynamic components using `<svelte:component>`.
  * 
  * Example:
  * ```html
