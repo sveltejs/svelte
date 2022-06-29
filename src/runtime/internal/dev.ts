@@ -276,8 +276,8 @@ export class SvelteComponentTyped<
  * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
  * </script>
  * 
- * <svelte:element this={component} />
- * <svelte:element this={componentOfCertainSubType} needsThisProp="hello" />
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
 export type ComponentType<T extends SvelteComponentTyped = SvelteComponentTyped<any, any, any>> =
