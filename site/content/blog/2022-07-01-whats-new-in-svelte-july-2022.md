@@ -11,13 +11,13 @@ So let's dive in!
 
 ## OpenCollective funding drives Svelte forward
 
-Svelte supporters have donated approximately $80,000 to [the project on OpenCollective](https://opencollective.com/svelte). We're happy to share that the funds are being drawn on to move Svelte forward in a meaningful way. [@gtm-nayan](https://github.com/gtm-nayan) has begun triaging and fixing SvelteKit issues this past month as a paid contributor to the project to help us get SvelteKit to a 1.0 level of stability! **@gtm-nayan** has been an active member of the Svelte community for quite some time and is well known for writing the bot that helps keep our Discord server running. We're happy that this funding has allowed Svelte to get much more of his time.
+Svelte supporters have donated approximately $80,000 to [the project on OpenCollective](https://opencollective.com/svelte). We're happy to share that the funds are being drawn on to move Svelte forward in a meaningful way. **[@gtm-nayan](https://github.com/gtm-nayan)** has begun triaging and fixing SvelteKit issues this past month as a paid contributor to the project to help us get SvelteKit to a 1.0 level of stability! @gtm-nayan has been an active member of the Svelte community for quite some time and is well known for writing the bot that helps keep our Discord server running. We're happy that this funding has allowed Svelte to get much more of his time.
 
-We will also be utilizing OpenCollective funds to allow Svelte core maintainers to attend [Svelte Summit](https://www.sveltesummit.com/) in person this fall. Thanks to everyone who has donated, so far!
+We will also be utilizing OpenCollective funds to allow Svelte core maintainers to attend [Svelte Summit](https://www.sveltesummit.com/) in person this fall. Thanks to everyone who has donated so far!
 
 ## What's new in Svelte & Language Tools
 - [learn.svelte.dev](https://learn.svelte.dev/) is a new way to learn Svelte and SvelteKit from the ground up that is currently in development
-- Faster SSR is coming in the next Svelte release. A PR two years in the making, resulting in up to 3.05x faster in some tests! ([PR](https://github.com/sveltejs/svelte/pull/5701))
+- Faster SSR is coming in the next Svelte release. A PR two years in the making, resulting in up to 3x faster rendering in some benchmarking tests! ([PR](https://github.com/sveltejs/svelte/pull/5701))
 - "Find File References" ([0.14.28](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.28)) and "Find Component References" ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29)) in the latest versions of the Svelte extension shows where Svelte files and components have been imported and used ([Demo](https://twitter.com/dummdidumm_/status/1532459709604716544/photo/1))
 - The Svelte extension now supports CSS path completion ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29))
 
