@@ -18,13 +18,13 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 ## What's new in Svelte & Language Tools
 - [learn.svelte.dev](https://learn.svelte.dev/) is a new way to learn Svelte and SvelteKit from the ground up that is currently in development
 - Faster SSR is coming in the next Svelte release. A PR two years in the making, resulting in up to 3.05x faster in some tests! ([PR](https://github.com/sveltejs/svelte/pull/5701))
-- "Find File References" in the latest version of the Svelte extension shows where Svelte files have been imported ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29), [Demo](https://twitter.com/dummdidumm_/status/1532459709604716544/photo/1))
+- "Find File References" ([0.14.28](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.28)) and "Find Component References" ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29)) in the latest versions of the Svelte extension shows where Svelte files and components have been imported and used ([Demo](https://twitter.com/dummdidumm_/status/1532459709604716544/photo/1))
 - The Svelte extension now supports CSS path completion ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29))
 
 
 ## What's new in SvelteKit
 - Introduced `@sveltejs/kit/experimental/vite` which allows SvelteKit to interoperate with other tools in the Vite ecosystem like Vitest and Storybook ([#5094](https://github.com/sveltejs/kit/pull/5094)). Please [leave feedback](https://github.com/sveltejs/kit/issues/5184) as to whether the feature works and is helpful as we consider taking it out of experimental and making `vite.config.js` required for all users
-- Switched to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117)), which unblocks implementing streaming
+- Steaming in endpoints is now supported ([#3419](https://github.com/sveltejs/kit/issues/3419)). This was enabled by switching to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117))
 - Static assets can now be symlinked in development environments ([#5089](https://github.com/sveltejs/kit/pull/5089))
 - `server` and `prod` environment variables are now available as a correlary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
 
@@ -77,6 +77,7 @@ _To Read_
 
 
 **Libraries, Tools & Components**
+- [Svend3r](https://github.com/oslabs-beta/svend3r) is a plug and play D3 charting library for Svelte
 - [Svelte Hover Draw SVG](https://github.com/davipon/svelte-hover-draw-svg) is a lightweight Svelte component to draw SVG on hover
 - [Svelte French Toast](https://svelte-french-toast.com/) provides buttery smooth toast notifications that are lightweight, customizable, and beautiful by default
 - [SVooltip](https://svooltip.vercel.app/) is a basic Svelte tooltip directive, powered by Floating UI
