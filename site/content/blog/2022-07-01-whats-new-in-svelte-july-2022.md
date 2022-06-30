@@ -24,7 +24,7 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 
 ## What's new in SvelteKit
 - Introduced `@sveltejs/kit/experimental/vite` which allows SvelteKit to interoperate with other tools in the Vite ecosystem like Vitest and Storybook ([#5094](https://github.com/sveltejs/kit/pull/5094)). Please [leave feedback](https://github.com/sveltejs/kit/issues/5184) as to whether the feature works and is helpful as we consider taking it out of experimental and making `vite.config.js` required for all users
-- Steaming in endpoints is now supported ([#3419](https://github.com/sveltejs/kit/issues/3419)). This was enabled by switching to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117))
+- Streaming in endpoints is now supported ([#3419](https://github.com/sveltejs/kit/issues/3419)). This was enabled by switching to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117))
 - Static assets can now be symlinked in development environments ([#5089](https://github.com/sveltejs/kit/pull/5089))
 - `server` and `prod` environment variables are now available as a correlary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
 
@@ -53,7 +53,7 @@ Want to contribute to a site using the latest SvelteKit features? [Help build th
 
 **Learning Resources**
 
-_Featuring Svelte Society_
+_Starring the Svelte team_
 - [Svelte Origins: A JavaScript Documentary](https://www.youtube.com/watch?v=kMlkCYL9qo0) by OfferZen Origins
 - [Full Stack Documentation (announcing learn.svelte.dev)](https://portal.gitnation.org/contents/full-stack-documentation) by Rich Harris @ JSNation 2022
 - [All About the Sirens](https://www.svelteradio.com/episodes/all-about-the-sirens) by Svelte Radio
