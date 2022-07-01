@@ -1,11 +1,11 @@
 ---
 title: "What's new in Svelte: July 2022"
-description: "Faster SSR, language tools improvements and something special..."
+description: "Faster SSR, language tools improvements and a new paid contributor!"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-With [something special](https://twitter.com/SvelteSociety/status/1539284972544180230?s=20&t=3Qoi371NrL9LP6xMOF63ag) dropping today along with faster SSR and support for Vitest and Storybook in SvelteKit, there's a lot to cover in this month's newsletter...
+From faster SSR to support for Vitest and Storybook in SvelteKit, there's a lot to cover in this month's newsletter...
 
 So let's dive in!
 
@@ -42,6 +42,7 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 - [Grunfy](https://grunfy.com/tools) is a set of guitar tools - recently migrated to SvelteKit
 - [Radiant: The Future of Radio](https://play.google.com/store/apps/details?id=co.broadcastapp.Radiant) is a personal radio station app built with Svelte and Capacitor
 - [Imperfect Reminders](https://imperfectreminders.mildlyupset.com/) is a todo list for things that are only sort of time sensitive
+- [Periodic Table](https://github.com/janosh/periodic-table) is a dynamic Periodic Table component written in Svelte
 - [Svelvet](https://github.com/open-source-labs/Svelvet) is a lightweight Svelte component library for building interactive node-based diagrams
 - [publint](https://github.com/bluwy/publint) lints for packaging errors to ensure compatibility across environments
 - [Playlistr](https://github.com/alextana/spotify-playlist-creator) helps manage and create Spotify playlists
