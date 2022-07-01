@@ -5,6 +5,7 @@
 * Faster SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
 * Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521), [#7571](https://github.com/sveltejs/svelte/issues/7571))
 * Harden attribute escaping during ssr ([#7530](https://github.com/sveltejs/svelte/pull/7530))
+* Add `ComponentType` and `ComponentProps` convenience types ([#6770](https://github.com/sveltejs/svelte/pull/6770))
 
 ## 3.48.0
 

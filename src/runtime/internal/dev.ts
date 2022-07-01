@@ -128,7 +128,7 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
+export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
 	target: Element | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
@@ -164,7 +164,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: ComponentConstructorOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -256,10 +256,50 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions<Props>) {
+	constructor(options: ComponentConstructorOptions<Props>) {
 		super(options);
 	}
 }
+
+/**
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
+ * dynamic components using `<svelte:component>`.
+ * 
+ * Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import Component1 from './Component1.svelte';
+ * 	import Component2 from './Component2.svelte';
+ * 
+ * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+ * </script>
+ * 
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+ * ```
+ */
+export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped> = new (
+	options: ComponentConstructorOptions<
+		Component extends SvelteComponentTyped<infer Props> ? Props : Record<string, any>
+	>
+) => Component;
+
+/**
+ * Convenience type to get the props the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentProps } from 'svelte';
+ * 	import Component from './Component.svelte';
+ * 
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * </script>
+ * ```
+ */
+export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentTyped<infer Props>
+	? Props
+	: never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();

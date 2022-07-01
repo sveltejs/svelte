@@ -95,7 +95,7 @@
     "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "node check_publish_env.js && npm run lint && npm test",
-    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
+    "tsd": "node ./generate-type-definitions.js",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\""
   },
   "repository": {
