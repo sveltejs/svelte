@@ -19,6 +19,8 @@ import Title from '../Title';
 import Window from '../Window';
 import { TemplateNode } from '../../../interfaces';
 import { push_array } from '../../../utils/push_array';
+import SwitchBlock from '../SwitchBlock';
+import CaseBlock from '../CaseBlock';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -27,6 +29,7 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
+		case 'CaseBlock': return CaseBlock;
 		case 'ConstTag': return ConstTag;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
@@ -40,6 +43,7 @@ function get_constructor(type) {
 		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
 		case 'SlotTemplate': return SlotTemplate;
+		case 'SwitchBlock': return SwitchBlock;
 		case 'Text': return Text;
 		case 'Title': return Title;
 		case 'Window': return Window;

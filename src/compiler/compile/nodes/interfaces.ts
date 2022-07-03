@@ -6,6 +6,7 @@ import Attribute from './Attribute';
 import AwaitBlock from './AwaitBlock';
 import Binding from './Binding';
 import Body from './Body';
+import CaseBlock from './CaseBlock';
 import CatchBlock from './CatchBlock';
 import Class from './Class';
 import StyleDirective from './StyleDirective';
@@ -28,6 +29,7 @@ import PendingBlock from './PendingBlock';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import SlotTemplate from './SlotTemplate';
+import SwitchBlock from './SwitchBlock';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
 import Title from './Title';
@@ -43,6 +45,7 @@ export type INode = Action
 | Binding
 | Body
 | CatchBlock
+| CaseBlock
 | Class
 | Comment
 | ConstTag
@@ -64,6 +67,7 @@ export type INode = Action
 | Slot
 | SlotTemplate
 | StyleDirective
+| SwitchBlock
 | Tag
 | Text
 | ThenBlock
@@ -73,9 +77,11 @@ export type INode = Action
 
 export type INodeAllowConstTag =
 | IfBlock
+| CaseBlock
 | ElseBlock
 | EachBlock
 | CatchBlock
 | ThenBlock
 | InlineComponent
-| SlotTemplate;
+| SlotTemplate
+| SwitchBlock;

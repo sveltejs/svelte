@@ -1,0 +1,1 @@
+{#switch foo}<p>default</p>{:case bar}<p>bar</p>{/switch}

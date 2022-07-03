@@ -137,13 +137,13 @@ export default function tag(parser: Parser) {
 			}
 
 			parent.end = start;
-			parser.stack.pop();
+			parser.remove_last_in_stack();
 
 			parent = parser.current();
 		}
 
 		parent.end = parser.index;
-		parser.stack.pop();
+		parser.remove_last_in_stack();
 
 		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
 			parser.last_auto_closed_tag = null;
@@ -152,7 +152,7 @@ export default function tag(parser: Parser) {
 		return;
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
-		parser.stack.pop();
+		parser.remove_last_in_stack();
 		parser.last_auto_closed_tag = {
 			tag: parent.name,
 			reason: name,
@@ -232,7 +232,7 @@ export default function tag(parser: Parser) {
 		parser.eat(`</${name}>`, true);
 		element.end = parser.index;
 	} else {
-		parser.stack.push(element);
+		parser.add_to_end_of_stack(element);
 	}
 }
 

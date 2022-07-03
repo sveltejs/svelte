@@ -86,6 +86,14 @@ export class Parser {
 		}
 	}
 
+	add_to_end_of_stack(node: TemplateNode) {
+		this.stack.push(node);
+	}
+
+	remove_last_in_stack() {
+		this.stack.pop();
+	}
+
 	current() {
 		return this.stack[this.stack.length - 1];
 	}

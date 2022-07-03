@@ -188,6 +188,7 @@ export default class Expression {
 			template_scope,
 			owner
 		} = this;
+
 		let scope = this.scope;
 
 		let function_expression;

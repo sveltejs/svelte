@@ -7,6 +7,7 @@ import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
 import parser_errors from '../errors';
+import { Node } from 'estree';
 
 function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
@@ -28,10 +29,66 @@ function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: 
 		trim_whitespace(block.else, trim_before, trim_after);
 	}
 
+	if (block.case) {
+		trim_whitespace(block.case, trim_before, trim_after);
+	}
+
 	if (first_child.elseif) {
 		trim_whitespace(first_child, trim_before, trim_after);
 	}
 }
+
+function get_empty_block(type: string, start: number, expression: Node): TemplateNode {
+	if (type === 'AwaitBlock') {
+		return {
+			start,
+			end: null,
+			type,
+			expression,
+			value: null,
+			error: null,
+			pending: {
+				start: null,
+				end: null,
+				type: 'PendingBlock',
+				children: [],
+				skip: true
+			},
+			then: {
+				start: null,
+				end: null,
+				type: 'ThenBlock',
+				children: [],
+				skip: true
+			},
+			catch: {
+				start: null,
+				end: null,
+				type: 'CatchBlock',
+				children: [],
+				skip: true
+			}
+		};
+	}
+	if (type === 'SwitchBlock') {
+		return {
+			start,
+			end: null,
+			type,
+			discriminant: expression,
+			cases: []
+		};
+	}
+
+	return 	{
+		start,
+		end: null,
+		type,
+		expression,
+		children: []
+	};
+}
+
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
@@ -39,23 +96,29 @@ export default function mustache(parser: Parser) {
 
 	parser.allow_whitespace();
 
-	// {/if}, {/each}, {/await} or {/key}
+	// {/if}, {/each}, {/await}, {/key} or {/switch}
 	if (parser.eat('/')) {
 		let block = parser.current();
 		let expected;
 
 		if (closing_tag_omitted(block.name)) {
 			block.end = start;
-			parser.stack.pop();
+			parser.remove_last_in_stack();
 			block = parser.current();
 		}
 
 		if (block.type === 'ElseBlock' || block.type === 'PendingBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
 			block.end = start;
-			parser.stack.pop();
+			parser.remove_last_in_stack();
 			block = parser.current();
 
 			expected = 'await';
+		}
+
+		if (block.type === 'CaseBlock') {
+			block.end = start;
+			parser.remove_last_in_stack();
+			block = parser.current();
 		}
 
 		if (block.type === 'IfBlock') {
@@ -66,6 +129,8 @@ export default function mustache(parser: Parser) {
 			expected = 'await';
 		} else if (block.type === 'KeyBlock') {
 			expected = 'key';
+		} else if (block.type === 'SwitchBlock') {
+			expected = 'switch';
 		} else {
 			parser.error(parser_errors.unexpected_block_close);
 		}
@@ -76,7 +141,7 @@ export default function mustache(parser: Parser) {
 
 		while (block.elseif) {
 			block.end = parser.index;
-			parser.stack.pop();
+			parser.remove_last_in_stack();
 			block = parser.current();
 
 			if (block.else) {
@@ -93,7 +158,7 @@ export default function mustache(parser: Parser) {
 		trim_whitespace(block, trim_before, trim_after);
 
 		block.end = parser.index;
-		parser.stack.pop();
+		parser.remove_last_in_stack();
 	} else if (parser.eat(':else')) {
 		if (parser.eat('if')) {
 			parser.error(parser_errors.invalid_elseif);
@@ -135,7 +200,7 @@ export default function mustache(parser: Parser) {
 				]
 			};
 
-			parser.stack.push(block.else.children[0]);
+			parser.add_to_end_of_stack(block.else.children[0]);
 		} else {
 			// :else
 			const block = parser.current();
@@ -157,8 +222,34 @@ export default function mustache(parser: Parser) {
 				children: []
 			};
 
-			parser.stack.push(block.else);
+			parser.add_to_end_of_stack(block.else);
 		}
+	} else if (parser.eat(':case')) {
+		parser.allow_whitespace();
+
+		const previous_case_block = parser.current();
+		previous_case_block.end = start;
+		parser.remove_last_in_stack();
+		 
+		// it's called test (not expression) in case blocks
+		const test = read_expression(parser);
+
+		const block = {
+			start,
+			end: null,
+			test,
+			type: 'CaseBlock',
+			children: []
+		};
+
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		const switch_block = parser.current();
+
+		switch_block.cases.push(block);
+
+		parser.add_to_end_of_stack(block);
 	} else if (parser.match(':then') || parser.match(':catch')) {
 		const block = parser.current();
 		const is_then = parser.eat(':then') || !parser.eat(':catch');
@@ -181,7 +272,7 @@ export default function mustache(parser: Parser) {
 		}
 
 		block.end = start;
-		parser.stack.pop();
+		parser.remove_last_in_stack();
 		const await_block = parser.current();
 
 		if (!parser.eat('}')) {
@@ -200,9 +291,9 @@ export default function mustache(parser: Parser) {
 		};
 
 		await_block[is_then ? 'then' : 'catch'] = new_block;
-		parser.stack.push(new_block);
+		parser.add_to_end_of_stack(new_block);
 	} else if (parser.eat('#')) {
-		// {#if foo}, {#each foo} or {#await foo}
+		// {#if foo}, {#each foo}, {#await foo} or {#case foo}
 		let type;
 
 		if (parser.eat('if')) {
@@ -213,6 +304,8 @@ export default function mustache(parser: Parser) {
 			type = 'AwaitBlock';
 		} else if (parser.eat('key')) {
 			type = 'KeyBlock';
+		} else if (parser.eat('switch')) {
+			type = 'SwitchBlock';
 		} else {
 			parser.error(parser_errors.expected_block_type);
 		}
@@ -221,44 +314,7 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		const block: TemplateNode = type === 'AwaitBlock' ?
-			{
-				start,
-				end: null,
-				type,
-				expression,
-				value: null,
-				error: null,
-				pending: {
-					start: null,
-					end: null,
-					type: 'PendingBlock',
-					children: [],
-					skip: true
-				},
-				then: {
-					start: null,
-					end: null,
-					type: 'ThenBlock',
-					children: [],
-					skip: true
-				},
-				catch: {
-					start: null,
-					end: null,
-					type: 'CatchBlock',
-					children: [],
-					skip: true
-				}
-			} :
-			{
-				start,
-				end: null,
-				type,
-				expression,
-				children: []
-			};
-
+		const block: TemplateNode = get_empty_block(type, start, expression);
 		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
@@ -310,10 +366,40 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
+
+		if (type === 'SwitchBlock') {
+			const no_default_case = parser.eat('case');
+			if (no_default_case) parser.require_whitespace();
+
+			const test = read_expression(parser);
+
+			const first_case_block: any = {
+				type: 'CaseBlock',
+				start: block.start,
+				end: null,
+				children: []
+			};
+
+			if (no_default_case) {
+				first_case_block.test = test;
+			} else {
+				first_case_block.isdefault = true;
+			}
+
+			parser.current().children.push(block);
+			block.cases.push(first_case_block);
+			parser.add_to_end_of_stack(block);
+			parser.add_to_end_of_stack(first_case_block);
+		} 
+
 		parser.eat('}', true);
 
-		parser.current().children.push(block);
-		parser.stack.push(block);
+		// SwitchBlock doesn't have children, it has cases with children
+		// so this logic is performed above if type is SwitchBlock
+		if (type !== 'SwitchBlock') {
+			parser.current().children.push(block);
+			parser.add_to_end_of_stack(block);
+		}
 
 		if (type === 'AwaitBlock') {
 			let child_block;
@@ -329,8 +415,10 @@ export default function mustache(parser: Parser) {
 			}
 
 			child_block.start = parser.index;
-			parser.stack.push(child_block);
+			parser.add_to_end_of_stack(child_block);
 		}
+
+
 	} else if (parser.eat('@html')) {
 		// {@html content} tag
 		parser.require_whitespace();
@@ -349,7 +437,7 @@ export default function mustache(parser: Parser) {
 	} else if (parser.eat('@debug')) {
 		let identifiers;
 
-		// Implies {@debug} which indicates "debug all"
+		// Implies {@debug} which indicates 'debug all'
 		if (parser.read(/\s*}/)) {
 			identifiers = [];
 		} else {

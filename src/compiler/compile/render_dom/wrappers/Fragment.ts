@@ -6,6 +6,7 @@ import EachBlock from './EachBlock';
 import Element from './Element/index';
 import Head from './Head';
 import IfBlock from './IfBlock';
+import SwitchBlock from './SwitchBlock';
 import KeyBlock from './KeyBlock';
 import InlineComponent from './InlineComponent/index';
 import MustacheTag from './MustacheTag';
@@ -32,6 +33,7 @@ const wrappers = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	SwitchBlock,
 	KeyBlock,
 	MustacheTag,
 	Options: null,

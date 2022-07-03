@@ -36,7 +36,7 @@ export default {
 	},
 	expected_block_type: {
 		code: 'expected-block-type',
-		message: 'Expected if, each or await'
+		message: 'Expected if, each, await or case'
 	},
 	expected_name: {
 		code: 'expected-name',

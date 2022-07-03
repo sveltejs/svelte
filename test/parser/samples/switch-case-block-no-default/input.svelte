@@ -1,0 +1,1 @@
+{#switch foo case bar}<p>bar</p>{:case foo}<p>foo</p>{/switch}

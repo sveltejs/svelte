@@ -1,0 +1,94 @@
+{
+	"html": {
+		"start": 0,
+		"end": 57,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 57,
+				"type": "SwitchBlock",
+				"discriminant": {
+					"type": "Identifier",
+					"start": 9,
+					"end": 12,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 9
+						},
+						"end": {
+							"line": 1,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"cases": [
+					{
+						"start": 0,
+						"end": 27,
+						"type": "CaseBlock",
+						"isdefault": true,
+						"children": [
+							{
+								"start": 13,
+								"end": 27,
+								"type": "Element",
+								"name": "p",
+								"attributes": [],
+								"children": [
+									{
+										"start": 16,
+										"end": 23,
+										"type": "Text",
+										"raw": "default",
+										"data": "default"
+									}
+								]
+							}
+						]
+					},
+					{
+					"start": 27,
+					"end": 48,
+					"type": "CaseBlock",
+					"test": {
+						"type": "Identifier",
+						"start": 34,
+						"end": 37,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 34
+							},
+							"end": {
+								"line": 1,
+								"column": 37
+							}
+						},
+						"name": "bar"
+					},
+					"children": [
+						{
+							"start": 38,
+							"end": 48,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 41,
+									"end": 44,
+									"type": "Text",
+									"raw": "bar",
+									"data": "bar"
+								}
+							]
+						}
+					]
+				}]
+			}
+		]
+	}
+}
