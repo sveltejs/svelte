@@ -7,7 +7,7 @@ import ConditionalBlockBranch from './shared/ConditionalBlockBranch';
 import SwitchBlock from '../../nodes/SwitchBlock';
 import CaseBlock from '../../nodes/CaseBlock';
 import Expression from '../../nodes/shared/Expression';
-import ConditionalBlockWrapper from './shared/ConditionalBlockWrapper';
+import ConditionalBlockWrapper from './shared/ConditionalBlock';
 
 export default class SwitchBlockWrapper extends ConditionalBlockWrapper {
 	node: SwitchBlock;

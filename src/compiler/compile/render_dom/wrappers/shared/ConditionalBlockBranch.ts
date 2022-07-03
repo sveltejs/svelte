@@ -10,7 +10,7 @@ import create_debugging_comment from './create_debugging_comment';
 import Wrapper from './Wrapper';
 import { Node } from 'estree';
 import Expression from '../../../nodes/shared/Expression';
-import ConditionalBlockWrapper from './ConditionalBlockWrapper';
+import ConditionalBlockWrapper from './ConditionalBlock';
 
 function get_expression(node: IfBlock | ElseBlock | CaseBlock): Expression | void {
 	switch (node.type) {

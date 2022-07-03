@@ -6,7 +6,7 @@ import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier } from 'estree';
 import { push_array } from '../../../utils/push_array';
 import ConditionalBlockBranch from './shared/ConditionalBlockBranch';
-import ConditionalBlockWrapper from './shared/ConditionalBlockWrapper';
+import ConditionalBlockWrapper from './shared/ConditionalBlock';
 
 function is_else_if(node: ElseBlock) {
 	return (
