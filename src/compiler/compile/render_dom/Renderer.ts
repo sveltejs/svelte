@@ -279,10 +279,6 @@ export default class Renderer {
 		return node;
 	}
 
-	convert_to_binary_expression(left: Node, operator: string, ctx: string | void = '#ctx') {
-
-	}
-
 	remove_block(block: Block | Node | Node[]) {
 		this.blocks.splice(this.blocks.indexOf(block), 1);
 	}
