@@ -2,7 +2,6 @@ import EachBlock from '../../../nodes/EachBlock';
 import InlineComponentWrapper from '../InlineComponent';
 import ElementWrapper from '../Element';
 import Binding from '../../../nodes/Binding';
-import compiler_warnings from '../../../compiler_warnings';
 
 export default function mark_each_block_bindings(
 	parent: ElementWrapper | InlineComponentWrapper,
@@ -12,12 +11,6 @@ export default function mark_each_block_bindings(
 	// the list and the index, if they're not otherwise referenced
 	binding.expression.references.forEach(name => {
 		const each_block = parent.node.scope.get_owner(name);
-		if (each_block && each_block.type === 'EachBlock') {
-			const rest_node = each_block.context_rest_properties.get(name);
-			if (rest_node) {
-				parent.renderer.component.warn(rest_node as any, compiler_warnings.invalid_rest_eachblock_binding(name));
-			}
-		}
 		if (each_block) {
 			(each_block as EachBlock).has_binding = true;
 		}
