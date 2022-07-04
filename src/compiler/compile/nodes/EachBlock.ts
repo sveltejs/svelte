@@ -5,7 +5,7 @@ import AbstractBlock from './shared/AbstractBlock';
 import Element from './Element';
 import ConstTag from './ConstTag';
 import { Context, unpack_destructuring } from './shared/Context';
-import { Node, Identifier } from 'estree';
+import { Node } from 'estree';
 import Component from '../Component';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
@@ -42,15 +42,8 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 		this.context_rest_properties = new Map();
 		this.contexts = [];
-		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component });
+		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, context_rest_properties: this.context_rest_properties });
 
-		if (this.context_node.type === 'ObjectPattern') {
-			this.context_node.properties.forEach(i => {
-				if (i.type === 'RestElement') {
-					this.context_rest_properties.set((i.argument as Identifier).name, i);
-				}
-			});
-		}
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});

@@ -1,0 +1,9 @@
+[
+  {
+    "code": "invalid-rest-eachblock-binding",
+    "message": "...rest operator will create a new object and binding propogation with original object will not work",
+		"pos": 102,
+    "start": { "line": 8, "column": 24, "character": 102 },
+		"end": { "line": 8, "column": 31, "character": 109 }
+  }
+]
