@@ -7,6 +7,7 @@
 * Harden attribute escaping during ssr ([#7530](https://github.com/sveltejs/svelte/pull/7530))
 * Add `ComponentType` and `ComponentProps` convenience types ([#6770](https://github.com/sveltejs/svelte/pull/6770))
 * Fix empty component not properly destroyed ([#7488](https://github.com/sveltejs/svelte/issues/7488))
+* Add CSS at-rule `@layer` support ([#7504](https://github.com/sveltejs/svelte/issues/7504))
 
 ## 3.48.0
 
