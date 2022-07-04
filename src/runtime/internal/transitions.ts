@@ -79,6 +79,8 @@ export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, ca
 		});
 
 		block.o(local);
+	} else if (callback) {
+		callback();
 	}
 }
 
@@ -143,7 +145,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	return {
 		start() {
 			if (started) return;
-			
+
 			started = true;
 			delete_rule(node);
 
