@@ -9,6 +9,9 @@ import read_script from '../read/script';
 import read_style from '../read/style';
 import { closing_tag_omitted, decode_character_references } from '../utils/html';
 
+// characters equivalent to using \s in regex
+const whitespace_characters = ['\r', '\n', '\t', '\f', '\v', ' ', '\u00a0', '\u1680', '\u2000-', '\u200a', '\u2028', '\u2029', '\u202f', '\u205f', '\u3000', '\ufeff'];
+
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
@@ -77,6 +80,7 @@ export default function tag(parser: Parser) {
 
 	const name = read_tag_name(parser);
 
+
 	if (meta_tags.has(name)) {
 		const slug = meta_tags.get(name).toLowerCase();
 		if (is_closing_tag) {
@@ -108,6 +112,7 @@ export default function tag(parser: Parser) {
 			: name === 'svelte:fragment' ? 'SlotTemplate'
 				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+
 
 	const element: TemplateNode = {
 		start,
@@ -160,8 +165,9 @@ export default function tag(parser: Parser) {
 		};
 	}
 
+	
 	const unique_names: Set<string> = new Set();
-
+	
 	let attribute;
 	while ((attribute = read_attribute(parser, unique_names))) {
 		element.attributes.push(attribute);
@@ -363,6 +369,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		parser.error(parser_errors.unexpected_token('='), parser.index);
 	}
 
+
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
@@ -455,6 +462,7 @@ function get_directive_type(name: string): DirectiveType {
 
 function read_attribute_value(parser: Parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
+
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [{
 			start: parser.index - 1,
@@ -465,15 +473,10 @@ function read_attribute_value(parser: Parser) {
 		}];
 	}
 
-	const regex = (
-		quote_mark === "'" ? /'/ :
-			quote_mark === '"' ? /"/ :
-				/(\/>|[\s"'=<>`])/
-	);
-
 	let value;
 	try {
-		value = read_sequence(parser, () => !!parser.match_regex(regex));
+		const characters = quote_mark ? [quote_mark] : [...whitespace_characters, '/>', '"', '"', '=', '<', '>', '`'];
+		value = read_sequence(parser, () => characters.some(c => parser.match(c)));
 	} catch (error) {
 		if (error.code === 'parse-error') {
 			// if the attribute value didn't close + self-closing tag
