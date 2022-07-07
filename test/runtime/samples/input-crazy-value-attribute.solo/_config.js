@@ -5,6 +5,7 @@ export default {
 
 	test({ assert, target }) {
 		const input = target.querySelector('input');
-		assert.equal(input.value.length > 100_000, true);
+		const one_million = 1000000
+		assert.equal(input.value.length > one_million, true);
 	}
 };

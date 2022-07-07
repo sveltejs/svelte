@@ -5,6 +5,7 @@ export default {
 
 	test({ assert, target }) {
 		const textarea = target.querySelector('textarea');
-		assert.equal(textarea.value.length > 100_000, true);
+		const one_million = 1000000
+		assert.equal(textarea.value.length > one_million, true);
 	}
 };
