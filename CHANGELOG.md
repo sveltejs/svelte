@@ -1,14 +1,14 @@
 # Svelte changelog
 
-## Unreleased
+## 3.49.0
 
-* Faster SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
-* Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521), [#7571](https://github.com/sveltejs/svelte/issues/7571))
-* Harden attribute escaping during ssr ([#7530](https://github.com/sveltejs/svelte/pull/7530))
+* Improve performance of string escaping during SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
 * Add `ComponentType` and `ComponentProps` convenience types ([#6770](https://github.com/sveltejs/svelte/pull/6770))
-* Fix empty component not properly destroyed ([#7488](https://github.com/sveltejs/svelte/issues/7488))
-* Add CSS at-rule `@layer` support ([#7504](https://github.com/sveltejs/svelte/issues/7504))
+* Add support for CSS `@layer` ([#7504](https://github.com/sveltejs/svelte/issues/7504))
 * Export `CompileOptions` from `svelte/compiler` ([#7658](https://github.com/sveltejs/svelte/pull/7658))
+* Fix DOM-less components not being properly destroyed ([#7488](https://github.com/sveltejs/svelte/issues/7488))
+* Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521), [#7571](https://github.com/sveltejs/svelte/issues/7571))
+* Harden attribute escaping during SSR ([#7530](https://github.com/sveltejs/svelte/pull/7530))
 
 ## 3.48.0
 
