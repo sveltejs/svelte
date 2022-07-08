@@ -1,0 +1,177 @@
+{
+	"html": {
+		"start": 67,
+		"end": 153,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 65,
+				"end": 67,
+				"type": "Text",
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"start": 67,
+				"end": 153,
+				"type": "InlineComponent",
+				"name": "TestButton",
+				"attributes": [
+					{
+						"start": 79,
+						"end": 92,
+						"type": "Let",
+						"name": "outerCall",
+						"modifiers": [],
+						"expression": null
+					}
+				],
+				"children": [
+					{
+						"start": 93,
+						"end": 96,
+						"type": "Text",
+						"raw": "\n  ",
+						"data": "\n  "
+					},
+					{
+						"start": 96,
+						"end": 139,
+						"type": "Element",
+						"name": "button",
+						"attributes": [
+							{
+								"start": 104,
+								"end": 124,
+								"type": "EventHandler",
+								"name": "click",
+								"modifiers": [],
+								"expression": {
+									"type": "Identifier",
+									"start": 114,
+									"end": 123,
+									"loc": {
+										"start": {
+											"line": 6,
+											"column": 20
+										},
+										"end": {
+											"line": 6,
+											"column": 29
+										}
+									},
+									"name": "outerCall"
+								}
+							}
+						],
+						"children": [
+							{
+								"start": 125,
+								"end": 130,
+								"type": "Text",
+								"raw": "Click",
+								"data": "Click"
+							}
+						]
+					},
+					{
+						"start": 139,
+						"end": 140,
+						"type": "Text",
+						"raw": "\n",
+						"data": "\n"
+					}
+				]
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 65,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 56,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "ImportDeclaration",
+					"start": 11,
+					"end": 55,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 2
+						},
+						"end": {
+							"line": 2,
+							"column": 46
+						}
+					},
+					"specifiers": [
+						{
+							"type": "ImportDefaultSpecifier",
+							"start": 18,
+							"end": 28,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 9
+								},
+								"end": {
+									"line": 2,
+									"column": 19
+								}
+							},
+							"local": {
+								"type": "Identifier",
+								"start": 18,
+								"end": 28,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 9
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
+								"name": "TestButton"
+							}
+						}
+					],
+					"source": {
+						"type": "Literal",
+						"start": 34,
+						"end": 55,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 25
+							},
+							"end": {
+								"line": 2,
+								"column": 46
+							}
+						},
+						"value": "./TestButton.svelte",
+						"raw": "'./TestButton.svelte'"
+					}
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}
