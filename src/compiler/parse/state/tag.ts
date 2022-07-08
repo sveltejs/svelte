@@ -473,7 +473,7 @@ function read_attribute_value(parser: Parser) {
 
 	let value;
 	try {
-		const characters = quote_mark ? [quote_mark] : [...whitespace_characters, '/>', '"', '"', '=', '<', '>', '`'];
+		const characters = quote_mark ? [quote_mark] : [...whitespace_characters, '/>', '"', '\'', '=', '<', '>', '`'];
 		value = read_sequence(parser, () => characters.some(c => parser.match(c)));
 	} catch (error) {
 		if (error.code === 'parse-error') {
