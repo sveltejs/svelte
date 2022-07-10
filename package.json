@@ -139,7 +139,7 @@
     "eslint-plugin-svelte3": "^4.0.0",
     "estree-walker": "^3.0.0",
     "is-reference": "^3.0.0",
-    "jsdom": "^15.2.1",
+    "jsdom": "^16.5.0",
     "kleur": "^3.0.3",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
