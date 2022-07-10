@@ -92,7 +92,7 @@ Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templ
 
 ## Before you go, answer the call for speakers!
 
-Svelte Summit Fall 2021 (happening 20 November 2021) is looking for speakers. Submit your talk propsoal before 30 October... all are welcome to present and attend.
+Svelte Summit Fall 2021 (happening 20 November 2021) is looking for speakers. Submit your talk proposal before 30 October... all are welcome to present and attend.
 
 ### More info on the [sessionize site](https://sessionize.com/svelte-summit-fall-2021/)
 
