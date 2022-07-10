@@ -80,6 +80,10 @@ export default {
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
 	}),
+	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
+		code: 'a11y-role-has-required-aria-props',
+		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
+	}),
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'
