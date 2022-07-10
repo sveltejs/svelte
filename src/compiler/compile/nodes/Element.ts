@@ -23,6 +23,7 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
+import { ARIARoleDefintionKey, roles } from 'aria-query';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -43,20 +44,6 @@ const a11y_required_attributes = {
 	iframe: ['title'],
 	img: ['alt'],
 	object: ['title', 'aria-label', 'aria-labelledby']
-};
-
-const a11y_required_role_props = {
-	checkbox: ['aria-checked'],
-	combobox: ['aria-controls', 'aria-expanded'],
-	heading: ['aria-level'],
-	menuitemcheckbox: ['aria-checked'],
-	menuitemradio: ['aria-checked'],
-	meter: ['aria-valuemax', 'aria-valuemin', 'aria-valuenow'],
-	option: ['aria-selected'],
-	radio: ['aria-checked'],
-	scrollbar: ['aria-controls', 'aria-valuenow'],
-	slider: ['aria-valuenow'],
-	switch: ['aria-checked']
 };
 
 const a11y_distracting_elements = new Set([
@@ -477,18 +464,14 @@ export default class Element extends Node {
 					}
 				}
 
-				// @ts-ignore
-				const required_role_props = a11y_required_role_props[value];
-
 				// role-has-required-aria-props
-				if (required_role_props) {
+				const role = roles.get(value as ARIARoleDefintionKey);
+				if (role) {
+					const required_role_props = Object.keys(role.requiredProps);
 					const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
 
 					if (has_missing_props) {
-						component.warn(attribute, {
-							code: 'a11y-role-has-required-aria-props',
-							message: `A11y: Elements with the ARIA role "${value}" must have the following attributes defined: ${String(required_role_props)}`
-						});
+						component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
 					}
 				}
 			}
