@@ -23,7 +23,7 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
-import { ARIARoleDefintionKey, roles } from 'aria-query';
+import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -45,85 +45,6 @@ const a11y_required_attributes = {
 	img: ['alt'],
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
-
-// Full list of attributes from https://www.w3.org/TR/wai-aria
-const a11y_attribute_types = new Map([
-	['activedescendant', { type: 'id'}],
-	['atomic', { type: 'boolean' }],
-	['autocomplete', {
-		type: 'token',
-		whitelist: 'inline list both none'.split(' ')
-	}],
-	['busy', { type: 'boolean'}],
-	['checked', { type: 'tristate' }],
-	['colcount', { type: 'integer'}],
-	['colindex', { type: 'integer'}],
-	['colspan', { type: 'integer'}],
-	['controls', { type: 'idlist'}],
-	['current', {
-		type: 'token',
-		whitelist: 'page step location date time true false'.split(' ')
-	}],
-	['details', { type: 'id'}],
-	['describedby', { type: 'idlist'}],
-	['disabled', { type: 'boolean'}],
-	['dropeffect', {
-		type: 'tokenlist',
-		whitelist: 'copy execute link move none popup'.split(' ')
-	}],
-	['errormessage', { type: 'id'}],
-	['expanded', { type: 'boolean_or_undefined' }],
-	['flowto', { type: 'idlist'}],
-	['grabbed', { type: 'boolean_or_undefined'}],
-	['haspopup', {
-		type: 'token',
-		whitelist: 'false true menu listbox tree grid dialog'.split(' ')
-	}],
-	['hidden', { type: 'boolean_or_undefined' }],
-	['invalid', {
-		type: 'token',
-		whitelist: 'grammar false spelling true'.split(' ')
-	}],
-	['keyshortcuts', { type: 'string' }],
-	['label', { type: 'string' }],
-	['labelledby', { type: 'idlist' }],
-	['level', { type: 'integer' }],
-	['live', {
-		type: 'token',
-		whitelist: 'assertive off polite'.split(' ')
-	}],
-	['modal', { type: 'boolean' }],
-	['multiline', { type: 'boolean' }],
-	['multiselectable', { type: 'boolean' }],
-	['orientation', {
-		type: 'token',
-		whitelist: 'vertical undefined horizontal'.split(' ')
-	}],
-	['owns', { type: 'idlist' }],
-	['placeholder', { type: 'string' }],
-	['posinset', { type: 'integer' }],
-	['pressed', { type: 'tristate' }],
-	['readonly', { type: 'boolean' }],
-	['relevant', {
-		type: 'tokenlist',
-		whitelist: 'additions all removals text'.split(' ')
-	}],
-	['required', { type: 'boolean' }],
-	['roledescription', { type: 'string' }],
-	['rowcount', { type: 'integer' }],
-	['rowindex', { type: 'integer' }],
-	['rowspan', { type: 'integer' }],
-	['selected', { type: 'boolean_or_undefined' }],
-	['setsize', { type: 'integer' }],
-	['sort', {
-		type: 'token',
-		whitelist: 'ascending descending none other'.split(' ')
-	}],
-	['valuemax', { type: 'number' }],
-	['valuemin', { type: 'number' }],
-	['valuenow', { type: 'number' }],
-	['valuetext', { type: 'string' }]
-]);
 
 const a11y_distracting_elements = new Set([
 	'blink',
@@ -256,30 +177,27 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	return parent_element.namespace;
 }
 
-function is_valid_aria_attribute_value(schema: any, value: any): boolean {
+function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: string | boolean): boolean {
 	switch (schema.type) {
 		case 'boolean':
-		case 'boolean_or_undefined':
 			return typeof value === 'boolean';
 		case 'string':
-			return typeof value === 'string';
 		case 'id':
 			return typeof value === 'string';
 		case 'tristate':
 			return typeof value === 'boolean' || value === 'mixed';
 		case 'integer':
-			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
 		case 'number':
 			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
 		case 'token': // single token
-			return schema.whitelist
+			return (schema.values || [])
 				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
 		case 'idlist': // if list of ids, split each
 			return typeof value === 'string'
 				&& value.split(' ').every((id) => typeof id === 'string');
 		case 'tokenlist': // if list of tokens, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((token) => schema.whitelist.indexOf(token.toLowerCase()) > -1);
+				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
 		default:
 			return false;
 	}
@@ -545,8 +463,8 @@ export default class Element extends Node {
 				if (value === 'true') value = true;
 				if (value === 'false') value = false;
 
-				if (value !== null && value !== undefined && a11y_attribute_types.has(type)) {
-					const schema = a11y_attribute_types.get(type);
+				if (value !== null && value !== undefined && aria.has(name as ARIAProperty)) {
+					const schema = aria.get(name as ARIAProperty);
 					if (!is_valid_aria_attribute_value(schema, value)) {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}

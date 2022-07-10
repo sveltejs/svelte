@@ -1,5 +1,7 @@
 // All compiler warnings should be listed and accessed from here
 
+import { ARIAPropertyDefinition } from 'aria-query';
+
 /**
  * @internal
  */
@@ -60,14 +62,11 @@ export default {
 		code: 'a11y-aria-attributes',
 		message: `A11y: <${name}> should not have aria-* attributes`
 	}),
-	a11y_incorrect_attribute_type: (schema: any, attribute: string) => {
+	a11y_incorrect_attribute_type: (schema: ARIAPropertyDefinition, attribute: string) => {
 		let message;
 		switch (schema.type) {
 			case 'boolean':
 				message = `The value of '${attribute}' must be exactly one of true or false`;
-				break;
-			case 'boolean_or_undefined':
-				message = `The value of '${attribute}' must be exactly one of true, false, or undefined`;
 				break;
 			case 'id':
 				message = `The value of '${attribute}' must be a string that represents a DOM element ID`;
@@ -79,10 +78,10 @@ export default {
 				message = `The value of '${attribute}' must be exactly one of true, false, or mixed`;
 				break;
 			case 'token':
-				message = `The value of '${attribute}' must be exactly one of ${schema.whitelist.join(', ')}`;
+				message = `The value of '${attribute}' must be exactly one of ${(schema.values || []).join(', ')}`;
 				break;
 			case 'tokenlist':
-				message = `The value of '${attribute}' must be a space-separated list of one or more of ${schema.whitelist.join(', ')}`;
+				message = `The value of '${attribute}' must be a space-separated list of one or more of ${(schema.values || []).join(', ')}`;
 				break;
 			default:
 				message = `The value of '${attribute}' must be of type ${schema.type}`;

@@ -101,10 +101,10 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 ### `a11y-incorrect-aria-attribute-type`
 
 Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
-should only receive a boolean or `undefined`.
+should only receive a boolean.
 
 ```sv
-<!-- A11y: The value of 'aria-hidden' must be exactly one of true, false, or undefined -->
+<!-- A11y: The value of 'aria-hidden' must be exactly one of true or false -->
 <div aria-hidden="yes"/>
 ```
 
