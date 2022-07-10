@@ -23,6 +23,7 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
+import { ARIARoleDefintionKey, roles } from 'aria-query';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -407,9 +408,9 @@ export default class Element extends Node {
 	}
 
 	validate_attributes_a11y() {
-		const { component } = this;
+		const { component, attributes } = this;
 
-		this.attributes.forEach(attribute => {
+		attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
@@ -460,6 +461,17 @@ export default class Element extends Node {
 					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
 					if (has_nested_redundant_role) {
 						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
+					}
+				}
+
+				// role-has-required-aria-props
+				const role = roles.get(value as ARIARoleDefintionKey);
+				if (role) {
+					const required_role_props = Object.keys(role.requiredProps);
+					const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+					if (has_missing_props) {
+						component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
 					}
 				}
 			}
