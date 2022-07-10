@@ -59,7 +59,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [Svelte-Capacitor](https://github.com/drannex42/svelte-capacitor/) just released v2.0.0 - making it even easier to build hybrid mobile apps for iOS and Android using Svelte and Capacitor with near native performance.
 - [svelte-remixicon](https://github.com/ABarnob/svelte-remixicon) is an icon library for Svelte based on Remix Icon, consisting of more than 2000 icons.
 - [SveltePress](https://github.com/GeopJr/SveltePress) is a documentation tool built on top of SvelteKit.
-- [Svelte Starter Kit](https://github.com/one-aalam/svelte-starter-kit/tree/auth-supabase) is a boilerplate to quckly get up and running with Svelte, with Auth and User Profiles powered by Supabase.
+- [Svelte Starter Kit](https://github.com/one-aalam/svelte-starter-kit/tree/auth-supabase) is a boilerplate to quickly get up and running with Svelte, with Auth and User Profiles powered by Supabase.
 - [Kahi UI](https://github.com/novacbn/kahi-ui) is a Svelte-first UI kit with Dark Mode built-in.
 - [typesafe-i18n](https://github.com/ivanhofer/typesafe-i18n) is an opinionated, fully type-safe, lightweight localization library for TypeScript and JavaScript projects with no external dependencies.
 

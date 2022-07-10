@@ -33,7 +33,7 @@ Notable SvelteKit improvements this month include...
 - Svelte libraries should now work out-of-the-box without any Vite configuration ([#2343](https://github.com/sveltejs/kit/pull/2343))
 - Improvements to package exports field ([#2345](https://github.com/sveltejs/kit/pull/2345) and [#2327](https://github.com/sveltejs/kit/pull/2327))
 - [breaking] The `prerender.pages` config option has been renamed to `prerender.entries` ([#2380](https://github.com/sveltejs/kit/pull/2380))
-- A new generic argument has beend added to allow typing Body from hooks ([#2413](https://github.com/sveltejs/kit/pull/2413))
+- A new generic argument has been added to allow typing Body from hooks ([#2413](https://github.com/sveltejs/kit/pull/2413))
 - The `svelte` field will be added to package.json when running the package command ([#2431](https://github.com/sveltejs/kit/pull/2431))
 - [breaking] The `context` parameter of the load function was renamed to `stuff` ([#2439](https://github.com/sveltejs/kit/pull/2439))
 - Added an `entryPoint` option for building a custom server with `adapter-node` ([#2414](https://github.com/sveltejs/kit/pull/2414))
@@ -92,7 +92,7 @@ Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templ
 
 ## Before you go, answer the call for speakers!
 
-Svelte Summit Fall 2021 (happening 20 November 2021) is looking for speakers. Submit your talk propsoal before 30 October... all are welcome to present and attend.
+Svelte Summit Fall 2021 (happening 20 November 2021) is looking for speakers. Submit your talk proposal before 30 October... all are welcome to present and attend.
 
 ### More info on the [sessionize site](https://sessionize.com/svelte-summit-fall-2021/)
 
