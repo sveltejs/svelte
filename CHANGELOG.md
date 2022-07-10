@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add a11y warning `a11y-role-has-required-aria-props` which checks that elements with `role` attribute has all required attributes for that role. ([#5852](https://github.com/sveltejs/svelte/pull/5852))
+
 ## 3.49.0
 
 * Improve performance of string escaping during SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
