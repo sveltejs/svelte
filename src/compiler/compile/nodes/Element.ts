@@ -32,6 +32,7 @@ const aria_attribute_set = new Set(aria_attributes);
 
 const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
 const aria_role_set = new Set(aria_roles);
+const aria_role_abstract_set = new Set(roles.keys().filter(role => roles.get(role).abstract));
 
 const a11y_required_attributes = {
 	a: ['href'],
@@ -479,8 +480,10 @@ export default class Element extends Node {
 				}
 
 				const value = attribute.get_static_value();
-				// @ts-ignore
-				if (value && !aria_role_set.has(value)) {
+				
+				if (value && aria_role_abstract_set.has(value as ARIARoleDefintionKey)) {
+					component.warn(attribute, compiler_warnings.a11y_no_abstract_role(value));
+				} else if (value && !aria_role_set.has(value as string)) {
 					// @ts-ignore
 					const match = fuzzymatch(value, aria_roles);
 					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
