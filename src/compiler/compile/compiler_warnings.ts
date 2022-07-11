@@ -107,6 +107,10 @@ export default {
 		code: 'a11y-unknown-role',
 		message: `A11y: Unknown role '${role}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
+	a11y_no_abstract_role: (role: string | boolean) => ({
+		code: 'a11y-no-abstract-role',
+		message: `A11y: Abstract role '${role}' is forbidden`
+	}),
 	a11y_no_redundant_roles: (role: string | boolean) => ({
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
