@@ -115,6 +115,10 @@ export default {
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
 	}),
+	a11y_no_interactive_element_to_noninteractive_role: (role: string | boolean, element: string) => ({
+		code: 'a11y-no-interactive-element-to-noninteractive-role',
+		message: `A11y: <${element}> cannot have role '${role}'`
+	}),
 	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`

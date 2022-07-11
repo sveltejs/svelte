@@ -250,6 +250,17 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 ---
 
+### `a11y-no-interactive-element-to-noninteractive-role`
+
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert an interactive element to a non-interactive element. Non-interactive ARIA roles include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
+
+```sv
+<!-- A11y: <textarea> cannot have role 'listitem' -->
+<textarea role="listitem" />
+```
+
+---
+
 ### `a11y-positive-tabindex`
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
