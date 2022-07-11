@@ -15,6 +15,7 @@ export default function get_name_from_filename(filename: string) {
 		.replace(/%/g, 'u')
 		.replace(/\.[^.]+$/, '')
 		.replace(/[^a-zA-Z_$0-9]+/g, '_')
+		// remove leading and trailing '_'
 		.replace(/^_?(.+?)_?$/, '$1')
 		.replace(/^(\d)/, '_$1');
 
