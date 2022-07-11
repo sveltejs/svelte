@@ -6,7 +6,7 @@
 			"column": 19,
 			"line": 1
 		},
-		"message": "A11y: abstract role 'command' is forbidden",
+		"message": "A11y: Abstract role 'command' is forbidden",
 		"pos": 5,
 		"start": {
 			"character": 5,
@@ -21,7 +21,7 @@
 			"column": 21,
 			"line": 2
 		},
-		"message": "A11y: abstract role 'composite' is forbidden",
+		"message": "A11y: Abstract role 'composite' is forbidden",
 		"pos": 27,
 		"start": {
 			"character": 27,
@@ -36,7 +36,7 @@
 			"column": 17,
 			"line": 3
 		},
-		"message": "A11y: abstract role 'input' is forbidden",
+		"message": "A11y: Abstract role 'input' is forbidden",
 		"pos": 51,
 		"start": {
 			"character": 51,
@@ -51,7 +51,7 @@
 			"column": 20,
 			"line": 4
 		},
-		"message": "A11y: abstract role 'landmark' is forbidden",
+		"message": "A11y: Abstract role 'landmark' is forbidden",
 		"pos": 71,
 		"start": {
 			"character": 71,
@@ -66,7 +66,7 @@
 			"column": 17,
 			"line": 5
 		},
-		"message": "A11y: abstract role 'range' is forbidden",
+		"message": "A11y: Abstract role 'range' is forbidden",
 		"pos": 94,
 		"start": {
 			"character": 94,
@@ -81,7 +81,7 @@
 			"column": 20,
 			"line": 6
 		},
-		"message": "A11y: abstract role 'roletype' is forbidden",
+		"message": "A11y: Abstract role 'roletype' is forbidden",
 		"pos": 114,
 		"start": {
 			"character": 114,
@@ -96,7 +96,7 @@
 			"column": 19,
 			"line": 7
 		},
-		"message": "A11y: abstract role 'section' is forbidden",
+		"message": "A11y: Abstract role 'section' is forbidden",
 		"pos": 137,
 		"start": {
 			"character": 137,
@@ -111,7 +111,7 @@
 			"column": 23,
 			"line": 8
 		},
-		"message": "A11y: abstract role 'sectionhead' is forbidden",
+		"message": "A11y: Abstract role 'sectionhead' is forbidden",
 		"pos": 159,
 		"start": {
 			"character": 159,
@@ -126,7 +126,7 @@
 			"column": 18,
 			"line": 9
 		},
-		"message": "A11y: abstract role 'select' is forbidden",
+		"message": "A11y: Abstract role 'select' is forbidden",
 		"pos": 185,
 		"start": {
 			"character": 185,
@@ -141,7 +141,7 @@
 			"column": 21,
 			"line": 10
 		},
-		"message": "A11y: abstract role 'structure' is forbidden",
+		"message": "A11y: Abstract role 'structure' is forbidden",
 		"pos": 206,
 		"start": {
 			"character": 206,
@@ -156,7 +156,7 @@
 			"column": 18,
 			"line": 11
 		},
-		"message": "A11y: abstract role 'widget' is forbidden",
+		"message": "A11y: Abstract role 'widget' is forbidden",
 		"pos": 230,
 		"start": {
 			"character": 230,
@@ -171,7 +171,7 @@
 			"column": 18,
 			"line": 12
 		},
-		"message": "A11y: abstract role 'window' is forbidden",
+		"message": "A11y: Abstract role 'window' is forbidden",
 		"pos": 251,
 		"start": {
 			"character": 251,
