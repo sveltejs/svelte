@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add a11y warning `a11y-role-has-required-aria-props` which checks that elements with `role` attribute has all required attributes for that role. ([#5852](https://github.com/sveltejs/svelte/pull/5852))
+* Add a11y warning `aria-proptypes` which checks ARIA state and property values ([#6978](https://github.com/sveltejs/svelte/pull/6978))
 
 ## 3.49.0
 
