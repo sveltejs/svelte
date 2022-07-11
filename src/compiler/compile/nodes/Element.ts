@@ -23,7 +23,7 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
-import { ARIARoleDefintionKey, roles } from 'aria-query';
+import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -175,6 +175,32 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	}
 
 	return parent_element.namespace;
+}
+
+function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: string | boolean): boolean {
+	switch (schema.type) {
+		case 'boolean':
+			return typeof value === 'boolean';
+		case 'string':
+		case 'id':
+			return typeof value === 'string';
+		case 'tristate':
+			return typeof value === 'boolean' || value === 'mixed';
+		case 'integer':
+		case 'number':
+			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
+		case 'token': // single token
+			return (schema.values || [])
+				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
+		case 'idlist': // if list of ids, split each
+			return typeof value === 'string'
+				&& value.split(' ').every((id) => typeof id === 'string');
+		case 'tokenlist': // if list of tokens, split each
+			return typeof value === 'string'
+				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+		default:
+			return false;
+	}
 }
 
 export default class Element extends Node {
@@ -430,6 +456,18 @@ export default class Element extends Node {
 
 				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
 					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
+				}
+
+				// aria-proptypes
+				let value = attribute.get_static_value();
+				if (value === 'true') value = true;
+				if (value === 'false') value = false;
+
+				if (value !== null && value !== undefined && aria.has(name as ARIAProperty)) {
+					const schema = aria.get(name as ARIAProperty);
+					if (!is_valid_aria_attribute_value(schema, value)) {
+						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
+					}
 				}
 			}
 
