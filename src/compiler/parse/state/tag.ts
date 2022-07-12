@@ -11,7 +11,7 @@ import { closing_tag_omitted, decode_character_references } from '../utils/html'
 
 // characters equivalent to using \s in regex
 const whitespace_characters = ['\r', '\n', '\t', '\f', '\v', ' ', '\u00a0', '\u1680', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200a', '\u2028', '\u2029', '\u202f', '\u205f', '\u3000', '\ufeff'];
-const invalid_attribute_characters = [...whitespace_characters, '/', '"', '\'', '=', '<', '>', '`'];
+const invalid_attribute_characters = [...whitespace_characters, '/>', '"', '\'', '=', '<', '>', '`'];
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
