@@ -616,17 +616,16 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-			const has_input_child = (children) => {
-				const has_input = children.some(i => (i instanceof Element && a11y_labelable.has(i.name)));
-				if (has_input) {
+			const has_input_child = (children: INode[]) => {
+				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
 					return true;
 				}
 
-				for (const c of children) {
-					if (!c.children || c.children.length === 0) {
+				for (const child of children) {
+					if (!('children' in child) || child.children.length === 0) {
 						continue;
 					}
-					if (has_input_child(c.children)) {
+					if (has_input_child(child.children)) {
 						return true;
 					}
 				}
