@@ -399,6 +399,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			return b`${name}.$on("${handler.name}", ${snippet});`;
 		});
 
+		const mount_target = has_css_custom_properties ? css_custom_properties_wrapper : (parent_node || '#target');
+		const mount_anchor = has_css_custom_properties ? 'null' : (parent_node ? 'null' : '#anchor');
+		const to_claim = parent_nodes && this.renderer.options.hydratable;
+		let claim_nodes = parent_nodes;
+
 		if (this.node.name === 'svelte:component') {
 			const switch_value = block.get_unique_name('switch_value');
 			const switch_props = block.get_unique_name('switch_props');
@@ -420,10 +425,6 @@ export default class InlineComponentWrapper extends Wrapper {
 					css_custom_properties_wrapper_anchor = (this.next && this.next.var) || parent_node;
 				}
 			}
-
-			this.create_claim_chunk(block, parent_nodes, name, css_custom_properties_wrapper);
-
-			this.create_mount_chunk(block, parent_node, name, css_custom_properties_wrapper);
 
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
@@ -447,6 +448,14 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
+			block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${mount_target}, ${mount_anchor});`);
+			if (css_custom_properties_wrapper) this.create_css_custom_properties_wrapper_mount_chunk(block, parent_node, css_custom_properties_wrapper);
+
+			if (to_claim) {
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper);
+				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${claim_nodes});`);
+			}
+
 			if (updates.length) {
 				block.chunks.update.push(b`
 					${updates}
@@ -454,7 +463,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 
 			const tmp_anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-			const anchor = css_custom_properties_wrapper ? 'null' : tmp_anchor;
+			const anchor = has_css_custom_properties ? 'null' : tmp_anchor;
 			const update_mount_node = has_css_custom_properties ? css_custom_properties_wrapper : this.get_update_mount_node(tmp_anchor);
 
 			block.chunks.update.push(b`
@@ -516,9 +525,13 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
-			this.create_claim_chunk(block, parent_nodes, name, css_custom_properties_wrapper);
+			if (css_custom_properties_wrapper) this.create_css_custom_properties_wrapper_mount_chunk(block, parent_node, css_custom_properties_wrapper);
+			block.chunks.mount.push(b`@mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 
-			this.create_mount_chunk(block, parent_node, name, css_custom_properties_wrapper);
+			if (to_claim) {
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper);
+				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${claim_nodes});`);
+			}
 
 			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);
@@ -541,56 +554,35 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 	}
 
-	private create_mount_chunk(
+	private create_css_custom_properties_wrapper_mount_chunk(
 		block: Block,
 		parent_node: Identifier,
-		name: Identifier,
 		css_custom_properties_wrapper: Identifier | null
 	) {
-			if (css_custom_properties_wrapper) {
-				if (parent_node) {
-					block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
-					if (is_head(parent_node)) {
-						block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
-					}
-				} else {
-					block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
-					// TODO we eventually need to consider what happens to elements
-					// that belong to the same outgroup as an outroing element...
-					block.chunks.destroy.push(b`if (detaching && ${name}) @detach(${css_custom_properties_wrapper});`);
+			if (parent_node) {
+				block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
+				if (is_head(parent_node)) {
+					block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
 				}
-			}
-
-			const target = css_custom_properties_wrapper || parent_node || '#target';
-			const anchor = css_custom_properties_wrapper ? 'null' : (parent_node ? 'null' : '#anchor');
-			if (this.node.name === 'svelte:component') {
-				block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${target}, ${anchor});`);
 			} else {
-				block.chunks.mount.push(b`@mount_component(${name}, ${target}, ${anchor});`);
+				block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
+				// TODO we eventually need to consider what happens to elements
+				// that belong to the same outgroup as an outroing element...
+				block.chunks.destroy.push(b`if (detaching && ${this.var}) @detach(${css_custom_properties_wrapper});`);
 			}
 	}
 
-	private create_claim_chunk(
+	private create_css_custom_properties_wrapper_claim_chunk(
 		block: Block,
 		parent_nodes: Identifier,
-		name: Identifier,
 		css_custom_properties_wrapper: Identifier | null
 	) {
-		if (parent_nodes && this.renderer.options.hydratable) {
-			let nodes = parent_nodes;
-			if (css_custom_properties_wrapper) {
-				nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
-				block.chunks.claim.push(b`
-					${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
-					var ${nodes} = @children(${css_custom_properties_wrapper});
-				`);
-			}
-			if (this.node.name === 'svelte:component') {
-				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${nodes});`);
-			} else {
-				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${nodes});`);
-			}
-		}
+		const nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+		block.chunks.claim.push(b`
+			${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
+			var ${nodes} = @children(${css_custom_properties_wrapper});
+		`);
+		return nodes;
 	}
 
 	private set_css_custom_properties(
