@@ -1,16 +1,10 @@
-import tag from './tag';
-import mustache from './mustache';
-import text from './text';
-import { Parser } from '../index';
+import { Parser } from "../index";
+import mustache from "./mustache";
+import tag from "./tag";
+import text from "./text";
 
-export default function fragment(parser: Parser) {
-	if (parser.match('<')) {
-		return tag;
-	}
-
-	if (parser.match('{')) {
-		return mustache;
-	}
-
-	return text;
-}
+export default (parser: Parser) =>
+	[
+		{ match: "<", fragment: tag },
+		{ match: "{", fragment: mustache },
+	].find(({ match }) => parser.match(match))?.fragment ?? text;
