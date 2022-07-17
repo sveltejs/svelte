@@ -5,6 +5,7 @@
 * Add a11y warning `a11y-role-has-required-aria-props` which checks that elements with `role` attribute has all required attributes for that role. ([#5852](https://github.com/sveltejs/svelte/pull/5852))
 * Add a11y warning `aria-proptypes` which checks ARIA state and property values ([#6978](https://github.com/sveltejs/svelte/pull/6978))
 * Add a11y warning `a11y-no-abstract-role` which checks ARIA roles must be non-abstract ARIA role ([#6241](https://github.com/sveltejs/svelte/pull/6241))
+* Add a11y warning `a11y-no-interactive-element-to-noninteractive-role` which checks for noninteractive roles used on interactive elements ([#5955](https://github.com/sveltejs/svelte/pull/5955))
 * Remove of empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
 
 ## 3.49.0
