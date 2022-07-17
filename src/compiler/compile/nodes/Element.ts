@@ -24,7 +24,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -113,23 +113,6 @@ const a11y_implicit_semantics = new Map([
 	['thead', 'rowgroup'],
 	['tr', 'row'],
 	['ul', 'list']
-]);
-
-const a11y_interactive = new Set([
-	'a',
-	'button',
-	'select'
-]);
-
-const input_type_interactive = new Set([
-	'button',
-	'checkbox',
-	'color',
-	'file',
-	'image',
-	'radio',
-	'reset',
-	'submit'
 ]);
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
@@ -506,7 +489,7 @@ export default class Element extends Node {
 				}
 
 				const value = attribute.get_static_value() as ARIARoleDefintionKey;
-				
+
 				if (value && aria_role_abstract_set.has(value)) {
 					component.warn(attribute, compiler_warnings.a11y_no_abstract_role(value));
 				} else if (value && !aria_role_set.has(value)) {
@@ -574,64 +557,26 @@ export default class Element extends Node {
 
 		// click-events-have-key-events
 		if (handlers_map.has('click')) {
-			if (a11y_interactive.has(this.name)) {
-				return;
-			}
+			const role = attribute_map.get('role');
+			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
 
-			const type_attribute = attribute_map.get('type');
+			if (
+				!is_hidden_from_screen_reader(this.name, attribute_map) &&
+				(!role || is_non_presentation_role) &&
+				!is_interactive_element(this.name, attribute_map) &&
+				!this.attributes.find(attr => attr.is_spread)
+			) {
+				const has_key_event =
+					handlers_map.has('keydown') ||
+					handlers_map.has('keyup') ||
+					handlers_map.has('keypress');
 
-			if (this.name === 'input') {
-				if (
-					type_attribute &&
-					(!type_attribute.is_static ||
-						input_type_interactive.has(type_attribute.get_static_value()))
-				) {
-					return;
+				if (!has_key_event) {
+					component.warn(
+						this,
+						compiler_warnings.a11y_click_events_have_key_events()
+					);
 				}
-			}
-
-			if (this.attributes.find((attr) => attr.is_spread)) {
-				return;
-			}
-
-			const aria_hidden_attribute = attribute_map.get('aria-hidden');
-			const aria_hidden_value =
-				aria_hidden_attribute &&
-				(!aria_hidden_attribute.is_static ||
-					aria_hidden_attribute.get_static_value());
-
-			// aria-hidden value is string, check its boolean value with JSON.parse()
-			if (aria_hidden_value && JSON.parse(aria_hidden_value)) {
-				return;
-			}
-
-			const type_value = type_attribute && type_attribute.get_static_value();
-
-			if (type_value && type_value === 'hidden') {
-				return;
-			}
-
-			const role_attribute = attribute_map.get('role');
-			const role_value = role_attribute && role_attribute.get_static_value();
-			const presentation_role_value =
-				role_value === null ||
-				role_value === 'presentation' ||
-				role_value === 'none';
-
-			if (presentation_role_value) {
-				return;
-			}
-
-			const has_key_event =
-				handlers_map.has('keydown') ||
-				handlers_map.has('keyup') ||
-				handlers_map.has('keypress');
-
-			if (!has_key_event) {
-				component.warn(
-					this,
-					compiler_warnings.a11y_click_events_have_key_events()
-				);
 			}
 		}
 
@@ -716,6 +661,7 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
+<<<<<<< HEAD
 			const has_input_child = (children: INode[]) => {
 				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
 					return true;
@@ -734,6 +680,10 @@ export default class Element extends Node {
 			};
 
 			if (!attribute_map.has('for') && !has_input_child(this.children)) {
+=======
+			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name)));
+			if (!attribute_map.has('for') && !has_input_child) {
+>>>>>>> 72722864e (slight refactor to use existing utils)
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}

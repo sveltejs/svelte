@@ -103,20 +103,5 @@
 			"character": 393
 		},
 		"pos": 367
-	},
-	{
-		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
-		"start": {
-			"line": 21,
-			"column": 0,
-			"character": 395
-		},
-		"end": {
-			"line": 21,
-			"column": 37,
-			"character": 432
-		},
-		"pos": 395
 	}
 ]

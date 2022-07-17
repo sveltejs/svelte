@@ -18,8 +18,6 @@
 <header on:click={noop} />
 <footer on:click={noop} />
 
-<input type="date" on:click={noop} />
-
 <!-- should not warn -->
 <div class="foo" />
 
@@ -39,7 +37,7 @@
 <div on:click={noop} on:keypress={noop} on:keydown={noop} />
 <div on:click={noop} on:keydown={noop} on:keyup={noop} on:keypress={noop} />
 
-<div on:click={noop} type="hidden" />
+<input on:click={noop} type="hidden" />
 
 <div on:click={noop} aria-hidden />
 <div on:click={noop} aria-hidden="true" />
