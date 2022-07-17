@@ -24,8 +24,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_roles, is_presentation_role } from '../utils/a11y';
-import { is_interactive_roles } from '../utils/is_interactive_role';
+import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles } from '../utils/a11y';
 
 const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
@@ -554,20 +553,13 @@ export default class Element extends Node {
 		});
 
 		// no-nointeractive-tabindex
-		if (!is_interactive_element(this)) {
-			const roleValue = this.attributes.find(attr => attr.name === 'role')?.get_static_value()?.toString();
-			if (!roleValue || !is_interactive_roles(roleValue)) {
-				const _tabIndexValue = this.attributes.find(attr => attr.name === 'tabindex');
-				if (_tabIndexValue) {
-					const tabIndexValue = Number(_tabIndexValue.get_static_value());
-					if (!isNaN(tabIndexValue) && tabIndexValue >= 0) {
-						component.warn(this, compiler_warnings.a11y_no_nointeractive_tabindex);
-					}
-				}
+		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+			const tab_index = attribute_map.get('tabindex');
+			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
+				component.warn(this, compiler_warnings.a11y_no_nointeractive_tabindex);
 			}
 		}
 	}
-
 
 	validate_special_cases() {
 		const { component, attributes, handlers } = this;
