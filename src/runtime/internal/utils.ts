@@ -72,6 +72,15 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
+export function subscribe_dynamic_store(store, callback) {
+	if (store == null) {
+		callback(undefined);
+		return noop;
+	}
+	const unsub = store.subscribe(callback);
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
+
 export function get_store_value<T>(store: Readable<T>): T {
 	let value;
 	subscribe(store, _ => value = _)();
