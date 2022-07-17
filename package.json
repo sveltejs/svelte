@@ -132,6 +132,7 @@
     "acorn": "^8.4.1",
     "agadoo": "^1.1.0",
     "aria-query": "^5.0.0",
+    "axobject-query": "^3.0.1",
     "code-red": "^0.2.5",
     "css-tree": "^1.1.2",
     "eslint": "^8.0.0",
