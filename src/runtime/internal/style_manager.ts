@@ -1,8 +1,8 @@
-import { append_empty_stylesheet, get_root_for_style } from './dom';
+import { append_stylesheet, detach, element, get_root_for_style } from './dom';
 import { raf } from './environment';
 
 interface StyleInformation {
-	stylesheet: CSSStyleSheet;
+	style_element: HTMLStyleElement;
 	rules: Record<string, true>;
 }
 
@@ -20,8 +20,8 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
-function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
-	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+function create_style_information(doc: Document | ShadowRoot) {
+	const info = { style_element: element('style'), rules: {} };
 	managed_styles.set(doc, info);
 	return info;
 }
@@ -39,9 +39,10 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	const name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node);
 
-	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
+	const { style_element, rules } = managed_styles.get(doc) || create_style_information(doc);
 
 	if (!rules[name]) {
+		const stylesheet = append_stylesheet(doc, style_element);
 		rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
@@ -71,10 +72,8 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		managed_styles.forEach(info => {
-			const { stylesheet } = info;
-			let i = stylesheet.cssRules.length;
-			while (i--) stylesheet.deleteRule(i);
-			info.rules = {};
+			const { style_element } = info;
+			detach(style_element);
 		});
 		managed_styles.clear();
 	});
