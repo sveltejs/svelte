@@ -504,9 +504,10 @@ export default class ElementWrapper extends Wrapper {
 
 	get_render_statement(block: Block) {
 		const { name, namespace, tag_expr } = this.node;
+		const reference = tag_expr.manipulate(block);
 
 		if (namespace === namespaces.svg) {
-			return x`@svg_element("${name}")`;
+			return x`@svg_element(${reference})`;
 		}
 
 		if (namespace) {
@@ -518,7 +519,6 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		const reference = tag_expr.manipulate(block);
 		return x`@element(${reference})`;
 	}
 
