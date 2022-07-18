@@ -18,31 +18,18 @@ function create_dynamic_element_1(ctx) {
 	return { c: noop, m: noop, p: noop, d: noop };
 }
 
-// (1:0) <svelte:element this="svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2">
+// (1:0) <svelte:element this="svg" xmlns="http://www.w3.org/2000/svg">
 function create_dynamic_element(ctx) {
 	let svelte_element1;
 	let svelte_element0;
-
-	let svelte_element0_levels = [
-		{ "stroke-linecap": "round" },
-		{ "stroke-linejoin": "round" },
-		{ d: "M9 5l7 7-7 7" }
-	];
-
+	let svelte_element0_levels = [{ xmlns: "http://www.w3.org/2000/svg" }];
 	let svelte_element0_data = {};
 
 	for (let i = 0; i < svelte_element0_levels.length; i += 1) {
 		svelte_element0_data = assign(svelte_element0_data, svelte_element0_levels[i]);
 	}
 
-	let svelte_element1_levels = [
-		{ viewBox: "0 0 24 24" },
-		{ xmlns: "http://www.w3.org/2000/svg" },
-		{ fill: "none" },
-		{ stroke: "currentColor" },
-		{ "stroke-width": "2" }
-	];
-
+	let svelte_element1_levels = [{ xmlns: "http://www.w3.org/2000/svg" }];
 	let svelte_element1_data = {};
 
 	for (let i = 0; i < svelte_element1_levels.length; i += 1) {
@@ -61,19 +48,8 @@ function create_dynamic_element(ctx) {
 			append(svelte_element1, svelte_element0);
 		},
 		p(ctx, dirty) {
-			set_svg_attributes(svelte_element0, svelte_element0_data = get_spread_update(svelte_element0_levels, [
-				{ "stroke-linecap": "round" },
-				{ "stroke-linejoin": "round" },
-				{ d: "M9 5l7 7-7 7" }
-			]));
-
-			set_svg_attributes(svelte_element1, svelte_element1_data = get_spread_update(svelte_element1_levels, [
-				{ viewBox: "0 0 24 24" },
-				{ xmlns: "http://www.w3.org/2000/svg" },
-				{ fill: "none" },
-				{ stroke: "currentColor" },
-				{ "stroke-width": "2" }
-			]));
+			set_svg_attributes(svelte_element0, svelte_element0_data = get_spread_update(svelte_element0_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]));
+			set_svg_attributes(svelte_element1, svelte_element1_data = get_spread_update(svelte_element1_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]));
 		},
 		d(detaching) {
 			if (detaching) detach(svelte_element1);
