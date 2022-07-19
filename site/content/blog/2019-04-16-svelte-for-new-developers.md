@@ -61,7 +61,7 @@ We're going to use the [Svelte + Vite](https://github.com/vitejs/vite/tree/main/
 On the command line, navigate to where you want to create a new project, then type the following lines (you can paste the whole lot, but you'll develop better muscle memory if you get into the habit of writing each line out one at a time then running it):
 
 ```bash
-npm init vite my-svelte-project -- --template svelte
+npm create vite@latest my-svelte-project -- --template svelte
 cd my-svelte-project
 npm install
 ```
