@@ -339,10 +339,6 @@ export type ComponentEvent<Component extends SvelteComponent, Name extends strin
 	? never extends Events[Name] ? CustomEvent<unknown> : Events[Name]
 	: never;
 
-export type ComponentSlots<Component extends SvelteComponent> = Component extends SvelteComponentTyped<any, any, infer Slots>
-	? {} extends Slots ? never : Slots
-	: never;
-  
 export function loop_guard(timeout) {
 	const start = Date.now();
 	return () => {
