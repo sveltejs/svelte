@@ -1,5 +1,5 @@
 import { set_current_component, current_component } from './lifecycle';
-import { run_all, blank_object } from './utils';
+import { run_all } from './utils';
 import { boolean_attributes } from '../../shared/boolean_attributes';
 export { is_void } from '../../shared/utils/names';
 
@@ -150,7 +150,7 @@ export function create_ssr_component(fn) {
 			on_mount: [],
 			before_update: [],
 			after_update: [],
-			callbacks: blank_object()
+			callbacks: {}
 		};
 
 		set_current_component({ $$ });
