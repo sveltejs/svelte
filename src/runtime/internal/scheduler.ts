@@ -1,5 +1,6 @@
 import { run_all } from './utils';
 import { current_component, set_current_component } from './lifecycle';
+import { resolved_promise } from './constants';
 
 export const dirty_components = [];
 export const intros = { enabled: false };
@@ -8,7 +9,6 @@ export const binding_callbacks = [];
 const render_callbacks = [];
 const flush_callbacks = [];
 
-const resolved_promise = Promise.resolve();
 let update_scheduled = false;
 
 export function schedule_update() {
