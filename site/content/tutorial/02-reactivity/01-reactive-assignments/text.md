@@ -10,7 +10,7 @@ To demonstrate it, we first need to wire up an event handler. Replace line 9 wit
 <button on:click={incrementCount}>
 ```
 
-Inside the `incrementCount` function, all we need to do is change the value of `count`:
+Inside the `incrementCount` function, all we need to do is to change the value of `count`:
 
 ```js
 function incrementCount() {
