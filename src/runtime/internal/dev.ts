@@ -316,9 +316,8 @@ export type ComponentProps<Component extends SvelteComponent> = Component extend
  * </div>
  * ```
  */
-export type ComponentEvents<Component extends SvelteComponent> = Component extends SvelteComponentTyped<any, infer Events>
-	? Events
-	: never;
+export type ComponentEvents<Component extends SvelteComponent> =
+	Component extends SvelteComponentTyped<any, infer Events> ? Events : never;
 
 /**
 * Convenience type to get an event the given component expects. Example:
