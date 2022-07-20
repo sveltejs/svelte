@@ -308,7 +308,7 @@ export type ComponentProps<Component extends SvelteComponent> = Component extend
  *    import type { ComponentEvents } from 'svelte';
  *    import Component from './Component.svelte';
  *
- *    type $$Events = ComponentEvent<Component>;
+ *    type $$Events = ComponentEvents<Component>;
  * </script>
  * 
  * <div class="wrapper">
