@@ -327,7 +327,7 @@ export type ComponentEvents<Component extends SvelteComponent> = Component exten
 *    import type { ComponentEvent } from 'svelte';
 *    import Component from './Component.svelte';
 *
-*    function handleCloseEvent(event: ComponentEvents<Component, 'close'>) {
+*    function handleCloseEvent(event: ComponentEvent<Component, 'close'>) {
 *       console.log(event.detail);
 *    };
 * </script>
