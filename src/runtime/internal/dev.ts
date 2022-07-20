@@ -320,6 +320,25 @@ export type ComponentEvents<Component extends SvelteComponent> = Component exten
 	? Events
 	: never;
 
+/**
+* Convenience type to get an event the given component expects. Example:
+* ```html
+* <script lang="ts">
+*    import type { ComponentEvent } from 'svelte';
+*    import Component from './Component.svelte';
+*
+*    function handleCloseEvent(event: ComponentEvents<Component, 'close'>) {
+*       console.log(event.detail);
+*    };
+* </script>
+*
+* <Component on:close={handleCloseEvent} />
+* ```
+*/
+export type ComponentEvent<Component extends SvelteComponent, Name extends string> = Component extends SvelteComponentTyped<any, infer Events>
+	? never extends Events[Name] ? CustomEvent<unknown> : Events[Name]
+	: never;
+
 export function loop_guard(timeout) {
 	const start = Date.now();
 	return () => {
