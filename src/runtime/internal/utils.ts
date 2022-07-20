@@ -51,7 +51,7 @@ export function not_equal(a, b) {
 }
 
 export function is_empty(obj) {
-	return Object.keys(obj).length === 0;
+	return !Object.keys(obj).length;
 }
 
 export function validate_store(store, name) {
