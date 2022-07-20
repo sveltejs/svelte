@@ -190,7 +190,7 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 		} else {
 			duration = len / speed;
 		}
-	} else if (typeof duration === 'function') {
+	} else if (is_function(duration)) {
 		duration = duration(len);
 	}
 

@@ -177,7 +177,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 }
 
 export let SvelteElement;
-if (typeof HTMLElement === 'function') {
+if (is_function(HTMLElement)) {
 	SvelteElement = class extends HTMLElement {
 		$$: T$$;
 		$$set?: ($$props: any) => void;

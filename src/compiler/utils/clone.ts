@@ -1,3 +1,5 @@
+import { is_function} from '../../runtime/internal/utils';
+
 // adapted from klona v2.0.4 - https://github.com/lukeed/klona
 // (c) Luke Edwards, under MIT License
 
@@ -22,7 +24,7 @@ export function clone(val) {
 					enumerable: true,
 					writable: true
 				});
-			} else if (typeof val[k] !== 'function') { // MODIFICATION: skip functions
+			} else if (!is_function(val[k])) { // MODIFICATION: skip functions
 				out[k] = (tmp = val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
 			}
 		}

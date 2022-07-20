@@ -1,6 +1,7 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
+import { is_function } from './utils';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -93,7 +94,7 @@ export function set_data_dev(text, data) {
 export function validate_each_argument(arg) {
 	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
 		let msg = '{#each} only iterates over array-like objects.';
-		if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
+		if (is_function(Symbol) && arg && Symbol.iterator in arg) {
 			msg += ' You can use a spread to convert this iterable into an array.';
 		}
 		throw new Error(msg);

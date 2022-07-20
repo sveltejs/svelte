@@ -11,7 +11,7 @@ export function assign<T, S>(tar: T, src: S): T & S {
 }
 
 export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return value && typeof value === 'object' && typeof value.then === 'function';
+	return value && typeof value === 'object' && is_function(value.then);
 }
 
 export function add_location(element, file, line, column, char) {
@@ -33,7 +33,7 @@ export function is_function(thing: any): thing is Function {
 }
 
 export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || is_function(a));
 }
 
 let src_url_equal_anchor;
@@ -55,7 +55,7 @@ export function is_empty(obj) {
 }
 
 export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
+	if (store != null && !is_function(store.subscribe)) {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
 }
