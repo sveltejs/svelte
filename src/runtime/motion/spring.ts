@@ -1,7 +1,6 @@
 import { Readable, writable } from 'svelte/store';
-import { loop, now, Task } from 'svelte/internal';
+import { loop, now, Task, resolved_promise } from 'svelte/internal';
 import { is_date } from './utils';
-import { resolved_promise } from 'svelte/internal/constants';
 
 interface TickContext<T> {
 	inv_mass: number;
