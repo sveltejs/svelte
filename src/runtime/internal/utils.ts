@@ -24,6 +24,10 @@ export function run(fn) {
 	return fn();
 }
 
+export function blank_object() {
+	return Object.create(null);
+}
+
 export function run_all(fns: Function[]) {
 	fns.forEach(run);
 }

@@ -1,6 +1,6 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
-import { is_empty, is_function, run, run_all, noop } from './utils';
+import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
 
@@ -116,7 +116,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		props,
 		update: noop,
 		not_equal,
-		bound: {},
+		bound: blank_object(),
 
 		// lifecycle
 		on_mount: [],
@@ -127,7 +127,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
 
 		// everything else
-		callbacks: {},
+		callbacks: blank_object(),
 		dirty,
 		skip_bound: false,
 		root: options.target || parent_component.$$.root
