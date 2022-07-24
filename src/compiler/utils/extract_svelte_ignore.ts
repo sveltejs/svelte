@@ -3,9 +3,11 @@ import { flatten } from './flatten';
 
 const pattern = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 
+const regex_no_whitespace_character = /[^\S]/;
+
 export function extract_svelte_ignore(text: string): string[] {
 	const match = pattern.exec(text);
-	return match ? match[1].split(/[^\S]/).map(x => x.trim()).filter(Boolean) : [];
+	return match ? match[1].split(regex_no_whitespace_character).map(x => x.trim()).filter(Boolean) : [];
 }
 
 export function extract_svelte_ignore_from_comments<Node extends { leadingComments?: Array<{value: string}> }>(node: Node): string[] {

@@ -65,10 +65,15 @@ export function is_valid(str: string): boolean {
 	return true;
 }
 
+const regex_non_standard_characters = /[^a-zA-Z0-9_]+/g;
+const regex_starts_with_underscore = /^_/;
+const regex_ends_with_underscore = /_$/;
+const regex_starts_with_number = /^[0-9]/;
+
 export function sanitize(name: string) {
 	return name
-		.replace(/[^a-zA-Z0-9_]+/g, '_')
-		.replace(/^_/, '')
-		.replace(/_$/, '')
-		.replace(/^[0-9]/, '_$&');
+		.replace(regex_non_standard_characters, '_')
+		.replace(regex_starts_with_underscore, '')
+		.replace(regex_ends_with_underscore, '')
+		.replace(regex_starts_with_number, '_$&');
 }

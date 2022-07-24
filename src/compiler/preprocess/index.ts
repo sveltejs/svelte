@@ -13,8 +13,10 @@ interface SourceUpdate {
 	dependencies?: string[];
 }
 
+const regex_filepath_separator = /[/\\]/;
+
 function get_file_basename(filename: string) {
-	return filename.split(/[/\\]/).pop();
+	return filename.split(regex_filepath_separator).pop();
 }
 
 /**
@@ -120,19 +122,26 @@ function processed_tag_to_code(
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
 
+const regex_whitespace = /\s+/;
+const regex_unquoted_value = /^['"](.*)['"]$/;
+
 function parse_tag_attributes(str: string) {
 	// note: won't work with attribute values containing spaces.
 	return str
-		.split(/\s+/)
+		.split(regex_whitespace)
 		.filter(Boolean)
 		.reduce((attrs, attr) => {
 			const i = attr.indexOf('=');
 			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
-			const [, unquoted] = (value && value.match(/^['"](.*)['"]$/)) || [];
+			const [, unquoted] = (value && value.match(regex_unquoted_value)) || [];
 
 			return { ...attrs, [key]: unquoted ?? value ?? true };
 		}, {});
 }
+
+
+const regex_style_tags = /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi;
+const regex_script_tags = /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
 
 /**
  * Calculate the updates required to process all instances of the specified tag.
@@ -143,10 +152,7 @@ async function process_tag(
 	source: Source
 ): Promise<SourceUpdate> {
 	const { filename, source: markup } = source;
-	const tag_regex =
-		tag_name === 'style'
-			? /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi
-			: /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+	const tag_regex = tag_name === 'style' ? regex_style_tags : regex_script_tags;
 
 	const dependencies: string[] = [];
 
@@ -190,7 +196,7 @@ async function process_markup(process: MarkupPreprocessor, source: Source) {
 			string: processed.code,
 			map: processed.map
 				? // TODO: can we use decode_sourcemap?
-				  typeof processed.map === 'string'
+				typeof processed.map === 'string'
 					? JSON.parse(processed.map)
 					: processed.map
 				: undefined,
