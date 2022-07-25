@@ -51,7 +51,10 @@ export function add_flush_callback(fn) {
 //    function, guarantees this behavior.
 const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
+let flushing = false;
 export function flush() {
+	if (flushing) return;
+	flushing = true;
 	const saved_component = current_component;
 
 	do {
@@ -90,7 +93,8 @@ export function flush() {
 	while (flush_callbacks.length) {
 		flush_callbacks.pop()();
 	}
-
+	
+	flushing = false;
 	update_scheduled = false;
 	seen_callbacks.clear();
 	set_current_component(saved_component);
