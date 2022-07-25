@@ -16,7 +16,7 @@ function modify(path, modifyFn) {
 
 modify(
     'types/runtime/index.d.ts',
-    content => content.replace('SvelteComponentTyped', 'SvelteComponentTyped, ComponentType, ComponentConstructorOptions, ComponentProps')
+    content => content.replace('SvelteComponentTyped', 'SvelteComponentTyped, ComponentType, ComponentConstructorOptions, ComponentProps, ComponentEvents')
 );
 modify(
     'types/compiler/index.d.ts',
