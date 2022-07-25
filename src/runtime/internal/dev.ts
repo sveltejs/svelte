@@ -264,18 +264,18 @@ export class SvelteComponentTyped<
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
- * 
+ *
  * Example:
  * ```html
  * <script lang="ts">
  * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
  * 	import Component1 from './Component1.svelte';
  * 	import Component2 from './Component2.svelte';
- * 
+ *
  * 	const component: ComponentType = someLogic() ? Component1 : Component2;
  * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
  * </script>
- * 
+ *
  * <svelte:component this={component} />
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
@@ -292,7 +292,7 @@ export type ComponentType<Component extends SvelteComponentTyped = SvelteCompone
  * <script lang="ts">
  * 	import type { ComponentProps } from 'svelte';
  * 	import Component from './Component.svelte';
- * 
+ *
  * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
  * </script>
  * ```
@@ -300,6 +300,24 @@ export type ComponentType<Component extends SvelteComponentTyped = SvelteCompone
 export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentTyped<infer Props>
 	? Props
 	: never;
+
+/**
+ * Convenience type to get the events the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ *    import type { ComponentEvents } from 'svelte';
+ *    import Component from './Component.svelte';
+ *
+ *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
+ *       console.log(event.detail);
+ *    }
+ * </script>
+ *
+ * <Component on:close={handleCloseEvent} />
+ * ```
+ */
+export type ComponentEvents<Component extends SvelteComponent> =
+	Component extends SvelteComponentTyped<any, infer Events> ? Events : never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();
