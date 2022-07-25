@@ -310,7 +310,7 @@ export type ComponentProps<Component extends SvelteComponent> = Component extend
  *
  *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
  *       console.log(event.detail);
- *    };
+ *    }
  * </script>
  *
  * <Component on:close={handleCloseEvent} />
