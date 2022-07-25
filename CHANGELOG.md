@@ -8,6 +8,7 @@
 * Add a11y warning `a11y-no-interactive-element-to-noninteractive-role` which checks for noninteractive roles used on interactive elements ([#5955](https://github.com/sveltejs/svelte/pull/5955))
 * Remove of empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
 * Disallow invalid CSS selectors starting with a combinator ([#7643](https://github.com/sveltejs/svelte/issues/7643))
+* Add `ComponentEvents` convenience type ([#7702](https://github.com/sveltejs/svelte/pull/7702))
 
 ## 3.49.0
 
