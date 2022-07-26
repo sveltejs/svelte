@@ -133,12 +133,18 @@ export function renderer_invalidate(renderer: Renderer, name: string, value?, ma
 			});
 		});
 	});
+	deps.delete(name);
 
 	// TODO ideally globals etc wouldn't be here in the first place
 	const filtered = Array.from(deps).filter(n => renderer.context_lookup.has(n));
-	if (!filtered.length) return null;
+	if (!renderer.context_lookup.has(name)) return null;
 
-	return filtered
+	const invalidateValue = x`$$invalidate(${renderer.context_lookup.get(name).index}, ${name})`;
+	if (!filtered.length) return invalidateValue;
+	
+	// we don't want to invalidate reactive deps when changing a primitive
+	const invalidateReactiveDeps = filtered
 		.map(n => x`$$invalidate(${renderer.context_lookup.get(n).index}, ${n})`)
 		.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
+	return x`(${name} instanceof Object) && ${invalidateReactiveDeps}, ${invalidateValue}`;
 }
