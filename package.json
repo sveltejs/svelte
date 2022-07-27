@@ -148,7 +148,7 @@
     "periscopic": "^3.0.4",
     "puppeteer": "^2.0.0",
     "rollup": "^1.27.14",
-    "source-map": "^0.7.3",
+    "source-map": "^0.7.4",
     "source-map-support": "^0.5.13",
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.6",
