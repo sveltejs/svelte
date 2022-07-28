@@ -9,6 +9,7 @@
 * Remove of empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
 * Disallow invalid CSS selectors starting with a combinator ([#7643](https://github.com/sveltejs/svelte/issues/7643))
 * Add `ComponentEvents` convenience type ([#7702](https://github.com/sveltejs/svelte/pull/7702))
+* Handle arrow function on `<slot>` inside `<svelte:fragment>` ([#7485](https://github.com/sveltejs/svelte/issues/7485))
 
 ## 3.49.0
 
