@@ -323,7 +323,7 @@ export default class Expression {
 
 							const func_expression = func_declaration[0];
 
-							if (node.type === 'InlineComponent') {
+							if (node.type === 'InlineComponent' || node.type === 'SlotTemplate') {
 								// <Comp let:data />
 								this.replace(func_expression);
 							} else {
