@@ -163,7 +163,6 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);
 
-		// Note: It is important to use `Node.parentNode` instead `Node.parentElement` for a simple legacy browsers compatibility.
 		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentNode !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
