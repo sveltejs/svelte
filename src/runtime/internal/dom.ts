@@ -477,11 +477,14 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
-function find_comment(nodes, text, start) {
+function find_html_tag_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
-		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === text) {
-			return i;
+		if (node.nodeType === 8 /* comment node */) {
+			const value = node.textContent.trim();
+			if (value === text || value.startsWith(text + ' data-svelte="') === true) {
+				return i;
+			}
 		}
 	}
 	return nodes.length;
@@ -490,8 +493,8 @@ function find_comment(nodes, text, start) {
 
 export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
-	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
-	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
+	const start_index = find_html_tag_comment(nodes, 'HTML_TAG_START', 0);
+	const end_index = find_html_tag_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
 		return new HtmlTagHydration(undefined, is_svg);
 	}
@@ -638,6 +641,25 @@ export function custom_event<T=any>(type: string, detail?: T, { bubbles = false,
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
+}
+
+export function head_selector(nodeId: string, head: HTMLElement) {
+	const result = [];
+	let started = 0;
+	for (const node of head.childNodes) {
+		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HTML_TAG_END data-svelte="${nodeId}"`) {
+			started -= 1;
+			result.push(node);
+		} else if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HTML_TAG_START data-svelte="${nodeId}"`) {
+			started += 1;
+			result.push(node);
+		} else if (started > 0) {
+			result.push(node);
+		} else if (node.nodeType === 1 /* element node */ && (<Element>node).getAttribute('data-svelte') === nodeId) {
+			result.push(node);
+		}
+	}
+	return result;
 }
 
 export class HtmlTag {
