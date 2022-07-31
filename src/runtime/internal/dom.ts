@@ -640,6 +640,24 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
+export function head_selector(nodeId: string, head: HTMLElement) {
+	const result = [];
+	let started = 0;
+
+	for (const node of head.childNodes) {
+		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HEAD_END data-svelte="${nodeId}"`) {
+			started -= 1;
+			result.push(node);
+		} else if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HEAD_START data-svelte="${nodeId}"`) {
+			started += 1;
+			result.push(node);
+		} else if (started > 0) {
+			result.push(node);
+		}
+	}
+	return result;
+}
+
 export class HtmlTag {
 	private is_svg = false;
 	// parent for creating node

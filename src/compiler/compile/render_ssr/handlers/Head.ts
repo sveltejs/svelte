@@ -12,5 +12,5 @@ export default function(node: Head, renderer: Renderer, options: RenderOptions) 
 	renderer.render(node.children, head_options);
 	const result = renderer.pop();
 
-	renderer.add_expression(x`$$result.head += ${result}, ""`);
+	renderer.add_expression(x`$$result.head += '<!-- HEAD_START data-svelte="${node.id}" -->' + ${result} + '<!-- HEAD_END data-svelte="${node.id}" -->', ""`);
 }
