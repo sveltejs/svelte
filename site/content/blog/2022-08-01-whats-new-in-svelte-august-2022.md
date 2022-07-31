@@ -19,6 +19,7 @@ Now onto the rest of the updates...
 - Custom Vite config locations are now supported ([#5705](https://github.com/sveltejs/kit/pull/5705))
 - Private environment variables (aka "secrets") are now much more secure. Now if you accidentally import them to client-side code, you'll see an error ([#5663](https://github.com/sveltejs/kit/pull/5663), [Docs](https://kit.svelte.dev/docs/configuration#env))
 - Vercel's v3 build output API is now being used in `adapter-vercel` ([#5514](https://github.com/sveltejs/kit/pull/5514))
+- `vite-plugin-svelte` has reached 1.0 and now supports Vite 3. You'll notice new default ports for `dev` (port 5173) and `preview` (port 4173) ([#5005](https://github.com/sveltejs/kit/pull/5005), [vite-plugin-svelte CHANGELOG](https://github.com/sveltejs/vite-plugin-svelte/blob/main/packages/vite-plugin-svelte/CHANGELOG.md))
 
 **Breaking changes:**
 - `mode`, `prod` and `server` are no longer available in `$app/env` ([#5602](https://github.com/sveltejs/kit/pull/5602))
