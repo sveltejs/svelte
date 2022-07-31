@@ -7,7 +7,7 @@ authorURL: https://desandoval.net
 
 There's a lot to cover this month... big changes are coming to SvelteKit's design before 1.0 can be completed. If you haven't already, check out Rich's Discussion, [Fixing `load`, and tightening up SvelteKit's design before 1.0 #5748](https://github.com/sveltejs/kit/discussions/5748).
 
-Also, [@dummdidumm](https://github.com/dummdidumm) (Simon H) [has joined Vercel to work on Svelte full-time](https://twitter.com/dummdidumm_/status/1549041206348222464)! We're super excited to have another maintainer now dedicated to working on Svelte and SvelteKit.
+Also, [@dummdidumm](https://github.com/dummdidumm) (Simon H) [has joined Vercel to work on Svelte full-time](https://twitter.com/dummdidumm_/status/1549041206348222464) and [@tcc-sejohnson](https://github.com/tcc-sejohnson) has joined the group of SvelteKit maintainers! We're super excited to have additional maintainers now dedicated to working on Svelte and SvelteKit and have already been noticing their impact. July was the third largest month for SvelteKit changes since its inception!
 
 Now onto the rest of the updates...
 
@@ -18,6 +18,7 @@ Now onto the rest of the updates...
 - Custom Vite modes are now respected in SSR builds ([#5602](https://github.com/sveltejs/kit/pull/5602))
 - Custom Vite config locations are now supported ([#5705](https://github.com/sveltejs/kit/pull/5705))
 - Private environment variables (aka "secrets") are now much more secure. Now if you accidentally import them to client-side code, you'll see an error ([#5663](https://github.com/sveltejs/kit/pull/5663), [Docs](https://kit.svelte.dev/docs/configuration#env))
+- Using Vercel's v3 build output API in `adapter-vercel` ([#5514](https://github.com/sveltejs/kit/pull/5514))
 
 **Breaking changes:**
 - `mode`, `prod` and `server` are no longer available in `$app/env` ([#5602](https://github.com/sveltejs/kit/pull/5602))
@@ -25,9 +26,11 @@ Now onto the rest of the updates...
 - `endpointExtensions` is now `moduleExtensions` and can be used to filter param matchers ([#5085](https://github.com/sveltejs/kit/pull/5085), [Docs](https://kit.svelte.dev/docs/configuration#moduleextensions))
 - Node 16.9 is now the minimum version for SvelteKit ([#5395](https://github.com/sveltejs/kit/pull/5395))
 - %-encoded filenames are now allowed. If you had a `%` in your route, you must now encode it with `%25` ([#5056](https://github.com/sveltejs/kit/pull/5056))
-- Endpoint method names are now uppercased to match HTTP specifications (#5513, [Docs](https://kit.svelte.dev/docs/routing#endpoints))
+- Endpoint method names are now uppercased to match HTTP specifications ([#5513](https://github.com/sveltejs/kit/pull/5513), [Docs](https://kit.svelte.dev/docs/routing#endpoints))
 - `writeStatic` has been removed to align with Vite's config ([#5618](https://github.com/sveltejs/kit/pull/5618))
 - `transformPage` is now `transformPageChunk` ([#5657](https://github.com/sveltejs/kit/pull/5657), [Docs](https://kit.svelte.dev/docs/hooks#handle))
+- The `prepare` script is no longer needed in `package.json` ([#5760](https://github.com/sveltejs/kit/pull/5760))
+- `adapter-node` no longer does any compression while we wait for a [bug fix in the `compression` library](https://github.com/expressjs/compression/pull/183) ([#5560](https://github.com/sveltejs/kit/pull/5506))
 
 For a full list of changes, check out kit's [CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
@@ -90,7 +93,7 @@ _Tech Demos_
 
 
 **Libraries, Tools & Components**
-- [PocketBase](https://github.com/pocketbase/pocketbase) is an open source Go backend with a single file
+- [PocketBase](https://github.com/pocketbase/pocketbase) is an open source Go backend with a single file and a svelte [admin dashboard ui](https://github.com/pocketbase/pocketbase/tree/master/ui)
 - [Lucia](https://github.com/pilcrowOnPaper/lucia-sveltekit) is a simple, JWT based authentication library for SvelteKit that connects your SvelteKit app with your database
 - [Skeleton](https://github.com/Brain-Bones/skeleton) is a UI component library for use with Svelte + Tailwind
 - [pass-composer](https://pass-composer.vercel.app/) helps you compose your postprocessing passes for threlte scenes
