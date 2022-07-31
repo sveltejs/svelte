@@ -5,22 +5,23 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-There's lots to cover this month... with big changes are coming to SvelteKit's design before 1.0 can be completed. If you haven't already, check out Rich's Discussion, [Fixing `load`, and tightening up SvelteKit's design before 1.0 #5748](https://github.com/sveltejs/kit/discussions/5748).
+There's a lot to cover this month... big changes are coming to SvelteKit's design before 1.0 can be completed. If you haven't already, check out Rich's Discussion, [Fixing `load`, and tightening up SvelteKit's design before 1.0 #5748](https://github.com/sveltejs/kit/discussions/5748).
 
-There's been lots of great discussion there over the last few days. If any of the comments resonate with you, feel free to drop an emoji on them 🤓
+Also, [@dummdidumm](https://github.com/dummdidumm) (Simon H) [has joined Vercel to work on Svelte full-time](https://twitter.com/dummdidumm_/status/1549041206348222464)! We're super excited to have another maintainer now dedicated to working on Svelte and SvelteKit.
 
 Now onto the rest of the updates...
 
 ## What's new in SvelteKit
 - Dynamically imported styles are now included during SSR ([#5138](https://github.com/sveltejs/kit/pull/5138))
-- Improvements to routes and prop updates to prevent unnecessary rerending ([#5654](https://github.com/sveltejs/kit/pull/5654), [#5671](https://github.com/sveltejs/kit/pull/5671))
+- Improvements to routes and prop updates to prevent unnecessary rerendering ([#5654](https://github.com/sveltejs/kit/pull/5654), [#5671](https://github.com/sveltejs/kit/pull/5671))
 - Lots of improvements to error handling ([#4665](https://github.com/sveltejs/kit/pull/4665), [#5622](https://github.com/sveltejs/kit/pull/5622), [#5619](https://github.com/sveltejs/kit/pull/5619), [#5616](https://github.com/sveltejs/kit/pull/5616))
 - Custom Vite modes are now respected in SSR builds ([#5602](https://github.com/sveltejs/kit/pull/5602))
 - Custom Vite config locations are now supported ([#5705](https://github.com/sveltejs/kit/pull/5705))
+- Private environment variables (aka "secrets") are now much more secure. Now if you accidentally import them to client-side code, you'll see an error ([#5663](https://github.com/sveltejs/kit/pull/5663), [Docs](https://kit.svelte.dev/docs/configuration#env))
 
 **Breaking changes:**
-- `svelte-kit` CLI commands are now run using the `vite` command and `vite.config.js` is required ([#5332](https://github.com/sveltejs/kit/pull/5332), [Docs](https://kit.svelte.dev/docs/project-structure#project-files-vite-config-js))
-- `mode`, `prod` and `server` in `$app/env` have been replaced with a more consistent set of environment variables ([#5602](https://github.com/sveltejs/kit/pull/5602)/[#5663](https://github.com/sveltejs/kit/pull/5663), [Docs](https://kit.svelte.dev/docs/configuration#env))
+- `mode`, `prod` and `server` are no longer available in `$app/env` ([#5602](https://github.com/sveltejs/kit/pull/5602))
+- `svelte-kit` CLI commands are now run using the `vite` command and `vite.config.js` is required. This will allow first-class support with other projects in the Vite ecosystem like Vitest and Storybook ([#5332](https://github.com/sveltejs/kit/pull/5332), [Docs](https://kit.svelte.dev/docs/project-structure#project-files-vite-config-js))
 - `endpointExtensions` is now `moduleExtensions` and can be used to filter param matchers ([#5085](https://github.com/sveltejs/kit/pull/5085), [Docs](https://kit.svelte.dev/docs/configuration#moduleextensions))
 - Node 16.9 is now the minimum version for SvelteKit ([#5395](https://github.com/sveltejs/kit/pull/5395))
 - %-encoded filenames are now allowed. If you had a `%` in your route, you must now encode it with `%25` ([#5056](https://github.com/sveltejs/kit/pull/5056))
@@ -44,7 +45,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 **Apps & Sites built with Svelte**
 - [Hondo](https://www.playhondo.com/how-to-play) is a word guessing game with multiple rounds
 - [Hexapipes](https://github.com/gereleth/hexapipes) is a site for playing hexagonal pipes puzzle
-- Mail Must Move is an email made for those who want to get more done
+- [Mail Must Move](https://www.mordon.app/) is an email made for those who want to get more done
 - [Jot Down](https://github.com/brysonbw/vscode-jot-down) is a Visual Studio Code extension for quick and simple note taking
 - [Kadium](https://kadium.kasper.space/) is an app for staying on top of YouTube channels' uploads
 - [Samen zjin we #1metS10](https://1mets10.avrotros.nl/) is a campaign website to support S10, the dutch Eurovision finalist, by sending a drawing or a wish
@@ -59,7 +60,9 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 _Starring the Svelte team_
 - [The Svelte Documentary is out!](https://www.svelteradio.com/episodes/the-svelte-documentary-is-out) on Svelte Radio
 - [Beginner SvelteKit](https://vercel.com/docs/beginner-sveltekit) by Vite
+- [Challenge: Explore Svelte by Building a Bubble Popping Game](https://prismic.io/blog/try-svelte-build-game) by Brittney Postma
 - [Let's write a Client-side Routing Library with Svelte](https://www.youtube.com/watch?v=3foVDSknGEY) by lihautan
+- [Svelte Sirens July Talk - Testing in Svelte with Jess Sachs](https://sveltesirens.dev/event/testing-in-svelte)
 
 _To Watch_
 - [10 Awesome Svelte UI Component Libraries](https://www.youtube.com/watch?v=RkD88ARvucM) by LevelUpTuts
@@ -82,7 +85,6 @@ _To Read_
 
 _Tech Demos_
 - [Bringing the best GraphQL experience to Svelte](https://www.the-guild.dev/blog/houdini-and-kitql) by The Guild
-- [Challenge: Explore Svelte by Building a Bubble Popping Game](https://prismic.io/blog/try-svelte-build-game) by Prismic
 - [Style your Svelte website faster with Stylify CSS](https://stylifycss.com/blog/style-your-svelte-website-faster-with-stylify-css/) by Stylify
 - [Revamped Auth Helpers for Supabase (with SvelteKit support)](https://supabase.com/blog/2022/07/13/supabase-auth-helpers-with-sveltekit-support) by Supabase
 
