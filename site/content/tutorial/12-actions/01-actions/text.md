@@ -15,7 +15,7 @@ In this app, we want to make the orange modal close when the user clicks outside
 import { clickOutside } from "./click_outside.js";
 ```
 
-...then use it with the element:
+...then use it with the element (the `clickOutside` function is called when element is created):
 
 ```html
 <div class="box" use:clickOutside on:outclick="{() => (showModal = false)}">
