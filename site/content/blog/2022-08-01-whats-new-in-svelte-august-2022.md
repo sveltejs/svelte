@@ -18,7 +18,7 @@ Now onto the rest of the updates...
 - Custom Vite modes are now respected in SSR builds ([#5602](https://github.com/sveltejs/kit/pull/5602))
 - Custom Vite config locations are now supported ([#5705](https://github.com/sveltejs/kit/pull/5705))
 - Private environment variables (aka "secrets") are now much more secure. Now if you accidentally import them to client-side code, you'll see an error ([#5663](https://github.com/sveltejs/kit/pull/5663), [Docs](https://kit.svelte.dev/docs/configuration#env))
-- Using Vercel's v3 build output API in `adapter-vercel` ([#5514](https://github.com/sveltejs/kit/pull/5514))
+- Vercel's v3 build output API is now being used in `adapter-vercel` ([#5514](https://github.com/sveltejs/kit/pull/5514))
 
 **Breaking changes:**
 - `mode`, `prod` and `server` are no longer available in `$app/env` ([#5602](https://github.com/sveltejs/kit/pull/5602))
@@ -46,6 +46,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+- [PocketBase](https://github.com/pocketbase/pocketbase) is an open source Go backend with a single file and an admin dashboard built with Svelte
 - [Hondo](https://www.playhondo.com/how-to-play) is a word guessing game with multiple rounds
 - [Hexapipes](https://github.com/gereleth/hexapipes) is a site for playing hexagonal pipes puzzle
 - [Mail Must Move](https://www.mordon.app/) is an email made for those who want to get more done
@@ -93,7 +94,6 @@ _Tech Demos_
 
 
 **Libraries, Tools & Components**
-- [PocketBase](https://github.com/pocketbase/pocketbase) is an open source Go backend with a single file and a svelte [admin dashboard ui](https://github.com/pocketbase/pocketbase/tree/master/ui)
 - [Lucia](https://github.com/pilcrowOnPaper/lucia-sveltekit) is a simple, JWT based authentication library for SvelteKit that connects your SvelteKit app with your database
 - [Skeleton](https://github.com/Brain-Bones/skeleton) is a UI component library for use with Svelte + Tailwind
 - [pass-composer](https://pass-composer.vercel.app/) helps you compose your postprocessing passes for threlte scenes
