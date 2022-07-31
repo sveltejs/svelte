@@ -54,6 +54,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 - [Jot Down](https://github.com/brysonbw/vscode-jot-down) is a Visual Studio Code extension for quick and simple note taking
 - [Kadium](https://kadium.kasper.space/) is an app for staying on top of YouTube channels' uploads
 - [Samen zjin we #1metS10](https://1mets10.avrotros.nl/) is a campaign website to support S10, the dutch Eurovision finalist, by sending a drawing or a wish
+- [On Writing Code](https://onwritingcode.com/) is an interactive website to learn programming design patterns
 - [Svelte-In-Motion](https://github.com/novacbn/svelte-in-motion) lets you create Svelte-animated videos in your browser
 - [Svelte Terminal](https://github.com/Nico-Mayer/svelte-terminal) is a terminal-like website
 - [Bulletlist](https://bulletlist.com/) is a simple tool with a single purpose: making lists
