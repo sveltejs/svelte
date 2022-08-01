@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: August 2022"
-description: "Changes to SvelteKit's `load` before 1.0, better Vite configurations, plus some new HTML and CSS properties!"
+description: "Changes to SvelteKit's `load` before 1.0 plus support for Vite 3 and `vite.config.js`!"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
@@ -65,7 +65,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 
 _Starring the Svelte team_
 - [The Svelte Documentary is out!](https://www.svelteradio.com/episodes/the-svelte-documentary-is-out) on Svelte Radio
-- [Beginner SvelteKit](https://vercel.com/docs/beginner-sveltekit) by Vite
+- [Beginner SvelteKit](https://vercel.com/docs/beginner-sveltekit) by Vercel
 - [Challenge: Explore Svelte by Building a Bubble Popping Game](https://prismic.io/blog/try-svelte-build-game) by Brittney Postma
 - [Let's write a Client-side Routing Library with Svelte](https://www.youtube.com/watch?v=3foVDSknGEY) by lihautan
 - [Svelte Sirens July Talk - Testing in Svelte with Jess Sachs](https://sveltesirens.dev/event/testing-in-svelte)
@@ -104,7 +104,7 @@ _Tech Demos_
 - [Svelte Schema Form](https://github.com/restspace/svelte-schema-form) is a form generator for JSON schema
 - [svelte-gesture](https://github.com/wobsoriano/svelte-gesture) is a library that lets you bind richer mouse and touch events to any component or view
 - [Snap Layout](https://github.com/ThaUnknown/snap-layout) is a window resizing module for PWAs
-- [svelte-adapter-bun](https://github.com/gornostay25/svelte-adapter-bun?c) is an adapter for SvelteKit apps that generates a standalone Bun server
+- [svelte-adapter-bun](https://github.com/gornostay25/svelte-adapter-bun) is an adapter for SvelteKit apps that generates a standalone Bun server
 - [json2dir](https://www.npmjs.com/package/json2dir) converts JSON objects into directory trees
 - [Svelte Command Palette](https://github.com/rohitpotato/svelte-command-palette) is a drop-in command palette component
 - [svelte-use-drop-outside](https://github.com/untemps/svelte-use-drop-outside) is a Svelte action to drop an element outside an area
