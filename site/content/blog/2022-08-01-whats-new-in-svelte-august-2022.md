@@ -103,7 +103,7 @@ _Tech Demos_
 - [Svelte Chrome Storage](https://github.com/shaun-wild/svelte-chrome-storage) is a lightweight abstraction between Svelte stores and Chrome extension storage
 - [Svelte Schema Form](https://github.com/restspace/svelte-schema-form) is a form generator for JSON schema
 - [svelte-gesture](https://github.com/wobsoriano/svelte-gesture) is a library that lets you bind richer mouse and touch events to any component or view
-- [Snap Layout](https://github.com/ThaUnknown/snap-layout) is a window resizing module for PWAs
+- [Snap Layout](https://github.com/ThaUnknown/snap-layout) and [universal-title-bar](https://github.com/ThaUnknown/universal-title-bar) bring Windows 11 snap layout and title features to webapps and PWAs. Both can be imported as a `.svelte` module or as a web component
 - [svelte-adapter-bun](https://github.com/gornostay25/svelte-adapter-bun) is an adapter for SvelteKit apps that generates a standalone Bun server
 - [json2dir](https://www.npmjs.com/package/json2dir) converts JSON objects into directory trees
 - [Svelte Command Palette](https://github.com/rohitpotato/svelte-command-palette) is a drop-in command palette component
