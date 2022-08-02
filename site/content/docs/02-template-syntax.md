@@ -1006,7 +1006,7 @@ Like actions, transitions can have parameters.
 ```sv
 {#if visible}
 	<div transition:fade="{{ duration: 2000 }}">
-		flies in, fades out over two seconds
+		fades in and out over two seconds
 	</div>
 {/if}
 ```
