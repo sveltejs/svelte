@@ -645,12 +645,15 @@ export function head_selector(nodeId: string, head: HTMLElement) {
 	let started = 0;
 
 	for (const node of head.childNodes) {
-		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HEAD_END data-svelte="${nodeId}"`) {
-			started -= 1;
-			result.push(node);
-		} else if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === `HEAD_START data-svelte="${nodeId}"`) {
-			started += 1;
-			result.push(node);
+		if (node.nodeType === 8 /* comment node */) {
+			const comment = node.textContent.trim();
+			if (comment === `HEAD_${nodeId}_END`) {
+				started -= 1;
+				result.push(node);
+			} else if (comment === `HEAD_${nodeId}_START`) {
+				started += 1;
+				result.push(node);
+			}
 		} else if (started > 0) {
 			result.push(node);
 		}
