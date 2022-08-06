@@ -11,6 +11,7 @@
 * Add `ComponentEvents` convenience type ([#7702](https://github.com/sveltejs/svelte/pull/7702))
 * Add `SveltePreprocessor` utility type ([#7742](https://github.com/sveltejs/svelte/pull/7742))
 * Handle arrow function on `<slot>` inside `<svelte:fragment>` ([#7485](https://github.com/sveltejs/svelte/issues/7485))
+* Use `Node.parentNode` instead of `Node.parentElement` for legacy browser support ([#7723](https://github.com/sveltejs/svelte/issues/7723))
 
 ## 3.49.0
 
