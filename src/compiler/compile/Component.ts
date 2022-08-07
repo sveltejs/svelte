@@ -47,6 +47,8 @@ interface ComponentOptions {
 	preserveWhitespace?: boolean;
 }
 
+const regex_leading_directory_separator = /^[/\\]/;
+
 export default class Component {
 	stats: Stats;
 	warnings: Warning[];
@@ -136,7 +138,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-					.replace(/^[/\\]/, '')
+				.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 

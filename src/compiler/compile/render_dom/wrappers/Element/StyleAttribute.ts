@@ -69,6 +69,8 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	}
 }
 
+const regex_style_prop_key = /^\s*([\w-]+):\s*/;
+
 function optimize_style(value: Array<Text | Expression>) {
 	const props: StyleProp[] = [];
 	let chunks = value.slice();
@@ -78,7 +80,7 @@ function optimize_style(value: Array<Text | Expression>) {
 
 		if (chunk.type !== 'Text') return null;
 
-		const key_match = /^\s*([\w-]+):\s*/.exec(chunk.data);
+		const key_match = regex_style_prop_key.exec(chunk.data);
 		if (!key_match) return null;
 
 		const key = key_match[1];

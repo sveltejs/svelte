@@ -45,6 +45,8 @@ export class BaseAttributeWrapper {
 	render(_block: Block) {}
 }
 
+const regex_minus_sign = /-/;
+
 export default class AttributeWrapper extends BaseAttributeWrapper {
 	node: Attribute;
 	parent: ElementWrapper;
@@ -115,7 +117,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = /-/.test(element.node.name)
+		const method = regex_minus_sign.test(element.node.name)
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
 				? '@xlink_attr'

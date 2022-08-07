@@ -988,7 +988,7 @@ export default class Element extends Node {
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
 					if (chunk.type === 'Text') {
-						let data = chunk.data.replace(/[\s\n\t]+/g, ' ');
+						let data = chunk.data.replace(regex_any_repeated_whitespace, ' ');
 						if (index === 0) {
 							data = data.trimLeft();
 						} else if (index === attribute.chunks.length - 1) {
@@ -1002,12 +1002,16 @@ export default class Element extends Node {
 	}
 }
 
+const regex_any_repeated_whitespace = /[\s\n\t]+/g;
+
+const regex_starts_with_vovel = /^[aeiou]/;
+
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];

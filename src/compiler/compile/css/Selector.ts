@@ -281,12 +281,14 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	return true;
 }
 
+const regex_backslash_and_following_character = /\\(.)/g;
+
 function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
 		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+		const name = typeof selector.name === 'string' && selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return BlockAppliesToNode.NotPossible;

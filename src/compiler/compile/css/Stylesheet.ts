@@ -10,8 +10,10 @@ import compiler_warnings from '../compiler_warnings';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
 import { push_array } from '../../utils/push_array';
 
+const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
+
 function remove_css_prefix(name: string): string {
-	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
+	return name.replace(regex_css_browser_prefix, '');
 }
 
 const is_keyframes_node = (node: CssNode) =>
