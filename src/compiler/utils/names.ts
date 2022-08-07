@@ -10,6 +10,7 @@ export const globals = new Set([
 	'clearTimeout',
 	'confirm',
 	'console',
+	'CustomEvent',
 	'Date',
 	'decodeURI',
 	'decodeURIComponent',
