@@ -123,7 +123,7 @@ function processed_tag_to_code(
 }
 
 const regex_whitespace = /\s+/;
-const regex_unquoted_value = /^['"](.*)['"]$/;
+const regex_quoted_value = /^['"](.*)['"]$/;
 
 function parse_tag_attributes(str: string) {
 	// note: won't work with attribute values containing spaces.
@@ -133,7 +133,7 @@ function parse_tag_attributes(str: string) {
 		.reduce((attrs, attr) => {
 			const i = attr.indexOf('=');
 			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
-			const [, unquoted] = (value && value.match(regex_unquoted_value)) || [];
+			const [, unquoted] = (value && value.match(regex_quoted_value)) || [];
 
 			return { ...attrs, [key]: unquoted ?? value ?? true };
 		}, {});
