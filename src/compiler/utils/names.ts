@@ -27,6 +27,7 @@ export const globals = new Set([
 	'globalThis',
 	'history',
 	'HTMLElement',
+	'HTMLCanvasElement',
 	'Infinity',
 	'InternalError',
 	'Intl',
