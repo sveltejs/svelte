@@ -46,6 +46,8 @@ export class BaseAttributeWrapper {
 }
 
 const regex_minus_sign = /-/;
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g; // is 0-9 missing?
+const regex_double_quotes = /"/g;
 
 export default class AttributeWrapper extends BaseAttributeWrapper {
 	node: Attribute;
@@ -198,7 +200,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 	get_init(block: Block, value) {
 		this.last = this.should_cache && block.get_unique_name(
-			`${this.parent.var.name}_${this.name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+			`${this.parent.var.name}_${this.name.replace(regex_invalid_variable_identifier_characters, '_')}_value`
 		);
 
 		if (this.should_cache) block.add_variable(this.last);
@@ -315,7 +317,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
-				? chunk.data.replace(/"/g, '\\"')
+				? chunk.data.replace(regex_double_quotes, '\\"')
 				: `\${${chunk.manipulate()}}`;
 		}).join('')}"`;
 	}

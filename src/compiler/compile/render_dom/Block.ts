@@ -23,6 +23,8 @@ export interface BlockOptions {
 	dependencies?: Set<string>;
 }
 
+const regex_double_quotes = /"/g;
+
 export default class Block {
 	parent?: Block;
 	renderer: Renderer;
@@ -415,7 +417,7 @@ export default class Block {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						source: "${this.comment ? this.comment.replace(regex_double_quotes, '\\"') : ''}",
 						ctx: #ctx
 					});
 					return ${block};`

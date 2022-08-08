@@ -1,6 +1,8 @@
 import Component from '../../../Component';
 import { INode } from '../../../nodes/interfaces';
 
+const regex_whitespace_characters = /\s/g;
+
 export default function create_debugging_comment(
 	node: INode,
 	component: Component
@@ -36,5 +38,5 @@ export default function create_debugging_comment(
 	const start = locate(c);
 	const loc = `(${start.line}:${start.column})`;
 
-	return `${loc} ${source.slice(c, d)}`.replace(/\s/g, ' ');
+	return `${loc} ${source.slice(c, d)}`.replace(regex_whitespace_characters, ' ');
 }

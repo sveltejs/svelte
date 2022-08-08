@@ -15,13 +15,15 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 	return get_attribute_value(attribute);
 }
 
+const regex_double_quotes = /"/g;
+
 export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	if (attribute.chunks.length === 0) return x`""`;
 
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? string_literal(chunk.data.replace(/"/g, '&quot;')) as ESTreeExpression
+				? string_literal(chunk.data.replace(regex_double_quotes, '&quot;')) as ESTreeExpression
 				: x`@escape(${chunk.node}, true)`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);

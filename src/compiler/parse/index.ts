@@ -15,6 +15,8 @@ interface LastAutoClosedTag {
 	depth: number;
 }
 
+const regex_position_indicator = / \(\d+:\d+\)$/;
+
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
@@ -93,7 +95,7 @@ export class Parser {
 	acorn_error(err: any) {
 		this.error({
 			code: 'parse-error',
-			message: err.message.replace(/ \(\d+:\d+\)$/, '')
+			message: err.message.replace(regex_position_indicator, '')
 		}, err.pos);
 	}
 

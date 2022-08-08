@@ -136,6 +136,8 @@ const events = [
 ];
 
 const CHILD_DYNAMIC_ELEMENT_BLOCK = 'child_dynamic_element';
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
+const regex_minus_signs = /-/g;
 
 export default class ElementWrapper extends Wrapper {
 	node: Element;
@@ -182,7 +184,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.var = {
 			type: 'Identifier',
-			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
 		};
 
 		this.void = is_void(node.name);
@@ -320,19 +322,19 @@ export default class ElementWrapper extends Wrapper {
 				}
 			} else if (${previous_tag}) {
 				${
-					has_transitions
-						? b`
+			has_transitions
+				? b`
 							@group_outros();
 							@transition_out(${this.var}, 1, 1, () => {
 								${this.var} = null;
 							});
 							@check_outros();
 						`
-						: b`
+			: b`
 							${this.var}.d(1);
 							${this.var} = null;
 						`
-				}
+			}
 			}
 			${previous_tag} = ${tag};
 		`);
@@ -547,7 +549,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 	}
 
-	add_directives_in_order (block: Block) {
+	add_directives_in_order(block: Block) {
 		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
 		const binding_groups = events
@@ -561,7 +563,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 
-		function getOrder (item: OrderedAttribute) {
+		function getOrder(item: OrderedAttribute) {
 			if (item instanceof EventHandler) {
 				return item.node.start;
 			} else if (item instanceof Binding) {
@@ -674,9 +676,9 @@ export default class ElementWrapper extends Wrapper {
 			function ${handler}(${params}) {
 				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
-					.filter(dep => dep[0] !== '$')
-					.filter(dep => !contextual_dependencies.has(dep))
-					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+			.filter(dep => dep[0] !== '$')
+			.filter(dep => !contextual_dependencies.has(dep))
+			.map(dep => b`${this.renderer.invalidate(dep)};`)}
 			}
 		`);
 
@@ -1100,7 +1102,7 @@ export default class ElementWrapper extends Wrapper {
 			const snippet = expression.manipulate(block);
 			let cached_snippet;
 			if (should_cache) {
-				cached_snippet = block.get_unique_name(`style_${name.replace(/-/g, '_')}`);
+				cached_snippet = block.get_unique_name(`style_${name.replace(regex_minus_signs, '_')}`);
 				block.add_variable(cached_snippet, snippet);
 			}
 
@@ -1154,10 +1156,14 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				can_use_raw_text
 			);
 
+			const regex_backslashes = /\\/g;
+			const regex_backticks = /`/g;
+			const regex_dollar_signs = /\$/g;
+
 			state.quasi.value.raw += (raw ? wrapper.data : escape_html(wrapper.data))
-				.replace(/\\/g, '\\\\')
-				.replace(/`/g, '\\`')
-				.replace(/\$/g, '\\$');
+				.replace(regex_backslashes, '\\\\')
+				.replace(regex_backticks, '\\`')
+				.replace(regex_dollar_signs, '\\$');
 		} else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));

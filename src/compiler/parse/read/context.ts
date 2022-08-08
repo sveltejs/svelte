@@ -11,6 +11,8 @@ import { parse_expression_at } from '../acorn';
 import { Pattern } from 'estree';
 import parser_errors from '../errors';
 
+const regex_not_newline_characters = /[^\n]/g;
+
 export default function read_context(
 	parser: Parser
 ): Pattern & { start: number; end: number } {
@@ -65,7 +67,7 @@ export default function read_context(
 		// so we offset it by removing 1 character in the `space_with_newline`
 		// to achieve that, we remove the 1st space encountered,
 		// so it will not affect the `column` of the node
-		let space_with_newline = parser.template.slice(0, start).replace(/[^\n]/g, ' ');
+		let space_with_newline = parser.template.slice(0, start).replace(regex_not_newline_characters, ' ');
 		const first_space = space_with_newline.indexOf(' ');
 		space_with_newline = space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 

@@ -108,6 +108,8 @@ function optimize_style(value: Array<Text | Expression>) {
 	return props;
 }
 
+const regex_important_flag = /\s*!important\s*$/;
+
 function get_style_value(chunks: Array<Text | Expression>) {
 	const value: Array<Text | Expression> = [];
 
@@ -174,9 +176,9 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	let important = false;
 
 	const last_chunk = value[value.length - 1];
-	if (last_chunk && last_chunk.type === 'Text' && /\s*!important\s*$/.test(last_chunk.data)) {
+	if (last_chunk && last_chunk.type === 'Text' && regex_important_flag.test(last_chunk.data)) {
 		important = true;
-		last_chunk.data = last_chunk.data.replace(/\s*!important\s*$/, '');
+		last_chunk.data = last_chunk.data.replace(regex_important_flag, '');
 		if (!last_chunk.data) value.pop();
 	}
 
