@@ -138,7 +138,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-				.replace(regex_leading_directory_separator, '')
+					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -1091,7 +1091,7 @@ export default class Component {
 
 						this.replace(b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${ props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
 						` as any);
 						return this.skip();
@@ -1475,7 +1475,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, {code, message}) {
+	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
 		const chunk = value[0];
 

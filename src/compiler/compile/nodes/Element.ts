@@ -203,6 +203,8 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 	}
 }
 
+const regex_any_repeated_whitespace = /[\s\n\t]+/g;
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -1001,8 +1003,6 @@ export default class Element extends Node {
 		});
 	}
 }
-
-const regex_any_repeated_whitespace = /[\s\n\t]+/g;
 
 const regex_starts_with_vovel = /^[aeiou]/;
 
