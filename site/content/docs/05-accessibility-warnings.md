@@ -54,17 +54,6 @@ The following elements are visually distracting: `<marquee>` and `<blink>`.
 
 ---
 
-### `role-has-required-aria-props`
-
-Elements with ARIA roles must have all required attributes for that role.
-
-```sv
-<!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
-<span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
-```
-
----
-
 ### `a11y-hidden`
 
 Certain DOM elements are useful for screen reader navigation and should not be hidden.
@@ -268,6 +257,17 @@ Avoid positive `tabindex` property values. This will move elements out of the ex
 ```sv
 <!-- A11y: avoid tabindex values above zero -->
 <div tabindex='1'/>
+```
+
+---
+
+### `a11y-role-has-required-aria-props`
+
+Elements with ARIA roles must have all required attributes for that role.
+
+```sv
+<!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
+<span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
 ```
 
 ---
