@@ -17,7 +17,7 @@ export default class AbstractBlock extends Node {
 
 		const child = this.children[0];
 
-		if (!child || (child.type === 'Text' && !/[^ \r\n\f\v\t]/.test(child.data))) {
+		if (!child || (child.type === 'Text' && !/[^\s]/.test(child.data))) {
 			this.component.warn(this, compiler_warnings.empty_block);
 		}
 	}

@@ -61,6 +61,8 @@ function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boo
 	return [new_table, idx_map, val_changed, idx_changed];
 }
 
+const regex_line_token = /([^\d\w\s]|\s+)/g;
+
 export class MappedCode {
 	string: string;
 	map: DecodedSourceMap;
@@ -182,8 +184,6 @@ export class MappedCode {
 		return new MappedCode(string, map);
 	}
 
-	private static regex_line_token = /([^\d\w\s]|\s+)/g;
-
 	static from_source({ source, file_basename, get_location }: Source): MappedCode {
 		let offset: SourceLocation = get_location(0);
 
@@ -197,7 +197,7 @@ export class MappedCode {
 		const line_list = source.split('\n');
 		for (let line = 0; line < line_list.length; line++) {
 			map.mappings.push([]);
-			const token_list = line_list[line].split(this.regex_line_token);
+			const token_list = line_list[line].split(regex_line_token);
 			for (let token = 0, column = 0; token < token_list.length; token++) {
 				if (token_list[token] == '') continue;
 				map.mappings[line].push([column, 0, offset.line + line, column]);

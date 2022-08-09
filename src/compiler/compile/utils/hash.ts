@@ -1,9 +1,9 @@
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 
-const const_return_characters = /\r/g;
+const regex_return_characters = /\r/g;
 
 export default function hash(str: string): string {
-	str = str.replace(const_return_characters, '');
+	str = str.replace(regex_return_characters, '');
 	let hash = 5381;
 	let i = str.length;
 
