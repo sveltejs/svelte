@@ -153,6 +153,55 @@ There are two supported ways to associate a label with a control:
 <label>A</label>
 ```
 
+If your label and input are Svelte components, you can configure the rule to be aware of your custom components.
+
+```svelte
+<CustomInputLabel label="Surname">
+  <CustomInput type="text" bind:value />
+</CustomInputLabel>
+```
+
+And the configuration:
+
+```js
+// svelte.config.js
+export default {
+  compilerOptions: {
+		a11y: {
+			rules: {
+				'label-has-associated-control': {
+					labelComponents: ['CustomInputLabel'],
+      		controlComponents: ['CustomInput'],
+				}
+			}
+		}
+	},
+}
+```
+
+**Configuration**
+
+```js
+// svelte.config.js
+export default {
+  compilerOptions: {
+		a11y: {
+			rules: {
+				'label-has-associated-control': {
+					labelComponents: ['CustomInputLabel'],
+      		controlComponents: ['CustomInput'],
+      		depth: 3,
+				}
+			}
+		}
+	},
+}
+```
+
+- `labelComponents` is a list of Svelte component names that should be checked for an associated control.
+- `controlComponents` is a list of Svelte component names that will output an input element.
+- `depth` (default 3, max 25) is an integer that determines how deep within the label element the rule should look for an element to determine if the label element has associated control.
+
 ---
 
 ### `a11y-media-has-caption`

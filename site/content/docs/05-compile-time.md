@@ -84,6 +84,7 @@ The following options can be passed to the compiler. None are required:
 | `cssOutputFilename` | `null` | A `string` used for your CSS sourcemap.
 | `sveltePath` | `"svelte"` | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.
 | `namespace` | `"html"` | The namespace of the element; e.g., `"mathml"`, `"svg"`, `"foreign"`.
+| `a11y` | `null` | Rule configurations for accessibility checks. Check [individual rules](#accessibility-warnings) for more details.
 
 ---
 

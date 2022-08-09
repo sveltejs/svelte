@@ -41,14 +41,14 @@ interface DebugTag extends BaseNode {
 }
 
 export type DirectiveType = 'Action'
-| 'Animation'
-| 'Binding'
-| 'Class'
-| 'StyleDirective'
-| 'EventHandler'
-| 'Let'
-| 'Ref'
-| 'Transition';
+	| 'Animation'
+	| 'Binding'
+	| 'Class'
+	| 'StyleDirective'
+	| 'EventHandler'
+	| 'Let'
+	| 'Ref'
+	| 'Transition';
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
@@ -88,16 +88,16 @@ export interface Transition extends BaseExpressionDirective {
 export type Directive = BaseDirective | BaseExpressionDirective | Transition;
 
 export type TemplateNode = Text
-| ConstTag
-| DebugTag
-| MustacheTag
-| BaseNode
-| Element
-| Attribute
-| SpreadAttribute
-| Directive
-| Transition
-| Comment;
+	| ConstTag
+	| DebugTag
+	| MustacheTag
+	| BaseNode
+	| Element
+	| Attribute
+	| SpreadAttribute
+	| Directive
+	| Transition
+	| Comment;
 
 export interface Parser {
 	readonly template: string;
@@ -186,6 +186,16 @@ export interface CompileOptions {
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
+
+	a11y?: {
+		rules?: {
+			'label-has-associated-control'?: {
+				labelComponents?: string[];
+				controlComponents?: string[];
+				depth?: number;
+			};
+		};
+	};
 }
 
 export interface ParserOptions {

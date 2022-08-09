@@ -24,7 +24,15 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
+import {
+	is_interactive_element,
+	is_non_interactive_roles,
+	is_presentation_role,
+	is_interactive_roles,
+	is_hidden_from_screen_reader,
+	is_semantic_role_element,
+	may_contain_input_child,
+} from "../utils/a11y";
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -62,17 +70,6 @@ const a11y_required_content = new Set([
 	'h4',
 	'h5',
 	'h6'
-]);
-
-const a11y_labelable = new Set([
-	'button',
-	'input',
-	'keygen',
-	'meter',
-	'output',
-	'progress',
-	'select',
-	'textarea'
 ]);
 
 const a11y_nested_implicit_semantics = new Map([
@@ -413,12 +410,12 @@ export default class Element extends Node {
 				}
 
 				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+					{
+						const transition = new Transition(component, this, scope, node);
+						if (node.intro) this.intro = transition;
+						if (node.outro) this.outro = transition;
+						break;
+					}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -790,24 +787,8 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-			const has_input_child = (children: INode[]) => {
-				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
-					return true;
-				}
-
-				for (const child of children) {
-					if (!('children' in child) || child.children.length === 0) {
-						continue;
-					}
-					if (has_input_child(child.children)) {
-						return true;
-					}
-				}
-
-				return false;
-			};
-
-			if (!attribute_map.has('for') && !has_input_child(this.children)) {
+			const rule_options = component.compile_options.a11y?.rules?.['label-has-associated-control'];
+			if (!attribute_map.has('for') && !may_contain_input_child(this, rule_options)) {
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}

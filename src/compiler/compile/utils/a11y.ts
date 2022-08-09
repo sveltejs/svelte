@@ -5,7 +5,9 @@ import {
 	ARIARoleRelationConcept
 } from 'aria-query';
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
+import { CompileOptions } from '../../interfaces';
 import Attribute from '../nodes/Attribute';
+import { INode } from '../nodes/interfaces';
 
 const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract);
 
@@ -159,4 +161,46 @@ export function is_semantic_role_element(role: ARIARoleDefintionKey, tag_name: s
 		}
 	}
 	return false;
+}
+
+const a11y_labelable = new Set([
+	'button',
+	'input',
+	'keygen',
+	'meter',
+	'output',
+	'progress',
+	'select',
+	'textarea'
+]);
+
+export function may_contain_input_child(
+	root: INode,
+	rule_options: CompileOptions['a11y']['rules']['label-has-associated-control']
+): boolean {
+	// magic number inspired from https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/rules/label-has-associated-control.js
+	const max_depth = Math.min(rule_options?.depth ?? 3, 25);
+	const additional_component_names = rule_options?.controlComponents;
+
+	function traverse_children(
+		node: INode,
+		depth: number
+	): boolean {
+		// Bail when max_depth is exceeded.
+		if (depth > max_depth) {
+			return false;
+		}
+		if ('children' in node) {
+			for (const child of node.children) {
+				if ('name' in child && (a11y_labelable.has(child.name) || child.name === 'slot' || additional_component_names?.includes(child.name))) {
+					return true;
+				}
+				if (traverse_children(child, depth + 1)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	return traverse_children(root, 1);
 }

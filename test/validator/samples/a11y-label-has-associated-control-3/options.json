@@ -1,0 +1,10 @@
+{
+  "a11y": {
+    "rules": {
+      "label-has-associated-control": {
+        "labelComponents": ["MyLabel"],
+        "controlComponents": ["MyInput"]
+      }
+    }
+  }
+}

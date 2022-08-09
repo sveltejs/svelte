@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-label-has-associated-control",
+		"message": "A11y: A form label must be associated with a control.",
+		"pos": 151,
+		"start": {
+			"character": 151,
+			"column": 0,
+			"line": 7
+		},
+		"end": {
+			"character": 173,
+			"column": 22,
+			"line": 7
+		}
+	}
+]
