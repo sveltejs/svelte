@@ -4,7 +4,7 @@ import Node from './Node';
 import { INode } from '../interfaces';
 import compiler_warnings from '../../compiler_warnings';
 
-const regex_non_whitespace_characters = /\S/;
+const regex_non_whitespace_characters = /[^ \r\n\f\v\t]/;
 
 export default class AbstractBlock extends Node {
 	block: Block;
