@@ -34,8 +34,8 @@ interface BindingGroup {
 	bindings: Binding[];
 }
 
-const regex_radio_or_checkbox_or_file = /radio|checkbox|file/;
-const regex_radio_or_checkbox_or_range_or_file = /radio|checkbox|range|file/;
+const regex_contains_radio_or_checkbox_or_file = /radio|checkbox|file/;
+const regex_contains_radio_or_checkbox_or_range_or_file = /radio|checkbox|range|file/;
 
 const events = [
 	{
@@ -43,7 +43,7 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
 			node.name === 'input' &&
-			!regex_radio_or_checkbox_or_range_or_file.test(node.get_static_attribute_value('type') as string)
+			!regex_contains_radio_or_checkbox_or_range_or_file.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['input'],
@@ -56,7 +56,7 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
 			node.name === 'input' &&
-			regex_radio_or_checkbox_or_file.test(node.get_static_attribute_value('type') as string)
+			regex_contains_radio_or_checkbox_or_file.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
@@ -1145,6 +1145,10 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
+const regex_backslashes = /\\/g;
+const regex_backticks = /`/g;
+const regex_dollar_signs = /\$/g;
+
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
@@ -1160,10 +1164,6 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 				parent.name === 'style' ||
 				can_use_raw_text
 			);
-
-			const regex_backslashes = /\\/g;
-			const regex_backticks = /`/g;
-			const regex_dollar_signs = /\$/g;
 
 			state.quasi.value.raw += (raw ? wrapper.data : escape_html(wrapper.data))
 				.replace(regex_backslashes, '\\\\')

@@ -46,7 +46,7 @@ export class BaseAttributeWrapper {
 }
 
 const regex_minus_sign = /-/;
-const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g; // is 0-9 missing?
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 const regex_double_quotes = /"/g;
 
 export default class AttributeWrapper extends BaseAttributeWrapper {
@@ -385,7 +385,7 @@ function should_cache(attribute: AttributeWrapper) {
 	return attribute.is_src || attribute.node.should_cache();
 }
 
-const regex_checked_or_group = /checked|group/;
+const regex_contains_checked_or_group = /checked|group/;
 
 function is_indirectly_bound_value(attribute: AttributeWrapper) {
 	const element = attribute.parent;
@@ -393,6 +393,6 @@ function is_indirectly_bound_value(attribute: AttributeWrapper) {
 		(element.node.name === 'option' || // TODO check it's actually bound
 			(element.node.name === 'input' &&
 				element.node.bindings.some(
-					(binding) => regex_checked_or_group.test(binding.name)
+					(binding) => regex_contains_checked_or_group.test(binding.name)
 				)));
 }

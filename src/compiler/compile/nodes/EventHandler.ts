@@ -6,7 +6,7 @@ import { Identifier } from 'estree';
 import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
 
-const regex_FunctionExpression = /FunctionExpression/;
+const regex_contains_FunctionExpression = /FunctionExpression/;
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
@@ -27,7 +27,7 @@ export default class EventHandler extends Node {
 			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.uses_context = this.expression.uses_context;
 
-			if (regex_FunctionExpression.test(info.expression.type) && info.expression.params.length === 0) {
+			if (regex_contains_FunctionExpression.test(info.expression.type) && info.expression.params.length === 0) {
 				// TODO make this detection more accurate — if `event.preventDefault` isn't called, and
 				// `event` is passed to another function, we can make it passive
 				this.can_make_passive = true;
@@ -57,7 +57,7 @@ export default class EventHandler extends Node {
 		}
 		const node = this.expression.node;
 
-		if (regex_FunctionExpression.test(node.type)) {
+		if (regex_contains_FunctionExpression.test(node.type)) {
 			return false;
 		}
 

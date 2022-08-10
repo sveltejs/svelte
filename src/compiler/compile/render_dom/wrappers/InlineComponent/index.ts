@@ -24,7 +24,7 @@ import { namespaces } from '../../../../utils/namespaces';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
-const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g; // is 0-9 missing?
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
