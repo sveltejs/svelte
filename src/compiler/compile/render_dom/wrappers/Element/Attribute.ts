@@ -42,7 +42,7 @@ export class BaseAttributeWrapper {
 		}
 	}
 
-	render(_block: Block) {}
+	render(_block: Block) { }
 }
 
 const regex_minus_sign = /-/;
@@ -385,13 +385,14 @@ function should_cache(attribute: AttributeWrapper) {
 	return attribute.is_src || attribute.node.should_cache();
 }
 
+const regex_checked_or_group = /checked|group/;
+
 function is_indirectly_bound_value(attribute: AttributeWrapper) {
 	const element = attribute.parent;
 	return attribute.name === 'value' &&
 		(element.node.name === 'option' || // TODO check it's actually bound
 			(element.node.name === 'input' &&
 				element.node.bindings.some(
-					(binding) =>
-						/checked|group/.test(binding.name)
+					(binding) => regex_checked_or_group.test(binding.name)
 				)));
 }

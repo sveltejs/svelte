@@ -203,7 +203,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 	}
 }
 
-const regex_any_repeated_whitespace = /[\s]+/g;
+const regex_any_repeated_whitespaces = /[\s]+/g;
+const regex_heading_tags = /^h[1-6]$/;
+const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
+const regex_non_whitespace_characters = /\S/;
 
 export default class Element extends Node {
 	type: 'Element';
@@ -400,7 +403,7 @@ export default class Element extends Node {
 
 			// Errors
 
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+			if (regex_illegal_attribute_character.test(name)) {
 				return component.error(attribute, compiler_errors.illegal_attribute(name));
 			}
 
@@ -466,7 +469,7 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_unknown_aria_attribute(type, match));
 				}
 
-				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+				if (name === 'aria-hidden' && regex_heading_tags.test(this.name)) {
 					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
 				}
 
@@ -731,7 +734,7 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
+				if (node.type === 'Text') return regex_non_whitespace_characters.test(node.data);
 				return true;
 			});
 
@@ -990,7 +993,7 @@ export default class Element extends Node {
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
 					if (chunk.type === 'Text') {
-						let data = chunk.data.replace(regex_any_repeated_whitespace, ' ');
+						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
 						if (index === 0) {
 							data = data.trimLeft();
 						} else if (index === attribute.chunks.length - 1) {
@@ -1019,10 +1022,12 @@ function should_have_attribute(
 	node.component.warn(node, compiler_warnings.a11y_missing_attribute(name, article, sequence));
 }
 
+const regex_minus_sign = /-/;
+
 function within_custom_element(parent: INode) {
 	while (parent) {
 		if (parent.type === 'InlineComponent') return false;
-		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		if (parent.type === 'Element' && regex_minus_sign.test(parent.name)) return true;
 		parent = parent.parent;
 	}
 	return false;

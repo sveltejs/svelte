@@ -50,6 +50,8 @@ function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
 }
 
+const regex_starts_with_whitespace = /^\s/;
+
 export default class FragmentWrapper {
 	nodes: Wrapper[];
 
@@ -92,7 +94,7 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const should_trim = (
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
+						next_sibling ? (next_sibling.node.type === 'Text' && regex_starts_with_whitespace.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
 					);
 
 					if (should_trim && !child.keep_space()) {

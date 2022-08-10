@@ -55,6 +55,7 @@ function parent_is_head(stack) {
 
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
+const regex_capital_letter = /[A-Z]/;
 
 export default function tag(parser: Parser) {
 	const start = parser.index++;
@@ -107,7 +108,7 @@ export default function tag(parser: Parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
+		: (regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 			: name === 'svelte:fragment' ? 'SlotTemplate'
 				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';

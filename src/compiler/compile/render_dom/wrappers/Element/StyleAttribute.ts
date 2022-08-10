@@ -109,6 +109,7 @@ function optimize_style(value: Array<Text | Expression>) {
 }
 
 const regex_important_flag = /\s*!important\s*$/;
+const regex_semicolon_or_Whitespace = /[;\s]/;
 
 function get_style_value(chunks: Array<Text | Expression>) {
 	const value: Array<Text | Expression> = [];
@@ -155,7 +156,7 @@ function get_style_value(chunks: Array<Text | Expression>) {
 				} as Text);
 			}
 
-			while (/[;\s]/.test(chunk.data[c])) c += 1;
+			while (regex_semicolon_or_Whitespace.test(chunk.data[c])) c += 1;
 			const remaining_data = chunk.data.slice(c);
 
 			if (remaining_data) {

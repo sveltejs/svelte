@@ -48,6 +48,8 @@ interface ComponentOptions {
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
+const regex_starts_with_Export = /^Export/;
+const regex_contains_Function = /Function/;
 
 export default class Component {
 	stats: Stats;
@@ -640,7 +642,7 @@ export default class Component {
 				body.splice(i, 1);
 			}
 
-			if (/^Export/.test(node.type)) {
+			if (regex_starts_with_Export.test(node.type)) {
 				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
@@ -797,7 +799,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				if (/^Export/.test(node.type)) {
+				if (regex_starts_with_Export.test(node.type)) {
 					const replacement = component.extract_exports(node);
 					if (replacement) {
 						this.replace(replacement);
@@ -920,7 +922,7 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+					if (!((regex_contains_Function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -967,7 +969,7 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node: Node) {
-				if (/Function/.test(node.type)) {
+				if (regex_contains_Function.test(node.type)) {
 					return this.skip();
 				}
 
@@ -1462,6 +1464,8 @@ export default class Component {
 	}
 }
 
+const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
+
 function process_component_options(component: Component, nodes) {
 	const component_options: ComponentOptions = {
 		immutable: component.compile_options.immutable || false,
@@ -1507,7 +1511,7 @@ function process_component_options(component: Component, nodes) {
 							return component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !regex_valid_tag_name.test(tag)) {
 							return component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 

@@ -21,6 +21,8 @@ import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
+const regex_FunctionExpression = /FunctionExpression/;
+
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
@@ -72,7 +74,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (!function_expression && /FunctionExpression/.test(node.type)) {
+				if (!function_expression && regex_FunctionExpression.test(node.type)) {
 					function_expression = node;
 				}
 

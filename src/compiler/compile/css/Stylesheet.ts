@@ -118,6 +118,9 @@ class Rule {
 	}
 }
 
+const regex_only_whitespace = /^\s+$/;
+const regex_whitespace = /\s/;
+
 class Declaration {
 	node: CssNode;
 
@@ -149,10 +152,10 @@ class Declaration {
 
 		// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
 		// treat --foo: ; and --foo:; differently
-		if (first.type === 'Raw' && /^\s+$/.test(first.value)) return;
+		if (first.type === 'Raw' && regex_only_whitespace.test(first.value)) return;
 
 		let start = first.start;
-		while (/\s/.test(code.original[start])) start += 1;
+		while (regex_whitespace.test(code.original[start])) start += 1;
 
 		if (start - c > 1) {
 			code.overwrite(c, start, ':');

@@ -6,6 +6,8 @@ import TemplateScope from './shared/TemplateScope';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 
+const regex_non_whitespace_characters = /\S/;
+
 export default class Head extends Node {
 	type: 'Head';
 	children: any[]; // TODO
@@ -20,7 +22,7 @@ export default class Head extends Node {
 		}
 
 		this.children = map_children(component, parent, scope, info.children.filter(child => {
-			return (child.type !== 'Text' || /\S/.test(child.data));
+			return (child.type !== 'Text' || regex_non_whitespace_characters.test(child.data));
 		}));
 
 		if (this.children.length > 0) {
