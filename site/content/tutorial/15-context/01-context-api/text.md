@@ -33,7 +33,7 @@ const map = getMap();
 
 The markers can now add themselves to the map.
 
-> A more finished version of `<MapMarker>` would also handle removal and prop changes, but we're only demonstrating context here.
+> A more refined version of `<MapMarker>` would also handle removal and prop changes, but we're only demonstrating context here.
 
 ## Context keys
 
