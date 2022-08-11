@@ -136,7 +136,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			child.render(block, null, x`#nodes` as Identifier);
 		});
 
-		let props;
+		let props: Identifier | undefined;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
@@ -229,7 +229,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 					const unchanged = dependencies.size === 0;
 
-					let change_object;
+					let change_object: Node | ReturnType<typeof x>;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);

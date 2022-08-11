@@ -168,7 +168,7 @@ export default class Renderer {
 		return member;
 	}
 
-	invalidate(name: string, value?, main_execution_context: boolean = false) {
+	invalidate(name: string, value?: unknown, main_execution_context: boolean = false) {
 		return renderer_invalidate(this, name, value, main_execution_context);
 	}
 

@@ -1,7 +1,7 @@
 import { b, x } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
-import { Expression } from 'estree';
+import { Expression, Node } from 'estree';
 import is_contextual from '../../../nodes/shared/is_contextual';
 
 export default function add_actions(
@@ -14,8 +14,8 @@ export default function add_actions(
 
 export function add_action(block: Block, target: string | Expression, action: Action) {
 	const { expression, template_scope } = action;
-	let snippet;
-	let dependencies;
+	let snippet: Node | undefined;
+	let dependencies: string[] | undefined;
 
 	if (expression) {
 		snippet = expression.manipulate(block);
