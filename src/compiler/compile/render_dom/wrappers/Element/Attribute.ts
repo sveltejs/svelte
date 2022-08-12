@@ -390,6 +390,7 @@ const boolean_attribute = new Set([
 	'disabled',
 	'formnovalidate',
 	'hidden',
+	'inert',
 	'ismap',
 	'itemscope',
 	'loop',
