@@ -16,14 +16,17 @@ const SPECIALS = ['global', 'globalThis', 'InternalError', 'process', 'undefined
 const get_url = (name) => `https://raw.githubusercontent.com/microsoft/TypeScript/main/lib/lib.${name}.d.ts`;
 const extract_name = (split) => split.match(/^[a-zA-Z0-9_$]+/)[0];
 
-const extract_functions_and_references = (data) => {
+const extract_functions_and_references = (name, data) => {
 	const functions = [];
 	const references = [];
 	data.split('\n').forEach(line => {
 		const trimmed = line.trim();
 		const split = trimmed.replace(/[\s+]/, ' ').split(' ');
-		if (split[0] === 'declare') functions.push(extract_name(split[2]));
-		else if (trimmed.startsWith('/// <reference')) {
+		if (split[0] === 'declare') {
+			// MEMO: ignore `declare type xxx` statement in lib.es5.d.ts.
+			//       Because all of these are TypeScript types. (not exists in runtime.)
+			if (name !== 'es5' || split[1] !== 'type') functions.push(extract_name(split[2]));
+		} else if (trimmed.startsWith('/// <reference')) {
 			const matched = trimmed.match(/ lib="(.+)"/);
 			const reference = matched && matched[1];
 			if (reference) references.push(reference);
@@ -50,7 +53,7 @@ const get_functions = async (name) => {
 	if (fetched_names.has(name)) return res;
 	fetched_names.add(name);
 	const body = await do_get(get_url(name));
-	const { functions, references } = extract_functions_and_references(body);
+	const { functions, references } = extract_functions_and_references(name, body);
 	res.push(...functions);
 	const chile_functions = await Promise.all(references.map(get_functions));
 	chile_functions.forEach(i => res.push(...i));
