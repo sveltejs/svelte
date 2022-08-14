@@ -15,8 +15,7 @@ const extract_interfaces_and_references = (data) => {
 	data.split('\n').forEach(line => {
 		const trimmed = line.trim();
 		const split = trimmed.replace(/[\s+]/, ' ').split(' ');
-		if (split[0] === 'interface') interfaces.push(extract_name(split[1]));
-		else if (split[0] === 'declare') interfaces.push(extract_name(split[2]));
+		if (split[0] === 'declare') interfaces.push(extract_name(split[2]));
 		else if (trimmed.startsWith('/// <reference')) {
 			const reference = trimmed.match(/lib="(.+)"/)[1];
 			if (reference) references.push(reference);
@@ -51,6 +50,6 @@ const get_interfaces = async (name) => {
 	const interfaces = await get_interfaces('es2021.full');
 	// MEMO: add additional objects/interfaces which existed in `src/compiler/utils/names.ts`
 	//       before this script was introduced but could not be retrieved by this process.
-	interfaces.push(...['globalThis', 'InternalError', 'process', 'undefined']);
+	interfaces.push(...['global', 'globalThis', 'InternalError', 'process', 'undefined']);
 	new Set(interfaces.sort()).forEach((i) => console.log(`'${i}',`));
 })();
