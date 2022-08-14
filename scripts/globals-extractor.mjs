@@ -9,6 +9,10 @@ see: https://github.com/microsoft/TypeScript/tree/main/lib
 import http from 'https';
 import fs from 'fs';
 
+// MEMO: add additional objects/functions which existed in `src/compiler/utils/names.ts`
+//       before this script was introduced but could not be retrieved by this process.
+const SPECIALS = ['global', 'globalThis', 'InternalError', 'process', 'undefined'];
+
 const get_url = (name) => `https://raw.githubusercontent.com/microsoft/TypeScript/main/lib/lib.${name}.d.ts`;
 const extract_name = (split) => split.match(/^[a-zA-Z0-9_$]+/)[0];
 
@@ -20,7 +24,8 @@ const extract_functions_and_references = (data) => {
 		const split = trimmed.replace(/[\s+]/, ' ').split(' ');
 		if (split[0] === 'declare') functions.push(extract_name(split[2]));
 		else if (trimmed.startsWith('/// <reference')) {
-			const reference = trimmed.match(/lib="(.+)"/)[1];
+			const matched = trimmed.match(/ lib="(.+)"/);
+			const reference = matched && matched[1];
 			if (reference) references.push(reference);
 		}
 	});
@@ -39,8 +44,11 @@ const do_get = (url) => new Promise((resolve, reject) => {
 	});
 });
 
+const fetched_names = new Set();
 const get_functions = async (name) => {
 	const res = [];
+	if (fetched_names.has(name)) return res;
+	fetched_names.add(name);
 	const body = await do_get(get_url(name));
 	const { functions, references } = extract_functions_and_references(body);
 	res.push(...functions);
@@ -65,8 +73,6 @@ ${sorted.map((i) => `\t'${i}'`).join(',\n')}
 
 (async () => {
 	const functions = await get_functions('es2021.full');
-	// MEMO: add additional objects/functions which existed in `src/compiler/utils/names.ts`
-	//       before this script was introduced but could not be retrieved by this process.
-	functions.push(...['global', 'globalThis', 'InternalError', 'process', 'undefined']);
+	functions.push(...SPECIALS);
 	fs.writeFileSync('src/compiler/utils/globals.ts', build_output(functions));
 })();
