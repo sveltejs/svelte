@@ -1,7 +1,8 @@
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
+import { reserved, is_valid } from '../utils/names';
+import globals from '../utils/globals';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import {
