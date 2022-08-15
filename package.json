@@ -17,6 +17,7 @@
     "easing",
     "motion",
     "action",
+    "html",
     "README.md"
   ],
   "exports": {
@@ -74,6 +75,9 @@
       "types": "./types/runtime/transition/index.d.ts",
       "import": "./transition/index.mjs",
       "require": "./transition/index.js"
+    },
+    "./html": {
+      "types": "./html/index.d.ts"
     },
     "./ssr": {
       "types": "./types/runtime/index.d.ts",

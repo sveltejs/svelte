@@ -84,7 +84,7 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
 	'on:input'?: FormEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
-	'on:submit'?: EventHandler<SubmitEvent, T> | undefined | null;
+	'on:submit'?: EventHandler<Event, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
 
 
@@ -1071,10 +1071,10 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window>  {
 	scrollY?: Window['scrollY'] | undefined | null;
 	readonly online?: Window['navigator']['onLine'] | undefined | null;
 
-	// Transformed from on:sveltekit:xy
-	'onsveltekit:start'?: EventHandler<CustomEvent, Window> | undefined | null;
-	'onsveltekit:navigation-start'?: EventHandler<CustomEvent, Window> | undefined | null;
-	'onsveltekit:navigation-end'?: EventHandler<CustomEvent, Window> | undefined | null;
+	// SvelteKit
+	'on:sveltekit:start'?: EventHandler<CustomEvent, Window> | undefined | null;
+	'on:sveltekit:navigation-start'?: EventHandler<CustomEvent, Window> | undefined | null;
+	'on:sveltekit:navigation-end'?: EventHandler<CustomEvent, Window> | undefined | null;
 
 	'on:devicelight'?: EventHandler<Event, Window> | undefined | null;
 	'on:beforeinstallprompt'?: EventHandler<Event, Window> | undefined | null;
