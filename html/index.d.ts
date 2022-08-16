@@ -1066,7 +1066,7 @@ export interface SvelteMediaTimeRange {
 	end: number;
 }
 
-export interface SvelteWindowAttributes extends HTMLAttributes<Window>  {
+export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 	readonly innerWidth?: Window['innerWidth'] | undefined | null;
 	readonly innerHeight?: Window['innerHeight'] | undefined | null;
 	readonly outerWidth?: Window['outerWidth'] | undefined | null;
