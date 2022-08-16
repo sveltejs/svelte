@@ -1024,7 +1024,7 @@ export interface TdHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	abbr?: string | undefined | null;
 	height?: number | string | undefined | null;
 	width?: number | string | undefined | null;
-	valign?: "top" | "middle" | "bottom" | "baseline" | undefined | null;
+	valign?: 'top' | 'middle' | 'bottom' | 'baseline' | undefined | null;
 }
 
 export interface ThHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
