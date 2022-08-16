@@ -701,7 +701,7 @@ export interface IframeHTMLAttributes extends HTMLAttributes<HTMLIFrameElement> 
 export interface ImgHTMLAttributes extends HTMLAttributes<HTMLImageElement> {
 	alt?: string | undefined | null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
-	decoding?: "async" | "auto" | "sync" | undefined | null;
+	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
 	loading?: "eager" | "lazy" | undefined | null;
