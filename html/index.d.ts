@@ -569,9 +569,9 @@ export interface AnchorHTMLAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
 
 	// SvelteKit
-	"sveltekit:noscroll"?: true | undefined | null;
-	"sveltekit:prefetch"?: true | undefined | null;
-	"sveltekit:reload"?: true | undefined | null;
+	'sveltekit:noscroll'?: true | undefined | null;
+	'sveltekit:prefetch'?: true | undefined | null;
+	'sveltekit:reload'?: true | undefined | null;
 
 	// Sapper
     "sapper:noscroll"?: true | undefined | null;
