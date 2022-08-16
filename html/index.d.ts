@@ -482,7 +482,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	style?: string | undefined | null;
 	tabindex?: number | undefined | null;
 	title?: string | undefined | null;
-	translate?: "yes" | "no" | "" | undefined | null;
+	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
 
 	// Unknown
