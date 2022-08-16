@@ -1517,7 +1517,6 @@ export interface SvelteHTMLElements {
 	video: VideoHTMLAttributes;
 	wbr: HTMLAttributes<HTMLElement>;
 	webview: WebViewHTMLAttributes;
-	
 	// SVG
 	svg: SVGAttributes<SVGSVGElement>;
 
