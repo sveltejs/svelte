@@ -533,8 +533,8 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	innerHTML?: string | undefined | null;
 	/**
-	* Elements with the contenteditable attribute support innerHTML and textContent bindings.
-	*/
+	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 */
 	textContent?: string | undefined | null;
 }
 
