@@ -1028,7 +1028,7 @@ export interface TdHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
 }
 
 export interface ThHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
-	align?: "left" | "center" | "right" | "justify" | "char" | undefined | null;
+	align?: 'left' | 'center' | 'right' | 'justify' | 'char' | undefined | null;
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
 	rowspan?: number | undefined | null;
