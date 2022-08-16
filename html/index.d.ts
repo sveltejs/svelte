@@ -574,8 +574,8 @@ export interface AnchorHTMLAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	'sveltekit:reload'?: true | undefined | null;
 
 	// Sapper
-    "sapper:noscroll"?: true | undefined | null;
-    "sapper:prefetch"?: true | undefined | null;
+	'sapper:noscroll'?: true | undefined | null;
+	'sapper:prefetch'?: true | undefined | null;
 }
 
 export interface AudioHTMLAttributes extends MediaHTMLAttributes<HTMLAudioElement> {}
