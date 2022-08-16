@@ -682,7 +682,7 @@ export interface IframeHTMLAttributes extends HTMLAttributes<HTMLIFrameElement> 
 	/** @deprecated */
 	frameborder?: number | string | undefined | null;
 	height?: number | string | undefined | null;
-	loading?: "eager" | "lazy" | undefined | null;
+	loading?: 'eager' | 'lazy' | undefined | null;
 	/** @deprecated */
 	marginheight?: number | undefined | null;
 	/** @deprecated */
