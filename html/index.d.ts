@@ -704,7 +704,7 @@ export interface ImgHTMLAttributes extends HTMLAttributes<HTMLImageElement> {
 	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
-	loading?: "eager" | "lazy" | undefined | null;
+	loading?: 'eager' | 'lazy' | undefined | null;
 	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
 	sizes?: string | undefined | null;
 	src?: string | undefined | null;
