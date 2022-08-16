@@ -845,7 +845,7 @@ export interface MediaHTMLAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	src?: string | undefined | null;
 	/**
 	 * a value between 0 and 1
-	*/
+	 */
 	volume?: number | undefined | null;
 
 	// Svelte bind:x
