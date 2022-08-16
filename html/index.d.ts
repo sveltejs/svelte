@@ -990,7 +990,7 @@ export interface TableHTMLAttributes extends HTMLAttributes<HTMLTableElement> {
 	cellpadding?: number | string | undefined | null;
 	cellspacing?: number | string | undefined | null;
 	frame?: boolean | undefined | null;
-	rules?: "none" | "groups" | "rows" | "columns" | "all" | undefined | null;
+	rules?: 'none' | 'groups' | 'rows' | 'columns' | 'all' | undefined | null;
 	summary?: string | undefined | null;
 	width?: number | string | undefined | null;
 }
