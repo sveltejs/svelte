@@ -984,7 +984,7 @@ export interface StyleHTMLAttributes extends HTMLAttributes<HTMLStyleElement> {
 }
 
 export interface TableHTMLAttributes extends HTMLAttributes<HTMLTableElement> {
-	align?: "left" | "center" | "right" | undefined | null;
+	align?: 'left' | 'center' | 'right' | undefined | null;
 	bgcolor?: string | undefined | null;
 	border?: number | undefined | null;
 	cellpadding?: number | string | undefined | null;
