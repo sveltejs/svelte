@@ -243,7 +243,7 @@ export interface AriaAttributes {
 	 */
 	'aria-controls'?: string | undefined | null;
 	/** Indicates the element that represents the current item within a container or set of related elements. */
-	'aria-current'?: boolean | 'false' | 'true' | 'page' | 'step' | 'location' | 'date' | 'time' | undefined | null;
+	'aria-current'?: Booleanish | 'page' | 'step' | 'location' | 'date' | 'time' | undefined | null;
 	/**
 	 * Identifies the element (or elements) that describes the object.
 	 * @see aria-labelledby
