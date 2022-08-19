@@ -156,6 +156,7 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
+	style_element.textContent = '/* empty */';
 	append_stylesheet(get_root_for_style(node), style_element);
 	return style_element.sheet as CSSStyleSheet;
 }
