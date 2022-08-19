@@ -669,6 +669,7 @@ export interface FormHTMLAttributes extends HTMLAttributes<HTMLFormElement> {
 	name?: string | undefined | null;
 	novalidate?: boolean | undefined | null;
 	target?: string | undefined | null;
+	rel?: string | undefined | null;
 }
 
 export interface HtmlHTMLAttributes extends HTMLAttributes<HTMLHtmlElement> {
