@@ -72,7 +72,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [date-picker-svelte](https://github.com/probablykasper/date-picker-svelte) is a date and time picker for Svelte
 - [TwelveUI](https://twelveui.readme.io/reference/what-is-twelveui) is a Svelte component library with accessibility built-in
 - [svelte-outclick](https://github.com/babakfp/svelte-outclick/) is a Svelte component that allows you to listen for clicks outside of an element, by providing you an outclick event
-- [svelte-zero-api](https://github.com/ymzuiku/svelte-zero-api) lets you use SvelteKit APIs like client functions - with support for Typescript
+- [svelte-zero-api](https://github.com/ymzuiku/svelte-zero-api) lets you use SvelteKit APIs like client functions - with support for TypeScript
 - [svelte-recaptcha-v2](https://github.com/basaran/svelte-recaptcha-v2) is a Google reCAPTCHA v2 implementation for Svelte SPA, SSR and sveltekit static sites.
 - [Svelte Body](https://github.com/ghostdevv/svelte-body) lets you apply styles to the body in routes - designed to work with SvelteKit and Routify.
 - [svelte-debug-console](https://github.com/basaran/svelte-debug-console) is a debug.js implementation for Svelte SPA, SSR and sveltekit static sites that lets you see your debug statements in the browser.
