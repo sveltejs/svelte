@@ -53,7 +53,7 @@ For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github
 
 **Components, Libraries & Tools**
 - [svelte-crossword](https://russellgoldenberg.github.io/svelte-crossword/) is a customizable crossword puzzle component for Svelte.
-- [svelte-cloudinary](https://github.com/cupcakearmy/svelte-cloudinary) makes it easy to integrate Cloudinary with Svelte (including Typescript and SSR support)
+- [svelte-cloudinary](https://github.com/cupcakearmy/svelte-cloudinary) makes it easy to integrate Cloudinary with Svelte (including TypeScript and SSR support)
 - [Svelte Nova](https://extensions.panic.com/extensions/sb.lao/sb.lao.svelte-nova/) extends the new Nova editor to support Svelte
 - [saos](https://github.com/shiryel/saos) is a small svelte component to animate your elements on scroll.
 - [Svelte-nStore](https://github.com/lacikawiz/svelte-nStore) is a general purpose store replacement that fulfills the Svelte store contract and adds getter and calculation features.

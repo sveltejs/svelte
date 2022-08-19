@@ -17,7 +17,7 @@ Let's dive into the news 🐬
 * Destructured defaults are now allowed to refer to other variables (**3.33.0**, [example](https://svelte.dev/repl/0ee7227e1b45465b9b47d7a5ae2d1252?version=3.33.0))
 * Custom elements will now call `onMount` functions when connecting and clean up when disconnecting (**3.33.0**, checkout [this PR](https://github.com/sveltejs/svelte/pull/4522) for an interesting conversation on how folks are using Svelte with Web Components)
 * A `cssHash` option has been added to the compiler options to control the classname used for CSS scoping (**3.34.0**, [docs](https://svelte.dev/docs#compile-time-svelte-compile))
-* Continued improvement to Typescript definitions
+* Continued improvement to TypeScript definitions
 
 For a complete list of changes, including bug fixes and links to PRs, check out [the CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)
 
@@ -96,7 +96,7 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 - [Using Fauna's streaming feature to build a chat with Svelte](https://dev.to/fauna/using-fauna-s-streaming-feature-to-build-a-chat-with-svelte-1gkd) demonstrates how to setup and configure Fauna to build a real-time chat interface with Svelte
 - [Using TakeShape with Sapper](https://www.takeshape.io/articles/using-takeshape-with-sapper/) demonstrates how to connect the TakeShape CMS with Sapper
 - [YastPack](https://github.com/rodabt/yastpack) is Yet Another Snowpack-Svelte-TailwindCss-Routify Template Pack
-- [S2T2](https://ralphbliu.medium.com/s2t2-snowpack-svelte-tailwindcss-typescript-8928caa5af6c) is a Snowpack + Svelte + TailwindCSS + Typescript template
+- [S2T2](https://ralphbliu.medium.com/s2t2-snowpack-svelte-tailwindcss-typescript-8928caa5af6c) is a Snowpack + Svelte + TailwindCSS + TypeScript template
 - [tonyketcham/sapper-tailwind2-template](https://github.com/tonyketcham/sapper-tailwind2-template) is a Sapper Template w/ Tailwind 2.0, TypeScript, ESLint, and Prettier
 
 ## See you next month!
