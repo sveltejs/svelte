@@ -282,7 +282,7 @@ export interface AriaAttributes {
 	 */
 	'aria-grabbed'?: Booleanish | undefined | null;
 	/** Indicates the availability and type of interactive popup element, such as menu or dialog, that can be triggered by an element. */
-	'aria-haspopup'?: boolean | 'false' | 'true' | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog' | undefined | null;
+	'aria-haspopup'?: Booleanish | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog' | undefined | null;
 	/**
 	 * Indicates whether the element is exposed to an accessibility API.
 	 * @see aria-disabled.
