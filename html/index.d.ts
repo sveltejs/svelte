@@ -591,6 +591,7 @@ export interface AreaHTMLAttributes extends HTMLAttributes<HTMLAreaElement> {
 	rel?: string | undefined | null;
 	shape?: string | undefined | null;
 	target?: string | undefined | null;
+	ping?: string | undefined | null;
 }
 
 export interface BaseHTMLAttributes extends HTMLAttributes<HTMLBaseElement> {
