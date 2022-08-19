@@ -292,7 +292,7 @@ export interface AriaAttributes {
 	 * Indicates the entered value does not conform to the format expected by the application.
 	 * @see aria-errormessage.
 	 */
-	'aria-invalid'?: boolean | 'false' | 'true' | 'grammar' | 'spelling' | undefined | null;
+	'aria-invalid'?: Booleanish | 'grammar' | 'spelling' | undefined | null;
 	/** Indicates keyboard shortcuts that an author has implemented to activate or give focus to an element. */
 	'aria-keyshortcuts'?: string | undefined | null;
 	/**
