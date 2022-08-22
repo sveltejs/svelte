@@ -467,12 +467,14 @@ export type AriaRole =
 
 export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Standard HTML Attributes
-	accesskey?: string | undefined | null;
+	accesskey?: string  | undefined | null;
+	autofocus?: boolean | undefined | null;
 	class?: string | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
+	enterkeyhint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | undefined | null;
 	hidden?: boolean | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
@@ -538,18 +540,6 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	textContent?: string | undefined | null;
 }
 
-
-export type HTMLAttributeReferrerPolicy =
-	| ''
-	| 'no-referrer'
-	| 'no-referrer-when-downgrade'
-	| 'origin'
-	| 'origin-when-cross-origin'
-	| 'same-origin'
-	| 'strict-origin'
-	| 'strict-origin-when-cross-origin'
-	| 'unsafe-url';
-
 export type HTMLAttributeAnchorTarget =
 	| '_self'
 	| '_blank'
@@ -566,7 +556,7 @@ export interface AnchorHTMLAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	rel?: string | undefined | null;
 	target?: HTMLAttributeAnchorTarget | undefined | null;
 	type?: string | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 
 	// SvelteKit
 	'sveltekit:noscroll'?: true | undefined | null;
@@ -587,7 +577,7 @@ export interface AreaHTMLAttributes extends HTMLAttributes<HTMLAreaElement> {
 	href?: string | undefined | null;
 	hreflang?: string | undefined | null;
 	media?: string | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 	rel?: string | undefined | null;
 	shape?: string | undefined | null;
 	target?: string | undefined | null;
@@ -604,7 +594,6 @@ export interface BlockquoteHTMLAttributes extends HTMLAttributes<HTMLQuoteElemen
 }
 
 export interface ButtonHTMLAttributes extends HTMLAttributes<HTMLButtonElement> {
-	autofocus?: boolean | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
@@ -690,7 +679,7 @@ export interface IframeHTMLAttributes extends HTMLAttributes<HTMLIFrameElement> 
 	/** @deprecated */
 	marginwidth?: number | undefined | null;
 	name?: string | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 	sandbox?: string | undefined | null;
 	/** @deprecated */
 	scrolling?: string | undefined | null;
@@ -707,7 +696,7 @@ export interface ImgHTMLAttributes extends HTMLAttributes<HTMLImageElement> {
 	height?: number | string | undefined | null;
 	ismap?: boolean | undefined | null;
 	loading?: 'eager' | 'lazy' | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 	sizes?: string | undefined | null;
 	src?: string | undefined | null;
 	srcset?: string | undefined | null;
@@ -749,12 +738,10 @@ export interface InputHTMLAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
 	autocomplete?: string | undefined | null;
-	autofocus?: boolean | undefined | null;
 	capture?: boolean | 'user' | 'environment' | undefined | null; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
 	checked?: boolean | undefined | null;
 	crossorigin?: string | undefined | null;
 	disabled?: boolean | undefined | null;
-	enterkeyhint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
 	formenctype?: string | undefined | null;
@@ -789,7 +776,6 @@ export interface InputHTMLAttributes extends HTMLAttributes<HTMLInputElement> {
 }
 
 export interface KeygenHTMLAttributes extends HTMLAttributes<HTMLElement> {
-	autofocus?: boolean | undefined | null;
 	challenge?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
@@ -816,7 +802,7 @@ export interface LinkHTMLAttributes extends HTMLAttributes<HTMLLinkElement> {
 	media?: string | undefined | null;
 	imagesrcset?: string | undefined | null;
 	imagesizes?: string | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 	rel?: string | undefined | null;
 	sizes?: string | undefined | null;
 	type?: string | undefined | null;
@@ -949,14 +935,13 @@ export interface ScriptHTMLAttributes extends HTMLAttributes<HTMLScriptElement> 
 	integrity?: string | undefined | null;
 	nomodule?: boolean | undefined | null;
 	nonce?: string | undefined | null;
-	referrerpolicy?: HTMLAttributeReferrerPolicy | undefined | null;
+	referrerpolicy?: ReferrerPolicy | undefined | null;
 	src?: string | undefined | null;
 	type?: string | undefined | null;
 }
 
 export interface SelectHTMLAttributes extends HTMLAttributes<HTMLSelectElement> {
 	autocomplete?: string | undefined | null;
-	autofocus?: boolean | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	multiple?: boolean | undefined | null;
@@ -999,7 +984,6 @@ export interface TableHTMLAttributes extends HTMLAttributes<HTMLTableElement> {
 
 export interface TextareaHTMLAttributes extends HTMLAttributes<HTMLTextAreaElement> {
 	autocomplete?: string | undefined | null;
-	autofocus?: boolean | undefined | null;
 	cols?: number | undefined | null;
 	dirname?: string | undefined | null;
 	disabled?: boolean | undefined | null;
@@ -1381,7 +1365,6 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 export interface WebViewHTMLAttributes extends HTMLAttributes<HTMLElement> {
 	allowfullscreen?: boolean | undefined | null;
 	allowpopups?: boolean | undefined | null;
-	autofocus?: boolean | undefined | null;
 	autosize?: boolean | undefined | null;
 	blinkfeatures?: string | undefined | null;
 	disableblinkfeatures?: string | undefined | null;
