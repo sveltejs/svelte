@@ -547,7 +547,7 @@ export type HTMLAttributeAnchorTarget =
 	| '_top'
 	| (string & {});
 
-export interface AnchorHTMLAttributes extends HTMLAttributes<HTMLAnchorElement> {
+export interface HTMLAnchorAttributes extends HTMLAttributes<HTMLAnchorElement> {
 	download?: any;
 	href?: string | undefined | null;
 	hreflang?: string | undefined | null;
@@ -568,9 +568,9 @@ export interface AnchorHTMLAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	'sapper:prefetch'?: true | undefined | null;
 }
 
-export interface AudioHTMLAttributes extends MediaHTMLAttributes<HTMLAudioElement> {}
+export interface HTMLAudioAttributes extends HTMLMediaAttributes<HTMLAudioElement> {}
 
-export interface AreaHTMLAttributes extends HTMLAttributes<HTMLAreaElement> {
+export interface HTMLAreaAttributes extends HTMLAttributes<HTMLAreaElement> {
 	alt?: string | undefined | null;
 	coords?: string | undefined | null;
 	download?: any;
@@ -584,16 +584,16 @@ export interface AreaHTMLAttributes extends HTMLAttributes<HTMLAreaElement> {
 	ping?: string | undefined | null;
 }
 
-export interface BaseHTMLAttributes extends HTMLAttributes<HTMLBaseElement> {
+export interface HTMLBaseAttributes extends HTMLAttributes<HTMLBaseElement> {
 	href?: string | undefined | null;
 	target?: string | undefined | null;
 }
 
-export interface BlockquoteHTMLAttributes extends HTMLAttributes<HTMLQuoteElement> {
+export interface HTMLBlockquoteAttributes extends HTMLAttributes<HTMLQuoteElement> {
 	cite?: string | undefined | null;
 }
 
-export interface ButtonHTMLAttributes extends HTMLAttributes<HTMLButtonElement> {
+export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> {
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	formaction?: string | undefined | null;
@@ -606,51 +606,51 @@ export interface ButtonHTMLAttributes extends HTMLAttributes<HTMLButtonElement> 
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface CanvasHTMLAttributes extends HTMLAttributes<HTMLCanvasElement> {
+export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
 	height?: number | string | undefined | null;
 	width?: number | string | undefined | null;
 }
 
-export interface ColHTMLAttributes extends HTMLAttributes<HTMLTableColElement> {
+export interface HTMLColAttributes extends HTMLAttributes<HTMLTableColElement> {
 	span?: number | undefined | null;
 	width?: number | string | undefined | null;
 }
 
-export interface ColgroupHTMLAttributes extends HTMLAttributes<HTMLTableColElement> {
+export interface HTMLColgroupAttributes extends HTMLAttributes<HTMLTableColElement> {
 	span?: number | undefined | null;
 }
 
-export interface DataHTMLAttributes extends HTMLAttributes<HTMLDataElement> {
+export interface HTMLDataAttributes extends HTMLAttributes<HTMLDataElement> {
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface DetailsHTMLAttributes extends HTMLAttributes<HTMLDetailsElement> {
+export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement> {
 	open?: boolean | undefined | null;
 }
 
-export interface DelHTMLAttributes extends HTMLAttributes<HTMLModElement> {
+export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
 	cite?: string | undefined | null;
 	datetime?: string | undefined | null;
 }
 
-export interface DialogHTMLAttributes extends HTMLAttributes<HTMLDialogElement> {
+export interface HTMLDialogAttributes extends HTMLAttributes<HTMLDialogElement> {
 	open?: boolean | undefined | null;
 }
 
-export interface EmbedHTMLAttributes extends HTMLAttributes<HTMLEmbedElement> {
+export interface HTMLEmbedAttributes extends HTMLAttributes<HTMLEmbedElement> {
 	height?: number | string | undefined | null;
 	src?: string | undefined | null;
 	type?: string | undefined | null;
 	width?: number | string | undefined | null;
 }
 
-export interface FieldsetHTMLAttributes extends HTMLAttributes<HTMLFieldSetElement> {
+export interface HTMLFieldsetAttributes extends HTMLAttributes<HTMLFieldSetElement> {
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
 	name?: string | undefined | null;
 }
 
-export interface FormHTMLAttributes extends HTMLAttributes<HTMLFormElement> {
+export interface HTMLFormAttributes extends HTMLAttributes<HTMLFormElement> {
 	acceptcharset?: string | undefined | null;
 	action?: string | undefined | null;
 	autocomplete?: string | undefined | null;
@@ -662,11 +662,11 @@ export interface FormHTMLAttributes extends HTMLAttributes<HTMLFormElement> {
 	rel?: string | undefined | null;
 }
 
-export interface HtmlHTMLAttributes extends HTMLAttributes<HTMLHtmlElement> {
+export interface HTMLHtmlAttributes extends HTMLAttributes<HTMLHtmlElement> {
 	manifest?: string | undefined | null;
 }
 
-export interface IframeHTMLAttributes extends HTMLAttributes<HTMLIFrameElement> {
+export interface HTMLIframeAttributes extends HTMLAttributes<HTMLIFrameElement> {
 	allow?: string | undefined | null;
 	allowfullscreen?: boolean | undefined | null;
 	allowtransparency?: boolean | undefined | null;
@@ -689,7 +689,7 @@ export interface IframeHTMLAttributes extends HTMLAttributes<HTMLIFrameElement> 
 	width?: number | string | undefined | null;
 }
 
-export interface ImgHTMLAttributes extends HTMLAttributes<HTMLImageElement> {
+export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	alt?: string | undefined | null;
 	crossorigin?: 'anonymous' | 'use-credentials' | '' | undefined | null;
 	decoding?: 'async' | 'auto' | 'sync' | undefined | null;
@@ -704,7 +704,7 @@ export interface ImgHTMLAttributes extends HTMLAttributes<HTMLImageElement> {
 	width?: number | string | undefined | null;
 }
 
-export interface InsHTMLAttributes extends HTMLAttributes<HTMLModElement> {
+export interface HTMLInsAttributes extends HTMLAttributes<HTMLModElement> {
 	cite?: string | undefined | null;
 	datetime?: string | undefined | null;
 }
@@ -734,7 +734,7 @@ export type HTMLInputTypeAttribute =
 	| 'week'
 	| (string & {});
 
-export interface InputHTMLAttributes extends HTMLAttributes<HTMLInputElement> {
+export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	accept?: string | undefined | null;
 	alt?: string | undefined | null;
 	autocomplete?: string | undefined | null;
@@ -775,7 +775,7 @@ export interface InputHTMLAttributes extends HTMLAttributes<HTMLInputElement> {
 	indeterminate?: boolean | undefined | null;
 }
 
-export interface KeygenHTMLAttributes extends HTMLAttributes<HTMLElement> {
+export interface HTMLKeygenAttributes extends HTMLAttributes<HTMLElement> {
 	challenge?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
@@ -784,16 +784,16 @@ export interface KeygenHTMLAttributes extends HTMLAttributes<HTMLElement> {
 	name?: string | undefined | null;
 }
 
-export interface LabelHTMLAttributes extends HTMLAttributes<HTMLLabelElement> {
+export interface HTMLLabelAttributes extends HTMLAttributes<HTMLLabelElement> {
 	form?: string | undefined | null;
 	for?: string | undefined | null;
 }
 
-export interface LiHTMLAttributes extends HTMLAttributes<HTMLLIElement> {
+export interface HTMLLiAttributes extends HTMLAttributes<HTMLLIElement> {
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface LinkHTMLAttributes extends HTMLAttributes<HTMLLinkElement> {
+export interface HTMLLinkAttributes extends HTMLAttributes<HTMLLinkElement> {
 	as?: string | undefined | null;
 	crossorigin?: string | undefined | null;
 	href?: string | undefined | null;
@@ -809,15 +809,15 @@ export interface LinkHTMLAttributes extends HTMLAttributes<HTMLLinkElement> {
 	charset?: string | undefined | null;
 }
 
-export interface MapHTMLAttributes extends HTMLAttributes<HTMLMapElement> {
+export interface HTMLMapAttributes extends HTMLAttributes<HTMLMapElement> {
 	name?: string | undefined | null;
 }
 
-export interface MenuHTMLAttributes extends HTMLAttributes<HTMLMenuElement> {
+export interface HTMLMenuAttributes extends HTMLAttributes<HTMLMenuElement> {
 	type?: string | undefined | null;
 }
 
-export interface MediaHTMLAttributes<T extends HTMLMediaElement> extends HTMLAttributes<T> {
+export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAttributes<T> {
 	autoplay?: boolean | undefined | null;
 	controls?: boolean | undefined | null;
 	controlslist?: 'nodownload' | 'nofullscreen' | 'noplaybackrate' | 'noremoteplayback' | (string & {}) | undefined | null;
@@ -854,7 +854,7 @@ export interface MediaHTMLAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	paused?: boolean | undefined | null;
 }
 
-export interface MetaHTMLAttributes extends HTMLAttributes<HTMLMetaElement> {
+export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
 	charSet?: string | undefined | null;
 	content?: string | undefined | null;
 	httpequiv?: string | undefined | null;
@@ -862,7 +862,7 @@ export interface MetaHTMLAttributes extends HTMLAttributes<HTMLMetaElement> {
 	media?: string | undefined | null;
 }
 
-export interface MeterHTMLAttributes extends HTMLAttributes<HTMLMeterElement> {
+export interface HTMLMeterAttributes extends HTMLAttributes<HTMLMeterElement> {
 	form?: string | undefined | null;
 	high?: number | undefined | null;
 	low?: number | undefined | null;
@@ -872,11 +872,11 @@ export interface MeterHTMLAttributes extends HTMLAttributes<HTMLMeterElement> {
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface QuoteHTMLAttributes extends HTMLAttributes<HTMLQuoteElement> {
+export interface HTMLQuoteAttributes extends HTMLAttributes<HTMLQuoteElement> {
 	cite?: string | undefined | null;
 }
 
-export interface ObjectHTMLAttributes extends HTMLAttributes<HTMLObjectElement> {
+export interface HTMLObjectAttributes extends HTMLAttributes<HTMLObjectElement> {
 	classid?: string | undefined | null;
 	data?: string | undefined | null;
 	form?: string | undefined | null;
@@ -888,45 +888,45 @@ export interface ObjectHTMLAttributes extends HTMLAttributes<HTMLObjectElement> 
 	wmode?: string | undefined | null;
 }
 
-export interface OlHTMLAttributes extends HTMLAttributes<HTMLOListElement> {
+export interface HTMLOlAttributes extends HTMLAttributes<HTMLOListElement> {
 	reversed?: boolean | undefined | null;
 	start?: number | undefined | null;
 	type?: '1' | 'a' | 'A' | 'i' | 'I' | undefined | null;
 }
 
-export interface OptgroupHTMLAttributes extends HTMLAttributes<HTMLOptGroupElement> {
+export interface HTMLOptgroupAttributes extends HTMLAttributes<HTMLOptGroupElement> {
 	disabled?: boolean | undefined | null;
 	label?: string | undefined | null;
 }
 
-export interface OptionHTMLAttributes extends HTMLAttributes<HTMLOptionElement> {
+export interface HTMLOptionAttributes extends HTMLAttributes<HTMLOptionElement> {
 	disabled?: boolean | undefined | null;
 	label?: string | undefined | null;
 	selected?: boolean | undefined | null;
 	value?: any;
 }
 
-export interface OutputHTMLAttributes extends HTMLAttributes<HTMLOutputElement> {
+export interface HTMLOutputAttributes extends HTMLAttributes<HTMLOutputElement> {
 	form?: string | undefined | null;
 	for?: string | undefined | null;
 	name?: string | undefined | null;
 }
 
-export interface ParamHTMLAttributes extends HTMLAttributes<HTMLParamElement> {
+export interface HTMLParamAttributes extends HTMLAttributes<HTMLParamElement> {
 	name?: string | undefined | null;
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface ProgressHTMLAttributes extends HTMLAttributes<HTMLProgressElement> {
+export interface HTMLProgressAttributes extends HTMLAttributes<HTMLProgressElement> {
 	max?: number | string | undefined | null;
 	value?: string | string[] | number | undefined | null;
 }
 
-export interface SlotHTMLAttributes extends HTMLAttributes<HTMLSlotElement> {
+export interface HTMLSlotAttributes extends HTMLAttributes<HTMLSlotElement> {
 	name?: string | undefined | null;
 }
 
-export interface ScriptHTMLAttributes extends HTMLAttributes<HTMLScriptElement> {
+export interface HTMLScriptAttributes extends HTMLAttributes<HTMLScriptElement> {
 	async?: boolean | undefined | null;
 	/** @deprecated */
 	charset?: string | undefined | null;
@@ -940,7 +940,7 @@ export interface ScriptHTMLAttributes extends HTMLAttributes<HTMLScriptElement> 
 	type?: string | undefined | null;
 }
 
-export interface SelectHTMLAttributes extends HTMLAttributes<HTMLSelectElement> {
+export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> {
 	autocomplete?: string | undefined | null;
 	disabled?: boolean | undefined | null;
 	form?: string | undefined | null;
@@ -953,7 +953,7 @@ export interface SelectHTMLAttributes extends HTMLAttributes<HTMLSelectElement> 
 	'on:change'?: ChangeEventHandler<HTMLSelectElement> | undefined | null;
 }
 
-export interface SourceHTMLAttributes extends HTMLAttributes<HTMLSourceElement> {
+export interface HTMLSourceAttributes extends HTMLAttributes<HTMLSourceElement> {
 	height?: number | string | undefined | null;
 	media?: string | undefined | null;
 	sizes?: string | undefined | null;
@@ -963,14 +963,14 @@ export interface SourceHTMLAttributes extends HTMLAttributes<HTMLSourceElement> 
 	width?: number | string | undefined | null;
 }
 
-export interface StyleHTMLAttributes extends HTMLAttributes<HTMLStyleElement> {
+export interface HTMLStyleAttributes extends HTMLAttributes<HTMLStyleElement> {
 	media?: string | undefined | null;
 	nonce?: string | undefined | null;
 	scoped?: boolean | undefined | null;
 	type?: string | undefined | null;
 }
 
-export interface TableHTMLAttributes extends HTMLAttributes<HTMLTableElement> {
+export interface HTMLTableAttributes extends HTMLAttributes<HTMLTableElement> {
 	align?: 'left' | 'center' | 'right' | undefined | null;
 	bgcolor?: string | undefined | null;
 	border?: number | undefined | null;
@@ -982,7 +982,7 @@ export interface TableHTMLAttributes extends HTMLAttributes<HTMLTableElement> {
 	width?: number | string | undefined | null;
 }
 
-export interface TextareaHTMLAttributes extends HTMLAttributes<HTMLTextAreaElement> {
+export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaElement> {
 	autocomplete?: string | undefined | null;
 	cols?: number | undefined | null;
 	dirname?: string | undefined | null;
@@ -1001,7 +1001,7 @@ export interface TextareaHTMLAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 }
 
-export interface TdHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
+export interface HTMLTdAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	align?: 'left' | 'center' | 'right' | 'justify' | 'char' | undefined | null;
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
@@ -1013,7 +1013,7 @@ export interface TdHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	valign?: 'top' | 'middle' | 'bottom' | 'baseline' | undefined | null;
 }
 
-export interface ThHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
+export interface HTMLThAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	align?: 'left' | 'center' | 'right' | 'justify' | 'char' | undefined | null;
 	colspan?: number | undefined | null;
 	headers?: string | undefined | null;
@@ -1022,11 +1022,11 @@ export interface ThHTMLAttributes extends HTMLAttributes<HTMLTableCellElement> {
 	abbr?: string | undefined | null;
 }
 
-export interface TimeHTMLAttributes extends HTMLAttributes<HTMLTimeElement> {
+export interface HTMLTimeAttributes extends HTMLAttributes<HTMLTimeElement> {
 	datetime?: string | undefined | null;
 }
 
-export interface TrackHTMLAttributes extends HTMLAttributes<HTMLTrackElement> {
+export interface HTMLTrackAttributes extends HTMLAttributes<HTMLTrackElement> {
 	default?: boolean | undefined | null;
 	kind?: string | undefined | null;
 	label?: string | undefined | null;
@@ -1034,7 +1034,7 @@ export interface TrackHTMLAttributes extends HTMLAttributes<HTMLTrackElement> {
 	srclang?: string | undefined | null;
 }
 
-export interface VideoHTMLAttributes extends MediaHTMLAttributes<HTMLVideoElement> {
+export interface HTMLVideoAttributes extends HTMLMediaAttributes<HTMLVideoElement> {
 	height?: number | string | undefined | null;
 	playsinline?: boolean | undefined | null;
 	poster?: string | undefined | null;
@@ -1362,7 +1362,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	zoomAndPan?: string | undefined | null;
 }
 
-export interface WebViewHTMLAttributes extends HTMLAttributes<HTMLElement> {
+export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
 	allowfullscreen?: boolean | undefined | null;
 	allowpopups?: boolean | undefined | null;
 	autosize?: boolean | undefined | null;
@@ -1386,45 +1386,45 @@ export interface WebViewHTMLAttributes extends HTMLAttributes<HTMLElement> {
 // ----------------------------------------------------------------------
 
 export interface SvelteHTMLElements {
-	a: AnchorHTMLAttributes;
+	a: HTMLAnchorAttributes;
 	abbr: HTMLAttributes<HTMLElement>;
 	address: HTMLAttributes<HTMLElement>;
-	area: AreaHTMLAttributes;
+	area: HTMLAreaAttributes;
 	article: HTMLAttributes<HTMLElement>;
 	aside: HTMLAttributes<HTMLElement>;
-	audio: AudioHTMLAttributes;
+	audio: HTMLAudioAttributes;
 	b: HTMLAttributes<HTMLElement>;
-	base: BaseHTMLAttributes;
+	base: HTMLBaseAttributes;
 	bdi: HTMLAttributes<HTMLElement>;
 	bdo: HTMLAttributes<HTMLElement>;
 	big: HTMLAttributes<HTMLElement>;
-	blockquote: BlockquoteHTMLAttributes;
+	blockquote: HTMLBlockquoteAttributes;
 	body: HTMLAttributes<HTMLBodyElement>;
 	br: HTMLAttributes<HTMLBRElement>;
-	button: ButtonHTMLAttributes;
-	canvas: CanvasHTMLAttributes;
+	button: HTMLButtonAttributes;
+	canvas: HTMLCanvasAttributes;
 	caption: HTMLAttributes<HTMLElement>;
 	cite: HTMLAttributes<HTMLElement>;
 	code: HTMLAttributes<HTMLElement>;
-	col: ColHTMLAttributes;
-	colgroup: ColgroupHTMLAttributes;
-	data: DataHTMLAttributes;
+	col: HTMLColAttributes;
+	colgroup: HTMLColgroupAttributes;
+	data: HTMLDataAttributes;
 	datalist: HTMLAttributes<HTMLDataListElement>;
 	dd: HTMLAttributes<HTMLElement>;
-	del: DelHTMLAttributes;
-	details: DetailsHTMLAttributes;
+	del: HTMLDelAttributes;
+	details: HTMLDetailsAttributes;
 	dfn: HTMLAttributes<HTMLElement>;
-	dialog: DialogHTMLAttributes;
+	dialog: HTMLDialogAttributes;
 	div: HTMLAttributes<HTMLDivElement>;
 	dl: HTMLAttributes<HTMLDListElement>;
 	dt: HTMLAttributes<HTMLElement>;
 	em: HTMLAttributes<HTMLElement>;
-	embed: EmbedHTMLAttributes;
-	fieldset: FieldsetHTMLAttributes;
+	embed: HTMLEmbedAttributes;
+	fieldset: HTMLFieldsetAttributes;
 	figcaption: HTMLAttributes<HTMLElement>;
 	figure: HTMLAttributes<HTMLElement>;
 	footer: HTMLAttributes<HTMLElement>;
-	form: FormHTMLAttributes;
+	form: HTMLFormAttributes;
 	h1: HTMLAttributes<HTMLHeadingElement>;
 	h2: HTMLAttributes<HTMLHeadingElement>;
 	h3: HTMLAttributes<HTMLHeadingElement>;
@@ -1435,73 +1435,73 @@ export interface SvelteHTMLElements {
 	header: HTMLAttributes<HTMLElement>;
 	hgroup: HTMLAttributes<HTMLElement>;
 	hr: HTMLAttributes<HTMLHRElement>;
-	html: HtmlHTMLAttributes;
+	html: HTMLHtmlAttributes;
 	i: HTMLAttributes<HTMLElement>;
-	iframe: IframeHTMLAttributes;
-	img: ImgHTMLAttributes;
-	input: InputHTMLAttributes;
-	ins: InsHTMLAttributes;
+	iframe: HTMLIframeAttributes;
+	img: HTMLImgAttributes;
+	input: HTMLInputAttributes;
+	ins: HTMLInsAttributes;
 	kbd: HTMLAttributes<HTMLElement>;
-	keygen: KeygenHTMLAttributes;
-	label: LabelHTMLAttributes;
+	keygen: HTMLKeygenAttributes;
+	label: HTMLLabelAttributes;
 	legend: HTMLAttributes<HTMLLegendElement>;
-	li: LiHTMLAttributes;
-	link: LinkHTMLAttributes;
+	li: HTMLLiAttributes;
+	link: HTMLLinkAttributes;
 	main: HTMLAttributes<HTMLElement>;
-	map: MapHTMLAttributes;
+	map: HTMLMapAttributes;
 	mark: HTMLAttributes<HTMLElement>;
-	menu: MenuHTMLAttributes;
+	menu: HTMLMenuAttributes;
 	menuitem: HTMLAttributes<HTMLElement>;
-	meta: MetaHTMLAttributes;
-	meter: MeterHTMLAttributes;
+	meta: HTMLMetaAttributes;
+	meter: HTMLMeterAttributes;
 	nav: HTMLAttributes<HTMLElement>;
 	noscript: HTMLAttributes<HTMLElement>;
-	object: ObjectHTMLAttributes;
-	ol: OlHTMLAttributes;
-	optgroup: OptgroupHTMLAttributes;
-	option: OptionHTMLAttributes;
-	output: OutputHTMLAttributes;
+	object: HTMLObjectAttributes;
+	ol: HTMLOlAttributes;
+	optgroup: HTMLOptgroupAttributes;
+	option: HTMLOptionAttributes;
+	output: HTMLOutputAttributes;
 	p: HTMLAttributes<HTMLParagraphElement>;
-	param: ParamHTMLAttributes;
+	param: HTMLParamAttributes;
 	picture: HTMLAttributes<HTMLElement>;
 	pre: HTMLAttributes<HTMLPreElement>;
-	progress: ProgressHTMLAttributes;
-	q: QuoteHTMLAttributes;
+	progress: HTMLProgressAttributes;
+	q: HTMLQuoteAttributes;
 	rp: HTMLAttributes<HTMLElement>;
 	rt: HTMLAttributes<HTMLElement>;
 	ruby: HTMLAttributes<HTMLElement>;
 	s: HTMLAttributes<HTMLElement>;
 	samp: HTMLAttributes<HTMLElement>;
-	slot: SlotHTMLAttributes;
-	script: ScriptHTMLAttributes;
+	slot: HTMLSlotAttributes;
+	script: HTMLScriptAttributes;
 	section: HTMLAttributes<HTMLElement>;
-	select: SelectHTMLAttributes;
+	select: HTMLSelectAttributes;
 	small: HTMLAttributes<HTMLElement>;
-	source: SourceHTMLAttributes;
+	source: HTMLSourceAttributes;
 	span: HTMLAttributes<HTMLSpanElement>;
 	strong: HTMLAttributes<HTMLElement>;
-	style: StyleHTMLAttributes;
+	style: HTMLStyleAttributes;
 	sub: HTMLAttributes<HTMLElement>;
 	summary: HTMLAttributes<HTMLElement>;
 	sup: HTMLAttributes<HTMLElement>;
-	table: TableHTMLAttributes;
+	table: HTMLTableAttributes;
 	template: HTMLAttributes<HTMLTemplateElement>;
 	tbody: HTMLAttributes<HTMLTableSectionElement>;
-	td: TdHTMLAttributes;
-	textarea: TextareaHTMLAttributes;
+	td: HTMLTdAttributes;
+	textarea: HTMLTextareaAttributes;
 	tfoot: HTMLAttributes<HTMLTableSectionElement>;
-	th: ThHTMLAttributes;
+	th: HTMLThAttributes;
 	thead: HTMLAttributes<HTMLTableSectionElement>;
-	time: TimeHTMLAttributes;
+	time: HTMLTimeAttributes;
 	title: HTMLAttributes<HTMLTitleElement>;
 	tr: HTMLAttributes<HTMLTableRowElement>;
-	track: TrackHTMLAttributes;
+	track: HTMLTrackAttributes;
 	u: HTMLAttributes<HTMLElement>;
 	ul: HTMLAttributes<HTMLUListElement>;
 	"var": HTMLAttributes<HTMLElement>;
-	video: VideoHTMLAttributes;
+	video: HTMLVideoAttributes;
 	wbr: HTMLAttributes<HTMLElement>;
-	webview: WebViewHTMLAttributes;
+	webview: HTMLWebViewAttributes;
 	// SVG
 	svg: SVGAttributes<SVGSVGElement>;
 
