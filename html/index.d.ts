@@ -529,15 +529,14 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	is?: string | undefined | null;
 
-	// Svelte bind:x
 	/**
 	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
 	 */
-	innerHTML?: string | undefined | null;
+	'bind:innerHTML'?: string | undefined | null;
 	/**
 	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
 	 */
-	textContent?: string | undefined | null;
+	'bind:textContent'?: string | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
@@ -626,6 +625,8 @@ export interface HTMLDataAttributes extends HTMLAttributes<HTMLDataElement> {
 
 export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement> {
 	open?: boolean | undefined | null;
+
+	'bind:open'?: boolean | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
@@ -769,10 +770,11 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 
 	'on:change'?: ChangeEventHandler<HTMLInputElement> | undefined | null;
 
-	// Svelte bind:x
-	group?: any | undefined | null;
-	files?: FileList | undefined | null;
-	indeterminate?: boolean | undefined | null;
+	'bind:checked'?: boolean | undefined | null;
+	'bind:value'?: any;
+	'bind:group'?: any | undefined | null;
+	'bind:files'?: FileList | undefined | null;
+	'bind:indeterminate'?: boolean | undefined | null;
 }
 
 export interface HTMLKeygenAttributes extends HTMLAttributes<HTMLElement> {
@@ -836,22 +838,23 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	 */
 	volume?: number | undefined | null;
 
-	// Svelte bind:x
-	readonly duration?: number | undefined | null;
-	readonly buffered?: SvelteMediaTimeRange[] | undefined | null;
-	readonly played?: SvelteMediaTimeRange[] | undefined | null;
-	readonly seekable?: SvelteMediaTimeRange[] | undefined | null;
-	readonly seeking?: boolean | undefined | null;
-	readonly ended?: boolean | undefined | null;
+	readonly 'bind:duration'?: number | undefined | null;
+	readonly 'bind:buffered'?: SvelteMediaTimeRange[] | undefined | null;
+	readonly 'bind:played'?: SvelteMediaTimeRange[] | undefined | null;
+	readonly 'bind:seekable'?: SvelteMediaTimeRange[] | undefined | null;
+	readonly 'bind:seeking'?: boolean | undefined | null;
+	readonly 'bind:ended'?: boolean | undefined | null;
+	'bind:muted'?: boolean | undefined | null;
+	'bind:volume'?: number | undefined | null;
 	/**
 	 * the current playback time in the video, in seconds
 	 */
-	currentTime?: number | undefined | null;
+	'bind:currentTime'?: number | undefined | null;
 	/**
 	 * how fast or slow to play the video, where 1 is 'normal'
 	 */
-	playbackRate?: number | undefined | null;
-	paused?: boolean | undefined | null;
+	'bind:playbackRate'?: number | undefined | null;
+	'bind:paused'?: boolean | undefined | null;
 }
 
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
@@ -951,6 +954,8 @@ export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> 
 	value?: any;
 
 	'on:change'?: ChangeEventHandler<HTMLSelectElement> | undefined | null;
+
+	'bind:value'?: any;
 }
 
 export interface HTMLSourceAttributes extends HTMLAttributes<HTMLSourceElement> {
@@ -999,6 +1004,8 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	wrap?: string | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
+
+	'bind:value'?: any;
 }
 
 export interface HTMLTdAttributes extends HTMLAttributes<HTMLTableCellElement> {
@@ -1042,9 +1049,8 @@ export interface HTMLVideoAttributes extends HTMLMediaAttributes<HTMLVideoElemen
 	disablepictureinpicture?: boolean | undefined | null;
 	disableremoteplayback?: boolean | undefined | null;
 
-	// Svelte bind:x
-	readonly videoWidth?: number | undefined | null;
-	readonly videoHeight?: number | undefined | null;
+	readonly 'bind:videoWidth'?: number | undefined | null;
+	readonly 'bind:videoHeight'?: number | undefined | null;
 }
 
 export interface SvelteMediaTimeRange {
@@ -1053,13 +1059,13 @@ export interface SvelteMediaTimeRange {
 }
 
 export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
-	readonly innerWidth?: Window['innerWidth'] | undefined | null;
-	readonly innerHeight?: Window['innerHeight'] | undefined | null;
-	readonly outerWidth?: Window['outerWidth'] | undefined | null;
-	readonly outerHeight?: Window['outerHeight'] | undefined | null;
-	scrollX?: Window['scrollX'] | undefined | null;
-	scrollY?: Window['scrollY'] | undefined | null;
-	readonly online?: Window['navigator']['onLine'] | undefined | null;
+	readonly 'bind:innerWidth'?: Window['innerWidth'] | undefined | null;
+	readonly 'bind:innerHeight'?: Window['innerHeight'] | undefined | null;
+	readonly 'bind:outerWidth'?: Window['outerWidth'] | undefined | null;
+	readonly 'bind:outerHeight'?: Window['outerHeight'] | undefined | null;
+	'bind:scrollX'?: Window['scrollX'] | undefined | null;
+	'bind:scrollY'?: Window['scrollY'] | undefined | null;
+	readonly 'bind:online'?: Window['navigator']['onLine'] | undefined | null;
 
 	// SvelteKit
 	'on:sveltekit:start'?: EventHandler<CustomEvent, Window> | undefined | null;
