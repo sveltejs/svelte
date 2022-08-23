@@ -14,6 +14,7 @@
 * Use `Node.parentNode` instead of `Node.parentElement` for legacy browser support ([#7723](https://github.com/sveltejs/svelte/issues/7723))
 * Improve a11y `label-has-associated-control` check to recusively check for input control ([#5528](https://github.com/sveltejs/svelte/issues/5528))
 * Fix class directive updates after half way transition [#7764](https://github.com/sveltejs/svelte/issues/7764)
+* Improve parsing speed when encountering large blocks of whitespace [#7675](https://github.com/sveltejs/svelte/issues/7675)
 
 ## 3.49.0
 
