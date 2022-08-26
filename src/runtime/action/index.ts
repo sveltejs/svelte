@@ -28,7 +28,12 @@
 export interface ActionReturn<Parameter = any, Attributes extends Record<string, any> = Record<never, any>> {
 	update?: (parameter: Parameter) => void;
 	destroy?: () => void;
-	$$attributes?: Attributes;
+	/**
+	 * ### DO NOT USE THIS
+	 * This exists solely for type-checking and has no effect at runtime.
+	 * Set this through the `Attributes` generic instead.
+	 */
+	$$_attributes?: Attributes;
 }
 
 /**
