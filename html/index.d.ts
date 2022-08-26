@@ -1504,7 +1504,7 @@ export interface SvelteHTMLElements {
 	track: HTMLTrackAttributes;
 	u: HTMLAttributes<HTMLElement>;
 	ul: HTMLAttributes<HTMLUListElement>;
-	"var": HTMLAttributes<HTMLElement>;
+	var: HTMLAttributes<HTMLElement>;
 	video: HTMLVideoAttributes;
 	wbr: HTMLAttributes<HTMLElement>;
 	webview: HTMLWebViewAttributes;
