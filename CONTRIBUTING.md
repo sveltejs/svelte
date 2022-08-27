@@ -11,7 +11,7 @@ The [Open Source Guides](https://opensource.guide/) website has a collection of 
 
 There are many ways to contribute to Svelte, and many of them do not involve writing any code. Here's a few ideas to get started:
 
-- Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/blog/the-easiest-way-to-get-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
+- Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#your-first-pull-request).
 - Read through our [tutorials](https://svelte.dev/tutorial/basics). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this chapter" at the bottom left of the tutorial page.
