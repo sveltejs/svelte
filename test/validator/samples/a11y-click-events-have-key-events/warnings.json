@@ -1,0 +1,17 @@
+[
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: elements with onClick property should have a keyboard key handler such as onKeyPress , onKeyDown or onKeyUp.",
+		"start": {
+			"line": 15,
+			"column": 6,
+			"character": 417
+		},
+		"end": {
+			"line": 15,
+			"column": 24,
+			"character": 435
+		},
+		"pos": 417
+	}
+]
