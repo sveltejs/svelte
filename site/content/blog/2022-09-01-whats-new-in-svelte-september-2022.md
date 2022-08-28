@@ -11,7 +11,6 @@ But the new routing isn't the only new feature in SvelteKit...
 
 ## What's new in SvelteKit
 - `Link` is now supported as an HTTP header and works out of the box with Cloudflare's [Automatic Early Hints](https://github.com/sveltejs/kit/issues/5455) (**1.0.0-next.405**, [PR](https://github.com/sveltejs/kit/pull/5735))
-- Svelte components are now lazy loaded to reenable no-ssr use cases (**1.0.0-next.412**, [PR](https://github.com/sveltejs/kit/pull/5930))
 - `$env/static/*` are now virtual to prevent writing sensitive values to disk (**1.0.0-next.413**, [PR](https://github.com/sveltejs/kit/pull/5825))
 - `$app/stores` can now be used from anywhere on the browser (**1.0.0-next.428**, [PR](https://github.com/sveltejs/kit/pull/6100))
 - `config.kit.env.dir` is a new config that sets the directory to search for `.env` files (**1.0.0-next.430**, [PR](https://github.com/sveltejs/kit/pull/6175))
@@ -35,7 +34,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 
 **Apps & Sites built with Svelte**
 - [canno](https://twitter.com/a_warnes/status/1556724034959818754?s=20&t=RyKWALPByqMT5A_PkLtUew) is a simple interactive 3d physics game with adjustable gravity, cannon power, and debug visualizer - made with threlte
-- [straw.page](https://straw.page/) is an extremely simple website builder that lets you create unique websites straigh from your phone
+- [straw.page](https://straw.page/) is an extremely simple website builder that lets you create unique websites straight from your phone
 - [Patra](https://patra.webjeda.com/) lets you share short notes just with a link. No database. No storage
 - [promptoMANIA](https://promptomania.com/) is an AI art community with an online prompt builder
 - [Album by Mood](https://www.albumbymood.com/) lets you listen to music based on your mood
@@ -53,7 +52,10 @@ _Starring the Svelte team_
 - [2.17 - Building the Future of Svelte at Vercel with Rich Harris](https://www.youtube.com/watch?v=F1sSUDVoij4)
 - [1.15 - What's Up With SvelteKit with Shawn Wang (swyx)](https://www.youtube.com/watch?v=xLhuUShkYkM)
 - [Adding Notion Tailwindcss and DaisyUI to Svelte App](https://www.youtube.com/watch?v=l4sbqrY0XGk)
-- [Svelte 101 Session](https://www.youtube.com/watch?v=IIeBERpyxx4) with Brittney Postma
+- [Svelte 101 Session](https://www.youtube.com/watch?v=IIeBERpyxx4)
+- [Astro and Svelte](https://www.youtube.com/watch?v=iYKKg-50Gm4)
+- [Storyblok in Svelte](https://www.youtube.com/watch?v=xXHFRzqUxoE)
+- [Svelte London August Recording](https://www.youtube.com/watch?v=ua6gE2zPulw)
 
 _Learning the new SvelteKit routing_
 - [Migrating Breaking Changes in SvelteKit](https://www.netlify.com/blog/migrating-breaking-changes-in-sveltekit/) by Brittney Postma (Netlify)
@@ -65,6 +67,7 @@ _To Watch_
 - [Svelte Guide For React Developers](https://www.youtube.com/watch?v=uWDBEUkTRGk) and [Svelte State Management Guide](https://www.youtube.com/watch?v=4dDjQiOVrOo) by Joy of Code
 - [What Is Bookit? The Svelte Kit Storybook Killer](https://www.youtube.com/watch?v=aOBGhvggsq0) and [What Is @type{import In Svelte Kit - JSDoc Syntax](https://www.youtube.com/watch?v=y0DvJTVO65M) by LevelUpTuts
 - [TWF Yet another JS Framework... or not? Svelte!](https://www.youtube.com/watch?app=desktop&v=nT8QtDBIKZA) by TWF meetup
+
 
 _To Read_
 - [Creating a Figma Plugin with Svelte](https://www.lekoarts.de/javascript/creating-a-figma-plugin-with-svelte) by Lennart
