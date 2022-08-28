@@ -38,7 +38,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 
 ## What's new in Svelte & Language Tools
 - The `@layer` [CSS at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/@layer) is now supported in Svelte components (**3.49.0**, [PR](https://github.com/sveltejs/svelte/issues/7504))
-- The `inert` [HTML attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute) is now supported in Svelte's language tools and plugins (**105.20.0**, [PR](https://github.com/sveltejs/language-tools/pull/1565))
+- The `inert` [HTML attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute) is now supported in Svelte's language tools and plugins ( **105.20.0**, [PR](https://github.com/sveltejs/language-tools/pull/1565))
 - The Svelte plugin will now use `SvelteComponentTyped` typings, if available (**105.19.0**, [PR](https://github.com/sveltejs/language-tools/pull/1548))
 
 
@@ -99,7 +99,7 @@ _Tech Demos_
 - [Lucia](https://github.com/pilcrowOnPaper/lucia-sveltekit) is a simple, JWT based authentication library for SvelteKit that connects your SvelteKit app with your database
 - [Skeleton](https://github.com/Brain-Bones/skeleton) is a UI component library for use with Svelte + Tailwind
 - [pass-composer](https://pass-composer.vercel.app/) helps you compose your postprocessing passes for threlte scenes
-- [@crikey/stores-*](https://www.npmjs.com/package/@crikey/stores-base) is a collection of 8 libraries to extend Svelte stores for common use-cases
+- [@crikey/stores-*](https://whenderson.github.io/stores-mono/) is a collection of libraries to extend Svelte stores for common use-cases
 - [Svelte Chrome Storage](https://github.com/shaun-wild/svelte-chrome-storage) is a lightweight abstraction between Svelte stores and Chrome extension storage
 - [Svelte Schema Form](https://github.com/restspace/svelte-schema-form) is a form generator for JSON schema
 - [svelte-gesture](https://github.com/wobsoriano/svelte-gesture) is a library that lets you bind richer mouse and touch events to any component or view
