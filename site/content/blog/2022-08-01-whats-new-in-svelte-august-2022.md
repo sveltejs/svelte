@@ -38,7 +38,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 
 ## What's new in Svelte & Language Tools
 - The `@layer` [CSS at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/@layer) is now supported in Svelte components (**3.49.0**, [PR](https://github.com/sveltejs/svelte/issues/7504))
-- The `inert` [HTML attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute) is now supported in Svelte's language tools and plugins ( **105.20.0**, [PR](https://github.com/sveltejs/language-tools/pull/1565))
+- The `inert` [HTML attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute) is now supported in Svelte's language tools and plugins (**105.20.0**, [PR](https://github.com/sveltejs/language-tools/pull/1565))
 - The Svelte plugin will now use `SvelteComponentTyped` typings, if available (**105.19.0**, [PR](https://github.com/sveltejs/language-tools/pull/1548))
 
 
