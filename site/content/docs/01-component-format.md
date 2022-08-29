@@ -87,7 +87,7 @@ You can use reserved words as prop names.
 </script>
 ```
 
-#### 2. Assignments cause updates
+#### 2. Assignments are 'reactive'
 
 ---
 
