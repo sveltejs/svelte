@@ -55,9 +55,7 @@ In development mode (see the [compiler options](/docs#compile-time-svelte-compil
 
 ---
 
-If you export a `const`, `class` or `function`, it is readonly from outside the component. Function *expressions* are valid props, however.
-
-Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs#template-syntax-component-directives-bind-this).
+If you export a `const`, `class` or `function`, it is readonly from outside the component. Functions are valid prop values, however, as shown below.
 
 ```sv
 <script>
@@ -72,6 +70,8 @@ Readonly props can be accessed as properties on the element, tied to the compone
 	export let format = n => n.toFixed(2);
 </script>
 ```
+
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs#template-syntax-component-directives-bind-this).
 
 ---
 
@@ -125,15 +125,29 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 </script>
 ```
 
+---
+
+Svelte's `<script>` blocks are run only when the component is created, so assignments within a `<script>` block are not automatically run again when a prop updates. If you'd like to track changes to a prop, see the next example in the following section.
+
+```sv
+<script>
+	export let person;
+	// this will only set `name` on component creation
+	// it will not update when `person` does
+	let { name } = person;
+</script>
+```
+
 #### 3. `$:` marks a statement as reactive
 
 ---
 
-Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run immediately before the component updates, whenever the values that they depend on have changed.
+Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run after other script code and before the component markup is rendered, whenever the values that they depend on have changed.
 
 ```sv
 <script>
 	export let title;
+	export let person
 
 	// this will update `document.title` whenever
 	// the `title` prop changes
@@ -143,6 +157,12 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 		console.log(`multiple statements can be combined`);
 		console.log(`the current title is ${title}`);
 	}
+
+	// this will update `name` when 'person' changes
+	$: ({ name } = person);
+
+	// don't do this. it will run before the previous line
+	let name2 = name;
 </script>
 ```
 
