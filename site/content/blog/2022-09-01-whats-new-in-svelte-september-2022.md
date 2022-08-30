@@ -5,6 +5,8 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
+Still looking for something to do this month? It's your last chance to get tickets to Svelte Summit, Stockholm! [Join us on Sept 8-9th](https://www.sveltesummit.com/) 🎉
+
 With the redesign of SvelteKit's filesystem-based router merging early last month, there's lots to cover this month - from the [migration script](https://github.com/sveltejs/kit/discussions/5774) to a number of new blog posts, videos and tutorials.
 
 But the new routing isn't the only new feature in SvelteKit...
@@ -17,7 +19,7 @@ But the new routing isn't the only new feature in SvelteKit...
 
 **Breaking changes:**
 - The filesystem-based router and `load` API improves the way routes are managed. **Before installing version `@sveltejs/kit@1.0.0-next.406` or later, [follow this migration guide](https://github.com/sveltejs/kit/discussions/5774)** ([PR](https://github.com/sveltejs/kit/pull/5778), [Issue](https://github.com/sveltejs/kit/discussions/5748))
-- `event.session` has been removed from `load`, the `session` store, and `getSession`. Use `event.locals` instead (**1.0.0-next.415**, [PR](https://github.com/sveltejs/kit/pull/5946))
+- `event.session` has been removed from `load` along with the `session` store and `getSession`. Use `event.locals` instead (**1.0.0-next.415**, [PR](https://github.com/sveltejs/kit/pull/5946))
 - Named layouts have been removed in favor of `(groups)` (**1.0.0-next.432**, [Docs](https://kit.svelte.dev/docs/advanced-routing#advanced-layouts), [PR & Migration Instructions](https://github.com/sveltejs/kit/pull/6174))
 - `event.clientAddress` is now `event.getClientAddress()` (**1.0.0-next.438**, [PR](https://github.com/sveltejs/kit/pull/6237))
 - `$app/env` has been renamed to `$app/environment`, to disambiguate with `$env/...` (**1.0.0-next.445**, [PR](https://github.com/sveltejs/kit/pull/6334))
@@ -99,7 +101,5 @@ _UI Kits and Starters_
 - [SvelteKit Commerce](https://vercel.com/templates/svelte/sveltekit-commerce) is an all-in-one starter kit for high-performance e-commerce sites built with SvelteKit by Vercel
 
 Did we miss anything? Let us know on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!
-
-It's your last chance to get tickets to Svelte Summit, Stockholm! [Join us on Sept 8-9th](https://www.sveltesummit.com/).
 
 See ya next month!
