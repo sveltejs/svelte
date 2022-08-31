@@ -193,7 +193,7 @@ Total: {total}
 ```
 
 ---
-Is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that `yDependant` will not be updated in the following example:
+It is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that `yDependent` will not be updated when `x` is updated in the following example:
 
 ```sv
 <script>
@@ -204,12 +204,12 @@ Is important to note that the reactive blocks are ordered via simple static anal
 		y = value;
 	}
 	
-	$: yDependant = y;
+	$: yDependent = y;
 	$: setY(x);
 </script>
 ```
 
-Moving the line `$: yDependant = y` bellow `$: setY(x)` will update `yDependant`.
+Moving the line `$: yDependent = y` bellow `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
 
 ---
 
