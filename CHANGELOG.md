@@ -16,6 +16,7 @@
 * Improve a11y `label-has-associated-control` check to recusively check for input control ([#5528](https://github.com/sveltejs/svelte/issues/5528))
 * Fix class directive updates after half way transition [#7764](https://github.com/sveltejs/svelte/issues/7764)
 * Improve parsing speed when encountering large blocks of whitespace [#7675](https://github.com/sveltejs/svelte/issues/7675)
+* Only show lowercase component warning for non-html/svg elements [#5712](https://github.com/sveltejs/svelte/issues/5712)
 
 ## 3.49.0
 
