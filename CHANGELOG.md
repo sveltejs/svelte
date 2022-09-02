@@ -1,22 +1,23 @@
 # Svelte changelog
 
-## Unreleased
+## 3.50.0
 
-* Add a11y warning `a11y-role-has-required-aria-props` which checks that elements with `role` attribute has all required attributes for that role. ([#5852](https://github.com/sveltejs/svelte/pull/5852))
-* Add a11y warning `aria-proptypes` which checks ARIA state and property values ([#6978](https://github.com/sveltejs/svelte/pull/6978))
-* Add a11y warning `a11y-no-abstract-role` which checks ARIA roles must be non-abstract ARIA role ([#6241](https://github.com/sveltejs/svelte/pull/6241))
-* Add a11y warning `a11y-no-interactive-element-to-noninteractive-role` which checks for noninteractive roles used on interactive elements ([#5955](https://github.com/sveltejs/svelte/pull/5955))
-* Remove of empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
-* Disallow invalid CSS selectors starting with a combinator ([#7643](https://github.com/sveltejs/svelte/issues/7643))
+* Add a11y warnings:
+	* `a11y-incorrect-aria-attribute-type`: check ARIA state and property values ([#6978](https://github.com/sveltejs/svelte/pull/6978))
+	* `a11y-no-abstract-role`: check that ARIA roles are non-abstract ([#6241](https://github.com/sveltejs/svelte/pull/6241))
+	* `a11y-no-interactive-element-to-noninteractive-role`: check for non-interactive roles used on interactive elements ([#5955](https://github.com/sveltejs/svelte/pull/5955))
+	* `a11y-role-has-required-aria-props`: check that elements with `role` attribute have all required attributes for that role ([#5852](https://github.com/sveltejs/svelte/pull/5852))
 * Add `ComponentEvents` convenience type ([#7702](https://github.com/sveltejs/svelte/pull/7702))
 * Add `SveltePreprocessor` utility type ([#7742](https://github.com/sveltejs/svelte/pull/7742))
 * Enhance action typings ([#7805](https://github.com/sveltejs/svelte/pull/7805))
-* Handle arrow function on `<slot>` inside `<svelte:fragment>` ([#7485](https://github.com/sveltejs/svelte/issues/7485))
+* Remove empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
+* Make `a11y-label-has-associated-control` warning check all descendants for input control ([#5528](https://github.com/sveltejs/svelte/issues/5528))
+* Only show lowercase component name warnings for non-HTML/SVG elements ([#5712](https://github.com/sveltejs/svelte/issues/5712))
+* Disallow invalid CSS selectors starting with a combinator ([#7643](https://github.com/sveltejs/svelte/issues/7643))
 * Use `Node.parentNode` instead of `Node.parentElement` for legacy browser support ([#7723](https://github.com/sveltejs/svelte/issues/7723))
-* Improve a11y `label-has-associated-control` check to recusively check for input control ([#5528](https://github.com/sveltejs/svelte/issues/5528))
-* Fix class directive updates after half way transition [#7764](https://github.com/sveltejs/svelte/issues/7764)
-* Improve parsing speed when encountering large blocks of whitespace [#7675](https://github.com/sveltejs/svelte/issues/7675)
-* Only show lowercase component warning for non-html/svg elements [#5712](https://github.com/sveltejs/svelte/issues/5712)
+* Handle arrow function on `<slot>` inside `<svelte:fragment>` ([#7485](https://github.com/sveltejs/svelte/issues/7485))
+* Improve parsing speed when encountering large blocks of whitespace ([#7675](https://github.com/sveltejs/svelte/issues/7675))
+* Fix `class:` directive updates in aborted/restarted transitions ([#7764](https://github.com/sveltejs/svelte/issues/7764))
 
 ## 3.49.0
 
