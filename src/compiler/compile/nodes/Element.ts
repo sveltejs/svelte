@@ -1,4 +1,4 @@
-import { is_void } from '../../../shared/utils/names';
+import { is_html, is_svg, is_void } from '../../../shared/utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -25,8 +25,6 @@ import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
 import { is_interactive_element, is_non_interactive_roles, is_presentation_role } from '../utils/a11y';
-
-const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -166,13 +164,13 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	const parent_element = parent.find_nearest(/^Element/);
 
 	if (!parent_element) {
-		return explicit_namespace || (svg.test(element.name)
+		return explicit_namespace || (is_svg(element.name)
 			? namespaces.svg
 			: null);
 	}
 
 	if (parent_element.namespace !== namespaces.foreign) {
-		if (svg.test(element.name.toLowerCase())) return namespaces.svg;
+		if (is_svg(element.name.toLowerCase())) return namespaces.svg;
 		if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 	}
 
@@ -373,7 +371,7 @@ export default class Element extends Node {
 	}
 
 	validate() {
-		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported) {
+		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported && !is_svg(this.name) && !is_html(this.name)) {
 			this.component.warn(this, compiler_warnings.component_name_lowercase(this.name));
 		}
 
@@ -827,7 +825,7 @@ export default class Element extends Node {
 			} else if (dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
-				} else if (svg.test(this.name)) {
+				} else if (is_svg(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
 				} else if (is_void(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
