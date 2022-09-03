@@ -9,6 +9,8 @@ see: https://github.com/microsoft/TypeScript/tree/main/lib
 import http from 'https';
 import fs from 'fs';
 
+const GLOBAL_TS_PATH = './src/compiler/utils/globals.ts';
+
 // MEMO: add additional objects/functions which existed in `src/compiler/utils/names.ts`
 //       before this script was introduced but could not be retrieved by this process.
 const SPECIALS = ['global', 'globalThis', 'InternalError', 'process', 'undefined'];
@@ -22,10 +24,8 @@ const extract_functions_and_references = (name, data) => {
 	data.split('\n').forEach(line => {
 		const trimmed = line.trim();
 		const split = trimmed.replace(/[\s+]/, ' ').split(' ');
-		if (split[0] === 'declare') {
-			// MEMO: ignore `declare type xxx` statement in lib.es5.d.ts.
-			//       Because all of these are TypeScript types. (not exists in runtime.)
-			if (name !== 'es5' || split[1] !== 'type') functions.push(extract_name(split[2]));
+		if (split[0] === 'declare' && split[1] !== 'type') {
+			functions.push(extract_name(split[2]));
 		} else if (trimmed.startsWith('/// <reference')) {
 			const matched = trimmed.match(/ lib="(.+)"/);
 			const reference = matched && matched[1];
@@ -74,8 +74,18 @@ ${sorted.map((i) => `\t'${i}'`).join(',\n')}
 `.substring(1);
 };
 
+const get_exists_globals = () => {
+	const regexp = /^\s*["'](.+)["'],?\s*$/;
+	return fs.readFileSync(GLOBAL_TS_PATH, 'utf8')
+		.split('\n')
+		.filter(line => line.match(regexp))
+		.map(line => line.match(regexp)[1]);
+};
+
 (async () => {
-	const functions = await get_functions('es2021.full');
-	functions.push(...SPECIALS);
-	fs.writeFileSync('src/compiler/utils/globals.ts', build_output(functions));
+	const globals = get_exists_globals();
+	const new_globals = await get_functions('es2021.full');
+	globals.forEach((g) => new_globals.push(g));
+	SPECIALS.forEach((g) => new_globals.push(g));
+	fs.writeFileSync(GLOBAL_TS_PATH, build_output(new_globals));
 })();
