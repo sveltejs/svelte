@@ -118,10 +118,10 @@ describe('runtime (puppeteer)', function() {
 							if (id === 'main') {
 								return `
 									import SvelteComponent from ${JSON.stringify(
-										path.join(__dirname, "samples", dir, "main.svelte")
+										path.join(__dirname, 'samples', dir, 'main.svelte')
 									)};
 									import config from ${JSON.stringify(
-										path.join(__dirname, "samples", dir, "_config.js")
+										path.join(__dirname, 'samples', dir, '_config.js')
 									)};
 									import * as assert from 'assert';
 
