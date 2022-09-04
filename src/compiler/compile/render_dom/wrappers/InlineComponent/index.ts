@@ -410,20 +410,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			const snippet = this.node.expression.manipulate(block);
 
-			let css_custom_properties_wrapper_anchor = null;
 			if (has_css_custom_properties) {
 				this.set_css_custom_properties(block, css_custom_properties_wrapper);
-				if ((this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node())) {
-					css_custom_properties_wrapper_anchor = block.get_unique_name(`${this.var.name}_anchor`);
-					block.add_element(
-						css_custom_properties_wrapper_anchor,
-						x`@empty()`,
-						parent_nodes && x`@empty()`,
-						parent_node
-					);
-				} else {
-					css_custom_properties_wrapper_anchor = (this.next && this.next.var) || parent_node;
-				}
 			}
 
 			block.chunks.init.push(b`
@@ -465,6 +453,11 @@ export default class InlineComponentWrapper extends Wrapper {
 			const tmp_anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 			const anchor = has_css_custom_properties ? 'null' : tmp_anchor;
 			const update_mount_node = has_css_custom_properties ? css_custom_properties_wrapper : this.get_update_mount_node(tmp_anchor);
+			const update_insert =
+				css_custom_properties_wrapper &&
+				(tmp_anchor.name !== 'null'
+					? b`@insert(${tmp_anchor}.parentNode, ${css_custom_properties_wrapper}, ${tmp_anchor});`
+					: b`@insert(${parent_node}, ${css_custom_properties_wrapper}, ${tmp_anchor});`);
 
 			block.chunks.update.push(b`
 				if (${switch_value} !== (${switch_value} = ${snippet})) {
@@ -479,7 +472,7 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 
 					if (${switch_value}) {
-						${css_custom_properties_wrapper_anchor && b`@insert(${css_custom_properties_wrapper_anchor}.parentNode, ${css_custom_properties_wrapper}, ${css_custom_properties_wrapper_anchor});`}
+						${update_insert}
 						${name} = new ${switch_value}(${switch_props}(#ctx));
 
 						${munged_bindings}
