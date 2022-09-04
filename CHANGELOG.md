@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add all global objects / functions ([#3805](https://github.com/sveltejs/svelte/issue/3805), [#7223](https://github.com/sveltejs/svelte/issue/7223), [#7240](https://github.com/sveltejs/svelte/issue/7240))
+
 ## 3.50.0
 
 * Add a11y warnings:
