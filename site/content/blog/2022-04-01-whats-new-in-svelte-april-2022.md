@@ -41,7 +41,7 @@ More on that, and what else is new in Svelte, as we dive in...
 
 **Apps & Sites built with Svelte**
 - [Launcher](https://launcher.team/) is an open-source app launcher powered by SvelteKit, Prisma, and Tailwind
-- [Paaster](https://paaster.io/) is a secure by default end to end encrypted pastebin built with Svelte, Vite, Typescript, Python, Starlette, rclone & Docker.
+- [Paaster](https://paaster.io/) is a secure by default end to end encrypted pastebin built with Svelte, Vite, TypeScript, Python, Starlette, rclone & Docker.
 - [Simple AF Video Converter](https://github.com/berlyozzy/Simple-AF-Video-Converter) is an Electron wrapper around ffmpeg.wasm to make converting videos between formats easier
 - [Streamchaser](https://github.com/streamchaser/streamchaser) seeks to simplify movie, series and documentary search through a centralized entertainment technology platform
 - [Svelte Color Picker](https://github.com/V-Py/svelte-material-color-picker) is a simple color picker made with Svelte
@@ -89,7 +89,7 @@ _To Watch_
 
 **Libraries, Tools & Components**
 - [SvelTable](https://sveltable.io/) is a feature rich, data table component built with Svelte
-- [svelte-cyberComp](https://github.com/Cybersteam00/svelte-cyberComp) is a powerful, lightweight component library written in Svelte and Typescript
+- [svelte-cyberComp](https://github.com/Cybersteam00/svelte-cyberComp) is a powerful, lightweight component library written in Svelte and TypeScript
 - [Flowbite Svelte](https://github.com/shinokada/flowbite-svelte) is an unofficial Flowbite component library for Svelte
 - [Svelte-Tide-Project](https://github.com/jbertovic/svelte-tide-project) is a starter template for Svelte frontend apps with Rust Tide backend server
 - [Fetch Inject](https://github.com/vhscom/fetch-inject#sveltekit) implements a performance optimization technique for managing asynchronous JavaScript dependencies - now with Svelte support

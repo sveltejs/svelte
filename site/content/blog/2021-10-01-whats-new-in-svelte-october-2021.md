@@ -52,7 +52,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [hirehive](https://www.hirehive.com/) is a candidate and job tracking site
 - [Microsocial](https://microsocial.xyz/) is an experimental Peer-to-Peer Social Platform 
 - [Dylan Ipsum](https://www.dylanlyrics.app/) is a random text generator to replace lorem ipsum with Bob Dylan lyrics
-- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is a CHIP-8 emulator frontend, built on top of CHIP8 Typescript
+- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is a CHIP-8 emulator frontend, built on top of CHIP8 TypeScript
 
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
@@ -74,7 +74,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 
 **Libraries, Tools & Components**
 - [sveltekit-netlify-cms](https://github.com/buhrmi/sveltekit-netlify-cms) is a SvelteKit skeleton app configured for use with Netlify CMS
-- [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + Typescript + Firebase library inspired by Fireship.io 
+- [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + TypeScript + Firebase library inspired by Fireship.io 
 - [stores-x](https://github.com/Anyass3/stores-x) lets you use Svelte stores just like vueX
 - [sveltekit-snippets](https://github.com/stordahl/sveltekit-snippets) is a VSCode extension that provides snippets for common patterns in SvelteKit & Vanilla Svelte
 - [svelte-xactor](https://github.com/wobsoriano/svelte-xactor) is a middleware that allows you to easily convert your xactor machines into a global store that implements the store contract
