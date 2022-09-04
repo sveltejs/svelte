@@ -124,6 +124,8 @@ An element or component can have multiple spread attributes, interspersed with r
 
 > The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
+> Sometimes, the attribute order matters as Svelte sets attributes sequentially in JavaScript. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, the value will be 1 because `step` is set after `value` is set. To fix it, `value` should set last.
+
 ---
 
 ### Text expressions
@@ -642,8 +644,6 @@ If you're using `bind:` directives together with `on:` directives, the order tha
 ```
 
 Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
-
-> Svelte bind attributes by JavaScript, so sometimes binding order is important. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, the value will be 1 because `step` is set after `value` is set. In this example, `value` should set at the last.
 
 ##### Binding `<select>` value
 
