@@ -643,6 +643,8 @@ If you're using `bind:` directives together with `on:` directives, the order tha
 
 Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
 
+> Svelte bind attributes by JavaScript, so sometimes binding order is important. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, the value will be 1 because `step` is set after `value` is set. In this example, `value` should set at the last.
+
 ##### Binding `<select>` value
 
 ---
