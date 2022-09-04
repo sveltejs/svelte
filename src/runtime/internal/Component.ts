@@ -14,7 +14,7 @@ export interface Fragment {
 	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
 	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p: (ctx: T$$['ctx'], dirty: any) => void;
+	/* update  */ p: (ctx: T$$['ctx'], dirty: T$$['dirty']) => void;
 	/* measure */ r: () => void;
 	/* fix     */ f: () => void;
 	/* animate */ a: () => void;
