@@ -520,6 +520,12 @@ export default class Element extends Node {
 					const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
 
 					if (has_missing_props) {
+						// native checkbox/radio inputs do not require ARIA attributes
+						if (this.name === 'input') {
+							const type = attributes.find((a) => a.name === 'type').get_static_value();
+							if (type === 'checkbox' || type === 'radio') return;
+						}
+
 						component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
 					}
 				}
