@@ -1,8 +1,9 @@
 # Svelte changelog
 
-## Unreleased
+## 3.50.1
 
-* Add all global objects / functions ([#3805](https://github.com/sveltejs/svelte/issues/3805), [#7223](https://github.com/sveltejs/svelte/issues/7223))
+* Add all global objects and functions as known globals ([#3805](https://github.com/sveltejs/svelte/issues/3805), [#7223](https://github.com/sveltejs/svelte/issues/7223))
+* Fix regression with style manager ([#7828](https://github.com/sveltejs/svelte/issues/7828))
 
 ## 3.50.0
 
