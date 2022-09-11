@@ -11,6 +11,7 @@ import InlineComponent from './InlineComponent';
 import Window from './Window';
 import { clone } from '../../utils/clone';
 import compiler_errors from '../compiler_errors';
+import compiler_warnings from '../compiler_warnings';
 
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([
@@ -47,6 +48,7 @@ export default class Binding extends Node {
 		const { name } = get_object(this.expression.node);
 
 		this.is_contextual = Array.from(this.expression.references).some(name => scope.names.has(name));
+		if (this.is_contextual) this.validate_binding_rest_properties(scope);
 
 		// make sure we track this as a mutable ref
 		if (scope.is_let(name)) {
@@ -94,6 +96,18 @@ export default class Binding extends Node {
 
 	is_readonly_media_attribute() {
 		return read_only_media_attributes.has(this.name);
+	}
+
+	validate_binding_rest_properties(scope: TemplateScope) {
+		this.expression.references.forEach(name => {
+			const each_block = scope.get_owner(name);
+			if (each_block && each_block.type === 'EachBlock') {
+				const rest_node = each_block.context_rest_properties.get(name);
+				if (rest_node) {
+					this.component.warn(rest_node as any, compiler_warnings.invalid_rest_eachblock_binding(name));
+				}
+			}
+		});
 	}
 }
 

@@ -186,5 +186,9 @@ export default {
 	redundant_event_modifier_passive: {
 		code: 'redundant-event-modifier',
 		message: 'The passive modifier only works with wheel and touch events'
-	}
+	},
+	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
+		code: 'invalid-rest-eachblock-binding',
+		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
+	})
 };
