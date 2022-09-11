@@ -7,6 +7,7 @@
 * Treat `inert` as boolean attribute ([#7785](https://github.com/sveltejs/svelte/pull/7785))
 * Supporting scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
 * Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
+* Warn user when binding on a `{...rest}` object in `{#each}` block ([#6860](https://github.com/sveltejs/svelte/issues/6860))
 
 
 ## 3.50.1
