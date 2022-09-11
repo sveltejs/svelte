@@ -311,7 +311,7 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 				return BlockAppliesToNode.NotPossible;
 			}
 		} else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*' && !node.is_dynamic_element) return BlockAppliesToNode.NotPossible;
 		} else {
 			return BlockAppliesToNode.UnknownSelectorType;
 		}
