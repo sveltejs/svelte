@@ -646,6 +646,27 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
+export function head_selector(nodeId: string, head: HTMLElement) {
+	const result = [];
+	let started = 0;
+
+	for (const node of head.childNodes) {
+		if (node.nodeType === 8 /* comment node */) {
+			const comment = node.textContent.trim();
+			if (comment === `HEAD_${nodeId}_END`) {
+				started -= 1;
+				result.push(node);
+			} else if (comment === `HEAD_${nodeId}_START`) {
+				started += 1;
+				result.push(node);
+			}
+		} else if (started > 0) {
+			result.push(node);
+		}
+	}
+	return result;
+}
+
 export class HtmlTag {
 	private is_svg = false;
 	// parent for creating node
