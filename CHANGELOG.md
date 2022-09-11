@@ -3,6 +3,8 @@
 ## Unreleased
 
 * Fix hydration issue with using `{@html}` and components in `svelte:head` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
+* Warn instead of throwing error if `<svelte:element>` is void tag ([#7566](https://github.com/sveltejs/svelte/issues/7566))
+
 
 ## 3.50.1
 
