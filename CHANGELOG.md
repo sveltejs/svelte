@@ -6,6 +6,7 @@
 * Warn instead of throwing error if `<svelte:element>` is void tag ([#7566](https://github.com/sveltejs/svelte/issues/7566))
 * Treat `inert` as boolean attribute ([#7785](https://github.com/sveltejs/svelte/pull/7785))
 * Supporting scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
+* Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
 
 
 ## 3.50.1
