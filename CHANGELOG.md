@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Fix hydration issue with using `{@html}` and components in `svelte:head` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
+
 ## 3.50.1
 
 * Add all global objects and functions as known globals ([#3805](https://github.com/sveltejs/svelte/issues/3805), [#7223](https://github.com/sveltejs/svelte/issues/7223))
