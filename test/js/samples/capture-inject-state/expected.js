@@ -12,7 +12,7 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	subscribe,
+	subscribe_dynamic_store,
 	text,
 	validate_slots,
 	validate_store
@@ -102,7 +102,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	let $prop,
 		$$unsubscribe_prop = noop,
-		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
+		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe_dynamic_store(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
 	let { $$slots: slots = {}, $$scope } = $$props;

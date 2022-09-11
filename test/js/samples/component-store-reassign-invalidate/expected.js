@@ -11,7 +11,7 @@ import {
 	safe_not_equal,
 	set_data,
 	space,
-	subscribe,
+	subscribe_dynamic_store,
 	text
 } from "svelte/internal";
 
@@ -62,7 +62,7 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo,
 		$$unsubscribe_foo = noop,
-		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate(1, $foo = $$value)), foo);
+		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe_dynamic_store(foo, $$value => $$invalidate(1, $foo = $$value)), foo);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_foo());
 	let foo = writable(0);
