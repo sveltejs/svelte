@@ -117,7 +117,9 @@ export function validate_dynamic_element(tag: unknown) {
 
 export function validate_void_dynamic_element(tag: undefined | string) {
 	if (tag && is_void(tag)) {
-		throw new Error(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
+		console.warn(
+			`<svelte:element this="${tag}"> is self-closing and cannot have content.`
+		);
 	}
 }
 
