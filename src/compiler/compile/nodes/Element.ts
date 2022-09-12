@@ -31,8 +31,8 @@ import {
 	is_interactive_roles,
 	is_hidden_from_screen_reader,
 	is_semantic_role_element,
-	may_contain_input_child,
-} from "../utils/a11y";
+	may_contain_input_child
+} from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);

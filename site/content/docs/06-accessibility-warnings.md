@@ -153,7 +153,7 @@ There are two supported ways to associate a label with a control:
 <label>A</label>
 ```
 
-If your label and input are Svelte components, you can configure the rule to be aware of your custom components.
+If your label and input are Svelte components, you can configure the rule to be aware of your Svelte components.
 
 ```svelte
 <CustomInputLabel label="Surname">
