@@ -1374,6 +1374,22 @@ Desugars to this:
 
 ---
 
+For SVG namespace, the example above desugars into using `<g>` instead:
+
+```sv
+<g style="--rail-color: black; --track-color: rgb(0, 0, 255)">
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
+</g>
+```
+
+**Note**: Since this is an extra `<g>`, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+
+---
+
 Svelte's CSS Variables support allows for easily themable components:
 
 ```sv

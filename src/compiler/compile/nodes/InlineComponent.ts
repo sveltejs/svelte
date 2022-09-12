@@ -22,6 +22,7 @@ export default class InlineComponent extends Node {
 	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
+	namespace: string;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
@@ -33,6 +34,7 @@ export default class InlineComponent extends Node {
 		}
 
 		this.name = info.name;
+		this.namespace = get_namespace(parent, component.namespace);
 
 		this.expression = this.name === 'svelte:component'
 			? new Expression(component, this, scope, info.expression)
@@ -164,4 +166,14 @@ export default class InlineComponent extends Node {
 
 function not_whitespace_text(node) {
 	return !(node.type === 'Text' && /^\s+$/.test(node.data));
+}
+
+function get_namespace(parent: Node, explicit_namespace: string) {
+	const parent_element = parent.find_nearest(/^Element/);
+
+	if (!parent_element) {
+		return explicit_namespace;
+	}
+
+	return parent_element.namespace;
 }
