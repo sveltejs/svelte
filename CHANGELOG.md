@@ -11,6 +11,7 @@
 * support `--style-props` for `<svelte:component>` ([#7461](https://github.com/sveltejs/svelte/issues/7461))
 * Add a11y warnings:
 	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
+	* `a11y-click-events-have-key-events`: check if click event is accompanied by key events ([#5073](https://github.com/sveltejs/svelte/pull/5073))
 
 ## 3.50.1
 
