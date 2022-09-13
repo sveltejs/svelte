@@ -550,11 +550,11 @@ export default class Element extends Node {
 			}
 		});
 
-		// no-nointeractive-tabindex
+		// no-noninteractive-tabindex
 		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
-				component.warn(this, compiler_warnings.a11y_no_nointeractive_tabindex);
+				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
 			}
 		}
 	}

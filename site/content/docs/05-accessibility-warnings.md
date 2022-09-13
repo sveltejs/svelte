@@ -250,6 +250,17 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 ---
 
+### `a11y-no-noninteractive-tabindex`
+
+Tab key navigation should be limited to elements on the page that can be interacted with.
+
+```sv
+<!-- A11y: not interactive element cannot have positive tabIndex value -->
+<div tabindex='0' />
+```
+
+---
+
 ### `a11y-positive-tabindex`
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.

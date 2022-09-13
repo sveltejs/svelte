@@ -1,6 +1,6 @@
 [
 	{
-		"code": "a11y-no-nointeractive-tabindex",
+		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"character": 241,
 			"column": 20,
@@ -15,7 +15,7 @@
 		}
 	},
 	{
-		"code": "a11y-no-nointeractive-tabindex",
+		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"character": 277,
 			"column": 35,
@@ -30,7 +30,7 @@
 		}
 	},
 	{
-		"code": "a11y-no-nointeractive-tabindex",
+		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"character": 302,
 			"column": 24,
@@ -45,7 +45,7 @@
 		}
 	},
 	{
-		"code": "a11y-no-nointeractive-tabindex",
+		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"character": 329,
 			"column": 26,

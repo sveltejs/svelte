@@ -179,8 +179,8 @@ export default {
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
-	a11y_no_nointeractive_tabindex: {
-		code: 'a11y-no-nointeractive-tabindex',
+	a11y_no_noninteractive_tabindex: {
+		code: 'a11y-no-noninteractive-tabindex',
 		message: 'A11y: not interactive element cannot have positive tabIndex value'
 	},
 	redundant_event_modifier_for_touch: {
