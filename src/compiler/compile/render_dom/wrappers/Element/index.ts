@@ -803,15 +803,31 @@ export default class ElementWrapper extends Wrapper {
 
 		const fn = this.node.namespace === namespaces.svg ? x`@set_svg_attributes` : x`@set_attributes`;
 
-		block.chunks.hydrate.push(
-			b`${fn}(${this.var}, ${data});`
-		);
+		if (this.node.is_dynamic_element) {
+			// call attribute bindings for custom element if tag is custom element
+			const tag = this.node.tag_expr.manipulate(block);
+			const attr_update = b`
+				if (/-/.test(${tag})) {
+					@set_custom_element_data_map(${this.var}, ${data});
+				} else {
+					${fn}(${this.var}, ${data});
+				}`;
+			block.chunks.hydrate.push(attr_update);
+			block.chunks.update.push(b`
+				${data} = @get_spread_update(${levels}, [${updates}]);
+				${attr_update}`
+			);
+		} else {
+			block.chunks.hydrate.push(
+				b`${fn}(${this.var}, ${data});`
+			);
 
-		block.chunks.update.push(b`
-			${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
-				${updates}
-			]));
-		`);
+			block.chunks.update.push(b`
+				${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
+					${updates}
+				]));
+			`);
+		}
 
 		// handle edge cases for elements
 		if (this.node.name === 'select') {
