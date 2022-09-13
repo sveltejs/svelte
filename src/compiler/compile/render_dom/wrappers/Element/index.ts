@@ -504,9 +504,10 @@ export default class ElementWrapper extends Wrapper {
 
 	get_render_statement(block: Block) {
 		const { name, namespace, tag_expr } = this.node;
+		const reference = tag_expr.manipulate(block);
 
 		if (namespace === namespaces.svg) {
-			return x`@svg_element("${name}")`;
+			return x`@svg_element(${reference})`;
 		}
 
 		if (namespace) {
@@ -518,7 +519,6 @@ export default class ElementWrapper extends Wrapper {
 			return x`@element_is("${name}", ${is.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`)})`;
 		}
 
-		const reference = tag_expr.manipulate(block);
 		return x`@element(${reference})`;
 	}
 
@@ -1052,7 +1052,10 @@ export default class ElementWrapper extends Wrapper {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
-				const condition = block.renderer.dirty(all_dependencies);
+				let condition = block.renderer.dirty(all_dependencies);
+				if (block.has_outros) {
+					condition = x`!#current || ${condition}`;
+				}
 
 				// If all of the dependencies are non-dynamic (don't get updated) then there is no reason
 				// to add an updater for this.

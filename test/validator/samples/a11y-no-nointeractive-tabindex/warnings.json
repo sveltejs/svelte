@@ -1,0 +1,62 @@
+[
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 241,
+			"column": 20,
+			"line": 11
+		},
+		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"pos": 221,
+		"start": {
+			"character": 221,
+			"column": 0,
+			"line": 11
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 277,
+			"column": 35,
+			"line": 12
+		},
+		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"pos": 242,
+		"start": {
+			"character": 242,
+			"column": 0,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 302,
+			"column": 24,
+			"line": 13
+		},
+		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"pos": 278,
+		"start": {
+			"character": 278,
+			"column": 0,
+			"line": 13
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 329,
+			"column": 26,
+			"line": 14
+		},
+		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"pos": 303,
+		"start": {
+			"character": 303,
+			"column": 0,
+			"line": 14
+		}
+	}
+]

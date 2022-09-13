@@ -145,6 +145,7 @@ export default class Selector {
 		}
 
 		this.validate_global_with_multiple_selectors(component);
+		this.validate_invalid_combinator_without_selector(component);
 	}
 
 	validate_global_with_multiple_selectors(component: Component) {
@@ -160,6 +161,17 @@ export default class Selector {
 						component.error(selector, compiler_errors.css_invalid_global_selector);
 					}
 				}
+			}
+		}
+	}
+	validate_invalid_combinator_without_selector(component: Component) {
+		for (let i = 0; i < this.blocks.length; i++) {
+			const block = this.blocks[i];
+			if (block.combinator && block.selectors.length === 0) {
+				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
+			}
+			if (!block.combinator && block.selectors.length === 0) {
+				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
 			}
 		}
 	}
@@ -299,7 +311,7 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 				return BlockAppliesToNode.NotPossible;
 			}
 		} else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*') return BlockAppliesToNode.NotPossible;
+			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*' && !node.is_dynamic_element) return BlockAppliesToNode.NotPossible;
 		} else {
 			return BlockAppliesToNode.UnknownSelectorType;
 		}

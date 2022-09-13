@@ -9,6 +9,7 @@ import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
 import { namespaces } from '../../../../utils/namespaces';
+import { boolean_attributes } from '../../../../../shared/boolean_attributes';
 
 const non_textlike_input_types = new Set([
 	'button',
@@ -255,7 +256,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 	get_value(block) {
 		if (this.node.is_true) {
-			if (this.metadata && boolean_attribute.has(this.metadata.property_name.toLowerCase())) {
+			if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
 				return x`true`;
 			}
 			return x`""`;
@@ -375,35 +376,6 @@ Object.keys(attribute_lookup).forEach(name => {
 	const metadata = attribute_lookup[name];
 	if (!metadata.property_name) metadata.property_name = name;
 });
-
-// source: https://html.spec.whatwg.org/multipage/indices.html
-const boolean_attribute = new Set([
-	'allowfullscreen',
-	'allowpaymentrequest',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'defer',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'ismap',
-	'itemscope',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'selected'
-]);
 
 function should_cache(attribute: AttributeWrapper) {
 	return attribute.is_src || attribute.node.should_cache();

@@ -44,7 +44,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [macos-web](https://github.com/PuruVJ/macos-web) by @puruvjdev has been rebuilt with Svelte from the ground up. Check out all the details in this [Twitter thread](https://twitter.com/puruvjdev/status/1426267327687847939)
 - [Brave Search](https://search.brave.com/) is using Svelte
 - [exatorrent](https://github.com/varbhat/exatorrent) is a self-hostable, easy-to-use, lightweight and feature-rich torrent client written in Go and Svelte
-- [json2TsTypes](https://github.com/jatinhemnani01/json2TsTypes) is a simple tool which will convert your JSON to Typescript Types/Interfaces
+- [json2TsTypes](https://github.com/jatinhemnani01/json2TsTypes) is a simple tool which will convert your JSON to TypeScript Types/Interfaces
 - [Histogram.dev](https://histogram.dev/) generates histograms for each feature in a CSV
 - [cybernetic.dev](https://cybernetic.dev/) is a collection of data-centric UI experiments made while learning Svelte
 - [LunaNotes](https://chrome.google.com/webstore/detail/lunanotes-youtube-video-n/oehoffnnkgcdacmbkhmlbjedinpampak?hl=en) is a Chrome extension to help with taking YouTube video notes

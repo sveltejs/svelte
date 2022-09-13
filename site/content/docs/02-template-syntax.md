@@ -1006,7 +1006,7 @@ Like actions, transitions can have parameters.
 ```sv
 {#if visible}
 	<div transition:fade="{{ duration: 2000 }}">
-		flies in, fades out over two seconds
+		fades in and out over two seconds
 	</div>
 {/if}
 ```
@@ -1666,7 +1666,7 @@ If `this` is the name of a void tag (e.g., `br`) and `<svelte:element>` has chil
 
 The `<svelte:window>` element allows you to add event listeners to the `window` object without worrying about removing them when the component is destroyed, or checking for the existence of `window` when server-side rendering.
 
-Unlike `<svelte:self>`, this element may only appear the top level of your component and must never be inside a block or element.
+Unlike `<svelte:self>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```sv
 <script>

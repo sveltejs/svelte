@@ -234,6 +234,10 @@ export default {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
 	},
+	css_invalid_selector: (selector: string) => ({
+		code: 'css-invalid-selector',
+		message: `Invalid selector "${selector}"`
+	}),
 	duplicate_animation: {
 		code: 'duplicate-animation',
 		message: "An element can only have one 'animate' directive"

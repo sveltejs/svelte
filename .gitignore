@@ -1,6 +1,5 @@
 .idea
 .DS_Store
-.nyc_output
 .vscode
 node_modules
 *.map

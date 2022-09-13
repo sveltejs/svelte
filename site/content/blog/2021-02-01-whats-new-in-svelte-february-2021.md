@@ -70,7 +70,7 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 - [here-maps-svelte](https://github.com/peopledrivemecrazy/here-maps-svelte) makes it easy to include HERE maps in a Svelte app
 - [p5-svelte](https://github.com/tonyketcham/p5-svelte) is an absolutely dead simple way of tossing the creative coding/sketching tool, p5, into a project
 - [svelte-windicss-preprocess](https://github.com/voorjaar/svelte-windicss-preprocess) is a Svelte preprocessor to compile tailwindcss at build time based on windicss compiler
-- [MitzaCoder/svelte-boilerplate](https://github.com/MitzaCoder/svelte-boilerplate) features configurations for Typescript, TailwindCSS, IE11 compatibility (with Babel) and lazy loaded modules.
+- [MitzaCoder/svelte-boilerplate](https://github.com/MitzaCoder/svelte-boilerplate) features configurations for TypeScript, TailwindCSS, IE11 compatibility (with Babel) and lazy loaded modules.
 
 **Want to share your Svelte Component with the world?** Head over to the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
 

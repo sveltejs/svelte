@@ -34,7 +34,7 @@ export class Parser {
 			throw new TypeError('Template must be a string');
 		}
 
-		this.template = template.replace(/\s+$/, '');
+		this.template = template.trimRight();
 		this.filename = options.filename;
 		this.customElement = options.customElement;
 
