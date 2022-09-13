@@ -51,6 +51,10 @@ export function is_non_interactive_roles(role: ARIARoleDefintionKey) {
 	return non_interactive_roles.has(role);
 }
 
+export function is_interactive_roles(role: ARIARoleDefintionKey) {
+	return interactive_roles.has(role);
+}
+
 const presentation_roles = new Set(['presentation', 'none']);
 
 export function is_presentation_role(role: ARIARoleDefintionKey) {
