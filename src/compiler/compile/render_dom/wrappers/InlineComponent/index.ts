@@ -436,8 +436,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
-			block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 			if (css_custom_properties_wrapper) this.create_css_custom_properties_wrapper_mount_chunk(block, parent_node, css_custom_properties_wrapper);
+			block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 
 			if (to_claim) {
 				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper);
