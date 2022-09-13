@@ -661,7 +661,6 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-<<<<<<< HEAD
 			const has_input_child = (children: INode[]) => {
 				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
 					return true;
@@ -680,10 +679,6 @@ export default class Element extends Node {
 			};
 
 			if (!attribute_map.has('for') && !has_input_child(this.children)) {
-=======
-			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name)));
-			if (!attribute_map.has('for') && !has_input_child) {
->>>>>>> 72722864e (slight refactor to use existing utils)
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}
