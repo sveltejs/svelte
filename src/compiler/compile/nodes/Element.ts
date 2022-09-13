@@ -24,7 +24,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -514,13 +514,15 @@ export default class Element extends Node {
 				}
 
 				// role-has-required-aria-props
-				const role = roles.get(value);
-				if (role) {
-					const required_role_props = Object.keys(role.requiredProps);
-					const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+				if (!is_semantic_role_element(value, this.name, attribute_map)) {
+					const role = roles.get(value);
+					if (role) {
+						const required_role_props = Object.keys(role.requiredProps);
+						const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
 
-					if (has_missing_props) {
-						component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
+						if (has_missing_props) {
+							component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
+						}
 					}
 				}
 

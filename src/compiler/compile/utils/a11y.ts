@@ -4,7 +4,7 @@ import {
 	elementRoles,
 	ARIARoleRelationConcept
 } from 'aria-query';
-import { AXObjects, elementAXObjects } from 'axobject-query';
+import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import Attribute from '../nodes/Attribute';
 
 const roles = [...roles_map.keys()];
@@ -119,8 +119,8 @@ function match_schema(
 			schema_attribute.value &&
 			schema_attribute.value !== attribute.get_static_value()
 		) {
-return false;
-}
+			return false;
+		}
 		return true;
 	});
 }
@@ -153,5 +153,25 @@ export function is_interactive_element(
 		return true;
 	}
 
+	return false;
+}
+
+export function is_semantic_role_element(role: ARIARoleDefintionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
+	for (const [schema, ax_object] of elementAXObjects.entries()) {
+		if (schema.name === tag_name && (!schema.attributes || schema.attributes.every(
+			(attr) => attribute_map.has(attr.name) && attribute_map.get(attr.name).get_static_value() === attr.value
+		))) {
+			for (const name of ax_object) {
+				const roles = AXObjectRoles.get(name);
+				if (roles) {
+					for (const { name } of roles) {
+						if (name === role) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
 	return false;
 }
