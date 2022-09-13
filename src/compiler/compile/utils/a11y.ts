@@ -61,6 +61,22 @@ export function is_presentation_role(role: ARIARoleDefintionKey) {
 	return presentation_roles.has(role);
 }
 
+export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Map<string, Attribute>) {
+	if (tag_name === 'input') {
+		const type = attribute_map.get('type')?.get_static_value();
+
+		if (type && type === 'hidden') {
+			return true;
+		}
+	}
+
+	const aria_hidden = attribute_map.get('aria-hidden');
+	if (!aria_hidden) return false;
+	if (!aria_hidden.is_static) return true;
+	const aria_hidden_value = aria_hidden.get_static_value();
+	return aria_hidden_value === true || aria_hidden_value === 'true';
+}
+
 const non_interactive_element_role_schemas: ARIARoleRelationConcept[] = [];
 
 elementRoles.entries().forEach(([schema, roles]) => {
