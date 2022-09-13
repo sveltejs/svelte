@@ -8,7 +8,8 @@
 * Supporting scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
 * Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
 * Warn user when binding on a `{...rest}` object in `{#each}` block ([#6860](https://github.com/sveltejs/svelte/issues/6860))
-
+* Add a11y warnings:
+	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
 
 ## 3.50.1
 
