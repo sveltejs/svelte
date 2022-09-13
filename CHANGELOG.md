@@ -12,6 +12,7 @@
 * Add a11y warnings:
 	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
 	* `a11y-click-events-have-key-events`: check if click event is accompanied by key events ([#5073](https://github.com/sveltejs/svelte/pull/5073))
+* `a11y-role-has-required-aria-props` do not warn when elements matched their semantic role ([#7838](https://github.com/sveltejs/svelte/pull/7838))
 
 ## 3.50.1
 
