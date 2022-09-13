@@ -11,6 +11,14 @@ export function get_current_component() {
 	return current_component;
 }
 
+export function no_current_component(callback: () => void) {
+	const old_current_component = current_component;
+	current_component = undefined;
+	const value = callback();
+	current_component = old_current_component;
+	return value;
+}
+
 export function beforeUpdate(fn: () => any) {
 	get_current_component().$$.before_update.push(fn);
 }

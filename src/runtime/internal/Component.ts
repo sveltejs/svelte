@@ -1,5 +1,5 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
-import { current_component, set_current_component } from './lifecycle';
+import { current_component, no_current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
@@ -152,26 +152,29 @@ export function init(component, options, instance, create_fragment, not_equal, p
 	ready = true;
 	run_all($$.before_update);
 
-	// `false` as a special case of no DOM component
-	$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
+	no_current_component(() => {
+		// `false` as a special case of no DOM component
+		$$.fragment = create_fragment ? create_fragment($$.ctx) : false;
+		
 
-	if (options.target) {
-		if (options.hydrate) {
-			start_hydrating();
-			const nodes = children(options.target);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.l(nodes);
-			nodes.forEach(detach);
-		} else {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			$$.fragment && $$.fragment!.c();
+		if (options.target) {
+			if (options.hydrate) {
+				start_hydrating();
+				const nodes = children(options.target);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				$$.fragment && $$.fragment!.l(nodes);
+				nodes.forEach(detach);
+			} else {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				$$.fragment && $$.fragment!.c();
+			}
+
+			if (options.intro) transition_in(component.$$.fragment);
+			mount_component(component, options.target, options.anchor, options.customElement);
+			end_hydrating();
+			flush();
 		}
-
-		if (options.intro) transition_in(component.$$.fragment);
-		mount_component(component, options.target, options.anchor, options.customElement);
-		end_hydrating();
-		flush();
-	}
+	});
 
 	set_current_component(parent_component);
 }

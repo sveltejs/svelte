@@ -198,7 +198,7 @@ export default function ssr(
 		instance_javascript,
 		...parent_bindings,
 		css.code && b`$$result.css.add(#css);`,
-		main
+		b`return @no_current_component(() => { ${main} });`
 	].filter(Boolean);
 
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
