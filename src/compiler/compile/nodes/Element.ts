@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions, start_newline } from '../../utils/patterns';
+import { regex_dimensions, regex_start_newline } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -258,7 +258,7 @@ export default class Element extends Node {
 					// places if there's another newline afterwards.
 					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-					first.data = first.data.replace(start_newline, '');
+					first.data = first.data.replace(regex_start_newline, '');
 				}
 			}
 
@@ -866,7 +866,7 @@ export default class Element extends Node {
 				if (this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
 				}
-			} else if (dimensions.test(name)) {
+			} else if (regex_dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
 				} else if (is_svg(this.name)) {

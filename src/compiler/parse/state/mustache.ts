@@ -1,7 +1,7 @@
 import read_context from '../read/context';
 import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
-import { whitespace } from '../../utils/patterns';
+import { regex_whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
 import { to_string } from '../utils/node';
 import { Parser } from '../index';
@@ -89,8 +89,8 @@ export default function mustache(parser: Parser) {
 		// strip leading/trailing whitespace as necessary
 		const char_before = parser.template[block.start - 1];
 		const char_after = parser.template[parser.index];
-		const trim_before = !char_before || whitespace.test(char_before);
-		const trim_after = !char_after || whitespace.test(char_after);
+		const trim_before = !char_before || regex_whitespace.test(char_before);
+		const trim_after = !char_after || regex_whitespace.test(char_after);
 
 		trim_whitespace(block, trim_before, trim_after);
 
