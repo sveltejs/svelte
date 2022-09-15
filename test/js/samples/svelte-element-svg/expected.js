@@ -48,8 +48,10 @@ function create_dynamic_element(ctx) {
 			append(svelte_element1, svelte_element0);
 		},
 		p(ctx, dirty) {
-			set_svg_attributes(svelte_element0, svelte_element0_data = get_spread_update(svelte_element0_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]));
-			set_svg_attributes(svelte_element1, svelte_element1_data = get_spread_update(svelte_element1_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]));
+			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
+			set_svg_attributes(svelte_element0, svelte_element0_data);
+			svelte_element1_data = get_spread_update(svelte_element1_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
+			set_svg_attributes(svelte_element1, svelte_element1_data);
 		},
 		d(detaching) {
 			if (detaching) detach(svelte_element1);
