@@ -806,12 +806,14 @@ export default class ElementWrapper extends Wrapper {
 		if (this.node.is_dynamic_element) {
 			// call attribute bindings for custom element if tag is custom element
 			const tag = this.node.tag_expr.manipulate(block);
-			const attr_update = b`
-				if (/-/.test(${tag})) {
-					@set_custom_element_data_map(${this.var}, ${data});
-				} else {
-					${fn}(${this.var}, ${data});
-				}`;
+			const attr_update = this.node.namespace === namespaces.svg
+				? b`${fn}(${this.var}, ${data});`
+				: b`
+					if (/-/.test(${tag})) {
+						@set_custom_element_data_map(${this.var}, ${data});
+					} else {
+						${fn}(${this.var}, ${data});
+					}`;
 			block.chunks.hydrate.push(attr_update);
 			block.chunks.update.push(b`
 				${data} = @get_spread_update(${levels}, [${updates}]);
