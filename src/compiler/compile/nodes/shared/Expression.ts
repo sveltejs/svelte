@@ -21,7 +21,7 @@ import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
-const regex_contains_FunctionExpression = /FunctionExpression/;
+const regex_contains_term_function_expression = /FunctionExpression/;
 
 export default class Expression {
 	type: 'Expression' = 'Expression';
@@ -74,7 +74,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (!function_expression && regex_contains_FunctionExpression.test(node.type)) {
+				if (!function_expression && regex_contains_term_function_expression.test(node.type)) {
 					function_expression = node;
 				}
 
