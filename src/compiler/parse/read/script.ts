@@ -3,8 +3,8 @@ import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
 import parser_errors from '../errors';
+import { regex_not_newline_characters } from '../../utils/patterns';
 
-const regex_not_newline_characters = /[^\n]/g;
 const regex_closing_script_tag = /<\/script\s*>/;
 
 function get_context(parser: Parser, attributes: any[], start: number): string {

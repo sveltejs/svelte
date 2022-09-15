@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { regex_dimensions, regex_start_newline } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -206,7 +206,6 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 const regex_any_repeated_whitespaces = /[\s]+/g;
 const regex_heading_tags = /^h[1-6]$/;
 const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
-const regex_non_whitespace_characters = /\S/;
 
 export default class Element extends Node {
 	type: 'Element';
@@ -258,7 +257,7 @@ export default class Element extends Node {
 					// places if there's another newline afterwards.
 					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-					first.data = first.data.replace(regex_start_newline, '');
+					first.data = first.data.replace(regex_starts_with_newline, '');
 				}
 			}
 
@@ -734,7 +733,7 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return regex_non_whitespace_characters.test(node.data);
+				if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
 				return true;
 			});
 

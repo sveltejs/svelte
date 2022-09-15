@@ -12,8 +12,7 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
-
-const regex_backslashes = /\\/g;
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,

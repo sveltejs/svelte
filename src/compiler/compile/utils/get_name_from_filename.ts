@@ -1,8 +1,8 @@
+import { regex_starts_with_underscore, regex_ends_with_underscore } from '../../utils/patterns';
+
 const regex_percentage_characters = /%/g;
 const regex_file_ending = /\.[^.]+$/;
 const regex_repeated_invalid_variable_identifier_characters = /[^a-zA-Z_$0-9]+/g;
-const regex_starts_with_underscore = /^_/;
-const regex_ends_with_underscore = /_$/;
 const regex_starts_with_digit = /^(\d)/;
 
 export default function get_name_from_filename(filename: string) {

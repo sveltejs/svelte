@@ -9,6 +9,7 @@ import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
 import { push_array } from '../../utils/push_array';
+import { regex_only_whitespaces, regex_whitespace } from '../../utils/patterns';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 
@@ -118,9 +119,6 @@ class Rule {
 	}
 }
 
-const regex_only_whitespace = /^\s+$/;
-const regex_whitespace = /\s/;
-
 class Declaration {
 	node: CssNode;
 
@@ -152,7 +150,7 @@ class Declaration {
 
 		// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
 		// treat --foo: ; and --foo:; differently
-		if (first.type === 'Raw' && regex_only_whitespace.test(first.value)) return;
+		if (first.type === 'Raw' && regex_only_whitespaces.test(first.value)) return;
 
 		let start = first.start;
 		while (regex_whitespace.test(code.original[start])) start += 1;

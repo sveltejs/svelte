@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { regex_dimensions, regex_start_newline } from '../../../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_backslashes } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -1145,7 +1145,6 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
-const regex_backslashes = /\\/g;
 const regex_backticks = /`/g;
 const regex_dollar_signs = /\$/g;
 
@@ -1203,7 +1202,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
 					const first = wrapper.fragment.nodes[0];
-					if (first && first.node.type === 'Text' && regex_start_newline.test(first.node.data)) {
+					if (first && first.node.type === 'Text' && regex_starts_with_newline.test(first.node.data)) {
 						state.quasi.value.raw += '\n';
 					}
 				}
@@ -1215,7 +1214,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
 						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 						const first = value_attribute.node.chunks[0];
-						if (first && first.type === 'Text' && regex_start_newline.test(first.data)) {
+						if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
 							state.quasi.value.raw += '\n';
 						}
 						to_html_for_attr_value(value_attribute, block, literal, state);

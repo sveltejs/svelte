@@ -1,5 +1,6 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import full_char_code_at from './full_char_code_at';
+import { regex_starts_with_underscore, regex_ends_with_underscore } from './patterns';
 
 export const reserved = new Set([
 	'arguments',
@@ -66,8 +67,6 @@ export function is_valid(str: string): boolean {
 }
 
 const regex_non_standard_characters = /[^a-zA-Z0-9_]+/g;
-const regex_starts_with_underscore = /^_/;
-const regex_ends_with_underscore = /_$/;
 const regex_starts_with_number = /^[0-9]/;
 
 export function sanitize(name: string) {

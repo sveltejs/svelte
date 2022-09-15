@@ -4,6 +4,7 @@ import Text from '../../../nodes/Text';
 import { x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import { Expression as ESTreeExpression } from 'estree';
+import { regex_double_quotes } from '../../../../utils/patterns';
 
 export function get_class_attribute_value(attribute: Attribute): ESTreeExpression {
 	// handle special case — `class={possiblyUndefined}` with scoped CSS
@@ -14,8 +15,6 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 
 	return get_attribute_value(attribute);
 }
-
-const regex_double_quotes = /"/g;
 
 export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	if (attribute.chunks.length === 0) return x`""`;

@@ -10,8 +10,7 @@ import {
 import { parse_expression_at } from '../acorn';
 import { Pattern } from 'estree';
 import parser_errors from '../errors';
-
-const regex_not_newline_characters = /[^\n]/g;
+import { regex_not_newline_characters } from '../../utils/patterns';
 
 export default function read_context(
 	parser: Parser

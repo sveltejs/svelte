@@ -3,6 +3,7 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
+import { regex_non_whitespace_character } from '../../utils/patterns';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -17,7 +18,6 @@ const elements_without_text = new Set([
 ]);
 
 const regex_ends_with_svg = /svg$/;
-const regex_non_whitespace_characters = /\S/;
 
 export default class Text extends Node {
 	type: 'Text';
@@ -31,7 +31,7 @@ export default class Text extends Node {
 	}
 
 	should_skip() {
-		if (regex_non_whitespace_characters.test(this.data)) return false;
+		if (regex_non_whitespace_character.test(this.data)) return false;
 
 		const parent_element = this.find_nearest(/(?:Element|InlineComponent|SlotTemplate|Head)/);
 		if (!parent_element) return false;

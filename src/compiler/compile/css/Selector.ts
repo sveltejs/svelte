@@ -9,6 +9,7 @@ import EachBlock from '../nodes/EachBlock';
 import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
 import compiler_errors from '../compiler_errors';
+import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../utils/patterns';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -339,9 +340,6 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 		default: throw new Error("this shouldn't happen");
 	}
 }
-
-const regex_starts_with_whitespace = /^\s/;
-const regex_ends_with_whitespace = /\s$/;
 
 function attribute_matches(node: CssNode, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');

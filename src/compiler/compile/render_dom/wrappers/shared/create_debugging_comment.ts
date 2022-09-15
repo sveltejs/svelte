@@ -1,7 +1,7 @@
 import Component from '../../../Component';
 import { INode } from '../../../nodes/interfaces';
+import { regex_whitespace_characters } from '../../../../utils/patterns';
 
-const regex_whitespace_characters = /\s/g;
 
 export default function create_debugging_comment(
 	node: INode,

@@ -10,6 +10,7 @@ import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
 import { namespaces } from '../../../../utils/namespaces';
 import { boolean_attributes } from '../../../../../shared/boolean_attributes';
+import { regex_double_quotes } from '../../../../utils/patterns';
 
 const non_textlike_input_types = new Set([
 	'button',
@@ -47,7 +48,6 @@ export class BaseAttributeWrapper {
 
 const regex_minus_sign = /-/;
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
-const regex_double_quotes = /"/g;
 
 export default class AttributeWrapper extends BaseAttributeWrapper {
 	node: Attribute;

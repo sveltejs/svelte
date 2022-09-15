@@ -3,6 +3,7 @@ import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { regex_double_quotes } from '../../utils/patterns';
 
 export interface Bindings {
 	object: Identifier;
@@ -22,8 +23,6 @@ export interface BlockOptions {
 	bindings?: Map<string, Bindings>;
 	dependencies?: Set<string>;
 }
-
-const regex_double_quotes = /"/g;
 
 export default class Block {
 	parent?: Block;

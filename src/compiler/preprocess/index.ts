@@ -4,6 +4,7 @@ import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_off
 import { decode_map } from './decode_sourcemap';
 import { replace_in_code, slice_source } from './replace_in_code';
 import { MarkupPreprocessor, Source, Preprocessor, PreprocessorGroup, Processed } from './types';
+import { regex_whitespaces } from '../utils/patterns';
 
 export * from './types';
 
@@ -122,13 +123,12 @@ function processed_tag_to_code(
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
 
-const regex_whitespace = /\s+/;
 const regex_quoted_value = /^['"](.*)['"]$/;
 
 function parse_tag_attributes(str: string) {
 	// note: won't work with attribute values containing spaces.
 	return str
-		.split(regex_whitespace)
+		.split(regex_whitespaces)
 		.filter(Boolean)
 		.reduce((attrs, attr) => {
 			const i = attr.indexOf('=');

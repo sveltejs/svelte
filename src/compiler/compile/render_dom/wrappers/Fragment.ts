@@ -21,6 +21,7 @@ import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
 import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
+import { regex_starts_with_whitespace } from '../../../utils/patterns';
 
 const wrappers = {
 	AwaitBlock,
@@ -49,8 +50,6 @@ function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	// The next sibling's previous node is an each block
 	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
 }
-
-const regex_starts_with_whitespace = /^\s/;
 
 export default class FragmentWrapper {
 	nodes: Wrapper[];

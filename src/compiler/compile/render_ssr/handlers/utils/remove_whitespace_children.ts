@@ -1,8 +1,7 @@
 import { INode } from '../../../nodes/interfaces';
 import { trim_end, trim_start } from '../../../../utils/trim';
 import { link } from '../../../../utils/link';
-
-const regex_starts_with_whitespace = /^\s/;
+import { regex_starts_with_whitespace } from '../../../../utils/patterns';
 
 // similar logic from `compile/render_dom/wrappers/Fragment`
 // We want to remove trailing whitespace inside an element/component/block,
