@@ -14,6 +14,7 @@
 	* `a11y-click-events-have-key-events`: check if click event is accompanied by key events ([#5073](https://github.com/sveltejs/svelte/pull/5073))
 * `a11y-role-has-required-aria-props` do not warn when elements matched their semantic role ([#7838](https://github.com/sveltejs/svelte/pull/7838))
 * Supports custom element in `<svelte:element>` ([#7766](https://github.com/sveltejs/svelte/pull/7766))
+* Improve performance of custom element data setting in `<svelte:element>` ([#7869](https://github.com/sveltejs/svelte/pull/7869))
 
 ## 3.50.1
 
