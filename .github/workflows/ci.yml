@@ -1,5 +1,7 @@
 name: CI
 on: [push, pull_request]
+permissions:
+  contents: read # to fetch code (actions/checkout)
 jobs:
   Tests:
     runs-on: ${{ matrix.os }}
