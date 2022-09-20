@@ -7,12 +7,11 @@ on:
     paths:
       - site/content/**
 
-permissions: {}
+permissions:
+  contents: read
+
 jobs:
   release:
-    permissions:
-      metadata: read #  (getsentry/action-github-app-token)
-
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
