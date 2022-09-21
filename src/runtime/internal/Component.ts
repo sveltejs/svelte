@@ -212,6 +212,9 @@ if (typeof HTMLElement === 'function') {
 
 		$on(type, callback) {
 			// TODO should this delegate to addEventListener?
+			if (!is_function(callback)) {
+				return noop;
+			}
 			const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 			callbacks.push(callback);
 
@@ -244,6 +247,9 @@ export class SvelteComponent {
 	}
 
 	$on(type, callback) {
+		if (!is_function(callback)) {
+			return noop;
+		}
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 
