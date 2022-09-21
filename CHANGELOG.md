@@ -15,6 +15,7 @@
 * `a11y-role-has-required-aria-props` do not warn when elements matched their semantic role ([#7838](https://github.com/sveltejs/svelte/pull/7838))
 * Supports custom element in `<svelte:element>` ([#7766](https://github.com/sveltejs/svelte/pull/7766))
 * Improve performance of custom element data setting in `<svelte:element>` ([#7869](https://github.com/sveltejs/svelte/pull/7869))
+* Supports nullish values for component event handlers ([#7568](https://github.com/sveltejs/svelte/issues/7568))
 
 ## 3.50.1
 
