@@ -7,8 +7,7 @@ on:
     paths:
       - site/content/**
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   release:
