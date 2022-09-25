@@ -19,5 +19,3 @@ Now we can programmatically interact with this component using `field`.
 	Focus field
 </button>
 ```
-
-> Note that we can't do `{field.focus}` since field is undefined when the button is first rendered and throws an error.
