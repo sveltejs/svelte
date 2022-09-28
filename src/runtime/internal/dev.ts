@@ -126,7 +126,7 @@ export function validate_void_dynamic_element(tag: undefined | string) {
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
-	$on(event: string, callback: (event: any) => void): () => void;
+	$on(event: string, callback: ((event: any) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
@@ -196,7 +196,7 @@ export interface SvelteComponentTyped<
 	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
 > {
 	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
