@@ -1,11 +1,11 @@
 ---
 title: "What's new in Svelte: September 2022"
-description: "use:enhance, Svelte Summit and a SvelteKit Release Candidate!"
+description: "Svelte Summit, `use:enhance`, and a SvelteKit Release Candidate!"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-There's a bunch of updates this month... from new features in Svelte and SvelteKit to a whole 2-day *summit*! Plus, the Svelte extension gets some helpful new tools, new accessibility (a11y) warnings, and Tan Lil Hau teaches us how to build our own Svelte 😎
+There's a bunch of updates this month... from new features in Svelte and SvelteKit to a whole 2-day *summit*! Plus, the Svelte extension gets some helpful new tools, new accessibility (a11y) warnings, and Tan Li Hau teaches us how to build our own Svelte and a Svelte spreadsheet 😎
 
 ## What happened at Svelte Summit?
 
@@ -30,23 +30,21 @@ _Day Two_
 - [3:04:56](https://www.youtube.com/watch?v=A8jkJTWacow&t=11096s) - Svemix? Re-svmix? Re-svelte?: Bringing Svelte to Remix Router
 - [5:09:39](https://www.youtube.com/watch?v=A8jkJTWacow&t=18579s) - Having fun with stores: an interactive demo of Svelte’s built in state management library
 - [5:37:06](https://www.youtube.com/watch?v=A8jkJTWacow&t=20226s) - When Keeping it Svelte Goes Wrong. An Analysis of Some of the Worst Svelte I Have Ever Coded
-- [7:22:05](https://www.youtube.com/watch?v=A8jkJTWacow&t=26525s) - Gettng started with Hooks
-- [7:38:14](https://www.youtube.com/watch?v=A8jkJTWacow&t=27494s) - TBA*
+- [7:22:05](https://www.youtube.com/watch?v=A8jkJTWacow&t=26525s) - Getting started with Hooks
+- [7:38:14](https://www.youtube.com/watch?v=A8jkJTWacow&t=27494s) - Special Announcement*
 
-*In the final talk of the summit, Rich Harris shares the path to the next step for SvelteKit... the first Release Candidate! With no planned breaking changes left for kit, the team is hard at work squashing bugs and adding the remaining features for 1.0...
+*In the final talk of the summit, Rich Harris announces the first Release Candidate of SvelteKit! With no planned breaking changes left, the team is hard at work squashing bugs and adding the remaining features for 1.0...
 
 ## More SvelteKit Updates
 - `use:enhance` is the easiest way to progressively enhance a form ([Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#6633](https://github.com/sveltejs/kit/pull/6633), [#6828](https://github.com/sveltejs/kit/pull/6828), [#7012](https://github.com/sveltejs/kit/pull/7012))
-- Support for `$env/dynamic/*` allows SvelteKit to support Vite ecosystem tools such as Vitest and `vite-node` ([#6454](https://github.com/sveltejs/kit/pull/6454))
-- `+server.js` files can now be made next to `+page` files ([Docs](https://kit.svelte.dev/docs/routing#server-receiving-data), [#6773](https://github.com/sveltejs/kit/pull/6773))
 
 **Breaking changes:**
 - Node 16.14 is now the minimum version to run SvelteKit ([#6388](https://github.com/sveltejs/kit/pull/6388))
 - `App.PrivateEnv` and `App.PublicEnv` have been removed in favour of generated types ([#6413](https://github.com/sveltejs/kit/pull/6413))
-- If you use error.html and customized it, replace `%sveltekit.message%`  with `%sveltekit.error.message%` ([6659](https://github.com/sveltejs/kit/pull/6659))
+- `%sveltekit.message%` has been replaced with `%sveltekit.error.message%` ([6659](https://github.com/sveltejs/kit/pull/6659))
 - `App.PageError` is now `App.Error` - check for it in your hooks ([Docs](https://kit.svelte.dev/docs/hooks#shared-hooks-handleerror), [#6963](https://github.com/sveltejs/kit/pull/6963))
 
-For a full list of changes, check out kit's [CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
+For a full list of changes, check out SvelteKit's [CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
 ## Svelte Updates
 - New a11y warnings for `incorrect-aria-attribute-type`, `no-abstract-role`, `interactive-element-to-noninteractive-role` and `role-has-required-aria-props`.`no-noninteractive-tabindex` and `click-events-have-key-events` coming soon! (**3.50.0**)
@@ -57,8 +55,8 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 For all the changes to the Svelte compiler, including upcoming changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## New in Language Tools
-- Better handling of configs for code formatting (**106.0.0**, [#1598](https://github.com/sveltejs/language-tools/pull/1598))
-- Easily create sveltekit route files from the context menu or command palette (**106.1.0**, [#1620](https://github.com/sveltejs/language-tools/pull/1620))
+- Better code formatting for editor suggestion (**106.0.0**, [#1598](https://github.com/sveltejs/language-tools/pull/1598))
+- Easily create SvelteKit route files from the context menu or command palette (**106.1.0**, [#1620](https://github.com/sveltejs/language-tools/pull/1620))
 
 ---
 
@@ -91,7 +89,7 @@ It can be used for anything you may be trying to accomplish using Svelte includi
 **Learning Resources**
 
 _Starring the Svelte team_
-- [Upgrading SvelteKit](https://www.youtube.com/watch?v=vzeZskhjoeQ) by Svelte Sirens (featuring Kev and GHOST!)
+- [Upgrading SvelteKit](https://www.youtube.com/watch?v=vzeZskhjoeQ) by Svelte Sirens (with Brittney, Kev, and GHOST!)
 - [Build your own Svelte](https://www.youtube.com/watch?v=mwvyKGw2CzU) by lihautan
 - [Native Page Transitions in SvelteKit: Part 1](https://geoffrich.net/posts/page-transitions-1/) by Geoff Rich
 - [Build a cross platform app with Tauri](https://ghostdev.xyz/posts/build-a-cross-platform-app-with-tauri/) by GHOST
