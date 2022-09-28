@@ -91,8 +91,10 @@ It can be used for anything you may be trying to accomplish using Svelte includi
 **Learning Resources**
 
 _Starring the Svelte team_
+- [Upgrading SvelteKit](https://www.youtube.com/watch?v=vzeZskhjoeQ) by Svelte Sirens (featuring Kev and GHOST!)
 - [Build your own Svelte](https://www.youtube.com/watch?v=mwvyKGw2CzU) by lihautan
 - [Native Page Transitions in SvelteKit: Part 1](https://geoffrich.net/posts/page-transitions-1/) by Geoff Rich
+- [Build a cross platform app with Tauri](https://ghostdev.xyz/posts/build-a-cross-platform-app-with-tauri/) by GHOST
 
 _To Watch_
 - [How To Use Future CSS In Svelte](https://www.youtube.com/watch?v=eqwtoaP-0pk) and [Master Animation With Svelte](https://www.youtube.com/watch?v=3RlBfUQCiAQ) by Joy of Code
