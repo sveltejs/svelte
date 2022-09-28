@@ -38,7 +38,7 @@ _Day Two_
 ## More SvelteKit Updates
 - `use:enhance` is the easiest way to progressively enhance a form ([Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#6633](https://github.com/sveltejs/kit/pull/6633), [#6828](https://github.com/sveltejs/kit/pull/6828), [#7012](https://github.com/sveltejs/kit/pull/7012))
 - Cloudflare Pages `_routes.json` specification is now supported by `adapter-cloudflare` ([#6530](https://github.com/sveltejs/kit/pull/6530))
-- Improved build performance by running the independent async functions (asset and page compression) in parallel ([#6710](https://github.com/sveltejs/kit/pull/6710))
+- Improved build performance by running asset and page compression in parallel ([#6710](https://github.com/sveltejs/kit/pull/6710))
 
 **Breaking changes:**
 - Node 16.14 is now the minimum version to run SvelteKit ([#6388](https://github.com/sveltejs/kit/pull/6388))
