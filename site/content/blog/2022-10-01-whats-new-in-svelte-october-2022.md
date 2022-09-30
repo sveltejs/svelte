@@ -125,6 +125,7 @@ _To Read_
 - [whyframe](https://whyframe.dev/) gives iframes superpowers, making it easy to render anything in isolation
 - [@svelte-put/modal](https://github.com/vnphanquang/svelte-put/tree/main/packages/misc/modal) is a solution to async, declarative, type-safe modals in Svelte
 - [Kitty](https://github.com/grottopress/kitty) is a collection of libraries and handlers for developing secure frontend apps
+- [svelte-turnstile](https://github.com/ghostdevv/svelte-turnstile) is a component for Cloudflare Turnstile, the privacy focused CAPTCHA replacement 
 
 _UI Kits and Starters_
 - [QWER](https://github.com/kwchang0831/svelte-QWER) is a blog starter built with SvelteKit
