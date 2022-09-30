@@ -37,7 +37,7 @@ _Day Two_
 
 ## More SvelteKit Updates
 - `use:enhance` is the easiest way to progressively enhance a form ([Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#6633](https://github.com/sveltejs/kit/pull/6633), [#6828](https://github.com/sveltejs/kit/pull/6828), [#7012](https://github.com/sveltejs/kit/pull/7012))
-- The demo app has been updated to add the Sverdle game, which Rich demoed at Svelte Summit and demonstrates `use:enhance` ([https://github.com/sveltejs/kit/pull/6979](#6979))
+- The demo app has been updated to add the Sverdle game, which Rich demoed at Svelte Summit and demonstrates `use:enhance` ([#6979](https://github.com/sveltejs/kit/pull/6979))
 - Cloudflare Pages `_routes.json` specification is now supported by `adapter-cloudflare` ([#6530](https://github.com/sveltejs/kit/pull/6530))
 - Improved build performance by running asset and page compression in parallel ([#6710](https://github.com/sveltejs/kit/pull/6710))
 
