@@ -1,5 +1,5 @@
 ---
-title: "What's new in Svelte: September 2022"
+title: "What's new in Svelte: October 2022"
 description: "Svelte Summit, `use:enhance`, and a SvelteKit Release Candidate!"
 author: Daniel Sandoval
 authorURL: https://desandoval.net
