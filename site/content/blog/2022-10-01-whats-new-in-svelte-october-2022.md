@@ -133,6 +133,6 @@ _UI Kits and Starters_
 - [sveltekit-monorepo](https://github.com/sw-yx/sveltekit-monorepo) is monorepo starter with 2022 tech
 - [svelte-component-test-recipes](https://github.com/davipon/svelte-component-test-recipes) uses `vitest`, `@testing-library/svelte`, and `svelte-htm` to test Svelte components that seemed to be hard to test
 
-Whew! That's a lot of updates! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!
+Whew! That's a lot of updates. Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!
 
-See ya next month!
+See ya next month 👋
