@@ -233,7 +233,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 	return {
 		end(reset) {
-			if (reset && config.tick) {
+			if (reset && config?.tick) {
 				config.tick(1, 0);
 			}
 
