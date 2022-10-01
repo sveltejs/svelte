@@ -19,7 +19,7 @@ describe('dom', () => {
 		describe('when parentNode does not exist', () => {
 			it('should not throw an exception', () => {
 				const childWithoutParent = document.createElement('div');
-        let error = null;
+        let error: Error | null = null;
 
         try {
           detach(childWithoutParent);
