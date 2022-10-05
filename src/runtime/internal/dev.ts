@@ -123,6 +123,24 @@ export function validate_void_dynamic_element(tag: undefined | string) {
 	}
 }
 
+export function construct_svelte_component_dev(component, props) {
+	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
+	try {
+		const instance = new component(props);
+		if (!instance.$$ || !instance.$set || !instance.$on || !instance.$destroy) {
+			throw new Error(error_message);
+		}
+		return instance;
+	} catch (err) {
+		const { message } = err;
+		if (typeof message === 'string' && message.indexOf('is not a constructor') !== -1) {
+			throw new Error(error_message);
+		} else {
+			throw err;
+		}
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;

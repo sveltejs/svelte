@@ -425,7 +425,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					${name} = new ${switch_value}(${switch_props}(#ctx));
+					${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -473,7 +473,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					if (${switch_value}) {
 						${update_insert}
-						${name} = new ${switch_value}(${switch_props}(#ctx));
+						${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 						${munged_bindings}
 						${munged_handlers}

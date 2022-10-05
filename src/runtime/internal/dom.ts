@@ -768,3 +768,7 @@ export function get_custom_elements_slots(element: HTMLElement) {
 	});
 	return result;
 }
+
+export function construct_svelte_component(component, props) {
+	return new component(props);
+}
