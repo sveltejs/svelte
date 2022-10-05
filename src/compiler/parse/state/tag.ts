@@ -527,6 +527,11 @@ function read_sequence(parser: Parser, done: () => boolean, location: string): T
 				parser.eat('#');
 				const name = parser.read_until(/[^a-z]/);
 				parser.error(parser_errors.invalid_logic_block_placement(location, name), index);
+			} else if (parser.match('@')) {
+				const index = parser.index - 1;
+				parser.eat('@');
+				const name = parser.read_until(/[^a-z]/);
+				parser.error(parser_errors.invalid_tag_placement(location, name), index);
 			}
 
 			flush(parser.index - 1);
