@@ -112,7 +112,7 @@ export default class Component {
 	slots: Map<string, Slot> = new Map();
 	slot_outlets: Set<string> = new Set();
 
-	tags: Tag[] = []
+	tags: Tag[] = [];
 
 	constructor(
 		ast: Ast,

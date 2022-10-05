@@ -162,9 +162,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	});
 
 	if (options.hydratable) {
-		if (options.head_id) {
-			renderer.add_string(` data-svelte="${options.head_id}"`);
-		} else if (node.children.length === 1 && node.children[0].type === 'RawMustacheTag') {
+		if (node.children.length === 1 && node.children[0].type === 'RawMustacheTag') {
 			renderer.add_string(` data-svelte="${hash(JSON.stringify(node.children[0].expression.node))}"`);
 			options = { ...options, optimised_html_hydration: true };
 		} else if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {

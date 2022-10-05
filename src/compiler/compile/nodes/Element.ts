@@ -449,6 +449,7 @@ export default class Element extends Node {
 				this.handlers.length > 0 ||
 				this.styles.length > 0 ||
 				this.name === 'option' ||
+				this.is_dynamic_element ||
 				this.tag_expr.dynamic_dependencies().length ||
 				this.is_dynamic_element ||
 				component.compile_options.dev
