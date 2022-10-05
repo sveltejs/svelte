@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { detach } from 'svelte/internal';
+import { detach } from '../../internal';
 
 describe('dom', () => {
 	describe('detach', () => {

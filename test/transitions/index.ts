@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import { create_out_transition, group_outros } from 'svelte/internal';
-import { TransitionConfig } from 'svelte/transition';
+import { create_out_transition, group_outros } from '../../internal';
+import { TransitionConfig } from '../../transition';
 
 declare const global: any;
 
