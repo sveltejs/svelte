@@ -20,6 +20,7 @@ import { string_to_member_expression } from '../../../utils/string_to_member_exp
 import SlotTemplate from '../../../nodes/SlotTemplate';
 import { is_head } from '../shared/is_head';
 import compiler_warnings from '../../../compiler_warnings';
+import { namespaces } from '../../../../utils/namespaces';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -150,7 +151,9 @@ export default class InlineComponentWrapper extends Wrapper {
 		}
 
 		const has_css_custom_properties = this.node.css_custom_properties.length > 0;
-		const css_custom_properties_wrapper = has_css_custom_properties ? block.get_unique_name('div') : null;
+		const is_svg_namespace = this.node.namespace === namespaces.svg;
+		const css_custom_properties_wrapper_element = is_svg_namespace ? 'g' : 'div';
+		const css_custom_properties_wrapper = has_css_custom_properties ? block.get_unique_name(css_custom_properties_wrapper_element) : null;
 		if (has_css_custom_properties) {
 			block.add_variable(css_custom_properties_wrapper);
 		}
@@ -411,7 +414,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const snippet = this.node.expression.manipulate(block);
 
 			if (has_css_custom_properties) {
-				this.set_css_custom_properties(block, css_custom_properties_wrapper);
+				this.set_css_custom_properties(block, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
 			}
 
 			block.chunks.init.push(b`
@@ -440,7 +443,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 
 			if (to_claim) {
-				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper);
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
 				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${claim_nodes});`);
 			}
 
@@ -514,7 +517,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			`);
 
 			if (has_css_custom_properties) {
-				this.set_css_custom_properties(block, css_custom_properties_wrapper);
+				this.set_css_custom_properties(block, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
 			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
@@ -522,7 +525,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.mount.push(b`@mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 
 			if (to_claim) {
-				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper);
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
 				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${claim_nodes});`);
 			}
 
@@ -568,11 +571,14 @@ export default class InlineComponentWrapper extends Wrapper {
 	private create_css_custom_properties_wrapper_claim_chunk(
 		block: Block,
 		parent_nodes: Identifier,
-		css_custom_properties_wrapper: Identifier | null
+		css_custom_properties_wrapper: Identifier | null,
+		css_custom_properties_wrapper_element: string,
+		is_svg_namespace: boolean
 	) {
 		const nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+		const claim_element = is_svg_namespace ? x`@claim_svg_element` : x`@claim_element`;
 		block.chunks.claim.push(b`
-			${css_custom_properties_wrapper} = @claim_element(${parent_nodes}, "DIV", { style: true })
+			${css_custom_properties_wrapper} = ${claim_element}(${parent_nodes}, "${css_custom_properties_wrapper_element.toUpperCase()}", { style: true })
 			var ${nodes} = @children(${css_custom_properties_wrapper});
 		`);
 		return nodes;
@@ -580,10 +586,13 @@ export default class InlineComponentWrapper extends Wrapper {
 
 	private set_css_custom_properties(
 		block: Block,
-		css_custom_properties_wrapper: Identifier
+		css_custom_properties_wrapper: Identifier,
+		css_custom_properties_wrapper_element: string,
+		is_svg_namespace: boolean
 	) {
-		block.chunks.create.push(b`${css_custom_properties_wrapper} = @element("div");`);
-		block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
+		const element = is_svg_namespace ? x`@svg_element` : x`@element`;
+		block.chunks.create.push(b`${css_custom_properties_wrapper} = ${element}("${css_custom_properties_wrapper_element}");`);
+		if (!is_svg_namespace) block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
 		this.node.css_custom_properties.forEach((attr) => {
 			const dependencies = attr.get_dependencies();
 			const should_cache = attr.should_cache();
