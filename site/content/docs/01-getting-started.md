@@ -18,4 +18,4 @@ Or use [SvelteKit](https://kit.svelte.dev/), the official application framework 
 
 See the SvelteSociety website run by the Svelte community for a list of integrations with various [tooling and editots](https://sveltesociety.dev/tools).
 
-If you're having trouble, get help on [Discord](https://svelte.dev/blog/chat) or [StackOverflow](https://stackoverflow.com/questions/tagged/svelte).
+If you're having trouble, get help on [Discord](https://svelte.dev/chat) or [StackOverflow](https://stackoverflow.com/questions/tagged/svelte).
