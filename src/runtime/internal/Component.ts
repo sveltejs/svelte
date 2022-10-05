@@ -22,7 +22,7 @@ export function claim_component(block, parent_nodes) {
 }
 
 export function mount_component(component, target, anchor, customElement) {
-	const { fragment, on_mount, on_destroy, after_update } = component.$$;
+	const { fragment, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
 
@@ -30,12 +30,12 @@ export function mount_component(component, target, anchor, customElement) {
 		// onMount happens before the initial afterUpdate
 		add_render_callback(() => {
 
-			const new_on_destroy = on_mount.map(run).filter(is_function);
+			const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
 			// if the component was destroyed immediately
 			// it will update the `$$.on_destroy` reference to `null`.
 			// the destructured on_destroy may still reference to the old array
 			if (component.$$.on_destroy) {
-				on_destroy.push(...new_on_destroy);
+				component.$$.on_destroy.push(...new_on_destroy);
 			} else {
 				// Edge case - component was destroyed immediately,
 				// most likely as a result of a binding initialising
