@@ -8,7 +8,8 @@ import parser_errors from '../errors';
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
 
-	const styles = parser.read_until(/<\/style\s*>/, parser_errors.unclosed_style);
+	const tag_close_pattern = /<\/style\s*>/;
+	const styles = parser.read_until(tag_close_pattern, parser_errors.unclosed_style);
 
 	if (parser.index >= parser.template.length) {
 		parser.error(parser_errors.unclosed_style);
@@ -18,7 +19,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// discard styles when css is disabled
 	if (parser.css_mode === 'none') {
-		parser.read(/<\/style\s*>/);
+		parser.read(tag_close_pattern);
 		return null;
 	}
 
@@ -73,7 +74,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		}
 	});
 
-	parser.read(/<\/style\s*>/);
+	parser.read(tag_close_pattern);
 	const end = parser.index;
 
 	return {
