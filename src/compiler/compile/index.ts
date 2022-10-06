@@ -81,7 +81,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 
 	if (valid_css_values.indexOf(css) === -1) {
-		throw new Error(`options.css must be true, false, "injected", "external" or "none" (got '${css}')`);
+		throw new Error(`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`);
 	}
 
 	if (css === true || css === false) {
