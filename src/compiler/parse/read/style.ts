@@ -16,6 +16,12 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	const content_end = parser.index;
 
+	// discard styles when css is disabled
+	if (parser.css_mode === 'none') {
+		parser.read(/<\/style\s*>/);
+		return null;
+	}
+
 	let ast;
 
 	try {
