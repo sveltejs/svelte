@@ -86,7 +86,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 
 	if (css === true || css === false) {
 		options.css = css === true ? 'injected' : 'external';
-		const message = `options.css as a boolean is deprecated. Use "${options.css}" instead of ${css}.`;
+		const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
 		warnings.push({
 			code: 'options-css-boolean-deprecated',
 			message,
