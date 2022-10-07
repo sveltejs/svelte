@@ -219,7 +219,8 @@ export default function tag(parser: Parser) {
 		element.children = read_sequence(
 			parser,
 			() =>
-				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index))
+				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index)),
+			'inside <textarea>'
 		);
 		parser.read(/^<\/textarea(\s[^>]*)?>/i);
 		element.end = parser.index;
@@ -473,7 +474,7 @@ function read_attribute_value(parser: Parser) {
 
 	let value;
 	try {
-		value = read_sequence(parser, () => !!parser.match_regex(regex));
+		value = read_sequence(parser, () => !!parser.match_regex(regex), 'in attribute value');
 	} catch (error) {
 		if (error.code === 'parse-error') {
 			// if the attribute value didn't close + self-closing tag
@@ -495,7 +496,7 @@ function read_attribute_value(parser: Parser) {
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
+function read_sequence(parser: Parser, done: () => boolean, location: string): TemplateNode[] {
 	let current_chunk: Text = {
 		start: parser.index,
 		end: null,
@@ -521,6 +522,18 @@ function read_sequence(parser: Parser, done: () => boolean): TemplateNode[] {
 			flush(parser.index);
 			return chunks;
 		} else if (parser.eat('{')) {
+			if (parser.match('#')) {
+				const index = parser.index - 1;
+				parser.eat('#');
+				const name = parser.read_until(/[^a-z]/);
+				parser.error(parser_errors.invalid_logic_block_placement(location, name), index);
+			} else if (parser.match('@')) {
+				const index = parser.index - 1;
+				parser.eat('@');
+				const name = parser.read_until(/[^a-z]/);
+				parser.error(parser_errors.invalid_tag_placement(location, name), index);
+			}
+
 			flush(parser.index - 1);
 
 			parser.allow_whitespace();
