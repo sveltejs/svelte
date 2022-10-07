@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Or use [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team (currently in beta).
+Or use [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team (currently in release candidate status).
 
 The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) and the Svelte community has created a list of integrations with various other [tooling and editors](https://sveltesociety.dev/tools).
 
