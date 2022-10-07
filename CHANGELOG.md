@@ -20,6 +20,7 @@
 * Better error message when specifying an invalid value for `<svelte:component this={...}>` ([#7550](https://github.com/sveltejs/svelte/issues/7550))
 * Fix to call component unmount if a component is mounted and then immediately unmounted ([#7817](https://github.com/sveltejs/svelte/issues/7817))
 * Fix false positive warnings about props binding in dev mode ([#4457](https://github.com/sveltejs/svelte/issues/4457))
+* Better error message when using logic blocks or tags in invalid place ([#7552](https://github.com/sveltejs/svelte/issues/7552))
 
 ## 3.50.1
 
