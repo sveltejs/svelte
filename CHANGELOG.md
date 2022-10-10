@@ -1,26 +1,26 @@
 # Svelte changelog
 
-## Unreleased
+## 3.51.0
 
-* Fix hydration issue with using `{@html}` and components in `svelte:head` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
-* Warn instead of throwing error if `<svelte:element>` is void tag ([#7566](https://github.com/sveltejs/svelte/issues/7566))
-* Treat `inert` as boolean attribute ([#7785](https://github.com/sveltejs/svelte/pull/7785))
-* Supporting scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
-* Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
-* Warn user when binding on a `{...rest}` object in `{#each}` block ([#6860](https://github.com/sveltejs/svelte/issues/6860))
-* Supports `--style-props` for `<svelte:component>` ([#7461](https://github.com/sveltejs/svelte/issues/7461))
-* Supports `--style-props` for SVG components ([#7808](https://github.com/sveltejs/svelte/issues/7808))
 * Add a11y warnings:
-	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
 	* `a11y-click-events-have-key-events`: check if click event is accompanied by key events ([#5073](https://github.com/sveltejs/svelte/pull/5073))
-* `a11y-role-has-required-aria-props` do not warn when elements matched their semantic role ([#7838](https://github.com/sveltejs/svelte/pull/7838))
-* Supports custom element in `<svelte:element>` ([#7766](https://github.com/sveltejs/svelte/pull/7766))
-* Improve performance of custom element data setting in `<svelte:element>` ([#7869](https://github.com/sveltejs/svelte/pull/7869))
+	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
+* Warn when two-way binding to `{...rest}` object in `{#each}` block ([#6860](https://github.com/sveltejs/svelte/issues/6860))
+* Support `--style-props` on `<svelte:component>` ([#7461](https://github.com/sveltejs/svelte/issues/7461))
 * Supports nullish values for component event handlers ([#7568](https://github.com/sveltejs/svelte/issues/7568))
-* Better error message when specifying an invalid value for `<svelte:component this={...}>` ([#7550](https://github.com/sveltejs/svelte/issues/7550))
-* Fix to call component unmount if a component is mounted and then immediately unmounted ([#7817](https://github.com/sveltejs/svelte/issues/7817))
-* Fix false positive warnings about props binding in dev mode ([#4457](https://github.com/sveltejs/svelte/issues/4457))
-* Better error message when using logic blocks or tags in invalid place ([#7552](https://github.com/sveltejs/svelte/issues/7552))
+* Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
+* Treat `inert` as boolean attribute ([#7785](https://github.com/sveltejs/svelte/pull/7785))
+* Support `--style-props` for SVG components ([#7808](https://github.com/sveltejs/svelte/issues/7808))
+* Fix false positive dev warnings about unset props when they are bound ([#4457](https://github.com/sveltejs/svelte/issues/4457))
+* Fix hydration with `{@html}` and components in `<svelte:head>` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
+* Support scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
+* Improve error message for invalid value for `<svelte:component this={...}>` ([#7550](https://github.com/sveltejs/svelte/issues/7550))
+* Improve error message when using logic blocks or tags at invalid location ([#7552](https://github.com/sveltejs/svelte/issues/7552))
+* Warn instead of throwing error if `<svelte:element>` is a void tag ([#7566](https://github.com/sveltejs/svelte/issues/7566))
+* Supports custom elements in `<svelte:element>` ([#7733](https://github.com/sveltejs/svelte/issues/7733))
+* Fix calling component unmount if a component is mounted and then immediately unmounted ([#7817](https://github.com/sveltejs/svelte/issues/7817))
+* Do not generate `a11y-role-has-required-aria-props` warning when elements match their semantic role ([#7837](https://github.com/sveltejs/svelte/issues/7837))
+* Improve performance of custom element data setting in `<svelte:element>` ([#7869](https://github.com/sveltejs/svelte/pull/7869))
 
 ## 3.50.1
 
