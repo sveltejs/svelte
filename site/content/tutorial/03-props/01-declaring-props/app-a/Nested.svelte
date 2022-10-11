@@ -1,5 +1,5 @@
 <script>
-	let answer;
+	export answer;
 </script>
 
 <p>The answer is {answer}</p>
