@@ -545,6 +545,10 @@ export function set_style(node, key, value, important) {
 	}
 }
 
+export function set_display(node, value) {
+	set_style(node, 'display', value ? null : 'none', 1);
+}
+
 export function select_option(select, value) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];

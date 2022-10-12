@@ -48,7 +48,8 @@ export type DirectiveType = 'Action'
 | 'EventHandler'
 | 'Let'
 | 'Ref'
-| 'Transition';
+| 'Transition'
+| 'SvelteDirective';
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;

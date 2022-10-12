@@ -163,7 +163,7 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
+		if ((node.display || node.is_dynamic_element) && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name('create_dynamic_element'),
@@ -273,16 +273,16 @@ export default class ElementWrapper extends Wrapper {
 			(x`#nodes` as unknown) as Identifier
 		);
 
-		const previous_tag = block.get_unique_name('previous_tag');
+		
 		const tag = this.node.tag_expr.manipulate(block);
-		block.add_variable(previous_tag, tag);
 
-		block.chunks.init.push(b`
-			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
-			${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
-			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
-		`);
-
+		if (this.renderer.options.dev) {
+			block.chunks.init.push(b`
+				@validate_dynamic_element(${tag});
+				@validate_void_dynamic_element(${tag});
+			`);
+		}
+		
 		block.chunks.create.push(b`
 			if (${this.var}) ${this.var}.c();
 		`);
@@ -297,45 +297,56 @@ export default class ElementWrapper extends Wrapper {
 			if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 		`);
 
-		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-		const has_transitions = !!(this.node.intro || this.node.outro);
-		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+		if (this.node.display && tag.type === 'Literal') {
+			block.chunks.init.push(b`const ${this.var} = ${this.child_dynamic_element_block.name}(#ctx);`);
+			block.chunks.update.push(b`${this.var}.p(#ctx, #dirty);`);
+		} else {
+			const previous_tag = block.get_unique_name('previous_tag');
+			block.add_variable(previous_tag, tag);
+			block.chunks.init.push(b`let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);`);
 
-		block.chunks.update.push(b`
-			if (${tag}) {
-				if (!${previous_tag}) {
-					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-					${this.var}.c();
-					${has_transitions && b`@transition_in(${this.var})`}
-					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-				} else if (${not_equal}(${previous_tag}, ${tag})) {
-					${this.var}.d(1);
-					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
-					${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
-					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-					${this.var}.c();
-					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-				} else {
-					${this.var}.p(#ctx, #dirty);
-				}
-			} else if (${previous_tag}) {
-				${
-					has_transitions
-						? b`
-							@group_outros();
-							@transition_out(${this.var}, 1, 1, () => {
+			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const has_transitions = !!(this.node.intro || this.node.outro);
+			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+	
+			block.chunks.update.push(b`
+				if (${tag}) {
+					if (!${previous_tag}) {
+						${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+						${this.var}.c();
+						${has_transitions && b`@transition_in(${this.var})`}
+						${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					} else if (${not_equal}(${previous_tag}, ${tag})) {
+						${this.var}.d(1);
+						${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+						${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
+						${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+						${this.var}.c();
+						${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					} else {
+						${this.var}.p(#ctx, #dirty);
+					}
+				} else if (${previous_tag}) {
+					${
+						has_transitions
+							? b`
+								@group_outros();
+								@transition_out(${this.var}, 1, 1, () => {
+									${this.var} = null;
+								});
+								@check_outros();
+							`
+							: b`
+								${this.var}.d(1);
 								${this.var} = null;
-							});
-							@check_outros();
-						`
-						: b`
-							${this.var}.d(1);
-							${this.var} = null;
-						`
+							`
+					}
 				}
-			}
-			${previous_tag} = ${tag};
-		`);
+				${previous_tag} = ${tag};
+			`);
+		}
+
+		
 
 		if (this.child_dynamic_element_block.has_intros) {
 			block.chunks.intro.push(b`@transition_in(${this.var});`);
@@ -480,6 +491,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_animation(block);
 		this.add_classes(block);
 		this.add_styles(block);
+		this.add_display(block);
 		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable && !this.void) {
@@ -1128,6 +1140,45 @@ export default class ElementWrapper extends Wrapper {
 			}
 		});
 	}
+
+	add_display(block: Block) {
+		const display = this.node.display;
+		if (display === null) {
+			return;
+		}
+
+		const snippet = display.expression.manipulate(block);
+		const dependencies = display.expression.dynamic_dependencies();
+		const has_dependancies = dependencies.length > 0;
+
+		const update_display = b`@set_display(${this.var}, ${snippet})`;
+		block.chunks.hydrate.push(update_display);
+
+		if (has_dependancies) {
+			const update_current = (this.node.intro || this.node.outro)
+				? x`#current = false`
+				: null;
+
+			const dirty = block.renderer.dirty(Array.from(dependencies));
+			block.chunks.update.push(b`
+				if (${dirty}) {
+					if (${snippet}) {
+						${update_current}
+						${update_display}
+						@transition_in(this, 1);
+					} else {
+						@group_outros();
+						@transition_out(this, 1, 0, () => {
+							${update_display}
+						});
+						@check_outros();
+					}
+				}
+			`);
+		}
+	}
+
+
 
 	add_manual_style_scoping(block) {
 		if (this.node.needs_manual_style_scoping) {

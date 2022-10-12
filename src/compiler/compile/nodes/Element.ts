@@ -25,6 +25,7 @@ import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
 import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
+import SvelteDirective from './SvelteDirective';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -217,6 +218,7 @@ export default class Element extends Node {
 	intro?: Transition = null;
 	outro?: Transition = null;
 	animation?: Animation = null;
+	display? : SvelteDirective = null;
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
@@ -355,6 +357,22 @@ export default class Element extends Node {
 					this.animation = new Animation(component, this, scope, node);
 					break;
 
+				case 'SvelteDirective':
+					switch (node.name) {
+					case 'display':
+						if (this.display) {
+							component.error(node,
+								compiler_errors.duplicate_directive('svelte:' + node.name));
+						} else {
+							this.display = new SvelteDirective(component, this, scope, node);
+						}
+						break;
+					default:
+						component.error(node,
+							compiler_errors.invalid_directive('svelte:' + node.name));
+					}
+					break;
+
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
 			}
@@ -385,7 +403,7 @@ export default class Element extends Node {
 			this.validate_bindings();
 			this.validate_content();
 		}
-
+		this.validate_display_directive();
 	}
 
 	validate_attributes() {
@@ -939,6 +957,16 @@ export default class Element extends Node {
 				handler.modifiers.add('passive');
 			}
 		});
+	}
+
+	validate_display_directive() {
+		if (!this.display) {
+			return;
+		}
+		if (this.styles.find(d => d.name === 'display')) {
+			this.component.error(this.display,
+				compiler_errors.directive_conflict('svelte:display', 'style:display'));
+		}
 	}
 
 	is_media_node() {
