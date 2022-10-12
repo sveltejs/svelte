@@ -25,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, VariableDeclarator } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -1309,12 +1309,12 @@ export default class Component {
 				walk(node.body, {
 					enter(node: Node, parent) {
 						if (node.type === 'VariableDeclaration' && node.kind === 'var') {
-							const names = extract_names(node.declarations[0].id);
-							const is_var_in_outset = names.every((i: string) => {
-								if (outset_scope_decalarations.has(i)) {
-									const varNode = outset_scope_decalarations.get(i);
-									return varNode === node;
-								}
+							const is_var_in_outset = node.declarations.some((declaration: VariableDeclarator) => {
+								const names: string[] = extract_names(declaration.id);
+								return !!names.find((name: string) => {
+									const var_node = outset_scope_decalarations.get(name);
+									return var_node === node;
+								});
 							});
 							if (is_var_in_outset) {
 								return component.error(node as any, compiler_errors.invalid_var_declaration);
