@@ -345,6 +345,7 @@ const attribute_lookup = {
 	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
 	hidden: {},
 	indeterminate: { applies_to: ['input'] },
+	inert: {},
 	ismap: { property_name: 'isMap', applies_to: ['img'] },
 	loop: { applies_to: ['audio', 'bgsound', 'video'] },
 	multiple: { applies_to: ['input', 'select'] },
