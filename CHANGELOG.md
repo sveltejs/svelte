@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Support `|important` modifier to style directive ([#7489](https://github.com/sveltejs/svelte/pull/7489))
+* Warn when using `<a target="_blank">` without `rel="noreferrer"` ([#6188](https://github.com/sveltejs/svelte/issues/6188))
 
 ## 3.51.0
 
