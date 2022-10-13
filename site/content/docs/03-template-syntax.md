@@ -7,7 +7,7 @@ title: Template syntax
 
 ---
 
-A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalized tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
+A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
 
 ```sv
 <script>
@@ -107,7 +107,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimize. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
+*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimise. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
 
 ```sv
 <Widget {...$$props}/>
@@ -115,7 +115,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimization problems as *`$$props`*, and is likewise not recommended.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as *`$$props`*, and is likewise not recommended.
 
 ```html
 <input {...$$restProps}>
@@ -378,7 +378,7 @@ This is useful if you want an element to play its transition whenever a value ch
 
 ---
 
-When used around components, this will cause them to be reinstantiated and reinitialized.
+When used around components, this will cause them to be reinstantiated and reinitialised.
 
 ```sv
 {#key value}
