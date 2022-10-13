@@ -3,7 +3,6 @@
 </script>
 
 <h1 style:background-color={color} >hello</h1>
-<h1 style:background-color="{color} important">hello</h1>
 <h1 style:background-color|important="{color}">hello</h1>
 
 <style>
