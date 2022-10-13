@@ -83,7 +83,7 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots;
+	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
@@ -396,7 +396,7 @@ export default function dom(
 
 	if (has_definition) {
 		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const fixed_reactive_declarations: Node[] = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -441,7 +441,7 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
+		let unknown_props_check: Node[] | undefined;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];

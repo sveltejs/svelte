@@ -19,7 +19,7 @@ import { add_event_handler } from '../shared/add_event_handlers';
 import { add_action } from '../shared/add_actions';
 import bind_this from '../shared/bind_this';
 import { is_head } from '../shared/is_head';
-import { Identifier, ExpressionStatement, CallExpression } from 'estree';
+import { Identifier, ExpressionStatement, CallExpression, Node } from 'estree';
 import EventHandler from './EventHandler';
 import { extract_names } from 'periscopic';
 import Action from '../../../nodes/Action';
@@ -534,7 +534,7 @@ export default class ElementWrapper extends Wrapper {
 			.filter((attr) => !(attr instanceof SpreadAttributeWrapper) && !attr.property_name)
 			.map((attr) => p`${(attr as StyleAttributeWrapper | AttributeWrapper).name}: true`);
 
-		let reference;
+		let reference: string | ReturnType<typeof x>;
 		if (this.node.tag_expr.node.type === 'Literal') {
 			if (this.node.namespace) {
 				reference = `"${this.node.tag_expr.node.value}"`;
@@ -634,7 +634,7 @@ export default class ElementWrapper extends Wrapper {
 		// media bindings — awkward special case. The native timeupdate events
 		// fire too infrequently, so we need to take matters into our
 		// own hands
-		let animation_frame;
+		let animation_frame: Identifier | undefined;
 		if (binding_group.events[0] === 'timeupdate') {
 			animation_frame = block.get_unique_name(`${this.var.name}_animationframe`);
 			block.add_variable(animation_frame);
@@ -874,9 +874,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 	}
 
-	add_transitions(
-		block: Block
-	) {
+	add_transitions(block: Block) {
 		const { intro, outro } = this.node;
 		if (!intro && !outro) return;
 
@@ -933,7 +931,7 @@ export default class ElementWrapper extends Wrapper {
 
 				const fn = this.renderer.reference(intro.name);
 
-				let intro_block;
+				let intro_block: Node[];
 
 				if (outro) {
 					intro_block = b`
@@ -1032,7 +1030,7 @@ export default class ElementWrapper extends Wrapper {
 			${outro && b`@add_transform(${this.var}, ${rect});`}
 		`);
 
-		let params;
+		let params: Node | ReturnType<typeof x>;
 		if (this.node.animation.expression) {
 			params = this.node.animation.expression.manipulate(block);
 
@@ -1060,8 +1058,8 @@ export default class ElementWrapper extends Wrapper {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.classes.forEach(class_directive => {
 			const { expression, name } = class_directive;
-			let snippet;
-			let dependencies;
+			let snippet: Node | string;
+			let dependencies: Set<string>;
 			if (expression) {
 				snippet = expression.manipulate(block);
 				dependencies = expression.dependencies;
@@ -1105,7 +1103,7 @@ export default class ElementWrapper extends Wrapper {
 			const { name, expression, should_cache } = style_directive;
 
 			const snippet = expression.manipulate(block);
-			let cached_snippet;
+			let cached_snippet: Identifier | undefined;
 			if (should_cache) {
 				cached_snippet = block.get_unique_name(`style_${name.replace(regex_minus_signs, '_')}`);
 				block.add_variable(cached_snippet, snippet);
@@ -1136,7 +1134,7 @@ export default class ElementWrapper extends Wrapper {
 		});
 	}
 
-	add_manual_style_scoping(block) {
+	add_manual_style_scoping(block: Block) {
 		if (this.node.needs_manual_style_scoping) {
 			const updater = b`@toggle_class(${this.var}, "${this.node.component.stylesheet.id}", true);`;
 			block.chunks.hydrate.push(updater);
@@ -1151,7 +1149,7 @@ const regex_dollar_signs = /\$/g;
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
-			// Don't add the <pre>/<textare> newline logic here because pre/textarea.innerHTML
+			// Don't add the <pre>/<textarea> newline logic here because pre/textarea.innerHTML
 			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
 
 			if ((wrapper as TextWrapper).use_space()) state.quasi.value.raw += ' ';

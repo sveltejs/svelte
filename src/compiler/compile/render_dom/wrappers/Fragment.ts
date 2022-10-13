@@ -65,7 +65,7 @@ export default class FragmentWrapper {
 		this.nodes = [];
 
 		let last_child: Wrapper;
-		let window_wrapper;
+		let window_wrapper: Window | undefined;
 
 		let i = nodes.length;
 		while (i--) {

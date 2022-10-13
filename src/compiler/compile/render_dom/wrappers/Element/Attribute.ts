@@ -130,7 +130,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
 
-		let updater;
+		let updater: Node[];
 		const init = this.get_init(block, value);
 
 		if (is_legacy_input_type) {
@@ -258,7 +258,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		return metadata;
 	}
 
-	get_value(block) {
+	get_value(block: Block) {
 		if (this.node.is_true) {
 			if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
 				return x`true`;
@@ -287,7 +287,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		return value;
 	}
 
-	get_class_name_text(block) {
+	get_class_name_text(block: Block) {
 		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
 		const rendered = this.render_chunks(block);
 
