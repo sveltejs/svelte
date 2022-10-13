@@ -20,5 +20,9 @@ export default {
 
 		assert.equal(input.value, '42');
 		assert.equal(component.map.get(component.id).x, '42')
+
+		component.map.set(3, { x: 7, y: 8 });
+		component.id = 3;
+		assert.equal(input.value, '7');
 	}
 };
