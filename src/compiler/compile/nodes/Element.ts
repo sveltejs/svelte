@@ -402,7 +402,7 @@ export default class Element extends Node {
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					const rel_values = rel ? rel.get_static_value().split(' ') : [];
-					const expected_values = ['noopener', 'noreferrer'];
+					const expected_values = ['noreferrer'];
 
 					expected_values.forEach(expected_value => {
 						if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
