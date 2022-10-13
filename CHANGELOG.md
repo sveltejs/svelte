@@ -4,6 +4,7 @@
 
 * Support `|important` modifier to style directive ([#7489](https://github.com/sveltejs/svelte/pull/7489))
 * Warn when using `<a target="_blank">` without `rel="noreferrer"` ([#6188](https://github.com/sveltejs/svelte/issues/6188))
+* Throw helpful compiler error for attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
 
 ## 3.51.0
 
