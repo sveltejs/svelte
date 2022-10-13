@@ -254,6 +254,7 @@ export default class ElementWrapper extends Wrapper {
 				node.handlers.length > 0 ||
 				node.styles.length > 0 ||
 				this.node.name === 'option' ||
+				this.node.name === 'svelte:element' ||
 				node.tag_expr.dynamic_dependencies().length ||
 				renderer.options.dev
 			) {
