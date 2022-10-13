@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Support `|important` modifier to style directive ([#7489](https://github.com/sveltejs/svelte/pull/7489))
+
 ## 3.51.0
 
 * Add a11y warnings:
