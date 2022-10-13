@@ -10,6 +10,7 @@ import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
+import { regex_only_whitespaces } from '../../utils/patterns';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -73,10 +74,10 @@ export default class InlineComponent extends Node {
 
 				case 'Transition':
 					return component.error(node, compiler_errors.invalid_transition);
-				
+
 				case 'StyleDirective':
 					return component.error(node, compiler_errors.invalid_component_style_directive);
-	
+
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
 			}
@@ -165,7 +166,7 @@ export default class InlineComponent extends Node {
 }
 
 function not_whitespace_text(node) {
-	return !(node.type === 'Text' && /^\s+$/.test(node.data));
+	return !(node.type === 'Text' && regex_only_whitespaces.test(node.data));
 }
 
 function get_namespace(parent: Node, explicit_namespace: string) {

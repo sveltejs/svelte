@@ -53,13 +53,17 @@ function parent_is_head(stack) {
 	return false;
 }
 
+const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
+const regex_closing_comment = /-->/;
+const regex_capital_letter = /[A-Z]/;
+
 export default function tag(parser: Parser) {
 	const start = parser.index++;
 
 	let parent = parser.current();
 
 	if (parser.eat('!--')) {
-		const data = parser.read_until(/-->/);
+		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true, parser_errors.unclosed_comment);
 
 		parser.current().children.push({
@@ -104,7 +108,7 @@ export default function tag(parser: Parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: (/[A-Z]/.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
+		: (regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 			: name === 'svelte:fragment' ? 'SlotTemplate'
 				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
 					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
@@ -218,11 +222,10 @@ export default function tag(parser: Parser) {
 		// special case
 		element.children = read_sequence(
 			parser,
-			() =>
-				/^<\/textarea(\s[^>]*)?>/i.test(parser.template.slice(parser.index)),
+			() => regex_closing_textarea_tag.test(parser.template.slice(parser.index)),
 			'inside <textarea>'
 		);
-		parser.read(/^<\/textarea(\s[^>]*)?>/i);
+		parser.read(regex_closing_textarea_tag);
 		element.end = parser.index;
 	} else if (name === 'script' || name === 'style') {
 		// special case
@@ -236,6 +239,8 @@ export default function tag(parser: Parser) {
 		parser.stack.push(element);
 	}
 }
+
+const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 
 function read_tag_name(parser: Parser) {
 	const start = parser.index;
@@ -266,7 +271,7 @@ function read_tag_name(parser: Parser) {
 
 	if (parser.read(SLOT)) return 'svelte:fragment';
 
-	const name = parser.read_until(/(\s|\/|>)/);
+	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
 
 	if (meta_tags.has(name)) return name;
 
@@ -285,6 +290,10 @@ function read_tag_name(parser: Parser) {
 
 	return name;
 }
+
+// eslint-disable-next-line no-useless-escape
+const regex_token_ending_character = /[\s=\/>"']/;
+const regex_quote_characters = /["']/;
 
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
@@ -344,8 +353,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 	}
 
-	// eslint-disable-next-line no-useless-escape
-	const name = parser.read_until(/[\s=\/>"']/);
+	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
 
 	let end = parser.index;
@@ -360,7 +368,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		parser.allow_whitespace();
 		value = read_attribute_value(parser);
 		end = parser.index;
-	} else if (parser.match_regex(/["']/)) {
+	} else if (parser.match_regex(regex_quote_characters)) {
 		parser.error(parser_errors.unexpected_token('='), parser.index);
 	}
 

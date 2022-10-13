@@ -1,7 +1,7 @@
 import read_context from '../read/context';
 import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
-import { whitespace } from '../../utils/patterns';
+import { regex_whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
 import { to_string } from '../utils/node';
 import { Parser } from '../index';
@@ -32,6 +32,8 @@ function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: 
 		trim_whitespace(first_child, trim_before, trim_after);
 	}
 }
+
+const regex_whitespace_with_closing_curly_brace = /\s*}/;
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
@@ -87,8 +89,8 @@ export default function mustache(parser: Parser) {
 		// strip leading/trailing whitespace as necessary
 		const char_before = parser.template[block.start - 1];
 		const char_after = parser.template[parser.index];
-		const trim_before = !char_before || whitespace.test(char_before);
-		const trim_after = !char_after || whitespace.test(char_after);
+		const trim_before = !char_before || regex_whitespace.test(char_before);
+		const trim_after = !char_after || regex_whitespace.test(char_after);
 
 		trim_whitespace(block, trim_before, trim_after);
 
@@ -106,8 +108,8 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
 				parser.error(
-					parser.stack.some(block => block.type === 'IfBlock') 
-						? parser_errors.invalid_elseif_placement_unclosed_block(to_string(block)) 
+					parser.stack.some(block => block.type === 'IfBlock')
+						? parser_errors.invalid_elseif_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_elseif_placement_outside_if
 				);
 			}
@@ -141,8 +143,8 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error(
-					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock') 
-						? parser_errors.invalid_else_placement_unclosed_block(to_string(block)) 
+					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+						? parser_errors.invalid_else_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_else_placement_outside_if
 				);
 			}
@@ -167,15 +169,15 @@ export default function mustache(parser: Parser) {
 			if (block.type !== 'PendingBlock') {
 				parser.error(
 					parser.stack.some(block => block.type === 'PendingBlock')
-						? parser_errors.invalid_then_placement_unclosed_block(to_string(block)) 
-						: parser_errors.invalid_then_placement_without_await 
+						? parser_errors.invalid_then_placement_unclosed_block(to_string(block))
+						: parser_errors.invalid_then_placement_without_await
 				);
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
 				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
-						? parser_errors.invalid_catch_placement_unclosed_block(to_string(block)) 
-						: parser_errors.invalid_catch_placement_without_await 
+					? parser_errors.invalid_catch_placement_unclosed_block(to_string(block))
+					: parser_errors.invalid_catch_placement_without_await
 				);
 			}
 		}
@@ -290,7 +292,7 @@ export default function mustache(parser: Parser) {
 
 		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
 		if (await_block_shorthand) {
-			if (parser.match_regex(/\s*}/)) {
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
 			} else {
 				parser.require_whitespace();
@@ -301,7 +303,7 @@ export default function mustache(parser: Parser) {
 
 		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
 		if (await_block_catch_shorthand) {
-			if (parser.match_regex(/\s*}/)) {
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
 			} else {
 				parser.require_whitespace();
@@ -350,7 +352,7 @@ export default function mustache(parser: Parser) {
 		let identifiers;
 
 		// Implies {@debug} which indicates "debug all"
-		if (parser.read(/\s*}/)) {
+		if (parser.read(regex_whitespace_with_closing_curly_brace)) {
 			identifiers = [];
 		} else {
 			const expression = read_expression(parser);

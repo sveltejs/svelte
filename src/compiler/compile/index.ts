@@ -35,6 +35,9 @@ const valid_options = [
 	'cssHash'
 ];
 
+const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+const regex_starts_with_lowercase_character = /^[a-z]/;
+
 function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename, loopGuardTimeout, dev, namespace } = options;
 
@@ -48,11 +51,11 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 		}
 	});
 
-	if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
+	if (name && !regex_valid_identifier.test(name)) {
 		throw new Error(`options.name must be a valid identifier (got '${name}')`);
 	}
 
-	if (name && /^[a-z]/.test(name)) {
+	if (name && regex_starts_with_lowercase_character.test(name)) {
 		const message = 'options.name should be capitalised';
 		warnings.push({
 			code: 'options-lowercase-name',

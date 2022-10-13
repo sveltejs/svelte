@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions, start_newline } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -203,6 +203,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 	}
 }
 
+const regex_any_repeated_whitespaces = /[\s]+/g;
+const regex_heading_tags = /^h[1-6]$/;
+const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
+
 export default class Element extends Node {
 	type: 'Element';
 	name: string;
@@ -253,7 +257,7 @@ export default class Element extends Node {
 					// places if there's another newline afterwards.
 					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
-					first.data = first.data.replace(start_newline, '');
+					first.data = first.data.replace(regex_starts_with_newline, '');
 				}
 			}
 
@@ -398,7 +402,7 @@ export default class Element extends Node {
 
 			// Errors
 
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+			if (regex_illegal_attribute_character.test(name)) {
 				return component.error(attribute, compiler_errors.illegal_attribute(name));
 			}
 
@@ -464,7 +468,7 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_unknown_aria_attribute(type, match));
 				}
 
-				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+				if (name === 'aria-hidden' && regex_heading_tags.test(this.name)) {
 					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
 				}
 
@@ -729,7 +733,7 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
+				if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
 				return true;
 			});
 
@@ -861,7 +865,7 @@ export default class Element extends Node {
 				if (this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
 				}
-			} else if (dimensions.test(name)) {
+			} else if (regex_dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
 				} else if (is_svg(this.name)) {
@@ -988,7 +992,7 @@ export default class Element extends Node {
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
 					if (chunk.type === 'Text') {
-						let data = chunk.data.replace(/[\s\n\t]+/g, ' ');
+						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
 						if (index === 0) {
 							data = data.trimLeft();
 						} else if (index === attribute.chunks.length - 1) {
@@ -1002,12 +1006,14 @@ export default class Element extends Node {
 	}
 }
 
+const regex_starts_with_vovel = /^[aeiou]/;
+
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];
@@ -1015,10 +1021,12 @@ function should_have_attribute(
 	node.component.warn(node, compiler_warnings.a11y_missing_attribute(name, article, sequence));
 }
 
+const regex_minus_sign = /-/;
+
 function within_custom_element(parent: INode) {
 	while (parent) {
 		if (parent.type === 'InlineComponent') return false;
-		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		if (parent.type === 'Element' && regex_minus_sign.test(parent.name)) return true;
 		parent = parent.parent;
 	}
 	return false;

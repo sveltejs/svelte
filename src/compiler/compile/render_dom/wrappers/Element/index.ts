@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { dimensions, start_newline } from '../../../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_backslashes } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -34,12 +34,16 @@ interface BindingGroup {
 	bindings: Binding[];
 }
 
+const regex_contains_radio_or_checkbox_or_file = /radio|checkbox|file/;
+const regex_contains_radio_or_checkbox_or_range_or_file = /radio|checkbox|range|file/;
+
 const events = [
 	{
 		event_names: ['input'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'textarea' ||
-			node.name === 'input' && !/radio|checkbox|range|file/.test(node.get_static_attribute_value('type') as string)
+			node.name === 'input' &&
+			!regex_contains_radio_or_checkbox_or_range_or_file.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['input'],
@@ -51,7 +55,8 @@ const events = [
 		event_names: ['change'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'select' ||
-			node.name === 'input' && /radio|checkbox|file/.test(node.get_static_attribute_value('type') as string)
+			node.name === 'input' &&
+			regex_contains_radio_or_checkbox_or_file.test(node.get_static_attribute_value('type') as string)
 	},
 	{
 		event_names: ['change', 'input'],
@@ -62,7 +67,7 @@ const events = [
 	{
 		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
-			dimensions.test(name)
+			regex_dimensions.test(name)
 	},
 
 	// media events
@@ -136,6 +141,8 @@ const events = [
 ];
 
 const CHILD_DYNAMIC_ELEMENT_BLOCK = 'child_dynamic_element';
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
+const regex_minus_signs = /-/g;
 
 export default class ElementWrapper extends Wrapper {
 	node: Element;
@@ -182,7 +189,7 @@ export default class ElementWrapper extends Wrapper {
 
 		this.var = {
 			type: 'Identifier',
-			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
+			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
 		};
 
 		this.void = is_void(node.name);
@@ -547,7 +554,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 	}
 
-	add_directives_in_order (block: Block) {
+	add_directives_in_order(block: Block) {
 		type OrderedAttribute = EventHandler | BindingGroup | Binding | Action;
 
 		const binding_groups = events
@@ -561,7 +568,7 @@ export default class ElementWrapper extends Wrapper {
 
 		const this_binding = this.bindings.find(b => b.node.name === 'this');
 
-		function getOrder (item: OrderedAttribute) {
+		function getOrder(item: OrderedAttribute) {
 			if (item instanceof EventHandler) {
 				return item.node.start;
 			} else if (item instanceof Binding) {
@@ -1100,7 +1107,7 @@ export default class ElementWrapper extends Wrapper {
 			const snippet = expression.manipulate(block);
 			let cached_snippet;
 			if (should_cache) {
-				cached_snippet = block.get_unique_name(`style_${name.replace(/-/g, '_')}`);
+				cached_snippet = block.get_unique_name(`style_${name.replace(regex_minus_signs, '_')}`);
 				block.add_variable(cached_snippet, snippet);
 			}
 
@@ -1138,6 +1145,9 @@ export default class ElementWrapper extends Wrapper {
 	}
 }
 
+const regex_backticks = /`/g;
+const regex_dollar_signs = /\$/g;
+
 function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
 		if (wrapper instanceof TextWrapper) {
@@ -1155,9 +1165,9 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			);
 
 			state.quasi.value.raw += (raw ? wrapper.data : escape_html(wrapper.data))
-				.replace(/\\/g, '\\\\')
-				.replace(/`/g, '\\`')
-				.replace(/\$/g, '\\$');
+				.replace(regex_backslashes, '\\\\')
+				.replace(regex_backticks, '\\`')
+				.replace(regex_dollar_signs, '\\$');
 		} else if (wrapper instanceof MustacheTagWrapper || wrapper instanceof RawMustacheTagWrapper) {
 			literal.quasis.push(state.quasi);
 			literal.expressions.push(wrapper.node.expression.manipulate(block));
@@ -1192,7 +1202,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
 					const first = wrapper.fragment.nodes[0];
-					if (first && first.node.type === 'Text' && start_newline.test(first.node.data)) {
+					if (first && first.node.type === 'Text' && regex_starts_with_newline.test(first.node.data)) {
 						state.quasi.value.raw += '\n';
 					}
 				}
@@ -1204,7 +1214,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 						// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
 						// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 						const first = value_attribute.node.chunks[0];
-						if (first && first.type === 'Text' && start_newline.test(first.data)) {
+						if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
 							state.quasi.value.raw += '\n';
 						}
 						to_html_for_attr_value(value_attribute, block, literal, state);

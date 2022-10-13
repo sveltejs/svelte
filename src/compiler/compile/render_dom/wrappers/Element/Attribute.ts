@@ -10,6 +10,7 @@ import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
 import { namespaces } from '../../../../utils/namespaces';
 import { boolean_attributes } from '../../../../../shared/boolean_attributes';
+import { regex_double_quotes } from '../../../../utils/patterns';
 
 const non_textlike_input_types = new Set([
 	'button',
@@ -42,8 +43,11 @@ export class BaseAttributeWrapper {
 		}
 	}
 
-	render(_block: Block) {}
+	render(_block: Block) { }
 }
+
+const regex_minus_sign = /-/;
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class AttributeWrapper extends BaseAttributeWrapper {
 	node: Attribute;
@@ -115,7 +119,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = /-/.test(element.node.name)
+		const method = regex_minus_sign.test(element.node.name)
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
 				? '@xlink_attr'
@@ -196,7 +200,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 	get_init(block: Block, value) {
 		this.last = this.should_cache && block.get_unique_name(
-			`${this.parent.var.name}_${this.name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+			`${this.parent.var.name}_${this.name.replace(regex_invalid_variable_identifier_characters, '_')}_value`
 		);
 
 		if (this.should_cache) block.add_variable(this.last);
@@ -313,7 +317,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
-				? chunk.data.replace(/"/g, '\\"')
+				? chunk.data.replace(regex_double_quotes, '\\"')
 				: `\${${chunk.manipulate()}}`;
 		}).join('')}"`;
 	}
@@ -381,13 +385,14 @@ function should_cache(attribute: AttributeWrapper) {
 	return attribute.is_src || attribute.node.should_cache();
 }
 
+const regex_contains_checked_or_group = /checked|group/;
+
 function is_indirectly_bound_value(attribute: AttributeWrapper) {
 	const element = attribute.parent;
 	return attribute.name === 'value' &&
 		(element.node.name === 'option' || // TODO check it's actually bound
 			(element.node.name === 'input' &&
 				element.node.bindings.some(
-					(binding) =>
-						/checked|group/.test(binding.name)
+					(binding) => regex_contains_checked_or_group.test(binding.name)
 				)));
 }
