@@ -613,6 +613,26 @@ export default class Element extends Node {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
+			const target_attribute = attribute_map.get('target');
+
+			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
+
+				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
+					const rel = attribute_map.get('rel');
+					const rel_values = rel ? rel.get_static_value().split(' ') : [];
+					const expected_values = ['noreferrer'];
+
+					expected_values.forEach(expected_value => {
+						if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
+							component.warn(this, {
+								code: `security-anchor-rel-${expected_value}`,
+								message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
+							});
+						}
+					});
+				}
+			}
 
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();
