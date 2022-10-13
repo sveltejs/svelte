@@ -14,7 +14,9 @@ jobs:
         with:
           node-version: 16
           cache: npm
-      - run: npm install --ignore-scripts
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
       - run: npm run build
         env:
           PUBLISH: true
@@ -64,7 +66,9 @@ jobs:
             store/
             transition/
             types/
-      - run: npm install --ignore-scripts
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
       - run: npm test
         env:
           CI: true
@@ -88,5 +92,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           cache: npm
-      - run: npm install --ignore-scripts
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
       - run: npm run test:unit
