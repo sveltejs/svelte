@@ -128,6 +128,7 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
+                        deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
@@ -149,7 +150,26 @@ export default class Expression {
 							component.add_reference(node, name);
 
 							const variable = component.var_lookup.get(name);
-							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+
+							if (variable) {
+								variable[deep ? 'mutated' : 'reassigned'] = true;
+							}
+
+							const declaration: any = scope.find_owner(name)?.declarations.get(name);
+
+							if (declaration) {
+								if (declaration.kind === 'const' && !deep) {
+									component.error(node, {
+										code: 'assignment-to-const',
+										message: 'You are assigning to a const'
+									});
+								}
+							} else if (variable && variable.writable === false && !deep) {
+								component.error(node, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
+							}
 						}
 					});
 				}
