@@ -874,6 +874,9 @@ The `style:` directive provides a shorthand for setting multiple styles on an el
 
 <!-- Multiple styles can be included -->
 <div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+
+<!-- Styles can be marked as important -->
+<div style:color|important="red">...</div>
 ```
 
 ---

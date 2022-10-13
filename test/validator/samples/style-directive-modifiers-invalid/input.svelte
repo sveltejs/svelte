@@ -1,0 +1,1 @@
+<button style:color|bad='red'></button>

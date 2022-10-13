@@ -1100,7 +1100,7 @@ export default class ElementWrapper extends Wrapper {
 	add_styles(block: Block) {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
 		this.node.styles.forEach((style_directive) => {
-			const { name, expression, should_cache } = style_directive;
+			const { name, expression, should_cache, important } = style_directive;
 
 			const snippet = expression.manipulate(block);
 			let cached_snippet: Identifier | undefined;
@@ -1109,7 +1109,7 @@ export default class ElementWrapper extends Wrapper {
 				block.add_variable(cached_snippet, snippet);
 			}
 
-			const updater = b`@set_style(${this.var}, "${name}", ${should_cache ? cached_snippet : snippet}, false)`;
+			const updater = b`@set_style(${this.var}, "${name}", ${should_cache ? cached_snippet : snippet}, ${important ? 1 : null})`;
 
 			block.chunks.hydrate.push(updater);
 
