@@ -153,16 +153,7 @@ export default class Expression {
 								variable[deep ? 'mutated' : 'reassigned'] = true;
 							}
 
-							let current_scope = scope;
-							let declaration;
-
-							while (current_scope) {
-								if (current_scope.declarations.has(name)) {
-									declaration = current_scope.declarations.get(name);
-									break;
-								}
-								current_scope = current_scope.parent;
-							}
+							const declaration: any = scope.find_owner(name)?.declarations.get(name);
 
 							if (declaration) {
 								if (declaration.kind === 'const' && !deep) {
