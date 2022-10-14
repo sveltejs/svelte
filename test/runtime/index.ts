@@ -65,6 +65,7 @@ describe('runtime', () => {
 				accessors: 'accessors' in config ? config.accessors : true
 			};
 
+			register.clearCompileOutputCache();
 			register.clearRequireCache();
 			register.setCompile((config.preserveIdentifiers ? svelte : svelte$).compile);
 			register.setCompileOptions(compileOptions);
@@ -191,11 +192,10 @@ describe('runtime', () => {
 					}
 				}).catch(err => {
 					failed.add(dir);
-					throw err;
-				})
-				.catch(err => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					// saves the compiled output into file system
+					register.writeCompileOutputCacheToFile();
 					throw err;
 				})
 				.then(() => {

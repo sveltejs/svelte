@@ -38,7 +38,7 @@ export function clearRequireCache() {
 }
 
 function registerExtension(extension: string) {
-	require.extensions[extension] = function(module, filename) {
+	require.extensions[extension] = function (module, filename) {
 		const name = path
 			.parse(filename)
 			.name.replace(/^\d/, '_$&')
@@ -56,22 +56,33 @@ function registerExtension(extension: string) {
 		} = compile(fs.readFileSync(filename, 'utf-8'), options);
 
 		if (!process.env.CI) {
-			saveGeneratedOutput(code, filename);
+			saveGeneratedOutputToCache(code, filename);
 		}
 
 		return module._compile(code, filename);
 	};
 }
 
-function saveGeneratedOutput(code: string, filename: string) {
+const outputCache = new Map();
+function saveGeneratedOutputToCache(code: string, filename: string) {
 	filename = filename.split('\\').join('/');
 	filename = filename.replace(
 		/samples\/([^/]+)\/(.*)\.svelte$/,
 		`samples/$1/_output/${folderName}/$2.js`
 	);
+	outputCache.set(filename, code);
+}
 
-	mkdirp(path.dirname(filename));
-	fs.writeFileSync(filename, code, 'utf8');
+export function clearCompileOutputCache() {
+	outputCache.clear();
+}
+
+export function writeCompileOutputCacheToFile() {
+	for (const [filename, code] of outputCache) {
+		mkdirp(path.dirname(filename));
+		fs.writeFileSync(filename, code, 'utf8');
+	}
+	clearCompileOutputCache();
 }
 
 extensions.forEach(registerExtension);

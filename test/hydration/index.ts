@@ -40,63 +40,71 @@ describe('hydration', () => {
 			});
 			register.setCompile(svelte.compile);
 			register.setOutputFolderName('hydratable');
+			register.clearRequireCache();
+			register.clearCompileOutputCache();
 
 			const window = env();
 
-			global.window = window;
-
-			const SvelteComponent = require(`${cwd}/main.svelte`).default;
-
-			const target = window.document.body;
-			const head = window.document.head;
-
-			target.innerHTML = fs.readFileSync(`${cwd}/_before.html`, 'utf-8');
-
-			let before_head;
 			try {
-				before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
-				head.innerHTML = before_head;
-			} catch (err) {
-				// continue regardless of error
-			}
+				global.window = window;
 
-			const snapshot = config.snapshot ? config.snapshot(target) : {};
+				const SvelteComponent = require(`${cwd}/main.svelte`).default;
 
-			const component = new SvelteComponent({
-				target,
-				hydrate: true,
-				props: config.props
-			});
+				const target = window.document.body;
+				const head = window.document.head;
 
-			try {
-				assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
-			} catch (error) {
-				if (shouldUpdateExpected()) {
-					fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
-					console.log(`Updated ${cwd}/_after.html.`);
-				} else {
-					throw error;
-				}
-			}
+				target.innerHTML = fs.readFileSync(`${cwd}/_before.html`, 'utf-8');
 
-			if (before_head) {
+				let before_head;
 				try {
-					assert.htmlEqual(head.innerHTML, fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
+					before_head = fs.readFileSync(`${cwd}/_before_head.html`, 'utf-8');
+					head.innerHTML = before_head;
+				} catch (err) {
+					// continue regardless of error
+				}
+
+				const snapshot = config.snapshot ? config.snapshot(target) : {};
+
+				const component = new SvelteComponent({
+					target,
+					hydrate: true,
+					props: config.props
+				});
+
+				try {
+					assert.htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
 				} catch (error) {
 					if (shouldUpdateExpected()) {
-						fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
-						console.log(`Updated ${cwd}/_after_head.html.`);
+						fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
+						console.log(`Updated ${cwd}/_after.html.`);
 					} else {
 						throw error;
 					}
 				}
-			}
 
-			if (config.test) {
-				config.test(assert, target, snapshot, component, window);
-			} else {
-				component.$destroy();
-				assert.equal(target.innerHTML, '');
+				if (before_head) {
+					try {
+						assert.htmlEqual(head.innerHTML, fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8'));
+					} catch (error) {
+						if (shouldUpdateExpected()) {
+							fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
+							console.log(`Updated ${cwd}/_after_head.html.`);
+						} else {
+							throw error;
+						}
+					}
+				}
+
+				if (config.test) {
+					config.test(assert, target, snapshot, component, window);
+				} else {
+					component.$destroy();
+					assert.equal(target.innerHTML, '');
+				}
+			} catch (err) {
+				// saves the compiled output into file system
+				register.writeCompileOutputCacheToFile();
+				throw err;
 			}
 		});
 	}

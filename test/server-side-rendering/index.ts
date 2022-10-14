@@ -8,7 +8,6 @@ import {
 	loadSvelte,
 	setupHtmlEqual,
 	tryToLoadJson,
-	cleanRequireCache,
 	shouldUpdateExpected
 } from '../helpers';
 import { set_current_component } from '../../internal';
@@ -55,19 +54,18 @@ describe('ssr', () => {
 		(solo ? it.only : it)(dir, (done) => {
 
 			try {
-
 				dir = path.resolve(`${__dirname}/samples`, dir);
 
-				cleanRequireCache();
-
+				register.clearCompileOutputCache();
+				register.clearRequireCache();
 				const compileOptions = {
 					sveltePath,
 					...config.compileOptions,
 					generate: 'ssr',
 					format: 'cjs'
 				};
-
-				require('../../register')(compileOptions);
+				register.setCompileOptions(compileOptions);
+				register.setOutputFolderName('ssr');
 
 				const Component = require(`${dir}/main.svelte`).default;
 
@@ -134,6 +132,7 @@ describe('ssr', () => {
 				done();
 			} catch (err) {
 				err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), dir)}/main.svelte`;
+				register.writeCompileOutputCacheToFile();
 				done(err);
 			} finally {
 				set_current_component(null);
@@ -143,7 +142,7 @@ describe('ssr', () => {
 
 	// duplicate client-side tests, as far as possible
 	runRuntimeSamples('runtime');
-	runRuntimeSamples('runtime-puppeteer');
+	// runRuntimeSamples('runtime-puppeteer');
 
 	function runRuntimeSamples(suite) {
 		fs.readdirSync(`test/${suite}/samples`).forEach(dir => {
@@ -162,50 +161,54 @@ describe('ssr', () => {
 				const cwd = path.resolve(`test/${suite}/samples`, dir);
 
 				delete global.window;
-				register.clearRequireCache();
-				register.setCompileOptions({
-					sveltePath,
-					...config.compileOptions,
-					generate: 'ssr',
-					format: 'cjs'
-				});
 
-				register.setOutputFolderName('ssr');
+				return Promise.resolve()
+					.then(() => {
+						register.clearCompileOutputCache();
+						register.clearRequireCache();
+						register.setCompileOptions({
+							sveltePath,
+							...config.compileOptions,
+							generate: 'ssr',
+							format: 'cjs'
+						});
+						register.setOutputFolderName('ssr');
 
-				try {
-					if (config.before_test) config.before_test();
+						if (config.before_test) config.before_test();
 
-					const Component = require(`../${suite}/samples/${dir}/main.svelte`).default;
-					const { html } = Component.render(config.props, {
-						store: (config.store !== true) && config.store
-					});
+						const Component = require(`../${suite}/samples/${dir}/main.svelte`).default;
+						const { html } = Component.render(config.props, {
+							store: (config.store !== true) && config.store
+						});
 
-					if (config.ssrHtml) {
-						assert.htmlEqual(html, config.ssrHtml);
-					} else if (config.html) {
-						assert.htmlEqual(html, config.html);
-					}
-
-					if (config.test_ssr) {
-						config.test_ssr({ assert });
-					}
-
-					if (config.after_test) config.after_test();
-				} catch (err) {
-					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-
-					if (config.error) {
-						if (typeof config.error === 'function') {
-							config.error(assert, err);
-						} else {
-							assert.equal(err.message, config.error);
+						if (config.ssrHtml) {
+							assert.htmlEqual(html, config.ssrHtml);
+						} else if (config.html) {
+							assert.htmlEqual(html, config.html);
 						}
-					} else {
+
+						if (config.test_ssr) {
+							config.test_ssr({ assert });
+						}
+
+						if (config.after_test) config.after_test();
+						set_current_component(null);
+					}).catch(err => {
+						if (config.error) {
+							if (typeof config.error === 'function') {
+								config.error(assert, err);
+							} else {
+								assert.equal(err.message, config.error);
+							}
+						} else {
+							throw err;
+						}
+					}).catch(err => {
+						err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+						register.writeCompileOutputCacheToFile();
+						set_current_component(null);
 						throw err;
-					}
-				} finally {
-					set_current_component(null);
-				}
+					});
 			});
 		});
 	}
