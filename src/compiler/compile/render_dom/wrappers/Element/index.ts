@@ -280,9 +280,7 @@ export default class ElementWrapper extends Wrapper {
 			(x`#nodes` as unknown) as Identifier
 		);
 
-		const previous_tag = block.get_unique_name('previous_tag');
 		const tag = this.node.tag_expr.manipulate(block);
-		block.add_variable(previous_tag, tag);
 
 		block.chunks.init.push(b`
 			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
@@ -304,63 +302,68 @@ export default class ElementWrapper extends Wrapper {
 			if (${this.var}) ${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 		`);
 
-		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-		const has_transitions = !!(this.node.intro || this.node.outro);
-		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
+		if (this.node.tag_expr.dynamic_dependencies().length == 0) {
+			block.chunks.update.push(b`if (${this.var}) ${this.var}.p(#ctx, #dirty)`);
+		} else {
+			const previous_tag = block.get_unique_name('previous_tag');
+			block.add_variable(previous_tag, tag);
+			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const has_transitions = !!(this.node.intro || this.node.outro);
+			const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 
-		const tag_will_be_removed = block.get_unique_name('tag_will_be_removed');
-		if (has_transitions) {
-			block.add_variable(tag_will_be_removed, x`false`);
-		}
-
-		block.chunks.update.push(b`
-			if (${tag}) {
-				if (!${previous_tag}) {
-					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-					${previous_tag} = ${tag};
-					${this.var}.c();
-					${has_transitions && b`@transition_in(${this.var})`}
-					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-				} else if (${not_equal}(${previous_tag}, ${tag})) {
-					${this.var}.d(1);
-					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
-					${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
-					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
-					${previous_tag} = ${tag};
-					${this.var}.c();
-					${has_transitions && b`if (${tag_will_be_removed}) {
-						${tag_will_be_removed} = false;
-						@transition_in(${this.var})
-					}`}
-					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
-				} else {
-					${has_transitions && b`if (${tag_will_be_removed}) {
-						${tag_will_be_removed} = false;
-						@transition_in(${this.var})
-					}`}
-					${this.var}.p(#ctx, #dirty);
-				}
-			} else if (${previous_tag}) {
-				${
-					has_transitions
-						? b`
-							${tag_will_be_removed} = true;
-							@group_outros();
-							@transition_out(${this.var}, 1, 1, () => {
+			const tag_will_be_removed = block.get_unique_name('tag_will_be_removed');
+			if (has_transitions) {
+				block.add_variable(tag_will_be_removed, x`false`);
+			}
+			block.chunks.update.push(b`
+				if (${tag}) {
+					if (!${previous_tag}) {
+						${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+						${previous_tag} = ${tag};
+						${this.var}.c();
+						${has_transitions && b`@transition_in(${this.var})`}
+						${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					} else if (${not_equal}(${previous_tag}, ${tag})) {
+						${this.var}.d(1);
+						${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+						${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
+						${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+						${previous_tag} = ${tag};
+						${this.var}.c();
+						${has_transitions && b`if (${tag_will_be_removed}) {
+							${tag_will_be_removed} = false;
+							@transition_in(${this.var})
+						}`}
+						${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
+					} else {
+						${has_transitions && b`if (${tag_will_be_removed}) {
+							${tag_will_be_removed} = false;
+							@transition_in(${this.var})
+						}`}
+						${this.var}.p(#ctx, #dirty);
+					}
+				} else if (${previous_tag}) {
+					${
+						has_transitions
+							? b`
+								${tag_will_be_removed} = true;
+								@group_outros();
+								@transition_out(${this.var}, 1, 1, () => {
+									${this.var} = null;
+									${previous_tag} = ${tag};
+									${tag_will_be_removed} = false;
+								});
+								@check_outros();
+							`
+							: b`
+								${this.var}.d(1);
 								${this.var} = null;
 								${previous_tag} = ${tag};
-								${tag_will_be_removed} = false;
-							});
-							@check_outros();
-						`
-						: b`
-							${this.var}.d(1);
-							${this.var} = null;
-							${previous_tag} = ${tag};
-						`
+							`
+					}
 				}
-			}
-		`);
+			`);
+		}
 
 		if (this.child_dynamic_element_block.has_intros) {
 			block.chunks.intro.push(b`@transition_in(${this.var});`);

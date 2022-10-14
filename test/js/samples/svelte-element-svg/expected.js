@@ -4,7 +4,6 @@ import {
 	append,
 	assign,
 	detach,
-	empty,
 	get_spread_update,
 	init,
 	insert,
@@ -60,44 +59,21 @@ function create_dynamic_element(ctx) {
 }
 
 function create_fragment(ctx) {
-	let previous_tag = "svg";
-	let svelte_element1_anchor;
 	let svelte_element1 = "svg" && create_dynamic_element(ctx);
 
 	return {
 		c() {
 			if (svelte_element1) svelte_element1.c();
-			svelte_element1_anchor = empty();
 		},
 		m(target, anchor) {
 			if (svelte_element1) svelte_element1.m(target, anchor);
-			insert(target, svelte_element1_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if ("svg") {
-				if (!previous_tag) {
-					svelte_element1 = create_dynamic_element(ctx);
-					svelte_element1.c();
-					svelte_element1.m(svelte_element1_anchor.parentNode, svelte_element1_anchor);
-				} else if (safe_not_equal(previous_tag, "svg")) {
-					svelte_element1.d(1);
-					svelte_element1 = create_dynamic_element(ctx);
-					svelte_element1.c();
-					svelte_element1.m(svelte_element1_anchor.parentNode, svelte_element1_anchor);
-				} else {
-					svelte_element1.p(ctx, dirty);
-				}
-			} else if (previous_tag) {
-				svelte_element1.d(1);
-				svelte_element1 = null;
-			}
-
-			previous_tag = "svg";
+			if (svelte_element1) svelte_element1.p(ctx, dirty);
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element1_anchor);
 			if (svelte_element1) svelte_element1.d(detaching);
 		}
 	};
