@@ -57,20 +57,13 @@ describe('runtime', () => {
 			unhandled_rejection = null;
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
-			
+
 			const compileOptions = {
 				...config.compileOptions,
 				hydratable: hydrate,
 				immutable: config.immutable,
 				accessors: 'accessors' in config ? config.accessors : true
 			};
-
-			register.clearCompileOutputCache();
-			register.clearRequireCache();
-			register.setCompile((config.preserveIdentifiers ? svelte : svelte$).compile);
-			register.setCompileOptions(compileOptions);
-			register.setOutputFolderName(hydrate ? 'hydratable' : 'normal');
-
 			let mod;
 			let SvelteComponent;
 
@@ -99,7 +92,13 @@ describe('runtime', () => {
 							flush();
 						};
 					});
-
+		
+					register.clearCompileOutputCache();
+					register.clearRequireCache();
+					register.setCompile((config.preserveIdentifiers ? svelte : svelte$).compile);
+					register.setCompileOptions(compileOptions);
+					register.setOutputFolderName(hydrate ? 'hydratable' : 'normal');
+		
 					mod = require(`./samples/${dir}/main.svelte`);
 					SvelteComponent = mod.default;
 
