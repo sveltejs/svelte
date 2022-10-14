@@ -9,7 +9,6 @@ import {
 	noop,
 	safe_not_equal,
 	space,
-	subscribe,
 	toggle_class
 } from "svelte/internal";
 
@@ -133,13 +132,8 @@ let reactiveModuleVar = Math.random();
 function instance($$self, $$props, $$invalidate) {
 	let reactiveDeclaration;
 	let $reactiveStoreVal;
-
-	let $reactiveDeclaration,
-		$$unsubscribe_reactiveDeclaration = noop,
-		$$subscribe_reactiveDeclaration = () => ($$unsubscribe_reactiveDeclaration(), $$unsubscribe_reactiveDeclaration = subscribe(reactiveDeclaration, $$value => $$invalidate(3, $reactiveDeclaration = $$value)), reactiveDeclaration);
-
+	let $reactiveDeclaration;
 	component_subscribe($$self, reactiveStoreVal, $$value => $$invalidate(2, $reactiveStoreVal = $$value));
-	$$self.$$.on_destroy.push(() => $$unsubscribe_reactiveDeclaration());
 	nonReactiveGlobal = Math.random();
 	const reactiveConst = { x: Math.random() };
 	reactiveModuleVar += 1;
@@ -148,7 +142,8 @@ function instance($$self, $$props, $$invalidate) {
 		reactiveConst.x += 1;
 	}
 
-	$: $$subscribe_reactiveDeclaration($$invalidate(1, reactiveDeclaration = reactiveModuleVar * 2));
+	$: reactiveDeclaration = reactiveModuleVar * 2;
+	component_subscribe($$self, reactiveDeclaration, $$value => $$invalidate(3, $reactiveDeclaration = $$value));
 	return [reactiveConst, reactiveDeclaration, $reactiveStoreVal, $reactiveDeclaration];
 }
 
