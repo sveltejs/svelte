@@ -48,7 +48,7 @@ describe('runtime', () => {
 		}
 
 		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
-		(config.skip ? it.skip : solo ? it.only : it)(testName, (done) => {
+		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -196,14 +196,12 @@ describe('runtime', () => {
 				.catch(err => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-					done(err);
 					throw err;
 				})
 				.then(() => {
 					flush();
 
 					if (config.after_test) config.after_test();
-					done();
 				});
 		});
 	}
