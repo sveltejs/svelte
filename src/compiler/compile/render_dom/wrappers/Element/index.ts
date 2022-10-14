@@ -254,7 +254,6 @@ export default class ElementWrapper extends Wrapper {
 				node.handlers.length > 0 ||
 				node.styles.length > 0 ||
 				this.node.name === 'option' ||
-				this.node.name === 'svelte:element' ||
 				node.tag_expr.dynamic_dependencies().length ||
 				renderer.options.dev
 			) {
@@ -1177,10 +1176,12 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
 		} else {
-			// element
-			state.quasi.value.raw += `<${wrapper.node.name}`;
+			const nodeName = wrapper.node.name === 'svelte:element' && wrapper.node.tag_expr.node.type === 'Literal' ? wrapper.node.tag_expr.node.value : wrapper.node.name;
 
-			const is_empty_textarea = wrapper.node.name === 'textarea' && wrapper.fragment.nodes.length === 0;
+			// element
+			state.quasi.value.raw += `<${nodeName}`;
+
+			const is_empty_textarea = nodeName === 'textarea' && wrapper.fragment.nodes.length === 0;
 
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
 				if (is_empty_textarea && attr.node.name === 'value') {
@@ -1197,7 +1198,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';
 
-				if (wrapper.node.name === 'pre') {
+				if (nodeName === 'pre') {
 					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
 					const first = wrapper.fragment.nodes[0];
@@ -1222,7 +1223,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
-				state.quasi.value.raw += `</${wrapper.node.name}>`;
+				state.quasi.value.raw += `</${nodeName}>`;
 			} else {
 				state.quasi.value.raw += '/>';
 			}
