@@ -86,7 +86,8 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha --exit",
+    "test": "npm run test:integration && npm run test:unit",
+    "test:integration": "mocha --exit",
     "test:unit": "mocha --config .mocharc.unit.js --exit",
     "quicktest": "mocha --exit",
     "build": "rollup -c && npm run tsd",
