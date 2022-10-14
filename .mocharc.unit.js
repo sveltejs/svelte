@@ -1,10 +1,11 @@
-const is_unit_test = process.env.UNIT_TEST;
-
 module.exports = {
-	file: is_unit_test ? [] : ['test/test.ts'],
+	spec: [
+		'src/**/__test__.ts',
+	],
 	require: [
 		'sucrase/register'
-	]
+	],
+	recursive: true,
 };
 
 // add coverage options when running 'npx c8 mocha'

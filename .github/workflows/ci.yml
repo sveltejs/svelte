@@ -3,7 +3,42 @@ on: [push, pull_request]
 permissions:
   contents: read # to fetch code (actions/checkout)
 jobs:
+  Setup:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: npm
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
+      - run: npm run build
+        env:
+          PUBLISH: true
+      - uses: actions/cache@v3
+        with:
+          # cache key based on OS as the full path for each OS may be different
+          # and windows is not able to reuse the cache from ubuntu
+          key: output-${{ github.run_id }}-${{ matrix.os }}
+          path: |
+            index.*
+            compiler.*
+            ssr.*
+            action/
+            animate/
+            easing/
+            internal/
+            motion/
+            store/
+            transition/
+            types/
   Tests:
+    needs: Setup
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -16,8 +51,25 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - uses: actions/cache@v3
+        with:
+          key: output-${{ github.run_id }}-${{ matrix.os }}
+          path: |
+            index.*
+            compiler.*
+            ssr.*
+            action/
+            animate/
+            easing/
+            internal/
+            motion/
+            store/
+            transition/
+            types/
       - run: npm install
-      - run: npm test
+        env:
+          SKIP_PREPARE: true
+      - run: npm run test:integration
         env:
           CI: true
   Lint:
@@ -40,4 +92,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           cache: npm
-      - run: 'npm i && npm run test:unit'
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
+      - run: npm run test:unit
