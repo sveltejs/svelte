@@ -9,7 +9,6 @@ import {
 	assert,
 	loadConfig,
 	loadSvelte,
-	cleanRequireCache,
 	env,
 	setupHtmlEqual
 } from '../helpers';
@@ -109,12 +108,12 @@ describe('runtime', () => {
 
 					if (hydrate && from_ssr_html) {
 						// ssr into target
-						compileOptions.generate = 'ssr';
-						cleanRequireCache();
+						register.setCompileOptions({ ...compileOptions, generate: 'ssr' });
+						register.setOutputFolderName('hydratable-ssr');
+						register.clearRequireCache();
 						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
-						delete compileOptions.generate;
 					} else {
 						target.innerHTML = '';
 					}
@@ -162,7 +161,14 @@ describe('runtime', () => {
 							target,
 							window,
 							raf,
-							compileOptions
+							compileOptions,
+							require: function require_for_csr(module: string) {
+								register.clearRequireCache();
+								register.setCompileOptions({
+									format: 'cjs'
+								});
+								return require(path.join(`${__dirname}/samples/${dir}`, module));
+							}							
 						})).then(() => {
 							component.$destroy();
 

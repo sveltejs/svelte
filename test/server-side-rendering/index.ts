@@ -188,7 +188,18 @@ describe('ssr', () => {
 						}
 
 						if (config.test_ssr) {
-							config.test_ssr({ assert });
+							config.test_ssr({
+								assert,
+								require: function require_for_ssr(module: string) {
+									register.clearRequireCache();
+									register.setCompileOptions({
+										sveltePath,
+										generate: 'ssr',
+										format: 'cjs'
+									});
+									return require(path.join(__dirname, `../${suite}/samples/${dir}`, module));
+								}
+							});
 						}
 
 						if (config.after_test) config.after_test();

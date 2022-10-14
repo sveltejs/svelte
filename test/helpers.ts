@@ -45,12 +45,6 @@ export function tryToReadFile(file) {
 	}
 }
 
-export function cleanRequireCache() {
-	Object.keys(require.cache)
-		.filter(x => x.endsWith('.svelte'))
-		.forEach(file => delete require.cache[file]);
-}
-
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
