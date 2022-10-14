@@ -27,7 +27,7 @@ jobs:
         id: upload-artifact
         uses: actions/upload-artifact@v3
         with:
-          name: build-files
+          name: build-assets
           path: |
             index.*
             compiler.*
@@ -58,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v3
         id: download-artifact
         with:
-          name: build-files
+          name: build-assets
       - run: npm install
         env:
           SKIP_PREPARE: true
