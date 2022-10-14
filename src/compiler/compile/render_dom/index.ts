@@ -385,11 +385,21 @@ export default function dom(
 			${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
 			@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
 		`);
+	
+	// const reactive_store_non_hoistable_subscriptions = reactive_stores
+	// 	.filter(store => {
+	// 		const variable = component.var_lookup.get(store.name.slice(1));
+	// 		return !variable || variable.hoistable;
+	// 	})
+	// 	.map(({ name }) => b`
+	// 		${component.compile_options.dev && b`@validate_store(${name.slice(1)}, '${name.slice(1)}');`}
+	// 		@component_subscribe($$self, ${name.slice(1)}, $$value => $$invalidate(${renderer.context_lookup.get(name).index}, ${name} = $$value));
+	// 	`);
 
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name);
+			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
@@ -416,6 +426,15 @@ export default function dom(
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
+				for (const assignee of d.assignees) {
+					const variable = component.var_lookup.get(assignee);
+					if (variable && variable.subscribable) {
+						fixed_reactive_declarations.push(b`
+							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
+							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
+						`);
+					}
+				}
 			}
 		});
 
@@ -429,7 +448,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name)) {
+			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;

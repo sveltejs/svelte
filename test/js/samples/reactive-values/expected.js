@@ -42,7 +42,7 @@ function create_fragment(ctx) {
 	};
 }
 
-let name = "world";
+let name = 'world';
 
 function instance($$self) {
 	let foo;
