@@ -24,6 +24,8 @@ import { namespaces } from '../../../../utils/namespaces';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
+
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
 	slots: Map<string, SlotDefinition> = new Map();
@@ -137,7 +139,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			child.render(block, null, x`#nodes` as Identifier);
 		});
 
-		let props;
+		let props: Identifier | undefined;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
@@ -232,7 +234,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 					const unchanged = dependencies.size === 0;
 
-					let change_object;
+					let change_object: Node | ReturnType<typeof x>;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -596,7 +598,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.node.css_custom_properties.forEach((attr) => {
 			const dependencies = attr.get_dependencies();
 			const should_cache = attr.should_cache();
-			const last = should_cache &&	block.get_unique_name(`${attr.name.replace(/[^a-zA-Z_$]/g, '_')}_last`);
+			const last = should_cache &&	block.get_unique_name(`${attr.name.replace(regex_invalid_variable_identifier_characters, '_')}_last`);
 			if (should_cache) block.add_variable(last);
 			const value = attr.get_value(block);
 			const init = should_cache ? x`${last} = ${value}` : value;

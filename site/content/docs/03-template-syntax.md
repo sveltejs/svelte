@@ -158,7 +158,7 @@ You can use HTML comments inside components.
 
 ---
 
-Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually these are accessibility warnings; make sure that you're disabling them for a good reason.
+Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
 
 ```sv
 <!-- svelte-ignore a11y-autofocus -->
@@ -593,7 +593,7 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 
 ---
 
-If the name matches the value, you can use a shorthand.
+If the name matches the value, you can use shorthand.
 
 ```sv
 <!-- These are equivalent -->
@@ -750,7 +750,7 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
 ---
 
-Block-level elements have 4 readonly bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
+Block-level elements have 4 read-only bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
 
 * `clientWidth`
 * `clientHeight`
@@ -874,6 +874,9 @@ The `style:` directive provides a shorthand for setting multiple styles on an el
 
 <!-- Multiple styles can be included -->
 <div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+
+<!-- Styles can be marked as important -->
+<div style:color|important="red">...</div>
 ```
 
 ---
@@ -981,7 +984,7 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has completed.
+When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has been completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
@@ -1241,7 +1244,7 @@ As with actions and transitions, animations can have parameters.
 
 ---
 
-Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
+Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, and the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
 
 If the returned object has a `css` method, Svelte will create a CSS animation that plays on the element.
 
@@ -1390,7 +1393,7 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 
 ---
 
-Svelte's CSS Variables support allows for easily themable components:
+Svelte's CSS Variables support allows for easily themeable components:
 
 ```sv
 <!-- Slider.svelte -->
@@ -1654,7 +1657,7 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 
-The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
+The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
 

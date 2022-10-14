@@ -282,6 +282,10 @@ export default {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
 	},
+  invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	}),
 	invalid_component_svelte_directive: (name) => ({
 		code: 'invalid-component-svelte-directive',
 		message: `svelte:${name} directives cannot be used on components`
@@ -301,5 +305,5 @@ export default {
 	directive_conflict: (directive1, directive2) => ({
 		code: 'directive-conflict',
 		message: `Cannot use ${directive1} and ${directive2} on the same element`
-	})
+  })
 };

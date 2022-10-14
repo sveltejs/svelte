@@ -1,0 +1,17 @@
+[
+	{
+		"code": "assignment-to-const",
+		"message": "You are assigning to a const",
+		"start": {
+			"line": 17,
+			"column": 2,
+			"character": 189
+		},
+		"end": {
+			"line": 17,
+			"column": 9,
+			"character": 196
+		},
+		"pos": 189
+	}
+]

@@ -12,6 +12,7 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -82,7 +83,7 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots;
+	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
@@ -395,7 +396,7 @@ export default function dom(
 
 	if (has_definition) {
 		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const fixed_reactive_declarations: Node[] = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -440,7 +441,7 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
+		let unknown_props_check: Node[] | undefined;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
@@ -530,7 +531,7 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
