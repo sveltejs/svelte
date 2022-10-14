@@ -319,7 +319,7 @@ export default class ElementWrapper extends Wrapper {
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 					${previous_tag} = ${tag};
 					${this.var}.c();
-					${has_transitions && b`@transition_in(${this.var});`}
+					${has_transitions && b`@transition_in(${this.var})`}
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				} else if (${not_equal}(${previous_tag}, ${tag})) {
 					${this.var}.d(1);
