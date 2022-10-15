@@ -1,11 +1,11 @@
 # Svelte changelog
 
-## Unreleased
+## 3.52.0
 
-* Support `|important` modifier to style directive ([#7489](https://github.com/sveltejs/svelte/pull/7489))
+* Throw compile-time error when attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
 * Warn when using `<a target="_blank">` without `rel="noreferrer"` ([#6188](https://github.com/sveltejs/svelte/issues/6188))
-* Throw helpful compiler error for attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
-* Refix hydration with `{@html}` and components in `<svelte:head>` ([#7941](https://github.com/sveltejs/svelte/pull/7941))
+* Support `style:foo|important` modifier ([#7365](https://github.com/sveltejs/svelte/issues/7365))
+* Fix hydration regression with `{@html}` and components in `<svelte:head>` ([#7941](https://github.com/sveltejs/svelte/pull/7941))
 
 ## 3.51.0
 
