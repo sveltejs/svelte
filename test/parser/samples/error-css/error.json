@@ -1,6 +1,6 @@
 {
 	"code": "css-syntax-error",
-	"message": "LeftCurlyBracket is expected",
+	"message": "\"{\" is expected",
 	"start": {
 		"line": 2,
 		"column": 16,
