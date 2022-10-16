@@ -53,7 +53,7 @@ function registerExtension(extension: string) {
 
 		const {
 			js: { code }
-		} = compile(fs.readFileSync(filename, 'utf-8'), options);
+		} = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
 
 		if (!process.env.CI) {
 			saveGeneratedOutputToCache(code, filename);
