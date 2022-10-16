@@ -142,7 +142,7 @@ describe('ssr', () => {
 
 	// duplicate client-side tests, as far as possible
 	runRuntimeSamples('runtime');
-	// runRuntimeSamples('runtime-puppeteer');
+	runRuntimeSamples('runtime-puppeteer');
 
 	function runRuntimeSamples(suite) {
 		fs.readdirSync(`test/${suite}/samples`).forEach(dir => {
