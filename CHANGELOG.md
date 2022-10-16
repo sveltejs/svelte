@@ -1,5 +1,8 @@
 # Svelte changelog
 
+## Unreleased
+* Upgraded `css-tree` to `2.1.0` ([#7572](https://github.com/sveltejs/svelte/pull/7572))
+
 ## 3.52.0
 
 * Throw compile-time error when attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
