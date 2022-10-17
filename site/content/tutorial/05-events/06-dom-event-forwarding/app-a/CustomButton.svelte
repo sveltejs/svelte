@@ -15,7 +15,7 @@
 		background: #CBD5E1;
 		color: #475569;
 	}
-	button:focus {
+	button:active {
 		background: #94A3B8;
 		color: #F1F5F9;
 	}
