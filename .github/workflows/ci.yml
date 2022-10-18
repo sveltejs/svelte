@@ -1,5 +1,8 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
 jobs:
@@ -9,8 +12,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
           cache: npm
@@ -20,11 +23,11 @@ jobs:
       - run: npm run build
         env:
           PUBLISH: true
-      - uses: actions/cache@v3
+      - name: Upload build assets
+        id: upload-artifact
+        uses: actions/upload-artifact@v3
         with:
-          # cache key based on OS as the full path for each OS may be different
-          # and windows is not able to reuse the cache from ubuntu
-          key: output-${{ github.run_id }}-${{ matrix.os }}
+          name: build-assets
           path: |
             index.*
             compiler.*
@@ -51,21 +54,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-      - uses: actions/cache@v3
+      - name: Download build assets
+        uses: actions/download-artifact@v3
+        id: download-artifact
         with:
-          key: output-${{ github.run_id }}-${{ matrix.os }}
-          path: |
-            index.*
-            compiler.*
-            ssr.*
-            action/
-            animate/
-            easing/
-            internal/
-            motion/
-            store/
-            transition/
-            types/
+          name: build-assets
       - run: npm install
         env:
           SKIP_PREPARE: true
