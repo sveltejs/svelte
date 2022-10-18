@@ -212,7 +212,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	}
 
 	if (block.combinator) {
-		if (block.combinator.type === 'WhiteSpace') {
+		if (block.combinator.type === 'Combinator' && block.combinator.name === ' ') {
 			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;

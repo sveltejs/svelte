@@ -209,7 +209,7 @@ It is important to note that the reactive blocks are ordered via simple static a
 </script>
 ```
 
-Moving the line `$: yDependent = y` bellow `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
+Moving the line `$: yDependent = y` below `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
 
 ---
 
