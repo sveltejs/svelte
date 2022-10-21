@@ -793,9 +793,19 @@ export default class Component {
 				}
 
 				let deep = false;
-				let names: string[] | undefined; 
+				let names: string[] = []; 
 
-				if (node.type === 'AssignmentExpression') {
+				if (node.type === 'AssignmentExpression' &&
+					node.left.type === 'ArrayPattern') {
+					walk(node.left, {
+						enter(node: Node, parent: Node) {
+							if (node.type === 'Identifier' &&
+								parent.type !== 'MemberExpression') {
+									names.push(node.name);
+							}
+						}
+					});
+				} else if (node.type === 'AssignmentExpression') {
 					deep = node.left.type === 'MemberExpression';
 					names = deep
 						? [get_object(node.left).name]
@@ -803,10 +813,9 @@ export default class Component {
 				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
 					const { name } = get_object(node.argument);
-					names = [name];
+					names.push(name);
 				}
-
-				if (names) {
+				if (names.length > 0) {
 					names.forEach(name => {
 						let current_scope = scope;
 						let declaration;
