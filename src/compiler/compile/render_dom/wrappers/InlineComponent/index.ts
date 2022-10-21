@@ -542,9 +542,15 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
-			block.chunks.destroy.push(b`
-				@destroy_component(${name}, ${parent_node ? null : 'detaching'});
-			`);
+			if (parent_node) {
+				block.chunks.destroy.unshift(b`
+					@destroy_component(${name}, detaching);
+				`);
+			} else {
+				block.chunks.destroy.push(b`
+					@destroy_component(${name}, ${parent_node ? null : 'detaching'});
+				`);
+			}
 
 			block.chunks.outro.push(
 				b`@transition_out(${name}.$$.fragment, #local);`
