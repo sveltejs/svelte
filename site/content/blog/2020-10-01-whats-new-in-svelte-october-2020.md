@@ -53,7 +53,7 @@ For all the features and bugfixes see the CHANGELOG for [Svelte](https://github.
 
 ## Svelte Showcase
 - [This CustomMenu example](https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dade0c1?version=3.25.0) demos how to replace the OS right-click menu
-- [Github Tetris](https://svelte.dev/repl/cc1eaa7c66964fedb5e70e3ecbbaa0e1?version=3.25.1) lets you play a Tetris-like game in a git commit history
+- [GitHub Tetris](https://svelte.dev/repl/cc1eaa7c66964fedb5e70e3ecbbaa0e1?version=3.25.1) lets you play a Tetris-like game in a git commit history
 - [Who are my representatives?](https://whoaremyrepresentatives.us/) is a website built with Svelte to help US residents get more info on their congressional representatives
 - [Pick Palette](https://github.com/bluwy/pick-palette) is a color palette manager made with Svelte!
 
