@@ -1,15 +1,17 @@
-import parse from 'css-tree/lib/parser/index.js';
+// @ts-ignore
+import parse from 'css-tree/parser';
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from 'estree';
 import { Style } from '../../interfaces';
 import parser_errors from '../errors';
 
+const regex_closing_style_tag = /<\/style\s*>/;
+
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
 
-	const tag_close_pattern = /<\/style\s*>/;
-	const styles = parser.read_until(tag_close_pattern, parser_errors.unclosed_style);
+	const styles = parser.read_until(regex_closing_style_tag, parser_errors.unclosed_style);
 
 	if (parser.index >= parser.template.length) {
 		parser.error(parser_errors.unclosed_style);
@@ -19,7 +21,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// discard styles when css is disabled
 	if (parser.css_mode === 'none') {
-		parser.read(tag_close_pattern);
+		parser.read(regex_closing_style_tag);
 		return null;
 	}
 
@@ -74,7 +76,8 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		}
 	});
 
-	parser.read(tag_close_pattern);
+	parser.read(regex_closing_style_tag);
+  
 	const end = parser.index;
 
 	return {

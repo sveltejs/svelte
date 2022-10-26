@@ -107,6 +107,14 @@ export default {
 		code: `invalid-${slug}-placement`,
 		message: `<${name}> tags cannot be inside elements or blocks`
 	}),
+	invalid_logic_block_placement: (location: string, name: string) => ({
+		code: 'invalid-logic-block-placement',
+		message: `{#${name}} logic block cannot be ${location}`
+	}),
+	invalid_tag_placement: (location: string, name: string) => ({
+		code: 'invalid-tag-placement',
+		message: `{@${name}} tag cannot be ${location}`
+	}),
 	invalid_ref_directive: (name: string) => ({
 		code: 'invalid-ref-directive',
 		message: `The ref directive is no longer supported — use \`bind:this={${name}}\` instead`

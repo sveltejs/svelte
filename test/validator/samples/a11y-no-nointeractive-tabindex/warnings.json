@@ -6,7 +6,7 @@
 			"column": 20,
 			"line": 11
 		},
-		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
 		"pos": 221,
 		"start": {
 			"character": 221,
@@ -21,7 +21,7 @@
 			"column": 35,
 			"line": 12
 		},
-		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
 		"pos": 242,
 		"start": {
 			"character": 242,
@@ -36,7 +36,7 @@
 			"column": 24,
 			"line": 13
 		},
-		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
 		"pos": 278,
 		"start": {
 			"character": 278,
@@ -51,7 +51,7 @@
 			"column": 26,
 			"line": 14
 		},
-		"message": "A11y: not interactive element cannot have positive tabIndex value",
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
 		"pos": 303,
 		"start": {
 			"character": 303,

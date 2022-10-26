@@ -1,6 +1,6 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment';
-import { whitespace } from '../utils/patterns';
+import { regex_whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
 import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
@@ -14,6 +14,8 @@ interface LastAutoClosedTag {
 	reason: string;
 	depth: number;
 }
+
+const regex_position_indicator = / \(\d+:\d+\)$/;
 
 export class Parser {
 	readonly template: string;
@@ -76,10 +78,10 @@ export class Parser {
 
 		if (this.html.children.length) {
 			let start = this.html.children[0].start;
-			while (whitespace.test(template[start])) start += 1;
+			while (regex_whitespace.test(template[start])) start += 1;
 
 			let end = this.html.children[this.html.children.length - 1].end;
-			while (whitespace.test(template[end - 1])) end -= 1;
+			while (regex_whitespace.test(template[end - 1])) end -= 1;
 
 			this.html.start = start;
 			this.html.end = end;
@@ -95,7 +97,7 @@ export class Parser {
 	acorn_error(err: any) {
 		this.error({
 			code: 'parse-error',
-			message: err.message.replace(/ \(\d+:\d+\)$/, '')
+			message: err.message.replace(regex_position_indicator, '')
 		}, err.pos);
 	}
 
@@ -140,7 +142,7 @@ export class Parser {
 	allow_whitespace() {
 		while (
 			this.index < this.template.length &&
-			whitespace.test(this.template[this.index])
+			regex_whitespace.test(this.template[this.index])
 		) {
 			this.index++;
 		}
@@ -202,7 +204,7 @@ export class Parser {
 	}
 
 	require_whitespace() {
-		if (!whitespace.test(this.template[this.index])) {
+		if (!regex_whitespace.test(this.template[this.index])) {
 			this.error({
 				code: 'missing-whitespace',
 				message: 'Expected whitespace'

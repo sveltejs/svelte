@@ -1,0 +1,1 @@
+<div style:color|important={myColor}></div>
