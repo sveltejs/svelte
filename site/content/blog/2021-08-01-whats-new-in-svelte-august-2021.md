@@ -52,7 +52,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [How to Create a Blog with SvelteKit and Strapi](https://strapi.io/blog/how-to-create-a-blog-with-svelte-kit-strapi) is a step-by-step tutorial by Aarnav Pai from Strapi
 - [Sveltekit Markdown Blog](https://www.youtube.com/watch?v=sKKgT0SEioI&list=PLm_Qt4aKpfKgonq1zwaCS6kOD-nbOKx7V) is a YouTube tutorial series by WebJeda.
 - [Using Custom Elements in Svelte](https://css-tricks.com/using-custom-elements-in-svelte/) is a deep dive into custom elements by Geoff Rich.
-- [learn / graphql / svelte](https://hasura.io/learn/graphql/svelte-apollo/introduction/) is a free 2-hour GraphQL course course from Hasura.
+- [learn / graphql / svelte](https://hasura.io/learn/graphql/svelte-apollo/introduction/) is a free 2-hour GraphQL course from Hasura.
 - [How to add Magic Link to a SvelteKit application](https://magic.link/posts/magic-svelte) is a guide to the popular password-less login pattern.
 
 **Libraries, Tools & Components**
