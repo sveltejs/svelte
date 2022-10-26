@@ -56,7 +56,7 @@ function init_hydrate(target: NodeEx) {
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence subsequence of nodes that are claimed in order can be found by
+	* subsequence of nodes that are claimed in order can be found by
 	* computing the longest increasing subsequence of .claim_order values.
 	*
 	* This algorithm is optimal in generating the least amount of reorder operations
