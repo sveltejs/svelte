@@ -63,7 +63,7 @@ _To Watch_
 - [SvelteKit Page Endpoints](https://www.youtube.com/watch?v=yQRf2wmTu5w), [Named Layouts](https://www.youtube.com/watch?v=UHX9TJ0BxZY) and [Passing data from page component to layout component with $page.stuff](https://www.youtube.com/watch?v=CXaCstU5pcw) by lihautan
 - [🍞 & 🧈: Magically load data with SvelteKit Endpoints](https://www.youtube.com/watch?v=f6prqYlbTE4) by Johnny Magrippis
 - [Svelte for React developers](https://www.youtube.com/watch?v=7tsrwrx5HtQ) by frontendtier
-- [Learn Svelte JS || Javascript Compiler for Building Front end Applications](https://www.youtube.com/watch?v=1rKRarJJFrY&list=PLIGDNOJWiL1-7zCgdR7MKuho-tPC6Ra6C&index=1) by Code with tsksharma
+- [Learn Svelte JS || JavaScript Compiler for Building Front end Applications](https://www.youtube.com/watch?v=1rKRarJJFrY&list=PLIGDNOJWiL1-7zCgdR7MKuho-tPC6Ra6C&index=1) by Code with tsksharma
 - [SvelteKit Authentication](https://www.youtube.com/watch?v=T935Ya4W5X0&list=PLA9WiRZ-IS_zKrDzhOhV5RGKKTHNIyTDO&index=1) by Joy of Code
 - [Svelte + websockets: Build a real-time Auction app](https://www.youtube.com/watch?v=CqgsWFrwQIU) by Evgeny Maksimov
 
