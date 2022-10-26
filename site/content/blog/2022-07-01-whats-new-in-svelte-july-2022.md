@@ -26,7 +26,7 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 - Introduced `@sveltejs/kit/experimental/vite` which allows SvelteKit to interoperate with other tools in the Vite ecosystem like Vitest and Storybook ([#5094](https://github.com/sveltejs/kit/pull/5094)). Please [leave feedback](https://github.com/sveltejs/kit/issues/5184) as to whether the feature works and is helpful as we consider taking it out of experimental and making `vite.config.js` required for all users
 - Streaming in endpoints is now supported ([#3419](https://github.com/sveltejs/kit/issues/3419)). This was enabled by switching to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117))
 - Static assets can now be symlinked in development environments ([#5089](https://github.com/sveltejs/kit/pull/5089))
-- `server` and `prod` environment variables are now available as a correlary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
+- `server` and `prod` environment variables are now available as a corollary to `browser` and `dev` ([#5251](https://github.com/sveltejs/kit/pull/5251))
 
 ---
 
