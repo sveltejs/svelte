@@ -85,7 +85,7 @@ _To Read_
 - [Svelte Brick Gallery](https://github.com/anotherempty/svelte-brick-gallery) is a masonry-like image gallery component for Svelte
 - [use-vest](https://github.com/enyo/use-vest) is a Svelte action for Vest - a library that makes it easy to validate forms and show errors when necessary
 - [Svelidate](https://github.com/svelidate/svelidate) is a simple and lightweight form validation library for Svelte with no dependencies
-- [Svve11](https://github.com/oslabs-beta/Svve11) is an "accessbility-first" component library for Svelte
+- [Svve11](https://github.com/oslabs-beta/Svve11) is an "accessibility-first" component library for Svelte
 - [Slidy](https://github.com/Valexr/Slidy) is a simple, configurable & reusable carousel sliding action script with templates & some useful plugins
 - [Svelte Component Snippets](https://marketplace.visualstudio.com/items?itemName=brysonbw.svelte-component-snippets) is a VS Code extension with access to common Svelte snippets
 - [Svelte Confetti](https://github.com/Mitcheljager/svelte-confetti) adds a little bit of flair to your app with some confetti 🎊
