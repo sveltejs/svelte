@@ -197,6 +197,6 @@ export default {
 	},
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
-		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
+		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
 	})
 };
