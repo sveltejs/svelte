@@ -110,7 +110,7 @@ _To Read_
 - [How to add an Emoji Picker to Sveltekit](https://xvrc.net/) by Xavier Coiffard
 - [Get Started with SvelteKit Headless WordPress](https://plus.rodneylab.com/tutorials/get-started-sveltekit-headless-wordpress) by Rodney Lab
 - [Speed up SvelteKit Pages With a Redis Cache](https://www.captaincodeman.com/speed-up-sveltekit-pages-with-a-redis-cache) and [How to await Firebase Auth with SvelteKit](https://www.captaincodeman.com/how-to-await-firebase-auth-with-sveltekit) by Captain Codeman
-- [Deploying SvelteKit with NodeJS to a Server Using Gitlab and PM2](https://abyteofcoding.com/blog/deploying-sveltekit-with-nodejs-pm2-to-server/) by A Byte of Coding
+- [Deploying SvelteKit with NodeJS to a Server Using GitLab and PM2](https://abyteofcoding.com/blog/deploying-sveltekit-with-nodejs-pm2-to-server/) by A Byte of Coding
 - [Quality of Life Tips when using SvelteKit in VS Code](https://www.reddit.com/r/sveltejs/comments/xltgyp/quality_of_life_tips_when_using_sveltekit_in_vs/) by doa-doa
 
 

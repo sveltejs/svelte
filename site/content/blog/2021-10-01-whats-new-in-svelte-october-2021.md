@@ -57,7 +57,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Podcasts Featuring Svelte**
-- [Syntax Podast: From React to SvelteKit](https://podcasts.apple.com/us/podcast/from-react-to-sveltekit/id1253186678?i=1000536276106) Scott talks with Wes about moving Level Up Tutorials from React to SvelteKit — why he did it, how, benefits, things to watch out for, and more!
+- [Syntax Podcast: From React to SvelteKit](https://podcasts.apple.com/us/podcast/from-react-to-sveltekit/id1253186678?i=1000536276106) Scott talks with Wes about moving Level Up Tutorials from React to SvelteKit — why he did it, how, benefits, things to watch out for, and more!
 - [Web Rush Podcast: Svelte Tools and Svelte Society](https://www.webrush.io/episodes/episode-150-svelte-tools-and-svelte-society) Kevin Åberg Kultalahti talks about what Svelte Society is, what he's excited about with Svelte, how important documentation is to any product, and much _much_ more
 - [Svelte: The Compiled Future of Front End](https://www.arahansen.com/the-compiled-future-of-front-end/) details the history of component-based frontends and how a compiler changes everything
 - [Svelte Radio: Contributing to Svelte with Martin 'Grygrflzr' Krisnanto Putra](https://share.transistor.fm/s/10aa305c) Grygrflzr shares his journey to becoming a maintainer and his views on React, Vite and a host of other things
