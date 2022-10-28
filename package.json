@@ -130,6 +130,7 @@
     "@typescript-eslint/eslint-plugin": "^5.22.0",
     "@typescript-eslint/parser": "^5.22.0",
     "acorn": "^8.8.1",
+    "agadoo": "^2.0.0",
     "aria-query": "^5.1.1",
     "axobject-query": "^3.1.1",
     "code-red": "^0.2.5",
