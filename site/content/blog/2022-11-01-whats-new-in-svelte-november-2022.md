@@ -35,6 +35,7 @@ Tom Smykowski also released a great summary of [all the changes in 3.52.0](https
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+- [AttendZen](https://www.attendzen.io/) is an event management and marketing platform for in-person, virtual or hybrid events
 - [Gram Jam](https://gramjam.app/) is a challenging daily word game using SvelteKit
 - [Collabwriting](https://collabwriting.com/) is an actionable knowledge base for your team
 - [Dazzle](https://dazzlega.me/) is a Puzzle Game made with Svelte & DallE
