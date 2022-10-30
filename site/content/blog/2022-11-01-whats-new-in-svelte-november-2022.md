@@ -21,7 +21,7 @@ There's also a _huge_ showcase to cover... so let's jump in!
 
 ## Svelte changes
 - You can now use `important` in inline style tags: `style:foo|important` (**3.52.0**, [#7365](https://github.com/sveltejs/svelte/issues/7365))
-- A warning will now be thrown when using <a target="_blank"> without rel="noreferrer" (**3.52.0**, [#6188](https://github.com/sveltejs/svelte/issues/6188))
+- A warning will now be thrown when using `<a target="_blank">` without `rel="noreferrer"` (**3.52.0**, [#6188](https://github.com/sveltejs/svelte/issues/6188))
 
 Tom Smykowski also released a great summary of [all the changes in 3.52.0](https://tomaszs2.medium.com/svelte-3-52-0-improves-dev-experience-45f8c460bb96)! For all the changes to the Svelte compiler, including upcoming changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
@@ -30,7 +30,7 @@ Tom Smykowski also released a great summary of [all the changes in 3.52.0](https
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
-- [Gram Jam](https://gramjam.app/) is a challenging daily word game using Sveltekit
+- [Gram Jam](https://gramjam.app/) is a challenging daily word game using SvelteKit
 - [Collabwriting](https://collabwriting.com/) is an actionable knowledge base for your team
 - [Dazzle](https://dazzlega.me/) is a Puzzle Game made with Svelte & DallE
 - [Figma Autoname plugin](https://github.com/Hugo-Dz/figma_autoname_client_app) automatically names your Figma layers in one click
@@ -105,6 +105,6 @@ _Fun ones_
 - [Aksel](https://www.npmjs.com/package/aksel) is the seagull you needed on your site
 - [Svelte-Dodge](https://github.com/WbaN314/svelte-dodge) makes components dodge the pointer
 
-That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)
+That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte)
 
 See ya next month 👋
