@@ -10,7 +10,7 @@
 	}
 </script>
 
-<span class:expanded on:click={toggle}>{name}</span>
+<span class:expanded on:click={toggle} on:keyup={toggle}>{name}</span>
 
 {#if expanded}
 	<ul>
