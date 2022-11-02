@@ -21,6 +21,8 @@ import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
+const regex_contains_term_function_expression = /FunctionExpression/;
+
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
@@ -72,7 +74,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (!function_expression && /FunctionExpression/.test(node.type)) {
+				if (!function_expression && regex_contains_term_function_expression.test(node.type)) {
 					function_expression = node;
 				}
 
@@ -126,6 +128,7 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
+                        deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
@@ -147,7 +150,26 @@ export default class Expression {
 							component.add_reference(node, name);
 
 							const variable = component.var_lookup.get(name);
-							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+
+							if (variable) {
+								variable[deep ? 'mutated' : 'reassigned'] = true;
+							}
+
+							const declaration: any = scope.find_owner(name)?.declarations.get(name);
+
+							if (declaration) {
+								if (declaration.kind === 'const' && !deep) {
+									component.error(node, {
+										code: 'assignment-to-const',
+										message: 'You are assigning to a const'
+									});
+								}
+							} else if (variable && variable.writable === false && !deep) {
+								component.error(node, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
+							}
 						}
 					});
 				}

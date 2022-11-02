@@ -9,6 +9,7 @@ import EachBlock from '../nodes/EachBlock';
 import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
 import compiler_errors from '../compiler_errors';
+import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../utils/patterns';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -24,6 +25,8 @@ const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
 	['dialog', new Set(['open'])]
 ]);
+
+const regex_is_single_css_selector = /[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/;
 
 export default class Selector {
 	node: CssNode;
@@ -157,7 +160,7 @@ export default class Selector {
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					if (/[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/.test(selector.children[0].value)) {
+					if (regex_is_single_css_selector.test(selector.children[0].value)) {
 						component.error(selector, compiler_errors.css_invalid_global_selector);
 					}
 				}
@@ -209,7 +212,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	}
 
 	if (block.combinator) {
-		if (block.combinator.type === 'WhiteSpace') {
+		if (block.combinator.type === 'Combinator' && block.combinator.name === ' ') {
 			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;
@@ -281,12 +284,14 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	return true;
 }
 
+const regex_backslash_and_following_character = /\\(.)/g;
+
 function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
 		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+		const name = typeof selector.name === 'string' && selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return BlockAppliesToNode.NotPossible;
@@ -371,7 +376,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 			const start_with_space = [];
 			const remaining = [];
 			current_possible_values.forEach((current_possible_value: string) => {
-				if (/^\s/.test(current_possible_value)) {
+				if (regex_starts_with_whitespace.test(current_possible_value)) {
 					start_with_space.push(current_possible_value);
 				} else {
 					remaining.push(current_possible_value);
@@ -392,7 +397,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 				prev_values = combined;
 
 				start_with_space.forEach((value: string) => {
-					if (/\s$/.test(value)) {
+					if (regex_ends_with_whitespace.test(value)) {
 						possible_values.add(value);
 					} else {
 						prev_values.push(value);
@@ -406,7 +411,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 		}
 
 		current_possible_values.forEach((current_possible_value: string) => {
-			if (/\s$/.test(current_possible_value)) {
+			if (regex_ends_with_whitespace.test(current_possible_value)) {
 				possible_values.add(current_possible_value);
 			} else {
 				prev_values.push(current_possible_value);

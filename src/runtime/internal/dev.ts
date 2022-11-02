@@ -123,10 +123,28 @@ export function validate_void_dynamic_element(tag: undefined | string) {
 	}
 }
 
+export function construct_svelte_component_dev(component, props) {
+	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
+	try {
+		const instance = new component(props);
+		if (!instance.$$ || !instance.$set || !instance.$on || !instance.$destroy) {
+			throw new Error(error_message);
+		}
+		return instance;
+	} catch (err) {
+		const { message } = err;
+		if (typeof message === 'string' && message.indexOf('is not a constructor') !== -1) {
+			throw new Error(error_message);
+		} else {
+			throw err;
+		}
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
-	$on(event: string, callback: (event: any) => void): () => void;
+	$on(event: string, callback: ((event: any) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
@@ -196,7 +214,7 @@ export interface SvelteComponentTyped<
 	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
 > {
 	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
