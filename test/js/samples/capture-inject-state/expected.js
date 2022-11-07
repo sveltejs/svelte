@@ -113,6 +113,17 @@ function instance($$self, $$props, $$invalidate) {
 	let { alias: realName } = $$props;
 	let local;
 	let shadowedByModule;
+
+	$$self.$$.on_mount.push(function () {
+		if (prop === undefined && !('prop' in $$props || $$self.$$.bound[$$self.$$.props['prop']])) {
+			console.warn("<Component> was created without expected prop 'prop'");
+		}
+
+		if (realName === undefined && !('alias' in $$props || $$self.$$.bound[$$self.$$.props['alias']])) {
+			console.warn("<Component> was created without expected prop 'alias'");
+		}
+	});
+
 	const writable_props = ['prop', 'alias'];
 
 	Object.keys($$props).forEach(key => {
@@ -166,17 +177,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*prop*/ ctx[0] === undefined && !('prop' in props)) {
-			console.warn("<Component> was created without expected prop 'prop'");
-		}
-
-		if (/*realName*/ ctx[1] === undefined && !('alias' in props)) {
-			console.warn("<Component> was created without expected prop 'alias'");
-		}
 	}
 
 	get prop() {

@@ -268,7 +268,7 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
 ```sv
-<!-- A11y: not interactive element cannot have positive tabIndex value -->
+<!-- A11y: noninteractive element cannot have positive tabIndex value -->
 <div tabindex='0' />
 ```
 

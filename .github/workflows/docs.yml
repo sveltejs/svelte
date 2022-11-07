@@ -7,6 +7,8 @@ on:
     paths:
       - site/content/**
 
+permissions: {}
+
 jobs:
   release:
     name: Deploy docs

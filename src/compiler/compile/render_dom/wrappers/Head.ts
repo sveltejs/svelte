@@ -33,7 +33,7 @@ export default class HeadWrapper extends Wrapper {
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		let nodes;
+		let nodes: Identifier;
 		if (this.renderer.options.hydratable && this.fragment.nodes.length) {
 			nodes = block.get_unique_name('head_nodes');
 			block.chunks.claim.push(b`const ${nodes} = @head_selector('${this.node.id}', @_document.head);`);

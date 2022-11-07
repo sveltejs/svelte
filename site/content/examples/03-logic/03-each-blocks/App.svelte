@@ -11,7 +11,7 @@
 <ul>
 	{#each cats as { id, name }, i}
 		<li>
-			<a target="_blank" href="https://www.youtube.com/watch?v={id}">
+			<a target="_blank" rel="noreferrer" href="https://www.youtube.com/watch?v={id}">
 				{i + 1}: {name}
 			</a>
 		</li>

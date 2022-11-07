@@ -66,7 +66,7 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 - [eleventy-plugin-embed-svelte](https://github.com/shalomscott/eleventy-plugin-embed-svelte) makes it easy to embed Svelte components into an 11ty site.
 - [svelte-tailwind-extension-boilerplate](https://github.com/kyrelldixon/svelte-tailwind-extension-boilerplate) is a good foundation for a Chrome extension using either JavaScript or TypeScript, Svelte for the frontend, Tailwind CSS for styling, Jest for testing, and Rollup as the build system.
 - [snowpack-ui](https://github.com/rajasegar/snowpack-ui) lets you run & manage Snowpack projects from the browser instead of the terminal
-- [Svelte for Appwrite](https://dev.to/torstendittmann/svelte-for-appwrite-4fkg) explains how to integrate with Appwrite, a self-hosted Firebase alternative [Github Repo](https://github.com/appwrite/sdk-for-svelte)
+- [Svelte for Appwrite](https://dev.to/torstendittmann/svelte-for-appwrite-4fkg) explains how to integrate with Appwrite, a self-hosted Firebase alternative [GitHub Repo](https://github.com/appwrite/sdk-for-svelte)
 - [here-maps-svelte](https://github.com/peopledrivemecrazy/here-maps-svelte) makes it easy to include HERE maps in a Svelte app
 - [p5-svelte](https://github.com/tonyketcham/p5-svelte) is an absolutely dead simple way of tossing the creative coding/sketching tool, p5, into a project
 - [svelte-windicss-preprocess](https://github.com/voorjaar/svelte-windicss-preprocess) is a Svelte preprocessor to compile tailwindcss at build time based on windicss compiler

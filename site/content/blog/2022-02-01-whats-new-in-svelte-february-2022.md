@@ -69,7 +69,7 @@ _To Read_
 - [Building an iOS app with Svelte, Capacitor and Firebase](https://harryherskowitz.com/2022/01/05/tapedrop-app.html) by Harry Herskowitz
 - [Mutating Query Params in SvelteKit Without Page Reloads or Navigations](https://dev.to/mohamadharith/mutating-query-params-in-sveltekit-without-page-reloads-or-navigations-2i2b) and [Workaround for Bubbling Custom Events in Svelte](https://dev.to/mohamadharith/workaround-for-bubbling-custom-events-in-svelte-3khk) by Mohamad Harith
 - [How to build a full stack serverless application with Svelte and GraphQL](https://dev.to/shadid12/how-to-build-a-full-stack-serverless-application-with-svelte-graphql-and-fauna-5427) by Shadid Haque
-- [How to Deploy SvelteKit Apps to Github Pages](https://sveltesaas.com/articles/sveltekit-github-pages-guide/)
+- [How to Deploy SvelteKit Apps to GitHub Pages](https://sveltesaas.com/articles/sveltekit-github-pages-guide/)
 - [Creating a dApp with SvelteKit](https://anthonyriley.org/2021/12/31/creating-a-dapp-with-sveltekit/) by Anthony Riley
 - [Comparing Svelte Reactivity Options](https://opendirective.net/2022/01/06/comparing-svelte-reactivity-options/) by Steve Lee
 

@@ -41,7 +41,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [DottoBit](https://dottobit.com/) is a multi-color 16-bit drawing program with URL sharing built-in
 - [Former Fast Document for Print](https://github.com/zummon/former) is an invoice generator with beautiful designs, abilities for international languages and auto calculation
 - [Helvetikon](https://github.com/noahsalvi/helvetikon) is a community maintained dictionary for the Swiss German language
-- [Palitra App](https://palitra.app/) is a search-based color pallete generator
+- [Palitra App](https://palitra.app/) is a search-based color palette generator
 
 **Podcasts Featuring Svelte**
 - [Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-is-coming-up-and-svelte-is-growing) dives into the tech behind the recently released Svelte Summit website and a bunch of other fun stuff!

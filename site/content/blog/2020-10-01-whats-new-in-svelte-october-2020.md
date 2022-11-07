@@ -12,7 +12,7 @@ Welcome to the first edition of our "What's new in Svelte" series! We'll try to 
 2. `_` is now supported as a "numerical separator", similar to a `.` or `,` ([Example](https://svelte.dev/repl/844c39e91d1248649fe54af839fab570?version=3.26.0), **3.26.0**)
 3. `import.meta` now works in template expressions ([Example](https://svelte.dev/repl/9630de41957a4c80a4fce264360a6bc7?version=3.26.0), **3.26.0**)
 4. CSS Selectors with `~` and `+` combinators are now supported ([Example](https://svelte.dev/repl/91ad9257d2d1430185a504a18cc60172?version=3.29.0), **3.27.0**, with a compiler fix in **3.29.0**)
-5. The `{#key}` block is now available to key arbitrary content on an expression. Whever the expression changes, the contents inside the `{#key}` block will be destroyed and recreated. For an in-depth explanation and to find out how it's implemented, check out the [new blog post](https://lihautan.com/contributing-to-svelte-implement-key-block/) of Svelte Team member Tan Li Hau. ([More info](https://github.com/sveltejs/svelte/issues/1469), **3.29.0**)
+5. The `{#key}` block is now available to key arbitrary content on an expression. Whenever the expression changes, the contents inside the `{#key}` block will be destroyed and recreated. For an in-depth explanation and to find out how it's implemented, check out the [new blog post](https://lihautan.com/contributing-to-svelte-implement-key-block/) of Svelte Team member Tan Li Hau. ([More info](https://github.com/sveltejs/svelte/issues/1469), **3.29.0**)
 6. Slots can now be forwarded through child components! This used to only be possible by adding extra wrapper `<div>`s ([More info](https://github.com/sveltejs/svelte/issues/2079), **3.29.0**)
 7. When using TypeScript, you can now type the `createEventDispatcher` method:
 ```html
@@ -53,7 +53,7 @@ For all the features and bugfixes see the CHANGELOG for [Svelte](https://github.
 
 ## Svelte Showcase
 - [This CustomMenu example](https://svelte.dev/repl/3a33725c3adb4f57b46b597f9dade0c1?version=3.25.0) demos how to replace the OS right-click menu
-- [Github Tetris](https://svelte.dev/repl/cc1eaa7c66964fedb5e70e3ecbbaa0e1?version=3.25.1) lets you play a Tetris-like game in a git commit history
+- [GitHub Tetris](https://svelte.dev/repl/cc1eaa7c66964fedb5e70e3ecbbaa0e1?version=3.25.1) lets you play a Tetris-like game in a git commit history
 - [Who are my representatives?](https://whoaremyrepresentatives.us/) is a website built with Svelte to help US residents get more info on their congressional representatives
 - [Pick Palette](https://github.com/bluwy/pick-palette) is a color palette manager made with Svelte!
 
