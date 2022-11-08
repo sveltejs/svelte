@@ -30,18 +30,14 @@ function minify_declarations(
 	start: number,
 	declarations: Declaration[]
 ): number {
-	let c = start;
-
-	declarations.forEach((declaration, i) => {
+	return declarations.reduce((result, declaration, i) => {
 		const separator = i > 0 ? ';' : '';
-		if ((declaration.node.start - c) > separator.length) {
-			code.overwrite(c, declaration.node.start, separator);
+		if ((declaration.node.start - result) > separator.length) {
+			code.overwrite(result, declaration.node.start, separator);
 		}
 		declaration.minify(code);
-		c = declaration.node.end;
-	});
-
-	return c;
+		return declaration.node.end;
+	}, start);
 }
 
 class Rule {
@@ -72,17 +68,16 @@ class Rule {
 		let started = false;
 
 		this.selectors.forEach((selector) => {
-			if (selector.used) {
-				const separator = started ? ',' : '';
-				if ((selector.node.start - c) > separator.length) {
-					code.overwrite(c, selector.node.start, separator);
-				}
-
-				selector.minify(code);
-				c = selector.node.end;
-
-				started = true;
+			if (!selector.used) return;
+			const separator = started ? ',' : '';
+			if ((selector.node.start - c) > separator.length) {
+				code.overwrite(c, selector.node.start, separator);
 			}
+
+			selector.minify(code);
+			c = selector.node.end;
+
+			started = true;
 		});
 
 		code.remove(c, this.node.block.start);
@@ -128,16 +123,14 @@ class Declaration {
 
 	transform(code: MagicString, keyframes: Map<string, string>) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
-		if (property === 'animation' || property === 'animation-name') {
-			this.node.value.children.forEach((block: CssNode) => {
-				if (block.type === 'Identifier') {
-					const name = block.name;
-					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
-					}
-				}
-			});
-		}
+		if (property !== 'animation' && property !== 'animation-name') return;
+		this.node.value.children.forEach((block: CssNode) => {
+			if (block.type !== 'Identifier') return;
+			const name = block.name;
+			if (keyframes.has(name)) {
+				code.overwrite(block.start, block.end, keyframes.get(name));
+			}
+		});
 	}
 
 	minify(code: MagicString) {
@@ -174,9 +167,7 @@ class Atrule {
 
 	apply(node: Element) {
 		if (this.node.name === 'media' || this.node.name === 'supports' || this.node.name === 'layer') {
-			this.children.forEach(child => {
-				child.apply(node);
-			});
+			this.children.forEach(child => child.apply(node));
 		} else if (is_keyframes_node(this.node)) {
 			this.children.forEach((rule: Rule) => {
 				rule.selectors.forEach(selector => {
@@ -246,17 +237,16 @@ class Atrule {
 	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
 		if (is_keyframes_node(this.node)) {
 			this.node.prelude.children.forEach(({ type, name, start, end }: CssNode) => {
-				if (type === 'Identifier') {
-					if (name.startsWith('-global-')) {
-						code.remove(start, start + 8);
-						this.children.forEach((rule: Rule) => {
-							rule.selectors.forEach(selector => {
-								selector.used = true;
-							});
+				if (type !== 'Identifier') return;
+				if (name.startsWith('-global-')) {
+					code.remove(start, start + 8);
+					this.children.forEach((rule: Rule) => {
+						rule.selectors.forEach(selector => {
+							selector.used = true;
 						});
-					} else {
-						code.overwrite(start, end, keyframes.get(name));
-					}
+					});
+				} else {
+					code.overwrite(start, end, keyframes.get(name));
 				}
 			});
 		}
@@ -267,17 +257,12 @@ class Atrule {
 	}
 
 	validate(component: Component) {
-		this.children.forEach(child => {
-			child.validate(component);
-		});
+		this.children.forEach(child => child.validate(component));
 	}
 
 	warn_on_unused_selector(handler: (selector: Selector) => void) {
 		if (this.node.name !== 'media') return;
-
-		this.children.forEach(child => {
-			child.warn_on_unused_selector(handler);
-		});
+		this.children.forEach(child => child.warn_on_unused_selector(handler));
 	}
 
 	get_max_amount_class_specificity_increased() {
@@ -322,74 +307,75 @@ export default class Stylesheet {
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
-
-		if (ast.css && ast.css.children.length) {
-			this.id = get_css_hash({
-				filename,
-				name: component_name,
-				css: ast.css.content.styles,
-				hash
-			});
-
-			this.has_styles = true;
-
-			const stack: Atrule[] = [];
-			let depth = 0;
-			let current_atrule: Atrule = null;
-
-			walk(ast.css as any, {
-				enter: (node: any) => {
-					if (node.type === 'Atrule') {
-						const atrule = new Atrule(node);
-						stack.push(atrule);
-
-						if (current_atrule) {
-							current_atrule.children.push(atrule);
-						} else if (depth <= 1) {
-							this.children.push(atrule);
-						}
-
-						if (is_keyframes_node(node)) {
-							node.prelude.children.forEach((expression: CssNode) => {
-								if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
-									this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
-								}
-							});
-						} else if (at_rule_has_declaration(node)) {
-							const at_rule_declarations = node.block.children
-								.filter(node => node.type === 'Declaration')
-								.map(node => new Declaration(node));
-							push_array(atrule.declarations, at_rule_declarations);
-						}
-
-						current_atrule = atrule;
-					}
-
-					if (node.type === 'Rule') {
-						const rule = new Rule(node, this, current_atrule);
-
-						if (current_atrule) {
-							current_atrule.children.push(rule);
-						} else if (depth <= 1) {
-							this.children.push(rule);
-						}
-					}
-
-					depth += 1;
-				},
-
-				leave: (node: any) => {
-					if (node.type === 'Atrule') {
-						stack.pop();
-						current_atrule = stack[stack.length - 1];
-					}
-
-					depth -= 1;
-				}
-			});
-		} else {
+		if (!ast.css || !ast.css.children.length) {
 			this.has_styles = false;
+			return;
 		}
+
+		this.id = get_css_hash({
+			filename,
+			name: component_name,
+			css: ast.css.content.styles,
+			hash
+		});
+
+		this.has_styles = true;
+
+		const stack: Atrule[] = [];
+		let depth = 0;
+		let current_atrule: Atrule = null;
+
+		walk(ast.css as any, {
+			enter: (node: any) => {
+				if (node.type === 'Atrule') {
+					const atrule = new Atrule(node);
+					stack.push(atrule);
+
+					if (current_atrule) {
+						current_atrule.children.push(atrule);
+					} else if (depth <= 1) {
+						this.children.push(atrule);
+					}
+
+					if (is_keyframes_node(node)) {
+						node.prelude.children.forEach((expression: CssNode) => {
+							if (expression.type === 'Identifier' && !expression.name.startsWith('-global-')) {
+								this.keyframes.set(expression.name, `${this.id}-${expression.name}`);
+							}
+						});
+					} else if (at_rule_has_declaration(node)) {
+						const at_rule_declarations = node.block.children
+							.filter(node => node.type === 'Declaration')
+							.map(node => new Declaration(node));
+						push_array(atrule.declarations, at_rule_declarations);
+					}
+
+					current_atrule = atrule;
+				}
+
+				if (node.type === 'Rule') {
+					const rule = new Rule(node, this, current_atrule);
+
+					if (current_atrule) {
+						current_atrule.children.push(rule);
+					} else if (depth <= 1) {
+						this.children.push(rule);
+					}
+				}
+
+				depth += 1;
+			},
+
+			leave: (node: any) => {
+				if (node.type === 'Atrule') {
+					stack.pop();
+					current_atrule = stack[stack.length - 1];
+				}
+
+				depth -= 1;
+			}
+		});
+
 	}
 
 	apply(node: Element) {
@@ -402,15 +388,13 @@ export default class Stylesheet {
 	}
 
 	reify() {
-		this.nodes_with_css_class.forEach((node: Element) => {
-			node.add_css_class();
-		});
+		this.nodes_with_css_class.forEach((node: Element) => node.add_css_class());
 	}
 
 	render(file: string, should_transform_selectors: boolean) {
 		if (!this.has_styles) {
-			return { code: null, map: null };
-		}
+return { code: null, map: null };
+}
 
 		const code = new MagicString(this.source);
 
@@ -450,9 +434,7 @@ export default class Stylesheet {
 	}
 
 	validate(component: Component) {
-		this.children.forEach(child => {
-			child.validate(component);
-		});
+		this.children.forEach(child => child.validate(component));
 	}
 
 	warn_on_unused_selectors(component: Component) {

@@ -42,11 +42,7 @@ export default class Selector {
 		this.blocks = group_selectors(node);
 
 		// take trailing :global(...) selectors out of consideration
-		let i = this.blocks.length;
-		while (i > 0) {
-			if (!this.blocks[i - 1].global) break;
-			i -= 1;
-		}
+		const i = this.blocks.findIndex(block => !block.global);
 
 		this.local_blocks = this.blocks.slice(0, i);
 
@@ -74,10 +70,8 @@ export default class Selector {
 	minify(code: MagicString) {
 		let c: number = null;
 		this.blocks.forEach((block, i) => {
-			if (i > 0) {
-				if (block.start - c > 1) {
-					code.overwrite(c, block.start, block.combinator.name || ' ');
-				}
+			if (i > 0 && block.start - c > 1) {
+				code.overwrite(c, block.start, block.combinator.name || ' ');
 			}
 
 			c = block.end;
@@ -105,8 +99,8 @@ export default class Selector {
 			while (i--) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (selector.name !== 'root' && selector.name !== 'host') {
-						if (i === 0) code.prependRight(selector.start, attr);
+					if (selector.name !== 'root' && selector.name !== 'host' && i === 0) {
+						code.prependRight(selector.start, attr);
 					}
 					continue;
 				}
@@ -159,10 +153,8 @@ export default class Selector {
 
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
-				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					if (regex_is_single_css_selector.test(selector.children[0].value)) {
-						component.error(selector, compiler_errors.css_invalid_global_selector);
-					}
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global' && regex_is_single_css_selector.test(selector.children[0].value)) {
+					component.error(selector, compiler_errors.css_invalid_global_selector);
 				}
 			}
 		}
@@ -183,7 +175,7 @@ export default class Selector {
 		let count = 0;
 		for (const block of this.blocks) {
 			if (block.should_encapsulate) {
-				count ++;
+				count++;
 			}
 		}
 		return count;
@@ -206,7 +198,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 			return false;
 
 		case BlockAppliesToNode.UnknownSelectorType:
-		// bail. TODO figure out what these could be
+			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
 	}
@@ -293,11 +285,10 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 		const selector = block.selectors[i];
 		const name = typeof selector.name === 'string' && selector.name.replace(regex_backslash_and_following_character, '$1');
 
-		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
-			return BlockAppliesToNode.NotPossible;
-		}
-
-		if (block.selectors.length === 1 && selector.type === 'PseudoClassSelector' && name === 'global') {
+		if ((
+			selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) ||
+			block.selectors.length === 1 && selector.type === 'PseudoClassSelector' && name === 'global'
+		) {
 			return BlockAppliesToNode.NotPossible;
 		}
 
@@ -343,9 +334,7 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 
 function attribute_matches(node: CssNode, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
 	const spread = node.attributes.find(attr => attr.type === 'Spread');
-	if (spread) return true;
-
-	if (node.bindings.some((binding: CssNode) => binding.name === name)) return true;
+	if (spread || node.bindings.some((binding: CssNode) => binding.name === name)) return true;
 
 	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
@@ -428,13 +417,10 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	}
 	prev_values.forEach(prev_value => possible_values.add(prev_value));
 
-	if (possible_values.has(UNKNOWN)) return true;
-
-	for (const value of possible_values) {
-		if (test_attribute(operator, expected_value, case_insensitive, value)) return true;
-	}
-
-	return false;
+	return possible_values.has(UNKNOWN) ||
+		[...possible_values].some(value =>
+			test_attribute(operator, expected_value, case_insensitive, value)
+		);
 }
 
 function unquote(value: CssNode) {
@@ -469,8 +455,8 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 
 			add_to_map(possible_last_child, result);
 			if (adjacent_only && has_definite_elements(possible_last_child)) {
-				return result;
-			}
+return result;
+}
 		}
 	}
 
@@ -552,24 +538,21 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 }
 
 function has_definite_elements(result: Map<Element, NodeExist>): boolean {
-	if (result.size === 0) return false;
-	for (const exist of result.values()) {
-		if (exist === NodeExist.Definitely) {
-			return true;
-		}
-	}
-	return false;
+	return result.size === 0
+		? false
+		: [...result.values()].some(exist => exist === NodeExist.Definitely);
 }
 
 function add_to_map(from: Map<Element, NodeExist>, to: Map<Element, NodeExist>) {
-	from.forEach((exist, element) => {
-		to.set(element, higher_existence(exist, to.get(element)));
-	});
+	from.forEach((exist, element) =>
+		to.set(element, higher_existence(exist, to.get(element)))
+	);
 }
 
 function higher_existence(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
-	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
-	return exist1 > exist2 ? exist1 : exist2;
+	return exist1 === undefined || exist2 === undefined
+		? exist1 || exist2
+		: Math.max(exist1, exist2);
 }
 
 function mark_as_probably(result: Map<Element, NodeExist>) {
