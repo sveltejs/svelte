@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Upgraded `css-tree` to `2.1.0` ([#7572](https://github.com/sveltejs/svelte/pull/7572))
+* Check if `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))
 
 ## 3.52.0
 
