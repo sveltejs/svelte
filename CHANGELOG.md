@@ -1,6 +1,7 @@
 # Svelte changelog
 
-## Unreleased
+## 3.53.0
+
 * Check whether `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))
 * Upgrade various dependencies, notably `css-tree` to `2.2.1` ([#7572](https://github.com/sveltejs/svelte/pull/7572), [#7982](https://github.com/sveltejs/svelte/pull/7982))
 * Extend `css` compiler option with `'external' | 'injected' | 'none'` settings and deprecate old `true | false` values ([#7914](https://github.com/sveltejs/svelte/pull/7914))
