@@ -21,6 +21,7 @@ export class Parser {
 	readonly template: string;
 	readonly filename?: string;
 	readonly customElement: boolean;
+	readonly css_mode: 'injected' | 'external' | 'none' | boolean;
 
 	index = 0;
 	stack: TemplateNode[] = [];
@@ -39,6 +40,7 @@ export class Parser {
 		this.template = template.trimRight();
 		this.filename = options.filename;
 		this.customElement = options.customElement;
+		this.css_mode = options.css;
 
 		this.html = {
 			start: null,

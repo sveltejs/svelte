@@ -19,6 +19,12 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	const content_end = parser.index;
 
+	// discard styles when css is disabled
+	if (parser.css_mode === 'none') {
+		parser.read(regex_closing_style_tag);
+		return null;
+	}
+
 	let ast;
 
 	try {
@@ -71,6 +77,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	});
 
 	parser.read(regex_closing_style_tag);
+  
 	const end = parser.index;
 
 	return {
