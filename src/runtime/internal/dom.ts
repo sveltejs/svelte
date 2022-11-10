@@ -1,3 +1,4 @@
+import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
 import { has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
@@ -596,7 +597,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-export function add_resize_listener(node: HTMLElement, fn: () => void) {
+function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -639,6 +640,31 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		detach(iframe);
 	};
 }
+
+
+export const resize_observer_content_box = new ResizeObserverSingleton({ box: "content-box" });
+// export const resize_observer_border_box = new SoleResizeObserver({ box: "border-box" });
+// export const resize_observer_device_pixel_content_box = new SoleResizeObserver({ box: "device-pixel-content-box" });
+
+export function add_content_box_observer(node: HTMLElement, fn: () => void) {
+	resize_observer_content_box.addListener(node, fn);
+	return ()=> resize_observer_content_box.removeListener(node, fn);
+}
+
+// export function add_border_box_observer(node: HTMLElement, fn: () => void) {
+// 	resize_observer_border_box.addListener(node, fn);
+// 	return ()=> resize_observer_border_box.removeListener(node, fn);
+// }
+// 
+// export function add_device_pixel_content_box_observer(node: HTMLElement, fn: () => void) {
+// 	resize_observer_device_pixel_content_box.addListener(node, fn);
+// 	return ()=> resize_observer_device_pixel_content_box.removeListener(node, fn);
+// }
+
+
+export const add_resize_listener = "ResizeObserver" in window ? 
+add_content_box_observer : 
+add_iframe_resize_listener;
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
