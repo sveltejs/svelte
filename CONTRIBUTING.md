@@ -50,8 +50,8 @@ If you'd like to propose an implementation for a large new feature or change the
 ## Installation
 
 1. Ensure you have [npm](https://www.npmjs.com/get-npm) installed.
-1. After cloning the repository, run `npm install` in the root of the repository.
-1. To start a development server, run `npm run dev`.
+2. After cloning the repository, run `npm install` in the root of the repository.
+3. To start a development server, run `npm run dev`.
 
 ## Pull requests
 
@@ -76,9 +76,9 @@ Small pull requests are much easier to review and more likely to get merged. Mak
 Please make sure the following is done when submitting a pull request:
 
 1. Fork [the repository](https://github.com/sveltejs/svelte) and create your branch from `master`.
-1. Describe your **test plan** in your pull request description. Make sure to test your changes.
-1. Make sure your code lints (`npm run lint`).
-1. Make sure your tests pass (`npm run test`).
+2. Describe your **test plan** in your pull request description. Make sure to test your changes.
+3. Make sure your code lints (`npm run lint`).
+4. Make sure your tests pass (`npm run test`).
 
 All pull requests should be opened against the `master` branch.
 
@@ -97,18 +97,18 @@ Test samples are kept in `/test/xxx/samples` folder.
 #### Running tests
 
 1. To run test, run `npm run test`.
-1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
+2. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
 
 ##### Running solo test
 
 1. To run only one test, rename the test sample folder to end with `.solo`. For example, to run the `test/js/samples/action` only, rename it to `test/js/samples/action.solo`.
-1. To run only one test suite, rename the test suite folder to end with `.solo`. For example, to run the `test/js` test suite only, rename it to `test/js.solo`.
-1. Remember to rename the test folder back. The CI will fail if there's a solo test.
+2. To run only one test suite, rename the test suite folder to end with `.solo`. For example, to run the `test/js` test suite only, rename it to `test/js.solo`.
+3. Remember to rename the test folder back. The CI will fail if there's a solo test.
 
 ##### Updating `.expected` files
 
 1. Tests suites like `css`, `js`, `server-side-rendering` asserts that the generated output has to match the content in the `.expected` file. For example, in the `js` test suites, the generated js code is compared against the content in `expected.js`.
-1. To update the content of the `.expected` file, run the test with `--update` flag. (`npm run test --update`)
+2. To update the content of the `.expected` file, run the test with `--update` flag. (`npm run test --update`)
 
 #### Breaking changes
 
