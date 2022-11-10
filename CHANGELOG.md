@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Do not emit deprecation warnings for `css` compiler options for now ([#8009](https://github.com/sveltejs/svelte/issues/8009))
+
 ## 3.53.0
 
 * Check whether `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))

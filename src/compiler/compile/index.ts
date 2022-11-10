@@ -89,13 +89,15 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 
 	if (css === true || css === false) {
 		options.css = css === true ? 'injected' : 'external';
-		const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
-		warnings.push({
-			code: 'options-css-boolean-deprecated',
-			message,
-			filename,
-			toString: () => message
-		});
+		// possibly show this warning once we decided how Svelte 4 looks like
+		// const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
+		// warnings.push({
+		// 	code: 'options-css-boolean-deprecated',
+		// 	message,
+		// 	filename,
+		// 	toString: () => message
+		// });
+		// }
 	}
 
 	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
