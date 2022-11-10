@@ -11,6 +11,7 @@ import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import handle_select_value_binding from './handle_select_value_binding';
+import { regex_box_size } from '../../../../utils/patterns.js';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -411,6 +412,17 @@ function get_value_from_dom(
 
 	if (name === 'this') {
 		return x`$$value`;
+	}
+
+	// <div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>
+	if (regex_box_size.test(name)) {
+		const functionName = {
+			"contentRect": "get_content_rect",
+			"contentBoxSize": "get_content_box_size",
+			"borderBoxSize": "get_border_box_size",
+			"devicePixelContentBoxSize": "get_device_pixel_content_box_size",
+		}
+		return x`@${functionName}(this)`;
 	}
 
 	// <select bind:value='selected>

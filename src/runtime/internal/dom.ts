@@ -597,7 +597,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
+export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -641,30 +641,41 @@ function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
+const resize_observer_content_box = new ResizeObserverSingleton({ box: "content-box" });
+const resize_observer_border_box = new ResizeObserverSingleton({ box: "border-box" });
+const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: "device-pixel-content-box" });
 
-export const resize_observer_content_box = new ResizeObserverSingleton({ box: "content-box" });
-// export const resize_observer_border_box = new SoleResizeObserver({ box: "border-box" });
-// export const resize_observer_device_pixel_content_box = new SoleResizeObserver({ box: "device-pixel-content-box" });
-
-export function add_content_box_observer(node: HTMLElement, fn: () => void) {
+export function add_content_box_observer(node: Element, fn: () => void) {
 	resize_observer_content_box.addListener(node, fn);
 	return ()=> resize_observer_content_box.removeListener(node, fn);
 }
 
-// export function add_border_box_observer(node: HTMLElement, fn: () => void) {
-// 	resize_observer_border_box.addListener(node, fn);
-// 	return ()=> resize_observer_border_box.removeListener(node, fn);
-// }
-// 
-// export function add_device_pixel_content_box_observer(node: HTMLElement, fn: () => void) {
-// 	resize_observer_device_pixel_content_box.addListener(node, fn);
-// 	return ()=> resize_observer_device_pixel_content_box.removeListener(node, fn);
-// }
+export function add_border_box_observer(node: Element, fn: () => void) {
+	resize_observer_border_box.addListener(node, fn);
+	return ()=> resize_observer_border_box.removeListener(node, fn);
+}
 
+export function add_device_pixel_content_box_observer(node: Element, fn: () => void) {
+	resize_observer_device_pixel_content_box.addListener(node, fn);
+	return ()=> resize_observer_device_pixel_content_box.removeListener(node, fn);
+}
 
-export const add_resize_listener = "ResizeObserver" in window ? 
-add_content_box_observer : 
-add_iframe_resize_listener;
+export function get_content_rect(node: Element) {
+	return resize_observer_content_box.getLastEntry(node)!.contentRect;
+}
+
+export function get_content_box_size(node: Element) {
+	return resize_observer_content_box.getLastEntry(node)!.contentBoxSize;
+}
+
+export function get_border_box_size(node: Element) {
+	return resize_observer_border_box.getLastEntry(node)!.borderBoxSize;
+}
+
+export function get_device_pixel_content_box_size(node: Element) {
+	return resize_observer_device_pixel_content_box.getLastEntry(node)!.devicePixelContentBoxSize;
+}
+
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);

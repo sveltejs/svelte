@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { regex_dimensions, regex_starts_with_newline, regex_backslashes } from '../../../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_backslashes, regex_border_box_size, regex_content_box_size, regex_device_pixel_content_box_size } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -68,6 +68,22 @@ const events = [
 		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
 			regex_dimensions.test(name)
+	},
+
+	{
+		event_names: ['elementresizeobserveborderbox'],
+		filter: (_node: Element, name: string) =>
+			regex_border_box_size.test(name)
+	},
+	{
+		event_names: ['elementresizeobservecontentbox'],
+		filter: (_node: Element, name: string) =>
+			regex_content_box_size.test(name)
+	},
+	{
+		event_names: ['elementresizeobservedevicepixelcontentbox'],
+		filter: (_node: Element, name: string) =>
+			regex_device_pixel_content_box_size.test(name)
 	},
 
 	// media events
@@ -688,13 +704,19 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		binding_group.events.forEach(name => {
-			if (name === 'elementresize') {
-				// special case
+			if (name.startsWith('elementresize')) {
 				const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 				block.add_variable(resize_listener);
 
+				const functionName = ({
+					"elementresize": "add_iframe_resize_listener",
+					"elementresizeobservecontentbox": "add_content_box_observer",
+					"elementresizeobserveborderbox": "add_border_box_observer",
+					"elementresizeobservedevicepixelcontentbox": "add_device_pixel_content_box_observer",
+				})[name]
+
 				block.chunks.mount.push(
-					b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
+					b`${resize_listener} = @${functionName}(${this.var}, ${callee}.bind(${this.var}));`
 				);
 
 				block.chunks.destroy.push(
