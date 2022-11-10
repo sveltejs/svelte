@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Emit deprecation warning only once
+
 ## 3.53.0
 
 * Check whether `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))

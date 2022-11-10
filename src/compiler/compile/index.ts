@@ -46,6 +46,8 @@ const valid_css_values = [
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 const regex_starts_with_lowercase_character = /^[a-z]/;
 
+let has_shown_deprecation = false;
+
 function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
 
@@ -89,13 +91,16 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 
 	if (css === true || css === false) {
 		options.css = css === true ? 'injected' : 'external';
-		const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
-		warnings.push({
-			code: 'options-css-boolean-deprecated',
-			message,
-			filename,
-			toString: () => message
-		});
+		if (!has_shown_deprecation) {
+			has_shown_deprecation=true;
+			const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
+			warnings.push({
+				code: 'options-css-boolean-deprecated',
+				message,
+				filename,
+				toString: () => message
+			});
+		}
 	}
 
 	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
