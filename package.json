@@ -153,6 +153,7 @@
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.9",
     "tslib": "^2.4.1",
-    "typescript": "^3.7.5"
+    "typescript": "^3.7.5",
+    "util": "^0.12.5"
   }
 }
