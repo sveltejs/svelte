@@ -1,8 +1,11 @@
 # Svelte changelog
 
-## Unreleased
+## 3.53.1
 
+* Fix exception in `rel=` attribute check with dynamic values ([#7994](https://github.com/sveltejs/svelte/issues/7994))
 * Do not emit deprecation warnings for `css` compiler options for now ([#8009](https://github.com/sveltejs/svelte/issues/8009))
+* Make compiler run in browser again ([#8010](https://github.com/sveltejs/svelte/issues/8010))
+* Upgrade `tslib` ([#8013](https://github.com/sveltejs/svelte/issues/8013))
 
 ## 3.53.0
 
