@@ -2,7 +2,7 @@
 	import Inner from './Inner.svelte';
 
 	function handleMessage(event) {
-		alert(event.detail.text);
+		alert(event.target.text);
 	}
 </script>
 
