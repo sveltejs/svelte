@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Do not deprecation warning for `css` compiler options for now
+* Do not emit deprecation warnings for `css` compiler options for now
 
 ## 3.53.0
 
