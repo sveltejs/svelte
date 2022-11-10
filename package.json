@@ -152,7 +152,7 @@
     "source-map-support": "^0.5.21",
     "sourcemap-codec": "^1.4.8",
     "tiny-glob": "^0.2.9",
-    "tslib": "^2.4.0",
+    "tslib": "^2.4.1",
     "typescript": "^3.7.5"
   }
 }
