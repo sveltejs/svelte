@@ -71,14 +71,9 @@ const events = [
 	},
 
 	{
-		event_names: ['elementresizeobservecontentrect'],
-		filter: (_node: Element, name: string) =>
-			regex_content_rect.test(name)
-	},
-	{
 		event_names: ['elementresizeobservecontentbox'],
 		filter: (_node: Element, name: string) =>
-			regex_content_box_size.test(name)
+			regex_content_rect.test(name) ?? regex_content_box_size.test(name)
 	},
 	{
 		event_names: ['elementresizeobserveborderbox'],
@@ -710,11 +705,10 @@ export default class ElementWrapper extends Wrapper {
 
 		binding_group.events.forEach(name => {
 			const resizeListenerFunctions = {
-				"elementresize": "add_iframe_resize_listener",
-				"elementresizeobservecontentrect": "add_content_rect_observer",
-				"elementresizeobservecontentbox": "add_content_box_observer",
-				"elementresizeobserveborderbox": "add_border_box_observer",
-				"elementresizeobservedevicepixelcontentbox": "add_device_pixel_content_box_observer",
+				elementresize: 'add_iframe_resize_listener',
+				elementresizeobservecontentbox: 'resize_observer_content_box.observe',
+				elementresizeobserveborderbox: 'resize_observer_border_box.observe',
+				elementresizeobservedevicepixelcontentbox: 'resize_observer_device_pixel_content_box.observe'
 			};
 
 			if (name in resizeListenerFunctions) {

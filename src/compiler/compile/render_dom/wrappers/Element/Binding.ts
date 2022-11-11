@@ -416,13 +416,7 @@ function get_value_from_dom(
 
 	// <div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>
 	if (regex_box_size.test(name)) {
-		const functionName = ({
-			"contentRect": "get_content_rect",
-			"contentBoxSize": "get_content_box_size",
-			"borderBoxSize": "get_border_box_size",
-			"devicePixelContentBoxSize": "get_device_pixel_content_box_size",
-		})[name];
-		return x`@${functionName}(this)`;
+		return x`@ResizeObserverSingleton.entries.get(this)?.${name}`;
 	}
 
 	// <select bind:value='selected>

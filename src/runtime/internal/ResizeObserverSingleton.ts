@@ -1,4 +1,4 @@
-const MapImplementation = "WeakMap" in window ? WeakMap : ("Map" in window ? Map : undefined);
+const MapImplementation = 'WeakMap' in window ? WeakMap : ('Map' in window ? Map : undefined);
 
 /**
  * Resize observer singleton
@@ -7,35 +7,27 @@ const MapImplementation = "WeakMap" in window ? WeakMap : ("Map" in window ? Map
 export class ResizeObserverSingleton {
 	constructor(readonly options?: ResizeObserverOptions) {}
 
-	addListener(element: Element, listener: Listener) {
-		this._subscriptions.set(element, {listener});
+	observe(element: Element, listener: Listener) {
+		this._listeners.set(element, listener);
 		this._getObserver().observe(element, this.options);
-		return ()=>{
-			this._subscriptions.delete(element);
-			this._observer!.unobserve(element); // this line can probably be removed
-		}
+		return () => {
+			this._listeners.delete(element);
+			this._observer.unobserve(element); // this line can probably be removed
+		};
 	}
 
-	getLastEntry(element: Element) {
-		return this._subscriptions.get(element)?.lastEntry;
-	}
+	static readonly entries: WeakMap<Element, ResizeObserverEntry> = MapImplementation ? new MapImplementation() : undefined;
 
-	private readonly _subscriptions: WeakMap<Element, Subscription> = MapImplementation ? new MapImplementation() : undefined;
+	private readonly _listeners: WeakMap<Element, Listener> = MapImplementation ? new MapImplementation() : undefined;
 	private _observer?: ResizeObserver;
 	private _getObserver() {
-		return this._observer ?? (this._observer = new ResizeObserver((entries)=>{
+		return this._observer ?? (this._observer = new ResizeObserver((entries) => {
 			for (const entry of entries) {
-				const subscription = this._subscriptions.get(entry.target)!;
-				subscription.lastEntry = entry;
-				subscription.listener(entry);
+				ResizeObserverSingleton.entries.set(entry.target, entry);
+				this._listeners.get(entry.target)?.(entry);
 			}
 		}));
 	}
 }
 
 type Listener = (entry: ResizeObserverEntry)=>any;
-
-interface Subscription {
-	readonly listener: Listener,
-	lastEntry?: ResizeObserverEntry,
-}

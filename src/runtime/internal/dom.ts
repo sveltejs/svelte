@@ -641,43 +641,11 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-const resize_observer_content_rect = new ResizeObserverSingleton({ box: "content-box" });
-const resize_observer_content_box = new ResizeObserverSingleton({ box: "content-box" });
-const resize_observer_border_box = new ResizeObserverSingleton({ box: "border-box" });
-const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: "device-pixel-content-box" });
-
-export function add_content_rect_observer(node: Element, fn: () => void) {
-	return resize_observer_content_rect.addListener(node, fn);
-}
-
-export function add_content_box_observer(node: Element, fn: () => void) {
-	return resize_observer_content_box.addListener(node, fn);
-}
-
-export function add_border_box_observer(node: Element, fn: () => void) {
-	return resize_observer_border_box.addListener(node, fn);
-}
-
-export function add_device_pixel_content_box_observer(node: Element, fn: () => void) {
-	return resize_observer_device_pixel_content_box.addListener(node, fn);
-}
-
-export function get_content_rect(node: Element) {
-	return resize_observer_content_rect.getLastEntry(node)?.contentRect;
-}
-
-export function get_content_box_size(node: Element) {
-	return resize_observer_content_box.getLastEntry(node)?.contentBoxSize;
-}
-
-export function get_border_box_size(node: Element) {
-	return resize_observer_border_box.getLastEntry(node)?.borderBoxSize;
-}
-
-export function get_device_pixel_content_box_size(node: Element) {
-	return resize_observer_device_pixel_content_box.getLastEntry(node)?.devicePixelContentBoxSize;
-}
-
+export const resize_observer_content_rect = new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_content_box = new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
