@@ -1,4 +1,4 @@
-import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
+import { ResizeObserverSingleton } from './ResizeObserverSingleton';
 import { has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
