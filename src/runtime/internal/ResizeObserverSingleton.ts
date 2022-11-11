@@ -1,5 +1,3 @@
-const MapImplementation = 'WeakMap' in window ? WeakMap : ('Map' in window ? Map : undefined);
-
 /**
  * Resize observer singleton.
  * One listener per element only!
@@ -17,9 +15,9 @@ export class ResizeObserverSingleton {
 		};
 	}
 
-	static readonly entries: WeakMap<Element, ResizeObserverEntry> = MapImplementation ? new MapImplementation() : undefined;
+	static readonly entries: WeakMap<Element, ResizeObserverEntry> = 'WeakMap' in globalThis ? new WeakMap() : undefined;
 
-	private readonly _listeners: WeakMap<Element, Listener> = MapImplementation ? new MapImplementation() : undefined;
+	private readonly _listeners: WeakMap<Element, Listener> = 'WeakMap' in globalThis ? new WeakMap() : undefined;
 	private _observer?: ResizeObserver;
 	private _getObserver() {
 		return this._observer ?? (this._observer = new ResizeObserver((entries) => {
