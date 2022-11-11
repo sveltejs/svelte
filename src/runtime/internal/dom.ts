@@ -647,23 +647,19 @@ const resize_observer_border_box = new ResizeObserverSingleton({ box: "border-bo
 const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: "device-pixel-content-box" });
 
 export function add_content_rect_observer(node: Element, fn: () => void) {
-	resize_observer_content_rect.addListener(node, fn);
-	return ()=> resize_observer_content_rect.removeListener(node);
+	return resize_observer_content_rect.addListener(node, fn);
 }
 
 export function add_content_box_observer(node: Element, fn: () => void) {
-	resize_observer_content_box.addListener(node, fn);
-	return ()=> resize_observer_content_box.removeListener(node);
+	return resize_observer_content_box.addListener(node, fn);
 }
 
 export function add_border_box_observer(node: Element, fn: () => void) {
-	resize_observer_border_box.addListener(node, fn);
-	return ()=> resize_observer_border_box.removeListener(node);
+	return resize_observer_border_box.addListener(node, fn);
 }
 
 export function add_device_pixel_content_box_observer(node: Element, fn: () => void) {
-	resize_observer_device_pixel_content_box.addListener(node, fn);
-	return ()=> resize_observer_device_pixel_content_box.removeListener(node);
+	return resize_observer_device_pixel_content_box.addListener(node, fn);
 }
 
 export function get_content_rect(node: Element) {

@@ -7,14 +7,13 @@ const MapImplementation = "WeakMap" in window ? WeakMap : ("Map" in window ? Map
 export class ResizeObserverSingleton {
 	constructor(readonly options?: ResizeObserverOptions) {}
 
-	addListener(element: Element, callback: Callback) {
-		this._subscriptions.set(element, new Subscription(callback));
+	addListener(element: Element, listener: Listener) {
+		this._subscriptions.set(element, {listener});
 		this._getObserver().observe(element, this.options);
-	}
-
-	removeListener(element: Element) {
-		this._subscriptions.delete(element);
-		this._getObserver().unobserve(element);
+		return ()=>{
+			this._subscriptions.delete(element);
+			this._observer!.unobserve(element); // this line can probably be removed
+		}
 	}
 
 	getLastEntry(element: Element) {
@@ -22,7 +21,7 @@ export class ResizeObserverSingleton {
 	}
 
 	private readonly _subscriptions: WeakMap<Element, Subscription> = MapImplementation ? new MapImplementation() : undefined;
-	private _observer: ResizeObserver|undefined = undefined;
+	private _observer?: ResizeObserver;
 	private _getObserver() {
 		return this._observer ?? (this._observer = new ResizeObserver((entries)=>{
 			for (const entry of entries) {
@@ -34,11 +33,9 @@ export class ResizeObserverSingleton {
 	}
 }
 
-type Callback = (entry: ResizeObserverEntry)=>any;
+type Listener = (entry: ResizeObserverEntry)=>any;
 
-class Subscription {
-	constructor(
-		readonly listener: Callback,
-		public lastEntry?: ResizeObserverEntry,
-	) {}
+interface Subscription {
+	readonly listener: Listener,
+	lastEntry?: ResizeObserverEntry,
 }
