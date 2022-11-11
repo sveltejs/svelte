@@ -713,7 +713,7 @@ export default class ElementWrapper extends Wrapper {
 					"elementresizeobservecontentbox": "add_content_box_observer",
 					"elementresizeobserveborderbox": "add_border_box_observer",
 					"elementresizeobservedevicepixelcontentbox": "add_device_pixel_content_box_observer",
-				})[name]
+				})[name];
 
 				block.chunks.mount.push(
 					b`${resize_listener} = @${functionName}(${this.var}, ${callee}.bind(${this.var}));`

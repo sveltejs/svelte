@@ -661,19 +661,19 @@ export function add_device_pixel_content_box_observer(node: Element, fn: () => v
 }
 
 export function get_content_rect(node: Element) {
-	return resize_observer_content_box.getLastEntry(node)!.contentRect;
+	return resize_observer_content_box.getLastEntry(node)?.contentRect;
 }
 
 export function get_content_box_size(node: Element) {
-	return resize_observer_content_box.getLastEntry(node)!.contentBoxSize;
+	return resize_observer_content_box.getLastEntry(node)?.contentBoxSize;
 }
 
 export function get_border_box_size(node: Element) {
-	return resize_observer_border_box.getLastEntry(node)!.borderBoxSize;
+	return resize_observer_border_box.getLastEntry(node)?.borderBoxSize;
 }
 
 export function get_device_pixel_content_box_size(node: Element) {
-	return resize_observer_device_pixel_content_box.getLastEntry(node)!.devicePixelContentBoxSize;
+	return resize_observer_device_pixel_content_box.getLastEntry(node)?.devicePixelContentBoxSize;
 }
 
 
