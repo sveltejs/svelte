@@ -43,7 +43,9 @@ const interactive_roles = new Set(
 		.concat(
 			// 'toolbar' does not descend from widget, but it does support
 			// aria-activedescendant, thus in practice we treat it as a widget.
-			'toolbar'
+			'toolbar',
+			//focusable tabpanel elements are recommended if any panels in a set contain content where the first element in the panel is not focusable.
+			'tabpanel'
 		)
 );
 
