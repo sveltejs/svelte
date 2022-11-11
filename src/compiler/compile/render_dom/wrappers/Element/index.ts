@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { regex_dimensions, regex_starts_with_newline, regex_backslashes, regex_border_box_size, regex_content_box_size, regex_device_pixel_content_box_size } from '../../../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_backslashes, regex_border_box_size, regex_content_box_size, regex_device_pixel_content_box_size, regex_content_rect } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -71,14 +71,19 @@ const events = [
 	},
 
 	{
-		event_names: ['elementresizeobserveborderbox'],
+		event_names: ['elementresizeobservecontentrect'],
 		filter: (_node: Element, name: string) =>
-			regex_border_box_size.test(name)
+			regex_content_rect.test(name)
 	},
 	{
 		event_names: ['elementresizeobservecontentbox'],
 		filter: (_node: Element, name: string) =>
 			regex_content_box_size.test(name)
+	},
+	{
+		event_names: ['elementresizeobserveborderbox'],
+		filter: (_node: Element, name: string) => 
+			regex_border_box_size.test(name)
 	},
 	{
 		event_names: ['elementresizeobservedevicepixelcontentbox'],
@@ -710,6 +715,7 @@ export default class ElementWrapper extends Wrapper {
 
 				const functionName = ({
 					"elementresize": "add_iframe_resize_listener",
+					"elementresizeobservecontentrect": "add_content_rect_observer",
 					"elementresizeobservecontentbox": "add_content_box_observer",
 					"elementresizeobserveborderbox": "add_border_box_observer",
 					"elementresizeobservedevicepixelcontentbox": "add_device_pixel_content_box_observer",

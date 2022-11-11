@@ -641,27 +641,33 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
+const resize_observer_content_rect = new ResizeObserverSingleton({ box: "content-box" });
 const resize_observer_content_box = new ResizeObserverSingleton({ box: "content-box" });
 const resize_observer_border_box = new ResizeObserverSingleton({ box: "border-box" });
 const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: "device-pixel-content-box" });
 
+export function add_content_rect_observer(node: Element, fn: () => void) {
+	resize_observer_content_rect.addListener(node, fn);
+	return ()=> resize_observer_content_rect.removeListener(node);
+}
+
 export function add_content_box_observer(node: Element, fn: () => void) {
 	resize_observer_content_box.addListener(node, fn);
-	return ()=> resize_observer_content_box.removeListener(node, fn);
+	return ()=> resize_observer_content_box.removeListener(node);
 }
 
 export function add_border_box_observer(node: Element, fn: () => void) {
 	resize_observer_border_box.addListener(node, fn);
-	return ()=> resize_observer_border_box.removeListener(node, fn);
+	return ()=> resize_observer_border_box.removeListener(node);
 }
 
 export function add_device_pixel_content_box_observer(node: Element, fn: () => void) {
 	resize_observer_device_pixel_content_box.addListener(node, fn);
-	return ()=> resize_observer_device_pixel_content_box.removeListener(node, fn);
+	return ()=> resize_observer_device_pixel_content_box.removeListener(node);
 }
 
 export function get_content_rect(node: Element) {
-	return resize_observer_content_box.getLastEntry(node)?.contentRect;
+	return resize_observer_content_rect.getLastEntry(node)?.contentRect;
 }
 
 export function get_content_box_size(node: Element) {
