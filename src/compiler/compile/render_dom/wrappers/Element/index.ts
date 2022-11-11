@@ -64,6 +64,7 @@ const events = [
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
 
+	// resize events
 	{
 		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
@@ -71,17 +72,19 @@ const events = [
 	},
 
 	{
-		event_names: ['elementresizeobservecontentbox'],
+		event_names: ['elementresizecontentbox'],
 		filter: (_node: Element, name: string) =>
 			regex_content_rect.test(name) ?? regex_content_box_size.test(name)
 	},
+
 	{
-		event_names: ['elementresizeobserveborderbox'],
+		event_names: ['elementresizeborderbox'],
 		filter: (_node: Element, name: string) => 
 			regex_border_box_size.test(name)
 	},
+
 	{
-		event_names: ['elementresizeobservedevicepixelcontentbox'],
+		event_names: ['elementresizedevicepixelcontentbox'],
 		filter: (_node: Element, name: string) =>
 			regex_device_pixel_content_box_size.test(name)
 	},
@@ -706,9 +709,9 @@ export default class ElementWrapper extends Wrapper {
 		binding_group.events.forEach(name => {
 			const resizeListenerFunctions = {
 				elementresize: 'add_iframe_resize_listener',
-				elementresizeobservecontentbox: 'resize_observer_content_box.observe',
-				elementresizeobserveborderbox: 'resize_observer_border_box.observe',
-				elementresizeobservedevicepixelcontentbox: 'resize_observer_device_pixel_content_box.observe'
+				elementresizecontentbox: 'resize_observer_content_box.observe',
+				elementresizeborderbox: 'resize_observer_border_box.observe',
+				elementresizedevicepixelcontentbox: 'resize_observer_device_pixel_content_box.observe'
 			};
 
 			if (name in resizeListenerFunctions) {

@@ -1,7 +1,8 @@
 const MapImplementation = 'WeakMap' in window ? WeakMap : ('Map' in window ? Map : undefined);
 
 /**
- * Resize observer singleton
+ * Resize observer singleton.
+ * One listener per element only!
  * https://groups.google.com/a/chromium.org/g/blink-dev/c/z6ienONUb5A/m/F5-VcUZtBAAJ
  */
 export class ResizeObserverSingleton {
