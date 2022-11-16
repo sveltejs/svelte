@@ -48,7 +48,7 @@ export function unpack_destructuring({
 		context_rest_properties.set((node.argument as Identifier).name, node);
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
-			if (element && element.type === 'RestElement') {
+			if (element?.type === 'RestElement') {
 				unpack_destructuring({
 					contexts,
 					node: element,
@@ -59,7 +59,7 @@ export function unpack_destructuring({
 					context_rest_properties
 				});
 				context_rest_properties.set((element.argument as Identifier).name, element);
-			} else if (element && element.type === 'AssignmentPattern') {
+			} else if (element?.type === 'AssignmentPattern') {
 				const n = contexts.length;
 				mark_referenced(element.right, scope, component);
 
@@ -195,11 +195,10 @@ function mark_referenced(
 ) {
 	walk(node, {
 		enter(node: any, parent: any) {
-			if (is_reference(node, parent)) {
-				const { name } = flatten_reference(node);
-				if (!scope.is_let(name) && !scope.names.has(name)) {
-					component.add_reference(node, name);
-				}
+			if (!is_reference(node, parent)) return;
+			const { name } = flatten_reference(node);
+			if (!scope.is_let(name) && !scope.names.has(name)) {
+				component.add_reference(node, name);
 			}
 		}
 	});

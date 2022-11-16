@@ -13,8 +13,6 @@ export default class DebugTag extends Node {
 	constructor(component: Component, parent: INode, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
-		this.expressions = info.identifiers.map((node: EsTreeNode) => {
-			return new Expression(component, parent, scope, node);
-		});
+		this.expressions = info.identifiers.map((node: EsTreeNode) => new Expression(component, parent, scope, node));
 	}
 }

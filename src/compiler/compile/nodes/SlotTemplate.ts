@@ -42,19 +42,20 @@ export default class SlotTemplate extends Node {
 					break;
 				}
 				case 'Attribute': {
-					if (node.name === 'slot') {
-						this.slot_attribute = new Attribute(component, this, scope, node);
-						if (!this.slot_attribute.is_static) {
-							return component.error(node, compiler_errors.invalid_slot_attribute);
-						}
-						const value = this.slot_attribute.get_static_value();
-						if (typeof value === 'boolean') {
-							return component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
-						}
-						this.slot_template_name = value as string;
-						break;
+					if (node.name !== 'slot') {
+						throw new Error(`Invalid attribute '${node.name}' in <svelte:fragment>`);
 					}
-					throw new Error(`Invalid attribute '${node.name}' in <svelte:fragment>`);
+
+					this.slot_attribute = new Attribute(component, this, scope, node);
+					if (!this.slot_attribute.is_static) {
+						return component.error(node, compiler_errors.invalid_slot_attribute);
+					}
+					const value = this.slot_attribute.get_static_value();
+					if (typeof value === 'boolean') {
+						return component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
+					}
+					this.slot_template_name = value as string;
+					break;
 				}
 				default:
 					throw new Error(`Not implemented: ${node.type}`);

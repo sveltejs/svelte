@@ -128,51 +128,49 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
-                        deep = node.argument.type === 'MemberExpression';
+						deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
 
-				if (names) {
-					names.forEach(name => {
-						if (template_scope.names.has(name)) {
-							if (template_scope.is_const(name)) {
-								component.error(node, compiler_errors.invalid_const_update(name));
-							}
+				names?.forEach(name => {
+					if (template_scope.names.has(name)) {
+						if (template_scope.is_const(name)) {
+							component.error(node, compiler_errors.invalid_const_update(name));
+						}
 
-							template_scope.dependencies_for_name.get(name).forEach(name => {
-								const variable = component.var_lookup.get(name);
-								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
-							});
-							const each_block = template_scope.get_owner(name);
-							(each_block as EachBlock).has_binding = true;
-						} else {
-							component.add_reference(node, name);
-
+						template_scope.dependencies_for_name.get(name).forEach(name => {
 							const variable = component.var_lookup.get(name);
+							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+						});
+						const each_block = template_scope.get_owner(name);
+						(each_block as EachBlock).has_binding = true;
+					} else {
+						component.add_reference(node, name);
 
-							if (variable) {
-								variable[deep ? 'mutated' : 'reassigned'] = true;
-							}
+						const variable = component.var_lookup.get(name);
 
-							const declaration: any = scope.find_owner(name)?.declarations.get(name);
+						if (variable) {
+							variable[deep ? 'mutated' : 'reassigned'] = true;
+						}
 
-							if (declaration) {
-								if (declaration.kind === 'const' && !deep) {
-									component.error(node, {
-										code: 'assignment-to-const',
-										message: 'You are assigning to a const'
-									});
-								}
-							} else if (variable && variable.writable === false && !deep) {
+						const declaration: any = scope.find_owner(name)?.declarations.get(name);
+
+						if (declaration) {
+							if (declaration.kind === 'const' && !deep) {
 								component.error(node, {
 									code: 'assignment-to-const',
 									message: 'You are assigning to a const'
 								});
 							}
+						} else if (variable && variable.writable === false && !deep) {
+							component.error(node, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
 						}
-					});
-				}
+					}
+				});
 			},
 
 			leave(node: Node) {
@@ -189,8 +187,8 @@ export default class Expression {
 
 	dynamic_dependencies() {
 		return Array.from(this.dependencies).filter(name => {
-			if (this.template_scope.is_let(name)) return true;
-			if (is_reserved_keyword(name)) return true;
+			if (this.template_scope.is_let(name) ||
+				is_reserved_keyword(name)) return true;
 
 			const variable = this.component.var_lookup.get(name);
 			return is_dynamic(variable);
@@ -428,11 +426,9 @@ export default class Expression {
 			}
 		});
 
-		if (declarations.length > 0) {
+		if (declarations.length) {
 			block.maintain_context = true;
-			declarations.forEach(declaration => {
-				block.chunks.init.push(declaration);
-			});
+			block.chunks.init.push(...declarations);
 		}
 
 		return (this.manipulated = node as Node);

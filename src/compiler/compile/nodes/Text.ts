@@ -40,16 +40,15 @@ export default class Text extends Node {
 		if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && this === parent_element.children[0];
 
 		// svg namespace exclusions
-		if (regex_ends_with_svg.test(parent_element.namespace)) {
-			if (this.prev && this.prev.type === 'Element' && this.prev.name === 'tspan') return false;
+		if (regex_ends_with_svg.test(parent_element.namespace) && this.prev?.type === 'Element' && this.prev?.name === 'tspan') {
+			return false;
 		}
 
 		return parent_element.namespace || elements_without_text.has(parent_element.name);
 	}
 
 	keep_space(): boolean {
-		if (this.component.component_options.preserveWhitespace) return true;
-		return this.within_pre();
+		return this.component.component_options.preserveWhitespace || this.within_pre();
 	}
 
 	within_pre(): boolean {

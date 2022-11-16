@@ -36,10 +36,9 @@ export default class Node {
 	}
 
 	cannot_use_innerhtml() {
-		if (this.can_use_innerhtml !== false) {
-			this.can_use_innerhtml = false;
-			if (this.parent) this.parent.cannot_use_innerhtml();
-		}
+		if (this.can_use_innerhtml === false) return;
+		this.can_use_innerhtml = false;
+		if (this.parent) this.parent.cannot_use_innerhtml();
 	}
 
 	find_nearest(selector: RegExp) {

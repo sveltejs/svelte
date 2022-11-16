@@ -28,8 +28,7 @@ export default class TemplateScope {
 	}
 
 	child() {
-		const child = new TemplateScope(this);
-		return child;
+		return new TemplateScope(this);
 	}
 
 	is_top_level(name: string) {

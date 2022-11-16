@@ -261,24 +261,22 @@ export default class Element extends Node {
 				}
 			}
 
-			if (this.name === 'textarea') {
-				if (info.children.length > 0) {
-					const value_attribute = info.attributes.find(node => node.name === 'value');
-					if (value_attribute) {
-						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
-						return;
-					}
-
-					// this is an egregious hack, but it's the easiest way to get <textarea>
-					// children treated the same way as a value attribute
-					info.attributes.push({
-						type: 'Attribute',
-						name: 'value',
-						value: info.children
-					});
-
-					info.children = [];
+			if (this.name === 'textarea' && info.children.length) {
+				const value_attribute = info.attributes.find(node => node.name === 'value');
+				if (value_attribute) {
+					component.error(value_attribute, compiler_errors.textarea_duplicate_value);
+					return;
 				}
+
+				// this is an egregious hack, but it's the easiest way to get <textarea>
+				// children treated the same way as a value attribute
+				info.attributes.push({
+					type: 'Attribute',
+					name: 'value',
+					value: info.children
+				});
+
+				info.children = [];
 			}
 
 			if (this.name === 'option') {
@@ -348,12 +346,12 @@ export default class Element extends Node {
 				}
 
 				case 'Transition':
-				{
-					const transition = new Transition(component, this, scope, node);
-					if (node.intro) this.intro = transition;
-					if (node.outro) this.outro = transition;
-					break;
-				}
+					{
+						const transition = new Transition(component, this, scope, node);
+						if (node.intro) this.intro = transition;
+						if (node.outro) this.outro = transition;
+						break;
+					}
 
 				case 'Animation':
 					this.animation = new Animation(component, this, scope, node);
@@ -688,20 +686,10 @@ export default class Element extends Node {
 
 		if (this.name === 'label') {
 			const has_input_child = (children: INode[]) => {
-				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
-					return true;
-				}
-
-				for (const child of children) {
-					if (!('children' in child) || child.children.length === 0) {
-						continue;
-					}
-					if (has_input_child(child.children)) {
-						return true;
-					}
-				}
-
-				return false;
+				return children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot'))) ||
+					children.some(child =>
+						('children' in child) && child.children.length && has_input_child(child.children)
+					);
 			};
 
 			if (!attribute_map.has('for') && !has_input_child(this.children)) {
@@ -714,11 +702,9 @@ export default class Element extends Node {
 				return;
 			}
 
-			let has_caption;
-			const track = this.children.find((i: Element) => i.name === 'track');
-			if (track) {
-				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
-			}
+			const has_caption = this.children
+				.find((i: Element) => i.name === 'track')
+				?.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
 
 			if (!has_caption) {
 				component.warn(this, compiler_warnings.a11y_media_has_caption);
@@ -1011,15 +997,14 @@ export default class Element extends Node {
 			const attribute = this.attributes.find(a => a.name === attribute_name);
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
-					if (chunk.type === 'Text') {
-						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
-						if (index === 0) {
-							data = data.trimLeft();
-						} else if (index === attribute.chunks.length - 1) {
-							data = data.trimRight();
-						}
-						chunk.data = data;
+					if (chunk.type !== 'Text') return;
+					let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
+					if (index === 0) {
+						data = data.trimLeft();
+					} else if (index === attribute.chunks.length - 1) {
+						data = data.trimRight();
 					}
+					chunk.data = data;
 				});
 			}
 		});

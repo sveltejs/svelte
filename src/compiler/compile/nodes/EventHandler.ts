@@ -52,12 +52,8 @@ export default class EventHandler extends Node {
 	}
 
 	get reassigned(): boolean {
-		if (!this.expression) {
-			return false;
-		}
-		const node = this.expression.node;
-
-		if (regex_contains_term_function_expression.test(node.type)) {
+		if (!this.expression ||
+			regex_contains_term_function_expression.test(this.expression.node.type)) {
 			return false;
 		}
 

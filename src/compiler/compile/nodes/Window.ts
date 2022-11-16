@@ -47,11 +47,10 @@ export default class Window extends Node {
 								fuzzymatch(node.name, valid_bindings)
 					);
 
-					if (match) {
-						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` (did you mean '${match}'?)`));
-					} else {
-						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` — valid bindings are ${list(valid_bindings)}`));
-					}
+					return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>',
+						match
+							? ` (did you mean '${match}'?)`
+							: ` — valid bindings are ${list(valid_bindings)}`));
 				}
 
 				this.bindings.push(new Binding(component, this, scope, node));

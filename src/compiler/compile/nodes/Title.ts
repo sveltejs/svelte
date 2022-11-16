@@ -14,7 +14,7 @@ export default class Title extends Node {
 		super(component, parent, scope, info);
 		this.children = map_children(component, parent, scope, info.children);
 
-		if (info.attributes.length > 0) {
+		if (info.attributes.length) {
 			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
 			return;
 		}

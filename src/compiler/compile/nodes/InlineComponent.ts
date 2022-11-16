@@ -52,7 +52,7 @@ export default class InlineComponent extends Node {
 						this.css_custom_properties.push(new Attribute(component, this, scope, node));
 						break;
 					}
-					// fallthrough
+				// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
@@ -172,9 +172,7 @@ function not_whitespace_text(node) {
 function get_namespace(parent: Node, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
-	if (!parent_element) {
-		return explicit_namespace;
-	}
-
-	return parent_element.namespace;
+	return !parent_element
+		? explicit_namespace
+		: parent_element.namespace;
 }
