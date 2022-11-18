@@ -42,7 +42,7 @@ export default class Selector {
 		this.blocks = group_selectors(node);
 
 		// take trailing :global(...) selectors out of consideration
-		const i = this.blocks.findIndex(block => !block.global);
+		const i = this.blocks.findLastIndex(block => !block.global);
 
 		this.local_blocks = this.blocks.slice(0, i);
 

@@ -1,6 +1,15 @@
 import { AssignmentExpression, Node, Program } from 'estree';
 import { SourceMap } from 'magic-string';
 
+declare global {
+  interface Array<T> {
+    findLastIndex(
+      predicate: (value: T, index: number, obj: T[]) => unknown,
+      thisArg?: any
+    ): number
+  }
+}
+
 interface BaseNode {
 	start: number;
 	end: number;
