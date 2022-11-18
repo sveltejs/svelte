@@ -525,13 +525,21 @@ export default function dom(
 		if (uses_slots) {
 			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
 		}
+		let buildCss = `${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}`
+		if (options.constructableStylesheets) {
+			buildCss = `
+			const sheet = new CSSStyleSheet();
+			sheet.replaceSync('${css.code}')
 
+			this.shadow.adoptedStyleSheets = [sheet];
+			`
+		}
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${buildCss}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
