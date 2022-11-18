@@ -101,7 +101,7 @@ export default class Binding extends Node {
 	validate_binding_rest_properties(scope: TemplateScope) {
 		this.expression.references.forEach(name => {
 			const each_block = scope.get_owner(name);
-			if (!each_block || each_block.type !== 'EachBlock') return;
+			if (each_block?.type !== 'EachBlock') return;
 			const rest_node = each_block.context_rest_properties.get(name);
 			if (rest_node) {
 				this.component.warn(rest_node as any, compiler_warnings.invalid_rest_eachblock_binding(name));
