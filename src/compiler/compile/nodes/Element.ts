@@ -194,10 +194,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
 		case 'idlist': // if list of ids, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((id) => typeof id === 'string');
+				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
 		case 'tokenlist': // if list of tokens, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
 		default:
 			return false;
 	}
@@ -495,7 +495,7 @@ export default class Element extends Node {
 				const value = attribute.get_static_value();
 
 				if (typeof value === 'string') {
-					value.split(' ').forEach((current_role: ARIARoleDefintionKey) => {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
 						if (current_role && aria_role_abstract_set.has(current_role)) {
 							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
 						} else if (current_role && !aria_role_set.has(current_role)) {
@@ -626,7 +626,7 @@ export default class Element extends Node {
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
-						const rel_values = rel ? rel.get_static_value().split(' ') : [];
+						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
 						const expected_values = ['noreferrer'];
 						expected_values.forEach(expected_value => {
 							if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
