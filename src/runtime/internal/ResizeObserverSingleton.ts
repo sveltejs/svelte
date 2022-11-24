@@ -30,3 +30,9 @@ export class ResizeObserverSingleton {
 }
 
 type Listener = (entry: ResizeObserverEntry)=>any;
+
+// TODO: Remove this
+type ResizeObserverEntry = any;
+type ResizeObserverOptions = any;
+type ResizeObserver = any;
+declare const ResizeObserver: any;
