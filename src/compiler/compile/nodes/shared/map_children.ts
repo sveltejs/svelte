@@ -47,11 +47,22 @@ function get_constructor(type) {
 	}
 }
 
+function should_treat_as_element(child: TemplateNode) {
+	switch (child.type) {
+		case 'Slot':
+			return child.attributes.some((attr) => attr.name === 'compiler-ignore' && attr.value);
+		default: return false;
+	}
+}
+
 export default function map_children(component, parent, scope, children: TemplateNode[]) {
 	let last = null;
 	let ignores = [];
 
-	return children.map(child => {
+	return children.map(child => {		
+		if (should_treat_as_element(child)) {
+			child.type = 'Element';
+		}
 		const constructor = get_constructor(child.type);
 
 		const use_ignores = child.type !== 'Text' && child.type !== 'Comment' && ignores.length;

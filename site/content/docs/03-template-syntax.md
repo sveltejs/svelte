@@ -1609,6 +1609,14 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 </FancyList>
 ```
 
+---
+
+Svelte can also instructed to ignore a `<slot>` element and treat it in a semantically generic way so that that `<slot>` can retain its default behavior as an HTML Element.
+This is useful if you are rendering your Svelte application to a `shadowRoot` and you wish to have slotted content come from the light DOM outside of the Svelte application
+
+```sv
+<slot name="some-slot" compiler-ignore></slot>
+```
 
 ### `<svelte:self>`
 

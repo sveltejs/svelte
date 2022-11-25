@@ -29,3 +29,5 @@ $$slots: {toString($$slots)}
 {:else}
 	Slot b is not available
 {/if}
+
+<slot compiler-ignore name="c"></slot>
