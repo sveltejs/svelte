@@ -32,7 +32,36 @@ export class ResizeObserverSingleton {
 type Listener = (entry: ResizeObserverEntry)=>any;
 
 // TODO: Remove this
-type ResizeObserverEntry = any;
-type ResizeObserverOptions = any;
-type ResizeObserver = any;
-declare const ResizeObserver: any;
+interface ResizeObserverSize {
+    readonly blockSize: number;
+    readonly inlineSize: number;
+}
+
+interface ResizeObserverEntry {
+    readonly borderBoxSize: readonly ResizeObserverSize[];
+    readonly contentBoxSize: readonly ResizeObserverSize[];
+    readonly contentRect: DOMRectReadOnly;
+    readonly devicePixelContentBoxSize: readonly ResizeObserverSize[];
+    readonly target: Element;
+}
+
+type ResizeObserverBoxOptions = 'border-box' | 'content-box' | 'device-pixel-content-box';
+
+interface ResizeObserverOptions {
+    box?: ResizeObserverBoxOptions;
+}
+
+interface ResizeObserver {
+    disconnect(): void;
+    observe(target: Element, options?: ResizeObserverOptions): void;
+    unobserve(target: Element): void;
+}
+
+interface ResizeObserverCallback {
+    (entries: ResizeObserverEntry[], observer: ResizeObserver): void;
+}
+
+declare let ResizeObserver: {
+    prototype: ResizeObserver;
+    new(callback: ResizeObserverCallback): ResizeObserver;
+};
