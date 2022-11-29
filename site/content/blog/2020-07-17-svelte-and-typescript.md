@@ -5,6 +5,9 @@ author: Orta Therox
 authorURL: https://twitter.com/orta
 ---
 
+*This blog post is outdated. The recommended way to create a Svelte project with TypeScript is using [Vite](https://vitejs.dev). 
+Run `npm create vite@latest myapp -- --template svelte-ts` for Vite to scaffold a project.*
+
 It's been by far the most requested feature for a while, and it's finally here: Svelte officially supports TypeScript.
 
 We think it'll give you a much nicer development experience — one that also scales beautifully to larger Svelte code bases — regardless of whether you use TypeScript or JavaScript.
