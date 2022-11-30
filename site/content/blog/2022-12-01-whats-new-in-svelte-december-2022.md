@@ -5,13 +5,13 @@ author: Daniel Sandoval
 authorURL: https://desandoval.net
 ---
 
-SvelteKit V1 is just around the corner! With [99% of the 1.0 milestones completed](https://github.com/sveltejs/kit/milestone/2), there's a lot of new changes from the last month to cover...
+SvelteKit 1.0 is just around the corner! With [99% of the milestone issues completed](https://github.com/sveltejs/kit/milestone/2), there's a lot of new changes from the last month to cover...
 
 Let's get to it!
 
 ## What's new in SvelteKit
 - Use the `willUnload` property to find out if the navigation will result the app being unloaded (full page reload/closing/leaving to another page). ([#6813](https://github.com/sveltejs/kit/pull/6813))
-- `__data.json` requests now use the Vary header, which allows one cached response for each variation of the x-sveltekit-invalidated header, ensuring we cache matching responses for all invalidation scenarios ([#7532](https://github.com/sveltejs/kit/pull/7532))
+- `__data.json` requests now use the `Vary` header, which allows one cached response for each variation of the `x-sveltekit-invalidated` header, ensuring we cache matching responses for all invalidation scenarios ([#7532](https://github.com/sveltejs/kit/pull/7532))
 - Linking to `<a name="hash">` tags is now supported ([#7596](https://github.com/sveltejs/kit/pull/7596))
 - Throwing redirects in the `handle` hook is now supported ([#7612](https://github.com/sveltejs/kit/pull/7612))
 - A fallback component will now be added automatically for layouts without one ([#7619](https://github.com/sveltejs/kit/pull/7619))
