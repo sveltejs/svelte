@@ -86,10 +86,11 @@ _To Read_
 - [svelte-svg-spinners](https://github.com/luluvia/svelte-svg-spinners) is a collection of SVG Spinners components
 - [Svelte Floating UI](https://github.com/fedorovvvv/svelte-floating-ui) enables floating UIs with actions - no wrapper components or component bindings required
 - [at-html](https://github.com/micha-lmxt/at-html) lets you use `{@html }` tags with slots in Svelte apps
+- [html-svelte-parser](https://github.com/PatrickG/html-svelte-parser) is a HTML to Svelte parser that works on both the server (Node.js) and the client (browser)
 - [svelte-switcher](https://github.com/rohitpotato/svelte-switcher) is a fully customisable, touch-friendly, accessible and tiny toggle component
-- [sveltekit-video-meet](https://github.com/harshmangalam/sveltekit-video-meet) is a video calling web app built with SvelteKit and SocketIO
 - [sveltkit-hook-html-minifier](https://www.npmjs.com/package/@svackages/sveltkit-hook-html-minifier) is a hook that wrapps `html-minifier`
 - [sveltekit-hook-redirect](https://www.npmjs.com/package/@svackages/sveltekit-hook-redirect) is a hook that makes redirects easy
+- [sveltekit-video-meet](https://github.com/harshmangalam/sveltekit-video-meet) is a video calling web app built with SvelteKit and SocketIO
 - [svelte-colourpicker](https://www.npmjs.com/package/svelte-colourpicker) is a lightweight opinionated colour picker component for Svelte
 - [Svelte-HeadlessUI](https://captaincodeman.github.io/svelte-headlessui/) is an unofficial implementation of Tailwind HeadlessUI for Svelte
 - [svelte-lazyimage-cache](https://github.com/binsarjr/svelte-lazyimage-cache) is a Lazy Image component with IntersectionObserver and cache action
