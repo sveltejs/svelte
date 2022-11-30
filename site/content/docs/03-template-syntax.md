@@ -971,7 +971,7 @@ transition:fn|local={params}
 
 
 ```js
-transition = (node: HTMLElement, params: any) => {
+transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
 	easing?: (t: number) => number,
@@ -1013,6 +1013,16 @@ Like actions, transitions can have parameters.
 	</div>
 {/if}
 ```
+
+##### Transition options
+
+---
+
+Transitions also get passed an options object which provides data about the type of transition.
+
+Possible values in the options object are:
+
+* `direction` - one of `in`, `out`, or `both` depending on the type of transition
 
 ##### Custom transition functions
 
