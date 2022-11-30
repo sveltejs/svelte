@@ -35,11 +35,19 @@ const valid_options = [
 	'cssHash'
 ];
 
+const valid_css_values = [
+	true,
+	false,
+	'injected',
+	'external',
+	'none'
+];
+
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 const regex_starts_with_lowercase_character = /^[a-z]/;
 
 function validate_options(options: CompileOptions, warnings: Warning[]) {
-	const { name, filename, loopGuardTimeout, dev, namespace } = options;
+	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
 
 	Object.keys(options).forEach(key => {
 		if (!valid_options.includes(key)) {
@@ -75,6 +83,23 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 		});
 	}
 
+	if (valid_css_values.indexOf(css) === -1) {
+		throw new Error(`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`);
+	}
+
+	if (css === true || css === false) {
+		options.css = css === true ? 'injected' : 'external';
+		// possibly show this warning once we decided how Svelte 4 looks like
+		// const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
+		// warnings.push({
+		// 	code: 'options-css-boolean-deprecated',
+		// 	message,
+		// 	filename,
+		// 	toString: () => message
+		// });
+		// }
+	}
+
 	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
 		const match = fuzzymatch(namespace, valid_namespaces);
 		if (match) {
@@ -86,7 +111,7 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true }, options);
+	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' }, options);
 
 	const stats = new Stats();
 	const warnings = [];

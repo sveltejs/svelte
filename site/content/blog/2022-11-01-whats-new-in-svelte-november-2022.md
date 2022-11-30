@@ -12,7 +12,7 @@ There's also a _huge_ showcase to cover... so let's jump in!
 ## What's new in SvelteKit
 - The new `update` method for `use:enhance` lets you easily get back the default form behavior while augmenting it with your own logic ([docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#7083](https://github.com/sveltejs/kit/pull/7083) and [#7326](https://github.com/sveltejs/kit/pull/7326))
 - `[[optional]]` parameters are now available for routing ([docs](https://kit.svelte.dev/docs/advanced-routing#optional-parameters), [#7051](https://github.com/sveltejs/kit/pull/7051))
-- `goto` now has `invalidateAll` to (re-)run all `load` functions belonging to the new active page ([docs](https://kit.svelte.dev/docs/modules#app-navigation-goto), [#7407](https://github.com/sveltejs/kit/pull/7407))
+- `goto` now has `invalidateAll` to (re-)run all `load` functions belonging to the new active page ([docs](https://kit.svelte.dev/docs/modules#$app-navigation-goto), [#7407](https://github.com/sveltejs/kit/pull/7407))
 - `config.kit.paths.base` is now used in adapters looking for static assets - fixing 404 issues across `adapter-netlify`, `adapter-vercel`, `adapter-cloudflare`, and `adapter-cloudflare-workers` ([#4448](https://github.com/sveltejs/kit/pull/4448))
 
 **Breaking changes:**
