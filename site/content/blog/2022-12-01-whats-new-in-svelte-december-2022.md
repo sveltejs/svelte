@@ -11,7 +11,7 @@ Let's get to it!
 
 ## What's new in SvelteKit
 - Use the `willUnload` property to find out if the navigation will result the app being unloaded (full page reload/closing/leaving to another page). ([#6813](https://github.com/sveltejs/kit/pull/6813))
-- `__data.json` requests now use the `Vary` header, which allows one cached response for each variation of the `x-sveltekit-invalidated` header, ensuring we cache matching responses for all invalidation scenarios ([#7532](https://github.com/sveltejs/kit/pull/7532))
+- `__data.json` requests now allows for caching while ensuring we cache matching responses for all invalidation scenarios ([#7532](https://github.com/sveltejs/kit/pull/7532))
 - Linking to `<a name="hash">` tags is now supported ([#7596](https://github.com/sveltejs/kit/pull/7596))
 - Throwing redirects in the `handle` hook is now supported ([#7612](https://github.com/sveltejs/kit/pull/7612))
 - A fallback component will now be added automatically for layouts without one ([#7619](https://github.com/sveltejs/kit/pull/7619))
