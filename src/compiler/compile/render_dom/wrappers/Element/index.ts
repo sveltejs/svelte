@@ -221,10 +221,8 @@ export default class ElementWrapper extends Wrapper {
 
 		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
 
-		if (node.intro || node.outro) {
-			if (node.intro) block.add_intro(node.intro.is_local);
-			if (node.outro) block.add_outro(node.outro.is_local);
-		}
+		if (node.intro) block.add_intro(node.intro.is_local);
+		if (node.outro) block.add_outro(node.outro.is_local);
 
 		if (node.animation) {
 			block.add_animation();
@@ -326,20 +324,19 @@ export default class ElementWrapper extends Wrapper {
 					${this.var}.p(#ctx, #dirty);
 				}
 			} else if (${previous_tag}) {
-				${
-					has_transitions
-						? b`
+				${has_transitions
+				? b`
 							@group_outros();
 							@transition_out(${this.var}, 1, 1, () => {
 								${this.var} = null;
 							});
 							@check_outros();
 						`
-						: b`
+				: b`
 							${this.var}.d(1);
 							${this.var} = null;
 						`
-				}
+			}
 			}
 			${previous_tag} = ${tag};
 		`);
@@ -681,9 +678,9 @@ export default class ElementWrapper extends Wrapper {
 			function ${handler}(${params}) {
 				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
-					.filter(dep => dep[0] !== '$')
-					.filter(dep => !contextual_dependencies.has(dep))
-					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+				.filter(dep => dep[0] !== '$')
+				.filter(dep => !contextual_dependencies.has(dep))
+				.map(dep => b`${this.renderer.invalidate(dep)};`)}
 			}
 		`);
 
