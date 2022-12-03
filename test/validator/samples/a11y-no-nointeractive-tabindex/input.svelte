@@ -13,5 +13,3 @@
 <div role='article' tabindex='0' />
 <article tabindex='0' />
 <article tabindex='{0}' />
-
-
