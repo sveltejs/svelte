@@ -1014,16 +1014,6 @@ Like actions, transitions can have parameters.
 {/if}
 ```
 
-##### Transition options
-
----
-
-Transitions also get passed an options object which provides data about the type of transition.
-
-Possible values in the options object are:
-
-* `direction` - one of `in`, `out`, or `both` depending on the type of transition
-
 ##### Custom transition functions
 
 ---
@@ -1101,6 +1091,32 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
+Transition functions also receive a third argument, `options`, which contains information about the transition.
+
+Available values in the `options` object are:
+
+* `direction` - one of `in`, `out`, or `both` depending on the type of transition
+
+```sv
+<script>
+	export let visible = false;
+
+	function attribute(node, params, options) {
+		node.dataset.direction = options.direction;
+		
+		return {
+			delay: params.delay || 0,
+			duration: params.duration || 400,
+		};
+	}
+</script>
+
+{#if visible}
+	<div in:attribute>
+		Attribute changes based on transition direction
+	</div>
+{/if}
+```
 
 ##### Transition events
 
