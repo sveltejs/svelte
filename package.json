@@ -96,7 +96,7 @@
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
     "tsd": "node ./generate-type-definitions.js",
-    "lint": "eslint \"{src,test}/**/*.{ts,js}\""
+    "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
     "type": "git",
