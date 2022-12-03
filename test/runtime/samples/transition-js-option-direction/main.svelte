@@ -1,12 +1,11 @@
 <script>
 	export let visible = false;
 
-	function foo(node, params, options) {
-		console.log("options", options);
-		node.direction = options.direction
+	function foo(node, _params, options) {
+		node.direction = options.direction;
 
 		return {
-			duration: 10,
+			duration: 10
 		};
 	}
 </script>

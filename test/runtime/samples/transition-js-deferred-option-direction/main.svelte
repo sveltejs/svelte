@@ -1,14 +1,14 @@
 <script>
 	export let visible;
 
-	function foo(node, params, options) {
-		node.initial = options.direction
+	function foo(node, _params, options) {
+		node.initial = options.direction;
 
 		return (opts) => {
 			node.later = opts.direction;
 
 			return {
-				duration: 10,
+				duration: 10
 			};
 		};
 	}

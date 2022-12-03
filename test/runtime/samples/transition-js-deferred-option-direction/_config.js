@@ -1,19 +1,19 @@
 export default {
-	test({ assert, component, target, raf }) {
+	test({ assert, component, target }) {
 		component.visible = true;
 
-		const divIn = target.querySelector('#in');
-		const divOut = target.querySelector('#out');
-		const divBoth = target.querySelector('#both');
+		const div_in = target.querySelector('#in');
+		const div_out = target.querySelector('#out');
+		const div_both = target.querySelector('#both');
 
-		assert.equal(divIn.initial, 'in');
-		assert.equal(divOut.initial, 'out');
-		assert.equal(divBoth.initial, 'both');
+		assert.equal(div_in.initial, 'in');
+		assert.equal(div_out.initial, 'out');
+		assert.equal(div_both.initial, 'both');
 
 		return Promise.resolve().then(() => {
-			assert.equal(divIn.later, 'in');
-			assert.equal(divOut.later, 'out');
-			assert.equal(divBoth.later, 'both');
+			assert.equal(div_in.later, 'in');
+			assert.equal(div_out.later, 'out');
+			assert.equal(div_both.later, 'both');
 		});
 	}
 };
