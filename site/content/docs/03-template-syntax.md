@@ -1095,28 +1095,7 @@ Transition functions also receive a third argument, `options`, which contains in
 
 Available values in the `options` object are:
 
-* `direction` - one of `in`, `out`, or `both` depending on the type of transition
-
-```sv
-<script>
-	export let visible = false;
-
-	function attribute(node, params, options) {
-		node.dataset.direction = options.direction;
-		
-		return {
-			delay: params.delay || 0,
-			duration: params.duration || 400,
-		};
-	}
-</script>
-
-{#if visible}
-	<div in:attribute>
-		Attribute changes based on transition direction
-	</div>
-{/if}
-```
+* `direction` - one of `in`, `out`, or `bidirectional` depending on the type of transition
 
 ##### Transition events
 
