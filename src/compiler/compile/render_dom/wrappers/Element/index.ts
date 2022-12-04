@@ -255,6 +255,7 @@ export default class ElementWrapper extends Wrapper {
 				node.styles.length > 0 ||
 				this.node.name === 'option' ||
 				node.tag_expr.dynamic_dependencies().length ||
+				node.is_dynamic_element ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
@@ -1176,7 +1177,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
 		} else {
-			const nodeName = wrapper.node.name === 'svelte:element' && wrapper.node.tag_expr.node.type === 'Literal' ? wrapper.node.tag_expr.node.value : wrapper.node.name;
+			const nodeName = wrapper.node.name;
 
 			// element
 			state.quasi.value.raw += `<${nodeName}`;
