@@ -971,7 +971,7 @@ transition:fn|local={params}
 
 
 ```js
-transition = (node: HTMLElement, params: any) => {
+transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
 	easing?: (t: number) => number,
@@ -1091,6 +1091,11 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
+Transition functions also receive a third argument, `options`, which contains information about the transition.
+
+Available values in the `options` object are:
+
+* `direction` - one of `in`, `out`, or `bidirectional` depending on the type of transition
 
 ##### Transition events
 
