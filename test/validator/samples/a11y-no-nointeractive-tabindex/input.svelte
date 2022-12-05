@@ -7,6 +7,7 @@
 <div role='button' tabindex='0' />
 <div role='article' tabindex='-1' />
 <article tabindex='-1' />
+<div role="tabpanel" tabindex='0' />
 <!-- invalid -->
 <div tabindex='0' />
 <div role='article' tabindex='0' />
