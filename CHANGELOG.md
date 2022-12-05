@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add argument `option.direction` to `transition` function ([#3918](https://github.com/sveltejs/svelte/issues/3918))
+* Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
 
 
 ## 3.53.1
