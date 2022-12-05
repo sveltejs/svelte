@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add argument `option.direction` to `transition` function ([#3918](https://github.com/sveltejs/svelte/issues/3918))
+
+
 ## 3.53.1
 
 * Fix exception in `rel=` attribute check with dynamic values ([#7994](https://github.com/sveltejs/svelte/issues/7994))
