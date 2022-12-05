@@ -6,6 +6,7 @@
 * Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
 * Suppress `a11y-no-noninteractive-tabindex` warning if an element has a `tabpanel` ([#8025](https://github.com/sveltejs/svelte/pull/8025))
 * Prevent to call unnecessary init binding ([#5689](https://github.com/sveltejs/svelte/issues/5689), [#6298](https://github.com/sveltejs/svelte/issues/6298))
+* Allow updating variables from `@const` declared function ([#7843](https://github.com/sveltejs/svelte/issues/7843))
 
 ## 3.53.1
 
