@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.54.0
 
 * Pass `options.direction` argument to custom transition functions ([#3918](https://github.com/sveltejs/svelte/issues/3918))
 * Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
