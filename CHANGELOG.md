@@ -7,6 +7,7 @@
 * Prevent running init binding unnecessarily ([#5689](https://github.com/sveltejs/svelte/issues/5689), [#6298](https://github.com/sveltejs/svelte/issues/6298))
 * Allow updating variables from `@const` declared function ([#7843](https://github.com/sveltejs/svelte/issues/7843))
 * Do not emit `a11y-no-noninteractive-tabindex` warning if element has a `tabpanel` ([#8025](https://github.com/sveltejs/svelte/pull/8025))
+* Fix escaping SSR'd values in `style:` directive ([#8085](https://github.com/sveltejs/svelte/issues/8085))
 
 ## 3.53.1
 
