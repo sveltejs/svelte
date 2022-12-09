@@ -4,11 +4,25 @@ export default {
 		<span>*</span>
 		<span>*</span>
 		<span>*</span>
+		<span>*</span>
 
 		<span></span>
 		<span>A</span>
 		<span>€</span>
+		<span>€</span>
 
-		<span>&amp;notanentity;</span>
+		<span>&amp;stringnotanentity;</span>
+
+		<span>different &amp;rect and ▭</span>
+
+		<span>©otherstring</span>
+
+		<span>©=otherstring</span>
+
+		<span>©=otherstring</span>
+
+		<span>©123</span>
+
+		<span>Ÿotherstring</span>
 	`
 };
