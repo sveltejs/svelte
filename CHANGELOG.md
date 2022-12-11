@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
+
 ## 3.54.0
 
 * Pass `options.direction` argument to custom transition functions ([#3918](https://github.com/sveltejs/svelte/issues/3918))
