@@ -86,7 +86,7 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:reset'?: FormEventHandler<T> | undefined | null;
 	'on:submit'?: EventHandler<Event, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
-
+	'on:formdata'?: EventHandler<Event & { readonly formData: FormData; }, T> | undefined | null; // TODO make this FormDataEvent once we require TS>=4.4
 
 	// Image Events
 	'on:load'?: EventHandler | undefined | null;
@@ -537,6 +537,12 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
 	 */
 	'bind:textContent'?: string | undefined | null;
+
+	// SvelteKit
+	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
+	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
+	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
+	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
@@ -556,11 +562,6 @@ export interface HTMLAnchorAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	target?: HTMLAttributeAnchorTarget | undefined | null;
 	type?: string | undefined | null;
 	referrerpolicy?: ReferrerPolicy | undefined | null;
-
-	// SvelteKit
-	'sveltekit:noscroll'?: true | undefined | null;
-	'sveltekit:prefetch'?: true | undefined | null;
-	'sveltekit:reload'?: true | undefined | null;
 
 	// Sapper
 	'sapper:noscroll'?: true | undefined | null;
