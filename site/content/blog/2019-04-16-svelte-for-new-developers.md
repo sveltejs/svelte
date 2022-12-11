@@ -61,7 +61,7 @@ We're going to use the [Svelte + Vite](https://github.com/vitejs/vite/tree/main/
 On the command line, navigate to where you want to create a new project, then type the following lines (you can paste the whole lot, but you'll develop better muscle memory if you get into the habit of writing each line out one at a time then running it):
 
 ```bash
-npm init vite my-svelte-project -- --template svelte
+npm create vite@latest my-svelte-project -- --template svelte
 cd my-svelte-project
 npm install
 ```
@@ -78,7 +78,7 @@ npm run dev
 
 Running the `dev` script starts a program called [Vite](https://vitejs.dev/). Vite's job is to take your application's source files, pass them to other programs (including Svelte, in our case) and convert them into the code that will actually run when you open the application in a browser.
 
-Speaking of which, open a browser and navigate to http://localhost:3000. This is your application running on a local *web server* (hence 'localhost') on port 3000.
+Speaking of which, open a browser and navigate to http://localhost:5173. This is your application running on a local *web server* (hence 'localhost') on port 5173.
 
 Try changing `src/App.svelte` and saving it. The application will update with your changes.
 

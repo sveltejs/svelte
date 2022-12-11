@@ -41,6 +41,19 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 
 ---
 
+### `a11y-click-events-have-key-events`
+
+Enforce `on:click` is accompanied by at least one of the following: `onKeyUp`, `onKeyDown`, `onKeyPress`. Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users. 
+
+This does not apply for interactive or hidden elements.
+
+```sv
+<!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event. -->
+<div on:click={() => {}} />
+```
+
+---
+
 ### `a11y-distracting-elements`
 
 Enforces that no distracting elements are used. Elements that can be visually distracting can cause accessibility issues with visually impaired users. Such elements are most likely deprecated, and should be avoided.
@@ -83,6 +96,18 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 
 <!-- A11y: Screen readers already announce <img> elements as an image. -->
 <img src="foo" alt="Picture of baz fixing a bug." />
+```
+
+---
+
+### `a11y-incorrect-aria-attribute-type`
+
+Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
+should only receive a boolean.
+
+```sv
+<!-- A11y: The value of 'aria-hidden' must be exactly one of true or false -->
+<div aria-hidden="yes"/>
 ```
 
 ---
@@ -227,6 +252,28 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 ---
 
+### `a11y-no-interactive-element-to-noninteractive-role`
+
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert an interactive element to a non-interactive element. Non-interactive ARIA roles include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
+
+```sv
+<!-- A11y: <textarea> cannot have role 'listitem' -->
+<textarea role="listitem" />
+```
+
+---
+
+### `a11y-no-noninteractive-tabindex`
+
+Tab key navigation should be limited to elements on the page that can be interacted with.
+
+```sv
+<!-- A11y: noninteractive element cannot have positive tabIndex value -->
+<div tabindex='0' />
+```
+
+---
+
 ### `a11y-positive-tabindex`
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
@@ -234,6 +281,17 @@ Avoid positive `tabindex` property values. This will move elements out of the ex
 ```sv
 <!-- A11y: avoid tabindex values above zero -->
 <div tabindex='1'/>
+```
+
+---
+
+### `a11y-role-has-required-aria-props`
+
+Elements with ARIA roles must have all required attributes for that role.
+
+```sv
+<!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
+<span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
 ```
 
 ---

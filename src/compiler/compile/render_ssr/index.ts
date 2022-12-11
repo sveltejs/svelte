@@ -237,7 +237,7 @@ function trim(nodes: TemplateNode[]) {
 		const node = nodes[end - 1] as Text;
 		if (node.type !== 'Text') break;
 
-		node.data = node.data.replace(/\s+$/, '');
+		node.data = node.data.trimRight();
 		if (node.data) break;
 	}
 

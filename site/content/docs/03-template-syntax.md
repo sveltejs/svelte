@@ -124,6 +124,10 @@ An element or component can have multiple spread attributes, interspersed with r
 
 > The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
+> Sometimes, the attribute order matters as Svelte sets attributes sequentially in JavaScript. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, Svelte will attempt to set the value to `1` (rounding up from 0.5 as the step by default is 1), and then set the step to `0.1`. To fix this, change it to `<input type="range" min="0" max="1" step="0.1" value={0.5}/>`.
+
+> Another example is `<img src="..." loading="lazy" />`. Svelte will set the img `src` before making the img element `loading="lazy"`, which is probably too late. Change this to `<img loading="lazy" src="...">` to make the image lazily loaded.
+
 ---
 
 ### Text expressions
@@ -158,7 +162,7 @@ You can use HTML comments inside components.
 
 ---
 
-Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually these are accessibility warnings; make sure that you're disabling them for a good reason.
+Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
 
 ```sv
 <!-- svelte-ignore a11y-autofocus -->
@@ -593,7 +597,7 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 
 ---
 
-If the name matches the value, you can use a shorthand.
+If the name matches the value, you can use shorthand.
 
 ```sv
 <!-- These are equivalent -->
@@ -750,7 +754,7 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
 ---
 
-Block-level elements have 4 readonly bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
+Block-level elements have 4 read-only bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
 
 * `clientWidth`
 * `clientHeight`
@@ -874,6 +878,9 @@ The `style:` directive provides a shorthand for setting multiple styles on an el
 
 <!-- Multiple styles can be included -->
 <div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+
+<!-- Styles can be marked as important -->
+<div style:color|important="red">...</div>
 ```
 
 ---
@@ -968,7 +975,7 @@ transition:fn|local={params}
 
 
 ```js
-transition = (node: HTMLElement, params: any) => {
+transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
 	easing?: (t: number) => number,
@@ -981,7 +988,7 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has completed.
+When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has been completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
@@ -1006,7 +1013,7 @@ Like actions, transitions can have parameters.
 ```sv
 {#if visible}
 	<div transition:fade="{{ duration: 2000 }}">
-		flies in, fades out over two seconds
+		fades in and out over two seconds
 	</div>
 {/if}
 ```
@@ -1088,6 +1095,11 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
+Transition functions also receive a third argument, `options`, which contains information about the transition.
+
+Available values in the `options` object are:
+
+* `direction` - one of `in`, `out`, or `bidirectional` depending on the type of transition
 
 ##### Transition events
 
@@ -1241,7 +1253,7 @@ As with actions and transitions, animations can have parameters.
 
 ---
 
-Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
+Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, and the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
 
 If the returned object has a `css` method, Svelte will create a CSS animation that plays on the element.
 
@@ -1374,7 +1386,23 @@ Desugars to this:
 
 ---
 
-Svelte's CSS Variables support allows for easily themable components:
+For SVG namespace, the example above desugars into using `<g>` instead:
+
+```sv
+<g style="--rail-color: black; --track-color: rgb(0, 0, 255)">
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
+</g>
+```
+
+**Note**: Since this is an extra `<g>`, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+
+---
+
+Svelte's CSS Variables support allows for easily themeable components:
 
 ```sv
 <!-- Slider.svelte -->
@@ -1638,7 +1666,7 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 
-The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
+The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
 

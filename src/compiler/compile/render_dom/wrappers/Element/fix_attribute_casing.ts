@@ -6,7 +6,7 @@ svg_attributes.forEach(name => {
 	svg_attribute_lookup.set(name.toLowerCase(), name);
 });
 
-export default function fix_attribute_casing(name) {
+export default function fix_attribute_casing(name: string) {
 	name = name.toLowerCase();
 	return svg_attribute_lookup.get(name) || name;
 }

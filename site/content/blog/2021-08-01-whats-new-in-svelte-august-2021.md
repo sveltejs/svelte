@@ -52,14 +52,14 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [How to Create a Blog with SvelteKit and Strapi](https://strapi.io/blog/how-to-create-a-blog-with-svelte-kit-strapi) is a step-by-step tutorial by Aarnav Pai from Strapi
 - [Sveltekit Markdown Blog](https://www.youtube.com/watch?v=sKKgT0SEioI&list=PLm_Qt4aKpfKgonq1zwaCS6kOD-nbOKx7V) is a YouTube tutorial series by WebJeda.
 - [Using Custom Elements in Svelte](https://css-tricks.com/using-custom-elements-in-svelte/) is a deep dive into custom elements by Geoff Rich.
-- [learn / graphql / svelte](https://hasura.io/learn/graphql/svelte-apollo/introduction/) is a free 2-hour GraphQL course course from Hasura.
+- [learn / graphql / svelte](https://hasura.io/learn/graphql/svelte-apollo/introduction/) is a free 2-hour GraphQL course from Hasura.
 - [How to add Magic Link to a SvelteKit application](https://magic.link/posts/magic-svelte) is a guide to the popular password-less login pattern.
 
 **Libraries, Tools & Components**
 - [Svelte-Capacitor](https://github.com/drannex42/svelte-capacitor/) just released v2.0.0 - making it even easier to build hybrid mobile apps for iOS and Android using Svelte and Capacitor with near native performance.
 - [svelte-remixicon](https://github.com/ABarnob/svelte-remixicon) is an icon library for Svelte based on Remix Icon, consisting of more than 2000 icons.
 - [SveltePress](https://github.com/GeopJr/SveltePress) is a documentation tool built on top of SvelteKit.
-- [Svelte Starter Kit](https://github.com/one-aalam/svelte-starter-kit/tree/auth-supabase) is a boilerplate to quckly get up and running with Svelte, with Auth and User Profiles powered by Supabase.
+- [Svelte Starter Kit](https://github.com/one-aalam/svelte-starter-kit/tree/auth-supabase) is a boilerplate to quickly get up and running with Svelte, with Auth and User Profiles powered by Supabase.
 - [Kahi UI](https://github.com/novacbn/kahi-ui) is a Svelte-first UI kit with Dark Mode built-in.
 - [typesafe-i18n](https://github.com/ivanhofer/typesafe-i18n) is an opinionated, fully type-safe, lightweight localization library for TypeScript and JavaScript projects with no external dependencies.
 

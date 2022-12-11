@@ -117,8 +117,12 @@ describe('runtime (puppeteer)', function() {
 						load(id) {
 							if (id === 'main') {
 								return `
-									import SvelteComponent from ${JSON.stringify(path.join(__dirname, 'samples', dir, 'main.svelte'))};
-									import config from ${JSON.stringify(path.join(__dirname, 'samples', dir, '_config.js'))};
+									import SvelteComponent from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, 'main.svelte')
+									)};
+									import config from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, '_config.js')
+									)};
 									import * as assert from 'assert';
 
 									export default async function (target) {
@@ -140,6 +144,14 @@ describe('runtime (puppeteer)', function() {
 
 											const component = new SvelteComponent(options);
 
+											const waitUntil = async (fn, ms = 500) => {
+												const start = new Date().getTime();
+												do {
+													if (fn()) return;
+													await new Promise(resolve => window.setTimeout(resolve, 1));
+												} while (new Date().getTime() <= start + ms);
+											};
+
 											if (config.html) {
 												assert.htmlEqual(target.innerHTML, config.html);
 											}
@@ -150,6 +162,7 @@ describe('runtime (puppeteer)', function() {
 													component,
 													target,
 													window,
+													waitUntil,
 												});
 
 												component.$destroy();
