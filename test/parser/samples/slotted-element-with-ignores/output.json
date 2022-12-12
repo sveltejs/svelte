@@ -1,0 +1,72 @@
+{
+	"html": {
+		"start": 0,
+		"end": 92,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 92,
+				"type": "InlineComponent",
+				"name": "Component",
+				"attributes": [],
+				"children": [
+					{
+						"start": 11,
+						"end": 13,
+						"type": "Text",
+						"raw": "\n\t",
+						"data": "\n\t"
+					},
+					{
+						"start": 13,
+						"end": 58,
+						"type": "Comment",
+						"data": " svelte-ignore a11y-missing-attribute ",
+						"ignores": [
+							"a11y-missing-attribute"
+						]
+					},
+					{
+						"start": 58,
+						"end": 61,
+						"type": "Text",
+						"raw": " \n\t",
+						"data": " \n\t"
+					},
+					{
+						"start": 61,
+						"end": 79,
+						"type": "Element",
+						"name": "a",
+						"attributes": [
+							{
+								"start": 64,
+								"end": 74,
+								"type": "Attribute",
+								"name": "slot",
+								"value": [
+									{
+										"start": 70,
+										"end": 73,
+										"type": "Text",
+										"raw": "foo",
+										"data": "foo"
+									}
+								]
+							}
+						],
+						"children": []
+					},
+					{
+						"start": 79,
+						"end": 80,
+						"type": "Text",
+						"raw": "\n",
+						"data": "\n"
+					}
+				]
+			}
+		]
+	}
+}
