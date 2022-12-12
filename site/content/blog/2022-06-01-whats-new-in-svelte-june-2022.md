@@ -16,7 +16,7 @@ Let's dive in!
 
 
 ## What's new in SvelteKit
-- Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestone](https://github.com/vitejs/vite/milestone/5))
+- Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestone](https://github.com/vitejs/vite/milestone/5))
 - `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [PR](https://github.com/sveltejs/kit/pull/4964))
 - Pages marked for prerendering will now fail during SSR at runtime ([PR](https://github.com/sveltejs/kit/pull/4812))
 

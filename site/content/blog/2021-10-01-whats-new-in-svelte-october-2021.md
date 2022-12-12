@@ -52,12 +52,12 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [hirehive](https://www.hirehive.com/) is a candidate and job tracking site
 - [Microsocial](https://microsocial.xyz/) is an experimental Peer-to-Peer Social Platform 
 - [Dylan Ipsum](https://www.dylanlyrics.app/) is a random text generator to replace lorem ipsum with Bob Dylan lyrics
-- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is a CHIP-8 emulator frontend, built on top of CHIP8 Typescript
+- [Chip8 Svelte](https://github.com/mikeyhogarth/chip8-svelte) is a CHIP-8 emulator frontend, built on top of CHIP8 TypeScript
 
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Podcasts Featuring Svelte**
-- [Syntax Podast: From React to SvelteKit](https://podcasts.apple.com/us/podcast/from-react-to-sveltekit/id1253186678?i=1000536276106) Scott talks with Wes about moving Level Up Tutorials from React to SvelteKit — why he did it, how, benefits, things to watch out for, and more!
+- [Syntax Podcast: From React to SvelteKit](https://podcasts.apple.com/us/podcast/from-react-to-sveltekit/id1253186678?i=1000536276106) Scott talks with Wes about moving Level Up Tutorials from React to SvelteKit — why he did it, how, benefits, things to watch out for, and more!
 - [Web Rush Podcast: Svelte Tools and Svelte Society](https://www.webrush.io/episodes/episode-150-svelte-tools-and-svelte-society) Kevin Åberg Kultalahti talks about what Svelte Society is, what he's excited about with Svelte, how important documentation is to any product, and much _much_ more
 - [Svelte: The Compiled Future of Front End](https://www.arahansen.com/the-compiled-future-of-front-end/) details the history of component-based frontends and how a compiler changes everything
 - [Svelte Radio: Contributing to Svelte with Martin 'Grygrflzr' Krisnanto Putra](https://share.transistor.fm/s/10aa305c) Grygrflzr shares his journey to becoming a maintainer and his views on React, Vite and a host of other things
@@ -74,7 +74,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 
 **Libraries, Tools & Components**
 - [sveltekit-netlify-cms](https://github.com/buhrmi/sveltekit-netlify-cms) is a SvelteKit skeleton app configured for use with Netlify CMS
-- [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + Typescript + Firebase library inspired by Fireship.io 
+- [SvelteFireTS](https://github.com/jacobbowdoin/sveltefirets) is a SvelteKit + TypeScript + Firebase library inspired by Fireship.io 
 - [stores-x](https://github.com/Anyass3/stores-x) lets you use Svelte stores just like vueX
 - [sveltekit-snippets](https://github.com/stordahl/sveltekit-snippets) is a VSCode extension that provides snippets for common patterns in SvelteKit & Vanilla Svelte
 - [svelte-xactor](https://github.com/wobsoriano/svelte-xactor) is a middleware that allows you to easily convert your xactor machines into a global store that implements the store contract

@@ -1,5 +1,7 @@
+const regex_tabs = /^\t+/;
+
 function tabs_to_spaces(str: string) {
-	return str.replace(/^\t+/, match => match.split('\t').join('  '));
+	return str.replace(regex_tabs, match => match.split('\t').join('  '));
 }
 
 export default function get_code_frame(

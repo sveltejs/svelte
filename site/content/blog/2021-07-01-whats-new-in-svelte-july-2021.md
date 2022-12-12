@@ -49,7 +49,7 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 
 
 **Libraries, Tools & Components**
-- [svelte-pipeline](https://github.com/novacbn/svelte-pipeline) provides custom Javascript contexts and the Svelte Compiler as Svelte Stores, for REPLs, Editors, etc.
+- [svelte-pipeline](https://github.com/novacbn/svelte-pipeline) provides custom JavaScript contexts and the Svelte Compiler as Svelte Stores, for REPLs, Editors, etc.
 - [Sveltotron](https://github.com/Salemmous/sveltotron) is an Electron-based app made to inspect your Svelte app
 - [svelte-qr-reader-writer](https://github.com/pleasemarkdarkly/svelte-qr-reader-writer) is a Svelte component that helps read and write data from QR codes
 - [svelte-stack-router](https://www.npmjs.com/package/svelte-stack-router) Aims to make Svelte apps feel more native by routing with Stacks

@@ -1,10 +1,10 @@
 <script>
 	let key;
-	let keyCode;
+	let code;
 
 	function handleKeydown(event) {
 		key = event.key;
-		keyCode = event.keyCode;
+		code = event.code;
 	}
 </script>
 
@@ -13,7 +13,7 @@
 <div style="text-align: center">
 	{#if key}
 		<kbd>{key === ' ' ? 'Space' : key}</kbd>
-		<p>{keyCode}</p>
+		<p>{code}</p>
 	{:else}
 		<p>Focus this window and press any key</p>
 	{/if}

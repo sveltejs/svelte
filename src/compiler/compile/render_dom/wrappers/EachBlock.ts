@@ -582,7 +582,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			const start = this.block.has_update_method ? 0 : '#old_length';
 
-			let remove_old_blocks;
+			let remove_old_blocks: Node[];
 
 			if (this.block.has_outros) {
 				const out = block.get_unique_name('out');

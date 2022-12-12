@@ -234,6 +234,10 @@ export default {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
 	},
+	css_invalid_selector: (selector: string) => ({
+		code: 'css-invalid-selector',
+		message: `Invalid selector "${selector}"`
+	}),
 	duplicate_animation: {
 		code: 'duplicate-animation',
 		message: "An element can only have one 'animate' directive"
@@ -277,5 +281,9 @@ export default {
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
-	}
+	},
+	invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	})
 };

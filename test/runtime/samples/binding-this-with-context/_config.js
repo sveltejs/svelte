@@ -33,8 +33,8 @@ export default {
 		assert.equal(component.divs.length, 3, 'the divs array is still 3 long');
 		assert.equal(component.divs[2], null, 'the last div is unregistered');
 		assert.equal(component.ps[2], null, 'the last p is unregistered');
-		assert.equal(component.spans['-bar1'], null, 'the bar span is unregisterd');
-		assert.equal(component.hrs.bar, null, 'the bar hr is unregisterd');
+		assert.equal(component.spans['-bar1'], null, 'the bar span is unregistered');
+		assert.equal(component.hrs.bar, null, 'the bar hr is unregistered');
 
 		elems = target.querySelectorAll('div');
 		component.divs.forEach((e, i) => {

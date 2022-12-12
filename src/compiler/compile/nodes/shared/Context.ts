@@ -20,7 +20,8 @@ export function unpack_destructuring({
 	modifier = (node) => node,
 	default_modifier = (node) => node,
 	scope,
-	component
+	component,
+	context_rest_properties
 }: {
 	contexts: Context[];
 	node: Node;
@@ -28,6 +29,7 @@ export function unpack_destructuring({
 	default_modifier?: Context['default_modifier'];
 	scope: TemplateScope;
 	component: Component;
+	context_rest_properties: Map<string, Node>;
 }) {
 	if (!node) return;
 
@@ -43,6 +45,7 @@ export function unpack_destructuring({
 			modifier,
 			default_modifier
 		});
+		context_rest_properties.set((node.argument as Identifier).name, node);
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (element && element.type === 'RestElement') {
@@ -52,8 +55,10 @@ export function unpack_destructuring({
 					modifier: (node) => x`${modifier(node)}.slice(${i})` as Node,
 					default_modifier,
 					scope,
-					component
+					component,
+					context_rest_properties
 				});
+				context_rest_properties.set((element.argument as Identifier).name, element);
 			} else if (element && element.type === 'AssignmentPattern') {
 				const n = contexts.length;
 				mark_referenced(element.right, scope, component);
@@ -70,7 +75,8 @@ export function unpack_destructuring({
 							to_ctx
 						)}` as Node,
 					scope,
-					component
+					component,
+					context_rest_properties
 				});
 			} else {
 				unpack_destructuring({
@@ -79,7 +85,8 @@ export function unpack_destructuring({
 					modifier: (node) => x`${modifier(node)}[${i}]` as Node,
 					default_modifier,
 					scope,
-					component
+					component,
+					context_rest_properties
 				});
 			}
 		});
@@ -97,8 +104,10 @@ export function unpack_destructuring({
 						)}, [${used_properties}])` as Node,
 					default_modifier,
 					scope,
-					component
+					component,
+					context_rest_properties
 				});
+				context_rest_properties.set((property.argument as Identifier).name, property);
 			} else {
 				const key = property.key as Identifier;
 				const value = property.value;
@@ -121,7 +130,8 @@ export function unpack_destructuring({
 								to_ctx
 							)}` as Node,
 						scope,
-						component
+						component,
+						context_rest_properties
 					});
 				} else {
 					unpack_destructuring({
@@ -130,7 +140,8 @@ export function unpack_destructuring({
 						modifier: (node) => x`${modifier(node)}.${key.name}` as Node,
 						default_modifier,
 						scope,
-						component
+						component,
+						context_rest_properties
 					});
 				}
 			}

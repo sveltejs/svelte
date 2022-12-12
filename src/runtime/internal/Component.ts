@@ -3,49 +3,15 @@ import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
+import { T$$ } from './types';
 
-/**
- * INTERNAL, DO NOT USE. Code may change at any time.
- */
-export interface Fragment {
-	key: string | null;
-	first: null;
-	/* create  */ c: () => void;
-	/* claim   */ l: (nodes: any) => void;
-	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p: (ctx: any, dirty: any) => void;
-	/* measure */ r: () => void;
-	/* fix     */ f: () => void;
-	/* animate */ a: () => void;
-	/* intro   */ i: (local: any) => void;
-	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0 | 1) => void;
-}
-interface T$$ {
-	dirty: number[];
-	ctx: null | any;
-	bound: any;
-	update: () => void;
-	callbacks: any;
-	after_update: any[];
-	props: Record<string, 0 | string>;
-	fragment: null | false | Fragment;
-	not_equal: any;
-	before_update: any[];
-	context: Map<any, any>;
-	on_mount: any[];
-	on_destroy: any[];
-	skip_bound: boolean;
-	on_disconnect: any[];
-	root:Element | ShadowRoot
-}
-
-export function bind(component, name, callback) {
+export function bind(component, name, callback, value) {
 	const index = component.$$.props[name];
 	if (index !== undefined) {
 		component.$$.bound[index] = callback;
-		callback(component.$$.ctx[index]);
+		if (value === undefined) {
+			callback(component.$$.ctx[index]);
+		}
 	}
 }
 
@@ -58,7 +24,7 @@ export function claim_component(block, parent_nodes) {
 }
 
 export function mount_component(component, target, anchor, customElement) {
-	const { fragment, on_mount, on_destroy, after_update } = component.$$;
+	const { fragment, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
 
@@ -66,9 +32,12 @@ export function mount_component(component, target, anchor, customElement) {
 		// onMount happens before the initial afterUpdate
 		add_render_callback(() => {
 
-			const new_on_destroy = on_mount.map(run).filter(is_function);
-			if (on_destroy) {
-				on_destroy.push(...new_on_destroy);
+			const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
+			// if the component was destroyed immediately
+			// it will update the `$$.on_destroy` reference to `null`.
+			// the destructured on_destroy may still reference to the old array
+			if (component.$$.on_destroy) {
+				component.$$.on_destroy.push(...new_on_destroy);
 			} else {
 				// Edge case - component was destroyed immediately,
 				// most likely as a result of a binding initialising
@@ -110,7 +79,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	const $$: T$$ = component.$$ = {
 		fragment: null,
-		ctx: null,
+		ctx: [],
 
 		// state
 		props,
@@ -212,6 +181,9 @@ if (typeof HTMLElement === 'function') {
 
 		$on(type, callback) {
 			// TODO should this delegate to addEventListener?
+			if (!is_function(callback)) {
+				return noop;
+			}
 			const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 			callbacks.push(callback);
 
@@ -244,6 +216,9 @@ export class SvelteComponent {
 	}
 
 	$on(type, callback) {
+		if (!is_function(callback)) {
+			return noop;
+		}
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 

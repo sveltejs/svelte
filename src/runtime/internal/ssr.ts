@@ -124,7 +124,7 @@ export const missing_component = {
 export function validate_component(component, name) {
 	if (!component || !component.$$render) {
 		if (name === 'svelte:component') name += ' this={...}';
-		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
+		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules. Otherwise you may need to fix a <${name}>.`);
 	}
 
 	return component;
@@ -205,7 +205,7 @@ export function add_classes(classes) {
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
 		.filter(key => style_object[key])
-		.map(key => `${key}: ${style_object[key]};`)
+		.map(key => `${key}: ${escape_attribute_value(style_object[key])};`)
 		.join(' ');
 }
 

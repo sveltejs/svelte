@@ -8,7 +8,7 @@ import Element from '../../nodes/Element';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
 import { is_head } from './shared/is_head';
-import { Identifier } from 'estree';
+import { Identifier, Node } from 'estree';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 'raw' };
@@ -30,7 +30,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
 
 		if (can_use_innerhtml) {
-			const insert = content => b`${parent_node}.innerHTML = ${content};`[0];
+			const insert = (content: Node) => b`${parent_node}.innerHTML = ${content};`[0];
 
 			const { init } = this.rename_this_method(
 				block,

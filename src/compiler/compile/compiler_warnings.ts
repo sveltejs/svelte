@@ -175,10 +175,18 @@ export default {
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
+	a11y_click_events_have_key_events: () => ({
+		code: 'a11y-click-events-have-key-events',
+		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
+	}),
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
+	a11y_no_noninteractive_tabindex: {
+		code: 'a11y-no-noninteractive-tabindex',
+		message: 'A11y: noninteractive element cannot have positive tabIndex value'
+	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
 		message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'
@@ -186,5 +194,9 @@ export default {
 	redundant_event_modifier_passive: {
 		code: 'redundant-event-modifier',
 		message: 'The passive modifier only works with wheel and touch events'
-	}
+	},
+	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
+		code: 'invalid-rest-eachblock-binding',
+		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
+	})
 };

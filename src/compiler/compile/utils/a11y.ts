@@ -4,20 +4,20 @@ import {
 	elementRoles,
 	ARIARoleRelationConcept
 } from 'aria-query';
-import { AXObjects, elementAXObjects } from 'axobject-query';
+import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import Attribute from '../nodes/Attribute';
 
-const roles = [...roles_map.keys()];
+const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract);
 
 const non_interactive_roles = new Set(
-	roles
+	non_abstract_roles
 		.filter((name) => {
 			const role = roles_map.get(name);
 			return (
-				!roles_map.get(name).abstract &&
 				// 'toolbar' does not descend from widget, but it does support
 				// aria-activedescendant, thus in practice we treat it as a widget.
-				name !== 'toolbar' &&
+				// focusable tabpanel elements are recommended if any panels in a set contain content where the first element in the panel is not focusable.
+				!['toolbar', 'tabpanel'].includes(name) &&
 				!role.superClass.some((classes) => classes.includes('widget'))
 			);
 		})
@@ -29,32 +29,37 @@ const non_interactive_roles = new Set(
 );
 
 const interactive_roles = new Set(
-	roles
-		.filter((name) => {
-			const role = roles_map.get(name);
-			return (
-				!role.abstract &&
-				// The `progressbar` is descended from `widget`, but in practice, its
-				// value is always `readonly`, so we treat it as a non-interactive role.
-				name !== 'progressbar' &&
-				role.superClass.some((classes) => classes.includes('widget'))
-			);
-		})
-		.concat(
-			// 'toolbar' does not descend from widget, but it does support
-			// aria-activedescendant, thus in practice we treat it as a widget.
-			'toolbar'
-		)
+	non_abstract_roles.filter((name) => !non_interactive_roles.has(name))
 );
 
 export function is_non_interactive_roles(role: ARIARoleDefintionKey) {
 	return non_interactive_roles.has(role);
 }
 
+export function is_interactive_roles(role: ARIARoleDefintionKey) {
+	return interactive_roles.has(role);
+}
+
 const presentation_roles = new Set(['presentation', 'none']);
 
 export function is_presentation_role(role: ARIARoleDefintionKey) {
 	return presentation_roles.has(role);
+}
+
+export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Map<string, Attribute>) {
+	if (tag_name === 'input') {
+		const type = attribute_map.get('type')?.get_static_value();
+
+		if (type && type === 'hidden') {
+			return true;
+		}
+	}
+
+	const aria_hidden = attribute_map.get('aria-hidden');
+	if (!aria_hidden) return false;
+	if (!aria_hidden.is_static) return true;
+	const aria_hidden_value = aria_hidden.get_static_value();
+	return aria_hidden_value === true || aria_hidden_value === 'true';
 }
 
 const non_interactive_element_role_schemas: ARIARoleRelationConcept[] = [];
@@ -99,8 +104,8 @@ function match_schema(
 			schema_attribute.value &&
 			schema_attribute.value !== attribute.get_static_value()
 		) {
-return false;
-}
+			return false;
+		}
 		return true;
 	});
 }
@@ -133,5 +138,25 @@ export function is_interactive_element(
 		return true;
 	}
 
+	return false;
+}
+
+export function is_semantic_role_element(role: ARIARoleDefintionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
+	for (const [schema, ax_object] of elementAXObjects.entries()) {
+		if (schema.name === tag_name && (!schema.attributes || schema.attributes.every(
+			(attr) => attribute_map.has(attr.name) && attribute_map.get(attr.name).get_static_value() === attr.value
+		))) {
+			for (const name of ax_object) {
+				const roles = AXObjectRoles.get(name);
+				if (roles) {
+					for (const { name } of roles) {
+						if (name === role) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
 	return false;
 }
