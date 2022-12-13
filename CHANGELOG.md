@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.55.0
 
 * Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
 
