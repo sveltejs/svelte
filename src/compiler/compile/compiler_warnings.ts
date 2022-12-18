@@ -185,7 +185,7 @@ export default {
 	}),
 	a11y_no_noninteractive_tabindex: {
 		code: 'a11y-no-noninteractive-tabindex',
-		message: 'A11y: noninteractive element cannot have positive tabIndex value'
+		message: 'A11y: noninteractive element cannot have nonnegative tabIndex value'
 	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
