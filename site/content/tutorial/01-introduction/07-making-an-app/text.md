@@ -12,7 +12,7 @@ npm create vite@latest my-app -- --template svelte
 
 ...or one of the [community-maintained integrations](https://sveltesociety.dev/tools).
 
-> [SvelteKit](https://kit.svelte.dev) is the official application framework from the Svelte team. It's currently in development, but if you don't mind using pre-1.0 software then it's the recommended way to build Svelte apps.
+> [SvelteKit](https://kit.svelte.dev) is the official application framework from the Svelte team. It [reached version 1.0](https://svelte.dev/blog/announcing-sveltekit-1.0) on December 14, 2022 and is now the recommended way to built Svelte apps of all shapes and sizes.
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](/blog/svelte-for-new-developers), which walks you through the process.
 
