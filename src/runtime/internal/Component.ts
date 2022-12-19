@@ -5,13 +5,11 @@ import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
 import { T$$ } from './types';
 
-export function bind(component, name, callback, value) {
+export function bind(component, name, callback) {
 	const index = component.$$.props[name];
 	if (index !== undefined) {
 		component.$$.bound[index] = callback;
-		if (value === undefined) {
-			callback(component.$$.ctx[index]);
-		}
+		callback(component.$$.ctx[index]);
 	}
 }
 
