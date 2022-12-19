@@ -56,8 +56,8 @@ function get_entity_pattern(is_attribute_value: boolean) {
 	return entity_pattern;
 }
 
-const entity_pattern_content = get_entity_pattern(false)
-const entity_pattern_attri_value = get_entity_pattern(true)
+const entity_pattern_content = get_entity_pattern(false);
+const entity_pattern_attri_value = get_entity_pattern(true);
 
 export function decode_character_references(html: string, is_attribute_value: boolean) {
 	const entity_pattern = is_attribute_value ? entity_pattern_attri_value : entity_pattern_content;
