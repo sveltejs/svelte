@@ -1099,7 +1099,7 @@ Transition functions also receive a third argument, `options`, which contains in
 
 Available values in the `options` object are:
 
-* `direction` - one of `in`, `out`, or `bidirectional` depending on the type of transition
+* `direction` - one of `in`, `out`, or `both` depending on the type of transition
 
 ##### Transition events
 
