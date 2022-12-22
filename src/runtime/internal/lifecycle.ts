@@ -31,7 +31,7 @@ export function beforeUpdate(fn: () => any) {
  * 
  * https://svelte.dev/docs#run-time-svelte-onmount
  */
-export function onMount(fn: () => any) {
+export function onMount(fn: (() => () => void) | (() => void | Promise<void>)) {
 	get_current_component().$$.on_mount.push(fn);
 }
 
