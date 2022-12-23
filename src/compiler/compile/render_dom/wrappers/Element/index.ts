@@ -169,8 +169,8 @@ export default class ElementWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-
-		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
+		const is_original_dynamic_element = node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK;
+		if (is_original_dynamic_element) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
 				name: renderer.component.get_unique_name('create_dynamic_element'),
@@ -187,82 +187,87 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
-		this.var = {
-			type: 'Identifier',
-			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
-		};
-
-		this.void = is_void(node.name);
-
-		this.class_dependencies = [];
-
-		if (this.node.children.length) {
-			this.node.lets.forEach(l => {
-				extract_names(l.value || l.name).forEach(name => {
-					renderer.add_to_context(name, true);
+		// the original svelte:element is never used for rendering, because
+		// it gets assigned a child_dynamic_element which is used in all rendering logic.
+		// so doing all of this on the original svelte:element will just cause double
+		// code, because it will be done again on the child_dynamic_element.
+		if (!is_original_dynamic_element) {
+			this.var = {
+				type: 'Identifier',
+				name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
+			};
+	
+			this.void = is_void(node.name);
+	
+			this.class_dependencies = [];
+			if (this.node.children.length) {
+				this.node.lets.forEach(l => {
+					extract_names(l.value || l.name).forEach(name => {
+						renderer.add_to_context(name, true);
+					});
 				});
+			}
+
+			this.attributes = this.node.attributes.map(attribute => {
+				if (attribute.name === 'style') {
+					return new StyleAttributeWrapper(this, block, attribute);
+				}
+				if (attribute.type === 'Spread') {
+					return new SpreadAttributeWrapper(this, block, attribute);
+				}
+				return new AttributeWrapper(this, block, attribute);
 			});
+
+			// ordinarily, there'll only be one... but we need to handle
+			// the rare case where an element can have multiple bindings,
+			// e.g. <audio bind:paused bind:currentTime>
+			this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
+
+			this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
+
+			if (node.intro || node.outro) {
+				if (node.intro) block.add_intro(node.intro.is_local);
+				if (node.outro) block.add_outro(node.outro.is_local);
+			}
+
+			if (node.animation) {
+				block.add_animation();
+			}
+
+			block.add_dependencies(node.tag_expr.dependencies);
+
+			// add directive and handler dependencies
+			[node.animation, node.outro, ...node.actions, ...node.classes, ...node.styles].forEach(directive => {
+				if (directive && directive.expression) {
+					block.add_dependencies(directive.expression.dependencies);
+				}
+			});
+
+			node.handlers.forEach(handler => {
+				if (handler.expression) {
+					block.add_dependencies(handler.expression.dependencies);
+				}
+			});
+
+			if (this.parent) {
+				if (node.actions.length > 0 ||
+					node.animation ||
+					node.bindings.length > 0 ||
+					node.classes.length > 0 ||
+					node.intro || node.outro ||
+					node.handlers.length > 0 ||
+					node.styles.length > 0 ||
+					this.node.name === 'option' ||
+					node.tag_expr.dynamic_dependencies().length ||
+					renderer.options.dev
+				) {
+					this.parent.cannot_use_innerhtml(); // need to use add_location
+					this.parent.not_static_content();
+				}
+			}
+
+			this.fragment = new FragmentWrapper(renderer, block, node.children, this, strip_whitespace, next_sibling);
 		}
-
-		this.attributes = this.node.attributes.map(attribute => {
-			if (attribute.name === 'style') {
-				return new StyleAttributeWrapper(this, block, attribute);
-			}
-			if (attribute.type === 'Spread') {
-				return new SpreadAttributeWrapper(this, block, attribute);
-			}
-			return new AttributeWrapper(this, block, attribute);
-		});
-
-		// ordinarily, there'll only be one... but we need to handle
-		// the rare case where an element can have multiple bindings,
-		// e.g. <audio bind:paused bind:currentTime>
-		this.bindings = this.node.bindings.map(binding => new Binding(block, binding, this));
-
-		this.event_handlers = this.node.handlers.map(event_handler => new EventHandler(event_handler, this));
-
-		if (node.intro || node.outro) {
-			if (node.intro) block.add_intro(node.intro.is_local);
-			if (node.outro) block.add_outro(node.outro.is_local);
-		}
-
-		if (node.animation) {
-			block.add_animation();
-		}
-
-		block.add_dependencies(node.tag_expr.dependencies);
-
-		// add directive and handler dependencies
-		[node.animation, node.outro, ...node.actions, ...node.classes, ...node.styles].forEach(directive => {
-			if (directive && directive.expression) {
-				block.add_dependencies(directive.expression.dependencies);
-			}
-		});
-
-		node.handlers.forEach(handler => {
-			if (handler.expression) {
-				block.add_dependencies(handler.expression.dependencies);
-			}
-		});
-
-		if (this.parent) {
-			if (node.actions.length > 0 ||
-				node.animation ||
-				node.bindings.length > 0 ||
-				node.classes.length > 0 ||
-				node.intro || node.outro ||
-				node.handlers.length > 0 ||
-				node.styles.length > 0 ||
-				this.node.name === 'option' ||
-				node.tag_expr.dynamic_dependencies().length ||
-				renderer.options.dev
-			) {
-				this.parent.cannot_use_innerhtml(); // need to use add_location
-				this.parent.not_static_content();
-			}
-		}
-
-		this.fragment = new FragmentWrapper(renderer, block, node.children, this, strip_whitespace, next_sibling);
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
