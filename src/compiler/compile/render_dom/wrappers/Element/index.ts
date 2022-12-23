@@ -187,19 +187,20 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
+		};
+
+		this.void = is_void(node.name);
+		
+		this.class_dependencies = [];
+
 		// the original svelte:element is never used for rendering, because
 		// it gets assigned a child_dynamic_element which is used in all rendering logic.
 		// so doing all of this on the original svelte:element will just cause double
 		// code, because it will be done again on the child_dynamic_element.
 		if (!is_original_dynamic_element) {
-			this.var = {
-				type: 'Identifier',
-				name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
-			};
-	
-			this.void = is_void(node.name);
-	
-			this.class_dependencies = [];
 			if (this.node.children.length) {
 				this.node.lets.forEach(l => {
 					extract_names(l.value || l.name).forEach(name => {
@@ -207,7 +208,7 @@ export default class ElementWrapper extends Wrapper {
 					});
 				});
 			}
-
+	
 			this.attributes = this.node.attributes.map(attribute => {
 				if (attribute.name === 'style') {
 					return new StyleAttributeWrapper(this, block, attribute);
