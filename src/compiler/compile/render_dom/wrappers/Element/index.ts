@@ -193,7 +193,7 @@ export default class ElementWrapper extends Wrapper {
 		};
 
 		this.void = is_void(node.name);
-		
+
 		this.class_dependencies = [];
 
 		// the original svelte:element is never used for rendering, because
