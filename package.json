@@ -148,7 +148,7 @@
     "kleur": "^4.1.5",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
-    "mocha": "^7.0.0",
+    "mocha": "^10.2.0",
     "periscopic": "^3.0.4",
     "puppeteer": "^2.0.0",
     "rollup": "^1.27.14",
