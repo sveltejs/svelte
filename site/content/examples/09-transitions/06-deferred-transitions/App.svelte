@@ -56,8 +56,8 @@
 					>
 
 					<p class='credit'>
-						<a target="_blank" href="https://www.flickr.com/photos/{d.path}">via Flickr</a> &ndash;
-						<a target="_blank" href={d.license.url}>{d.license.name}</a>
+						<a target="_blank" rel="noreferrer" href="https://www.flickr.com/photos/{d.path}">via Flickr</a> &ndash;
+						<a target="_blank" rel="noreferrer" href={d.license.url}>{d.license.name}</a>
 					</p>
 				</div>
 			{/await}

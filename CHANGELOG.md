@@ -1,10 +1,41 @@
 # Svelte changelog
 
-## Unreleased
+## 3.55.1 (unreleased)
 
-* Support `|important` modifier to style directive ([#7489](https://github.com/sveltejs/svelte/pull/7489))
+* add missing `submitter` property to `on:submit` event type
+
+## 3.55.0
+
+* Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
+
+## 3.54.0
+
+* Pass `options.direction` argument to custom transition functions ([#3918](https://github.com/sveltejs/svelte/issues/3918))
+* Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
+* Prevent running init binding unnecessarily ([#5689](https://github.com/sveltejs/svelte/issues/5689), [#6298](https://github.com/sveltejs/svelte/issues/6298))
+* Allow updating variables from `@const` declared function ([#7843](https://github.com/sveltejs/svelte/issues/7843))
+* Do not emit `a11y-no-noninteractive-tabindex` warning if element has a `tabpanel` ([#8025](https://github.com/sveltejs/svelte/pull/8025))
+* Fix escaping SSR'd values in `style:` directive ([#8085](https://github.com/sveltejs/svelte/issues/8085))
+
+## 3.53.1
+
+* Fix exception in `rel=` attribute check with dynamic values ([#7994](https://github.com/sveltejs/svelte/issues/7994))
+* Do not emit deprecation warnings for `css` compiler options for now ([#8009](https://github.com/sveltejs/svelte/issues/8009))
+* Make compiler run in browser again ([#8010](https://github.com/sveltejs/svelte/issues/8010))
+* Upgrade `tslib` ([#8013](https://github.com/sveltejs/svelte/issues/8013))
+
+## 3.53.0
+
+* Check whether `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))
+* Upgrade various dependencies, notably `css-tree` to `2.2.1` ([#7572](https://github.com/sveltejs/svelte/pull/7572), [#7982](https://github.com/sveltejs/svelte/pull/7982))
+* Extend `css` compiler option with `'external' | 'injected' | 'none'` settings and deprecate old `true | false` values ([#7914](https://github.com/sveltejs/svelte/pull/7914))
+
+## 3.52.0
+
+* Throw compile-time error when attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
 * Warn when using `<a target="_blank">` without `rel="noreferrer"` ([#6188](https://github.com/sveltejs/svelte/issues/6188))
-* Throw helpful compiler error for attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
+* Support `style:foo|important` modifier ([#7365](https://github.com/sveltejs/svelte/issues/7365))
+* Fix hydration regression with `{@html}` and components in `<svelte:head>` ([#7941](https://github.com/sveltejs/svelte/pull/7941))
 
 ## 3.51.0
 
@@ -1200,7 +1231,7 @@ Also:
 ## 2.12.0
 
 * Initialise actions on mount rather than hydrate ([#1653](https://github.com/sveltejs/svelte/pull/1653))
-* Allow non-existent components to be destroyed ([#1677](https://github.com/sveltejs/svelte/pull/1677))
+* Allow nonexistent components to be destroyed ([#1677](https://github.com/sveltejs/svelte/pull/1677))
 * Pass AMD ID from CLI correctly ([#1672](https://github.com/sveltejs/svelte/pull/1672))
 * Minor AST tweaks ([#1673](https://github.com/sveltejs/svelte/pull/1673), [#1674](https://github.com/sveltejs/svelte/pull/1674))
 * Reduce code duplication in component initialisation ([#1670](https://github.com/sveltejs/svelte/pull/1670))

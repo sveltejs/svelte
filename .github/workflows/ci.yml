@@ -1,9 +1,47 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
 jobs:
+  Setup:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
+      - run: npm run build
+        env:
+          PUBLISH: true
+      - name: Upload build assets
+        id: upload-artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-assets
+          path: |
+            index.*
+            compiler.*
+            ssr.*
+            action/
+            animate/
+            easing/
+            internal/
+            motion/
+            store/
+            transition/
+            types/
   Tests:
+    needs: Setup
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -16,8 +54,25 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - name: Download build assets
+        uses: actions/download-artifact@v3
+        id: download-artifact
+        with:
+          name: build-assets
+      - name: Get Node version ${{ runner.os }}
+        run: echo "NODE_VERSION=`node --version`" >> $GITHUB_ENV
+        if: runner.os != 'Windows'
+      - name: Get Node version ${{ runner.os }}
+        run: |
+          chcp 65001
+          echo ("NODE_VERSION=$(node --version)") >> $env:GITHUB_ENV
+        if: runner.os == 'Windows'
+      - run: npm install --save-dev puppeteer@13
+        if: ${{ runner.os == 'Linux' && (!startsWith(env.NODE_VERSION, 'v8.') && !startsWith(env.NODE_VERSION, 'v10.')) }}
       - run: npm install
-      - run: npm test
+        env:
+          SKIP_PREPARE: true
+      - run: npm run test:integration
         env:
           CI: true
   Lint:
@@ -40,4 +95,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           cache: npm
-      - run: 'npm i && npm run test:unit'
+      - run: npm install
+        env:
+          SKIP_PREPARE: true
+      - run: npm run test:unit

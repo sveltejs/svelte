@@ -29,3 +29,5 @@
 <a href="HTTPS://svelte.dev" target="_blank" rel="noreferrer noopener">svelte website (valid)</a>
 <a href="//svelte.dev" target="_blank" rel="noreferrer">svelte website (valid)</a>
 <a href="//svelte.dev" target="_blank" rel="noreferrer noopener">svelte website (valid)</a>
+<!-- dynamic rel value should not warn-->
+<a href="//svelte.dev" target="_blank" rel={`${Math.random()}`}>svelte website (valid)</a>

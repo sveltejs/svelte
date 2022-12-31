@@ -1,4 +1,5 @@
-import parse from 'css-tree/lib/parser/index.js';
+// @ts-ignore
+import parse from 'css-tree/parser';
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from 'estree';
@@ -17,6 +18,12 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	}
 
 	const content_end = parser.index;
+
+	// discard styles when css is disabled
+	if (parser.css_mode === 'none') {
+		parser.read(regex_closing_style_tag);
+		return null;
+	}
 
 	let ast;
 
@@ -70,6 +77,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	});
 
 	parser.read(regex_closing_style_tag);
+  
 	const end = parser.index;
 
 	return {
