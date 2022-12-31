@@ -59,6 +59,16 @@ jobs:
         id: download-artifact
         with:
           name: build-assets
+      - name: Get Node version ${{ runner.os }}
+        run: echo "NODE_VERSION=`node --version`" >> $GITHUB_ENV
+        if: runner.os != 'Windows'
+      - name: Get Node version ${{ runner.os }}
+        run: |
+          chcp 65001
+          echo ("NODE_VERSION=$(node --version)") >> $env:GITHUB_ENV
+        if: runner.os == 'Windows'
+      - run: npm install --save-dev puppeteer@13
+        if: ${{ runner.os == 'Linux' && (!startsWith(env.NODE_VERSION, 'v8.') && !startsWith(env.NODE_VERSION, 'v10.')) }}
       - run: npm install
         env:
           SKIP_PREPARE: true

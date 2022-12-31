@@ -20,6 +20,11 @@ Svelte is an MIT-licensed open source project with its ongoing development made 
 Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
 
 
+## Roadmap
+
+You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what we're currently working on.
+
+
 ## Development
 
 Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!

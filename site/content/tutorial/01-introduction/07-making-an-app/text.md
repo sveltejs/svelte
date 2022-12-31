@@ -4,15 +4,13 @@ title: Making an app
 
 This tutorial is designed to get you familiar with the process of writing components. But at some point, you'll want to start writing components in the comfort of your own text editor.
 
-First, you'll need to integrate Svelte with a build tool. We recommend using [Vite](https://vitejs.dev/) with [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte/)...
+First, you'll need to integrate Svelte with a build tool. We recommend using [SvelteKit](https://kit.svelte.dev), which sets up [Vite](https://vitejs.dev/) with [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte/) for you...
 
 ```bash
-npm create vite@latest my-app -- --template svelte
+npm create svelte@latest myapp
 ```
 
-...or one of the [community-maintained integrations](https://sveltesociety.dev/tools).
-
-> [SvelteKit](https://kit.svelte.dev) is the official application framework from the Svelte team. It's currently in development, but if you don't mind using pre-1.0 software then it's the recommended way to build Svelte apps.
+There are also a number of [community-maintained integrations](https://sveltesociety.dev/tools).
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](/blog/svelte-for-new-developers), which walks you through the process.
 

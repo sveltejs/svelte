@@ -77,6 +77,9 @@ describe('runtime (puppeteer)', function() {
 
 	function runTest(dir, hydrate) {
 		if (dir[0] === '.') return;
+		// MEMO: puppeteer can not execute Chromium properly with Node8,10 on Linux at GitHub actions.
+		const { version } = process;
+		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
