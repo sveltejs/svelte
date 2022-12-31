@@ -1,6 +1,10 @@
 # Svelte changelog
 
-## Unreleased
+## 3.55.1 (unreleased)
+
+* add missing `submitter` property to `on:submit` event type
+
+## 3.55.0
 
 * Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
 
