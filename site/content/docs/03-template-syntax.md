@@ -124,6 +124,10 @@ An element or component can have multiple spread attributes, interspersed with r
 
 > The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
+> Sometimes, the attribute order matters as Svelte sets attributes sequentially in JavaScript. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, Svelte will attempt to set the value to `1` (rounding up from 0.5 as the step by default is 1), and then set the step to `0.1`. To fix this, change it to `<input type="range" min="0" max="1" step="0.1" value={0.5}/>`.
+
+> Another example is `<img src="..." loading="lazy" />`. Svelte will set the img `src` before making the img element `loading="lazy"`, which is probably too late. Change this to `<img loading="lazy" src="...">` to make the image lazily loaded.
+
 ---
 
 ### Text expressions
@@ -971,7 +975,7 @@ transition:fn|local={params}
 
 
 ```js
-transition = (node: HTMLElement, params: any) => {
+transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
 	easing?: (t: number) => number,
@@ -1091,6 +1095,11 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
+Transition functions also receive a third argument, `options`, which contains information about the transition.
+
+Available values in the `options` object are:
+
+* `direction` - one of `in`, `out`, or `both` depending on the type of transition
 
 ##### Transition events
 

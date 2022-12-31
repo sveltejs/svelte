@@ -1,5 +1,22 @@
 # Svelte changelog
 
+## 3.55.1 (unreleased)
+
+* add missing `submitter` property to `on:submit` event type
+
+## 3.55.0
+
+* Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
+
+## 3.54.0
+
+* Pass `options.direction` argument to custom transition functions ([#3918](https://github.com/sveltejs/svelte/issues/3918))
+* Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
+* Prevent running init binding unnecessarily ([#5689](https://github.com/sveltejs/svelte/issues/5689), [#6298](https://github.com/sveltejs/svelte/issues/6298))
+* Allow updating variables from `@const` declared function ([#7843](https://github.com/sveltejs/svelte/issues/7843))
+* Do not emit `a11y-no-noninteractive-tabindex` warning if element has a `tabpanel` ([#8025](https://github.com/sveltejs/svelte/pull/8025))
+* Fix escaping SSR'd values in `style:` directive ([#8085](https://github.com/sveltejs/svelte/issues/8085))
+
 ## 3.53.1
 
 * Fix exception in `rel=` attribute check with dynamic values ([#7994](https://github.com/sveltejs/svelte/issues/7994))

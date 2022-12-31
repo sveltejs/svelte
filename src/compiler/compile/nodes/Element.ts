@@ -194,10 +194,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
 		case 'idlist': // if list of ids, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((id) => typeof id === 'string');
+				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
 		case 'tokenlist': // if list of tokens, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
 		default:
 			return false;
 	}
@@ -492,47 +492,52 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_misplaced_role(this.name));
 				}
 
-				const value = attribute.get_static_value() as ARIARoleDefintionKey;
+				const value = attribute.get_static_value();
 
-				if (value && aria_role_abstract_set.has(value)) {
-					component.warn(attribute, compiler_warnings.a11y_no_abstract_role(value));
-				} else if (value && !aria_role_set.has(value)) {
-					const match = fuzzymatch(value, aria_roles);
-					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
-				}
-
-				// no-redundant-roles
-				const has_redundant_role = value === a11y_implicit_semantics.get(this.name);
-
-				if (this.name === value || has_redundant_role) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-				if (!is_parent_section_or_article) {
-					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
-					if (has_nested_redundant_role) {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
-				}
-
-				// role-has-required-aria-props
-				if (!is_semantic_role_element(value, this.name, attribute_map)) {
-					const role = roles.get(value);
-					if (role) {
-						const required_role_props = Object.keys(role.requiredProps);
-						const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
-
-						if (has_missing_props) {
-							component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
+				if (typeof value === 'string') {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
+						if (current_role && aria_role_abstract_set.has(current_role)) {
+							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+						} else if (current_role && !aria_role_set.has(current_role)) {
+							const match = fuzzymatch(current_role, aria_roles);
+							component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
 						}
-					}
-				}
 
-				// no-interactive-element-to-noninteractive-role
-				if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(value) || is_presentation_role(value))) {
-					component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(value, this.name));
+						// no-redundant-roles
+						const has_redundant_role = current_role === a11y_implicit_semantics.get(this.name);
+
+						if (this.name === current_role || has_redundant_role) {
+							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+						}
+
+						// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+						const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+						if (!is_parent_section_or_article) {
+							const has_nested_redundant_role = current_role === a11y_nested_implicit_semantics.get(this.name);
+							if (has_nested_redundant_role) {
+								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+							}
+						}
+
+						// role-has-required-aria-props
+						if (!is_semantic_role_element(current_role, this.name, attribute_map)) {
+							const role = roles.get(current_role);
+							if (role) {
+								const required_role_props = Object.keys(role.requiredProps);
+								const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+								if (has_missing_props) {
+									component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(current_role, required_role_props));
+								}
+							}
+						}
+
+						// no-interactive-element-to-noninteractive-role
+						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
+							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
+						}
+					});
+
 				}
 			}
 
@@ -621,7 +626,7 @@ export default class Element extends Node {
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
-						const rel_values = rel ? rel.get_static_value().split(' ') : [];
+						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
 						const expected_values = ['noreferrer'];
 						expected_values.forEach(expected_value => {
 							if (!rel || rel && rel_values.indexOf(expected_value) < 0) {

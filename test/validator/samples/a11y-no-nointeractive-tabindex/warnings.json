@@ -2,44 +2,29 @@
 	{
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
-			"character": 241,
-			"column": 20,
-			"line": 11
-		},
-		"message": "A11y: noninteractive element cannot have positive tabIndex value",
-		"pos": 221,
-		"start": {
-			"character": 221,
-			"column": 0,
-			"line": 11
-		}
-	},
-	{
-		"code": "a11y-no-noninteractive-tabindex",
-		"end": {
-			"character": 277,
-			"column": 35,
-			"line": 12
-		},
-		"message": "A11y: noninteractive element cannot have positive tabIndex value",
-		"pos": 242,
-		"start": {
-			"character": 242,
-			"column": 0,
-			"line": 12
-		}
-	},
-	{
-		"code": "a11y-no-noninteractive-tabindex",
-		"end": {
-			"character": 302,
-			"column": 24,
-			"line": 13
-		},
-		"message": "A11y: noninteractive element cannot have positive tabIndex value",
-		"pos": 278,
-		"start": {
 			"character": 278,
+			"column": 20,
+			"line": 12
+		},
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
+		"pos": 258,
+		"start": {
+			"character": 258,
+			"column": 0,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 314,
+			"column": 35,
+			"line": 13
+		},
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
+		"pos": 279,
+		"start": {
+			"character": 279,
 			"column": 0,
 			"line": 13
 		}
@@ -47,16 +32,31 @@
 	{
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
-			"character": 329,
-			"column": 26,
+			"character": 339,
+			"column": 24,
 			"line": 14
 		},
 		"message": "A11y: noninteractive element cannot have positive tabIndex value",
-		"pos": 303,
+		"pos": 315,
 		"start": {
-			"character": 303,
+			"character": 315,
 			"column": 0,
 			"line": 14
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"character": 366,
+			"column": 26,
+			"line": 15
+		},
+		"message": "A11y: noninteractive element cannot have positive tabIndex value",
+		"pos": 340,
+		"start": {
+			"character": 340,
+			"column": 0,
+			"line": 15
 		}
 	}
 ]
