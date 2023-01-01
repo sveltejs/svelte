@@ -3,6 +3,7 @@
 ## 3.55.1 (unreleased)
 
 * add missing `submitter` property to `on:submit` event type
+* Fix static `<svelte:element>` optimization in production mode ([#7938](https://github.com/sveltejs/svelte/pull/7938))
 
 ## 3.55.0
 
