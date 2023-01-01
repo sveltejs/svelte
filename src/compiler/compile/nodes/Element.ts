@@ -239,6 +239,7 @@ export default class Element extends Node {
 				this.tag_expr = new Expression(component, this, scope, info.tag);
 			} else {
 				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+				this.name = info.tag;
 			}
 		} else {
 			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
