@@ -7,7 +7,8 @@
 * Fix `draw` transition with delay showing a dot at the beginning of transition ([#6816](https://github.com/sveltejs/svelte/issues/6816))
 * Fix `svelte-ignore` comment breaks named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
 * Fix duplicate event listeners for `<svelte:element on:event>` ([#8129](https://github.com/sveltejs/svelte/issues/8129))
-
+* Fix max call stack exceeded ([#7032](https://github.com/sveltejs/svelte/issues/7032))
+* Revert to prevent running init binding unnecessarily ([#8103](https://github.com/sveltejs/svelte/issues/8103))
 
 ## 3.55.0
 
