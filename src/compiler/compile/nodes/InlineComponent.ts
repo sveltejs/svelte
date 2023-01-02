@@ -143,6 +143,8 @@ export default class InlineComponent extends Node {
 
 				children.push(slot_template);
 				info.children.splice(i, 1);
+			} else if (child.type === 'Comment' && children.length > 0) {
+				children[children.length - 1].children.unshift(child);
 			}
 		}
 
