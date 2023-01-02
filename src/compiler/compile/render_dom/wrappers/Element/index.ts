@@ -170,6 +170,15 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
+		};
+
+		this.void = is_void(node.name);
+
+		this.class_dependencies = [];
+
 		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
@@ -185,16 +194,13 @@ export default class ElementWrapper extends Wrapper {
 				strip_whitespace,
 				next_sibling
 			);
+
+			// the original svelte:element is never used for rendering, because
+			// it gets assigned a child_dynamic_element which is used in all rendering logic.
+			// so doing all of this on the original svelte:element will just cause double
+			// code, because it will be done again on the child_dynamic_element.
+			return;
 		}
-
-		this.var = {
-			type: 'Identifier',
-			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
-		};
-
-		this.void = is_void(node.name);
-
-		this.class_dependencies = [];
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
@@ -327,20 +333,19 @@ export default class ElementWrapper extends Wrapper {
 					${this.var}.p(#ctx, #dirty);
 				}
 			} else if (${previous_tag}) {
-				${
-					has_transitions
-						? b`
+				${has_transitions
+				? b`
 							@group_outros();
 							@transition_out(${this.var}, 1, 1, () => {
 								${this.var} = null;
 							});
 							@check_outros();
 						`
-						: b`
+				: b`
 							${this.var}.d(1);
 							${this.var} = null;
 						`
-				}
+			}
 			}
 			${previous_tag} = ${tag};
 		`);
@@ -682,9 +687,9 @@ export default class ElementWrapper extends Wrapper {
 			function ${handler}(${params}) {
 				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
-					.filter(dep => dep[0] !== '$')
-					.filter(dep => !contextual_dependencies.has(dep))
-					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+				.filter(dep => dep[0] !== '$')
+				.filter(dep => !contextual_dependencies.has(dep))
+				.map(dep => b`${this.renderer.invalidate(dep)};`)}
 			}
 		`);
 

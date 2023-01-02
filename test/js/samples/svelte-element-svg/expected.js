@@ -14,11 +14,6 @@ import {
 	svg_element
 } from "svelte/internal";
 
-function create_dynamic_element_1(ctx) {
-	return { c: noop, m: noop, p: noop, d: noop };
-}
-
-// (5:0) <svelte:element this={tag.svg} xmlns="http://www.w3.org/2000/svg">
 function create_dynamic_element(ctx) {
 	let svelte_element1;
 	let svelte_element0;
@@ -61,35 +56,35 @@ function create_dynamic_element(ctx) {
 
 function create_fragment(ctx) {
 	let previous_tag = /*tag*/ ctx[0].svg;
-	let svelte_element1_anchor;
-	let svelte_element1 = /*tag*/ ctx[0].svg && create_dynamic_element(ctx);
+	let svelte_element_anchor;
+	let svelte_element = /*tag*/ ctx[0].svg && create_dynamic_element(ctx);
 
 	return {
 		c() {
-			if (svelte_element1) svelte_element1.c();
-			svelte_element1_anchor = empty();
+			if (svelte_element) svelte_element.c();
+			svelte_element_anchor = empty();
 		},
 		m(target, anchor) {
-			if (svelte_element1) svelte_element1.m(target, anchor);
-			insert(target, svelte_element1_anchor, anchor);
+			if (svelte_element) svelte_element.m(target, anchor);
+			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (/*tag*/ ctx[0].svg) {
 				if (!previous_tag) {
-					svelte_element1 = create_dynamic_element(ctx);
-					svelte_element1.c();
-					svelte_element1.m(svelte_element1_anchor.parentNode, svelte_element1_anchor);
+					svelte_element = create_dynamic_element(ctx);
+					svelte_element.c();
+					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else if (safe_not_equal(previous_tag, /*tag*/ ctx[0].svg)) {
-					svelte_element1.d(1);
-					svelte_element1 = create_dynamic_element(ctx);
-					svelte_element1.c();
-					svelte_element1.m(svelte_element1_anchor.parentNode, svelte_element1_anchor);
+					svelte_element.d(1);
+					svelte_element = create_dynamic_element(ctx);
+					svelte_element.c();
+					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else {
-					svelte_element1.p(ctx, dirty);
+					svelte_element.p(ctx, dirty);
 				}
 			} else if (previous_tag) {
-				svelte_element1.d(1);
-				svelte_element1 = null;
+				svelte_element.d(1);
+				svelte_element = null;
 			}
 
 			previous_tag = /*tag*/ ctx[0].svg;
@@ -97,8 +92,8 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element1_anchor);
-			if (svelte_element1) svelte_element1.d(detaching);
+			if (detaching) detach(svelte_element_anchor);
+			if (svelte_element) svelte_element.d(detaching);
 		}
 	};
 }
