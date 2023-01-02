@@ -1,3 +1,8 @@
-<svelte:element class="outer" this="a" on:keydown on:keyup>
-    <svelte:element class="inner" this="span" on:keydown on:keyup></svelte:element>
+<script>
+	const a = 'a';
+	const span = 'span';
+</script>
+
+<svelte:element this={a} class='outer' on:keydown on:keyup>
+	<svelte:element this={span} class='inner' on:keydown on:keyup />
 </svelte:element>

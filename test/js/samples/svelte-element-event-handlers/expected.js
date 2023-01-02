@@ -39,16 +39,16 @@ function create_dynamic_element(ctx) {
 
 	return {
 		c() {
-			svelte_element1 = element("a");
-			svelte_element0 = element("span");
+			svelte_element1 = element(a);
+			svelte_element0 = element(span);
 
-			if ((/-/).test("span")) {
+			if ((/-/).test(span)) {
 				set_custom_element_data_map(svelte_element0, svelte_element0_data);
 			} else {
 				set_attributes(svelte_element0, svelte_element0_data);
 			}
 
-			if ((/-/).test("a")) {
+			if ((/-/).test(a)) {
 				set_custom_element_data_map(svelte_element1, svelte_element1_data);
 			} else {
 				set_attributes(svelte_element1, svelte_element1_data);
@@ -72,7 +72,7 @@ function create_dynamic_element(ctx) {
 		p(ctx, dirty) {
 			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ class: "inner" }]);
 
-			if ((/-/).test("span")) {
+			if ((/-/).test(span)) {
 				set_custom_element_data_map(svelte_element0, svelte_element0_data);
 			} else {
 				set_attributes(svelte_element0, svelte_element0_data);
@@ -80,7 +80,7 @@ function create_dynamic_element(ctx) {
 
 			svelte_element1_data = get_spread_update(svelte_element1_levels, [{ class: "outer" }]);
 
-			if ((/-/).test("a")) {
+			if ((/-/).test(a)) {
 				set_custom_element_data_map(svelte_element1, svelte_element1_data);
 			} else {
 				set_attributes(svelte_element1, svelte_element1_data);
@@ -95,9 +95,9 @@ function create_dynamic_element(ctx) {
 }
 
 function create_fragment(ctx) {
-	let previous_tag = "a";
+	let previous_tag = a;
 	let svelte_element_anchor;
-	let svelte_element = "a" && create_dynamic_element(ctx);
+	let svelte_element = a && create_dynamic_element(ctx);
 
 	return {
 		c() {
@@ -109,12 +109,12 @@ function create_fragment(ctx) {
 			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
-			if ("a") {
+			if (a) {
 				if (!previous_tag) {
 					svelte_element = create_dynamic_element(ctx);
 					svelte_element.c();
 					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
-				} else if (safe_not_equal(previous_tag, "a")) {
+				} else if (safe_not_equal(previous_tag, a)) {
 					svelte_element.d(1);
 					svelte_element = create_dynamic_element(ctx);
 					svelte_element.c();
@@ -127,7 +127,7 @@ function create_fragment(ctx) {
 				svelte_element = null;
 			}
 
-			previous_tag = "a";
+			previous_tag = a;
 		},
 		i: noop,
 		o: noop,
@@ -137,6 +137,9 @@ function create_fragment(ctx) {
 		}
 	};
 }
+
+const a = 'a';
+const span = 'span';
 
 function instance($$self) {
 	function keydown_handler(event) {
