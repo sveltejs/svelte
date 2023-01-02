@@ -6,6 +6,8 @@
 * Fix static `<svelte:element>` optimization in production mode ([#7938](https://github.com/sveltejs/svelte/pull/7938))
 * Fix `draw` transition with delay showing a dot at the beginning of transition ([#6816](https://github.com/sveltejs/svelte/issues/6816))
 * Fix `svelte-ignore` comment breaks named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
+* Fix duplicate event listeners for `<svelte:element on:event>` ([#8129](https://github.com/sveltejs/svelte/issues/8129))
+
 
 ## 3.55.0
 
