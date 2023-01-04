@@ -537,6 +537,11 @@ export default class Element extends Node {
 						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
 							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
 						}
+            
+            // no-noninteractive-element-to-interactive-role
+            if (!is_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
+              component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
+            }
 					});
 
 				}
