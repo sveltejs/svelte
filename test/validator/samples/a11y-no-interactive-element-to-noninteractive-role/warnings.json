@@ -794,94 +794,94 @@
 			"line": 72
 		}
 	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3695,
-			"column": 28,
-			"line": 145
-		},
-		"message": "A11y: <menuitem> cannot have role 'listitem'",
-		"pos": 3667,
-		"start": {
-			"character": 3667,
-			"column": 0,
-			"line": 145
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3734,
-			"column": 38,
-			"line": 146
-		},
-		"message": "A11y: <option> cannot have role 'listitem'",
-		"pos": 3696,
-		"start": {
-			"character": 3696,
-			"column": 0,
-			"line": 146
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3773,
-			"column": 38,
-			"line": 147
-		},
-		"message": "A11y: <select> cannot have role 'listitem'",
-		"pos": 3735,
-		"start": {
-			"character": 3735,
-			"column": 0,
-			"line": 147
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3801,
-			"column": 27,
-			"line": 148
-		},
-		"message": "A11y: <summary> cannot have role 'listitem'",
-		"pos": 3774,
-		"start": {
-			"character": 3774,
-			"column": 0,
-			"line": 148
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3842,
-			"column": 40,
-			"line": 149
-		},
-		"message": "A11y: <textarea> cannot have role 'listitem'",
-		"pos": 3802,
-		"start": {
-			"character": 3802,
-			"column": 0,
-			"line": 149
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
-			"character": 3865,
-			"column": 22,
-			"line": 150
-		},
-		"message": "A11y: <tr> cannot have role 'listitem'",
-		"pos": 3843,
-		"start": {
-			"character": 3843,
-			"column": 0,
-			"line": 150
-		}
-	}
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3779,
+      "column": 28,
+      "line": 143
+    },
+    "message": "A11y: <menuitem> cannot have role 'listitem'",
+    "pos": 3751,
+    "start": {
+      "character": 3751,
+      "column": 0,
+      "line": 143
+    }
+  },
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3818,
+      "column": 38,
+      "line": 144
+    },
+    "message": "A11y: <option> cannot have role 'listitem'",
+    "pos": 3780,
+    "start": {
+      "character": 3780,
+      "column": 0,
+      "line": 144
+    }
+  },
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3857,
+      "column": 38,
+      "line": 145
+    },
+    "message": "A11y: <select> cannot have role 'listitem'",
+    "pos": 3819,
+    "start": {
+      "character": 3819,
+      "column": 0,
+      "line": 145
+    }
+  },
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3885,
+      "column": 27,
+      "line": 146
+    },
+    "message": "A11y: <summary> cannot have role 'listitem'",
+    "pos": 3858,
+    "start": {
+      "character": 3858,
+      "column": 0,
+      "line": 146
+    }
+  },
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3926,
+      "column": 40,
+      "line": 147
+    },
+    "message": "A11y: <textarea> cannot have role 'listitem'",
+    "pos": 3886,
+    "start": {
+      "character": 3886,
+      "column": 0,
+      "line": 147
+    }
+  },
+  {
+    "code": "a11y-no-interactive-element-to-noninteractive-role",
+    "end": {
+      "character": 3949,
+      "column": 22,
+      "line": 148
+    },
+    "message": "A11y: <tr> cannot have role 'listitem'",
+    "pos": 3927,
+    "start": {
+      "character": 3927,
+      "column": 0,
+      "line": 148
+    }
+  }
 ]

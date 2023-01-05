@@ -26,7 +26,6 @@
 <h5 role="spinbutton">Button</h5>
 <h6 role="switch" aria-checked>Button</h6>
 <hr role="tab" />
-<iframe role="tablist" title="tablist" />
 <img role="tabpanel" alt="tabpanel" />
 <label role="textbox" />
 <legend role="toolbar" />
@@ -74,11 +73,34 @@
 <li role="row" />
 <li role="treeitem" aria-selected={false} />
 
-<!-- VALID: HTML elements attributed with an interactive role -->
+<!-- VALID: div elements assigned an interactive role. -->
 <div role="button" />
+<div role="checkbox" aria-checked={true} />
+<div role="columnheader" />
+<div role="combobox" aria-controls={[]} aria-expanded={true} />
+<div role="grid" />
+<div role="gridcell" />
+<div role="link" />
+<div role="listbox" />
 <div role="menu" />
+<div role="menubar" />
+<div role="menuitem" />
+<div role="menuitemcheckbox" aria-checked />
+<div role="menuitemradio" aria-checked />
+<div role="option" aria-selected />
+<div role="progressbar" />
+<div role="radio" aria-checked />
+<div role="radiogroup" />
+<div role="row" />
+<div role="rowheader" />
+<div role="scrollbar" aria-controls={[]} aria-valuenow={0} />
+<div role="searchbox" />
+<div role="slider" aria-valuenow={0} />
+<div role="spinbutton" />
+<div role="switch" aria-checked />
 <div role="tab" />
 <div role="textbox" />
+<div role="treeitem" aria-selected={true} />
 
 <!-- VALID: HTML elements attributed with a non-interactive role -->
 <div role="alert" />
