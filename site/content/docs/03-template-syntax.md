@@ -1313,7 +1313,7 @@ A custom animation function can also return a `tick` function, which is called *
 		tick: (t, u) =>
 			Object.assign(node.style, {
 				color: t > 0.5 ? 'Pink' : 'Blue'
-			});
+			}),
 	};
 	}
 </script>
