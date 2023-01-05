@@ -543,7 +543,6 @@ export default class Element extends Node {
               component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
             }
 					});
-
 				}
 			}
 
