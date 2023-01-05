@@ -7,7 +7,7 @@ import {
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import Attribute from '../nodes/Attribute';
 
-const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract);
+const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract && name !== 'generic');
 
 const non_interactive_roles = new Set(
 	non_abstract_roles
@@ -82,6 +82,10 @@ const interactive_ax_objects = new Set(
 	[...AXObjects.keys()].filter((name) => AXObjects.get(name).type === 'widget')
 );
 
+const non_interactive_ax_objects = new Set(
+	[...AXObjects.keys()].filter((name) => ['windows', 'structure'].includes(AXObjects.get(name).type))
+);
+
 const interactive_element_ax_object_schemas: ARIARoleRelationConcept[] = [];
 
 elementAXObjects.entries().forEach(([schema, ax_object]) => {
@@ -89,6 +93,15 @@ elementAXObjects.entries().forEach(([schema, ax_object]) => {
 		interactive_element_ax_object_schemas.push(schema);
 	}
 });
+
+const non_interactive_element_ax_object_schemas: ARIARoleRelationConcept[] = [];
+
+elementAXObjects.entries().forEach(([schema, ax_object]) => {
+	if ([...ax_object].every((role) => non_interactive_ax_objects.has(role))) {
+		non_interactive_element_ax_object_schemas.push(schema);
+	}
+});
+
 
 function match_schema(
 	schema: ARIARoleRelationConcept,
@@ -132,6 +145,41 @@ export function is_interactive_element(
 
 	if (
 		interactive_element_ax_object_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return true;
+	}
+
+	return false;
+}
+
+export function is_non_interactive_element(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+): boolean {
+  if (tag_name === 'header') {
+    return false;
+  }
+  
+  if (
+		non_interactive_element_role_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return true;
+	}
+
+	if (
+		interactive_element_role_schemas.some((schema) =>
+			match_schema(schema, tag_name, attribute_map)
+		)
+	) {
+		return false;
+	}
+
+	if (
+		non_interactive_element_ax_object_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
 	) {
