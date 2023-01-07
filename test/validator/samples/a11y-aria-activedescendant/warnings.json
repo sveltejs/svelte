@@ -1,0 +1,17 @@
+[
+  {
+    "code": "a11y-aria-activedescendant-has-tabindex",
+    "end": {
+      "character": 568,
+      "column": 36,
+      "line": 16
+    },
+    "message": "A11y: Elements with attribute aria-activedescendant should have tabindex value",
+    "pos": 537,
+    "start": {
+      "character": 537,
+      "column": 5,
+      "line": 16
+    }
+  }
+]
