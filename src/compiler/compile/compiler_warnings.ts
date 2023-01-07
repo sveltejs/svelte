@@ -187,6 +187,10 @@ export default {
 		code: 'a11y-no-noninteractive-tabindex',
 		message: 'A11y: noninteractive element cannot have nonnegative tabIndex value'
 	},
+	a11y_aria_activedescendant_has_tabindex: {
+		code: 'a11y-aria-activedescendant-has-tabindex',
+		message: 'A11y: Elements with attribute aria-activedescendant should have tabindex value'
+	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
 		message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'
