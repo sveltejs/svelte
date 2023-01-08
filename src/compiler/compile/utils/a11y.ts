@@ -7,7 +7,9 @@ import {
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import Attribute from '../nodes/Attribute';
 
-const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract && name !== 'generic');
+const aria_roles = roles_map.keys();
+const abstract_roles = new Set(aria_roles.filter(role => roles_map.get(role).abstract));
+const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.has(name));
 
 const non_interactive_roles = new Set(
 	non_abstract_roles
@@ -32,12 +34,23 @@ const interactive_roles = new Set(
 	non_abstract_roles.filter((name) => !non_interactive_roles.has(name))
 );
 
-export function is_non_interactive_roles(role: ARIARoleDefintionKey) {
-	return non_interactive_roles.has(role);
+export enum RoleType {
+  Interactive = 'interactive',
+  NonInteractive = 'non-interactive',
+  Abstract = 'abstract',
+  Invalid = 'invalid',
 }
 
-export function is_interactive_roles(role: ARIARoleDefintionKey) {
-	return interactive_roles.has(role);
+export function role_type(role: ARIARoleDefintionKey): RoleType {
+  if (interactive_roles.has(role)) {
+    return RoleType.Interactive;
+  } else if (non_interactive_roles.has(role)) {
+    return RoleType.NonInteractive;
+  } else if (abstract_roles.has(role)) {
+    return RoleType.Abstract;
+  } else {
+    return RoleType.Invalid;
+  }
 }
 
 const presentation_roles = new Set(['presentation', 'none']);
@@ -65,7 +78,7 @@ export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Ma
 const non_interactive_element_role_schemas: ARIARoleRelationConcept[] = [];
 
 elementRoles.entries().forEach(([schema, roles]) => {
-	if ([...roles].every((role) => non_interactive_roles.has(role))) {
+	if ([...roles].every((role) => role !== 'generic' && non_interactive_roles.has(role))) {
 		non_interactive_element_role_schemas.push(schema);
 	}
 });
@@ -102,7 +115,6 @@ elementAXObjects.entries().forEach(([schema, ax_object]) => {
 	}
 });
 
-
 function match_schema(
 	schema: ARIARoleRelationConcept,
 	tag_name: string,
@@ -123,70 +135,50 @@ function match_schema(
 	});
 }
 
-export function is_interactive_element(
-	tag_name: string,
-	attribute_map: Map<string, Attribute>
-): boolean {
-	if (
+export enum ElementInteractivity {
+  Interactive = 'interactive',
+  NonInteractive = 'non-interactive',
+  Static = 'static',
+}
+
+export function element_interactivity(
+  tag_name: string,
+  attribute_map: Map<string, Attribute>
+): ElementInteractivity {
+  if (
 		interactive_element_role_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
 	) {
-		return true;
+		return ElementInteractivity.Interactive;
 	}
 
-	if (
+  if (
+		tag_name !== 'header' && 
 		non_interactive_element_role_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
 	) {
-		return false;
+		return ElementInteractivity.NonInteractive;
 	}
 
-	if (
+  if (
 		interactive_element_ax_object_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
 	) {
-		return true;
+		return ElementInteractivity.Interactive;
 	}
 
-	return false;
-}
-
-export function is_non_interactive_element(
-	tag_name: string,
-	attribute_map: Map<string, Attribute>
-): boolean {
-  if (tag_name === 'header') {
-    return false;
-  }
-  
   if (
-		non_interactive_element_role_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
-	) {
-		return true;
-	}
-
-	if (
-		interactive_element_role_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
-	) {
-		return false;
-	}
-
-	if (
 		non_interactive_element_ax_object_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
 	) {
-		return true;
+		return ElementInteractivity.NonInteractive;
 	}
 
-	return false;
+  return ElementInteractivity.Static;
 }
 
 export function is_semantic_role_element(role: ARIARoleDefintionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
