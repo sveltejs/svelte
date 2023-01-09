@@ -1,4 +1,4 @@
-import { namespaces } from './../../../utils/namespaces';
+import { namespaces } from '../../../utils/namespaces';
 import { b, x } from 'code-red';
 import Renderer from '../Renderer';
 import Block from '../Block';
