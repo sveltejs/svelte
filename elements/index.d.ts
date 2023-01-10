@@ -478,6 +478,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	hidden?: boolean | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
