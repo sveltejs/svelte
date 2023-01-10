@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add missing `submitter` property to `on:submit` event type
+* Add missing typing for global `part` attribute ([#8181](https://github.com/sveltejs/svelte/issues/8181))
 * Fix static `<svelte:element>` optimization in production mode ([#7938](https://github.com/sveltejs/svelte/pull/7938))
 * Fix `draw` transition with delay showing a dot at the beginning of transition ([#6816](https://github.com/sveltejs/svelte/issues/6816))
 * Fix `svelte-ignore` comment breaks named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
