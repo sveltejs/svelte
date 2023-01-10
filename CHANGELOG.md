@@ -1,17 +1,17 @@
 # Svelte changelog
 
-## Unreleased
+## 3.55.1
 
-* Add missing `submitter` property to `on:submit` event type
+* Fix `draw` transition with delay showing a dot at the beginning of the path ([#6816](https://github.com/sveltejs/svelte/issues/6816))
+* Fix infinity runtime call stack when propagating bindings ([#7032](https://github.com/sveltejs/svelte/issues/7032))
+* Fix static `<svelte:element>` optimization in production mode ([#7937](https://github.com/sveltejs/svelte/issues/7937))
+* Fix `svelte-ignore` comment breaking named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
+* Revert change to prevent running init binding unnecessarily ([#8103](https://github.com/sveltejs/svelte/issues/8103))
+* Fix adding duplicate event listeners with `<svelte:element on:event>` ([#8129](https://github.com/sveltejs/svelte/issues/8129))
+* Improve detection of promises that are also functions ([#8162](https://github.com/sveltejs/svelte/pull/8162))
+* Avoid mutating spread component props during SSR ([#8171](https://github.com/sveltejs/svelte/issues/8171))
 * Add missing typing for global `part` attribute ([#8181](https://github.com/sveltejs/svelte/issues/8181))
-* Fix static `<svelte:element>` optimization in production mode ([#7938](https://github.com/sveltejs/svelte/pull/7938))
-* Fix `draw` transition with delay showing a dot at the beginning of transition ([#6816](https://github.com/sveltejs/svelte/issues/6816))
-* Fix `svelte-ignore` comment breaks named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
-* Fix duplicate event listeners for `<svelte:element on:event>` ([#8129](https://github.com/sveltejs/svelte/issues/8129))
-* Fix max call stack exceeded ([#7032](https://github.com/sveltejs/svelte/issues/7032))
-* Revert to prevent running init binding unnecessarily ([#8103](https://github.com/sveltejs/svelte/issues/8103))
-* Improve `is_promise` logic ([#8162](https://github.com/sveltejs/svelte/pull/8162))
-* Spread component props for immutably during SSR ([#8171](https://github.com/sveltejs/svelte/issues/8171))
+* Add missing `submitter` property to `on:submit` event type
 
 ## 3.55.0
 
