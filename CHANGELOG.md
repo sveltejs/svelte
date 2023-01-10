@@ -11,6 +11,7 @@
 * Fix max call stack exceeded ([#7032](https://github.com/sveltejs/svelte/issues/7032))
 * Revert to prevent running init binding unnecessarily ([#8103](https://github.com/sveltejs/svelte/issues/8103))
 * Improve `is_promise` logic ([#8162](https://github.com/sveltejs/svelte/pull/8162))
+* Spread component props for immutably during SSR ([#8171](https://github.com/sveltejs/svelte/issues/8171))
 
 ## 3.55.0
 
