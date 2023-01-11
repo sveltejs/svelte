@@ -99,6 +99,9 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		return () => {
 			subscribers.delete(subscriber);
 			if (subscribers.size === 0) {
+				if (stop === null) {
+					throw new Error('unsubscribe cannot be called twice');
+				}
 				stop();
 				stop = null;
 			}
