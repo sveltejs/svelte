@@ -82,11 +82,15 @@ const a11y_nested_implicit_semantics = new Map([
 
 const a11y_implicit_semantics = new Map([
 	['a', 'link'],
+	['area', 'link'],
+	['article', 'article'],
 	['aside', 'complementary'],
 	['body', 'document'],
+	['button', 'button'],
 	['datalist', 'listbox'],
 	['dd', 'definition'],
 	['dfn', 'term'],
+	['dialog', 'dialog'],
 	['details', 'group'],
 	['dt', 'term'],
 	['fieldset', 'group'],
@@ -98,10 +102,14 @@ const a11y_implicit_semantics = new Map([
 	['h5', 'heading'],
 	['h6', 'heading'],
 	['hr', 'separator'],
+	['img', 'img'],
 	['li', 'listitem'],
+	['link', 'link'],
 	['menu', 'list'],
+	['meter', 'progressbar'],
 	['nav', 'navigation'],
 	['ol', 'list'],
+	['option', 'option'],
 	['optgroup', 'group'],
 	['output', 'status'],
 	['progress', 'progressbar'],
@@ -599,6 +607,23 @@ export default class Element extends Node {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
 			}
 		}
+
+    // role-supports-aria-props
+    const role = attribute_map.get('role');
+    const role_value = (role ? role.get_static_value() : a11y_implicit_semantics.get(this.name)) as ARIARoleDefintionKey;
+    if (typeof role_value === 'string' && roles.has(role_value)) {
+      const { props } = roles.get(role_value);
+      const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
+      const is_implicit = role_value && role === undefined;
+
+      attributes
+        .filter(prop => prop.type !== 'Spread')
+        .forEach(prop => {
+          if (invalid_aria_props.has(prop.name as ARIAProperty)) {
+            component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
+          }
+        });
+    }
 	}
 
 	validate_special_cases() {
