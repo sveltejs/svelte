@@ -30,6 +30,7 @@ function create_fragment(ctx) {
 			insert(target, div1, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*bar*/ 1) {
 				attr(div1, "data-foo", /*bar*/ ctx[0]);
 			}

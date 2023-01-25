@@ -50,6 +50,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
 				set_input_value(input, /*test*/ ctx[0]);
 			}

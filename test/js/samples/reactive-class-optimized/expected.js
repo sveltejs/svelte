@@ -83,6 +83,7 @@ function create_fragment(ctx) {
 			insert(target, div8, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*reactiveModuleVar*/ 0) {
 				toggle_class(div0, "update1", reactiveModuleVar);
 			}

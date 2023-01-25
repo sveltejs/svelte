@@ -75,6 +75,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (!audio_updating && dirty & /*currentTime*/ 8 && !isNaN(/*currentTime*/ ctx[3])) {
 				audio.currentTime = /*currentTime*/ ctx[3];
 			}

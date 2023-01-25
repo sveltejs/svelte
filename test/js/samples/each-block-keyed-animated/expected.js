@@ -45,6 +45,8 @@ function create_each_block(key_1, ctx) {
 		},
 		p(new_ctx, dirty) {
 			ctx = new_ctx;
+
+			/* istanbul ignore next */
 			if (dirty & /*things*/ 1 && t_value !== (t_value = /*thing*/ ctx[1].name + "")) set_data(t, t_value);
 		},
 		r() {
@@ -93,6 +95,7 @@ function create_fragment(ctx) {
 			insert(target, each_1_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
 				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();

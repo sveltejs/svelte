@@ -70,6 +70,7 @@ function create_dynamic_element(ctx) {
 			}
 		},
 		p(ctx, dirty) {
+			/* istanbul ignore next */
 			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ class: "inner" }]);
 
 			if ((/-/).test(span)) {
@@ -109,6 +110,7 @@ function create_fragment(ctx) {
 			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (a) {
 				if (!previous_tag) {
 					svelte_element = create_dynamic_element(ctx);

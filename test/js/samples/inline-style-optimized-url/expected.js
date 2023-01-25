@@ -22,6 +22,7 @@ function create_fragment(ctx) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*data*/ 1) {
 				set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 			}

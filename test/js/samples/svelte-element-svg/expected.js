@@ -43,7 +43,9 @@ function create_dynamic_element(ctx) {
 			append(svelte_element1, svelte_element0);
 		},
 		p(ctx, dirty) {
+			/* istanbul ignore next */
 			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
+
 			set_svg_attributes(svelte_element0, svelte_element0_data);
 			svelte_element1_data = get_spread_update(svelte_element1_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
 			set_svg_attributes(svelte_element1, svelte_element1_data);
@@ -69,6 +71,7 @@ function create_fragment(ctx) {
 			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (/*tag*/ ctx[0].svg) {
 				if (!previous_tag) {
 					svelte_element = create_dynamic_element(ctx);

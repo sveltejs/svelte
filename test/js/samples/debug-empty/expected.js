@@ -46,7 +46,9 @@ function create_fragment(ctx) {
 			insert_dev(target, t3, anchor);
 		},
 		p: function update(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*name*/ 1) set_data_dev(t1, /*name*/ ctx[0]);
+
 			debugger;
 		},
 		i: noop,

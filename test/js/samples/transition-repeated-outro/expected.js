@@ -62,6 +62,7 @@ function create_fragment(ctx) {
 			current = true;
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (/*num*/ ctx[0] < 5) {
 				if (if_block) {
 					if (dirty & /*num*/ 1) {

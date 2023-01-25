@@ -56,6 +56,7 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(ctx, dirty) {
+			/* istanbul ignore next */
 			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[4].name + "")) set_data_dev(t0, t0_value);
 
 			if (dirty & /*foo, bar, baz, things*/ 15) {
@@ -123,6 +124,7 @@ function create_fragment(ctx) {
 			append_dev(p, t2);
 		},
 		p: function update(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
 				validate_each_argument(each_value);

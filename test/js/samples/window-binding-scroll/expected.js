@@ -52,6 +52,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*y*/ 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);

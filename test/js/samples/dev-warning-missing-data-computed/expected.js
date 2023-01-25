@@ -43,7 +43,9 @@ function create_fragment(ctx) {
 			append_dev(p, t2);
 		},
 		p: function update(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*foo*/ 1 && t0_value !== (t0_value = Math.max(0, /*foo*/ ctx[0]) + "")) set_data_dev(t0, t0_value);
+
 			if (dirty & /*bar*/ 2) set_data_dev(t2, /*bar*/ ctx[1]);
 		},
 		i: noop,

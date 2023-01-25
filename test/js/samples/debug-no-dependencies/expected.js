@@ -92,6 +92,7 @@ function create_fragment(ctx) {
 			insert_dev(target, each_1_anchor, anchor);
 		},
 		p: function update(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*things*/ 0) {
 				each_value = things;
 				validate_each_argument(each_value);

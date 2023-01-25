@@ -53,6 +53,7 @@ function create_fragment(ctx) {
 			current = true;
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (!current || dirty & /*size, theme, $$restProps*/ 7 && div_class_value !== (div_class_value = "button button--size--" + /*size*/ ctx[0] + " button--theme--" + /*theme*/ ctx[1] + " " + (/*$$restProps*/ ctx[2].class || ''))) {
 				attr(div, "class", div_class_value);
 			}

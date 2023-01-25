@@ -156,6 +156,7 @@ function create_fragment(ctx) {
 			insert(target, if_block4_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (/*a*/ ctx[0]) {
 				if (if_block0) {
 					

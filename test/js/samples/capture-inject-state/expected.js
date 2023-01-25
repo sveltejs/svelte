@@ -68,7 +68,9 @@ function create_fragment(ctx) {
 			append_dev(p, t10);
 		},
 		p: function update(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*prop*/ 1) set_data_dev(t0, /*prop*/ ctx[0]);
+
 			if (dirty & /*realName*/ 2) set_data_dev(t2, /*realName*/ ctx[1]);
 			if (dirty & /*$prop*/ 4) set_data_dev(t8, /*$prop*/ ctx[2]);
 		},

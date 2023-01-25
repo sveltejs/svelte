@@ -34,6 +34,7 @@ function create_fragment(ctx) {
 			append(h1, t2);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*name*/ 1) set_data(t1, /*name*/ ctx[0]);
 		},
 		i: noop,

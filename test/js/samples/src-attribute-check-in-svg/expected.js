@@ -39,6 +39,7 @@ function create_fragment(ctx) {
 			append_hydration(svg, img);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*url*/ 1) {
 				attr(img, "src", /*url*/ ctx[0]);
 			}

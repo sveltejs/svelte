@@ -46,6 +46,7 @@ function create_fragment(ctx) {
 			insert_hydration(target, img1, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*url*/ 1 && !src_url_equal(img0.src, img0_src_value = /*url*/ ctx[0])) {
 				attr(img0, "src", img0_src_value);
 			}

@@ -27,6 +27,7 @@ function create_if_block(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, dirty) {
+			/* istanbul ignore next */
 			if (/*y*/ ctx[1]) {
 				if (if_block) {
 					if (dirty & /*y*/ 2) {
@@ -94,6 +95,7 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (/*x*/ ctx[0]) {
 				if (if_block) {
 					if_block.p(ctx, dirty);

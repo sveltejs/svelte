@@ -71,7 +71,9 @@ function create_each_block(ctx) {
 			html_tag.m(raw_value, div);
 		},
 		p(ctx, dirty) {
+			/* istanbul ignore next */
 			if (dirty & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
+
 			if (dirty & /*elapsed, comments, time*/ 7 && t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) set_data(t4, t4_value);
 			if (dirty & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
 		},
@@ -112,6 +114,7 @@ function create_fragment(ctx) {
 			append(p, t1);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*comments, elapsed, time*/ 7) {
 				each_value = /*comments*/ ctx[0];
 				let i;

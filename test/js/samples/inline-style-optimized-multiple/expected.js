@@ -23,6 +23,7 @@ function create_fragment(ctx) {
 			insert(target, div, anchor);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*color*/ 1) {
 				set_style(div, "color", /*color*/ ctx[0]);
 			}

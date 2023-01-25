@@ -54,7 +54,9 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			const bar_changes = {};
+
 			if (dirty & /*z*/ 1) bar_changes.x = /*z*/ ctx[0];
 			bar.$set(bar_changes);
 

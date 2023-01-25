@@ -35,6 +35,7 @@ function create_fragment(ctx) {
 			select_option(select, /*current*/ ctx[0]);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*current*/ 1) {
 				select_option(select, /*current*/ ctx[0]);
 			}

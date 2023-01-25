@@ -30,6 +30,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*open*/ 1) {
 				details.open = /*open*/ ctx[0];
 			}

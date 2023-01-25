@@ -57,6 +57,7 @@ function create_fragment(ctx) {
 			append(p3, t9);
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*world3*/ 1) set_data(t9, /*world3*/ ctx[0]);
 		},
 		i: noop,

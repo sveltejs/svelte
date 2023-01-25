@@ -319,6 +319,7 @@ export default class Block {
 
 				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
+					/* istanbul ignore next */
 					${this.chunks.update}
 				}`;
 			}

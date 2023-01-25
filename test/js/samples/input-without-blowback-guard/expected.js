@@ -31,6 +31,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*foo*/ 1) {
 				input.checked = /*foo*/ ctx[0];
 			}

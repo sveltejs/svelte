@@ -249,6 +249,7 @@ function create_fragment(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
+			/* istanbul ignore next */
 			if (dirty & /*name*/ 1 && input0.value !== /*name*/ ctx[0]) {
 				input0.value = /*name*/ ctx[0];
 			}
