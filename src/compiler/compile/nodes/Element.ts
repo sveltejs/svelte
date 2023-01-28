@@ -628,10 +628,11 @@ export default class Element extends Node {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
 						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
-						if (!rel || (!rel_values.includes('noopener') && !rel_values.includes('noreferrer'))) {
+						if (!rel || (!rel_values.includes('noreferrer'))) {
 								component.warn(this, {
-									code: 'security-anchor-rel-noopener',
-									message: 'Security: Anchor with "target=_blank" should have rel attribute containing the value "noopener" or "noreferrer"'
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
 								});
 						}
 					}
