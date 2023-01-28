@@ -6,6 +6,7 @@ Svelte's reactivity not only keeps the DOM in sync with your application's varia
 
 ```js
 let count = 0;
+let doubled ;
 $: doubled = count * 2;
 ```
 
