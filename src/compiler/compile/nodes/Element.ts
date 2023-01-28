@@ -631,7 +631,7 @@ export default class Element extends Node {
 						if (!rel || (!rel_values.includes('noopener') && !rel_values.includes('noreferrer'))) {
 								component.warn(this, {
 									code: 'security-anchor-rel-noopener',
-									message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "noopener" or "noreferrer"`
+									message: 'Security: Anchor with "target=_blank" should have rel attribute containing the value "noopener" or "noreferrer"'
 								});
 						}
 					}
