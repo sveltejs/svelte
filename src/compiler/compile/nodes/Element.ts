@@ -621,22 +621,23 @@ export default class Element extends Node {
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
 
-			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
+			// modern browsers add noopener by default, so we only need to check legacy browsers
+			// legacy browsers don't support noopener so we only check for noreferrer there
+			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
 				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
 						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
-						const expected_values = ['noreferrer'];
-						expected_values.forEach(expected_value => {
-							if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
+						if (!rel || !rel_values.includes('noreferrer')) {
 								component.warn(this, {
-									code: `security-anchor-rel-${expected_value}`,
-									message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
 								});
-							}
-						});
+						}
 					}
 				}
 			}
