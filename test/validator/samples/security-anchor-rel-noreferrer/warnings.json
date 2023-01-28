@@ -1,7 +1,7 @@
 [
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 73,
 			"column": 73,
@@ -15,8 +15,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 154,
 			"column": 80,
@@ -30,8 +30,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 243,
 			"column": 88,
@@ -45,8 +45,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 319,
 			"column": 75,
@@ -60,8 +60,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 402,
 			"column": 82,
@@ -75,8 +75,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 493,
 			"column": 90,
@@ -90,8 +90,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 561,
 			"column": 67,
@@ -105,8 +105,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 636,
 			"column": 74,
@@ -120,8 +120,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 719,
 			"column": 82,
@@ -135,8 +135,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 792,
 			"column": 72,
@@ -150,8 +150,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 872,
 			"column": 79,
@@ -165,8 +165,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 960,
 			"column": 87,
@@ -180,8 +180,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1033,
 			"column": 72,
@@ -195,8 +195,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1113,
 			"column": 79,
@@ -210,8 +210,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1201,
 			"column": 87,
@@ -225,8 +225,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1277,
 			"column": 75,
@@ -240,8 +240,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1360,
 			"column": 82,
@@ -255,8 +255,8 @@
 		}
 	},
 	{
-		"code": "security-anchor-rel-noreferrer",
-		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
+		"code": "security-anchor-rel-noopener",
+		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noopener\" or \"noreferrer\"",
 		"end": {
 			"character": 1451,
 			"column": 90,
