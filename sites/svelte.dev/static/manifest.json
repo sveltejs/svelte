@@ -1,0 +1,20 @@
+{
+	"background_color": "#ffffff",
+	"theme_color": "#ff3e00",
+	"name": "Svelte",
+	"short_name": "Svelte",
+	"display": "minimal-ui",
+	"start_url": "/",
+	"icons": [
+		{
+			"src": "images/svelte-android-chrome-192.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "images/svelte-android-chrome-512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	]
+}

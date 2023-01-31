@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-default typo-default">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta name="theme-color" content="#ff3e00" />
+
+		<link rel="manifest" href="/manifest.json" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+
+		<meta name="twitter:site" content="@sveltejs" />
+		<meta name="twitter:creator" content="@sveltejs" />
+
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+	<body data-sveltekit-prefetch>
+		<div>%sveltekit.body%</div>
 	</body>
 </html>
