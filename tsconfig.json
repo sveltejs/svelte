@@ -1,9 +1,8 @@
 {
-	"include": [],
+	"include": ["src/**/*.{js,ts}"],
+	"exclude": ["sites/**/*"],
 
 	"compilerOptions": {
-		"rootDir": "src",
-
 		// target node v8+ (https://node.green/)
 		// the only missing feature is Array.prototype.values
 		"lib": ["es2017"],
