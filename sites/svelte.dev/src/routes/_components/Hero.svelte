@@ -1,27 +1,19 @@
 <script>
-	import Image from "./Image.svelte";
-	import Machine from "./svelte-machine.png?w=640;1280;2560;3840&format=avif;webp;png&picture";
-	import SvelteLogotype from "./svelte-logotype.svg";
+	import Image from './Image.svelte';
+	import Machine from './svelte-machine.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
+	import SvelteLogotype from './svelte-logotype.svg';
 </script>
 
 <div class="hero">
 	<strong>Cybernetically enhanced web apps</strong>
-	<Image
-		src={Machine}
-		alt="The Svelte compiler packaging up your component code"
-		--max-height="65vh"
-	/>
+	<Image src={Machine} alt="The Svelte compiler packaging up your component code" --max-height="65vh" />
 	<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
 </div>
 
 <style>
 	.hero {
 		position: relative;
-		background: radial-gradient(
-			circle at 40% 30%,
-			rgb(235, 243, 249),
-			rgb(214, 222, 228)
-		);
+		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
 	}
 
 	.logotype {

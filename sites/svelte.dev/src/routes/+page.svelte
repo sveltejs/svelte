@@ -1,11 +1,11 @@
 <script>
-	import Blurb from "@sveltejs/site-kit/components/Blurb.svelte";
-	import Balls from "./svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture";
-	import Demo from "./_components/Demo.svelte";
-	import Hero from "./_components/Hero.svelte";
-	import Image from "./_components/Image.svelte";
-	import Supporters from "./_components/Supporters/index.svelte";
-	import WhosUsingSvelte from "./_components/WhosUsingSvelte/index.svelte";
+	import Blurb from '@sveltejs/site-kit/components/Blurb.svelte';
+	import Supporters from './_components/Supporters/index.svelte';
+	import Hero from './_components/Hero.svelte';
+	import Image from './_components/Image.svelte';
+	import Demo from './_components/Demo.svelte';
+	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
+	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
 </script>
 
 <svelte:head>
@@ -24,45 +24,35 @@
 	<Blurb>
 		<div slot="one">
 			<h2>Write less code</h2>
-			<p>
-				Build boilerplate-free components using languages you already know —
-				HTML, CSS and JavaScript
-			</p>
+			<p>Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript</p>
 
 			<a href="/blog/write-less-code" class="cta">learn more</a>
 		</div>
 
 		<div slot="two">
 			<h2>No virtual DOM</h2>
-			<p>
-				Svelte compiles your code to tiny, framework-less vanilla JS — your app
-				starts fast and stays fast
-			</p>
+			<p>Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays fast</p>
 
 			<a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a>
 		</div>
 
 		<div slot="three">
 			<h2>Truly reactive</h2>
-			<p>
-				No more complex state management libraries — Svelte brings reactivity to
-				JavaScript itself
-			</p>
+			<p>No more complex state management libraries — Svelte brings reactivity to JavaScript itself</p>
 
 			<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
 		</div>
 
 		<div class="description" slot="what">
 			<p>
-				Svelte is a radical new approach to building user interfaces. Whereas
-				traditional frameworks like React and Vue do the bulk of their work in
-				the <em>browser</em>, Svelte shifts that work into a
+				Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue
+				do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a
 				<em>compile step</em> that happens when you build your app.
 			</p>
 
 			<p>
-				Instead of using techniques like virtual DOM diffing, Svelte writes code
-				that surgically updates the DOM when the state of your app changes.
+				Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically updates the DOM when
+				the state of your app changes.
 			</p>
 
 			<p>
@@ -71,19 +61,14 @@
 					>most loved web framework</a
 				>
 				with the
-				<a
-					href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/"
-					>most satisfied developers</a
-				>
+				<a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/">most satisfied developers</a>
 				drawing the
 				<a
 					href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
 					>most interest in learning it</a
 				>
 				in a trio of industry surveys. We think you'll love it too.
-				<a href="/blog/svelte-3-rethinking-reactivity" class="cta"
-					>Read the introductory blog post</a
-				> to learn more.
+				<a href="/blog/svelte-3-rethinking-reactivity" class="cta">Read the introductory blog post</a> to learn more.
 			</p>
 		</div>
 

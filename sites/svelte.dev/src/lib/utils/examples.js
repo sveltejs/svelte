@@ -2,7 +2,7 @@ export function process_example(files) {
 	return files
 		.map((file) => {
 			const [name, type] = file.name.split('.');
-			return { name, type, source: file.source || file.content };
+			return { name, type, source: file.source ?? file.content ?? '' };
 		})
 		.sort((a, b) => {
 			if (a.name === 'App' && a.type === 'svelte') return -1;

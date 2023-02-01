@@ -18,7 +18,7 @@ function munge(files) {
 			let type = file.name.slice(dot + 1);
 
 			if (type === 'html') type = 'svelte';
-			return { name, type, source: file.source || file.content };
+			return { name, type, source: file.source ?? file.content ?? '' };
 		})
 		.sort((a, b) => {
 			if (a.name === 'App' && a.type === 'svelte') return -1;
@@ -47,7 +47,7 @@ export async function GET({ params }) {
 		if (!res.ok) {
 			return new Response(await res.json(), {
 				status: res.status,
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 		}
 
@@ -58,7 +58,7 @@ export async function GET({ params }) {
 			name: example.name,
 			owner: null,
 			relaxed: example.relaxed, // TODO is this right?
-			components: munge(example.files)
+			components: munge(example.files),
 		});
 	}
 
@@ -83,7 +83,7 @@ export async function GET({ params }) {
 		name: app.name,
 		owner: app.userid,
 		relaxed: false,
-		components: munge(app.files)
+		components: munge(app.files),
 	});
 }
 

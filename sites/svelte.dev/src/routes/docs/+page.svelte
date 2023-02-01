@@ -1,5 +1,5 @@
 <script>
-	import { Contents, Main, Section } from '@sveltejs/site-kit/docs';
+	// import { Contents, Main, Section } from '@sveltejs/site-kit/docs';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -14,9 +14,9 @@
 			title: subsection.title,
 			sections: subsection.sections.map((subsection) => ({
 				path: `/docs#${subsection.slug}`,
-				title: subsection.title
-			}))
-		}))
+				title: subsection.title,
+			})),
+		})),
 	}));
 </script>
 
@@ -28,7 +28,7 @@
 	<meta name="Description" content="Complete documentation for Svelte" />
 </svelte:head>
 
-<Main bind:path>
+<!-- <Main bind:path>
 	<h1>Documentation</h1>
 
 	{#each data.sections as section}
@@ -40,4 +40,4 @@
 	{/each}
 </Main>
 
-<Contents {contents} {path} />
+<Contents {contents} {path} /> -->

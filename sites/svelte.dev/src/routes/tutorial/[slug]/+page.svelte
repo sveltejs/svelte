@@ -1,5 +1,5 @@
 <script>
-	import '@sveltejs/site-kit/code.css';
+	import '@sveltejs/site-kit/styles/code.css';
 	import { browser } from '$app/environment';
 	import { getContext } from 'svelte';
 
@@ -10,7 +10,7 @@
 	import {
 		mapbox_setup, // needed for context API tutorial
 		rollupUrl,
-		svelteUrl
+		svelteUrl,
 	} from '../../../config.js';
 
 	/** @type {import('./$types').PageData} */
@@ -32,7 +32,7 @@
 				slug: chapter.slug,
 				section,
 				chapter,
-				prev
+				prev,
 			};
 
 			lookup.set(chapter.slug, obj);
@@ -54,13 +54,13 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content
+		source: file.content,
 	});
 
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone)
+			components: data.tutorial.initial.map(clone),
 		});
 	}
 
@@ -68,13 +68,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone)
+			components: data.tutorial.initial.map(clone),
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone)
+			components: data.tutorial.complete.map(clone),
 		});
 	}
 

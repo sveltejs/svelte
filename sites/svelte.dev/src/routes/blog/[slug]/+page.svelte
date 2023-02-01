@@ -1,6 +1,6 @@
 <script>
 	import { page } from '$app/stores';
-	import '@sveltejs/site-kit/code.css';
+	import '@sveltejs/site-kit/styles/code.css';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
