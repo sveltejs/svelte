@@ -43,7 +43,7 @@
 			<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
 		</div>
 
-		<div class="description" slot="what">
+		<div class="description" slot="four">
 			<p>
 				Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks like React and Vue
 				do the bulk of their work in the <em>browser</em>, Svelte shifts that work into a
@@ -72,7 +72,7 @@
 			</p>
 		</div>
 
-		<div slot="how">
+		<div slot="five">
 			<pre><code
 					>npm create svelte@latest myapp
 cd myapp
@@ -131,9 +131,9 @@ npm run dev
 		display: block;
 	}
 
-	@media (min-width: 900px) {
+	/* @media (min-width: 900px) {
 		.blurb-shifter {
 			margin-top: -12em;
 		}
-	}
+	} */
 </style>
