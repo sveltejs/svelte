@@ -1,8 +1,10 @@
-import * as fs from 'fs';
 import { sveltekit } from '@sveltejs/kit/vite';
+import * as fs from 'fs';
 import { imagetools } from 'vite-imagetools';
 
-process.env.VITE_API_BASE = process.env.DOCS_PREVIEW ? 'http://localhost:8787' : 'https://api.svelte.dev';
+process.env.VITE_API_BASE = process.env.DOCS_PREVIEW
+	? 'http://localhost:8787'
+	: 'https://api.svelte.dev';
 
 function raw(ext) {
 	return {
@@ -20,6 +22,11 @@ function raw(ext) {
 const config = {
 	logLevel: 'info',
 	plugins: [raw(['.ttf']), imagetools(), sveltekit()],
+	build: {
+		rollupOptions: {
+			external: ['sourcemap-codec'],
+		},
+	},
 	optimizeDeps: {
 		include: [
 			'codemirror',
