@@ -21,7 +21,8 @@
     "cookie": "^0.5.0",
     "devalue": "^4.2.3",
     "do-not-zip": "^1.0.0",
-    "flru": "^1.0.2"
+    "flru": "^1.0.2",
+    "sourcemap-codec": "^1.4.8"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.2.0",

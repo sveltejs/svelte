@@ -22,11 +22,6 @@ function raw(ext) {
 const config = {
 	logLevel: 'info',
 	plugins: [raw(['.ttf']), imagetools(), sveltekit()],
-	build: {
-		rollupOptions: {
-			external: ['sourcemap-codec'],
-		},
-	},
 	optimizeDeps: {
 		include: [
 			'codemirror',
