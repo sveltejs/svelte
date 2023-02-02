@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher, getContext } from 'svelte';
 	import UserMenu from './UserMenu.svelte';
-	import { Icon } from '@sveltejs/site-kit';
+	import Icon from '@sveltejs/site-kit/components/Icon.svelte';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from './downloadBlob.js';
 	import { enter } from '$lib/utils/events.js';
@@ -45,15 +45,15 @@
 				method: 'POST',
 				credentials: 'include',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					name,
 					files: components.map((component) => ({
 						name: `${component.name}.${component.type}`,
-						source: component.source
-					}))
-				})
+						source: component.source,
+					})),
+				}),
 			});
 
 			if (r.status < 200 || r.status >= 300) {
@@ -110,15 +110,15 @@
 				method: 'PUT',
 				credentials: 'include',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					name,
 					files: components.map((component) => ({
 						name: `${component.name}.${component.type}`,
-						source: component.source
-					}))
-				})
+						source: component.source,
+					})),
+				}),
 			});
 
 			if (r.status < 200 || r.status >= 300) {
@@ -164,7 +164,7 @@
 		files.push(
 			...components.map((component) => ({
 				path: `src/${component.name}.${component.type}`,
-				data: component.source
+				data: component.source,
 			}))
 		);
 		files.push({
@@ -175,7 +175,7 @@ var app = new App({
 	target: document.body
 });
 
-export default app;`
+export default app;`,
 		});
 
 		downloadBlob(doNotZip.toBlob(files), 'svelte-app.zip');

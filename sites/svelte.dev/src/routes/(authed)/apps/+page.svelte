@@ -1,6 +1,6 @@
 <script>
 	import { getContext } from 'svelte';
-	import { Icon } from '@sveltejs/site-kit';
+	import Icon from '@sveltejs/site-kit/components/Icon.svelte';
 	import { ago } from '$lib/time';
 	import { goto, invalidate } from '$app/navigation';
 
@@ -26,11 +26,11 @@
 		const res = await fetch(`/apps/destroy`, {
 			method: 'POST',
 			headers: {
-				'content-type': 'application/json'
+				'content-type': 'application/json',
 			},
 			body: JSON.stringify({
-				ids: selected
-			})
+				ids: selected,
+			}),
 		});
 
 		if (res.ok) {
