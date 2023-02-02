@@ -290,7 +290,8 @@
 
 	a.next {
 		padding-right: 1.2em;
-		background: no-repeat 100% 50% url(@sveltejs/site-kit/icons/arrow-right.svg);
+		/* TODO */
+		/* background: no-repeat 100% 50% url(@sveltejs/site-kit/icons/arrow-right.svg); */
 		background-size: 1em 1em;
 		margin-left: auto;
 	}

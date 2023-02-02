@@ -1,5 +1,4 @@
 <script>
-	import { Permalink } from '@sveltejs/site-kit';
 	import '@sveltejs/site-kit/styles/code.css';
 
 	/** @type {import('./$types').PageData} */
@@ -21,7 +20,9 @@
 			<h2>
 				<span id={faq.slug} class="offset-anchor" />
 				{faq.title}
-				<Permalink href="/faq#{faq.slug}" />
+				<!-- TODO -->
+				<!-- <Permalink href="/faq#{faq.slug}" /> -->
+				<a href="/faq#{faq.slug}">#</a>
 			</h2>
 			{@html faq.content}
 		</article>
