@@ -1,5 +1,5 @@
 <script>
-	// import Blurb from '@sveltejs/site-kit/components/Blurb.svelte';
+	import Blurb from '@sveltejs/site-kit/components/Blurb.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
@@ -21,8 +21,7 @@
 <Hero />
 
 <div class="blurb-shifter">
-	<!-- TODO -->
-	<!-- <Blurb>
+	<Blurb>
 		<div slot="one">
 			<h2>Write less code</h2>
 			<p>
@@ -96,7 +95,7 @@ npm run dev
 
 			<a href="/tutorial" class="cta">Learn Svelte</a>
 		</div>
-	</Blurb> -->
+	</Blurb>
 </div>
 
 <Demo />
