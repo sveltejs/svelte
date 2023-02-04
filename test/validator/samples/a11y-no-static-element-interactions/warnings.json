@@ -2,31 +2,31 @@
 	{
 		"code": "a11y-no-static-element-interactions",
 		"end": {
-			"character": 249,
+			"character": 347,
 			"column": 29,
-			"line": 8
+			"line": 13
 		},
 		"message": "A11y: <div> with keydown handler must have an ARIA role",
-		"pos": 220,
+		"pos": 318,
 		"start": {
-			"character": 220,
+			"character": 318,
 			"column": 0,
-			"line": 8
+			"line": 13
 		}
 	},
 	{
 		"code": "a11y-no-static-element-interactions",
 		"end": {
-			"character": 372,
+			"character": 470,
 			"column": 76,
-			"line": 10
+			"line": 15
 		},
 		"message": "A11y: <a> with mousedown, mouseup handlers must have an ARIA role",
-		"pos": 296,
+		"pos": 394,
 		"start": {
-			"character": 296,
+			"character": 394,
 			"column": 0,
-			"line": 10
+			"line": 15
 		}
 	}
 ]

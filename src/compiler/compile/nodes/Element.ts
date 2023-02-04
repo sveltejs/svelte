@@ -764,10 +764,11 @@ export default class Element extends Node {
 				});
 		}
 
+		const has_dynamic_role = attribute_map.get('role') && !attribute_map.get('role').is_static;
+
 		// no-static-element-interactions
-		// TODO: investigate footer
-		// TODO: investigate dynamic roles
 		if (
+			!has_dynamic_role &&
 			!is_hidden_from_screen_reader(this.name, attribute_map) &&
 			!is_presentation_role(role) &&
 			!is_interactive_element(this.name, attribute_map) &&
