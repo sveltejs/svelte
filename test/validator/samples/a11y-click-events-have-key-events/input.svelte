@@ -23,7 +23,6 @@
 <footer on:click={noop} />
 
 <!-- should not warn -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class="foo" />
 
 <a href="http://x.y.z" on:click={noop}>foo</a>
@@ -63,7 +62,6 @@
 
 <div on:click={noop} role="presentation" />
 <div on:click={noop} role="none" />
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:click={noop} role={dynamicRole} />
 
 <svelte:element this={Math.random() ? 'button' : 'div'} on:click={noop} />
