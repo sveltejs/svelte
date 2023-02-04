@@ -25,7 +25,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute } from '../utils/a11y';
+import { is_non_interactive_element, is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute, is_interactive_handler } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -738,8 +738,10 @@ export default class Element extends Node {
 			}
 		}
 
+		const role = attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey;
+
 		// no-noninteractive-tabindex
-		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(role)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -747,8 +749,7 @@ export default class Element extends Node {
 		}
 
 		// role-supports-aria-props
-		const role = attribute_map.get('role');
-		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
+		const role_value = (role ?? get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
 			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
@@ -761,6 +762,27 @@ export default class Element extends Node {
 						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
 					}
 				});
+		}
+
+		// no-static-element-interactions
+		// TODO: investigate footer
+		// TODO: investigate dynamic roles
+		if (
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role) &&
+			!is_interactive_element(this.name, attribute_map) &&
+			!is_interactive_roles(role) &&
+			!is_non_interactive_element(this.name, attribute_map) &&
+			!is_non_interactive_roles(role) &&
+			!is_abstract_role(role)
+		) {
+			const interactive_handlers = handlers.map((handler) => handler.name).filter(is_interactive_handler);
+			if (interactive_handlers.length > 0) {
+				component.warn(
+					this,
+					compiler_warnings.a11y_no_static_element_interactions(this.name, interactive_handlers)
+				);
+			}
 		}
 	}
 

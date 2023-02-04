@@ -19,7 +19,8 @@ const non_interactive_roles = new Set(
 				// 'toolbar' does not descend from widget, but it does support
 				// aria-activedescendant, thus in practice we treat it as a widget.
 				// focusable tabpanel elements are recommended if any panels in a set contain content where the first element in the panel is not focusable.
-				!['toolbar', 'tabpanel'].includes(name) &&
+				// 'generic' is meant to have no semantic meaning.
+				!['toolbar', 'tabpanel', 'generic'].includes(name) &&
 				!role.superClass.some((classes) => classes.includes('widget'))
 			);
 		})
@@ -31,7 +32,11 @@ const non_interactive_roles = new Set(
 );
 
 const interactive_roles = new Set(
-	non_abstract_roles.filter((name) => !non_interactive_roles.has(name))
+	non_abstract_roles.filter((name) => 
+		!non_interactive_roles.has(name) &&
+		// 'generic' is meant to have no semantic meaning.
+		name !== 'generic'
+	)
 );
 
 export function is_non_interactive_roles(role: ARIARoleDefinitionKey) {
@@ -52,7 +57,10 @@ export function is_presentation_role(role: ARIARoleDefinitionKey) {
 	return presentation_roles.has(role);
 }
 
-export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Map<string, Attribute>) {
+export function is_hidden_from_screen_reader(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+) {
 	if (tag_name === 'input') {
 		const type = attribute_map.get('type')?.get_static_value();
 
@@ -204,11 +212,21 @@ export function is_static_element(tag_name: string, attribute_map: Map<string, A
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
-export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
+export function is_semantic_role_element(
+	role: ARIARoleDefinitionKey,
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
-		if (schema.name === tag_name && (!schema.attributes || schema.attributes.every(
-			(attr) => attribute_map.has(attr.name) && attribute_map.get(attr.name).get_static_value() === attr.value
-		))) {
+		if (
+			schema.name === tag_name &&
+			(!schema.attributes ||
+				schema.attributes.every(
+					(attr) =>
+						attribute_map.has(attr.name) &&
+						attribute_map.get(attr.name).get_static_value() === attr.value
+				))
+		) {
 			for (const name of ax_object) {
 				const roles = AXObjectRoles.get(name);
 				if (roles) {
@@ -222,4 +240,42 @@ export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: 
 		}
 	}
 	return false;
+}
+
+const interactive_handlers = new Set([
+	// Focus
+	'focus',
+	'focusin',
+	'focusout',
+	'blur',
+
+	// Keyboard
+	'keydown',
+	'keypress',
+	'keyup',
+
+	// Mouse
+	'auxclick',
+	'click',
+	'contextmenu',
+	'dblclick',
+	'drag',
+	'dragend',
+	'dragenter',
+	'dragexit',
+	'dragleave',
+	'dragover',
+	'dragstart',
+	'drop',
+	'mousedown',
+	'mouseenter',
+	'mouseleave',
+	'mousemove',
+	'mouseout',
+	'mouseover',
+	'mouseup'
+]);
+
+export function is_interactive_handler(handler: string) {
+	return interactive_handlers.has(handler);
 }
