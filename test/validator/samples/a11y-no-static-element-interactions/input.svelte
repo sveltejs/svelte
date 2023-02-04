@@ -9,6 +9,8 @@
 <div on:copy={() => {}} />
 <a href="/foo" on:click={() => {}}>link</a>
 <div role={dynamicRole} on:click={() => {}} />
+<footer on:keydown={() => {}} />
+
 <!-- invalid -->
 <div on:keydown={() => {}} />
 <!-- svelte-ignore a11y-missing-attribute -->
