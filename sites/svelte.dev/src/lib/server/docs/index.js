@@ -19,8 +19,9 @@ const base = '../../site/content/docs/';
 const languages = {
 	bash: 'bash',
 	env: 'bash',
-	html: 'markup',
+	html: 'html',
 	svelte: 'svelte',
+	sv: 'svelte',
 	js: 'javascript',
 	css: 'css',
 	diff: 'diff',
@@ -85,6 +86,9 @@ export async function read_file(file) {
 				language = language.replace('original-', '');
 				version_class = 'js-version';
 			}
+
+			// TODO: Replace later
+			html = highlighter.codeToHtml(source, { lang: languages[language] });
 
 			// if (language === 'dts') {
 			// 	// @ts-ignore
