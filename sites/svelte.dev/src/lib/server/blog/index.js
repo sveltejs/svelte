@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { extract_frontmatter } from '../markdown';
 import { transform } from './marked';
 
 /**
@@ -21,7 +22,7 @@ export function get_index() {
 				date,
 				title: metadata.title,
 				description: metadata.description,
-				draft: !!metadata.draft
+				draft: !!metadata.draft,
 			};
 		});
 }
@@ -47,10 +48,10 @@ export function get_post(slug) {
 			description: metadata.description,
 			author: {
 				name: metadata.author,
-				url: metadata.authorURL
+				url: metadata.authorURL,
 			},
 			draft: !!metadata.draft,
-			content: transform(body)
+			content: transform(body),
 		};
 	}
 }
@@ -65,27 +66,6 @@ function get_date_and_slug(filename) {
 	const date_formatted = `${months[+m - 1]} ${+d} ${y}`;
 
 	return { date, date_formatted, slug };
-}
-
-/** @param {string} markdown */
-function extract_frontmatter(markdown) {
-	const match = /---\r?\n([\s\S]+?)\r?\n---/.exec(markdown);
-	const frontmatter = match[1];
-	const body = markdown.slice(match[0].length);
-
-	/** @type {Record<string, string>} */
-	const metadata = {};
-	frontmatter.split('\n').forEach((pair) => {
-		const i = pair.indexOf(':');
-		metadata[pair.slice(0, i).trim()] = strip_quotes(pair.slice(i + 1).trim());
-	});
-
-	return { metadata, body };
-}
-
-function strip_quotes(str) {
-	if (str[0] === '"' && str[str.length - 1] === '"') return str.slice(1, -1);
-	return str;
 }
 
 const months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
