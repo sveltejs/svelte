@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/stores';
 	import Contents from './Contents.svelte';
 
 	/** @type {import('./$types').LayoutServerData}*/
@@ -7,6 +8,7 @@
 
 <div class="container">
 	<div class="page content">
+		<h1>{data.sections.find((val) => val.path === $page.url.pathname)?.title}</h1>
 		<slot />
 	</div>
 
