@@ -1,4 +1,4 @@
-import { get_post } from '$lib/server/markdown/index.js';
+import { get_post } from '$lib/server/blog/index.js';
 import { error } from '@sveltejs/kit';
 
 export const prerender = true;
@@ -11,6 +11,6 @@ export async function load({ params }) {
 	}
 
 	return {
-		post
+		post,
 	};
 }

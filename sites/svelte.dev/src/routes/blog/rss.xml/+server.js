@@ -1,4 +1,4 @@
-import { get_index } from '$lib/server/markdown';
+import { get_index } from '$lib/server/blog';
 
 export const prerender = true;
 
@@ -15,13 +15,13 @@ function escapeHTML(html) {
 		"'": '#39',
 		'&': 'amp',
 		'<': 'lt',
-		'>': 'gt'
+		'>': 'gt',
 	};
 
 	return html.replace(/["'&<>]/g, (c) => `&${chars[c]};`);
 }
 
-/** @type {import('$lib/server/markdown/types').BlogPostSummary[]} */
+/** @param {import('$lib/server/blog/types').BlogPostSummary[]} posts */
 const get_rss = (posts) =>
 	`
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -63,7 +63,7 @@ export async function GET() {
 	return new Response(get_rss(posts), {
 		headers: {
 			'Cache-Control': `max-age=${30 * 60 * 1e3}`,
-			'Content-Type': 'application/rss+xml'
-		}
+			'Content-Type': 'application/rss+xml',
+		},
 	});
 }

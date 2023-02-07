@@ -1,12 +1,7 @@
-import { PUBLIC_API_BASE } from '$env/static/public';
+import { base } from '$app/paths';
+import { redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, setHeaders }) {
-	const sections = await (await fetch(`${PUBLIC_API_BASE}/docs/svelte/docs?content`)).json();
-
-	setHeaders({
-		'cache-control': 'public, max-age=60'
-	});
-
-	return { sections };
+export async function load() {
+	throw redirect(307, `${base}/docs/introduction`);
 }
