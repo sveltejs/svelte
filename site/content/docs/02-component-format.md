@@ -147,7 +147,7 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 ```sv
 <script>
 	export let title;
-	export let person
+	export let person;
 
 	// this will update `document.title` whenever
 	// the `title` prop changes
