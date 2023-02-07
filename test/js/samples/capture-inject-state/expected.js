@@ -91,7 +91,7 @@ function create_fragment(ctx) {
 }
 
 let moduleLiveBinding;
-const moduleContantProps = 4;
+const moduleConstantProps = 4;
 let moduleLet;
 const moduleConst = 2;
 let shadowedByModule;
@@ -137,7 +137,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$capture_state = () => ({
 		moduleLiveBinding,
-		moduleContantProps,
+		moduleConstantProps,
 		moduleLet,
 		moduleConst,
 		shadowedByModule,
@@ -197,4 +197,4 @@ class Component extends SvelteComponentDev {
 }
 
 export default Component;
-export { moduleLiveBinding, moduleContantProps };
+export { moduleLiveBinding, moduleConstantProps };
