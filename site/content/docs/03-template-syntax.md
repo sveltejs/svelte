@@ -1716,7 +1716,7 @@ You can also bind to the following properties:
 * `outerHeight`
 * `scrollX`
 * `scrollY`
-* `online` — an alias for window.navigator.onLine
+* `online` — an alias for `window.navigator.onLine`
 
 All except `scrollX` and `scrollY` are readonly.
 
