@@ -1,6 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import Contents from './Contents.svelte';
+	import '@sveltejs/site-kit/styles/code.css';
 
 	/** @type {import('./$types').LayoutServerData}*/
 	export let data;
@@ -55,8 +56,8 @@
 
 	.content :global(h2) {
 		margin-top: 8rem;
-		padding: 2rem 1.6rem 4rem 0.2rem;
-		border-top: 2px solid #ddd;
+		padding: 2rem 1.6rem 2rem 0.2rem;
+		border-bottom: 1px solid hsl(0, 0%, 87%, 0.2);
 		line-height: 1;
 		font-size: var(--sk-text-m);
 		letter-spacing: 0.05em;
@@ -128,7 +129,7 @@
 		padding: 0 0 1rem 0;
 		color: var(--sk-text-2);
 		max-width: var(--sk-line-max-width);
-		border-bottom: 1px solid #ddd;
+		border-bottom: 1px solid hsl(0, 0%, 87%, 0.2);
 		background: transparent;
 		line-height: 1;
 	}
@@ -150,7 +151,7 @@
 		font-family: inherit;
 		font-weight: 600;
 		font-size: 2.4rem;
-		color: var(--sk-theme-2);
+		color: var(--sk-text-2);
 		margin: 6.4rem 0 1.6rem 0;
 		padding-left: 0;
 		background: transparent;
@@ -265,7 +266,7 @@
 		border-top: none;
 	}
 
-	.content :global(h2[id])::after {
+	/* .content :global(h2[id])::after {
 		content: '';
 		position: absolute;
 		width: 100%;
@@ -273,7 +274,7 @@
 		top: 8rem;
 		height: 2px;
 		background: #ddd;
-	}
+	} */
 
 	.toc-container {
 		background: var(--sk-back-3);
