@@ -6,7 +6,7 @@
 
 <div class="logos">
 	{#each sorted as { href, filename, alt, style, invert, width, height }}
-		<a target="_blank" rel="noopener" {href} class:invert style={style || ''}>
+		<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
 			<img src="/whos-using-svelte/{filename}" {alt} {width} {height} loading="lazy" />
 		</a>
 

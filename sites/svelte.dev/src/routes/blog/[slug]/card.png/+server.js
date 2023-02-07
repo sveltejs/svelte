@@ -2,7 +2,7 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import OverpassRegular from './Overpass-Regular.ttf';
 import { html as toReactNode } from 'satori-html';
-import { get_post } from '$lib/server/markdown/index.js';
+import { get_post } from '$lib/server/blog/index.js';
 import { error } from '@sveltejs/kit';
 import Card from './Card.svelte';
 
@@ -19,6 +19,7 @@ export const GET = async ({ params, url }) => {
 		throw error(404);
 	}
 
+	// @ts-ignore
 	const result = Card.render({ post });
 	const element = toReactNode(`${result.html}<style>${result.css.code}</style>`);
 
@@ -28,18 +29,18 @@ export const GET = async ({ params, url }) => {
 				name: 'Overpass',
 				data: Buffer.from(OverpassRegular),
 				style: 'normal',
-				weight: 400
-			}
+				weight: 400,
+			},
 		],
 		height,
-		width
+		width,
 	});
 
 	const resvg = new Resvg(svg, {
 		fitTo: {
 			mode: 'width',
-			value: width
-		}
+			value: width,
+		},
 	});
 
 	const image = resvg.render();
@@ -47,7 +48,7 @@ export const GET = async ({ params, url }) => {
 	return new Response(image.asPng(), {
 		headers: {
 			'content-type': 'image/png',
-			'cache-control': 'public, max-age=600' // cache for 10 minutes
-		}
+			'cache-control': 'public, max-age=600', // cache for 10 minutes
+		},
 	});
 };
