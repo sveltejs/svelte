@@ -92,12 +92,41 @@ function create_fragment(ctx) {
 			current = true;
 		},
 		p(ctx, [dirty]) {
-			if ((!current || dirty & /*a*/ 1) && t0_value !== (t0_value = /*a*/ ctx[0].normal + "")) set_data(t0, t0_value);
-			if ((!current || dirty & /*b*/ 2) && t1_value !== (t1_value = /*b*/ ctx[1]?.optional + "")) set_data(t1, t1_value);
-			if ((!current || dirty & /*c*/ 4) && t3_value !== (t3_value = /*c*/ ctx[2]['computed'] + "")) set_data(t3, t3_value);
-			if ((!current || dirty & /*d*/ 8) && t4_value !== (t4_value = /*d*/ ctx[3]?.['computed_optional'] + "")) set_data(t4, t4_value);
-			if ((!current || dirty & /*e*/ 16) && t6_value !== (t6_value = /*e*/ ctx[4]() + "")) set_data(t6, t6_value);
-			if ((!current || dirty & /*f*/ 32) && t7_value !== (t7_value = /*f*/ ctx[5]?.() + "")) set_data(t7, t7_value);
+			if (!current || dirty & /*a*/ 1) {
+				if (t0_value !== (t0_value = /*a*/ ctx[0].normal + "")) {
+					set_data(t0, t0_value);
+				}
+			}
+
+			if (!current || dirty & /*b*/ 2) {
+				if (t1_value !== (t1_value = /*b*/ ctx[1]?.optional + "")) {
+					set_data(t1, t1_value);
+				}
+			}
+
+			if (!current || dirty & /*c*/ 4) {
+				if (t3_value !== (t3_value = /*c*/ ctx[2]['computed'] + "")) {
+					set_data(t3, t3_value);
+				}
+			}
+
+			if (!current || dirty & /*d*/ 8) {
+				if (t4_value !== (t4_value = /*d*/ ctx[3]?.['computed_optional'] + "")) {
+					set_data(t4, t4_value);
+				}
+			}
+
+			if (!current || dirty & /*e*/ 16) {
+				if (t6_value !== (t6_value = /*e*/ ctx[4]() + "")) {
+					set_data(t6, t6_value);
+				}
+			}
+
+			if (!current || dirty & /*f*/ 32) {
+				if (t7_value !== (t7_value = /*f*/ ctx[5]?.() + "")) {
+					set_data(t7, t7_value);
+				}
+			}
 
 			if (!current || dirty & /*a*/ 1 && div_a_value !== (div_a_value = /*a*/ ctx[0].normal)) {
 				attr(div, "a", div_a_value);

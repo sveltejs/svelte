@@ -36,7 +36,11 @@ function create_each_block(ctx) {
 			append(span, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*createElement*/ 1 && t_value !== (t_value = /*node*/ ctx[1] + "")) set_data(t, t_value);
+			if (dirty & /*createElement*/ 1) {
+				if (t_value !== (t_value = /*node*/ ctx[1] + "")) {
+					set_data(t, t_value);
+				}
+			}
 		},
 		d(detaching) {
 			if (detaching) detach(span);

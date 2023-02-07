@@ -56,7 +56,11 @@ function create_each_block(ctx) {
 			insert_dev(target, t1, anchor);
 		},
 		p: function update(ctx, dirty) {
-			if (dirty & /*things*/ 1 && t0_value !== (t0_value = /*thing*/ ctx[4].name + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*things*/ 1) {
+				if (t0_value !== (t0_value = /*thing*/ ctx[4].name + "")) {
+					set_data_dev(t0, t0_value);
+				}
+			}
 
 			if (dirty & /*foo, bar, baz, things*/ 15) {
 				const foo = /*foo*/ ctx[1];

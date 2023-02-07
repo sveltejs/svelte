@@ -45,7 +45,12 @@ function create_each_block(key_1, ctx) {
 		},
 		p(new_ctx, dirty) {
 			ctx = new_ctx;
-			if (dirty & /*things*/ 1 && t_value !== (t_value = /*thing*/ ctx[1].name + "")) set_data(t, t_value);
+
+			if (dirty & /*things*/ 1) {
+				if (t_value !== (t_value = /*thing*/ ctx[1].name + "")) {
+					set_data(t, t_value);
+				}
+			}
 		},
 		r() {
 			rect = div.getBoundingClientRect();

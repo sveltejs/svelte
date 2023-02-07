@@ -71,9 +71,23 @@ function create_each_block(ctx) {
 			html_tag.m(raw_value, div);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*comments*/ 1 && t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) set_data(t2, t2_value);
-			if (dirty & /*elapsed, comments, time*/ 7 && t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) set_data(t4, t4_value);
-			if (dirty & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
+			if (dirty & /*comments*/ 1) {
+				if (t2_value !== (t2_value = /*comment*/ ctx[4].author + "")) {
+					set_data(t2, t2_value);
+				}
+			}
+
+			if (dirty & /*elapsed, comments, time*/ 7) {
+				if (t4_value !== (t4_value = /*elapsed*/ ctx[1](/*comment*/ ctx[4].time, /*time*/ ctx[2]) + "")) {
+					set_data(t4, t4_value);
+				}
+			}
+
+			if (dirty & /*comments*/ 1) {
+				if (raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) {
+					html_tag.p(raw_value);
+				}
+			}
 		},
 		d(detaching) {
 			if (detaching) detach(div);
