@@ -161,6 +161,28 @@
 <div role="doc-tip" aria-valuenow="0" />
 <div role="doc-toc" aria-posinset="0" />
 
+<!-- input and menuitem have different implicit roles based on different type attributes, and thus different valid and invalid props -->
+<!-- INVALID -->
+<input type="text" aria-rowspan="0" /> <!-- implicit role: textbox -->
+<input type="tel" aria-pressed /> <!-- implicit role: textbox -->
+<input type="url" aria-level="0" /> <!-- implicit role: textbox -->
+<input type="email" aria-pressed /> <!-- implicit role: textbox -->
+<input type="search" aria-valuetext="text" /> <!-- implicit role: searchbox -->
+<input type="text" list={['id']} aria-valuemin="0" /> <!-- implicit role: combobox -->
+<input type="tel" list={['id']} aria-colspan="0" /> <!-- implicit role: combobox -->
+<input type="url" list={['id']} aria-posinset="0" /> <!-- implicit role: combobox -->
+<input type="email" list={['id']} aria-modal /> <!-- implicit role: combobox -->
+<input type="search" list={['id']} aria-rowindex="0" /> <!-- implicit role: combobox -->
+<input type="image" alt="some text" aria-valuemax="0" /> <!-- implicit role: button -->
+<input type="reset" aria-modal /> <!-- implicit role: button -->
+<input type="submit" aria-placeholder="placeholder" /> <!-- implicit role: button -->
+<input type="checkbox" aria-rowindex="0" /> <!-- implicit role: checkbox -->
+<input type="radio" aria-valuetext="text" /> <!-- implicit role: radio -->
+<input type="range" aria-checked /> <!-- implicit role: slider -->
+<menuitem type="command" aria-colindex="0" /> <!-- implicit role: menuitem -->
+<menuitem type="checkbox" aria-colcount="0" /> <!-- implicit role: menuitemcheckbox -->
+<menuitem type="radio" aria-placeholder="placeholder" /> <!-- implicit role: menuitemradio -->
+
 <!-- VALID -->
 <a aria-keyshortcuts="" href="/">Link</a>
 <area aria-expanded alt="" />
@@ -324,4 +346,26 @@
 <div role="doc-subtitle" aria-errormessage="error" />
 <div role="doc-tip" aria-owns="id" />
 <div role="doc-toc" aria-expanded />
+
+<!-- input and menuitem have different implicit roles based on different type attributes, and thus different valid and invalid props -->
+<!-- VALID -->
+<input type="text" aria-labelledby="id" /> <!-- implicit role: textbox -->
+<input type="tel" aria-readonly /> <!-- implicit role: textbox -->
+<input type="url" aria-errormessage="id" /> <!-- implicit role: textbox -->
+<input type="email" aria-details="id" /> <!-- implicit role: textbox -->
+<input type="searchbox" aria-owns="id" /> <!-- implicit role: searchbox -->
+<input type="text" list={['id']} aria-keyshortcuts="key" /> <!-- implicit role: combobox -->
+<input type="tel" list={['id']} aria-readonly /> <!-- implicit role: combobox -->
+<input type="url" list={['id']} aria-label="label" /> <!-- implicit role: combobox -->
+<input type="email" list={['id']} aria-activedescendant="id" /> <!-- implicit role: combobox -->
+<input type="search" list={['id']} aria-dropeffect="none" /> <!-- implicit role: combobox -->
+<input type="image" alt="some text" aria-pressed /> <!-- implicit role: button -->
+<input type="reset" aria-expanded /> <!-- implicit role: button -->
+<input type="submit" aria-disabled /> <!-- implicit role: button -->
+<input type="checkbox" aria-controls="id" /> <!-- implicit role: checkbox -->
+<input type="radio" aria-atomic /> <!-- implicit role: radio -->
+<input type="range" aria-hidden /> <!-- implicit role: slider -->
+<menuitem type="command" aria-live="off" /> <!-- implicit role: menuitem -->
+<menuitem type="checkbox" aria-relevant="all" /> <!-- implicit role: menuitemcheckbox -->
+<menuitem type="radio" aria-required /> <!-- implicit role: menuitemradio -->
 
