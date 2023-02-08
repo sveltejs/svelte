@@ -123,6 +123,61 @@ const a11y_implicit_semantics = new Map([
 	['ul', 'list']
 ]);
 
+const menuitem_type_to_implicit_role = new Map([
+  ['command', 'menuitem'],
+  ['checkbox', 'menuitemcheckbox'],
+  ['radio', 'menuitemradio']
+]);
+
+const input_type_to_implicit_role = new Map([
+  ['button', 'button'],
+  ['image', 'button'],
+  ['reset', 'button'],
+  ['submit', 'button'],
+  ['checkbox', 'checkbox'],
+  ['radio', 'radio'],
+  ['range', 'slider'],
+  ['number', 'spinbutton'],
+  ['email', 'textbox'],
+  ['search', 'searchbox'],
+  ['tel', 'textbox'],
+  ['text', 'textbox'],
+  ['url', 'textbox']
+]);
+
+const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
+
+function input_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+
+  const list_attribute_exists = attribute_map.has('list');
+
+  if (list_attribute_exists && combobox_if_list.has(type)) {
+    return 'combobox';
+  }
+
+  return input_type_to_implicit_role.get(type);
+}
+
+function menuitem_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+  return menuitem_type_to_implicit_role.get(type);
+}
+
+function get_implicit_role(name: string, attribute_map: Map<string, Attribute>) : (string | undefined) {
+  if (name === 'menuitem') {
+    return menuitem_implicit_role(attribute_map);
+  } else if (name === 'input') {
+    return input_implicit_role(attribute_map);
+  } else {
+    return a11y_implicit_semantics.get(name);
+  }
+}
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
@@ -513,7 +568,7 @@ export default class Element extends Node {
 						}
 
 						// no-redundant-roles
-						const has_redundant_role = current_role === a11y_implicit_semantics.get(this.name);
+						const has_redundant_role = current_role === get_implicit_role(this.name, attribute_map);
 
 						if (this.name === current_role || has_redundant_role) {
 							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
@@ -610,7 +665,7 @@ export default class Element extends Node {
 
     // role-supports-aria-props
     const role = attribute_map.get('role');
-    const role_value = (role ? role.get_static_value() : a11y_implicit_semantics.get(this.name)) as ARIARoleDefintionKey;
+    const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefintionKey;
     if (typeof role_value === 'string' && roles.has(role_value)) {
       const { props } = roles.get(role_value);
       const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
