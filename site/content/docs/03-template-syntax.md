@@ -631,7 +631,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 
 ---
 
-If you're using `bind:` directives together with `on:` directives, the order that they're defined in affects the value of the bound variable when the event handler is called.
+If you're using `bind:` directives together with `on:` directives, the order in which they're defined affects the value of the bound variable when the event handler is called.
 
 ```sv
 <script>
@@ -933,7 +933,7 @@ Actions are functions that are called when an element is created. They can retur
 
 An action can have a parameter. If the returned value has an `update` method, it will be called whenever that parameter changes, immediately after Svelte has applied updates to the markup.
 
-> Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
+> Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on the local state out of the component definition.
 
 ```sv
 <script>
@@ -1008,7 +1008,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 
 Like actions, transitions can have parameters.
 
-(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+(The double `{{curlies}}` isn't a special syntax; this is an object literal inside an expression tag.)
 
 ```sv
 {#if visible}
@@ -1024,7 +1024,7 @@ Like actions, transitions can have parameters.
 
 Transitions can use custom functions. If the returned object has a `css` function, Svelte will create a CSS animation that plays on the element.
 
-The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
 
 The function is called repeatedly *before* the transition begins, with different `t` and `u` arguments.
 
@@ -1241,7 +1241,7 @@ Animations can be used with Svelte's [built-in animation functions](/docs#run-ti
 
 As with actions and transitions, animations can have parameters.
 
-(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+(The double `{{curlies}}` isn't a special syntax; this is an object literal inside an expression tag.)
 
 ```sv
 {#each list as item, index (item)}
@@ -1415,7 +1415,7 @@ Svelte's CSS Variables support allows for easily themeable components:
 
 ---
 
-So you can set a high level theme color:
+So you can set a high-level theme color:
 
 ```css
 /* global.css */
@@ -1575,7 +1575,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 
 ---
 
-Slots can be rendered zero or more times, and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
+Slots can be rendered zero or more times and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
@@ -1666,7 +1666,7 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 
-The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
+The only supported binding is `bind:this`, since the element type-specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
 
