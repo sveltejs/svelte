@@ -67,8 +67,8 @@
 		position: relative;
 		padding: 1em 0.5em;
 		font-weight: 300;
-		font-size: var(--h6);
-		color: white;
+		font-size: var(--sk-text-xs);
+		color: var(--sk-text-2);
 	}
 
 	a {
@@ -76,7 +76,7 @@
 		padding: 0.7em 0;
 		text-align: center;
 		opacity: 0.75;
-		color: white;
+		color: var(--sk-text-2);
 	}
 
 	a:hover {

@@ -17,12 +17,14 @@
 		{
 			id: 'reactive-assignments',
 			title: 'Reactivity',
-			description: 'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.',
+			description:
+				'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.',
 		},
 		{
 			id: 'svg-transitions',
 			title: 'Transitions',
-			description: 'Build beautiful UIs with a powerful, performant transition engine built right into the framework.',
+			description:
+				'Build beautiful UIs with a powerful, performant transition engine built right into the framework.',
 		},
 	];
 
@@ -102,8 +104,8 @@
 	}
 
 	button.selected {
-		background-color: white;
-		color: var(--sk-back-1);
+		background-color: var(--sk-back-1);
+		color: var(--sk-text-2);
 	}
 
 	.small-show {

@@ -220,7 +220,7 @@
 		font-size: var(--sk-text-m);
 		line-height: 1;
 		font-weight: 400;
-		color: white;
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup :global(h2:first-child) {
@@ -234,7 +234,7 @@
 	}
 
 	.chapter-markup :global(a:hover) {
-		color: white;
+		color: var(--sk-text-1);
 	}
 
 	.chapter-markup :global(ul) {
@@ -258,12 +258,21 @@
 
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
-		color: var(--sidebar-text);
+		color: var(--sk-code-base);
 		background: var(--sk-code-bg);
 		padding: 0.2em 0.4em 0.3em;
 		white-space: nowrap;
 		position: relative;
 		top: -0.1em;
+	}
+
+	.chapter-markup :global(:where(pre.language-markup)) {
+		background-color: var(--sk-code-bg);
+		color: var(--sk-code-base);
+		border-radius: 0.5rem;
+		padding: 1rem;
+		margin: 0 0 1rem;
+		font-size: 14px;
 	}
 
 	.controls {
@@ -274,9 +283,9 @@
 	}
 
 	.show {
-		background: var(--prime);
+		background: var(--sk-theme-1);
 		padding: 0.3em 0.7em;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		top: 0.1em;
 		position: relative;
 		font-size: var(--h5);
@@ -303,7 +312,7 @@
 	.improve-chapter a {
 		font-size: 14px;
 		text-decoration: none;
-		opacity: 0.3;
+		opacity: 0.6;
 		padding: 0 0.1em 0 1.2em;
 		background: no-repeat 0 50% url(/icons/edit.svg);
 		background-size: 1em 1em;

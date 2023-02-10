@@ -52,6 +52,10 @@
 </main>
 
 <style>
+	:global(:root) {
+		color-scheme: light dark;
+	}
+
 	@media (max-width: 830px) {
 		:global(aside) {
 			z-index: 9999 !important;
@@ -82,6 +86,11 @@
 		.large {
 			display: inline;
 		}
+	}
+
+	:global(html, body) {
+		height: 100%;
+		width: 100%;
 	}
 
 	:global(.examples-container, .repl-outer, .tutorial-outer) {

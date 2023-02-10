@@ -48,7 +48,7 @@
 		height: 100%;
 		border-right: 1px solid var(--sk-back-4);
 		background-color: var(--sk-back-4);
-		color: white;
+		color: var(--sk-text-2);
 		padding: 3rem 3rem 0 3rem;
 		margin: 0;
 	}
