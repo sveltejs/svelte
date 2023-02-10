@@ -41,7 +41,7 @@
 
 	afterNavigate(() => {
 		repl.set({
-			components: data.gist.components
+			components: data.gist.components,
 		});
 	});
 
