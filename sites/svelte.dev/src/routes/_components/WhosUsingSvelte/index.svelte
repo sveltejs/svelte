@@ -35,7 +35,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0;
-		color: var(--text);
+		color: var(--sk-text-2);
 		filter: grayscale(1) contrast(4) opacity(0.4) invert(var(--invert, 0));
 		grid-column: span 2;
 	}
@@ -71,6 +71,13 @@
 	@media (min-width: 960px) {
 		.logos {
 			--row-size: 5;
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		a {
+			--invert: 1;
+			filter: grayscale(1) contrast(4) opacity(0.7) invert(var(--invert, 0));
 		}
 	}
 </style>

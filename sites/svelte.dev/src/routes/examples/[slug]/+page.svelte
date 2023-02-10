@@ -7,7 +7,7 @@
 	import {
 		mapbox_setup, // see site/content/examples/15-context/00-context-api
 		rollupUrl,
-		svelteUrl
+		svelteUrl,
 	} from '../../../config';
 	import TableOfContents from './_TableOfContents.svelte';
 
@@ -23,7 +23,7 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content
+		source: file.content,
 	});
 
 	$: mobile = width < 768; // note: same as per media query below
@@ -43,7 +43,7 @@
 <h1 class="visually-hidden">Examples</h1>
 <div class="examples-container" bind:clientWidth={width}>
 	<div class="viewport offset-{offset}">
-		<TableOfContents {sections} active_section={data.example.slug} isLoading={$navigating} />
+		<TableOfContents {sections} active_section={data.example.slug} isLoading={!!$navigating} />
 		<div class="repl-container" class:loading={$navigating}>
 			<Repl
 				bind:this={repl}
@@ -64,7 +64,7 @@
 <style>
 	.examples-container {
 		position: relative;
-		height: calc(100vh - var(--nav-h));
+		height: calc(100vh - var(--sk-nav-height));
 		overflow: hidden;
 		padding: 0 0 42px 0;
 		box-sizing: border-box;
@@ -113,6 +113,7 @@
 			width: 100%;
 			height: 100%;
 			display: grid;
+			/* TODO */
 			grid-template-columns: var(--sidebar-mid-w) auto;
 			grid-auto-rows: 100%;
 			transition: none;

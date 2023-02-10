@@ -35,8 +35,8 @@
 	.posts {
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 1em;
-		min-height: calc(100vh - var(--nav-h));
-		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
+		min-height: calc(100vh - var(--sk-nav-height));
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}
@@ -44,9 +44,9 @@
 	h2 {
 		display: inline-block;
 		margin: 3.2rem 0 0.4rem 0;
-		color: var(--text);
+		color: var(--sk-text-2);
 		max-width: 18em;
-		font-size: var(--h3);
+		font-size: var(--sk-text-m);
 		font-weight: 400;
 	}
 
@@ -59,14 +59,13 @@
 	.post:first-child h2 {
 		font-size: 4rem;
 		font-weight: 400;
-		color: var(--second);
+		color: var(--sk-text-2);
 	}
 
-	.post:first-child::before,
-	.post:nth-child(2)::before {
+	.post:where(:first-child, :nth-child(2))::before {
 		content: 'Latest post • ' attr(data-pubdate);
-		color: var(--flash);
-		font-size: var(--h6);
+		color: var(--sk-theme-3);
+		font-size: var(--sk-text-xs);
 		font-weight: 400;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -77,9 +76,9 @@
 	}
 
 	.post p {
-		font-size: var(--h5);
+		font-size: var(--sk-text-s);
 		max-width: 30em;
-		color: var(--second);
+		color: var(--sk-text-3);
 	}
 
 	.post > a {
@@ -88,6 +87,6 @@
 
 	.posts a:hover,
 	.posts a:hover > h2 {
-		color: var(--flash);
+		color: var(--sk-theme-3);
 	}
 </style>

@@ -84,15 +84,6 @@
 		}
 	}
 
-	/** Ukraine banner */
-	:root {
-		--ukr-footer-height: 48px;
-	}
-
-	main {
-		padding-bottom: var(--ukr-footer-height);
-	}
-
 	:global(.examples-container, .repl-outer, .tutorial-outer) {
 		height: calc(100vh - var(--nav-h) - var(--ukr-footer-height)) !important;
 	}

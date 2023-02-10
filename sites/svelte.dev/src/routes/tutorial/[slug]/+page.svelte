@@ -157,7 +157,7 @@
 <style>
 	.tutorial-outer {
 		position: relative;
-		height: calc(100vh - var(--nav-h));
+		height: calc(100vh - var(--sk-nav-height));
 		overflow: hidden;
 		padding: 0 0 42px 0;
 		box-sizing: border-box;
@@ -203,9 +203,9 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		border-right: 1px solid var(--second);
-		background-color: var(--second);
-		color: var(--sidebar-text);
+		border-right: 1px solid var(--sk-back-4);
+		background-color: var(--sk-back-4);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup {
@@ -217,7 +217,7 @@
 
 	.chapter-markup :global(h2) {
 		margin: 4rem 0 1.6rem 0;
-		font-size: var(--h3);
+		font-size: var(--sk-text-m);
 		line-height: 1;
 		font-weight: 400;
 		color: white;
@@ -230,7 +230,7 @@
 	.chapter-markup :global(a) {
 		transition: color 0.2s;
 		text-decoration: underline;
-		color: var(--sidebar-text);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup :global(a:hover) {
@@ -243,11 +243,11 @@
 
 	.chapter-markup :global(blockquote) {
 		background-color: rgba(0, 0, 0, 0.17);
-		color: var(--sidebar-text);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup::-webkit-scrollbar {
-		background-color: var(--second);
+		background-color: var(--sk-theme-2);
 		width: 8px;
 	}
 
@@ -259,7 +259,7 @@
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
 		color: var(--sidebar-text);
-		background: rgba(0, 0, 0, 0.12);
+		background: var(--sk-code-bg);
 		padding: 0.2em 0.4em 0.3em;
 		white-space: nowrap;
 		position: relative;
