@@ -9,7 +9,6 @@
 
 	import {
 		mapbox_setup, // needed for context API tutorial
-		rollupUrl,
 		svelteUrl,
 	} from '../../../config.js';
 
@@ -138,7 +137,6 @@
 				<Repl
 					bind:this={repl}
 					{svelteUrl}
-					{rollupUrl}
 					orientation={mobile ? 'columns' : 'rows'}
 					fixed={mobile}
 					on:change={handle_change}

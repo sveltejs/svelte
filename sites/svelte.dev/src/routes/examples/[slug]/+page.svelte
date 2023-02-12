@@ -6,7 +6,6 @@
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import {
 		mapbox_setup, // see site/content/examples/15-context/00-context-api
-		rollupUrl,
 		svelteUrl,
 	} from '../../../config';
 	import TableOfContents from './_TableOfContents.svelte';
@@ -14,8 +13,10 @@
 	/** @type {import('./$types').PageData} */
 	export let data;
 
+	/** @type {number} */
 	let width;
 	let offset = 1;
+	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 
 	const { sections } = getContext('examples');
@@ -48,7 +49,6 @@
 			<Repl
 				bind:this={repl}
 				{svelteUrl}
-				{rollupUrl}
 				orientation={replOrientation}
 				fixed={mobile}
 				relaxed

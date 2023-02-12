@@ -93,9 +93,9 @@
 		width: 100%;
 	}
 
-	:global(.examples-container, .repl-outer, .tutorial-outer) {
+	/* :global(.examples-container, .repl-outer, .tutorial-outer) {
 		height: calc(100vh - var(--nav-h) - var(--ukr-footer-height)) !important;
-	}
+	} */
 
 	:global(.toggle) {
 		bottom: var(--ukr-footer-height) !important;
