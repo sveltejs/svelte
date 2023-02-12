@@ -101,9 +101,9 @@
 		bottom: var(--ukr-footer-height) !important;
 	}
 
-	:global(.zen-mode) {
+	/* :global(.zen-mode) {
 		height: calc(100vh - var(--ukr-footer-height)) !important;
-	}
+	} */
 
 	@media (max-width: 830px) {
 		:global(aside) {
