@@ -250,7 +250,7 @@
 	}
 
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgba(255, 255, 255, 0.7);
+		background-color: var(--sk-scrollbar);
 		border-radius: 1em;
 	}
 
