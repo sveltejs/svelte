@@ -286,7 +286,7 @@
 		border-radius: var(--sk-border-radius);
 		top: 0.1em;
 		position: relative;
-		font-size: var(--h5);
+		font-size: var(--sk-text-s);
 		font-weight: 300;
 		color: rgba(255, 255, 255, 0.7);
 	}
@@ -308,12 +308,30 @@
 	}
 
 	.improve-chapter a {
+		color: var(--sk-text-2);
 		font-size: 14px;
 		text-decoration: none;
 		opacity: 0.6;
 		padding: 0 0.1em 0 1.2em;
+	}
+
+	.improve-chapter a::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		height: 100%;
+		width: 1em;
+
 		background: no-repeat 0 50% url(/icons/edit.svg);
 		background-size: 1em 1em;
+	}
+
+	@media (prefers-color-scheme: light) {
+		.improve-chapter a::before {
+			filter: invert(1);
+		}
 	}
 
 	.improve-chapter a:hover {
