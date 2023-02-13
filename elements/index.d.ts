@@ -544,6 +544,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
+	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
