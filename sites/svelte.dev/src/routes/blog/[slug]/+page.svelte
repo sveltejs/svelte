@@ -35,7 +35,7 @@
 
 <style>
 	.post {
-		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
 		max-width: var(--main-width);
 		margin: 0 auto;
 	}
@@ -46,21 +46,21 @@
 	}
 
 	.standfirst {
-		font-size: var(--h4);
-		color: var(--second);
+		font-size: var(--sk-text-s);
+		color: var(--sk-text-3);
 		margin: 0 0 1em 0;
 	}
 
 	.byline {
 		margin: 0 0 6rem 0;
 		padding: 1.6rem 0 0 0;
-		border-top: var(--border-w) solid #6767785b;
-		font-size: var(--h6);
+		border-top: var(--sk-thick-border-width) solid #6767785b;
+		font-size: var(--sk-text-xs);
 		text-transform: uppercase;
 	}
 
 	.post h1 {
-		color: var(--second);
+		color: var(--sk-text-2);
 		max-width: 20em;
 		margin: 0 0 0.8rem 0;
 	}
@@ -68,8 +68,8 @@
 	.post :global(h2) {
 		margin: 2em 0 0.5em 0;
 		/* color: var(--second); */
-		color: var(--text);
-		font-size: var(--h3);
+		color: var(--sk-text-2);
+		font-size: var(--sk-text-m);
 		font-weight: 300;
 	}
 
@@ -82,7 +82,7 @@
 	}
 
 	.post :global(figcaption) {
-		color: var(--second);
+		color: var(--sk-theme-2);
 		text-align: left;
 	}
 
@@ -94,14 +94,14 @@
 		max-width: none;
 		border-left: 4px solid #eee;
 		background: #f9f9f9;
-		border-radius: 0 var(--border-r) var(--border-r) 0;
+		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
 	}
 
 	.post :global(code) {
 		padding: 0.3rem 0.8rem 0.3rem;
 		margin: 0 0.2rem;
 		top: -0.1rem;
-		background: var(--back-api);
+		background: var(--sk-back-4);
 	}
 
 	.post :global(pre) :global(code) {
@@ -115,7 +115,7 @@
 		float: right;
 		margin: 0 0 1em 1em;
 		width: 16rem;
-		color: var(--second);
+		color: var(--sk-theme-2);
 		z-index: 2;
 	}
 
@@ -127,12 +127,12 @@
 		width: 100%;
 		height: 420px;
 		margin: 2em 0;
-		border-radius: var(--border-r);
-		border: 0.8rem solid var(--second);
+		border-radius: var(--sk-border-radius);
+		border: 0.8rem solid var(--sk-theme-2);
 	}
 
 	.post :global(.anchor) {
-		top: calc((var(--h3) - 24px) / 2);
+		top: calc((var(--sk-text-m) - 24px) / 2);
 	}
 
 	.post :global(a) {
@@ -154,7 +154,7 @@
 
 	@media (min-width: 910px) {
 		.post :global(.max) {
-			width: calc(100vw - 2 * var(--side-nav));
+			width: calc(100vw - 2 * var(--sk-page-padding-side));
 			margin: 0 calc(var(--main-width) / 2 - 50vw);
 			text-align: center;
 		}

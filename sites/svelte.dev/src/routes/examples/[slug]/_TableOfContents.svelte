@@ -46,10 +46,11 @@
 	.examples-toc {
 		overflow-y: auto;
 		height: 100%;
-		border-right: 1px solid var(--second);
-		background-color: var(--second);
-		color: white;
+		border-right: 1px solid var(--sk-back-4);
+		background-color: var(--sk-back-4);
+		color: var(--sk-text-2);
 		padding: 3rem 3rem 0 3rem;
+		margin: 0;
 	}
 
 	.examples-toc li {
@@ -61,7 +62,7 @@
 	.section-title {
 		display: block;
 		padding: 0 0 0.8rem 0;
-		font: 400 var(--h6) var(--font);
+		font: 400 var(--sk-text-xs) var(--sk-font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
 		font-weight: 700;
@@ -88,7 +89,7 @@
 		display: flex;
 		flex: 1 1 auto;
 		position: relative;
-		color: var(--sidebar-text);
+		color: var(--sk-text-2);
 		border-bottom: none;
 		font-size: 1.6rem;
 		align-items: center;
@@ -97,7 +98,7 @@
 	}
 
 	a:hover {
-		color: white;
+		color: var(--sk-text-1);
 	}
 
 	.repl-link {
@@ -108,7 +109,7 @@
 	}
 
 	.thumbnail {
-		background-color: white;
+		background-color: var(--sk-back-1);
 		object-fit: contain;
 		width: 5rem;
 		height: 5rem;

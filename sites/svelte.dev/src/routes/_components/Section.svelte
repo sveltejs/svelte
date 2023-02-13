@@ -5,7 +5,7 @@
 <style>
 	section {
 		padding: 10rem 0;
-		background: var(--background, white);
+		background: var(--background, var(--sk-back-2));
 	}
 
 	.inner {

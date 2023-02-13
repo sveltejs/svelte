@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.7.1",
-    "@sveltejs/repl": "0.0.3",
+    "@sveltejs/repl": "^0.1.2",
     "cookie": "^0.5.0",
     "devalue": "^4.2.3",
     "do-not-zip": "^1.0.0",

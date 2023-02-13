@@ -52,6 +52,10 @@
 </main>
 
 <style>
+	:global(:root) {
+		color-scheme: light dark;
+	}
+
 	@media (max-width: 830px) {
 		:global(aside) {
 			z-index: 9999 !important;
@@ -84,26 +88,22 @@
 		}
 	}
 
-	/** Ukraine banner */
-	:root {
-		--ukr-footer-height: 48px;
+	:global(html, body) {
+		height: 100%;
+		width: 100%;
 	}
 
-	main {
-		padding-bottom: var(--ukr-footer-height);
-	}
-
-	:global(.examples-container, .repl-outer, .tutorial-outer) {
+	/* :global(.examples-container, .repl-outer, .tutorial-outer) {
 		height: calc(100vh - var(--nav-h) - var(--ukr-footer-height)) !important;
-	}
+	} */
 
 	:global(.toggle) {
 		bottom: var(--ukr-footer-height) !important;
 	}
 
-	:global(.zen-mode) {
+	/* :global(.zen-mode) {
 		height: calc(100vh - var(--ukr-footer-height)) !important;
-	}
+	} */
 
 	@media (max-width: 830px) {
 		:global(aside) {

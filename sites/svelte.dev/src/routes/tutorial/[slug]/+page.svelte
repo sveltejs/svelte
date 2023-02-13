@@ -9,7 +9,6 @@
 
 	import {
 		mapbox_setup, // needed for context API tutorial
-		rollupUrl,
 		svelteUrl,
 	} from '../../../config.js';
 
@@ -138,7 +137,6 @@
 				<Repl
 					bind:this={repl}
 					{svelteUrl}
-					{rollupUrl}
 					orientation={mobile ? 'columns' : 'rows'}
 					fixed={mobile}
 					on:change={handle_change}
@@ -157,7 +155,7 @@
 <style>
 	.tutorial-outer {
 		position: relative;
-		height: calc(100vh - var(--nav-h));
+		height: calc(100vh - var(--sk-nav-height));
 		overflow: hidden;
 		padding: 0 0 42px 0;
 		box-sizing: border-box;
@@ -203,9 +201,9 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		border-right: 1px solid var(--second);
-		background-color: var(--second);
-		color: var(--sidebar-text);
+		border-right: 1px solid var(--sk-back-4);
+		background-color: var(--sk-back-4);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup {
@@ -217,10 +215,10 @@
 
 	.chapter-markup :global(h2) {
 		margin: 4rem 0 1.6rem 0;
-		font-size: var(--h3);
+		font-size: var(--sk-text-m);
 		line-height: 1;
 		font-weight: 400;
-		color: white;
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup :global(h2:first-child) {
@@ -230,11 +228,11 @@
 	.chapter-markup :global(a) {
 		transition: color 0.2s;
 		text-decoration: underline;
-		color: var(--sidebar-text);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup :global(a:hover) {
-		color: white;
+		color: var(--sk-text-1);
 	}
 
 	.chapter-markup :global(ul) {
@@ -243,27 +241,36 @@
 
 	.chapter-markup :global(blockquote) {
 		background-color: rgba(0, 0, 0, 0.17);
-		color: var(--sidebar-text);
+		color: var(--sk-text-2);
 	}
 
 	.chapter-markup::-webkit-scrollbar {
-		background-color: var(--second);
+		background-color: var(--sk-theme-2);
 		width: 8px;
 	}
 
 	.chapter-markup::-webkit-scrollbar-thumb {
-		background-color: rgba(255, 255, 255, 0.7);
+		background-color: var(--sk-scrollbar);
 		border-radius: 1em;
 	}
 
 	.chapter-markup :global(p) > :global(code),
 	.chapter-markup :global(ul) :global(code) {
-		color: var(--sidebar-text);
-		background: rgba(0, 0, 0, 0.12);
+		color: var(--sk-code-base);
+		background: var(--sk-code-bg);
 		padding: 0.2em 0.4em 0.3em;
 		white-space: nowrap;
 		position: relative;
 		top: -0.1em;
+	}
+
+	.chapter-markup :global(:where(pre.language-markup)) {
+		background-color: var(--sk-code-bg);
+		color: var(--sk-code-base);
+		border-radius: 0.5rem;
+		padding: 1rem;
+		margin: 0 0 1rem;
+		font-size: 14px;
 	}
 
 	.controls {
@@ -274,12 +281,12 @@
 	}
 
 	.show {
-		background: var(--prime);
+		background: var(--sk-theme-1);
 		padding: 0.3em 0.7em;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		top: 0.1em;
 		position: relative;
-		font-size: var(--h5);
+		font-size: var(--sk-text-s);
 		font-weight: 300;
 		color: rgba(255, 255, 255, 0.7);
 	}
@@ -301,12 +308,30 @@
 	}
 
 	.improve-chapter a {
+		color: var(--sk-text-2);
 		font-size: 14px;
 		text-decoration: none;
-		opacity: 0.3;
+		opacity: 0.6;
 		padding: 0 0.1em 0 1.2em;
+	}
+
+	.improve-chapter a::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		height: 100%;
+		width: 1em;
+
 		background: no-repeat 0 50% url(/icons/edit.svg);
 		background-size: 1em 1em;
+	}
+
+	@media (prefers-color-scheme: light) {
+		.improve-chapter a::before {
+			filter: invert(1);
+		}
 	}
 
 	.improve-chapter a:hover {

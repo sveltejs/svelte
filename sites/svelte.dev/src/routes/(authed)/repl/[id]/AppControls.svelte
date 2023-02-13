@@ -243,8 +243,8 @@ export default app;`,
 		align-items: center;
 		justify-content: space-between;
 		padding: 0.6rem var(--side-nav);
-		background-color: var(--second);
-		color: white;
+		background-color: var(--sk-back-4);
+		color: var(--sk-text-1);
 		white-space: nowrap;
 		flex: 0;
 	}
@@ -256,9 +256,9 @@ export default app;`,
 		padding: 0.2em;
 		opacity: 0.7;
 		transition: opacity 0.3s;
-		font-family: var(--font);
+		font-family: var(--sk-font);
 		font-size: 1.6rem;
-		color: white;
+		color: var(--sk-text-1);
 		/* width: 1.6em;
 		height: 1.6em; */
 		line-height: 1;
@@ -280,7 +280,7 @@ export default app;`,
 		background: transparent;
 		border: none;
 		color: currentColor;
-		font-family: var(--font);
+		font-family: var(--sk-font);
 		font-size: 1.6rem;
 		opacity: 0.7;
 		outline: none;

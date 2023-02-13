@@ -4,9 +4,7 @@
 	import donors from './donors.js';
 </script>
 
-<Section
-	--background="radial-gradient(circle at top right, rgb(230, 233, 236), rgb(244, 245, 247))"
->
+<Section>
 	<p class="intro">
 		Svelte is free and open source software, made possible by the work of hundreds of supporters.
 	</p>
@@ -50,7 +48,7 @@
 
 <style>
 	h3 {
-		color: var(--text);
+		color: var(--sk-text-2);
 	}
 
 	.intro {
@@ -112,7 +110,7 @@
 		}
 
 		.intro {
-			font-size: var(--h3);
+			font-size: var(--sk-text-m);
 		}
 
 		h3 {
