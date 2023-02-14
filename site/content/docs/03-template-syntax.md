@@ -1307,14 +1307,12 @@ A custom animation function can also return a `tick` function, which is called *
 		const d = Math.sqrt(dx * dx + dy * dy);
 
 		return {
-		delay: 0,
-		duration: Math.sqrt(d) * 120,
-		easing: cubicOut,
-		tick: (t, u) =>
-			Object.assign(node.style, {
-				color: t > 0.5 ? 'Pink' : 'Blue'
-			});
-	};
+			delay: 0,
+			duration: Math.sqrt(d) * 120,
+			easing: cubicOut,
+			tick: (t, u) =>
+				Object.assign(node.style, { color: t > 0.5 ? 'Pink' : 'Blue' })
+		};
 	}
 </script>
 
