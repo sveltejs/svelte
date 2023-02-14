@@ -663,7 +663,7 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 
 ---
 
-A `<select multiple>` element behaves similarly to a checkbox group.
+A `<select multiple>` element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the `value` property of each selected `<option>`.
 
 ```sv
 <select multiple bind:value={fillings}>
