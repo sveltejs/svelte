@@ -1008,7 +1008,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 
 Like actions, transitions can have parameters.
 
-(The double `{{curlies}}` isn't a special syntax; this is an object literal inside an expression tag.)
+(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
 
 ```sv
 {#if visible}
