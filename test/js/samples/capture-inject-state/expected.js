@@ -48,7 +48,7 @@ function create_fragment(ctx) {
 			t8 = text(/*$prop*/ ctx[2]);
 			t9 = space();
 			t10 = text(/*shadowedByModule*/ ctx[4]);
-			add_location(p, file, 22, 0, 430);
+			add_location(p, file, 22, 0, 431);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
