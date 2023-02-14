@@ -48,7 +48,7 @@ function create_fragment(ctx) {
 			t8 = text(/*$prop*/ ctx[2]);
 			t9 = space();
 			t10 = text(/*shadowedByModule*/ ctx[4]);
-			add_location(p, file, 22, 0, 430);
+			add_location(p, file, 22, 0, 431);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -91,7 +91,7 @@ function create_fragment(ctx) {
 }
 
 let moduleLiveBinding;
-const moduleContantProps = 4;
+const moduleConstantProps = 4;
 let moduleLet;
 const moduleConst = 2;
 let shadowedByModule;
@@ -137,7 +137,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	$$self.$capture_state = () => ({
 		moduleLiveBinding,
-		moduleContantProps,
+		moduleConstantProps,
 		moduleLet,
 		moduleConst,
 		shadowedByModule,
@@ -197,4 +197,4 @@ class Component extends SvelteComponentDev {
 }
 
 export default Component;
-export { moduleLiveBinding, moduleContantProps };
+export { moduleLiveBinding, moduleConstantProps };

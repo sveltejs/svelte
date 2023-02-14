@@ -1034,14 +1034,14 @@ export default class Element extends Node {
 	}
 }
 
-const regex_starts_with_vovel = /^[aeiou]/;
+const regex_starts_with_vowel = /^[aeiou]/;
 
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];

@@ -1043,7 +1043,7 @@ Also:
 
 ## 3.5.1
 
-* Accommodate webpack idiosyncracies
+* Accommodate webpack idiosyncrasies
 
 ## 3.5.0
 
