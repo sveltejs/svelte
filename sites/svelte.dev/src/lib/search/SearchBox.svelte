@@ -109,7 +109,7 @@
 />
 
 {#if $searching && ready}
-	<div class="modal-background" on:click={close} />
+	<div class="modal-background" on:click={close} on:keyup={(e) => e.key === ' ' && close()} />
 
 	<div
 		bind:this={modal}
@@ -140,9 +140,7 @@
 						modal.querySelector('a[data-has-node]')?.click();
 					}
 				}}
-				on:input={(e) => {
-					$query = e.target.value;
-				}}
+				on:input={(e) => ($query = e.currentTarget.value)}
 				value={$query}
 				placeholder="Search"
 				aria-describedby="search-description"
