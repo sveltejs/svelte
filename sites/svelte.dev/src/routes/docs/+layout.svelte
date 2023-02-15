@@ -1,14 +1,13 @@
 <script>
 	import { page } from '$app/stores';
 	import Contents from './Contents.svelte';
-	import '@sveltejs/site-kit/styles/code.css';
 
 	/** @type {import('./$types').LayoutServerData}*/
 	export let data;
 </script>
 
 <div class="container">
-	<div class="page content">
+	<div class="page content ">
 		<h1>{data.sections.find((val) => val.path === $page.url.pathname)?.title}</h1>
 		<slot />
 	</div>
@@ -80,10 +79,10 @@
 		height: 0;
 	}
 
-	.content :global(.anchor) {
+	.content :global(a.permalink) {
 		position: absolute;
 		display: block;
-		background: url(../icons/link.svg) 0 50% no-repeat;
+		background: url(/icons/link.svg) 0 50% no-repeat;
 		background-size: 1em 1em;
 		width: 1.4em;
 		height: 1em;
@@ -94,11 +93,11 @@
 		user-select: none;
 	}
 
-	.content :global(h2) :global(.anchor) {
-		bottom: 4rem;
+	.content :global(h2) :global(.permalink) {
+		bottom: 2rem;
 	}
 
-	.content :global(h3) :global(.anchor) {
+	.content :global(h3) :global(.permalink) {
 		bottom: 1rem;
 	}
 
@@ -114,11 +113,7 @@
 		}
 
 		.content :global(.anchor:focus),
-		.content :global(h2):hover :global(.anchor),
-		.content :global(h3):hover :global(.anchor),
-		.content :global(h4):hover :global(.anchor),
-		.content :global(h5):hover :global(.anchor),
-		.content :global(h6):hover :global(.anchor) {
+		.content :global(:where(h2, h3, h4, h5, h6):hover .permalink) {
 			opacity: 1;
 		}
 	}

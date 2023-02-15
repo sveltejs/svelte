@@ -3,8 +3,6 @@
 	import { searching, query } from './stores.js';
 
 	export let q = '';
-
-	$: console.log($searching);
 </script>
 
 <form class="search-container" action="/search">

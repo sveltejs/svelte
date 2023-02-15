@@ -290,6 +290,7 @@ export async function read_file(file) {
 export function slugify(title) {
 	return title
 		.toLowerCase()
+		.replace(/&#39;/g, '')
 		.replace(/&lt;/g, '')
 		.replace(/&gt;/g, '')
 		.replace(/[^a-z0-9-$]/g, '-')
@@ -335,6 +336,8 @@ function parse({ file, body, code, codespan }) {
 			current = title;
 
 			const normalized = slugify(title);
+
+			console.log({ title });
 
 			headings[level - 1] = normalized;
 			headings.length = level;
