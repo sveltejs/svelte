@@ -1,7 +1,9 @@
 <script>
+	import { browser } from '$app/environment';
 	import { navigating, page } from '$app/stores';
 	import PreloadingIndicator from '$lib/components/PreloadingIndicator.svelte';
 	import Search from '$lib/search/Search.svelte';
+	import SearchBox from '$lib/search/SearchBox.svelte';
 	import { Icon, Icons, Nav, NavItem, SkipLink } from '@sveltejs/site-kit';
 	import '@sveltejs/site-kit/styles/index.css';
 </script>
@@ -60,6 +62,10 @@
 <main id="main">
 	<slot />
 </main>
+
+{#if browser}
+	<SearchBox />
+{/if}
 
 <style>
 	:global(:root) {

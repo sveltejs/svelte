@@ -42,7 +42,7 @@ export function content() {
 
 			const { body, metadata } = extract_frontmatter(markdown);
 
-			const sections = body.trim().split(/^## /m);
+			const sections = body.trim().split(/^### /m);
 			const intro = sections.shift().trim();
 			const rank = +metadata.rank || undefined;
 

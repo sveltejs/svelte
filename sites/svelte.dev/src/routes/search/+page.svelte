@@ -1,7 +1,7 @@
 <script>
 	import SearchResults from '$lib/search/SearchResults.svelte';
 
-	/** @type {import('./$types').Data} */
+	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
@@ -43,7 +43,7 @@
 		border-radius: var(--sk-border-radius);
 		padding-left: var(--size);
 		border-radius: var(--size);
-		background: no-repeat 1rem 50% / 2rem 2rem url($lib/icons/search.svg);
+		background: no-repeat 1rem 50% / 2rem 2rem url(/icons/search.svg);
 		color: var(--sk-text-1);
 	}
 </style>

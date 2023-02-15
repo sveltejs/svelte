@@ -158,7 +158,11 @@
 
 			<div class="results">
 				{#if search?.query}
-					<div class="results-container" on:click={() => ($searching = false)}>
+					<div
+						class="results-container"
+						on:click={() => ($searching = false)}
+						on:keydown={(e) => e.key === ' ' && ($searching = false)}
+					>
 						<SearchResults
 							results={search.results}
 							query={search.query}

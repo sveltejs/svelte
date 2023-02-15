@@ -11,7 +11,7 @@
 
 	/** @param {string} text */
 	function escape(text) {
-		return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		return text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replaceAll('`', '');
 	}
 
 	/**
@@ -19,6 +19,8 @@
 	 * @param {string} query
 	 */
 	function excerpt(content, query) {
+		if (content === null) return '';
+
 		const index = content.toLowerCase().indexOf(query.toLowerCase());
 		if (index === -1) {
 			return escape(content.slice(0, 100));
