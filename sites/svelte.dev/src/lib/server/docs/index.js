@@ -337,8 +337,6 @@ function parse({ file, body, code, codespan }) {
 
 			const normalized = slugify(title);
 
-			console.log({ title });
-
 			headings[level - 1] = normalized;
 			headings.length = level;
 
