@@ -11,15 +11,15 @@
 			$page.url.hash.replace('#', '').startsWith(val.path.split('/').at(-1))
 		);
 
-		if (!section) goto('/docs/introduction');
+		if (!section) return '/docs/introduction';
 
 		// Remove the section name from hash, then redirect to that
 		const hash = $page.url.hash.replace(`#${section.path.split('/').at(-1)}-`, '');
 
-		goto(`${section.path}#${hash}`);
+		return `${section.path}#${hash}`;
 	}
 
 	onMount(() => {
-		getURlToRedirectTo();
+		goto(getURlToRedirectTo());
 	});
 </script>
