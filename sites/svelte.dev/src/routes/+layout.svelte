@@ -1,6 +1,7 @@
 <script>
 	import { navigating, page } from '$app/stores';
 	import PreloadingIndicator from '$lib/components/PreloadingIndicator.svelte';
+	import Search from '$lib/search/Search.svelte';
 	import { Icon, Icons, Nav, NavItem, SkipLink } from '@sveltejs/site-kit';
 	import '@sveltejs/site-kit/styles/index.css';
 </script>
@@ -15,15 +16,24 @@
 	<SkipLink href="#main" />
 	<Nav {page} logo="/svelte-logo.svg">
 		<svelte:fragment slot="nav-center">
+			{#if $page.url.pathname !== '/search'}
+				<!-- the <Nav> component renders this content inside a <ul>, so
+				we need to wrap it in an <li>. TODO if we adopt this design
+				on other sites, change <Nav> so we don't need to do this -->
+				<li><Search /></li>
+			{/if}
+		</svelte:fragment>
+
+		<svelte:fragment slot="nav-right">
 			<NavItem href="/tutorial">Tutorial</NavItem>
 			<NavItem href="/docs">Docs</NavItem>
 			<NavItem href="/examples">Examples</NavItem>
 			<NavItem href="/repl">REPL</NavItem>
 			<NavItem href="/blog">Blog</NavItem>
 			<NavItem href="/faq">FAQ</NavItem>
-		</svelte:fragment>
+			<!-- </svelte:fragment>
 
-		<svelte:fragment slot="nav-right">
+		<svelte:fragment slot="nav-right"> -->
 			<NavItem external="https://kit.svelte.dev">SvelteKit</NavItem>
 
 			<NavItem external="/chat" title="Discord Chat">
