@@ -4,11 +4,16 @@
 
 	/** @type {import('./$types').LayoutServerData}*/
 	export let data;
+
+	$: title = data.sections.find((val) => val.path === $page.url.pathname)?.title;
 </script>
 
 <div class="container">
 	<div class="page content ">
-		<h1>{data.sections.find((val) => val.path === $page.url.pathname)?.title}</h1>
+		{#if title}
+			<h1>{title}</h1>
+		{/if}
+
 		<slot />
 	</div>
 
