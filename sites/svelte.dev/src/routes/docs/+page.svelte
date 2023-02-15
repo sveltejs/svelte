@@ -20,6 +20,6 @@
 	}
 
 	onMount(() => {
-		goto(getURlToRedirectTo());
+		goto(getURlToRedirectTo(), { replaceState: true });
 	});
 </script>
