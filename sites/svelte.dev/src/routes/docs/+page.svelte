@@ -1,8 +1,7 @@
 <script>
-	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { redirect } from '@sveltejs/kit';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
