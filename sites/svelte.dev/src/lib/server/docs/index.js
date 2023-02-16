@@ -14,6 +14,42 @@ import MagicString from 'magic-string';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
 
+/** @param {string} title */
+export function slugify(title) {
+	return title
+		.toLowerCase()
+		.replace(/&#39;/g, '')
+		.replace(/&lt;/g, '')
+		.replace(/&gt;/g, '')
+		.replace(/[^a-z0-9-$]/g, '-')
+		.replace(/-{2,}/g, '-')
+		.replace(/^-/, '')
+		.replace(/-$/, '');
+}
+
+/** @param {string} markdown */
+export function removeMarkdown(markdown) {
+	return markdown
+		.replace(/\*\*(.+?)\*\*/g, '$1')
+		.replace(/\*(.+?)\*/g, '$1')
+		.replace(/`(.+?)`/g, '$1')
+		.replace(/~~(.+?)~~/g, '$1')
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1')
+		.replace(/\n/g, ' ')
+		.replace(/ {2,}/g, ' ')
+		.trim();
+}
+
+/** @param {string} html */
+export function removeHTMLEntities(html) {
+	return html.replace(/&.+?;/g, '');
+}
+
+/** @param {string} str */
+export const normalizeSlugify = (str) => {
+	return slugify(removeHTMLEntities(removeMarkdown(str))).replace(/(<([^>]+)>)/gi, '');
+};
+
 const base = '../../site/content/docs/';
 
 const languages = {
@@ -286,18 +322,6 @@ export async function read_file(file) {
 	};
 }
 
-/** @param {string} title */
-export function slugify(title) {
-	return title
-		.toLowerCase()
-		.replace(/&lt;/g, '')
-		.replace(/&gt;/g, '')
-		.replace(/[^a-z0-9-$]/g, '-')
-		.replace(/-{2,}/g, '-')
-		.replace(/^-/, '')
-		.replace(/-$/, '');
-}
-
 /**
  * @param {{
  *   file: string;
@@ -325,7 +349,7 @@ function parse({ file, body, code, codespan }) {
 		 * @param {string} html
 		 * @param {number} level
 		 */
-		heading(html, level) {
+		heading(html, level, raw) {
 			const title = html
 				.replace(/<\/?code>/g, '')
 				.replace(/&quot;/g, '"')
@@ -334,7 +358,7 @@ function parse({ file, body, code, codespan }) {
 
 			current = title;
 
-			const normalized = slugify(title);
+			const normalized = normalizeSlugify(raw);
 
 			headings[level - 1] = normalized;
 			headings.length = level;

@@ -33,8 +33,9 @@
 	.faqs {
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 1em;
-		min-height: calc(100vh - var(--nav-h));
-		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
+		min-height: calc(100vh - var(--sk-nav-height));
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
+		/* TODO: REMOVE */
 		max-width: var(--main-width);
 		margin: 0 auto;
 		tab-size: 2;
@@ -50,7 +51,7 @@
 	.faqs :global(pre) {
 		margin: 0 0 2rem 0;
 		width: 100%;
-		max-width: var(--linemax);
+		max-width: var(--sk-line-max-width);
 		padding: 1.5rem 2.5rem;
 		background: #333;
 		border-radius: 0.5rem;
@@ -60,7 +61,7 @@
 	.faqs :global(.offset-anchor) {
 		position: relative;
 		display: block;
-		top: calc(-1 * var(--top-offset));
+		top: calc(-1 * var(--sk-page-padding-top));
 		width: 0;
 		height: 0;
 	}
@@ -101,9 +102,9 @@
 	h2 {
 		margin: 3.5rem 0 1rem 0;
 		padding: 0 0 0.2em 0;
-		color: var(--text);
+		color: var(--sk-text-2);
 		/* max-width: 24em; */
-		font-size: var(--h3);
+		font-size: var(--sk-text-m);
 		font-weight: 400;
 		border-bottom: 1px solid #ddd;
 	}
@@ -112,7 +113,7 @@
 		font-family: inherit;
 		font-weight: 600;
 		font-size: 2rem;
-		color: var(--second);
+		color: var(--sk-theme-2);
 		margin: 2rem 0 1.6rem 0;
 		padding-left: 0;
 		background: transparent;
@@ -124,12 +125,12 @@
 	.faq:first-child {
 		margin: 0 0 2rem 0;
 		padding: 0 0 4rem 0;
-		border-bottom: var(--border-w) solid #6767785b; /* based on --second */
+		border-bottom: var(--sk-thick-border-width) solid #6767785b; /* based on --second */
 	}
 	.faq:first-child h2 {
 		font-size: 4rem;
 		font-weight: 400;
-		color: var(--second);
+		color: var(--sk-theme-2);
 	}
 
 	:global(.faqs .faq ul) {
@@ -137,7 +138,7 @@
 	}
 
 	.faqs :global(.anchor) {
-		top: calc((var(--h3) - 24px) / 2);
+		top: calc((var(--sk-text-m) - 24px) / 2);
 	}
 
 	@media (max-width: 768px) {

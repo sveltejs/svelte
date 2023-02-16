@@ -186,6 +186,7 @@
 			width: 100%;
 			height: 100%;
 			display: grid;
+			/* TODO */
 			grid-template-columns: minmax(33.333%, var(--sidebar-large-w)) auto;
 			grid-auto-rows: 100%;
 			transition: none;
