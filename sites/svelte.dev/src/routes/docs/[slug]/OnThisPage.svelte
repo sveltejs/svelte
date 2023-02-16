@@ -145,7 +145,7 @@
 
 	h2 {
 		text-transform: uppercase;
-		font-size: 1.4rem;
+		font-size: 1.4rem !important;
 		font-weight: 400;
 		margin: 0 0 1rem 0 !important;
 		padding: 0 0 0 0.6rem;
