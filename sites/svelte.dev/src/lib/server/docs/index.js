@@ -13,7 +13,19 @@ import ts, { ScriptTarget } from 'typescript';
 import MagicString from 'magic-string';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
-import slugify from 'slugify';
+
+/** @param {string} title */
+export function slugify(title) {
+	return title
+		.toLowerCase()
+		.replace(/&#39;/g, '')
+		.replace(/&lt;/g, '')
+		.replace(/&gt;/g, '')
+		.replace(/[^a-z0-9-$]/g, '-')
+		.replace(/-{2,}/g, '-')
+		.replace(/^-/, '')
+		.replace(/-$/, '');
+}
 
 /** @param {string} markdown */
 export function removeMarkdown(markdown) {
@@ -28,9 +40,14 @@ export function removeMarkdown(markdown) {
 		.trim();
 }
 
+/** @param {string} html */
+export function removeHTMLEntities(html) {
+	return html.replace(/&.+?;/g, '');
+}
+
 /** @param {string} str */
 export const normalizeSlugify = (str) => {
-	return slugify(removeMarkdown(str));
+	return slugify(removeHTMLEntities(removeMarkdown(str))).replace(/(<([^>]+)>)/gi, '');
 };
 
 const base = '../../site/content/docs/';
@@ -341,7 +358,7 @@ function parse({ file, body, code, codespan }) {
 
 			current = title;
 
-			const normalized = normalizeSlugify(raw).replace(/(<([^>]+)>)/gi, '');
+			const normalized = normalizeSlugify(raw);
 
 			headings[level - 1] = normalized;
 			headings.length = level;

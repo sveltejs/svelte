@@ -62,6 +62,7 @@ export function content() {
 
 				const intro = subsections.shift().trim();
 
+				console.log(normalizeSlugify(h3));
 				blocks.push({
 					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h3)],
 					href: category.href([slug, normalizeSlugify(h3)]),
