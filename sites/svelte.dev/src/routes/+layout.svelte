@@ -18,25 +18,25 @@
 	<SkipLink href="#main" />
 	<Nav {page} logo="/svelte-logo.svg">
 		<svelte:fragment slot="nav-center">
-			<NavItem href="/tutorial">Tutorial</NavItem>
-			<NavItem href="/docs/introduction">Docs</NavItem>
-			<NavItem href="/examples">Examples</NavItem>
-			<NavItem href="/repl">REPL</NavItem>
-			<NavItem href="/blog">Blog</NavItem>
-			<NavItem href="/faq">FAQ</NavItem>
-			<!-- </svelte:fragment>
-
-		<svelte:fragment slot="nav-right"> -->
-			<NavItem external="https://kit.svelte.dev">SvelteKit</NavItem>
-		</svelte:fragment>
-
-		<svelte:fragment slot="nav-right">
 			{#if $page.url.pathname !== '/search'}
 				<!-- the <Nav> component renders this content inside a <ul>, so
 				we need to wrap it in an <li>. TODO if we adopt this design
 				on other sites, change <Nav> so we don't need to do this -->
 				<li><Search /></li>
 			{/if}
+		</svelte:fragment>
+
+		<svelte:fragment slot="nav-right">
+			<NavItem href="/tutorial">Tutorial</NavItem>
+			<NavItem href="/docs/introduction">Docs</NavItem>
+			<NavItem href="/examples">Examples</NavItem>
+			<NavItem href="/repl">REPL</NavItem>
+			<NavItem href="/blog">Blog</NavItem>
+			<NavItem href="/faq">FAQ</NavItem>
+
+			<li aria-hidden="true"><span class="separator" /></li>
+
+			<NavItem external="https://kit.svelte.dev">SvelteKit</NavItem>
 
 			<NavItem external="/chat" title="Discord Chat">
 				<span class="small">Discord</span>
@@ -94,6 +94,14 @@
 		display: none;
 	}
 
+	.separator {
+		display: block;
+		position: relative;
+		height: 1px;
+		margin: 0.5rem 0;
+		background: radial-gradient(circle at center, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
+	}
+
 	@media (min-width: 800px) {
 		.small {
 			display: none;
@@ -101,6 +109,23 @@
 
 		.large {
 			display: inline;
+		}
+
+		.separator {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: none;
+			height: 100%;
+			margin: 0;
+			border: none;
+			text-align: center;
+		}
+
+		.separator::before {
+			content: '•';
+			margin: 0 0.3rem;
+			color: #ccc;
 		}
 	}
 
