@@ -27,9 +27,6 @@
 		top: 0;
 		left: 0;
 		color: var(--sk-text-3);
-
-		display: grid;
-		justify-content: center;
 	}
 
 	.sidebar {
@@ -74,24 +71,28 @@
 		color: var(--sk-text-1);
 	}
 
+	ul ul li {
+		margin: 0;
+	}
+
 	@media (min-width: 600px) {
 		.sidebar {
 			columns: 2;
-			padding-left: var(--sk-page-padding-side);
+			/* padding-left: var(--sk-page-padding-side); */
 			padding-right: var(--sk-page-padding-side);
 		}
 	}
 
 	@media (min-width: 700px) {
 		.sidebar {
-			/* columns: 3; */
+			columns: 3;
 		}
 	}
 
 	@media (min-width: 832px) {
 		.sidebar {
 			columns: 1;
-			padding-left: 3.2rem;
+			padding-left: 0;
 			padding-right: 0;
 			width: var(--sidebar-menu-width);
 			margin: 0 0 0 auto;
