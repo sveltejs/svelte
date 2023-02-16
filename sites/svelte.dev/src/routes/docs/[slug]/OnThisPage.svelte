@@ -127,9 +127,15 @@
 		<ul>
 			<li><a href="{base}/docs/{details.slug}" class:active={hash === ''}>{details.title}</a></li>
 			{#each details.sections as { title, slug }}
-				<li><a href={`#${slug}`} class:active={`#${slug}` === hash}>{title}</a></li>
+				<li>
+					<a href={`#${slug}`} class:active={`#${slug}` === hash}>{title}</a>
+				</li>
 			{/each}
-			<div class="glider" style:transform="translateY({(glider_index + 1) * 100}%)" />
+			<div
+				class="glider"
+				aria-hidden="true"
+				style:transform="translateY({(glider_index + 1) * 100}%)"
+			/>
 		</ul>
 	</nav>
 </aside>
@@ -180,10 +186,9 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		z-index: -1;
+		z-index: 1;
 		width: 100%;
 		height: 30px;
-		background: var(--sk-back-3);
 		border-left: 2px solid transparent;
 		border-left-color: var(--sk-theme-1);
 		transition: transform 0.15s ease-out;
