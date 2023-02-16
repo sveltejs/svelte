@@ -1,8 +1,8 @@
+import { normalizeSlugify, removeMarkdown } from '$lib/server/docs';
+import { extract_frontmatter, transform } from '$lib/server/markdown';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
-import { extract_frontmatter, transform } from '$lib/server/markdown';
-import { slugify } from '$lib/server/docs/index.js';
 
 const base = '../../site/content/';
 
@@ -47,7 +47,7 @@ export function content() {
 			const rank = +metadata.rank || undefined;
 
 			blocks.push({
-				breadcrumbs: [...breadcrumbs, metadata.title],
+				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
 				href: category.href([slug]),
 				content: plaintext(intro),
 				rank,
@@ -63,8 +63,8 @@ export function content() {
 				const intro = subsections.shift().trim();
 
 				blocks.push({
-					breadcrumbs: [...breadcrumbs, metadata.title, h3],
-					href: category.href([slug, slugify(h3)]),
+					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h3)],
+					href: category.href([slug, normalizeSlugify(h3)]),
 					content: plaintext(intro),
 					rank,
 				});
@@ -74,8 +74,13 @@ export function content() {
 					const h4 = lines.shift();
 
 					blocks.push({
-						breadcrumbs: [...breadcrumbs, metadata.title, h3, h4],
-						href: category.href([slug, slugify(h3), slugify(h4)]),
+						breadcrumbs: [
+							...breadcrumbs,
+							removeMarkdown(metadata.title),
+							removeMarkdown(h3),
+							removeMarkdown(h4),
+						],
+						href: category.href([slug, normalizeSlugify(h3), normalizeSlugify(h4)]),
 						content: plaintext(lines.join('\n').trim()),
 						rank,
 					});

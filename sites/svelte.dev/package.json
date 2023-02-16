@@ -23,6 +23,7 @@
     "do-not-zip": "^1.0.0",
     "flexsearch": "^0.7.31",
     "flru": "^1.0.2",
+    "slugify": "^1.6.5",
     "sourcemap-codec": "^1.4.8",
     "svelte-local-storage-store": "^0.4.0"
   },

@@ -18,15 +18,6 @@
 	<SkipLink href="#main" />
 	<Nav {page} logo="/svelte-logo.svg">
 		<svelte:fragment slot="nav-center">
-			{#if $page.url.pathname !== '/search'}
-				<!-- the <Nav> component renders this content inside a <ul>, so
-				we need to wrap it in an <li>. TODO if we adopt this design
-				on other sites, change <Nav> so we don't need to do this -->
-				<li><Search /></li>
-			{/if}
-		</svelte:fragment>
-
-		<svelte:fragment slot="nav-right">
 			<NavItem href="/tutorial">Tutorial</NavItem>
 			<NavItem href="/docs/introduction">Docs</NavItem>
 			<NavItem href="/examples">Examples</NavItem>
@@ -37,6 +28,15 @@
 
 		<svelte:fragment slot="nav-right"> -->
 			<NavItem external="https://kit.svelte.dev">SvelteKit</NavItem>
+		</svelte:fragment>
+
+		<svelte:fragment slot="nav-right">
+			{#if $page.url.pathname !== '/search'}
+				<!-- the <Nav> component renders this content inside a <ul>, so
+				we need to wrap it in an <li>. TODO if we adopt this design
+				on other sites, change <Nav> so we don't need to do this -->
+				<li><Search /></li>
+			{/if}
 
 			<NavItem external="/chat" title="Discord Chat">
 				<span class="small">Discord</span>
