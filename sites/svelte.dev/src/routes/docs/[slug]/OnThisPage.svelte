@@ -1,9 +1,8 @@
 <script>
-	import { afterUpdate, onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
-	import { browser } from '$app/environment';
+	import { afterUpdate, onMount } from 'svelte';
 
 	/** @type {import('./$types').PageData['page']} */
 	export let details;
