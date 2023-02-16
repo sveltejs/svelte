@@ -1,8 +1,9 @@
 <script>
-	import { onMount } from 'svelte';
+	import { afterUpdate, onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 
 	/** @type {import('./$types').PageData['page']} */
 	export let details;
@@ -21,6 +22,11 @@
 
 	/** @type {number[]} */
 	let positions = [];
+
+	/** @type {HTMLElement} */
+	let containerEl;
+
+	let show_contents = false;
 
 	onMount(async () => {
 		await document.fonts.ready;
@@ -79,11 +85,40 @@
 			{ once: true }
 		);
 	}
+
+	afterUpdate(() => {
+		// bit of a hack — prevent sidebar scrolling if
+		// TOC is open on mobile, or scroll came from within sidebar
+		if (show_contents && window.innerWidth < 832) return;
+
+		const active = containerEl.querySelector('.active');
+
+		if (active) {
+			const { top, bottom } = active.getBoundingClientRect();
+
+			const min = 200;
+			const max = window.innerHeight - 200;
+
+			if (top > max) {
+				containerEl.scrollBy({
+					top: top - max,
+					left: 0,
+					behavior: 'smooth',
+				});
+			} else if (bottom < min) {
+				containerEl.scrollBy({
+					top: bottom - min,
+					left: 0,
+					behavior: 'smooth',
+				});
+			}
+		}
+	});
 </script>
 
 <svelte:window on:scroll={highlight} on:resize={update} on:hashchange={() => select($page.url)} />
 
-<aside class="on-this-page">
+<aside class="on-this-page" bind:this={containerEl}>
 	<h2>On this page</h2>
 	<nav>
 		<ul>
@@ -100,17 +135,18 @@
 		display: var(--on-this-page-display);
 		position: fixed;
 		padding: 0 var(--sk-page-padding-side) 0 0;
+		margin-right: var(--sk-page-padding-side);
 		width: min(280px, calc(var(--sidebar-width) - var(--sk-page-padding-side)));
-		/* top: calc(var(--sk-page-padding-top) + var(--sk-nav-height)); */
+		height: calc(100% - var(--sk-nav-height));
+		overflow-y: auto;
 		top: var(--sk-nav-height);
-		left: calc(100vw - (var(--sidebar-width)));
+		left: calc(99vw - (var(--sidebar-width)));
 	}
 
 	h2 {
 		text-transform: uppercase;
 		font-size: 1.4rem;
 		font-weight: 400;
-		line-height: 0;
 		margin: 0 0 1rem 0 !important;
 		padding: 0 0 0 0.6rem;
 		color: var(--sk-text-3);
@@ -124,9 +160,8 @@
 		display: block;
 		padding: 0.3rem 0.5rem;
 		color: var(--sk-text-3);
+		font-size: 1.6rem;
 		border-left: 2px solid transparent;
-
-		font-size: 1.3rem;
 	}
 
 	a:hover {
