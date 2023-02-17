@@ -540,6 +540,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:textContent'?: string | undefined | null;
 
 	// SvelteKit
+	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
