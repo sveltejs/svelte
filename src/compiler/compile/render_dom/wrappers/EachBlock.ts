@@ -448,7 +448,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				${iterations}[#i] && ${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
 		`);
 
@@ -542,7 +542,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				${iterations}[#i] && ${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
 			}
 		`);
 

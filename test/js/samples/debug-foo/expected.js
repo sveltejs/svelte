@@ -108,7 +108,7 @@ function create_fragment(ctx) {
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				each_blocks[i] && each_blocks[i].m(target, anchor);
 			}
 
 			insert_dev(target, t0, anchor);
