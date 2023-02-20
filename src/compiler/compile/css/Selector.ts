@@ -10,16 +10,18 @@ import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
 import compiler_errors from '../compiler_errors';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../utils/patterns';
+import create_enum from '../../utils/enum';
 
-enum BlockAppliesToNode {
-	NotPossible,
-	Possible,
-	UnknownSelectorType
-}
-enum NodeExist {
-	Probably = 1,
-	Definitely = 2,
-}
+const BlockAppliesToNode = create_enum([
+	'NotPossible',
+	'Possible',
+	'UnknownSelectorType'
+]);
+
+const NodeExist = create_enum([
+	'Probably',
+	'Definitely'
+], 1);
 
 const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
@@ -286,7 +288,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 
 const regex_backslash_and_following_character = /\\(.)/g;
 
-function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
+function block_might_apply_to_node(block: Block, node: Element): keyof typeof BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
@@ -452,8 +454,8 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
-function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
-	const result: Map<Element, NodeExist> = new Map();
+function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, keyof typeof NodeExist> {
+	const result: Map<Element, keyof typeof NodeExist> = new Map();
 	let prev: INode = node;
 	while (prev = prev.prev) {
 		if (prev.type === 'Element') {
@@ -502,12 +504,12 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 	return result;
 }
 
-function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjacent_only: boolean): Map<Element, NodeExist> {
-	const result: Map<Element, NodeExist> = new Map();
+function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjacent_only: boolean): Map<Element, keyof typeof NodeExist> {
+	const result: Map<Element, keyof typeof NodeExist> = new Map();
 
 	if (block.type === 'EachBlock') {
-		const each_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
-		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+		const each_result: Map<Element, keyof typeof NodeExist> = loop_child(block.children, adjacent_only);
+		const else_result: Map<Element, keyof typeof NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
 
 		const not_exhaustive = !has_definite_elements(else_result);
 
@@ -518,8 +520,8 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 		add_to_map(each_result, result);
 		add_to_map(else_result, result);
 	} else if (block.type === 'IfBlock') {
-		const if_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
-		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+		const if_result: Map<Element, keyof typeof NodeExist> = loop_child(block.children, adjacent_only);
+		const else_result: Map<Element, keyof typeof NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
 
 		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
 
@@ -531,9 +533,9 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 		add_to_map(if_result, result);
 		add_to_map(else_result, result);
 	} else if (block.type === 'AwaitBlock') {
-		const pending_result: Map<Element, NodeExist> = block.pending ? loop_child(block.pending.children, adjacent_only) : new Map();
-		const then_result: Map<Element, NodeExist> = block.then ? loop_child(block.then.children, adjacent_only) : new Map();
-		const catch_result: Map<Element, NodeExist> = block.catch ? loop_child(block.catch.children, adjacent_only) : new Map();
+		const pending_result: Map<Element, keyof typeof NodeExist> = block.pending ? loop_child(block.pending.children, adjacent_only) : new Map();
+		const then_result: Map<Element, keyof typeof NodeExist> = block.then ? loop_child(block.then.children, adjacent_only) : new Map();
+		const catch_result: Map<Element, keyof typeof NodeExist> = block.catch ? loop_child(block.catch.children, adjacent_only) : new Map();
 
 		const not_exhaustive = !has_definite_elements(pending_result) || !has_definite_elements(then_result) || !has_definite_elements(catch_result);
 
@@ -551,7 +553,7 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 	return result;
 }
 
-function has_definite_elements(result: Map<Element, NodeExist>): boolean {
+function has_definite_elements(result: Map<Element, keyof typeof NodeExist>): boolean {
 	if (result.size === 0) return false;
 	for (const exist of result.values()) {
 		if (exist === NodeExist.Definitely) {
@@ -561,25 +563,25 @@ function has_definite_elements(result: Map<Element, NodeExist>): boolean {
 	return false;
 }
 
-function add_to_map(from: Map<Element, NodeExist>, to: Map<Element, NodeExist>) {
+function add_to_map(from: Map<Element, keyof typeof NodeExist>, to: Map<Element, keyof typeof NodeExist>) {
 	from.forEach((exist, element) => {
 		to.set(element, higher_existence(exist, to.get(element)));
 	});
 }
 
-function higher_existence(exist1: NodeExist | null, exist2: NodeExist | null): NodeExist {
+function higher_existence(exist1: keyof typeof NodeExist | null, exist2: keyof typeof NodeExist | null): keyof typeof NodeExist {
 	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
-function mark_as_probably(result: Map<Element, NodeExist>) {
+function mark_as_probably(result: Map<Element, keyof typeof NodeExist>) {
 	for (const key of result.keys()) {
 		result.set(key, NodeExist.Probably);
 	}
 }
 
 function loop_child(children: INode[], adjacent_only: boolean) {
-	const result: Map<Element, NodeExist> = new Map();
+	const result: Map<Element, keyof typeof NodeExist> = new Map();
 	for (let i = children.length - 1; i >= 0; i--) {
 		const child = children[i];
 		if (child.type === 'Element') {
