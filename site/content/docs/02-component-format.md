@@ -354,7 +354,7 @@ The `-global-` part will be removed when compiled, and the keyframe then be refe
 ```html
 <style>
 	@keyframes -global-my-animation-name {
-		...;
+		/* code goes here */
 	}
 </style>
 ```
