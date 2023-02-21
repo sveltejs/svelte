@@ -350,7 +350,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
-	if (!expected_value) return true;
+	if (expected_value == null) return true;
 
 	if (attr.chunks.length === 1) {
 		const value = attr.chunks[0];
