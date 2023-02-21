@@ -620,7 +620,7 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
-
+            const aria_label_attribute = attribute_map.get('aria-label');
 			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
 			// modern browsers add noopener by default, so we only need to check legacy browsers
 			// legacy browsers don't support noopener so we only check for noreferrer there
@@ -641,7 +641,12 @@ export default class Element extends Node {
 					}
 				}
 			}
-
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					a11y_required_content.delete('a');
+				}
+			}
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();
 
