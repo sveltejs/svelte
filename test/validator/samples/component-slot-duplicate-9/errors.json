@@ -1,0 +1,9 @@
+[
+	{
+		"code": "duplicate-slot-name-in-component",
+		"message": "Duplicate slot name \"d\" in <Component>",
+		"start": { "line": 13, "column": 1, "character": 195 },
+		"end": { "line": 15, "column": 19, "character": 259 },
+		"pos": 195
+	}
+]

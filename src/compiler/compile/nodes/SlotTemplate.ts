@@ -66,7 +66,12 @@ export default class SlotTemplate extends Node {
 	}
 
 	validate_slot_template_placement() {
-		if (this.parent.type !== 'InlineComponent') {
+		let parent = this.parent;
+		while (parent.type === 'SlotTemplateIfBlock' || parent.type === 'SlotTemplateElseBlock') parent = parent.parent;
+		if (parent.type === 'IfBlock' || parent.type === 'ElseBlock') {
+			return this.component.error(this, compiler_errors.invalid_mix_element_and_conditional_slot);
+		}
+		if (parent.type !== 'InlineComponent') {
 			return this.component.error(this, compiler_errors.invalid_slotted_content_fragment);
 		}
 	}

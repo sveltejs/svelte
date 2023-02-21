@@ -125,37 +125,47 @@ export default class SlotWrapper extends Wrapper {
 		}
 
 		const slot = block.get_unique_name(`${sanitize(slot_name)}_slot`);
-		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
-		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
+		const needs_anchor = this.next ? !this.next.is_dom_node() : !parent_node || !this.parent.is_dom_node();
+		const anchor = needs_anchor
+			? block.get_unique_name(`${this.var.name}_anchor`)
+			: (this.next && this.next.var) || x`null`;
 
 		block.chunks.init.push(b`
-			const ${slot_definition} = ${renderer.reference('#slots')}.${slot_name};
-			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
-			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
+			${has_fallback
+				? b`const ${slot} = @create_slot_with_fallback(${renderer.context_lookup.get('#slots').index}, '${slot_name}', ${renderer.context_lookup.get('$$scope').index}, #ctx, ${get_slot_context_fn}, ${this.fallback.name});`
+			  : b`const ${slot} = @create_slot(${renderer.context_lookup.get('#slots').index}, '${slot_name}', ${renderer.context_lookup.get('$$scope').index}, #ctx, ${get_slot_context_fn});`
+			}
 		`);
 
 		block.chunks.create.push(
-			b`if (${slot_or_fallback}) ${slot_or_fallback}.c();`
+			b`${slot}.c();`
 		);
 
 		if (renderer.options.hydratable) {
 			block.chunks.claim.push(
-				b`if (${slot_or_fallback}) ${slot_or_fallback}.l(${parent_nodes});`
+				b`${slot}.l(${parent_nodes});`
 			);
 		}
 
 		block.chunks.mount.push(b`
-			if (${slot_or_fallback}) {
-				${slot_or_fallback}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
-			}
+			${slot}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
 		`);
+		if (needs_anchor) {
+			block.add_element(
+				anchor as Identifier,
+				x`@empty()`,
+				parent_nodes && x`@empty()`,
+				parent_node
+			);
+		}
+		block.chunks.hydrate.push(b`${slot}.a = ${anchor};`);
 
 		block.chunks.intro.push(
-			b`@transition_in(${slot_or_fallback}, #local);`
+			b`@transition_in(${slot}, #local);`
 		);
 
 		block.chunks.outro.push(
-			b`@transition_out(${slot_or_fallback}, #local);`
+			b`@transition_out(${slot}, #local);`
 		);
 
 		const dynamic_dependencies = Array.from(this.dependencies).filter((name) => this.is_dependency_dynamic(name));
@@ -178,17 +188,17 @@ export default class SlotWrapper extends Wrapper {
 
 		let slot_update: Node[];
 		if (all_dirty_condition) {
-			const dirty = x`${all_dirty_condition} ? @get_all_dirty_from_scope(${renderer.reference('$$scope')}) : @get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})`;
+			const dirty = x`${all_dirty_condition} ? @get_all_dirty_from_scope(${renderer.reference('$$scope')}) : @get_slot_changes(${slot}.x, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})`;
 
 			slot_update = b`
-				if (${slot}.p && ${condition}) {
-					@update_slot_base(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_context_fn});
+				if (${slot}.s && ${slot}.s.p && ${condition}) {
+					@update_slot_base(${slot}.s, ${slot}.x, #ctx, ${renderer.reference('$$scope')}, ${dirty}, ${get_slot_context_fn});
 				}
 			`;
 		} else {
 			slot_update = b`
-				if (${slot}.p && ${condition}) {
-					@update_slot(${slot}, ${slot_definition}, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
+				if (${slot}.s && ${slot}.s.p && ${condition}) {
+					@update_slot(${slot}.s, ${slot}.x, #ctx, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn}, ${get_slot_context_fn});
 				}
 			`;
 		}
@@ -201,29 +211,33 @@ export default class SlotWrapper extends Wrapper {
 		}
 
 		const fallback_update = has_fallback && fallback_dynamic_dependencies.length > 0 && b`
-			if (${slot_or_fallback} && ${slot_or_fallback}.p && ${fallback_condition}) {
-				${slot_or_fallback}.p(#ctx, ${fallback_dirty});
+			if (${slot}.f.p && ${fallback_condition}) {
+				${slot}.f.p(#ctx, ${fallback_dirty});
 			}
 		`;
 
-		if (fallback_update) {
-			block.chunks.update.push(b`
-				if (${slot}) {
+		const slot_or_fallback_update = fallback_update
+			? b`
+				if (${slot}.s) {
 					${slot_update}
 				} else {
 					${fallback_update}
 				}
-			`);
-		} else {
-			block.chunks.update.push(b`
-				if (${slot}) {
+			`
+			: b`
+				if (${slot}.s) {
 					${slot_update}
 				}
-			`);
-		}
+			`;
+
+		block.chunks.update.push(b`
+			if (!(${renderer.dirty(['#slots'])} && ${slot}.p(#ctx))) {
+				${slot_or_fallback_update}
+			}
+		`)
 
 		block.chunks.destroy.push(
-			b`if (${slot_or_fallback}) ${slot_or_fallback}.d(detaching);`
+			b`if (${slot}) ${slot}.d(detaching);`
 		);
 	}
 

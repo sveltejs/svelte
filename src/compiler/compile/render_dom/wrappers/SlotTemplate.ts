@@ -3,20 +3,25 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import FragmentWrapper from './Fragment';
 import create_debugging_comment from './shared/create_debugging_comment';
-import { get_slot_definition } from './shared/get_slot_definition';
+import { get_slot_definition, SlotDefinition } from './shared/get_slot_definition';
 import { b, x } from 'code-red';
 import { sanitize } from '../../../utils/names';
-import { Identifier } from 'estree';
+import { Identifier, Node } from 'estree';
 import InlineComponentWrapper from './InlineComponent';
 import { extract_names } from 'periscopic';
 import SlotTemplate from '../../nodes/SlotTemplate';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import TemplateScope from '../../nodes/shared/TemplateScope';
+import SlotTemplateIfBlockWrapper from './SlotTemplateIfBlock';
 
 export default class SlotTemplateWrapper extends Wrapper {
 	node: SlotTemplate;
 	fragment: FragmentWrapper;
 	block: Block;
-	parent: InlineComponentWrapper;
+	parent: InlineComponentWrapper | SlotTemplateIfBlockWrapper;
+	slot_template_name: string;
+	slot_definition: Node;
+	scope: TemplateScope;
 
 	constructor(
 		renderer: Renderer,
@@ -48,14 +53,16 @@ export default class SlotTemplateWrapper extends Wrapper {
 		this.renderer.blocks.push(this.block);
 
 		const seen = new Set(lets.map(l => l.name.name));
-		this.parent.node.lets.forEach(l => {
+		const component_parent = this.get_component_parent();
+		component_parent.node.lets.forEach(l => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
-		this.parent.set_slot(
-			slot_template_name,
-			get_slot_definition(this.block, scope, lets)
-		);
+		const slot_definition = get_slot_definition(this.block, scope, lets);
+
+		this.slot_template_name = slot_template_name;
+		this.slot_definition = x`[${slot_definition.block.name}, ${slot_definition.get_context || null}, ${slot_definition.get_changes || null}]`;
+		this.scope = scope;
 
 		this.fragment = new FragmentWrapper(
 			renderer,
@@ -69,13 +76,29 @@ export default class SlotTemplateWrapper extends Wrapper {
 		this.block.parent.add_dependencies(this.block.dependencies);
 	}
 
-	render() {
+	render_slot_template_content(should_cache: boolean) {
 		this.fragment.render(this.block, null, x`#nodes` as Identifier);
 
 		if (this.node.const_tags.length > 0) {
 			this.render_get_context();
 		}
+
+		if (!this.block.has_content()) {
+			this.renderer.remove_block(this.block);
+			this.slot_definition = null;
+		}
+
+		if (this.slot_definition && should_cache) {
+			const cached_name = this.renderer.component.get_unique_name(`${this.slot_template_name}_definition`);
+			this.renderer.blocks.push(b`var ${cached_name} = ${this.slot_definition};`);
+			this.slot_definition = cached_name;
+		}
 	}
+
+	render_slot_template_definition(_block: Block) {
+		return b`#slots_definition["${this.slot_template_name}"] = ${this.slot_definition};`;
+	}
+
 	render_get_context() {
 		const get_context = this.block.renderer.component.get_unique_name('get_context');
 		this.block.renderer.blocks.push(b`
@@ -87,5 +110,11 @@ export default class SlotTemplateWrapper extends Wrapper {
 		if (this.block.has_update_method) {
 			this.block.chunks.update.unshift(b`${get_context}(#ctx)`);
 		}
+	}
+
+	get_component_parent() {
+		let parent: Wrapper = this.parent;
+		while (parent.node.type !== 'InlineComponent') parent = parent.parent;
+		return parent as InlineComponentWrapper;
 	}
 }

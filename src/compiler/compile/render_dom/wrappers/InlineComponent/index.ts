@@ -9,7 +9,6 @@ import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import TemplateScope from '../../../nodes/shared/TemplateScope';
 import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
@@ -21,17 +20,18 @@ import SlotTemplate from '../../../nodes/SlotTemplate';
 import { is_head } from '../shared/is_head';
 import compiler_warnings from '../../../compiler_warnings';
 import { namespaces } from '../../../../utils/namespaces';
-
-type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
+import SlotTemplateIfBlockWrapper from '../SlotTemplateIfBlock';
+import SlotTemplateIfBlock from '../../../nodes/SlotTemplateIfBlock';
+import { collect_slot_dynamic_dependencies, collect_slot_fragment_dependencies } from '../shared/slots';
 
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, SlotDefinition> = new Map();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
-	children: Array<Wrapper | FragmentWrapper> = [];
+	children: Array<SlotTemplateWrapper | SlotTemplateIfBlockWrapper> = [];
+	has_conditional_slots: boolean = false;
 
 	constructor(
 		renderer: Renderer,
@@ -88,20 +88,17 @@ export default class InlineComponentWrapper extends Wrapper {
 				});
 			});
 
-			this.children = this.node.children.map(child => new SlotTemplateWrapper(renderer, block, this, child as SlotTemplate, strip_whitespace, next_sibling));
+			for (const child of this.node.children) {
+				if (child.type === 'SlotTemplate') {
+					this.children.push(new SlotTemplateWrapper(renderer, block, this, child as SlotTemplate, strip_whitespace, next_sibling));
+				} else if (child.type === 'SlotTemplateIfBlock') {
+					this.has_conditional_slots = true;
+					this.children.push(new SlotTemplateIfBlockWrapper(renderer, block, this, child as SlotTemplateIfBlock, strip_whitespace, next_sibling));
+				}
+			}
 		}
 
 		block.add_outro();
-	}
-
-	set_slot(name: string, slot_definition: SlotDefinition) {
-		if (this.slots.has(name)) {
-			if (name === 'default') {
-				throw new Error('Found elements without slot attribute when using slot="default"');
-			}
-			throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
-		}
-		this.slots.set(name, slot_definition);
 	}
 
 	warn_if_reactive() {
@@ -133,24 +130,29 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		const statements: Array<Node | Node[]> = [];
 		const updates: Array<Node | Node[]> = [];
-
-		this.children.forEach((child) => {
-			this.renderer.add_to_context('$$scope', true);
-			child.render(block, null, x`#nodes` as Identifier);
-		});
-
-		let props: Identifier | undefined;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
-		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
-
-		// removing empty slot
-		for (const slot of this.slots.keys()) {
-			if (!this.slots.get(slot).block.has_content()) {
-				this.renderer.remove_block(this.slots.get(slot).block);
-				this.slots.delete(slot);
-			}
+		const should_cache_slot_definition = this.has_conditional_slots;
+		for (const slot of this.children) {
+			this.renderer.add_to_context('$$scope', true);
+			slot.render_slot_template_content(should_cache_slot_definition);
 		}
+
+		let get_slots_definition: Node = null;
+		if (this.has_conditional_slots) {
+			get_slots_definition = block.renderer.component.get_unique_name(`${name.name}_slots_definition`);
+			this.renderer.blocks.push(b`
+				function ${get_slots_definition}(#ctx) {
+					const #slots_definition = {};
+					${this.children.map(slot => slot.render_slot_template_definition(block))}
+					return #slots_definition;
+				}
+			`);
+		}
+
+		let props: Identifier | undefined;
+
+		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
 
 		const has_css_custom_properties = this.node.css_custom_properties.length > 0;
 		const is_svg_namespace = this.node.namespace === namespaces.svg;
@@ -160,16 +162,17 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.add_variable(css_custom_properties_wrapper);
 		}
 
-		const initial_props = this.slots.size > 0
+		const initial_props = this.has_conditional_slots
+			? [
+				p`$$slots: ${get_slots_definition}(#ctx)`,
+				p`$$scope: { ctx: #ctx }`
+			]
+			: this.children.length > 0
 			? [
 				p`$$slots: {
-					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
-					})}
+					${this.children.map((slot: SlotTemplateWrapper) => p`${slot.slot_template_name}: ${slot.slot_definition}`)}
 				}`,
-				p`$$scope: {
-					ctx: #ctx
-				}`
+				p`$$scope: { ctx: #ctx }`
 			]
 			: [];
 
@@ -197,19 +200,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			component_opts.properties.push(p`$$inline: true`);
 		}
 
-		const fragment_dependencies = new Set(this.slots.size ? ['$$scope'] : []);
-		this.slots.forEach(slot => {
-			slot.block.dependencies.forEach(name => {
-				const is_let = slot.scope.is_let(name);
-				const variable = renderer.component.var_lookup.get(name);
-
-				if (is_let || is_dynamic(variable)) fragment_dependencies.add(name);
-			});
-		});
+		const fragment_dependencies = new Set(this.children.length ? ['$$scope'] : []);
+		collect_slot_fragment_dependencies(renderer, this.children, fragment_dependencies);
 
 		const dynamic_attributes = this.node.attributes.filter(a => a.get_dependencies().length > 0);
 
-		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0)) {
+		if (!uses_spread && (dynamic_attributes.length > 0 || this.node.bindings.length > 0 || fragment_dependencies.size > 0 || this.has_conditional_slots)) {
 			updates.push(b`const ${name_changes} = {};`);
 		}
 
@@ -303,6 +299,16 @@ export default class InlineComponentWrapper extends Wrapper {
 				if (${renderer.dirty(Array.from(fragment_dependencies))}) {
 					${name_changes}.$$scope = { dirty: #dirty, ctx: #ctx };
 				}`);
+		}
+
+		if (this.has_conditional_slots) {
+			const dependencies = collect_slot_dynamic_dependencies(this.children);
+
+			updates.push(b`
+				if (${renderer.dirty(Array.from(dependencies))}) {
+					${name_changes}.$$slots = ${get_slots_definition}(#ctx);
+				}
+			`)
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {

@@ -285,5 +285,16 @@ export default {
 	invalid_style_directive_modifier: (valid: string) => ({
 		code: 'invalid-style-directive-modifier',
 		message: `Valid modifiers for style directives are: ${valid}`
-	})
+	}),
+	invalid_mix_element_and_conditional_slot: {
+		code: 'invalid-mix-element-and-conditional-slot',
+		message: 'Do not mix <svelte:fragment> and other elements under the same {#if}{:else} group. Default slot content should be wrapped with <svelte:fragment slot="default">'
+	},
+	duplicate_slot_name_in_component: (slot_name: string, component_name: string) => ({
+		code: 'duplicate-slot-name-in-component',
+		message:
+			slot_name === "default"
+				? 'Found elements without slot attribute when using slot="default"'
+				: `Duplicate slot name "${slot_name}" in <${component_name}>`,
+	}),
 };
