@@ -15,7 +15,7 @@
 	// ...but the "emoji" variable is fixed upon initialisation of the component
 	const emoji = emojis[name];
 
-	// when you remove first thing, it will remove items at the end of the block
+	// observe in the console which entry is removed
 	onDestroy(() => {
 		console.log('thing destroyed: ' + name)
 	});
