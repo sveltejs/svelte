@@ -88,6 +88,14 @@ describe('store', () => {
 
 			unsubscribe();
 		});
+
+		it('no error even if unsubscribe calls twice', () => {
+			let num = 0;
+			const store = writable(num, set => set(num += 1));
+			const unsubscribe = store.subscribe(() => { });
+			unsubscribe();
+			assert.doesNotThrow(() => unsubscribe());
+		});
 	});
 
 	describe('readable', () => {
