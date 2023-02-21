@@ -18,6 +18,7 @@ export function longpress(node, duration) {
 
 	return {
 		destroy() {
+			clearTimeout(timer);
 			node.removeEventListener('mousedown', handleMousedown);
 			node.removeEventListener('mouseup', handleMouseup);
 		}

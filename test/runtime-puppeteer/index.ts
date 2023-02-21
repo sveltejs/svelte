@@ -77,6 +77,9 @@ describe('runtime (puppeteer)', function() {
 
 	function runTest(dir, hydrate) {
 		if (dir[0] === '.') return;
+		// MEMO: puppeteer can not execute Chromium properly with Node8,10 on Linux at GitHub actions.
+		const { version } = process;
+		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
@@ -117,8 +120,12 @@ describe('runtime (puppeteer)', function() {
 						load(id) {
 							if (id === 'main') {
 								return `
-									import SvelteComponent from ${JSON.stringify(path.join(__dirname, 'samples', dir, 'main.svelte'))};
-									import config from ${JSON.stringify(path.join(__dirname, 'samples', dir, '_config.js'))};
+									import SvelteComponent from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, 'main.svelte')
+									)};
+									import config from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, '_config.js')
+									)};
 									import * as assert from 'assert';
 
 									export default async function (target) {
@@ -140,6 +147,14 @@ describe('runtime (puppeteer)', function() {
 
 											const component = new SvelteComponent(options);
 
+											const waitUntil = async (fn, ms = 500) => {
+												const start = new Date().getTime();
+												do {
+													if (fn()) return;
+													await new Promise(resolve => window.setTimeout(resolve, 1));
+												} while (new Date().getTime() <= start + ms);
+											};
+
 											if (config.html) {
 												assert.htmlEqual(target.innerHTML, config.html);
 											}
@@ -150,6 +165,7 @@ describe('runtime (puppeteer)', function() {
 													component,
 													target,
 													window,
+													waitUntil,
 												});
 
 												component.$destroy();

@@ -99,9 +99,21 @@ export default {
 		code: `invalid-${slug}-content`,
 		message: `<${name}> cannot have children`
 	}),
+	invalid_element_definition: {
+		code: 'invalid-element-definition',
+		message: 'Invalid element definition'
+	},
 	invalid_element_placement: (slug: string, name: string) => ({
 		code: `invalid-${slug}-placement`,
 		message: `<${name}> tags cannot be inside elements or blocks`
+	}),
+	invalid_logic_block_placement: (location: string, name: string) => ({
+		code: 'invalid-logic-block-placement',
+		message: `{#${name}} logic block cannot be ${location}`
+	}),
+	invalid_tag_placement: (location: string, name: string) => ({
+		code: 'invalid-tag-placement',
+		message: `{@${name}} tag cannot be ${location}`
 	}),
 	invalid_ref_directive: (name: string) => ({
 		code: 'invalid-ref-directive',
@@ -160,6 +172,10 @@ export default {
 	missing_attribute_value: {
 		code: 'missing-attribute-value',
 		message: 'Expected value for the attribute'
+	},
+	missing_element_definition: {
+		code: 'missing-element-definition',
+		message: '<svelte:element> must have a \'this\' attribute'
 	},
 	unclosed_script: {
 		code: 'unclosed-script',

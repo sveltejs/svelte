@@ -5,7 +5,7 @@ import { create_rule, delete_rule } from './style_manager';
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
-import { Fragment } from './Component';
+import { Fragment } from './types';
 
 let promise: Promise<void> | null;
 type INTRO = 1;
@@ -79,15 +79,19 @@ export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, ca
 		});
 
 		block.o(local);
+	} else if (callback) {
+		callback();
 	}
 }
 
 const null_transition: TransitionConfig = { duration: 0 };
 
-type TransitionFn = (node: Element, params: any) => TransitionConfig;
+type TransitionOptions = { direction: 'in' | 'out' | 'both' };
+type TransitionFn = (node: Element, params: any, options: TransitionOptions) => TransitionConfig;
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'in' };
+	let config = fn(node, params, options);
 	let running = false;
 	let animation_name;
 	let task;
@@ -143,12 +147,12 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	return {
 		start() {
 			if (started) return;
-			
+
 			started = true;
 			delete_rule(node);
 
 			if (is_function(config)) {
-				config = config();
+				config = config(options);
 				wait().then(go);
 			} else {
 				go();
@@ -169,7 +173,8 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 }
 
 export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'out' };
+	let config = fn(node, params, options);
 	let running = true;
 	let animation_name;
 
@@ -222,7 +227,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 	if (is_function(config)) {
 		wait().then(() => {
 			// @ts-ignore
-			config = config();
+			config = config(options);
 			go();
 		});
 	} else {
@@ -262,7 +267,8 @@ interface Program {
 }
 
 export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'both' };
+	let config = fn(node, params, options);
 
 	let t = intro ? 0 : 1;
 
@@ -371,7 +377,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			if (is_function(config)) {
 				wait().then(() => {
 					// @ts-ignore
-					config = config();
+					config = config(options);
 					go(b);
 				});
 			} else {

@@ -1,4 +1,6 @@
 <script>
+	import { onDestroy } from 'svelte';
+
 	const emojis = {
         apple: "🍎",
         banana: "🍌",
@@ -12,6 +14,11 @@
 
 	// ...but the "emoji" variable is fixed upon initialisation of the component
 	const emoji = emojis[name];
+
+	// observe in the console which entry is removed
+	onDestroy(() => {
+		console.log('thing destroyed: ' + name)
+	});
 </script>
 
 <p>

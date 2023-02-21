@@ -1,6 +1,6 @@
-import { is_void } from '../../../utils/names';
+import { is_void } from '../../../../shared/utils/names';
 import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
-import { boolean_attributes } from './shared/boolean_attributes';
+import { boolean_attributes } from '../../../../shared/boolean_attributes';
 import Renderer, { RenderOptions } from '../Renderer';
 import Element from '../../nodes/Element';
 import { p, x } from 'code-red';
@@ -8,8 +8,10 @@ import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
+import { regex_starts_with_newline } from '../../../utils/patterns';
+import { Node, Expression as ESExpression } from 'estree';
 
-export default function(node: Element, renderer: Renderer, options: RenderOptions) {
+export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
 	const children = remove_whitespace_children(node.children, node.next);
 
@@ -22,7 +24,12 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		node.attributes.some((attribute) => attribute.name === 'contenteditable')
 	);
 
-	renderer.add_string(`<${node.name}`);
+	if (node.is_dynamic_element) {
+		renderer.push();
+	}
+
+	renderer.add_string('<');
+	add_tag_name();
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -37,10 +44,13 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	const style_expression_list = node.styles.map(style_directive => {
-		const { name, expression: { node: expression } } = style_directive;
+		let { name, important, expression: { node: expression } } = style_directive;
+		if (important) {
+			expression = x`${expression} + ' !important'`;
+		}
 		return p`"${name}": ${expression}`;
 	});
-	
+
 	const style_expression =
 		style_expression_list.length > 0 &&
 		x`{ ${style_expression_list} }`;
@@ -150,10 +160,6 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	});
 
-	if (options.hydratable && options.head_id) {
-		renderer.add_string(` data-svelte="${options.head_id}"`);
-	}
-
 	renderer.add_string('>');
 
 	if (node_contents !== undefined) {
@@ -164,17 +170,66 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
+			if (node.name === 'textarea') {
+				// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+				const value_attribute = node.attributes.find(({ name }) => name === 'value');
+				if (value_attribute) {
+					const first = value_attribute.chunks[0];
+					if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
+						renderer.add_string('\n');
+					}
+				}
+			}
 			renderer.add_expression(node_contents);
 		}
 
-		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
-		}
+		add_close_tag();
 	} else {
+		if (node.name === 'pre') {
+			// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+			// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+			// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+			const first = children[0];
+			if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
+				renderer.add_string('\n');
+			}
+		}
+		if (node.is_dynamic_element) renderer.push();
 		renderer.render(children, options);
+		if (node.is_dynamic_element) {
+			const children = renderer.pop();
+			renderer.add_expression(x`@is_void(#tag) ? '' : ${children}`);
+		}
+		add_close_tag();
+	}
 
-		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
+	if (node.is_dynamic_element) {
+		let content: Node = renderer.pop();
+		if (options.dev && node.children.length > 0) content = x`(() => { @validate_void_dynamic_element(#tag); return ${content}; })()`;
+		renderer.add_expression(x`((#tag) => {
+			${options.dev && x`@validate_dynamic_element(#tag)`}
+			return #tag ? ${content} : '';
+		})(${node.tag_expr.node})`);
+	}
+
+	function add_close_tag() {
+		if (node.tag_expr.node.type === 'Literal') {
+			if (!is_void(node.tag_expr.node.value as string)) {
+				renderer.add_string('</');
+				add_tag_name();
+				renderer.add_string('>');
+			}
+			return;
+		}
+		renderer.add_expression(x`@is_void(#tag) ? '' : \`</\${#tag}>\``);
+	}
+
+	function add_tag_name() {
+		if (node.tag_expr.node.type === 'Literal') {
+			renderer.add_string(node.tag_expr.node.value as string);
+		} else {
+			renderer.add_expression(node.tag_expr.node as ESExpression);
 		}
 	}
 }

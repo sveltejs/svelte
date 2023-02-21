@@ -1,4 +1,4 @@
-import { is_void } from '../../utils/names';
+import { is_html, is_svg, is_void } from '../../../shared/utils/names';
 import Node from './shared/Node';
 import Attribute from './Attribute';
 import Binding from './Binding';
@@ -11,23 +11,27 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { dimensions } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import Component from '../Component';
+import Expression from './shared/Expression';
+import { string_literal } from '../utils/stringify';
+import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
+import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
+import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
 
-const svg = /^(?:altGlyph|altGlyphDef|altGlyphItem|animate|animateColor|animateMotion|animateTransform|circle|clipPath|color-profile|cursor|defs|desc|discard|ellipse|feBlend|feColorMatrix|feComponentTransfer|feComposite|feConvolveMatrix|feDiffuseLighting|feDisplacementMap|feDistantLight|feDropShadow|feFlood|feFuncA|feFuncB|feFuncG|feFuncR|feGaussianBlur|feImage|feMerge|feMergeNode|feMorphology|feOffset|fePointLight|feSpecularLighting|feSpotLight|feTile|feTurbulence|filter|font|font-face|font-face-format|font-face-name|font-face-src|font-face-uri|foreignObject|g|glyph|glyphRef|hatch|hatchpath|hkern|image|line|linearGradient|marker|mask|mesh|meshgradient|meshpatch|meshrow|metadata|missing-glyph|mpath|path|pattern|polygon|polyline|radialGradient|rect|set|solidcolor|stop|svg|switch|symbol|text|textPath|tref|tspan|unknown|use|view|vkern)$/;
-
-const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
-const aria_roles = 'alert alertdialog application article banner blockquote button caption cell checkbox code columnheader combobox complementary contentinfo definition deletion dialog directory document emphasis feed figure form generic graphics-document graphics-object graphics-symbol grid gridcell group heading img link list listbox listitem log main marquee math meter menu menubar menuitem menuitemcheckbox menuitemradio navigation none note option paragraph presentation progressbar radio radiogroup region row rowgroup rowheader scrollbar search searchbox separator slider spinbutton status strong subscript superscript switch tab table tablist tabpanel term textbox time timer toolbar tooltip tree treegrid treeitem'.split(' ');
+const aria_roles = roles.keys();
 const aria_role_set = new Set(aria_roles);
+const aria_role_abstract_set = new Set(roles.keys().filter(role => roles.get(role).abstract));
 
 const a11y_required_attributes = {
 	a: ['href'],
@@ -160,18 +164,48 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	const parent_element = parent.find_nearest(/^Element/);
 
 	if (!parent_element) {
-		return explicit_namespace || (svg.test(element.name)
+		return explicit_namespace || (is_svg(element.name)
 			? namespaces.svg
 			: null);
 	}
 
 	if (parent_element.namespace !== namespaces.foreign) {
-		if (svg.test(element.name.toLowerCase())) return namespaces.svg;
+		if (is_svg(element.name.toLowerCase())) return namespaces.svg;
 		if (parent_element.name.toLowerCase() === 'foreignobject') return null;
 	}
 
 	return parent_element.namespace;
 }
+
+function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: string | boolean): boolean {
+	switch (schema.type) {
+		case 'boolean':
+			return typeof value === 'boolean';
+		case 'string':
+		case 'id':
+			return typeof value === 'string';
+		case 'tristate':
+			return typeof value === 'boolean' || value === 'mixed';
+		case 'integer':
+		case 'number':
+			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
+		case 'token': // single token
+			return (schema.values || [])
+				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
+		case 'idlist': // if list of ids, split each
+			return typeof value === 'string'
+				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
+		case 'tokenlist': // if list of tokens, split each
+			return typeof value === 'string'
+				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+		default:
+			return false;
+	}
+}
+
+const regex_any_repeated_whitespaces = /[\s]+/g;
+const regex_heading_tags = /^h[1-6]$/;
+const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
 
 export default class Element extends Node {
 	type: 'Element';
@@ -190,14 +224,44 @@ export default class Element extends Node {
 	children: INode[];
 	namespace: string;
 	needs_manual_style_scoping: boolean;
+	tag_expr: Expression;
+
+	get is_dynamic_element() {
+		return this.name === 'svelte:element';
+	}
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 		this.name = info.name;
 
+		if (info.name === 'svelte:element') {
+			if (typeof info.tag !== 'string') {
+				this.tag_expr = new Expression(component, this, scope, info.tag);
+			} else {
+				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+				this.name = info.tag;
+			}
+		} else {
+			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
+		}
+
 		this.namespace = get_namespace(parent as Element, this, component.namespace);
 
 		if (this.namespace !== namespaces.foreign) {
+			if (this.name === 'pre' || this.name === 'textarea') {
+				const first = info.children[0];
+				if (first && first.type === 'Text') {
+					// The leading newline character needs to be stripped because of a quirk,
+					// it is ignored by browsers if the tag and its contents are set through
+					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
+					// Therefore strip it here but add it back in the appropriate
+					// places if there's another newline afterwards.
+					// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+					first.data = first.data.replace(regex_starts_with_newline, '');
+				}
+			}
+
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
 					const value_attribute = info.attributes.find(node => node.name === 'value');
@@ -312,7 +376,7 @@ export default class Element extends Node {
 	}
 
 	validate() {
-		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported) {
+		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported && !is_svg(this.name) && !is_html(this.name)) {
 			this.component.warn(this, compiler_warnings.component_name_lowercase(this.name));
 		}
 
@@ -339,7 +403,7 @@ export default class Element extends Node {
 
 			// Errors
 
-			if (/(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/.test(name)) {
+			if (regex_illegal_attribute_character.test(name)) {
 				return component.error(attribute, compiler_errors.illegal_attribute(name));
 			}
 
@@ -375,9 +439,19 @@ export default class Element extends Node {
 	}
 
 	validate_attributes_a11y() {
-		const { component } = this;
+		const { component, attributes, handlers } = this;
 
-		this.attributes.forEach(attribute => {
+		const attribute_map = new Map<string, Attribute>();
+		const handlers_map = new Map();
+
+		attributes.forEach(attribute => (
+			attribute_map.set(attribute.name, attribute)
+		));
+		handlers.forEach(handler => (
+			handlers_map.set(handler.name, handler)
+		));
+
+		attributes.forEach(attribute => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
@@ -395,8 +469,20 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_unknown_aria_attribute(type, match));
 				}
 
-				if (name === 'aria-hidden' && /^h[1-6]$/.test(this.name)) {
+				if (name === 'aria-hidden' && regex_heading_tags.test(this.name)) {
 					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
+				}
+
+				// aria-proptypes
+				let value = attribute.get_static_value();
+				if (value === 'true') value = true;
+				if (value === 'false') value = false;
+
+				if (value !== null && value !== undefined && aria.has(name as ARIAProperty)) {
+					const schema = aria.get(name as ARIAProperty);
+					if (!is_valid_aria_attribute_value(schema, value)) {
+						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
+					}
 				}
 			}
 
@@ -408,27 +494,51 @@ export default class Element extends Node {
 				}
 
 				const value = attribute.get_static_value();
-				// @ts-ignore
-				if (value && !aria_role_set.has(value)) {
-					// @ts-ignore
-					const match = fuzzymatch(value, aria_roles);
-					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
-				}
 
-				// no-redundant-roles
-				const has_redundant_role = value === a11y_implicit_semantics.get(this.name);
+				if (typeof value === 'string') {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
+						if (current_role && aria_role_abstract_set.has(current_role)) {
+							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+						} else if (current_role && !aria_role_set.has(current_role)) {
+							const match = fuzzymatch(current_role, aria_roles);
+							component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
+						}
 
-				if (this.name === value || has_redundant_role) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
+						// no-redundant-roles
+						const has_redundant_role = current_role === a11y_implicit_semantics.get(this.name);
 
-				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-				if (!is_parent_section_or_article) {
-					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
-					if (has_nested_redundant_role) {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
+						if (this.name === current_role || has_redundant_role) {
+							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+						}
+
+						// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+						const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+						if (!is_parent_section_or_article) {
+							const has_nested_redundant_role = current_role === a11y_nested_implicit_semantics.get(this.name);
+							if (has_nested_redundant_role) {
+								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+							}
+						}
+
+						// role-has-required-aria-props
+						if (!is_semantic_role_element(current_role, this.name, attribute_map)) {
+							const role = roles.get(current_role);
+							if (role) {
+								const required_role_props = Object.keys(role.requiredProps);
+								const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+								if (has_missing_props) {
+									component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(current_role, required_role_props));
+								}
+							}
+						}
+
+						// no-interactive-element-to-noninteractive-role
+						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
+							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
+						}
+					});
+
 				}
 			}
 
@@ -456,8 +566,40 @@ export default class Element extends Node {
 				}
 			}
 		});
-	}
 
+		// click-events-have-key-events
+		if (handlers_map.has('click')) {
+			const role = attribute_map.get('role');
+			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
+
+			if (
+				!is_hidden_from_screen_reader(this.name, attribute_map) &&
+				(!role || is_non_presentation_role) &&
+				!is_interactive_element(this.name, attribute_map) &&
+				!this.attributes.find(attr => attr.is_spread)
+			) {
+				const has_key_event =
+					handlers_map.has('keydown') ||
+					handlers_map.has('keyup') ||
+					handlers_map.has('keypress');
+
+				if (!has_key_event) {
+					component.warn(
+						this,
+						compiler_warnings.a11y_click_events_have_key_events()
+					);
+				}
+			}
+		}
+
+		// no-noninteractive-tabindex
+		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+			const tab_index = attribute_map.get('tabindex');
+			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
+				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
+			}
+		}
+	}
 
 	validate_special_cases() {
 		const { component, attributes, handlers } = this;
@@ -477,6 +619,28 @@ export default class Element extends Node {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
+			const target_attribute = attribute_map.get('target');
+
+			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
+			// modern browsers add noopener by default, so we only need to check legacy browsers
+			// legacy browsers don't support noopener so we only check for noreferrer there
+			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
+
+				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
+					const rel = attribute_map.get('rel');
+					if (rel == null || rel.is_static) {
+						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
+						if (!rel || !rel_values.includes('noreferrer')) {
+								component.warn(this, {
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
+								});
+						}
+					}
+				}
+			}
 
 			if (href_attribute) {
 				const href_value = href_attribute.get_static_value();
@@ -531,8 +695,24 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'label') {
-			const has_input_child = this.children.some(i => (i instanceof Element && a11y_labelable.has(i.name) ));
-			if (!attribute_map.has('for') && !has_input_child) {
+			const has_input_child = (children: INode[]) => {
+				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
+					return true;
+				}
+
+				for (const child of children) {
+					if (!('children' in child) || child.children.length === 0) {
+						continue;
+					}
+					if (has_input_child(child.children)) {
+						return true;
+					}
+				}
+
+				return false;
+			};
+
+			if (!attribute_map.has('for') && !has_input_child(this.children)) {
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}
@@ -581,7 +761,7 @@ export default class Element extends Node {
 		if (this.name === 'figure') {
 			const children = this.children.filter(node => {
 				if (node.type === 'Comment') return false;
-				if (node.type === 'Text') return /\S/.test(node.data);
+				if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
 				return true;
 			});
 
@@ -713,10 +893,10 @@ export default class Element extends Node {
 				if (this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
 				}
-			} else if (dimensions.test(name)) {
+			} else if (regex_dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
-				} else if (svg.test(this.name)) {
+				} else if (is_svg(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
 				} else if (is_void(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
@@ -840,7 +1020,7 @@ export default class Element extends Node {
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
 					if (chunk.type === 'Text') {
-						let data = chunk.data.replace(/[\s\n\t]+/g, ' ');
+						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
 						if (index === 0) {
 							data = data.trimLeft();
 						} else if (index === attribute.chunks.length - 1) {
@@ -854,12 +1034,14 @@ export default class Element extends Node {
 	}
 }
 
+const regex_starts_with_vowel = /^[aeiou]/;
+
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = /^[aeiou]/.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];
@@ -867,10 +1049,12 @@ function should_have_attribute(
 	node.component.warn(node, compiler_warnings.a11y_missing_attribute(name, article, sequence));
 }
 
+const regex_minus_sign = /-/;
+
 function within_custom_element(parent: INode) {
 	while (parent) {
 		if (parent.type === 'InlineComponent') return false;
-		if (parent.type === 'Element' && /-/.test(parent.name)) return true;
+		if (parent.type === 'Element' && regex_minus_sign.test(parent.name)) return true;
 		parent = parent.parent;
 	}
 	return false;

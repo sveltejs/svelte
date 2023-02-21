@@ -1,8 +1,9 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
+import { is_void } from '../../shared/utils/names';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -107,14 +108,47 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
+export function validate_dynamic_element(tag: unknown) {
+	const is_string = typeof tag === 'string';
+	if (tag && !is_string) {
+		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+	}
+}
+
+export function validate_void_dynamic_element(tag: undefined | string) {
+	if (tag && is_void(tag)) {
+		console.warn(
+			`<svelte:element this="${tag}"> is self-closing and cannot have content.`
+		);
+	}
+}
+
+export function construct_svelte_component_dev(component, props) {
+	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
+	try {
+		const instance = new component(props);
+		if (!instance.$$ || !instance.$set || !instance.$on || !instance.$destroy) {
+			throw new Error(error_message);
+		}
+		return instance;
+	} catch (err) {
+		const { message } = err;
+		if (typeof message === 'string' && message.indexOf('is not a constructor') !== -1) {
+			throw new Error(error_message);
+		} else {
+			throw err;
+		}
+	}
+}
+
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
-	$on(event: string, callback: (event: any) => void): () => void;
+	$on(event: string, callback: ((event: any) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
+export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
 	target: Element | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
@@ -150,7 +184,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
-	constructor(options: IComponentOptions) {
+	constructor(options: ComponentConstructorOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -180,7 +214,7 @@ export interface SvelteComponentTyped<
 	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
 > {
 	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
@@ -242,10 +276,68 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions<Props>) {
+	constructor(options: ComponentConstructorOptions<Props>) {
 		super(options);
 	}
 }
+
+/**
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
+ * dynamic components using `<svelte:component>`.
+ *
+ * Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import Component1 from './Component1.svelte';
+ * 	import Component2 from './Component2.svelte';
+ *
+ * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+ * </script>
+ *
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+ * ```
+ */
+export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped> = new (
+	options: ComponentConstructorOptions<
+		Component extends SvelteComponentTyped<infer Props> ? Props : Record<string, any>
+	>
+) => Component;
+
+/**
+ * Convenience type to get the props the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentProps } from 'svelte';
+ * 	import Component from './Component.svelte';
+ *
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * </script>
+ * ```
+ */
+export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentTyped<infer Props>
+	? Props
+	: never;
+
+/**
+ * Convenience type to get the events the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ *    import type { ComponentEvents } from 'svelte';
+ *    import Component from './Component.svelte';
+ *
+ *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
+ *       console.log(event.detail);
+ *    }
+ * </script>
+ *
+ * <Component on:close={handleCloseEvent} />
+ * ```
+ */
+export type ComponentEvents<Component extends SvelteComponent> =
+	Component extends SvelteComponentTyped<any, infer Events> ? Events : never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();

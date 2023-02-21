@@ -198,7 +198,10 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `stroke-dasharray: ${t * len} ${u * len}`
+		css: (_, u) => `
+			stroke-dasharray: ${len};
+			stroke-dashoffset: ${u * len};
+		`
 	};
 }
 

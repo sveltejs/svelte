@@ -1,6 +1,5 @@
 .idea
 .DS_Store
-.nyc_output
 .vscode
 node_modules
 *.map
@@ -9,6 +8,7 @@ node_modules
 /compiler.*js
 /index.*js
 /ssr.*js
+/action
 /internal
 /store
 /easing
@@ -21,3 +21,4 @@ node_modules
 _actual*.*
 _output
 /types
+.eslintcache
