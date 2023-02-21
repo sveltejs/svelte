@@ -9,7 +9,7 @@ import add_to_set from '../../utils/add_to_set';
 import get_slot_data from '../../utils/get_slot_data';
 import { is_reserved_keyword } from '../../utils/reserved_keywords';
 import is_dynamic from './shared/is_dynamic';
-import { Identifier, ObjectExpression } from 'estree';
+import { Identifier, ObjectExpression, Node } from 'estree';
 import create_debugging_comment from './shared/create_debugging_comment';
 
 export default class SlotWrapper extends Wrapper {
@@ -75,9 +75,9 @@ export default class SlotWrapper extends Wrapper {
 			block = this.slot_block;
 		}
 
-		let get_slot_changes_fn;
-		let get_slot_spread_changes_fn;
-		let get_slot_context_fn;
+		let get_slot_changes_fn: Identifier | 'null';
+		let get_slot_spread_changes_fn: Identifier | undefined;
+		let get_slot_context_fn: Identifier | 'null';
 
 		if (this.node.values.size > 0) {
 			get_slot_changes_fn = renderer.component.get_unique_name(`get_${sanitize(slot_name)}_slot_changes`);
@@ -176,7 +176,7 @@ export default class SlotWrapper extends Wrapper {
 		].filter(Boolean);
 		const all_dirty_condition = all_dirty_conditions.length ? all_dirty_conditions.reduce((condition1, condition2) => x`${condition1} || ${condition2}`) : null;
 
-		let slot_update;
+		let slot_update: Node[];
 		if (all_dirty_condition) {
 			const dirty = x`${all_dirty_condition} ? @get_all_dirty_from_scope(${renderer.reference('$$scope')}) : @get_slot_changes(${slot_definition}, ${renderer.reference('$$scope')}, #dirty, ${get_slot_changes_fn})`;
 

@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.48.0",
+  "version": "3.55.1",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -17,6 +17,7 @@
     "easing",
     "motion",
     "action",
+    "elements",
     "README.md"
   ],
   "exports": {
@@ -75,6 +76,9 @@
       "import": "./transition/index.mjs",
       "require": "./transition/index.js"
     },
+    "./elements": {
+      "types": "./elements/index.d.ts"
+    },
     "./ssr": {
       "types": "./types/runtime/index.d.ts",
       "import": "./ssr.mjs",
@@ -86,17 +90,17 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "mocha --exit",
-    "test:unit": "mocha --require sucrase/register --recursive src/**/__test__.ts --exit",
-    "quicktest": "mocha",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:integration": "mocha --exit",
+    "test:unit": "mocha --config .mocharc.unit.js --exit",
+    "quicktest": "mocha --exit",
     "build": "rollup -c && npm run tsd",
-    "prepare": "npm run build",
+    "prepare": "node scripts/skip_in_ci.js npm run build",
     "dev": "rollup -cw",
-    "pretest": "npm run build",
     "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "node check_publish_env.js && npm run lint && npm test",
-    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
-    "lint": "eslint \"{src,test}/**/*.{ts,js}\""
+    "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
+    "tsd": "node ./generate-type-definitions.js",
+    "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
     "type": "git",
@@ -118,46 +122,42 @@
     "@ampproject/remapping": "^0.3.0",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-json": "^4.0.1",
-    "@rollup/plugin-node-resolve": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-replace": "^2.3.0",
     "@rollup/plugin-sucrase": "^3.1.0",
     "@rollup/plugin-typescript": "^2.0.1",
     "@rollup/plugin-virtual": "^2.0.0",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.8.0",
+    "@types/aria-query": "^5.0.0",
     "@types/mocha": "^7.0.0",
     "@types/node": "^8.10.53",
-    "@typescript-eslint/eslint-plugin": "^4.31.2",
-    "@typescript-eslint/parser": "^4.31.2",
-    "acorn": "^8.4.1",
-    "agadoo": "^1.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@typescript-eslint/parser": "^5.22.0",
+    "acorn": "^8.8.1",
+    "agadoo": "^2.0.0",
+    "aria-query": "^5.1.1",
+    "axobject-query": "^3.1.1",
     "code-red": "^0.2.5",
-    "css-tree": "^1.1.2",
-    "eslint": "^7.32.0",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-svelte3": "^3.2.1",
-    "estree-walker": "^3.0.0",
+    "css-tree": "^2.2.1",
+    "eslint": "^8.26.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "estree-walker": "^3.0.1",
     "is-reference": "^3.0.0",
     "jsdom": "^15.2.1",
-    "kleur": "^3.0.3",
+    "kleur": "^4.1.5",
     "locate-character": "^2.0.5",
     "magic-string": "^0.25.3",
     "mocha": "^7.0.0",
     "periscopic": "^3.0.4",
     "puppeteer": "^2.0.0",
     "rollup": "^1.27.14",
-    "source-map": "^0.7.3",
-    "source-map-support": "^0.5.13",
+    "source-map": "^0.7.4",
+    "source-map-support": "^0.5.21",
     "sourcemap-codec": "^1.4.8",
-    "tiny-glob": "^0.2.6",
-    "tslib": "^2.0.3",
-    "typescript": "^3.7.5"
-  },
-  "nyc": {
-    "include": [
-      "compiler/svelte.js",
-      "shared.js"
-    ],
-    "sourceMap": true,
-    "instrument": true
+    "tiny-glob": "^0.2.9",
+    "tslib": "^2.4.1",
+    "typescript": "^3.7.5",
+    "util": "^0.12.5"
   }
 }

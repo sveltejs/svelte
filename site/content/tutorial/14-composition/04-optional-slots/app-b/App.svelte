@@ -10,7 +10,7 @@
 <ul>
 	<li>
 		<Project
-			title="Add Typescript support"
+			title="Add TypeScript support"
 			tasksCompleted={25}
 			totalTasks={57}
 		>

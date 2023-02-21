@@ -1,6 +1,7 @@
 import { INode } from '../../../nodes/interfaces';
 import { trim_end, trim_start } from '../../../../utils/trim';
 import { link } from '../../../../utils/link';
+import { regex_starts_with_whitespace } from '../../../../utils/patterns';
 
 // similar logic from `compile/render_dom/wrappers/Fragment`
 // We want to remove trailing whitespace inside an element/component/block,
@@ -22,7 +23,7 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 			if (nodes.length === 0) {
 				const should_trim = next
 					? next.type === 'Text' &&
-					  /^\s/.test(next.data) &&
+					regex_starts_with_whitespace.test(next.data) &&
 					  trimmable_at(child, next)
 					: !child.has_ancestor('EachBlock');
 

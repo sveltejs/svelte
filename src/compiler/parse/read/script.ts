@@ -3,6 +3,9 @@ import { Parser } from '../index';
 import { Script } from '../../interfaces';
 import { Node, Program } from 'estree';
 import parser_errors from '../errors';
+import { regex_not_newline_characters } from '../../utils/patterns';
+
+const regex_closing_script_tag = /<\/script\s*>/;
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
@@ -23,13 +26,13 @@ function get_context(parser: Parser, attributes: any[], start: number): string {
 
 export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
 	const script_start = parser.index;
-	const data = parser.read_until(/<\/script\s*>/, parser_errors.unclosed_script);
+	const data = parser.read_until(regex_closing_script_tag, parser_errors.unclosed_script);
 	if (parser.index >= parser.template.length) {
 		parser.error(parser_errors.unclosed_script);
 	}
 
-	const source = parser.template.slice(0, script_start).replace(/[^\n]/g, ' ') + data;
-	parser.read(/<\/script\s*>/);
+	const source = parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
+	parser.read(regex_closing_script_tag);
 
 	let ast: Program;
 
