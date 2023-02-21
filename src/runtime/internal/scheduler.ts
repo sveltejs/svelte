@@ -126,10 +126,10 @@ function update($$) {
 /**
  * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
  */
-export function flush_render_callbacks(fns: Function[]) {
+export function flush_render_callbacks(fns: Function[]): void {
 	const filtered = [];
 	const targets = [];
-	render_callbacks.forEach((c) => fns.includes(c) ? filtered.push(c) : targets.push(c));
+	render_callbacks.forEach((c) => fns.indexOf(c) !== -1 ? filtered.push(c) : targets.push(c));
 	targets.forEach((c) => c());
 	render_callbacks = filtered;
 }
