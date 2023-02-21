@@ -108,12 +108,13 @@ function update($$) {
 	}
 }
 
-// For example, execute remaining `afterUpdate` before execute `destroy` through this function.
-// Doing this will prevent to execute `afterUpdate` after execute `destroy`.
+/**
+ * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
+ */
 export function flush_render_callbacks(fns: Function[]) {
 	const filtered = [];
 	const targets = [];
-	render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+	render_callbacks.forEach((c) => fns.includes(c) ? filtered.push(c) : targets.push(c));
 	targets.forEach((c) => c());
 	render_callbacks = filtered;
 }
