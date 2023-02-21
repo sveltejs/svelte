@@ -17,5 +17,5 @@ Some resources for getting started with testing:
 - [Svelte Component Testing in Cypress](https://docs.cypress.io/guides/component-testing/svelte/overview)
 - [Example using vitest](https://github.com/vitest-dev/vitest/tree/main/examples/svelte)
 - [Example using uvu test runner with JSDOM](https://github.com/lukeed/uvu/tree/master/examples/svelte)
-- [Test Svelte component using Vitest & Playwright](https://davipon.hashnode.dev/test-svelte-component-using-vitest-playwright)
+- [Test Svelte components using Vitest & Playwright](https://davipon.hashnode.dev/test-svelte-component-using-vitest-playwright)
 - [Component testing with WebdriverIO](https://webdriver.io/docs/component-testing/svelte)
