@@ -1,0 +1,9 @@
+[
+	{
+		"code": "duplicate-slot-name-in-component",
+		"message": "Found elements without slot attribute when using slot=\"default\"",
+		"start": { "line": 11, "column": 2, "character": 154 },
+		"end": { "line": 13, "column": 20, "character": 226 },
+		"pos": 154
+	}
+]

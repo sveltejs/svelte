@@ -19,6 +19,7 @@ import Title from '../Title';
 import Window from '../Window';
 import { TemplateNode } from '../../../interfaces';
 import { push_array } from '../../../utils/push_array';
+import SlotTemplateIfBlock from '../SlotTemplateIfBlock';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -40,6 +41,7 @@ function get_constructor(type) {
 		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
 		case 'SlotTemplate': return SlotTemplate;
+		case 'SlotTemplateIfBlock': return SlotTemplateIfBlock;
 		case 'Text': return Text;
 		case 'Title': return Title;
 		case 'Window': return Window;

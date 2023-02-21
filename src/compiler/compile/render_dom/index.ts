@@ -86,7 +86,7 @@ export default function dom(
 	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
-			const $$slots = @compute_slots(#slots);
+			let $$slots = @compute_slots(#slots);
 		`;
 	}
 
@@ -114,7 +114,13 @@ export default function dom(
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
 				${component.slots.size > 0 &&
-				b`if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};`}
+					b`
+						if ('$$scope' in ${$$props}) ${renderer.invalidate('$$scope', x`$$scope = ${$$props}.$$scope`)};
+						if ('$$slots' in ${$$props}) {
+							${renderer.invalidate('#slots', x`#slots = ${$$props}.$$slots`)};
+							${uses_slots ? renderer.invalidate('$$slots', x`$$slots = @compute_slots(#slots)`) : null}
+						}
+					`}
 			}
 		`
 		: null;

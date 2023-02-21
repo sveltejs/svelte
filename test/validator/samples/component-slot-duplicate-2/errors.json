@@ -1,0 +1,9 @@
+[
+	{
+		"code": "duplicate-slot-name-in-component",
+		"message": "Duplicate slot name \"foo\" in <Nested>",
+		"start": { "line": 7, "column": 1, "character": 124 },
+		"end": { "line": 7, "column": 54, "character": 177 },
+		"pos": 124
+	}
+]

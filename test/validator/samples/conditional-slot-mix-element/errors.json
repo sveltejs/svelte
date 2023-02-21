@@ -1,0 +1,9 @@
+[
+	{
+		"code": "invalid-mix-element-and-conditional-slot",
+		"message": "Do not mix <svelte:fragment> and other elements under the same {#if}{:else} group. Default slot content should be wrapped with <svelte:fragment slot=\"default\">",
+		"start": { "line": 11, "column": 2, "character": 170 },
+		"end": { "line": 11, "column": 19, "character": 187 },
+		"pos": 170
+	}
+]

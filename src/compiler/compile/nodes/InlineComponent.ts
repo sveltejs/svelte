@@ -11,6 +11,8 @@ import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 import { regex_only_whitespaces } from '../../utils/patterns';
+import SlotTemplateIfBlock, { validate_get_slot_names } from './SlotTemplateIfBlock';
+import SlotTemplate from './SlotTemplate';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -52,7 +54,7 @@ export default class InlineComponent extends Node {
 						this.css_custom_properties.push(new Attribute(component, this, scope, node));
 						break;
 					}
-					// fallthrough
+				// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
@@ -145,9 +147,15 @@ export default class InlineComponent extends Node {
 				info.children.splice(i, 1);
 			} else if (child.type === 'Comment' && children.length > 0) {
 				children[children.length - 1].children.unshift(child);
+				info.children.splice(i, 1);
+			} else if (child.type === 'IfBlock' && child.children.some(if_child => if_child.type === 'SlotTemplate')) {
+				children.push({
+					...child,
+					type: 'SlotTemplateIfBlock'
+				});
+				info.children.splice(i, 1);
 			}
 		}
-
 		if (info.children.some(node => not_whitespace_text(node))) {
 			children.push({
 				start: info.start,
@@ -159,11 +167,17 @@ export default class InlineComponent extends Node {
 			});
 		}
 
-		this.children = map_children(component, this, this.scope, children);
+		this.children = map_children(component, this, this.scope, children.reverse());
+
+		this.validate_duplicate_slot_name();
 	}
 
 	get slot_template_name() {
 		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
+	}
+
+	validate_duplicate_slot_name() {
+		validate_get_slot_names(this.children, this.component, this.name);
 	}
 }
 

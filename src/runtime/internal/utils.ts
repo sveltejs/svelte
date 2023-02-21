@@ -1,6 +1,7 @@
 import { Readable } from 'svelte/store';
+import { check_outros, group_outros, transition_in, transition_out } from './transitions';
 
-export function noop() {}
+export function noop() { }
 
 export const identity = x => x;
 
@@ -84,11 +85,109 @@ export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
-export function create_slot(definition, ctx, $$scope, fn) {
-	if (definition) {
-		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
-		return definition[0](slot_ctx);
+export function create_slot(definition_index: number, definition_name: string, $$scope_index: number, ctx, get_slot_context_fn) {
+	let definition;
+	let slot_block;
+	function init() {
+		slot.x = definition = ctx[definition_index][definition_name];
+		const $$scope = ctx[$$scope_index];
+		if (definition) {
+			const slot_ctx = get_slot_context(definition, ctx, $$scope, get_slot_context_fn);
+			slot.s = slot_block = definition[0](slot_ctx);
+		} else {
+			slot.s = slot_block = null;
+		}
 	}
+	let _target;
+
+	const slot = {
+		a: null,
+		s: null,
+		f: null,
+		x: definition,
+		c: () => slot_block && slot_block.c(),
+		m: (target, anchor) => {
+			_target = target;
+			slot_block && slot_block.m(target, anchor);
+		},
+		p: (ctx) => {
+			if ((definition !== (definition = ctx[definition_index][definition_name]))) {
+				if (slot_block) {
+					if (slot_block.o) {
+						group_outros();
+						transition_out(slot_block, 1, 1, () => {});
+						check_outros();
+					} else {
+						slot_block.d(1);
+					}
+				}
+				init();
+				if (slot_block) {
+					slot_block.c();
+					transition_in(slot_block, 1);
+					slot_block.m(_target, slot.a);
+				}
+				return true;
+			}
+		},
+		i: (local) => transition_in(slot_block, local),
+		o: (local) => transition_out(slot_block, local),
+		d: (detaching) => slot_block && slot_block.d(detaching),
+	}
+
+	init();
+	return slot;
+}
+
+export function create_slot_with_fallback(definition_index: number, definition_name: string, $$scope_index: number, ctx, get_slot_context_fn, fallback) {
+	let definition;
+	let slot_or_fallback;
+	function init() {
+		slot.x = definition = ctx[definition_index][definition_name];
+		const $$scope = ctx[$$scope_index];
+		if (definition) {
+			const slot_ctx = get_slot_context(definition, ctx, $$scope, get_slot_context_fn);
+			slot.s = slot_or_fallback = definition[0](slot_ctx);
+			slot.f = null;
+		} else {
+			slot.s = null;
+			slot.f = slot_or_fallback = fallback(ctx);
+		}
+	}
+	let _target;
+
+	const slot = {
+		a: null,
+		s: null,
+		f: null,
+		x: definition,
+		c: () => slot_or_fallback.c(),
+		m: (target, anchor) => {
+			slot_or_fallback.m(_target = target, anchor);
+		},
+		p: (ctx) => {
+			if ((definition !== (definition = ctx[definition_index][definition_name]))) {
+				if (slot_or_fallback.o) {
+					group_outros();
+					transition_out(slot_or_fallback, 1, 1, () => {});
+					check_outros();
+				} else {
+					slot_or_fallback.d(1);
+				}
+				init();
+				slot_or_fallback.c();
+				transition_in(slot_or_fallback, 1);
+				slot_or_fallback.m(_target, slot.a);
+				return true;
+			}
+		},
+		i: (local) => transition_in(slot_or_fallback, local),
+		o: (local) => transition_out(slot_or_fallback, local),
+		d: (detaching) => slot_or_fallback.d(detaching),
+	}
+
+	init();
+	return slot;
 }
 
 function get_slot_context(definition, ctx, $$scope, fn) {
@@ -168,7 +267,7 @@ export function compute_slots(slots) {
 
 export function once(fn) {
 	let ran = false;
-	return function(this: any, ...args) {
+	return function (this: any, ...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);

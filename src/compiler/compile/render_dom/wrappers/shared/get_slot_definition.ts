@@ -2,9 +2,11 @@ import Let from '../../../nodes/Let';
 import { x, p } from 'code-red';
 import Block from '../../Block';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
-import { BinaryExpression, Identifier } from 'estree';
+import { BinaryExpression, Identifier, Node } from 'estree';
 
-export function get_slot_definition(block: Block, scope: TemplateScope, lets: Let[]) {
+export type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
+
+export function get_slot_definition(block: Block, scope: TemplateScope, lets: Let[]): SlotDefinition {
 	if (lets.length === 0) return { block, scope };
 
 	const context_input = {
