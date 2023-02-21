@@ -6,6 +6,7 @@ import parser_errors from '../errors';
 import { regex_not_newline_characters } from '../../utils/patterns';
 
 const regex_closing_script_tag = /<\/script\s*>/;
+const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
 	const context = attributes.find(attribute => attribute.name === 'context');
@@ -32,7 +33,7 @@ export default function read_script(parser: Parser, start: number, attributes: N
 	}
 
 	const source = parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
-	parser.read(regex_closing_script_tag);
+	parser.read(regex_starts_with_closing_script_tag);
 
 	let ast: Program;
 

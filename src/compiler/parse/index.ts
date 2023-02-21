@@ -132,6 +132,10 @@ export class Parser {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
 
+	/**
+	 * Match a regex at the current index
+	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 */
 	match_regex(pattern: RegExp) {
 		const match = pattern.exec(this.template.slice(this.index));
 		if (!match || match.index !== 0) return null;
@@ -148,6 +152,10 @@ export class Parser {
 		}
 	}
 
+	/**
+	 * Search for a regex starting at the current index and return the result if it matches
+	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 */
 	read(pattern: RegExp) {
 		const result = this.match_regex(pattern);
 		if (result) this.index += result.length;

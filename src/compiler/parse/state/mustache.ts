@@ -33,7 +33,7 @@ function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: 
 	}
 }
 
-const regex_whitespace_with_closing_curly_brace = /\s*}/;
+const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
