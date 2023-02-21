@@ -1,21 +1,14 @@
 <script>
 	import Modal from './Modal.svelte';
 
-	let button; // HTMLButtonElement
 	let showModal = false;
 </script>
 
-<button bind:this={button} on:click={() => (showModal = true)}>
+<button on:click={() => (showModal = true)}>
 	show modal
 </button>
 
-<Modal
-	{showModal}
-	on:close={() => {
-		showModal = false;
-		button.focus();
-	}}
->
+<Modal bind:showModal>
 	<h2 slot="header">
 		modal
 		<small><em>adjective</em> mod·al \ˈmō-dəl\</small>
