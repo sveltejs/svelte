@@ -713,7 +713,7 @@ export default class Element extends Node {
 			const aria_hidden_attribute = attribute_map.get('aria-hidden');
 			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
 
-			if (attribute_map.has('muted') || aria_hidden_exist === 'true')
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
 				return;
 			}
 
