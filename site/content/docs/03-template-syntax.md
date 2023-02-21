@@ -206,6 +206,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {/if}
 ```
 
+(Blocks don't have to wrap elements, they can also wrap text within elements!)
 
 ### {#each ...}
 
