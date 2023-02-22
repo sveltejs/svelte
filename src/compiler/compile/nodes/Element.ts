@@ -225,6 +225,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
+	contains_a11y_label: boolean;
 
 	get is_dynamic_element() {
 		return this.name === 'svelte:element';
@@ -625,6 +626,7 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
+			const aria_label_attribute = attribute_map.get('aria-label');
 
 			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
 			// modern browsers add noopener by default, so we only need to check legacy browsers
@@ -644,6 +646,13 @@ export default class Element extends Node {
 								});
 						}
 					}
+				}
+			}
+
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					this.contains_a11y_label = true;
 				}
 			}
 
@@ -930,6 +939,7 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (this.contains_a11y_label) return;
 		if (
 			this.bindings
 				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
