@@ -7,7 +7,7 @@ import { Style } from '../../interfaces';
 import parser_errors from '../errors';
 
 const regex_closing_style_tag = /<\/style\s*>/;
-const regex_starts_with_closing_style_tag = /<\/style\s*>/;
+const regex_starts_with_closing_style_tag = /^<\/style\s*>/;
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
