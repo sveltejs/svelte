@@ -297,8 +297,8 @@ export default {
 	duplicate_slot_name_in_component: (slot_name: string, component_name: string) => ({
 		code: 'duplicate-slot-name-in-component',
 		message:
-			slot_name === "default"
+			slot_name === 'default'
 				? 'Found elements without slot attribute when using slot="default"'
-				: `Duplicate slot name "${slot_name}" in <${component_name}>`,
-	}),
+				: `Duplicate slot name "${slot_name}" in <${component_name}>`
+	})
 };

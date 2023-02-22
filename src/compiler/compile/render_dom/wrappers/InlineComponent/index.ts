@@ -311,7 +311,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				if (${renderer.dirty(Array.from(dependencies))}) {
 					${name_changes}.$$slots = ${get_slots_definition}(#ctx);
 				}
-			`)
+			`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {

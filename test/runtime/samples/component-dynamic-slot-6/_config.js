@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	skip_if_ssr: true,
-	skip_if_hydrate: true,
 	html: `
 		top fallback
 		<hr>

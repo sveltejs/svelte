@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	skip_if_ssr: true,
-	skip_if_hydrate: true,
 	html: `
 		<div id="_">
 			value: _
@@ -26,7 +23,7 @@ export default {
 	test({ assert, component, target }) {
 		const lvl1 = target.querySelector('#a');
 		const lvl2 = target.querySelector('#b');
-		component.paths = ["x", "y", "z"];
+		component.paths = ['x', 'y', 'z'];
 		assert.htmlEqual(target.innerHTML, `
 			<div id="_">
 			value: _
@@ -57,9 +54,8 @@ export default {
 
 		assert.equal(lvl1, target.querySelector('#x'));
 		assert.equal(lvl2, target.querySelector('#y'));
-		const lvl3 = target.querySelector('#z');
 	
-		component.paths = ["p"];
+		component.paths = ['p'];
 		assert.htmlEqual(target.innerHTML, `
 			<div id="_">
 			value: _

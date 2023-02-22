@@ -11,8 +11,7 @@ import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 import { regex_only_whitespaces } from '../../utils/patterns';
-import SlotTemplateIfBlock, { validate_get_slot_names } from './SlotTemplateIfBlock';
-import SlotTemplate from './SlotTemplate';
+import { validate_get_slot_names } from './SlotTemplateIfBlock';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';

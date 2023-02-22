@@ -17,7 +17,7 @@ export default class SlotTemplateIfBlockWrapper extends Wrapper {
 	children: Array<SlotTemplateWrapper | SlotTemplateIfBlockWrapper> = [];
 	else: Array<SlotTemplateWrapper | SlotTemplateIfBlockWrapper> = [];
 	parent: SlotTemplateIfBlockWrapper | InlineComponentWrapper;
-	scope: TemplateScope
+	scope: TemplateScope;
 
 	constructor(
 		renderer: Renderer,

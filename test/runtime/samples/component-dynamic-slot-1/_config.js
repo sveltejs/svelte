@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	skip_if_ssr: true,
-	skip_if_hydrate: true,
 	html: '<p>Fallback</p>',
 	test({ assert, component, target }) {
 		component.value = 1;

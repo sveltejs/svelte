@@ -3,7 +3,7 @@ import Renderer from '../Renderer';
 import Block from '../Block';
 import FragmentWrapper from './Fragment';
 import create_debugging_comment from './shared/create_debugging_comment';
-import { get_slot_definition, SlotDefinition } from './shared/get_slot_definition';
+import { get_slot_definition } from './shared/get_slot_definition';
 import { b, x } from 'code-red';
 import { sanitize } from '../../../utils/names';
 import { Identifier, Node } from 'estree';

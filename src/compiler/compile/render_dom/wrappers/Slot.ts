@@ -234,7 +234,7 @@ export default class SlotWrapper extends Wrapper {
 			if (!(${renderer.dirty(['#slots'])} && ${slot}.p(#ctx))) {
 				${slot_or_fallback_update}
 			}
-		`)
+		`);
 
 		block.chunks.destroy.push(
 			b`if (${slot}) ${slot}.d(detaching);`

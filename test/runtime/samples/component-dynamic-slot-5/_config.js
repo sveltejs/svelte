@@ -1,7 +1,4 @@
 export default {
-	solo: true,
-	skip_if_ssr: true,
-	skip_if_hydrate: true,
 	html: `
 		<div>
 			Top content
@@ -24,5 +21,5 @@ export default {
 			<hr>
 			bottom fallback
 		</div>
-	`,
+	`
 };

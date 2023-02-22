@@ -1,7 +1,7 @@
-import Renderer from "../../Renderer";
-import SlotTemplateWrapper from "../SlotTemplate";
-import SlotTemplateIfBlockWrapper from "../SlotTemplateIfBlock";
-import is_dynamic from "./is_dynamic";
+import Renderer from '../../Renderer';
+import SlotTemplateWrapper from '../SlotTemplate';
+import SlotTemplateIfBlockWrapper from '../SlotTemplateIfBlock';
+import is_dynamic from './is_dynamic';
 
 export function collect_slot_fragment_dependencies(
 	renderer: Renderer,
