@@ -484,6 +484,11 @@ export default class Element extends Node {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}
 				}
+
+				// aria-activedescendant-has-tabindex
+				if (name === 'aria-activedescendant' && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+			    component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
 			}
 
 			// aria-role
