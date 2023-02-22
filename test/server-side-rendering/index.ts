@@ -117,7 +117,9 @@ describe('ssr', () => {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
 
 					try {
-						assert.htmlEqual(
+						(compileOptions.hydratable
+							? assert.htmlEqualWithComments
+							: assert.htmlEqual)(
 							head,
 							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
 						);

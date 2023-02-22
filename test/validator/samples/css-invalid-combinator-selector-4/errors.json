@@ -1,0 +1,9 @@
+[
+	{
+		"code": "css-invalid-selector",
+		"message": "Invalid selector \"p >\"",
+		"start": { "line": 4, "column": 1, "character": 26 },
+		"end": { "line": 4, "column": 4, "character": 29 },
+		"pos": 26
+	}
+]

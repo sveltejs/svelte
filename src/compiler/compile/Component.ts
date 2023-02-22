@@ -1,7 +1,8 @@
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
+import { reserved, is_valid } from '../utils/names';
+import globals from '../utils/globals';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import {
@@ -45,6 +46,10 @@ interface ComponentOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 }
+
+const regex_leading_directory_separator = /^[/\\]/;
+const regex_starts_with_term_export = /^Export/;
+const regex_contains_term_function = /Function/;
 
 export default class Component {
 	stats: Stats;
@@ -135,7 +140,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-					.replace(/^[/\\]/, '')
+					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -637,7 +642,7 @@ export default class Component {
 				body.splice(i, 1);
 			}
 
-			if (/^Export/.test(node.type)) {
+			if (regex_starts_with_term_export.test(node.type)) {
 				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
@@ -787,6 +792,42 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				let deep = false;
+				let names: string[] | undefined; 
+
+				if (node.type === 'AssignmentExpression') {
+					deep = node.left.type === 'MemberExpression';
+					names = deep
+						? [get_object(node.left).name]
+						: extract_names(node.left);
+				} else if (node.type === 'UpdateExpression') {
+					deep = node.argument.type === 'MemberExpression';
+					const { name } = get_object(node.argument);
+					names = [name];
+				}
+
+				if (names) {
+					names.forEach(name => {
+						let current_scope = scope;
+						let declaration;
+
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
+							}
+							current_scope = current_scope.parent;
+						}
+
+						if (declaration && declaration.kind === 'const' && !deep) {
+							component.error(node as any, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
+				}
+
 				if (node.type === 'ImportDeclaration') {
 					component.extract_imports(node);
 					// TODO: to use actual remove
@@ -794,7 +835,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				if (/^Export/.test(node.type)) {
+				if (regex_starts_with_term_export.test(node.type)) {
 					const replacement = component.extract_exports(node);
 					if (replacement) {
 						this.replace(replacement);
@@ -917,7 +958,7 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+					if (!((regex_contains_term_function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -964,7 +1005,7 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node: Node) {
-				if (/Function/.test(node.type)) {
+				if (regex_contains_term_function.test(node.type)) {
 					return this.skip();
 				}
 
@@ -1088,7 +1129,7 @@ export default class Component {
 
 						this.replace(b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${ props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
 						` as any);
 						return this.skip();
@@ -1459,6 +1500,8 @@ export default class Component {
 	}
 }
 
+const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
+
 function process_component_options(component: Component, nodes) {
 	const component_options: ComponentOptions = {
 		immutable: component.compile_options.immutable || false,
@@ -1472,7 +1515,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, {code, message}) {
+	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
 		const chunk = value[0];
 
@@ -1504,7 +1547,7 @@ function process_component_options(component: Component, nodes) {
 							return component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !regex_valid_tag_name.test(tag)) {
 							return component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 
