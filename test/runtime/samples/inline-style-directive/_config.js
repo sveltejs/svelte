@@ -1,6 +1,8 @@
 export default {
 	html: `
-		<p style="color: red;"></p>
+		<div>
+			<p style="color: red;"></p>
+		</div>
 	`,
 
 	test({ assert, target, window }) {

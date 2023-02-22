@@ -108,8 +108,18 @@ export default [
 		input: 'src/compiler/index.ts',
 		plugins: [
 			replace({
-				__VERSION__: pkg.version
+				__VERSION__: pkg.version,
+				'process.env.NODE_DEBUG': false // appears inside the util package
 			}),
+			{
+				resolveId(id) {
+					// util is a built-in module in Node.js, but we want a self-contained compiler bundle
+					// that also works in the browser, so we load its polyfill instead
+					if (id === 'util') {
+						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
+					}
+				}
+			},
 			resolve(),
 			commonjs({
 				include: ['node_modules/**']

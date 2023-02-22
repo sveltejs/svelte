@@ -176,6 +176,25 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 	let { bar } = $$props;
 	let { baz } = $$props;
+
+	$$self.$$.on_mount.push(function () {
+		if (things === undefined && !('things' in $$props || $$self.$$.bound[$$self.$$.props['things']])) {
+			console.warn("<Component> was created without expected prop 'things'");
+		}
+
+		if (foo === undefined && !('foo' in $$props || $$self.$$.bound[$$self.$$.props['foo']])) {
+			console.warn("<Component> was created without expected prop 'foo'");
+		}
+
+		if (bar === undefined && !('bar' in $$props || $$self.$$.bound[$$self.$$.props['bar']])) {
+			console.warn("<Component> was created without expected prop 'bar'");
+		}
+
+		if (baz === undefined && !('baz' in $$props || $$self.$$.bound[$$self.$$.props['baz']])) {
+			console.warn("<Component> was created without expected prop 'baz'");
+		}
+	});
+
 	const writable_props = ['things', 'foo', 'bar', 'baz'];
 
 	Object.keys($$props).forEach(key => {
@@ -216,25 +235,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*things*/ ctx[0] === undefined && !('things' in props)) {
-			console.warn("<Component> was created without expected prop 'things'");
-		}
-
-		if (/*foo*/ ctx[1] === undefined && !('foo' in props)) {
-			console.warn("<Component> was created without expected prop 'foo'");
-		}
-
-		if (/*bar*/ ctx[2] === undefined && !('bar' in props)) {
-			console.warn("<Component> was created without expected prop 'bar'");
-		}
-
-		if (/*baz*/ ctx[3] === undefined && !('baz' in props)) {
-			console.warn("<Component> was created without expected prop 'baz'");
-		}
 	}
 
 	get things() {

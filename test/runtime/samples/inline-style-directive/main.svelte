@@ -2,4 +2,6 @@
 	export let myColor = "red";
 </script>
 
-<p style:color={myColor} />
+<div>
+	<p style:color={myColor} />
+</div>

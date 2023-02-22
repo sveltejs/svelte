@@ -44,7 +44,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {@const ...}'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
@@ -234,6 +234,10 @@ export default {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
 	},
+	css_invalid_selector: (selector: string) => ({
+		code: 'css-invalid-selector',
+		message: `Invalid selector "${selector}"`
+	}),
 	duplicate_animation: {
 		code: 'duplicate-animation',
 		message: "An element can only have one 'animate' directive"
@@ -242,9 +246,17 @@ export default {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
 	},
+	invalid_animation_key: {
+		code: 'invalid-animation',
+		message: 'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
+	},
 	invalid_animation_sole: {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the sole child of a keyed each block'
+	},
+	invalid_animation_dynamic_element: {
+		code: 'invalid-animation',
+		message: '<svelte:element> cannot have a animate directive'
 	},
 	invalid_directive_value: {
 		code: 'invalid-directive-value',
@@ -252,7 +264,7 @@ export default {
 	},
 	invalid_const_placement: {
 		code: 'invalid-const-placement',
-		message: '{@const} must be the immediate child of {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
+		message: '{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
 	},
 	invalid_const_declaration: (name: string) => ({
 		code: 'invalid-const-declaration',
@@ -269,5 +281,9 @@ export default {
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
-	}
+	},
+	invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	})
 };

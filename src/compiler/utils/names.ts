@@ -1,69 +1,6 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import full_char_code_at from './full_char_code_at';
-
-export const globals = new Set([
-	'alert',
-	'Array',
-	'BigInt',
-	'Boolean',
-	'clearInterval',
-	'clearTimeout',
-	'confirm',
-	'console',
-	'Date',
-	'decodeURI',
-	'decodeURIComponent',
-	'document',
-	'Element',
-	'encodeURI',
-	'encodeURIComponent',
-	'Error',
-	'EvalError',
-	'Event',
-	'EventSource',
-	'fetch',
-	'FormData',
-	'global',
-	'globalThis',
-	'history',
-	'HTMLElement',
-	'Infinity',
-	'InternalError',
-	'Intl',
-	'isFinite',
-	'isNaN',
-	'JSON',
-	'localStorage',
-	'location',
-	'Map',
-	'Math',
-	'NaN',
-	'navigator',
-	'Node',
-	'Number',
-	'Object',
-	'parseFloat',
-	'parseInt',
-	'process',
-	'Promise',
-	'prompt',
-	'RangeError',
-	'ReferenceError',
-	'RegExp',
-	'sessionStorage',
-	'Set',
-	'setInterval',
-	'setTimeout',
-	'String',
-	'SVGElement',
-	'SyntaxError',
-	'TypeError',
-	'undefined',
-	'URIError',
-	'URL',
-	'URLSearchParams',
-	'window'
-]);
+import { regex_starts_with_underscore, regex_ends_with_underscore } from './patterns';
 
 export const reserved = new Set([
 	'arguments',
@@ -116,12 +53,6 @@ export const reserved = new Set([
 	'yield'
 ]);
 
-const void_element_names = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/;
-
-export function is_void(name: string) {
-	return void_element_names.test(name) || name.toLowerCase() === '!doctype';
-}
-
 export function is_valid(str: string): boolean {
 	let i = 0;
 
@@ -135,10 +66,13 @@ export function is_valid(str: string): boolean {
 	return true;
 }
 
+const regex_non_standard_characters = /[^a-zA-Z0-9_]+/g;
+const regex_starts_with_number = /^[0-9]/;
+
 export function sanitize(name: string) {
 	return name
-		.replace(/[^a-zA-Z0-9_]+/g, '_')
-		.replace(/^_/, '')
-		.replace(/_$/, '')
-		.replace(/^[0-9]/, '_$&');
+		.replace(regex_non_standard_characters, '_')
+		.replace(regex_starts_with_underscore, '')
+		.replace(regex_ends_with_underscore, '')
+		.replace(regex_starts_with_number, '_$&');
 }

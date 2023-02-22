@@ -1,7 +1,7 @@
 import { parse_expression_at } from '../acorn';
 import { Parser } from '../index';
 import { Node } from 'estree';
-import { whitespace } from '../../utils/patterns';
+import { regex_whitespace } from '../../utils/patterns';
 import parser_errors from '../errors';
 
 export default function read_expression(parser: Parser): Node {
@@ -20,7 +20,7 @@ export default function read_expression(parser: Parser): Node {
 
 			if (char === ')') {
 				num_parens -= 1;
-			} else if (!whitespace.test(char)) {
+			} else if (!regex_whitespace.test(char)) {
 				parser.error(parser_errors.unexpected_token(')'), index);
 			}
 

@@ -13,7 +13,7 @@
 
 <article>
 	<span>{i + offset + 1}</span>
-	<h2><a target="_blank" href={url}>{item.title}</a></h2>
+	<h2><a target="_blank" rel="noreferrer" href={url}>{item.title}</a></h2>
 	<p class="meta"><a href="#/item/{item.id}">{comment_text()}</a> by {item.user} {item.time_ago}</p>
 </article>
 

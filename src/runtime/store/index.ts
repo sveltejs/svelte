@@ -98,7 +98,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 
 		return () => {
 			subscribers.delete(subscriber);
-			if (subscribers.size === 0) {
+			if (subscribers.size === 0 && stop) {
 				stop();
 				stop = null;
 			}

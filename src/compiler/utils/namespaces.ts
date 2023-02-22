@@ -25,4 +25,4 @@ export const valid_namespaces = [
 	xmlns
 ];
 
-export const namespaces: Record<string, string> = { foreign, html, mathml, svg, xlink, xml, xmlns };
+export const namespaces = { foreign, html, mathml, svg, xlink, xml, xmlns } as const;

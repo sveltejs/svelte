@@ -20,6 +20,9 @@
 		height: var(--height);
 		left: calc(50% - var(--width) / 2);
 		top: calc(50% - var(--height) / 2);
+		display: flex;
+		align-items: center;
+		padding: 8px;
 		border-radius: 4px;
 		background-color: #ff3e00;
 		color: #fff;

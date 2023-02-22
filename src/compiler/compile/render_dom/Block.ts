@@ -3,6 +3,7 @@ import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { regex_double_quotes } from '../../utils/patterns';
 
 export interface Bindings {
 	object: Identifier;
@@ -48,6 +49,7 @@ export default class Block {
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -96,6 +98,7 @@ export default class Block {
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
@@ -326,6 +329,12 @@ export default class Block {
 				${this.chunks.measure}
 			}`;
 
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
+
 			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
@@ -379,6 +388,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},
@@ -406,7 +416,7 @@ export default class Block {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						source: "${this.comment ? this.comment.replace(regex_double_quotes, '\\"') : ''}",
 						ctx: #ctx
 					});
 					return ${block};`
