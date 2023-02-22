@@ -153,7 +153,7 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
  * https://svelte.dev/docs#run-time-svelte-hascontext
  */
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);
+	return get_current_component().$$.context.has(key); 
 }
 
 // TODO figure out if we still want to support
