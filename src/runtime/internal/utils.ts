@@ -133,7 +133,8 @@ export function create_slot(definition_index: number, definition_name: string, $
 		i: (local) => transition_in(slot_block, local),
 		o: (local) => transition_out(slot_block, local),
 		d: (detaching) => slot_block && slot_block.d(detaching),
-	}
+		l: (nodes) => slot_block && slot_block.l(nodes)
+	};
 
 	init();
 	return slot;
@@ -184,7 +185,8 @@ export function create_slot_with_fallback(definition_index: number, definition_n
 		i: (local) => transition_in(slot_or_fallback, local),
 		o: (local) => transition_out(slot_or_fallback, local),
 		d: (detaching) => slot_or_fallback.d(detaching),
-	}
+		l: (nodes) => slot_or_fallback.l(nodes)
+	};
 
 	init();
 	return slot;

@@ -1,12 +1,10 @@
 import Renderer, { RenderOptions } from '../Renderer';
 import Slot from '../../nodes/Slot';
-import { x } from 'code-red';
+import { x, b } from 'code-red';
 import get_slot_data from '../../utils/get_slot_data';
 import { get_slot_scope } from './shared/get_slot_scope';
 
-export default function(node: Slot, renderer: Renderer, options: RenderOptions & {
-	slot_scopes: Map<any, any>;
-}) {
+export default function(node: Slot, renderer: Renderer, options: RenderOptions) {
 	const slot_data = get_slot_data(node.values);
 	const slot = node.get_static_attribute_value('slot');
 	const nearest_inline_component = node.find_nearest(/InlineComponent/);
@@ -32,9 +30,9 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions &
 		nearest_inline_component.lets.forEach(l => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
-		options.slot_scopes.set(slot, {
-			input: get_slot_scope(node.lets),
-			output: renderer.pop()
-		});
+
+		options.slot_scopes.push(b`#slots_definition['${node.slot_template_name}'] = 
+			(${get_slot_scope(node.lets)}) => ${renderer.pop()};
+		`);
 	}
 }

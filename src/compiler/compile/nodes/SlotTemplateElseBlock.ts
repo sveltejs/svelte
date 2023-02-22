@@ -1,9 +1,6 @@
 import Component from '../Component';
 import Expression from './shared/Expression';
 import TemplateScope from './shared/TemplateScope';
-import Node from './shared/Node';
-import Let from './Let';
-import Attribute from './Attribute';
 import { INode } from './interfaces';
 import compiler_errors from '../compiler_errors';
 import get_const_tags from './shared/get_const_tags';

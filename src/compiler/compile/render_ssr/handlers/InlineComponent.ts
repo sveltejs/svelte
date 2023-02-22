@@ -66,27 +66,20 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 				: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any)
 	);
 
-	const slot_fns = [];
+	const slot_scopes = [];
 
 	const children = node.children;
-
 	if (children.length) {
-		const slot_scopes = new Map();
-
 		renderer.render(children, Object.assign({}, options, {
 			slot_scopes
 		}));
-
-		slot_scopes.forEach(({ input, output, statements }, name) => {
-			slot_fns.push(
-				p`${name}: (${input}) => { ${statements}; return ${output}; }`
-			);
-		});
 	}
 
-	const slots = x`{
-		${slot_fns}
-	}`;
+	const slots = x`(() => {
+		const #slots_definition = {};
+		${slot_scopes}
+		return #slots_definition;
+	})()`;
 
 	if (node.css_custom_properties.length > 0) {
 		if (node.namespace === namespaces.svg) {

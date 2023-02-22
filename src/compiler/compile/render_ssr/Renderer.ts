@@ -10,12 +10,13 @@ import InlineComponent from './handlers/InlineComponent';
 import KeyBlock from './handlers/KeyBlock';
 import Slot from './handlers/Slot';
 import SlotTemplate from './handlers/SlotTemplate';
+import SlotTemplateIfBlock from './handlers/SlotTemplateIfBlock';
 import Tag from './handlers/Tag';
 import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
-import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { Expression, TemplateLiteral, Identifier, Node } from 'estree';
 import { collapse_template_literal } from '../utils/collapse_template_literal';
 import { escape_template } from '../utils/stringify';
 
@@ -39,6 +40,7 @@ const handlers: Record<string, Handler> = {
 	RawMustacheTag: HtmlTag,
 	Slot,
 	SlotTemplate,
+	SlotTemplateIfBlock,
 	Text,
 	Title,
 	Window: noop
@@ -47,6 +49,7 @@ const handlers: Record<string, Handler> = {
 export interface RenderOptions extends CompileOptions{
 	locate: (c: number) => { line: number; column: number };
 	head_id?: string;
+	slot_scopes?: Array<Node[] | Node>;
 }
 
 export default class Renderer {

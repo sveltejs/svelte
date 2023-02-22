@@ -67,7 +67,7 @@ export default class SlotTemplateIfBlock extends AbstractBlock {
 	}
 }
 
-export function validate_get_slot_names(children: Array<INode>, component: Component, component_name: string) {
+export function validate_get_slot_names(children: INode[], component: Component, component_name: string) {
 	const slot_names = new Map<string, SlotTemplate>();
 	function add_slot_name(slot_name: string, child: SlotTemplate) {
 		if (slot_names.has(slot_name)) {

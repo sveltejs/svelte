@@ -4,11 +4,11 @@ import remove_whitespace_children from './utils/remove_whitespace_children';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import { get_const_tags } from './shared/get_const_tags';
+import { x } from 'code-red';
+import { INode } from '../../nodes/interfaces';
 
-export default function(node: SlotTemplate, renderer: Renderer, options: RenderOptions & {
-	slot_scopes: Map<any, any>;
-}) {
-	const parent_inline_component = node.parent as InlineComponent;
+export default function(node: SlotTemplate, renderer: Renderer, options: RenderOptions) {
+	const parent_inline_component = get_parent_inline_component(node.parent);
 	const children = remove_whitespace_children(node instanceof SlotTemplate ? node.children : [node], node.next);
 
 	renderer.push();
@@ -22,18 +22,9 @@ export default function(node: SlotTemplate, renderer: Renderer, options: RenderO
 
 	const slot_fragment_content = renderer.pop();
 	if (!is_empty_template_literal(slot_fragment_content)) {
-		if (options.slot_scopes.has(node.slot_template_name)) {
-			if (node.slot_template_name === 'default') {
-				throw new Error('Found elements without slot attribute when using slot="default"');
-			}
-			throw new Error(`Duplicate slot name "${node.slot_template_name}" in <${parent_inline_component.name}>`);
-		}
-
-		options.slot_scopes.set(node.slot_template_name, {
-			input: get_slot_scope(node.lets),
-			output: slot_fragment_content,
-			statements: get_const_tags(node.const_tags)
-		});
+		options.slot_scopes.push(x`#slots_definition['${node.slot_template_name}'] = 
+			(${get_slot_scope(node.lets)}) => { ${get_const_tags(node.const_tags)}; return ${slot_fragment_content}; }
+		`);
 	}
 }
 
@@ -43,4 +34,12 @@ function is_empty_template_literal(template_literal) {
 		template_literal.quasis.length === 1 &&
 		template_literal.quasis[0].value.raw === ''
 	);
+}
+
+function get_parent_inline_component(node: INode) {
+	let parent = node;
+	while (parent.type !== 'InlineComponent') {
+		parent = parent.parent;
+	}
+	return parent as InlineComponent;
 }

@@ -1,8 +1,5 @@
 export default {
-	solo: true,
-	skip_if_ssr: true,
-	skip_if_hydrate: true,
-	html: `a`,
+	html: 'a',
 	test({ assert, component, target }) {
 		component.a = 'foo';
 		assert.htmlEqual(target.innerHTML, 'foo');

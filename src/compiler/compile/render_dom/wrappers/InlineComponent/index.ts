@@ -9,7 +9,6 @@ import { sanitize } from '../../../../utils/names';
 import add_to_set from '../../../utils/add_to_set';
 import { b, x, p } from 'code-red';
 import Attribute from '../../../nodes/Attribute';
-import is_dynamic from '../shared/is_dynamic';
 import bind_this from '../shared/bind_this';
 import { Node, Identifier, ObjectExpression } from 'estree';
 import EventHandler from '../Element/EventHandler';
@@ -308,7 +307,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				if (${renderer.dirty(Array.from(dependencies))}) {
 					${name_changes}.$$slots = ${get_slots_definition}(#ctx);
 				}
-			`)
+			`);
 		}
 
 		const munged_bindings = this.node.bindings.map(binding => {
