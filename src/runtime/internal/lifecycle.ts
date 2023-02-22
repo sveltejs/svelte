@@ -111,16 +111,6 @@ export function createEventDispatcher<EventMap extends Record<string, any> = any
 	}) as EventDispatcher<EventMap>;
 }
 
-// no type restrictions
-const dispatch1 = createEventDispatcher()
-dispatch1('click')
-dispatch1('something')
-dispatch1('something', true)
-
-const dispatch2 = createEventDispatcher<{ click: never }>()
-dispatch2('click')
-dispatch2('click', true)
-
 /**
  * Associates an arbitrary `context` object with the current component and the specified `key` 
  * and returns that object. The context is then available to children of the component 
