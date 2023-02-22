@@ -1,8 +1,7 @@
 ---
 title: Textarea inputs
 ---
-
-The `<textarea>` element behaves similarly to a text input in Svelte — use `bind:value`:
+Similar to the text input in Svelte, a two-way binding will allow the user to update the value variable when information is updated in the textarea in the DOM. Try typing in the textarea, and then use 'bind:value':
 
 ```html
 <textarea bind:value={value}></textarea>
