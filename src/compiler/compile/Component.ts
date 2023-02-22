@@ -1409,7 +1409,9 @@ export default class Component {
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
 
-				const is_dependency_static = Array.from(dependencies).every(dependency => dependency !== '$$props' && !is_dynamic(this.var_lookup.get(dependency)));
+				const is_dependency_static = Array.from(dependencies).every(
+					dependency => dependency !== '$$props' && dependency !== '$$restProps' && !is_dynamic(this.var_lookup.get(dependency))
+				);
 
 				if (is_dependency_static) {
 					assignees.forEach(assignee => {
