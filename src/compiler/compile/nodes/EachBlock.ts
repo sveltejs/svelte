@@ -28,7 +28,7 @@ export default class EachBlock extends AbstractBlock {
 	has_animation: boolean;
 	has_binding = false;
 	has_index_binding = false;
-
+	context_rest_properties: Map<string, Node>;
 	else?: ElseBlock;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
@@ -40,9 +40,9 @@ export default class EachBlock extends AbstractBlock {
 		this.index = info.index;
 
 		this.scope = scope.child();
-
+		this.context_rest_properties = new Map();
 		this.contexts = [];
-		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component });
+		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, context_rest_properties: this.context_rest_properties });
 
 		this.contexts.forEach(context => {
 			this.scope.add(context.key.name, this.expression.dependencies, this);
@@ -63,7 +63,7 @@ export default class EachBlock extends AbstractBlock {
 		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
 
 		if (this.has_animation) {
-			this.children = this.children.filter(child => !isEmptyNode(child));
+			this.children = this.children.filter(child => !isEmptyNode(child) && !isCommentNode(child));
 
 			if (this.children.length !== 1) {
 				const child = this.children.find(child => !!(child as Element).animation);
@@ -82,4 +82,7 @@ export default class EachBlock extends AbstractBlock {
 
 function isEmptyNode(node: INode) {
 	return node.type === 'Text' && node.data.trim() === '';
+}
+function isCommentNode(node: INode) {
+	return node.type === 'Comment';
 }

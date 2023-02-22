@@ -1,0 +1,15 @@
+[{
+	"code": "missing-element-definition",
+	"message": "<svelte:element> must have a 'this' attribute",
+	"start": {
+		"line": 2,
+		"column": 1,
+		"character": 7
+	},
+	"end": {
+		"line": 2,
+		"column": 1,
+		"character": 7
+	},
+	"pos": 7
+}]

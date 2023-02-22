@@ -299,8 +299,8 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 
 	for (const dep of contextual_dependencies) {
 		const context = block.bindings.get(dep);
-		let key;
-		let name;
+		let key: string;
+		let name: string;
 		if (context) {
 			key = context.object.name;
 			name = context.property.name;
@@ -364,7 +364,7 @@ function get_event_handler(
 	const contextual_dependencies = new Set<string>(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
-	let set_store;
+	let set_store: Node[] | undefined;
 
 	if (context) {
 		const { object, property, store, snippet } = context;
