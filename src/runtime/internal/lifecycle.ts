@@ -64,7 +64,7 @@ type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
 
 type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
 	EventMap[EventKey] extends never | null
-	? (type: EventKey) => boolean
+	? (type: EventKey, detail?: null, options?: DispatchOptions) => boolean
 	: null extends EventMap[EventKey]
 	? (type: EventKey, detail?: EventMap[EventKey], options?: DispatchOptions) => boolean
 	: (type: EventKey, detail: EventMap[EventKey], options?: DispatchOptions) => boolean
@@ -111,6 +111,16 @@ export function createEventDispatcher<EventMap extends Record<string, any> = any
 	}) as EventDispatcher<EventMap>;
 }
 
+// no type restrictions
+const dispatch1 = createEventDispatcher()
+dispatch1('click')
+dispatch1('something')
+dispatch1('something', true)
+
+const dispatch2 = createEventDispatcher<{ click: never }>()
+dispatch2('click')
+dispatch2('click', true)
+
 /**
  * Associates an arbitrary `context` object with the current component and the specified `key` 
  * and returns that object. The context is then available to children of the component 
@@ -153,7 +163,7 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
  * https://svelte.dev/docs#run-time-svelte-hascontext
  */
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key); 
+	return get_current_component().$$.context.has(key);
 }
 
 // TODO figure out if we still want to support
