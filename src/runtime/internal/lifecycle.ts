@@ -64,10 +64,10 @@ type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
 
 type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
 	EventMap[EventKey] extends never | null
-	? (type: EventKey) => void
+	? (type: EventKey) => boolean
 	: null extends EventMap[EventKey]
-	? (type: EventKey, detail?: EventMap[EventKey]) => void
-	: (type: EventKey, detail: EventMap[EventKey]) => void
+	? (type: EventKey, detail?: EventMap[EventKey], options?: DispatchOptions) => boolean
+	: (type: EventKey, detail: EventMap[EventKey], options?: DispatchOptions) => boolean
 
 type CreateDispatchFunctionMap<EventMap> = {
 	[Key in keyof EventMap]: ConstructDispatchFunction<EventMap, Key>
@@ -91,12 +91,10 @@ export interface DispatchOptions {
  * 
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  */
-export function createEventDispatcher<
-	EventMap extends Record<string, any> = any
->(): EventDispatcher<EventMap> {
+export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap> {
 	const component = get_current_component();
 
-	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
+	return ((type: string, detail?: any, { cancelable = false } = {}): boolean => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
@@ -110,7 +108,7 @@ export function createEventDispatcher<
 		}
 
 		return true;
-	};
+	}) as EventDispatcher<EventMap>;
 }
 
 /**
@@ -155,7 +153,7 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
  * https://svelte.dev/docs#run-time-svelte-hascontext
  */
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);
+	return get_current_component().$$.context.has(key); 
 }
 
 // TODO figure out if we still want to support
