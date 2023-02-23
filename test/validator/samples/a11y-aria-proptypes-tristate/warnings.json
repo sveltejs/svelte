@@ -1,0 +1,32 @@
+[
+  {
+    "code": "a11y-incorrect-aria-attribute-type",
+    "message": "A11y: The value of 'aria-checked' must be exactly one of true, false, or mixed",
+    "start": {
+      "line": 5,
+      "column": 5,
+      "character": 48
+    },
+    "end": {
+      "line": 5,
+      "column": 23,
+      "character": 66
+    },
+    "pos": 48
+  },
+  {
+    "code": "a11y-incorrect-aria-attribute-type",
+    "message": "A11y: The value of 'aria-checked' must be exactly one of true, false, or mixed",
+    "start": {
+      "line": 6,
+      "column": 5,
+      "character": 75
+    },
+    "end": {
+      "line": 6,
+      "column": 22,
+      "character": 92
+    },
+    "pos": 75
+  }
+]

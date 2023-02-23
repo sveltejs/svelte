@@ -1,12 +1,14 @@
 // All compiler warnings should be listed and accessed from here
 
+import { ARIAPropertyDefinition } from 'aria-query';
+
 /**
  * @internal
  */
 export default {
 	custom_element_no_tag: {
 		code: 'custom-element-no-tag',
-		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'			
+		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'
 	},
 	unused_export_let: (component: string, property: string) => ({
 		code: 'unused-export-let',
@@ -60,6 +62,35 @@ export default {
 		code: 'a11y-aria-attributes',
 		message: `A11y: <${name}> should not have aria-* attributes`
 	}),
+	a11y_incorrect_attribute_type: (schema: ARIAPropertyDefinition, attribute: string) => {
+		let message;
+		switch (schema.type) {
+			case 'boolean':
+				message = `The value of '${attribute}' must be exactly one of true or false`;
+				break;
+			case 'id':
+				message = `The value of '${attribute}' must be a string that represents a DOM element ID`;
+				break;
+			case 'idlist':
+				message = `The value of '${attribute}' must be a space-separated list of strings that represent DOM element IDs`;
+				break;
+			case 'tristate':
+				message = `The value of '${attribute}' must be exactly one of true, false, or mixed`;
+				break;
+			case 'token':
+				message = `The value of '${attribute}' must be exactly one of ${(schema.values || []).join(', ')}`;
+				break;
+			case 'tokenlist':
+				message = `The value of '${attribute}' must be a space-separated list of one or more of ${(schema.values || []).join(', ')}`;
+				break;
+			default:
+				message = `The value of '${attribute}' must be of type ${schema.type}`;
+		}
+		return {
+			code: 'a11y-incorrect-aria-attribute-type',
+			message: `A11y: ${message}`
+		};
+	},
 	a11y_unknown_aria_attribute: (attribute: string, suggestion?: string) => ({
 		code: 'a11y-unknown-aria-attribute',
 		message: `A11y: Unknown aria attribute 'aria-${attribute}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
@@ -76,9 +107,21 @@ export default {
 		code: 'a11y-unknown-role',
 		message: `A11y: Unknown role '${role}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
+	a11y_no_abstract_role: (role: string | boolean) => ({
+		code: 'a11y-no-abstract-role',
+		message: `A11y: Abstract role '${role}' is forbidden`
+	}),
 	a11y_no_redundant_roles: (role: string | boolean) => ({
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
+	}),
+	a11y_no_interactive_element_to_noninteractive_role: (role: string | boolean, element: string) => ({
+		code: 'a11y-no-interactive-element-to-noninteractive-role',
+		message: `A11y: <${element}> cannot have role '${role}'`
+	}),
+	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
+		code: 'a11y-role-has-required-aria-props',
+		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
 	}),
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
@@ -132,10 +175,18 @@ export default {
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
+	a11y_click_events_have_key_events: () => ({
+		code: 'a11y-click-events-have-key-events',
+		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
+	}),
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
+	a11y_no_noninteractive_tabindex: {
+		code: 'a11y-no-noninteractive-tabindex',
+		message: 'A11y: noninteractive element cannot have nonnegative tabIndex value'
+	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
 		message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'
@@ -143,5 +194,9 @@ export default {
 	redundant_event_modifier_passive: {
 		code: 'redundant-event-modifier',
 		message: 'The passive modifier only works with wheel and touch events'
-	}
+	},
+	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
+		code: 'invalid-rest-eachblock-binding',
+		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
+	})
 };

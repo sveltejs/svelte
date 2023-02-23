@@ -5,7 +5,7 @@ export default {
 	props: {
 		logs
 	},
-	async test({ assert, component, target, raf }) {
+	async test({ assert, target }) {
 		assert.deepEqual(logs, ['mount']);
 
 		const button = target.querySelector('button');
