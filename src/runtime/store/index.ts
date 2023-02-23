@@ -214,7 +214,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
  */
 export function readonly<T>(store: Readable<T>): Readable<T> {
 	return {
-		subscribe: store.subscribe
+		subscribe: store.subscribe.bind(store)
 	};
 }
 
