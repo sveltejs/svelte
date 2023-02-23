@@ -14,6 +14,10 @@
 * Detect unused empty attribute CSS selectors ([#8042](https://github.com/sveltejs/svelte/issues/8042))
 * Simpler output for reactive statements if dependencies are all static ([#7942](https://github.com/sveltejs/svelte/pull/7942))
 * Flush remaining `afterUpdate` calls before `onDestroy` ([#7476](https://github.com/sveltejs/svelte/issues/7476))
+* Check value equality for `input` types `url` and `search` ([#7027](https://github.com/sveltejs/svelte/issues/7027))
+* Compute node dimensions directly before crossfading ([#4111](https://github.com/sveltejs/svelte/issues/4111))
+* Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
+* Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
 
 ## 3.55.1
 
