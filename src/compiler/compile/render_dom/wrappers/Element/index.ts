@@ -133,7 +133,6 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'details'
 	},
-
 	{
 		event_names: ['load'],
 		filter: (_: Element, name: string) => name === 'naturalHeight' || name === 'naturalWidth'
