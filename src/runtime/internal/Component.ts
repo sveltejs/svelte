@@ -1,4 +1,4 @@
-import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
+import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
@@ -51,6 +51,8 @@ export function mount_component(component, target, anchor, customElement) {
 export function destroy_component(component, detaching) {
 	const $$ = component.$$;
 	if ($$.fragment !== null) {
+		flush_render_callbacks($$.after_update);
+
 		run_all($$.on_destroy);
 
 		$$.fragment && $$.fragment.d(detaching);

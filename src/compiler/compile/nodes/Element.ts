@@ -225,6 +225,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
+	contains_a11y_label: boolean;
 
 	get is_dynamic_element() {
 		return this.name === 'svelte:element';
@@ -484,6 +485,11 @@ export default class Element extends Node {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}
 				}
+
+				// aria-activedescendant-has-tabindex
+				if (name === 'aria-activedescendant' && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+			    component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
 			}
 
 			// aria-role
@@ -620,24 +626,33 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
+			const aria_label_attribute = attribute_map.get('aria-label');
 
-			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
+			// modern browsers add noopener by default, so we only need to check legacy browsers
+			// legacy browsers don't support noopener so we only check for noreferrer there
+			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
 				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
 						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
-						const expected_values = ['noreferrer'];
-						expected_values.forEach(expected_value => {
-							if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
+						if (!rel || !rel_values.includes('noreferrer')) {
 								component.warn(this, {
-									code: `security-anchor-rel-${expected_value}`,
-									message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
 								});
-							}
-						});
+						}
 					}
+				}
+			}
+
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					this.contains_a11y_label = true;
 				}
 			}
 
@@ -717,7 +732,10 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'video') {
-			if (attribute_map.has('muted')) {
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
 				return;
 			}
 
@@ -921,6 +939,7 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (this.contains_a11y_label) return;
 		if (
 			this.bindings
 				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
@@ -1033,14 +1052,14 @@ export default class Element extends Node {
 	}
 }
 
-const regex_starts_with_vovel = /^[aeiou]/;
+const regex_starts_with_vowel = /^[aeiou]/;
 
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];
