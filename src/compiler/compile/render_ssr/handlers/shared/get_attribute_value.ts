@@ -4,6 +4,7 @@ import Text from '../../../nodes/Text';
 import { x } from 'code-red';
 import Expression from '../../../nodes/shared/Expression';
 import { Expression as ESTreeExpression } from 'estree';
+import { regex_double_quotes } from '../../../../utils/patterns';
 
 export function get_class_attribute_value(attribute: Attribute): ESTreeExpression {
 	// handle special case — `class={possiblyUndefined}` with scoped CSS
@@ -21,7 +22,7 @@ export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? string_literal(chunk.data.replace(/"/g, '&quot;')) as ESTreeExpression
+				? string_literal(chunk.data.replace(regex_double_quotes, '&quot;')) as ESTreeExpression
 				: x`@escape(${chunk.node}, true)`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);

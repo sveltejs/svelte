@@ -56,7 +56,7 @@ function init_hydrate(target: NodeEx) {
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence subsequence of nodes that are claimed in order can be found by
+	* subsequence of nodes that are claimed in order can be found by
 	* computing the longest increasing subsequence of .claim_order values.
 	*
 	* This algorithm is optimal in generating the least amount of reorder operations
@@ -204,7 +204,9 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
 }
 
 export function destroy_each(iterations, detaching) {
@@ -314,6 +316,12 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	for (const key in attributes) {
 		attr(node, key, attributes[key]);
 	}
+}
+
+export function set_custom_element_data_map(node, data_map: Record<string, unknown>) {
+	Object.keys(data_map).forEach((key) => {
+		set_custom_element_data(node, key, data_map[key]);
+	});
 }
 
 export function set_custom_element_data(node, prop, value) {
@@ -761,4 +769,8 @@ export function get_custom_elements_slots(element: HTMLElement) {
 		result[node.slot || 'default'] = true;
 	});
 	return result;
+}
+
+export function construct_svelte_component(component, props) {
+	return new component(props);
 }

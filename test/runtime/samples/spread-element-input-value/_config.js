@@ -6,7 +6,7 @@ export default {
 		// therefore, jsdom could not validate minlength / maxlength
 
 		// we simulate user input with
-		// setting input.value + dispathEvent
+		// setting input.value + dispatchEvent
 
 		// and we determine if svelte does not set the `input.value` again by
 		// spying on the setter of `input.value`

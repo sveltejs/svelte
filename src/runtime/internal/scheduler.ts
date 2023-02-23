@@ -52,17 +52,32 @@ export function add_flush_callback(fn) {
 const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
+	// Do not reenter flush while dirty components are updated, as this can
+	// result in an infinite loop. Instead, let the inner flush handle it.
+	// Reentrancy is ok afterwards for bindings etc.
+	if (flushidx !== 0) {
+		return;
+	}
+
 	const saved_component = current_component;
 
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		while (flushidx < dirty_components.length) {
-			const component = dirty_components[flushidx];
-			flushidx++;
-			set_current_component(component);
-			update(component.$$);
+		try {
+			while (flushidx < dirty_components.length) {
+				const component = dirty_components[flushidx];
+				flushidx++;
+				set_current_component(component);
+				update(component.$$);
+			}
+		} catch (e) {
+			// reset dirty state to not end up in a deadlocked state and then rethrow
+			dirty_components.length = 0;
+			flushidx = 0;
+			throw e;
 		}
+
 		set_current_component(null);
 
 		dirty_components.length = 0;

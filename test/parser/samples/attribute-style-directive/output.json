@@ -15,6 +15,7 @@
 						"end": 26,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 17,

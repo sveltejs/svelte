@@ -225,21 +225,6 @@
 		}
 	},
 	{
-		"code": "a11y-role-has-required-aria-props",
-		"end": {
-			"character": 383,
-			"column": 18,
-			"line": 15
-		},
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
-		"pos": 369,
-		"start": {
-			"character": 369,
-			"column": 4,
-			"line": 15
-		}
-	},
-	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
 			"character": 415,
@@ -255,21 +240,6 @@
 		}
 	},
 	{
-		"code": "a11y-role-has-required-aria-props",
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
-		"pos": 401,
-		"start": {
-			"character": 401,
-			"column": 4,
-			"line": 16
-		},
-		"end": {
-			"character": 415,
-			"column": 18,
-			"line": 16
-		}
-	},
-	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
 			"character": 447,
@@ -277,21 +247,6 @@
 			"line": 17
 		},
 		"message": "A11y: Redundant role 'heading'",
-		"pos": 433,
-		"start": {
-			"character": 433,
-			"column": 4,
-			"line": 17
-		}
-	},
-	{
-		"code": "a11y-role-has-required-aria-props",
-		"end": {
-			"character": 447,
-			"column": 18,
-			"line": 17
-		},
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
 		"pos": 433,
 		"start": {
 			"character": 433,
@@ -315,21 +270,6 @@
 		}
 	},
 	{
-		"code": "a11y-role-has-required-aria-props",
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
-		"pos": 465,
-		"start": {
-			"character": 465,
-			"column": 4,
-			"line": 18
-		},
-		"end": {
-			"character": 479,
-			"column": 18,
-			"line": 18
-		}
-	},
-	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
 			"character": 511,
@@ -345,21 +285,6 @@
 		}
 	},
 	{
-		"code": "a11y-role-has-required-aria-props",
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
-		"pos": 497,
-		"start": {
-			"character": 497,
-			"column": 4,
-			"line": 19
-		},
-		"end": {
-			"character": 511,
-			"column": 18,
-			"line": 19
-		}
-	},
-	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
 			"character": 543,
@@ -371,21 +296,6 @@
 		"start": {
 			"character": 529,
 			"column": 4,
-			"line": 20
-		}
-	},
-	{
-		"code": "a11y-role-has-required-aria-props",
-		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
-		"pos": 529,
-		"start": {
-			"character": 529,
-			"column": 4,
-			"line": 20
-		},
-		"end": {
-			"character": 543,
-			"column": 18,
 			"line": 20
 		}
 	},
@@ -521,21 +431,6 @@
 		"start": {
 			"character": 751,
 			"column": 8,
-			"line": 29
-		}
-	},
-	{
-		"code": "a11y-role-has-required-aria-props",
-		"message": "A11y: Elements with the ARIA role \"option\" must have the following attributes defined: \"aria-selected\"",
-		"pos": 751,
-		"start": {
-			"character": 751,
-			"column": 8,
-			"line": 29
-		},
-		"end": {
-			"character": 764,
-			"column": 21,
 			"line": 29
 		}
 	},
