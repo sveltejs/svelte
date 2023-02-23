@@ -12,7 +12,6 @@ import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 import { regex_only_whitespaces } from '../../utils/patterns';
 import { validate_get_slot_names } from './SlotTemplateIfBlock';
-import { BaseNode } from 'estree-walker';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
