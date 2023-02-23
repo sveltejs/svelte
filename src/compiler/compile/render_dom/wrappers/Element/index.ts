@@ -334,17 +334,17 @@ export default class ElementWrapper extends Wrapper {
 					${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
 					${previous_tag} = ${tag};
-						${this.var}.c();
-						${has_transitions && b`if (${tag_will_be_removed}) {
-							${tag_will_be_removed} = false;
-							@transition_in(${this.var})
-						}`}
+					${this.var}.c();
+					${has_transitions && b`if (${tag_will_be_removed}) {
+						${tag_will_be_removed} = false;
+						@transition_in(${this.var})
+					}`}
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				} else {
 					${has_transitions && b`if (${tag_will_be_removed}) {
-							${tag_will_be_removed} = false;
-							@transition_in(${this.var})
-						}`}
+						${tag_will_be_removed} = false;
+						@transition_in(${this.var})
+					}`}
 					${this.var}.p(#ctx, #dirty);
 				}
 			} else if (${previous_tag}) {
