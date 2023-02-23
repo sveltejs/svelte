@@ -7,17 +7,17 @@ import {
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import Attribute from '../nodes/Attribute';
 
-const roles = [...roles_map.keys()];
+const non_abstract_roles = [...roles_map.keys()].filter((name) => !roles_map.get(name).abstract);
 
 const non_interactive_roles = new Set(
-	roles
+	non_abstract_roles
 		.filter((name) => {
 			const role = roles_map.get(name);
 			return (
-				!roles_map.get(name).abstract &&
 				// 'toolbar' does not descend from widget, but it does support
 				// aria-activedescendant, thus in practice we treat it as a widget.
-				name !== 'toolbar' &&
+				// focusable tabpanel elements are recommended if any panels in a set contain content where the first element in the panel is not focusable.
+				!['toolbar', 'tabpanel'].includes(name) &&
 				!role.superClass.some((classes) => classes.includes('widget'))
 			);
 		})
@@ -29,22 +29,7 @@ const non_interactive_roles = new Set(
 );
 
 const interactive_roles = new Set(
-	roles
-		.filter((name) => {
-			const role = roles_map.get(name);
-			return (
-				!role.abstract &&
-				// The `progressbar` is descended from `widget`, but in practice, its
-				// value is always `readonly`, so we treat it as a non-interactive role.
-				name !== 'progressbar' &&
-				role.superClass.some((classes) => classes.includes('widget'))
-			);
-		})
-		.concat(
-			// 'toolbar' does not descend from widget, but it does support
-			// aria-activedescendant, thus in practice we treat it as a widget.
-			'toolbar'
-		)
+	non_abstract_roles.filter((name) => !non_interactive_roles.has(name))
 );
 
 export function is_non_interactive_roles(role: ARIARoleDefintionKey) {
