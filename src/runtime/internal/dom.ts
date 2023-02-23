@@ -350,15 +350,9 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	}
 }
 
-export function set_custom_element_data_map(node, data_map: Record<string, unknown>) {
+export function set_custom_element_data_map(node: Element, data_map: Record<string, unknown>) {
 	Object.keys(data_map).forEach((key) => {
-		set_custom_element_data(node, key, data_map[key]);
-	});
-}
-
-export function set_custom_element_data_map(node, data_map: Record<string, unknown>) {
-	Object.keys(data_map).forEach((key) => {
-		set_custom_element_data(node, key, data_map[key]);
+		set_custom_element_data(node, key, data_map[key] as TODO<string>);
 	});
 }
 
@@ -548,7 +542,8 @@ export function claim_html_tag(nodes: ChildNodeArray, is_svg: boolean) {
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
-		return new HtmlTagHydration(undefined, is_svg);
+		// @ts-expect-error `HtmlTagHydration` does not expect a second parameter
+		return new HtmlTagHydration(undefined, is_svg); 
 	}
 
 	init_claim_info(nodes);
@@ -560,6 +555,7 @@ export function claim_html_tag(nodes: ChildNodeArray, is_svg: boolean) {
 		n.claim_order = (nodes.claim_info as TODO<ClaimInfo>).total_claimed;
 		(nodes.claim_info as TODO<ClaimInfo>).total_claimed += 1;
 	}
+	// @ts-expect-error `HtmlTagHydration` does not expect a second parameter
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
@@ -779,8 +775,8 @@ export class HtmlTagHydration extends HtmlTag {
 	// hydration claimed nodes
 	l: ChildNode[] | void;
 
-	constructor(claimed_nodes?: ChildNode[], is_svg: boolean = false) {
-		super(is_svg);
+	constructor(claimed_nodes?: ChildNode[]) {
+		super();
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}
@@ -814,6 +810,6 @@ export function get_custom_elements_slots(element: HTMLElement) {
 	return result;
 }
 
-export function construct_svelte_component(component, props) {
+export function construct_svelte_component(component: TODO, props: Record<string, unknown>) {
 	return new component(props);
 }

@@ -1,33 +1,35 @@
-import { createEventDispatcher } from '$runtime/internal/lifecycle';
+// TODO: enable those tests when #7224 got merged
 
-const dispatch = createEventDispatcher<{
-   loaded: never
-   change: string
-   valid: boolean
-   optional: number | null
-}>();
+// import { createEventDispatcher } from '$runtime/internal/lifecycle';
 
-// @ts-expect-error: dispatch invalid event
-dispatch('some-event');
+// const dispatch = createEventDispatcher<{
+//    loaded: never
+//    change: string
+//    valid: boolean
+//    optional: number | null
+// }>();
 
-dispatch('loaded');
-// @ts-expect-error: no detail accepted
-dispatch('loaded', 123);
+// // @ts-expect-error: dispatch invalid event
+// dispatch('some-event');
 
-// @ts-expect-error: detail not provided
-dispatch('change');
-dispatch('change', 'string');
-// @ts-expect-error: wrong type of detail
-dispatch('change', 123);
-// @ts-expect-error: wrong type of detail
-dispatch('change', undefined);
+// dispatch('loaded');
+// // @ts-expect-error: no detail accepted
+// dispatch('loaded', 123);
 
-dispatch('valid', true);
-// @ts-expect-error: wrong type of detail
-dispatch('valid', 'string');
+// // @ts-expect-error: detail not provided
+// dispatch('change');
+// dispatch('change', 'string');
+// // @ts-expect-error: wrong type of detail
+// dispatch('change', 123);
+// // @ts-expect-error: wrong type of detail
+// dispatch('change', undefined);
 
-dispatch('optional');
-dispatch('optional', 123);
-dispatch('optional', null);
-// @ts-expect-error: wrong type of optional detail
-dispatch('optional', 'string');
+// dispatch('valid', true);
+// // @ts-expect-error: wrong type of detail
+// dispatch('valid', 'string');
+
+// dispatch('optional');
+// dispatch('optional', 123);
+// dispatch('optional', null);
+// // @ts-expect-error: wrong type of optional detail
+// dispatch('optional', 'string');

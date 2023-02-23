@@ -56,6 +56,10 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
+export interface DispatchOptions {
+	cancelable?: boolean;
+}
+
 /**
  * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname). 
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.

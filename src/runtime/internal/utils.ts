@@ -1,5 +1,5 @@
 import { Readable, Subscriber, Invalidator, Writable } from 'svelte/store';
-import { SvelteComponent } from '..';
+import { SvelteComponent } from '../index.js';
 
 export function noop() { }
 
