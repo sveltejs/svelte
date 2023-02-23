@@ -1125,14 +1125,12 @@ export default class ElementWrapper extends Wrapper {
 
 	add_styles(block: Block) {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
-		this.node.styles.forEach((style_directive) => {
-			
-			const { name, expression, important } = style_directive;
+		
+		const style_changed_var =  block.get_unique_name('style_changed');
+		block.chunks.update.push(b`const ${style_changed_var} = ${block.renderer.dirty([...this.dynamic_style_dependencies])};`);
 
-			const should_cache =
-				style_directive.should_cache &&
-				// Avoid caching if we have to override the style attribute
-				!this.dynamic_style_dependencies.size;
+		this.node.styles.forEach((style_directive) => {
+			const { name, expression, important, should_cache } = style_directive;
 
 			const snippet = expression.manipulate(block);
 			let cached_snippet: Identifier | undefined;
@@ -1149,16 +1147,30 @@ export default class ElementWrapper extends Wrapper {
 			if (has_spread) {
 				block.chunks.update.push(updater);
 			} else {
-				const dependencies = [
-					...this.dynamic_style_dependencies,
-					...expression.dynamic_dependencies()
+				const deps = [
+					...expression.dynamic_dependencies(),
+					...this.dynamic_style_dependencies
 				];
 
-				if (dependencies.length > 0) {
-					const is_dirty = block.renderer.dirty(dependencies);
-					const condition = should_cache
-						? x`${is_dirty} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))`
-						: is_dirty;
+				if (deps.length > 0) {
+					if (deps.length === this.dynamic_style_dependencies.size) {
+						block.chunks.update.push(b`
+							if (${style_changed_var}) {
+								${updater}
+							}
+						`);
+						return;
+					}
+
+					let condition =  block.renderer.dirty(deps);
+
+					if (should_cache) {
+						condition = x`${condition} && ${cached_snippet} !== (${cached_snippet} = ${snippet})`;
+
+						if (style_changed_var) {
+							condition = x`${style_changed_var} || ${condition}`;
+						}
+					}
 
 					block.chunks.update.push(b`
 						if (${condition}) {
