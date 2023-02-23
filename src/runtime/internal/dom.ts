@@ -333,10 +333,7 @@ export function set_custom_element_data(node, prop, value) {
 }
 
 export function set_dynamic_element_data(tag: string) {
-	return function (node: HTMLElement, data_map: { [x: string]: string }) {
-		if (/-/.test(tag)) set_custom_element_data_map(node, data_map);
-		else set_attributes(node, data_map);
-	};
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
