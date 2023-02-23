@@ -1,5 +1,4 @@
 export default {
-	solo:true,
 	html: `
 		<p slot='one'>one: 1 two: 2</p>
 	`,

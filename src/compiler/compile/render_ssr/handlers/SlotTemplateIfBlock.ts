@@ -1,7 +1,7 @@
 import Renderer, { RenderOptions } from '../Renderer';
 import { b } from 'code-red';
 import SlotTemplateIfBlock from '../../nodes/SlotTemplateIfBlock';
-import { flatten } from '../../../utils/flatten';
+import { get_const_tags } from './shared/get_const_tags';
 
 export default function (node: SlotTemplateIfBlock, renderer: Renderer, options: RenderOptions) {
 	const if_slot_scopes = [];
@@ -16,14 +16,17 @@ export default function (node: SlotTemplateIfBlock, renderer: Renderer, options:
 		}));
 		options.slot_scopes.push(b`
 			if (${node.expression.node}) {
+				${get_const_tags(node.const_tags)}
 				${if_slot_scopes}
 			} else {
+				${get_const_tags(node.else.const_tags)}
 				${else_slot_scopes}
 			}
 		`);
 	} else {
 		options.slot_scopes.push(b`if (${node.expression.node}) {
-			${flatten(if_slot_scopes)}
+			${get_const_tags(node.const_tags)}
+			${if_slot_scopes}
 		}`);
 	}
 }

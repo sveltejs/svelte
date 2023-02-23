@@ -12,6 +12,7 @@ import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 import { regex_only_whitespaces } from '../../utils/patterns';
 import { validate_get_slot_names } from './SlotTemplateIfBlock';
+import { BaseNode } from 'estree-walker';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -147,7 +148,7 @@ export default class InlineComponent extends Node {
 			} else if (child.type === 'Comment' && children.length > 0) {
 				children[children.length - 1].children.unshift(child);
 				info.children.splice(i, 1);
-			} else if (child.type === 'IfBlock' && child.children.some(if_child => if_child.type === 'SlotTemplate')) {
+			} else if (child.type === 'IfBlock' && if_block_contains_slot_template(child)) {
 				children.push({
 					...child,
 					type: 'SlotTemplateIfBlock'
@@ -192,4 +193,12 @@ function get_namespace(parent: Node, explicit_namespace: string) {
 	}
 
 	return parent_element.namespace;
+}
+
+function if_block_contains_slot_template(node: TemplateNode) {
+	for (const child of node.children) {
+		if (child.type === 'SlotTemplate') return true;
+		if (child.type === 'IfBlock' && if_block_contains_slot_template(child)) return true; 
+	}
+	return false;
 }
