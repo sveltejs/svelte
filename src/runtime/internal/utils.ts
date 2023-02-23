@@ -1,8 +1,6 @@
 import { Readable, Subscriber, Writable } from 'svelte/store';
 import { SvelteComponent } from '../index.js';
 
-type TODO<T = any> = T
-
 export function noop() {}
 
 export const identity = <T>(x: T): T => x;
@@ -74,7 +72,7 @@ export function subscribe<T, S extends Readable<T>>(store: S, ...callbacks: Arra
 		return noop;
 	}
 	// TODO: `store` does not accept an array of callbacks
-	const unsub: TODO = store.subscribe(...(callbacks as [TODO]));
+	const unsub: any = store.subscribe(...(callbacks as [any]));
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
