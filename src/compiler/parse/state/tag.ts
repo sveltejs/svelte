@@ -12,6 +12,9 @@ import { closing_tag_omitted, decode_character_references } from '../utils/html'
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 
+/** Invalid attribute characters if the attribute is not surrounded by quotes */
+const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
+
 const meta_tags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:options', 'Options'],
@@ -293,7 +296,7 @@ function read_tag_name(parser: Parser) {
 
 // eslint-disable-next-line no-useless-escape
 const regex_token_ending_character = /[\s=\/>"']/;
-const regex_quote_characters = /["']/;
+const regex_starts_with_quote_characters = /^["']/;
 
 function read_attribute(parser: Parser, unique_names: Set<string>) {
 	const start = parser.index;
@@ -368,7 +371,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		parser.allow_whitespace();
 		value = read_attribute_value(parser);
 		end = parser.index;
-	} else if (parser.match_regex(regex_quote_characters)) {
+	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		parser.error(parser_errors.unexpected_token('='), parser.index);
 	}
 
@@ -475,15 +478,13 @@ function read_attribute_value(parser: Parser) {
 		}];
 	}
 
-	const regex = (
-		quote_mark === "'" ? /'/ :
-			quote_mark === '"' ? /"/ :
-				/(\/>|[\s"'=<>`])/
-	);
-
 	let value;
 	try {
-		value = read_sequence(parser, () => !!parser.match_regex(regex), 'in attribute value');
+		value = read_sequence(parser, () => {
+			// handle common case of quote marks existing outside of regex for performance reasons
+			if (quote_mark) return parser.match(quote_mark);
+			return !!parser.match_regex(regex_starts_with_invalid_attr_value);
+		}, 'in attribute value');
 	} catch (error) {
 		if (error.code === 'parse-error') {
 			// if the attribute value didn't close + self-closing tag

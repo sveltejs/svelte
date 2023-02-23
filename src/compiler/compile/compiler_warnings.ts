@@ -185,7 +185,11 @@ export default {
 	}),
 	a11y_no_noninteractive_tabindex: {
 		code: 'a11y-no-noninteractive-tabindex',
-		message: 'A11y: noninteractive element cannot have positive tabIndex value'
+		message: 'A11y: noninteractive element cannot have nonnegative tabIndex value'
+	},
+	a11y_aria_activedescendant_has_tabindex: {
+		code: 'a11y-aria-activedescendant-has-tabindex',
+		message: 'A11y: Elements with attribute aria-activedescendant should have tabindex value'
 	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
@@ -197,6 +201,6 @@ export default {
 	},
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
-		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
+		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
 	})
 };
