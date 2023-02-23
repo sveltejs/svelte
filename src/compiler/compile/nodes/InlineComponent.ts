@@ -12,7 +12,7 @@ import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 import compiler_warnings from '../compiler_warnings';
 import { regex_only_whitespaces } from '../../utils/patterns';
-import { may_contain_input_child } from '../utils/a11y';
+import { contains_input_child } from '../utils/a11y';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -173,7 +173,7 @@ export default class InlineComponent extends Node {
 	validate() {
 		const label_has_associated_control_rule_options = this.component.compile_options.a11y?.rules?.['label-has-associated-control'];
 		if (label_has_associated_control_rule_options?.labelComponents?.includes(this.name)) {
-			if (!may_contain_input_child(this, label_has_associated_control_rule_options)) {
+			if (!contains_input_child(this, label_has_associated_control_rule_options)) {
 				this.component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}

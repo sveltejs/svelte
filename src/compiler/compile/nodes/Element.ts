@@ -31,7 +31,7 @@ import {
 	is_interactive_roles,
 	is_hidden_from_screen_reader,
 	is_semantic_role_element,
-	may_contain_input_child
+	contains_input_child
 } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
@@ -788,7 +788,7 @@ export default class Element extends Node {
 
 		if (this.name === 'label') {
 			const rule_options = component.compile_options.a11y?.rules?.['label-has-associated-control'];
-			if (!attribute_map.has('for') && !may_contain_input_child(this, rule_options)) {
+			if (!attribute_map.has('for') && !contains_input_child(this, rule_options)) {
 				component.warn(this, compiler_warnings.a11y_label_has_associated_control);
 			}
 		}

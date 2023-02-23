@@ -174,7 +174,7 @@ const a11y_labelable = new Set([
 	'textarea'
 ]);
 
-export function may_contain_input_child(
+export function contains_input_child(
 	root: INode,
 	rule_options: CompileOptions['a11y']['rules']['label-has-associated-control']
 ): boolean {
