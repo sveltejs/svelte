@@ -220,7 +220,8 @@ export default class Component {
 			this.add_var(node, {
 				name,
 				injected: true,
-				referenced: true
+				referenced: true,
+				reassigned: name === '$$slots'
 			});
 		} else if (name[0] === '$') {
 			this.add_var(node, {
@@ -721,7 +722,8 @@ export default class Component {
 			} else if (is_reserved_keyword(name)) {
 				this.add_var(node, {
 					name,
-					injected: true
+					injected: true,
+					reassigned: name === '$$slots'
 				});
 			} else if (name[0] === '$') {
 				if (name === '$' || name[1] === '$') {
