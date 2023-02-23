@@ -1,7 +1,7 @@
 export default {
 	async test({ assert, target, raf }) {
 		const button = target.querySelector('#button');
-		const container = target.querySelector("#container");
+		const container = target.querySelector('#container');
 
 		// Multiple click on button
 		await button.dispatchEvent(new window.MouseEvent('click'));
