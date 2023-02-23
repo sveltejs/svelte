@@ -36,7 +36,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	let props;
 
 	if (uses_spread) {
-		props = x`@_Object.assign(${
+		props = x`@_Object.assign({}, ${
 			node.attributes
 				.map(attribute => {
 					if (attribute.is_spread) {

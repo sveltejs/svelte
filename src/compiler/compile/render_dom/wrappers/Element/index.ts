@@ -170,6 +170,15 @@ export default class ElementWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
+		this.var = {
+			type: 'Identifier',
+			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
+		};
+
+		this.void = is_void(node.name);
+
+		this.class_dependencies = [];
+
 		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
@@ -185,16 +194,13 @@ export default class ElementWrapper extends Wrapper {
 				strip_whitespace,
 				next_sibling
 			);
+
+			// the original svelte:element is never used for rendering, because
+			// it gets assigned a child_dynamic_element which is used in all rendering logic.
+			// so doing all of this on the original svelte:element will just cause double
+			// code, because it will be done again on the child_dynamic_element.
+			return;
 		}
-
-		this.var = {
-			type: 'Identifier',
-			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
-		};
-
-		this.void = is_void(node.name);
-
-		this.class_dependencies = [];
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
@@ -255,6 +261,7 @@ export default class ElementWrapper extends Wrapper {
 				node.styles.length > 0 ||
 				this.node.name === 'option' ||
 				node.tag_expr.dynamic_dependencies().length ||
+				node.is_dynamic_element ||
 				renderer.options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
@@ -326,20 +333,19 @@ export default class ElementWrapper extends Wrapper {
 					${this.var}.p(#ctx, #dirty);
 				}
 			} else if (${previous_tag}) {
-				${
-					has_transitions
-						? b`
+				${has_transitions
+				? b`
 							@group_outros();
 							@transition_out(${this.var}, 1, 1, () => {
 								${this.var} = null;
 							});
 							@check_outros();
 						`
-						: b`
+				: b`
 							${this.var}.d(1);
 							${this.var} = null;
 						`
-				}
+			}
 			}
 			${previous_tag} = ${tag};
 		`);
@@ -681,9 +687,9 @@ export default class ElementWrapper extends Wrapper {
 			function ${handler}(${params}) {
 				${binding_group.bindings.map(b => b.handler.mutation)}
 				${Array.from(dependencies)
-					.filter(dep => dep[0] !== '$')
-					.filter(dep => !contextual_dependencies.has(dep))
-					.map(dep => b`${this.renderer.invalidate(dep)};`)}
+				.filter(dep => dep[0] !== '$')
+				.filter(dep => !contextual_dependencies.has(dep))
+				.map(dep => b`${this.renderer.invalidate(dep)};`)}
 			}
 		`);
 
@@ -1176,10 +1182,12 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 		} else if (wrapper.node.name === 'noscript') {
 			// do nothing
 		} else {
-			// element
-			state.quasi.value.raw += `<${wrapper.node.name}`;
+			const nodeName = wrapper.node.name;
 
-			const is_empty_textarea = wrapper.node.name === 'textarea' && wrapper.fragment.nodes.length === 0;
+			// element
+			state.quasi.value.raw += `<${nodeName}`;
+
+			const is_empty_textarea = nodeName === 'textarea' && wrapper.fragment.nodes.length === 0;
 
 			(wrapper as ElementWrapper).attributes.forEach((attr: AttributeWrapper) => {
 				if (is_empty_textarea && attr.node.name === 'value') {
@@ -1196,7 +1204,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';
 
-				if (wrapper.node.name === 'pre') {
+				if (nodeName === 'pre') {
 					// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
 					// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
 					const first = wrapper.fragment.nodes[0];
@@ -1221,7 +1229,7 @@ function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapp
 
 				to_html(wrapper.fragment.nodes as Array<ElementWrapper | TextWrapper>, block, literal, state);
 
-				state.quasi.value.raw += `</${wrapper.node.name}>`;
+				state.quasi.value.raw += `</${nodeName}>`;
 			} else {
 				state.quasi.value.raw += '/>';
 			}

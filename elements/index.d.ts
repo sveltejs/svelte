@@ -84,7 +84,7 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
 	'on:input'?: FormEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
-	'on:submit'?: EventHandler<Event, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
+	'on:submit'?: EventHandler<Event & { readonly submitter: HTMLElement | null; }, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
 	'on:formdata'?: EventHandler<Event & { readonly formData: FormData; }, T> | undefined | null; // TODO make this FormDataEvent once we require TS>=4.4
 
@@ -478,6 +478,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	hidden?: boolean | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
@@ -539,10 +540,12 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:textContent'?: string | undefined | null;
 
 	// SvelteKit
+	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
+	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
