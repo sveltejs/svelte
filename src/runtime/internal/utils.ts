@@ -1,16 +1,16 @@
-import { Readable, Subscriber, Invalidator, Writable } from 'svelte/store';
+import { Readable, Subscriber, Writable } from 'svelte/store';
 import { SvelteComponent } from '../index.js';
 
-export function noop() { }
+type TODO<T = any> = T
 
-export function identity<T>(x: T): T {
-	return x;
-}
+export function noop() {}
 
-export function assign<T, S>(target: T, source: S): T & S {
+export const identity = <T>(x: T): T => x;
+
+export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore
-	for (const k in source) target[k] = source[k];
-	return target as T & S;
+	for (const k in src) tar[k] = src[k];
+	return tar as T & S;
 }
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
@@ -69,11 +69,13 @@ export function validate_store<S extends Readable<unknown>>(store: S, name: stri
 	}
 }
 
-export function subscribe<T, S extends Readable<T>>(store: S, run: Subscriber<T>, invalidate?: Invalidator<T>) {
+export function subscribe<T, S extends Readable<T>>(store: S, ...callbacks: Array<Subscriber<T>>) {
 	if (store == null) {
 		return noop;
 	}
-	return store.subscribe(run, invalidate);
+	// TODO: `store` does not accept an array of callbacks
+	const unsub: TODO = store.subscribe(...(callbacks as [TODO]));
+	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
 export function get_store_value<T, S extends Readable<T>>(store: S): T {
@@ -170,7 +172,7 @@ export function compute_slots<S extends Map<string, unknown>>(slots: S) {
 
 export function once(fn: Function) {
 	let ran = false;
-	return function (this: any, ...args: unknown[]) {
+	return function(this: any, ...args: unknown[]) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
