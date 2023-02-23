@@ -1,80 +1,62 @@
 <script>
-	import { createEventDispatcher, onDestroy } from 'svelte';
+	export let showModal; // boolean
 
-	const dispatch = createEventDispatcher();
-	const close = () => dispatch('close');
+	let dialog; // HTMLDialogElement
 
-	let modal;
-
-	const handle_keydown = e => {
-		if (e.key === 'Escape') {
-			close();
-			return;
-		}
-
-		if (e.key === 'Tab') {
-			// trap focus
-			const nodes = modal.querySelectorAll('*');
-			const tabbable = Array.from(nodes).filter(n => n.tabIndex >= 0);
-
-			let index = tabbable.indexOf(document.activeElement);
-			if (index === -1 && e.shiftKey) index = 0;
-
-			index += tabbable.length + (e.shiftKey ? -1 : 1);
-			index %= tabbable.length;
-
-			tabbable[index].focus();
-			e.preventDefault();
-		}
-	};
-
-	const previously_focused = typeof document !== 'undefined' && document.activeElement;
-
-	if (previously_focused) {
-		onDestroy(() => {
-			previously_focused.focus();
-		});
-	}
+	$: if (dialog && showModal) dialog.showModal();
 </script>
 
-<svelte:window on:keydown={handle_keydown}/>
-
-<div class="modal-background" on:click={close}></div>
-
-<div class="modal" role="dialog" aria-modal="true" bind:this={modal}>
-	<slot name="header"></slot>
-	<hr>
-	<slot></slot>
-	<hr>
-
-	<!-- svelte-ignore a11y-autofocus -->
-	<button autofocus on:click={close}>close modal</button>
-</div>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<dialog
+	bind:this={dialog}
+	on:close={() => (showModal = false)}
+	on:click|self={() => dialog.close()}
+>
+	<div on:click|stopPropagation>
+		<slot name="header" />
+		<hr />
+		<slot />
+		<hr />
+		<!-- svelte-ignore a11y-autofocus -->
+		<button autofocus on:click={() => dialog.close()}>close modal</button>
+	</div>
+</dialog>
 
 <style>
-	.modal-background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background: rgba(0,0,0,0.3);
-	}
-
-	.modal {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		width: calc(100vw - 4em);
+	dialog {
 		max-width: 32em;
-		max-height: calc(100vh - 4em);
-		overflow: auto;
-		transform: translate(-50%,-50%);
-		padding: 1em;
 		border-radius: 0.2em;
-		background: white;
+		border: none;
+		padding: 0;
 	}
-
+	dialog::backdrop {
+		background: rgba(0, 0, 0, 0.3);
+	}
+	dialog > div {
+		padding: 1em;
+	}
+	dialog[open] {
+		animation: zoom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+	@keyframes zoom {
+		from {
+			transform: scale(0.95);
+		}
+		to {
+			transform: scale(1);
+		}
+	}
+	dialog[open]::backdrop {
+		animation: fade 0.2s ease-out;
+	}
+	@keyframes fade {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
 	button {
 		display: block;
 	}
