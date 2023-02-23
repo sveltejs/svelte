@@ -10,8 +10,8 @@ import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
-import { regex_only_whitespaces } from '../../utils/patterns';
 import { validate_get_slot_names } from './SlotTemplateIfBlock';
+import { extract_children_to_slot_templates } from './extract_children_to_slot_templates';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -107,66 +107,9 @@ export default class InlineComponent extends Node {
 			});
 		});
 
-		const children = [];
-		for (let i = info.children.length - 1; i >= 0; i--) {
-			const child = info.children[i];
-			if (child.type === 'SlotTemplate') {
-				children.push(child);
-				info.children.splice(i, 1);
-			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
-				const slot_template = {
-					start: child.start,
-					end: child.end,
-					type: 'SlotTemplate',
-					name: 'svelte:fragment',
-					attributes: [],
-					children: [child]
-				};
+		const children = extract_children_to_slot_templates(component, info, true);
 
-				// transfer attributes
-				for (let i = child.attributes.length - 1; i >= 0; i--) {
-					const attribute = child.attributes[i];
-					if (attribute.type === 'Let') {
-						slot_template.attributes.push(attribute);
-						child.attributes.splice(i, 1);
-					} else if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-						slot_template.attributes.push(attribute);
-					}
-				}
-				// transfer const
-				for (let i = child.children.length - 1; i >= 0; i--) {
-					const child_child = child.children[i];
-					if (child_child.type === 'ConstTag') {
-						slot_template.children.push(child_child);
-						child.children.splice(i, 1);
-					}
-				}
-
-				children.push(slot_template);
-				info.children.splice(i, 1);
-			} else if (child.type === 'Comment' && children.length > 0) {
-				children[children.length - 1].children.unshift(child);
-				info.children.splice(i, 1);
-			} else if (child.type === 'IfBlock' && if_block_contains_slot_template(child)) {
-				children.push({
-					...child,
-					type: 'SlotTemplateIfBlock'
-				});
-				info.children.splice(i, 1);
-			}
-		}
-		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({
-				start: info.start,
-				end: info.end,
-				type: 'SlotTemplate',
-				name: 'svelte:fragment',
-				attributes: [],
-				children: info.children
-			});
-		}
-
-		this.children = map_children(component, this, this.scope, children.reverse());
+		this.children = map_children(component, this, this.scope, children);
 
 		this.validate_duplicate_slot_name();
 	}
@@ -180,10 +123,6 @@ export default class InlineComponent extends Node {
 	}
 }
 
-function not_whitespace_text(node) {
-	return !(node.type === 'Text' && regex_only_whitespaces.test(node.data));
-}
-
 function get_namespace(parent: Node, explicit_namespace: string) {
 	const parent_element = parent.find_nearest(/^Element/);
 
@@ -192,12 +131,4 @@ function get_namespace(parent: Node, explicit_namespace: string) {
 	}
 
 	return parent_element.namespace;
-}
-
-function if_block_contains_slot_template(node: TemplateNode) {
-	for (const child of node.children) {
-		if (child.type === 'SlotTemplate') return true;
-		if (child.type === 'IfBlock' && if_block_contains_slot_template(child)) return true; 
-	}
-	return false;
 }

@@ -7,7 +7,8 @@ import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 
 export default class Slot extends Element {
-	type: 'Element';
+	// @ts-ignore unable to override the type from Element, but this give us a right type
+	type: 'Slot';
 	name: string;
 	children: INode[];
 	slot_name: string;

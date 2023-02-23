@@ -8,10 +8,9 @@ import compiler_errors from '../compiler_errors';
 import get_const_tags from './shared/get_const_tags';
 import { TemplateNode } from '../../interfaces';
 import ConstTag from './ConstTag';
-import { regex_only_whitespaces } from '../../utils/patterns';
 import SlotTemplate from './SlotTemplate';
 import { INode } from './interfaces';
-
+import { extract_children_to_slot_templates } from './extract_children_to_slot_templates';
 
 export default class SlotTemplateIfBlock extends AbstractBlock {
 	type: 'SlotTemplateIfBlock';
@@ -30,23 +29,7 @@ export default class SlotTemplateIfBlock extends AbstractBlock {
 		super(component, parent, scope, info);
 		this.scope = scope.child();
 
-		const children = [];
-		for (const child of info.children) {
-			if (child.type === 'SlotTemplate' || child.type === 'ConstTag') {
-				children.push(child);
-			} else if (child.type === 'Comment') {
-				// ignore
-			} else if (child.type === 'Text' && regex_only_whitespaces.test(child.data)) {
-				// ignore
-			} else if (child.type === 'IfBlock') {
-				children.push({
-					...child,
-					type: 'SlotTemplateIfBlock'
-				});
-			} else {
-				this.component.error(child, compiler_errors.invalid_mix_element_and_conditional_slot);
-			}
-		}
+		const children = extract_children_to_slot_templates(component, info, false);
 
 		this.expression = new Expression(component, this, this.scope, info.expression);
 		([this.const_tags, this.children] = get_const_tags(children, component, this, this));
