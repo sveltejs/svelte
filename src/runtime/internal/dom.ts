@@ -306,8 +306,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
 			if (node[key] !== attributes[key]) {
-				node[key] = attributes[key];
-				if (node[key] !== attributes[key]) attr(node, key, attributes[key]);
+				 node[key] = attributes[key];
 			}
 		} else {
 			attr(node, key, attributes[key]);
