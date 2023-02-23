@@ -315,7 +315,7 @@ export default class ElementWrapper extends Wrapper {
 		const has_transitions = !!(this.node.intro || this.node.outro);
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 
-		const tag_will_be_removed = block.get_unique_name("tag_will_be_removed");
+		const tag_will_be_removed = block.get_unique_name('tag_will_be_removed');
 		if (has_transitions) {
 			block.add_variable(tag_will_be_removed, x`false`);
 		}
