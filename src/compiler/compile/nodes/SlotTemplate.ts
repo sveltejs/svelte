@@ -69,6 +69,7 @@ export default class SlotTemplate extends Node {
 		let parent = this.parent;
 		while (parent.type === 'SlotTemplateIfBlock' || parent.type === 'SlotTemplateElseBlock') parent = parent.parent;
 		if (parent.type === 'IfBlock' || parent.type === 'ElseBlock') {
+			console.log({ parent });
 			return this.component.error(this, compiler_errors.invalid_mix_element_and_conditional_slot);
 		}
 		if (parent.type !== 'InlineComponent') {

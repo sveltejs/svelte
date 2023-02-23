@@ -12,7 +12,7 @@ import get_object from '../utils/get_object';
 import compiler_errors from '../compiler_errors';
 import { Node as ESTreeNode } from 'estree';
 
-const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate', 'IfBlock', 'ElseBlock']);
+const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate', 'IfBlock', 'ElseBlock', 'SlotTemplateIfBlock', 'SlotTemplateElseBlock']);
 
 export default class ConstTag extends Node {
 	type: 'ConstTag';

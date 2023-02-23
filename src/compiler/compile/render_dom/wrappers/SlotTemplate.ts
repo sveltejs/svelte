@@ -13,6 +13,7 @@ import SlotTemplate from '../../nodes/SlotTemplate';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 import TemplateScope from '../../nodes/shared/TemplateScope';
 import SlotTemplateIfBlockWrapper from './SlotTemplateIfBlock';
+import { INode } from '../../nodes/interfaces';
 
 export default class SlotTemplateWrapper extends Wrapper {
 	node: SlotTemplate;
@@ -83,7 +84,7 @@ export default class SlotTemplateWrapper extends Wrapper {
 			this.render_get_context();
 		}
 
-		if (!this.block.has_content()) {
+		if (this.slot_template_name === 'default' && !this.block.has_content()) {
 			this.renderer.remove_block(this.block);
 			this.slot_definition = null;
 		}
@@ -100,10 +101,23 @@ export default class SlotTemplateWrapper extends Wrapper {
 	}
 
 	render_get_context() {
+		const if_const_tags = [];
+		let parent = this.node.parent;
+		while (parent.type === 'SlotTemplateIfBlock' || parent.type === 'SlotTemplateElseBlock') {
+			if_const_tags.push(parent.const_tags);
+			if (parent.type === 'SlotTemplateElseBlock') parent = parent.parent;
+			parent = parent.parent;
+		}
+		const const_tags = [];
+		for (let i = if_const_tags.length - 1; i >= 0; i--) {
+			const_tags.push(...if_const_tags[i]);
+		}
+		const_tags.push(...this.node.const_tags);
+
 		const get_context = this.block.renderer.component.get_unique_name('get_context');
 		this.block.renderer.blocks.push(b`
 			function ${get_context}(#ctx) {
-				${add_const_tags(this.block, this.node.const_tags, '#ctx')}
+				${add_const_tags(this.block, const_tags, '#ctx')}
 			}
 		`);
 		this.block.chunks.declarations.push(b`${get_context}(#ctx)`);

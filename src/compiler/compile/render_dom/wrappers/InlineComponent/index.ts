@@ -173,7 +173,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			: this.children.length > 0
 			? [
 				p`$$slots: {
-					${this.children.map((slot: SlotTemplateWrapper) => p`${slot.slot_template_name}: ${slot.slot_definition}`)}
+					${this.children.filter((slot: SlotTemplateWrapper) => slot.slot_definition).map((slot: SlotTemplateWrapper) => p`${slot.slot_template_name}: ${slot.slot_definition}`)}
 				}`,
 				p`$$scope: { ctx: #ctx }`
 			]
