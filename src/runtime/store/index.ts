@@ -208,6 +208,17 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 }
 
 /**
+ * Takes a store and returns a new one derived from the old one that is readable.
+ *
+ * @param store - store to make readonly
+ */
+export function readonly<T>(store: Readable<T>): Readable<T> {
+	return {
+		subscribe: store.subscribe.bind(store)
+	};
+}
+
+/**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
  */

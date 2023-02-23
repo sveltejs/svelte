@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../../store';
+import { readable, writable, derived, get, readonly } from '../../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -418,5 +418,22 @@ describe('store', () => {
 		it('works with RxJS-style observables', () => {
 			assert.equal(get(fake_observable), 42);
 		});
+	});
+
+	describe('readonly', () => {
+		it('makes a store readonly', () => {
+			const writableStore = writable(1);
+			const readableStore = readonly(writableStore);
+
+			assert.equal(get(readableStore), get(writableStore));
+
+			writableStore.set(2);
+
+			assert.equal(get(readableStore), 2);
+			assert.equal(get(readableStore), get(writableStore));
+
+			assert.throws(() => readableStore.set(3));
+		});
+
 	});
 });
