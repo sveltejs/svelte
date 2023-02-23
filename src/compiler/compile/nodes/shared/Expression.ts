@@ -21,6 +21,8 @@ import compiler_errors from '../../compiler_errors';
 
 type Owner = INode;
 
+const regex_contains_term_function_expression = /FunctionExpression/;
+
 export default class Expression {
 	type: 'Expression' = 'Expression';
 	component: Component;
@@ -72,7 +74,7 @@ export default class Expression {
 					scope = map.get(node);
 				}
 
-				if (!function_expression && /FunctionExpression/.test(node.type)) {
+				if (!function_expression && regex_contains_term_function_expression.test(node.type)) {
 					function_expression = node;
 				}
 
@@ -90,7 +92,7 @@ export default class Expression {
 					}
 
 					if (template_scope.is_let(name)) {
-						if (!function_expression) { // TODO should this be `!lazy` ?
+						if (!lazy) {
 							contextual_dependencies.add(name);
 							dependencies.add(name);
 						}
@@ -110,7 +112,7 @@ export default class Expression {
 							dependencies.add(name);
 						}
 
-						component.add_reference(name);
+						component.add_reference(node, name);
 						component.warn_if_undefined(name, nodes[0], template_scope);
 					}
 
@@ -126,6 +128,7 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
+                        deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
@@ -133,6 +136,10 @@ export default class Expression {
 				if (names) {
 					names.forEach(name => {
 						if (template_scope.names.has(name)) {
+							if (template_scope.is_const(name)) {
+								component.error(node, compiler_errors.invalid_const_update(name));
+							}
+
 							template_scope.dependencies_for_name.get(name).forEach(name => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
@@ -140,10 +147,29 @@ export default class Expression {
 							const each_block = template_scope.get_owner(name);
 							(each_block as EachBlock).has_binding = true;
 						} else {
-							component.add_reference(name);
+							component.add_reference(node, name);
 
 							const variable = component.var_lookup.get(name);
-							if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+
+							if (variable) {
+								variable[deep ? 'mutated' : 'reassigned'] = true;
+							}
+
+							const declaration: any = scope.find_owner(name)?.declarations.get(name);
+
+							if (declaration) {
+								if (declaration.kind === 'const' && !deep) {
+									component.error(node, {
+										code: 'assignment-to-const',
+										message: 'You are assigning to a const'
+									});
+								}
+							} else if (variable && variable.writable === false && !deep) {
+								component.error(node, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
+							}
 						}
 					});
 				}
@@ -172,7 +198,7 @@ export default class Expression {
 	}
 
 	// TODO move this into a render-dom wrapper?
-	manipulate(block?: Block) {
+	manipulate(block?: Block, ctx?: string | void) {
 		// TODO ideally we wouldn't end up calling this method
 		// multiple times
 		if (this.manipulated) return this.manipulated;
@@ -216,10 +242,10 @@ export default class Expression {
 							});
 						} else {
 							dependencies.add(name);
-							component.add_reference(name); // TODO is this redundant/misplaced?
+							component.add_reference(node, name); // TODO is this redundant/misplaced?
 						}
 					} else if (is_contextual(component, template_scope, name)) {
-						const reference = block.renderer.reference(node);
+						const reference = block.renderer.reference(node, ctx);
 						this.replace(reference);
 					}
 
@@ -248,27 +274,7 @@ export default class Expression {
 					);
 
 					const declaration = b`const ${id} = ${node}`;
-
-					if (dependencies.size === 0 && contextual_dependencies.size === 0) {
-						// we can hoist this out of the component completely
-						component.fully_hoisted.push(declaration);
-
-						this.replace(id as any);
-
-						component.add_var({
-							name: id.name,
-							internal: true,
-							hoistable: true,
-							referenced: true
-						});
-					} else if (contextual_dependencies.size === 0) {
-						// function can be hoisted inside the component init
-						component.partly_hoisted.push(declaration);
-
-						block.renderer.add_to_context(id.name);
-						this.replace(block.renderer.reference(id));
-					} else {
-						// we need a combo block/init recipe
+					const extract_functions = () => {
 						const deps = Array.from(contextual_dependencies);
 						const function_expression = node as FunctionExpression;
 
@@ -278,7 +284,7 @@ export default class Expression {
 							...function_expression.params
 						];
 
-						const context_args = deps.map(name => block.renderer.reference(name));
+						const context_args = deps.map(name => block.renderer.reference(name, ctx));
 
 						component.partly_hoisted.push(declaration);
 
@@ -294,6 +300,50 @@ export default class Expression {
 							: b`function ${id}() {
 								return ${callee}(${context_args});
 							}`;
+						return { deps, func_declaration };
+					};
+
+					if (owner.type === 'ConstTag') {
+						// we need a combo block/init recipe
+						if (contextual_dependencies.size === 0) {
+							let child_scope = scope;
+							walk(node, {
+								enter(node: Node, parent: any) {
+									if (map.has(node)) child_scope = map.get(node);
+									if (node.type === 'Identifier' && is_reference(node, parent)) {
+										if (child_scope.has(node.name)) return;
+										this.replace(block.renderer.reference(node, ctx));
+									}
+								},
+								leave(node: Node) {
+									if (map.has(node)) child_scope = child_scope.parent;
+								}
+							});
+						} else {
+							const { func_declaration } = extract_functions();
+							this.replace(func_declaration[0]);
+						}
+					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
+						// we can hoist this out of the component completely
+						component.fully_hoisted.push(declaration);
+
+						this.replace(id as any);
+
+						component.add_var(node, {
+							name: id.name,
+							internal: true,
+							hoistable: true,
+							referenced: true
+						});
+					} else if (contextual_dependencies.size === 0) {
+						// function can be hoisted inside the component init
+						component.partly_hoisted.push(declaration);
+
+						block.renderer.add_to_context(id.name);
+						this.replace(block.renderer.reference(id));
+					} else {
+						// we need a combo block/init recipe
+						const { deps, func_declaration } = extract_functions();
 
 						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
 							const dep_scopes = new Set<INode>(deps.map(name => template_scope.get_owner(name)));
@@ -305,7 +355,7 @@ export default class Expression {
 
 							const func_expression = func_declaration[0];
 
-							if (node.type === 'InlineComponent') {
+							if (node.type === 'InlineComponent' || node.type === 'SlotTemplate') {
 								// <Comp let:data />
 								this.replace(func_expression);
 							} else {

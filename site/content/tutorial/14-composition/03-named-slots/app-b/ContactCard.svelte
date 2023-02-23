@@ -42,10 +42,10 @@
 	}
 
 	.address {
-		background-image: url(tutorial/icons/map-marker.svg);
+		background-image: url(/tutorial/icons/map-marker.svg);
 	}
 	.email {
-		background-image: url(tutorial/icons/email.svg);
+		background-image: url(/tutorial/icons/email.svg);
 	}
 	.missing {
 		color: #999;

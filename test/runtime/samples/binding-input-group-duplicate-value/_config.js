@@ -17,7 +17,7 @@ export default {
 		<input type='checkbox' value='d'>d<br>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		const p = target.querySelector('p');
 

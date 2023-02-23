@@ -17,7 +17,7 @@
 		return {
 			duration,
 			tick: t => {
-				const i = ~~(text.length * t);
+				const i = Math.trunc(text.length * t);
 				node.textContent = text.slice(0, i);
 			}
 		};
@@ -30,7 +30,7 @@
 </label>
 
 {#if visible}
-	<p in:typewriter out:typewriter>
+	<p transition:typewriter>
 		The quick brown fox jumps over the lazy dog
 	</p>
 {/if}

@@ -70,6 +70,30 @@ export default class BindingWrapper {
 		return dependencies;
 	}
 
+	get_update_dependencies() {
+		const object = this.object;
+		const dependencies = new Set<string>();
+		if (this.node.expression.template_scope.names.has(object)) {
+			this.node.expression.template_scope.dependencies_for_name
+				.get(object)
+				.forEach((name) => dependencies.add(name));
+		} else {
+			dependencies.add(object);
+		}
+
+		const result = new Set(dependencies);
+		dependencies.forEach((dependency) => {
+			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(dependency);
+			if (indirect_dependencies) {
+				indirect_dependencies.forEach(indirect_dependency => {
+					result.add(indirect_dependency);
+				});
+			}
+		});
+
+		return result;
+	}
+
 	is_readonly_media_attribute() {
 		return this.node.is_readonly_media_attribute();
 	}
@@ -275,8 +299,8 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 
 	for (const dep of contextual_dependencies) {
 		const context = block.bindings.get(dep);
-		let key;
-		let name;
+		let key: string;
+		let name: string;
 		if (context) {
 			key = context.object.name;
 			name = context.property.name;
@@ -340,7 +364,7 @@ function get_event_handler(
 	const contextual_dependencies = new Set<string>(binding.node.expression.contextual_dependencies);
 
 	const context = block.bindings.get(name);
-	let set_store;
+	let set_store: Node[] | undefined;
 
 	if (context) {
 		const { object, property, store, snippet } = context;

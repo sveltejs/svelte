@@ -17,7 +17,7 @@ export default {
 		<div>e</div>
 	`,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, window, raf }) {
 		let divs = window.document.querySelectorAll('div');
 		divs.forEach(div => {
 			div.getBoundingClientRect = function() {

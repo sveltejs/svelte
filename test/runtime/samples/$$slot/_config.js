@@ -11,7 +11,7 @@ export default {
 		<div><span slot="b">hello world</span></div>
 	`,
 
-	async test({ assert, target, component }) {
+	async test({ assert, component }) {
 		assert.equal(component.getA(), '');
 		assert.equal(component.getB(), 'foo');
 	}

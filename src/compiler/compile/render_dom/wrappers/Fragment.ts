@@ -21,6 +21,7 @@ import Block from '../Block';
 import { trim_start, trim_end } from '../../../utils/trim';
 import { link } from '../../../utils/link';
 import { Identifier } from 'estree';
+import { regex_starts_with_whitespace } from '../../../utils/patterns';
 
 const wrappers = {
 	AwaitBlock,
@@ -64,7 +65,7 @@ export default class FragmentWrapper {
 		this.nodes = [];
 
 		let last_child: Wrapper;
-		let window_wrapper;
+		let window_wrapper: Window | undefined;
 
 		let i = nodes.length;
 		while (i--) {
@@ -92,10 +93,10 @@ export default class FragmentWrapper {
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
 					const should_trim = (
-						next_sibling ? (next_sibling.node.type === 'Text' && /^\s/.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
+						next_sibling ? (next_sibling.node.type === 'Text' && regex_starts_with_whitespace.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
 					);
 
-					if (should_trim) {
+					if (should_trim && !child.keep_space()) {
 						data = trim_end(data);
 						if (!data) continue;
 					}
@@ -127,7 +128,7 @@ export default class FragmentWrapper {
 		if (strip_whitespace) {
 			const first = this.nodes[0] as Text;
 
-			if (first && first.node.type === 'Text') {
+			if (first && first.node.type === 'Text' && !first.node.keep_space()) {
 				first.data = trim_start(first.data);
 				if (!first.data) {
 					first.var = null;

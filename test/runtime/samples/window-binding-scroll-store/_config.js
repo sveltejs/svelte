@@ -8,7 +8,7 @@ export default {
 			}
 		});
 	},
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		assert.equal(window.pageYOffset, 0);
 
 		const event = new window.Event('scroll');

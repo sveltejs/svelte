@@ -5,7 +5,7 @@ export default {
 	before_test() {
 		store.reset();
 	},
-	async test({ assert, target, component }) {
+	async test({ assert, target }) {
 		store.set(42);
 
 		await Promise.resolve();

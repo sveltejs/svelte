@@ -52,7 +52,7 @@ function create_each_block(ctx) {
 			t4 = text(t4_value);
 			t5 = text(" ago:");
 			t6 = space();
-			html_tag = new HtmlTag();
+			html_tag = new HtmlTag(false);
 			attr(span, "class", "meta");
 			html_tag.a = null;
 			attr(div, "class", "comment");

@@ -198,7 +198,10 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `stroke-dasharray: ${t * len} ${u * len}`
+		css: (_, u) => `
+			stroke-dasharray: ${len};
+			stroke-dashoffset: ${u * len};
+		`
 	};
 }
 
@@ -212,7 +215,20 @@ type ClientRectMap = Map<any, { rect: ClientRect }>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
-}) {
+}): [
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig,
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig
+] {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
 

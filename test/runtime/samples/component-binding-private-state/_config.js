@@ -4,7 +4,7 @@ export default {
 		<p>x in parent: undefined</p>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		component.a = false;
 
 		assert.htmlEqual(target.innerHTML, `

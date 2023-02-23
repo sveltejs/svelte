@@ -1,7 +1,7 @@
 // key is not used in the template
 export default {
 	html: '<div></div>',
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		const div = target.querySelector('div');
 
 		component.value = 5;

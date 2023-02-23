@@ -7,7 +7,7 @@ export default {
 		<div>a</div>
 	`,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.x = false;
 
 		assert.htmlEqual(target.innerHTML, `

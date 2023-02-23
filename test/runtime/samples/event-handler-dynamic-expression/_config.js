@@ -1,7 +1,7 @@
 export default {
 	html: '<button>bar</button>',
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [button] = target.querySelectorAll(
 			'button'
 		);
@@ -10,10 +10,10 @@ export default {
 
 		await button.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, '<button>foo</button>');
-		
+
 		await button.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, '<button>bar</button>');
-		
+
 		await button.dispatchEvent(event);
 		assert.htmlEqual(target.innerHTML, '<button>foo</button>');
 	}
