@@ -802,7 +802,7 @@ export default class Component {
 							enter(node: Node, parent: Node) {
 								if (node.type === 'Identifier' &&
 									parent.type !== 'MemberExpression' &&
-									(parent.type !== "AssignmentPattern" || parent.right !== node)) {
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
 										names.push(node.name);
 								}
 							}
