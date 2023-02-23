@@ -13,7 +13,6 @@ import SlotTemplate from '../../nodes/SlotTemplate';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 import TemplateScope from '../../nodes/shared/TemplateScope';
 import SlotTemplateIfBlockWrapper from './SlotTemplateIfBlock';
-import { INode } from '../../nodes/interfaces';
 
 export default class SlotTemplateWrapper extends Wrapper {
 	node: SlotTemplate;
