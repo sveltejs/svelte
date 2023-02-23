@@ -794,23 +794,25 @@ export default class Component {
 				}
 
 				let deep = false;
-				let names: string[] = []; 
+				let names: string[] = [];
 
-				if (node.type === 'AssignmentExpression' &&
-					node.left.type === 'ArrayPattern') {
-					walk(node.left, {
-						enter(node: Node, parent: Node) {
-							if (node.type === 'Identifier' &&
-								parent.type !== 'MemberExpression') {
-									names.push(node.name);
+				if (node.type === 'AssignmentExpression') {
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== "AssignmentPattern" || parent.right !== node)) {
+										names.push(node.name);
+								}
 							}
-						}
-					});
-				} else if (node.type === 'AssignmentExpression') {
-					deep = node.left.type === 'MemberExpression';
-					names = deep
-						? [get_object(node.left).name]
-						: extract_names(node.left);
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
 				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
 					const { name } = get_object(node.argument);
