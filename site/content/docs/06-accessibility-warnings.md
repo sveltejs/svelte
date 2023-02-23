@@ -19,6 +19,18 @@ Enforce no `accesskey` on element. Access keys are HTML attributes that allow we
 
 ---
 
+### `a11y-aria-activedescendant-has-tabindex`
+
+An element with `aria-activedescendant` must be tabbable, so it must either have an inherent `tabindex` or declare `tabindex` as an attribute.
+
+```sv
+<!-- A11y: Elements with attribute aria-activedescendant should have tabindex value -->
+<div aria-activedescendant="some-id" />
+
+```
+
+---
+
 ### `a11y-aria-attributes`
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
@@ -268,7 +280,7 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
 ```sv
-<!-- A11y: noninteractive element cannot have positive tabIndex value -->
+<!-- A11y: noninteractive element cannot have nonnegative tabIndex value -->
 <div tabindex='0' />
 ```
 
