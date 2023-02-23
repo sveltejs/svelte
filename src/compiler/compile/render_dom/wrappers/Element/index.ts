@@ -911,7 +911,6 @@ export default class ElementWrapper extends Wrapper {
 		if (this.attributes.length === 0) return;
 
 		if (this.has_dynamic_attribute) {
-			// has dynamic attribute
 			this.add_spread_attributes(block);
 			return;
 		}
