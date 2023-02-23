@@ -305,8 +305,17 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
+			// For example, if an element has spread attributes,
+			// when a user inputs a value, spread attributes also will be updated, and it spoils the next user's input.
+			// So we need to skip updating if it's not changed.
+			// e.g.
+			// <script>
+			//   const attributes = { min: '2021-09-21' };
+			//   let value = '2021-09-21';
+			// </script>
+			// <input type='date' {...attributes} bind:value />
 			if (node[key] !== attributes[key]) {
-				 node[key] = attributes[key];
+				node[key] = attributes[key];
 			}
 		} else {
 			attr(node, key, attributes[key]);
