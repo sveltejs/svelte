@@ -919,6 +919,13 @@ export default class Element extends Node {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
 				}
 			} else if (
+				name === 'naturalWidth' ||
+				name === 'naturalHeight'
+			) {
+				if (this.name !== 'img') {
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
+				}
+			} else if (
 				name === 'textContent' ||
 				name === 'innerHTML'
 			) {
