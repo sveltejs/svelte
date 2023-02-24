@@ -8,6 +8,7 @@ import { Style } from '../../interfaces';
 import parser_errors from '../errors';
 
 const regex_closing_style_tag = /<\/style\s*>/;
+const regex_starts_with_closing_style_tag = /^<\/style\s*>/;
 
 export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
 	const content_start = parser.index;
@@ -22,7 +23,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// discard styles when css is disabled
 	if (parser.css_mode === 'none') {
-		parser.read(regex_closing_style_tag);
+		parser.read(regex_starts_with_closing_style_tag);
 		return null;
 	}
 
@@ -77,7 +78,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 		}
 	});
 
-	parser.read(regex_closing_style_tag);
+	parser.read(regex_starts_with_closing_style_tag);
 
 	const end = parser.index;
 

@@ -120,7 +120,9 @@ export default class BindingWrapper {
 				type === '' ||
 				type === 'text' ||
 				type === 'email' ||
-				type === 'password'
+				type === 'password' ||
+				type === 'search' ||
+				type === 'url'
 			) {
 				update_conditions.push(
 					x`${parent.var}.${this.node.name} !== ${this.snippet}`

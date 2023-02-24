@@ -2,8 +2,22 @@
 
 ## Unreleased
 
+* Add a11y warnings:
+	* `aria-activedescendant-has-tabindex`: elements with `aria-activedescendant` need to have a `tabindex` ([#8172](https://github.com/sveltejs/svelte/pull/8172))
+	* 
+* Omit a11y warning on `<video>` tags with `aria-hidden="true"` ([#7874](https://github.com/sveltejs/svelte/issues/7874))
+* Omit a11y "no child content" warning on elements with `aria-label` ([#8299](https://github.com/sveltejs/svelte/pull/8299))
 * Make `noreferrer` warning less zealous ([#6289](https://github.com/sveltejs/svelte/issues/6289))
 * `trusted-types` CSP compatibility for Web Components ([#8134](https://github.com/sveltejs/svelte/issues/8134))
+* Add `data-sveltekit-replacestate` and `data-sveltekit-keepfocus` attribute typings ([#8281](https://github.com/sveltejs/svelte/issues/8281))
+* Don't throw when calling `unsubscribe` twice ([#8186](https://github.com/sveltejs/svelte/pull/8186))
+* Detect unused empty attribute CSS selectors ([#8042](https://github.com/sveltejs/svelte/issues/8042))
+* Simpler output for reactive statements if dependencies are all static ([#7942](https://github.com/sveltejs/svelte/pull/7942))
+* Flush remaining `afterUpdate` calls before `onDestroy` ([#7476](https://github.com/sveltejs/svelte/issues/7476))
+* Check value equality for `input` types `url` and `search` ([#7027](https://github.com/sveltejs/svelte/issues/7027))
+* Compute node dimensions directly before crossfading ([#4111](https://github.com/sveltejs/svelte/issues/4111))
+* Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
+* Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
 
 ## 3.55.1
 
@@ -1043,7 +1057,7 @@ Also:
 
 ## 3.5.1
 
-* Accommodate webpack idiosyncracies
+* Accommodate webpack idiosyncrasies
 
 ## 3.5.0
 
