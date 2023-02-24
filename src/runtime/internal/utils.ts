@@ -1,5 +1,6 @@
 import { Readable, Subscriber, Writable } from 'svelte/store';
 import { SvelteComponent } from '../index.js';
+import { T$$ } from './types.js';
 
 export function noop() {}
 
@@ -17,8 +18,8 @@ export function is_promise<T = any>(value: any): value is PromiseLike<T> {
 	return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
-export function add_location(element, file, line, column, char) {
-	element.__svelte_meta = {
+export function add_location(element: Element, file: string | undefined, line: number, column: number, char: number) {
+	(element as Element & { __svelte_meta: any }).__svelte_meta = {
 		loc: { file, line, column, char }
 	};
 }
@@ -86,20 +87,22 @@ export function component_subscribe<T, S extends Readable<T>>(component: SvelteC
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
-export function create_slot(definition, ctx, $$scope, fn: Function) {
+// TODO: find out what types are expected here instead of using `any` everywhere 
+
+export function create_slot(definition: any[], ctx: any[], $$scope: T$$, fn: Function) {
 	if (definition) {
 		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
 		return definition[0](slot_ctx);
 	}
 }
 
-function get_slot_context(definition, ctx, $$scope, fn: Function) {
+function get_slot_context(definition: any[], ctx: any[], $$scope: T$$, fn: Function) {
 	return definition[1] && fn
 		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
 		: $$scope.ctx;
 }
 
-export function get_slot_changes(definition, $$scope, dirty, fn: Function) {
+export function get_slot_changes(definition: any[], $$scope: T$$, dirty: number[], fn: Function) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
 
@@ -117,25 +120,26 @@ export function get_slot_changes(definition, $$scope, dirty, fn: Function) {
 			return merged;
 		}
 
+		// @ts-expect-error TODO
 		return $$scope.dirty | lets;
 	}
 
 	return $$scope.dirty;
 }
 
-export function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
+export function update_slot_base(slot: any, slot_definition: any[], ctx: any[], $$scope: T$$, slot_changes: any, get_slot_context_fn: Function) {
 	if (slot_changes) {
 		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
 		slot.p(slot_context, slot_changes);
 	}
 }
 
-export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+export function update_slot(slot: any, slot_definition: any[], ctx: any[], $$scope: T$$, dirty: number[], get_slot_changes_fn: Function, get_slot_context_fn: Function) {
 	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
 	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
 }
 
-export function get_all_dirty_from_scope($$scope) {
+export function get_all_dirty_from_scope($$scope: T$$) {
 	if ($$scope.ctx.length > 32) {
 		const dirty = [];
 		const length = $$scope.ctx.length / 32;
@@ -190,6 +194,6 @@ export function has_prop<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): 
 	return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-export function action_destroyer(action_result) {
+export function action_destroyer(action_result: { destroy?: () => void } | undefined) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }

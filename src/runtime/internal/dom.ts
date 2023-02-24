@@ -1,4 +1,5 @@
 import { has_prop } from './utils';
+import { Fragment } from './types.js';
 
 // marks a part in the code where types
 // 1. should be improved or
@@ -228,23 +229,6 @@ export function detach(node: Node) {
 	}
 }
 
-// TODO: import this interface from /src/runtime/internal/Component.ts
-interface Fragment {
-	key: string | null;
-	first: null;
-	/* create  */ c: () => void;
-	/* claim   */ l: (nodes: any) => void;
-	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p: (ctx: any, dirty: any) => void;
-	/* measure */ r: () => void;
-	/* fix     */ f: () => void;
-	/* animate */ a: () => void;
-	/* intro   */ i: (local: any) => void;
-	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0 | 1) => void;
-}
-
 export function destroy_each(iterations: Fragment[], detaching: 0 | 1) {
 	for (let i = 0; i < iterations.length; i += 1) {
 		if (iterations[i]) iterations[i].d(detaching);
@@ -274,7 +258,7 @@ export function object_without_properties<T, K extends keyof T>(obj: T, exclude:
 	return target;
 }
 
-export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElement {
+export function svg_element<K extends keyof SVGElementTagNameMap>(name: K): SVGElementTagNameMap[K] {
 	return document.createElementNS<K>('http://www.w3.org/2000/svg', name);
 }
 
@@ -296,27 +280,27 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 }
 
 export function prevent_default<E extends Event>(fn: (event: E) => void) {
-	return function (this: unknown, event: E) {
+	return function(this: unknown, event: E) {
 		event.preventDefault();
 		return fn.call(this, event);
 	};
 }
 
 export function stop_propagation<E extends Event>(fn: (event: E) => void) {
-	return function (this: unknown, event: E) {
+	return function(this: unknown, event: E) {
 		event.stopPropagation();
 		return fn.call(this, event);
 	};
 }
 
 export function self<E extends Event>(fn: (event: E) => void) {
-	return function (this: unknown, event: E) {
+	return function(this: unknown, event: E) {
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 export function trusted<E extends Event>(fn: (event: E) => void) {
-	return function (this: unknown, event: E) {
+	return function(this: unknown, event: E) {
 		if (event.isTrusted) fn.call(this, event);
 	};
 }
@@ -358,7 +342,6 @@ export function set_custom_element_data_map(node: Element, data_map: Record<stri
 
 export function set_custom_element_data(node: Element, prop: string, value: string) {
 	if (prop in node) {
-		//@ts-ignore
 		node[prop] = typeof node[(prop as keyof typeof node)] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
@@ -380,7 +363,7 @@ export function get_binding_group_value(group: HTMLInputElementEx[], __value: st
 	return Array.from(value);
 }
 
-export function to_number(value: TODO) {
+export function to_number(value: string | number) {
 	return value === '' ? null : +value;
 }
 
@@ -476,10 +459,29 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 	return resultNode;
 }
 
-function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement) {
-	return claim_node<Element | SVGElement>(
+function claim_element_base<Map extends HTMLElementTagNameMap, Name extends keyof Map>(
+	nodes: ChildNodeArray,
+	name: Name,
+	attributes: { [key: string]: boolean },
+	create_element: (name: Name) => Map[Name]
+): Map[Name]
+
+function claim_element_base<Map extends SVGElementTagNameMap, Name extends keyof Map>(
+	nodes: ChildNodeArray,
+	name: Name,
+	attributes: { [key: string]: boolean },
+	create_element: (name: Name) => Map[Name]
+): Map[Name]
+
+function claim_element_base<Map extends HTMLElementTagNameMap, Name extends keyof HTMLElementTagNameMap>(
+	nodes: ChildNodeArray,
+	name: Name,
+	attributes: { [key: string]: boolean },
+	create_element: (name: Name) => Map[Name]
+) {
+	return claim_node<Map[Name]>(
 		nodes,
-		(node): node is Element | SVGElement => node.nodeName === name,
+		(node): node is Map[Name] => node.nodeName === name,
 		(node) => {
 			const remove = [];
 			for (let j = 0; j < node.attributes.length; j++) {
@@ -495,11 +497,11 @@ function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [
 	);
 }
 
-export function claim_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+export function claim_element<N extends keyof HTMLElementTagNameMap>(nodes: ChildNodeArray, name: N, attributes: { [key: string]: boolean }) {
 	return claim_element_base(nodes, name, attributes, element);
 }
 
-export function claim_svg_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+export function claim_svg_element<N extends keyof SVGElementTagNameMap>(nodes: ChildNodeArray, name: N, attributes: { [key: string]: boolean }) {
 	return claim_element_base(nodes, name, attributes, svg_element);
 }
 
@@ -745,7 +747,6 @@ export class HtmlTag {
 			this.c(html);
 		}
 
-		//@ts-ignore
 		this.i(anchor);
 	}
 
