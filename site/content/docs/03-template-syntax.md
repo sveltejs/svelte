@@ -757,14 +757,14 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 
 Image elements (`<img>`) have two readonly bindings:
 
-* `naturalWidth` (readonly) — the original width of the image
-* `naturalHeight` (readonly) — the original height of the image
+* `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
+* `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
 
 ```sv
 <img
 	bind:naturalWidth
 	bind:naturalHeight
-></video>
+></img>
 ```
 
 ##### Block-level element bindings
