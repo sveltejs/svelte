@@ -38,7 +38,7 @@ describe('validate', () => {
 						code: w.code,
 						message: w.message,
 						start: { line: w.start.line, column: w.start.column },
-						end: { line: w.end.line, column: w.end.column },
+						end: { line: w.end.line, column: w.end.column }
 					})),
 					expected_warnings
 				);
@@ -63,7 +63,7 @@ describe('validate', () => {
 							code: error.code,
 							message: error.message,
 							start: { line: error.start.line, column: error.start.column },
-							end: { line: error.end.line, column: error.end.column },
+							end: { line: error.end.line, column: error.end.column }
 						},
 						expected
 					);
@@ -84,9 +84,9 @@ describe('validate', () => {
 		}, /options\.name must be a valid identifier/);
 	});
 
-	it("check warning position", () => {
+	it('check warning position', () => {
 		const { warnings } = svelte.compile('\n  <img \n src="foo.jpg">\n', {
-			generate: false,
+			generate: false
 		});
 
 		assert.deepEqual(
@@ -98,33 +98,33 @@ describe('validate', () => {
 					start: {
 						character: w.start.character,
 						column: w.start.column,
-						line: w.start.line,
+						line: w.start.line
 					},
 					end: {
 						character: w.end.character,
 						column: w.end.column,
-						line: w.end.line,
+						line: w.end.line
 					},
-					pos: w.pos,
+					pos: w.pos
 				};
 			}),
 			[
 				{
-					code: "a11y-missing-attribute",
+					code: 'a11y-missing-attribute',
 					frame: '1: \n2:   <img \n     ^\n3:  src="foo.jpg">\n4: ',
-					message: "A11y: <img> element should have an alt attribute",
+					message: 'A11y: <img> element should have an alt attribute',
 					start: {
 						character: 3,
 						column: 2,
-						line: 2,
+						line: 2
 					},
 					end: {
 						character: 24,
 						column: 15,
-						line: 3,
+						line: 3
 					},
-					pos: 3,
-				},
+					pos: 3
+				}
 			]
 		);
 	});
