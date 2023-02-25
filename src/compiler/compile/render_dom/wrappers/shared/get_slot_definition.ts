@@ -2,7 +2,7 @@ import Let from '../../../nodes/Let';
 import { x, p } from 'code-red';
 import Block from '../../Block';
 import TemplateScope from '../../../nodes/shared/TemplateScope';
-import { BinaryExpression } from 'estree';
+import { BinaryExpression, Identifier } from 'estree';
 
 export function get_slot_definition(block: Block, scope: TemplateScope, lets: Let[]) {
 	if (lets.length === 0) return { block, scope };
@@ -21,7 +21,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 	const value_map = new Map();
 
 	lets.forEach(l => {
-		let value;
+		let value: Identifier;
 		if (l.names.length > 1) {
 			// more than one, probably destructuring
 			const unique_name = block.get_unique_name(l.names.join('_')).name;
@@ -86,7 +86,7 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 					elements[g] = grouped[g]
 						? grouped[g]
 							.map(({ name, n }) => x`${name} ? ${1 << n} : 0`)
-							.reduce((lhs, rhs) => x`${lhs} | ${rhs}`)
+							.reduce((lhs: ReturnType<typeof x>, rhs: ReturnType<typeof x>) => x`${lhs} | ${rhs}`)
 						: x`0`;
 				}
 

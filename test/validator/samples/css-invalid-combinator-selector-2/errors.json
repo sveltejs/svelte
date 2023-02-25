@@ -1,0 +1,9 @@
+[
+	{
+		"code": "css-invalid-selector",
+		"message": "Invalid selector \"+ p\"",
+		"start": { "line": 8, "column": 1, "character": 68 },
+		"end": { "line": 8, "column": 4, "character": 71 },
+		"pos": 68
+	}
+]

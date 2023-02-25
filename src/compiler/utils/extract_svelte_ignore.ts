@@ -1,11 +1,12 @@
 import { TemplateNode } from '../interfaces';
 import { flatten } from './flatten';
+import { regex_whitespace } from './patterns';
 
-const pattern = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
+const regex_svelte_ignore = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 
 export function extract_svelte_ignore(text: string): string[] {
-	const match = pattern.exec(text);
-	return match ? match[1].split(/[^\S]/).map(x => x.trim()).filter(Boolean) : [];
+	const match = regex_svelte_ignore.exec(text);
+	return match ? match[1].split(regex_whitespace).map(x => x.trim()).filter(Boolean) : [];
 }
 
 export function extract_svelte_ignore_from_comments<Node extends { leadingComments?: Array<{value: string}> }>(node: Node): string[] {
