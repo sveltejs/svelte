@@ -203,14 +203,6 @@ export default class ElementWrapper extends Wrapper {
 			return;
 		}
 
-		this.var = {
-			type: 'Identifier',
-			name: node.name.replace(/[^a-zA-Z0-9_$]/g, '_')
-		};
-
-		this.void = is_void(node.name);
-
-		this.class_dependencies = [];
 		this.dynamic_style_dependencies = new Set();
 
 		if (this.node.children.length) {
