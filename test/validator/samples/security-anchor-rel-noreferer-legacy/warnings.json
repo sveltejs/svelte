@@ -3,13 +3,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 73,
 			"column": 73,
 			"line": 1
 		},
-		"pos": 0,
 		"start": {
-			"character": 0,
 			"column": 0,
 			"line": 1
 		}
@@ -18,13 +15,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 154,
 			"column": 80,
 			"line": 2
 		},
-		"pos": 74,
 		"start": {
-			"character": 74,
 			"column": 0,
 			"line": 2
 		}
@@ -33,13 +27,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 243,
 			"column": 88,
 			"line": 3
 		},
-		"pos": 155,
 		"start": {
-			"character": 155,
 			"column": 0,
 			"line": 3
 		}
@@ -48,13 +39,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 319,
 			"column": 75,
 			"line": 4
 		},
-		"pos": 244,
 		"start": {
-			"character": 244,
 			"column": 0,
 			"line": 4
 		}
@@ -63,13 +51,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 402,
 			"column": 82,
 			"line": 5
 		},
-		"pos": 320,
 		"start": {
-			"character": 320,
 			"column": 0,
 			"line": 5
 		}
@@ -78,13 +63,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 493,
 			"column": 90,
 			"line": 6
 		},
-		"pos": 403,
 		"start": {
-			"character": 403,
 			"column": 0,
 			"line": 6
 		}
@@ -93,13 +75,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 561,
 			"column": 67,
 			"line": 7
 		},
-		"pos": 494,
 		"start": {
-			"character": 494,
 			"column": 0,
 			"line": 7
 		}
@@ -108,13 +87,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 636,
 			"column": 74,
 			"line": 8
 		},
-		"pos": 562,
 		"start": {
-			"character": 562,
 			"column": 0,
 			"line": 8
 		}
@@ -123,13 +99,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 719,
 			"column": 82,
 			"line": 9
 		},
-		"pos": 637,
 		"start": {
-			"character": 637,
 			"column": 0,
 			"line": 9
 		}
@@ -138,13 +111,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 792,
 			"column": 72,
 			"line": 10
 		},
-		"pos": 720,
 		"start": {
-			"character": 720,
 			"column": 0,
 			"line": 10
 		}
@@ -153,13 +123,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 872,
 			"column": 79,
 			"line": 11
 		},
-		"pos": 793,
 		"start": {
-			"character": 793,
 			"column": 0,
 			"line": 11
 		}
@@ -168,13 +135,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 960,
 			"column": 87,
 			"line": 12
 		},
-		"pos": 873,
 		"start": {
-			"character": 873,
 			"column": 0,
 			"line": 12
 		}
@@ -183,13 +147,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1033,
 			"column": 72,
 			"line": 13
 		},
-		"pos": 961,
 		"start": {
-			"character": 961,
 			"column": 0,
 			"line": 13
 		}
@@ -198,13 +159,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1113,
 			"column": 79,
 			"line": 14
 		},
-		"pos": 1034,
 		"start": {
-			"character": 1034,
 			"column": 0,
 			"line": 14
 		}
@@ -213,13 +171,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1201,
 			"column": 87,
 			"line": 15
 		},
-		"pos": 1114,
 		"start": {
-			"character": 1114,
 			"column": 0,
 			"line": 15
 		}
@@ -228,13 +183,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1277,
 			"column": 75,
 			"line": 16
 		},
-		"pos": 1202,
 		"start": {
-			"character": 1202,
 			"column": 0,
 			"line": 16
 		}
@@ -243,13 +195,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1360,
 			"column": 82,
 			"line": 17
 		},
-		"pos": 1278,
 		"start": {
-			"character": 1278,
 			"column": 0,
 			"line": 17
 		}
@@ -258,13 +207,10 @@
 		"code": "security-anchor-rel-noreferrer",
 		"message": "Security: Anchor with \"target=_blank\" should have rel attribute containing the value \"noreferrer\"",
 		"end": {
-			"character": 1451,
 			"column": 90,
 			"line": 18
 		},
-		"pos": 1361,
 		"start": {
-			"character": 1361,
 			"column": 0,
 			"line": 18
 		}

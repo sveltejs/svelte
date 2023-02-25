@@ -4,89 +4,71 @@
 		"message": "A11y: <a> element should have an href attribute",
 		"start": {
 			"line": 1,
-			"column": 0,
-			"character": 0
+			"column": 0
 		},
 		"end": {
 			"line": 1,
-			"column": 26,
-			"character": 26
-		},
-		"pos": 0
+			"column": 26
+		}
 	},
 	{
 		"code": "a11y-invalid-attribute",
 		"message": "A11y: '' is not a valid href attribute",
 		"start": {
 			"line": 2,
-			"column": 3,
-			"character": 30
+			"column": 3
 		},
 		"end": {
 			"line": 2,
-			"column": 10,
-			"character": 37
-		},
-		"pos": 30
+			"column": 10
+		}
 	},
 	{
 		"code": "a11y-invalid-attribute",
 		"message": "A11y: '#' is not a valid href attribute",
 		"start": {
 			"line": 3,
-			"column": 3,
-			"character": 53
+			"column": 3
 		},
 		"end": {
 			"line": 3,
-			"column": 11,
-			"character": 61
-		},
-		"pos": 53
+			"column": 11
+		}
 	},
 	{
 		"code": "a11y-invalid-attribute",
 		"message": "A11y: 'javascript:void(0)' is not a valid href attribute",
 		"start": {
 			"line": 4,
-			"column": 3,
-			"character": 77
+			"column": 3
 		},
 		"end": {
 			"line": 4,
-			"column": 28,
-			"character": 102
-		},
-		"pos": 77
+			"column": 28
+		}
 	},
 	{
 		"code": "a11y-missing-attribute",
 		"message": "A11y: <a> element should have an href attribute",
 		"start": {
 			"line": 5,
-			"column": 0,
-			"character": 115
+			"column": 0
 		},
 		"end": {
 			"line": 5,
-			"column": 22,
-			"character": 137
-		},
-		"pos": 115
+			"column": 22
+		}
 	},
 	{
 		"code": "a11y-missing-attribute",
 		"message": "A11y: <a> element should have an href attribute",
 		"start": {
 			"line": 6,
-			"column": 0,
-			"character": 138
+			"column": 0
 		},
 		"end": {
 			"line": 6,
-			"column": 20,
-			"character": 158
-		},
-		"pos": 138
+			"column": 20
+		}
 	}
 ]
