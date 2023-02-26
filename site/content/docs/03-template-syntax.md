@@ -1517,6 +1517,8 @@ The content is exposed in the child component using the `<slot>` element, which 
 </Widget>
 ```
 
+Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
+
 #### `<slot name="`*name*`">`
 
 ---
