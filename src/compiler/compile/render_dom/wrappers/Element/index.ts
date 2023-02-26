@@ -862,11 +862,13 @@ export default class ElementWrapper extends Wrapper {
 			b`${fn}(${this.var}, ${data});`
 		);
 
-		block.chunks.update.push(b`
-			${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
-				${updates}
-			]));
-		`);
+		if (this.has_dynamic_attribute) {
+			block.chunks.update.push(b`
+				${fn}(${this.var}, ${data} = @get_spread_update(${levels}, [
+					${updates}
+				]));
+			`);
+		}
 
 		// handle edge cases for elements
 		if (this.node.name === 'select') {
@@ -1133,7 +1135,7 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			if ((this.node.is_dynamic_element && this.has_dynamic_attribute) || has_spread) {
+			if ((this.node.is_dynamic_element || has_spread) && this.has_dynamic_attribute) {
 				block.chunks.update.push(updater);
 			} else if ((dependencies && dependencies.size > 0) || this.class_dependencies.length) {
 				const all_dependencies = this.class_dependencies.concat(...dependencies);
