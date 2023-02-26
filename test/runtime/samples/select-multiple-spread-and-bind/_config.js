@@ -5,7 +5,7 @@ export default {
 		assert.equal(options[0].selected, true);
 		assert.equal(options[1].selected, false);
 
-		component.value = ["2"];
+		component.value = ['2'];
 		assert.equal(options[0].selected, false);
 		assert.equal(options[1].selected, true);
 	}
