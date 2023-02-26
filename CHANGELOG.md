@@ -18,6 +18,7 @@
 * Compute node dimensions directly before crossfading ([#4111](https://github.com/sveltejs/svelte/issues/4111))
 * Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
 * Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
+* Better handling of `inert` attribute ([#7500](https://github.com/sveltejs/svelte/issues/7500))
 
 ## 3.55.1
 
