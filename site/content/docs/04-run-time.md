@@ -768,7 +768,7 @@ Slides an element in and out.
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
-* `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
+- `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
 
 ```sv
 <script>
