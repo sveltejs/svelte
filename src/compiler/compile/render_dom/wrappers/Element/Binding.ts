@@ -363,7 +363,7 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 					b`${local_name}.p(${elements})`
 				);
 				block.chunks.destroy.push(
-					b`${local_name}.r(${elements})`
+					b`${local_name}.r()`
 				);
 			}
 		});
