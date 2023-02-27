@@ -13,7 +13,9 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_each_argument,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -88,6 +90,7 @@ function create_fragment(ctx) {
 	let t1;
 	let t2;
 	let each_value = /*things*/ ctx[0];
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -111,7 +114,9 @@ function create_fragment(ctx) {
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert_dev(target, t0, anchor);
@@ -122,6 +127,7 @@ function create_fragment(ctx) {
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
 				each_value = /*things*/ ctx[0];
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -166,33 +172,56 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots('Component', slots, []);
 	let { things } = $$props;
 	let { foo } = $$props;
 	let { bar } = $$props;
 	let { baz } = $$props;
-	const writable_props = ["things", "foo", "bar", "baz"];
 
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+	$$self.$$.on_mount.push(function () {
+		if (things === undefined && !('things' in $$props || $$self.$$.bound[$$self.$$.props['things']])) {
+			console.warn("<Component> was created without expected prop 'things'");
+		}
+
+		if (foo === undefined && !('foo' in $$props || $$self.$$.bound[$$self.$$.props['foo']])) {
+			console.warn("<Component> was created without expected prop 'foo'");
+		}
+
+		if (bar === undefined && !('bar' in $$props || $$self.$$.bound[$$self.$$.props['bar']])) {
+			console.warn("<Component> was created without expected prop 'bar'");
+		}
+
+		if (baz === undefined && !('baz' in $$props || $$self.$$.bound[$$self.$$.props['baz']])) {
+			console.warn("<Component> was created without expected prop 'baz'");
+		}
 	});
 
-	$$self.$set = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+	const writable_props = ['things', 'foo', 'bar', 'baz'];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
+
+	$$self.$$set = $$props => {
+		if ('things' in $$props) $$invalidate(0, things = $$props.things);
+		if ('foo' in $$props) $$invalidate(1, foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate(2, bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate(3, baz = $$props.baz);
 	};
 
-	$$self.$capture_state = () => {
-		return { things, foo, bar, baz };
-	};
+	$$self.$capture_state = () => ({ things, foo, bar, baz });
 
 	$$self.$inject_state = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
-		if ("foo" in $$props) $$invalidate(1, foo = $$props.foo);
-		if ("bar" in $$props) $$invalidate(2, bar = $$props.bar);
-		if ("baz" in $$props) $$invalidate(3, baz = $$props.baz);
+		if ('things' in $$props) $$invalidate(0, things = $$props.things);
+		if ('foo' in $$props) $$invalidate(1, foo = $$props.foo);
+		if ('bar' in $$props) $$invalidate(2, bar = $$props.bar);
+		if ('baz' in $$props) $$invalidate(3, baz = $$props.baz);
 	};
+
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
 
 	return [things, foo, bar, baz];
 }
@@ -208,25 +237,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || ({});
-
-		if (/*things*/ ctx[0] === undefined && !("things" in props)) {
-			console.warn("<Component> was created without expected prop 'things'");
-		}
-
-		if (/*foo*/ ctx[1] === undefined && !("foo" in props)) {
-			console.warn("<Component> was created without expected prop 'foo'");
-		}
-
-		if (/*bar*/ ctx[2] === undefined && !("bar" in props)) {
-			console.warn("<Component> was created without expected prop 'bar'");
-		}
-
-		if (/*baz*/ ctx[3] === undefined && !("baz" in props)) {
-			console.warn("<Component> was created without expected prop 'baz'");
-		}
 	}
 
 	get things() {

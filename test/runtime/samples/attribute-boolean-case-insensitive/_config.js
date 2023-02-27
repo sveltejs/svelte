@@ -1,3 +1,3 @@
 export default {
-	html: `<input readonly>`
+	html: '<input readonly>'
 };

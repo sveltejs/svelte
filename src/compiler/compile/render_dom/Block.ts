@@ -3,6 +3,15 @@ import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { regex_double_quotes } from '../../utils/patterns';
+
+export interface Bindings {
+	object: Identifier;
+	property: Identifier;
+	snippet: Node;
+	store: string;
+	modifier: (node: Node) => Node;
+}
 
 export interface BlockOptions {
 	parent?: Block;
@@ -11,14 +20,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: Identifier;
-	bindings?: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings?: Map<string, Bindings>;
 	dependencies?: Set<string>;
 }
 
@@ -36,22 +38,18 @@ export default class Block {
 
 	dependencies: Set<string> = new Set();
 
-	bindings: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
 
 	chunks: {
+		declarations: Array<Node | Node[]>;
 		init: Array<Node | Node[]>;
 		create: Array<Node | Node[]>;
 		claim: Array<Node | Node[]>;
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -75,7 +73,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus: string;
+	autofocus?: { element_var: string, condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -93,18 +91,20 @@ export default class Block {
 		this.bindings = options.bindings;
 
 		this.chunks = {
+			declarations: [],
 			init: [],
 			create: [],
 			claim: [],
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
 			update: [],
 			outro: [],
-			destroy: [],
+			destroy: []
 		};
 
 		this.has_animation = false;
@@ -160,6 +160,9 @@ export default class Block {
 		});
 
 		this.has_update_method = true;
+		if (this.parent) {
+			this.parent.add_dependencies(dependencies);
+		}
 	}
 
 	add_element(
@@ -180,7 +183,7 @@ export default class Block {
 			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
 			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
-			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
+			this.chunks.mount.push(b`@insert(#target, ${id}, #anchor);`);
 			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);
 		}
 	}
@@ -239,7 +242,11 @@ export default class Block {
 		}
 
 		if (this.autofocus) {
-			this.chunks.mount.push(b`${this.autofocus}.focus();`);
+			if (this.autofocus.condition_expression) {
+				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+			} else {
+				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
+			}
 		}
 
 		this.render_listeners();
@@ -289,8 +296,12 @@ export default class Block {
 
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
+		} else if (this.event_listeners.length === 0) {
+			properties.mount = x`function #mount(#target, #anchor) {
+				${this.chunks.mount}
+			}`;
 		} else {
-			properties.mount = x`function #mount(#target, anchor) {
+			properties.mount = x`function #mount(#target, #anchor) {
 				${this.chunks.mount}
 			}`;
 		}
@@ -317,6 +328,12 @@ export default class Block {
 			properties.measure = x`function #measure() {
 				${this.chunks.measure}
 			}`;
+
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
 
 			properties.fix = x`function #fix() {
 				${this.chunks.fix}
@@ -371,6 +388,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},
@@ -381,6 +399,8 @@ export default class Block {
 		const block = dev && this.get_unique_name('block');
 
 		const body = b`
+			${this.chunks.declarations}
+
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
 					? b`let ${id} = ${init}`
@@ -396,7 +416,7 @@ export default class Block {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						source: "${this.comment ? this.comment.replace(regex_double_quotes, '\\"') : ''}",
 						ctx: #ctx
 					});
 					return ${block};`
@@ -408,9 +428,8 @@ export default class Block {
 		return body;
 	}
 
-	has_content() {
-		return this.renderer.options.dev ||
-			this.first ||
+	has_content(): boolean {
+		return !!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||
@@ -442,6 +461,9 @@ export default class Block {
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
+			this.add_variable({ type: 'Identifier', name: '#mounted' });
+			this.chunks.destroy.push(b`#mounted = false`);
+
 			const dispose: Identifier = {
 				type: 'Identifier',
 				name: `#dispose${chunk}`
@@ -450,18 +472,26 @@ export default class Block {
 			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
-				this.chunks.hydrate.push(
-					b`${dispose} = ${this.event_listeners[0]};`
+				this.chunks.mount.push(
+					b`
+						if (!#mounted) {
+							${dispose} = ${this.event_listeners[0]};
+							#mounted = true;
+						}
+					`
 				);
 
 				this.chunks.destroy.push(
 					b`${dispose}();`
 				);
 			} else {
-				this.chunks.hydrate.push(b`
-					${dispose} = [
-						${this.event_listeners}
-					];
+				this.chunks.mount.push(b`
+					if (!#mounted) {
+						${dispose} = [
+							${this.event_listeners}
+						];
+						#mounted = true;
+					}
 				`);
 
 				this.chunks.destroy.push(

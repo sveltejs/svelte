@@ -1,3 +1,3 @@
 export default {
-	html: `<h1>0 0</h1>`
+	html: '<h1>0 0</h1>'
 };

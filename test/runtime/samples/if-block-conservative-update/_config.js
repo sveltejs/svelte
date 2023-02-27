@@ -9,14 +9,17 @@ export default {
 		}
 	},
 
-	html: `<p>potato</p>`,
+	html: '<p>potato</p>',
 
+	before_test() {
+		count = 0;
+	},
 	test({ assert, component, target }) {
 		assert.equal(count, 1);
 
 		component.foo = 'soup';
 		assert.equal(count, 1);
 
-		assert.htmlEqual(target.innerHTML, `<p>soup</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>soup</p>');
 	}
 };

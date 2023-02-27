@@ -3,7 +3,7 @@
 </script>
 
 <figure>
-	<img src='foo.jpg' alt='a picture of a foo'>
+	<img src='foo.jpg' alt='a foo'>
 	{#if caption}
 		<figcaption>{caption}</figcaption>
 	{/if}

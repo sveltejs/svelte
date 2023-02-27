@@ -10,21 +10,27 @@ import {
 } from "svelte/internal";
 
 function create_fragment(ctx) {
+	let mounted;
 	let dispose;
 	add_render_callback(/*onlinestatuschanged*/ ctx[1]);
 
 	return {
-		c() {
-			dispose = [
-				listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
-				listen(window, "offline", /*onlinestatuschanged*/ ctx[1])
-			];
+		c: noop,
+		m(target, anchor) {
+			if (!mounted) {
+				dispose = [
+					listen(window, "online", /*onlinestatuschanged*/ ctx[1]),
+					listen(window, "offline", /*onlinestatuschanged*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
-		m: noop,
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
+			mounted = false;
 			run_all(dispose);
 		}
 	};

@@ -121,5 +121,5 @@ export default {
 
 			<p>done:one / done:two / remaining:four</p>
 		`);
-	},
+	}
 };

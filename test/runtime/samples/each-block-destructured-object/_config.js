@@ -16,5 +16,5 @@ export default {
 		assert.htmlEqual( target.innerHTML, `
 			<p>cow: hooves</p>
 		`);
-	},
+	}
 };

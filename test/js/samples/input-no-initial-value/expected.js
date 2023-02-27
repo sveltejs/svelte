@@ -20,6 +20,7 @@ function create_fragment(ctx) {
 	let input;
 	let t0;
 	let button;
+	let mounted;
 	let dispose;
 
 	return {
@@ -31,11 +32,6 @@ function create_fragment(ctx) {
 			button.textContent = "Store";
 			attr(input, "type", "text");
 			input.required = true;
-
-			dispose = [
-				listen(input, "input", /*input_input_handler*/ ctx[2]),
-				listen(form, "submit", /*handleSubmit*/ ctx[1])
-			];
 		},
 		m(target, anchor) {
 			insert(target, form, anchor);
@@ -43,6 +39,15 @@ function create_fragment(ctx) {
 			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
+
+			if (!mounted) {
+				dispose = [
+					listen(input, "input", /*input_input_handler*/ ctx[2]),
+					listen(form, "submit", /*handleSubmit*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
@@ -53,6 +58,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(form);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -63,7 +69,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	function handleSubmit(event) {
 		event.preventDefault();
-		console.log("value", test);
+		console.log('value', test);
 	}
 
 	function input_input_handler() {

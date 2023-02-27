@@ -40,6 +40,16 @@
 									"type": "Identifier",
 									"start": 37,
 									"end": 41,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 5
+										},
+										"end": {
+											"line": 2,
+											"column": 9
+										}
+									},
 									"name": "todo"
 								}
 							}
@@ -47,10 +57,10 @@
 					}
 				],
 				"context": {
-					"start": 16,
-					"end": 20,
 					"type": "Identifier",
-					"name": "todo"
+					"name": "todo",
+					"start": 16,
+					"end": 20
 				},
 				"key": {
 					"type": "MemberExpression",
@@ -98,7 +108,8 @@
 						},
 						"name": "id"
 					},
-					"computed": false
+					"computed": false,
+					"optional": false
 				}
 			}
 		]

@@ -16,17 +16,20 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import Foo from "./Foo.svelte";
-import Bar from "./Bar.svelte";
+import Foo from './Foo.svelte';
+import Bar from './Bar.svelte';
 
 function create_fragment(ctx) {
+	let foo;
 	let t0;
+	let bar;
 	let t1;
 	let input;
 	let current;
+	let mounted;
 	let dispose;
-	const foo = new Foo({ props: { x: y } });
-	const bar = new Bar({ props: { x: /*z*/ ctx[0] } });
+	foo = new Foo({ props: { x: y } });
+	bar = new Bar({ props: { x: /*z*/ ctx[0] } });
 
 	return {
 		c() {
@@ -35,7 +38,6 @@ function create_fragment(ctx) {
 			create_component(bar.$$.fragment);
 			t1 = space();
 			input = element("input");
-			dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			mount_component(foo, target, anchor);
@@ -45,6 +47,11 @@ function create_fragment(ctx) {
 			insert(target, input, anchor);
 			set_input_value(input, /*z*/ ctx[0]);
 			current = true;
+
+			if (!mounted) {
+				dispose = listen(input, "input", /*input_input_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			const bar_changes = {};
@@ -72,6 +79,7 @@ function create_fragment(ctx) {
 			destroy_component(bar, detaching);
 			if (detaching) detach(t1);
 			if (detaching) detach(input);
+			mounted = false;
 			dispose();
 		}
 	};

@@ -1,5 +1,5 @@
 export default {
-	html: `<p>wait for it...</p>`,
+	html: '<p>wait for it...</p>',
 	test({ assert, component, target }) {
 
 		return component.promise

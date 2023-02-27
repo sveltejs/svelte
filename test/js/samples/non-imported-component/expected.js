@@ -14,13 +14,15 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import Imported from "Imported.svelte";
+import Imported from 'Imported.svelte';
 
 function create_fragment(ctx) {
+	let imported;
 	let t;
+	let nonimported;
 	let current;
-	const imported = new Imported({});
-	const nonimported = new NonImported({});
+	imported = new Imported({});
+	nonimported = new NonImported({});
 
 	return {
 		c() {

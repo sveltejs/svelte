@@ -13,11 +13,11 @@ export default {
 		loading...
 	`,
 
-	async test({ assert, component, target }) {
+	async test({ assert, target }) {
 		fulfil([]);
 
 		await thePromise;
-		
+
 		assert.htmlEqual(target.innerHTML, `
 			<p>promise array is empty</p>
 		`);

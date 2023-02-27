@@ -1,9 +1,9 @@
 <script>
-	import FancyButton from './FancyButton.svelte';
+	import CustomButton from './CustomButton.svelte';
 
 	function handleClick() {
 		alert('clicked');
 	}
 </script>
 
-<FancyButton on:click={handleClick}/>
+<CustomButton on:click={handleClick}/>

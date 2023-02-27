@@ -14,7 +14,7 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 		// @ts-ignore
 		const delta = target_value - current_value;
 		// @ts-ignore
-		const velocity = (current_value - last_value) / (ctx.dt||1/60); // guard div by 0
+		const velocity = (current_value - last_value) / (ctx.dt || 1 / 60); // guard div by 0
 		const spring = ctx.opts.stiffness * delta;
 		const damper = ctx.opts.damping * velocity;
 		const acceleration = (spring - damper) * ctx.inv_mass;
@@ -34,9 +34,10 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 			tick_spring(ctx, last_value[i], current_value[i], target_value[i]));
 	} else if (typeof current_value === 'object') {
 		const next_value = {};
-		for (const k in current_value)
+		for (const k in current_value) {
 			// @ts-ignore
 			next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+		}
 		// @ts-ignore
 		return next_value;
 	} else {
@@ -57,7 +58,7 @@ interface SpringUpdateOpts {
 
 type Updater<T> = (target_value: T, value: T) => T;
 
-interface Spring<T> extends Readable<T>{
+export interface Spring<T> extends Readable<T>{
 	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
 	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
 	precision: number;
@@ -79,7 +80,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
 
-	function set(new_value: T, opts: SpringUpdateOpts={}): Promise<void> {
+	function set(new_value: T, opts: SpringUpdateOpts = {}): Promise<void> {
 		target_value = new_value;
 		const token = current_token = {};
 
@@ -121,8 +122,9 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 				last_value = value;
 				store.set(value = next_value);
 
-				if (ctx.settled)
+				if (ctx.settled) {
 					task = null;
+				}
 				return !ctx.settled;
 			});
 		}

@@ -1,14 +1,14 @@
 export default {
 	props: {
 		target: 'World!',
-		display: true,
+		display: true
 	},
 
 	html: `
 		<h1></h1>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const header = target.querySelector('h1');
 		const click = new window.MouseEvent('click');
 
@@ -16,5 +16,5 @@ export default {
 		assert.htmlEqual(target.innerHTML, `
 			<h1>Hello World!</h1>
 		`);
-	},
+	}
 };

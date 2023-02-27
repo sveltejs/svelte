@@ -1,9 +1,15 @@
-import { element } from './dom';
+import { append_empty_stylesheet, detach, get_root_for_style } from './dom';
 import { raf } from './environment';
 
-let stylesheet;
+interface StyleInformation {
+	stylesheet: CSSStyleSheet;
+	rules: Record<string, true>;
+}
+
+// we need to store the information for multiple documents because a Svelte application could also contain iframes
+// https://github.com/sveltejs/svelte/issues/3624
+const managed_styles = new Map<Document | ShadowRoot, StyleInformation>();
 let active = 0;
-let current_rules = {};
 
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
 function hash(str: string) {
@@ -12,6 +18,12 @@ function hash(str: string) {
 
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
+}
+
+function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
+	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
+	managed_styles.set(doc, info);
+	return info;
 }
 
 export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
@@ -25,42 +37,44 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
 	const name = `__svelte_${hash(rule)}_${uid}`;
+	const doc = get_root_for_style(node);
 
-	if (!current_rules[name]) {
-		if (!stylesheet) {
-			const style = element('style');
-			document.head.appendChild(style);
-			stylesheet = style.sheet;
-		}
+	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
 
-		current_rules[name] = true;
+	if (!rules[name]) {
+		rules[name] = true;
 		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
 	}
 
 	const animation = node.style.animation || '';
-	node.style.animation = `${animation ? `${animation}, ` : ``}${name} ${duration}ms linear ${delay}ms 1 both`;
+	node.style.animation = `${animation ? `${animation}, ` : ''}${name} ${duration}ms linear ${delay}ms 1 both`;
 
 	active += 1;
 	return name;
 }
 
 export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
-	node.style.animation = (node.style.animation || '')
-		.split(', ')
-		.filter(name
-			? anim => anim.indexOf(name) < 0 // remove specific animation
-			: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
-		)
-		.join(', ');
-
-	if (name && !--active) clear_rules();
+	const previous = (node.style.animation || '').split(', ');
+	const next = previous.filter(name
+		? anim => anim.indexOf(name) < 0 // remove specific animation
+		: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+	);
+	const deleted = previous.length - next.length;
+	if (deleted) {
+		node.style.animation = next.join(', ');
+		active -= deleted;
+		if (!active) clear_rules();
+	}
 }
 
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
-		let i = stylesheet.cssRules.length;
-		while (i--) stylesheet.deleteRule(i);
-		current_rules = {};
+		managed_styles.forEach(info => {
+			const { ownerNode } = info.stylesheet;
+			// there is no ownerNode if it runs on jsdom.
+			if (ownerNode) detach(ownerNode);
+		});
+		managed_styles.clear();
 	});
 }

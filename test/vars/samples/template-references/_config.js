@@ -10,7 +10,7 @@ export default {
 				reassigned: false,
 				referenced: true,
 				referenced_from_script: false,
-				writable: false,
+				writable: false
 			},
 			{
 				export_name: null,
@@ -21,7 +21,7 @@ export default {
 				reassigned: false,
 				referenced: true,
 				referenced_from_script: false,
-				writable: true,
+				writable: true
 			},
 			{
 				export_name: null,
@@ -32,8 +32,8 @@ export default {
 				reassigned: false,
 				referenced: true,
 				referenced_from_script: false,
-				writable: true,
-			},
+				writable: true
+			}
 		]);
-	},
+	}
 };

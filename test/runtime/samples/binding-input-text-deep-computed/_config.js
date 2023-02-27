@@ -2,8 +2,8 @@ export default {
 	props: {
 		prop: 'name',
 		user: {
-			name: 'alice',
-		},
+			name: 'alice'
+		}
 	},
 
 	html: `
@@ -40,5 +40,5 @@ export default {
 			<input>
 			<p>hello carol</p>
 		`);
-	},
+	}
 };

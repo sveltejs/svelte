@@ -4,18 +4,21 @@ title: Media elements
 
 The `<audio>` and `<video>` elements have several properties that you can bind to. This example demonstrates a few of them.
 
-On line 116, add `currentTime={time}`, `duration` and `paused` bindings:
+On line 62, add `currentTime={time}`, `duration` and `paused` bindings:
 
 ```html
 <video
 	poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
 	src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
-	on:mousemove={handleMousemove}
+	on:mousemove={handleMove}
+	on:touchmove|preventDefault={handleMove}
 	on:mousedown={handleMousedown}
+	on:mouseup={handleMouseup}
 	bind:currentTime={time}
 	bind:duration
-	bind:paused
-></video>
+	bind:paused>
+	<track kind="captions">
+</video>
 ```
 
 > `bind:duration` is equivalent to `bind:duration={duration}`
@@ -33,11 +36,12 @@ The complete set of bindings for `<audio>` and `<video>` is as follows — six *
 * `seeking` (readonly) — boolean
 * `ended` (readonly) — boolean
 
-...and four *two-way* bindings:
+...and five *two-way* bindings:
 
 * `currentTime` — the current point in the video, in seconds
 * `playbackRate` — how fast to play the video, where `1` is 'normal'
 * `paused` — this one should be self-explanatory
 * `volume` — a value between 0 and 1
+* `muted` — a boolean value where true is muted
 
 Videos additionally have readonly `videoWidth` and `videoHeight` bindings.

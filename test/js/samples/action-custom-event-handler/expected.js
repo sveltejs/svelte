@@ -14,16 +14,21 @@ import {
 function create_fragment(ctx) {
 	let button;
 	let foo_action;
+	let mounted;
 	let dispose;
 
 	return {
 		c() {
 			button = element("button");
 			button.textContent = "foo";
-			dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
+
+			if (!mounted) {
+				dispose = action_destroyer(foo_action = foo.call(null, button, /*foo_function*/ ctx[1]));
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (foo_action && is_function(foo_action.update) && dirty & /*bar*/ 1) foo_action.update.call(null, /*foo_function*/ ctx[1]);
@@ -32,6 +37,7 @@ function create_fragment(ctx) {
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(button);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -42,15 +48,15 @@ function handleFoo(bar) {
 }
 
 function foo(node, callback) {
-
-}
+	
+} // code goes here
 
 function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 	const foo_function = () => handleFoo(bar);
 
-	$$self.$set = $$props => {
-		if ("bar" in $$props) $$invalidate(0, bar = $$props.bar);
+	$$self.$$set = $$props => {
+		if ('bar' in $$props) $$invalidate(0, bar = $$props.bar);
 	};
 
 	return [bar, foo_function];

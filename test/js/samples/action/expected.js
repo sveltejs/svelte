@@ -14,6 +14,7 @@ import {
 function create_fragment(ctx) {
 	let a;
 	let link_action;
+	let mounted;
 	let dispose;
 
 	return {
@@ -21,16 +22,21 @@ function create_fragment(ctx) {
 			a = element("a");
 			a.textContent = "Test";
 			attr(a, "href", "#");
-			dispose = action_destroyer(link_action = link.call(null, a));
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
+
+			if (!mounted) {
+				dispose = action_destroyer(link_action = link.call(null, a));
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(a);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -42,11 +48,11 @@ function link(node) {
 		history.pushState(null, null, event.target.href);
 	}
 
-	node.addEventListener("click", onClick);
+	node.addEventListener('click', onClick);
 
 	return {
 		destroy() {
-			node.removeEventListener("click", onClick);
+			node.removeEventListener('click', onClick);
 		}
 	};
 }

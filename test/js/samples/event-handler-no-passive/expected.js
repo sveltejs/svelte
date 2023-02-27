@@ -13,6 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let a;
+	let mounted;
 	let dispose;
 
 	return {
@@ -20,16 +21,21 @@ function create_fragment(ctx) {
 			a = element("a");
 			a.textContent = "this should not navigate to example.com";
 			attr(a, "href", "https://example.com");
-			dispose = listen(a, "touchstart", touchstart_handler);
 		},
 		m(target, anchor) {
 			insert(target, a, anchor);
+
+			if (!mounted) {
+				dispose = listen(a, "touchstart", touchstart_handler);
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(a);
+			mounted = false;
 			dispose();
 		}
 	};

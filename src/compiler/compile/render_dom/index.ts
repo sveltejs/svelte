@@ -3,10 +3,16 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from '../utils/scope';
+import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
+import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { flatten } from '../../utils/flatten';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
+import { push_array } from '../../utils/push_array';
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -30,7 +36,16 @@ export default function dom(
 	}
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
-	const styles = component.stylesheet.has_styles && options.dev
+
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
+
+	if (css_sourcemap_enabled) {
+		css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	} else {
+		css.map = null;
+	}
+
+	const styles = css_sourcemap_enabled && component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
 
@@ -39,16 +54,13 @@ export default function dom(
 	const should_add_css = (
 		!options.customElement &&
 		!!styles &&
-		options.css !== false
+		options.css === 'injected'
 	);
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
-				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
-				style.textContent = "${styles}";
-				@append(@_document.head, style);
+			function ${add_css}(target) {
+				@append_styles(target, "${component.stylesheet.id}", "${styles}");
 			}
 		`);
 	}
@@ -57,7 +69,7 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks.map(block => {
+	push_array(body, blocks.map(block => {
 		// TODO this is a horrible mess — renderer.blocks
 		// contains a mixture of Blocks and Nodes
 		if ((block as Block).render) return (block as Block).render();
@@ -70,15 +82,34 @@ export default function dom(
 		);
 	}
 
+	const uses_slots = component.var_lookup.has('$$slots');
+	let compute_slots: Node[] | undefined;
+	if (uses_slots) {
+		compute_slots = b`
+			const $$slots = @compute_slots(#slots);
+		`;
+	}
+
+
 	const uses_props = component.var_lookup.has('$$props');
-	const $$props = uses_props ? `$$new_props` : `$$props`;
+	const uses_rest = component.var_lookup.has('$$restProps');
+	const $$props = uses_props || uses_rest ? '$$new_props' : '$$props';
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);
 	const writable_props = props.filter(variable => variable.writable);
 
-	const set = (uses_props || writable_props.length > 0 || component.slots.size > 0)
+	const omit_props_names = component.get_unique_name('omit_props_names');
+	const compute_rest = x`@compute_rest_props($$props, ${omit_props_names.name})`;
+	const rest = uses_rest ? b`
+		const ${omit_props_names.name} = [${props.map(prop => `"${prop.export_name}"`).join(',')}];
+		let $$restProps = ${compute_rest};
+	` : null;
+
+	const set = (uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0)
 		? x`
 			${$$props} => {
 				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`)}
+				${uses_rest && !uses_props && x`$$props = @assign(@assign({}, $$props), @exclude_internal_props($$new_props))`}
+				${uses_rest && renderer.invalidate('$$restProps', x`$$restProps = ${compute_rest}`)}
 				${writable_props.map(prop =>
 					b`if ('${prop.export_name}' in ${$$props}) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.export_name}`)};`
 				)}
@@ -91,7 +122,10 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check; let inject_state; let capture_state;
+	let missing_props_check: Node[] | Node;
+	let inject_state: Expression;
+	let capture_state: Expression;
+	let props_inject: Node[] | Node;
 
 	props.forEach(prop => {
 		const variable = component.var_lookup.get(prop.name);
@@ -123,7 +157,7 @@ export default function dom(
 					kind: 'set',
 					key: { type: 'Identifier', name: prop.export_name },
 					value: x`function(${prop.name}) {
-						this.$set({ ${prop.export_name}: ${prop.name} });
+						this.$$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
 					}`
 				});
@@ -149,42 +183,85 @@ export default function dom(
 		}
 	});
 
+	component.instance_exports_from.forEach(exports_from => {
+		const import_declaration = {
+			...exports_from,
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: exports_from.source
+		};
+		component.imports.push(import_declaration as ImportDeclaration);
+
+		exports_from.specifiers.forEach(specifier => {
+			if (component.component_options.accessors) {
+				const name = component.get_unique_name(specifier.exported.name);
+				import_declaration.specifiers.push({
+					...specifier,
+					type: 'ImportSpecifier',
+					imported: specifier.local,
+					local: name
+				});
+
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						return ${name}
+					}`
+				});
+			} else if (component.compile_options.dev) {
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					}`
+				});
+			}
+		});
+	});
+
 	if (component.compile_options.dev) {
 		// checking that expected ones were passed
 		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
-			dev_props_check = b`
-				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
-				${expected.map(prop => b`
-				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
-					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
-				}`)}
+			missing_props_check = b`
+				$$self.$$.on_mount.push(function () {
+					${expected.map(prop => b`
+					if (${prop.name} === undefined && !(('${prop.export_name}' in $$props) || $$self.$$.bound[$$self.$$.props['${prop.export_name}']])) {
+						@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+					}`)}
+				});
 			`;
 		}
 
-		capture_state = (uses_props || writable_props.length > 0) ? x`
-			() => {
-				return { ${component.vars.filter(prop => prop.writable).map(prop => p`${prop.name}`)} };
-			}
-		` : x`
-			() => {
-				return {};
-			}
-		`;
+		const capturable_vars = component.vars.filter(v => !v.internal && !v.global && !v.name.startsWith('$$'));
 
-		const writable_vars = component.vars.filter(variable => !variable.module && variable.writable);
-		inject_state = (uses_props || writable_vars.length > 0) ? x`
-			${$$props} => {
-				${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
-				${writable_vars.map(prop => b`
-					if ('${prop.name}' in $$props) ${renderer.invalidate(prop.name, x`${prop.name} = ${$$props}.${prop.name}`)};
-				`)}
-			}
-		` : x`
-			${$$props} => {}
-		`;
+		if (capturable_vars.length > 0) {
+			capture_state = x`() => ({ ${capturable_vars.map(prop => p`${prop.name}`)} })`;
+		}
+
+		const injectable_vars = capturable_vars.filter(v => !v.module && v.writable && v.name[0] !== '$');
+
+		if (uses_props || injectable_vars.length > 0) {
+			inject_state = x`
+				${$$props} => {
+					${uses_props && renderer.invalidate('$$props', x`$$props = @assign(@assign({}, $$props), $$new_props)`)}
+					${injectable_vars.map(
+						v => b`if ('${v.name}' in $$props) ${renderer.invalidate(v.name, x`${v.name} = ${$$props}.${v.name}`)};`
+					)}
+				}
+			`;
+
+			props_inject = b`
+				if ($$props && "$$inject" in $$props) {
+					$$self.$inject_state($$props.$$inject);
+				}
+			`;
+		}
 	}
 
 	// instrument assignments
@@ -194,7 +271,7 @@ export default function dom(
 		let execution_context: Node | null = null;
 
 		walk(component.ast.instance.content, {
-			enter(node) {
+			enter(node: Node) {
 				if (map.has(node)) {
 					scope = map.get(node) as Scope;
 
@@ -206,7 +283,7 @@ export default function dom(
 				}
 			},
 
-			leave(node) {
+			leave(node: Node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
@@ -222,7 +299,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as Node));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
@@ -246,11 +323,19 @@ export default function dom(
 	}
 
 	const args = [x`$$self`];
-	if (props.length > 0 || component.has_reactive_assignments || component.slots.size > 0) {
+	const has_invalidate = props.length > 0 ||
+		component.has_reactive_assignments ||
+		component.slots.size > 0 ||
+		capture_state ||
+		inject_state;
+	if (has_invalidate) {
 		args.push(x`$$props`, x`$$invalidate`);
+	} else if (component.compile_options.dev) {
+		// $$props arg is still needed for unknown prop check
+		args.push(x`$$props`);
 	}
-
-	const has_create_fragment = block.has_content();
+	// has_create_fragment is intentionally to be true in dev mode.
+	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
 			function create_fragment(#ctx) {
@@ -269,32 +354,23 @@ export default function dom(
 		const variable = component.var_lookup.get(prop.name);
 
 		if (variable.hoistable) return false;
-		if (prop.name[0] === '$') return false;
-		return true;
+		return prop.name[0] !== '$';
 	});
 
 	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
 
 	const instance_javascript = component.extract_javascript(component.ast.instance);
 
-	let i = renderer.context.length;
-	while (i--) {
-		const member = renderer.context[i];
-		if (member.variable) {
-			if (member.variable.referenced || member.variable.export_name) break;
-		} else if (member.is_non_contextual) {
-			break;
-		}
-	}
-	const initial_context = renderer.context.slice(0, i + 1);
-
 	const has_definition = (
+		component.compile_options.dev ||
 		(instance_javascript && instance_javascript.length > 0) ||
 		filtered_props.length > 0 ||
 		uses_props ||
 		component.partly_hoisted.length > 0 ||
-		initial_context.length > 0 ||
-		component.reactive_declarations.length > 0
+		renderer.initial_context.length > 0 ||
+		component.reactive_declarations.length > 0 ||
+		capture_state ||
+		inject_state
 	);
 
 	const definition = has_definition
@@ -314,33 +390,42 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name);
+			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
-		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const reactive_declarations: Node[] = [];
+		const fixed_reactive_declarations: Array<Node | Node[]> = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
-			const uses_props = !!dependencies.find(n => n === '$$props');
+			const uses_rest_or_props = !!dependencies.find(n => n === '$$props' || n === '$$restProps');
 
 			const writable = dependencies.filter(n => {
 				const variable = component.var_lookup.get(n);
 				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
 
-			const condition = !uses_props && writable.length > 0 && renderer.dirty(writable, true);
+			const condition = !uses_rest_or_props && writable.length > 0 && renderer.dirty(writable, true);
 
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
 
 			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
 
-			if (condition || uses_props) {
+			if (condition || uses_rest_or_props) {
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
+				for (const assignee of d.assignees) {
+					const variable = component.var_lookup.get(assignee);
+					if (variable && variable.subscribable) {
+						fixed_reactive_declarations.push(b`
+							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
+							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
+						`);
+					}
+				}
 			}
 		});
 
@@ -354,7 +439,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name)) {
+			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
@@ -365,19 +450,19 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
-		if (component.compile_options.dev && !component.var_lookup.has('$$props') && writable_props.length) {
+		let unknown_props_check: Node[] | undefined;
+		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
 
 		const return_value = {
 			type: 'ArrayExpression',
-			elements: initial_context.map(member => ({
+			elements: renderer.initial_context.map(member => ({
 				type: 'Identifier',
 				name: member.name
 			}) as Expression)
@@ -385,29 +470,36 @@ export default function dom(
 
 		body.push(b`
 			function ${definition}(${args}) {
+				${injected.map(name => b`let ${name};`)}
+
+				${rest}
+
 				${reactive_store_declarations}
 
 				${reactive_store_subscriptions}
 
 				${resubscribable_reactive_store_unsubscribers}
 
+				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
+				${compute_slots}
+
 				${instance_javascript}
 
+				${missing_props_check}
 				${unknown_props_check}
 
-				${component.slots.size ? b`let { $$slots = {}, $$scope } = $$props;` : null}
-
-				${renderer.binding_groups.length > 0 && b`const $$binding_groups = [${renderer.binding_groups.map(_ => x`[]`)}];`}
+				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
 
 				${component.partly_hoisted}
 
-				${set && b`$$self.$set = ${set};`}
+				${set && b`$$self.$$set = ${set};`}
 
-				${capture_state && x`$$self.$capture_state = ${capture_state};`}
+				${capture_state && b`$$self.$capture_state = ${capture_state};`}
 
-				${inject_state && x`$$self.$inject_state = ${inject_state};`}
+				${inject_state && b`$$self.$inject_state = ${inject_state};`}
 
-				${injected.map(name => b`let ${name};`)}
+				${/* before reactive declarations */ props_inject}
 
 				${reactive_declarations.length > 0 && b`
 				$$self.$$.update = () => {
@@ -437,23 +529,30 @@ export default function dom(
 	}
 
 	if (options.customElement) {
+
+		let init_props = x`@attribute_to_object(this.attributes)`;
+		if (uses_slots) {
+			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
+		}
+
 		const declaration = b`
 			class ${name} extends @SvelteElement {
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`
+						const style = document.createElement('style');
+						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
+						this.shadowRoot.appendChild(style)`}
 
-					@init(this, { target: this.shadowRoot }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
-
-					${dev_props_check}
+					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
 					if (options) {
 						if (options.target) {
 							@insert(options.target, this, options.anchor);
 						}
 
-						${(props.length > 0 || uses_props) && b`
+						${(props.length > 0 || uses_props || uses_rest) && b`
 						if (options.props) {
 							this.$set(options.props);
 							@flush();
@@ -476,7 +575,7 @@ export default function dom(
 			});
 		}
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 
@@ -491,36 +590,30 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
+		const optional_parameters = [];
+		if (should_add_css) {
+			optional_parameters.push(add_css);
+		} else if (dirty) {
+			optional_parameters.push(x`null`);
+		}
+		if (dirty) {
+			optional_parameters.push(dirty);
+		}
+
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
-					super(${options.dev && `options`});
-					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					super(${options.dev && 'options'});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-
-					${dev_props_check}
 				}
 			}
 		`[0] as ClassDeclaration;
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 	}
 
-	return { js: flatten(body, []), css };
-}
-
-function flatten(nodes: any[], target: any[]) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (Array.isArray(node)) {
-			flatten(node, target);
-		} else {
-			target.push(node);
-		}
-	}
-
-	return target;
+	return { js: flatten(body), css };
 }

@@ -1,6 +1,6 @@
 export default {
 	props: {
-		items: ['foo', 'bar', 'baz'],
+		items: ['foo', 'bar', 'baz']
 	},
 
 	html: `

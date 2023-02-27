@@ -1,8 +1,9 @@
 import { string_literal } from '../../utils/stringify';
+import { get_attribute_value } from './shared/get_attribute_value';
 import Renderer, { RenderOptions } from '../Renderer';
-import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import { p, x } from 'code-red';
+import { namespaces } from '../../../utils/namespaces';
 
 function get_prop_value(attribute) {
 	if (attribute.is_true) return x`true`;
@@ -35,7 +36,7 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	let props;
 
 	if (uses_spread) {
-		props = x`@_Object.assign(${
+		props = x`@_Object.assign({}, ${
 			node.attributes
 				.map(attribute => {
 					if (attribute.is_spread) {
@@ -67,23 +68,18 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 
 	const slot_fns = [];
 
-	if (node.children.length) {
+	const children = node.children;
+
+	if (children.length) {
 		const slot_scopes = new Map();
 
-		renderer.push();
-
-		renderer.render(node.children, Object.assign({}, options, {
+		renderer.render(children, Object.assign({}, options, {
 			slot_scopes
 		}));
 
-		slot_scopes.set('default', {
-			input: get_slot_scope(node.lets),
-			output: renderer.pop()
-		});
-
-		slot_scopes.forEach(({ input, output }, name) => {
+		slot_scopes.forEach(({ input, output, statements }, name) => {
 			slot_fns.push(
-				p`${name}: (${input}) => ${output}`
+				p`${name}: (${input}) => { ${statements}; return ${output}; }`
 			);
 		});
 	}
@@ -92,5 +88,28 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		${slot_fns}
 	}`;
 
+	if (node.css_custom_properties.length > 0) {
+		if (node.namespace === namespaces.svg) {
+			renderer.add_string('<g style="');
+		} else {
+			renderer.add_string('<div style="display: contents; ');
+		}
+		node.css_custom_properties.forEach((attr, index) => {
+			renderer.add_string(`${attr.name}:`);
+			renderer.add_expression(get_attribute_value(attr));
+			renderer.add_string(';');
+			if (index < node.css_custom_properties.length - 1) renderer.add_string(' ');
+		});
+		renderer.add_string('">');
+	}
+
 	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
+
+	if (node.css_custom_properties.length > 0) {
+		if (node.namespace === namespaces.svg) {
+			renderer.add_string('</g>');
+		} else {
+			renderer.add_string('</div>');
+		}
+	}
 }

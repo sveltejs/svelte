@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window }) {
+	test({ assert, window }) {
 		assert.equal(window.document.title, 'changed');
 	}
 };

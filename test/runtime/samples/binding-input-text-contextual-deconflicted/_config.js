@@ -1,7 +1,7 @@
 export default {
 	props: {
 		foo: 'a',
-		items: ['x'],
+		items: ['x']
 	},
 
 	html: `
@@ -32,5 +32,5 @@ export default {
 			<div><input><p>b</p></div>
 			<div><input><p>y</p></div>
 		`);
-	},
+	}
 };

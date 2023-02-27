@@ -13,6 +13,7 @@ import {
 
 function create_fragment(ctx) {
 	let input;
+	let mounted;
 	let dispose;
 
 	return {
@@ -20,16 +21,21 @@ function create_fragment(ctx) {
 			input = element("input");
 			attr(input, "type", "file");
 			input.multiple = true;
-			dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
+
+			if (!mounted) {
+				dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(input);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -43,8 +49,8 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, files);
 	}
 
-	$$self.$set = $$props => {
-		if ("files" in $$props) $$invalidate(0, files = $$props.files);
+	$$self.$$set = $$props => {
+		if ('files' in $$props) $$invalidate(0, files = $$props.files);
 	};
 
 	return [files, input_change_handler];

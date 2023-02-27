@@ -4,14 +4,14 @@
 	import Decrementer from './Decrementer.svelte';
 	import Resetter from './Resetter.svelte';
 
-	let count_value;
+	let countValue;
 
 	const unsubscribe = count.subscribe(value => {
-		count_value = value;
+		countValue = value;
 	});
 </script>
 
-<h1>The count is {count_value}</h1>
+<h1>The count is {countValue}</h1>
 
 <Incrementer/>
 <Decrementer/>

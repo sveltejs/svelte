@@ -1,0 +1,26 @@
+[
+	{
+		"code": "invalid-html-attribute",
+		"message": "'className' is not a valid HTML attribute. Did you mean 'class'?",
+		"start": {
+			"column": 5,
+			"line": 1
+		},
+		"end": {
+			"column": 20,
+			"line": 1
+		}
+	},
+	{
+		"code": "invalid-html-attribute",
+		"message": "'htmlFor' is not a valid HTML attribute. Did you mean 'for'?",
+		"start": {
+			"column": 7,
+			"line": 2
+		},
+		"end": {
+			"column": 18,
+			"line": 2
+		}
+	}
+]

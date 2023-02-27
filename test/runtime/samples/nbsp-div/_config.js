@@ -3,7 +3,7 @@ export default {
 	<div>&nbsp;hello&nbsp;&nbsp;</div>
 	<div>&nbsp;hello&nbsp; &nbsp;hello</div>`,
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const divList = target.querySelectorAll('div');
 		assert.equal( divList[0].textContent.charCodeAt( 0 ), 160 );
 		assert.equal( divList[1].textContent.charCodeAt( 0 ), 160 );

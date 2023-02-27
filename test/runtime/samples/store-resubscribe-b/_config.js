@@ -1,3 +1,3 @@
 export default {
-	html: `42`,
+	html: '42'
 };

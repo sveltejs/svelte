@@ -37,8 +37,8 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { color } = $$props;
 
-	$$self.$set = $$props => {
-		if ("color" in $$props) $$invalidate(0, color = $$props.color);
+	$$self.$$set = $$props => {
+		if ('color' in $$props) $$invalidate(0, color = $$props.color);
 	};
 
 	return [color];

@@ -1,11 +1,11 @@
 export default {
 	props: {
-		primary: true,
+		primary: true
 	},
 
-	html: `<div class="test-class primary" role="button"></div>`,
+	html: '<div class="test-class primary" role="button"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.primary = true;
 
 		assert.htmlEqual(
@@ -14,5 +14,5 @@ export default {
 			<div class="test-class primary" role="button"></div>
 		`
 		);
-	},
+	}
 };

@@ -1,11 +1,11 @@
 import { Node } from 'estree';
-import is_reference from 'is-reference';
+import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 
 export default function is_used_as_reference(
 	node: Node,
 	parent: Node
 ): boolean {
-	if (!is_reference(node, parent)) {
+	if (!is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 		return false;
 	}
 	if (!parent) {

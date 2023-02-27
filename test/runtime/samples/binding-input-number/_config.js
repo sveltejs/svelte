@@ -1,6 +1,6 @@
 export default {
 	props: {
-		count: 42,
+		count: 42
 	},
 
 	html: `
@@ -35,14 +35,14 @@ export default {
 			<p>number 44</p>
 		`);
 
-		// empty string should be treated as undefined
+		// empty string should be treated as null
 		input.value = '';
 		await input.dispatchEvent(event);
 
-		assert.equal(component.count, undefined);
+		assert.equal(component.count, null);
 		assert.htmlEqual(target.innerHTML, `
 			<input type='number'>
-			<p>undefined undefined</p>
+			<p>object null</p>
 		`);
-	},
+	}
 };

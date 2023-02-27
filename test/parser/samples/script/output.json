@@ -33,6 +33,16 @@
 							"type": "Identifier",
 							"start": 52,
 							"end": 56,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 11
+								},
+								"end": {
+									"line": 5,
+									"column": 15
+								}
+							},
 							"name": "name"
 						}
 					},

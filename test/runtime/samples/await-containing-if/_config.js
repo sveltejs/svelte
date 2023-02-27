@@ -24,7 +24,7 @@ export default {
 				`);
 
 				component.show = false;
-				assert.htmlEqual(target.innerHTML, `<div></div>`);
+				assert.htmlEqual(target.innerHTML, '<div></div>');
 
 				component.show = true;
 				assert.htmlEqual(target.innerHTML, `
