@@ -1,4 +1,4 @@
-import { append_empty_stylesheet, get_root_for_style } from './dom';
+import { append_empty_stylesheet, detach, get_root_for_style } from './dom';
 import { raf } from './environment';
 
 interface StyleInformation {
@@ -71,10 +71,9 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		managed_styles.forEach(info => {
-			const { stylesheet } = info;
-			let i = stylesheet.cssRules.length;
-			while (i--) stylesheet.deleteRule(i);
-			info.rules = {};
+			const { ownerNode } = info.stylesheet;
+			// there is no ownerNode if it runs on jsdom.
+			if (ownerNode) detach(ownerNode);
 		});
 		managed_styles.clear();
 	});

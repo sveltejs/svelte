@@ -19,6 +19,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 				!variable.hoistable &&
 				!variable.global &&
 				!variable.module &&
+				!variable.is_reactive_static &&
 				(
 					variable.referenced ||
 					variable.subscribable ||
@@ -80,7 +81,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 	return invalidate;
 }
 
-export function renderer_invalidate(renderer: Renderer, name: string, value?, main_execution_context: boolean = false) {
+export function renderer_invalidate(renderer: Renderer, name: string, value?: unknown, main_execution_context: boolean = false) {
 	const variable = renderer.component.var_lookup.get(name);
 
 	if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {

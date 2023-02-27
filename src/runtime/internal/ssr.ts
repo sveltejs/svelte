@@ -85,18 +85,20 @@ export function escape(value: unknown, is_attr = false) {
 	let escaped = '';
 	let last = 0;
 
-  while (pattern.test(str)) {
-    const i = pattern.lastIndex - 1;
-    const ch = str[i];
-    escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
-    last = i + 1;
-  }
+	while (pattern.test(str)) {
+		const i = pattern.lastIndex - 1;
+		const ch = str[i];
+		escaped += str.substring(last, i) + (ch === '&' ? '&amp;' : (ch === '"' ? '&quot;' : '&lt;'));
+		last = i + 1;
+	}
 
 	return escaped + str.substring(last);
 }
 
 export function escape_attribute_value(value) {
-	return typeof value === 'string' ? escape(value, true) : value;
+	// keep booleans, null, and undefined for the sake of `spread`
+	const should_escape = typeof value === 'string' || (value && typeof value === 'object');
+	return should_escape ? escape(value, true) : value;
 }
 
 export function escape_object(obj) {
@@ -122,7 +124,7 @@ export const missing_component = {
 export function validate_component(component, name) {
 	if (!component || !component.$$render) {
 		if (name === 'svelte:component') name += ' this={...}';
-		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules`);
+		throw new Error(`<${name}> is not a valid SSR component. You may need to review your build config to ensure that dependencies are compiled, rather than imported as pre-compiled modules. Otherwise you may need to fix a <${name}>.`);
 	}
 
 	return component;
@@ -192,7 +194,7 @@ export function create_ssr_component(fn) {
 
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
-	const assignment = (boolean && value === true) ? '' : `="${escape_attribute_value(value.toString())}"`;
+	const assignment = (boolean && value === true) ? '' : `="${escape(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
 
@@ -203,7 +205,7 @@ export function add_classes(classes) {
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
 		.filter(key => style_object[key])
-		.map(key => `${key}: ${style_object[key]};`)
+		.map(key => `${key}: ${escape_attribute_value(style_object[key])};`)
 		.join(' ');
 }
 
