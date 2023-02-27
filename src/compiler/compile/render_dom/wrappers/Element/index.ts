@@ -886,7 +886,9 @@ export default class ElementWrapper extends Wrapper {
 			const type = this.node.get_static_attribute_value('type');
 			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				block.chunks.mount.push(b`
-					${this.var}.value = ${data}.value;
+					if ('value' in ${data}) {
+						${this.var}.value = ${data}.value;
+					}
 				`);
 				block.chunks.update.push(b`
 					if ('value' in ${data}) {
