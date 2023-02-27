@@ -7,8 +7,9 @@ export default {
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, false);
 
-		await component.moveDown(0);
-		await component.moveDown(1);
+		component.moveDown(0);
+		component.moveDown(1);
+		await Promise.resolve();
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -31,14 +32,16 @@ export default {
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, true);
 
-		await (component.current = 'b');
+		(component.current = 'b');
+		await Promise.resolve();
 
 		inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, false);
 
-		await component.moveDown(1);
+		component.moveDown(1);
+		await Promise.resolve();
 
 		// after shifting order, should still keep the correct radio checked
 		inputs = target.querySelectorAll('input');
