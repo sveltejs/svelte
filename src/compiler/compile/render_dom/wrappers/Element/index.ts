@@ -63,13 +63,11 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
-
 	{
 		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
 			regex_dimensions.test(name)
 	},
-
 	// media events
 	{
 		event_names: ['timeupdate'],
@@ -137,7 +135,6 @@ const events = [
 			node.is_media_node() &&
 			name === 'readyState'
 	},
-
 	// details event
 	{
 		event_names: ['toggle'],
