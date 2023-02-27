@@ -4,7 +4,6 @@
 
 * Add a11y warnings:
 	* `aria-activedescendant-has-tabindex`: elements with `aria-activedescendant` need to have a `tabindex` ([#8172](https://github.com/sveltejs/svelte/pull/8172))
-	* 
 * Omit a11y warning on `<video>` tags with `aria-hidden="true"` ([#7874](https://github.com/sveltejs/svelte/issues/7874))
 * Omit a11y "no child content" warning on elements with `aria-label` ([#8299](https://github.com/sveltejs/svelte/pull/8299))
 * Make `noreferrer` warning less zealous ([#6289](https://github.com/sveltejs/svelte/issues/6289))
@@ -19,6 +18,7 @@
 * Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
 * Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
 * Better handling of `inert` attribute ([#7500](https://github.com/sveltejs/svelte/issues/7500))
+* Clear inputs when `bind:group` to `undefined` ([#8214](https://github.com/sveltejs/svelte/issues/8214))
 
 ## 3.55.1
 
