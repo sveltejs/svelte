@@ -2,14 +2,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 84,
       "column": 25,
       "line": 2
     },
     "message": "A11y: Non-interactive element <article> cannot have interactive role 'button'",
-    "pos": 59,
     "start": {
-      "character": 59,
       "column": 0,
       "line": 2
     }
@@ -17,14 +14,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 131,
       "column": 46,
       "line": 3
     },
     "message": "A11y: Non-interactive element <aside> cannot have interactive role 'checkbox'",
-    "pos": 85,
     "start": {
-      "character": 85,
       "column": 0,
       "line": 3
     }
@@ -32,14 +26,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 166,
       "column": 34,
       "line": 4
     },
     "message": "A11y: Non-interactive element <blockquote> cannot have interactive role 'columnheader'",
-    "pos": 132,
     "start": {
-      "character": 132,
       "column": 0,
       "line": 4
     }
@@ -47,14 +38,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 224,
       "column": 57,
       "line": 5
     },
     "message": "A11y: Non-interactive element <body> cannot have interactive role 'combobox'",
-    "pos": 167,
     "start": {
-      "character": 167,
       "column": 0,
       "line": 5
     }
@@ -62,14 +50,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 243,
       "column": 18,
       "line": 6
     },
     "message": "A11y: Non-interactive element <br> cannot have interactive role 'grid'",
-    "pos": 225,
     "start": {
-      "character": 225,
       "column": 0,
       "line": 6
     }
@@ -77,14 +62,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 271,
       "column": 27,
       "line": 7
     },
     "message": "A11y: Non-interactive element <caption> cannot have interactive role 'gridcell'",
-    "pos": 244,
     "start": {
-      "character": 244,
       "column": 0,
       "line": 7
     }
@@ -92,14 +74,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 290,
       "column": 18,
       "line": 8
     },
     "message": "A11y: Non-interactive element <dd> cannot have interactive role 'link'",
-    "pos": 272,
     "start": {
-      "character": 272,
       "column": 0,
       "line": 8
     }
@@ -107,14 +86,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 317,
       "column": 26,
       "line": 9
     },
     "message": "A11y: Non-interactive element <details> cannot have interactive role 'listbox'",
-    "pos": 291,
     "start": {
-      "character": 291,
       "column": 0,
       "line": 9
     }
@@ -122,14 +98,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 337,
       "column": 19,
       "line": 10
     },
     "message": "A11y: Non-interactive element <dir> cannot have interactive role 'menu'",
-    "pos": 318,
     "start": {
-      "character": 318,
       "column": 0,
       "line": 10
     }
@@ -137,14 +110,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 359,
       "column": 21,
       "line": 11
     },
     "message": "A11y: Non-interactive element <dl> cannot have interactive role 'menubar'",
-    "pos": 338,
     "start": {
-      "character": 338,
       "column": 0,
       "line": 11
     }
@@ -152,14 +122,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 383,
       "column": 23,
       "line": 12
     },
     "message": "A11y: Non-interactive element <dfn> cannot have interactive role 'menuitem'",
-    "pos": 360,
     "start": {
-      "character": 360,
       "column": 0,
       "line": 12
     }
@@ -167,14 +134,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 427,
       "column": 43,
       "line": 13
     },
     "message": "A11y: Non-interactive element <dt> cannot have interactive role 'menuitemcheckbox'",
-    "pos": 384,
     "start": {
-      "character": 384,
       "column": 0,
       "line": 13
     }
@@ -182,14 +146,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 474,
       "column": 46,
       "line": 14
     },
     "message": "A11y: Non-interactive element <fieldset> cannot have interactive role 'menuitemradio'",
-    "pos": 428,
     "start": {
-      "character": 428,
       "column": 0,
       "line": 14
     }
@@ -197,14 +158,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 534,
       "column": 50,
       "line": 16
     },
     "message": "A11y: Non-interactive element <figcaption> cannot have interactive role 'menuitemradio'",
-    "pos": 486,
     "start": {
-      "character": 486,
       "column": 2,
       "line": 16
     }
@@ -212,14 +170,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 583,
       "column": 38,
       "line": 18
     },
     "message": "A11y: Non-interactive element <figure> cannot have interactive role 'option'",
-    "pos": 545,
     "start": {
-      "character": 545,
       "column": 0,
       "line": 18
     }
@@ -227,14 +182,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 620,
       "column": 36,
       "line": 19
     },
     "message": "A11y: Non-interactive element <footer> cannot have interactive role 'radio'",
-    "pos": 584,
     "start": {
-      "character": 584,
       "column": 0,
       "line": 19
     }
@@ -242,14 +194,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 647,
       "column": 26,
       "line": 20
     },
     "message": "A11y: Non-interactive element <form> cannot have interactive role 'radiogroup'",
-    "pos": 621,
     "start": {
-      "character": 621,
       "column": 0,
       "line": 20
     }
@@ -257,14 +206,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 668,
       "column": 20,
       "line": 21
     },
     "message": "A11y: Non-interactive element <frame> cannot have interactive role 'row'",
-    "pos": 648,
     "start": {
-      "character": 648,
       "column": 0,
       "line": 21
     }
@@ -272,14 +218,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 701,
       "column": 32,
       "line": 22
     },
     "message": "A11y: Non-interactive element <h1> cannot have interactive role 'rowheader'",
-    "pos": 669,
     "start": {
-      "character": 669,
       "column": 0,
       "line": 22
     }
@@ -287,14 +230,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 772,
       "column": 70,
       "line": 23
     },
     "message": "A11y: Non-interactive element <h2> cannot have interactive role 'scrollbar'",
-    "pos": 702,
     "start": {
-      "character": 702,
       "column": 0,
       "line": 23
     }
@@ -302,14 +242,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 805,
       "column": 32,
       "line": 24
     },
     "message": "A11y: Non-interactive element <h3> cannot have interactive role 'searchbox'",
-    "pos": 773,
     "start": {
-      "character": 773,
       "column": 0,
       "line": 24
     }
@@ -317,14 +254,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 853,
       "column": 47,
       "line": 25
     },
     "message": "A11y: Non-interactive element <h4> cannot have interactive role 'slider'",
-    "pos": 806,
     "start": {
-      "character": 806,
       "column": 0,
       "line": 25
     }
@@ -332,14 +266,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 887,
       "column": 33,
       "line": 26
     },
     "message": "A11y: Non-interactive element <h5> cannot have interactive role 'spinbutton'",
-    "pos": 854,
     "start": {
-      "character": 854,
       "column": 0,
       "line": 26
     }
@@ -347,14 +278,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 930,
       "column": 42,
       "line": 27
     },
     "message": "A11y: Non-interactive element <h6> cannot have interactive role 'switch'",
-    "pos": 888,
     "start": {
-      "character": 888,
       "column": 0,
       "line": 27
     }
@@ -362,14 +290,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 948,
       "column": 17,
       "line": 28
     },
     "message": "A11y: Non-interactive element <hr> cannot have interactive role 'tab'",
-    "pos": 931,
     "start": {
-      "character": 931,
       "column": 0,
       "line": 28
     }
@@ -377,14 +302,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 987,
       "column": 38,
       "line": 29
     },
     "message": "A11y: Non-interactive element <img> cannot have interactive role 'tabpanel'",
-    "pos": 949,
     "start": {
-      "character": 949,
       "column": 0,
       "line": 29
     }
@@ -392,14 +314,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1012,
       "column": 24,
       "line": 30
     },
     "message": "A11y: Non-interactive element <label> cannot have interactive role 'textbox'",
-    "pos": 988,
     "start": {
-      "character": 988,
       "column": 0,
       "line": 30
     }
@@ -407,14 +326,11 @@
   {
     "code": "a11y-label-has-associated-control",
     "end": {
-      "character": 1012,
       "column": 24,
       "line": 30
     },
     "message": "A11y: A form label must be associated with a control.",
-    "pos": 988,
     "start": {
-      "character": 988,
       "column": 0,
       "line": 30
     }
@@ -422,14 +338,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1038,
       "column": 25,
       "line": 31
     },
     "message": "A11y: Non-interactive element <legend> cannot have interactive role 'toolbar'",
-    "pos": 1013,
     "start": {
-      "character": 1013,
       "column": 0,
       "line": 31
     }
@@ -437,14 +350,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1057,
       "column": 18,
       "line": 32
     },
     "message": "A11y: Non-interactive element <li> cannot have interactive role 'tree'",
-    "pos": 1039,
     "start": {
-      "character": 1039,
       "column": 0,
       "line": 32
     }
@@ -452,14 +362,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1082,
       "column": 24,
       "line": 33
     },
     "message": "A11y: Non-interactive element <main> cannot have interactive role 'treegrid'",
-    "pos": 1058,
     "start": {
-      "character": 1058,
       "column": 0,
       "line": 33
     }
@@ -467,14 +374,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1121,
       "column": 38,
       "line": 34
     },
     "message": "A11y: Non-interactive element <mark> cannot have interactive role 'treeitem'",
-    "pos": 1083,
     "start": {
-      "character": 1083,
       "column": 0,
       "line": 34
     }
@@ -482,14 +386,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1153,
       "column": 31,
       "line": 35
     },
     "message": "A11y: Non-interactive element <marquee> cannot have interactive role 'doc-backlink'",
-    "pos": 1122,
     "start": {
-      "character": 1122,
       "column": 0,
       "line": 35
     }
@@ -497,14 +398,11 @@
   {
     "code": "a11y-distracting-elements",
     "end": {
-      "character": 1153,
       "column": 31,
       "line": 35
     },
     "message": "A11y: Avoid <marquee> elements",
-    "pos": 1122,
     "start": {
-      "character": 1122,
       "column": 0,
       "line": 35
     }
@@ -512,14 +410,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1183,
       "column": 29,
       "line": 36
     },
     "message": "A11y: Non-interactive element <menu> cannot have interactive role 'doc-biblioref'",
-    "pos": 1154,
     "start": {
-      "character": 1154,
       "column": 0,
       "line": 36
     }
@@ -527,14 +422,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1213,
       "column": 29,
       "line": 37
     },
     "message": "A11y: Non-interactive element <meter> cannot have interactive role 'doc-glossref'",
-    "pos": 1184,
     "start": {
-      "character": 1184,
       "column": 0,
       "line": 37
     }
@@ -542,14 +434,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1240,
       "column": 26,
       "line": 38
     },
     "message": "A11y: Non-interactive element <nav> cannot have interactive role 'doc-noteref'",
-    "pos": 1214,
     "start": {
-      "character": 1214,
       "column": 0,
       "line": 38
     }
@@ -557,14 +446,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1261,
       "column": 20,
       "line": 39
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'button'",
-    "pos": 1241,
     "start": {
-      "character": 1241,
       "column": 0,
       "line": 39
     }
@@ -572,14 +458,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1304,
       "column": 42,
       "line": 40
     },
     "message": "A11y: Non-interactive element <optgroup> cannot have interactive role 'treeitem'",
-    "pos": 1262,
     "start": {
-      "character": 1262,
       "column": 0,
       "line": 40
     }
@@ -587,14 +470,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1331,
       "column": 26,
       "line": 41
     },
     "message": "A11y: Non-interactive element <output> cannot have interactive role 'treegrid'",
-    "pos": 1305,
     "start": {
-      "character": 1305,
       "column": 0,
       "line": 41
     }
@@ -602,14 +482,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1357,
       "column": 25,
       "line": 42
     },
     "message": "A11y: Non-interactive element <p> cannot have interactive role 'columnheader'",
-    "pos": 1332,
     "start": {
-      "character": 1332,
       "column": 0,
       "line": 42
     }
@@ -617,14 +494,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1377,
       "column": 19,
       "line": 43
     },
     "message": "A11y: Non-interactive element <pre> cannot have interactive role 'tree'",
-    "pos": 1358,
     "start": {
-      "character": 1358,
       "column": 0,
       "line": 43
     }
@@ -632,14 +506,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1439,
       "column": 61,
       "line": 44
     },
     "message": "A11y: Non-interactive element <progress> cannot have interactive role 'combobox'",
-    "pos": 1378,
     "start": {
-      "character": 1378,
       "column": 0,
       "line": 44
     }
@@ -647,14 +518,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1463,
       "column": 23,
       "line": 45
     },
     "message": "A11y: Non-interactive element <ruby> cannot have interactive role 'toolbar'",
-    "pos": 1440,
     "start": {
-      "character": 1440,
       "column": 0,
       "line": 45
     }
@@ -662,14 +530,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1520,
       "column": 56,
       "line": 46
     },
     "message": "A11y: Non-interactive element <section> cannot have interactive role 'radio'",
-    "pos": 1464,
     "start": {
-      "character": 1464,
       "column": 0,
       "line": 46
     }
@@ -677,14 +542,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1542,
       "column": 21,
       "line": 47
     },
     "message": "A11y: Non-interactive element <table> cannot have interactive role 'menu'",
-    "pos": 1521,
     "start": {
-      "character": 1521,
       "column": 0,
       "line": 47
     }
@@ -692,14 +554,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1569,
       "column": 26,
       "line": 48
     },
     "message": "A11y: Non-interactive element <tbody> cannot have interactive role 'searchbox'",
-    "pos": 1543,
     "start": {
-      "character": 1543,
       "column": 0,
       "line": 48
     }
@@ -707,14 +566,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1590,
       "column": 20,
       "line": 49
     },
     "message": "A11y: Non-interactive element <td> cannot have interactive role 'button'",
-    "pos": 1570,
     "start": {
-      "character": 1570,
       "column": 0,
       "line": 49
     }
@@ -722,14 +578,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1615,
       "column": 24,
       "line": 50
     },
     "message": "A11y: Non-interactive element <tfoot> cannot have interactive role 'listbox'",
-    "pos": 1591,
     "start": {
-      "character": 1591,
       "column": 0,
       "line": 50
     }
@@ -737,14 +590,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1657,
       "column": 41,
       "line": 51
     },
     "message": "A11y: Non-interactive element <thead> cannot have interactive role 'slider'",
-    "pos": 1616,
     "start": {
-      "character": 1616,
       "column": 0,
       "line": 51
     }
@@ -752,14 +602,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1686,
       "column": 28,
       "line": 52
     },
     "message": "A11y: Non-interactive element <time> cannot have interactive role 'doc-backlink'",
-    "pos": 1658,
     "start": {
-      "character": 1658,
       "column": 0,
       "line": 52
     }
@@ -767,14 +614,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1711,
       "column": 24,
       "line": 53
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'spinbutton'",
-    "pos": 1687,
     "start": {
-      "character": 1687,
       "column": 0,
       "line": 53
     }
@@ -782,14 +626,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1850,
       "column": 18,
       "line": 57
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'menu'",
-    "pos": 1832,
     "start": {
-      "character": 1832,
       "column": 0,
       "line": 57
     }
@@ -797,14 +638,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1872,
       "column": 21,
       "line": 58
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'menubar'",
-    "pos": 1851,
     "start": {
-      "character": 1851,
       "column": 0,
       "line": 58
     }
@@ -812,14 +650,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1897,
       "column": 24,
       "line": 59
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'radiogroup'",
-    "pos": 1873,
     "start": {
-      "character": 1873,
       "column": 0,
       "line": 59
     }
@@ -827,14 +662,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1919,
       "column": 21,
       "line": 60
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'tablist'",
-    "pos": 1898,
     "start": {
-      "character": 1898,
       "column": 0,
       "line": 60
     }
@@ -842,14 +674,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1938,
       "column": 18,
       "line": 61
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'tree'",
-    "pos": 1920,
     "start": {
-      "character": 1920,
       "column": 0,
       "line": 61
     }
@@ -857,14 +686,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1961,
       "column": 22,
       "line": 62
     },
     "message": "A11y: Non-interactive element <ul> cannot have interactive role 'treegrid'",
-    "pos": 1939,
     "start": {
-      "character": 1939,
       "column": 0,
       "line": 62
     }
@@ -872,14 +698,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 1992,
       "column": 18,
       "line": 64
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'menu'",
-    "pos": 1974,
     "start": {
-      "character": 1974,
       "column": 0,
       "line": 64
     }
@@ -887,14 +710,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2014,
       "column": 21,
       "line": 65
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'menubar'",
-    "pos": 1993,
     "start": {
-      "character": 1993,
       "column": 0,
       "line": 65
     }
@@ -902,14 +722,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2039,
       "column": 24,
       "line": 66
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'radiogroup'",
-    "pos": 2015,
     "start": {
-      "character": 2015,
       "column": 0,
       "line": 66
     }
@@ -917,14 +734,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2061,
       "column": 21,
       "line": 67
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'tablist'",
-    "pos": 2040,
     "start": {
-      "character": 2040,
       "column": 0,
       "line": 67
     }
@@ -932,14 +746,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2080,
       "column": 18,
       "line": 68
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'tree'",
-    "pos": 2062,
     "start": {
-      "character": 2062,
       "column": 0,
       "line": 68
     }
@@ -947,14 +758,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2103,
       "column": 22,
       "line": 69
     },
     "message": "A11y: Non-interactive element <ol> cannot have interactive role 'treegrid'",
-    "pos": 2081,
     "start": {
-      "character": 2081,
       "column": 0,
       "line": 69
     }
@@ -962,14 +770,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2133,
       "column": 17,
       "line": 71
     },
     "message": "A11y: Non-interactive element <li> cannot have interactive role 'tab'",
-    "pos": 2116,
     "start": {
-      "character": 2116,
       "column": 0,
       "line": 71
     }
@@ -977,14 +782,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2156,
       "column": 22,
       "line": 72
     },
     "message": "A11y: Non-interactive element <li> cannot have interactive role 'menuitem'",
-    "pos": 2134,
     "start": {
-      "character": 2134,
       "column": 0,
       "line": 72
     }
@@ -992,14 +794,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2174,
       "column": 17,
       "line": 73
     },
     "message": "A11y: Non-interactive element <li> cannot have interactive role 'row'",
-    "pos": 2157,
     "start": {
-      "character": 2157,
       "column": 0,
       "line": 73
     }
@@ -1007,14 +806,11 @@
   {
     "code": "a11y-no-noninteractive-element-to-interactive-role",
     "end": {
-      "character": 2219,
       "column": 44,
       "line": 74
     },
     "message": "A11y: Non-interactive element <li> cannot have interactive role 'treeitem'",
-    "pos": 2175,
     "start": {
-      "character": 2175,
       "column": 0,
       "line": 74
     }
