@@ -64,6 +64,9 @@ describe('custom-elements', function() {
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		if (dir[0] === '.') return;
+		// MEMO: puppeteer can not execute Chromium properly with Node8,10 on Linux at GitHub actions.
+		const { version } = process;
+		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux') return;
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);

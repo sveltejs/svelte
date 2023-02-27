@@ -194,10 +194,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
 		case 'idlist': // if list of ids, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((id) => typeof id === 'string');
+				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
 		case 'tokenlist': // if list of tokens, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
 		default:
 			return false;
 	}
@@ -225,6 +225,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
+	contains_a11y_label: boolean;
 
 	get is_dynamic_element() {
 		return this.name === 'svelte:element';
@@ -239,6 +240,7 @@ export default class Element extends Node {
 				this.tag_expr = new Expression(component, this, scope, info.tag);
 			} else {
 				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+				this.name = info.tag;
 			}
 		} else {
 			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
@@ -250,7 +252,7 @@ export default class Element extends Node {
 			if (this.name === 'pre' || this.name === 'textarea') {
 				const first = info.children[0];
 				if (first && first.type === 'Text') {
-					// The leading newline character needs to be stripped because of a qirk,
+					// The leading newline character needs to be stripped because of a quirk,
 					// it is ignored by browsers if the tag and its contents are set through
 					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
 					// Therefore strip it here but add it back in the appropriate
@@ -483,6 +485,11 @@ export default class Element extends Node {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}
 				}
+
+				// aria-activedescendant-has-tabindex
+				if (name === 'aria-activedescendant' && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+			    component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
 			}
 
 			// aria-role
@@ -492,47 +499,52 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_misplaced_role(this.name));
 				}
 
-				const value = attribute.get_static_value() as ARIARoleDefintionKey;
+				const value = attribute.get_static_value();
 
-				if (value && aria_role_abstract_set.has(value)) {
-					component.warn(attribute, compiler_warnings.a11y_no_abstract_role(value));
-				} else if (value && !aria_role_set.has(value)) {
-					const match = fuzzymatch(value, aria_roles);
-					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
-				}
-
-				// no-redundant-roles
-				const has_redundant_role = value === a11y_implicit_semantics.get(this.name);
-
-				if (this.name === value || has_redundant_role) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-				if (!is_parent_section_or_article) {
-					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
-					if (has_nested_redundant_role) {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
-				}
-
-				// role-has-required-aria-props
-				if (!is_semantic_role_element(value, this.name, attribute_map)) {
-					const role = roles.get(value);
-					if (role) {
-						const required_role_props = Object.keys(role.requiredProps);
-						const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
-
-						if (has_missing_props) {
-							component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
+				if (typeof value === 'string') {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
+						if (current_role && aria_role_abstract_set.has(current_role)) {
+							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+						} else if (current_role && !aria_role_set.has(current_role)) {
+							const match = fuzzymatch(current_role, aria_roles);
+							component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
 						}
-					}
-				}
 
-				// no-interactive-element-to-noninteractive-role
-				if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(value) || is_presentation_role(value))) {
-					component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(value, this.name));
+						// no-redundant-roles
+						const has_redundant_role = current_role === a11y_implicit_semantics.get(this.name);
+
+						if (this.name === current_role || has_redundant_role) {
+							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+						}
+
+						// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+						const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+						if (!is_parent_section_or_article) {
+							const has_nested_redundant_role = current_role === a11y_nested_implicit_semantics.get(this.name);
+							if (has_nested_redundant_role) {
+								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+							}
+						}
+
+						// role-has-required-aria-props
+						if (!is_semantic_role_element(current_role, this.name, attribute_map)) {
+							const role = roles.get(current_role);
+							if (role) {
+								const required_role_props = Object.keys(role.requiredProps);
+								const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+								if (has_missing_props) {
+									component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(current_role, required_role_props));
+								}
+							}
+						}
+
+						// no-interactive-element-to-noninteractive-role
+						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
+							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
+						}
+					});
+
 				}
 			}
 
@@ -614,23 +626,33 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
+			const aria_label_attribute = attribute_map.get('aria-label');
 
-			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
+			// modern browsers add noopener by default, so we only need to check legacy browsers
+			// legacy browsers don't support noopener so we only check for noreferrer there
+			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
 				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
-					const rel_values = rel ? rel.get_static_value().split(' ') : [];
-					const expected_values = ['noreferrer'];
-
-					expected_values.forEach(expected_value => {
-						if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
-							component.warn(this, {
-								code: `security-anchor-rel-${expected_value}`,
-								message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
-							});
+					if (rel == null || rel.is_static) {
+						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
+						if (!rel || !rel_values.includes('noreferrer')) {
+								component.warn(this, {
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
+								});
 						}
-					});
+					}
+				}
+			}
+
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					this.contains_a11y_label = true;
 				}
 			}
 
@@ -710,7 +732,10 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'video') {
-			if (attribute_map.has('muted')) {
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
 				return;
 			}
 
@@ -895,6 +920,13 @@ export default class Element extends Node {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
 				}
 			} else if (
+				name === 'naturalWidth' ||
+				name === 'naturalHeight'
+			) {
+				if (this.name !== 'img') {
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
+				}
+			} else if (
 				name === 'textContent' ||
 				name === 'innerHTML'
 			) {
@@ -915,6 +947,7 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (this.contains_a11y_label) return;
 		if (
 			this.bindings
 				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
@@ -1027,14 +1060,14 @@ export default class Element extends Node {
 	}
 }
 
-const regex_starts_with_vovel = /^[aeiou]/;
+const regex_starts_with_vowel = /^[aeiou]/;
 
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];

@@ -23,7 +23,9 @@ const read_only_media_attributes = new Set([
 	'ended',
 	'videoHeight',
 	'videoWidth',
-	'readyState'
+	'naturalWidth',
+	'naturalHeight',
+  'readyState'
 ]);
 
 export default class Binding extends Node {
@@ -81,7 +83,7 @@ export default class Binding extends Node {
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
 			if (info.expression.type === 'Identifier' && !variable.writable) {
-				component.error(this.expression.node as any, compiler_errors.invalid_binding_writibale);
+				component.error(this.expression.node as any, compiler_errors.invalid_binding_writable);
 				return;
 			}
 		}
