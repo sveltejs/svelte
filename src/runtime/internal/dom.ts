@@ -567,8 +567,16 @@ export function select_options(select, value) {
 	}
 }
 
+function first_enabled_option(select) {
+	for (const option of select.options) {
+		if (!option.disabled) {
+			return option;
+		}
+	}
+}
+
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+	const selected_option = select.querySelector(':checked') || first_enabled_option(select);
 	return selected_option && selected_option.__value;
 }
 
@@ -624,6 +632,10 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
 			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 

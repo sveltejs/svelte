@@ -19,6 +19,18 @@ Enforce no `accesskey` on element. Access keys are HTML attributes that allow we
 
 ---
 
+### `a11y-aria-activedescendant-has-tabindex`
+
+An element with `aria-activedescendant` must be tabbable, so it must either have an inherent `tabindex` or declare `tabindex` as an attribute.
+
+```sv
+<!-- A11y: Elements with attribute aria-activedescendant should have tabindex value -->
+<div aria-activedescendant="some-id" />
+
+```
+
+---
+
 ### `a11y-aria-attributes`
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
@@ -303,6 +315,20 @@ Elements with ARIA roles must have all required attributes for that role.
 ```sv
 <!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
 <span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
+```
+
+---
+
+### `a11y-role-supports-aria-props`
+
+Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
+
+```sv
+<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
+<div role="link" aria-multiline />
+
+<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
+<li aria-required />
 ```
 
 ---

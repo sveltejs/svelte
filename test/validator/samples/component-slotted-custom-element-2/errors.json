@@ -2,8 +2,7 @@
 	{
 		"code": "invalid-slotted-content",
 		"message": "Element with a slot='...' attribute must be a child of a component or a descendant of a custom element",
-		"start": { "line": 10, "column": 9, "character": 138 },
-		"end": { "line": 10, "column": 19, "character": 148 },
-		"pos": 138
+		"start": { "line": 10, "column": 9 },
+		"end": { "line": 10, "column": 19 }
 	}
 ]

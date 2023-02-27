@@ -44,7 +44,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {@const ...}'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},

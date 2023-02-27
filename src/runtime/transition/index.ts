@@ -211,7 +211,7 @@ export interface CrossfadeParams {
 	easing?: EasingFunction;
 }
 
-type ClientRectMap = Map<any, { rect: ClientRect }>;
+type ClientRectMap = Map<any, Element>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
@@ -232,13 +232,14 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
 
-	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams): TransitionConfig {
+	function crossfade(from_node: Element, node: Element, params: CrossfadeParams): TransitionConfig {
 		const {
 			delay = 0,
 			duration = d => Math.sqrt(d) * 30,
 			easing = cubicOut
 		} = assign(assign({}, defaults), params);
 
+		const from = from_node.getBoundingClientRect();
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
@@ -264,16 +265,14 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 
 	function transition(items: ClientRectMap, counterparts: ClientRectMap, intro: boolean) {
 		return (node: Element, params: CrossfadeParams & { key: any }) => {
-			items.set(params.key, {
-				rect: node.getBoundingClientRect()
-			});
+			items.set(params.key, node);
 
 			return () => {
 				if (counterparts.has(params.key)) {
-					const { rect } = counterparts.get(params.key);
+					const other_node = counterparts.get(params.key);
 					counterparts.delete(params.key);
 
-					return crossfade(rect, node, params);
+					return crossfade(other_node, node, params);
 				}
 
 				// if the node is disappearing altogether

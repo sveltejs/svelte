@@ -137,6 +137,10 @@ const events = [
 		event_names: ['toggle'],
 		filter: (node: Element, _name: string) =>
 			node.name === 'details'
+	},
+	{
+		event_names: ['load'],
+		filter: (_: Element, name: string) => name === 'naturalHeight' || name === 'naturalWidth'
 	}
 ];
 
@@ -315,10 +319,16 @@ export default class ElementWrapper extends Wrapper {
 		const has_transitions = !!(this.node.intro || this.node.outro);
 		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
 
+		const tag_will_be_removed = block.get_unique_name('tag_will_be_removed');
+		if (has_transitions) {
+			block.add_variable(tag_will_be_removed, x`false`);
+		}
+
 		block.chunks.update.push(b`
 			if (${tag}) {
 				if (!${previous_tag}) {
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${previous_tag} = ${tag};
 					${this.var}.c();
 					${has_transitions && b`@transition_in(${this.var})`}
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
@@ -327,27 +337,39 @@ export default class ElementWrapper extends Wrapper {
 					${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
 					${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
 					${this.var} = ${this.child_dynamic_element_block.name}(#ctx);
+					${previous_tag} = ${tag};
 					${this.var}.c();
+					${has_transitions && b`if (${tag_will_be_removed}) {
+						${tag_will_be_removed} = false;
+						@transition_in(${this.var})
+					}`}
 					${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 				} else {
+					${has_transitions && b`if (${tag_will_be_removed}) {
+						${tag_will_be_removed} = false;
+						@transition_in(${this.var})
+					}`}
 					${this.var}.p(#ctx, #dirty);
 				}
 			} else if (${previous_tag}) {
 				${has_transitions
 				? b`
+							${tag_will_be_removed} = true;
 							@group_outros();
 							@transition_out(${this.var}, 1, 1, () => {
 								${this.var} = null;
+								${previous_tag} = ${tag};
+								${tag_will_be_removed} = false;
 							});
 							@check_outros();
 						`
 				: b`
 							${this.var}.d(1);
 							${this.var} = null;
+							${previous_tag} = ${tag};
 						`
 			}
 			}
-			${previous_tag} = ${tag};
 		`);
 
 		if (this.child_dynamic_element_block.has_intros) {
@@ -854,8 +876,9 @@ export default class ElementWrapper extends Wrapper {
 			}
 
 			block.chunks.mount.push(b`
-				(${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
+				'value' in ${data} && (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
+
 			block.chunks.update.push(b`
 				if (${block.renderer.dirty(Array.from(dependencies))} && 'value' in ${data}) (${data}.multiple ? @select_options : @select_option)(${this.var}, ${data}.value);
 			`);
@@ -863,7 +886,9 @@ export default class ElementWrapper extends Wrapper {
 			const type = this.node.get_static_attribute_value('type');
 			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
 				block.chunks.mount.push(b`
-					${this.var}.value = ${data}.value;
+					if ('value' in ${data}) {
+						${this.var}.value = ${data}.value;
+					}
 				`);
 				block.chunks.update.push(b`
 					if ('value' in ${data}) {

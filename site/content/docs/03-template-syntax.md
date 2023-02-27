@@ -206,6 +206,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {/if}
 ```
 
+(Blocks don't have to wrap elements, they can also wrap text within elements!)
 
 ### {#each ...}
 
@@ -663,7 +664,7 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 
 ---
 
-A `<select multiple>` element behaves similarly to a checkbox group.
+A `<select multiple>` element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the `value` property of each selected `<option>`.
 
 ```sv
 <select multiple bind:value={fillings}>
@@ -748,6 +749,22 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:videoWidth
 	bind:videoHeight
 ></video>
+```
+
+##### Image element bindings
+
+---
+
+Image elements (`<img>`) have two readonly bindings:
+
+* `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
+* `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
+
+```sv
+<img
+	bind:naturalWidth
+	bind:naturalHeight
+></img>
 ```
 
 ##### Block-level element bindings
@@ -1024,7 +1041,7 @@ Like actions, transitions can have parameters.
 
 Transitions can use custom functions. If the returned object has a `css` function, Svelte will create a CSS animation that plays on the element.
 
-The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
 
 The function is called repeatedly *before* the transition begins, with different `t` and `u` arguments.
 
@@ -1307,14 +1324,12 @@ A custom animation function can also return a `tick` function, which is called *
 		const d = Math.sqrt(dx * dx + dy * dy);
 
 		return {
-		delay: 0,
-		duration: Math.sqrt(d) * 120,
-		easing: cubicOut,
-		tick: (t, u) =>
-			Object.assign(node.style, {
-				color: t > 0.5 ? 'Pink' : 'Blue'
-			});
-	};
+			delay: 0,
+			duration: Math.sqrt(d) * 120,
+			easing: cubicOut,
+			tick: (t, u) =>
+				Object.assign(node.style, { color: t > 0.5 ? 'Pink' : 'Blue' })
+		};
 	}
 </script>
 
@@ -1415,7 +1430,7 @@ Svelte's CSS Variables support allows for easily themeable components:
 
 ---
 
-So you can set a high level theme color:
+So you can set a high-level theme color:
 
 ```css
 /* global.css */
@@ -1502,6 +1517,8 @@ The content is exposed in the child component using the `<slot>` element, which 
 </Widget>
 ```
 
+Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
+
 #### `<slot name="`*name*`">`
 
 ---
@@ -1575,7 +1592,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 
 ---
 
-Slots can be rendered zero or more times, and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
+Slots can be rendered zero or more times and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
@@ -1666,11 +1683,11 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 
-The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
+The only supported binding is `bind:this`, since the element type-specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
 
-If `this` is the name of a void tag (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
+If `this` is the name of a [void element](https://developer.mozilla.org/en-US/docs/Glossary/Void_element) (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
 
 ```sv
 <script>
@@ -1716,7 +1733,7 @@ You can also bind to the following properties:
 * `outerHeight`
 * `scrollX`
 * `scrollY`
-* `online` — an alias for window.navigator.onLine
+* `online` — an alias for `window.navigator.onLine`
 
 All except `scrollX` and `scrollY` are readonly.
 

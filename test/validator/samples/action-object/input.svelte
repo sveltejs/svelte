@@ -3,7 +3,7 @@
 		foo : "bar",
 		action(element, { leet }) {
 			element.foo = this.foo + leet;
-		},
+		}
 	}
 </script>
 

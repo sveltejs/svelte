@@ -3,13 +3,10 @@
 	"message": "An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?",
 	"start": {
 		"line": 6,
-		"column": 6,
-		"character": 69
+		"column": 6
 	},
 	"end": {
 		"line": 6,
-		"column": 17,
-		"character": 80
-	},
-	"pos": 69
+		"column": 17
+	}
 }]

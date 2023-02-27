@@ -478,6 +478,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	hidden?: boolean | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
+	part?: string | undefined | null;
 	placeholder?: string | undefined | null;
 	slot?: string | undefined | null;
 	spellcheck?: Booleanish | undefined | null;
@@ -539,10 +540,12 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:textContent'?: string | undefined | null;
 
 	// SvelteKit
+	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
+	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
