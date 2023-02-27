@@ -266,7 +266,7 @@ function get_dom_updater(
 		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
-			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
+			? x`~(${binding.snippet} || []).indexOf(${element.var}.__value)`
 			: x`${element.var}.__value === ${binding.snippet}`;
 
 		return b`${element.var}.checked = ${condition};`;
