@@ -16,11 +16,15 @@ export function collapse_template_literal(literal: TemplateLiteral) {
 		const next_quasi = literal.quasis[i + 1];
 		// If an expression is a simple string literal, combine it with its preceding
 		// and following quasi
-		if (next_quasi && expr.type === 'Literal' && typeof expr.value === 'string') {
+		if (next_quasi && expr && expr.type === 'Literal' && typeof expr.value === 'string') {
 			cur_quasi.value.raw += escape_template(expr.value) + next_quasi.value.raw;
 		} else {
-			collapsed_expressions.push(expr);
-			collapsed_quasis.push(next_quasi);
+			if (expr) {
+				collapsed_expressions.push(expr);
+			}
+			if (next_quasi) {
+				collapsed_quasis.push(next_quasi);
+			}
 			cur_quasi = next_quasi;
 		}
 	}
