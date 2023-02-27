@@ -4,6 +4,7 @@
 
 * Add a11y warnings:
 	* `aria-activedescendant-has-tabindex`: elements with `aria-activedescendant` need to have a `tabindex` ([#8172](https://github.com/sveltejs/svelte/pull/8172))
+	* `role-supports-aria-props`: checks that the (implicit) element role supports the given aria attributes ([#8195](https://github.com/sveltejs/svelte/pull/8195))
 * Omit a11y warning on `<video>` tags with `aria-hidden="true"` ([#7874](https://github.com/sveltejs/svelte/issues/7874))
 * Omit a11y "no child content" warning on elements with `aria-label` ([#8299](https://github.com/sveltejs/svelte/pull/8299))
 * Make `noreferrer` warning less zealous ([#6289](https://github.com/sveltejs/svelte/issues/6289))
@@ -19,6 +20,13 @@
 * Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
 * Better handling of `inert` attribute ([#7500](https://github.com/sveltejs/svelte/issues/7500))
 * Clear inputs when `bind:group` to `undefined` ([#8214](https://github.com/sveltejs/svelte/issues/8214))
+* Ensure nested arrays can change at the same time ([#8282](https://github.com/sveltejs/svelte/issues/8282))
+* Reduce use of template literals in SSR output for better performance ([#7539](https://github.com/sveltejs/svelte/pull/7539))
+* Allow assigning to property of const while destructuring ([#7964](https://github.com/sveltejs/svelte/issues/7964))
+* Don't set selected options if value is unbound or not passed ([#5644](https://github.com/sveltejs/svelte/issues/5644))
+* Ensure `<input>` value persists when swapping elements with spread attributes in an `#each` block ([#7578](https://github.com/sveltejs/svelte/issues/7578))
+* Select first enabled option by default when initial value is undefined ([#7041](https://github.com/sveltejs/svelte/issues/7041))
+* Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948)) 
 
 ## 3.55.1
 
