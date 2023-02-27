@@ -12,4 +12,4 @@ In Svelte, you do this with the special `{@html ...}` tag:
 <p>{@html string}</p>
 ```
 
-> Svelte doesn't perform any sanitization of the expression inside `{@html ...}` before it gets inserted into the DOM. In other words, if you use this feature it's critical that you manually escape HTML that comes from sources you don't trust, otherwise you risk exposing your users to XSS attacks.
+> **Warning!** Svelte doesn't perform any sanitization of the expression inside `{@html ...}` before it gets inserted into the DOM. In other words, if you use this feature it's **critical** that you manually escape HTML that comes from sources you don't trust, otherwise you risk exposing your users to XSS attacks.
