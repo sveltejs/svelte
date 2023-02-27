@@ -123,6 +123,17 @@ export default {
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
 	}),
+  a11y_role_supports_aria_props: (attribute: string, role: string, is_implicit: boolean, name: string) => {
+    let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
+    if (is_implicit) {
+      message += ` This role is implicit on the element <${name}>.`;
+    }
+
+    return {
+      code: 'a11y-role-supports-aria-props',
+      message: `A11y: ${message}`
+    };
+  },
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'

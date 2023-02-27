@@ -308,6 +308,20 @@ Elements with ARIA roles must have all required attributes for that role.
 
 ---
 
+### `a11y-role-supports-aria-props`
+
+Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
+
+```sv
+<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
+<div role="link" aria-multiline />
+
+<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
+<li aria-required />
+```
+
+---
+
 ### `a11y-structure`
 
 Enforce that certain DOM elements have the correct structure.
