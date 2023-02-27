@@ -5,6 +5,8 @@ import { escape_template } from './stringify';
  * Collapse string literals together
  */ 
 export function collapse_template_literal(literal: TemplateLiteral) {
+	if (!literal.quasis.length) return;
+
 	const collapsed_quasis = [];
 	const collapsed_expressions = [];
 
@@ -22,9 +24,7 @@ export function collapse_template_literal(literal: TemplateLiteral) {
 			if (expr) {
 				collapsed_expressions.push(expr);
 			}
-			if (next_quasi) {
-				collapsed_quasis.push(next_quasi);
-			}
+			collapsed_quasis.push(cur_quasi);
 			cur_quasi = next_quasi;
 		}
 	}
