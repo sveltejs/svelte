@@ -190,7 +190,7 @@ export default {
 				'label-has-associated-control': {
 					labelComponents: ['CustomInputLabel'],
       		controlComponents: ['CustomInput'],
-      		depth: 3,
+      		depth: 5,
 				}
 			}
 		}
@@ -200,7 +200,7 @@ export default {
 
 - `labelComponents` is a list of Svelte component names that should be checked for an associated control.
 - `controlComponents` is a list of Svelte component names that will output an input element.
-- `depth` (default 3, max 25) is an integer that determines how deep within the label element the rule should look for an element to determine if the label element has associated control.
+- `depth` (default 5, max 25) is an integer that determines how deep within the label element the rule should look for an element to determine if the label element has associated control.
 
 ---
 

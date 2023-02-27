@@ -179,7 +179,7 @@ export function contains_input_child(
 	rule_options: CompileOptions['a11y']['rules']['label-has-associated-control']
 ): boolean {
 	// magic number inspired from https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/rules/label-has-associated-control.js
-	const max_depth = Math.min(rule_options?.depth ?? 3, 25);
+	const max_depth = Math.min(rule_options?.depth ?? 5, 25);
 	const additional_component_names = rule_options?.controlComponents;
 
 	function traverse_children(
