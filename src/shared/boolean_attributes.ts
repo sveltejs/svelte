@@ -1,4 +1,3 @@
-// source: https://html.spec.whatwg.org/multipage/indices.html
 const _boolean_attributes = [
 	'allowfullscreen',
 	'allowpaymentrequest',
@@ -12,7 +11,6 @@ const _boolean_attributes = [
 	'disabled',
 	'formnovalidate',
 	'hidden',
-	'indeterminate',
 	'inert',
 	'ismap',
 	'itemscope',
@@ -30,4 +28,9 @@ const _boolean_attributes = [
 ] as const;
 
 export type BooleanAttributes = typeof _boolean_attributes[number];
+
+/**
+ * List of HTML boolean attributes (e.g. `<input disabled>`).
+ * Source: https://html.spec.whatwg.org/multipage/indices.html
+ */
 export const boolean_attributes: Set<string> = new Set([..._boolean_attributes]);
