@@ -72,11 +72,13 @@ function create_fragment(ctx) {
 			if (/*tag*/ ctx[0].svg) {
 				if (!previous_tag) {
 					svelte_element = create_dynamic_element(ctx);
+					previous_tag = /*tag*/ ctx[0].svg;
 					svelte_element.c();
 					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else if (safe_not_equal(previous_tag, /*tag*/ ctx[0].svg)) {
 					svelte_element.d(1);
 					svelte_element = create_dynamic_element(ctx);
+					previous_tag = /*tag*/ ctx[0].svg;
 					svelte_element.c();
 					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else {
@@ -85,9 +87,8 @@ function create_fragment(ctx) {
 			} else if (previous_tag) {
 				svelte_element.d(1);
 				svelte_element = null;
+				previous_tag = /*tag*/ ctx[0].svg;
 			}
-
-			previous_tag = /*tag*/ ctx[0].svg;
 		},
 		i: noop,
 		o: noop,

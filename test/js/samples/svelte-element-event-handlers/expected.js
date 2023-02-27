@@ -112,11 +112,13 @@ function create_fragment(ctx) {
 			if (a) {
 				if (!previous_tag) {
 					svelte_element = create_dynamic_element(ctx);
+					previous_tag = a;
 					svelte_element.c();
 					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else if (safe_not_equal(previous_tag, a)) {
 					svelte_element.d(1);
 					svelte_element = create_dynamic_element(ctx);
+					previous_tag = a;
 					svelte_element.c();
 					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
 				} else {
@@ -125,9 +127,8 @@ function create_fragment(ctx) {
 			} else if (previous_tag) {
 				svelte_element.d(1);
 				svelte_element = null;
+				previous_tag = a;
 			}
-
-			previous_tag = a;
 		},
 		i: noop,
 		o: noop,
