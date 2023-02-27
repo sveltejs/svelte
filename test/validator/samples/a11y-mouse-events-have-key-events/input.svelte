@@ -3,7 +3,7 @@
 	// Props should be passed down explicitly for rule to pass.
 	const otherProps = {
 		onBlur: () => void 0,
-		onFocus: () => void 0,
+		onFocus: () => void 0
 	};
 </script>
 

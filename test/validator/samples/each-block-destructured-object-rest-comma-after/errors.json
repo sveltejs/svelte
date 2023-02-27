@@ -1,15 +1,12 @@
 [{
 	"code": "parse-error",
 	"message": "Comma is not permitted after the rest element",
-	"pos": 100,
 	"start": {
 		"line": 5,
-		"column": 53,
-		"character": 100
+		"column": 53
 	},
 	"end": {
 		"line": 5,
-		"column": 53,
-		"character": 100
+		"column": 53
 	}
 }]
