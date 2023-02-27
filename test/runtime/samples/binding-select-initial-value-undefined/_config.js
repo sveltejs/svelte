@@ -5,6 +5,7 @@ export default {
 		<p>selected: a</p>
 
 		<select>
+			<option disabled='' value='x'>x</option>
 			<option value='a'>a</option>
 			<option value='b'>b</option>
 			<option value='c'>c</option>
@@ -18,7 +19,8 @@ export default {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];
 
+		// first enabled option should be selected
 		assert.equal(select.value, 'a');
-		assert.ok(options[0].selected);
+		assert.ok(options[1].selected);
 	}
 };
