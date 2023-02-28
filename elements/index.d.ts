@@ -707,6 +707,9 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	srcset?: string | undefined | null;
 	usemap?: string | undefined | null;
 	width?: number | string | undefined | null;
+
+	readonly 'bind:naturalWidth'?: number | undefined | null;
+	readonly 'bind:naturalHeight'?: number | undefined | null;
 }
 
 export interface HTMLInsAttributes extends HTMLAttributes<HTMLModElement> {
