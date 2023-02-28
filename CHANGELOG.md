@@ -32,6 +32,7 @@
 * Decode html entities correctly ([#8026](https://github.com/sveltejs/svelte/issues/8026))
 * Handle `{@html}` tags inside `<template>` tags ([#7364](https://github.com/sveltejs/svelte/pull/7364))
 * Introduce parameter to allow for horizontal slide transition ([#6182](https://github.com/sveltejs/svelte/issues/6182))
+* Add `naturalWidth` and `naturalHeight` bindings ([#7771](https://github.com/sveltejs/svelte/issues/7771))
 
 
 ## 3.55.1
