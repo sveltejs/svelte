@@ -161,11 +161,13 @@ function create_fragment(ctx) {
 			if (/*dynamic_value*/ ctx[0]) {
 				if (!previous_tag) {
 					svelte_element1 = create_dynamic_element_2(ctx);
+					previous_tag = /*dynamic_value*/ ctx[0];
 					svelte_element1.c();
 					svelte_element1.m(t1.parentNode, t1);
 				} else if (safe_not_equal(previous_tag, /*dynamic_value*/ ctx[0])) {
 					svelte_element1.d(1);
 					svelte_element1 = create_dynamic_element_2(ctx);
+					previous_tag = /*dynamic_value*/ ctx[0];
 					svelte_element1.c();
 					svelte_element1.m(t1.parentNode, t1);
 				} else {
@@ -174,9 +176,8 @@ function create_fragment(ctx) {
 			} else if (previous_tag) {
 				svelte_element1.d(1);
 				svelte_element1 = null;
+				previous_tag = /*dynamic_value*/ ctx[0];
 			}
-
-			previous_tag = /*dynamic_value*/ ctx[0];
 
 			if (static_value) {
 				svelte_element2.p(ctx, dirty);
@@ -185,11 +186,13 @@ function create_fragment(ctx) {
 			if (/*dynamic_value*/ ctx[0]) {
 				if (!previous_tag_1) {
 					svelte_element3 = create_dynamic_element(ctx);
+					previous_tag_1 = /*dynamic_value*/ ctx[0];
 					svelte_element3.c();
 					svelte_element3.m(svelte_element3_anchor.parentNode, svelte_element3_anchor);
 				} else if (safe_not_equal(previous_tag_1, /*dynamic_value*/ ctx[0])) {
 					svelte_element3.d(1);
 					svelte_element3 = create_dynamic_element(ctx);
+					previous_tag_1 = /*dynamic_value*/ ctx[0];
 					svelte_element3.c();
 					svelte_element3.m(svelte_element3_anchor.parentNode, svelte_element3_anchor);
 				} else {
@@ -198,9 +201,8 @@ function create_fragment(ctx) {
 			} else if (previous_tag_1) {
 				svelte_element3.d(1);
 				svelte_element3 = null;
+				previous_tag_1 = /*dynamic_value*/ ctx[0];
 			}
-
-			previous_tag_1 = /*dynamic_value*/ ctx[0];
 		},
 		i: noop,
 		o: noop,
