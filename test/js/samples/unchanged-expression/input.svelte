@@ -1,7 +1,7 @@
 <script>
   let world1 = 'world';
   let world2 = 'world';
-  const world3 = 'world';
+  let world3 = 'world';
   function foo() {
     world3 = 'svelte';
   }

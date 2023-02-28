@@ -3,13 +3,10 @@
 	"message": "'String' is not defined. Consider adding a <script> block with 'export let String' to declare a prop",
 	"start": {
 		"line": 2,
-		"column": 1,
-		"character": 7
+		"column": 1
 	},
 	"end": {
 		"line": 2,
-		"column": 10,
-		"character": 16
-	},
-	"pos": 7
+		"column": 10
+	}
 }]

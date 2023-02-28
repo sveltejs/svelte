@@ -15,6 +15,7 @@
 						"end": 22,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 18,
@@ -45,6 +46,7 @@
 						"start": 35,
 						"end": 52,
 						"type": "StyleDirective",
+						"modifiers": [],
 						"name": "color",
 						"value": [
 							{
@@ -77,6 +79,7 @@
 						"end": 80,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 77,
@@ -108,6 +111,7 @@
 						"end": 120,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 106,
@@ -160,6 +164,7 @@
 						"end": 160,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 146,
@@ -212,6 +217,7 @@
 						"end": 198,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 185,
@@ -264,6 +270,7 @@
 						"end": 245,
 						"type": "StyleDirective",
 						"name": "color",
+						"modifiers": [],
 						"value": [
 							{
 								"start": 223,

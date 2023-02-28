@@ -84,7 +84,7 @@ describe('ssr', () => {
 
 				try {
 					if (config.withoutNormalizeHtml) {
-						assert.strictEqual(html.trim(), expectedHtml.trim().replace(/\r\n/g, '\n'));
+						assert.strictEqual(html.trim().replace(/\r\n/g, '\n'), expectedHtml.trim().replace(/\r\n/g, '\n'));
 					} else {
 						(compileOptions.preserveComments
 							? assert.htmlEqualWithComments
@@ -117,7 +117,9 @@ describe('ssr', () => {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
 
 					try {
-						assert.htmlEqual(
+						(compileOptions.hydratable
+							? assert.htmlEqualWithComments
+							: assert.htmlEqual)(
 							head,
 							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
 						);

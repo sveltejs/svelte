@@ -4,9 +4,17 @@
  *   immediately after Svelte has applied updates to the markup.
  * - destroy: Method that is called after the element is unmounted
  *
+ * Additionally, you can specify which additional attributes and events the action enables on the applied element.
+ * This applies to TypeScript typings only and has no effect at runtime.
+ *
  * Example usage:
  * ```ts
- * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter> {
+ * interface Attributes {
+ * 	newprop?: string;
+ *	'on:event': (e: CustomEvent<boolean>) => void;
+ * }
+ *
+ * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {
  *   // ...
  *   return {
  *     update: (updatedParameter) => {...},
@@ -17,9 +25,15 @@
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-interface ActionReturn<Parameter = void> {
-	update?: void extends Parameter ? undefined : (parameter: Parameter) => void;
+export interface ActionReturn<Parameter = any, Attributes extends Record<string, any> = Record<never, any>> {
+	update?: [Parameter] extends [never] ? never : (parameter: Parameter) => void;
 	destroy?: () => void;
+	/**
+	 * ### DO NOT USE THIS
+	 * This exists solely for type-checking and has no effect at runtime.
+	 * Set this through the `Attributes` generic instead.
+	 */
+	$$_attributes?: Attributes;
 }
 
 /**
@@ -28,20 +42,15 @@ interface ActionReturn<Parameter = void> {
  * The following example defines an action that only works on `<div>` elements
  * and optionally accepts a parameter which it has a default value for:
  * ```ts
- * export const myAction: Action<HTMLDivElement, undefined | { someProperty: boolean }> = (node, param = { someProperty: true }) => {
+ * export const myAction: Action<HTMLDivElement, { someProperty: boolean }> = (node, param = { someProperty: true }) => {
  *   // ...
  * }
  * ```
- * If your action doesn't accept a parameter, type if as `Action<HTMLElement, void>`.
- *
- * You can return an object with methods `update` (if the action accepts a parameter) and `destroy` from the function.
+ * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
  * See interface `ActionReturn` for more details.
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-export type Action<Element = HTMLElement, Parameter = any> = 
-	void extends Parameter
-	? <Node extends Element>(node: Node) => void | ActionReturn<Parameter>
-	: undefined extends Parameter
-	? <Node extends Element>(node: Node, parameter?: Parameter) => void | ActionReturn<Parameter>
-	: <Node extends Element>(node: Node, parameter: Parameter) => void | ActionReturn<Parameter>;
+export interface Action<Element = HTMLElement, Parameter = never, Attributes extends Record<string, any> = Record<never, any>> {
+	<Node extends Element>(...args: [Parameter] extends [never ]? [node: Node] : undefined extends Parameter? [node: Node, parameter?: Parameter] : [node: Node, parameter: Parameter]): void | ActionReturn<Parameter, Attributes>;
+}

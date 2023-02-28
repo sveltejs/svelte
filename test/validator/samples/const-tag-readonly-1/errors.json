@@ -2,8 +2,7 @@
 	{
 		"code": "invalid-const-update",
 		"message": "'b' is declared using {@const ...} and is read-only",
-		"start": { "line": 7, "column": 26, "character": 106 },
-		"end": { "line": 7, "column": 30, "character": 110 },
-		"pos": 106
+		"start": { "line": 7, "column": 26 },
+		"end": { "line": 7, "column": 30 }
 	}
 ]

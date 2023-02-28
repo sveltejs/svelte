@@ -1,12 +1,14 @@
+import { namespaces } from '../../../utils/namespaces';
 import { b, x } from 'code-red';
 import Renderer from '../Renderer';
 import Block from '../Block';
 import Tag from './shared/Tag';
 import Wrapper from './shared/Wrapper';
+import Element from '../../nodes/Element';
 import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
 import { is_head } from './shared/is_head';
-import { Identifier } from 'estree';
+import { Identifier, Node } from 'estree';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 'raw' };
@@ -28,7 +30,7 @@ export default class RawMustacheTagWrapper extends Tag {
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
 
 		if (can_use_innerhtml) {
-			const insert = content => b`${parent_node}.innerHTML = ${content};`[0];
+			const insert = (content: Node) => b`${parent_node}.innerHTML = ${content};`[0];
 
 			const { init } = this.rename_this_method(
 				block,
@@ -51,9 +53,12 @@ export default class RawMustacheTagWrapper extends Tag {
 
 			const update_anchor = needs_anchor ? html_anchor : this.next ? this.next.var : 'null';
 
-			block.chunks.create.push(b`${html_tag} = new @HtmlTag();`);
+			const parent_element = this.node.find_nearest(/^Element/) as Element;
+			const is_svg = parent_element && parent_element.namespace === namespaces.svg;
+			block.chunks.create.push(b`${html_tag} = new @HtmlTag(${is_svg ? 'true' : 'false'});`);
+
 			if (this.renderer.options.hydratable) {
-				block.chunks.claim.push(b`${html_tag} = @claim_html_tag(${_parent_nodes});`);
+				block.chunks.claim.push(b`${html_tag} = @claim_html_tag(${_parent_nodes}, ${is_svg ? 'true' : 'false'});`);
 			}
 			block.chunks.hydrate.push(b`${html_tag}.a = ${update_anchor};`);
 			block.chunks.mount.push(b`${html_tag}.m(${init}, ${parent_node || '#target'}, ${parent_node ? null : '#anchor'});`);
