@@ -3,48 +3,48 @@
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"column": 20,
-			"line": 12
+			"line": 13
 		},
 		"message": "A11y: noninteractive element cannot have nonnegative tabIndex value",
 		"start": {
 			"column": 0,
-			"line": 12
+			"line": 13
 		}
 	},
 	{
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"column": 35,
-			"line": 13
+			"line": 14
 		},
 		"message": "A11y: noninteractive element cannot have nonnegative tabIndex value",
 		"start": {
 			"column": 0,
-			"line": 13
+			"line": 14
 		}
 	},
 	{
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"column": 24,
-			"line": 14
+			"line": 15
 		},
 		"message": "A11y: noninteractive element cannot have nonnegative tabIndex value",
 		"start": {
 			"column": 0,
-			"line": 14
+			"line": 15
 		}
 	},
 	{
 		"code": "a11y-no-noninteractive-tabindex",
 		"end": {
 			"column": 26,
-			"line": 15
+			"line": 16
 		},
 		"message": "A11y: noninteractive element cannot have nonnegative tabIndex value",
 		"start": {
 			"column": 0,
-			"line": 15
+			"line": 16
 		}
 	}
 ]
