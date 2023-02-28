@@ -18,8 +18,10 @@ export async function test({ assert, css,  js }) {
 	// TODO make util fn + move to test index.js
 	const sourcefile = 'input.svelte';
 	[
-		// TODO how to get line + column numbers?
+		// TODO: get line and col num from input.svelte rather than hardcoding here
+		// TODO: this should be line 12
 		[css, '--keep-me', 13, 2],
+		// TODO: these should be col 2
 		[css, '--done-replace-once', 6, 4],
 		[css, '--done-replace-twice', 9, 4]
 	]
