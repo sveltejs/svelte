@@ -325,7 +325,8 @@ export function set_custom_element_data_map(node, data_map: Record<string, unkno
 }
 
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
+	const descriptor = Object.getOwnPropertyDescriptor(node, prop);
+	if (descriptor && descriptor.writable) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
