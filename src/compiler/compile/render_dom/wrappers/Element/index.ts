@@ -97,7 +97,7 @@ const events = [
 		event_names: ['loadedmetadata'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
-			(name === 'buffered' || name === 'seekable' || name === 'readyState')
+			(name === 'buffered' || name === 'seekable')
 	},
 	{
 		event_names: ['volumechange'],
@@ -130,7 +130,7 @@ const events = [
 			(name === 'videoHeight' || name === 'videoWidth')
 	},
 	{
-		event_names: ['loadeddata', 'canplay', 'canplaythrough', 'emptied'],
+		event_names: ['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'emptied'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
 			name === 'readyState'

@@ -38,8 +38,7 @@ function create_fragment(ctx) {
 			video = element("video");
 			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[6].call(video));
 			add_render_callback(() => /*video_elementresize_handler*/ ctx[7].call(video));
-			if (/*readyState*/ ctx[4] === void 0) add_render_callback(() => /*video_loadedmetadata_handler*/ ctx[8].call(video));
-			if (/*readyState*/ ctx[4] === void 0) add_render_callback(() => /*video_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[9].call(video));
+			if (/*readyState*/ ctx[4] === void 0) add_render_callback(() => /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8].call(video));
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
@@ -49,11 +48,13 @@ function create_fragment(ctx) {
 				dispose = [
 					listen(video, "timeupdate", video_timeupdate_handler),
 					listen(video, "resize", /*video_resize_handler*/ ctx[6]),
-					listen(video, "loadedmetadata", /*video_loadedmetadata_handler*/ ctx[8]),
-					listen(video, "loadeddata", /*video_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[9]),
-					listen(video, "canplay", /*video_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[9]),
-					listen(video, "canplaythrough", /*video_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[9]),
-					listen(video, "emptied", /*video_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[9])
+					listen(video, "loadedmetadata", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "loadeddata", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "canplay", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "canplaythrough", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "playing", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "waiting", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "emptied", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8])
 				];
 
 				mounted = true;
@@ -101,12 +102,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(3, offsetWidth);
 	}
 
-	function video_loadedmetadata_handler() {
-		readyState = this.readyState;
-		$$invalidate(4, readyState);
-	}
-
-	function video_loadeddata_canplay_canplaythrough_emptied_handler() {
+	function video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler() {
 		readyState = this.readyState;
 		$$invalidate(4, readyState);
 	}
@@ -128,8 +124,7 @@ function instance($$self, $$props, $$invalidate) {
 		video_timeupdate_handler,
 		video_resize_handler,
 		video_elementresize_handler,
-		video_loadedmetadata_handler,
-		video_loadeddata_canplay_canplaythrough_emptied_handler
+		video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler
 	];
 }
 

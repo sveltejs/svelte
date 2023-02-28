@@ -37,12 +37,12 @@ function create_fragment(ctx) {
 		c() {
 			audio = element("audio");
 			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[12].call(audio));
-			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0 || /*readyState*/ ctx[11] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[13].call(audio));
+			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[13].call(audio));
 			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[10] === void 0) add_render_callback(audio_timeupdate_handler);
 			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[15].call(audio));
 			if (/*seeking*/ ctx[9] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[19].call(audio));
 			if (/*ended*/ ctx[10] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[20].call(audio));
-			if (/*readyState*/ ctx[11] === void 0) add_render_callback(() => /*audio_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[21].call(audio));
+			if (/*readyState*/ ctx[11] === void 0) add_render_callback(() => /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21].call(audio));
 		},
 		m(target, anchor) {
 			insert(target, audio, anchor);
@@ -70,10 +70,13 @@ function create_fragment(ctx) {
 					listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[19]),
 					listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[19]),
 					listen(audio, "ended", /*audio_ended_handler*/ ctx[20]),
-					listen(audio, "loadeddata", /*audio_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[21]),
-					listen(audio, "canplay", /*audio_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[21]),
-					listen(audio, "canplaythrough", /*audio_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[21]),
-					listen(audio, "emptied", /*audio_loadeddata_canplay_canplaythrough_emptied_handler*/ ctx[21])
+					listen(audio, "loadedmetadata", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "loadeddata", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "canplay", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "canplaythrough", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "playing", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "waiting", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "emptied", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21])
 				];
 
 				mounted = true;
@@ -134,10 +137,8 @@ function instance($$self, $$props, $$invalidate) {
 	function audio_loadedmetadata_handler() {
 		buffered = time_ranges_to_array(this.buffered);
 		seekable = time_ranges_to_array(this.seekable);
-		readyState = this.readyState;
 		$$invalidate(0, buffered);
 		$$invalidate(1, seekable);
-		$$invalidate(11, readyState);
 	}
 
 	function audio_timeupdate_handler() {
@@ -181,7 +182,7 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(10, ended);
 	}
 
-	function audio_loadeddata_canplay_canplaythrough_emptied_handler() {
+	function audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler() {
 		readyState = this.readyState;
 		$$invalidate(11, readyState);
 	}
@@ -223,7 +224,7 @@ function instance($$self, $$props, $$invalidate) {
 		audio_ratechange_handler,
 		audio_seeking_seeked_handler,
 		audio_ended_handler,
-		audio_loadeddata_canplay_canplaythrough_emptied_handler
+		audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler
 	];
 }
 
