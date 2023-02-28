@@ -1,6 +1,8 @@
 import { TemplateNode } from '../interfaces';
 import { flatten } from './flatten';
 import { regex_whitespace } from './patterns';
+import Node from '../compile/nodes/shared/Node';
+import { INode } from '../compile/nodes/interfaces';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 
@@ -32,4 +34,22 @@ export function extract_ignores_above_position(position: number, template_nodes:
 	}
 
 	return [];
+}
+
+export function extract_ignores_above_node(node: Node): string[] {
+  // We traverse along nodes on the same array as the node we pass in
+  let cur_node: INode | undefined = node.prev;
+  while (cur_node) {
+    if (cur_node.type !== 'Comment' && cur_node.type !== 'Text') {
+      return [];
+	  }
+
+	  if (cur_node.type === 'Comment' && cur_node.ignores.length) {
+      return cur_node.ignores;
+	  }
+
+    cur_node = cur_node.prev;
+  }
+
+  return [];
 }
