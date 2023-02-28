@@ -56,7 +56,7 @@ function init_hydrate(target: NodeEx) {
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence subsequence of nodes that are claimed in order can be found by
+	* subsequence of nodes that are claimed in order can be found by
 	* computing the longest increasing subsequence of .claim_order values.
 	*
 	* This algorithm is optimal in generating the least amount of reorder operations
@@ -162,13 +162,14 @@ export function append_empty_stylesheet(node: Node) {
 
 function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
 	append((node as Document).head || node, style);
+	return style.sheet as CSSStyleSheet;
 }
 
 export function append_hydration(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);
 
-		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
+		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentNode !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
 
@@ -203,7 +204,9 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
 }
 
 export function destroy_each(iterations, detaching) {
@@ -315,12 +318,22 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	}
 }
 
+export function set_custom_element_data_map(node, data_map: Record<string, unknown>) {
+	Object.keys(data_map).forEach((key) => {
+		set_custom_element_data(node, key, data_map[key]);
+	});
+}
+
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
 	}
+}
+
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
@@ -492,12 +505,13 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-export function claim_html_tag(nodes) {
+
+export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
-		return new HtmlTagHydration();
+		return new HtmlTagHydration(undefined, is_svg);
 	}
 
 	init_claim_info(nodes);
@@ -509,7 +523,7 @@ export function claim_html_tag(nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
 	}
-	return new HtmlTagHydration(claimed_nodes);
+	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
 export function set_data(text, data) {
@@ -557,8 +571,16 @@ export function select_options(select, value) {
 	}
 }
 
+function first_enabled_option(select) {
+	for (const option of select.options) {
+		if (!option.disabled) {
+			return option;
+		}
+	}
+}
+
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+	const selected_option = select.querySelector(':checked') || first_enabled_option(select);
 	return selected_option && selected_option.__value;
 }
 
@@ -614,6 +636,10 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
 			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 
@@ -644,17 +670,40 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
+export function head_selector(nodeId: string, head: HTMLElement) {
+	const result = [];
+	let started = 0;
+
+	for (const node of head.childNodes) {
+		if (node.nodeType === 8 /* comment node */) {
+			const comment = node.textContent.trim();
+			if (comment === `HEAD_${nodeId}_END`) {
+				started -= 1;
+				result.push(node);
+			} else if (comment === `HEAD_${nodeId}_START`) {
+				started += 1;
+				result.push(node);
+			}
+		} else if (started > 0) {
+			result.push(node);
+		}
+	}
+	return result;
+}
+
 export class HtmlTag {
+	private is_svg = false;
 	// parent for creating node
-	e: HTMLElement;
+	e: HTMLElement | SVGElement;
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | DocumentFragment;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
-	a: HTMLElement;
+	a: HTMLElement | SVGElement;
 
-	constructor() {
+	constructor(is_svg: boolean = false) {
+		this.is_svg = is_svg;
 		this.e = this.n = null;
 	}
 
@@ -662,10 +711,15 @@ export class HtmlTag {
 		this.h(html);
 	}
 
-	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+	m(
+		html: string,
+		target: HTMLElement | SVGElement,
+		anchor: HTMLElement | SVGElement = null
+	) {
 		if (!this.e) {
+			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
 			/** #7364  target for <template> may be provided as #document-fragment(11) */
-			this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
 			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
@@ -699,8 +753,8 @@ export class HtmlTagHydration extends HtmlTag {
 	// hydration claimed nodes
 	l: ChildNode[] | void;
 
-	constructor(claimed_nodes?: ChildNode[]) {
-		super();
+	constructor(claimed_nodes?: ChildNode[], is_svg: boolean = false) {
+		super(is_svg);
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}
@@ -732,4 +786,8 @@ export function get_custom_elements_slots(element: HTMLElement) {
 		result[node.slot || 'default'] = true;
 	});
 	return result;
+}
+
+export function construct_svelte_component(component, props) {
+	return new component(props);
 }

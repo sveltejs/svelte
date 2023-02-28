@@ -1,0 +1,50 @@
+[
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
+		"start": {
+			"line": 1,
+			"column": 5
+		},
+		"end": {
+			"line": 1,
+			"column": 19
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"checkbox\" must have the following attributes defined: \"aria-checked\"",
+		"start": {
+			"line": 2,
+			"column": 6
+		},
+		"end": {
+			"line": 2,
+			"column": 21
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"meter\" must have the following attributes defined: \"aria-valuenow\"",
+		"start": {
+			"line": 3,
+			"column": 5
+		},
+		"end": {
+			"line": 3,
+			"column": 17
+		}
+	},
+	{
+		"code": "a11y-role-has-required-aria-props",
+		"message": "A11y: Elements with the ARIA role \"scrollbar\" must have the following attributes defined: \"aria-controls\", \"aria-valuenow\"",
+		"start": {
+			"column": 5,
+			"line": 4
+		},
+		"end": {
+			"column": 21,
+			"line": 4
+		}
+	}
+]
