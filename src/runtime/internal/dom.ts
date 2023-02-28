@@ -698,7 +698,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -718,8 +718,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -728,7 +729,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {
