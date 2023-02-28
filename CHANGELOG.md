@@ -26,7 +26,9 @@
 * Don't set selected options if value is unbound or not passed ([#5644](https://github.com/sveltejs/svelte/issues/5644))
 * Ensure `<input>` value persists when swapping elements with spread attributes in an `#each` block ([#7578](https://github.com/sveltejs/svelte/issues/7578))
 * Select first enabled option by default when initial value is undefined ([#7041](https://github.com/sveltejs/svelte/issues/7041))
-* Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948)) 
+* Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948))
+* Optimise `<svelte:element>` output code for static tag and static attribute ([#8161](https://github.com/sveltejs/svelte/pull/8161))
+
 
 ## 3.55.1
 
