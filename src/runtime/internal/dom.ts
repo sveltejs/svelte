@@ -332,6 +332,10 @@ export function set_custom_element_data(node, prop, value) {
 	}
 }
 
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
+}
+
 export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
