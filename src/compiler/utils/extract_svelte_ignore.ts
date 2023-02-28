@@ -1,7 +1,6 @@
 import { TemplateNode } from '../interfaces';
 import { flatten } from './flatten';
 import { regex_whitespace } from './patterns';
-import Node from '../compile/nodes/shared/Node';
 import { INode } from '../compile/nodes/interfaces';
 
 const regex_svelte_ignore = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
@@ -42,7 +41,7 @@ export function extract_ignores_above_node(node: INode): string[] {
     * which means that it can find svelte-ignores along
     * the nodes on the same level as itself who share the same parent. 
     */
-  let cur_node: INode | undefined = node.prev;
+  let cur_node = node.prev;
   while (cur_node) {
     if (cur_node.type !== 'Comment' && cur_node.type !== 'Text') {
       return [];
