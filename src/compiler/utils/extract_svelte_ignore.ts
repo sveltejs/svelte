@@ -36,8 +36,12 @@ export function extract_ignores_above_position(position: number, template_nodes:
 	return [];
 }
 
-export function extract_ignores_above_node(node: Node): string[] {
-  // We traverse along nodes on the same array as the node we pass in
+export function extract_ignores_above_node(node: INode): string[] {
+  /**
+    * This utilizes the fact that node has a prev and a next attribute
+    * which means that it can find svelte-ignores along
+    * the nodes on the same level as itself who share the same parent. 
+    */
   let cur_node: INode | undefined = node.prev;
   while (cur_node) {
     if (cur_node.type !== 'Comment' && cur_node.type !== 'Text') {
