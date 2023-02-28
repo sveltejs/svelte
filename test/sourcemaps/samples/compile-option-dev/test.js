@@ -19,9 +19,9 @@ export async function test({ assert, css,  js }) {
 	const sourcefile = 'input.svelte';
 	[
 		// TODO: get line and col num from input.svelte rather than hardcoding here
-		// TODO: this should be line 12
+		// TODO: this should be line 12 (source maps are 0-indexed)
 		[css, '--keep-me', 13, 2],
-		// TODO: these should be col 2
+		// TODO: these should be col 2 (each tab is 1 col)
 		[css, '--done-replace-once', 6, 4],
 		[css, '--done-replace-twice', 9, 4]
 	]
