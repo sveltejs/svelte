@@ -29,6 +29,9 @@
 * Select first enabled option by default when initial value is undefined ([#7041](https://github.com/sveltejs/svelte/issues/7041))
 * Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948))
 * Optimise `<svelte:element>` output code for static tag and static attribute ([#8161](https://github.com/sveltejs/svelte/pull/8161))
+* Decode html entities correctly ([#8026](https://github.com/sveltejs/svelte/issues/8026))
+* Handle `{@html}` tags inside `<template>` tags ([#7364](https://github.com/sveltejs/svelte/pull/7364))
+* Introduce parameter to allow for horizontal slide transition ([#6182](https://github.com/sveltejs/svelte/issues/6182))
 
 
 ## 3.55.1
