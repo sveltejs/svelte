@@ -295,6 +295,7 @@ export function attr(node: Element, attribute: string, value?: string) {
 }
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+	// TODO: is this wasteful because we don't batch read and write operations, potentially causing layout thrashing?
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
@@ -305,10 +306,9 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
 		} else if (descriptors[key] && descriptors[key].set) {
-			// For example, if an element has spread attributes,
-			// when a user inputs a value, spread attributes also will be updated, and it spoils the next user's input.
-			// So we need to skip updating if it's not changed.
-			// e.g.
+			// When something changes, spread attributes will also be updated.
+			// If we don't do the equality check, some attributes cause weird behavior,
+			// for example the min attribute (from https://github.com/sveltejs/svelte/issues/6751) in Chrome:
 			// <script>
 			//   const attributes = { min: '2021-09-21' };
 			//   let value = '2021-09-21';
