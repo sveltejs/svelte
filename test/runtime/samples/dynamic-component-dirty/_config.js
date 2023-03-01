@@ -1,7 +1,11 @@
-const calls = [];
+const calls = []
 export default {
 	props: {
 		calls
+	},
+
+	before_test() {
+		calls.length = 0;
 	},
 
 	async test({ assert, component, target, window }) {

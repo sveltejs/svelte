@@ -1,5 +1,4 @@
 <script>
-	import { writable } from 'svelte/store';
 	export let current_path = 'foo';
 	export let calls;
 	let i = 0;
@@ -14,4 +13,4 @@
 
 <svelte:component this={getComponent(current_path)} />
 <button on:click={onClick}>click me</button>
-{ i }
+{i}
