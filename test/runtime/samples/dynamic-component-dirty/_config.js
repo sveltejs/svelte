@@ -1,7 +1,7 @@
 const calls = [];
 export default {
 	props: {
-		calls,
+		calls
 	},
 
 	async test({ assert, component, target, window }) {
@@ -16,5 +16,5 @@ export default {
 
 		component.current_path = 'bar';
 		assert.deepEqual(calls.length, 2);
-	},
+	}
 };
