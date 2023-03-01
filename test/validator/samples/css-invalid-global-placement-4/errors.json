@@ -1,6 +1,6 @@
 [{
 	"code": "css-invalid-global-selector-position",
-	"message": ":global(...) which not at the start of selector sequence should not contain type or universal selector",
+	"message": ":global(...) not at the start of a selector sequence should not contain type or universal selectors",
 	"start": {
 		"line": 2,
 		"column": 5

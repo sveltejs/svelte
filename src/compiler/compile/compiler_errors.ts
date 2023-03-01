@@ -236,7 +236,7 @@ export default {
 	},
 	css_invalid_global_selector_position: {
 		code: 'css-invalid-global-selector-position',
-		message: ':global(...) which not at the start of selector sequence should not contain type or universal selector'
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',
