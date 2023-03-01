@@ -1,4 +1,4 @@
-const calls = []
+const calls = [];
 export default {
 	props: {
 		calls
