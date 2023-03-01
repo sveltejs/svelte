@@ -130,6 +130,8 @@ const events = [
 			(name === 'videoHeight' || name === 'videoWidth')
 	},
 	{
+		// from https://html.spec.whatwg.org/multipage/media.html#ready-states
+		// and https://html.spec.whatwg.org/multipage/media.html#loading-the-media-resource
 		event_names: ['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'waiting', 'emptied'],
 		filter: (node: Element, name: string) =>
 			node.is_media_node() &&
