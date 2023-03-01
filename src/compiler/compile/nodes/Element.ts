@@ -182,6 +182,7 @@ const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
@@ -549,7 +550,7 @@ export default class Element extends Node {
 				}
 
 				// aria-activedescendant-has-tabindex
-				if (name === 'aria-activedescendant' && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+				if (name === 'aria-activedescendant' && !this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
 					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
 				}
 			}
@@ -589,7 +590,7 @@ export default class Element extends Node {
 						}
 
 						// role-has-required-aria-props
-						if (!is_semantic_role_element(current_role, this.name, attribute_map)) {
+						if (!this.is_dynamic_element && !is_semantic_role_element(current_role, this.name, attribute_map)) {
 							const role = roles.get(current_role);
 							if (role) {
 								const required_role_props = Object.keys(role.requiredProps);
@@ -625,7 +626,7 @@ export default class Element extends Node {
 			}
 
 			// scope
-			if (name === 'scope' && this.name !== 'th') {
+			if (name === 'scope' && !this.is_dynamic_element && this.name !== 'th') {
 				component.warn(attribute, compiler_warnings.a11y_misplaced_scope);
 			}
 
@@ -645,6 +646,7 @@ export default class Element extends Node {
 			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
 
 			if (
+				!this.is_dynamic_element && 
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
 				!is_interactive_element(this.name, attribute_map) &&
@@ -658,14 +660,14 @@ export default class Element extends Node {
 				if (!has_key_event) {
 					component.warn(
 						this,
-						compiler_warnings.a11y_click_events_have_key_events()
+						compiler_warnings.a11y_click_events_have_key_events
 					);
 				}
 			}
 		}
 
 		// no-noninteractive-tabindex
-		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -981,7 +983,8 @@ export default class Element extends Node {
 				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
-				name === 'ended'
+				name === 'ended' ||
+				name === 'readyState'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));

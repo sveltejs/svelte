@@ -275,6 +275,14 @@ export function stop_propagation(fn) {
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
 	return function(event) {
 		// @ts-ignore
@@ -330,6 +338,10 @@ export function set_custom_element_data(node, prop, value) {
 	} else {
 		attr(node, prop, value);
 	}
+}
+
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
@@ -694,7 +706,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -714,8 +726,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -724,7 +737,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {
