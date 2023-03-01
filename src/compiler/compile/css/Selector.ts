@@ -148,6 +148,7 @@ export default class Selector {
 		}
 
 		this.validate_global_with_multiple_selectors(component);
+		this.validate_global_compound_selector(component);
 		this.validate_invalid_combinator_without_selector(component);
 	}
 
@@ -175,6 +176,23 @@ export default class Selector {
 			}
 			if (!block.combinator && block.selectors.length === 0) {
 				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
+			}
+		}
+	}
+
+	validate_global_compound_selector(component: Component) {
+		for (const block of this.blocks) {
+			for (let index = 0; index < block.selectors.length; index++) {
+				const selector = block.selectors[index];
+				if (selector.type === 'PseudoClassSelector' &&
+					selector.name === 'global' &&
+					index !== 0 &&
+					selector.children &&
+					selector.children.length > 0 &&
+					!/[.:#\s]/.test(selector.children[0].value)
+				) {
+					component.error(selector, compiler_errors.css_invalid_global_selector_position);
+				}
 			}
 		}
 	}

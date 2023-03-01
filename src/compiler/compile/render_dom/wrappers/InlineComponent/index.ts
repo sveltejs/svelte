@@ -21,6 +21,7 @@ import SlotTemplate from '../../../nodes/SlotTemplate';
 import { is_head } from '../shared/is_head';
 import compiler_warnings from '../../../compiler_warnings';
 import { namespaces } from '../../../../utils/namespaces';
+import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ignore';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -111,9 +112,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			return;
 		}
 
+    const ignores = extract_ignores_above_node(this.node);  
+    this.renderer.component.push_ignores(ignores);
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
+    this.renderer.component.pop_ignores();
 	}
 
 	render(
