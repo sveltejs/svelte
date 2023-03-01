@@ -275,6 +275,14 @@ export function stop_propagation(fn) {
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
 	return function(event) {
 		// @ts-ignore

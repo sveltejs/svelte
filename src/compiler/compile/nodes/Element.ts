@@ -183,6 +183,7 @@ const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
