@@ -845,6 +845,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	 */
 	volume?: number | undefined | null;
 
+	readonly 'bind:readyState'?: 0 | 1 | 2 | 3 | 4 | undefined | null;
 	readonly 'bind:duration'?: number | undefined | null;
 	readonly 'bind:buffered'?: SvelteMediaTimeRange[] | undefined | null;
 	readonly 'bind:played'?: SvelteMediaTimeRange[] | undefined | null;

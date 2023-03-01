@@ -980,7 +980,8 @@ export default class Element extends Node {
 				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
-				name === 'ended'
+				name === 'ended' ||
+				name === 'readyState'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
