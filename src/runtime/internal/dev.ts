@@ -49,10 +49,11 @@ export function detach_after_dev(before: Node) {
 	}
 }
 
-export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean) {
+export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean, has_stop_immediate_propagation?: boolean) {
 	const modifiers = options === true ? [ 'capture' ] : options ? Array.from(Object.keys(options)) : [];
 	if (has_prevent_default) modifiers.push('preventDefault');
 	if (has_stop_propagation) modifiers.push('stopPropagation');
+	if (has_stop_immediate_propagation) modifiers.push('stopImmediatePropagation');
 
 	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
 
