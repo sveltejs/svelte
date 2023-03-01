@@ -34,23 +34,16 @@ const interactive_roles = new Set(
 	non_abstract_roles.filter((name) => !non_interactive_roles.has(name))
 );
 
-export enum RoleType {
-  Interactive = 'interactive',
-  NonInteractive = 'non-interactive',
-  Abstract = 'abstract',
-  Invalid = 'invalid',
+export function is_non_interactive_roles(role: ARIARoleDefintionKey) {
+	return non_interactive_roles.has(role);
 }
 
-export function role_type(role: ARIARoleDefintionKey): RoleType {
-  if (interactive_roles.has(role)) {
-    return RoleType.Interactive;
-  } else if (non_interactive_roles.has(role)) {
-    return RoleType.NonInteractive;
-  } else if (abstract_roles.has(role)) {
-    return RoleType.Abstract;
-  } else {
-    return RoleType.Invalid;
-  }
+export function is_interactive_roles(role: ARIARoleDefintionKey) {
+	return interactive_roles.has(role);
+}
+
+export function is_abstract_role(role: ARIARoleDefintionKey) {
+	return abstract_roles.has(role);
 }
 
 const presentation_roles = new Set(['presentation', 'none']);
@@ -179,6 +172,18 @@ export function element_interactivity(
 	}
 
   return ElementInteractivity.Static;
+}
+
+export function is_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
+}
+
+export function is_non_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
+}
+
+export function is_static_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
 export function is_semantic_role_element(role: ARIARoleDefintionKey, tag_name: string, attribute_map: Map<string, Attribute>) {

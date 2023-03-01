@@ -24,7 +24,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { role_type, RoleType, element_interactivity, ElementInteractivity, is_presentation_role, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -549,9 +549,7 @@ export default class Element extends Node {
 				}
 
 				// aria-activedescendant-has-tabindex
-				if (name === 'aria-activedescendant'
-            && element_interactivity(this.name, attribute_map) !== ElementInteractivity.Interactive
-            && !attribute_map.has('tabindex')) {
+				if (name === 'aria-activedescendant' && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
 					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
 				}
 			}
@@ -567,7 +565,7 @@ export default class Element extends Node {
 
 				if (typeof value === 'string') {
 					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
-						if (current_role && role_type(current_role) === RoleType.Abstract) {
+						if (current_role && is_abstract_role(current_role)) {
 							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
 						} else if (current_role && !aria_role_set.has(current_role)) {
 							const match = fuzzymatch(current_role, aria_roles);
@@ -604,14 +602,12 @@ export default class Element extends Node {
 						}
 
 						// no-interactive-element-to-noninteractive-role
-						if (element_interactivity(this.name, attribute_map) === ElementInteractivity.Interactive
-                && (role_type(current_role) === RoleType.NonInteractive || is_presentation_role(current_role))) {
+						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
 							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
 						}
             
             // no-noninteractive-element-to-interactive-role
-            if (element_interactivity(this.name, attribute_map) === ElementInteractivity.NonInteractive
-                && role_type(current_role) === RoleType.Interactive) {
+            if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
               component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
             }
 					});
@@ -651,7 +647,7 @@ export default class Element extends Node {
 			if (
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
-				element_interactivity(this.name, attribute_map) !== ElementInteractivity.Interactive &&
+				!is_interactive_element(this.name, attribute_map) &&
 				!this.attributes.find(attr => attr.is_spread)
 			) {
 				const has_key_event =
@@ -669,10 +665,7 @@ export default class Element extends Node {
 		}
 
 		// no-noninteractive-tabindex
-		if (element_interactivity(this.name, attribute_map) !== ElementInteractivity.Interactive
-        && role_type(
-          attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey
-        ) !== RoleType.Interactive) {
+		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
