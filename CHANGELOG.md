@@ -33,7 +33,12 @@
 * Handle `{@html}` tags inside `<template>` tags ([#7364](https://github.com/sveltejs/svelte/pull/7364))
 * Introduce parameter to allow for horizontal slide transition ([#6182](https://github.com/sveltejs/svelte/issues/6182))
 * Add `naturalWidth` and `naturalHeight` bindings ([#7771](https://github.com/sveltejs/svelte/issues/7771))
-
+* make `<!-- svelte-ignore ... -->` work above components ([#8082](https://github.com/sveltejs/svelte/issues/8082))
+* add global compound selector validation ([#6272](https://github.com/sveltejs/svelte/issues/6272))
+* add `stopImmediatePropagation` event modifier ([#5085](https://github.com/sveltejs/svelte/issues/5085))
+* add `readyState` binding for media elements ([#6666](https://github.com/sveltejs/svelte/issues/6666))
+* call `<svelte:component>` update to `this` only when it's dirty ([#4129](https://github.com/sveltejs/svelte/issues/4129))
+* support exclusively special characters in component filenames ([#7143](https://github.com/sveltejs/svelte/issues/7143))
 
 ## 3.55.1
 
