@@ -10,7 +10,7 @@ export const STYLES = '.awesome { color: orange; }\n';
 
 export default {
 	css_map_sources: ['common.scss', 'styles.scss'],
-	js_map_sources: [],
+	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: () => {

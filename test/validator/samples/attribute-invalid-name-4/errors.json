@@ -3,13 +3,10 @@
 	"message": "'-a' is not a valid attribute name",
 	"start": {
 		"line": 1,
-		"column": 3,
-		"character": 3
+		"column": 3
 	},
 	"end": {
 		"line": 1,
-		"column": 5,
-		"character": 5
-	},
-	"pos": 3
+		"column": 5
+	}
 }]

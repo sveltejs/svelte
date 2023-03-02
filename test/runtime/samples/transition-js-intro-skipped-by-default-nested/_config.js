@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window, raf }) {
+	test({ assert, target, raf }) {
 		const div = target.querySelector('div');
 		assert.equal(div.foo, undefined);
 

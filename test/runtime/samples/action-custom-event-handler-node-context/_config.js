@@ -3,7 +3,7 @@ export default {
 
 	html: '<button>10</button>',
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const event = new window.MouseEvent('click');
 
 		const button = target.querySelector('button');

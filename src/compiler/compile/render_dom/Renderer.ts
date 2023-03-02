@@ -3,7 +3,7 @@ import { CompileOptions, Var } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression } from 'estree';
+import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression, UnaryExpression, ArrayExpression } from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 import { reserved_keywords } from '../utils/reserved_keywords';
 import { renderer_invalidate } from './invalidate';
@@ -168,7 +168,7 @@ export default class Renderer {
 		return member;
 	}
 
-	invalidate(name: string, value?, main_execution_context: boolean = false) {
+	invalidate(name: string, value?: unknown, main_execution_context: boolean = false) {
 		return renderer_invalidate(this, name, value, main_execution_context);
 	}
 
@@ -229,7 +229,32 @@ export default class Renderer {
 		} as any;
 	}
 
-	reference(node: string | Identifier | MemberExpression) {
+	// NOTE: this method may be called before this.context_overflow / this.context is fully defined
+	// therefore, they can only be evaluated later in a getter function
+	get_initial_dirty(): UnaryExpression | ArrayExpression {
+		const _this = this;
+		// TODO: context-overflow make it less gross
+		const val: UnaryExpression = x`-1` as UnaryExpression;
+		return {
+			get type() {
+				return _this.context_overflow ? 'ArrayExpression' : 'UnaryExpression';
+			},
+			// as [-1]
+			get elements() {
+				const elements = [];
+				for (let i = 0; i < _this.context.length; i += 31) {
+					elements.push(val);
+				}
+				return elements;
+			},
+			// as -1
+			operator: val.operator,
+			prefix: val.prefix,
+			argument: val.argument
+		};
+	}
+
+	reference(node: string | Identifier | MemberExpression, ctx: string | void = '#ctx') {
 		if (typeof node === 'string') {
 			node = { type: 'Identifier', name: node };
 		}
@@ -239,11 +264,11 @@ export default class Renderer {
 
 		// TODO is this correct?
 		if (this.component.var_lookup.get(name)) {
-			this.component.add_reference(name);
+			this.component.add_reference(node, name);
 		}
 
 		if (member !== undefined) {
-			const replacement = x`/*${member.name}*/ #ctx[${member.index}]` as MemberExpression;
+			const replacement = x`/*${member.name}*/ ${ctx}[${member.index}]` as MemberExpression;
 
 			if (nodes[0].loc) replacement.object.loc = nodes[0].loc;
 			nodes[0] = replacement;

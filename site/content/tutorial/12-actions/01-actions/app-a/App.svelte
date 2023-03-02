@@ -1,28 +1,15 @@
 <script>
-	import { spring } from 'svelte/motion';
 
-	const coords = spring({ x: 0, y: 0 }, {
-		stiffness: 0.2,
-		damping: 0.4
-	});
-
-	function handlePanStart() {
-		coords.stiffness = coords.damping = 1;
-	}
-
-	function handlePanMove(event) {
-		coords.update($coords => ({
-			x: $coords.x + event.detail.dx,
-			y: $coords.y + event.detail.dy
-		}));
-	}
-
-	function handlePanEnd(event) {
-		coords.stiffness = 0.2;
-		coords.damping = 0.4;
-		coords.set({ x: 0, y: 0 });
-	}
+	
+	let showModal = true;
 </script>
+
+<button on:click={() => (showModal = true)}>Show Modal</button>
+{#if showModal}
+	<div class="box" on:outclick={() => (showModal = false)}>
+		Click outside me!
+	</div>
+{/if}
 
 <style>
 	.box {
@@ -33,17 +20,13 @@
 		height: var(--height);
 		left: calc(50% - var(--width) / 2);
 		top: calc(50% - var(--height) / 2);
+		display: flex;
+		align-items: center;
+		padding: 8px;
 		border-radius: 4px;
 		background-color: #ff3e00;
-		cursor: move;
+		color: #fff;
+		text-align: center;
+		font-weight: bold;
 	}
 </style>
-
-<div class="box"
-	on:panstart={handlePanStart}
-	on:panmove={handlePanMove}
-	on:panend={handlePanEnd}
-	style="transform:
-		translate({$coords.x}px,{$coords.y}px)
-		rotate({$coords.x * 0.2}deg)"
-></div>

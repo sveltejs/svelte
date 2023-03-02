@@ -4,11 +4,11 @@ import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void };
+export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithComments: (actual, expected, message?) => void };
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-export function loadSvelte(test) {
+export function loadSvelte(test: boolean = false) {
 	process.env.TEST = test ? 'true' : '';
 
 	const resolved = require.resolve('../compiler.js');
@@ -55,7 +55,7 @@ export function cleanRequireCache() {
 const virtualConsole = new jsdom.VirtualConsole();
 virtualConsole.sendTo(console);
 
-const window = new jsdom.JSDOM('<main></main>', {virtualConsole}).window;
+const window = new jsdom.JSDOM('<main></main>', { virtualConsole }).window;
 global.document = window.document;
 global.navigator = window.navigator;
 global.getComputedStyle = window.getComputedStyle;
@@ -118,6 +118,9 @@ function cleanChildren(node) {
 				node.removeChild(child);
 				child = previous;
 			}
+		} else if (child.nodeType === 8) {
+			// comment
+			// do nothing
 		} else {
 			cleanChildren(child);
 		}
@@ -137,11 +140,11 @@ function cleanChildren(node) {
 	}
 }
 
-export function normalizeHtml(window, html) {
+export function normalizeHtml(window, html, preserveComments = false) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
-			.replace(/<!--.*?-->/g, '')
+			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 		cleanChildren(node);
@@ -159,6 +162,14 @@ export function setupHtmlEqual() {
 		assert.deepEqual(
 			normalizeHtml(window, actual),
 			normalizeHtml(window, expected),
+			message
+		);
+	};
+	// eslint-disable-next-line no-import-assign
+	assert.htmlEqualWithComments = (actual, expected, message) => {
+		assert.deepEqual(
+			normalizeHtml(window, actual, true),
+			normalizeHtml(window, expected, true),
 			message
 		);
 	};
@@ -259,4 +270,59 @@ export function mkdirp(dir) {
 	} catch (err) {
 		// do nothing
 	}
+}
+
+export function prettyPrintPuppeteerAssertionError(message) {
+	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
+
+	if (match) {
+		assert.equal(match[1], match[2]);
+	}
+}
+
+export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 3, interval: number = 1000): Promise<T> {
+	let attempts = 0;
+	while (attempts <= maxAttempts) {
+		try {
+			return await fn();
+		} catch (err) {
+			if (++attempts >= maxAttempts) throw err;
+			await new Promise(resolve => setTimeout(resolve, interval));
+		}
+	}
+}
+
+// NOTE: Chromium may exit with SIGSEGV, so retry in that case
+export async function executeBrowserTest<T>(browser, launchPuppeteer: () => Promise<T>, additionalAssertion: () => void, onError: (err: Error) => void) {
+	let count = 0;
+	do {
+		count++;
+		try {
+			const page = await browser.newPage();
+
+			page.on('console', (type) => {
+				console[type._type](type._text);
+			});
+
+			page.on('error', error => {
+				console.log('>>> an error happened');
+				console.error(error);
+			});
+			await page.goto('http://localhost:6789');
+			const result = await page.evaluate(() => test(document.querySelector('main')));
+			if (result) console.log(result);
+			additionalAssertion();
+			await page.close();
+			break;
+		} catch (err) {
+			if (count === 5 || browser.isConnected()) {
+				onError(err);
+				throw err;
+			}
+			console.debug(err.stack || err);
+			console.log('RESTARTING Chromium...');
+			browser = await launchPuppeteer();
+		}
+	} while (count <= 5);
+	return browser;
 }

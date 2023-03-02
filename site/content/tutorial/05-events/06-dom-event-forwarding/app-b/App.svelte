@@ -2,7 +2,7 @@
 	import CustomButton from './CustomButton.svelte';
 
 	function handleClick() {
-		alert('clicked');
+		alert('Button Clicked');
 	}
 </script>
 

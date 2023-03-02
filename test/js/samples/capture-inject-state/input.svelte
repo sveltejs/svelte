@@ -1,6 +1,6 @@
 <script context="module">
   export let moduleLiveBinding;
-  export const moduleContantProps = 4;
+  export const moduleConstantProps = 4;
   let moduleLet;
   const moduleConst = 2;
   let shadowedByModule;

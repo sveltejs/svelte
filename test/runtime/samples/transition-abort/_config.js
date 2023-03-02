@@ -7,7 +7,7 @@ export default {
 		<div>a</div>
 	`,
 
-	async test({ assert, component, target, window, raf }) {
+	async test({ assert, component, target, raf }) {
 		component.visible = false;
 
 		// abort halfway through the outro transition

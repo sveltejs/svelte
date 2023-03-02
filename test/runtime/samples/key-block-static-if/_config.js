@@ -5,7 +5,7 @@ export default {
 		</section>
 		<button>Click</button>
 	`,
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 
 		await button.dispatchEvent(new window.Event('click'));

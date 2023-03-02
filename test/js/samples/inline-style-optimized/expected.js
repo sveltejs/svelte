@@ -38,7 +38,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { color } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("color" in $$props) $$invalidate(0, color = $$props.color);
+		if ('color' in $$props) $$invalidate(0, color = $$props.color);
 	};
 
 	return [color];

@@ -52,6 +52,7 @@ describe('hydration', () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			compileOptions = config.compileOptions || {};
+			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
 			const window = env();
 

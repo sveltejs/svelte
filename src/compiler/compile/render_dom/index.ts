@@ -3,12 +3,16 @@ import Component from '../Component';
 import Renderer from './Renderer';
 import { CompileOptions, CssResult } from '../../interfaces';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from '../utils/scope';
+import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import { flatten } from '../../utils/flatten';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
+import { push_array } from '../../utils/push_array';
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -33,9 +37,15 @@ export default function dom(
 
 	const css = component.stylesheet.render(options.filename, !options.customElement);
 
-	css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
-	const styles = component.stylesheet.has_styles && options.dev
+	if (css_sourcemap_enabled) {
+		css.map = apply_preprocessor_sourcemap(options.filename, css.map, options.sourcemap as string | RawSourceMap | DecodedSourceMap);
+	} else {
+		css.map = null;
+	}
+
+	const styles = css_sourcemap_enabled && component.stylesheet.has_styles && options.dev
 		? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 		: css.code;
 
@@ -44,16 +54,13 @@ export default function dom(
 	const should_add_css = (
 		!options.customElement &&
 		!!styles &&
-		options.css !== false
+		options.css === 'injected'
 	);
 
 	if (should_add_css) {
 		body.push(b`
-			function ${add_css}() {
-				var style = @element("style");
-				style.id = "${component.stylesheet.id}-style";
-				style.textContent = "${styles}";
-				@append(@_document.head, style);
+			function ${add_css}(target) {
+				@append_styles(target, "${component.stylesheet.id}", "${styles}");
 			}
 		`);
 	}
@@ -62,7 +69,7 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks.map(block => {
+	push_array(body, blocks.map(block => {
 		// TODO this is a horrible mess — renderer.blocks
 		// contains a mixture of Blocks and Nodes
 		if ((block as Block).render) return (block as Block).render();
@@ -76,7 +83,7 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots;
+	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
@@ -115,7 +122,7 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check: Node[] | Node;
+	let missing_props_check: Node[] | Node;
 	let inject_state: Expression;
 	let capture_state: Expression;
 	let props_inject: Node[] | Node;
@@ -150,7 +157,7 @@ export default function dom(
 					kind: 'set',
 					key: { type: 'Identifier', name: prop.export_name },
 					value: x`function(${prop.name}) {
-						this.$set({ ${prop.export_name}: ${prop.name} });
+						this.$$set({ ${prop.export_name}: ${prop.name} });
 						@flush();
 					}`
 				});
@@ -176,18 +183,58 @@ export default function dom(
 		}
 	});
 
+	component.instance_exports_from.forEach(exports_from => {
+		const import_declaration = {
+			...exports_from,
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: exports_from.source
+		};
+		component.imports.push(import_declaration as ImportDeclaration);
+
+		exports_from.specifiers.forEach(specifier => {
+			if (component.component_options.accessors) {
+				const name = component.get_unique_name(specifier.exported.name);
+				import_declaration.specifiers.push({
+					...specifier,
+					type: 'ImportSpecifier',
+					imported: specifier.local,
+					local: name
+				});
+
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						return ${name}
+					}`
+				});
+			} else if (component.compile_options.dev) {
+				accessors.push({
+					type: 'MethodDefinition',
+					kind: 'get',
+					key: { type: 'Identifier', name: specifier.exported.name },
+					value: x`function() {
+						throw new @_Error("<${component.tag}>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+					}`
+				});
+			}
+		});
+	});
+
 	if (component.compile_options.dev) {
 		// checking that expected ones were passed
 		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
-			dev_props_check = b`
-				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
-				${expected.map(prop => b`
-				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
-					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
-				}`)}
+			missing_props_check = b`
+				$$self.$$.on_mount.push(function () {
+					${expected.map(prop => b`
+					if (${prop.name} === undefined && !(('${prop.export_name}' in $$props) || $$self.$$.bound[$$self.$$.props['${prop.export_name}']])) {
+						@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+					}`)}
+				});
 			`;
 		}
 
@@ -252,7 +299,7 @@ export default function dom(
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as Node));
 
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
@@ -287,7 +334,7 @@ export default function dom(
 		// $$props arg is still needed for unknown prop check
 		args.push(x`$$props`);
 	}
-
+	// has_create_fragment is intentionally to be true in dev mode.
 	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
@@ -343,13 +390,13 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name);
+			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
-		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const reactive_declarations: Node[] = [];
+		const fixed_reactive_declarations: Array<Node | Node[]> = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -370,6 +417,15 @@ export default function dom(
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
+				for (const assignee of d.assignees) {
+					const variable = component.var_lookup.get(assignee);
+					if (variable && variable.subscribable) {
+						fixed_reactive_declarations.push(b`
+							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
+							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
+						`);
+					}
+				}
 			}
 		});
 
@@ -383,7 +439,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name)) {
+			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
@@ -394,12 +450,12 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
+		let unknown_props_check: Node[] | undefined;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
 				@_Object.keys($$props).forEach(key => {
-					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
+					if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') @_console.warn(\`<${component.tag}> was created with unknown prop '\${key}'\`);
 				});
 			`;
 		}
@@ -430,6 +486,7 @@ export default function dom(
 
 				${instance_javascript}
 
+				${missing_props_check}
 				${unknown_props_check}
 
 				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
@@ -483,11 +540,12 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`
+						const style = document.createElement('style');
+						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
+						this.shadowRoot.appendChild(style)`}
 
-					@init(this, { target: this.shadowRoot, props: ${init_props} }, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
-
-					${dev_props_check}
+					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 
 					if (options) {
 						if (options.target) {
@@ -517,7 +575,7 @@ export default function dom(
 			});
 		}
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 
@@ -532,36 +590,30 @@ export default function dom(
 			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 		};
 
+		const optional_parameters = [];
+		if (should_add_css) {
+			optional_parameters.push(add_css);
+		} else if (dirty) {
+			optional_parameters.push(x`null`);
+		}
+		if (dirty) {
+			optional_parameters.push(dirty);
+		}
+
 		const declaration = b`
 			class ${name} extends ${superclass} {
 				constructor(options) {
 					super(${options.dev && 'options'});
-					${should_add_css && b`if (!@_document.getElementById("${component.stylesheet.id}-style")) ${add_css}();`}
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment': 'null'}, ${not_equal}, ${prop_indexes}, ${dirty});
+					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-
-					${dev_props_check}
 				}
 			}
 		`[0] as ClassDeclaration;
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 	}
-	
-	return { js: flatten(body, []), css };
-}
 
-function flatten(nodes: any[], target: any[]) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
-		if (Array.isArray(node)) {
-			flatten(node, target);
-		} else {
-			target.push(node);
-		}
-	}
-
-	return target;
+	return { js: flatten(body), css };
 }

@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, raf }) {
+	test({ assert, component }) {
 		assert.equal(component.count, 0);
 
 		component.arr = ['2'];

@@ -6,9 +6,11 @@ import Renderer from './Renderer';
 import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
 import Text from '../nodes/Text';
 import { LabeledStatement, Statement, Node } from 'estree';
-import { walk } from 'estree-walker';
 import { extract_names } from 'periscopic';
+import { walk } from 'estree-walker';
+
 import { invalidate } from '../render_dom/invalidate';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 
 export default function ssr(
 	component: Component,
@@ -51,7 +53,6 @@ export default function ssr(
 			return b`
 				${component.compile_options.dev && b`@validate_store(${store_name}, '${store_name}');`}
 				${`$$unsubscribe_${store_name}`} = @subscribe(${store_name}, #value => ${name} = #value)
-				${store_name}.subscribe($$value => ${name} = $$value);
 			`;
 		});
 	const reactive_store_unsubscriptions = reactive_stores.map(
@@ -90,7 +91,7 @@ export default function ssr(
 
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = new Set(extract_names(assignee));
+					const names = new Set(extract_names(assignee as Node));
 					const to_invalidate = new Set<string>();
 
 					for (const name of names) {
@@ -200,11 +201,13 @@ export default function ssr(
 		main
 	].filter(Boolean);
 
+	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
+
 	const js = b`
 		${css.code ? b`
 		const #css = {
 			code: "${css.code}",
-			map: ${css.map ? string_literal(css.map.toString()) : 'null'}
+			map: ${css_sourcemap_enabled && css.map ? string_literal(css.map.toString()) : 'null'}
 		};` : null}
 
 		${component.extract_javascript(component.ast.module)}
@@ -234,7 +237,7 @@ function trim(nodes: TemplateNode[]) {
 		const node = nodes[end - 1] as Text;
 		if (node.type !== 'Text') break;
 
-		node.data = node.data.replace(/\s+$/, '');
+		node.data = node.data.trimRight();
 		if (node.data) break;
 	}
 

@@ -52,8 +52,9 @@ function create_each_block(ctx) {
 			t4 = text(t4_value);
 			t5 = text(" ago:");
 			t6 = space();
+			html_tag = new HtmlTag(false);
 			attr(span, "class", "meta");
-			html_tag = new HtmlTag(null);
+			html_tag.a = null;
 			attr(div, "class", "comment");
 		},
 		m(target, anchor) {
@@ -103,7 +104,9 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert(target, t0, anchor);
@@ -153,10 +156,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { foo } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("comments" in $$props) $$invalidate(0, comments = $$props.comments);
-		if ("elapsed" in $$props) $$invalidate(1, elapsed = $$props.elapsed);
-		if ("time" in $$props) $$invalidate(2, time = $$props.time);
-		if ("foo" in $$props) $$invalidate(3, foo = $$props.foo);
+		if ('comments' in $$props) $$invalidate(0, comments = $$props.comments);
+		if ('elapsed' in $$props) $$invalidate(1, elapsed = $$props.elapsed);
+		if ('time' in $$props) $$invalidate(2, time = $$props.time);
+		if ('foo' in $$props) $$invalidate(3, foo = $$props.foo);
 	};
 
 	return [comments, elapsed, time, foo];

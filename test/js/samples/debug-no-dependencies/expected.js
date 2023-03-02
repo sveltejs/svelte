@@ -86,7 +86,9 @@ function create_fragment(ctx) {
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert_dev(target, each_1_anchor, anchor);
@@ -137,11 +139,11 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots("Component", slots, []);
+	validate_slots('Component', slots, []);
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
 	});
 
 	return [];

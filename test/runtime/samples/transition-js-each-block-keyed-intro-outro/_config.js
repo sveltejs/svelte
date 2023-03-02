@@ -9,7 +9,7 @@ export default {
 
 	intro: true,
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		const divs = target.querySelectorAll('div');
 		divs[0].i = 0; // for debugging
 		divs[1].i = 1;

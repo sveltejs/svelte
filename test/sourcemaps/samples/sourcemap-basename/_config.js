@@ -15,11 +15,11 @@ span {
 
 export default {
 	css_map_sources: [external_relative_filename],
-	js_map_sources: [],
+	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: ({ content, filename }) => {
-				const external =`/* Filename from preprocess: ${filename} */` + external_code;
+				const external = `/* Filename from preprocess: ${filename} */` + external_code;
 				return magic_string_bundle([
 					{ code: external, filename: external_relative_filename },
 					{ code: content, filename }

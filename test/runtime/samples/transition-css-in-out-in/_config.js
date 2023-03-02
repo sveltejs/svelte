@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		const div = target.querySelector('div');
 
@@ -15,6 +15,6 @@ export default {
 		component.visible = true;
 
 		// reset original styles
-		assert.equal(div.style.animation, '__svelte_3809512021_1 100ms linear 0ms 1 both');
+		assert.equal(div.style.animation, '__svelte_3809512021_0 100ms linear 0ms 1 both');
 	}
 };

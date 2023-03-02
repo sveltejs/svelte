@@ -1,5 +1,7 @@
-<style>
-	strong { color: green; }
-</style>
+<strong>Green thing</strong>
 
-<strong>green thing</strong>
+<style>
+	strong {
+		color: green;
+	}
+</style>

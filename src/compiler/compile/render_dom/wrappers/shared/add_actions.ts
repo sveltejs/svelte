@@ -1,20 +1,23 @@
 import { b, x } from 'code-red';
 import Block from '../../Block';
 import Action from '../../../nodes/Action';
+import { Expression, Node } from 'estree';
 import is_contextual from '../../../nodes/shared/is_contextual';
 
 export default function add_actions(
 	block: Block,
-	target: string,
+	target: string | Expression,
 	actions: Action[]
 ) {
 	actions.forEach(action => add_action(block, target, action));
 }
 
-export function add_action(block: Block, target: string, action: Action) {
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
+
+export function add_action(block: Block, target: string | Expression, action: Action) {
 	const { expression, template_scope } = action;
-	let snippet;
-	let dependencies;
+	let snippet: Node | undefined;
+	let dependencies: string[] | undefined;
 
 	if (expression) {
 		snippet = expression.manipulate(block);
@@ -22,7 +25,7 @@ export function add_action(block: Block, target: string, action: Action) {
 	}
 
 	const id = block.get_unique_name(
-		`${action.name.replace(/[^a-zA-Z0-9_$]/g, '_')}_action`
+		`${action.name.replace(regex_invalid_variable_identifier_characters, '_')}_action`
 	);
 
 	block.add_variable(id);

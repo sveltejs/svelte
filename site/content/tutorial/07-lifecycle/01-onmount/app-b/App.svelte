@@ -4,24 +4,10 @@
 	let photos = [];
 
 	onMount(async () => {
-		const res = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=20`);
+		const res = await fetch(`/tutorial/api/album`);
 		photos = await res.json();
 	});
 </script>
-
-<style>
-	.photos {
-		width: 100%;
-		display: grid;
-		grid-template-columns: repeat(5, 1fr);
-		grid-gap: 8px;
-	}
-
-	figure, img {
-		width: 100%;
-		margin: 0;
-	}
-</style>
 
 <h1>Photo album</h1>
 
@@ -36,3 +22,17 @@
 		<p>loading...</p>
 	{/each}
 </div>
+
+<style>
+	.photos {
+		width: 100%;
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		grid-gap: 8px;
+	}
+
+	figure, img {
+		width: 100%;
+		margin: 0;
+	}
+</style>

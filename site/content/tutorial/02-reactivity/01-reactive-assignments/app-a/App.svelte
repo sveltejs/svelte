@@ -1,7 +1,7 @@
 <script>
 	let count = 0;
 
-	function handleClick() {
+	function incrementCount() {
 		// event handler code goes here
 	}
 </script>

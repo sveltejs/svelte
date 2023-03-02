@@ -34,18 +34,22 @@ function create_fragment(ctx) {
 class Component extends SvelteElement {
 	constructor(options) {
 		super();
-		this.shadowRoot.innerHTML = `<style>div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}</style>`;
+		const style = document.createElement('style');
+		style.textContent = `div{animation:foo 1s}@keyframes foo{0%{opacity:0}100%{opacity:1}}`;
+		this.shadowRoot.appendChild(style);
 
 		init(
 			this,
 			{
 				target: this.shadowRoot,
-				props: attribute_to_object(this.attributes)
+				props: attribute_to_object(this.attributes),
+				customElement: true
 			},
 			null,
 			create_fragment,
 			safe_not_equal,
-			{}
+			{},
+			null
 		);
 
 		if (options) {
