@@ -13,6 +13,7 @@ cd myapp
 npm install
 npm run dev
 ```
+*The installer is interactive, so when prompted use your arrow keys to make your selections.*
 
 SvelteKit will handle calling [the Svelte compiler](https://www.npmjs.com/package/svelte) to convert your `.svelte` files into `.js` files that create the DOM and `.css` files that style it. It also provides all the other pieces you need to build a web application such as a development server, routing, and deployment. [SvelteKit](https://kit.svelte.dev/) utilizes [Vite](https://vitejs.dev/) to build your code and handle server-side rendering (SSR). There are [plugins for all the major web bundlers](https://sveltesociety.dev/tools#bundling) to handle Svelte compilation, which will output `.js` and `.css` that you can insert into your HTML, but most others won't handle SSR.
 
