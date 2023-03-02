@@ -13,7 +13,7 @@ export function end_hydrating() {
 
 type NodeEx = Node & {
 	claim_order?: number,
-	hydrate_init? : true,
+	hydrate_init?: true,
 	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
@@ -35,7 +35,7 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 
-	type NodeEx2 = NodeEx & {claim_order: number};
+	type NodeEx2 = NodeEx & { claim_order: number };
 
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
@@ -260,7 +260,7 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -268,7 +268,7 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -284,14 +284,14 @@ export function stop_immediate_propagation(fn) {
 }
 
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 export function trusted(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
@@ -359,6 +359,53 @@ export function get_binding_group_value(group, __value, checked) {
 	return Array.from(value);
 }
 
+export function init_binding_group(group) {
+	let _inputs: HTMLInputElement[];
+	return {
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			_inputs.forEach(input => group.push(input));
+		},
+
+		/* remove */ r() {
+			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+		}
+	};
+}
+
+export function init_binding_group_dynamic(group, indexes: number[]) {
+	let _group: HTMLInputElement[] = get_binding_group(group);
+	let _inputs: HTMLInputElement[];
+	function get_binding_group(group) {
+		for (let i = 0; i < indexes.length; i++) {
+			group = group[indexes[i]] = group[indexes[i]] || [];
+		}
+		return group;
+	}
+	function push() {
+		_inputs.forEach(input => _group.push(input));
+	}
+	function remove() {
+		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+	}
+	return {
+		/* update */ u(new_indexes: number[]) {
+			indexes = new_indexes;
+			const new_group = get_binding_group(group);
+			if (new_group !== _group) {
+				remove();
+				_group = new_group;
+				push();
+			}
+		},
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			push();
+		},
+		/* remove */ r: remove
+	};
+}
+
 export function to_number(value) {
 	return value === '' ? null : +value;
 }
@@ -392,7 +439,7 @@ export function children(element: Element) {
 
 function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
-		nodes.claim_info = {last_index: 0, total_claimed: 0};
+		nodes.claim_info = { last_index: 0, total_claimed: 0 };
 	}
 }
 
@@ -668,7 +715,7 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
+export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, bubbles, cancelable, detail);
 	return e;

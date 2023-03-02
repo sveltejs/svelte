@@ -22,6 +22,15 @@ type BitMasks = Array<{
 	names: string[];
 }>;
 
+export interface BindingGroup {
+	binding_group: (to_reference?: boolean) => Node;
+	contexts: string[];
+	list_dependencies: Set<string>;
+	keypath: string;
+	elements: Identifier[];
+	render: () => void;
+}
+
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
@@ -33,7 +42,7 @@ export default class Renderer {
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number; keypath: string }> = new Map();
+	binding_groups: Map<string, BindingGroup> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -62,10 +71,6 @@ export default class Renderer {
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
 			this.add_to_context('#slots');
-		}
-
-		if (this.binding_groups.size > 0) {
-			this.add_to_context('$$binding_groups');
 		}
 
 		// main block
