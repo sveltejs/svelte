@@ -196,6 +196,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	
+	// Document Events
+	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
