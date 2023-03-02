@@ -4,6 +4,7 @@ import {
     Number,
     Delim,
     Dimension,
+		Function,
     LeftParenthesis,
     RightParenthesis,
 	  WhiteSpace
@@ -12,7 +13,7 @@ import {
 export const name = 'ContainerFeatureRange';
 export const structure = {
     name: String,
-    value: ['Identifier', 'Number', 'Comparison', 'Dimension', 'Ratio', null]
+    value: ['Identifier', 'Number', 'Comparison', 'Dimension', 'QueryCSSFunction', 'Ratio', null]
 };
 
 function lookupNonWSTypeAndValue(offset, type, referenceStr) {
@@ -53,12 +54,16 @@ export function parse() {
                 child = this.Dimension();
                 break;
 
+						case Function:
+								child = this.QueryCSSFunction();
+								break;
+
             case Ident:
                 child = this.Identifier();
                 break;
 
             default:
-                this.error('Number, dimension, comparison, ratio or identifier is expected');
+                this.error('Number, dimension, comparison, ratio, function, or identifier is expected');
                 break;
         }
 

@@ -8,6 +8,7 @@ import * as ContainerFeature from './node/container_feature';
 import * as ContainerFeatureRange from './node/container_feature_range';
 import * as ContainerFeatureStyle from './node/container_feature_style';
 import * as ContainerQuery from './node/container_query';
+import * as QueryCSSFunction from './node/query_css_function';
 
 /**
  * Extends `css-tree` for container query support by forking and adding new nodes and at-rule support for `@container`.
@@ -34,7 +35,8 @@ const cqSyntax = fork({
 		ContainerFeature,
 		ContainerFeatureRange,
 		ContainerFeatureStyle,
-		ContainerQuery
+		ContainerQuery,
+		QueryCSSFunction
 	}
 });
 

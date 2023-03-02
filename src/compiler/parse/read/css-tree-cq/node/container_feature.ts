@@ -3,7 +3,8 @@ import {
     Ident,
     Number,
     Dimension,
-    LeftParenthesis,
+		Function,
+		LeftParenthesis,
     RightParenthesis,
     Colon,
     Delim
@@ -12,7 +13,7 @@ import {
 export const name = 'ContainerFeature';
 export const structure = {
     name: String,
-    value: ['Identifier', 'Number', 'Dimension', 'Ratio', null]
+    value: ['Identifier', 'Number', 'Dimension', 'QueryCSSFunction', 'Ratio', null]
 };
 
 export function parse() {
@@ -36,19 +37,22 @@ export function parse() {
                 } else {
                     value = this.Number();
                 }
-
                 break;
 
             case Dimension:
                 value = this.Dimension();
                 break;
 
-            case Ident:
+						case Function:
+								value = this.QueryCSSFunction();
+								break;
+
+						case Ident:
                 value = this.Identifier();
                 break;
 
             default:
-                this.error('Number, dimension, ratio or identifier is expected');
+                this.error('Number, dimension, ratio, function, or identifier is expected');
                 break;
         }
 

@@ -57,7 +57,31 @@
 
 	@container style(color: blue) {
 		div {
-			color: salmon;
+			color: tan;
+		}
+	}
+
+	@container test-container (min-width: calc(400px + 1px)) {
+		div {
+			color: green;
+		}
+	}
+
+	@container test-container (width < clamp(200px, 40%, 400px)) {
+		div {
+			color: blue;
+		}
+	}
+
+	@container test-container (calc(400px + 1px) <= width < calc(500px + 1px)) {
+		div {
+			color: purple;
+		}
+	}
+
+	@container style(--var: calc(400px + 1px)) {
+		div {
+			color: sandybrown;
 		}
 	}
 </style>
