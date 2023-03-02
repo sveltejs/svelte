@@ -1,0 +1,1 @@
+input.svelte-xyz:focus+div.svelte-xyz{color:red}input.svelte-xyz:focus~div.svelte-xyz{color:red}

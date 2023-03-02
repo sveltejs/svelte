@@ -16,14 +16,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			set_style(div, "color", ctx.color);
+			set_style(div, "color", /*color*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.color) {
-				set_style(div, "color", ctx.color);
+		p(ctx, [dirty]) {
+			if (dirty & /*color*/ 1) {
+				set_style(div, "color", /*color*/ ctx[0]);
 			}
 		},
 		i: noop,
@@ -37,11 +37,11 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { color } = $$props;
 
-	$$self.$set = $$props => {
-		if ("color" in $$props) $$invalidate("color", color = $$props.color);
+	$$self.$$set = $$props => {
+		if ('color' in $$props) $$invalidate(0, color = $$props.color);
 	};
 
-	return { color };
+	return [color];
 }
 
 class Component extends SvelteComponent {

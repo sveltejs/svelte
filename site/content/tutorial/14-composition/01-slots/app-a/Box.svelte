@@ -1,3 +1,7 @@
+<div class="box">
+	<!-- content should be injected here -->
+</div>
+
 <style>
 	.box {
 		width: 300px;
@@ -8,7 +12,3 @@
 		margin: 0 0 1em 0;
 	}
 </style>
-
-<div class="box">
-	<!-- content should be injected here -->
-</div>

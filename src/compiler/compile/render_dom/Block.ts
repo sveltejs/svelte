@@ -1,8 +1,17 @@
 import Renderer from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier } from 'estree';
+import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { regex_double_quotes } from '../../utils/patterns';
+
+export interface Bindings {
+	object: Identifier;
+	property: Identifier;
+	snippet: Node;
+	store: string;
+	modifier: (node: Node) => Node;
+}
 
 export interface BlockOptions {
 	parent?: Block;
@@ -11,14 +20,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: Identifier;
-	bindings?: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings?: Map<string, Bindings>;
 	dependencies?: Set<string>;
 }
 
@@ -34,24 +36,20 @@ export default class Block {
 	key: Identifier;
 	first: Identifier;
 
-	dependencies: Set<string>;
+	dependencies: Set<string> = new Set();
 
-	bindings: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
 
 	chunks: {
+		declarations: Array<Node | Node[]>;
 		init: Array<Node | Node[]>;
 		create: Array<Node | Node[]>;
 		claim: Array<Node | Node[]>;
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -75,7 +73,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus: string;
+	autofocus?: { element_var: string, condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -90,23 +88,23 @@ export default class Block {
 		this.key = options.key;
 		this.first = null;
 
-		this.dependencies = new Set();
-
 		this.bindings = options.bindings;
 
 		this.chunks = {
+			declarations: [],
 			init: [],
 			create: [],
 			claim: [],
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
 			update: [],
 			outro: [],
-			destroy: [],
+			destroy: []
 		};
 
 		this.has_animation = false;
@@ -162,6 +160,9 @@ export default class Block {
 		});
 
 		this.has_update_method = true;
+		if (this.parent) {
+			this.parent.add_dependencies(dependencies);
+		}
 	}
 
 	add_element(
@@ -182,7 +183,7 @@ export default class Block {
 			this.chunks.mount.push(b`@append(${parent_node}, ${id});`);
 			if (is_head(parent_node) && !no_detach) this.chunks.destroy.push(b`@detach(${id});`);
 		} else {
-			this.chunks.mount.push(b`@insert(#target, ${id}, anchor);`);
+			this.chunks.mount.push(b`@insert(#target, ${id}, #anchor);`);
 			if (!no_detach) this.chunks.destroy.push(b`if (detaching) @detach(${id});`);
 		}
 	}
@@ -241,7 +242,11 @@ export default class Block {
 		}
 
 		if (this.autofocus) {
-			this.chunks.mount.push(b`${this.autofocus}.focus();`);
+			if (this.autofocus.condition_expression) {
+				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+			} else {
+				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
+			}
 		}
 
 		this.render_listeners();
@@ -266,7 +271,7 @@ export default class Block {
 					: this.chunks.hydrate
 			);
 
-			properties.create = x`function create() {
+			properties.create = x`function #create() {
 				${this.chunks.create}
 				${hydrate}
 			}`;
@@ -276,7 +281,7 @@ export default class Block {
 			if (this.chunks.claim.length === 0 && this.chunks.hydrate.length === 0) {
 				properties.claim = noop;
 			} else {
-				properties.claim = x`function claim(#nodes) {
+				properties.claim = x`function #claim(#nodes) {
 					${this.chunks.claim}
 					${this.renderer.options.hydratable && this.chunks.hydrate.length > 0 && b`this.h();`}
 				}`;
@@ -284,15 +289,19 @@ export default class Block {
 		}
 
 		if (this.renderer.options.hydratable && this.chunks.hydrate.length > 0) {
-			properties.hydrate = x`function hydrate() {
+			properties.hydrate = x`function #hydrate() {
 				${this.chunks.hydrate}
 			}`;
 		}
 
 		if (this.chunks.mount.length === 0) {
 			properties.mount = noop;
+		} else if (this.event_listeners.length === 0) {
+			properties.mount = x`function #mount(#target, #anchor) {
+				${this.chunks.mount}
+			}`;
 		} else {
-			properties.mount = x`function mount(#target, anchor) {
+			properties.mount = x`function #mount(#target, #anchor) {
 				${this.chunks.mount}
 			}`;
 		}
@@ -302,7 +311,13 @@ export default class Block {
 				properties.update = noop;
 			} else {
 				const ctx = this.maintain_context ? x`#new_ctx` : x`#ctx`;
-				properties.update = x`function update(#changed, ${ctx}) {
+
+				let dirty: Identifier | ArrayPattern = { type: 'Identifier', name: '#dirty' };
+				if (!this.renderer.context_overflow && !this.parent) {
+					dirty = { type: 'ArrayPattern', elements: [dirty] };
+				}
+
+				properties.update = x`function #update(${ctx}, ${dirty}) {
 					${this.maintain_context && b`#ctx = ${ctx};`}
 					${this.chunks.update}
 				}`;
@@ -310,15 +325,21 @@ export default class Block {
 		}
 
 		if (this.has_animation) {
-			properties.measure = x`function measure() {
+			properties.measure = x`function #measure() {
 				${this.chunks.measure}
 			}`;
 
-			properties.fix = x`function fix() {
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
+
+			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
 
-			properties.animate = x`function animate() {
+			properties.animate = x`function #animate() {
 				${this.chunks.animate}
 			}`;
 		}
@@ -327,7 +348,7 @@ export default class Block {
 			if (this.chunks.intro.length === 0) {
 				properties.intro = noop;
 			} else {
-				properties.intro = x`function intro(#local) {
+				properties.intro = x`function #intro(#local) {
 					${this.has_outros && b`if (#current) return;`}
 					${this.chunks.intro}
 				}`;
@@ -336,7 +357,7 @@ export default class Block {
 			if (this.chunks.outro.length === 0) {
 				properties.outro = noop;
 			} else {
-				properties.outro = x`function outro(#local) {
+				properties.outro = x`function #outro(#local) {
 					${this.chunks.outro}
 				}`;
 			}
@@ -345,7 +366,7 @@ export default class Block {
 		if (this.chunks.destroy.length === 0) {
 			properties.destroy = noop;
 		} else {
-			properties.destroy = x`function destroy(detaching) {
+			properties.destroy = x`function #destroy(detaching) {
 				${this.chunks.destroy}
 			}`;
 		}
@@ -367,6 +388,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},
@@ -377,6 +399,8 @@ export default class Block {
 		const block = dev && this.get_unique_name('block');
 
 		const body = b`
+			${this.chunks.declarations}
+
 			${Array.from(this.variables.values()).map(({ id, init }) => {
 				return init
 					? b`let ${id} = ${init}`
@@ -392,7 +416,7 @@ export default class Block {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						source: "${this.comment ? this.comment.replace(regex_double_quotes, '\\"') : ''}",
 						ctx: #ctx
 					});
 					return ${block};`
@@ -404,9 +428,8 @@ export default class Block {
 		return body;
 	}
 
-	has_content() {
-		return this.renderer.options.dev ||
-			this.first ||
+	has_content(): boolean {
+		return !!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
 			this.chunks.outro.length > 0  ||
@@ -438,6 +461,9 @@ export default class Block {
 
 	render_listeners(chunk: string = '') {
 		if (this.event_listeners.length > 0) {
+			this.add_variable({ type: 'Identifier', name: '#mounted' });
+			this.chunks.destroy.push(b`#mounted = false`);
+
 			const dispose: Identifier = {
 				type: 'Identifier',
 				name: `#dispose${chunk}`
@@ -446,18 +472,26 @@ export default class Block {
 			this.add_variable(dispose);
 
 			if (this.event_listeners.length === 1) {
-				this.chunks.hydrate.push(
-					b`${dispose} = ${this.event_listeners[0]};`
+				this.chunks.mount.push(
+					b`
+						if (!#mounted) {
+							${dispose} = ${this.event_listeners[0]};
+							#mounted = true;
+						}
+					`
 				);
 
 				this.chunks.destroy.push(
 					b`${dispose}();`
 				);
 			} else {
-				this.chunks.hydrate.push(b`
-					${dispose} = [
-						${this.event_listeners}
-					];
+				this.chunks.mount.push(b`
+					if (!#mounted) {
+						${dispose} = [
+							${this.event_listeners}
+						];
+						#mounted = true;
+					}
 				`);
 
 				this.chunks.destroy.push(

@@ -5,13 +5,13 @@ export default {
 		cols: ['a', 'b', 'c']
 	},
 
-	html: ``,
+	html: '',
 
 	compileOptions: {
 		dev: true
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		assert.htmlEqual(target.innerHTML, `
 			<div class="row">
@@ -34,6 +34,6 @@ export default {
 		component.visible = false;
 		raf.tick(0);
 		raf.tick(100);
-		assert.htmlEqual(target.innerHTML, ``);
-	},
+		assert.htmlEqual(target.innerHTML, '');
+	}
 };

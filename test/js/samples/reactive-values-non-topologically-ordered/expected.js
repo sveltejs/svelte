@@ -6,21 +6,21 @@ function instance($$self, $$props, $$invalidate) {
 	let a;
 	let b;
 
-	$$self.$set = $$props => {
-		if ("x" in $$props) $$invalidate("x", x = $$props.x);
+	$$self.$$set = $$props => {
+		if ('x' in $$props) $$invalidate(0, x = $$props.x);
 	};
 
-	$$self.$$.update = (changed = { x: 1, b: 1 }) => {
-		if (changed.x) {
-			$: $$invalidate("b", b = x);
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*x*/ 1) {
+			$: $$invalidate(1, b = x);
 		}
 
-		if (changed.b) {
+		if ($$self.$$.dirty & /*b*/ 2) {
 			$: a = b;
 		}
 	};
 
-	return { x };
+	return [x, b];
 }
 
 class Component extends SvelteComponent {

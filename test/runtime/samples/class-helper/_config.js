@@ -3,7 +3,7 @@ export default {
 		user: { active: true }
 	},
 
-	html: `<div class="active"></div>`,
+	html: '<div class="active"></div>',
 
 	test({ assert, component, target }) {
 		component.user = { active: false };

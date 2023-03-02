@@ -1,3 +1,9 @@
+<div class="box">
+	<slot>
+		<em>no content was provided</em>
+	</slot>
+</div>
+
 <style>
 	.box {
 		width: 300px;
@@ -8,9 +14,3 @@
 		margin: 0 0 1em 0;
 	}
 </style>
-
-<div class="box">
-	<slot>
-		<em>no content was provided</em>
-	</slot>
-</div>

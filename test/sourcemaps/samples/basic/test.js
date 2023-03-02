@@ -1,31 +1,31 @@
-export function test({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource( 'foo.bar.baz' );
+export function test({ assert, input, js }) {
+	const expected = input.locate('foo.bar.baz');
 
 	let start;
 	let actual;
 
-	start = locateInGenerated('foo.bar.baz');
+	start = js.locate('ctx[0].bar.baz');
 
-	actual = smc.originalPositionFor({
+	actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
 
-	assert.deepEqual( actual, {
+	assert.deepEqual(actual, {
 		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,
 		column: expected.column
 	});
 
-	start = locateInGenerated( 'foo.bar.baz', start.character + 1 );
+	start = js.locate('ctx[0].bar.baz', start.character + 1);
 
-	actual = smc.originalPositionFor({
+	actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
 
-	assert.deepEqual( actual, {
+	assert.deepEqual(actual, {
 		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,

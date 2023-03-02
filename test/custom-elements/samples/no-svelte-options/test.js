@@ -3,7 +3,7 @@ import CustomElement from './main.svelte';
 
 export default function (target) {
 	customElements.define('no-tag', CustomElement);
-	target.innerHTML = `<no-tag name="world"></no-tag>`;
+	target.innerHTML = '<no-tag name="world"></no-tag>';
 
 	const el = target.querySelector('no-tag');
 	const h1 = el.shadowRoot.querySelector('h1');

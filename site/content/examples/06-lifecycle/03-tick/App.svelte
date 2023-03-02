@@ -4,7 +4,7 @@
 	let text = `Select some text and hit the tab key to toggle uppercase`;
 
 	async function handleKeydown(event) {
-		if (event.which !== 9) return;
+		if (event.key !== 'Tab') return;
 
 		event.preventDefault();
 
@@ -27,11 +27,11 @@
 	}
 </script>
 
+<textarea value={text} on:keydown={handleKeydown}></textarea>
+
 <style>
 	textarea {
 		width: 100%;
 		height: 200px;
 	}
 </style>
-
-<textarea value={text} on:keydown={handleKeydown}></textarea>

@@ -20,6 +20,7 @@ function create_fragment(ctx) {
 	let input;
 	let t0;
 	let button;
+	let mounted;
 	let dispose;
 
 	return {
@@ -31,28 +32,33 @@ function create_fragment(ctx) {
 			button.textContent = "Store";
 			attr(input, "type", "text");
 			input.required = true;
-
-			dispose = [
-				listen(input, "input", ctx.input_input_handler),
-				listen(form, "submit", ctx.handleSubmit)
-			];
 		},
 		m(target, anchor) {
 			insert(target, form, anchor);
 			append(form, input);
-			set_input_value(input, ctx.test);
+			set_input_value(input, /*test*/ ctx[0]);
 			append(form, t0);
 			append(form, button);
+
+			if (!mounted) {
+				dispose = [
+					listen(input, "input", /*input_input_handler*/ ctx[2]),
+					listen(form, "submit", /*handleSubmit*/ ctx[1])
+				];
+
+				mounted = true;
+			}
 		},
-		p(changed, ctx) {
-			if (changed.test && input.value !== ctx.test) {
-				set_input_value(input, ctx.test);
+		p(ctx, [dirty]) {
+			if (dirty & /*test*/ 1 && input.value !== /*test*/ ctx[0]) {
+				set_input_value(input, /*test*/ ctx[0]);
 			}
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(form);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
@@ -63,15 +69,15 @@ function instance($$self, $$props, $$invalidate) {
 
 	function handleSubmit(event) {
 		event.preventDefault();
-		console.log("value", test);
+		console.log('value', test);
 	}
 
 	function input_input_handler() {
 		test = this.value;
-		$$invalidate("test", test);
+		$$invalidate(0, test);
 	}
 
-	return { test, handleSubmit, input_input_handler };
+	return [test, handleSubmit, input_input_handler];
 }
 
 class Component extends SvelteComponent {

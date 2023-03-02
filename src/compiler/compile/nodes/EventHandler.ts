@@ -3,6 +3,10 @@ import Expression from './shared/Expression';
 import Component from '../Component';
 import { sanitize } from '../../utils/names';
 import { Identifier } from 'estree';
+import TemplateScope from './shared/TemplateScope';
+import { TemplateNode } from '../../interfaces';
+
+const regex_contains_term_function_expression = /FunctionExpression/;
 
 export default class EventHandler extends Node {
 	type: 'EventHandler';
@@ -12,9 +16,8 @@ export default class EventHandler extends Node {
 	handler_name: Identifier;
 	uses_context = false;
 	can_make_passive = false;
-	reassigned?: boolean;
 
-	constructor(component: Component, parent, template_scope, info) {
+	constructor(component: Component, parent: Node, template_scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, template_scope, info);
 
 		this.name = info.name;
@@ -24,7 +27,7 @@ export default class EventHandler extends Node {
 			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.uses_context = this.expression.uses_context;
 
-			if (/FunctionExpression/.test(info.expression.type) && info.expression.params.length === 0) {
+			if (regex_contains_term_function_expression.test(info.expression.type) && info.expression.params.length === 0) {
 				// TODO make this detection more accurate — if `event.preventDefault` isn't called, and
 				// `event` is passed to another function, we can make it passive
 				this.can_make_passive = true;
@@ -41,12 +44,23 @@ export default class EventHandler extends Node {
 					if (node && (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
 						this.can_make_passive = true;
 					}
-
-					this.reassigned = component.var_lookup.get(info.expression.name).reassigned;
 				}
 			}
 		} else {
 			this.handler_name = component.get_unique_name(`${sanitize(this.name)}_handler`);
 		}
+	}
+
+	get reassigned(): boolean {
+		if (!this.expression) {
+			return false;
+		}
+		const node = this.expression.node;
+
+		if (regex_contains_term_function_expression.test(node.type)) {
+			return false;
+		}
+
+		return this.expression.dynamic_dependencies().length > 0;
 	}
 }

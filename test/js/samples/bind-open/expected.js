@@ -12,30 +12,33 @@ import {
 
 function create_fragment(ctx) {
 	let details;
+	let mounted;
 	let dispose;
 
 	return {
 		c() {
 			details = element("details");
-
-			details.innerHTML = `<summary>summary</summary>content
-`;
-
-			dispose = listen(details, "toggle", ctx.details_toggle_handler);
+			details.innerHTML = `<summary>summary</summary>content`;
 		},
 		m(target, anchor) {
 			insert(target, details, anchor);
-			details.open = ctx.open;
+			details.open = /*open*/ ctx[0];
+
+			if (!mounted) {
+				dispose = listen(details, "toggle", /*details_toggle_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
-		p(changed, ctx) {
-			if (changed.open) {
-				details.open = ctx.open;
+		p(ctx, [dirty]) {
+			if (dirty & /*open*/ 1) {
+				details.open = /*open*/ ctx[0];
 			}
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(details);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -46,14 +49,14 @@ function instance($$self, $$props, $$invalidate) {
 
 	function details_toggle_handler() {
 		open = this.open;
-		$$invalidate("open", open);
+		$$invalidate(0, open);
 	}
 
-	$$self.$set = $$props => {
-		if ("open" in $$props) $$invalidate("open", open = $$props.open);
+	$$self.$$set = $$props => {
+		if ('open' in $$props) $$invalidate(0, open = $$props.open);
 	};
 
-	return { open, details_toggle_handler };
+	return [open, details_toggle_handler];
 }
 
 class Component extends SvelteComponent {

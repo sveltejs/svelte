@@ -1,3 +1,3 @@
 export default {
-	html: `<div class="foo"></div>`
+	html: '<div class="foo"></div>'
 };

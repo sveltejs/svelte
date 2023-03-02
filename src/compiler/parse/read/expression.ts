@@ -1,39 +1,10 @@
 import { parse_expression_at } from '../acorn';
 import { Parser } from '../index';
-import { Identifier, Node, SimpleLiteral } from 'estree';
-import { whitespace } from '../../utils/patterns';
-
-const literals = new Map([['true', true], ['false', false], ['null', null]]);
+import { Node } from 'estree';
+import { regex_whitespace } from '../../utils/patterns';
+import parser_errors from '../errors';
 
 export default function read_expression(parser: Parser): Node {
-	const start = parser.index;
-
-	const name = parser.read_until(/\s*}/);
-	if (name && /^[a-z]+$/.test(name)) {
-		const end = start + name.length;
-
-		if (literals.has(name)) {
-			// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
-			return {
-				type: 'Literal',
-				start,
-				end,
-				value: literals.get(name),
-				raw: name,
-			} as SimpleLiteral;
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-object-literal-type-assertion
-		return {
-			type: 'Identifier',
-			start,
-			end: start + name.length,
-			name,
-		} as Identifier;
-	}
-
-	parser.index = start;
-
 	try {
 		const node = parse_expression_at(parser.template, parser.index);
 
@@ -49,11 +20,8 @@ export default function read_expression(parser: Parser): Node {
 
 			if (char === ')') {
 				num_parens -= 1;
-			} else if (!whitespace.test(char)) {
-				parser.error({
-					code: 'unexpected-token',
-					message: 'Expected )'
-				}, index);
+			} else if (!regex_whitespace.test(char)) {
+				parser.error(parser_errors.unexpected_token(')'), index);
 			}
 
 			index += 1;

@@ -1,3 +1,3 @@
 export default {
-	html: `<p>ab</p>`
+	html: '<p>ab</p>'
 };

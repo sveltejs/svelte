@@ -12,7 +12,8 @@ import {
 	safe_not_equal,
 	set_data_dev,
 	space,
-	text
+	text,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
@@ -28,7 +29,7 @@ function create_fragment(ctx) {
 		c: function create() {
 			h1 = element("h1");
 			t0 = text("Hello ");
-			t1 = text(ctx.name);
+			t1 = text(/*name*/ ctx[0]);
 			t2 = text("!");
 			t3 = space();
 			debugger;
@@ -44,8 +45,8 @@ function create_fragment(ctx) {
 			append_dev(h1, t2);
 			insert_dev(target, t3, anchor);
 		},
-		p: function update(changed, ctx) {
-			if (changed.name) set_data_dev(t1, ctx.name);
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*name*/ 1) set_data_dev(t1, /*name*/ ctx[0]);
 			debugger;
 		},
 		i: noop,
@@ -68,26 +69,37 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots('Component', slots, []);
 	let { name } = $$props;
-	const writable_props = ["name"];
 
-	Object.keys($$props).forEach(key => {
-		if (!writable_props.includes(key) && !key.startsWith("$$")) console.warn(`<Component> was created with unknown prop '${key}'`);
+	$$self.$$.on_mount.push(function () {
+		if (name === undefined && !('name' in $$props || $$self.$$.bound[$$self.$$.props['name']])) {
+			console.warn("<Component> was created without expected prop 'name'");
+		}
 	});
 
-	$$self.$set = $$props => {
-		if ("name" in $$props) $$invalidate("name", name = $$props.name);
+	const writable_props = ['name'];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
+
+	$$self.$$set = $$props => {
+		if ('name' in $$props) $$invalidate(0, name = $$props.name);
 	};
 
-	$$self.$capture_state = () => {
-		return { name };
-	};
+	$$self.$capture_state = () => ({ name });
 
 	$$self.$inject_state = $$props => {
-		if ("name" in $$props) $$invalidate("name", name = $$props.name);
+		if ('name' in $$props) $$invalidate(0, name = $$props.name);
 	};
 
-	return { name };
+	if ($$props && "$$inject" in $$props) {
+		$$self.$inject_state($$props.$$inject);
+	}
+
+	return [name];
 }
 
 class Component extends SvelteComponentDev {
@@ -101,13 +113,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || ({});
-
-		if (ctx.name === undefined && !("name" in props)) {
-			console.warn("<Component> was created without expected prop 'name'");
-		}
 	}
 
 	get name() {

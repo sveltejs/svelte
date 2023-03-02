@@ -1,7 +1,7 @@
 export default {
 	props: {
 		foo: 'a',
-		items: ['x'],
+		items: ['x']
 	},
 
 	html: `
@@ -16,7 +16,6 @@ export default {
 
 	async test({ assert, component, target, window }) {
 		const inputs = [...target.querySelectorAll('input')];
-		const items = component.items;
 		const event = new window.Event('input');
 
 		assert.equal(inputs[0].value, 'a');
@@ -33,5 +32,5 @@ export default {
 			<div><input><p>b</p></div>
 			<div><input><p>y</p></div>
 		`);
-	},
+	}
 };

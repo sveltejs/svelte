@@ -12,7 +12,7 @@ import {
 	text
 } from "svelte/internal";
 
-import { onMount } from "svelte";
+import { onMount } from 'svelte';
 
 function create_fragment(ctx) {
 	let p;
@@ -21,14 +21,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			p = element("p");
-			t = text(ctx.y);
+			t = text(/*y*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t);
 		},
-		p(changed, ctx) {
-			if (changed.y) set_data(t, ctx.y);
+		p(ctx, [dirty]) {
+			if (dirty & /*y*/ 1) set_data(t, /*y*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
@@ -39,12 +39,14 @@ function create_fragment(ctx) {
 }
 
 function instance($$self, $$props, $$invalidate) {
-	let a, b, c;
+	let x;
+	let y;
+	let a = 1, b = 2, c = 3;
 
 	onMount(() => {
 		const interval = setInterval(
 			() => {
-				$$invalidate("b", b += 1);
+				$$invalidate(1, b += 1);
 				c += 1;
 				console.log(b, c);
 			},
@@ -54,20 +56,14 @@ function instance($$self, $$props, $$invalidate) {
 		return () => clearInterval(interval);
 	});
 
-	let x;
-	let y;
-
-	$$self.$$.update = (changed = { a: 1, b: 1 }) => {
-		if (changed.a) {
-			$: x = a * 2;
-		}
-
-		if (changed.b) {
-			$: $$invalidate("y", y = b * 2);
+	$$self.$$.update = () => {
+		if ($$self.$$.dirty & /*b*/ 2) {
+			$: $$invalidate(0, y = b * 2);
 		}
 	};
 
-	return { y };
+	$: x = a * 2;
+	return [y, b];
 }
 
 class Component extends SvelteComponent {

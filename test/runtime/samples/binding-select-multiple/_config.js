@@ -4,16 +4,6 @@ export default {
 		selected: [ 'two', 'three' ]
 	},
 
-	ssrHtml: `
-		<select multiple value="two,three">
-			<option value="one">one</option>
-			<option value="two">two</option>
-			<option value="three">three</option>
-		</select>
-
-		<p>selected: two, three</p>
-	`,
-
 	html: `
 		<select multiple>
 			<option value="one">one</option>

@@ -2,6 +2,7 @@ import EventHandler from '../../../nodes/EventHandler';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
 import { b, x, p } from 'code-red';
+import { Expression } from 'estree';
 
 const TRUE = x`true`;
 const FALSE = x`false`;
@@ -15,54 +16,59 @@ export default class EventHandlerWrapper {
 		this.parent = parent;
 
 		if (!node.expression) {
-			this.parent.renderer.component.add_var({
-				name: node.handler_name.name,
-				internal: true,
-				referenced: true,
-			});
+			this.parent.renderer.add_to_context(node.handler_name.name);
 
 			this.parent.renderer.component.partly_hoisted.push(b`
-        function ${node.handler_name.name}(event) {
-          @bubble($$self, event);
-        }
-      `);
+				function ${node.handler_name.name}(event) {
+					@bubble.call(this, $$self, event);
+				}
+			`);
 		}
 	}
 
-  get_snippet(block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : x`#ctx.${this.node.handler_name}`;
+	get_snippet(block: Block) {
+		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
 
 		if (this.node.reassigned) {
 			block.maintain_context = true;
-			return x`function () { ${snippet}.apply(this, arguments); }`;
+			return x`function () { if (@is_function(${snippet})) ${snippet}.apply(this, arguments); }`;
 		}
 		return snippet;
-  }
+	}
 
-	render(block: Block, target: string) {
+	render(block: Block, target: string | Expression) {
 		let snippet = this.get_snippet(block);
 
-    if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
+		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
+		if (this.node.modifiers.has('stopImmediatePropagation')) snippet = x`@stop_immediate_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
-    
-    const args = [];
+		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
 
-    const opts = ['passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
+		const args = [];
+
+		const opts = ['nonpassive', 'passive', 'once', 'capture'].filter(mod => this.node.modifiers.has(mod));
 		if (opts.length) {
-			args.push((opts.length === 1 && opts[0] === 'capture')
-				? TRUE
-				: x`{ ${opts.map(opt => p`${opt}: true`)} }`);
+			if (opts.length === 1 && opts[0] === 'capture') {
+				args.push(TRUE);
+			} else {
+				args.push(x`{ ${ opts.map(opt =>
+					opt === 'nonpassive'
+						? p`passive: false`
+						: p`${opt}: true`
+				) } }`);
+			}
 		} else if (block.renderer.options.dev) {
 			args.push(FALSE);
 		}
 
 		if (block.renderer.options.dev) {
-			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
 			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
+			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
+			args.push(this.node.modifiers.has('stopImmediatePropagation') ? TRUE : FALSE);
 		}
 
-    block.event_listeners.push(
+		block.event_listeners.push(
 			x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`
 		);
 	}

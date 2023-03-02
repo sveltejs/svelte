@@ -10,7 +10,13 @@ describe('get_name_from_filename', () => {
 		assert.equal(get_name_from_filename('path/to/Widget/index.svelte'), 'Widget');
 	});
 
-	it('handles unusual filenames', () => {
-		assert.equal(get_name_from_filename('path/to/[...parts].svelte'), 'Parts');
+	it('handles Windows filenames', () => {
+		assert.equal(get_name_from_filename('path\\to\\Widget.svelte'), 'Widget');
+	});
+
+	it('handles special characters in filenames', () => {
+		assert.equal(get_name_from_filename('@.svelte'), '_');
+		assert.equal(get_name_from_filename('&.svelte'), '_');
+		assert.equal(get_name_from_filename('~.svelte'), '_');
 	});
 });

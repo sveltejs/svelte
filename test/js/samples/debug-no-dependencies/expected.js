@@ -10,28 +10,30 @@ import {
 	noop,
 	safe_not_equal,
 	space,
-	text
+	text,
+	validate_each_argument,
+	validate_slots
 } from "svelte/internal";
 
 const file = undefined;
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
-	child_ctx.index = i;
+	const child_ctx = ctx.slice();
+	child_ctx[0] = list[i];
+	child_ctx[2] = i;
 	return child_ctx;
 }
 
 // (4:0) {#each things as thing, index}
 function create_each_block(ctx) {
 	let t0;
-	let t1_value = ctx.thing + "";
+	let t1_value = /*thing*/ ctx[0] + "";
 	let t1;
 
 	const block = {
 		c: function create() {
 			{
-				const { index } = ctx;
+				const index = /*index*/ ctx[2];
 				console.log({ index });
 				debugger;
 			}
@@ -64,6 +66,7 @@ function create_each_block(ctx) {
 function create_fragment(ctx) {
 	let each_1_anchor;
 	let each_value = things;
+	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -83,21 +86,24 @@ function create_fragment(ctx) {
 		},
 		m: function mount(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert_dev(target, each_1_anchor, anchor);
 		},
-		p: function update(changed, ctx) {
-			if (changed.things) {
+		p: function update(ctx, [dirty]) {
+			if (dirty & /*things*/ 0) {
 				each_value = things;
+				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 
 					if (each_blocks[i]) {
-						each_blocks[i].p(changed, child_ctx);
+						each_blocks[i].p(child_ctx, dirty);
 					} else {
 						each_blocks[i] = create_each_block(child_ctx);
 						each_blocks[i].c();
@@ -131,10 +137,22 @@ function create_fragment(ctx) {
 	return block;
 }
 
+function instance($$self, $$props) {
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots('Component', slots, []);
+	const writable_props = [];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
+
+	return [];
+}
+
 class Component extends SvelteComponentDev {
 	constructor(options) {
 		super(options);
-		init(this, options, null, create_fragment, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {});
 
 		dispatch_dev("SvelteRegisterComponent", {
 			component: this,

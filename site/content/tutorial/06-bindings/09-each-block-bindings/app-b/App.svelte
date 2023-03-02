@@ -16,12 +16,6 @@
 	$: remaining = todos.filter(t => !t.done).length;
 </script>
 
-<style>
-	.done {
-		opacity: 0.4;
-	}
-</style>
-
 <h1>Todos</h1>
 
 {#each todos as todo}
@@ -47,3 +41,9 @@
 <button on:click={clear}>
 	Clear completed
 </button>
+
+<style>
+	.done {
+		opacity: 0.4;
+	}
+</style>

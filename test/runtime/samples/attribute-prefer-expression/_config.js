@@ -1,8 +1,7 @@
 export default {
-	skip_if_ssr: true,
 
 	props: {
-		foo: false,
+		foo: false
 	},
 
 	test({ assert, component, target }) {
@@ -15,5 +14,5 @@ export default {
 
 		assert.ok(!inputs[0].checked);
 		assert.ok(inputs[1].checked);
-	},
+	}
 };

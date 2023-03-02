@@ -7,7 +7,7 @@ export default {
 		</svg>
 	`,
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const circle = target.querySelector('circle');
 		assert.equal(circle.getAttribute('class'), 'red');
 	}

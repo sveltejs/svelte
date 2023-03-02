@@ -14,7 +14,7 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import { fade } from "svelte/transition";
+import { fade } from 'svelte/transition';
 
 function create_if_block(ctx) {
 	let div;
@@ -49,7 +49,7 @@ function create_if_block(ctx) {
 function create_fragment(ctx) {
 	let if_block_anchor;
 	let current;
-	let if_block = ctx.num < 5 && create_if_block(ctx);
+	let if_block = /*num*/ ctx[0] < 5 && create_if_block(ctx);
 
 	return {
 		c() {
@@ -61,15 +61,17 @@ function create_fragment(ctx) {
 			insert(target, if_block_anchor, anchor);
 			current = true;
 		},
-		p(changed, ctx) {
-			if (ctx.num < 5) {
-				if (!if_block) {
+		p(ctx, [dirty]) {
+			if (/*num*/ ctx[0] < 5) {
+				if (if_block) {
+					if (dirty & /*num*/ 1) {
+						transition_in(if_block, 1);
+					}
+				} else {
 					if_block = create_if_block(ctx);
 					if_block.c();
 					transition_in(if_block, 1);
 					if_block.m(if_block_anchor.parentNode, if_block_anchor);
-				} else {
-					transition_in(if_block, 1);
 				}
 			} else if (if_block) {
 				group_outros();
@@ -100,11 +102,11 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { num = 1 } = $$props;
 
-	$$self.$set = $$props => {
-		if ("num" in $$props) $$invalidate("num", num = $$props.num);
+	$$self.$$set = $$props => {
+		if ('num' in $$props) $$invalidate(0, num = $$props.num);
 	};
 
-	return { num };
+	return [num];
 }
 
 class Component extends SvelteComponent {

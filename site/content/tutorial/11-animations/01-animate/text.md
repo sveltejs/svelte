@@ -2,7 +2,7 @@
 title: The animate directive
 ---
 
-In the [previous chapter](tutorial/deferred-transitions), we used deferred transitions to create the illusion of motion as elements move from one todo list to the other.
+In the [previous chapter](/tutorial/deferred-transitions), we used deferred transitions to create the illusion of motion as elements move from one todo list to the other.
 
 To complete the illusion, we also need to apply motion to the elements that *aren't* transitioning. For this, we use the `animate` directive.
 

@@ -3,7 +3,7 @@ import { SvelteComponent, init, safe_not_equal } from "svelte/internal";
 
 function instance($$self) {
 	const a = 1 + 2;
-	return {};
+	return [];
 }
 
 class Component extends SvelteComponent {

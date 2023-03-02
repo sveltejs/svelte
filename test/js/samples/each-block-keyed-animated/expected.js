@@ -18,15 +18,15 @@ import {
 } from "svelte/internal";
 
 function get_each_context(ctx, list, i) {
-	const child_ctx = Object.create(ctx);
-	child_ctx.thing = list[i];
+	const child_ctx = ctx.slice();
+	child_ctx[1] = list[i];
 	return child_ctx;
 }
 
 // (19:0) {#each things as thing (thing.id)}
 function create_each_block(key_1, ctx) {
 	let div;
-	let t_value = ctx.thing.name + "";
+	let t_value = /*thing*/ ctx[1].name + "";
 	let t;
 	let rect;
 	let stop_animation = noop;
@@ -43,8 +43,9 @@ function create_each_block(key_1, ctx) {
 			insert(target, div, anchor);
 			append(div, t);
 		},
-		p(changed, ctx) {
-			if (changed.things && t_value !== (t_value = ctx.thing.name + "")) set_data(t, t_value);
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
+			if (dirty & /*things*/ 1 && t_value !== (t_value = /*thing*/ ctx[1].name + "")) set_data(t, t_value);
 		},
 		r() {
 			rect = div.getBoundingClientRect();
@@ -67,8 +68,8 @@ function create_fragment(ctx) {
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let each_1_anchor;
-	let each_value = ctx.things;
-	const get_key = ctx => ctx.thing.id;
+	let each_value = /*things*/ ctx[0];
+	const get_key = ctx => /*thing*/ ctx[1].id;
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
@@ -86,16 +87,20 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert(target, each_1_anchor, anchor);
 		},
-		p(changed, ctx) {
-			const each_value = ctx.things;
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
-			each_blocks = update_keyed_each(each_blocks, changed, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+		p(ctx, [dirty]) {
+			if (dirty & /*things*/ 1) {
+				each_value = /*things*/ ctx[0];
+				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].r();
+				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, fix_and_destroy_block, create_each_block, each_1_anchor, get_each_context);
+				for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].a();
+			}
 		},
 		i: noop,
 		o: noop,
@@ -126,11 +131,11 @@ function foo(node, animation, params) {
 function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
-	$$self.$set = $$props => {
-		if ("things" in $$props) $$invalidate("things", things = $$props.things);
+	$$self.$$set = $$props => {
+		if ('things' in $$props) $$invalidate(0, things = $$props.things);
 	};
 
-	return { things };
+	return [things];
 }
 
 class Component extends SvelteComponent {

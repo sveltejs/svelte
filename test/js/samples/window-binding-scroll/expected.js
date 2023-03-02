@@ -25,41 +25,47 @@ function create_fragment(ctx) {
 	let p;
 	let t0;
 	let t1;
+	let mounted;
 	let dispose;
-	add_render_callback(ctx.onwindowscroll);
+	add_render_callback(/*onwindowscroll*/ ctx[1]);
 
 	return {
 		c() {
 			p = element("p");
 			t0 = text("scrolled to ");
-			t1 = text(ctx.y);
-
-			dispose = listen(window, "scroll", () => {
-				scrolling = true;
-				clearTimeout(scrolling_timeout);
-				scrolling_timeout = setTimeout(clear_scrolling, 100);
-				ctx.onwindowscroll();
-			});
+			t1 = text(/*y*/ ctx[0]);
 		},
 		m(target, anchor) {
 			insert(target, p, anchor);
 			append(p, t0);
 			append(p, t1);
+
+			if (!mounted) {
+				dispose = listen(window, "scroll", () => {
+					scrolling = true;
+					clearTimeout(scrolling_timeout);
+					scrolling_timeout = setTimeout(clear_scrolling, 100);
+					/*onwindowscroll*/ ctx[1]();
+				});
+
+				mounted = true;
+			}
 		},
-		p(changed, ctx) {
-			if (changed.y && !scrolling) {
+		p(ctx, [dirty]) {
+			if (dirty & /*y*/ 1 && !scrolling) {
 				scrolling = true;
 				clearTimeout(scrolling_timeout);
-				scrollTo(window.pageXOffset, ctx.y);
+				scrollTo(window.pageXOffset, /*y*/ ctx[0]);
 				scrolling_timeout = setTimeout(clear_scrolling, 100);
 			}
 
-			if (changed.y) set_data(t1, ctx.y);
+			if (dirty & /*y*/ 1) set_data(t1, /*y*/ ctx[0]);
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(p);
+			mounted = false;
 			dispose();
 		}
 	};
@@ -69,14 +75,14 @@ function instance($$self, $$props, $$invalidate) {
 	let { y } = $$props;
 
 	function onwindowscroll() {
-		$$invalidate("y", y = window.pageYOffset)
+		$$invalidate(0, y = window.pageYOffset)
 	}
 
-	$$self.$set = $$props => {
-		if ("y" in $$props) $$invalidate("y", y = $$props.y);
+	$$self.$$set = $$props => {
+		if ('y' in $$props) $$invalidate(0, y = $$props.y);
 	};
 
-	return { y, onwindowscroll };
+	return [y, onwindowscroll];
 }
 
 class Component extends SvelteComponent {

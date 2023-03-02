@@ -1,5 +1,854 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add a11y warnings:
+	* `aria-activedescendant-has-tabindex`: elements with `aria-activedescendant` need to have a `tabindex` ([#8172](https://github.com/sveltejs/svelte/pull/8172))
+	* `role-supports-aria-props`: checks that the (implicit) element role supports the given aria attributes ([#8195](https://github.com/sveltejs/svelte/pull/8195))
+* Omit a11y warning on `<video>` tags with `aria-hidden="true"` ([#7874](https://github.com/sveltejs/svelte/issues/7874))
+* Omit a11y "no child content" warning on elements with `aria-label` ([#8299](https://github.com/sveltejs/svelte/pull/8299))
+* Omit a11y warnings on `<svelte:element>` ([#7939](https://github.com/sveltejs/svelte/issues/7939))
+* Make `noreferrer` warning less zealous ([#6289](https://github.com/sveltejs/svelte/issues/6289))
+* `trusted-types` CSP compatibility for Web Components ([#8134](https://github.com/sveltejs/svelte/issues/8134))
+* Add `data-sveltekit-replacestate` and `data-sveltekit-keepfocus` attribute typings ([#8281](https://github.com/sveltejs/svelte/issues/8281))
+* Don't throw when calling `unsubscribe` twice ([#8186](https://github.com/sveltejs/svelte/pull/8186))
+* Detect unused empty attribute CSS selectors ([#8042](https://github.com/sveltejs/svelte/issues/8042))
+* Simpler output for reactive statements if dependencies are all static ([#7942](https://github.com/sveltejs/svelte/pull/7942))
+* Flush remaining `afterUpdate` calls before `onDestroy` ([#7476](https://github.com/sveltejs/svelte/issues/7476))
+* Check value equality for `input` types `url` and `search` ([#7027](https://github.com/sveltejs/svelte/issues/7027))
+* Compute node dimensions directly before crossfading ([#4111](https://github.com/sveltejs/svelte/issues/4111))
+* Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
+* Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
+* Better handling of `inert` attribute ([#7500](https://github.com/sveltejs/svelte/issues/7500))
+* Clear inputs when `bind:group` to `undefined` ([#8214](https://github.com/sveltejs/svelte/issues/8214))
+* Ensure nested arrays can change at the same time ([#8282](https://github.com/sveltejs/svelte/issues/8282))
+* Reduce use of template literals in SSR output for better performance ([#7539](https://github.com/sveltejs/svelte/pull/7539))
+* Allow assigning to property of const while destructuring ([#7964](https://github.com/sveltejs/svelte/issues/7964))
+* Don't set selected options if value is unbound or not passed ([#5644](https://github.com/sveltejs/svelte/issues/5644))
+* Ensure `<input>` value persists when swapping elements with spread attributes in an `#each` block ([#7578](https://github.com/sveltejs/svelte/issues/7578))
+* Select first enabled option by default when initial value is undefined ([#7041](https://github.com/sveltejs/svelte/issues/7041))
+* Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948))
+* Optimise `<svelte:element>` output code for static tag and static attribute ([#8161](https://github.com/sveltejs/svelte/pull/8161))
+* Decode html entities correctly ([#8026](https://github.com/sveltejs/svelte/issues/8026))
+* Handle `{@html}` tags inside `<template>` tags ([#7364](https://github.com/sveltejs/svelte/pull/7364))
+* Introduce parameter to allow for horizontal slide transition ([#6182](https://github.com/sveltejs/svelte/issues/6182))
+* Add `naturalWidth` and `naturalHeight` bindings ([#7771](https://github.com/sveltejs/svelte/issues/7771))
+* make `<!-- svelte-ignore ... -->` work above components ([#8082](https://github.com/sveltejs/svelte/issues/8082))
+* add global compound selector validation ([#6272](https://github.com/sveltejs/svelte/issues/6272))
+* add `stopImmediatePropagation` event modifier ([#5085](https://github.com/sveltejs/svelte/issues/5085))
+* add `readyState` binding for media elements ([#6666](https://github.com/sveltejs/svelte/issues/6666))
+* call `<svelte:component>` update to `this` only when it's dirty ([#4129](https://github.com/sveltejs/svelte/issues/4129))
+* support exclusively special characters in component filenames ([#7143](https://github.com/sveltejs/svelte/issues/7143))
+
+## 3.55.1
+
+* Fix `draw` transition with delay showing a dot at the beginning of the path ([#6816](https://github.com/sveltejs/svelte/issues/6816))
+* Fix infinity runtime call stack when propagating bindings ([#7032](https://github.com/sveltejs/svelte/issues/7032))
+* Fix static `<svelte:element>` optimization in production mode ([#7937](https://github.com/sveltejs/svelte/issues/7937))
+* Fix `svelte-ignore` comment breaking named slot ([#8075](https://github.com/sveltejs/svelte/issues/8075))
+* Revert change to prevent running init binding unnecessarily ([#8103](https://github.com/sveltejs/svelte/issues/8103))
+* Fix adding duplicate event listeners with `<svelte:element on:event>` ([#8129](https://github.com/sveltejs/svelte/issues/8129))
+* Improve detection of promises that are also functions ([#8162](https://github.com/sveltejs/svelte/pull/8162))
+* Avoid mutating spread component props during SSR ([#8171](https://github.com/sveltejs/svelte/issues/8171))
+* Add missing typing for global `part` attribute ([#8181](https://github.com/sveltejs/svelte/issues/8181))
+* Add missing `submitter` property to `on:submit` event type
+
+## 3.55.0
+
+* Add `svelte/elements` for HTML/Svelte typings ([#7649](https://github.com/sveltejs/svelte/pull/7649))
+
+## 3.54.0
+
+* Pass `options.direction` argument to custom transition functions ([#3918](https://github.com/sveltejs/svelte/issues/3918))
+* Support fallback a11y WAI-ARIA roles ([#8044](https://github.com/sveltejs/svelte/issues/8044))
+* Prevent running init binding unnecessarily ([#5689](https://github.com/sveltejs/svelte/issues/5689), [#6298](https://github.com/sveltejs/svelte/issues/6298))
+* Allow updating variables from `@const` declared function ([#7843](https://github.com/sveltejs/svelte/issues/7843))
+* Do not emit `a11y-no-noninteractive-tabindex` warning if element has a `tabpanel` ([#8025](https://github.com/sveltejs/svelte/pull/8025))
+* Fix escaping SSR'd values in `style:` directive ([#8085](https://github.com/sveltejs/svelte/issues/8085))
+
+## 3.53.1
+
+* Fix exception in `rel=` attribute check with dynamic values ([#7994](https://github.com/sveltejs/svelte/issues/7994))
+* Do not emit deprecation warnings for `css` compiler options for now ([#8009](https://github.com/sveltejs/svelte/issues/8009))
+* Make compiler run in browser again ([#8010](https://github.com/sveltejs/svelte/issues/8010))
+* Upgrade `tslib` ([#8013](https://github.com/sveltejs/svelte/issues/8013))
+
+## 3.53.0
+
+* Check whether `parentNode` exists before removing child ([#6037](https://github.com/sveltejs/svelte/issues/6037))
+* Upgrade various dependencies, notably `css-tree` to `2.2.1` ([#7572](https://github.com/sveltejs/svelte/pull/7572), [#7982](https://github.com/sveltejs/svelte/pull/7982))
+* Extend `css` compiler option with `'external' | 'injected' | 'none'` settings and deprecate old `true | false` values ([#7914](https://github.com/sveltejs/svelte/pull/7914))
+
+## 3.52.0
+
+* Throw compile-time error when attempting to update `const` variable ([#4895](https://github.com/sveltejs/svelte/issues/4895))
+* Warn when using `<a target="_blank">` without `rel="noreferrer"` ([#6188](https://github.com/sveltejs/svelte/issues/6188))
+* Support `style:foo|important` modifier ([#7365](https://github.com/sveltejs/svelte/issues/7365))
+* Fix hydration regression with `{@html}` and components in `<svelte:head>` ([#7941](https://github.com/sveltejs/svelte/pull/7941))
+
+## 3.51.0
+
+* Add a11y warnings:
+	* `a11y-click-events-have-key-events`: check if click event is accompanied by key events ([#5073](https://github.com/sveltejs/svelte/pull/5073))
+	* `a11y-no-noninteractive-tabindex`: check for tabindex on non-interactive elements ([#6693](https://github.com/sveltejs/svelte/pull/6693))
+* Warn when two-way binding to `{...rest}` object in `{#each}` block ([#6860](https://github.com/sveltejs/svelte/issues/6860))
+* Support `--style-props` on `<svelte:component>` ([#7461](https://github.com/sveltejs/svelte/issues/7461))
+* Supports nullish values for component event handlers ([#7568](https://github.com/sveltejs/svelte/issues/7568))
+* Supports SVG elements with `<svelte:element>`([#7613](https://github.com/sveltejs/svelte/issues/7613))
+* Treat `inert` as boolean attribute ([#7785](https://github.com/sveltejs/svelte/pull/7785))
+* Support `--style-props` for SVG components ([#7808](https://github.com/sveltejs/svelte/issues/7808))
+* Fix false positive dev warnings about unset props when they are bound ([#4457](https://github.com/sveltejs/svelte/issues/4457))
+* Fix hydration with `{@html}` and components in `<svelte:head>` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
+* Support scoped style for `<svelte:element>` ([#7443](https://github.com/sveltejs/svelte/issues/7443))
+* Improve error message for invalid value for `<svelte:component this={...}>` ([#7550](https://github.com/sveltejs/svelte/issues/7550))
+* Improve error message when using logic blocks or tags at invalid location ([#7552](https://github.com/sveltejs/svelte/issues/7552))
+* Warn instead of throwing error if `<svelte:element>` is a void tag ([#7566](https://github.com/sveltejs/svelte/issues/7566))
+* Supports custom elements in `<svelte:element>` ([#7733](https://github.com/sveltejs/svelte/issues/7733))
+* Fix calling component unmount if a component is mounted and then immediately unmounted ([#7817](https://github.com/sveltejs/svelte/issues/7817))
+* Do not generate `a11y-role-has-required-aria-props` warning when elements match their semantic role ([#7837](https://github.com/sveltejs/svelte/issues/7837))
+* Improve performance of custom element data setting in `<svelte:element>` ([#7869](https://github.com/sveltejs/svelte/pull/7869))
+
+## 3.50.1
+
+* Add all global objects and functions as known globals ([#3805](https://github.com/sveltejs/svelte/issues/3805), [#7223](https://github.com/sveltejs/svelte/issues/7223))
+* Fix regression with style manager ([#7828](https://github.com/sveltejs/svelte/issues/7828))
+
+## 3.50.0
+
+* Add a11y warnings:
+	* `a11y-incorrect-aria-attribute-type`: check ARIA state and property values ([#6978](https://github.com/sveltejs/svelte/pull/6978))
+	* `a11y-no-abstract-role`: check that ARIA roles are non-abstract ([#6241](https://github.com/sveltejs/svelte/pull/6241))
+	* `a11y-no-interactive-element-to-noninteractive-role`: check for non-interactive roles used on interactive elements ([#5955](https://github.com/sveltejs/svelte/pull/5955))
+	* `a11y-role-has-required-aria-props`: check that elements with `role` attribute have all required attributes for that role ([#5852](https://github.com/sveltejs/svelte/pull/5852))
+* Add `ComponentEvents` convenience type ([#7702](https://github.com/sveltejs/svelte/pull/7702))
+* Add `SveltePreprocessor` utility type ([#7742](https://github.com/sveltejs/svelte/pull/7742))
+* Enhance action typings ([#7805](https://github.com/sveltejs/svelte/pull/7805))
+* Remove empty stylesheets created from transitions ([#4801](https://github.com/sveltejs/svelte/issues/4801), [#7164](https://github.com/sveltejs/svelte/issues/7164))
+* Make `a11y-label-has-associated-control` warning check all descendants for input control ([#5528](https://github.com/sveltejs/svelte/issues/5528))
+* Only show lowercase component name warnings for non-HTML/SVG elements ([#5712](https://github.com/sveltejs/svelte/issues/5712))
+* Disallow invalid CSS selectors starting with a combinator ([#7643](https://github.com/sveltejs/svelte/issues/7643))
+* Use `Node.parentNode` instead of `Node.parentElement` for legacy browser support ([#7723](https://github.com/sveltejs/svelte/issues/7723))
+* Handle arrow function on `<slot>` inside `<svelte:fragment>` ([#7485](https://github.com/sveltejs/svelte/issues/7485))
+* Improve parsing speed when encountering large blocks of whitespace ([#7675](https://github.com/sveltejs/svelte/issues/7675))
+* Fix `class:` directive updates in aborted/restarted transitions ([#7764](https://github.com/sveltejs/svelte/issues/7764))
+
+## 3.49.0
+
+* Improve performance of string escaping during SSR ([#5701](https://github.com/sveltejs/svelte/pull/5701))
+* Add `ComponentType` and `ComponentProps` convenience types ([#6770](https://github.com/sveltejs/svelte/pull/6770))
+* Add support for CSS `@layer` ([#7504](https://github.com/sveltejs/svelte/issues/7504))
+* Export `CompileOptions` from `svelte/compiler` ([#7658](https://github.com/sveltejs/svelte/pull/7658))
+* Fix DOM-less components not being properly destroyed ([#7488](https://github.com/sveltejs/svelte/issues/7488))
+* Fix `class:` directive updates with `<svelte:element>` ([#7521](https://github.com/sveltejs/svelte/issues/7521), [#7571](https://github.com/sveltejs/svelte/issues/7571))
+* Harden attribute escaping during SSR ([#7530](https://github.com/sveltejs/svelte/pull/7530))
+
+## 3.48.0
+
+* Allow creating cancelable custom events with `createEventDispatcher` ([#4623](https://github.com/sveltejs/svelte/issues/4623))
+* Support `{@const}` tag in `{#if}` blocks [#7241](https://github.com/sveltejs/svelte/issues/7241)
+* Return the context object in `setContext` [#7427](https://github.com/sveltejs/svelte/issues/7427)
+* Allow comments inside `{#each}` blocks when using `animate:` ([#3999](https://github.com/sveltejs/svelte/issues/3999))
+* Fix `|local` transitions in `{#key}` blocks ([#5950](https://github.com/sveltejs/svelte/issues/5950))
+* Support svg namespace for `{@html}` ([#7002](https://github.com/sveltejs/svelte/issues/7002), [#7450](https://github.com/sveltejs/svelte/issues/7450))
+* Fix `{@const}` tag not working inside a component when there's no `let:` [#7189](https://github.com/sveltejs/svelte/issues/7189)
+* Remove extraneous leading newline inside `<pre>` and `<textarea>` ([#7264](https://github.com/sveltejs/svelte/issues/7264))
+* Fix erroneous setting of `textContent` for `<template>` elements ([#7297](https://github.com/sveltejs/svelte/pull/7297))
+* Fix value of `let:` bindings not updating in certain cases ([#7440](https://github.com/sveltejs/svelte/issues/7440))
+* Fix handling of void tags in `<svelte:element>` ([#7449](https://github.com/sveltejs/svelte/issues/7449))
+* Fix handling of boolean attributes in `<svelte:element>` ([#7478](https://github.com/sveltejs/svelte/issues/7478))
+* Add special style scoping handling of `[open]` selectors on `<dialog>` elements ([#7495](https://github.com/sveltejs/svelte/issues/7494))
+
+## 3.47.0
+
+* Add support for dynamic elements through `<svelte:element>` ([#2324](https://github.com/sveltejs/svelte/issues/2324))
+* Miscellaneous variable context fixes in `{@const}` ([#7222](https://github.com/sveltejs/svelte/pull/7222))
+* Fix `{#key}` block not being reactive when the key variable is not otherwise used ([#7408](https://github.com/sveltejs/svelte/issues/7408))
+* Add `Symbol` as a known global ([#7418](https://github.com/sveltejs/svelte/issues/7418))
+
+## 3.46.6
+
+* Actually include action TypeScript interface in published package ([#7407](https://github.com/sveltejs/svelte/pull/7407))
+
+## 3.46.5
+
+* Add TypeScript interfaces for typing actions ([#6538](https://github.com/sveltejs/svelte/issues/6538))
+* Do not generate `unused-export-let` warning inside `<script context="module">` blocks ([#7055](https://github.com/sveltejs/svelte/issues/7055))
+* Do not collapse whitespace-only CSS vars ([#7152](https://github.com/sveltejs/svelte/issues/7152))
+* Add `aria-description` to the list of allowed ARIA attributes ([#7301](https://github.com/sveltejs/svelte/issues/7301))
+* Fix attribute escaping during SSR ([#7327](https://github.com/sveltejs/svelte/issues/7327))
+* Prevent `.innerHTML` optimization from being used when `style:` directive is present ([#7386](https://github.com/sveltejs/svelte/issues/7386))
+
+## 3.46.4
+
+* Avoid `maximum call stack size exceeded` errors on large components ([#4694](https://github.com/sveltejs/svelte/issues/4694))
+* Preserve leading space with `preserveWhitespace: true` ([#4731](https://github.com/sveltejs/svelte/issues/4731))
+* Preserve leading space in `<pre>` tags ([#6437](https://github.com/sveltejs/svelte/issues/6437))
+* Improve error message when trying to use `style:` directives on inline components ([#7177](https://github.com/sveltejs/svelte/issues/7177))
+* Add `FormData` as a known global ([#7199](https://github.com/sveltejs/svelte/pull/7199))
+* Mark `css`/`instance`/`module` AST properties as optional in types ([#7204](https://github.com/sveltejs/svelte/pull/7204))
+
+## 3.46.3
+
+* Ignore whitespace in `{#each}` blocks when containing elements with `animate:` ([#5477](https://github.com/sveltejs/svelte/pull/5477))
+* Throw compiler error when variable in `context="instance"` collides with import in `context="module"` ([#7090](https://github.com/sveltejs/svelte/issues/7090))
+* Fix compiler crash when `{@const}` contains arrow functions ([#7134](https://github.com/sveltejs/svelte/issues/7134))
+
+## 3.46.2
+
+* Export `FlipParams` interface from `svelte/animate` ([#7103](https://github.com/sveltejs/svelte/issues/7103))
+* Fix `style:` directive reactivity inside `{#each}` block ([#7136](https://github.com/sveltejs/svelte/issues/7136))
+
+## 3.46.1
+
+* Handle `style:kebab-case` directives ([#7122](https://github.com/sveltejs/svelte/issues/7122))
+* Improve AST produced for `style:` directives ([#7127](https://github.com/sveltejs/svelte/pull/7127))
+
+## 3.46.0
+
+* Implement `{@const}` tag ([RFC #33](https://github.com/sveltejs/rfcs/pull/33), [#6413](https://github.com/sveltejs/svelte/pull/6413))
+* Implement `style:` directive ([RFC #42](https://github.com/sveltejs/rfcs/pull/42), [#5923](https://github.com/sveltejs/svelte/pull/5923))
+* Fix style manager conflicts when using multiple Svelte instances ([#7026](https://github.com/sveltejs/svelte/issues/7026))
+* Fix hydration when using `{@html}` ([#7115](https://github.com/sveltejs/svelte/issues/7115))
+
+## 3.45.0
+
+* Fix non-boolean attribute rendering in SSR to render truthy values as-is ([#6121](https://github.com/sveltejs/svelte/issues/6121))
+* Fix binding to a member expression also invalidating the member property ([#6921](https://github.com/sveltejs/svelte/issues/6921))
+* Fix default values in `{#each}`/etc. destructurings not being considered references for the purposes of compiler warnings ([#6964](https://github.com/sveltejs/svelte/issues/6964))
+* Fix `{:else if}` value incorrectly being cached ([#7043](https://github.com/sveltejs/svelte/pull/7043))
+* Add `a11y-no-redundant-roles` warning ([#7067](https://github.com/sveltejs/svelte/pull/7067))
+* Fix code generation error with arrow functions whose bodies are object destructuring assignments ([#7087](https://github.com/sveltejs/svelte/issues/7087))
+
+## 3.44.3
+
+* Fix `bind:this` binding inside `onMount` for manually instantiated component ([#6760](https://github.com/sveltejs/svelte/issues/6760))
+* Prevent cursor jumps with one-way binding for other `type="text"`-like `<input>`s ([#6941](https://github.com/sveltejs/svelte/pull/6941))
+* Exclude `async` loops from `loopGuardTimeout` ([#6945](https://github.com/sveltejs/svelte/issues/6945))
+
+## 3.44.2
+
+* Fix overly restrictive preprocessor types ([#6904](https://github.com/sveltejs/svelte/pull/6904))
+* More specific typing for crossfade function - returns a tuple, not an array ([#6926](https://github.com/sveltejs/svelte/issues/6926))
+* Add `URLSearchParams` as a known global ([#6938](https://github.com/sveltejs/svelte/pull/6938))
+* Add `types` field to `exports` map ([#6939](https://github.com/sveltejs/svelte/issues/6939))
+
+## 3.44.1
+
+* Fix code generation when a multi-line `return` statement contains comments ([code-red#36](https://github.com/Rich-Harris/code-red/issues/36))
+* Fix code generation when `for`/`if`/`while` statements have empty bodies ([#6884](https://github.com/sveltejs/svelte/issues/6884))
+
+## 3.44.0
+
+* Add `enableSourcemap` compiler option ([#6835](https://github.com/sveltejs/svelte/pull/6835))
+
+## 3.43.2
+
+* Fix regression where user-specified `import`s were not rewritten according to the `sveltePath` option ([#6834](https://github.com/sveltejs/svelte/issues/6834))
+
+## 3.43.1
+
+* Prevent a rejecting promise used in `{#await}` during SSR from appearing as an unhandled rejection ([#6789](https://github.com/sveltejs/svelte/issues/6789))
+
+## 3.43.0
+
+* Use export map to expose no-op versions of lifecycle functions for SSR ([#6743](https://github.com/sveltejs/svelte/pull/6743))
+* Prefer `context` passed to component constructor, even when running synchronously in another component ([#6753](https://github.com/sveltejs/svelte/issues/6753))
+* Handle preprocessors that return empty sourcemaps ([#6757](https://github.com/sveltejs/svelte/pull/6757))
+
+## 3.42.6
+
+* Hide private preprocess typings ([#6622](https://github.com/sveltejs/svelte/issues/6622))
+* Fix reactive function in `{:else if}` expression not being properly re-run ([#6727](https://github.com/sveltejs/svelte/pull/6727))
+
+## 3.42.5
+
+* In `draw` transition, account for `stroke-linecap` in determining length ([#4540](https://github.com/sveltejs/svelte/issues/4540))
+* Fix regression with destructuring assignments with default values ([#6699](https://github.com/sveltejs/svelte/issues/6699))
+
+## 3.42.4
+
+* Only apply optimized `src` attribute handling when in an `html` namespace ([#6575](https://github.com/sveltejs/svelte/issues/6575))
+* Fix styles for transitions and animations being attached to the wrong `document` in `<iframe>`s ([#6637](https://github.com/sveltejs/svelte/issues/6637))
+* Fix `<select>` with a `{...spread}` attribute that didn't provide a `value` key getting its value improperly unset ([#6675](https://github.com/sveltejs/svelte/issues/6675))
+
+## 3.42.3
+
+* Add `BigInt` as a known global ([#6671](https://github.com/sveltejs/svelte/pull/6671))
+* Fix regression where `onDestroy` in `svelte/ssr` was improperly a no-op ([#6676](https://github.com/sveltejs/svelte/issues/6676))
+
+## 3.42.2
+
+* Collapse whitespace in `class` and `style` attributes ([#6004](https://github.com/sveltejs/svelte/issues/6004))
+* Deselect all `<option>`s in a `<select>` where the bound `value` doesn't match any of them ([#6126](https://github.com/sveltejs/svelte/issues/6126))
+* In hydrated components, only rely on helpers for creating the types of elements present in the component ([#6555](https://github.com/sveltejs/svelte/issues/6555))
+* Add `HTMLElement` and `SVGElement` as known globals ([#6643](https://github.com/sveltejs/svelte/issues/6643))
+* Account for scaling in `flip` animations ([#6657](https://github.com/sveltejs/svelte/issues/6657))
+
+## 3.42.1
+
+* Fix regression with reordering keyed `{#each}` blocks when compiling with hydration enabled ([#6561](https://github.com/sveltejs/svelte/issues/6561))
+
+## 3.42.0
+
+* Allow `use:actions` to be used on `<svelte:body>` ([#3163](https://github.com/sveltejs/svelte/issues/3163))
+* Improve parser errors for certain invalid components ([#6259](https://github.com/sveltejs/svelte/issues/6259), [#6288](https://github.com/sveltejs/svelte/issues/6288))
+* Fix paths in generator JS sourcemaps to be relative ([#6598](https://github.com/sveltejs/svelte/pull/6598))
+* Fix overzealous warnings about `context="module"` variables not being reactive ([#6606](https://github.com/sveltejs/svelte/issues/6606))
+
+## 3.41.0
+
+* Support `export { ... } from` syntax in components ([#2214](https://github.com/sveltejs/svelte/issues/2214))
+* Support `export let { ... } =` syntax in components ([#5612](https://github.com/sveltejs/svelte/issues/5612))
+* Support `{#await ... then/catch}` without a variable for the resolved/rejected value ([#6270](https://github.com/sveltejs/svelte/issues/6270))
+
+## 3.40.3
+
+* Fix `<slot>` data when a transition is cancelled before completing ([#5394](https://github.com/sveltejs/svelte/issues/5394))
+* Fix destructuring into variables beginning with `$` so that they result in store updates ([#5653](https://github.com/sveltejs/svelte/issues/5653))
+* Fix `in:` transition configuration not properly updating when it's changed after its initial creation ([#6505](https://github.com/sveltejs/svelte/issues/6505))
+* Fix applying `:global()` for `>` selector combinator ([#6550](https://github.com/sveltejs/svelte/issues/6550))
+* Fix mounting component at detached DOM node ([#6567](https://github.com/sveltejs/svelte/issues/6567))
+
+## 3.40.2
+
+* Fix dynamic `autofocus={...}` attribute handling ([#4995](https://github.com/sveltejs/svelte/issues/4995))
+* Add filename to combined source map if needed ([#6089](https://github.com/sveltejs/svelte/pull/6089))
+* In AST, parse empty attribute values as an empty string ([#6286](https://github.com/sveltejs/svelte/issues/6286))
+* Fix tracking whether transition has started ([#6399](https://github.com/sveltejs/svelte/pull/6399))
+* Fix incorrect scoping of `:global()` selectors ([#6550](https://github.com/sveltejs/svelte/issues/6550))
+
+## 3.40.1
+
+* Fix store reactivity regression when using reactive statements ([#6557](https://github.com/sveltejs/svelte/issues/6557))
+
+## 3.40.0
+
+* Support rendering a component in a shadow DOM ([#5869](https://github.com/sveltejs/svelte/issues/5869))
+* Fix `:root` selector being erroneously scoped to component ([#4767](https://github.com/sveltejs/svelte/issues/4767))
+* Fix `.end` in AST for expressions inside attributes ([#6258](https://github.com/sveltejs/svelte/issues/6258))
+* Fix one-way `<select>` binding when it has a spread attribute ([#6433](https://github.com/sveltejs/svelte/issues/6433))
+* Various hydration improvements and fixes ([#6449](https://github.com/sveltejs/svelte/pull/6449))
+* Use smaller versions of internal helpers when compiling without hydration support ([#6462](https://github.com/sveltejs/svelte/issues/6462))
+* Fix two-way binding of values when updating through synchronous component accessors ([#6502](https://github.com/sveltejs/svelte/issues/6502))
+
+## 3.39.0
+
+* Support `bind:group` in SSR ([#4621](https://github.com/sveltejs/svelte/pull/4621))
+* Add a11y warning `a11y-mouse-events-have-key-events` which checks that `mouseover`/`mouseout` are accompanied by `focus`/`blur` event handlers ([#5938](https://github.com/sveltejs/svelte/pull/5938))
+* Make it possible to silence more warnings ([#5954](https://github.com/sveltejs/svelte/issues/5954))
+* Add `|trusted` event modifier ([#6137](https://github.com/sveltejs/svelte/issues/6137))
+* Add `varsReport` compiler option to include all variables reference in the component in the `variables` report ([#6192](https://github.com/sveltejs/svelte/pull/6192))
+* Add `errorMode` compiler option to try to continue compiling when an error is detected ([#6194](https://github.com/sveltejs/svelte/pull/6194))
+* Expose `svelte/ssr` which exports lifecycle methods as no-ops ([#6416](https://github.com/sveltejs/svelte/pull/6416))
+* Add `getAllContexts` ([#6447](https://github.com/sveltejs/svelte/issues/6447))
+* Throw proper error for `export default function() {}` and `export default class {}` rather than crashing the compiler ([#3275](https://github.com/sveltejs/svelte/issues/3275))
+* Fix SSR rendering of falsy `input` values ([#4551](https://github.com/sveltejs/svelte/issues/4551))
+* Fix `preserveComments` in SSR mode ([#4730](https://github.com/sveltejs/svelte/issues/4730))
+* Do not warn if `context="module"` variables are not the only dependencies in reactive statements ([#5954](https://github.com/sveltejs/svelte/issues/5954))
+* Stop checking `a11y-media-has-caption` a11y warning on `<audio>` elements ([#6054](https://github.com/sveltejs/svelte/issues/6054))
+* Fix erroneous "unknown prop" warning when using slot on a component ([#6065](https://github.com/sveltejs/svelte/pull/6065))
+* Add sourcemaps to all HTML elements ([#6092](https://github.com/sveltejs/svelte/issues/6092))
+* Relax `derived` function signature ([#6178](https://github.com/sveltejs/svelte/issues/6178))
+* Throw compiler error when passing empty directive names ([#6299](https://github.com/sveltejs/svelte/issues/6299))
+* Fix compiler error when using `:where()` inside `:global()` ([#6434](https://github.com/sveltejs/svelte/issues/6434))
+* Fix ordering of elements in keyed `{#each}` ([#6444](https://github.com/sveltejs/svelte/issues/6444))
+* Remove deprecated a11y warning `a11y-no-onchange warning` ([#6457](https://github.com/sveltejs/svelte/issues/6457))
+* Fix `:global()` with pseudo element not being seen as global ([#6468](https://github.com/sveltejs/svelte/issues/6468))
+* Allow `:global()` to contain multiple selectors when it is not part of a larger selector ([#6477](https://github.com/sveltejs/svelte/issues/6477))
+* Make `<script>` and `<style>` end tag parsing more robust ([#6511](https://github.com/sveltejs/svelte/pull/6511))
+
+## 3.38.3
+
+* Speed up hydration by reducing amount of element reorderings ([#4308](https://github.com/sveltejs/svelte/issues/4308))
+* Fix escaping attribute values when using a spread in SSR ([#5756](https://github.com/sveltejs/svelte/issues/5756))
+* Throw compiler error when `:global()` contains multiple selectors ([#5907](https://github.com/sveltejs/svelte/issues/5907))
+* Give explicit error rather than crashing when an attribute shorthand `{}` is empty ([#6086](https://github.com/sveltejs/svelte/issues/6086))
+* Make `<textarea>` end tag parsing more robust ([#6276](https://github.com/sveltejs/svelte/issues/6276))
+* Fix `:global(...):some-pseudoclass` selectors not being seen as global ([#6306](https://github.com/sveltejs/svelte/issues/6306))
+* Fix type signatures of `writable` and `readable` so it's possible to call them without arguments ([#6291](https://github.com/sveltejs/svelte/issues/6291), [#6345](https://github.com/sveltejs/svelte/issues/6345))
+* Preserve `this` in bubbled events ([#6310](https://github.com/sveltejs/svelte/issues/6310))
+* Fix slot props not updating when transition is aborted ([#6386](https://github.com/sveltejs/svelte/issues/6386))
+* Fix generic props relationship in `SvelteComponentTyped` ([#6400](https://github.com/sveltejs/svelte/pull/6400))
+
+## 3.38.2
+
+* Revert hydration optimisation for the time being ([#6279](https://github.com/sveltejs/svelte/issues/6279))
+
+## 3.38.1
+
+* Fix hydration regression ([#6274](https://github.com/sveltejs/svelte/issues/6274))
+
+## 3.38.0
+
+* Avoid recreating DOM elements during hydration ([#1067](https://github.com/sveltejs/svelte/issues/1067))
+* Support passing CSS custom properties to component ([#5628](https://github.com/sveltejs/svelte/issues/5628))
+* Support `:global()` as part of compound CSS selectors ([#6222](https://github.com/sveltejs/svelte/issues/6222))
+* Fix updating `<slot>` contents when there's an aborted transition ([#3542](https://github.com/sveltejs/svelte/issues/3542))
+* Fix setting boolean attributes on custom elements ([#5951](https://github.com/sveltejs/svelte/issues/5951))
+* Add missing function overload for `derived` to allow explicitly setting an initial value for non-async derived stores ([#6172](https://github.com/sveltejs/svelte/pull/6172))
+* Fix dynamic `href` values erroneously triggering a11y warnings ([#5990](https://github.com/sveltejs/svelte/issues/5990))
+* Fix scope leak when updating an `{#await}` block ([#6173](https://github.com/sveltejs/svelte/issues/6173))
+* Pass full markup source to `script`/`style` preprocessors ([#6169](https://github.com/sveltejs/svelte/pull/6169))
+* Fix `crossfade` types to mark `fallback` as optional ([#6201](https://github.com/sveltejs/svelte/pull/6201))
+* Add missing "context" typing to `SvelteComponent` constructor options ([#6236](https://github.com/sveltejs/svelte/pull/6236))
+* Don't automatically switch to `svg` namespace when in `foreign` namespace ([#6257](https://github.com/sveltejs/svelte/issues/6257))
+
+## 3.37.0
+
+* Allow root-level context to be passed to the component constructor ([#6032](https://github.com/sveltejs/svelte/pull/6032))
+
+## 3.36.0
+
+* Add `this: void` typing to store functions ([#6094](https://github.com/sveltejs/svelte/pull/6094))
+* Export `Spring`, `Tweened` and `EasingFunction` interfaces ([#6070](https://github.com/sveltejs/svelte/issues/6070), [#6056](https://github.com/sveltejs/svelte/pull/6056))
+* Export interfaces for transition parameters ([#5207](https://github.com/sveltejs/svelte/issues/5207))
+* Export store's useful TypeScript definitions ([#5864](https://github.com/sveltejs/svelte/issues/5864))
+* Fix previous breaking change to `svelte/preprocess` types location ([#6100](https://github.com/sveltejs/svelte/pull/6100))
+* Fix missing slotted elements in AST ([#6066](https://github.com/sveltejs/svelte/issues/6066))
+
+## 3.35.0
+
+* Implement slotted components and `<svelte:fragment slot="...">` ([#1037](https://github.com/sveltejs/svelte/issues/1037), [#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix reactivity bug where `slot="..."` is specified after attributes that should be reactive ([#5626](https://github.com/sveltejs/svelte/issues/5626))
+
+## 3.34.0
+
+* Add a `cssHash` option for controlling the classname used for CSS scoping ([#570](https://github.com/sveltejs/svelte/issues/570))
+
+## 3.33.0
+
+* In custom elements, call `onMount` functions when connecting and clean up when disconnecting ([#1152](https://github.com/sveltejs/svelte/issues/1152), [#2227](https://github.com/sveltejs/svelte/issues/2227), [#4522](https://github.com/sveltejs/svelte/pull/4522))
+* Allow destructured defaults to refer to other variables ([#5066](https://github.com/sveltejs/svelte/issues/5066))
+* Do not emit `contextual-store` warnings for function parameters or declared variables ([#6008](https://github.com/sveltejs/svelte/pull/6008))
+
+## 3.32.3
+
+* Fix removal of lone `:host` selectors ([#5982](https://github.com/sveltejs/svelte/issues/5982))
+
+## 3.32.2
+
+* Fix unnecessary additional invalidation with `<Component bind:prop={obj.foo}/>` ([#3075](https://github.com/sveltejs/svelte/issues/3075), [#4447](https://github.com/sveltejs/svelte/issues/4447), [#5555](https://github.com/sveltejs/svelte/issues/5555))
+* Fix scoping of selectors with `:global()` and `~` sibling combinators ([#5499](https://github.com/sveltejs/svelte/issues/5499))
+* Fix removal of `:host` selectors as unused when compiling to a custom element ([#5946](https://github.com/sveltejs/svelte/issues/5946))
+
+## 3.32.1
+
+* Warn when using `module` variables reactively, and close weird reactivity loophole ([#5847](https://github.com/sveltejs/svelte/pull/5847))
+* Throw a parser error for `class:` directives with an empty class name ([#5858](https://github.com/sveltejs/svelte/issues/5858))
+* Fix extraneous store subscription in SSR mode ([#5883](https://github.com/sveltejs/svelte/issues/5883))
+* Don't emit update code for `class:` directives whose expression is not dynamic ([#5919](https://github.com/sveltejs/svelte/issues/5919))
+* Fix type inference for derived stores ([#5935](https://github.com/sveltejs/svelte/pull/5935))
+* Make parameters of built-in animations and transitions optional ([#5936](https://github.com/sveltejs/svelte/pull/5936))
+* Make `SvelteComponentDev` typings more forgiving ([#5937](https://github.com/sveltejs/svelte/pull/5937))
+* Fix `foreign` elements incorrectly disallowing `bind:this` ([#5942](https://github.com/sveltejs/svelte/pull/5942))
+
+## 3.32.0
+
+* Allow multiple instances of the same action on an element ([#5516](https://github.com/sveltejs/svelte/issues/5516))
+* Support `foreign` namespace, which disables certain HTML5-specific behaviour and checks ([#5652](https://github.com/sveltejs/svelte/pull/5652))
+* Support inline comment sourcemaps in code from preprocessors ([#5854](https://github.com/sveltejs/svelte/pull/5854))
+
+## 3.31.2
+
+* Rework SSR store handling to subscribe and unsubscribe as in DOM mode ([#3375](https://github.com/sveltejs/svelte/issues/3375), [#3582](https://github.com/sveltejs/svelte/issues/3582), [#3636](https://github.com/sveltejs/svelte/issues/3636))
+* Fix error when removing elements that are already transitioning out ([#5789](https://github.com/sveltejs/svelte/issues/5789), [#5808](https://github.com/sveltejs/svelte/issues/5808))
+* Fix duplicate content race condition with `{#await}` blocks and out transitions ([#5815](https://github.com/sveltejs/svelte/issues/5815))
+* Deconflict variable names used for contextual actions ([#5834](https://github.com/sveltejs/svelte/issues/5834))
+
+## 3.31.1
+
+* Fix scrolling of element with resize listener by making the `<iframe>` have `z-index: -1` ([#5448](https://github.com/sveltejs/svelte/issues/5448))
+* Fix location of automatically declared reactive variables ([#5749](https://github.com/sveltejs/svelte/issues/5749))
+* Warn when using `className` or `htmlFor` attributes ([#5777](https://github.com/sveltejs/svelte/issues/5777))
+* Fix checkbox `bind:group` in keyed `{#each}` where the array can be reordered ([#5779](https://github.com/sveltejs/svelte/issues/5779))
+* Fix checkbox `bind:group` in nested `{#each}` contexts ([#5811](https://github.com/sveltejs/svelte/issues/5811))
+* Add graphics roles as known ARIA roles ([#5822](https://github.com/sveltejs/svelte/pull/5822))
+* Fix local transitions if a parent has a cancelled outro transition ([#5829](https://github.com/sveltejs/svelte/issues/5829))
+* Support `use:obj.some.deep.function` as actions ([#5844](https://github.com/sveltejs/svelte/issues/5844))
+
+## 3.31.0
+
+* Use a separate `SvelteComponentTyped` interface for typed components ([#5738](https://github.com/sveltejs/svelte/pull/5738))
+
+## 3.30.1
+
+* Support consuming decoded sourcemaps as created by the `source-map` library's `SourceMapGenerator` ([#5722](https://github.com/sveltejs/svelte/issues/5722))
+* Actually export `hasContext` ([#5726](https://github.com/sveltejs/svelte/issues/5726))
+
+## 3.30.0
+
+* Add a typed `SvelteComponent` interface ([#5431](https://github.com/sveltejs/svelte/pull/5431))
+* Support spread into `<slot>` props ([#5456](https://github.com/sveltejs/svelte/issues/5456))
+* Fix setting reactive dependencies which don't appear in the template to `undefined` ([#5538](https://github.com/sveltejs/svelte/issues/5538))
+* Support preprocessor sourcemaps during compilation ([#5584](https://github.com/sveltejs/svelte/pull/5584))
+* Fix ordering of elements when using `{#if}` inside `{#key}` ([#5680](https://github.com/sveltejs/svelte/issues/5680))
+* Add `hasContext` lifecycle function ([#5690](https://github.com/sveltejs/svelte/pull/5690))
+* Fix missing `walk` types in `svelte/compiler` ([#5696](https://github.com/sveltejs/svelte/pull/5696))
+
+## 3.29.7
+
+* Include `./register` in exports map ([#5670](https://github.com/sveltejs/svelte/issues/5670))
+
+## 3.29.6
+
+* Include `./package.json` in export map ([#5659](https://github.com/sveltejs/svelte/issues/5659))
+
+## 3.29.5
+
+* Fix `$$props` and `$$restProps` when compiling to a custom element ([#5482](https://github.com/sveltejs/svelte/issues/5482))
+* Include an export map in `package.json` ([#5556](https://github.com/sveltejs/svelte/issues/5556))
+* Fix function calls in `<slot>` props that use contextual values ([#5565](https://github.com/sveltejs/svelte/issues/5565))
+* Fix handling aborted transitions in `{:else}` blocks ([#5573](https://github.com/sveltejs/svelte/issues/5573))
+* Add `Element` and `Node` to known globals ([#5586](https://github.com/sveltejs/svelte/issues/5586))
+* Fix `$$slots` when compiling to custom elements ([#5594](https://github.com/sveltejs/svelte/issues/5594))
+* Fix internal `import`s so that we're exposing a valid ES module ([#5617](https://github.com/sveltejs/svelte/issues/5617))
+
+## 3.29.4
+
+* Fix code generation error with `??` alongside logical operators ([#5558](https://github.com/sveltejs/svelte/issues/5558))
+
+## 3.29.3
+
+* Hopefully actually republish with proper UMD build for use in the REPL
+
+## 3.29.2
+
+* Republish with proper UMD build for use in the REPL
+
+## 3.29.1
+
+* Fix compiler hanging on `<slot slot="...">` ([#5475](https://github.com/sveltejs/svelte/issues/5475))
+* Fix types on `get` function in `svelte/store` ([#5483](https://github.com/sveltejs/svelte/pull/5483))
+* Add missing `end` field on ASTs for non-top-level `<style>` elements ([#5487](https://github.com/sveltejs/svelte/pull/5487))
+* Fix `{#if}` inside `{#await}` with destructuring ([#5508](https://github.com/sveltejs/svelte/issues/5508))
+* Fix types on lifecycle hooks ([#5529](https://github.com/sveltejs/svelte/pull/5529))
+
+## 3.29.0
+
+* Support `<slot slot="...">` ([#2079](https://github.com/sveltejs/svelte/issues/2079))
+* Fix unmounting components with a bidirectional transition with a delay ([#4954](https://github.com/sveltejs/svelte/issues/4954))
+* Add types to `get` function in `svelte/store` ([#5269](https://github.com/sveltejs/svelte/pull/5269))
+* Add a warning when a component looks like it's trying to use another component without beginning with a capital letter ([#5302](https://github.com/sveltejs/svelte/pull/5302))
+* Add `EventSource` to known globals ([#5463](https://github.com/sveltejs/svelte/issues/5463))
+* Fix compiler exception with `~`/`+` combinators and `{...spread}` attributes ([#5465](https://github.com/sveltejs/svelte/issues/5465))
+
+## 3.28.0
+
+* Add `{#key}` block for keying arbitrary content on an expression ([#1469](https://github.com/sveltejs/svelte/issues/1469))
+
+## 3.27.0
+
+* Add `|nonpassive` event modifier, explicitly passing `passive: false` ([#2068](https://github.com/sveltejs/svelte/issues/2068))
+* Scope CSS selectors with `~` and `+` combinators ([#3104](https://github.com/sveltejs/svelte/issues/3104))
+* Fix keyed `{#each}` not reacting to key changing ([#5444](https://github.com/sveltejs/svelte/issues/5444))
+* Fix destructuring into store values ([#5449](https://github.com/sveltejs/svelte/issues/5449))
+* Fix erroneous `missing-declaration` warning with `use:obj.method` ([#5451](https://github.com/sveltejs/svelte/issues/5451))
+
+## 3.26.0
+
+* Support `use:obj.method` as actions ([#3935](https://github.com/sveltejs/svelte/issues/3935))
+* Support `_` as numeric separator ([#5407](https://github.com/sveltejs/svelte/issues/5407))
+* Fix assignments to properties on store values ([#5412](https://github.com/sveltejs/svelte/issues/5412))
+* Add special style scoping handling of `[open]` selectors on `<details>` elements ([#5421](https://github.com/sveltejs/svelte/issues/5421))
+* Support `import.meta` in template expressions ([#5422](https://github.com/sveltejs/svelte/issues/5422))
+
+## 3.25.1
+
+* Fix specificity of certain styles involving a child selector ([#4795](https://github.com/sveltejs/svelte/issues/4795))
+* Fix transitions that are parameterised with stores ([#5244](https://github.com/sveltejs/svelte/issues/5244))
+* Fix scoping of styles involving child selector and `*` ([#5370](https://github.com/sveltejs/svelte/issues/5370))
+* Fix destructuring which reassigns stores ([#5388](https://github.com/sveltejs/svelte/issues/5388))
+* Fix `{#await}`s with no `{:catch}` getting stuck unresolved if the promise rejects ([#5401](https://github.com/sveltejs/svelte/issues/5401))
+
+## 3.25.0
+
+* Use `null` rather than `undefined` for coerced bound value of `<input type="number">` ([#1701](https://github.com/sveltejs/svelte/issues/1701))
+* Expose object of which slots have received content in `$$slots` ([#2106](https://github.com/sveltejs/svelte/issues/2106))
+* Correctly disallow using lifecycle hooks after synchronous component initialisation ([#4259](https://github.com/sveltejs/svelte/issues/4259), [#4899](https://github.com/sveltejs/svelte/issues/4899))
+* Re-throw an unhandled rejection when an `{#await}` block with no `{:catch}` gets a rejection ([#5129](https://github.com/sveltejs/svelte/issues/5129))
+* Add types to `createEventDispatcher` ([#5211](https://github.com/sveltejs/svelte/issues/5211))
+* In SSR mode, do not automatically declare variables for reactive assignments to member expressions ([#5247](https://github.com/sveltejs/svelte/issues/5247))
+* Include selector in message of `unused-css-selector` warning ([#5252](https://github.com/sveltejs/svelte/issues/5252))
+* Fix using `<Namespaced.Component/>`s in child `{#await}`/`{#each}` contexts ([#5255](https://github.com/sveltejs/svelte/issues/5255))
+* Fix using `<svelte:component>` in `{:catch}` ([#5259](https://github.com/sveltejs/svelte/issues/5259))
+* Fix setting one-way bound `<input>` `value` to `undefined` when it has spread attributes ([#5270](https://github.com/sveltejs/svelte/issues/5270))
+* Fix deep two-way bindings inside an `{#each}` involving a store ([#5286](https://github.com/sveltejs/svelte/issues/5286))
+* Use valid XHTML for elements that are optimised and inserted with `.innerHTML` ([#5315](https://github.com/sveltejs/svelte/issues/5315))
+* Fix reactivity of `$$props` in slot fallback content ([#5367](https://github.com/sveltejs/svelte/issues/5367))
+
+## 3.24.1
+
+* Prevent duplicate invalidation with certain two-way component bindings ([#3180](https://github.com/sveltejs/svelte/issues/3180), [#5117](https://github.com/sveltejs/svelte/issues/5117), [#5144](https://github.com/sveltejs/svelte/issues/5144))
+* Fix reactivity when passing `$$props` to a `<slot>` ([#3364](https://github.com/sveltejs/svelte/issues/3364))
+* Fix transitions on `{#each}` `{:else}` ([#4970](https://github.com/sveltejs/svelte/issues/4970))
+* Fix unneeded invalidation of `$$props` and `$$restProps` ([#4993](https://github.com/sveltejs/svelte/issues/4993), [#5118](https://github.com/sveltejs/svelte/issues/5118))
+* Provide better compiler error message when mismatched tags are due to autoclosing of tags ([#5049](https://github.com/sveltejs/svelte/issues/5049))
+* Add `a11y-label-has-associated-control` warning ([#5074](https://github.com/sveltejs/svelte/pull/5074))
+* Add `a11y-media-has-caption` warning ([#5075](https://github.com/sveltejs/svelte/pull/5075))
+* Fix `bind:group` when using contextual reference ([#5174](https://github.com/sveltejs/svelte/issues/5174))
+
+## 3.24.0
+
+* Support nullish coalescing (`??`) and optional chaining (`?.`) operators ([#1972](https://github.com/sveltejs/svelte/issues/1972))
+* Support `import.meta` ([#4379](https://github.com/sveltejs/svelte/issues/4379))
+* Fix only setting `<input>` values when they're changed when there are spread attributes ([#4418](https://github.com/sveltejs/svelte/issues/4418))
+* Fix placement of `{@html}` when used at the root of a slot, at the root of a component, or in `<svelte:head>` ([#5012](https://github.com/sveltejs/svelte/issues/5012), [#5071](https://github.com/sveltejs/svelte/pull/5071))
+* Fix certain handling of two-way bound `contenteditable` elements ([#5018](https://github.com/sveltejs/svelte/issues/5018))
+* Fix handling of `import`ed value that is used as a store and is also mutated ([#5019](https://github.com/sveltejs/svelte/issues/5019))
+* Do not display `a11y-missing-content` warning on elements with `contenteditable` bindings ([#5020](https://github.com/sveltejs/svelte/issues/5020))
+* Fix handling of `this` in inline function expressions in the template ([#5033](https://github.com/sveltejs/svelte/issues/5033))
+* Fix collapsing HTML with static content ([#5040](https://github.com/sveltejs/svelte/issues/5040))
+* Prevent use of `$store` at compile time when top-level `store` has been shadowed ([#5048](https://github.com/sveltejs/svelte/issues/5048))
+* Update `<select>` with one-way `value` binding when the available `<option>`s change ([#5051](https://github.com/sveltejs/svelte/issues/5051))
+* Fix published `tweened` types so the `.set()` and `.update()` options are optional ([#5062](https://github.com/sveltejs/svelte/issues/5062))
+* Fix contextual `bind:this` inside `{#each}` block ([#5067](https://github.com/sveltejs/svelte/issues/5067))
+* Preprocess self-closing `<script>` and `<style>` tags ([#5080](https://github.com/sveltejs/svelte/issues/5080))
+* Fix types for animation- and transition-related param objects so each param is optional ([#5083](https://github.com/sveltejs/svelte/pull/5083))
+
+## 3.23.2
+
+* Fix `bind:group` inside `{#each}` ([#3243](https://github.com/sveltejs/svelte/issues/3243))
+* Don't crash when using an arrow function as a statement ([#4617](https://github.com/sveltejs/svelte/issues/4617))
+* Deconflict `bind:this` variable ([#4636](https://github.com/sveltejs/svelte/issues/4636))
+
+## 3.23.1
+
+* Fix checkbox `bind:group` when multiple options have the same value ([#4397](https://github.com/sveltejs/svelte/issues/4397))
+* Fix `bind:this` to the value of an `{#each}` block ([#4517](https://github.com/sveltejs/svelte/issues/4517))
+* Fix reactivity when assigning to contextual `{#each}` variable ([#4574](https://github.com/sveltejs/svelte/issues/4574), [#4744](https://github.com/sveltejs/svelte/issues/4744))
+* Fix binding to contextual `{#each}` values that shadow outer names ([#4757](https://github.com/sveltejs/svelte/issues/4757))
+* Work around EdgeHTML DOM issue when removing attributes during hydration ([#4911](https://github.com/sveltejs/svelte/pull/4911))
+* Throw CSS parser error when `:global()` does not contain a selector ([#4930](https://github.com/sveltejs/svelte/issues/4930))
+
+## 3.23.0
+
+* Update `<select>` with `bind:value` when the available `<option>`s change ([#1764](https://github.com/sveltejs/svelte/issues/1764))
+* Add `muted` binding for media elements ([#2998](https://github.com/sveltejs/svelte/issues/2998))
+* Fix inconsistencies when setting a two-way bound `<input>` to `undefined` ([#3569](https://github.com/sveltejs/svelte/issues/3569))
+* Fix setting `<select multiple>` when there are spread attributes ([#4392](https://github.com/sveltejs/svelte/issues/4392))
+* Fix let-less `<slot>` with context overflow ([#4624](https://github.com/sveltejs/svelte/issues/4624))
+* Fix resize listening on certain older browsers ([#4752](https://github.com/sveltejs/svelte/issues/4752))
+* Add `a11y-no-onchange` warning ([#4788](https://github.com/sveltejs/svelte/pull/4788))
+* Fix `use:` actions being recreated when a keyed `{#each}` is reordered ([#4693](https://github.com/sveltejs/svelte/issues/4693))
+* Fix `{@html}` when using tags that can only appear inside certain tags ([#4852](https://github.com/sveltejs/svelte/issues/4852))
+* Fix reactivity when binding directly to `{#each}` context ([#4879](https://github.com/sveltejs/svelte/issues/4879))
+
+## 3.22.3
+
+* Support default values and trailing commas in destructuring `{#await}` ([#4560](https://github.com/sveltejs/svelte/issues/4560), [#4810](https://github.com/sveltejs/svelte/issues/4810))
+* Fix handling of `tweened` store when set using `duration: 0` ([#4799](https://github.com/sveltejs/svelte/issues/4799), [#4846](https://github.com/sveltejs/svelte/issues/4846))
+* Fix setting `value` attribute with `bind:group` and attribute spread ([#4803](https://github.com/sveltejs/svelte/issues/4803))
+* Fix issue with compound `{#if}` block involving static condition, dynamic condition, and inline component ([#4840](https://github.com/sveltejs/svelte/issues/4840))
+* Update a11y warnings per ARIA 1.2 working draft ([#4844](https://github.com/sveltejs/svelte/issues/4844))
+
+## 3.22.2
+
+* Fix compiler exception with `a11y-img-redundant-alt` and value-less `alt` attribute ([#4777](https://github.com/sveltejs/svelte/issues/4777))
+
+## 3.22.1
+
+* Fix compiler exception with `a11y-img-redundant-alt` and dynamic `alt` attribute ([#4770](https://github.com/sveltejs/svelte/issues/4770))
+
+## 3.22.0
+
+* Fix misaligned line numbers in source maps ([#3906](https://github.com/sveltejs/svelte/issues/3906))
+* Make setting a `tweened` store using `duration: 0` instantly update the value ([#4399](https://github.com/sveltejs/svelte/issues/4399))
+* Fix reactivity with imported values that are then mutated ([#4555](https://github.com/sveltejs/svelte/issues/4555))
+* Fix contextual dynamic `bind:this` inside `{#each}` block ([#4686](https://github.com/sveltejs/svelte/issues/4686))
+* Do not display a11y warning about missing `href` for `<a>` with `name` or `id` ([#4697](https://github.com/sveltejs/svelte/issues/4697))
+* Disable infinite loop guard inside generators ([#4698](https://github.com/sveltejs/svelte/issues/4698))
+* Display `a11y-invalid-attribute` warning for `href="javascript:..."` ([#4733](https://github.com/sveltejs/svelte/pull/4733))
+* Implement `a11y-img-redundant-alt` warning ([#4750](https://github.com/sveltejs/svelte/pull/4750))
+* Fix variable name conflict with component called `<Anchor>` ([#4768](https://github.com/sveltejs/svelte/issues/4768))
+
+## 3.21.0
+
+* Support dimension bindings in cross-origin environments ([#2147](https://github.com/sveltejs/svelte/issues/2147))
+* Fix several related outro bugs ([#3202](https://github.com/sveltejs/svelte/issues/3202), [#3410](https://github.com/sveltejs/svelte/issues/3410), [#3685](https://github.com/sveltejs/svelte/issues/3685), [#4620](https://github.com/sveltejs/svelte/issues/4620), [#4630](https://github.com/sveltejs/svelte/issues/4630))
+* Try using `globalThis` rather than `globals` for the benefit of non-Node servers and web workers ([#3561](https://github.com/sveltejs/svelte/issues/3561), [#4545](https://github.com/sveltejs/svelte/issues/4545))
+* Support `{#await ... catch ...}` syntax shorthand ([#3623](https://github.com/sveltejs/svelte/issues/3623))
+* Fix attaching of JS debugging comments to HTML comments ([#4565](https://github.com/sveltejs/svelte/issues/4565))
+* Fix `<svelte:component/>` within `<slot/>` ([#4597](https://github.com/sveltejs/svelte/issues/4597))
+* Fix bug with updating simple `{#if}` blocks ([#4629](https://github.com/sveltejs/svelte/issues/4629))
+* Fix issues with `<input type="number">` updates ([#4631](https://github.com/sveltejs/svelte/issues/4631), [#4687](https://github.com/sveltejs/svelte/issues/4687))
+* Prevent illegal attribute names ([#4648](https://github.com/sveltejs/svelte/issues/4648))
+* Fix `{#if}` block directly within `<slot/>` ([#4703](https://github.com/sveltejs/svelte/issues/4703))
+
+## 3.20.1
+
+* Fix compiler regression with slots ([#4562](https://github.com/sveltejs/svelte/issues/4562))
+
+## 3.20.0
+
+* Allow destructuring in `{#await}` blocks ([#1851](https://github.com/sveltejs/svelte/issues/1851))
+* Allow `<svelte:self>` to be used in a slot ([#2798](https://github.com/sveltejs/svelte/issues/2798))
+* Expose object of unknown props in `$$restProps` ([#2930](https://github.com/sveltejs/svelte/issues/2930))
+* Prevent passing named slots other than from the top level within a component ([#3385](https://github.com/sveltejs/svelte/issues/3385))
+* Allow transitions and animations to work within iframes ([#3624](https://github.com/sveltejs/svelte/issues/3624))
+* Fix initialising slot fallbacks when unnecessary ([#3763](https://github.com/sveltejs/svelte/issues/3763))
+* Disallow binding directly to `const` variables ([#4479](https://github.com/sveltejs/svelte/issues/4479))
+* Fix re-attaching event handlers on keyed `{#each}` blocks ([#4491](https://github.com/sveltejs/svelte/issues/4491))
+* Fix updating keyed `{#each}` blocks with `{:else}` ([#4536](https://github.com/sveltejs/svelte/issues/4536), [#4549](https://github.com/sveltejs/svelte/issues/4549))
+* Fix hydration of top-level content ([#4542](https://github.com/sveltejs/svelte/issues/4542))
+
+## 3.19.2
+
+* In `dev` mode, display a runtime warning when a component is passed an unexpected slot ([#1020](https://github.com/sveltejs/svelte/issues/1020), [#1447](https://github.com/sveltejs/svelte/issues/1447))
+* In `vars` array, correctly indicate whether `module` variables are `mutated` or `reassigned` ([#3215](https://github.com/sveltejs/svelte/issues/3215))
+* Fix spread props not updating in certain situations ([#3521](https://github.com/sveltejs/svelte/issues/3521), [#4480](https://github.com/sveltejs/svelte/issues/4480))
+* Use the fallback content for slots if they are passed only whitespace ([#4092](https://github.com/sveltejs/svelte/issues/4092))
+* Fix bitmask overflow for `{#if}` blocks ([#4263](https://github.com/sveltejs/svelte/issues/4263))
+* In `dev` mode, check for unknown props even if the component has no writable props ([#4323](https://github.com/sveltejs/svelte/issues/4323))
+* Exclude global variables from `$capture_state` ([#4463](https://github.com/sveltejs/svelte/issues/4463))
+* Fix bitmask overflow for slots ([#4481](https://github.com/sveltejs/svelte/issues/4481))
+
+## 3.19.1
+
+* Do not treat modifications to `$$props` as updates to a store called `$props` ([#4368](https://github.com/sveltejs/svelte/issues/4368))
+* Deconflict `value` parameter name used in contextual bindings ([#4445](https://github.com/sveltejs/svelte/issues/4445))
+* Fix dev mode validation of `{#each}` blocks using strings ([#4450](https://github.com/sveltejs/svelte/issues/4450))
+
+## 3.19.0
+
+* Fix indirect bindings involving elements with spreads ([#3680](https://github.com/sveltejs/svelte/issues/3680))
+* `$capture_state`/`$inject_state` now act on the component's entire state, rather than its props ([#3822](https://github.com/sveltejs/svelte/pull/3822))
+* Warn when using `<Foo/>` and `Foo` is dynamic ([#4331](https://github.com/sveltejs/svelte/issues/4331))
+* Display compilation warnings in `svelte/register` in dev mode ([#4364](https://github.com/sveltejs/svelte/issues/4364))
+* Fix unneeded updating of keyed each blocks ([#4373](https://github.com/sveltejs/svelte/issues/4373))
+* Throw runtime error in dev mode for non-array-like values in `{#each}` blocks ([#4408](https://github.com/sveltejs/svelte/issues/4408))
+
+## 3.18.2
+
+* Fix binding to module-level variables ([#4086](https://github.com/sveltejs/svelte/issues/4086))
+* Improve parsing error messages when there is a pending unclosed tag ([#4131](https://github.com/sveltejs/svelte/issues/4131))
+* Disallow attribute/prop names from matching two-way-bound names or `{shorthand}` attribute/prop names ([#4325](https://github.com/sveltejs/svelte/issues/4325))
+* Improve performance of `flush()` by not using `.shift()` ([#4356](https://github.com/sveltejs/svelte/pull/4356))
+* Permit reserved keywords as destructuring keys in `{#each}` ([#4372](https://github.com/sveltejs/svelte/issues/4372))
+* Disallow reserved keywords in `{expressions}` ([#4372](https://github.com/sveltejs/svelte/issues/4372))
+* Fix code generation error with precedence of arrow functions ([#4384](https://github.com/sveltejs/svelte/issues/4384))
+* Fix event handlers that are dynamic via reactive declarations or stores ([#4388](https://github.com/sveltejs/svelte/issues/4388))
+* Fix invalidation in expressions like `++foo.bar` ([#4393](https://github.com/sveltejs/svelte/issues/4393))
+
+## 3.18.1
+
+* Fix code generation error with adjacent inline and block comments ([#4312](https://github.com/sveltejs/svelte/issues/4312))
+* Fix detection of unused CSS selectors that begin with a `:global()` but contain a scoped portion ([#4314](https://github.com/sveltejs/svelte/issues/4314))
+
+## 3.18.0
+
+* Fix infinite loop when instantiating another component during `onMount` ([#3218](https://github.com/sveltejs/svelte/issues/3218))
+* Make autosubscribing to a nullish store a no-op ([#2181](https://github.com/sveltejs/svelte/issues/2181))
+
+## 3.17.3
+
+* Fix updating a `<slot>` inside an `{#if}` or other block ([#4292](https://github.com/sveltejs/svelte/issues/4292))
+* Fix using RxJS observables in `derived` stores ([#4298](https://github.com/sveltejs/svelte/issues/4298))
+* Add dev mode check to disallow duplicate keys in a keyed `{#each}` ([#4301](https://github.com/sveltejs/svelte/issues/4301))
+* Fix hydration of `<title>` when starting from SSR-generated code with `hydratable: true` ([#4310](https://github.com/sveltejs/svelte/issues/4310))
+
+## 3.17.2
+
+* Fix removing attributes during hydration ([#1733](https://github.com/sveltejs/svelte/issues/1733))
+* Disallow two-way binding to a variable declared by an `{#await}` block ([#4012](https://github.com/sveltejs/svelte/issues/4012))
+* Allow access to `let:` variables in sibling attributes on slot root ([#4173](https://github.com/sveltejs/svelte/issues/4173))
+* Fix `~=` and class selector matching against values separated by any whitespace characters ([#4242](https://github.com/sveltejs/svelte/issues/4242))
+* Fix code generation for `await`ed expressions that need parentheses ([#4267](https://github.com/sveltejs/svelte/issues/4267))
+* Preserve JavaScript comments from the original component source where possible ([#4268](https://github.com/sveltejs/svelte/issues/4268))
+* Add some more known globals ([#4276](https://github.com/sveltejs/svelte/pull/4276))
+* Correctly apply event modifiers to `<svelte:body>` events ([#4278](https://github.com/sveltejs/svelte/issues/4278))
+
+## 3.17.1
+
+* Only attach SSR mode markers to a component's `<head>` elements when compiling with `hydratable: true` ([#4258](https://github.com/sveltejs/svelte/issues/4258))
+
+## 3.17.0
+
+* Remove old `<head>` elements during hydration so they aren't duplicated ([#1607](https://github.com/sveltejs/svelte/issues/1607))
+* Prevent text input cursor jumping in Safari with one-way binding ([#3449](https://github.com/sveltejs/svelte/issues/3449))
+* Expose compiler version in dev events ([#4047](https://github.com/sveltejs/svelte/issues/4047))
+* Don't run actions before their element is in the document ([#4166](https://github.com/sveltejs/svelte/issues/4166))
+* Fix reactive assignments with destructuring and stores where the destructured value should be undefined ([#4170](https://github.com/sveltejs/svelte/issues/4170))
+* Fix hydrating `{:else}` in `{#each}` ([#4202](https://github.com/sveltejs/svelte/issues/4202))
+* Do not automatically declare variables in reactive declarations when assigning to a member expression ([#4212](https://github.com/sveltejs/svelte/issues/4212))
+* Fix stringifying of attributes in SSR mode when there are spread attributes ([#4240](https://github.com/sveltejs/svelte/issues/4240))
+* Only render one `<title>` in SSR mode when multiple components provide one ([#4250](https://github.com/sveltejs/svelte/pull/4250))
+
+## 3.16.7
+
+* Also apply actions in the order they're given along with other directives ([#2446](https://github.com/sveltejs/svelte/issues/2446), [#4156](https://github.com/sveltejs/svelte/pull/4156))
+* Check whether a dynamic event handler is a function before calling it ([#4090](https://github.com/sveltejs/svelte/issues/4090))
+* Correctly mark event handlers as dynamic when they involve an expression used in a `bind:` elsewhere ([#4155](https://github.com/sveltejs/svelte/pull/4155))
+
+## 3.16.6
+
+* Fix CSS specificity bug when encapsulating styles ([#1277](https://github.com/sveltejs/svelte/issues/1277))
+* Apply directives in the order they're given ([#2446](https://github.com/sveltejs/svelte/issues/2446))
+* Fix destructuring in `let:` directives ([#2751](https://github.com/sveltejs/svelte/issues/2751))
+* Preserve whitespace around `<tspan>`s in `<svg>`s ([#3998](https://github.com/sveltejs/svelte/issues/3998))
+
+## 3.16.5
+
+* Better fix for cascading invalidations and fix some regressions ([#4098](https://github.com/sveltejs/svelte/issues/4098), [#4114](https://github.com/sveltejs/svelte/issues/4114), [#4120](https://github.com/sveltejs/svelte/issues/4120))
+
+## 3.16.4
+
+* Fix slots with props not propagating through to inner slots ([#4061](https://github.com/sveltejs/svelte/issues/4061))
+* Fix noting autosubscribed stores as `referenced` in `vars` for tooling ([#4081](https://github.com/sveltejs/svelte/issues/4081))
+* Fix cascading invalidations in certain situations ([#4094](https://github.com/sveltejs/svelte/issues/4094))
+
+## 3.16.3
+
+* Fix bitmask overflow when using slotted components ([#4077](https://github.com/sveltejs/svelte/issues/4077))
+* Remove unnecessary `$$invalidate` calls from init block ([#4018](https://github.com/sveltejs/svelte/issues/4018))
+
+## 3.16.2
+
+* Handle slot updates when parent component has a bitmask overflow  ([#4078](https://github.com/sveltejs/svelte/pull/4078))
+
+## 3.16.1
+
+* Fix unused export warning for props used as stores ([#4021](https://github.com/sveltejs/svelte/issues/4021))
+* Fix `{:then}` without resolved value containing `{#each}` ([#4022](https://github.com/sveltejs/svelte/issues/4022))
+* Fix incorrect code generated with `loopGuardTimeout` ([#4034](https://github.com/sveltejs/svelte/issues/4034))
+* Fix handling of bitmask overflow and globals ([#4037](https://github.com/sveltejs/svelte/issues/4037))
+* Fix `{:then}` containing `{#if}` ([#4044](https://github.com/sveltejs/svelte/issues/4044))
+* Fix bare `import`s in `format: 'cjs'` output mode ([#4055](https://github.com/sveltejs/svelte/issues/4050))
+* Warn when using a known global as a component name ([#4070](https://github.com/sveltejs/svelte/issues/4070))
+
+## 3.16.0
+
+* Use bitmasks to track changes ([#3945](https://github.com/sveltejs/svelte/pull/3945))
+* Fix heisenbug with component styles ([#3977](https://github.com/sveltejs/svelte/issues/3977))
+* Do not warn about missing expected props for `export function foo() {}` ([#3954](https://github.com/sveltejs/svelte/issues/3954))
+* Fix `context="module"` exports with the same name as an instance variable ([#3983](https://github.com/sveltejs/svelte/issues/3983))
+* Fix binding to contextual values from `{#each}` blocks referring to global variables ([#3992](https://github.com/sveltejs/svelte/issues/3992))
+* Use `requestAnimationFrame` callback argument for smoother transitions ([#4014](https://github.com/sveltejs/svelte/pull/4014))
+* Fix `listen_dev` argument order ([#4016](https://github.com/sveltejs/svelte/pull/4016))
+
+## 3.15.0
+
+* Hide commented sections from preprocessors ([#3894](https://github.com/sveltejs/svelte/pull/3894))
+* Add `seeking` and `ended` bindings to media elements ([#3650](https://github.com/sveltejs/svelte/pull/3650))
+* Add `videoWidth` and `videoHeight` bindings to video elements ([#3927](https://github.com/sveltejs/svelte/pull/3927))
+* Fix for dynamic event handlers ([#3934](https://github.com/sveltejs/svelte/pull/3934))
+* Handle scale transforms when using the `flip` animation ([#3555](https://github.com/sveltejs/svelte/issues/3555))
+* Fix some code generation bugs ([#3929](https://github.com/sveltejs/svelte/issues/3929), [#3939](https://github.com/sveltejs/svelte/issues/3939))
+* Add `aria-hidden="true"` to objects generated when adding resize-listeners, to improve accessibility ([#3948](https://github.com/sveltejs/svelte/issues/3948))
+
+## 3.14.1
+
+* Deconflict block method names with other variables ([#3900](https://github.com/sveltejs/svelte/issues/3900))
+* Fix entity encoding issue in text nodes with constant expressions ([#3911](https://github.com/sveltejs/svelte/issues/3911))
+* Make code for unknown prop warnings compatible with older js engines ([#3914](https://github.com/sveltejs/svelte/issues/3914))
+
+## 3.14.0
+
+* Add `loopGuardTimeout` option that augments `for`/`while` loops to prevent infinite loops, primarily for use in the REPL ([#3887](https://github.com/sveltejs/svelte/pull/3887))
+* Keep component bindings in sync when changed in reactive statements ([#3382](https://github.com/sveltejs/svelte/issues/3382))
+* Update attributes before bindings ([#3857](https://github.com/sveltejs/svelte/issues/3857))
+* Prevent variable naming conflict ([#3899](https://github.com/sveltejs/svelte/issues/3899))
+
+
 ## 3.13.0
 
 * New structured code generation, which eliminates a number of edge cases and obscure bugs ([#3539](https://github.com/sveltejs/svelte/pull/3539))
@@ -229,7 +1078,7 @@ Also:
 
 ## 3.5.1
 
-* Accommodate webpack idiosyncracies
+* Accommodate webpack idiosyncrasies
 
 ## 3.5.0
 
@@ -431,7 +1280,7 @@ Also:
 ## 2.12.0
 
 * Initialise actions on mount rather than hydrate ([#1653](https://github.com/sveltejs/svelte/pull/1653))
-* Allow non-existent components to be destroyed ([#1677](https://github.com/sveltejs/svelte/pull/1677))
+* Allow nonexistent components to be destroyed ([#1677](https://github.com/sveltejs/svelte/pull/1677))
 * Pass AMD ID from CLI correctly ([#1672](https://github.com/sveltejs/svelte/pull/1672))
 * Minor AST tweaks ([#1673](https://github.com/sveltejs/svelte/pull/1673), [#1674](https://github.com/sveltejs/svelte/pull/1674))
 * Reduce code duplication in component initialisation ([#1670](https://github.com/sveltejs/svelte/pull/1670))
@@ -1441,7 +2290,7 @@ Also:
 
 ## 1.10.3
 
-* Prevent `'</script>'` string occurence breaking pages ([#349](https://github.com/sveltejs/svelte/pull/349))
+* Prevent `'</script>'` string occurrence breaking pages ([#349](https://github.com/sveltejs/svelte/pull/349))
 * Allow reference to whitelisted globals without properties ([#333](https://github.com/sveltejs/svelte/pull/333))
 * Don't remove `&nbsp;` incorrectly ([#348](https://github.com/sveltejs/svelte/issues/348))
 * `let` -> `var` in `addCss` block ([#351](https://github.com/sveltejs/svelte/pull/351))

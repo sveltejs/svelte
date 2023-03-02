@@ -1,7 +1,7 @@
-import repeat from './repeat';
+const regex_tabs = /^\t+/;
 
 function tabs_to_spaces(str: string) {
-	return str.replace(/^\t+/, match => match.split('\t').join('  '));
+	return str.replace(regex_tabs, match => match.split('\t').join('  '));
 }
 
 export default function get_code_frame(
@@ -20,13 +20,10 @@ export default function get_code_frame(
 		.slice(frame_start, frame_end)
 		.map((str, i) => {
 			const isErrorLine = frame_start + i === line;
-
-			let line_num = String(i + frame_start + 1);
-			while (line_num.length < digits) line_num = ` ${line_num}`;
+			const line_num = String(i + frame_start + 1).padStart(digits, ' ');
 
 			if (isErrorLine) {
-				const indicator =
-					repeat(' ', digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
+				const indicator = ' '.repeat(digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
 				return `${line_num}: ${tabs_to_spaces(str)}\n${indicator}`;
 			}
 

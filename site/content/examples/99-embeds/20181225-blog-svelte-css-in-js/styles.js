@@ -1,4 +1,4 @@
-import emotion from 'emotion/dist/emotion.umd.min.js';
+import emotion from '@emotion/css@11.1.3/dist/emotion-css.umd.min.js';
 
 const { css } = emotion;
 
@@ -11,7 +11,7 @@ export const title = css`
 `;
 
 export const comicSans = css`
-	font-family: 'Comic Sans MS';
+	font-family: 'Comic Sans MS', cursive;
 `;
 
 export const box = css`

@@ -1,5 +1,5 @@
 export default {
-	html: `ABCD`,
+	html: 'ABCD',
 
 	test({ assert, component }) {
 		assert.equal(component.compute(), 'ABCD');

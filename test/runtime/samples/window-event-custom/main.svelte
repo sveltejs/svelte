@@ -3,7 +3,7 @@
 
 	function esc(node, callback) {
 		function onKeyDown(event) {
-			if (event.which === 27) callback(event);
+			if (event.key === 'Escape') callback(event);
 		}
 		node.addEventListener('keydown', onKeyDown);
 		return {

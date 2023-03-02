@@ -16,14 +16,14 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			set_style(div, "background", "url(data:image/png;base64," + ctx.data + ")");
+			set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 		},
-		p(changed, ctx) {
-			if (changed.data) {
-				set_style(div, "background", "url(data:image/png;base64," + ctx.data + ")");
+		p(ctx, [dirty]) {
+			if (dirty & /*data*/ 1) {
+				set_style(div, "background", "url(data:image/png;base64," + /*data*/ ctx[0] + ")");
 			}
 		},
 		i: noop,
@@ -37,11 +37,11 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let { data } = $$props;
 
-	$$self.$set = $$props => {
-		if ("data" in $$props) $$invalidate("data", data = $$props.data);
+	$$self.$$set = $$props => {
+		if ('data' in $$props) $$invalidate(0, data = $$props.data);
 	};
 
-	return { data };
+	return [data];
 }
 
 class Component extends SvelteComponent {
