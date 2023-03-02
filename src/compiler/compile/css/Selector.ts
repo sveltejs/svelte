@@ -76,7 +76,7 @@ export default class Selector {
 		this.blocks.forEach((block, i) => {
 			if (i > 0) {
 				if (block.start - c > 1) {
-					code.overwrite(c, block.start, block.combinator.name || ' ');
+					code.update(c, block.start, block.combinator.name || ' ');
 				}
 			}
 
@@ -112,7 +112,7 @@ export default class Selector {
 				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.overwrite(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, attr);
 				} else {
 					code.appendLeft(selector.end, attr);
 				}
