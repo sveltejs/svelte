@@ -352,7 +352,7 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 						b`${local_name} = @init_binding_group_dynamic(${binding_group}[${index}], ${indexes})`
 					);
 					block.chunks.update.push(
-						b`if (${block.renderer.dirty(Array.from(list_dependencies))}) ${local_name}.u(${indexes}, ${elements})`
+						b`if (${block.renderer.dirty(Array.from(list_dependencies))}) ${local_name}.u(${indexes})`
 					);
 				} else {
 					block.chunks.init.push(
