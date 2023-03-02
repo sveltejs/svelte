@@ -189,7 +189,7 @@ export default class Selector {
 					index !== 0 &&
 					selector.children &&
 					selector.children.length > 0 &&
-					!/[.:#\s]/.test(selector.children[0].value)
+					!/[.:#\s]/.test(selector.children[0].value[0])
 				) {
 					component.error(selector, compiler_errors.css_invalid_global_selector_position);
 				}
