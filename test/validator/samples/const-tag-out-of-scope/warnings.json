@@ -2,14 +2,11 @@
 	{
 		"code": "missing-declaration",
 		"message": "'b' is not defined",
-		"pos": 100,
 		"start": {
-			"character": 100,
 			"column": 1,
 			"line": 10
 		},
 		"end": {
-			"character": 101,
 			"column": 2,
 			"line": 10
 		}

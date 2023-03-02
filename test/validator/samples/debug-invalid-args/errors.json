@@ -3,13 +3,10 @@
 	"message": "{@debug ...} arguments must be identifiers, not arbitrary expressions",
 	"start": {
 		"line": 2,
-		"column": 9,
-		"character": 13
+		"column": 9
 	},
 	"end": {
 		"line": 2,
-		"column": 9,
-		"character": 13
-	},
-	"pos": 13
+		"column": 9
+	}
 }]

@@ -56,7 +56,7 @@ function init_hydrate(target: NodeEx) {
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence subsequence of nodes that are claimed in order can be found by
+	* subsequence of nodes that are claimed in order can be found by
 	* computing the longest increasing subsequence of .claim_order values.
 	*
 	* This algorithm is optimal in generating the least amount of reorder operations
@@ -204,7 +204,9 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
 }
 
 export function destroy_each(iterations, detaching) {
@@ -273,6 +275,14 @@ export function stop_propagation(fn) {
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
 	return function(event) {
 		// @ts-ignore
@@ -328,6 +338,10 @@ export function set_custom_element_data(node, prop, value) {
 	} else {
 		attr(node, prop, value);
 	}
+}
+
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
@@ -565,8 +579,16 @@ export function select_options(select, value) {
 	}
 }
 
+function first_enabled_option(select) {
+	for (const option of select.options) {
+		if (!option.disabled) {
+			return option;
+		}
+	}
+}
+
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+	const selected_option = select.querySelector(':checked') || first_enabled_option(select);
 	return selected_option && selected_option.__value;
 }
 
@@ -622,6 +644,10 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
 			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 
@@ -680,7 +706,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -700,8 +726,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -710,7 +737,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {

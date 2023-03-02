@@ -12,6 +12,7 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -53,7 +54,7 @@ export default function dom(
 	const should_add_css = (
 		!options.customElement &&
 		!!styles &&
-		options.css !== false
+		options.css === 'injected'
 	);
 
 	if (should_add_css) {
@@ -82,7 +83,7 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots;
+	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
@@ -389,13 +390,13 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name);
+			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
-		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const reactive_declarations: Node[] = [];
+		const fixed_reactive_declarations: Array<Node | Node[]> = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -416,6 +417,15 @@ export default function dom(
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
+				for (const assignee of d.assignees) {
+					const variable = component.var_lookup.get(assignee);
+					if (variable && variable.subscribable) {
+						fixed_reactive_declarations.push(b`
+							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
+							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
+						`);
+					}
+				}
 			}
 		});
 
@@ -429,7 +439,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name)) {
+			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
@@ -440,7 +450,7 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
+		let unknown_props_check: Node[] | undefined;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
@@ -530,7 +540,10 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`
+						const style = document.createElement('style');
+						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
+						this.shadowRoot.appendChild(style)`}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
 

@@ -26,7 +26,7 @@ export default class EventHandlerWrapper {
 		}
 	}
 
-	get_snippet(block) {
+	get_snippet(block: Block) {
 		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
 
 		if (this.node.reassigned) {
@@ -41,6 +41,7 @@ export default class EventHandlerWrapper {
 
 		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
 		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
+		if (this.node.modifiers.has('stopImmediatePropagation')) snippet = x`@stop_immediate_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
 		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
 
@@ -64,6 +65,7 @@ export default class EventHandlerWrapper {
 		if (block.renderer.options.dev) {
 			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
 			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
+			args.push(this.node.modifiers.has('stopImmediatePropagation') ? TRUE : FALSE);
 		}
 
 		block.event_listeners.push(

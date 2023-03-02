@@ -44,7 +44,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {@const ...}'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
@@ -234,6 +234,10 @@ export default {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
 	},
+	css_invalid_global_selector_position: {
+		code: 'css-invalid-global-selector-position',
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
+	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',
 		message: `Invalid selector "${selector}"`
@@ -285,5 +289,9 @@ export default {
 	invalid_var_declaration: {
 		code: 'invalid_var_declaration',
 		message: '"var" scope should not extend outside the reactive block'
-	}
+	},
+	invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	})
 };
