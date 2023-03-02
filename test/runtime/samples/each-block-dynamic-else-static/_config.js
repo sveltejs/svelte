@@ -16,7 +16,7 @@ export default {
 		` );
 
 		// trigger an 'update' of the else block, to ensure that
-		// non-existent update method is not called
+		// nonexistent update method is not called
 		component.animals = [];
 
 		component.animals = ['wombat'];

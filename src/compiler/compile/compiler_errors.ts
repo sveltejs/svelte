@@ -44,7 +44,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {@const ...}'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
@@ -233,6 +233,10 @@ export default {
 	css_invalid_global_selector: {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
+	},
+	css_invalid_global_selector_position: {
+		code: 'css-invalid-global-selector-position',
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',

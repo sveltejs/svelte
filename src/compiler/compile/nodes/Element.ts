@@ -83,11 +83,15 @@ const a11y_nested_implicit_semantics = new Map([
 
 const a11y_implicit_semantics = new Map([
 	['a', 'link'],
+	['area', 'link'],
+	['article', 'article'],
 	['aside', 'complementary'],
 	['body', 'document'],
+	['button', 'button'],
 	['datalist', 'listbox'],
 	['dd', 'definition'],
 	['dfn', 'term'],
+	['dialog', 'dialog'],
 	['details', 'group'],
 	['dt', 'term'],
 	['fieldset', 'group'],
@@ -99,10 +103,14 @@ const a11y_implicit_semantics = new Map([
 	['h5', 'heading'],
 	['h6', 'heading'],
 	['hr', 'separator'],
+	['img', 'img'],
 	['li', 'listitem'],
+	['link', 'link'],
 	['menu', 'list'],
+	['meter', 'progressbar'],
 	['nav', 'navigation'],
 	['ol', 'list'],
+	['option', 'option'],
 	['optgroup', 'group'],
 	['output', 'status'],
 	['progress', 'progressbar'],
@@ -116,11 +124,67 @@ const a11y_implicit_semantics = new Map([
 	['ul', 'list']
 ]);
 
+const menuitem_type_to_implicit_role = new Map([
+  ['command', 'menuitem'],
+  ['checkbox', 'menuitemcheckbox'],
+  ['radio', 'menuitemradio']
+]);
+
+const input_type_to_implicit_role = new Map([
+  ['button', 'button'],
+  ['image', 'button'],
+  ['reset', 'button'],
+  ['submit', 'button'],
+  ['checkbox', 'checkbox'],
+  ['radio', 'radio'],
+  ['range', 'slider'],
+  ['number', 'spinbutton'],
+  ['email', 'textbox'],
+  ['search', 'searchbox'],
+  ['tel', 'textbox'],
+  ['text', 'textbox'],
+  ['url', 'textbox']
+]);
+
+const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
+
+function input_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+
+  const list_attribute_exists = attribute_map.has('list');
+
+  if (list_attribute_exists && combobox_if_list.has(type)) {
+	return 'combobox';
+  }
+
+  return input_type_to_implicit_role.get(type);
+}
+
+function menuitem_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+  return menuitem_type_to_implicit_role.get(type);
+}
+
+function get_implicit_role(name: string, attribute_map: Map<string, Attribute>) : (string | undefined) {
+  if (name === 'menuitem') {
+	return menuitem_implicit_role(attribute_map);
+  } else if (name === 'input') {
+	return input_implicit_role(attribute_map);
+  } else {
+	return a11y_implicit_semantics.get(name);
+  }
+}
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
@@ -195,10 +259,10 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
 		case 'idlist': // if list of ids, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((id) => typeof id === 'string');
+				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
 		case 'tokenlist': // if list of tokens, split each
 			return typeof value === 'string'
-				&& value.split(' ').every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
 		default:
 			return false;
 	}
@@ -227,6 +291,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
+	contains_a11y_label: boolean;
 
 	get is_dynamic_element() {
 		return this.name === 'svelte:element';
@@ -241,6 +306,7 @@ export default class Element extends Node {
 				this.tag_expr = new Expression(component, this, scope, info.tag);
 			} else {
 				this.tag_expr = new Expression(component, this, scope, string_literal(info.tag) as Literal);
+				this.name = info.tag;
 			}
 		} else {
 			this.tag_expr = new Expression(component, this, scope, string_literal(this.name) as Literal);
@@ -252,7 +318,7 @@ export default class Element extends Node {
 			if (this.name === 'pre' || this.name === 'textarea') {
 				const first = info.children[0];
 				if (first && first.type === 'Text') {
-					// The leading newline character needs to be stripped because of a qirk,
+					// The leading newline character needs to be stripped because of a quirk,
 					// it is ignored by browsers if the tag and its contents are set through
 					// innerHTML (NOT if set through the innerHTML of the tag or dynamically).
 					// Therefore strip it here but add it back in the appropriate
@@ -501,6 +567,11 @@ export default class Element extends Node {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}
 				}
+
+				// aria-activedescendant-has-tabindex
+				if (name === 'aria-activedescendant' && !this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
 			}
 
 			// aria-role
@@ -510,47 +581,52 @@ export default class Element extends Node {
 					component.warn(attribute, compiler_warnings.a11y_misplaced_role(this.name));
 				}
 
-				const value = attribute.get_static_value() as ARIARoleDefintionKey;
+				const value = attribute.get_static_value();
 
-				if (value && aria_role_abstract_set.has(value)) {
-					component.warn(attribute, compiler_warnings.a11y_no_abstract_role(value));
-				} else if (value && !aria_role_set.has(value)) {
-					const match = fuzzymatch(value, aria_roles);
-					component.warn(attribute, compiler_warnings.a11y_unknown_role(value, match));
-				}
-
-				// no-redundant-roles
-				const has_redundant_role = value === a11y_implicit_semantics.get(this.name);
-
-				if (this.name === value || has_redundant_role) {
-					component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-				}
-
-				// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-				const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-				if (!is_parent_section_or_article) {
-					const has_nested_redundant_role = value === a11y_nested_implicit_semantics.get(this.name);
-					if (has_nested_redundant_role) {
-						component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(value));
-					}
-				}
-
-				// role-has-required-aria-props
-				if (!is_semantic_role_element(value, this.name, attribute_map)) {
-					const role = roles.get(value);
-					if (role) {
-						const required_role_props = Object.keys(role.requiredProps);
-						const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
-
-						if (has_missing_props) {
-							component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(value as string, required_role_props));
+				if (typeof value === 'string') {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
+						if (current_role && aria_role_abstract_set.has(current_role)) {
+							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+						} else if (current_role && !aria_role_set.has(current_role)) {
+							const match = fuzzymatch(current_role, aria_roles);
+							component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
 						}
-					}
-				}
 
-				// no-interactive-element-to-noninteractive-role
-				if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(value) || is_presentation_role(value))) {
-					component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(value, this.name));
+						// no-redundant-roles
+						const has_redundant_role = current_role === get_implicit_role(this.name, attribute_map);
+
+						if (this.name === current_role || has_redundant_role) {
+							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+						}
+
+						// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+						const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+						if (!is_parent_section_or_article) {
+							const has_nested_redundant_role = current_role === a11y_nested_implicit_semantics.get(this.name);
+							if (has_nested_redundant_role) {
+								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+							}
+						}
+
+						// role-has-required-aria-props
+						if (!this.is_dynamic_element && !is_semantic_role_element(current_role, this.name, attribute_map)) {
+							const role = roles.get(current_role);
+							if (role) {
+								const required_role_props = Object.keys(role.requiredProps);
+								const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
+
+								if (has_missing_props) {
+									component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(current_role, required_role_props));
+								}
+							}
+						}
+
+						// no-interactive-element-to-noninteractive-role
+						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
+							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
+						}
+					});
+
 				}
 			}
 
@@ -565,7 +641,7 @@ export default class Element extends Node {
 			}
 
 			// scope
-			if (name === 'scope' && this.name !== 'th') {
+			if (name === 'scope' && !this.is_dynamic_element && this.name !== 'th') {
 				component.warn(attribute, compiler_warnings.a11y_misplaced_scope);
 			}
 
@@ -585,6 +661,7 @@ export default class Element extends Node {
 			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
 
 			if (
+				!this.is_dynamic_element && 
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
 				!is_interactive_element(this.name, attribute_map) &&
@@ -598,18 +675,35 @@ export default class Element extends Node {
 				if (!has_key_event) {
 					component.warn(
 						this,
-						compiler_warnings.a11y_click_events_have_key_events()
+						compiler_warnings.a11y_click_events_have_key_events
 					);
 				}
 			}
 		}
 
 		// no-noninteractive-tabindex
-		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
 			}
+		}
+
+		// role-supports-aria-props
+		const role = attribute_map.get('role');
+		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefintionKey;
+		if (typeof role_value === 'string' && roles.has(role_value)) {
+			const { props } = roles.get(role_value);
+			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
+			const is_implicit = role_value && role === undefined;
+
+			attributes
+				.filter(prop => prop.type !== 'Spread')
+				.forEach(prop => {
+					if (invalid_aria_props.has(prop.name as ARIAProperty)) {
+						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
+					}
+				});
 		}
 	}
 
@@ -632,23 +726,33 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
+			const aria_label_attribute = attribute_map.get('aria-label');
 
-			if (target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
+			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
+			// modern browsers add noopener by default, so we only need to check legacy browsers
+			// legacy browsers don't support noopener so we only check for noreferrer there
+			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
 				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
-					const rel_values = rel ? rel.get_static_value().split(' ') : [];
-					const expected_values = ['noreferrer'];
-
-					expected_values.forEach(expected_value => {
-						if (!rel || rel && rel_values.indexOf(expected_value) < 0) {
-							component.warn(this, {
-								code: `security-anchor-rel-${expected_value}`,
-								message: `Security: Anchor with "target=_blank" should have rel attribute containing the value "${expected_value}"`
-							});
+					if (rel == null || rel.is_static) {
+						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
+						if (!rel || !rel_values.includes('noreferrer')) {
+								component.warn(this, {
+									code: 'security-anchor-rel-noreferrer',
+									message:
+										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
+								});
 						}
-					});
+					}
+				}
+			}
+
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					this.contains_a11y_label = true;
 				}
 			}
 
@@ -728,7 +832,10 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'video') {
-			if (attribute_map.has('muted')) {
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
 				return;
 			}
 
@@ -891,7 +998,8 @@ export default class Element extends Node {
 				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
-				name === 'ended'
+				name === 'ended' ||
+				name === 'readyState'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
@@ -910,6 +1018,13 @@ export default class Element extends Node {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
 				} else if (is_void(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
+				}
+			} else if (
+				name === 'naturalWidth' ||
+				name === 'naturalHeight'
+			) {
+				if (this.name !== 'img') {
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
 				}
 			} else if (
 				name === 'textContent' ||
@@ -932,6 +1047,7 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (this.contains_a11y_label) return;
 		if (
 			this.bindings
 				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
@@ -1054,14 +1170,14 @@ export default class Element extends Node {
 	}
 }
 
-const regex_starts_with_vovel = /^[aeiou]/;
+const regex_starts_with_vowel = /^[aeiou]/;
 
 function should_have_attribute(
 	node,
 	attributes: string[],
 	name = node.name
 ) {
-	const article = regex_starts_with_vovel.test(attributes[0]) ? 'an' : 'a';
+	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
 	const sequence = attributes.length > 1 ?
 		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
 		attributes[0];

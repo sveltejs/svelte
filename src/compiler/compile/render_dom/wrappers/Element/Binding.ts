@@ -120,7 +120,9 @@ export default class BindingWrapper {
 				type === '' ||
 				type === 'text' ||
 				type === 'email' ||
-				type === 'password'
+				type === 'password' ||
+				type === 'search' ||
+				type === 'url'
 			) {
 				update_conditions.push(
 					x`${parent.var}.${this.node.name} !== ${this.snippet}`
@@ -264,7 +266,7 @@ function get_dom_updater(
 		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
-			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
+			? x`~(${binding.snippet} || []).indexOf(${element.var}.__value)`
 			: x`${element.var}.__value === ${binding.snippet}`;
 
 		return b`${element.var}.checked = ${condition};`;

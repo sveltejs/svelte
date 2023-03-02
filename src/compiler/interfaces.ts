@@ -180,7 +180,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: boolean;
 	tag?: string;
-	css?: boolean;
+	css?: 'injected' | 'external' | 'none' | boolean;
 	loopGuardTimeout?: number;
 	namespace?: string;
 	cssHash?: CssHashGetter;
@@ -192,6 +192,7 @@ export interface CompileOptions {
 export interface ParserOptions {
 	filename?: string;
 	customElement?: boolean;
+	css?: 'injected' | 'external' | 'none' | boolean;
 }
 
 export interface Visitor {
@@ -223,6 +224,7 @@ export interface Var {
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
 	imported?: boolean;
+	is_reactive_static?: boolean;
 }
 
 export interface CssResult {
