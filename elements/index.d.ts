@@ -196,6 +196,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	
+	// Document Events
+	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
@@ -707,6 +710,9 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	srcset?: string | undefined | null;
 	usemap?: string | undefined | null;
 	width?: number | string | undefined | null;
+
+	readonly 'bind:naturalWidth'?: number | undefined | null;
+	readonly 'bind:naturalHeight'?: number | undefined | null;
 }
 
 export interface HTMLInsAttributes extends HTMLAttributes<HTMLModElement> {
@@ -842,6 +848,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	 */
 	volume?: number | undefined | null;
 
+	readonly 'bind:readyState'?: 0 | 1 | 2 | 3 | 4 | undefined | null;
 	readonly 'bind:duration'?: number | undefined | null;
 	readonly 'bind:buffered'?: SvelteMediaTimeRange[] | undefined | null;
 	readonly 'bind:played'?: SvelteMediaTimeRange[] | undefined | null;

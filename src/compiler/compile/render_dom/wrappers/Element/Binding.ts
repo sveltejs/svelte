@@ -5,7 +5,7 @@ import InlineComponentWrapper from '../InlineComponent';
 import get_object from '../../../utils/get_object';
 import replace_object from '../../../utils/replace_object';
 import Block from '../../Block';
-import Renderer from '../../Renderer';
+import Renderer, { BindingGroup } from '../../Renderer';
 import flatten_reference from '../../../utils/flatten_reference';
 import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
@@ -26,6 +26,7 @@ export default class BindingWrapper {
 	snippet: Node;
 	is_readonly: boolean;
 	needs_lock: boolean;
+	binding_group: BindingGroup;
 
 	constructor(block: Block, node: Binding, parent: ElementWrapper | InlineComponentWrapper) {
 		this.node = node;
@@ -44,6 +45,10 @@ export default class BindingWrapper {
 		}
 
 		this.object = get_object(this.node.expression.node).name;
+
+		if (this.node.name === 'group') {
+			this.binding_group = get_binding_group(parent.renderer, this, block);
+		}
 
 		// view to model
 		this.handler = get_event_handler(this, parent.renderer, block, this.object, this.node.raw_expression);
@@ -66,6 +71,10 @@ export default class BindingWrapper {
 				});
 			}
 		});
+
+		if (this.binding_group) {
+			this.binding_group.list_dependencies.forEach(dep => dependencies.add(dep));
+		}
 
 		return dependencies;
 	}
@@ -105,6 +114,7 @@ export default class BindingWrapper {
 
 		const update_conditions: any[] = this.needs_lock ? [x`!${lock}`] : [];
 		const mount_conditions: any[] = [];
+		let update_or_condition: any = null;
 
 		const dependency_array = Array.from(this.get_dependencies());
 
@@ -142,33 +152,12 @@ export default class BindingWrapper {
 		switch (this.node.name) {
 			case 'group':
 			{
-				const { binding_group, is_context, contexts, index, keypath } = get_binding_group(parent.renderer, this.node, block);
-
 				block.renderer.add_to_context('$$binding_groups');
+				this.binding_group.elements.push(this.parent.var);
 
-				if (is_context && !block.binding_group_initialised.has(keypath)) {
-					if (contexts.length > 1) {
-						let binding_group = x`${block.renderer.reference('$$binding_groups')}[${index}]`;
-						for (const name of contexts.slice(0, -1)) {
-							binding_group = x`${binding_group}[${block.renderer.reference(name)}]`;
-							block.chunks.init.push(
-								b`${binding_group} = ${binding_group} || [];`
-							);
-						}
-					}
-					block.chunks.init.push(
-						b`${binding_group(true)} = [];`
-					);
-					block.binding_group_initialised.add(keypath);
+				if ((this.parent as ElementWrapper).has_dynamic_value) {	
+					update_or_condition = (this.parent as ElementWrapper).dynamic_value_condition;	
 				}
-
-				block.chunks.hydrate.push(
-					b`${binding_group(true)}.push(${parent.var});`
-				);
-
-				block.chunks.destroy.push(
-					b`${binding_group(true)}.splice(${binding_group(true)}.indexOf(${parent.var}), 1);`
-				);
 				break;
 			}
 
@@ -214,7 +203,8 @@ export default class BindingWrapper {
 
 		if (update_dom) {
 			if (update_conditions.length > 0) {
-				const condition = update_conditions.reduce((lhs, rhs) => x`${lhs} && ${rhs}`);
+				let condition = update_conditions.reduce((lhs, rhs) => x`${lhs} && ${rhs}`);
+				if (update_or_condition) condition = x`${update_or_condition} || (${condition})`;
 
 				block.chunks.update.push(b`
 					if (${condition}) {
@@ -266,7 +256,7 @@ function get_dom_updater(
 		const type = node.get_static_attribute_value('type');
 
 		const condition = type === 'checkbox'
-			? x`~${binding.snippet}.indexOf(${element.var}.__value)`
+			? x`~(${binding.snippet} || []).indexOf(${element.var}.__value)`
 			: x`${element.var}.__value === ${binding.snippet}`;
 
 		return b`${element.var}.checked = ${condition};`;
@@ -279,7 +269,8 @@ function get_dom_updater(
 	return b`${element.var}.${binding.node.name} = ${binding.snippet};`;
 }
 
-function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
+function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: Block) {
+	const value = binding.node;
 	const { parts } = flatten_reference(value.raw_expression);
 	let keypath = parts.join('.');
 
@@ -314,41 +305,75 @@ function get_binding_group(renderer: Renderer, value: Binding, block: Block) {
 		contexts.push(name);
 	}
 
+	// create a global binding_group across blocks
 	if (!renderer.binding_groups.has(keypath)) {
 		const index = renderer.binding_groups.size;
+		// the bind:group depends on the list in the {#each} block as well
+		// as reordering (removing and adding back to the DOM) may affect the value
+		const list_dependencies = new Set<string>();
+		let parent = value.parent;
+		while (parent) {
+			if (parent.type === 'EachBlock') {
+				for (const dep of parent.expression.dynamic_dependencies()) {
+					list_dependencies.add(dep);
+				}
+			}
+			parent = parent.parent;
+		}
+
+		const elements = [];
 
 		contexts.forEach(context => {
 			renderer.add_to_context(context, true);
 		});
 
 		renderer.binding_groups.set(keypath, {
-			binding_group: (to_reference: boolean = false) => {
-				let binding_group = '$$binding_groups';
-				let _secondary_indexes = contexts;
+			binding_group: () => {
+				let obj = x`$$binding_groups[${index}]`;
 
-				if (to_reference) {
-					binding_group = block.renderer.reference(binding_group);
-					_secondary_indexes = _secondary_indexes.map(name => block.renderer.reference(name));
-				}
-
-				if (_secondary_indexes.length > 0) {
-					let obj = x`${binding_group}[${index}]`;
-					_secondary_indexes.forEach(secondary_index => {
+				if (contexts.length > 0) {
+					contexts.forEach(secondary_index => {
 						obj = x`${obj}[${secondary_index}]`;
 					});
-					return obj;
-				} else {
-					return x`${binding_group}[${index}]`;
 				}
+				return obj;
 			},
-			is_context: contexts.length > 0,
 			contexts,
-			index,
-			keypath
+			list_dependencies,
+			keypath,
+			elements,
+			render() {
+				const local_name = block.get_unique_name('binding_group');
+				const binding_group = block.renderer.reference('$$binding_groups');
+				block.add_variable(local_name);
+				if (contexts.length > 0) {
+					const indexes = { type: 'ArrayExpression', elements: contexts.map(name => block.renderer.reference(name)) };
+					block.chunks.init.push(
+						b`${local_name} = @init_binding_group_dynamic(${binding_group}[${index}], ${indexes})`
+					);
+					block.chunks.update.push(
+						b`if (${block.renderer.dirty(Array.from(list_dependencies))}) ${local_name}.u(${indexes})`
+					);
+				} else {
+					block.chunks.init.push(
+						b`${local_name} = @init_binding_group(${binding_group}[${index}])`
+					);
+				}
+				block.chunks.hydrate.push(
+					b`${local_name}.p(${elements})`
+				);
+				block.chunks.destroy.push(
+					b`${local_name}.r()`
+				);
+			}
 		});
 	}
 
-	return renderer.binding_groups.get(keypath);
+	// register the binding_group for the block
+	const binding_group = renderer.binding_groups.get(keypath);
+	block.binding_groups.add(binding_group);
+
+	return binding_group;
 }
 
 function get_event_handler(
@@ -386,7 +411,7 @@ function get_event_handler(
 		}
 	}
 
-	const value = get_value_from_dom(renderer, binding.parent, binding, block, contextual_dependencies);
+	const value = get_value_from_dom(renderer, binding.parent, binding, contextual_dependencies);
 
 	const mutation = b`
 		${lhs} = ${value};
@@ -402,10 +427,9 @@ function get_event_handler(
 }
 
 function get_value_from_dom(
-	renderer: Renderer,
+	_renderer: Renderer,
 	element: ElementWrapper | InlineComponentWrapper,
 	binding: BindingWrapper,
-	block: Block,
 	contextual_dependencies: Set<string>
 ) {
 	const { node } = element;
@@ -427,7 +451,7 @@ function get_value_from_dom(
 	// <input type='checkbox' bind:group='foo'>
 	if (name === 'group') {
 		if (type === 'checkbox') {
-			const { binding_group, contexts } = get_binding_group(renderer, binding.node, block);
+			const { binding_group, contexts } = binding.binding_group;
 			add_to_set(contextual_dependencies, contexts);
 			return x`@get_binding_group_value(${binding_group()}, this.__value, this.checked)`;
 		}

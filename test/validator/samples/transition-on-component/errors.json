@@ -3,13 +3,10 @@
 	"message": "Transitions can only be applied to DOM elements, not components",
 	"start": {
 		"line": 7,
-		"column": 8,
-		"character": 87
+		"column": 8
 	},
 	"end": {
 		"line": 7,
-		"column": 14,
-		"character": 93
-	},
-	"pos": 87
+		"column": 14
+	}
 }]

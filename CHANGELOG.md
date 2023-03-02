@@ -4,9 +4,10 @@
 
 * Add a11y warnings:
 	* `aria-activedescendant-has-tabindex`: elements with `aria-activedescendant` need to have a `tabindex` ([#8172](https://github.com/sveltejs/svelte/pull/8172))
-	* 
+	* `role-supports-aria-props`: checks that the (implicit) element role supports the given aria attributes ([#8195](https://github.com/sveltejs/svelte/pull/8195))
 * Omit a11y warning on `<video>` tags with `aria-hidden="true"` ([#7874](https://github.com/sveltejs/svelte/issues/7874))
 * Omit a11y "no child content" warning on elements with `aria-label` ([#8299](https://github.com/sveltejs/svelte/pull/8299))
+* Omit a11y warnings on `<svelte:element>` ([#7939](https://github.com/sveltejs/svelte/issues/7939))
 * Make `noreferrer` warning less zealous ([#6289](https://github.com/sveltejs/svelte/issues/6289))
 * `trusted-types` CSP compatibility for Web Components ([#8134](https://github.com/sveltejs/svelte/issues/8134))
 * Add `data-sveltekit-replacestate` and `data-sveltekit-keepfocus` attribute typings ([#8281](https://github.com/sveltejs/svelte/issues/8281))
@@ -18,6 +19,26 @@
 * Compute node dimensions directly before crossfading ([#4111](https://github.com/sveltejs/svelte/issues/4111))
 * Add `readonly` method to convert `writable` store to readonly ([#6518](https://github.com/sveltejs/svelte/pull/6518))
 * Ensure `bind:offsetHeight` updates initially ([#4233](https://github.com/sveltejs/svelte/issues/4233))
+* Better handling of `inert` attribute ([#7500](https://github.com/sveltejs/svelte/issues/7500))
+* Clear inputs when `bind:group` to `undefined` ([#8214](https://github.com/sveltejs/svelte/issues/8214))
+* Ensure nested arrays can change at the same time ([#8282](https://github.com/sveltejs/svelte/issues/8282))
+* Reduce use of template literals in SSR output for better performance ([#7539](https://github.com/sveltejs/svelte/pull/7539))
+* Allow assigning to property of const while destructuring ([#7964](https://github.com/sveltejs/svelte/issues/7964))
+* Don't set selected options if value is unbound or not passed ([#5644](https://github.com/sveltejs/svelte/issues/5644))
+* Ensure `<input>` value persists when swapping elements with spread attributes in an `#each` block ([#7578](https://github.com/sveltejs/svelte/issues/7578))
+* Select first enabled option by default when initial value is undefined ([#7041](https://github.com/sveltejs/svelte/issues/7041))
+* Fix race condition on `svelte:element` with transitions ([#7948](https://github.com/sveltejs/svelte/issues/7948))
+* Optimise `<svelte:element>` output code for static tag and static attribute ([#8161](https://github.com/sveltejs/svelte/pull/8161))
+* Decode html entities correctly ([#8026](https://github.com/sveltejs/svelte/issues/8026))
+* Handle `{@html}` tags inside `<template>` tags ([#7364](https://github.com/sveltejs/svelte/pull/7364))
+* Introduce parameter to allow for horizontal slide transition ([#6182](https://github.com/sveltejs/svelte/issues/6182))
+* Add `naturalWidth` and `naturalHeight` bindings ([#7771](https://github.com/sveltejs/svelte/issues/7771))
+* make `<!-- svelte-ignore ... -->` work above components ([#8082](https://github.com/sveltejs/svelte/issues/8082))
+* add global compound selector validation ([#6272](https://github.com/sveltejs/svelte/issues/6272))
+* add `stopImmediatePropagation` event modifier ([#5085](https://github.com/sveltejs/svelte/issues/5085))
+* add `readyState` binding for media elements ([#6666](https://github.com/sveltejs/svelte/issues/6666))
+* call `<svelte:component>` update to `this` only when it's dirty ([#4129](https://github.com/sveltejs/svelte/issues/4129))
+* support exclusively special characters in component filenames ([#7143](https://github.com/sveltejs/svelte/issues/7143))
 
 ## 3.55.1
 

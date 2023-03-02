@@ -2,14 +2,11 @@
   {
     "code": "a11y-media-has-caption",
     "end": {
-      "character": 55,
       "column": 15,
       "line": 2
     },
     "message": "A11y: <video> elements must have a <track kind=\"captions\">",
-    "pos": 40,
     "start": {
-      "character": 40,
       "column": 0,
       "line": 2
     }
@@ -17,14 +14,11 @@
   {
     "code": "a11y-media-has-caption",
     "end": {
-      "character": 80,
       "column": 24,
       "line": 3
     },
     "message": "A11y: <video> elements must have a <track kind=\"captions\">",
-    "pos": 56,
     "start": {
-      "character": 56,
       "column": 0,
       "line": 3
     }
@@ -32,14 +26,11 @@
   {
     "code": "a11y-media-has-caption",
     "end": {
-      "character": 124,
       "column": 27,
       "line": 5
     },
     "message": "A11y: <video> elements must have a <track kind=\"captions\">",
-    "pos": 97,
     "start": {
-      "character": 97,
       "column": 0,
       "line": 5
     }
@@ -47,14 +38,11 @@
   {
     "code": "a11y-media-has-caption",
     "end": {
-      "character": 160,
       "column": 35,
       "line": 6
     },
     "message": "A11y: <video> elements must have a <track kind=\"captions\">",
-    "pos": 125,
     "start": {
-      "character": 125,
       "column": 0,
       "line": 6
     }

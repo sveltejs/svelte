@@ -3,13 +3,10 @@
 	"message": "<title> can only contain text and {tags}",
 	"start": {
 		"line": 2,
-		"column": 11,
-		"character": 25
+		"column": 11
 	},
 	"end": {
 		"line": 2,
-		"column": 35,
-		"character": 49
-	},
-	"pos": 25
+		"column": 35
+	}
 }]
