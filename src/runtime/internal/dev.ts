@@ -1,4 +1,4 @@
-import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr, prevent_default, stop_propagation, trusted, self } from './dom';
+import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr, prevent_default, stop_propagation, trusted, self, stop_immediate_propagation } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
 import { bubble, listen_comp } from './lifecycle';
@@ -55,6 +55,7 @@ function build_modifiers(options?: boolean | AddEventListenerOptions | EventList
 	if (wrappers) {
 		if (wrappers.indexOf(prevent_default) >= 0) modifiers.push('preventDefault');
 		if (wrappers.indexOf(stop_propagation) >= 0) modifiers.push('stopPropagation');
+		if (wrappers.indexOf(stop_immediate_propagation) >= 0) modifiers.push('stopImmediatePropagation');
 		// ???
 		if (wrappers.indexOf(trusted) >= 0) modifiers.push('trusted');
 		if (wrappers.indexOf(self) >= 0) modifiers.push('self');

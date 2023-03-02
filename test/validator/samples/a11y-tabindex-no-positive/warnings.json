@@ -4,14 +4,11 @@
 		"message": "A11y: avoid tabindex values above zero",
 		"start": {
 			"line": 7,
-			"column": 8,
-			"character": 85
+			"column": 8
 		},
 		"end": {
 			"line": 7,
-			"column": 20,
-			"character": 97
-		},
-		"pos": 85
+			"column": 20
+		}
 	}
 ]

@@ -3,13 +3,10 @@
 	"message": "'this' is a reserved word in JavaScript and cannot be used here",
 	"start": {
 		"line": 2,
-		"column": 18,
-		"character": 24
+		"column": 18
 	},
 	"end": {
 		"line": 2,
-		"column": 18,
-		"character": 24
-	},
-	"pos": 24
+		"column": 18
+	}
 	}]

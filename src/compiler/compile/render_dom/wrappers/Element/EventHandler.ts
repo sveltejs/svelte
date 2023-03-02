@@ -41,6 +41,7 @@ export default class EventHandlerWrapper {
 		let wrappers = [];
 		if (this.node.modifiers.has('trusted')) wrappers.push(x`@trusted`);
 		if (this.node.modifiers.has('self')) wrappers.push(x`@self`);
+		if (this.node.modifiers.has('stopImmediatePropagation')) wrappers.push(x`@stop_immediate_propagation`);
 		if (this.node.modifiers.has('stopPropagation')) wrappers.push(x`@stop_propagation`);
 		if (this.node.modifiers.has('preventDefault')) wrappers.push(x`@prevent_default`);
 		// TODO : once() on component ????
