@@ -1,3 +1,5 @@
+import { Readable } from 'svelte/store';
+
 export function noop() {}
 
 export const identity = x => x;
@@ -8,8 +10,10 @@ export function assign<T, S>(tar: T, src: S): T & S {
 	return tar as T & S;
 }
 
+// Adapted from https://github.com/then/is-promise/blob/master/index.js
+// Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return value && typeof value === 'object' && typeof value.then === 'function';
+	return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
 export function add_location(element, file, line, column, char) {
@@ -26,7 +30,7 @@ export function blank_object() {
 	return Object.create(null);
 }
 
-export function run_all(fns) {
+export function run_all(fns: Function[]) {
 	fns.forEach(run);
 }
 
@@ -36,6 +40,16 @@ export function is_function(thing: any): thing is Function {
 
 export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+}
+
+let src_url_equal_anchor;
+
+export function src_url_equal(element_src, url) {
+	if (!src_url_equal_anchor) {
+		src_url_equal_anchor = document.createElement('a');
+	}
+	src_url_equal_anchor.href = url;
+	return element_src === src_url_equal_anchor.href;
 }
 
 export function not_equal(a, b) {
@@ -60,7 +74,7 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value(store) {
+export function get_store_value<T>(store: Readable<T>): T {
 	let value;
 	subscribe(store, _ => value = _)();
 	return value;
@@ -77,7 +91,7 @@ export function create_slot(definition, ctx, $$scope, fn) {
 	}
 }
 
-export function get_slot_context(definition, ctx, $$scope, fn) {
+function get_slot_context(definition, ctx, $$scope, fn) {
 	return definition[1] && fn
 		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
 		: $$scope.ctx;
@@ -107,12 +121,28 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	return $$scope.dirty;
 }
 
-export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
-	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+export function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
 	if (slot_changes) {
 		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
 		slot.p(slot_context, slot_changes);
 	}
+}
+
+export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
+}
+
+export function get_all_dirty_from_scope($$scope) {
+	if ($$scope.ctx.length > 32) {
+		const dirty = [];
+		const length = $$scope.ctx.length / 32;
+		for (let i = 0; i < length; i++) {
+			dirty[i] = -1;
+		}
+		return dirty;
+	}
+	return -1;
 }
 
 export function exclude_internal_props(props) {
@@ -128,6 +158,14 @@ export function compute_rest_props(props, keys) {
 	return rest;
 }
 
+export function compute_slots(slots) {
+	const result = {};
+	for (const key in slots) {
+		result[key] = true;
+	}
+	return result;
+}
+
 export function once(fn) {
 	let ran = false;
 	return function(this: any, ...args) {
@@ -141,7 +179,7 @@ export function null_to_empty(value) {
 	return value == null ? '' : value;
 }
 
-export function set_store_value(store, ret, value = ret) {
+export function set_store_value(store, ret, value) {
 	store.set(value);
 	return ret;
 }

@@ -1,5 +1,5 @@
 export default {
-	html: `<div>1024x768</div>`,
+	html: '<div>1024x768</div>',
 
 	before_test() {
 		Object.defineProperties(window, {
@@ -16,7 +16,7 @@ export default {
 
 	skip_if_ssr: true, // there's some kind of weird bug with this test... it compiles with the wrong require.extensions hook for some bizarre reason
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const event = new window.Event('resize');
 
 		Object.defineProperties(window, {

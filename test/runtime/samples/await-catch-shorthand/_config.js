@@ -9,14 +9,14 @@ export default {
 		thePromise
 	},
 
-	html: ``,
+	html: '',
 
 	test({ assert, component, target }) {
 		fulfil(42);
 
 		return thePromise
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, ``);
+				assert.htmlEqual(target.innerHTML, '');
 
 				let reject;
 
@@ -26,7 +26,7 @@ export default {
 
 				component.thePromise = thePromise;
 
-				assert.htmlEqual(target.innerHTML, ``);
+				assert.htmlEqual(target.innerHTML, '');
 
 				reject(new Error('something broke'));
 

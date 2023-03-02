@@ -48,7 +48,7 @@ function create_fragment(ctx) {
 			t8 = text(/*$prop*/ ctx[2]);
 			t9 = space();
 			t10 = text(/*shadowedByModule*/ ctx[4]);
-			add_location(p, file, 22, 0, 430);
+			add_location(p, file, 22, 0, 431);
 		},
 		l: function claim(nodes) {
 			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -91,41 +91,53 @@ function create_fragment(ctx) {
 }
 
 let moduleLiveBinding;
-const moduleContantProps = 4;
+const moduleConstantProps = 4;
 let moduleLet;
 const moduleConst = 2;
 let shadowedByModule;
-const priv = "priv";
+const priv = 'priv';
 
 function instance($$self, $$props, $$invalidate) {
+	let computed;
+
 	let $prop,
 		$$unsubscribe_prop = noop,
 		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
+	let { $$slots: slots = {}, $$scope } = $$props;
+	validate_slots('Component', slots, []);
 	let { prop } = $$props;
-	validate_store(prop, "prop");
+	validate_store(prop, 'prop');
 	$$subscribe_prop();
 	let { alias: realName } = $$props;
 	let local;
 	let shadowedByModule;
-	const writable_props = ["prop", "alias"];
 
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Component> was created with unknown prop '${key}'`);
+	$$self.$$.on_mount.push(function () {
+		if (prop === undefined && !('prop' in $$props || $$self.$$.bound[$$self.$$.props['prop']])) {
+			console.warn("<Component> was created without expected prop 'prop'");
+		}
+
+		if (realName === undefined && !('alias' in $$props || $$self.$$.bound[$$self.$$.props['alias']])) {
+			console.warn("<Component> was created without expected prop 'alias'");
+		}
 	});
 
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Component", $$slots, []);
+	const writable_props = ['prop', 'alias'];
+
+	Object.keys($$props).forEach(key => {
+		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<Component> was created with unknown prop '${key}'`);
+	});
 
 	$$self.$$set = $$props => {
-		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
-		if ("alias" in $$props) $$invalidate(1, realName = $$props.alias);
+		if ('prop' in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
+		if ('alias' in $$props) $$invalidate(1, realName = $$props.alias);
 	};
 
 	$$self.$capture_state = () => ({
 		moduleLiveBinding,
-		moduleContantProps,
+		moduleConstantProps,
 		moduleLet,
 		moduleConst,
 		shadowedByModule,
@@ -139,14 +151,12 @@ function instance($$self, $$props, $$invalidate) {
 	});
 
 	$$self.$inject_state = $$props => {
-		if ("prop" in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
-		if ("realName" in $$props) $$invalidate(1, realName = $$props.realName);
-		if ("local" in $$props) $$invalidate(3, local = $$props.local);
-		if ("shadowedByModule" in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
-		if ("computed" in $$props) computed = $$props.computed;
+		if ('prop' in $$props) $$subscribe_prop($$invalidate(0, prop = $$props.prop));
+		if ('realName' in $$props) $$invalidate(1, realName = $$props.realName);
+		if ('local' in $$props) $$invalidate(3, local = $$props.local);
+		if ('shadowedByModule' in $$props) $$invalidate(4, shadowedByModule = $$props.shadowedByModule);
+		if ('computed' in $$props) computed = $$props.computed;
 	};
-
-	let computed;
 
 	if ($$props && "$$inject" in $$props) {
 		$$self.$inject_state($$props.$$inject);
@@ -167,17 +177,6 @@ class Component extends SvelteComponentDev {
 			options,
 			id: create_fragment.name
 		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*prop*/ ctx[0] === undefined && !("prop" in props)) {
-			console.warn("<Component> was created without expected prop 'prop'");
-		}
-
-		if (/*realName*/ ctx[1] === undefined && !("alias" in props)) {
-			console.warn("<Component> was created without expected prop 'alias'");
-		}
 	}
 
 	get prop() {
@@ -198,4 +197,4 @@ class Component extends SvelteComponentDev {
 }
 
 export default Component;
-export { moduleLiveBinding, moduleContantProps };
+export { moduleLiveBinding, moduleConstantProps };

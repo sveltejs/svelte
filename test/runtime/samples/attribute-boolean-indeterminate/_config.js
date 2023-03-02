@@ -7,9 +7,7 @@ export default {
 		indeterminate: true
 	},
 
-	html: `
-		<input type='checkbox'>
-	`,
+	html: "<input type='checkbox'>",
 
 	test({ assert, component, target }) {
 		const input = target.querySelector('input');

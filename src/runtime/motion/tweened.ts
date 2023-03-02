@@ -63,7 +63,7 @@ interface Options<T> {
 
 type Updater<T> = (target_value: T, value: T) => T;
 
-interface Tweened<T> extends Readable<T> {
+export interface Tweened<T> extends Readable<T> {
 	set(value: T, opts?: Options<T>): Promise<void>;
 
 	update(updater: Updater<T>, opts?: Options<T>): Promise<void>;

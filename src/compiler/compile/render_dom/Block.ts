@@ -1,8 +1,17 @@
-import Renderer from './Renderer';
+import Renderer, { BindingGroup } from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
+import { regex_double_quotes } from '../../utils/patterns';
+
+export interface Bindings {
+	object: Identifier;
+	property: Identifier;
+	snippet: Node;
+	store: string;
+	modifier: (node: Node) => Node;
+}
 
 export interface BlockOptions {
 	parent?: Block;
@@ -11,14 +20,7 @@ export interface BlockOptions {
 	renderer?: Renderer;
 	comment?: string;
 	key?: Identifier;
-	bindings?: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings?: Map<string, Bindings>;
 	dependencies?: Set<string>;
 }
 
@@ -36,14 +38,9 @@ export default class Block {
 
 	dependencies: Set<string> = new Set();
 
-	bindings: Map<string, {
-		object: Identifier;
-		property: Identifier;
-		snippet: Node;
-		store: string;
-		tail: Node;
-		modifier: (node: Node) => Node;
-	}>;
+	bindings: Map<string, Bindings>;
+	binding_group_initialised: Set<string> = new Set();
+	binding_groups: Set<BindingGroup> = new Set();
 
 	chunks: {
 		declarations: Array<Node | Node[]>;
@@ -53,6 +50,7 @@ export default class Block {
 		hydrate: Array<Node | Node[]>;
 		mount: Array<Node | Node[]>;
 		measure: Array<Node | Node[]>;
+		restore_measurements: Array<Node | Node[]>;
 		fix: Array<Node | Node[]>;
 		animate: Array<Node | Node[]>;
 		intro: Array<Node | Node[]>;
@@ -76,7 +74,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus: string;
+	autofocus?: { element_var: string, condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -101,12 +99,13 @@ export default class Block {
 			hydrate: [],
 			mount: [],
 			measure: [],
+			restore_measurements: [],
 			fix: [],
 			animate: [],
 			intro: [],
 			update: [],
 			outro: [],
-			destroy: [],
+			destroy: []
 		};
 
 		this.has_animation = false;
@@ -244,9 +243,14 @@ export default class Block {
 		}
 
 		if (this.autofocus) {
-			this.chunks.mount.push(b`${this.autofocus}.focus();`);
+			if (this.autofocus.condition_expression) {
+				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+			} else {
+				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
+			}
 		}
 
+		this.render_binding_groups();
 		this.render_listeners();
 
 		const properties: Record<string, any> = {};
@@ -327,6 +331,12 @@ export default class Block {
 				${this.chunks.measure}
 			}`;
 
+			if (this.chunks.restore_measurements.length) {
+				properties.restore_measurements = x`function #restore_measurements(#measurement) {
+					${this.chunks.restore_measurements}
+				}`;
+			}
+
 			properties.fix = x`function #fix() {
 				${this.chunks.fix}
 			}`;
@@ -380,6 +390,7 @@ export default class Block {
 			m: ${properties.mount},
 			p: ${properties.update},
 			r: ${properties.measure},
+			s: ${properties.restore_measurements},
 			f: ${properties.fix},
 			a: ${properties.animate},
 			i: ${properties.intro},
@@ -407,7 +418,7 @@ export default class Block {
 						block: ${block},
 						id: ${this.name || 'create_fragment'}.name,
 						type: "${this.type}",
-						source: "${this.comment ? this.comment.replace(/"/g, '\\"') : ''}",
+						source: "${this.comment ? this.comment.replace(regex_double_quotes, '\\"') : ''}",
 						ctx: #ctx
 					});
 					return ${block};`
@@ -489,6 +500,12 @@ export default class Block {
 					b`@run_all(${dispose});`
 				);
 			}
+		}
+	}
+
+	render_binding_groups() {
+		for (const binding_group of this.binding_groups) {
+			binding_group.render();
 		}
 	}
 }

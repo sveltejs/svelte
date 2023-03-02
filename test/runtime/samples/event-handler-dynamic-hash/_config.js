@@ -8,20 +8,20 @@ export default {
 	<button>click</button>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [updateButton1, updateButton2, button] = target.querySelectorAll(
 			'button'
 		);
 
 		const event = new window.MouseEvent('click');
-		let err = "";
+		let err = '';
 		window.addEventListener('error', (e) => {
 			e.preventDefault();
 			err = e.message;
 		});
 
 		await button.dispatchEvent(event);
-		assert.equal(err, "", err);
+		assert.equal(err, '', err);
 		assert.htmlEqual(target.innerHTML, `
 			<p>
 				<button>set handler 1</button>
@@ -52,5 +52,5 @@ export default {
 			<p>2</p>
 			<button>click</button>
 		`);
-	},
+	}
 };

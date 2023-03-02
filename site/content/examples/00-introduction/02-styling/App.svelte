@@ -1,3 +1,5 @@
+<p>Styled!</p>
+
 <style>
 	p {
 		color: purple;
@@ -5,5 +7,3 @@
 		font-size: 2em;
 	}
 </style>
-
-<p>Styled!</p>

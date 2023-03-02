@@ -7,9 +7,12 @@ function callback(_value) {
 
 export default {
 	props: {
-		callback,
+		callback
 	},
-	async test({ assert, component, target, window }) {
+	before_test() {
+		called = 0;
+	},
+	async test({ assert, target, window }) {
 		assert.equal(called, 1);
 
 		const input = target.querySelector('input');

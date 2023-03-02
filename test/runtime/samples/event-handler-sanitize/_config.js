@@ -3,7 +3,7 @@ export default {
 		<div>toggle</div>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const div = target.querySelector('div');
 		const event = new window.MouseEvent('some-event');
 

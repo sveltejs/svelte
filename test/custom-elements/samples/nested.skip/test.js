@@ -8,10 +8,10 @@ export default async function (target) {
 	const button = counter.shadowRoot.querySelector('button');
 
 	assert.equal(counter.count, 0);
-	assert.equal(counter.shadowRoot.innerHTML, `<button>count: 0</button>`);
+	assert.equal(counter.shadowRoot.innerHTML, '<button>count: 0</button>');
 
 	await button.dispatchEvent(new MouseEvent('click'));
 
 	assert.equal(counter.count, 1);
-	assert.equal(counter.shadowRoot.innerHTML, `<button>count: 1</button>`);
+	assert.equal(counter.shadowRoot.innerHTML, '<button>count: 1</button>');
 }

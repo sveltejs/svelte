@@ -5,8 +5,8 @@ export default {
 		<p>This line should be last.</p>
 	`,
 	async test({ assert, target, window }) {
-		const btn = target.querySelector("button");
-		const clickEvent = new window.MouseEvent("click");
+		const btn = target.querySelector('button');
+		const clickEvent = new window.MouseEvent('click');
 
 		await btn.dispatchEvent(clickEvent);
 
@@ -29,5 +29,5 @@ export default {
 				<p>This line should be last.</p>
 			`
 		);
-	},
+	}
 };

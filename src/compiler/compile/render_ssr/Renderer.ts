@@ -7,13 +7,16 @@ import Head from './handlers/Head';
 import HtmlTag from './handlers/HtmlTag';
 import IfBlock from './handlers/IfBlock';
 import InlineComponent from './handlers/InlineComponent';
+import KeyBlock from './handlers/KeyBlock';
 import Slot from './handlers/Slot';
+import SlotTemplate from './handlers/SlotTemplate';
 import Tag from './handlers/Tag';
 import Text from './handlers/Text';
 import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
 import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { collapse_template_literal } from '../utils/collapse_template_literal';
 import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
@@ -30,10 +33,12 @@ const handlers: Record<string, Handler> = {
 	Head,
 	IfBlock,
 	InlineComponent,
+	KeyBlock,
 	MustacheTag: Tag, // TODO MustacheTag is an anachronism
 	Options: noop,
 	RawMustacheTag: HtmlTag,
 	Slot,
+	SlotTemplate,
 	Text,
 	Title,
 	Window: noop
@@ -101,6 +106,9 @@ export default class Renderer {
 			this.literal = last.literal;
 			this.current = last.current;
 		}
+
+		// Optimize the TemplateLiteral to remove unnecessary nodes
+		collapse_template_literal(popped.literal);
 
 		return popped.literal;
 	}

@@ -3,7 +3,7 @@ export default {
 		visible: true
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = false;
 		const div = target.querySelector('div');
 
@@ -13,5 +13,5 @@ export default {
 		component.$destroy();
 
 		raf.tick(100);
-	},
+	}
 };

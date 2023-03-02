@@ -1,7 +1,7 @@
 export default {
 	html: '<button>click me</button>',
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const button = target.querySelector('button');
 		const messages = [];
 
@@ -21,5 +21,5 @@ export default {
 		}
 
 		console.log = log;
-	},
+	}
 };

@@ -3,5 +3,5 @@ export default {
 		dev: true
 	},
 
-	error: `Cannot have duplicate keys in a keyed each`
+	error: 'Cannot have duplicate keys in a keyed each'
 };

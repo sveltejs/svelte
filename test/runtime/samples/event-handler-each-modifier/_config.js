@@ -2,21 +2,21 @@ export default {
 	async test({ assert, component, target, window }) {
 		// set first
 		await component.lists.update(() => [
-			{ text: "item1" },
-			{ text: "item2" },
-			{ text: "item3" }
+			{ text: 'item1' },
+			{ text: 'item2' },
+			{ text: 'item3' }
 		]);
 
 		await component.lists.update(() => [
-			{ text: "item3" },
-			{ text: "item2" },
-			{ text: "item1" }
+			{ text: 'item3' },
+			{ text: 'item2' },
+			{ text: 'item1' }
 		]);
 
 		await component.lists.update(() => [
-			{ text: "item1" },
-			{ text: "item2" },
-			{ text: "item3" }
+			{ text: 'item1' },
+			{ text: 'item2' },
+			{ text: 'item3' }
 		]);
 
 		assert.equal(component.updated, 4);

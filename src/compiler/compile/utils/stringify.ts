@@ -12,17 +12,21 @@ export function escape(data: string, { only_escape_at_symbol = false } = {}) {
 }
 
 const escaped = {
-  '"': '&quot;',
-  "'": '&#39;',
+	'"': '&quot;',
+	"'": '&#39;',
 	'&': '&amp;',
 	'<': '&lt;',
-	'>': '&gt;',
+	'>': '&gt;'
 };
 
+const regex_html_characters_to_escape = /["'&<>]/g;
+
 export function escape_html(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+	return String(html).replace(regex_html_characters_to_escape, match => escaped[match]);
 }
 
+const regex_template_characters_to_escape = /(\${|`|\\)/g;
+
 export function escape_template(str) {
-	return str.replace(/(\${|`|\\)/g, '\\$1');
+	return str.replace(regex_template_characters_to_escape, '\\$1');
 }

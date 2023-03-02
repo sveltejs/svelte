@@ -18,6 +18,16 @@
 		});
 </script>
 
+{#if items}
+	{#each items as item, i}
+		<Summary {item} {i} {offset}/>
+	{/each}
+
+	<a href="#/top/{page + 1}">page {page + 1}</a>
+{:else}
+	<p class="loading">loading...</p>
+{/if}
+
 <style>
 	a {
 		padding: 2em;
@@ -34,13 +44,3 @@
 		to { opacity: 1; }
 	}
 </style>
-
-{#if items}
-	{#each items as item, i}
-		<Summary {item} {i} {offset}/>
-	{/each}
-
-	<a href="#/top/{page + 1}">page {page + 1}</a>
-{:else}
-	<p class="loading">loading...</p>
-{/if}

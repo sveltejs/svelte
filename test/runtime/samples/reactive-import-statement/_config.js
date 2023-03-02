@@ -11,7 +11,7 @@ export default {
 	before_test() {
 		delete require.cache[path.resolve(__dirname, 'data.js')];
 	},
-	async test({ assert, target, window, }) {
+	async test({ assert, target, window }) {
 		const btn = target.querySelector('button');
 		const clickEvent = new window.MouseEvent('click');
 

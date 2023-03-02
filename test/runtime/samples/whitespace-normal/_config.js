@@ -3,10 +3,10 @@ export default {
 		name: 'world'
 	},
 
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		assert.equal(
 			target.textContent,
-			`Hello world! How are you?`
+			'Hello world! How are you?'
 		);
 	}
 };

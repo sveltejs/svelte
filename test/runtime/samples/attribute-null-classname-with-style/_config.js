@@ -1,5 +1,5 @@
 export default {
-	html: `<div class=" svelte-x1o6ra"></div>`,
+	html: '<div class=" svelte-x1o6ra"></div>',
 
 	test({ assert, component, target }) {
 		const div = target.querySelector('div');

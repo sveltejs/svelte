@@ -3,5 +3,5 @@ export default {
 		dev: true
 	},
 	props: { foo: 'foo' },
-	html: `<div>foo @ foo # foo</div>`,
+	html: '<div>foo @ foo # foo</div>'
 };

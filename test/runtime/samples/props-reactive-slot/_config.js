@@ -4,9 +4,9 @@ export default {
 		<button>Change</button>
 	`,
 
-	async test({ assert, component, target, window }) {
-		const btn = target.querySelector("button");
-		const clickEvent = new window.MouseEvent("click");
+	async test({ assert, target, window }) {
+		const btn = target.querySelector('button');
+		const clickEvent = new window.MouseEvent('click');
 
 		await btn.dispatchEvent(clickEvent);
 
@@ -17,5 +17,5 @@ export default {
 			<button>Change</button>
 		`
 		);
-	},
+	}
 };

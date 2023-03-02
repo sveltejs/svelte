@@ -1,20 +1,24 @@
 import AwaitBlock from '../AwaitBlock';
 import Body from '../Body';
+import ConstTag from '../ConstTag';
 import Comment from '../Comment';
 import EachBlock from '../EachBlock';
 import Element from '../Element';
 import Head from '../Head';
 import IfBlock from '../IfBlock';
 import InlineComponent from '../InlineComponent';
+import KeyBlock from '../KeyBlock';
 import MustacheTag from '../MustacheTag';
 import Options from '../Options';
 import RawMustacheTag from '../RawMustacheTag';
 import DebugTag from '../DebugTag';
 import Slot from '../Slot';
+import SlotTemplate from '../SlotTemplate';
 import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
 import { TemplateNode } from '../../../interfaces';
+import { push_array } from '../../../utils/push_array';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -23,16 +27,19 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
+		case 'ConstTag': return ConstTag;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
 		case 'IfBlock': return IfBlock;
 		case 'InlineComponent': return InlineComponent;
+		case 'KeyBlock': return KeyBlock;
 		case 'MustacheTag': return MustacheTag;
 		case 'Options': return Options;
 		case 'RawMustacheTag': return RawMustacheTag;
 		case 'DebugTag': return DebugTag;
 		case 'Slot': return Slot;
+		case 'SlotTemplate': return SlotTemplate;
 		case 'Text': return Text;
 		case 'Title': return Title;
 		case 'Window': return Window;
@@ -54,7 +61,7 @@ export default function map_children(component, parent, scope, children: Templat
 		if (use_ignores) component.pop_ignores(), ignores = [];
 
 		if (node.type === 'Comment' && node.ignores.length) {
-			ignores.push(...node.ignores);
+			push_array(ignores, node.ignores);
 		}
 
 		if (last) last.next = node;

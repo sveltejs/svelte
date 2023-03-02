@@ -1,3 +1,3 @@
 export default {
-	html: `<p>nested component</p>`
+	html: '<p>nested component</p>'
 };

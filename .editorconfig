@@ -13,4 +13,3 @@ insert_final_newline = false
 
 [{package.json,.travis.yml,.eslintrc.json}]
 indent_style = space
-indent_size = 2

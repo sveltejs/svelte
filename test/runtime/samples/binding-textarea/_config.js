@@ -1,6 +1,6 @@
 export default {
 	props: {
-		value: 'some text',
+		value: 'some text'
 	},
 
 	html: `
@@ -33,5 +33,5 @@ export default {
 			<textarea></textarea>
 			<p>goodbye</p>
 		`);
-	},
+	}
 };

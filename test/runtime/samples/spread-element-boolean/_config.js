@@ -18,8 +18,8 @@ export default {
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<button>click me</button>`
+			'<button>click me</button>'
 		);
 		assert.ok(!button.disabled);
-	},
+	}
 };

@@ -7,18 +7,18 @@ export default {
 		letters: [
 			{
 				id: 1,
-				char: 'a',
+				char: 'a'
 			},
 			{
 				id: 2,
-				char: 'b',
+				char: 'b'
 			},
 			{
 				id: 3,
-				char: 'c',
-			},
-		],
+				char: 'c'
+			}
+		]
 	},
 
-	warnings: [],
+	warnings: []
 };

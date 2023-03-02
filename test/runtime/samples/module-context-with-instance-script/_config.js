@@ -1,3 +1,3 @@
 export default {
-	html: `<p>(42)(99)</p>`
+	html: '<p>(42)(99)</p>'
 };

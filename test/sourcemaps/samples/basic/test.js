@@ -1,12 +1,12 @@
-export function test({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource('foo.bar.baz');
+export function test({ assert, input, js }) {
+	const expected = input.locate('foo.bar.baz');
 
 	let start;
 	let actual;
 
-	start = locateInGenerated('ctx[0].bar.baz');
+	start = js.locate('ctx[0].bar.baz');
 
-	actual = smc.originalPositionFor({
+	actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});
@@ -18,9 +18,9 @@ export function test({ assert, smc, locateInSource, locateInGenerated }) {
 		column: expected.column
 	});
 
-	start = locateInGenerated('ctx[0].bar.baz', start.character + 1);
+	start = js.locate('ctx[0].bar.baz', start.character + 1);
 
-	actual = smc.originalPositionFor({
+	actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});

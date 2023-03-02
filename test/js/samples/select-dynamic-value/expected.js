@@ -55,7 +55,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { current } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("current" in $$props) $$invalidate(0, current = $$props.current);
+		if ('current' in $$props) $$invalidate(0, current = $$props.current);
 	};
 
 	return [current];

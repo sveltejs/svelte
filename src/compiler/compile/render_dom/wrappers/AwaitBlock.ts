@@ -10,6 +10,7 @@ import ThenBlock from '../../nodes/ThenBlock';
 import CatchBlock from '../../nodes/CatchBlock';
 import { Context } from '../../nodes/shared/Context';
 import { Identifier, Literal, Node } from 'estree';
+import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 
 type Status = 'pending' | 'then' | 'catch';
 
@@ -76,27 +77,39 @@ class AwaitBlockBranch extends Wrapper {
 			this.is_destructured = true;
 		}
 		this.value_index = this.renderer.context_lookup.get(this.value).index;
+
+		if (this.has_consts(this.node)) {
+			add_const_tags_context(this.renderer, this.node.const_tags);
+		}
+	}
+
+	has_consts(node: PendingBlock | ThenBlock | CatchBlock): node is ThenBlock | CatchBlock {
+		return node instanceof ThenBlock || node instanceof CatchBlock;
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		this.fragment.render(block, parent_node, parent_nodes);
 
-		if (this.is_destructured) {
-			this.render_destructure();
+		if (this.is_destructured || (this.has_consts(this.node) && this.node.const_tags.length > 0)) {
+			this.render_get_context();
 		}
 	}
 
-	render_destructure() {
-		const props = this.value_contexts.map(prop => b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.modifier(x`#ctx[${this.value_index}]`)};`);
+	render_get_context() {
+		const props = this.is_destructured ? this.value_contexts.map(prop => b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), name => this.renderer.reference(name))};`) : null;
+
+		const const_tags_props = this.has_consts(this.node) ? add_const_tags(this.block, this.node.const_tags, '#ctx') : null;
+
 		const get_context = this.block.renderer.component.get_unique_name(`get_${this.status}_context`);
 		this.block.renderer.blocks.push(b`
 			function ${get_context}(#ctx) {
 				${props}
+				${const_tags_props}
 			}
 		`);
 		this.block.chunks.declarations.push(b`${get_context}(#ctx)`);
 		if (this.block.has_update_method) {
-			this.block.chunks.update.push(b`${get_context}(#ctx)`);
+			this.block.chunks.update.unshift(b`${get_context}(#ctx)`);
 		}
 	}
 }
@@ -177,8 +190,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const snippet = this.node.expression.manipulate(block);
 
-		const info = block.get_unique_name(`info`);
-		const promise = block.get_unique_name(`promise`);
+		const info = block.get_unique_name('info');
+		const promise = block.get_unique_name('promise');
 
 		block.add_variable(promise);
 
@@ -188,6 +201,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			ctx: #ctx,
 			current: null,
 			token: null,
+			hasCatch: ${this.catch.node.start !== null ? 'true' : 'false'},
 			pending: ${this.pending.block.name},
 			then: ${this.then.block.name},
 			catch: ${this.catch.block.name},
@@ -231,6 +245,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 
 		const dependencies = this.node.expression.dynamic_dependencies();
 
+		const update_await_block_branch = b`@update_await_block_branch(${info}, #ctx, #dirty)`;
+
 		if (dependencies.length > 0) {
 			const condition = x`
 				${block.renderer.dirty(dependencies)} &&
@@ -246,9 +262,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 					if (${condition}) {
 
 					} else {
-						const #child_ctx = #ctx.slice();
-						${this.then.value && b`#child_ctx[${this.then.value_index}] = ${info}.resolved;`}
-						${info}.block.p(#child_ctx, #dirty);
+						${update_await_block_branch}
 					}
 				`);
 			} else {
@@ -259,11 +273,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		} else {
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
-					{
-						const #child_ctx = #ctx.slice();
-						${this.then.value && b`#child_ctx[${this.then.value_index}] = ${info}.resolved;`}
-						${info}.block.p(#child_ctx, #dirty);
-					}
+					${update_await_block_branch}
 				`);
 			}
 		}

@@ -9,6 +9,14 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 		properties: Array.from(values.values())
 			.filter(attribute => attribute.name !== 'name')
 			.map(attribute => {
+				if (attribute.is_spread) {
+					const argument = get_spread_value(block, attribute);
+					return {
+						type: 'SpreadElement',
+						argument
+					};
+				}
+
 				const value = get_value(block, attribute);
 				return p`${attribute.name}: ${value}`;
 			})
@@ -28,4 +36,8 @@ function get_value(block: Block, attribute: Attribute) {
 	}
 
 	return value;
+}
+
+function get_spread_value(block: Block, attribute: Attribute) {
+	return block ? attribute.expression.manipulate(block) : attribute.expression.node;
 }

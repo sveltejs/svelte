@@ -1,8 +1,8 @@
-export function test({ assert, smc, locateInSource, locateInGenerated }) {
-	const expected = locateInSource( '42' );
-	const start = locateInGenerated( '42' );
+export function test({ assert, input, js }) {
+	const expected = input.locate('42');
+	const start = js.locate('42');
 
-	const actual = smc.originalPositionFor({
+	const actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,
 		column: start.column
 	});

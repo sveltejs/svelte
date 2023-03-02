@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const select = target.querySelector( 'select' );
 		assert.equal( select.childNodes.length, 3 );
 	}

@@ -20,5 +20,5 @@ export default {
 				<span>a</span>
 			</li>
 		`);
-	},
+	}
 };
