@@ -148,7 +148,7 @@
     "jsdom": "^15.2.1",
     "kleur": "^4.1.5",
     "locate-character": "^2.0.5",
-    "magic-string": "^0.25.3",
+    "magic-string": "^0.30.0",
     "mocha": "^7.0.0",
     "periscopic": "^3.0.4",
     "puppeteer": "^2.0.0",
