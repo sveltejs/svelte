@@ -1,9 +1,9 @@
 import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
-import { current_component, set_current_component } from './lifecycle';
+import { current_component, set_current_component, start_callback, stop_callback } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
-import { T$$ } from './types';
+import { Callback, T$$ } from './types';
 
 export function bind(component, name, callback) {
 	const index = component.$$.props[name];
@@ -95,6 +95,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 		// everything else
 		callbacks: blank_object(),
+		bubbles: blank_object(),
 		dirty,
 		skip_bound: false,
 		root: options.target || parent_component.$$.root
@@ -177,17 +178,22 @@ if (typeof HTMLElement === 'function') {
 			this.$destroy = noop;
 		}
 
-		$on(type, callback) {
-			// TODO should this delegate to addEventListener?
+		$on(type: string, callback: EventListener, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 			if (!is_function(callback)) {
 				return noop;
 			}
 			const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
-			callbacks.push(callback);
-
+			const c: Callback = {f:callback, o:options};
+			callbacks.push(c);
+			
+			start_callback(this as any, type, c);
+	
 			return () => {
-				const index = callbacks.indexOf(callback);
-				if (index !== -1) callbacks.splice(index, 1);
+				const index = callbacks.indexOf(c);
+				if (index !== -1) {
+					callbacks.splice(index, 1);
+					stop_callback(this as any, type, c);
+				}
 			};
 		}
 
@@ -213,16 +219,20 @@ export class SvelteComponent {
 		this.$destroy = noop;
 	}
 
-	$on(type, callback) {
+	$on(type: string, callback: EventListener, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 		if (!is_function(callback)) {
 			return noop;
 		}
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
-		callbacks.push(callback);
+		const c: Callback = {f:callback, o:options};
+		callbacks.push(c);
+		
+		start_callback(this as any, type, c);
 
 		return () => {
-			const index = callbacks.indexOf(callback);
+			const index = callbacks.indexOf(c);
 			if (index !== -1) callbacks.splice(index, 1);
+			stop_callback(this as any, type, c);
 		};
 	}
 

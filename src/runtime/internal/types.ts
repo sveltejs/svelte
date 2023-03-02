@@ -19,12 +19,27 @@ export interface Fragment {
 
 export type FragmentFactory = (ctx: any) => Fragment;
 
+
+export interface Callback {
+	f: EventListener;
+	o?: boolean | AddEventListenerOptions | EventListenerOptions;
+}
+
+export type CallbackFactory = (type: string, callback: EventListener, options: boolean | AddEventListenerOptions | EventListenerOptions | undefined) => Function|void;
+
+export interface Bubble {
+	f: CallbackFactory;
+	r: Map<Callback,Function>;
+}
+
+
 export interface T$$ {
 	dirty: number[];
 	ctx: any[];
 	bound: any;
 	update: () => void;
-	callbacks: any;
+	callbacks: Record<string, Callback[]>;
+	bubbles: Record<string, Bubble[]>;
 	after_update: any[];
 	props: Record<string, 0 | string>;
 	fragment: null | false | Fragment;

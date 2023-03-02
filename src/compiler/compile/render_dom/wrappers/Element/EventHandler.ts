@@ -1,8 +1,9 @@
 import EventHandler from '../../../nodes/EventHandler';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { b, x, p } from 'code-red';
+import { x, p, b } from 'code-red';
 import { Expression } from 'estree';
+import { sanitize } from '../../../../utils/names';
 
 const TRUE = x`true`;
 const FALSE = x`false`;
@@ -15,34 +16,34 @@ export default class EventHandlerWrapper {
 		this.node = node;
 		this.parent = parent;
 
-		if (!node.expression) {
-			this.parent.renderer.add_to_context(node.handler_name.name);
-
-			this.parent.renderer.component.partly_hoisted.push(b`
-				function ${node.handler_name.name}(event) {
-					@bubble.call(this, $$self, event);
-				}
-			`);
-		}
 	}
 
+	
 	get_snippet(block: Block) {
-		const snippet = this.node.expression ? this.node.expression.manipulate(block) : block.renderer.reference(this.node.handler_name);
-
-		if (this.node.reassigned) {
-			block.maintain_context = true;
-			return x`function () { if (@is_function(${snippet})) ${snippet}.apply(this, arguments); }`;
-		}
-		return snippet;
+		return this.node.expression.manipulate(block);
 	}
 
-	render(block: Block, target: string | Expression) {
-		let snippet = this.get_snippet(block);
 
-		if (this.node.modifiers.has('preventDefault')) snippet = x`@prevent_default(${snippet})`;
-		if (this.node.modifiers.has('stopPropagation')) snippet = x`@stop_propagation(${snippet})`;
-		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
-		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
+
+	render(block: Block, target: string | Expression, is_comp: boolean = false) {
+		const listen = is_comp ? '@listen_comp' : '@listen';
+		if (!this.node.expression) {
+			const self = this.parent.renderer.add_to_context('$$self');
+			const selfvar = block.renderer.reference(self.name);
+			const aliasName = this.node.aliasName ? `"${this.node.aliasName}"` : null;
+			
+			block.event_listeners.push(x`@bubble(${selfvar}, ${listen}, ${target}, "${this.node.name}", ${aliasName})`);
+			return;
+		}
+
+		const snippet = this.get_snippet(block);
+
+		let wrappers = [];
+		if (this.node.modifiers.has('trusted')) wrappers.push(x`@trusted`);
+		if (this.node.modifiers.has('self')) wrappers.push(x`@self`);
+		if (this.node.modifiers.has('stopPropagation')) wrappers.push(x`@stop_propagation`);
+		if (this.node.modifiers.has('preventDefault')) wrappers.push(x`@prevent_default`);
+		// TODO : once() on component ????
 
 		const args = [];
 
@@ -57,17 +58,30 @@ export default class EventHandlerWrapper {
 						: p`${opt}: true`
 				) } }`);
 			}
-		} else if (block.renderer.options.dev) {
+		} else if (wrappers.length) {
 			args.push(FALSE);
 		}
-
-		if (block.renderer.options.dev) {
-			args.push(this.node.modifiers.has('preventDefault') ? TRUE : FALSE);
-			args.push(this.node.modifiers.has('stopPropagation') ? TRUE : FALSE);
+		if (wrappers.length) {
+			args.push(x`[${wrappers}]`);
 		}
 
-		block.event_listeners.push(
-			x`@listen(${target}, "${this.node.name}", ${snippet}, ${args})`
-		);
+		if (this.node.reassigned) {
+			const handle = this.node.component.get_unique_name(`${sanitize(this.node.name)}_handle`);
+			block.add_variable(handle);
+
+			const condition = block.renderer.dirty(this.node.expression.dynamic_dependencies());
+
+			block.chunks.update.push(b`
+				if (${condition}) {
+					${handle}.swap(${snippet})
+				}`);
+			block.event_listeners.push(
+				x`${handle} = @listen_swap(${snippet}, (h)=> ${listen}(${target}, "${this.node.name}", h, ${args}))`
+			);
+		} else {
+			block.event_listeners.push(
+				x`${listen}(${target}, "${this.node.name}", ${snippet}, ${args})`
+			);
+		}
 	}
 }

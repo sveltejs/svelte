@@ -1,4 +1,4 @@
-import { has_prop } from './utils';
+import { has_prop, is_function, noop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -252,9 +252,38 @@ export function empty() {
 	return text('');
 }
 
-export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
-	node.addEventListener(event, handler, options);
-	return () => node.removeEventListener(event, handler, options);
+export function wrap_handler(handler: EventListenerOrEventListenerObject, wrappers?: Function[]): EventListener {
+	let result = is_function(handler) ? handler : handler.handleEvent.bind(handler);
+	if (wrappers) {
+		for (const fn of wrappers) {
+			result = fn(result);
+		}
+	}
+	return result;
+}
+
+export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject|null|undefined, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+	if (handler) {
+		handler = wrap_handler(handler, wrappers);
+		node.addEventListener(event, handler, options);
+		return () => node.removeEventListener(event, handler, options);
+	}
+	return noop;
+}
+
+export function listen_swap(handler: EventListenerOrEventListenerObject|null|undefined, factory: (handler:EventListenerOrEventListenerObject) => Function) {
+	let disposeHandle: Function = factory(handler);
+	const dispose = () => {
+		disposeHandle();
+	}
+	dispose.swap = (new_handler:EventListenerOrEventListenerObject) => {
+		if (new_handler !== handler) {
+			disposeHandle();
+			handler = new_handler;
+			disposeHandle = factory(handler);
+		}
+	}
+	return dispose;
 }
 
 export function prevent_default(fn) {

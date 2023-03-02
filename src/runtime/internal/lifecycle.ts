@@ -1,4 +1,7 @@
-import { custom_event } from './dom';
+import { SvelteComponent } from './Component';
+import { custom_event, wrap_handler } from './dom';
+import { Bubble, Callback, CallbackFactory } from './types';
+import { noop } from './utils';
 
 export let current_component;
 
@@ -82,14 +85,14 @@ export function createEventDispatcher<EventMap extends {} = any>(): <
 	const component = get_current_component();
 
 	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
-		const callbacks = component.$$.callbacks[type];
+		const callbacks: Callback[] = component.$$.callbacks[type];
 
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail, { cancelable });
-			callbacks.slice().forEach(fn => {
-				fn.call(component, event);
+			callbacks.slice().forEach(callback => {
+				callback.f.call(component, event);
 			});
 			return !event.defaultPrevented;
 		}
@@ -143,14 +146,93 @@ export function hasContext(key): boolean {
 	return get_current_component().$$.context.has(key);	
 }
 
-// TODO figure out if we still want to support
-// shorthand events, or if we want to implement
-// a real bubbling mechanism
-export function bubble(component, event) {
-	const callbacks = component.$$.callbacks[event.type];
-
-	if (callbacks) {
-		// @ts-ignore
-		callbacks.slice().forEach(fn => fn.call(this, event));
+function start_bubble(type: string, bubble: Bubble, callback: Callback) {
+	const dispose = bubble.f(type, callback.f, callback.o);
+	if (dispose) {
+		bubble.r.set(callback, dispose);
 	}
+}
+
+function start_bubbles(comp : SvelteComponent, bubble: Bubble) {
+	for (const type of Object.keys(comp.$$.callbacks)) {
+		comp.$$.callbacks[type].forEach( callback => { start_bubble(type, bubble, callback); })
+	}
+}
+
+export function start_callback(comp : SvelteComponent, type: string, callback: Callback) {
+	for (const bubbles of [ comp.$$.bubbles[type], comp.$$.bubbles['*'] ]) {
+		if (bubbles) {
+			for(const bubble of bubbles) {
+				start_bubble(type, bubble, callback);
+			}
+		}
+	}
+}
+
+export function stop_callback(comp : SvelteComponent, type: string, callback: Callback) {
+	for (const bubbles of [ comp.$$.bubbles[type], comp.$$.bubbles['*'] ]) {
+		if (bubbles) {
+			for (const bubble of bubbles) {
+				const dispose = bubble.r.get(callback);
+				if (dispose) {
+					dispose();
+					bubble.r.delete(callback);
+				}
+			}
+		}
+	}
+}
+
+function add_bubble(comp: SvelteComponent, type: string, f: CallbackFactory): Function {
+	const bubble : Bubble = {f, r: new Map()};
+	const bubbles = (comp.$$.bubbles[type] || (comp.$$.bubbles[type] = []));
+	bubbles.push(bubble);
+
+	start_bubbles(comp, bubble);
+	
+	return () => {
+		const index = bubbles.indexOf(bubble);
+		if (index !== -1) bubbles.splice(index, 1);
+		for (const dispose of bubble.r.values()) {
+			dispose();
+		}
+	}
+}
+
+export function onEventListener(type: string, fn: CallbackFactory) {
+	add_bubble(get_current_component(), type, fn);
+}
+
+
+export function bubble(component: SvelteComponent, listen_func: Function, node: EventTarget|SvelteComponent, type: string, typeName: string = type): Function {
+	return add_bubble(component, type, (eventType, callback, options) => {
+		let typeToListen: string;
+		if (type === '*') {
+			if (typeName === '*') {
+				typeToListen = eventType;
+			} else if (typeName.startsWith('*')) {
+				const len = typeName.length;
+				if (eventType.endsWith(typeName.substring(1))) {
+					typeToListen = eventType.substring(0, eventType.length - (len-1));
+				}
+			} else if (typeName.endsWith('*')) {
+				const len = typeName.length;
+				if (eventType.startsWith(typeName.substring(0,len-1))) {
+					typeToListen = eventType.substring(len-1);
+				}
+			}
+		} else if (eventType === typeName) {
+			typeToListen = type;
+		}
+		if (typeToListen) {
+			return listen_func(node, typeToListen, callback, options);
+		}
+	});
+}
+
+export function listen_comp(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+	if (handler) {
+		return comp.$on(event, wrap_handler(handler, wrappers), options);
+	}
+	return noop;
 }

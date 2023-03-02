@@ -305,5 +305,9 @@ export default {
 	directive_conflict: (directive1, directive2) => ({
 		code: 'directive-conflict',
 		message: `Cannot use ${directive1} and ${directive2} on the same element`
-  })
+  	}),
+	too_much_forward_event_modifiers: {
+		code: 'too-much-forward-event-modifiers',
+		message: 'Forward-event only accept one modifier (the forward alias)'
+	},
 };

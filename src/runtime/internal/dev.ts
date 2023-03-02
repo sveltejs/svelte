@@ -1,6 +1,7 @@
-import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
+import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr, prevent_default, stop_propagation, trusted, self } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
+import { bubble, listen_comp } from './lifecycle';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -49,16 +50,45 @@ export function detach_after_dev(before: Node) {
 	}
 }
 
-export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean) {
+function build_modifiers(options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
 	const modifiers = options === true ? [ 'capture' ] : options ? Array.from(Object.keys(options)) : [];
-	if (has_prevent_default) modifiers.push('preventDefault');
-	if (has_stop_propagation) modifiers.push('stopPropagation');
+	if (wrappers) {
+		if (wrappers.indexOf(prevent_default) >= 0) modifiers.push('preventDefault');
+		if (wrappers.indexOf(stop_propagation) >= 0) modifiers.push('stopPropagation');
+		// ???
+		if (wrappers.indexOf(trusted) >= 0) modifiers.push('trusted');
+		if (wrappers.indexOf(self) >= 0) modifiers.push('self');
+	}
+	return modifiers;
+}
 
+export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+	const modifiers = build_modifiers(options, wrappers);
 	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
 
-	const dispose = listen(node, event, handler, options);
+	const dispose = listen(node, event, handler, options, wrappers);
 	return () => {
 		dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
+		dispose();
+	};
+}
+
+export function bubble_dev(component: SvelteComponent, listen_func: Function, node: EventTarget|SvelteComponent, type: string, typeName: string = type): Function {
+	dispatch_dev('SvelteComponentAddEventBubble', { component, listen_func, node, type, typeName });
+	const dispose = bubble(component, listen_func, node, type, typeName);
+	return () => {
+		dispatch_dev('SvelteComponentRemoveEventBubble', { component, listen_func, node, type, typeName });
+		dispose();
+	};
+}
+
+export function listen_comp_dev(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+	const modifiers = build_modifiers(options, wrappers);
+	dispatch_dev('SvelteComponentAddEventListener', { comp, event, handler, modifiers });
+
+	const dispose = listen_comp(comp, event, handler, options, wrappers);
+	return () => {
+		dispatch_dev('SvelteComponentRemoveEventListener', { comp, event, handler, modifiers });
 		dispose();
 	};
 }
@@ -144,7 +174,7 @@ export function construct_svelte_component_dev(component, props) {
 type Props = Record<string, any>;
 export interface SvelteComponentDev {
 	$set(props?: Props): void;
-	$on(event: string, callback: ((event: any) => void) | null | undefined): () => void;
+	$on(event: string, callback: ((event: any) => void) | null | undefined, options?: boolean | AddEventListenerOptions | EventListenerOptions): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }

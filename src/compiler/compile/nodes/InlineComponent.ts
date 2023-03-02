@@ -101,13 +101,7 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
-		this.handlers.forEach(handler => {
-			handler.modifiers.forEach(modifier => {
-				if (modifier !== 'once') {
-					return component.error(handler, compiler_errors.invalid_event_modifier_component);
-				}
-			});
-		});
+		this.handlers.forEach(h => h.validate())
 
 		const children = [];
 		for (let i = info.children.length - 1; i >= 0; i--) {

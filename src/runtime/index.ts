@@ -11,6 +11,7 @@ export {
 	hasContext,
 	tick,
 	createEventDispatcher,
+	onEventListener,
 	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
 	// additional exports added through generate-type-definitions.js

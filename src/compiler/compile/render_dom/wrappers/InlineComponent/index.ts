@@ -396,13 +396,13 @@ export default class InlineComponentWrapper extends Wrapper {
 			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
 		});
 
-		const munged_handlers = this.node.handlers.map(handler => {
-			const event_handler = new EventHandler(handler, this);
-			let snippet = event_handler.get_snippet(block);
-			if (handler.modifiers.has('once')) snippet = x`@once(${snippet})`;
-
-			return b`${name}.$on("${handler.name}", ${snippet});`;
-		});
+		if (this.node.handlers.length > 0) {
+			const target = x`${name}`;
+			for (const handler of this.node.handlers) {
+				new EventHandler(handler, this)
+					.render(block, target, true);
+			}
+		}
 
 		const mount_target = has_css_custom_properties ? css_custom_properties_wrapper : (parent_node || '#target');
 		const mount_anchor = has_css_custom_properties ? 'null' : (parent_node ? 'null' : '#anchor');
@@ -433,7 +433,6 @@ export default class InlineComponentWrapper extends Wrapper {
 					${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 					${munged_bindings}
-					${munged_handlers}
 				}
 			`);
 
@@ -481,7 +480,6 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 						${munged_bindings}
-						${munged_handlers}
 
 						@create_component(${name}.$$.fragment);
 						@transition_in(${name}.$$.fragment, 1);
@@ -515,7 +513,6 @@ export default class InlineComponentWrapper extends Wrapper {
 				${name} = new ${expression}(${component_opts});
 
 				${munged_bindings}
-				${munged_handlers}
 			`);
 
 			if (has_css_custom_properties) {

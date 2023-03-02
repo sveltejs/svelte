@@ -198,5 +198,9 @@ export default {
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
 		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
-	})
+	}),
+	incorrect_forward_event_modifier: (modifiers: Set<string>) => ({
+		code: 'incorrect-forward-event-modifier',
+		message: `Forward-event only accept one modifier for the forward alias. Event modifiers should not be used here : ${modifiers}`
+	}),
 };

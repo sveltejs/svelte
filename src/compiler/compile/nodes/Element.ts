@@ -13,7 +13,6 @@ import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
 import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
-import list from '../../utils/list';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
@@ -118,24 +117,6 @@ const a11y_implicit_semantics = new Map([
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
-const valid_modifiers = new Set([
-	'preventDefault',
-	'stopPropagation',
-	'capture',
-	'once',
-	'passive',
-	'nonpassive',
-	'self',
-	'trusted'
-]);
-
-const passive_events = new Set([
-	'wheel',
-	'touchstart',
-	'touchmove',
-	'touchend',
-	'touchcancel'
-]);
 
 const react_attributes = new Map([
 	['className', 'class'],
@@ -943,44 +924,7 @@ export default class Element extends Node {
 	}
 
 	validate_event_handlers() {
-		const { component } = this;
-
-		this.handlers.forEach(handler => {
-			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
-				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault'));
-			}
-
-			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
-				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive'));
-			}
-
-			handler.modifiers.forEach(modifier => {
-				if (!valid_modifiers.has(modifier)) {
-					return component.error(handler, compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers))));
-				}
-
-				if (modifier === 'passive') {
-					if (passive_events.has(handler.name)) {
-						if (handler.can_make_passive) {
-							component.warn(handler, compiler_warnings.redundant_event_modifier_for_touch);
-						}
-					} else {
-						component.warn(handler, compiler_warnings.redundant_event_modifier_passive);
-					}
-				}
-
-				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
-					// TODO this could be supported, but it would need a few changes to
-					// how event listeners work
-					return component.error(handler, compiler_errors.invalid_event_modifier_legacy(modifier));
-				}
-			});
-
-			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault') && !handler.modifiers.has('nonpassive')) {
-				// touch/wheel events should be passive by default
-				handler.modifiers.add('passive');
-			}
-		});
+		this.handlers.forEach(h => h.validate());
 	}
 
 	validate_display_directive() {
