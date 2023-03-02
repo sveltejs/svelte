@@ -111,11 +111,10 @@ describe('ssr', () => {
 					fs.writeFileSync(`${dir}/_actual-head.html`, head);
 
 					try {
-						(compileOptions.hydratable
-							? assert.htmlEqualWithComments
-							: assert.htmlEqual)(
+						assert.htmlEqualWithOptions(
 							head,
-							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8')
+							fs.readFileSync(`${dir}/_expected-head.html`, "utf-8"),
+							{ preserveComments: compileOptions.hydratable }
 						);
 					} catch (error) {
 						if (shouldUpdateExpected()) {
