@@ -13,6 +13,7 @@ const regex_contains_term_function_expression = /FunctionExpression/;
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
