@@ -69,9 +69,9 @@ export default class EventHandlerWrapper {
 			const index = block.event_listeners.length;
 			const condition = block.renderer.dirty(this.node.expression.dynamic_dependencies());
 
-			block.event_updaters.push({condition, snippet, index});
+			block.event_updaters.push({condition, index});
 			block.event_listeners.push(
-				x`@listen_swap(${snippet}, (h)=> ${listen}(${target}, "${this.node.name}", h, ${args}))`
+				x`@listen_and_update( () => (${snippet}), (h) => ${listen}(${target}, "${this.node.name}", h, ${args}))`
 			);
 		} else {
 			block.event_listeners.push(

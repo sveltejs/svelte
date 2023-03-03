@@ -273,16 +273,19 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 	return noop;
 }
 
-export function listen_swap(handler: EventListenerOrEventListenerObject|null|undefined|false, factory: (handler:EventListenerOrEventListenerObject|null|undefined|false) => Function) {
-	let disposeHandle: Function = factory(handler);
+export function listen_and_update(get_handler: ()=>EventListenerOrEventListenerObject|null|undefined|false, factory: (handler:EventListenerOrEventListenerObject|null|undefined|false) => Function) {
+	let handler = get_handler();
+	let dispose_handle: Function = factory(handler);
 	const dispose = () => {
-		disposeHandle();
+		dispose_handle();
 	}
-	dispose.swap = (new_handler:EventListenerOrEventListenerObject) => {
+	// update :
+	dispose.p = () => {
+		const new_handler = get_handler();
 		if (new_handler !== handler) {
-			disposeHandle();
+			dispose_handle();
 			handler = new_handler;
-			disposeHandle = factory(handler);
+			dispose_handle = factory(handler);
 		}
 	}
 	return dispose;

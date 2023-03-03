@@ -59,7 +59,7 @@ export default class Block {
 		destroy: Array<Node | Node[]>;
 	};
 
-	event_updaters: ({condition:Expression, snippet:Node, index:number})[] = [];
+	event_updaters: ({condition:Expression, index:number})[] = [];
 	event_listeners: Node[] = [];
 
 	maintain_context: boolean;
@@ -484,12 +484,9 @@ export default class Block {
 				);
 
 				if (this.event_updaters.length === 1) {
-					const {condition, snippet} = this.event_updaters[0];
+					const {condition} = this.event_updaters[0];
 					this.chunks.update.push(b`
-					if (${condition}) {
-						${dispose}.swap(${snippet})
-					}`
-					);
+					if (${condition}) ${dispose}.p()`);
 				}
 
 				this.chunks.destroy.push(
@@ -505,12 +502,8 @@ export default class Block {
 					}
 				`);
 
-				for (const {condition, snippet, index} of this.event_updaters) {
-					this.chunks.update.push(b`
-					if (${condition}) {
-						${dispose}[${index}].swap(${snippet})
-					}`
-					);
+				for (const {condition, index} of this.event_updaters) {
+					this.chunks.update.push(b` if (${condition}) ${dispose}[${index}].p()`);
 				}
 
 				this.chunks.destroy.push(
