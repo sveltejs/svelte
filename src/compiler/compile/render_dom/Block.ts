@@ -4,6 +4,7 @@ import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 import { regex_double_quotes } from '../../utils/patterns';
+import { Expression } from 'estree';
 
 export interface Bindings {
 	object: Identifier;
@@ -58,6 +59,7 @@ export default class Block {
 		destroy: Array<Node | Node[]>;
 	};
 
+	event_updaters: ({condition:Expression, snippet:Node, index:number})[] = [];
 	event_listeners: Node[] = [];
 
 	maintain_context: boolean;
@@ -481,6 +483,15 @@ export default class Block {
 					`
 				);
 
+				if (this.event_updaters.length === 1) {
+					const {condition, snippet} = this.event_updaters[0];
+					this.chunks.update.push(b`
+					if (${condition}) {
+						${dispose}.swap(${snippet})
+					}`
+					);
+				}
+
 				this.chunks.destroy.push(
 					b`${dispose}();`
 				);
@@ -493,6 +504,14 @@ export default class Block {
 						#mounted = true;
 					}
 				`);
+
+				for (const {condition, snippet, index} of this.event_updaters) {
+					this.chunks.update.push(b`
+					if (${condition}) {
+						${dispose}[${index}].swap(${snippet})
+					}`
+					);
+				}
 
 				this.chunks.destroy.push(
 					b`@run_all(${dispose});`

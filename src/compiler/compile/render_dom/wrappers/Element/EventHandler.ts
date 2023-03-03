@@ -1,9 +1,8 @@
 import EventHandler from '../../../nodes/EventHandler';
 import Wrapper from '../shared/Wrapper';
 import Block from '../../Block';
-import { x, p, b } from 'code-red';
+import { x, p } from 'code-red';
 import { Expression } from 'estree';
-import { sanitize } from '../../../../utils/names';
 
 const TRUE = x`true`;
 const FALSE = x`false`;
@@ -67,17 +66,12 @@ export default class EventHandlerWrapper {
 		}
 
 		if (this.node.reassigned) {
-			const handle = this.node.component.get_unique_name(`${sanitize(this.node.name)}_handle`);
-			block.add_variable(handle);
-
+			const index = block.event_listeners.length;
 			const condition = block.renderer.dirty(this.node.expression.dynamic_dependencies());
 
-			block.chunks.update.push(b`
-				if (${condition}) {
-					${handle}.swap(${snippet})
-				}`);
+			block.event_updaters.push({condition, snippet, index});
 			block.event_listeners.push(
-				x`${handle} = @listen_swap(${snippet}, (h)=> ${listen}(${target}, "${this.node.name}", h, ${args}))`
+				x`@listen_swap(${snippet}, (h)=> ${listen}(${target}, "${this.node.name}", h, ${args}))`
 			);
 		} else {
 			block.event_listeners.push(

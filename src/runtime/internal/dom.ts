@@ -264,16 +264,16 @@ export function wrap_handler(handler: EventListenerOrEventListenerObject, wrappe
 	return result;
 }
 
-export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject|null|undefined, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject|null|undefined|false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
 	if (handler) {
-		handler = wrap_handler(handler, wrappers);
-		node.addEventListener(event, handler, options);
-		return () => node.removeEventListener(event, handler, options);
+		const h = wrap_handler(handler, wrappers);
+		node.addEventListener(event, h, options);
+		return () => node.removeEventListener(event, h, options);
 	}
 	return noop;
 }
 
-export function listen_swap(handler: EventListenerOrEventListenerObject|null|undefined, factory: (handler:EventListenerOrEventListenerObject) => Function) {
+export function listen_swap(handler: EventListenerOrEventListenerObject|null|undefined|false, factory: (handler:EventListenerOrEventListenerObject|null|undefined|false) => Function) {
 	let disposeHandle: Function = factory(handler);
 	const dispose = () => {
 		disposeHandle();

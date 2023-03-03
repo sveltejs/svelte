@@ -231,7 +231,7 @@ export function bubble(component: SvelteComponent, listen_func: Function, node: 
 	});
 }
 
-export function listen_comp(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+export function listen_comp(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject|null|undefined|false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
 	if (handler) {
 		return comp.$on(event, wrap_handler(handler, wrappers), options);
 	}
