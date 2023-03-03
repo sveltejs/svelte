@@ -214,8 +214,8 @@ export default {
 		code: 'invalid-rest-eachblock-binding',
 		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
 	}),
-	incorrect_forward_event_modifier: (modifiers: Set<string>) => ({
-		code: 'incorrect-forward-event-modifier',
-		message: `Forward-event only accept one modifier for the forward alias. Event modifiers should not be used here : ${modifiers}`
-	})
+	invalid_forward_event_alias: {
+		code: 'invalid-forward-event-alias',
+		message: 'Forward-event accept only one modifier : the event alias name'
+	}
 };

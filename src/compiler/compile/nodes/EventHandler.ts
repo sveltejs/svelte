@@ -30,6 +30,19 @@ const passive_events = new Set([
 	'touchcancel'
 ]);
 
+
+function is_valid_any_alias_name(alias: string) {
+	if (alias === '*') {
+		return true;
+	}
+	let idx = alias.indexOf('*');
+	if (idx < 0) return false;
+	if (idx !== alias.lastIndexOf('*')) {
+		return false;
+	}
+	return idx === 0 || alias.endsWith('*');
+}
+
 export default class EventHandler extends Node {
 	type: 'EventHandler';
 	name: string;
@@ -115,10 +128,13 @@ export default class EventHandler extends Node {
 			}
 		} else {
 			if (this.aliasCount > 1) {
-				return this.component.error(this, compiler_errors.too_much_forward_event_modifiers);
+				return this.component.error(this, compiler_errors.invalid_forward_event_alias_count);
 			}
 			if (this.aliasName && valid_modifiers.has(this.aliasName)) {
-				this.component.warn(this, compiler_warnings.incorrect_forward_event_modifier(valid_modifiers));
+				this.component.warn(this, compiler_warnings.invalid_forward_event_alias);
+			}
+			if (this.name === '*' && !is_valid_any_alias_name(this.aliasName)) {
+				return this.component.error(this, compiler_errors.invalid_forward_event_alias_any);
 			}
 		}
 	}

@@ -310,8 +310,12 @@ export default {
 		code: 'directive-conflict',
 		message: `Cannot use ${directive1} and ${directive2} on the same element`
   	}),
-	too_much_forward_event_modifiers: {
-		code: 'too-much-forward-event-modifiers',
-		message: 'Forward-event only accept one modifier (the forward alias)'
+	invalid_forward_event_alias_count: {
+		code: 'invalid-forward-event-alias-count',
+		message: 'Forward-event accept only one modifier (the event alias)'
+	},
+	invalid_forward_event_alias_any: {
+		code: 'invalid-forward-event-alias-any',
+		message: 'The alias for on:* must be one of the following form: "prefix*" or "*suffix"'
 	},
 };
