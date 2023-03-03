@@ -13,3 +13,4 @@ export {
 export function onMount() {}
 export function beforeUpdate() {}
 export function afterUpdate() {}
+export function onEventListener() {}
