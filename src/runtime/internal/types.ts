@@ -25,7 +25,7 @@ export interface Callback {
 	o?: boolean | AddEventListenerOptions | EventListenerOptions;
 }
 
-export type CallbackFactory = (type: string, callback: EventListener, options: boolean | AddEventListenerOptions | EventListenerOptions | undefined) => Function|void;
+export type CallbackFactory = (callback: EventListener, options: boolean | AddEventListenerOptions | EventListenerOptions | undefined, type: string) => Function|void;
 
 export interface Bubble {
 	f: CallbackFactory;

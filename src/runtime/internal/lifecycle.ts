@@ -147,7 +147,7 @@ export function hasContext(key): boolean {
 }
 
 function start_bubble(type: string, bubble: Bubble, callback: Callback) {
-	const dispose = bubble.f(type, callback.f, callback.o);
+	const dispose = bubble.f(callback.f, callback.o, type);
 	if (dispose) {
 		bubble.r.set(callback, dispose);
 	}
@@ -205,9 +205,9 @@ export function onEventListener(type: string, fn: CallbackFactory) {
 
 
 export function bubble(component: SvelteComponent, listen_func: Function, node: EventTarget|SvelteComponent, type: string, typeName: string = type): Function {
-	return add_bubble(component, type, (eventType, callback, options) => {
-		let typeToListen: string;
-		if (type === '*') {
+	if (type === '*') {
+		return add_bubble(component, type, (callback, options, eventType) => {
+			let typeToListen: string = null;
 			if (typeName === '*') {
 				typeToListen = eventType;
 			} else if (typeName.startsWith('*')) {
@@ -221,12 +221,13 @@ export function bubble(component: SvelteComponent, listen_func: Function, node: 
 					typeToListen = eventType.substring(len-1);
 				}
 			}
-		} else if (eventType === typeName) {
-			typeToListen = type;
-		}
-		if (typeToListen) {
-			return listen_func(node, typeToListen, callback, options);
-		}
+			if (typeToListen) {
+				return listen_func(node, typeToListen, callback, options);
+			}
+		});
+	}
+	return add_bubble(component, typeName, (callback, options) => {
+		return listen_func(node, type, callback, options);
 	});
 }
 
