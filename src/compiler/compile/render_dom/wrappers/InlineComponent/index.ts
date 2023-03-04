@@ -402,6 +402,10 @@ export default class InlineComponentWrapper extends Wrapper {
 
 		if (this.node.handlers.length > 0) {
 			const target = x`${name}`;
+			if (component.compile_options.dev) {
+				/* Hook for restoring handlers on components after HMR */
+				munged_bindings.push(b`@fix_callbacks_hmr_dev(${target})`);
+			}
 			for (const handler of this.node.handlers) {
 				new EventHandler(handler, this)
 					.render(block, target, true);

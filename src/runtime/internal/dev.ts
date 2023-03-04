@@ -1,7 +1,7 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr, prevent_default, stop_propagation, trusted, self, stop_immediate_propagation } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
-import { bubble, listen_comp } from './lifecycle';
+import { bubble, listen_comp, restart_all_callback } from './lifecycle';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -92,6 +92,13 @@ export function listen_comp_dev(comp: SvelteComponent, event: string, handler: E
 		dispatch_dev('SvelteComponentRemoveEventListener', { comp, event, handler, modifiers });
 		dispose();
 	};
+}
+
+/* Hook for restarting callbacks after HMR */
+export function fix_callbacks_hmr_dev(comp: any) {
+	comp.$$.on_hmr && comp.$$.on_hmr.push( (_: any) => {
+		return (c: SvelteComponent) => restart_all_callback(c);
+	});
 }
 
 export function attr_dev(node: Element, attribute: string, value?: string) {
