@@ -1153,17 +1153,6 @@ export default class ElementWrapper extends Wrapper {
 
 				if (all_deps.size === 0) return;
 
-				if (all_deps.size === this.dynamic_style_dependencies.size) {
-					// Only needed to maintain style directive precedence, we can skip the dirty check	
-					maybe_create_style_changed_var();
-					block.chunks.update.push(b`
-						if (${style_changed_var}) {
-							${updater}
-						}
-					`);
-					return;
-				}
-
 				let condition =  block.renderer.dirty([...all_deps]);
 
 				if (should_cache) {
@@ -1172,7 +1161,11 @@ export default class ElementWrapper extends Wrapper {
 
 				if (this.dynamic_style_dependencies.size > 0) {
 					maybe_create_style_changed_var();
-					condition = x`${style_changed_var} || ${condition}`;
+					// If all dependencies are same as the style attribute dependencies, then we can skip the dirty check
+					condition = 
+						all_deps.size === this.dynamic_style_dependencies.size 
+							? style_changed_var
+							: x`${style_changed_var} || ${condition}`;
 				}
 
 				block.chunks.update.push(b`
