@@ -51,11 +51,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		return p`"${name}": ${expression}`;
 	});
 
-	if (node.display) {
-		const snippet = node.display.expression.node;
-		style_expression_list.push(p`"display": (${snippet} ? "none !important" : null)`);
-	}
-
 	const style_expression =
 		style_expression_list.length > 0 &&
 		x`{ ${style_expression_list} }`;

@@ -294,15 +294,6 @@ function read_tag_name(parser: Parser) {
 	return name;
 }
 
-function use_name_as_expression(type:string, name:string):boolean {
-	if (type === 'Binding' || type === 'Class') {
-		return true;
-	} else if (type === 'SvelteDirective') {
-		return name === 'display';
-	}
-	return false;
-}
-
 // eslint-disable-next-line no-useless-escape
 const regex_token_ending_character = /[\s=\/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
@@ -440,7 +431,7 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 		}
 
 		// Directive name is expression, e.g. <p class:isRed />
-		if (!directive.expression && use_name_as_expression(type, directive_name)) {
+		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
 			directive.expression = {
 				start: directive.start + colon_index + 1,
 				end: directive.end,
@@ -473,7 +464,6 @@ function get_directive_type(name: string): DirectiveType {
 	if (name === 'let') return 'Let';
 	if (name === 'ref') return 'Ref';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
-	if (name === 'svelte') return 'SvelteDirective';
 }
 
 function read_attribute_value(parser: Parser) {
