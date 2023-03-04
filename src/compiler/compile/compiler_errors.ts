@@ -289,5 +289,13 @@ export default {
 	invalid_style_directive_modifier: (valid: string) => ({
 		code: 'invalid-style-directive-modifier',
 		message: `Valid modifiers for style directives are: ${valid}`
-	})
+	}),
+	invalid_forward_event_alias_count: {
+		code: 'invalid-forward-event-alias-count',
+		message: 'The on: forward directive accept only one modifier (the forward alias)'
+	},
+	invalid_forward_event_alias_any: {
+		code: 'invalid-forward-event-alias-any',
+		message: 'The alias for on:* must be of the following form : "prefix*" or "*suffix"'
+	}
 };
