@@ -264,7 +264,7 @@ export function wrap_handler(handler: EventListenerOrEventListenerObject, wrappe
 	return result;
 }
 
-export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject|null|undefined|false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject | null | undefined | false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
 	if (handler) {
 		const h = wrap_handler(handler, wrappers);
 		node.addEventListener(event, h, options);
@@ -273,12 +273,10 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 	return noop;
 }
 
-export function listen_and_update(get_handler: ()=>EventListenerOrEventListenerObject|null|undefined|false, factory: (handler:EventListenerOrEventListenerObject|null|undefined|false) => Function) {
+export function listen_and_update(get_handler: ()=>EventListenerOrEventListenerObject | null | undefined | false, factory: (handler:EventListenerOrEventListenerObject | null | undefined | false) => Function) {
 	let handler = get_handler();
 	let dispose_handle: Function = factory(handler);
-	const dispose = () => {
-		dispose_handle();
-	}
+	const dispose = () => dispose_handle();
 	// update :
 	dispose.p = () => {
 		const new_handler = get_handler();
@@ -287,7 +285,7 @@ export function listen_and_update(get_handler: ()=>EventListenerOrEventListenerO
 			handler = new_handler;
 			dispose_handle = factory(handler);
 		}
-	}
+	};
 	return dispose;
 }
 

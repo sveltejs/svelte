@@ -74,7 +74,7 @@ export function listen_dev(node: Node, event: string, handler: EventListenerOrEv
 	};
 }
 
-export function bubble_dev(component: SvelteComponent, listen_func: Function, node: EventTarget|SvelteComponent, type: string, typeName: string = type): Function {
+export function bubble_dev(component: SvelteComponent, listen_func: Function, node: EventTarget | SvelteComponent, type: string, typeName: string = type): Function {
 	dispatch_dev('SvelteComponentAddEventBubble', { component, listen_func, node, type, typeName });
 	const dispose = bubble(component, listen_func, node, type, typeName);
 	return () => {

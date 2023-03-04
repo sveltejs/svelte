@@ -155,7 +155,7 @@ function start_bubble(type: string, bubble: Bubble, callback: Callback) {
 
 function start_bubbles(comp : SvelteComponent, bubble: Bubble) {
 	for (const type of Object.keys(comp.$$.callbacks)) {
-		comp.$$.callbacks[type].forEach( callback => { start_bubble(type, bubble, callback); })
+		comp.$$.callbacks[type].forEach( callback => start_bubble(type, bubble, callback));
 	}
 }
 
@@ -170,7 +170,7 @@ export function restart_all_callback(comp : SvelteComponent) {
 function start_callback(comp : SvelteComponent, type: string, callback: Callback) {
 	for (const bubbles of [ comp.$$.bubbles[type], comp.$$.bubbles['*'] ]) {
 		if (bubbles) {
-			for(const bubble of bubbles) {
+			for (const bubble of bubbles) {
 				start_bubble(type, bubble, callback);
 			}
 		}
@@ -186,8 +186,8 @@ export function add_callback(comp : SvelteComponent, type: string, f: EventListe
 	const callback: Callback = {f, o};
 	
 	if (o && (o as any)?.once === true) {
-		callback.f = function () {
-			const r = f.apply(this, arguments);
+		callback.f = function(this: any, ...args) {
+			const r = f.call(this, ...args);
 			remove_callback(comp, type, callback);
 			return r;
 		};
@@ -236,15 +236,20 @@ function add_bubble(comp: SvelteComponent, type: string, f: CallbackFactory): Fu
 		for (const dispose of bubble.r.values()) {
 			dispose();
 		}
-	}
+	};
 }
 
+/**
+ * Schedules a callback to run when an handler is added to the component
+ * 
+ * TODO : Docs
+ */
 export function onEventListener(type: string, fn: CallbackFactory) {
 	add_bubble(get_current_component(), type, fn);
 }
 
 
-export function bubble(component: SvelteComponent, listen_func: Function, node: EventTarget|SvelteComponent, type: string, typeName: string = type): Function {
+export function bubble(component: SvelteComponent, listen_func: Function, node: EventTarget | SvelteComponent, type: string, typeName: string = type): Function {
 	if (type === '*') {
 		return add_bubble(component, type, (callback, options, eventType) => {
 			let typeToListen: string = null;
@@ -253,12 +258,12 @@ export function bubble(component: SvelteComponent, listen_func: Function, node: 
 			} else if (typeName.startsWith('*')) {
 				const len = typeName.length;
 				if (eventType.endsWith(typeName.substring(1))) {
-					typeToListen = eventType.substring(0, eventType.length - (len-1));
+					typeToListen = eventType.substring(0, eventType.length - (len - 1));
 				}
 			} else if (typeName.endsWith('*')) {
 				const len = typeName.length;
-				if (eventType.startsWith(typeName.substring(0,len-1))) {
-					typeToListen = eventType.substring(len-1);
+				if (eventType.startsWith(typeName.substring(0,len - 1))) {
+					typeToListen = eventType.substring(len - 1);
 				}
 			}
 			if (typeToListen) {
@@ -271,7 +276,7 @@ export function bubble(component: SvelteComponent, listen_func: Function, node: 
 	});
 }
 
-export function listen_comp(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject|null|undefined|false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
+export function listen_comp(comp: SvelteComponent, event: string, handler: EventListenerOrEventListenerObject | null | undefined | false, options?: boolean | AddEventListenerOptions | EventListenerOptions, wrappers?: Function[]) {
 	if (handler) {
 		return comp.$on(event, wrap_handler(handler, wrappers), options);
 	}

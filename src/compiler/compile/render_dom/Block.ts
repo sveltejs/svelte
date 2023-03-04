@@ -1,10 +1,9 @@
 import Renderer, { BindingGroup } from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
-import { Node, Identifier, ArrayPattern } from 'estree';
+import { Node, Identifier, ArrayPattern, Expression } from 'estree';
 import { is_head } from './wrappers/shared/is_head';
 import { regex_double_quotes } from '../../utils/patterns';
-import { Expression } from 'estree';
 
 export interface Bindings {
 	object: Identifier;
@@ -60,7 +59,7 @@ export default class Block {
 		destroy: Array<Node | Node[]>;
 	};
 
-	event_updaters: ({condition:Expression, index:number})[] = [];
+	event_updaters: Array<{condition:Expression, index:number}> = [];
 	event_listeners: Node[] = [];
 
 	maintain_context: boolean;

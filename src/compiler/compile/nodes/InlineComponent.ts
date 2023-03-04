@@ -98,7 +98,7 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
-		this.handlers.forEach(h => h.validate())
+		this.handlers.forEach(h => h.validate());
 
 		const children = [];
 		for (let i = info.children.length - 1; i >= 0; i--) {

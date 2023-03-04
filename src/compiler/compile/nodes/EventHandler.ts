@@ -35,7 +35,7 @@ function is_valid_any_alias_name(alias: string) {
 	if (alias === '*') {
 		return true;
 	}
-	let idx = alias.indexOf('*');
+	const idx = alias.indexOf('*');
 	if (idx < 0) return false;
 	if (idx !== alias.lastIndexOf('*')) {
 		return false;

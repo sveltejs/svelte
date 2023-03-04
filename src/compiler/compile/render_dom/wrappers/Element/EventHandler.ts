@@ -37,7 +37,7 @@ export default class EventHandlerWrapper {
 
 		const snippet = this.get_snippet(block);
 
-		let wrappers = [];
+		const wrappers = [];
 		if (this.node.modifiers.has('trusted')) wrappers.push(x`@trusted`);
 		if (this.node.modifiers.has('self')) wrappers.push(x`@self`);
 		if (this.node.modifiers.has('stopImmediatePropagation')) wrappers.push(x`@stop_immediate_propagation`);
