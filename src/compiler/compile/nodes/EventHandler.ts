@@ -92,6 +92,10 @@ export default class EventHandler extends Node {
 
 	validate() {
 		if (this.expression) {
+			if (this.name === '*') {
+				return this.component.error(this, compiler_errors.invalid_foward_event_any);
+			}
+
 			if (this.modifiers.has('passive') && this.modifiers.has('preventDefault')) {
 				return this.component.error(this, compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault'));
 			}
@@ -130,12 +134,15 @@ export default class EventHandler extends Node {
 			if (this.aliasCount > 1) {
 				return this.component.error(this, compiler_errors.invalid_forward_event_alias_count);
 			}
-			if (this.aliasName && valid_modifiers.has(this.aliasName)) {
-				this.component.warn(this, compiler_warnings.invalid_forward_event_alias);
+			if (this.aliasName) {
+				if (this.name === '*' && !is_valid_any_alias_name(this.aliasName)) {
+					return this.component.error(this, compiler_errors.invalid_forward_event_alias_any);
+				}
+				if (valid_modifiers.has(this.aliasName)) {
+					this.component.warn(this, compiler_warnings.invalid_forward_event_alias);
+				}
 			}
-			if (this.name === '*' && !is_valid_any_alias_name(this.aliasName)) {
-				return this.component.error(this, compiler_errors.invalid_forward_event_alias_any);
-			}
+			
 		}
 	}
 

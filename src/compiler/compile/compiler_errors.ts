@@ -297,5 +297,9 @@ export default {
 	invalid_forward_event_alias_any: {
 		code: 'invalid-forward-event-alias-any',
 		message: 'The alias for on:* must be of the following form : "prefix*" or "*suffix"'
+	},
+	invalid_foward_event_any: {
+		code: 'invalid-forward-event-any',
+		message: 'The directive on:* cannot be used with an handler'
 	}
 };
