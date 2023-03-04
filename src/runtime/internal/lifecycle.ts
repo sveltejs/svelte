@@ -1,7 +1,7 @@
 import { SvelteComponent } from './Component';
 import { custom_event, wrap_handler } from './dom';
 import { Bubble, Callback, CallbackFactory } from './types';
-import { noop } from './utils';
+import { is_function, noop } from './utils';
 
 export let current_component;
 
@@ -159,7 +159,15 @@ function start_bubbles(comp : SvelteComponent, bubble: Bubble) {
 	}
 }
 
-export function start_callback(comp : SvelteComponent, type: string, callback: Callback) {
+export function restart_all_callback(comp : SvelteComponent) {
+	for (const type of Object.keys(comp.$$.callbacks)) {
+		for (const callback of comp.$$.callbacks[type]) {
+			start_callback(comp, type, callback);
+		}
+	}
+}
+
+function start_callback(comp : SvelteComponent, type: string, callback: Callback) {
 	for (const bubbles of [ comp.$$.bubbles[type], comp.$$.bubbles['*'] ]) {
 		if (bubbles) {
 			for(const bubble of bubbles) {
@@ -169,7 +177,28 @@ export function start_callback(comp : SvelteComponent, type: string, callback: C
 	}
 }
 
-export function stop_callback(comp : SvelteComponent, type: string, callback: Callback) {
+export function add_callback(comp : SvelteComponent, type: string, f: EventListener, o?: boolean | AddEventListenerOptions | EventListenerOptions) {
+	if (!is_function(f)) {
+		return noop;
+	}
+	
+	const callbacks = (comp.$$.callbacks[type] || (comp.$$.callbacks[type] = []));
+	const callback: Callback = {f, o};
+	
+	if (o && (o as any)?.once === true) {
+		callback.f = function () {
+			const r = f.apply(this, arguments);
+			remove_callback(comp, type, callback);
+			return r;
+		};
+	}
+
+	callbacks.push(callback);
+	start_callback(comp, type, callback);
+	return () => remove_callback(comp, type, callback);
+}
+
+function stop_callback(comp : SvelteComponent, type: string, callback: Callback) {
 	for (const bubbles of [ comp.$$.bubbles[type], comp.$$.bubbles['*'] ]) {
 		if (bubbles) {
 			for (const bubble of bubbles) {
@@ -179,6 +208,17 @@ export function stop_callback(comp : SvelteComponent, type: string, callback: Ca
 					bubble.r.delete(callback);
 				}
 			}
+		}
+	}
+}
+
+function remove_callback(comp : SvelteComponent, type: string, callback: Callback) {
+	const callbacks = comp.$$.callbacks[type];
+	if (callbacks) {
+		const index = callbacks.indexOf(callback);
+		if (index !== -1) {
+			callbacks.splice(index, 1);
+			stop_callback(comp, type, callback);
 		}
 	}
 }
