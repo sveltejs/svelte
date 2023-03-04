@@ -8,4 +8,4 @@
 <div role="meter" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
 <div role="scrollbar" aria-controls="panel" aria-valuenow="50"></div>
 <input role="switch" type="checkbox" />
-<input role="radio" type="radio" />
+<svelte:element this={Math.random() ? 'input' : 'div'} role="checkbox" />

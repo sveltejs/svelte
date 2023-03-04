@@ -123,6 +123,17 @@ export default {
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
 	}),
+  a11y_role_supports_aria_props: (attribute: string, role: string, is_implicit: boolean, name: string) => {
+    let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
+    if (is_implicit) {
+      message += ` This role is implicit on the element <${name}>.`;
+    }
+
+    return {
+      code: 'a11y-role-supports-aria-props',
+      message: `A11y: ${message}`
+    };
+  },
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'
@@ -175,10 +186,10 @@ export default {
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
-	a11y_click_events_have_key_events: () => ({
+	a11y_click_events_have_key_events: {
 		code: 'a11y-click-events-have-key-events',
 		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
-	}),
+	},
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
