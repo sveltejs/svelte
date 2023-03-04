@@ -18,10 +18,13 @@ export async function test({ assert, css,  js }) {
 	// TODO make util fn + move to test index.js
 	const sourcefile = 'input.svelte';
 	[
-		// TODO how to get line + column numbers?
+		// TODO: get line and col num from input.svelte rather than hardcoding here
 		[css, '--keep-me', 13, 2],
-		[css, '--done-replace-once', 6, 5],
-		[css, '--done-replace-twice', 9, 5]
+		// TODO: these should be 7, 2 and 10, 2
+		// we use locate_1 which means lines are 1-indexed and cols are 0-indexed
+		// each tab is 1 col
+		[css, '--done-replace-once', 6, 4],
+		[css, '--done-replace-twice', 9, 4]
 	]
 	.forEach(([where, content, line, column]) => {
 		assert.deepEqual(
