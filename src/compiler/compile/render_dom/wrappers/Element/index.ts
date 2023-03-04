@@ -191,15 +191,6 @@ export default class ElementWrapper extends Wrapper {
 
 		this.class_dependencies = [];
 
-		this.var = {
-			type: 'Identifier',
-			name: node.name.replace(regex_invalid_variable_identifier_characters, '_')
-		};
-
-		this.void = is_void(node.name);
-
-		this.class_dependencies = [];
-
 		if (node.is_dynamic_element && block.type !== CHILD_DYNAMIC_ELEMENT_BLOCK) {
 			this.child_dynamic_element_block = block.child({
 				comment: create_debugging_comment(node, renderer.component),
@@ -312,13 +303,12 @@ export default class ElementWrapper extends Wrapper {
 		const is_tag_dynamic = this.node.tag_expr.dynamic_dependencies().length > 0;
 		const tag = this.node.tag_expr.manipulate(block);
 
-		if (this.renderer.options.dev) {
-			block.chunks.init.push(b`
-				@validate_dynamic_element(${tag});
-				@validate_void_dynamic_element(${tag});
-			`);
-		}
-		
+		block.chunks.init.push(b`
+			${this.renderer.options.dev && b`@validate_dynamic_element(${tag});`}
+			${this.renderer.options.dev && this.node.children.length > 0 && b`@validate_void_dynamic_element(${tag});`}
+			let ${this.var} = ${tag} && ${this.child_dynamic_element_block.name}(#ctx);
+		`);
+
 		block.chunks.create.push(b`
 			if (${this.var}) ${this.var}.c();
 		`);
@@ -547,7 +537,6 @@ export default class ElementWrapper extends Wrapper {
 		this.add_animation(block);
 		this.add_classes(block);
 		this.add_styles(block);
-		this.add_display(block);
 		this.add_manual_style_scoping(block);
 
 		if (nodes && this.renderer.options.hydratable && !this.void) {
@@ -1214,43 +1203,6 @@ export default class ElementWrapper extends Wrapper {
 				}
 			}
 		});
-	}
-
-	add_display(block: Block) {
-		const display = this.node.display;
-		if (display === null) {
-			return;
-		}
-
-		const snippet = display.expression.manipulate(block);
-		const dependencies = display.expression.dynamic_dependencies();
-		const has_dependancies = dependencies.length > 0;
-
-		const update_display = b`@set_display(${this.var}, ${snippet})`;
-		block.chunks.hydrate.push(update_display);
-
-		if (has_dependancies) {
-			const update_current = (this.node.intro || this.node.outro)
-				? x`#current = false`
-				: null;
-
-			const dirty = block.renderer.dirty(Array.from(dependencies));
-			block.chunks.update.push(b`
-				if (${dirty}) {
-					if (${snippet}) {
-						${update_current}
-						${update_display}
-						@transition_in(this, 1);
-					} else {
-						@group_outros();
-						@transition_out(this, 1, 0, () => {
-							${update_display}
-						});
-						@check_outros();
-					}
-				}
-			`);
-		}
 	}
 
 	add_manual_style_scoping(block: Block) {
