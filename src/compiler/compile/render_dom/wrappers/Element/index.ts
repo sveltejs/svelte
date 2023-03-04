@@ -810,14 +810,7 @@ export default class ElementWrapper extends Wrapper {
 				const dependencies = attribute.node.get_dependencies();
 				push_array(this.class_dependencies, dependencies);
 			} else if (attribute.node.name === 'style') {
-				// TODO Is there a better way to get the dynamic dependencies
-				// of the style attribute?
-				const dependencies = attribute.node.get_dependencies();
-
-				for (const dep of dependencies) {
-					const variable = this.renderer.component.var_lookup.get(dep);
-					if (!variable || is_dynamic(variable)) this.dynamic_style_dependencies.add(dep);
-				}
+				add_to_set(this.dynamic_style_dependencies, attribute.node.get_dependencies());
 			}
 		});
 
