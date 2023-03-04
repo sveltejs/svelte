@@ -1145,40 +1145,43 @@ export default class ElementWrapper extends Wrapper {
 			if (has_spread) {
 				block.chunks.update.push(updater);
 			} else {
-				const deps = [
-					...expression.dynamic_dependencies().filter(dep => !this.dynamic_style_dependencies.has(dep)),
+				const self_deps = expression.dynamic_dependencies();
+				const all_deps = new Set([
+					...self_deps,
 					...this.dynamic_style_dependencies
-				];
+				]);
 
-				if (deps.length > 0) {
-					if (deps.length === this.dynamic_style_dependencies.size) {
-						maybe_create_style_changed_var();
-						block.chunks.update.push(b`
-							if (${style_changed_var}) {
-								${updater}
-							}
-						`);
-						return;
-					}
+				if (all_deps.size === 0) return;
 
-					let condition =  block.renderer.dirty(deps);
-
-					if (should_cache) {
-						condition = x`${condition} && ${cached_snippet} !== (${cached_snippet} = ${snippet})`;
-
-						maybe_create_style_changed_var();
-						if (style_changed_var) {
-							condition = x`${style_changed_var} || ${condition}`;
-						}
-					}
-
+				if (all_deps.size === this.dynamic_style_dependencies.size) {
+					// Only needed to maintain style directive precedence, we can skip the dirty check	
+					maybe_create_style_changed_var();
 					block.chunks.update.push(b`
-						if (${condition}) {
+						if (${style_changed_var}) {
 							${updater}
 						}
 					`);
+					return;
 				}
+
+				let condition =  block.renderer.dirty([...all_deps]);
+
+				if (should_cache) {
+					condition = x`${condition} && ${cached_snippet} !== (${cached_snippet} = ${snippet})`;
+				}
+
+				if (this.dynamic_style_dependencies.size > 0) {
+					maybe_create_style_changed_var();
+					condition = x`${style_changed_var} || ${condition}`;
+				}
+
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${updater}
+					}
+				`);
 			}
+			
 		});
 	}
 
