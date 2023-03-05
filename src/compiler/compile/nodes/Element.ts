@@ -23,7 +23,7 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
-import { ARIARoleDefintionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
+import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
 import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
@@ -566,7 +566,7 @@ export default class Element extends Node {
 				const value = attribute.get_static_value();
 
 				if (typeof value === 'string') {
-					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefintionKey) => {
+					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefinitionKey) => {
 						if (current_role && aria_role_abstract_set.has(current_role)) {
 							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
 						} else if (current_role && !aria_role_set.has(current_role)) {
@@ -640,7 +640,7 @@ export default class Element extends Node {
 		// click-events-have-key-events
 		if (handlers_map.has('click')) {
 			const role = attribute_map.get('role');
-			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
+			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefinitionKey);
 
 			if (
 				!this.is_dynamic_element && 
@@ -664,7 +664,7 @@ export default class Element extends Node {
 		}
 
 		// no-noninteractive-tabindex
-		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -673,7 +673,7 @@ export default class Element extends Node {
 
 		// role-supports-aria-props
 		const role = attribute_map.get('role');
-		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefintionKey;
+		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
 			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
