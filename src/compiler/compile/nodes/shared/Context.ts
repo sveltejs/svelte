@@ -161,7 +161,7 @@ export function unpack_destructuring({
 						context_rest_properties
 					});
 				}
-			}
+      }
 		});
 	}
 }
