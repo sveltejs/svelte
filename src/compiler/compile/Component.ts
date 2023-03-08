@@ -38,6 +38,7 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import is_dynamic from './render_dom/wrappers/shared/is_dynamic';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -793,20 +794,31 @@ export default class Component {
 				}
 
 				let deep = false;
-				let names: string[] | undefined; 
+				let names: string[] = [];
 
 				if (node.type === 'AssignmentExpression') {
-					deep = node.left.type === 'MemberExpression';
-					names = deep
-						? [get_object(node.left).name]
-						: extract_names(node.left);
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
+										names.push(node.name);
+								}
+							}
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
 				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
 					const { name } = get_object(node.argument);
-					names = [name];
+					names.push(name);
 				}
-
-				if (names) {
+				if (names.length > 0) {
 					names.forEach(name => {
 						let current_scope = scope;
 						let declaration;
@@ -939,7 +951,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -1380,12 +1392,11 @@ export default class Component {
 										module_dependencies.add(name);
 									}
 								}
-								const is_writable_or_mutated =
-									variable && (variable.writable || variable.mutated);
+
 								if (
 									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
-									(name[0] === '$' || is_writable_or_mutated)
+									(name[0] === '$' || variable)
 								) {
 									dependencies.add(name);
 								}
@@ -1408,6 +1419,19 @@ export default class Component {
 
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
+
+				const is_dependency_static = Array.from(dependencies).every(
+					dependency => dependency !== '$$props' && dependency !== '$$restProps' && !is_dynamic(this.var_lookup.get(dependency))
+				);
+
+				if (is_dependency_static) {
+					assignees.forEach(assignee => {
+						const variable = component.var_lookup.get(assignee);
+						if (variable) {
+							variable.is_reactive_static = true;
+						}
+					});
+				}
 
 				unsorted_reactive_declarations.push({
 					assignees,

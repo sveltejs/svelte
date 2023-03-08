@@ -5,6 +5,7 @@
 <p>selected: {selected}</p>
 
 <select bind:value={selected}>
+	<option disabled>x</option>
 	<option>a</option>
 	<option>b</option>
 	<option>c</option>

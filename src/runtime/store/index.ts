@@ -98,7 +98,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 
 		return () => {
 			subscribers.delete(subscriber);
-			if (subscribers.size === 0) {
+			if (subscribers.size === 0 && stop) {
 				stop();
 				stop = null;
 			}
@@ -205,6 +205,17 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			cleanup();
 		};
 	});
+}
+
+/**
+ * Takes a store and returns a new one derived from the old one that is readable.
+ *
+ * @param store - store to make readonly
+ */
+export function readonly<T>(store: Readable<T>): Readable<T> {
+	return {
+		subscribe: store.subscribe.bind(store)
+	};
 }
 
 /**

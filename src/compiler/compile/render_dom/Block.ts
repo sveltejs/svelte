@@ -1,4 +1,4 @@
-import Renderer from './Renderer';
+import Renderer, { BindingGroup } from './Renderer';
 import Wrapper from './wrappers/shared/Wrapper';
 import { b, x } from 'code-red';
 import { Node, Identifier, ArrayPattern } from 'estree';
@@ -40,6 +40,7 @@ export default class Block {
 
 	bindings: Map<string, Bindings>;
 	binding_group_initialised: Set<string> = new Set();
+	binding_groups: Set<BindingGroup> = new Set();
 
 	chunks: {
 		declarations: Array<Node | Node[]>;
@@ -249,6 +250,7 @@ export default class Block {
 			}
 		}
 
+		this.render_binding_groups();
 		this.render_listeners();
 
 		const properties: Record<string, any> = {};
@@ -498,6 +500,12 @@ export default class Block {
 					b`@run_all(${dispose});`
 				);
 			}
+		}
+	}
+
+	render_binding_groups() {
+		for (const binding_group of this.binding_groups) {
+			binding_group.render();
 		}
 	}
 }

@@ -30,18 +30,19 @@ function create_fragment(ctx) {
 			audio_updating = true;
 		}
 
-		/*audio_timeupdate_handler*/ ctx[13].call(audio);
+		/*audio_timeupdate_handler*/ ctx[14].call(audio);
 	}
 
 	return {
 		c() {
 			audio = element("audio");
-			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[11].call(audio));
-			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[12].call(audio));
+			if (/*buffered*/ ctx[0] === void 0) add_render_callback(() => /*audio_progress_handler*/ ctx[12].call(audio));
+			if (/*buffered*/ ctx[0] === void 0 || /*seekable*/ ctx[1] === void 0) add_render_callback(() => /*audio_loadedmetadata_handler*/ ctx[13].call(audio));
 			if (/*played*/ ctx[2] === void 0 || /*currentTime*/ ctx[3] === void 0 || /*ended*/ ctx[10] === void 0) add_render_callback(audio_timeupdate_handler);
-			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[14].call(audio));
-			if (/*seeking*/ ctx[9] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[18].call(audio));
-			if (/*ended*/ ctx[10] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[19].call(audio));
+			if (/*duration*/ ctx[4] === void 0) add_render_callback(() => /*audio_durationchange_handler*/ ctx[15].call(audio));
+			if (/*seeking*/ ctx[9] === void 0) add_render_callback(() => /*audio_seeking_seeked_handler*/ ctx[19].call(audio));
+			if (/*ended*/ ctx[10] === void 0) add_render_callback(() => /*audio_ended_handler*/ ctx[20].call(audio));
+			if (/*readyState*/ ctx[11] === void 0) add_render_callback(() => /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21].call(audio));
 		},
 		m(target, anchor) {
 			insert(target, audio, anchor);
@@ -58,17 +59,24 @@ function create_fragment(ctx) {
 
 			if (!mounted) {
 				dispose = [
-					listen(audio, "progress", /*audio_progress_handler*/ ctx[11]),
-					listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[12]),
+					listen(audio, "progress", /*audio_progress_handler*/ ctx[12]),
+					listen(audio, "loadedmetadata", /*audio_loadedmetadata_handler*/ ctx[13]),
 					listen(audio, "timeupdate", audio_timeupdate_handler),
-					listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[14]),
-					listen(audio, "play", /*audio_play_pause_handler*/ ctx[15]),
-					listen(audio, "pause", /*audio_play_pause_handler*/ ctx[15]),
-					listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[16]),
-					listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[17]),
-					listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[18]),
-					listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[18]),
-					listen(audio, "ended", /*audio_ended_handler*/ ctx[19])
+					listen(audio, "durationchange", /*audio_durationchange_handler*/ ctx[15]),
+					listen(audio, "play", /*audio_play_pause_handler*/ ctx[16]),
+					listen(audio, "pause", /*audio_play_pause_handler*/ ctx[16]),
+					listen(audio, "volumechange", /*audio_volumechange_handler*/ ctx[17]),
+					listen(audio, "ratechange", /*audio_ratechange_handler*/ ctx[18]),
+					listen(audio, "seeking", /*audio_seeking_seeked_handler*/ ctx[19]),
+					listen(audio, "seeked", /*audio_seeking_seeked_handler*/ ctx[19]),
+					listen(audio, "ended", /*audio_ended_handler*/ ctx[20]),
+					listen(audio, "loadedmetadata", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "loadeddata", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "canplay", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "canplaythrough", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "playing", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "waiting", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21]),
+					listen(audio, "emptied", /*audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[21])
 				];
 
 				mounted = true;
@@ -119,6 +127,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { playbackRate } = $$props;
 	let { seeking } = $$props;
 	let { ended } = $$props;
+	let { readyState } = $$props;
 
 	function audio_progress_handler() {
 		buffered = time_ranges_to_array(this.buffered);
@@ -173,6 +182,11 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(10, ended);
 	}
 
+	function audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler() {
+		readyState = this.readyState;
+		$$invalidate(11, readyState);
+	}
+
 	$$self.$$set = $$props => {
 		if ('buffered' in $$props) $$invalidate(0, buffered = $$props.buffered);
 		if ('seekable' in $$props) $$invalidate(1, seekable = $$props.seekable);
@@ -185,6 +199,7 @@ function instance($$self, $$props, $$invalidate) {
 		if ('playbackRate' in $$props) $$invalidate(8, playbackRate = $$props.playbackRate);
 		if ('seeking' in $$props) $$invalidate(9, seeking = $$props.seeking);
 		if ('ended' in $$props) $$invalidate(10, ended = $$props.ended);
+		if ('readyState' in $$props) $$invalidate(11, readyState = $$props.readyState);
 	};
 
 	return [
@@ -199,6 +214,7 @@ function instance($$self, $$props, $$invalidate) {
 		playbackRate,
 		seeking,
 		ended,
+		readyState,
 		audio_progress_handler,
 		audio_loadedmetadata_handler,
 		audio_timeupdate_handler,
@@ -207,7 +223,8 @@ function instance($$self, $$props, $$invalidate) {
 		audio_volumechange_handler,
 		audio_ratechange_handler,
 		audio_seeking_seeked_handler,
-		audio_ended_handler
+		audio_ended_handler,
+		audio_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler
 	];
 }
 
@@ -226,7 +243,8 @@ class Component extends SvelteComponent {
 			muted: 7,
 			playbackRate: 8,
 			seeking: 9,
-			ended: 10
+			ended: 10,
+			readyState: 11
 		});
 	}
 }

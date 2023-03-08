@@ -4,29 +4,23 @@
 		"message": "A11y: Unknown role 'toooltip' (did you mean 'tooltip'?)",
 		"start": {
 			"line": 6,
-			"column": 5,
-			"character": 101
+			"column": 5
 		},
 		"end": {
 			"line": 6,
-			"column": 20,
-			"character": 116
-		},
-		"pos": 101
+			"column": 20
+		}
 	},
 	{
 		"code": "a11y-unknown-role",
 		"message": "A11y: Unknown role 'toooltip' (did you mean 'tooltip'?)",
 		"start": {
 			"line": 7,
-			"column": 5,
-			"character": 129
+			"column": 5
 		},
 		"end": {
 			"line": 7,
-			"column": 27,
-			"character": 151
-		},
-		"pos": 129
+			"column": 27
+		}
 	}
 ]

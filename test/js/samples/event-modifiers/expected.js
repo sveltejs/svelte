@@ -12,6 +12,7 @@ import {
 	run_all,
 	safe_not_equal,
 	space,
+	stop_immediate_propagation,
 	stop_propagation
 } from "svelte/internal";
 
@@ -24,6 +25,8 @@ function create_fragment(ctx) {
 	let button1;
 	let t5;
 	let button2;
+	let t7;
+	let button3;
 	let mounted;
 	let dispose;
 
@@ -41,6 +44,9 @@ function create_fragment(ctx) {
 			t5 = space();
 			button2 = element("button");
 			button2.textContent = "or me!";
+			t7 = space();
+			button3 = element("button");
+			button3.textContent = "or me!";
 		},
 		m(target, anchor) {
 			insert(target, div1, anchor);
@@ -51,6 +57,8 @@ function create_fragment(ctx) {
 			append(div1, button1);
 			append(div1, t5);
 			append(div1, button2);
+			append(div1, t7);
+			append(div1, button3);
 
 			if (!mounted) {
 				dispose = [
@@ -58,6 +66,8 @@ function create_fragment(ctx) {
 					listen(button0, "click", stop_propagation(prevent_default(handleClick))),
 					listen(button1, "click", handleClick, { once: true, capture: true }),
 					listen(button2, "click", handleClick, true),
+					listen(button3, "click", stop_immediate_propagation(handleClick)),
+					listen(button3, "click", handleTouchstart),
 					listen(div1, "touchstart", handleTouchstart, { passive: true })
 				];
 
