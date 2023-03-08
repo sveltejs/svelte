@@ -785,7 +785,7 @@ Slides an element in and out.
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/run-time#svelte-easing)
 
 * `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
 
@@ -898,8 +898,8 @@ The `crossfade` function creates a pair of [transitions](/docs/template-syntax#e
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
-- `fallback` (`function`) — A fallback [transition](/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
+- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/run-time#svelte-easing)
+- `fallback` (`function`) — A fallback [transition](/docs/template-syntax#element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```sv
 <script>
