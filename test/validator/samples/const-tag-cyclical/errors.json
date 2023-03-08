@@ -2,8 +2,7 @@
 	{
 		"code": "cyclical-const-tags",
 		"message": "Cyclical dependency detected: b → c → b",
-		"start": { "line": 6, "column": 2, "character": 61 },
-		"end": { "line": 6, "column": 20, "character": 79 },
-		"pos": 61
+		"start": { "line": 6, "column": 2 },
+		"end": { "line": 6, "column": 20 }
 	}
 ]

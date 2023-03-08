@@ -204,6 +204,8 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {/if}
 ```
 
+(Blocks don't have to wrap elements, they can also wrap text within elements!)
+
 ### {#each ...}
 
 ```sv
@@ -539,6 +541,7 @@ The following modifiers are available:
 
 - `preventDefault` — calls `event.preventDefault()` before running the handler
 - `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
+- `stopImmediatePropagation` - calls `event.stopImmediatePropagation()`, preventing other listeners of the same event from being fired.
 - `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
 - `nonpassive` — explicitly set `passive: false`
 - `capture` — fires the handler during the _capture_ phase instead of the _bubbling_ phase
@@ -713,7 +716,7 @@ Elements with the `contenteditable` attribute support `innerHTML` and `textConte
 
 ---
 
-Media elements (`<audio>` and `<video>`) have their own set of bindings — six _readonly_ ones...
+Media elements (`<audio>` and `<video>`) have their own set of bindings — seven _readonly_ ones...
 
 - `duration` (readonly) — the total duration of the video, in seconds
 - `buffered` (readonly) — an array of `{start, end}` objects
@@ -721,6 +724,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 - `seekable` (readonly) — ditto
 - `seeking` (readonly) — boolean
 - `ended` (readonly) — boolean
+- `readyState` (readonly) — number between (and including) 0 and 4
 
 ...and five _two-way_ bindings:
 
@@ -741,6 +745,7 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:seekable
 	bind:seeking
 	bind:ended
+	bind:readyState
 	bind:currentTime
 	bind:playbackRate
 	bind:paused
@@ -749,6 +754,22 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:videoWidth
 	bind:videoHeight
 ></video>
+```
+
+##### Image element bindings
+
+---
+
+Image elements (`<img>`) have two readonly bindings:
+
+- `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
+- `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
+
+```sv
+<img
+	bind:naturalWidth
+	bind:naturalHeight
+></img>
 ```
 
 ##### Block-level element bindings
@@ -1503,6 +1524,10 @@ The content is exposed in the child component using the `<slot>` element, which 
 	<p>this is some child content that will overwrite the default slot content</p>
 </Widget>
 ```
+
+Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
+
+Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
 
 #### `<slot name="`_name_`">`
 

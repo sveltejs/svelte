@@ -196,6 +196,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	
+	// Document Events
+	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
@@ -540,10 +543,12 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:textContent'?: string | undefined | null;
 
 	// SvelteKit
+	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
+	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
 }
 
 export type HTMLAttributeAnchorTarget =
@@ -705,6 +710,9 @@ export interface HTMLImgAttributes extends HTMLAttributes<HTMLImageElement> {
 	srcset?: string | undefined | null;
 	usemap?: string | undefined | null;
 	width?: number | string | undefined | null;
+
+	readonly 'bind:naturalWidth'?: number | undefined | null;
+	readonly 'bind:naturalHeight'?: number | undefined | null;
 }
 
 export interface HTMLInsAttributes extends HTMLAttributes<HTMLModElement> {
@@ -840,6 +848,7 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 	 */
 	volume?: number | undefined | null;
 
+	readonly 'bind:readyState'?: 0 | 1 | 2 | 3 | 4 | undefined | null;
 	readonly 'bind:duration'?: number | undefined | null;
 	readonly 'bind:buffered'?: SvelteMediaTimeRange[] | undefined | null;
 	readonly 'bind:played'?: SvelteMediaTimeRange[] | undefined | null;
@@ -860,9 +869,9 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 }
 
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
-	charSet?: string | undefined | null;
+	charset?: string | undefined | null;
 	content?: string | undefined | null;
-	httpequiv?: string | undefined | null;
+	'http-equiv'?: string | undefined | null;
 	name?: string | undefined | null;
 	media?: string | undefined | null;
 }
