@@ -4,29 +4,23 @@
 		"message": "Empty block",
 		"start": {
 			"line": 5,
-			"column": 0,
-			"character": 38
+			"column": 0
 		},
 		"end": {
 			"line": 7,
-			"column": 7,
-			"character": 70
-		},
-		"pos": 38
+			"column": 7
+		}
 	},
 	{
 		"code": "empty-block",
 		"message": "Empty block",
 		"start": {
 			"line": 9,
-			"column": 0,
-			"character": 72
+			"column": 0
 		},
 		"end": {
 			"line": 9,
-			"column": 30,
-			"character": 102
-		},
-		"pos": 72
+			"column": 30
+		}
 	}
 ]

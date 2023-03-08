@@ -2,8 +2,7 @@
 	{
 		"code": "invalid-tag-placement",
 		"message": "{@html} tag cannot be inside <textarea>",
-		"start": { "line": 2, "column": 1, "character": 12 },
-		"end": { "line": 2, "column": 1, "character": 12 },
-		"pos": 12
+		"start": { "line": 2, "column": 1 },
+		"end": { "line": 2, "column": 1 }
 	}
 ]

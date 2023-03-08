@@ -1,4 +1,4 @@
-import { decode as decode_mappings } from 'sourcemap-codec';
+import { decode as decode_mappings } from '@jridgewell/sourcemap-codec';
 import { Processed } from './types';
 
 /**

@@ -2,14 +2,11 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 519,
 			"column": 13,
 			"line": 31
 		},
 		"message": "Component has unused export property 'd2'. If it is for external reference only, please consider using `export const d2`",
-		"pos": 517,
 		"start": {
-			"character": 517,
 			"column": 11,
 			"line": 31
 		}
@@ -17,14 +14,11 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 523,
 			"column": 17,
 			"line": 31
 		},
 		"message": "Component has unused export property 'e2'. If it is for external reference only, please consider using `export const e2`",
-		"pos": 521,
 		"start": {
-			"character": 521,
 			"column": 15,
 			"line": 31
 		}
@@ -32,14 +26,11 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 549,
 			"column": 19,
 			"line": 32
 		},
 		"message": "Component has unused export property 'g2'. If it is for external reference only, please consider using `export const g2`",
-		"pos": 543,
 		"start": {
-			"character": 543,
 			"column": 13,
 			"line": 32
 		}
@@ -47,14 +38,11 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 570,
 			"column": 19,
 			"line": 33
 		},
 		"message": "Component has unused export property 'h2'. If it is for external reference only, please consider using `export const h2`",
-		"pos": 564,
 		"start": {
-			"character": 564,
 			"column": 13,
 			"line": 33
 		}
@@ -62,14 +50,11 @@
 	{
 		"code": "unused-export-let",
 		"end": {
-			"character": 621,
 			"column": 26,
 			"line": 35
 		},
 		"message": "Component has unused export property 'j2'. If it is for external reference only, please consider using `export const j2`",
-		"pos": 608,
 		"start": {
-			"character": 608,
 			"column": 13,
 			"line": 35
 		}

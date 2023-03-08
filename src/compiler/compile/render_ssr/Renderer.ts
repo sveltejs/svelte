@@ -16,6 +16,7 @@ import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
 import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { collapse_template_literal } from '../utils/collapse_template_literal';
 import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
@@ -105,6 +106,9 @@ export default class Renderer {
 			this.literal = last.literal;
 			this.current = last.current;
 		}
+
+		// Optimize the TemplateLiteral to remove unnecessary nodes
+		collapse_template_literal(popped.literal);
 
 		return popped.literal;
 	}

@@ -82,11 +82,15 @@ const a11y_nested_implicit_semantics = new Map([
 
 const a11y_implicit_semantics = new Map([
 	['a', 'link'],
+	['area', 'link'],
+	['article', 'article'],
 	['aside', 'complementary'],
 	['body', 'document'],
+	['button', 'button'],
 	['datalist', 'listbox'],
 	['dd', 'definition'],
 	['dfn', 'term'],
+	['dialog', 'dialog'],
 	['details', 'group'],
 	['dt', 'term'],
 	['fieldset', 'group'],
@@ -98,10 +102,14 @@ const a11y_implicit_semantics = new Map([
 	['h5', 'heading'],
 	['h6', 'heading'],
 	['hr', 'separator'],
+	['img', 'img'],
 	['li', 'listitem'],
+	['link', 'link'],
 	['menu', 'list'],
+	['meter', 'progressbar'],
 	['nav', 'navigation'],
 	['ol', 'list'],
+	['option', 'option'],
 	['optgroup', 'group'],
 	['output', 'status'],
 	['progress', 'progressbar'],
@@ -115,11 +123,67 @@ const a11y_implicit_semantics = new Map([
 	['ul', 'list']
 ]);
 
+const menuitem_type_to_implicit_role = new Map([
+  ['command', 'menuitem'],
+  ['checkbox', 'menuitemcheckbox'],
+  ['radio', 'menuitemradio']
+]);
+
+const input_type_to_implicit_role = new Map([
+  ['button', 'button'],
+  ['image', 'button'],
+  ['reset', 'button'],
+  ['submit', 'button'],
+  ['checkbox', 'checkbox'],
+  ['radio', 'radio'],
+  ['range', 'slider'],
+  ['number', 'spinbutton'],
+  ['email', 'textbox'],
+  ['search', 'searchbox'],
+  ['tel', 'textbox'],
+  ['text', 'textbox'],
+  ['url', 'textbox']
+]);
+
+const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
+
+function input_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+
+  const list_attribute_exists = attribute_map.has('list');
+
+  if (list_attribute_exists && combobox_if_list.has(type)) {
+	return 'combobox';
+  }
+
+  return input_type_to_implicit_role.get(type);
+}
+
+function menuitem_implicit_role(attribute_map: Map<string, Attribute>) {
+  const type_attribute = attribute_map.get('type');
+  if (!type_attribute || !type_attribute.is_static) return;
+  const type = type_attribute.get_static_value() as string;
+  return menuitem_type_to_implicit_role.get(type);
+}
+
+function get_implicit_role(name: string, attribute_map: Map<string, Attribute>) : (string | undefined) {
+  if (name === 'menuitem') {
+	return menuitem_implicit_role(attribute_map);
+  } else if (name === 'input') {
+	return input_implicit_role(attribute_map);
+  } else {
+	return a11y_implicit_semantics.get(name);
+  }
+}
+
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
 
 const valid_modifiers = new Set([
 	'preventDefault',
 	'stopPropagation',
+	'stopImmediatePropagation',
 	'capture',
 	'once',
 	'passive',
@@ -225,6 +289,7 @@ export default class Element extends Node {
 	namespace: string;
 	needs_manual_style_scoping: boolean;
 	tag_expr: Expression;
+	contains_a11y_label: boolean;
 
 	get is_dynamic_element() {
 		return this.name === 'svelte:element';
@@ -484,6 +549,11 @@ export default class Element extends Node {
 						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
 					}
 				}
+
+				// aria-activedescendant-has-tabindex
+				if (name === 'aria-activedescendant' && !this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
 			}
 
 			// aria-role
@@ -505,7 +575,7 @@ export default class Element extends Node {
 						}
 
 						// no-redundant-roles
-						const has_redundant_role = current_role === a11y_implicit_semantics.get(this.name);
+						const has_redundant_role = current_role === get_implicit_role(this.name, attribute_map);
 
 						if (this.name === current_role || has_redundant_role) {
 							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
@@ -521,7 +591,7 @@ export default class Element extends Node {
 						}
 
 						// role-has-required-aria-props
-						if (!is_semantic_role_element(current_role, this.name, attribute_map)) {
+						if (!this.is_dynamic_element && !is_semantic_role_element(current_role, this.name, attribute_map)) {
 							const role = roles.get(current_role);
 							if (role) {
 								const required_role_props = Object.keys(role.requiredProps);
@@ -553,7 +623,7 @@ export default class Element extends Node {
 			}
 
 			// scope
-			if (name === 'scope' && this.name !== 'th') {
+			if (name === 'scope' && !this.is_dynamic_element && this.name !== 'th') {
 				component.warn(attribute, compiler_warnings.a11y_misplaced_scope);
 			}
 
@@ -573,6 +643,7 @@ export default class Element extends Node {
 			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefintionKey);
 
 			if (
+				!this.is_dynamic_element && 
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
 				!is_interactive_element(this.name, attribute_map) &&
@@ -586,18 +657,35 @@ export default class Element extends Node {
 				if (!has_key_event) {
 					component.warn(
 						this,
-						compiler_warnings.a11y_click_events_have_key_events()
+						compiler_warnings.a11y_click_events_have_key_events
 					);
 				}
 			}
 		}
 
 		// no-noninteractive-tabindex
-		if (!is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefintionKey)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
 			}
+		}
+
+		// role-supports-aria-props
+		const role = attribute_map.get('role');
+		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefintionKey;
+		if (typeof role_value === 'string' && roles.has(role_value)) {
+			const { props } = roles.get(role_value);
+			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
+			const is_implicit = role_value && role === undefined;
+
+			attributes
+				.filter(prop => prop.type !== 'Spread')
+				.forEach(prop => {
+					if (invalid_aria_props.has(prop.name as ARIAProperty)) {
+						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
+					}
+				});
 		}
 	}
 
@@ -620,6 +708,7 @@ export default class Element extends Node {
 			const id_attribute = attribute_map.get('id');
 			const name_attribute = attribute_map.get('name');
 			const target_attribute = attribute_map.get('target');
+			const aria_label_attribute = attribute_map.get('aria-label');
 
 			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
 			// modern browsers add noopener by default, so we only need to check legacy browsers
@@ -639,6 +728,13 @@ export default class Element extends Node {
 								});
 						}
 					}
+				}
+			}
+
+			if (aria_label_attribute) {
+				const aria_value = aria_label_attribute.get_static_value();
+				if (aria_value != '') {
+					this.contains_a11y_label = true;
 				}
 			}
 
@@ -718,7 +814,10 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'video') {
-			if (attribute_map.has('muted')) {
+			const aria_hidden_attribute = attribute_map.get('aria-hidden');
+			const aria_hidden_exist = aria_hidden_attribute && aria_hidden_attribute.get_static_value();
+
+			if (attribute_map.has('muted') || aria_hidden_exist === 'true') {
 				return;
 			}
 
@@ -881,7 +980,8 @@ export default class Element extends Node {
 				name === 'muted' ||
 				name === 'playbackRate' ||
 				name === 'seeking' ||
-				name === 'ended'
+				name === 'ended' ||
+				name === 'readyState'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
@@ -900,6 +1000,13 @@ export default class Element extends Node {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
 				} else if (is_void(this.name)) {
 					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
+				}
+			} else if (
+				name === 'naturalWidth' ||
+				name === 'naturalHeight'
+			) {
+				if (this.name !== 'img') {
+					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
 				}
 			} else if (
 				name === 'textContent' ||
@@ -922,6 +1029,7 @@ export default class Element extends Node {
 
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
+		if (this.contains_a11y_label) return;
 		if (
 			this.bindings
 				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))

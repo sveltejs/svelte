@@ -2,14 +2,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 49,
 			"column": 38,
 			"line": 2
 		},
 		"message": "A11y: <a> cannot have role 'article'",
-		"pos": 11,
 		"start": {
-			"character": 11,
 			"column": 0,
 			"line": 2
 		}
@@ -17,14 +14,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 87,
 			"column": 37,
 			"line": 3
 		},
 		"message": "A11y: <a> cannot have role 'banner'",
-		"pos": 50,
 		"start": {
-			"character": 50,
 			"column": 0,
 			"line": 3
 		}
@@ -32,14 +26,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 132,
 			"column": 44,
 			"line": 4
 		},
 		"message": "A11y: <a> cannot have role 'complementary'",
-		"pos": 88,
 		"start": {
-			"character": 88,
 			"column": 0,
 			"line": 4
 		}
@@ -47,14 +38,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 167,
 			"column": 34,
 			"line": 5
 		},
 		"message": "A11y: <a> cannot have role 'img'",
-		"pos": 133,
 		"start": {
-			"character": 133,
 			"column": 0,
 			"line": 5
 		}
@@ -62,14 +50,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 207,
 			"column": 39,
 			"line": 6
 		},
 		"message": "A11y: <a> cannot have role 'listitem'",
-		"pos": 168,
 		"start": {
-			"character": 168,
 			"column": 0,
 			"line": 6
 		}
@@ -77,14 +62,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 243,
 			"column": 35,
 			"line": 7
 		},
 		"message": "A11y: <a> cannot have role 'main'",
-		"pos": 208,
 		"start": {
-			"character": 208,
 			"column": 0,
 			"line": 7
 		}
@@ -92,14 +74,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 281,
 			"column": 37,
 			"line": 8
 		},
 		"message": "A11y: <a> cannot have role 'region'",
-		"pos": 244,
 		"start": {
-			"character": 244,
 			"column": 0,
 			"line": 8
 		}
@@ -107,14 +86,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 320,
 			"column": 38,
 			"line": 9
 		},
 		"message": "A11y: <a> cannot have role 'tooltip'",
-		"pos": 282,
 		"start": {
-			"character": 282,
 			"column": 0,
 			"line": 9
 		}
@@ -122,14 +98,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 414,
 			"column": 38,
 			"line": 13
 		},
 		"message": "A11y: <button> cannot have role 'article'",
-		"pos": 376,
 		"start": {
-			"character": 376,
 			"column": 0,
 			"line": 13
 		}
@@ -137,14 +110,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 452,
 			"column": 37,
 			"line": 14
 		},
 		"message": "A11y: <button> cannot have role 'banner'",
-		"pos": 415,
 		"start": {
-			"character": 415,
 			"column": 0,
 			"line": 14
 		}
@@ -152,14 +122,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 497,
 			"column": 44,
 			"line": 15
 		},
 		"message": "A11y: <button> cannot have role 'complementary'",
-		"pos": 453,
 		"start": {
-			"character": 453,
 			"column": 0,
 			"line": 15
 		}
@@ -167,14 +134,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 532,
 			"column": 34,
 			"line": 16
 		},
 		"message": "A11y: <button> cannot have role 'img'",
-		"pos": 498,
 		"start": {
-			"character": 498,
 			"column": 0,
 			"line": 16
 		}
@@ -182,14 +146,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 572,
 			"column": 39,
 			"line": 17
 		},
 		"message": "A11y: <button> cannot have role 'listitem'",
-		"pos": 533,
 		"start": {
-			"character": 533,
 			"column": 0,
 			"line": 17
 		}
@@ -197,14 +158,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 608,
 			"column": 35,
 			"line": 18
 		},
 		"message": "A11y: <button> cannot have role 'main'",
-		"pos": 573,
 		"start": {
-			"character": 573,
 			"column": 0,
 			"line": 18
 		}
@@ -212,14 +170,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 646,
 			"column": 37,
 			"line": 19
 		},
 		"message": "A11y: <button> cannot have role 'region'",
-		"pos": 609,
 		"start": {
-			"character": 609,
 			"column": 0,
 			"line": 19
 		}
@@ -227,14 +182,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 685,
 			"column": 38,
 			"line": 20
 		},
 		"message": "A11y: <button> cannot have role 'tooltip'",
-		"pos": 647,
 		"start": {
-			"character": 647,
 			"column": 0,
 			"line": 20
 		}
@@ -242,14 +194,11 @@
 	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
-			"character": 707,
 			"column": 21,
 			"line": 21
 		},
 		"message": "A11y: Redundant role 'button'",
-		"pos": 694,
 		"start": {
-			"character": 694,
 			"column": 8,
 			"line": 21
 		}
@@ -257,14 +206,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 763,
 			"column": 23,
 			"line": 24
 		},
 		"message": "A11y: <input> cannot have role 'article'",
-		"pos": 740,
 		"start": {
-			"character": 740,
 			"column": 0,
 			"line": 24
 		}
@@ -272,14 +218,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 786,
 			"column": 22,
 			"line": 25
 		},
 		"message": "A11y: <input> cannot have role 'banner'",
-		"pos": 764,
 		"start": {
-			"character": 764,
 			"column": 0,
 			"line": 25
 		}
@@ -287,14 +230,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 816,
 			"column": 29,
 			"line": 26
 		},
 		"message": "A11y: <input> cannot have role 'complementary'",
-		"pos": 787,
 		"start": {
-			"character": 787,
 			"column": 0,
 			"line": 26
 		}
@@ -302,14 +242,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 836,
 			"column": 19,
 			"line": 27
 		},
 		"message": "A11y: <input> cannot have role 'img'",
-		"pos": 817,
 		"start": {
-			"character": 817,
 			"column": 0,
 			"line": 27
 		}
@@ -317,14 +254,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 861,
 			"column": 24,
 			"line": 28
 		},
 		"message": "A11y: <input> cannot have role 'listitem'",
-		"pos": 837,
 		"start": {
-			"character": 837,
 			"column": 0,
 			"line": 28
 		}
@@ -332,14 +266,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 882,
 			"column": 20,
 			"line": 29
 		},
 		"message": "A11y: <input> cannot have role 'main'",
-		"pos": 862,
 		"start": {
-			"character": 862,
 			"column": 0,
 			"line": 29
 		}
@@ -347,14 +278,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 905,
 			"column": 22,
 			"line": 30
 		},
 		"message": "A11y: <input> cannot have role 'region'",
-		"pos": 883,
 		"start": {
-			"character": 883,
 			"column": 0,
 			"line": 30
 		}
@@ -362,14 +290,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 929,
 			"column": 23,
 			"line": 31
 		},
 		"message": "A11y: <input> cannot have role 'tooltip'",
-		"pos": 906,
 		"start": {
-			"character": 906,
 			"column": 0,
 			"line": 31
 		}
@@ -377,14 +302,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 994,
 			"column": 24,
 			"line": 35
 		},
 		"message": "A11y: <select> cannot have role 'article'",
-		"pos": 970,
 		"start": {
-			"character": 970,
 			"column": 0,
 			"line": 35
 		}
@@ -392,14 +314,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1018,
 			"column": 23,
 			"line": 36
 		},
 		"message": "A11y: <select> cannot have role 'banner'",
-		"pos": 995,
 		"start": {
-			"character": 995,
 			"column": 0,
 			"line": 36
 		}
@@ -407,14 +326,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1049,
 			"column": 30,
 			"line": 37
 		},
 		"message": "A11y: <select> cannot have role 'complementary'",
-		"pos": 1019,
 		"start": {
-			"character": 1019,
 			"column": 0,
 			"line": 37
 		}
@@ -422,14 +338,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1070,
 			"column": 20,
 			"line": 38
 		},
 		"message": "A11y: <select> cannot have role 'img'",
-		"pos": 1050,
 		"start": {
-			"character": 1050,
 			"column": 0,
 			"line": 38
 		}
@@ -437,14 +350,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1096,
 			"column": 25,
 			"line": 39
 		},
 		"message": "A11y: <select> cannot have role 'listitem'",
-		"pos": 1071,
 		"start": {
-			"character": 1071,
 			"column": 0,
 			"line": 39
 		}
@@ -452,14 +362,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1118,
 			"column": 21,
 			"line": 40
 		},
 		"message": "A11y: <select> cannot have role 'main'",
-		"pos": 1097,
 		"start": {
-			"character": 1097,
 			"column": 0,
 			"line": 40
 		}
@@ -467,14 +374,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1142,
 			"column": 23,
 			"line": 41
 		},
 		"message": "A11y: <select> cannot have role 'region'",
-		"pos": 1119,
 		"start": {
-			"character": 1119,
 			"column": 0,
 			"line": 41
 		}
@@ -482,14 +386,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1167,
 			"column": 24,
 			"line": 42
 		},
 		"message": "A11y: <select> cannot have role 'tooltip'",
-		"pos": 1143,
 		"start": {
-			"character": 1143,
 			"column": 0,
 			"line": 42
 		}
@@ -497,14 +398,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1237,
 			"column": 26,
 			"line": 46
 		},
 		"message": "A11y: <textarea> cannot have role 'article'",
-		"pos": 1211,
 		"start": {
-			"character": 1211,
 			"column": 0,
 			"line": 46
 		}
@@ -512,14 +410,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1263,
 			"column": 25,
 			"line": 47
 		},
 		"message": "A11y: <textarea> cannot have role 'banner'",
-		"pos": 1238,
 		"start": {
-			"character": 1238,
 			"column": 0,
 			"line": 47
 		}
@@ -527,14 +422,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1296,
 			"column": 32,
 			"line": 48
 		},
 		"message": "A11y: <textarea> cannot have role 'complementary'",
-		"pos": 1264,
 		"start": {
-			"character": 1264,
 			"column": 0,
 			"line": 48
 		}
@@ -542,14 +434,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1319,
 			"column": 22,
 			"line": 49
 		},
 		"message": "A11y: <textarea> cannot have role 'img'",
-		"pos": 1297,
 		"start": {
-			"character": 1297,
 			"column": 0,
 			"line": 49
 		}
@@ -557,14 +446,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1347,
 			"column": 27,
 			"line": 50
 		},
 		"message": "A11y: <textarea> cannot have role 'listitem'",
-		"pos": 1320,
 		"start": {
-			"character": 1320,
 			"column": 0,
 			"line": 50
 		}
@@ -572,14 +458,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1371,
 			"column": 23,
 			"line": 51
 		},
 		"message": "A11y: <textarea> cannot have role 'main'",
-		"pos": 1348,
 		"start": {
-			"character": 1348,
 			"column": 0,
 			"line": 51
 		}
@@ -587,14 +470,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1397,
 			"column": 25,
 			"line": 52
 		},
 		"message": "A11y: <textarea> cannot have role 'region'",
-		"pos": 1372,
 		"start": {
-			"character": 1372,
 			"column": 0,
 			"line": 52
 		}
@@ -602,14 +482,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 1424,
 			"column": 26,
 			"line": 53
 		},
 		"message": "A11y: <textarea> cannot have role 'tooltip'",
-		"pos": 1398,
 		"start": {
-			"character": 1398,
 			"column": 0,
 			"line": 53
 		}
@@ -617,14 +494,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1527,
 			"column": 19,
 			"line": 57
 		},
 		"message": "A11y: Abstract role 'command' is forbidden",
-		"pos": 1513,
 		"start": {
-			"character": 1513,
 			"column": 5,
 			"line": 57
 		}
@@ -632,14 +506,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1552,
 			"column": 21,
 			"line": 58
 		},
 		"message": "A11y: Abstract role 'composite' is forbidden",
-		"pos": 1536,
 		"start": {
-			"character": 1536,
 			"column": 5,
 			"line": 58
 		}
@@ -647,14 +518,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1573,
 			"column": 17,
 			"line": 59
 		},
 		"message": "A11y: Abstract role 'input' is forbidden",
-		"pos": 1561,
 		"start": {
-			"character": 1561,
 			"column": 5,
 			"line": 59
 		}
@@ -662,14 +530,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1597,
 			"column": 20,
 			"line": 60
 		},
 		"message": "A11y: Abstract role 'landmark' is forbidden",
-		"pos": 1582,
 		"start": {
-			"character": 1582,
 			"column": 5,
 			"line": 60
 		}
@@ -677,14 +542,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1618,
 			"column": 17,
 			"line": 61
 		},
 		"message": "A11y: Abstract role 'range' is forbidden",
-		"pos": 1606,
 		"start": {
-			"character": 1606,
 			"column": 5,
 			"line": 61
 		}
@@ -692,14 +554,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1642,
 			"column": 20,
 			"line": 62
 		},
 		"message": "A11y: Abstract role 'roletype' is forbidden",
-		"pos": 1627,
 		"start": {
-			"character": 1627,
 			"column": 5,
 			"line": 62
 		}
@@ -707,14 +566,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1665,
 			"column": 19,
 			"line": 63
 		},
 		"message": "A11y: Abstract role 'section' is forbidden",
-		"pos": 1651,
 		"start": {
-			"character": 1651,
 			"column": 5,
 			"line": 63
 		}
@@ -722,14 +578,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1692,
 			"column": 23,
 			"line": 64
 		},
 		"message": "A11y: Abstract role 'sectionhead' is forbidden",
-		"pos": 1674,
 		"start": {
-			"character": 1674,
 			"column": 5,
 			"line": 64
 		}
@@ -737,14 +590,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1714,
 			"column": 18,
 			"line": 65
 		},
 		"message": "A11y: Abstract role 'select' is forbidden",
-		"pos": 1701,
 		"start": {
-			"character": 1701,
 			"column": 5,
 			"line": 65
 		}
@@ -752,14 +602,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1739,
 			"column": 21,
 			"line": 66
 		},
 		"message": "A11y: Abstract role 'structure' is forbidden",
-		"pos": 1723,
 		"start": {
-			"character": 1723,
 			"column": 5,
 			"line": 66
 		}
@@ -767,14 +614,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1851,
 			"column": 18,
 			"line": 71
 		},
 		"message": "A11y: Abstract role 'widget' is forbidden",
-		"pos": 1838,
 		"start": {
-			"character": 1838,
 			"column": 5,
 			"line": 71
 		}
@@ -782,14 +626,11 @@
 	{
 		"code": "a11y-no-abstract-role",
 		"end": {
-			"character": 1873,
 			"column": 18,
 			"line": 72
 		},
 		"message": "A11y: Abstract role 'window' is forbidden",
-		"pos": 1860,
 		"start": {
-			"character": 1860,
 			"column": 5,
 			"line": 72
 		}
@@ -797,14 +638,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3695,
 			"column": 28,
 			"line": 145
 		},
 		"message": "A11y: <menuitem> cannot have role 'listitem'",
-		"pos": 3667,
 		"start": {
-			"character": 3667,
 			"column": 0,
 			"line": 145
 		}
@@ -812,14 +650,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3734,
 			"column": 38,
 			"line": 146
 		},
 		"message": "A11y: <option> cannot have role 'listitem'",
-		"pos": 3696,
 		"start": {
-			"character": 3696,
 			"column": 0,
 			"line": 146
 		}
@@ -827,14 +662,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3773,
 			"column": 38,
 			"line": 147
 		},
 		"message": "A11y: <select> cannot have role 'listitem'",
-		"pos": 3735,
 		"start": {
-			"character": 3735,
 			"column": 0,
 			"line": 147
 		}
@@ -842,14 +674,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3801,
 			"column": 27,
 			"line": 148
 		},
 		"message": "A11y: <summary> cannot have role 'listitem'",
-		"pos": 3774,
 		"start": {
-			"character": 3774,
 			"column": 0,
 			"line": 148
 		}
@@ -857,14 +686,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3842,
 			"column": 40,
 			"line": 149
 		},
 		"message": "A11y: <textarea> cannot have role 'listitem'",
-		"pos": 3802,
 		"start": {
-			"character": 3802,
 			"column": 0,
 			"line": 149
 		}
@@ -872,14 +698,11 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"character": 3865,
 			"column": 22,
 			"line": 150
 		},
 		"message": "A11y: <tr> cannot have role 'listitem'",
-		"pos": 3843,
 		"start": {
-			"character": 3843,
 			"column": 0,
 			"line": 150
 		}
