@@ -1,3 +1,4 @@
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -143,8 +144,16 @@ export default class Component {
 					.replace(process.cwd(), '')
 					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
-		this.locate = getLocator(this.source, { offsetLine: 1 });
-
+		const locator = getLocator(this.source, { offsetLine: 1 });
+		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
+		this.locate = (c) => {
+			let location:{line:number,column:number} = locator(c);
+			if (tracer) {
+				location = originalPositionFor(tracer, location);
+			}
+			location.line += 1; // make line one based
+			return location;
+		};
 		// styles
 		this.stylesheet = new Stylesheet({
 			source,
