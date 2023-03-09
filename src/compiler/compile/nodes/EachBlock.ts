@@ -42,10 +42,12 @@ export default class EachBlock extends AbstractBlock {
 		this.scope = scope.child();
 		this.context_rest_properties = new Map();
 		this.contexts = [];
-		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, context_rest_properties: this.context_rest_properties });
+		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, owner: this, context_rest_properties: this.context_rest_properties });
 
 		this.contexts.forEach(context => {
-			this.scope.add(context.key.name, this.expression.dependencies, this);
+			if (context.type === 'DestructuredVariable') {
+				this.scope.add(context.key.name, this.expression.dependencies, this);
+			}
 		});
 
 		if (this.index) {
