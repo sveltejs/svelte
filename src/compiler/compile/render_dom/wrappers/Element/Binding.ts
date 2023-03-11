@@ -153,7 +153,7 @@ export default class BindingWrapper {
 			case 'group':
 			{
 				block.renderer.add_to_context('$$binding_groups');
-				this.binding_group.elements.push(this.parent.var);
+				this.binding_group.add_element(block, this.parent.var);
 
 				if ((this.parent as ElementWrapper).has_dynamic_value) {	
 					update_or_condition = (this.parent as ElementWrapper).dynamic_value_condition;	
@@ -321,7 +321,10 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 			parent = parent.parent;
 		}
 
-		const elements = [];
+		// when using bind:group with logic blocks, the <input> with bind:group
+		// maybe scatter across different blocks
+		// will need to keep track all the <input> elements that has the same bind:group within the same block
+		const elements = new Map<Block, any>();
 
 		contexts.forEach(context => {
 			renderer.add_to_context(context, true);
@@ -341,8 +344,13 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 			contexts,
 			list_dependencies,
 			keypath,
-			elements,
-			render() {
+			add_element(block, element) {
+				if (!elements.has(block)) {
+					elements.set(block, []);
+				}
+				elements.get(block).push(element);
+			},
+			render(block) {
 				const local_name = block.get_unique_name('binding_group');
 				const binding_group = block.renderer.reference('$$binding_groups');
 				block.add_variable(local_name);
@@ -360,7 +368,7 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 					);
 				}
 				block.chunks.hydrate.push(
-					b`${local_name}.p(${elements})`
+					b`${local_name}.p(${elements.get(block)})`
 				);
 				block.chunks.destroy.push(
 					b`${local_name}.r()`

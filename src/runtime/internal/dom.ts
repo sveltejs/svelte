@@ -359,7 +359,7 @@ export function get_binding_group_value(group, __value, checked) {
 	return Array.from(value);
 }
 
-export function init_binding_group(group) {
+export function init_binding_group(group: HTMLInputElement[]) {
 	let _inputs: HTMLInputElement[];
 	return {
 		/* push */ p(...inputs: HTMLInputElement[]) {

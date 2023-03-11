@@ -27,8 +27,8 @@ export interface BindingGroup {
 	contexts: string[];
 	list_dependencies: Set<string>;
 	keypath: string;
-	elements: Identifier[];
-	render: () => void;
+	add_element: (block: Block, element: Identifier) => void;
+	render: (block: Block) => void;
 }
 
 export default class Renderer {
