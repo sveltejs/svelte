@@ -9,6 +9,7 @@ import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
 import get_object from '../../utils/get_object';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import Expression from '../../nodes/shared/Expression';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -369,7 +370,8 @@ export default class EachBlockWrapper extends Wrapper {
 			if (prop.type === 'DestructuredVariable') {
 				return b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), to_ctx)};`;
 			} else {
-				return prop.declaration(block, this.node.scope, 'child_ctx');
+        const expression = new Expression(this.renderer.component, this.node, this.node.scope, prop.key);
+        return b`const ${prop.property_name} = ${expression.manipulate(block, 'child_ctx')};`;
 			}
 		});
 

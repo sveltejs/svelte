@@ -11,6 +11,7 @@ import CatchBlock from '../../nodes/CatchBlock';
 import { Context } from '../../nodes/shared/Context';
 import { Identifier, Literal, Node } from 'estree';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import Expression from '../../nodes/shared/Expression';
 
 type Status = 'pending' | 'then' | 'catch';
 
@@ -101,7 +102,8 @@ class AwaitBlockBranch extends Wrapper {
 		const props = this.is_destructured ? this.value_contexts.map(prop => {
 			const to_ctx = name => this.renderer.reference(name);
 			if (prop.type === 'ComputedProperty') {
-				return prop.declaration(this.block, this.has_consts(this.node) ? this.node.scope : null, '#ctx');
+        const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
+        return b`const ${prop.property_name} = ${expression.manipulate(this.block, 'ctx')};`;
 			} else {
 				return b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), to_ctx)};`;
 			}

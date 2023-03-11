@@ -1,20 +1,19 @@
-import { b, x } from 'code-red';
-import { Node, Identifier, Expression as ESTreeExpression } from 'estree';
+import { x } from 'code-red';
+import { Node, Identifier, Expression, PrivateIdentifier } from 'estree';
 import { walk } from 'estree-walker';
 import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import { clone } from '../../../utils/clone';
 import Component from '../../Component';
-import Block from '../../render_dom/Block';
 import flatten_reference from '../../utils/flatten_reference';
 import { INode } from '../interfaces';
-import Expression from './Expression';
 import TemplateScope from './TemplateScope';
 
 export type Context = DestructuredVariable | ComputedProperty;
 
 interface ComputedProperty {
 	type: 'ComputedProperty';
-	declaration: (block: Block, scope: TemplateScope, ctx: string) => Node[];
+  property_name: string;
+  key: Expression | PrivateIdentifier;
 }
  
 interface DestructuredVariable {
@@ -140,19 +139,18 @@ export function unpack_destructuring({
 				let new_modifier: (node: Node) => Node; 
 
 				if (property.computed) {
-					// TODO: If the property is computed, ie, { [computed_key]: prop }, the computed_key can be any type of expression.
-					const computed_property = `#computed_property_${number_of_computed_props}`;
-					new_modifier = (node) => x`${modifier(node)}[${computed_property}]`;
-					used_properties.push(x`${computed_property}`);
+          // e.g { [computedProperty]: ... }
+					const property_name = `#computed_property_${number_of_computed_props}`;
 					number_of_computed_props += 1;
 
 					contexts.push({
 						type: 'ComputedProperty',
-						declaration: (block, scope, ctx) => {
-							const computed_expression = new Expression(component, owner, scope, key);
-							return b`const ${computed_property} = ${computed_expression.manipulate(block, ctx)}`;
-						}
+            property_name,
+            key
 					});
+
+					new_modifier = (node) => x`${modifier(node)}[${property_name}]`;
+					used_properties.push(x`${property_name}`);
 				} else if (key.type === 'Identifier') {
 					// e.g. { someProperty: ... }
 				  const property_name = key.name;
@@ -210,7 +208,7 @@ export function unpack_destructuring({
 function update_reference(
 	contexts: Context[],
 	n: number,
-	expression: ESTreeExpression,
+	expression: Expression,
 	to_ctx: (name: string) => Node
 ): Node {
 	const find_from_context = (node: Identifier) => {
@@ -231,7 +229,7 @@ function update_reference(
 	}
 
 	// NOTE: avoid unnecessary deep clone?
-	expression = clone(expression) as ESTreeExpression;
+	expression = clone(expression) as Expression;
 	walk(expression, {
 		enter(node, parent: Node) {
 			if (
