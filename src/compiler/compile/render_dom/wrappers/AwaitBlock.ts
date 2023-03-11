@@ -70,9 +70,8 @@ class AwaitBlockBranch extends Wrapper {
 			this.renderer.add_to_context(this.value, true);
 		} else {
 			contexts.forEach(context => {
-				if (context.type === 'DestructuredVariable') {
-					this.renderer.add_to_context(context.key.name, true);
-				}
+				if (context.type !== 'DestructuredVariable') return;
+				this.renderer.add_to_context(context.key.name, true);
 			});
 			this.value = this.block.parent.get_unique_name('value').name;
 			this.value_contexts = contexts;

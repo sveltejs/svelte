@@ -214,11 +214,10 @@ function update_reference(
 	const find_from_context = (node: Identifier) => {
 		for (let i = n; i < contexts.length; i++) {
 			const cur_context = contexts[i];
-			if (cur_context.type === 'DestructuredVariable') {
-				const { key } = cur_context;
-				if (node.name === key.name) {
-					throw new Error(`Cannot access '${node.name}' before initialization`);
-				}
+			if (cur_context.type !== 'DestructuredVariable') continue; 
+			const { key } = cur_context;
+			if (node.name === key.name) {
+				throw new Error(`Cannot access '${node.name}' before initialization`);
 			}
 		}
 		return to_ctx(node.name);
