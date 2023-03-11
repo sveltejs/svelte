@@ -61,8 +61,7 @@ export default class ConstTag extends Node {
 			node: this.node.expression.left,
 			scope: this.scope,
 			component: this.component,
-			context_rest_properties: this.context_rest_properties,
-			owner: this
+			context_rest_properties: this.context_rest_properties
 		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
 		this.contexts.forEach(context => {

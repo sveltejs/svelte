@@ -5,7 +5,6 @@ import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import { clone } from '../../../utils/clone';
 import Component from '../../Component';
 import flatten_reference from '../../utils/flatten_reference';
-import { INode } from '../interfaces';
 import TemplateScope from './TemplateScope';
 
 export type Context = DestructuredVariable | ComputedProperty;
@@ -32,7 +31,6 @@ export function unpack_destructuring({
 	scope,
 	component,
 	context_rest_properties,
-	owner,
 	number_of_computed_props = 0
 }: {
 	contexts: Context[];
@@ -42,7 +40,6 @@ export function unpack_destructuring({
 	scope: TemplateScope;
 	component: Component;
 	context_rest_properties: Map<string, Node>;
-	owner: INode;
 	number_of_computed_props?: number;
 }) {
 	if (!node) return;
@@ -73,7 +70,6 @@ export function unpack_destructuring({
 					scope,
 					component,
 					context_rest_properties,
-					owner,
 					number_of_computed_props
 				});
 				context_rest_properties.set((element.argument as Identifier).name, element);
@@ -95,7 +91,6 @@ export function unpack_destructuring({
 					scope,
 					component,
 					context_rest_properties,
-					owner,
 					number_of_computed_props
 				});
 			} else {
@@ -107,7 +102,6 @@ export function unpack_destructuring({
 					scope,
 					component,
 					context_rest_properties,
-					owner,
 					number_of_computed_props
 				});
 			}
@@ -128,7 +122,6 @@ export function unpack_destructuring({
 					scope,
 					component,
 					context_rest_properties,
-					owner,
 					number_of_computed_props
 				});
 				context_rest_properties.set((property.argument as Identifier).name, property);
@@ -183,7 +176,6 @@ export function unpack_destructuring({
 						scope,
 						component,
 						context_rest_properties,
-						owner,
 						number_of_computed_props
 					});
 				} else {
@@ -196,7 +188,6 @@ export function unpack_destructuring({
 						scope,
 						component,
 						context_rest_properties,
-						owner,
 						number_of_computed_props
 					});
 				}
