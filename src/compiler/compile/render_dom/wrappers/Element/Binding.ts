@@ -321,9 +321,10 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 			parent = parent.parent;
 		}
 
-		// when using bind:group with logic blocks, the <input> with bind:group
-		// maybe scatter across different blocks
-		// will need to keep track all the <input> elements that has the same bind:group within the same block
+		/**
+		 * When using bind:group with logic blocks, the inputs with bind:group may be scattered across different blocks.
+		 * This therefore keeps track of all the <input> elements that have the same bind:group within the same block.
+		 */
 		const elements = new Map<Block, any>();
 
 		contexts.forEach(context => {
