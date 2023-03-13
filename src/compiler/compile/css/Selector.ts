@@ -76,7 +76,7 @@ export default class Selector {
 		this.blocks.forEach((block, i) => {
 			if (i > 0) {
 				if (block.start - c > 1) {
-					code.overwrite(c, block.start, block.combinator.name || ' ');
+					code.update(c, block.start, block.combinator.name || ' ');
 				}
 			}
 
@@ -112,7 +112,7 @@ export default class Selector {
 				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.overwrite(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, attr);
 				} else {
 					code.appendLeft(selector.end, attr);
 				}
@@ -189,7 +189,7 @@ export default class Selector {
 					index !== 0 &&
 					selector.children &&
 					selector.children.length > 0 &&
-					!/[.:#\s]/.test(selector.children[0].value)
+					!/[.:#\s]/.test(selector.children[0].value[0])
 				) {
 					component.error(selector, compiler_errors.css_invalid_global_selector_position);
 				}

@@ -163,6 +163,8 @@ export default class ElementWrapper extends Wrapper {
 	has_dynamic_attribute: boolean;
 
 	select_binding_dependencies?: Set<string>;
+	has_dynamic_value: boolean;
+	dynamic_value_condition: any;
 
 	var: any;
 	void: boolean;

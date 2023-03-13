@@ -35,7 +35,7 @@ function minify_declarations(
 	declarations.forEach((declaration, i) => {
 		const separator = i > 0 ? ';' : '';
 		if ((declaration.node.start - c) > separator.length) {
-			code.overwrite(c, declaration.node.start, separator);
+			code.update(c, declaration.node.start, separator);
 		}
 		declaration.minify(code);
 		c = declaration.node.end;
@@ -75,7 +75,7 @@ class Rule {
 			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
-					code.overwrite(c, selector.node.start, separator);
+					code.update(c, selector.node.start, separator);
 				}
 
 				selector.minify(code);
@@ -133,7 +133,7 @@ class Declaration {
 				if (block.type === 'Identifier') {
 					const name = block.name;
 					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
+						code.update(block.start, block.end, keyframes.get(name));
 					}
 				}
 			});
@@ -156,7 +156,7 @@ class Declaration {
 		while (regex_whitespace.test(code.original[start])) start += 1;
 
 		if (start - c > 1) {
-			code.overwrite(c, start, ':');
+			code.update(c, start, ':');
 		}
 	}
 }
@@ -204,7 +204,7 @@ class Atrule {
 			code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+			if (this.node.prelude.start - c > 1) code.update(c, this.node.prelude.start, ' ');
 			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
@@ -213,7 +213,7 @@ class Atrule {
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.prelude) {
-				if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+				if (this.node.prelude.start - c > 1) code.update(c, this.node.prelude.start, ' ');
 				c = this.node.prelude.end;
 			}
 			if (this.node.block && this.node.block.start - c > 0) {
@@ -255,7 +255,7 @@ class Atrule {
 							});
 						});
 					} else {
-						code.overwrite(start, end, keyframes.get(name));
+						code.update(start, end, keyframes.get(name));
 					}
 				}
 			});

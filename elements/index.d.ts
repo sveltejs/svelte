@@ -196,6 +196,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	
+	// Document Events
+	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
@@ -866,9 +869,9 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 }
 
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
-	charSet?: string | undefined | null;
+	charset?: string | undefined | null;
 	content?: string | undefined | null;
-	httpequiv?: string | undefined | null;
+	'http-equiv'?: string | undefined | null;
 	name?: string | undefined | null;
 	media?: string | undefined | null;
 }
