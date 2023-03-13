@@ -145,8 +145,8 @@ export default class BindingWrapper {
 		}
 
 		// model to view
-		let update_dom = get_dom_updater(parent, this);
-		let mount_dom = update_dom;
+		let update_dom = get_dom_updater(parent, this, false);
+		let mount_dom = get_dom_updater(parent, this, true);
 
 		// special cases
 		switch (this.node.name) {
@@ -234,7 +234,8 @@ export default class BindingWrapper {
 
 function get_dom_updater(
 	element: ElementWrapper | InlineComponentWrapper,
-	binding: BindingWrapper
+	binding: BindingWrapper,
+	mounting: boolean
 ) {
 	const { node } = element;
 
@@ -249,6 +250,7 @@ function get_dom_updater(
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
 			b`@select_options(${element.var}, ${binding.snippet})` :
+			mounting ? b`@select_option(${element.var}, ${binding.snippet}, true)` :
 			b`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
@@ -439,7 +441,7 @@ function get_value_from_dom(
 		return x`$$value`;
 	}
 
-	// <select bind:value='selected>
+	// <select bind:value='selected'>
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
 			x`@select_multiple_value(this)` :
