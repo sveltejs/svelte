@@ -10,8 +10,10 @@ export function assign<T, S>(tar: T, src: S): T & S {
 	return tar as T & S;
 }
 
+// Adapted from https://github.com/then/is-promise/blob/master/index.js
+// Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return value && typeof value === 'object' && typeof value.then === 'function';
+	return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
 export function add_location(element, file, line, column, char) {

@@ -10,6 +10,7 @@ import { extract_identifiers } from 'periscopic';
 import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import get_object from '../utils/get_object';
 import compiler_errors from '../compiler_errors';
+import { Node as ESTreeNode } from 'estree';
 
 const allowed_parents = new Set(['EachBlock', 'CatchBlock', 'ThenBlock', 'InlineComponent', 'SlotTemplate', 'IfBlock', 'ElseBlock']);
 
@@ -19,6 +20,7 @@ export default class ConstTag extends Node {
 	contexts: Context[] = [];
 	node: ConstTagType;
 	scope: TemplateScope;
+	context_rest_properties: Map<string, ESTreeNode> = new Map();
 
 	assignees: Set<string> = new Set();
   dependencies: Set<string> = new Set();
@@ -58,7 +60,8 @@ export default class ConstTag extends Node {
 			contexts: this.contexts,
 			node: this.node.expression.left,
 			scope: this.scope,
-			component: this.component
+			component: this.component,
+			context_rest_properties: this.context_rest_properties
 		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
 		this.contexts.forEach(context => {

@@ -61,7 +61,7 @@ export default class EachBlockWrapper extends Wrapper {
 		fixed_length: number;
 		data_length: Node | number;
 		view_length: Node | number;
-	}
+	};
 
 	context_props: Array<Node | Node[]>;
 	index_name: Identifier;
@@ -448,7 +448,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				if (${iterations}[#i]) {
+					${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				}
 			}
 		`);
 
@@ -542,7 +544,9 @@ export default class EachBlockWrapper extends Wrapper {
 
 		block.chunks.mount.push(b`
 			for (let #i = 0; #i < ${view_length}; #i += 1) {
-				${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				if (${iterations}[#i]) {
+					${iterations}[#i].m(${initial_mount_node}, ${initial_anchor_node});
+				}
 			}
 		`);
 
@@ -582,7 +586,7 @@ export default class EachBlockWrapper extends Wrapper {
 
 			const start = this.block.has_update_method ? 0 : '#old_length';
 
-			let remove_old_blocks;
+			let remove_old_blocks: Node[];
 
 			if (this.block.has_outros) {
 				const out = block.get_unique_name('out');

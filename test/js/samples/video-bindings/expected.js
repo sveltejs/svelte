@@ -30,23 +30,31 @@ function create_fragment(ctx) {
 			video_updating = true;
 		}
 
-		/*video_timeupdate_handler*/ ctx[4].call(video);
+		/*video_timeupdate_handler*/ ctx[5].call(video);
 	}
 
 	return {
 		c() {
 			video = element("video");
-			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[5].call(video));
-			add_render_callback(() => /*video_elementresize_handler*/ ctx[6].call(video));
+			if (/*videoHeight*/ ctx[1] === void 0 || /*videoWidth*/ ctx[2] === void 0) add_render_callback(() => /*video_resize_handler*/ ctx[6].call(video));
+			add_render_callback(() => /*video_elementresize_handler*/ ctx[7].call(video));
+			if (/*readyState*/ ctx[4] === void 0) add_render_callback(() => /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8].call(video));
 		},
 		m(target, anchor) {
 			insert(target, video, anchor);
-			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[6].bind(video));
+			video_resize_listener = add_resize_listener(video, /*video_elementresize_handler*/ ctx[7].bind(video));
 
 			if (!mounted) {
 				dispose = [
 					listen(video, "timeupdate", video_timeupdate_handler),
-					listen(video, "resize", /*video_resize_handler*/ ctx[5])
+					listen(video, "resize", /*video_resize_handler*/ ctx[6]),
+					listen(video, "loadedmetadata", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "loadeddata", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "canplay", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "canplaythrough", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "playing", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "waiting", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8]),
+					listen(video, "emptied", /*video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler*/ ctx[8])
 				];
 
 				mounted = true;
@@ -75,6 +83,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { videoHeight } = $$props;
 	let { videoWidth } = $$props;
 	let { offsetWidth } = $$props;
+	let { readyState } = $$props;
 
 	function video_timeupdate_handler() {
 		currentTime = this.currentTime;
@@ -93,11 +102,17 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(3, offsetWidth);
 	}
 
+	function video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler() {
+		readyState = this.readyState;
+		$$invalidate(4, readyState);
+	}
+
 	$$self.$$set = $$props => {
 		if ('currentTime' in $$props) $$invalidate(0, currentTime = $$props.currentTime);
 		if ('videoHeight' in $$props) $$invalidate(1, videoHeight = $$props.videoHeight);
 		if ('videoWidth' in $$props) $$invalidate(2, videoWidth = $$props.videoWidth);
 		if ('offsetWidth' in $$props) $$invalidate(3, offsetWidth = $$props.offsetWidth);
+		if ('readyState' in $$props) $$invalidate(4, readyState = $$props.readyState);
 	};
 
 	return [
@@ -105,9 +120,11 @@ function instance($$self, $$props, $$invalidate) {
 		videoHeight,
 		videoWidth,
 		offsetWidth,
+		readyState,
 		video_timeupdate_handler,
 		video_resize_handler,
-		video_elementresize_handler
+		video_elementresize_handler,
+		video_loadedmetadata_loadeddata_canplay_canplaythrough_playing_waiting_emptied_handler
 	];
 }
 
@@ -119,7 +136,8 @@ class Component extends SvelteComponent {
 			currentTime: 0,
 			videoHeight: 1,
 			videoWidth: 2,
-			offsetWidth: 3
+			offsetWidth: 3,
+			readyState: 4
 		});
 	}
 }
