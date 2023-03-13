@@ -31,6 +31,7 @@ export default {
 		assert.deepEqual(component.test, ['b', 'a']);
 
 		await button.dispatchEvent(clickEvent);
+		assert.deepEqual(component.test, ['b', 'a']); // should it be ['a'] only? valid arguments for both outcomes
 
 		input1.checked = false;
 		await input1.dispatchEvent(changeEvent);

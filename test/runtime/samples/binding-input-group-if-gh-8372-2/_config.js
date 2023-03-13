@@ -25,6 +25,7 @@ export default {
 		assert.deepEqual(component.test, 'b');
 
 		await button.dispatchEvent(clickEvent);
+		assert.deepEqual(component.test, 'b'); // should it be undefined? valid arguments for both outcomes
 
 		input1.checked = true;
 		await input1.dispatchEvent(changeEvent);
