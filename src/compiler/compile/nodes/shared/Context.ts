@@ -31,7 +31,7 @@ export function unpack_destructuring({
 	scope,
 	component,
 	context_rest_properties,
-	number_of_computed_props = 0
+	number_of_computed_props = { n: 0 }
 }: {
 	contexts: Context[];
 	node: Node;
@@ -40,7 +40,7 @@ export function unpack_destructuring({
 	scope: TemplateScope;
 	component: Component;
 	context_rest_properties: Map<string, Node>;
-	number_of_computed_props?: number;
+	number_of_computed_props?: { n: number }; // we want to pass this by reference, as a sort of global variable
 }) {
 	if (!node) return;
 
@@ -133,8 +133,8 @@ export function unpack_destructuring({
 
 				if (property.computed) {
           // e.g { [computedProperty]: ... }
-					const property_name = `#computed_property_${number_of_computed_props}`;
-					number_of_computed_props += 1;
+					const property_name = `computed_property_${number_of_computed_props.n}`;
+          number_of_computed_props.n += 1;
 
 					contexts.push({
 						type: 'ComputedProperty',
