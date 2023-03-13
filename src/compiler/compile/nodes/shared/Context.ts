@@ -40,7 +40,10 @@ export function unpack_destructuring({
 	scope: TemplateScope;
 	component: Component;
 	context_rest_properties: Map<string, Node>;
-	number_of_computed_props?: { n: number }; // we want to pass this by reference, as a sort of global variable
+	// we want to pass this by reference, as a sort of global variable, because 
+	// if we pass this by value, we could get computed_property_# variable collisions
+	// when we deal with nested object destructuring
+	number_of_computed_props?: { n: number }; 
 }) {
 	if (!node) return;
 
