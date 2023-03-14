@@ -1,5 +1,15 @@
 # Svelte changelog
 
+## Unreleased
+
+* Prefer style directive values over style attribute values ([#7475](https://github.com/sveltejs/svelte/issues/7475))
+* Stop intro transition from triggering wrongfully ([#6152](https://github.com/sveltejs/svelte/issues/6152), [#6812](https://github.com/sveltejs/svelte/issues/6812))
+* Select `<option>` with `selected` attribute when initial state is `undefined` ([#8361](https://github.com/sveltejs/svelte/issues/8361))
+* Add a11y `no-noninteractive-element-to-interactive-role` ([#8167](https://github.com/sveltejs/svelte/pull/8167))
+* Account for `bind:group` members being spread across multiple control flow blocks ([#8372](https://github.com/sveltejs/svelte/issues/8372))
+* Support literal properties when destructuring objects in the template ([#8357](https://github.com/sveltejs/svelte/pull/8357))
+* Prevent derived store callbacks after store is unsubscribed from ([#8364](https://github.com/sveltejs/svelte/issues/8364))
+
 ## 3.56.0
 
 * Add `|stopImmediatePropagation` event modifier ([#5085](https://github.com/sveltejs/svelte/issues/5085))
