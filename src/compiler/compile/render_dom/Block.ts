@@ -505,7 +505,7 @@ export default class Block {
 
 	render_binding_groups() {
 		for (const binding_group of this.binding_groups) {
-			binding_group.render();
+			binding_group.render(this);
 		}
 	}
 }
