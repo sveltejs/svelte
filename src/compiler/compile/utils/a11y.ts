@@ -129,16 +129,16 @@ function match_schema(
 }
 
 export enum ElementInteractivity {
-  Interactive = 'interactive',
-  NonInteractive = 'non-interactive',
-  Static = 'static',
+	Interactive = 'interactive',
+	NonInteractive = 'non-interactive',
+	Static = 'static',
 }
 
 export function element_interactivity(
-  tag_name: string,
-  attribute_map: Map<string, Attribute>
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
 ): ElementInteractivity {
-  if (
+	if (
 		interactive_element_role_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
@@ -146,7 +146,7 @@ export function element_interactivity(
 		return ElementInteractivity.Interactive;
 	}
 
-  if (
+	if (
 		tag_name !== 'header' && 
 		non_interactive_element_role_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
@@ -155,7 +155,7 @@ export function element_interactivity(
 		return ElementInteractivity.NonInteractive;
 	}
 
-  if (
+	if (
 		interactive_element_ax_object_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
@@ -163,7 +163,7 @@ export function element_interactivity(
 		return ElementInteractivity.Interactive;
 	}
 
-  if (
+	if (
 		non_interactive_element_ax_object_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
@@ -171,19 +171,19 @@ export function element_interactivity(
 		return ElementInteractivity.NonInteractive;
 	}
 
-  return ElementInteractivity.Static;
+	return ElementInteractivity.Static;
 }
 
 export function is_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
-  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
 }
 
 export function is_non_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
-  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
 }
 
 export function is_static_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
-  return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
+	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
 export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
