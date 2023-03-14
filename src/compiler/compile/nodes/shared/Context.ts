@@ -108,12 +108,28 @@ export function unpack_destructuring({
 					context_rest_properties
 				});
 				context_rest_properties.set((property.argument as Identifier).name, property);
-			} else {
-				const key = property.key as Identifier;
+			} else if (property.type === 'Property') {
+				const key = property.key;
 				const value = property.value;
 
-				used_properties.push(x`"${key.name}"`);
+				let property_name: any;
+				let new_modifier: (node: Node) => Node; 
+
+				if (property.computed) {
+					// TODO: If the property is computed, ie, { [computed_key]: prop }, the computed_key can be any type of expression.
+				} else if (key.type === 'Identifier') {
+					// e.g. { someProperty: ... }
+				  property_name = key.name;
+					new_modifier = (node) => x`${modifier(node)}.${property_name}`;
+				} else if (key.type === 'Literal') {
+					// e.g. { "property-in-quotes": ... } or { 14: ... }
+					property_name = key.value;
+					new_modifier = (node) => x`${modifier(node)}["${property_name}"]`;
+				}
+				
+			  used_properties.push(x`"${property_name}"`);
 				if (value.type === 'AssignmentPattern') {
+					// e.g. { property = default } or { property: newName = default }
 					const n = contexts.length;
 
 					mark_referenced(value.right, scope, component);
@@ -121,7 +137,7 @@ export function unpack_destructuring({
 					unpack_destructuring({
 						contexts,
 						node: value.left,
-						modifier: (node) => x`${modifier(node)}.${key.name}`,
+						modifier: new_modifier,
 						default_modifier: (node, to_ctx) =>
 							x`${node} !== undefined ? ${node} : ${update_reference(
 								contexts,
@@ -134,10 +150,11 @@ export function unpack_destructuring({
 						context_rest_properties
 					});
 				} else {
+					// e.g. { property } or { property: newName }
 					unpack_destructuring({
 						contexts,
 						node: value,
-						modifier: (node) => x`${modifier(node)}.${key.name}` as Node,
+						modifier: new_modifier,
 						default_modifier,
 						scope,
 						component,
