@@ -24,14 +24,13 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
 
 const aria_roles = roles.keys();
 const aria_role_set = new Set(aria_roles);
-const aria_role_abstract_set = new Set(roles.keys().filter(role => roles.get(role).abstract));
 
 const a11y_required_attributes = {
 	a: ['href'],
@@ -567,7 +566,7 @@ export default class Element extends Node {
 
 				if (typeof value === 'string') {
 					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefinitionKey) => {
-						if (current_role && aria_role_abstract_set.has(current_role)) {
+						if (current_role && is_abstract_role(current_role)) {
 							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
 						} else if (current_role && !aria_role_set.has(current_role)) {
 							const match = fuzzymatch(current_role, aria_roles);
@@ -607,8 +606,12 @@ export default class Element extends Node {
 						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
 							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
 						}
-					});
 
+						// no-noninteractive-element-to-interactive-role
+						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
+							component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
+						}
+					});
 				}
 			}
 
