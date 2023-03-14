@@ -967,6 +967,7 @@ export default class ElementWrapper extends Wrapper {
 
 			const intro_block = b`
 				@add_render_callback(() => {
+					if (!#current) return;
 					if (!${name}) ${name} = @create_bidirectional_transition(${this.var}, ${fn}, ${snippet}, true);
 					${name}.run(1);
 				});
@@ -1012,6 +1013,7 @@ export default class ElementWrapper extends Wrapper {
 				if (outro) {
 					intro_block = b`
 						@add_render_callback(() => {
+							if (!#current) return;
 							if (${outro_name}) ${outro_name}.end(1);
 							${intro_name} = @create_in_transition(${this.var}, ${fn}, ${snippet});
 							${intro_name}.start();
