@@ -42,7 +42,7 @@ export function is_interactive_roles(role: ARIARoleDefinitionKey) {
 	return interactive_roles.has(role);
 }
 
-export function is_abstract_role(role: ARIARoleDefintionKey) {
+export function is_abstract_role(role: ARIARoleDefinitionKey) {
 	return abstract_roles.has(role);
 }
 
