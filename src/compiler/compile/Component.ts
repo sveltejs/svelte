@@ -1,3 +1,4 @@
+// @ts-expect-error Svelte 3's ancient TS version can't look up the types for this package properly yet
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
