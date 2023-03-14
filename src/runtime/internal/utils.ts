@@ -190,14 +190,13 @@ export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
 
-export function split_css_unit(value: number | string, fallback = 'px'): [number, string] {
+export function split_css_unit(value: number | string): [number, string] {
 	if (typeof value === 'number') {
-		return [value, fallback];
+		return [value, 'px'];
 	}
 	const split = value?.match?.(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
 	if (split) {
-		return [parseFloat(split[1]), split[2] || fallback];
+		return [parseFloat(split[1]), split[2] || 'px'];
 	}
-	console.warn('Failed to split', value);
-	return [parseFloat(value), fallback];
+	return [parseFloat(value), 'px'];
 }
