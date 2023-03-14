@@ -203,6 +203,9 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
+			// We need to set this to false because callbacks can still happen despite having unsubscribed:
+			// Callbacks might already be placed in the queue which doesn't know it should no longer
+			// invoke this derived store.
 			started = false;
 		};
 	});
