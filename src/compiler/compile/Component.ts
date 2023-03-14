@@ -149,7 +149,7 @@ export default class Component {
 		const locator = getLocator(this.source, { offsetLine: 1 });
 		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
 		this.locate = (c) => {
-			let location:{line:number,column:number} = locator(c);
+			let location: { line: number, column: number } = locator(c);
 			if (tracer) {
 				location = originalPositionFor(tracer, location);
 			}
