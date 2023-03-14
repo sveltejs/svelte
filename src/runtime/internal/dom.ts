@@ -13,7 +13,7 @@ export function end_hydrating() {
 
 type NodeEx = Node & {
 	claim_order?: number,
-	hydrate_init? : true,
+	hydrate_init?: true,
 	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
@@ -35,7 +35,7 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 
-	type NodeEx2 = NodeEx & {claim_order: number};
+	type NodeEx2 = NodeEx & { claim_order: number };
 
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
@@ -56,7 +56,7 @@ function init_hydrate(target: NodeEx) {
 	* Reorder claimed children optimally.
 	* We can reorder claimed children optimally by finding the longest subsequence of
 	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence subsequence of nodes that are claimed in order can be found by
+	* subsequence of nodes that are claimed in order can be found by
 	* computing the longest increasing subsequence of .claim_order values.
 	*
 	* This algorithm is optimal in generating the least amount of reorder operations
@@ -157,18 +157,19 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
 	append_stylesheet(get_root_for_style(node), style_element);
-	return style_element;
+	return style_element.sheet as CSSStyleSheet;
 }
 
 function append_stylesheet(node: ShadowRoot | Document, style: HTMLStyleElement) {
 	append((node as Document).head || node, style);
+	return style.sheet as CSSStyleSheet;
 }
 
 export function append_hydration(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);
 
-		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
+		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentNode !== target))) {
 			target.actual_end_child = target.firstChild;
 		}
 
@@ -203,7 +204,9 @@ export function insert_hydration(target: NodeEx, node: NodeEx, anchor?: NodeEx) 
 }
 
 export function detach(node: Node) {
-	node.parentNode.removeChild(node);
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
 }
 
 export function destroy_each(iterations, detaching) {
@@ -257,7 +260,7 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -265,22 +268,30 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 export function trusted(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
@@ -315,12 +326,22 @@ export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attrib
 	}
 }
 
+export function set_custom_element_data_map(node, data_map: Record<string, unknown>) {
+	Object.keys(data_map).forEach((key) => {
+		set_custom_element_data(node, key, data_map[key]);
+	});
+}
+
 export function set_custom_element_data(node, prop, value) {
 	if (prop in node) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
 	}
+}
+
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
@@ -336,6 +357,53 @@ export function get_binding_group_value(group, __value, checked) {
 		value.delete(__value);
 	}
 	return Array.from(value);
+}
+
+export function init_binding_group(group: HTMLInputElement[]) {
+	let _inputs: HTMLInputElement[];
+	return {
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			_inputs.forEach(input => group.push(input));
+		},
+
+		/* remove */ r() {
+			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+		}
+	};
+}
+
+export function init_binding_group_dynamic(group, indexes: number[]) {
+	let _group: HTMLInputElement[] = get_binding_group(group);
+	let _inputs: HTMLInputElement[];
+	function get_binding_group(group) {
+		for (let i = 0; i < indexes.length; i++) {
+			group = group[indexes[i]] = group[indexes[i]] || [];
+		}
+		return group;
+	}
+	function push() {
+		_inputs.forEach(input => _group.push(input));
+	}
+	function remove() {
+		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+	}
+	return {
+		/* update */ u(new_indexes: number[]) {
+			indexes = new_indexes;
+			const new_group = get_binding_group(group);
+			if (new_group !== _group) {
+				remove();
+				_group = new_group;
+				push();
+			}
+		},
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			push();
+		},
+		/* remove */ r: remove
+	};
 }
 
 export function to_number(value) {
@@ -371,7 +439,7 @@ export function children(element: Element) {
 
 function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
-		nodes.claim_info = {last_index: 0, total_claimed: 0};
+		nodes.claim_info = { last_index: 0, total_claimed: 0 };
 	}
 }
 
@@ -492,16 +560,17 @@ function find_comment(nodes, text, start) {
 	return nodes.length;
 }
 
-export function claim_html_tag(nodes) {
+
+export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
 	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
 	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
 	if (start_index === end_index) {
-		return new HtmlTagHydration();
+		return new HtmlTagHydration(undefined, is_svg);
 	}
 
 	init_claim_info(nodes);
-	const html_tag_nodes = nodes.splice(start_index, end_index + 1);
+	const html_tag_nodes = nodes.splice(start_index, end_index - start_index + 1);
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
@@ -509,7 +578,7 @@ export function claim_html_tag(nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
 	}
-	return new HtmlTagHydration(claimed_nodes);
+	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
 export function set_data(text, data) {
@@ -530,10 +599,14 @@ export function set_input_type(input, type) {
 }
 
 export function set_style(node, key, value, important) {
-	node.style.setProperty(key, value, important ? 'important' : '');
+	if (value === null) {
+		node.style.removeProperty(key);
+	} else {
+		node.style.setProperty(key, value, important ? 'important' : '');
+	}
 }
 
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -543,7 +616,9 @@ export function select_option(select, value) {
 		}
 	}
 
-	select.selectedIndex = -1; // no option should be selected
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 export function select_options(select, value) {
@@ -554,7 +629,7 @@ export function select_options(select, value) {
 }
 
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 
@@ -610,6 +685,10 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
 			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 
@@ -630,9 +709,9 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, bubbles: boolean = false) {
+export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, false, detail);
+	e.initCustomEvent(type, bubbles, cancelable, detail);
 	return e;
 }
 
@@ -640,17 +719,40 @@ export function query_selector_all(selector: string, parent: HTMLElement = docum
 	return Array.from(parent.querySelectorAll(selector)) as ChildNodeArray;
 }
 
+export function head_selector(nodeId: string, head: HTMLElement) {
+	const result = [];
+	let started = 0;
+
+	for (const node of head.childNodes) {
+		if (node.nodeType === 8 /* comment node */) {
+			const comment = node.textContent.trim();
+			if (comment === `HEAD_${nodeId}_END`) {
+				started -= 1;
+				result.push(node);
+			} else if (comment === `HEAD_${nodeId}_START`) {
+				started += 1;
+				result.push(node);
+			}
+		} else if (started > 0) {
+			result.push(node);
+		}
+	}
+	return result;
+}
+
 export class HtmlTag {
+	private is_svg = false;
 	// parent for creating node
-	e: HTMLElement;
+	e: HTMLElement | SVGElement;
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
-	a: HTMLElement;
+	a: HTMLElement | SVGElement;
 
-	constructor() {
+	constructor(is_svg: boolean = false) {
+		this.is_svg = is_svg;
 		this.e = this.n = null;
 	}
 
@@ -658,10 +760,16 @@ export class HtmlTag {
 		this.h(html);
 	}
 
-	m(html: string, target: HTMLElement, anchor: HTMLElement = null) {
+	m(
+		html: string,
+		target: HTMLElement | SVGElement,
+		anchor: HTMLElement | SVGElement = null
+	) {
 		if (!this.e) {
-			this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -670,7 +778,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {
@@ -694,8 +802,8 @@ export class HtmlTagHydration extends HtmlTag {
 	// hydration claimed nodes
 	l: ChildNode[] | void;
 
-	constructor(claimed_nodes?: ChildNode[]) {
-		super();
+	constructor(claimed_nodes?: ChildNode[], is_svg: boolean = false) {
+		super(is_svg);
 		this.e = this.n = null;
 		this.l = claimed_nodes;
 	}
@@ -727,4 +835,8 @@ export function get_custom_elements_slots(element: HTMLElement) {
 		result[node.slot || 'default'] = true;
 	});
 	return result;
+}
+
+export function construct_svelte_component(component, props) {
+	return new component(props);
 }

@@ -11,6 +11,8 @@ import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
+import { push_array } from '../../utils/push_array';
+import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -52,7 +54,7 @@ export default function dom(
 	const should_add_css = (
 		!options.customElement &&
 		!!styles &&
-		options.css !== false
+		options.css === 'injected'
 	);
 
 	if (should_add_css) {
@@ -67,7 +69,7 @@ export default function dom(
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
 
-	body.push(...blocks.map(block => {
+	push_array(body, blocks.map(block => {
 		// TODO this is a horrible mess — renderer.blocks
 		// contains a mixture of Blocks and Nodes
 		if ((block as Block).render) return (block as Block).render();
@@ -81,7 +83,7 @@ export default function dom(
 	}
 
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots;
+	let compute_slots: Node[] | undefined;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
@@ -120,7 +122,7 @@ export default function dom(
 	const accessors = [];
 
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let dev_props_check: Node[] | Node;
+	let missing_props_check: Node[] | Node;
 	let inject_state: Expression;
 	let capture_state: Expression;
 	let props_inject: Node[] | Node;
@@ -226,13 +228,13 @@ export default function dom(
 		const expected = props.filter(prop => prop.writable && !prop.initialised);
 
 		if (expected.length) {
-			dev_props_check = b`
-				const { ctx: #ctx } = this.$$;
-				const props = ${options.customElement ? x`this.attributes` : x`options.props || {}`};
-				${expected.map(prop => b`
-				if (${renderer.reference(prop.name)} === undefined && !('${prop.export_name}' in props)) {
-					@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
-				}`)}
+			missing_props_check = b`
+				$$self.$$.on_mount.push(function () {
+					${expected.map(prop => b`
+					if (${prop.name} === undefined && !(('${prop.export_name}' in $$props) || $$self.$$.bound[$$self.$$.props['${prop.export_name}']])) {
+						@_console.warn("<${component.tag}> was created without expected prop '${prop.export_name}'");
+					}`)}
+				});
 			`;
 		}
 
@@ -332,7 +334,7 @@ export default function dom(
 		// $$props arg is still needed for unknown prop check
 		args.push(x`$$props`);
 	}
-
+	// has_create_fragment is intentionally to be true in dev mode.
 	const has_create_fragment = component.compile_options.dev || block.has_content();
 	if (has_create_fragment) {
 		body.push(b`
@@ -388,13 +390,13 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name);
+			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
-		const reactive_declarations: (Node | Node[]) = [];
-		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
+		const reactive_declarations: Node[] = [];
+		const fixed_reactive_declarations: Array<Node | Node[]> = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -415,6 +417,15 @@ export default function dom(
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
+				for (const assignee of d.assignees) {
+					const variable = component.var_lookup.get(assignee);
+					if (variable && variable.subscribable) {
+						fixed_reactive_declarations.push(b`
+							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
+							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
+						`);
+					}
+				}
 			}
 		});
 
@@ -428,7 +439,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name)) {
+			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
@@ -439,7 +450,7 @@ export default function dom(
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check;
+		let unknown_props_check: Node[] | undefined;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map(prop => x`'${prop.export_name}'`)}];
@@ -475,6 +486,7 @@ export default function dom(
 
 				${instance_javascript}
 
+				${missing_props_check}
 				${unknown_props_check}
 
 				${renderer.binding_groups.size > 0 && b`const $$binding_groups = [${[...renderer.binding_groups.keys()].map(_ => x`[]`)}];`}
@@ -528,11 +540,12 @@ export default function dom(
 				constructor(options) {
 					super();
 
-					${css.code && b`this.shadowRoot.innerHTML = \`<style>${css.code.replace(/\\/g, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}</style>\`;`}
+					${css.code && b`
+						const style = document.createElement('style');
+						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
+						this.shadowRoot.appendChild(style)`}
 
 					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
-
-					${dev_props_check}
 
 					if (options) {
 						if (options.target) {
@@ -562,7 +575,7 @@ export default function dom(
 			});
 		}
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 
@@ -593,13 +606,11 @@ export default function dom(
 					super(${options.dev && 'options'});
 					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-
-					${dev_props_check}
 				}
 			}
 		`[0] as ClassDeclaration;
 
-		declaration.body.body.push(...accessors);
+		push_array(declaration.body.body, accessors);
 
 		body.push(declaration);
 	}

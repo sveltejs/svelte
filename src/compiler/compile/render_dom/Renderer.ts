@@ -22,6 +22,15 @@ type BitMasks = Array<{
 	names: string[];
 }>;
 
+export interface BindingGroup {
+	binding_group: (to_reference?: boolean) => Node;
+	contexts: string[];
+	list_dependencies: Set<string>;
+	keypath: string;
+	add_element: (block: Block, element: Identifier) => void;
+	render: (block: Block) => void;
+}
+
 export default class Renderer {
 	component: Component; // TODO Maybe Renderer shouldn't know about Component?
 	options: CompileOptions;
@@ -33,7 +42,7 @@ export default class Renderer {
 	blocks: Array<Block | Node | Node[]> = [];
 	readonly: Set<string> = new Set();
 	meta_bindings: Array<Node | Node[]> = []; // initial values for e.g. window.innerWidth, if there's a <svelte:window> meta tag
-	binding_groups: Map<string, { binding_group: (to_reference?: boolean) => Node; is_context: boolean; contexts: string[]; index: number; keypath: string }> = new Map();
+	binding_groups: Map<string, BindingGroup> = new Map();
 
 	block: Block;
 	fragment: FragmentWrapper;
@@ -62,10 +71,6 @@ export default class Renderer {
 		if (component.slots.size > 0) {
 			this.add_to_context('$$scope');
 			this.add_to_context('#slots');
-		}
-
-		if (this.binding_groups.size > 0) {
-			this.add_to_context('$$binding_groups');
 		}
 
 		// main block
@@ -168,7 +173,7 @@ export default class Renderer {
 		return member;
 	}
 
-	invalidate(name: string, value?, main_execution_context: boolean = false) {
+	invalidate(name: string, value?: unknown, main_execution_context: boolean = false) {
 		return renderer_invalidate(this, name, value, main_execution_context);
 	}
 
@@ -254,7 +259,7 @@ export default class Renderer {
 		};
 	}
 
-	reference(node: string | Identifier | MemberExpression) {
+	reference(node: string | Identifier | MemberExpression, ctx: string | void = '#ctx') {
 		if (typeof node === 'string') {
 			node = { type: 'Identifier', name: node };
 		}
@@ -264,11 +269,11 @@ export default class Renderer {
 
 		// TODO is this correct?
 		if (this.component.var_lookup.get(name)) {
-			this.component.add_reference(name);
+			this.component.add_reference(node, name);
 		}
 
 		if (member !== undefined) {
-			const replacement = x`/*${member.name}*/ #ctx[${member.index}]` as MemberExpression;
+			const replacement = x`/*${member.name}*/ ${ctx}[${member.index}]` as MemberExpression;
 
 			if (nodes[0].loc) replacement.object.loc = nodes[0].loc;
 			nodes[0] = replacement;

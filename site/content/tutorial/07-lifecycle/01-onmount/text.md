@@ -4,7 +4,7 @@ title: onMount
 
 Every component has a *lifecycle* that starts when it is created, and ends when it is destroyed. There are a handful of functions that allow you to run code at key moments during that lifecycle.
 
-The one you'll use most frequently is `onMount`, which runs after the component is first rendered to the DOM. We briefly encountered it [earlier](tutorial/bind-this) when we needed to interact with a `<canvas>` element after it had been rendered.
+The one you'll use most frequently is `onMount`, which runs after the component is first rendered to the DOM. We briefly encountered it [earlier](/tutorial/bind-this) when we needed to interact with a `<canvas>` element after it had been rendered.
 
 We'll add an `onMount` handler that loads some data over the network:
 
@@ -15,7 +15,7 @@ We'll add an `onMount` handler that loads some data over the network:
 	let photos = [];
 
 	onMount(async () => {
-		const res = await fetch(`https://jsonplaceholder.typicode.com/photos?_limit=20`);
+		const res = await fetch(`/tutorial/api/album`);
 		photos = await res.json();
 	});
 </script>

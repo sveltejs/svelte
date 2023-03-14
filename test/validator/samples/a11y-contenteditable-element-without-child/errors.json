@@ -4,14 +4,11 @@
 		"message": "'contenteditable' attribute is required for textContent and innerHTML two-way bindings",
 		"start": {
 			"line": 6,
-			"column": 3,
-			"character": 157
+			"column": 3
 		},
 		"end": {
 			"line": 6,
-			"column": 24,
-			"character": 178
-		},
-		"pos": 157
+			"column": 24
+		}
 	}
 ]

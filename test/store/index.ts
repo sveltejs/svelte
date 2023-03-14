@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readable, writable, derived, get } from '../../store';
+import { readable, writable, derived, get, readonly } from '../../store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -87,6 +87,14 @@ describe('store', () => {
 			assert.equal(count2, 1);
 
 			unsubscribe();
+		});
+
+		it('no error even if unsubscribe calls twice', () => {
+			let num = 0;
+			const store = writable(num, set => set(num += 1));
+			const unsubscribe = store.subscribe(() => { });
+			unsubscribe();
+			assert.doesNotThrow(() => unsubscribe());
 		});
 	});
 
@@ -399,6 +407,25 @@ describe('store', () => {
 			const d = derived(fake_observable, _ => _);
 			assert.equal(get(d), 42);
 		});
+
+		it('doesn\'t restart when unsubscribed from another store with a shared ancestor', () => {
+			const a = writable(true);
+			let b_started = false;
+			const b = derived(a, (_, __) => {
+				b_started = true;
+				return () => {
+					assert.equal(b_started, true);
+					b_started = false;
+				};
+			});
+			const c = derived(a, ($a, set) => {
+				if ($a) return b.subscribe(set);
+			});
+
+			c.subscribe(() => { });
+			a.set(false);
+			assert.equal(b_started, false);
+		});
 	});
 
 	describe('get', () => {
@@ -410,5 +437,22 @@ describe('store', () => {
 		it('works with RxJS-style observables', () => {
 			assert.equal(get(fake_observable), 42);
 		});
+	});
+
+	describe('readonly', () => {
+		it('makes a store readonly', () => {
+			const writableStore = writable(1);
+			const readableStore = readonly(writableStore);
+
+			assert.equal(get(readableStore), get(writableStore));
+
+			writableStore.set(2);
+
+			assert.equal(get(readableStore), 2);
+			assert.equal(get(readableStore), get(writableStore));
+
+			assert.throws(() => readableStore.set(3));
+		});
+
 	});
 });

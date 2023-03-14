@@ -1,7 +1,8 @@
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
+import { reserved, is_valid } from '../utils/names';
+import globals from '../utils/globals';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import {
@@ -24,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -37,6 +38,7 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import is_dynamic from './render_dom/wrappers/shared/is_dynamic';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -45,6 +47,10 @@ interface ComponentOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 }
+
+const regex_leading_directory_separator = /^[/\\]/;
+const regex_starts_with_term_export = /^Export/;
+const regex_contains_term_function = /Function/;
 
 export default class Component {
 	stats: Stats;
@@ -135,7 +141,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-					.replace(/^[/\\]/, '')
+					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -191,27 +197,33 @@ export default class Component {
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
-	add_var(variable: Var, add_to_lookup = true) {
+	add_var(node: Node, variable: Var, add_to_lookup = true) {
 		this.vars.push(variable);
 
 		if (add_to_lookup) {
+			if (this.var_lookup.has(variable.name)) {
+				const exists_var = this.var_lookup.get(variable.name);
+				if (exists_var.module && exists_var.imported) {
+					this.error(node as any, compiler_errors.illegal_variable_declaration);
+				}
+			}
 			this.var_lookup.set(variable.name, variable);
 		}
 	}
 
-	add_reference(name: string) {
+	add_reference(node: Node, name: string) {
 		const variable = this.var_lookup.get(name);
 
 		if (variable) {
 			variable.referenced = true;
 		} else if (is_reserved_keyword(name)) {
-			this.add_var({
+			this.add_var(node, {
 				name,
 				injected: true,
 				referenced: true
 			});
 		} else if (name[0] === '$') {
-			this.add_var({
+			this.add_var(node, {
 				name,
 				injected: true,
 				referenced: true,
@@ -228,7 +240,7 @@ export default class Component {
 			}
 		} else {
 			if (this.compile_options.varsReport === 'full') {
-				this.add_var({ name, referenced: true }, false);
+				this.add_var(node, { name, referenced: true }, false);
 			}
 
 			this.used_names.add(name);
@@ -513,7 +525,7 @@ export default class Component {
 		return result;
 	}
 
-	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script) {
+	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script: boolean) {
 		if (node.type === 'ExportDefaultDeclaration') {
 			return this.error(node as any, compiler_errors.default_export);
 		}
@@ -533,7 +545,7 @@ export default class Component {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
-							if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
+							if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}
 						});
@@ -553,7 +565,7 @@ export default class Component {
 					if (variable) {
 						variable.export_name = specifier.exported.name;
 
-						if (variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
+						if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 							this.warn(specifier as any, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
 						}
 					}
@@ -599,12 +611,14 @@ export default class Component {
 			}
 
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const imported = node.type.startsWith('Import');
 
-			this.add_var({
+			this.add_var(node, {
 				name,
 				module: true,
 				hoistable: true,
-				writable
+				writable,
+				imported
 			});
 		});
 
@@ -612,7 +626,7 @@ export default class Component {
 			if (name[0] === '$') {
 				return this.error(node as any, compiler_errors.illegal_subscription);
 			} else {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					global: true,
 					hoistable: true
@@ -629,7 +643,7 @@ export default class Component {
 				body.splice(i, 1);
 			}
 
-			if (/^Export/.test(node.type)) {
+			if (regex_starts_with_term_export.test(node.type)) {
 				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
@@ -674,7 +688,7 @@ export default class Component {
 			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
 			const imported = node.type.startsWith('Import');
 
-			this.add_var({
+			this.add_var(node, {
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
 				writable,
@@ -697,7 +711,7 @@ export default class Component {
 			const node = globals.get(name);
 
 			if (this.injected_reactive_declaration_vars.has(name)) {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true,
 					writable: true,
@@ -705,7 +719,7 @@ export default class Component {
 					initialised: true
 				});
 			} else if (is_reserved_keyword(name)) {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true
 				});
@@ -714,14 +728,14 @@ export default class Component {
 					return this.error(node as any, compiler_errors.illegal_global(name));
 				}
 
-				this.add_var({
+				this.add_var(node, {
 					name,
 					injected: true,
 					mutated: true,
 					writable: true
 				});
 
-				this.add_reference(name.slice(1));
+				this.add_reference(node, name.slice(1));
 
 				const variable = this.var_lookup.get(name.slice(1));
 				if (variable) {
@@ -729,7 +743,7 @@ export default class Component {
 					variable.referenced_from_script = true;
 				}
 			} else {
-				this.add_var({
+				this.add_var(node, {
 					name,
 					global: true,
 					hoistable: true
@@ -766,16 +780,64 @@ export default class Component {
 		};
 		let scope_updated = false;
 
-		let generator_count = 0;
+		const current_function_stack = [];
+		let current_function: FunctionDeclaration | FunctionExpression = null;
 
 		walk(content, {
 			enter(node: Node, parent: Node, prop, index) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count++;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.push(current_function = node);
 				}
 
 				if (map.has(node)) {
 					scope = map.get(node);
+				}
+
+				let deep = false;
+				let names: string[] = [];
+
+				if (node.type === 'AssignmentExpression') {
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
+										names.push(node.name);
+								}
+							}
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
+				} else if (node.type === 'UpdateExpression') {
+					deep = node.argument.type === 'MemberExpression';
+					const { name } = get_object(node.argument);
+					names.push(name);
+				}
+				if (names.length > 0) {
+					names.forEach(name => {
+						let current_scope = scope;
+						let declaration;
+
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
+							}
+							current_scope = current_scope.parent;
+						}
+
+						if (declaration && declaration.kind === 'const' && !deep) {
+							component.error(node as any, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
 				}
 
 				if (node.type === 'ImportDeclaration') {
@@ -785,7 +847,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				if (/^Export/.test(node.type)) {
+				if (regex_starts_with_term_export.test(node.type)) {
 					const replacement = component.extract_exports(node);
 					if (replacement) {
 						this.replace(replacement);
@@ -800,12 +862,13 @@ export default class Component {
 			},
 
 			leave(node: Node) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') && node.generator === true) {
-					generator_count--;
+				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+					current_function_stack.pop();
+					current_function = current_function_stack[current_function_stack.length - 1];
 				}
 
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && generator_count <= 0) {
+				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && (!current_function || (!current_function.generator && !current_function.async))) {
 					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);
@@ -888,7 +951,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -907,7 +970,7 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+					if (!((regex_contains_term_function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -954,7 +1017,7 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node: Node) {
-				if (/Function/.test(node.type)) {
+				if (regex_contains_term_function.test(node.type)) {
 					return this.skip();
 				}
 
@@ -1078,7 +1141,7 @@ export default class Component {
 
 						this.replace(b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${ props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
 						` as any);
 						return this.skip();
@@ -1329,12 +1392,11 @@ export default class Component {
 										module_dependencies.add(name);
 									}
 								}
-								const is_writable_or_mutated =
-									variable && (variable.writable || variable.mutated);
+
 								if (
 									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
-									(name[0] === '$' || is_writable_or_mutated)
+									(name[0] === '$' || variable)
 								) {
 									dependencies.add(name);
 								}
@@ -1357,6 +1419,19 @@ export default class Component {
 
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
+
+				const is_dependency_static = Array.from(dependencies).every(
+					dependency => dependency !== '$$props' && dependency !== '$$restProps' && !is_dynamic(this.var_lookup.get(dependency))
+				);
+
+				if (is_dependency_static) {
+					assignees.forEach(assignee => {
+						const variable = component.var_lookup.get(assignee);
+						if (variable) {
+							variable.is_reactive_static = true;
+						}
+					});
+				}
 
 				unsorted_reactive_declarations.push({
 					assignees,
@@ -1449,6 +1524,8 @@ export default class Component {
 	}
 }
 
+const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
+
 function process_component_options(component: Component, nodes) {
 	const component_options: ComponentOptions = {
 		immutable: component.compile_options.immutable || false,
@@ -1462,7 +1539,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, {code, message}) {
+	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
 		const chunk = value[0];
 
@@ -1494,7 +1571,7 @@ function process_component_options(component: Component, nodes) {
 							return component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !regex_valid_tag_name.test(tag)) {
 							return component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 

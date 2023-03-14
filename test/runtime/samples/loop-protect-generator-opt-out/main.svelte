@@ -1,10 +1,12 @@
 <script>
-	const it = gen();
-	it.next();
-
-	setTimeout(() => {
+	export async function run_generator() {
+		const it = gen();
 		it.next();
-	}, 20)
+
+		await new Promise(resolve => setTimeout(resolve, 20));
+
+		it.next();
+	}
 
 	function* gen() {
 		while (true) {

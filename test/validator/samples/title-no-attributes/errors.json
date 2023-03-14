@@ -3,13 +3,10 @@
 	"message": "<title> cannot have attributes",
 	"start": {
 		"line": 2,
-		"column": 8,
-		"character": 22
+		"column": 8
 	},
 	"end": {
 		"line": 2,
-		"column": 25,
-		"character": 39
-	},
-	"pos": 22
+		"column": 25
+	}
 }]

@@ -1,14 +1,14 @@
 import { run_all } from './utils';
-import { set_current_component } from './lifecycle';
+import { current_component, set_current_component } from './lifecycle';
 
 export const dirty_components = [];
 export const intros = { enabled: false };
 
 export const binding_callbacks = [];
-const render_callbacks = [];
+let render_callbacks = [];
 const flush_callbacks = [];
 
-const resolved_promise = Promise.resolve();
+const resolved_promise = /* @__PURE__ */ Promise.resolve();
 let update_scheduled = false;
 
 export function schedule_update() {
@@ -31,27 +31,59 @@ export function add_flush_callback(fn) {
 	flush_callbacks.push(fn);
 }
 
-let flushing = false;
+// flush() calls callbacks in this order:
+// 1. All beforeUpdate callbacks, in order: parents before children
+// 2. All bind:this callbacks, in reverse order: children before parents.
+// 3. All afterUpdate callbacks, in order: parents before children. EXCEPT
+//    for afterUpdates called during the initial onMount, which are called in
+//    reverse order: children before parents.
+// Since callbacks might update component values, which could trigger another
+// call to flush(), the following steps guard against this:
+// 1. During beforeUpdate, any updated components will be added to the
+//    dirty_components array and will cause a reentrant call to flush(). Because
+//    the flush index is kept outside the function, the reentrant call will pick
+//    up where the earlier call left off and go through all dirty components. The
+//    current_component value is saved and restored so that the reentrant call will
+//    not interfere with the "parent" flush() call.
+// 2. bind:this callbacks cannot trigger new flush() calls.
+// 3. During afterUpdate, any updated components will NOT have their afterUpdate
+//    callback called a second time; the seen_callbacks set, outside the flush()
+//    function, guarantees this behavior.
 const seen_callbacks = new Set();
 let previous_dirty_components = new Set();
-
+let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
-	if (flushing) return;
-	flushing = true;
+	// Do not reenter flush while dirty components are updated, as this can
+	// result in an infinite loop. Instead, let the inner flush handle it.
+	// Reentrancy is ok afterwards for bindings etc.
+	if (flushidx !== 0) {
+		return;
+	}
+
+	const saved_component = current_component;
 
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		for (let i = 0; i < dirty_components.length; i += 1) {
-			const component = dirty_components[i];
-			set_current_component(component);
-			const is_previous_dirty = previous_dirty_components.has(component);
-			update(component.$$, is_previous_dirty);
+		try {
+			while (flushidx < dirty_components.length) {
+				const component = dirty_components[flushidx];
+				flushidx++;
+				set_current_component(component);
+				const is_previous_dirty = previous_dirty_components.has(component);
+				update(component.$$, is_previous_dirty);
+			}
+		} catch (e) {
+			// reset dirty state to not end up in a deadlocked state and then rethrow
+			dirty_components.length = 0;
+			flushidx = 0;
+			throw e;
 		}
 
 		set_current_component(null);
 
 		dirty_components.length = 0;
+		flushidx = 0;
 
 		while (binding_callbacks.length) {
 			binding_callbacks.pop()();
@@ -79,9 +111,9 @@ export function flush() {
 	}
 
 	update_scheduled = false;
-	flushing = false;
 	seen_callbacks.clear();
 	previous_dirty_components.clear();
+	set_current_component(saved_component);
 }
 
 function update($$, is_previous_dirty) {
@@ -94,4 +126,15 @@ function update($$, is_previous_dirty) {
 		// if (!is_previous_dirty) run_all($$.after_update);
 		$$.after_update.forEach(add_render_callback);
 	}
+}
+
+/**
+ * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
+ */
+export function flush_render_callbacks(fns: Function[]): void {
+	const filtered = [];
+	const targets = [];
+	render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+	targets.forEach((c) => c());
+	render_callbacks = filtered;
 }

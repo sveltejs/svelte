@@ -2,6 +2,7 @@ import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/rem
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
 import { Source, Processed } from '../preprocess/types';
+import { push_array } from './push_array';
 
 export type SourceLocation = {
 	line: number;
@@ -60,13 +61,7 @@ function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boo
 	return [new_table, idx_map, val_changed, idx_changed];
 }
 
-function pushArray<T>(_this: T[], other: T[]) {
-	// We use push to mutate in place for memory and perf reasons
-	// We use the for loop instead of _this.push(...other) to avoid the JS engine's function argument limit (65,535 in JavascriptCore)
-	for (let i = 0; i < other.length; i++) {
-		_this.push(other[i]);
-	}
-}
+const regex_line_token = /([^\d\w\s]|\s+)/g;
 
 export class MappedCode {
 	string: string;
@@ -159,10 +154,10 @@ export class MappedCode {
 		}
 
 		// combine last line + first line
-		pushArray(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
+		push_array(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
 
 		// append other lines
-		pushArray(m1.mappings, m2.mappings);
+		push_array(m1.mappings, m2.mappings);
 
 		return this;
 	}
@@ -202,7 +197,7 @@ export class MappedCode {
 		const line_list = source.split('\n');
 		for (let line = 0; line < line_list.length; line++) {
 			map.mappings.push([]);
-			const token_list = line_list[line].split(/([^\d\w\s]|\s+)/g);
+			const token_list = line_list[line].split(regex_line_token);
 			for (let token = 0, column = 0; token < token_list.length; token++) {
 				if (token_list[token] == '') continue;
 				map.mappings[line].push([column, 0, offset.line + line, column]);
@@ -252,7 +247,7 @@ export function combine_sourcemaps(
 	if (!map.file) delete map.file; // skip optional field `file`
 
 	// When source maps are combined and the leading map is empty, sources is not set.
-	// Add the filename to the empty array in this case. 
+	// Add the filename to the empty array in this case.
 	// Further improvements to remapping may help address this as well https://github.com/ampproject/remapping/issues/116
 	if (!map.sources.length) map.sources = [filename];
 
@@ -296,6 +291,8 @@ export function apply_preprocessor_sourcemap(filename: string, svelte_map: Sourc
 	return result_map as SourceMap;
 }
 
+const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
+
 // parse attached sourcemap in processed.code
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
@@ -309,7 +306,7 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {
 		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
-		const map_data = (map_url.match(/data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/) || [])[1];
+		const map_data = (map_url.match(regex_data_uri) || [])[1];
 		if (map_data) {
 			// sourceMappingURL is data URL
 			if (processed.map) {
