@@ -160,6 +160,7 @@ export default class ElementWrapper extends Wrapper {
 	bindings: Binding[];
 	event_handlers: EventHandler[];
 	class_dependencies: string[];
+	dynamic_style_dependencies: Set<string>;
 	has_dynamic_attribute: boolean;
 
 	select_binding_dependencies?: Set<string>;
@@ -213,6 +214,8 @@ export default class ElementWrapper extends Wrapper {
 			// code, because it will be done again on the child_dynamic_element.
 			return;
 		}
+
+		this.dynamic_style_dependencies = new Set();
 
 		if (this.node.children.length) {
 			this.node.lets.forEach(l => {
@@ -801,11 +804,13 @@ export default class ElementWrapper extends Wrapper {
 	}
 
 	add_attributes(block: Block) {
-		// Get all the class dependencies first
+		// Get all the class and style dependencies first
 		this.attributes.forEach((attribute) => {
 			if (attribute.node.name === 'class') {
 				const dependencies = attribute.node.get_dependencies();
 				push_array(this.class_dependencies, dependencies);
+			} else if (attribute.node.name === 'style') {
+				add_to_set(this.dynamic_style_dependencies, attribute.node.get_dependencies());
 			}
 		});
 
@@ -1170,8 +1175,18 @@ export default class ElementWrapper extends Wrapper {
 
 	add_styles(block: Block) {
 		const has_spread = this.node.attributes.some(attr => attr.is_spread);
+
+		let style_changed_var: Identifier | undefined;
+		const maybe_create_style_changed_var = () => {
+			if (!style_changed_var && this.dynamic_style_dependencies.size) {
+				style_changed_var = block.get_unique_name('style_changed');
+				const style_attr_dirty =  block.renderer.dirty([...this.dynamic_style_dependencies]);
+				block.chunks.update.push(b`const ${style_changed_var} = ${style_attr_dirty};`);
+			}
+		};
+
 		this.node.styles.forEach((style_directive) => {
-			const { name, expression, should_cache, important } = style_directive;
+			const { name, expression, important, should_cache } = style_directive;
 
 			const snippet = expression.manipulate(block);
 			let cached_snippet: Identifier | undefined;
@@ -1184,24 +1199,40 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
-			const dependencies = expression.dynamic_dependencies();
+			// Assume that style has changed through the spread attribute
 			if (has_spread) {
 				block.chunks.update.push(updater);
-			} else if (dependencies.length > 0) {
+			} else {
+				const self_deps = expression.dynamic_dependencies();
+				const all_deps = new Set([
+					...self_deps,
+					...this.dynamic_style_dependencies
+				]);
+
+				if (all_deps.size === 0) return;
+
+				let condition =  block.renderer.dirty([...all_deps]);
+
 				if (should_cache) {
-					block.chunks.update.push(b`
-							if (${block.renderer.dirty(dependencies)} && (${cached_snippet} !== (${cached_snippet} = ${snippet}))) {
-								${updater}
-							}
-					`);
-				} else {
-					block.chunks.update.push(b`
-						if (${block.renderer.dirty(dependencies)}) {
-							${updater}
-						}
-					`);
+					condition = x`${condition} && ${cached_snippet} !== (${cached_snippet} = ${snippet})`;
 				}
+
+				if (this.dynamic_style_dependencies.size > 0) {
+					maybe_create_style_changed_var();
+					// If all dependencies are same as the style attribute dependencies, then we can skip the dirty check
+					condition = 
+						all_deps.size === this.dynamic_style_dependencies.size 
+							? style_changed_var
+							: x`${style_changed_var} || ${condition}`;
+				}
+
+				block.chunks.update.push(b`
+					if (${condition}) {
+						${updater}
+					}
+				`);
 			}
+			
 		});
 	}
 
