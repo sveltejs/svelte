@@ -56,7 +56,7 @@ async function launchPuppeteer() {
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', function() {
+describe('runtime (puppeteer)', () => {
 	before(async () => {
 		svelte = loadSvelte(false);
 		console.log('[runtime-puppeteer] Loaded Svelte');
