@@ -9,10 +9,10 @@ export function test({ input, css, js }) {
 	out_obj = js;
 	// we need the second occurrence of 'done_replace_script_2' in output.js
 	// the first occurrence is mapped back to markup '{done_replace_script_2}'
-	loc_output = out_obj.locate_1('done_replace_script_2');
-	loc_output = out_obj.locate_1('done_replace_script_2', loc_output.character + 1);
+	loc_output = out_obj.locate('done_replace_script_2');
+	loc_output = out_obj.locate('done_replace_script_2', loc_output.character + 1);
 	actual = out_obj.mapConsumer.originalPositionFor(loc_output);
-	loc_input = input.locate_1('replace_me_script');
+	loc_input = input.locate('replace_me_script');
 	expected = {
 		source: 'input.svelte',
 		name: 'replace_me_script',
@@ -21,9 +21,9 @@ export function test({ input, css, js }) {
 	assert.deepEqual(actual, expected);
 
 	out_obj = css;
-	loc_output = out_obj.locate_1('.done_replace_style_2');
+	loc_output = out_obj.locate('.done_replace_style_2');
 	actual = out_obj.mapConsumer.originalPositionFor(loc_output);
-	loc_input = input.locate_1('.replace_me_style');
+	loc_input = input.locate('.replace_me_style');
 	expected = {
 		source: 'input.svelte',
 		name: '.replace_me_style',

@@ -24,7 +24,7 @@ export function assert_mapped(
 		`failed to locate "${input_code}" in "${filename}"`
 	);
 
-	const transformed_loc = preprocessed.locate_1(code);
+	const transformed_loc = preprocessed.locate(code);
 	assert.notEqual(
 		transformed_loc,
 		undefined,
@@ -36,7 +36,7 @@ export function assert_mapped(
 		{
 			source: filename,
 			name: null,
-			line: source_loc.line + 1,
+			line: source_loc.line,
 			column: source_loc.column
 		},
 		`incorrect mappings for "${input_code}" in "${filename}"`
@@ -54,7 +54,7 @@ export function assert_not_mapped(
 ) {
 	if (filename === undefined) filename = 'input.svelte';
 
-	const transformed_loc = preprocessed.locate_1(code);
+	const transformed_loc = preprocessed.locate(code);
 	assert.notEqual(
 		transformed_loc,
 		undefined,

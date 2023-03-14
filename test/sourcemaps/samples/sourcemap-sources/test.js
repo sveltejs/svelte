@@ -14,12 +14,12 @@ export function test({ assert, preprocessed, js }) {
 
 		assert.deepEqual(
 			where.mapConsumer.originalPositionFor(
-				where.locate_1(content)
+				where.locate(content)
 			),
 			{
 				source: sourcefile,
 				name: null,
-				line: 1,
+				line: 0,
 				column
 			},
 			`failed to locate "${content}" from "${sourcefile}"`

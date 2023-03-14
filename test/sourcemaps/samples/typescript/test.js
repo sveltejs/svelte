@@ -17,5 +17,5 @@ export function test({ input, preprocessed }) {
 	});
 	
 	// TS types, removed
-	assert_not_located('ITimeoutDestroyer', preprocessed.locate_1);
+	assert_not_located('ITimeoutDestroyer', preprocessed.locate);
 }

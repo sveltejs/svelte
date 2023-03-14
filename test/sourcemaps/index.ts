@@ -31,8 +31,7 @@ describe('sourcemaps', () => {
 			const inputCode = fs.readFileSync(inputFile, 'utf-8');
 			const input = {
 				code: inputCode,
-				locate: getLocator(inputCode),
-				locate_1: getLocator(inputCode, { offsetLine: 1 })
+				locate: getLocator(inputCode)
 			};
 
 			const preprocessed = await svelte.preprocess(
@@ -100,20 +99,14 @@ describe('sourcemaps', () => {
 				);
 			}
 
-			// use locate_1 with mapConsumer:
-			// lines are one-based, columns are zero-based
-
 			preprocessed.mapConsumer = preprocessed.map && await new SourceMapConsumer(preprocessed.map);
 			preprocessed.locate = getLocator(preprocessed.code);
-			preprocessed.locate_1 = getLocator(preprocessed.code, { offsetLine: 1 });
 
 			js.mapConsumer = js.map && await new SourceMapConsumer(js.map);
 			js.locate = getLocator(js.code);
-			js.locate_1 = getLocator(js.code, { offsetLine: 1 });
 
 			css.mapConsumer = css.map && await new SourceMapConsumer(css.map);
 			css.locate = getLocator(css.code || '');
-			css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
 			await test({ assert, input, preprocessed, js, css });
 		});
 	});
