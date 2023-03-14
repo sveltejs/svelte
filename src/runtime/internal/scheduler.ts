@@ -75,6 +75,7 @@ export function flush() {
 			}
 		} catch (e) {
 			// reset dirty state to not end up in a deadlocked state and then rethrow
+			previous_dirty_components.clear();
 			dirty_components.length = 0;
 			flushidx = 0;
 			throw e;
