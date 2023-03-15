@@ -12,6 +12,19 @@ export default {
 
 		<p>1, 2, 3</p>`,
 
+	ssrHtml: `
+		<label>
+			<input type="checkbox" value="1" checked> 1
+		</label>
+		<label>
+			<input type="checkbox" value="2" checked> 2
+		</label>
+		<label>
+			<input type="checkbox" value="3" checked> 3
+		</label>
+
+		<p>1, 2, 3</p>`,
+
 	async test({ assert, component, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, true);

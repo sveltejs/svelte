@@ -14,16 +14,6 @@ export default {
 		<p>foo: 2</p>
 	`,
 
-	ssrHtml: `
-		<select value=2>
-			<option value='1'>1</option>
-			<option value='2'>2</option>
-			<option value='3'>3</option>
-		</select>
-
-		<p>foo: 2</p>
-	`,
-
 	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');
 		const options = [...target.querySelectorAll('option')];

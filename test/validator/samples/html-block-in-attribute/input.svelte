@@ -1,0 +1,1 @@
+<div style="{@html text}" />

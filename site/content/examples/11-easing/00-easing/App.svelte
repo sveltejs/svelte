@@ -82,7 +82,6 @@
 		max-height: 95%;
 		max-width: 800px;
 		margin: auto;
-		padding: 10px;
 		border: 1px solid #333;
 		border-radius: 2px;
 		padding: 20px;

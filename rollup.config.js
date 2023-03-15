@@ -42,6 +42,24 @@ export default [
 		plugins: [ts_plugin]
 	},
 
+	{
+		input: `src/runtime/ssr.ts`,
+		output: [
+			{
+				file: `ssr.mjs`,
+				format: 'esm',
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.mjs`
+			},
+			{
+				file: `ssr.js`,
+				format: 'cjs',
+				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.js`
+			}
+		],
+		external,
+		plugins: [ts_plugin]
+	},
+
 	...fs.readdirSync('src/runtime')
 		.filter(dir => fs.statSync(`src/runtime/${dir}`).isDirectory())
 		.map(dir => ({
@@ -90,8 +108,18 @@ export default [
 		input: 'src/compiler/index.ts',
 		plugins: [
 			replace({
-				__VERSION__: pkg.version
+				__VERSION__: pkg.version,
+				'process.env.NODE_DEBUG': false // appears inside the util package
 			}),
+			{
+				resolveId(id) {
+					// util is a built-in module in Node.js, but we want a self-contained compiler bundle
+					// that also works in the browser, so we load its polyfill instead
+					if (id === 'util') {
+						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
+					}
+				}
+			},
 			resolve(),
 			commonjs({
 				include: ['node_modules/**']

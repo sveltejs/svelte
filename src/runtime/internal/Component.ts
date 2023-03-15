@@ -1,41 +1,9 @@
-import { add_render_callback, flush, schedule_update, dirty_components } from './scheduler';
+import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating } from './dom';
 import { transition_in } from './transitions';
-
-interface Fragment {
-	key: string|null;
-	first: null;
-	/* create  */ c: () => void;
-	/* claim   */ l: (nodes: any) => void;
-	/* hydrate */ h: () => void;
-	/* mount   */ m: (target: HTMLElement, anchor: any) => void;
-	/* update  */ p: (ctx: any, dirty: any) => void;
-	/* measure */ r: () => void;
-	/* fix     */ f: () => void;
-	/* animate */ a: () => void;
-	/* intro   */ i: (local: any) => void;
-	/* outro   */ o: (local: any) => void;
-	/* destroy */ d: (detaching: 0|1) => void;
-}
-interface T$$ {
-	dirty: number[];
-	ctx: null|any;
-	bound: any;
-	update: () => void;
-	callbacks: any;
-	after_update: any[];
-	props: Record<string, 0 | string>;
-	fragment: null|false|Fragment;
-	not_equal: any;
-	before_update: any[];
-	context: Map<any, any>;
-	on_mount: any[];
-	on_destroy: any[];
-	skip_bound: boolean;
-	on_disconnect: any[];
-}
+import { T$$ } from './types';
 
 export function bind(component, name, callback) {
 	const index = component.$$.props[name];
@@ -54,7 +22,7 @@ export function claim_component(block, parent_nodes) {
 }
 
 export function mount_component(component, target, anchor, customElement) {
-	const { fragment, on_mount, on_destroy, after_update } = component.$$;
+	const { fragment, after_update } = component.$$;
 
 	fragment && fragment.m(target, anchor);
 
@@ -62,9 +30,12 @@ export function mount_component(component, target, anchor, customElement) {
 		// onMount happens before the initial afterUpdate
 		add_render_callback(() => {
 
-			const new_on_destroy = on_mount.map(run).filter(is_function);
-			if (on_destroy) {
-				on_destroy.push(...new_on_destroy);
+			const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
+			// if the component was destroyed immediately
+			// it will update the `$$.on_destroy` reference to `null`.
+			// the destructured on_destroy may still reference to the old array
+			if (component.$$.on_destroy) {
+				component.$$.on_destroy.push(...new_on_destroy);
 			} else {
 				// Edge case - component was destroyed immediately,
 				// most likely as a result of a binding initialising
@@ -80,6 +51,8 @@ export function mount_component(component, target, anchor, customElement) {
 export function destroy_component(component, detaching) {
 	const $$ = component.$$;
 	if ($$.fragment !== null) {
+		flush_render_callbacks($$.after_update);
+
 		run_all($$.on_destroy);
 
 		$$.fragment && $$.fragment.d(detaching);
@@ -100,13 +73,13 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
 	const parent_component = current_component;
 	set_current_component(component);
 
 	const $$: T$$ = component.$$ = {
 		fragment: null,
-		ctx: null,
+		ctx: [],
 
 		// state
 		props,
@@ -120,13 +93,16 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		on_disconnect: [],
 		before_update: [],
 		after_update: [],
-		context: new Map(parent_component ? parent_component.$$.context : options.context || []),
+		context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
 
 		// everything else
 		callbacks: blank_object(),
 		dirty,
-		skip_bound: false
+		skip_bound: false,
+		root: options.target || parent_component.$$.root
 	};
+
+	append_styles && append_styles($$.root);
 
 	let ready = false;
 
@@ -205,6 +181,9 @@ if (typeof HTMLElement === 'function') {
 
 		$on(type, callback) {
 			// TODO should this delegate to addEventListener?
+			if (!is_function(callback)) {
+				return noop;
+			}
 			const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 			callbacks.push(callback);
 
@@ -237,6 +216,9 @@ export class SvelteComponent {
 	}
 
 	$on(type, callback) {
+		if (!is_function(callback)) {
+			return noop;
+		}
 		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
 		callbacks.push(callback);
 

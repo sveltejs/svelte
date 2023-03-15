@@ -1,0 +1,1 @@
+<!-- svelte-ignore foo bar -->

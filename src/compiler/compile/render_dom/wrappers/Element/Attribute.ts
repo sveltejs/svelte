@@ -9,6 +9,23 @@ import Text from '../../../nodes/Text';
 import handle_select_value_binding from './handle_select_value_binding';
 import { Identifier, Node } from 'estree';
 import { namespaces } from '../../../../utils/namespaces';
+import { BooleanAttributes, boolean_attributes } from '../../../../../shared/boolean_attributes';
+import { regex_double_quotes } from '../../../../utils/patterns';
+
+const non_textlike_input_types = new Set([
+	'button',
+	'checkbox',
+	'color',
+	'date',
+	'datetime-local',
+	'file',
+	'hidden',
+	'image',
+	'radio',
+	'range',
+	'reset',
+	'submit'
+]);
 
 export class BaseAttributeWrapper {
 	node: Attribute;
@@ -26,8 +43,11 @@ export class BaseAttributeWrapper {
 		}
 	}
 
-	render(_block: Block) {}
+	render(_block: Block) { }
 }
+
+const regex_minus_sign = /-/;
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class AttributeWrapper extends BaseAttributeWrapper {
 	node: Attribute;
@@ -65,6 +85,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 			if (node.name === 'value') {
 				handle_select_value_binding(this, node.dependencies);
+				this.parent.has_dynamic_value = true;
 			}
 		}
 
@@ -86,8 +107,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
 			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
 		}
-		
-		this.is_src = this.name === 'src'; // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+
+		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+		this.is_src = this.name === 'src' && (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
 
@@ -98,7 +120,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
-		const method = /-/.test(element.node.name)
+		const method = regex_minus_sign.test(element.node.name)
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
 				? '@xlink_attr'
@@ -109,7 +131,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
 
-		let updater;
+		let updater: Node[];
 		const init = this.get_init(block, value);
 
 		if (is_legacy_input_type) {
@@ -132,7 +154,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`);
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
-				b`if (${element.var}.src !== ${init}) ${method}(${element.var}, "${name}", ${this.last});`
+				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -159,6 +181,17 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			`;
 		}
 
+		if (this.node.name === 'value' && dependencies.length > 0) {
+			if (this.parent.bindings.some(binding => binding.node.name === 'group')) {
+				this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
+				block.add_variable(this.parent.dynamic_value_condition, x`false`);
+				updater = b`
+					${updater}
+					${this.parent.dynamic_value_condition} = true;
+				`;
+			}
+		}
+
 		if (dependencies.length > 0) {
 			const condition = this.get_dom_update_conditions(block, block.renderer.dirty(dependencies));
 
@@ -169,14 +202,17 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		// special case – autofocus. has to be handled in a bit of a weird way
-		if (this.node.is_true && name === 'autofocus') {
-			block.autofocus = element.var;
+		if (name === 'autofocus') {
+			block.autofocus = {
+				element_var: element.var,
+				condition_expression: this.node.is_true ? undefined : value
+			};
 		}
 	}
 
 	get_init(block: Block, value) {
 		this.last = this.should_cache && block.get_unique_name(
-			`${this.parent.var.name}_${this.name.replace(/[^a-zA-Z_$]/g, '_')}_value`
+			`${this.parent.var.name}_${this.name.replace(regex_invalid_variable_identifier_characters, '_')}_value`
 		);
 
 		if (this.should_cache) block.add_variable(this.last);
@@ -193,14 +229,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		if (should_cache) {
 			condition = this.is_src
-				? x`${condition} && (${element.var}.src !== (${last} = ${value}))`
+				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
 
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
-
-			if (type === null || type === '' || type === 'text' || type === 'email' || type === 'password') {
+			if (type !== true && !non_textlike_input_types.has(type)) {
 				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
 			}
 		}
@@ -235,9 +270,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		return metadata;
 	}
 
-	get_value(block) {
+	get_value(block: Block) {
 		if (this.node.is_true) {
-			if (this.metadata && boolean_attribute.has(this.metadata.property_name.toLowerCase())) {
+			if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
 				return x`true`;
 			}
 			return x`""`;
@@ -264,7 +299,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		return value;
 	}
 
-	get_class_name_text(block) {
+	get_class_name_text(block: Block) {
 		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
 		const rendered = this.render_chunks(block);
 
@@ -294,14 +329,15 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 		return `="${value.map(chunk => {
 			return chunk.type === 'Text'
-				? chunk.data.replace(/"/g, '\\"')
+				? chunk.data.replace(regex_double_quotes, '\\"')
 				: `\${${chunk.manipulate()}}`;
 		}).join('')}"`;
 	}
 }
 
 // source: https://html.spec.whatwg.org/multipage/indices.html
-const attribute_lookup = {
+type AttributeMetadata = { property_name?: string, applies_to?: string[] };
+const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [key in string]: AttributeMetadata } = {
 	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
 	allowpaymentrequest: { property_name: 'allowPaymentRequest', applies_to: ['iframe'] },
 	async: { applies_to: ['script'] },
@@ -326,7 +362,9 @@ const attribute_lookup = {
 	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
 	hidden: {},
 	indeterminate: { applies_to: ['input'] },
+	inert: {},
 	ismap: { property_name: 'isMap', applies_to: ['img'] },
+	itemscope: {},
 	loop: { applies_to: ['audio', 'bgsound', 'video'] },
 	multiple: { applies_to: ['input', 'select'] },
 	muted: { applies_to: ['audio', 'video'] },
@@ -358,38 +396,11 @@ Object.keys(attribute_lookup).forEach(name => {
 	if (!metadata.property_name) metadata.property_name = name;
 });
 
-// source: https://html.spec.whatwg.org/multipage/indices.html
-const boolean_attribute = new Set([
-	'allowfullscreen',
-	'allowpaymentrequest',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'defer',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'ismap',
-	'itemscope',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'selected'
-]);
-
 function should_cache(attribute: AttributeWrapper) {
 	return attribute.is_src || attribute.node.should_cache();
 }
+
+const regex_contains_checked_or_group = /checked|group/;
 
 function is_indirectly_bound_value(attribute: AttributeWrapper) {
 	const element = attribute.parent;
@@ -397,7 +408,6 @@ function is_indirectly_bound_value(attribute: AttributeWrapper) {
 		(element.node.name === 'option' || // TODO check it's actually bound
 			(element.node.name === 'input' &&
 				element.node.bindings.some(
-					(binding) =>
-						/checked|group/.test(binding.name)
+					(binding) => regex_contains_checked_or_group.test(binding.name)
 				)));
 }

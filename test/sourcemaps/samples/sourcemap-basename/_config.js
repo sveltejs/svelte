@@ -15,7 +15,7 @@ span {
 
 export default {
 	css_map_sources: [external_relative_filename],
-	js_map_sources: [],
+	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			style: ({ content, filename }) => {

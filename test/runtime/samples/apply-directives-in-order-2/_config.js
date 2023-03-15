@@ -4,7 +4,7 @@ export default {
 		value
 	},
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 
 		const event = new window.Event('input');

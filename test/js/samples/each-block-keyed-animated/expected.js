@@ -87,7 +87,9 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert(target, each_1_anchor, anchor);
@@ -130,7 +132,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { things } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("things" in $$props) $$invalidate(0, things = $$props.things);
+		if ('things' in $$props) $$invalidate(0, things = $$props.things);
 	};
 
 	return [things];

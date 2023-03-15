@@ -22,7 +22,7 @@ export default {
 					<p>loaded</p>
 				`);
 
-				promise = new Promise((f, r) => {
+				promise = new Promise((f, _) => {
 					fulfil = f;
 				});
 

@@ -4,3 +4,4 @@ export { default as preprocess } from './preprocess/index';
 export { walk } from 'estree-walker';
 
 export const VERSION = '__VERSION__';
+// additional exports added through generate-type-definitions.js

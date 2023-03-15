@@ -3,7 +3,7 @@ import { magic_string_preprocessor_result, magic_string_replace_all } from '../.
 
 export default {
 
-	js_map_sources: [], // test component has no scripts
+	js_map_sources: ['input.svelte'],
 
 	preprocess: {
 		markup: ({ content, filename }) => {

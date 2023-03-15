@@ -7,7 +7,7 @@ export default {
 	props: {
 		callback
 	},
-	after_test() {
+	before_test() {
 		calls = [];
 	},
 	async test({ assert, component, target }) {

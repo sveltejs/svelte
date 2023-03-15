@@ -1,6 +1,6 @@
 {
-	"code": "invalid-class-directive",
-	"message": "Class binding name cannot be empty",
+	"code": "empty-directive-name",
+	"message": "Class name cannot be empty",
 	"start": {
 		"line": 1,
 		"column": 10,

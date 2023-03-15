@@ -1,5 +1,5 @@
 export default {
-	test({ assert, component }) {
+	test({ component }) {
 		component.$destroy();
 		component.$destroy();
 	}

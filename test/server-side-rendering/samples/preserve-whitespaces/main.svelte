@@ -1,0 +1,34 @@
+<pre>
+  A
+  B
+  <span>
+    C
+    D
+  </span>
+  E
+  F
+</pre>
+
+<div>
+  A
+  B
+  <span>
+    C
+    D
+  </span>
+  E
+  F
+</div>
+
+<div>
+  <pre>
+    A
+    B
+    <span>
+      C
+      D
+    </span>
+    E
+    F
+  </pre>
+</div>

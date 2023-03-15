@@ -13,7 +13,7 @@
 				"children": [
 					{
 						"start": 10,
-						"end": 41,
+						"end": 40,
 						"type": "Text",
 						"raw": "\n\t<p>not actually an element. ",
 						"data": "\n\t<p>not actually an element. "

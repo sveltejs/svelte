@@ -7,8 +7,8 @@ export function clone(val) {
 	let k, out, tmp;
 
 	if (Array.isArray(val)) {
-		out = Array(k=val.length);
-		while (k--) out[k] = (tmp=val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
+		out = Array(k = val.length);
+		while (k--) out[k] = (tmp = val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
 		return out;
 	}
 
@@ -23,7 +23,7 @@ export function clone(val) {
 					writable: true
 				});
 			} else if (typeof val[k] !== 'function') { // MODIFICATION: skip functions
-				out[k] = (tmp=val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
+				out[k] = (tmp = val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
 			}
 		}
 		return out;

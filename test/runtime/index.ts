@@ -25,12 +25,13 @@ let compile = null;
 const sveltePath = process.cwd().split('\\').join('/');
 
 let unhandled_rejection = false;
-process.on('unhandledRejection', err => {
+function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
-});
+}
 
 describe('runtime', () => {
 	before(() => {
+		process.on('unhandledRejection', unhandledRejection_handler);
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
@@ -46,22 +47,25 @@ describe('runtime', () => {
 
 		return setupHtmlEqual();
 	});
+	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate) {
+	function runTest(dir, hydrate, from_ssr_html) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
+		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
 
 		if (solo && process.env.CI) {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(config.skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, () => {
+		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
+		(config.skip ? it.skip : solo ? it.only : it)(testName, (done) => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -92,7 +96,7 @@ describe('runtime', () => {
 			glob('**/*.svelte', { cwd }).forEach(file => {
 				if (file[0] === '_') return;
 
-				const dir  = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
+				const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
 				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 				if (fs.existsSync(out)) {
@@ -116,7 +120,7 @@ describe('runtime', () => {
 				}
 			});
 
-			return Promise.resolve()
+			Promise.resolve()
 				.then(() => {
 					// hack to support transition tests
 					clear_loops();
@@ -146,12 +150,24 @@ describe('runtime', () => {
 						throw err;
 					}
 
-					if (config.before_test) config.before_test();
-
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
 
 					const target = window.document.querySelector('main');
+
+					if (hydrate && from_ssr_html) {
+						// ssr into target
+						compileOptions.generate = 'ssr';
+						cleanRequireCache();
+						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						const { html } = SsrSvelteComponent.render(config.props);
+						target.innerHTML = html;
+						delete compileOptions.generate;
+					} else {
+						target.innerHTML = '';
+					}
+
+					if (config.before_test) config.before_test();
 
 					const warnings = [];
 					const warn = console.warn;
@@ -229,6 +245,7 @@ describe('runtime', () => {
 				.catch(err => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+					done(err);
 					throw err;
 				})
 				.then(() => {
@@ -239,13 +256,15 @@ describe('runtime', () => {
 					flush();
 
 					if (config.after_test) config.after_test();
+					done();
 				});
 		});
 	}
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
 		runTest(dir, false);
-		runTest(dir, true);
+		runTest(dir, true, false);
+		runTest(dir, true, true);
 	});
 
 	async function create_component(src = '<div></div>') {
