@@ -1,16 +1,16 @@
 # Svelte changelog
 
-## Unreleased
+## 3.57.0
 
-* Prefer style directive values over style attribute values ([#7475](https://github.com/sveltejs/svelte/issues/7475))
-* Stop intro transition from triggering wrongfully ([#6152](https://github.com/sveltejs/svelte/issues/6152), [#6812](https://github.com/sveltejs/svelte/issues/6812))
-* Select `<option>` with `selected` attribute when initial state is `undefined` ([#8361](https://github.com/sveltejs/svelte/issues/8361))
+* Add `<svelte:document>` ([#3310](https://github.com/sveltejs/svelte/issues/3310))
 * Add a11y `no-noninteractive-element-to-interactive-role` ([#8167](https://github.com/sveltejs/svelte/pull/8167))
-* Account for `bind:group` members being spread across multiple control flow blocks ([#8372](https://github.com/sveltejs/svelte/issues/8372))
+* Stop intro transition from triggering incorrectly ([#6152](https://github.com/sveltejs/svelte/issues/6152), [#6812](https://github.com/sveltejs/svelte/issues/6812))
 * Support computed and literal properties when destructuring objects in the template ([#6609](https://github.com/sveltejs/svelte/issues/6609))
+* Give `style:` directive precedence over `style=` attribute ([#7475](https://github.com/sveltejs/svelte/issues/7475))
+* Select `<option>` with `selected` attribute when initial state is `undefined` ([#8361](https://github.com/sveltejs/svelte/issues/8361))
 * Prevent derived store callbacks after store is unsubscribed from ([#8364](https://github.com/sveltejs/svelte/issues/8364))
+* Account for `bind:group` members being spread across multiple control flow blocks ([#8372](https://github.com/sveltejs/svelte/issues/8372))
 * Revert buggy reactive statement optimization ([#8374](https://github.com/sveltejs/svelte/issues/8374))
-* Reintroduce `<svelte:document>` ([#3310](https://github.com/sveltejs/svelte/issues/3310))
 
 ## 3.56.0
 
