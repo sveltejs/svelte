@@ -38,7 +38,6 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
-import is_dynamic from './render_dom/wrappers/shared/is_dynamic';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1392,11 +1391,12 @@ export default class Component {
 										module_dependencies.add(name);
 									}
 								}
-
+								const is_writable_or_mutated =
+									variable && (variable.writable || variable.mutated);
 								if (
 									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
-									(name[0] === '$' || variable)
+									(name[0] === '$' || is_writable_or_mutated)
 								) {
 									dependencies.add(name);
 								}
@@ -1419,19 +1419,6 @@ export default class Component {
 
 				const { expression } = node.body as ExpressionStatement;
 				const declaration = expression && (expression as AssignmentExpression).left;
-
-				const is_dependency_static = Array.from(dependencies).every(
-					dependency => dependency !== '$$props' && dependency !== '$$restProps' && !is_dynamic(this.var_lookup.get(dependency))
-				);
-
-				if (is_dependency_static) {
-					assignees.forEach(assignee => {
-						const variable = component.var_lookup.get(assignee);
-						if (variable) {
-							variable.is_reactive_static = true;
-						}
-					});
-				}
 
 				unsorted_reactive_declarations.push({
 					assignees,
