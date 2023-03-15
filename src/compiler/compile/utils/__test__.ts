@@ -2,7 +2,6 @@ import * as assert from 'assert';
 import get_name_from_filename from './get_name_from_filename';
 import {
 	is_contenteditable,
-	is_attr_contenteditable,
 	has_contenteditable_attr,
 	is_name_contenteditable,
 	get_contenteditable_attr,
@@ -50,18 +49,6 @@ describe('contenteditable', () => {
 			const attr = { name: 'contenteditable' } as Attribute;
 			const node = { name: 'a', attributes: [attr] } as Element;
 			assert.equal(is_contenteditable(node), true);
-		});
-	});
-
-	describe('is_attr_contenteditable', () => {
-		it('returns true if attribute is contenteditable', () => {
-			const attr = { name: 'contenteditable' } as Attribute;
-			assert.equal(is_attr_contenteditable(attr), true);
-		});
-		it('returns false if attribute is not contenteditable', () => {
-			const attr = { name: 'href' } as Attribute;
-			const actual = is_attr_contenteditable(attr);
-			assert.equal(actual, false);
 		});
 	});
 

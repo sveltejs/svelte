@@ -20,7 +20,7 @@ function is_input_or_textarea(node: Element): boolean {
  * Check if a given attribute is 'contenteditable'.
  * @param {Attribute} attribute A node.attribute
  */
-export function is_attr_contenteditable(attribute: Attribute): boolean {
+function is_attr_contenteditable(attribute: Attribute): boolean {
   return attribute.name === 'contenteditable';
 }
 
