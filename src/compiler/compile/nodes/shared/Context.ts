@@ -194,7 +194,7 @@ export function unpack_destructuring({
 						number_of_computed_props
 					});
 				}
-      }
+			}
 		});
 	}
 }

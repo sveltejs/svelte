@@ -7,36 +7,36 @@
 
 	function calculate(length, width, height) {
 		return { 
-      twoDimensions: {
-        bottomArea: length * width,
-        sideArea1: width * height,
-        sideArea2: length * height
-      },
-      threeDimensions: {
-        volume: length * width * height
-      }
-    };
+				twoDimensions: {
+				bottomArea: length * width,
+				sideArea1: width * height,
+				sideArea2: length * height
+			},
+			threeDimensions: {
+				volume: length * width * height
+			}
+		};
 	}
 
-  export let dimension = 'Dimensions';
-  function changeDimension() {
-    dimension = 'DIMENSIONS';
-  }
+	export let dimension = 'Dimensions';
+	function changeDimension() {
+		dimension = 'DIMENSIONS';
+	}
 
-  let area = 'Area';
+	let area = 'Area';
 </script>
 
 {#each boxes as { length, width, height }}
 	{@const {
-    [`two${dimension}`]: { 
-      i = 1, 
-      [`bottom${area}`]: bottom, 
-      [`side${area}${i++}`]: sideone, 
-      [`side${area}${i++}`]: sidetwo 
-    },
-    [`three${dimension}`]: {
-      volume
-    }
-  } = calculate(length, width, height)}
+		[`two${dimension}`]: { 
+			i = 1, 
+			[`bottom${area}`]: bottom, 
+			[`side${area}${i++}`]: sideone, 
+			[`side${area}${i++}`]: sidetwo 
+		},
+		[`three${dimension}`]: {
+			volume
+		}
+	} = calculate(length, width, height)}
 	<button on:click={changeDimension}>{bottom}, {sideone}, {sidetwo}, {volume}</button>
 {/each}
