@@ -35,7 +35,7 @@ export default class Document extends Node {
 		));
 
 		if (handlers_map.has('mouseenter') || handlers_map.has('mouseleave')) {
-			component.warn(this, compiler_warnings.avoid_mouse_events_on_document);
+			this.component.warn(this, compiler_warnings.avoid_mouse_events_on_document);
 		}
 	}
 }
