@@ -135,21 +135,21 @@ export function unpack_destructuring({
 				let new_modifier: (node: Node) => Node; 
 
 				if (property.computed) {
-          // e.g { [computedProperty]: ... }
+					// e.g { [computedProperty]: ... }
 					const property_name = `computed_property_${number_of_computed_props.n}`;
-          number_of_computed_props.n += 1;
+					number_of_computed_props.n += 1;
 
 					contexts.push({
 						type: 'ComputedProperty',
-            property_name,
-            key
+						property_name,
+						key
 					});
 
 					new_modifier = (node) => x`${modifier(node)}[${property_name}]`;
 					used_properties.push(x`${property_name}`);
 				} else if (key.type === 'Identifier') {
 					// e.g. { someProperty: ... }
-				  const property_name = key.name;
+					const property_name = key.name;
 					new_modifier = (node) => x`${modifier(node)}.${property_name}`;
 					used_properties.push(x`"${property_name}"`);
 				} else if (key.type === 'Literal') {

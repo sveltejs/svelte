@@ -99,11 +99,11 @@ class AwaitBlockBranch extends Wrapper {
 
 	render_get_context() {
 		const props = this.is_destructured ? this.value_contexts.map(prop => {
-			const to_ctx = name => this.renderer.reference(name);
 			if (prop.type === 'ComputedProperty') {
-        const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
-        return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
+				const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
+				return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
 			} else {
+				const to_ctx = name => this.renderer.reference(name);
 				return b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), to_ctx)};`;
 			}
 		}) : null;

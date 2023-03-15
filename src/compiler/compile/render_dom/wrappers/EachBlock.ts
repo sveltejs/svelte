@@ -365,13 +365,12 @@ export default class EachBlockWrapper extends Wrapper {
 		}
 
 		this.context_props = this.node.contexts.map(prop => {
-			const to_ctx = (name: string) => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]` : { type: 'Identifier', name } as Node;
-
 			if (prop.type === 'DestructuredVariable') {
+				const to_ctx = (name: string) => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]` : { type: 'Identifier', name } as Node;
 				return b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), to_ctx)};`;
 			} else {
-        const expression = new Expression(this.renderer.component, this.node, this.node.scope, prop.key);
-        return b`const ${prop.property_name} = ${expression.manipulate(block, 'child_ctx')};`;
+				const expression = new Expression(this.renderer.component, this.node, this.node.scope, prop.key);
+				return b`const ${prop.property_name} = ${expression.manipulate(block, 'child_ctx')};`;
 			}
 		});
 
