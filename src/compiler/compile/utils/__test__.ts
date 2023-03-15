@@ -2,7 +2,6 @@ import * as assert from 'assert';
 import get_name_from_filename from './get_name_from_filename';
 import {
 	is_contenteditable,
-	is_input_or_textarea,
 	is_attr_contenteditable,
 	has_contenteditable_attr,
 	is_name_contenteditable,
@@ -51,21 +50,6 @@ describe('contenteditable', () => {
 			const attr = { name: 'contenteditable' } as Attribute;
 			const node = { name: 'a', attributes: [attr] } as Element;
 			assert.equal(is_contenteditable(node), true);
-		});
-	});
-
-	describe('is_input_or_textarea', () => {
-		it('returns true if node is input', () => {
-			const node = { name: 'input' } as Element;
-			assert.equal(is_input_or_textarea(node), true);
-		});
-		it('returns true if node is textarea', () => {
-			const node = { name: 'textarea' } as Element;
-			assert.equal(is_input_or_textarea(node), true);
-		});
-		it('returns false if node is not input or textarea', () => {
-			const node = { name: 'div' } as Element;
-			assert.equal(is_input_or_textarea(node), false);
 		});
 	});
 

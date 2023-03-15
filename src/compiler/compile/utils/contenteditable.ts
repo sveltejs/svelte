@@ -12,7 +12,7 @@ export const CONTENTEDITABLE_BINDINGS = [
  * Returns true if node is an 'input' or 'textarea'.
  * @param {Element} node The element to be checked
  */
-export function is_input_or_textarea(node: Element): boolean {
+function is_input_or_textarea(node: Element): boolean {
   return node.name === 'textarea' || node.name === 'input';
 }
 
