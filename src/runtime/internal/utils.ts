@@ -191,12 +191,6 @@ export function action_destroyer(action_result) {
 }
 
 export function split_css_unit(value: number | string): [number, string] {
-	if (typeof value === 'number') {
-		return [value, 'px'];
-	}
-	const split = value?.match?.(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
-	if (split) {
-		return [parseFloat(split[1]), split[2] || 'px'];
-	}
-	return [parseFloat(value), 'px'];
+	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
+	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value, 'px'];
 }
