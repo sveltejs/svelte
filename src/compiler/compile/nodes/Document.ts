@@ -24,6 +24,10 @@ export default class Document extends Node {
 			}
 		});
 
+		this.validate();
+	}
+
+	private validate() {
 		const handlers_map = new Set();
 
 		this.handlers.forEach(handler => (

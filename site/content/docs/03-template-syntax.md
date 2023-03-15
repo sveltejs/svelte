@@ -1756,7 +1756,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on `document`.
 
-`<svelte:document>` also has to appear at the top level of your component.
+As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:document
@@ -1775,7 +1775,7 @@ Similarly to `<svelte:window>`, this element allows you to add listeners to even
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
-As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
+As with `<svelte:window>` and `<svelte:document>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:body
@@ -1796,7 +1796,7 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-As with `<svelte:window>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
+As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:head>
