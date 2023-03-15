@@ -63,7 +63,7 @@ interface BaseExpressionDirective extends BaseDirective {
 }
 
 export interface Element extends BaseNode {
-	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Document' | 'Body';
 	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
 	name: string;
 }
