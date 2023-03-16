@@ -691,7 +691,12 @@ When the value of an `<option>` matches its text content, the attribute can be o
 
 ---
 
-Elements with the `contenteditable` attribute support `innerHTML` and `textContent` bindings.
+Elements with the `contenteditable` attribute support the following bindings:
+- [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
+- [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
+- [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
+
+There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
 ```sv
 <div contenteditable="true" bind:innerHTML={html}></div>

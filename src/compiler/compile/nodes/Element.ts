@@ -11,6 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
+import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
 import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -1011,14 +1012,8 @@ export default class Element extends Node {
 				if (this.name !== 'img') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
 				}
-			} else if (
-				name === 'textContent' ||
-				name === 'innerHTML'
-			) {
-				const contenteditable = this.attributes.find(
-					(attribute: Attribute) => attribute.name === 'contenteditable'
-				);
-
+			} else if (is_name_contenteditable(name)) {
+				const contenteditable = get_contenteditable_attr(this);
 				if (!contenteditable) {
 					return component.error(binding, compiler_errors.missing_contenteditable_attribute);
 				} else if (contenteditable && !contenteditable.is_static) {
