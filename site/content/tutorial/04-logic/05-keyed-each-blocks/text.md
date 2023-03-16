@@ -4,7 +4,7 @@ title: Keyed each blocks
 
 By default, when you modify the value of an `each` block, it will add and remove items at the *end* of the block, and update any values that have changed. That might not be what you want.
 
-It's easier to show why than to explain. Click the 'Remove first thing' button a few times, and notice what happens: it does not remove the first `<Thing>` component, but rather the *last* DOM node. Then it updates the `name` value in the remaining DOM nodes, but not the emoji. 
+It's easier to show why than to explain. Click to expand the `Console`, then click the 'Remove first thing' button a few times, and notice what happens: it does not remove the first `<Thing>` component, but rather the *last* DOM node. Then it updates the `name` value in the remaining DOM nodes, but not the emoji. 
 
 Instead, we'd like to remove only the first `<Thing>` component and its DOM node, and leave the others unaffected.
 

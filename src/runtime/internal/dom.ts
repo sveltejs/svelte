@@ -14,7 +14,7 @@ export function end_hydrating() {
 
 type NodeEx = Node & {
 	claim_order?: number,
-	hydrate_init? : true,
+	hydrate_init?: true,
 	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
@@ -36,7 +36,7 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 
-	type NodeEx2 = NodeEx & {claim_order: number};
+	type NodeEx2 = NodeEx & { claim_order: number };
 
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
@@ -261,7 +261,7 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -269,22 +269,30 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 export function trusted(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
@@ -333,6 +341,10 @@ export function set_custom_element_data(node, prop, value) {
 	}
 }
 
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
+}
+
 export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
@@ -346,6 +358,53 @@ export function get_binding_group_value(group, __value, checked) {
 		value.delete(__value);
 	}
 	return Array.from(value);
+}
+
+export function init_binding_group(group: HTMLInputElement[]) {
+	let _inputs: HTMLInputElement[];
+	return {
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			_inputs.forEach(input => group.push(input));
+		},
+
+		/* remove */ r() {
+			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+		}
+	};
+}
+
+export function init_binding_group_dynamic(group, indexes: number[]) {
+	let _group: HTMLInputElement[] = get_binding_group(group);
+	let _inputs: HTMLInputElement[];
+	function get_binding_group(group) {
+		for (let i = 0; i < indexes.length; i++) {
+			group = group[indexes[i]] = group[indexes[i]] || [];
+		}
+		return group;
+	}
+	function push() {
+		_inputs.forEach(input => _group.push(input));
+	}
+	function remove() {
+		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+	}
+	return {
+		/* update */ u(new_indexes: number[]) {
+			indexes = new_indexes;
+			const new_group = get_binding_group(group);
+			if (new_group !== _group) {
+				remove();
+				_group = new_group;
+				push();
+			}
+		},
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			push();
+		},
+		/* remove */ r: remove
+	};
 }
 
 export function to_number(value) {
@@ -381,7 +440,7 @@ export function children(element: Element) {
 
 function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
-		nodes.claim_info = {last_index: 0, total_claimed: 0};
+		nodes.claim_info = { last_index: 0, total_claimed: 0 };
 	}
 }
 
@@ -548,7 +607,7 @@ export function set_style(node, key, value, important) {
 	}
 }
 
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -558,7 +617,9 @@ export function select_option(select, value) {
 		}
 	}
 
-	select.selectedIndex = -1; // no option should be selected
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 export function select_options(select, value) {
@@ -569,7 +630,7 @@ export function select_options(select, value) {
 }
 
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || select.options[0];
+	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 
@@ -625,6 +686,10 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
 			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 
@@ -650,7 +715,7 @@ export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
+export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, bubbles, cancelable, detail);
 	return e;
@@ -688,7 +753,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -708,8 +773,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -718,7 +784,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {

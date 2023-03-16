@@ -2,6 +2,7 @@ import Wrapper from './shared/Wrapper';
 import AwaitBlock from './AwaitBlock';
 import Body from './Body';
 import DebugTag from './DebugTag';
+import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element/index';
 import Head from './Head';
@@ -28,6 +29,7 @@ const wrappers = {
 	Body,
 	Comment: null,
 	DebugTag,
+	Document,
 	EachBlock,
 	Element,
 	Head,

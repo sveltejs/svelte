@@ -21,6 +21,7 @@ import SlotTemplate from '../../../nodes/SlotTemplate';
 import { is_head } from '../shared/is_head';
 import compiler_warnings from '../../../compiler_warnings';
 import { namespaces } from '../../../../utils/namespaces';
+import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ignore';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
 
@@ -111,9 +112,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			return;
 		}
 
+    const ignores = extract_ignores_above_node(this.node);  
+    this.renderer.component.push_ignores(ignores);
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
+    this.renderer.component.pop_ignores();
 	}
 
 	render(
@@ -414,6 +418,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			const switch_props = block.get_unique_name('switch_props');
 
 			const snippet = this.node.expression.manipulate(block);
+			const dependencies = this.node.expression.dynamic_dependencies();
 
 			if (has_css_custom_properties) {
 				this.set_css_custom_properties(block, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
@@ -464,8 +469,13 @@ export default class InlineComponentWrapper extends Wrapper {
 					? b`@insert(${tmp_anchor}.parentNode, ${css_custom_properties_wrapper}, ${tmp_anchor});`
 					: b`@insert(${parent_node}, ${css_custom_properties_wrapper}, ${tmp_anchor});`);
 
+			let update_condition = x`${switch_value} !== (${switch_value} = ${snippet})`;
+			if (dependencies.length > 0) {
+				update_condition = x`${block.renderer.dirty(dependencies)} && ${update_condition}`;
+			}
+
 			block.chunks.update.push(b`
-				if (${switch_value} !== (${switch_value} = ${snippet})) {
+				if (${update_condition}) {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};

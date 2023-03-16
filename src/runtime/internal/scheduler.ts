@@ -5,10 +5,10 @@ export const dirty_components = [];
 export const intros = { enabled: false };
 
 export const binding_callbacks = [];
-const render_callbacks = [];
+let render_callbacks = [];
 const flush_callbacks = [];
 
-const resolved_promise = Promise.resolve();
+const resolved_promise = /* @__PURE__ */ Promise.resolve();
 let update_scheduled = false;
 
 export function schedule_update() {
@@ -52,17 +52,32 @@ export function add_flush_callback(fn) {
 const seen_callbacks = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
+	// Do not reenter flush while dirty components are updated, as this can
+	// result in an infinite loop. Instead, let the inner flush handle it.
+	// Reentrancy is ok afterwards for bindings etc.
+	if (flushidx !== 0) {
+		return;
+	}
+
 	const saved_component = current_component;
 
 	do {
 		// first, call beforeUpdate functions
 		// and update components
-		while (flushidx < dirty_components.length) {
-			const component = dirty_components[flushidx];
-			flushidx++;
-			set_current_component(component);
-			update(component.$$);
+		try {
+			while (flushidx < dirty_components.length) {
+				const component = dirty_components[flushidx];
+				flushidx++;
+				set_current_component(component);
+				update(component.$$);
+			}
+		} catch (e) {
+			// reset dirty state to not end up in a deadlocked state and then rethrow
+			dirty_components.length = 0;
+			flushidx = 0;
+			throw e;
 		}
+
 		set_current_component(null);
 
 		dirty_components.length = 0;
@@ -106,4 +121,15 @@ function update($$) {
 
 		$$.after_update.forEach(add_render_callback);
 	}
+}
+
+/**
+ * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
+ */
+export function flush_render_callbacks(fns: Function[]): void {
+	const filtered = [];
+	const targets = [];
+	render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+	targets.forEach((c) => c());
+	render_callbacks = filtered;
 }
