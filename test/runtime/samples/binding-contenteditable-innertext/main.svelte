@@ -2,7 +2,5 @@
 	export let name;
 </script>
 
-<editor contenteditable="true" bind:innerText={name}>
-	<b>world</b>
-</editor>
-<p>hello {@html name}</p>
+<editor contenteditable="true" bind:innerText={name} />
+<p>hello {name}</p>

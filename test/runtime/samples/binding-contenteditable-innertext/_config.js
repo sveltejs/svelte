@@ -1,40 +1,25 @@
 export default {
-	html: `
-		<editor contenteditable="true"><b>world</b></editor>
-		<p>hello <b>world</b></p>
-	`,
+	props: {
+		name: 'world'
+	},
 
 	ssrHtml: `
-		<editor contenteditable="true"><b>world</b></editor>
-		<p>hello undefined</p>
+		<editor contenteditable="true">world</editor>
+		<p>hello world</p>
 	`,
 
 	async test({ assert, component, target, window }) {
-		assert.equal(component.name, '<b>world</b>');
-
+		// JSDom doesn't support innerText yet, so the test is not ideal
+		// https://github.com/jsdom/jsdom/issues/1245
 		const el = target.querySelector('editor');
+		assert.equal(el.innerText, 'world');
 
-		el.innerHTML = 'every<span>body</span>';
-
-		// No updates to data yet
-		assert.htmlEqual(target.innerHTML, `
-			<editor contenteditable="true">every<span>body</span></editor>
-			<p>hello <b>world</b></p>
-		`);
-
-		// Handle user input
 		const event = new window.Event('input');
+		el.innerText = 'everybody';
 		await el.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
-			<editor contenteditable="true">every<span>body</span></editor>
-			<p>hello every<span>body</span></p>
-		`);
+		assert.equal(component.name, 'everybody');
 
-		component.name = 'good<span>bye</span>';
-		assert.equal(el.innerHTML, 'good<span>bye</span>');
-		assert.htmlEqual(target.innerHTML, `
-			<editor contenteditable="true">good<span>bye</span></editor>
-			<p>hello good<span>bye</span></p>
-		`);
+		component.name = 'goodbye';
+		assert.equal(el.innerText, 'goodbye');
 	}
 };
