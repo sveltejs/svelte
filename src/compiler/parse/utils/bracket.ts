@@ -1,7 +1,7 @@
-const SQUARE_BRACKET_OPEN = "[".charCodeAt(0);
-const SQUARE_BRACKET_CLOSE = "]".charCodeAt(0);
-const CURLY_BRACKET_OPEN = "{".charCodeAt(0);
-const CURLY_BRACKET_CLOSE = "}".charCodeAt(0);
+const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
+const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
+const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
+const CURLY_BRACKET_CLOSE = '}'.charCodeAt(0);
 
 export function is_bracket_open(code) {
 	return code === SQUARE_BRACKET_OPEN || code === CURLY_BRACKET_OPEN;

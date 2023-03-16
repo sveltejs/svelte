@@ -9,7 +9,7 @@ export default {
 		promise
 	},
 
-	html: ``,
+	html: '',
 
 	async test({ assert, component, target }) {
 		component.condition = false;
@@ -17,6 +17,6 @@ export default {
 		fulfil();
 		await new Promise(f => setTimeout(f, 0));
 
-		assert.htmlEqual(target.innerHTML, ``);
+		assert.htmlEqual(target.innerHTML, '');
 	}
 };

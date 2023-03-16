@@ -1,4 +1,4 @@
 export default {
-	html: `<text>hello world</text>`,
-	preserveIdentifiers: true,
+	html: '<svg><text>hello world</text></svg>',
+	preserveIdentifiers: true
 };

@@ -4,8 +4,8 @@ export default {
 		things: ['a', 'b']
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target }) {
 		component.x = false;
 		assert.htmlEqual(target.innerHTML, '');
-	},
+	}
 };

@@ -1,6 +1,6 @@
 export default {
 	props: {
-		titles: [{ name: 'a', }, { name: 'b' }, { name: 'c' }]
+		titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
 	},
 
 	html: `

@@ -10,6 +10,10 @@
 		color: blue;
 	}
 
+	:global(div.foo) {
+		color: pink;
+	}
+
 	:global(.foo) {
 		font-weight: bold;
 	}

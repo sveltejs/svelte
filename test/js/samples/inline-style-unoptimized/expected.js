@@ -54,10 +54,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { key } = $$props;
 	let { value } = $$props;
 
-	$$self.$set = $$props => {
-		if ("style" in $$props) $$invalidate(0, style = $$props.style);
-		if ("key" in $$props) $$invalidate(1, key = $$props.key);
-		if ("value" in $$props) $$invalidate(2, value = $$props.value);
+	$$self.$$set = $$props => {
+		if ('style' in $$props) $$invalidate(0, style = $$props.style);
+		if ('key' in $$props) $$invalidate(1, key = $$props.key);
+		if ('value' in $$props) $$invalidate(2, value = $$props.value);
 	};
 
 	return [style, key, value];

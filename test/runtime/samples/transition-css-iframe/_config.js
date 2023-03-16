@@ -1,7 +1,7 @@
 export default {
 	skip_if_ssr: true,
 
-	async test({ assert, component, target, window, raf }) {
+	async test({ assert, component, target, raf }) {
 		const frame = target.querySelector('iframe');
 		await Promise.resolve();
 
@@ -14,5 +14,5 @@ export default {
 
 		raf.tick(26);
 		assert.ok(~div.style.animation.indexOf('25ms'));
-	},
+	}
 };

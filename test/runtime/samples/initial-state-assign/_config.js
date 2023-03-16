@@ -3,5 +3,5 @@ export default {
 	html: `
 		"foo"
 		"bar"
-	`,
+	`
 };

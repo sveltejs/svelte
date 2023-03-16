@@ -1,22 +1,22 @@
-<style>
-	button {
-		height: 4rem;
-		width: 8rem;
-		background-color: #aaa;
-		border-color: #f1c40f;
-		color: #f1c40f;
-		font-size: 1.25rem;
-		background-image: linear-gradient(45deg, #f1c40f 50%, transparent 50%);
-		background-position: 100%;
-		background-size: 400%;
-		transition: background 300ms ease-in-out;
-	}
-	button:hover {
-		background-position: 0;
-		color: #aaa;
-	}
-</style>
-
 <button>
 	Click me
 </button>
+
+<style>
+	button {
+		background: #E2E8F0;
+		color: #64748B;
+		border: unset;
+		border-radius: 6px;
+		padding: .75rem 1.5rem;
+		cursor: pointer;
+	}
+	button:hover {
+		background: #CBD5E1;
+		color: #475569;
+	}
+	button:focus {
+		background: #94A3B8;
+		color: #F1F5F9;
+	}
+</style>

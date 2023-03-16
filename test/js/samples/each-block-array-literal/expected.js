@@ -63,7 +63,9 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			for (let i = 0; i < 5; i += 1) {
-				each_blocks[i].m(target, anchor);
+				if (each_blocks[i]) {
+					each_blocks[i].m(target, anchor);
+				}
 			}
 
 			insert(target, each_1_anchor, anchor);
@@ -106,12 +108,12 @@ function instance($$self, $$props, $$invalidate) {
 	let { d } = $$props;
 	let { e } = $$props;
 
-	$$self.$set = $$props => {
-		if ("a" in $$props) $$invalidate(0, a = $$props.a);
-		if ("b" in $$props) $$invalidate(1, b = $$props.b);
-		if ("c" in $$props) $$invalidate(2, c = $$props.c);
-		if ("d" in $$props) $$invalidate(3, d = $$props.d);
-		if ("e" in $$props) $$invalidate(4, e = $$props.e);
+	$$self.$$set = $$props => {
+		if ('a' in $$props) $$invalidate(0, a = $$props.a);
+		if ('b' in $$props) $$invalidate(1, b = $$props.b);
+		if ('c' in $$props) $$invalidate(2, c = $$props.c);
+		if ('d' in $$props) $$invalidate(3, d = $$props.d);
+		if ('e' in $$props) $$invalidate(4, e = $$props.e);
 	};
 
 	return [a, b, c, d, e];

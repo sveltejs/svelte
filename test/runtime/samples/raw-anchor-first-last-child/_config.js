@@ -1,6 +1,6 @@
 export default {
 	props: {
-		raw: `<span>foo</span>`
+		raw: '<span>foo</span>'
 	},
 
 	test({ assert, component, target }) {
@@ -8,6 +8,6 @@ export default {
 		assert.ok(!span.previousSibling);
 		assert.ok(!span.nextSibling);
 
-		component.raw = `<span>bar</span>`;
+		component.raw = '<span>bar</span>';
 	}
 };

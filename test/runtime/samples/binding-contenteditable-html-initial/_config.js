@@ -36,5 +36,5 @@ export default {
 			<editor contenteditable="true">good<span>bye</span></editor>
 			<p>hello good<span>bye</span></p>
 		`);
-	},
+	}
 };

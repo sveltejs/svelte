@@ -1,8 +1,8 @@
 export default {
 	props: {
 		props: {
-			a: 1,
-		},
+			a: 1
+		}
 	},
 
 	html: `
@@ -11,9 +11,9 @@ export default {
 
 	test({ assert, component, target }) {
 		component.props = {
-			a: 2,
+			a: 2
 		};
 
-		assert.htmlEqual(target.innerHTML, `<p>a: 2</p>`);
-	},
+		assert.htmlEqual(target.innerHTML, '<p>a: 2</p>');
+	}
 };

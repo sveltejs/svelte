@@ -16,8 +16,8 @@ import {
 	transition_out
 } from "svelte/internal";
 
-import Foo from "./Foo.svelte";
-import Bar from "./Bar.svelte";
+import Foo from './Foo.svelte';
+import Bar from './Bar.svelte';
 
 function create_fragment(ctx) {
 	let foo;

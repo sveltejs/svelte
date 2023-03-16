@@ -1,9 +1,9 @@
 export default {
 	warnings: [
 		{
-			filename: "SvelteComponent.svelte",
-			code: `css-unused-selector`,
-			message: "Unused CSS selector",
+			filename: 'SvelteComponent.svelte',
+			code: 'css-unused-selector',
+			message: 'Unused CSS selector ".foo"',
 			start: {
 				line: 4,
 				column: 1,
@@ -25,9 +25,9 @@ export default {
 		},
 
 		{
-			filename: "SvelteComponent.svelte",
-			code: `css-unused-selector`,
-			message: "Unused CSS selector",
+			filename: 'SvelteComponent.svelte',
+			code: 'css-unused-selector',
+			message: 'Unused CSS selector ".baz"',
 			start: {
 				line: 4,
 				column: 13,

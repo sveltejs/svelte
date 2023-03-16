@@ -1,9 +1,9 @@
 export default {
-	html: `<div>undefinedxundefined</div>`,
+	html: '<div>undefinedxundefined</div>',
 
 	skip_if_ssr: true, // there's some kind of weird bug with this test... it compiles with the wrong require.extensions hook for some bizarre reason
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const event = new window.Event('resize');
 
 		Object.defineProperties(window, {

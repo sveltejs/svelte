@@ -18,9 +18,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			details = element("details");
-
-			details.innerHTML = `<summary>summary</summary>content
-`;
+			details.innerHTML = `<summary>summary</summary>content`;
 		},
 		m(target, anchor) {
 			insert(target, details, anchor);
@@ -54,8 +52,8 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, open);
 	}
 
-	$$self.$set = $$props => {
-		if ("open" in $$props) $$invalidate(0, open = $$props.open);
+	$$self.$$set = $$props => {
+		if ('open' in $$props) $$invalidate(0, open = $$props.open);
 	};
 
 	return [open, details_toggle_handler];

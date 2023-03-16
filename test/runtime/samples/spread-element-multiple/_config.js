@@ -2,12 +2,12 @@ export default {
 	props: {
 		a: {
 			'data-one': 1,
-			'data-two': 2,
+			'data-two': 2
 		},
 		c: {
-			'data-b': 'overridden',
+			'data-b': 'overridden'
 		},
-		d: 'deeeeee',
+		d: 'deeeeee'
 	},
 
 	html: `
@@ -25,7 +25,7 @@ export default {
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<div data-one="10" data-b="b" data-c="new" data-d="DEEEEEE" >test</div>`
+			'<div data-one="10" data-b="b" data-c="new" data-d="DEEEEEE" >test</div>'
 		);
-	},
+	}
 };

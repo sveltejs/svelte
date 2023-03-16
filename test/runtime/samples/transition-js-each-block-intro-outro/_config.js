@@ -4,7 +4,7 @@ export default {
 		things: [ 'a', 'b', 'c' ]
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		component.visible = true;
 		const divs = target.querySelectorAll('div');
 		assert.equal(divs[0].foo, 0);

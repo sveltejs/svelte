@@ -1,15 +1,12 @@
 [{
 	"code": "invalid-binding",
 	"message": "Cannot bind to a variable declared with the let: directive",
-	"pos": 52,
 	"start": {
 		"line": 6,
-		"column": 8,
-		"character": 52
+		"column": 8
 	},
 	"end": {
 		"line": 6,
-		"column": 24,
-		"character": 68
+		"column": 24
 	}
 }]

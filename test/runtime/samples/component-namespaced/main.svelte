@@ -1,5 +1,5 @@
 <script>
-	import Components from './components.js';
+	import { Components } from './components.svelte';
 
 	export let a;
 </script>

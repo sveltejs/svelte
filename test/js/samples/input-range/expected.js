@@ -60,8 +60,8 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, value);
 	}
 
-	$$self.$set = $$props => {
-		if ("value" in $$props) $$invalidate(0, value = $$props.value);
+	$$self.$$set = $$props => {
+		if ('value' in $$props) $$invalidate(0, value = $$props.value);
 	};
 
 	return [value, input_change_input_handler];

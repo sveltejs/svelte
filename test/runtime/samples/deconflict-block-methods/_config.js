@@ -2,5 +2,5 @@ export default {
 	compileOptions: {
 		dev: true
 	},
-	html: `<div>deconflicted</div>`
+	html: '<div>deconflicted</div>'
 };

@@ -62,7 +62,7 @@ function instance($$self, $$props, $$invalidate) {
 		}
 	};
 
-	return [x];
+	return [x, y];
 }
 
 class Component extends SvelteComponent {

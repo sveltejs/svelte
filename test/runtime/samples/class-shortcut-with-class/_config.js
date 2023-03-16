@@ -5,9 +5,9 @@ export default {
 		myClass: 'one two'
 	},
 
-	html: `<div class="one two foo bar"></div>`,
+	html: '<div class="one two foo bar"></div>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, component, target }) {
 		component.foo = false;
 
 		assert.htmlEqual(target.innerHTML, `

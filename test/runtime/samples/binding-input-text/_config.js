@@ -1,6 +1,6 @@
 export default {
 	props: {
-		name: 'world',
+		name: 'world'
 	},
 
 	html: `
@@ -33,5 +33,5 @@ export default {
 			<input>
 			<p>hello goodbye</p>
 		`);
-	},
+	}
 };

@@ -5,8 +5,8 @@ export default {
 	`,
 
 	async test({ assert, target, window }) {
-		const btn = target.querySelector("button");
-		const clickEvent = new window.MouseEvent("click");
+		const btn = target.querySelector('button');
+		const clickEvent = new window.MouseEvent('click');
 
 		await btn.dispatchEvent(clickEvent);
 

@@ -5,6 +5,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.names = component.names.reverse();
-		assert.htmlEqual(target.innerHTML, `JillJohn`);
+		assert.htmlEqual(target.innerHTML, 'JillJohn');
 	}
 };

@@ -46,6 +46,44 @@
 	}
 </script>
 
+<div class='board'>
+	<input
+		class="new-todo"
+		placeholder="what needs to be done?"
+		on:keydown="{event => event.key === 'Enter' && add(event.target)}"
+	>
+
+	<div class='left'>
+		<h2>todo</h2>
+		{#each todos.filter(t => !t.done) as todo (todo.id)}
+			<label
+				in:receive="{{key: todo.id}}"
+				out:send="{{key: todo.id}}"
+				animate:flip
+			>
+				<input type=checkbox bind:checked={todo.done}>
+				{todo.description}
+				<button on:click="{() => remove(todo)}">x</button>
+			</label>
+		{/each}
+	</div>
+
+	<div class='right'>
+		<h2>done</h2>
+		{#each todos.filter(t => t.done) as todo (todo.id)}
+			<label
+				in:receive="{{key: todo.id}}"
+				out:send="{{key: todo.id}}"
+				animate:flip
+			>
+				<input type=checkbox bind:checked={todo.done}>
+				{todo.description}
+				<button on:click="{() => remove(todo)}">x</button>
+			</label>
+		{/each}
+	</div>
+</div>
+
 <style>
 	.new-todo {
 		font-size: 1.4em;
@@ -107,41 +145,3 @@
 		opacity: 1;
 	}
 </style>
-
-<div class='board'>
-	<input
-		class="new-todo"
-		placeholder="what needs to be done?"
-		on:keydown="{event => event.key === 'Enter' && add(event.target)}"
-	>
-
-	<div class='left'>
-		<h2>todo</h2>
-		{#each todos.filter(t => !t.done) as todo (todo.id)}
-			<label
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-				animate:flip
-			>
-				<input type=checkbox bind:checked={todo.done}>
-				{todo.description}
-				<button on:click="{() => remove(todo)}">x</button>
-			</label>
-		{/each}
-	</div>
-
-	<div class='right'>
-		<h2>done</h2>
-		{#each todos.filter(t => t.done) as todo (todo.id)}
-			<label
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-				animate:flip
-			>
-				<input type=checkbox bind:checked={todo.done}>
-				{todo.description}
-				<button on:click="{() => remove(todo)}">x</button>
-			</label>
-		{/each}
-	</div>
-</div>

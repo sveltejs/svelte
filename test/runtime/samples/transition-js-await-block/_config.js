@@ -1,9 +1,7 @@
 let fulfil;
-let reject;
 
-const promise = new Promise((f, r) => {
+const promise = new Promise((f) => {
 	fulfil = f;
-	reject = r;
 });
 
 export default {

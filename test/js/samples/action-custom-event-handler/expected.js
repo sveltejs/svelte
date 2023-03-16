@@ -55,8 +55,8 @@ function instance($$self, $$props, $$invalidate) {
 	let { bar } = $$props;
 	const foo_function = () => handleFoo(bar);
 
-	$$self.$set = $$props => {
-		if ("bar" in $$props) $$invalidate(0, bar = $$props.bar);
+	$$self.$$set = $$props => {
+		if ('bar' in $$props) $$invalidate(0, bar = $$props.bar);
 	};
 
 	return [bar, foo_function];

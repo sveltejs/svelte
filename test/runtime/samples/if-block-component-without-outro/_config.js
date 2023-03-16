@@ -1,6 +1,6 @@
 export default {
 	props: {
-		foo: true,
+		foo: true
 	},
 
 	html: '<div>A wild component appears</div>',
@@ -8,5 +8,5 @@ export default {
 	test({ assert, component, target }) {
 		component.foo = false;
 		assert.htmlEqual(target.innerHTML, '');
-	},
+	}
 };

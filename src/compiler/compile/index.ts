@@ -1,4 +1,3 @@
-import { assign } from '../../runtime/internal/utils';
 import Stats from '../Stats';
 import parse from '../parse/index';
 import render_dom from './render_dom/index';
@@ -7,12 +6,17 @@ import { CompileOptions, Warning } from '../interfaces';
 import Component from './Component';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_name_from_filename from './utils/get_name_from_filename';
+import { valid_namespaces } from '../utils/namespaces';
 
 const valid_options = [
 	'format',
 	'name',
 	'filename',
+	'sourcemap',
+	'enableSourcemap',
 	'generate',
+	'errorMode',
+	'varsReport',
 	'outputFilename',
 	'cssOutputFilename',
 	'sveltePath',
@@ -22,15 +26,28 @@ const valid_options = [
 	'hydratable',
 	'legacy',
 	'customElement',
+	'namespace',
 	'tag',
 	'css',
 	'loopGuardTimeout',
 	'preserveComments',
-	'preserveWhitespace'
+	'preserveWhitespace',
+	'cssHash'
 ];
 
+const valid_css_values = [
+	true,
+	false,
+	'injected',
+	'external',
+	'none'
+];
+
+const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
+const regex_starts_with_lowercase_character = /^[a-z]/;
+
 function validate_options(options: CompileOptions, warnings: Warning[]) {
-	const { name, filename, loopGuardTimeout, dev } = options;
+	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
 
 	Object.keys(options).forEach(key => {
 		if (!valid_options.includes(key)) {
@@ -42,33 +59,59 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 		}
 	});
 
-	if (name && !/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(name)) {
+	if (name && !regex_valid_identifier.test(name)) {
 		throw new Error(`options.name must be a valid identifier (got '${name}')`);
 	}
 
-	if (name && /^[a-z]/.test(name)) {
-		const message = `options.name should be capitalised`;
+	if (name && regex_starts_with_lowercase_character.test(name)) {
+		const message = 'options.name should be capitalised';
 		warnings.push({
-			code: `options-lowercase-name`,
+			code: 'options-lowercase-name',
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
 	}
 
 	if (loopGuardTimeout && !dev) {
 		const message = 'options.loopGuardTimeout is for options.dev = true only';
 		warnings.push({
-			code: `options-loop-guard-timeout`,
+			code: 'options-loop-guard-timeout',
 			message,
 			filename,
-			toString: () => message,
+			toString: () => message
 		});
+	}
+
+	if (valid_css_values.indexOf(css) === -1) {
+		throw new Error(`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`);
+	}
+
+	if (css === true || css === false) {
+		options.css = css === true ? 'injected' : 'external';
+		// possibly show this warning once we decided how Svelte 4 looks like
+		// const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
+		// warnings.push({
+		// 	code: 'options-css-boolean-deprecated',
+		// 	message,
+		// 	filename,
+		// 	toString: () => message
+		// });
+		// }
+	}
+
+	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
+		const match = fuzzymatch(namespace, valid_namespaces);
+		if (match) {
+			throw new Error(`Invalid namespace '${namespace}' (did you mean '${match}'?)`);
+		} else {
+			throw new Error(`Invalid namespace '${namespace}'`);
+		}
 	}
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = assign({ generate: 'dom', dev: false }, options);
+	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' }, options);
 
 	const stats = new Stats();
 	const warnings = [];

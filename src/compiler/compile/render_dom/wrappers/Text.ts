@@ -5,6 +5,8 @@ import Wrapper from './shared/Wrapper';
 import { x } from 'code-red';
 import { Identifier } from 'estree';
 
+const regex_non_whitespace_characters = /[\S\u00A0]/;
+
 export default class TextWrapper extends Wrapper {
 	node: Text;
 	data: string;
@@ -27,27 +29,28 @@ export default class TextWrapper extends Wrapper {
 
 	use_space() {
 		if (this.renderer.component.component_options.preserveWhitespace) return false;
-		if (/[\S\u00A0]/.test(this.data)) return false;
+		if (regex_non_whitespace_characters.test(this.data)) return false;
 
-		let node = this.parent && this.parent.node;
-		while (node) {
-			if (node.type === 'Element' && node.name === 'pre') {
-				return false;
-			}
-			node = node.parent;
-		}
-
-		return true;
+		return !this.node.within_pre();
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		if (this.skip) return;
 		const use_space = this.use_space();
 
+		const string_literal = {
+			type: 'Literal',
+			value: this.data,
+			loc: {
+				start: this.renderer.locate(this.node.start),
+				end: this.renderer.locate(this.node.end)
+			}
+		};
+
 		block.add_element(
 			this.var,
-			use_space ? x`@space()` : x`@text("${this.data}")`,
-			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, "${this.data}")`),
+			use_space ? x`@space()` : x`@text(${string_literal})`,
+			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, ${string_literal})`),
 			parent_node as Identifier
 		);
 	}

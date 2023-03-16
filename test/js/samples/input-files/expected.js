@@ -49,8 +49,8 @@ function instance($$self, $$props, $$invalidate) {
 		$$invalidate(0, files);
 	}
 
-	$$self.$set = $$props => {
-		if ("files" in $$props) $$invalidate(0, files = $$props.files);
+	$$self.$$set = $$props => {
+		if ('files' in $$props) $$invalidate(0, files = $$props.files);
 	};
 
 	return [files, input_change_handler];

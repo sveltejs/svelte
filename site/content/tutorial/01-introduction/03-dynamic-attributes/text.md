@@ -2,9 +2,9 @@
 title: Dynamic attributes
 ---
 
-Just like you can use curly braces to control text, you can use them to control element attributes.
+You can use curly braces to control element attributes, just like you use them to control text.
 
-Our image is missing a `src` — let's add one:
+Our image is missing a `src` attribute — let's add one:
 
 ```html
 <img src={src}>
@@ -24,7 +24,6 @@ In this case, we're missing the `alt` attribute that describes the image for peo
 
 We can use curly braces *inside* attributes. Try changing it to `"{name} dances."` — remember to declare a `name` variable in the `<script>` block.
 
-
 ## Shorthand attributes
 
 It's not uncommon to have an attribute where the name and value are the same, like `src={src}`. Svelte gives us a convenient shorthand for these cases:
@@ -32,4 +31,3 @@ It's not uncommon to have an attribute where the name and value are the same, li
 ```html
 <img {src} alt="A man dances.">
 ```
-

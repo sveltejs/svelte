@@ -3,13 +3,10 @@
 	"message": "An element can only have one 'animate' directive",
 	"start": {
 		"line": 7,
-		"column": 18,
-		"character": 108
+		"column": 18
 	},
 	"end": {
 		"line": 7,
-		"column": 29,
-		"character": 119
-	},
-	"pos": 108
+		"column": 29
+	}
 }]

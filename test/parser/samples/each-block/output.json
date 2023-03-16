@@ -57,10 +57,10 @@
 					}
 				],
 				"context": {
-					"start": 18,
-					"end": 24,
 					"type": "Identifier",
-					"name": "animal"
+					"name": "animal",
+					"start": 18,
+					"end": 24
 				}
 			}
 		]

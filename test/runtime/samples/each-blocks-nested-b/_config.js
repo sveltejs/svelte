@@ -28,8 +28,8 @@ export default {
 			}
 		]
 	},
-	html: `<p>animals: aardvark</p><p>animals: buffalo</p><p>animals: chinchilla</p><!----><p>countries: albania</p><p>countries: brazil</p><p>countries: china</p><!----><p>people: alice</p><p>people: bob</p><p>people: carol</p><p>people: dave</p><!----><!---->`,
-	test({ assert, component, target }) {
+	html: '<p>animals: aardvark</p><p>animals: buffalo</p><p>animals: chinchilla</p><!----><p>countries: albania</p><p>countries: brazil</p><p>countries: china</p><!----><p>people: alice</p><p>people: bob</p><p>people: carol</p><p>people: dave</p><!----><!---->',
+	test() {
 		// TODO
 	}
 };

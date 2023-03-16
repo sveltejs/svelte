@@ -11,7 +11,7 @@ export default {
 		<div d="4" e="5" foo="1"></div>
 		<button></button><button></button><button></button><button></button>
 	`,
-	async test({ assert, target, window, }) {
+	async test({ assert, target, window }) {
 		const [btn1, btn2, btn3, btn4] = target.querySelectorAll('button');
 		const clickEvent = new window.MouseEvent('click');
 

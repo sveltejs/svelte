@@ -23,7 +23,7 @@ export default {
 		visible: false
 	},
 
-	html: ``,
+	html: '',
 
 	async test({ assert, component, target }) {
 		assert.equal(subscribers.length, 0);

@@ -44,10 +44,10 @@ function instance($$self, $$props, $$invalidate) {
 	let { x } = $$props;
 	let { y } = $$props;
 
-	$$self.$set = $$props => {
-		if ("color" in $$props) $$invalidate(0, color = $$props.color);
-		if ("x" in $$props) $$invalidate(1, x = $$props.x);
-		if ("y" in $$props) $$invalidate(2, y = $$props.y);
+	$$self.$$set = $$props => {
+		if ('color' in $$props) $$invalidate(0, color = $$props.color);
+		if ('x' in $$props) $$invalidate(1, x = $$props.x);
+		if ('y' in $$props) $$invalidate(2, y = $$props.y);
 	};
 
 	return [color, x, y];

@@ -32,15 +32,35 @@ const windows_1252 = [
 	339,
 	157,
 	382,
-	376,
+	376
 ];
 
-const entity_pattern = new RegExp(
-	`&(#?(?:x[\\w\\d]+|\\d+|${Object.keys(entities).join('|')}))(?:;|\\b)`,
-	'g'
-);
+function reg_exp_entity(entity_name: string, is_attribute_value: boolean) {
+	// https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state
+	// doesn't decode the html entity which not ends with ; and next character is =, number or alphabet in attribute value.
+	if (is_attribute_value && !entity_name.endsWith(';')) {
+		return `${entity_name}\\b(?!=)`;
+	}
+	return entity_name;
+}
 
-export function decode_character_references(html: string) {
+function get_entity_pattern(is_attribute_value: boolean) {
+	const reg_exp_num = '#(?:x[a-fA-F\\d]+|\\d+)(?:;)?';
+	const reg_exp_entities = Object.keys(entities).map(entity_name => reg_exp_entity(entity_name, is_attribute_value));
+
+	const entity_pattern = new RegExp(
+		`&(${reg_exp_num}|${reg_exp_entities.join('|')})`,
+		'g'
+	);
+
+	return entity_pattern;
+}
+
+const entity_pattern_content = get_entity_pattern(false);
+const entity_pattern_attr_value = get_entity_pattern(true);
+
+export function decode_character_references(html: string, is_attribute_value: boolean) {
+	const entity_pattern = is_attribute_value ? entity_pattern_attr_value : entity_pattern_content;
 	return html.replace(entity_pattern, (match, entity) => {
 		let code;
 
@@ -124,7 +144,7 @@ const disallowed_contents = new Map([
 			'address article aside blockquote div dl fieldset footer form h1 h2 h3 h4 h5 h6 header hgroup hr main menu nav ol p pre section table ul'.split(
 				' '
 			)
-		),
+		)
 	],
 	['rt', new Set(['rt', 'rp'])],
 	['rp', new Set(['rt', 'rp'])],
@@ -135,7 +155,7 @@ const disallowed_contents = new Map([
 	['tfoot', new Set(['tbody'])],
 	['tr', new Set(['tr', 'tbody'])],
 	['td', new Set(['td', 'th', 'tr'])],
-	['th', new Set(['td', 'th', 'tr'])],
+	['th', new Set(['td', 'th', 'tr'])]
 ]);
 
 // can this be a child of the parent element, or does it implicitly

@@ -1,17 +1,27 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment';
-import { whitespace } from '../utils/patterns';
+import { regex_whitespace } from '../utils/patterns';
 import { reserved } from '../utils/names';
 import full_char_code_at from '../utils/full_char_code_at';
 import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
 import error from '../utils/error';
+import parser_errors from './errors';
 
 type ParserState = (parser: Parser) => (ParserState | void);
+
+interface LastAutoClosedTag {
+	tag: string;
+	reason: string;
+	depth: number;
+}
+
+const regex_position_indicator = / \(\d+:\d+\)$/;
 
 export class Parser {
 	readonly template: string;
 	readonly filename?: string;
 	readonly customElement: boolean;
+	readonly css_mode: 'injected' | 'external' | 'none' | boolean;
 
 	index = 0;
 	stack: TemplateNode[] = [];
@@ -20,21 +30,23 @@ export class Parser {
 	css: Style[] = [];
 	js: Script[] = [];
 	meta_tags = {};
+	last_auto_closed_tag?: LastAutoClosedTag;
 
 	constructor(template: string, options: ParserOptions) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
 
-		this.template = template.replace(/\s+$/, '');
+		this.template = template.trimRight();
 		this.filename = options.filename;
 		this.customElement = options.customElement;
+		this.css_mode = options.css;
 
 		this.html = {
 			start: null,
 			end: null,
 			type: 'Fragment',
-			children: [],
+			children: []
 		};
 
 		this.stack.push(this.html);
@@ -59,17 +71,17 @@ export class Parser {
 
 		if (state !== fragment) {
 			this.error({
-				code: `unexpected-eof`,
+				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
 		}
 
 		if (this.html.children.length) {
 			let start = this.html.children[0].start;
-			while (whitespace.test(template[start])) start += 1;
+			while (regex_whitespace.test(template[start])) start += 1;
 
 			let end = this.html.children[this.html.children.length - 1].end;
-			while (whitespace.test(template[end - 1])) end -= 1;
+			while (regex_whitespace.test(template[end - 1])) end -= 1;
 
 			this.html.start = start;
 			this.html.end = end;
@@ -84,8 +96,8 @@ export class Parser {
 
 	acorn_error(err: any) {
 		this.error({
-			code: `parse-error`,
-			message: err.message.replace(/ \(\d+:\d+\)$/, '')
+			code: 'parse-error',
+			message: err.message.replace(regex_position_indicator, '')
 		}, err.pos);
 	}
 
@@ -99,17 +111,18 @@ export class Parser {
 		});
 	}
 
-	eat(str: string, required?: boolean, message?: string) {
+	eat(str: string, required?: boolean, error?: { code: string, message: string }) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
 		if (required) {
-			this.error({
-				code: `unexpected-${this.index === this.template.length ? 'eof' : 'token'}`,
-				message: message || `Expected ${str}`
-			});
+			this.error(error ||
+				(this.index === this.template.length
+					? parser_errors.unexpected_eof_token(str)
+					: parser_errors.unexpected_token(str))
+			);
 		}
 
 		return false;
@@ -119,6 +132,10 @@ export class Parser {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
 
+	/**
+	 * Match a regex at the current index
+	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 */
 	match_regex(pattern: RegExp) {
 		const match = pattern.exec(this.template.slice(this.index));
 		if (!match || match.index !== 0) return null;
@@ -129,12 +146,16 @@ export class Parser {
 	allow_whitespace() {
 		while (
 			this.index < this.template.length &&
-			whitespace.test(this.template[this.index])
+			regex_whitespace.test(this.template[this.index])
 		) {
 			this.index++;
 		}
 	}
 
+	/**
+	 * Search for a regex starting at the current index and return the result if it matches
+	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 */
 	read(pattern: RegExp) {
 		const result = this.match_regex(pattern);
 		if (result) this.index += result.length;
@@ -162,7 +183,7 @@ export class Parser {
 
 		if (!allow_reserved && reserved.has(identifier)) {
 			this.error({
-				code: `unexpected-reserved-word`,
+				code: 'unexpected-reserved-word',
 				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
 			}, start);
 		}
@@ -170,12 +191,13 @@ export class Parser {
 		return identifier;
 	}
 
-	read_until(pattern: RegExp) {
-		if (this.index >= this.template.length)
-			this.error({
-				code: `unexpected-eof`,
+	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) {
+		if (this.index >= this.template.length) {
+			this.error(error_message || {
+				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
+		}
 
 		const start = this.index;
 		const match = pattern.exec(this.template.slice(start));
@@ -190,10 +212,10 @@ export class Parser {
 	}
 
 	require_whitespace() {
-		if (!whitespace.test(this.template[this.index])) {
+		if (!regex_whitespace.test(this.template[this.index])) {
 			this.error({
-				code: `missing-whitespace`,
-				message: `Expected whitespace`
+				code: 'missing-whitespace',
+				message: 'Expected whitespace'
 			});
 		}
 
@@ -210,27 +232,18 @@ export default function parse(
 	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
-		parser.error({
-			code: 'duplicate-style',
-			message: 'You can only have one top-level <style> tag per component'
-		}, parser.css[1].start);
+		parser.error(parser_errors.duplicate_style, parser.css[1].start);
 	}
 
 	const instance_scripts = parser.js.filter(script => script.context === 'default');
 	const module_scripts = parser.js.filter(script => script.context === 'module');
 
 	if (instance_scripts.length > 1) {
-		parser.error({
-			code: `invalid-script`,
-			message: `A component can only have one instance-level <script> element`
-		}, instance_scripts[1].start);
+		parser.error(parser_errors.invalid_script_instance, instance_scripts[1].start);
 	}
 
 	if (module_scripts.length > 1) {
-		parser.error({
-			code: `invalid-script`,
-			message: `A component can only have one <script context="module"> element`
-		}, module_scripts[1].start);
+		parser.error(parser_errors.invalid_script_module, module_scripts[1].start);
 	}
 
 	return {
