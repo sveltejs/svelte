@@ -407,6 +407,25 @@ describe('store', () => {
 			const d = derived(fake_observable, _ => _);
 			assert.equal(get(d), 42);
 		});
+
+		it('doesn\'t restart when unsubscribed from another store with a shared ancestor', () => {
+			const a = writable(true);
+			let b_started = false;
+			const b = derived(a, (_, __) => {
+				b_started = true;
+				return () => {
+					assert.equal(b_started, true);
+					b_started = false;
+				};
+			});
+			const c = derived(a, ($a, set) => {
+				if ($a) return b.subscribe(set);
+			});
+
+			c.subscribe(() => { });
+			a.set(false);
+			assert.equal(b_started, false);
+		});
 	});
 
 	describe('get', () => {

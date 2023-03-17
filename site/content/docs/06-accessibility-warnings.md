@@ -277,6 +277,17 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 ---
 
+### `a11y-no-noninteractive-element-to-interactive-role`
+
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
+
+```sv
+<!-- A11y: Non-interactive element <h3> cannot have interactive role 'searchbox' -->
+<h3 role="searchbox">Button</h3>
+```
+
+---
+
 ### `a11y-no-noninteractive-tabindex`
 
 Tab key navigation should be limited to elements on the page that can be interacted with.

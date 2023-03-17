@@ -534,13 +534,17 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	is?: string | undefined | null;
 
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:innerHTML'?: string | undefined | null;
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:textContent'?: string | undefined | null;
+	/**
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
+	 */
+	'bind:innerText'?: string | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
