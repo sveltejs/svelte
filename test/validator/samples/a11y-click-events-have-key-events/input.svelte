@@ -13,9 +13,12 @@
 <div on:click={noop} aria-hidden="false" />
 
 <section on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <main on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <article on:click={noop} />
 <header on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <footer on:click={noop} />
 
 <!-- should not warn -->
