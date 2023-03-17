@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## Unreleased
+
+* Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
+
 ## 3.57.0
 
 * Add `<svelte:document>` ([#3310](https://github.com/sveltejs/svelte/issues/3310))
