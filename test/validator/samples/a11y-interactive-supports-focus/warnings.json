@@ -1,1 +1,26 @@
-[]
+[
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 44,
+			"line": 10
+		},
+		"message": "A11y: Elements with the 'button' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 10
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 46,
+			"line": 11
+		},
+		"message": "A11y: Elements with the 'menuitem' interactive role must have a tabindex value.",
+		"start": {
+			"column": 0,
+			"line": 11
+		}
+	}
+]
