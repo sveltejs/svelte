@@ -3,6 +3,7 @@
 <div role="button" on:click={() => {}} on:keypress={() => {}} />
 <div role="listitem" aria-hidden on:click={() => {}} on:keypress={() => {}} />
 <button on:click={() => {}} />
+<h1 contenteditable="true" on:keydown={() => {}}>Heading</h1>
 <h1>Heading</h1>
 
 <!-- INVALID -->
