@@ -75,6 +75,15 @@ const a11y_labelable = new Set([
 	'textarea'
 ]);
 
+const a11y_interactive_handlers = new Set([
+	'click',
+	'mousedown',
+	'mouseup',
+	'keypress',
+	'keydown',
+	'keyup'
+]);
+
 const a11y_nested_implicit_semantics = new Map([
 	['header', 'banner'],
 	['footer', 'contentinfo']
@@ -677,7 +686,8 @@ export default class Element extends Node {
 
 		// role-supports-aria-props
 		const role = attribute_map.get('role');
-		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
+		const role_static_value = role?.get_static_value() as ARIARoleDefinitionKey;
+		const role_value = (role ? role_static_value : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
 			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
@@ -690,6 +700,20 @@ export default class Element extends Node {
 						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
 					}
 				});
+		}
+
+		// no-noninteractive-element-interactions
+		if (
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			((!is_interactive_element(this.name, attribute_map) && 
+				is_non_interactive_roles(role_static_value)) ||
+			 (is_non_interactive_element(this.name, attribute_map) && !role))
+		) {
+			const has_interactive_handlers = handlers.some((handler) => a11y_interactive_handlers.has(handler.name));
+			if (has_interactive_handlers) {
+				component.warn(this, compiler_warnings.a11y_no_noninteractive_element_interactions(this.name));
+			}
 		}
 	}
 
