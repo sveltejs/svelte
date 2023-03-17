@@ -1,6 +1,7 @@
 <!-- VALID -->
 <div aria-hidden role="button" on:keypress={() => {}} />
 <div aria-disabled role="button" on:keypress={() => {}} />
+<div disabled role="button" on:keypress={() => {}} />
 <div role="presentation" on:keypress={() => {}} />
 <button on:click={() => {}} />
 <div role="menuitem" tabindex="0" on:click={() => {}} on:keypress={() => {}} />
