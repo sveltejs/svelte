@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
+import { is_name_contenteditable, get_contenteditable_attr, has_contenteditable_attr } from '../utils/contenteditable';
 import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -704,6 +704,7 @@ export default class Element extends Node {
 
 		// no-noninteractive-element-interactions
 		if (
+			!has_contenteditable_attr(this) &&
 			!is_hidden_from_screen_reader(this.name, attribute_map) &&
 			!is_presentation_role(role_static_value) &&
 			((!is_interactive_element(this.name, attribute_map) && 
