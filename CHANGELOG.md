@@ -11,6 +11,7 @@
 * Prevent derived store callbacks after store is unsubscribed from ([#8364](https://github.com/sveltejs/svelte/issues/8364))
 * Account for `bind:group` members being spread across multiple control flow blocks ([#8372](https://github.com/sveltejs/svelte/issues/8372))
 * Revert buggy reactive statement optimization ([#8374](https://github.com/sveltejs/svelte/issues/8374))
+* Support CSS units in the `fly` and `blur` transitions ([#7623](https://github.com/sveltejs/svelte/pull/7623))
 
 ## 3.56.0
 
