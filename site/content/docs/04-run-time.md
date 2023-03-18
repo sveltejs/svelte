@@ -550,7 +550,7 @@ $: $size = big ? 100 : 10;
 
 The `interpolate` option allows you to tween between _any_ arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
-```sv
+```svelte
 <script>
 	import { interpolateLab } from 'd3-interpolate';
 	import { tweened } from 'svelte/motion';
@@ -570,8 +570,10 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 {#each colors as c}
 	<button
 		style="background-color: {c}; color: white; border: none;"
-		on:click="{e => color.set(c)}"
-	>{c}</button>
+		on:click={e => color.set(c)}
+	>
+	{c}
+	</button>
 {/each}
 
 <h1 style="color: {$color}">{$color}</h1>
@@ -743,7 +745,7 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
+- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/run-time#svelte-easing)
 - `x` (`number | string`, default 0) - the x offset to animate out to and in from
 - `y` (`number | string`, default 0) - the y offset to animate out to and in from
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from

@@ -694,6 +694,7 @@ When the value of an `<option>` matches its text content, the attribute can be o
 ---
 
 Elements with the `contenteditable` attribute support the following bindings:
+
 - [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
 - [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
 - [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
@@ -1765,7 +1766,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 ---
 
-Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on `document`.
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs/template-syntax#element-directives-use-action) on `document`.
 
 As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
 
