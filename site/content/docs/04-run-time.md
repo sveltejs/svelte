@@ -703,20 +703,11 @@ Animates a `blur` filter alongside an element's opacity.
 
 `blur` accepts the following parameters:
 
-<<<<<<< HEAD
-
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number`, default 400) — milliseconds the transition lasts
 - `easing` (`function`, default `cubicInOut`) — an [easing function](/docs/run-time#svelte-easing)
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
-- # `amount` (`number`, default 5) - the size of the blur in pixels
-
-* `delay` (`number`, default 0) — milliseconds before starting
-* `duration` (`number`, default 400) — milliseconds the transition lasts
-* `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
-* `opacity` (`number`, default 0) - the opacity value to animate out to and in from
-* `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
-  > > > > > > > origin/sites
+- `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
 
 ```sv
 <script>
