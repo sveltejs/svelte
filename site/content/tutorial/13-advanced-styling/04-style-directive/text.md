@@ -6,9 +6,9 @@ Being able to set CSS properties dynamically is nice. However, this can get unwi
 
 Change the style attribute of the paragraph to the following:
 
-```html
-<p 
-	style:color 
+```svelte
+<p
+	style:color
 	style:--opacity="{bgOpacity}"
 >
 ```

@@ -8,11 +8,11 @@ authorURL: https://dreamindani.com
 With the shortest month of the year coming up, Svelte maintainers and community members alike have been busy this last month – from big changes in `svelte-loader`, `prettier-plugin-svelte`, `rollup-plugin-svelte`, and `language-tools` to steady progress in Sapper and `svelte-preprocess`. Meanwhile, lots of folks have been busy integrating Svelte with other popular frameworks.
 
 ## New compiler features
+
 - Aria roles from the [WAI-ARIA Graphics Module](https://www.w3.org/TR/graphics-aria-1.0/#role_definitions) are now recognized as valid aria roles in Svelte components (**3.31.1**)
 - Compiler warnings for the common React attributes, `className` and `htmlFor`, now make it easier to port React components to Svelte (**3.31.1**)
 
 Have a suggestion for a compiler feature or want to help implement new features/bug fixes? Check out the ["triage: good first issue" tag for Svelte](https://github.com/sveltejs/svelte/issues?q=is%3Aopen+is%3Aissue+label%3A%22triage%3A+good+first+issue%22)
-
 
 ## New bits in language-tools
 
@@ -34,7 +34,7 @@ A great way to try the language tools is to download the [Svelte Extension for V
 - [Sapper](https://github.com/sveltejs/sapper) got some improvements in scroll tracking and handling encoding query parameters. Dynamic imports also now work as expected in browsers that don't support ES modules. These changes from 0.29.0 and a step-by-step migration guide can be found [in the changelog](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md)
 - [prettier-plugin-svelte](https://github.com/sveltejs/prettier-plugin-svelte) version 2 was released. It received an overhaul and comes with a rewrite of the HTML formatting. The output is now much more in line with how standard Prettier formats HTML. Better defaults for `svelteBracketNewLine` and `options-scripts-markup-styles` should now match how the majority of users like to order the code blocks. Additionally, Prettier's `htmlWhitespaceSensitivity` setting is now supported. [More info in the changelog](https://github.com/sveltejs/prettier-plugin-svelte/blob/master/CHANGELOG.md)
 
-New changes to the Svelte Society website include [a new cheat sheet](https://sveltesociety.dev/cheatsheet) for easy access to useful code patterns and some smaller visual fixes across the site. **Want to help make the Svelte Society website ready for prime time**? [Checkout the GitHub repo](https://github.com/svelte-society/sveltesociety.dev) to get started! 
+New changes to the Svelte Society website include [a new cheat sheet](https://sveltesociety.dev/cheatsheet) for easy access to useful code patterns and some smaller visual fixes across the site. **Want to help make the Svelte Society website ready for prime time**? [Checkout the GitHub repo](https://github.com/svelte-society/sveltesociety.dev) to get started!
 
 ---
 
@@ -46,7 +46,6 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 - [La neuva era de la educatión conectada](https://elfuturoesapasionante.vodafone.es/especiales/educacion-conectada/) is a Vodaphone site that highlights the ways that technology and COVID-19 has changed the education landscape
 - [sho.rest](https://github.com/Melonai/shorest) is a self-hostable url shortener
 - [night.fm](https://night.fm/) is a cyberpunk-themed radio station
-
 
 **Demos, Libraries & Components**
 
@@ -60,8 +59,8 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 - [svelte-video-player](https://github.com/meigo/svelte-video-player) is a customizable `VideoPlayer` component
 - [svelte-readonly](https://github.com/Crisfole/svelte-readonly) is a very small store that exposes only a readable interface.
 
-
 **New Integrations & Starters**
+
 - [svelte-derver-starter](https://github.com/AlexxNB/svelte-derver-starter) is a starter for baking fullstack application with the client based on Svelte and server side powered by Derver.
 - [eleventy-plugin-embed-svelte](https://github.com/shalomscott/eleventy-plugin-embed-svelte) makes it easy to embed Svelte components into an 11ty site.
 - [svelte-tailwind-extension-boilerplate](https://github.com/kyrelldixon/svelte-tailwind-extension-boilerplate) is a good foundation for a Chrome extension using either JavaScript or TypeScript, Svelte for the frontend, Tailwind CSS for styling, Jest for testing, and Rollup as the build system.

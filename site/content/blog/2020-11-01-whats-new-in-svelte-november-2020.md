@@ -10,7 +10,7 @@ Welcome back to the "What's new in Svelte" series! This month, we're covering ne
 ## New features & impactful bug fixes
 
 1. Destructuring Promises now works as expected by using the `{#await}` syntax
- (**3.29.3**, [Example](https://svelte.dev/repl/3fd4e2cecfa14d629961478f1dac2445?version=3.29.3))
+   (**3.29.3**, [Example](https://svelte.dev/repl/3fd4e2cecfa14d629961478f1dac2445?version=3.29.3))
 2. Slot forwarding (released in 3.29.0) should no longer hang during compilation (**3.29.3**, [Example](https://svelte.dev/repl/29959e70103f4868a6525c0734934936?version=3.29.3))
 3. Better typings for the `get` function in `svelte/store` and on lifecycle hooks (**3.29.1**)
 
@@ -18,17 +18,17 @@ Welcome back to the "What's new in Svelte" series! This month, we're covering ne
 
 Sapper got some new types in its `preload` function, which will make typing easier if you are using TypeScript. See the [Sapper docs](https://sapper.svelte.dev/docs#Typing_the_function) on how to use them. There also were fixes to `preload` links in exported sites. Route layouts got a few fixes too - including ensuring CSS is applied to nested route layouts. You can also better organize your files now that extensions with multiple dots are supported. (**0.28.10**)
 
-
 For all the features and bugfixes see the CHANGELOGs for [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [Sapper](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md).
 
-
 ## [Svelte Summit](https://sveltesummit.com/) was Svelte-tacular!
+
 - Rich Harris demoed the possible future of Svelte development in a talk titled "Futuristic Web Development". The not-yet-public project is called SvelteKit (name may change) and will bring a first-class developer experience and more flexibility for build outputs. If you want to get the full sneak-peek, [check out the video](https://www.youtube.com/watch?v=qSfdtmcZ4d0).
 - 17 speakers made the best of the conference's virtual format... From floating heads to seamless demos, Svelte developers from every skill level will find something of interest in this year's [YouTube playlist](https://www.youtube.com/playlist?list=PL8bMgX1kyZThM1sbYCoWdTcpiYysJsSeu)
 
 ---
 
 ## Community Showcase
+
 - [Svelte Lab](https://sveltelab.app/) showcases a variety of components, visualizations and interactions that can be achieved in Svelte. You can click into any component to see its source or edit it, using the site's built-in REPL
 - [svelte-electron-boilerplate](https://github.com/hjalmar/svelte-electron-boilerplate) is a fast way to get up and running with a Svelte app built in the desktop javascript framework, Electron
 - [React Hooks in Svelte](https://github.com/joshnuss/react-hooks-in-svelte) showcases examples of common React Hooks ported to Svelte.

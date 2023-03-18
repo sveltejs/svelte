@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: February 2022"
-description: "Rapid-fire releases across Svelte, SvelteKit and the community"
+description: 'Rapid-fire releases across Svelte, SvelteKit and the community'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -10,12 +10,14 @@ Happy February, everyone! Over the last month or so, we've seen Svelte and Svelt
 Let's take a look...
 
 ## Highlights from the Svelte changelog
+
 - **3.45.0** brought a [new a11y warning `a11y-no-redundant-roles`](https://svelte.dev/docs#accessibility-warnings-a11y-no-redundant-roles), destructuring and caching fixes
 - **3.46.0** added the much requested [`{@const}` tag](https://svelte.dev/docs#template-syntax-const) and [`style:` directive](https://svelte.dev/docs#template-syntax-element-directives-style-property)
 - Check out **3.46.1 - 3.46.3** for fixes to the `{@const}` tag and `style:` directive, along with a number of fixes to animations
 - [AST output is now available in the Svelte REPL](https://svelte.dev/repl/hello-world)
 
 ## What's new in SvelteKit
+
 - `inlineStyleThreshold` allows you to specify where inline stylesheets are inserted into the page ([Docs](https://kit.svelte.dev/docs/configuration#inlinestylethreshold), [#2620](https://github.com/sveltejs/kit/pull/2620))
 - `beforeNavigate`/`afterNavigate` lifecycle functions lets you add functionality before or after a page navigation ([Docs](https://kit.svelte.dev/docs/modules#$app-navigation), [#3293](https://github.com/sveltejs/kit/pull/3293))
 - Platform context can now be passed from adapters ([Docs](https://kit.svelte.dev/docs/adapters#supported-environments-platform-specific-context), [#3429](https://github.com/sveltejs/kit/pull/3429))
@@ -24,23 +26,26 @@ Let's take a look...
 - Fallthrough routes let you specify where to route when an route can't be loaded ([Docs](https://kit.svelte.dev/docs/routing#advanced-routing-fallthrough-routes), [#3217](https://github.com/sveltejs/kit/pull/3217))
 
 **New configs**
+
 - Content Security Policy (CSP) is now supported for increased security when using inline javascript or stylesheets ([Docs](https://kit.svelte.dev/docs/configuration#csp), [#3499](https://github.com/sveltejs/kit/pull/3499))
 - `kit.routes` config allows you to customise public/private modules during build ([Docs](https://kit.svelte.dev/docs/configuration#routes), [#3576](https://github.com/sveltejs/kit/pull/3576))
 - `prerender.createIndexFiles` config lets you prerender index.html files as their subfolder's name ([Docs](https://kit.svelte.dev/docs/configuration#prerender), [#2632](https://github.com/sveltejs/kit/pull/2632))
 - HTTP methods can now be overridden using `kit.methodOverride` ([Docs](https://kit.svelte.dev/docs/routing#endpoints-http-method-overrides), [#2989](https://github.com/sveltejs/kit/pull/2989))
 
 **Config changes**
+
 - `config.kit.hydrate` and `config.kit.router` are now nested under `config.kit.browser` ([Docs](https://kit.svelte.dev/docs/configuration#browser), [3578](https://github.com/sveltejs/kit/pull/3578))
 
 **Breaking change**
-- use `Request` and `Response` objects in endpoints and hooks ([#3384](https://github.com/sveltejs/kit/pull/3384))
 
+- use `Request` and `Response` objects in endpoints and hooks ([#3384](https://github.com/sveltejs/kit/pull/3384))
 
 ---
 
 ## Community Showcase
 
 **Apps & Sites**
+
 - [timb(re)](https://paullj.github.io/timb) is a live music programming environment
 - [Music for Programming](https://musicforprogramming.net/latest/) is a series of mixes intended for listening while `${task}` to focus the brain and inspire the mind
 - [Team Tale](https://teamtale.app/) allows two authors to write the same story in a tag-team sort of fashion
@@ -59,10 +64,10 @@ Let's take a look...
 
 Want to work on a SvelteKit site with others, [try contributing to the Svelte Society site](https://github.com/svelte-society/sveltesociety-2021/issues)!
 
-
 **Learning and Listening**
 
 _To Read_
+
 - [Accelerating Svelte's Development](https://svelte.dev/blog/accelerating-sveltes-development) by Ben McCann
 - [Storybook for Vite](https://storybook.js.org/blog/storybook-for-vite/)
 - [Let's learn SvelteKit by building a static Markdown blog from scratch](https://joshcollinsworth.com/blog/build-static-sveltekit-markdown-blog) by Josh Collinsworth
@@ -74,6 +79,7 @@ _To Read_
 - [Comparing Svelte Reactivity Options](https://opendirective.net/2022/01/06/comparing-svelte-reactivity-options/) by Steve Lee
 
 _To Watch_
+
 - [Integrating Storybook with SvelteKit](https://www.youtube.com/watch?v=Kc1ULlfyUcw) and [Integrating FaunaDB with Svelte](https://www.youtube.com/watch?v=zaoLZc76uZM) by the Svelte Sirens
 - [SvelteKit Crash Course Tutorial](https://www.youtube.com/watch?v=9OlLxkaeVvw&list=PL4cUxeGkcC9hpM9ARM59Ve3jqcb54dqiP) by The Net Ninja
 - [Svelte for Beginners](https://www.youtube.com/watch?v=BrkrOjknC_E&list=PLA9WiRZ-IS_ylnMYxIFCsZN6xVVSvLuHk) by Joy of Code
@@ -82,11 +88,13 @@ _To Watch_
 - [Sveltekit - Get All Routes/Pages](https://www.youtube.com/watch?v=Y_NE2R3HuOU) by WebJeda
 
 _To Listen To_
+
 - [New Year, New Svelte!?](https://share.transistor.fm/s/36212cdc) from Svelte Radio
 - [So much Sveltey goodness (featuring Rich Harris)](https://changelog.com/jsparty/205) from JS Party
 - [The Other Side of Tech: A Documentarian Perspective (with Stefan Kingham)](https://codingcat.dev/podcast/2-4-the-other-side-of-tech-a-documentarian-perspective) from Purrfect.dev
 
 **Libraries, Tools & Components**
+
 - [threlte](https://github.com/grischaerbe/threlte) is a three.js component library for Svelte
 - [svelte-formify](https://github.com/nodify-at/svelte-formify) is a library to manage and validate forms that uses decorators to define validations
 - [gQuery](https://github.com/leveluptuts/gQuery) is a GraphQL Fetcher & Cache for Svelte Kit

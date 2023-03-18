@@ -11,7 +11,6 @@ That's why Svelte allows you to add CSS in a component's `<style>` tag. Co-locat
 
 But Svelte's style handling does have some limitations. It's too difficult to share styles between components, or apply app-level optimisations. These are areas we plan to address in future versions, but in the meantime if you need those things you can use any framework-agnostic CSS-in-JS library.
 
-
 ## For example
 
 Here, we're using [Emotion](https://emotion.sh) to generate scoped class names that can be used across multiple components:

@@ -23,7 +23,7 @@ If your editor does not have a Svelte plugin then you can follow [this guide](/b
 Then, once you've got your project set up, using Svelte components is easy. The compiler turns each component into a regular JavaScript class — just import it and instantiate with `new`:
 
 ```js
-import App from "./App.svelte";
+import App from './App.svelte';
 
 const app = new App({
 	target: document.body,

@@ -10,13 +10,13 @@ Notice that both instances of `<Project>` in this example render a container for
 
 In `Project.svelte`, update the `class:has-discussion` directive on the `<article>`:
 
-```html
+```svelte
 <article class:has-discussion={$$slots.comments}>
 ```
 
 Next, wrap the `comments` slot and its wrapping `<div>` in an `if` block that checks `$$slots`:
 
-```html
+```svelte
 {#if $$slots.comments}
 	<div class="discussion">
 		<h3>Comments</h3>

@@ -40,7 +40,7 @@ export function focusable_children(node) {
 				}
 			}
 		},
-		update
+		update,
 	};
 }
 
@@ -63,6 +63,6 @@ export function trap(node) {
 	return {
 		destroy: () => {
 			node.removeEventListener('keydown', handle_keydown);
-		}
+		},
 	};
 }

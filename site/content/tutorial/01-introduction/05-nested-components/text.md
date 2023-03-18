@@ -10,7 +10,7 @@ Each `.svelte` file holds a component that is a reusable self-contained block of
 
 Let's add a `<script>` tag to `App.svelte` that imports the file (our component) `Nested.svelte` into our app...
 
-```html
+```svelte
 <script>
 	import Nested from './Nested.svelte';
 </script>
@@ -18,7 +18,7 @@ Let's add a `<script>` tag to `App.svelte` that imports the file (our component)
 
 ...then use component `Nested` in the app markup:
 
-```html
+```svelte
 <p>This is a paragraph.</p>
 <Nested/>
 ```

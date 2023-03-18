@@ -4,7 +4,7 @@ title: Each block bindings
 
 You can even bind to properties inside an `each` block.
 
-```html
+```svelte
 {#each todos as todo}
 	<div class:done={todo.done}>
 		<input

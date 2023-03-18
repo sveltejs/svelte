@@ -6,7 +6,7 @@ Similar to `<svelte:window>`, the `<svelte:body>` element allows you to listen f
 
 Add the `mouseenter` and `mouseleave` handlers to the `<svelte:body>` tag:
 
-```html
+```svelte
 <svelte:body
 	on:mouseenter={handleMouseenter}
 	on:mouseleave={handleMouseleave}

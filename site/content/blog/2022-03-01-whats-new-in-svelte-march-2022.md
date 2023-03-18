@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: March 2022"
-description: "Svelte Summit Spring is coming... and page endpoints are here!"
+description: 'Svelte Summit Spring is coming... and page endpoints are here!'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -12,29 +12,30 @@ Also, some long-requested features were added to SvelteKit this month... includi
 More on that and other new features and fixes below!
 
 ## What's new in SvelteKit
+
 - The docs are now searchable and multipage with type definitions and hoverable code examples - Check them out at [kit.svelte.dev/docs](https://kit.svelte.dev/docs/)
 - Page endpoints significantly decrease the boilerplate needed when loading a page ([Issue](https://github.com/sveltejs/kit/issues/3532), [PR](https://github.com/sveltejs/kit/pull/3679), [Docs](https://kit.svelte.dev/docs/routing#endpoints-page-endpoints))
 - Application versioning and update detection support lets you determine what to do when a route fails to load after an app update ([Issue](https://github.com/sveltejs/kit/issues/87), [PR](https://github.com/sveltejs/kit/pull/3412), [Docs](https://kit.svelte.dev/docs/configuration#version))
 - A new option in `npm init svelte@next` will now set up Playwright automatically for testing ([PR](https://github.com/sveltejs/kit/pull/4056))
 
-
 **Breaking Changes**
+
 - The `target` option is no longer available. Instead, the `init` script hydrates its `parentNode` ([#3674](https://github.com/sveltejs/kit/pull/3674))
 - App-level types now live in the `App` namespace which allows you to type global types like `Stuff` or `Session` ([#3670](https://github.com/sveltejs/kit/pull/3670))
 - `JSONString` is now `JSONValue` ([#3683](https://github.com/sveltejs/kit/pull/3683))
 - `createIndexFiles` has been removed — it is now controlled by the `trailingSlash` option ([#3801](https://github.com/sveltejs/kit/pull/3801))
 - SvelteKit will no longer exclude root-relative external links from prerendering, which will cause 404s if these URLs are intended to be served by a separate app. Use a custom [`prerender.onError`](https://kit.svelte.dev/docs/configuration#prerender) handler if you need to ignore them ([#3826](https://github.com/sveltejs/kit/pull/3826))
 
-
 ## New in Language Tools
-- Accessing properties in markups has been improved in the Svelte language tools ([105.12.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.12.0)) - working around some known issues with autocomplete ([#538](https://github.com/sveltejs/language-tools/issues/538) / [#1302](https://github.com/sveltejs/language-tools/issues/1302))
 
+- Accessing properties in markups has been improved in the Svelte language tools ([105.12.0](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.12.0)) - working around some known issues with autocomplete ([#538](https://github.com/sveltejs/language-tools/issues/538) / [#1302](https://github.com/sveltejs/language-tools/issues/1302))
 
 ---
 
 ## Community Showcase
 
 **Apps & Sites**
+
 - [SvelteStorm](https://github.com/open-source-labs/SvelteStorm) is specifically tailored to provide all of the essential tools a Svelte developer needs to build a Svelte application
 - [Supachat](https://github.com/Lleweraf/supachat) is a real-time chat app using Svelte and Supabase
 - [Radicle](https://radicle.xyz/) is a peer-to-peer stack for building software together
@@ -49,10 +50,10 @@ More on that and other new features and fixes below!
 
 Want to work on a SvelteKit site with others? [Contribute to the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
-
 **Learning Resources**
 
 _To Read_
+
 - [Svelte Components as Web Components](https://medium.com/@yesmeno/svelte-components-as-web-components-b400d1253504) by Matias Meno
 - [Simple Svelte Routing with Reactive URLs](https://bjornlu.com/blog/simple-svelte-routing-with-reactive-urls) by Bjorn Lu
 - [Leveling Up my Sveltekit / Sanity.io Blog Content with Featured Videos and Syntax Highlighting](https://ryanboddy.net/level-up-blog) by Ryan Boddy
@@ -64,12 +65,13 @@ _To Read_
 - [SvelteKit and the "Client pattern"](https://retro.cloud/sveltekit-and-the-client-pattern/) by Julian Laubstein
 
 _To Watch_
+
 - [~~Shadow~~ Page Endpoints In Svelte Kit - Weekly Svelte](https://www.youtube.com/watch?v=PoYPZT7ruqI) by LevelUpTuts
 - [Testing For Beginners (Playlist)](https://www.youtube.com/watch?v=y53wwdBr5AI&list=PLA9WiRZ-IS_z7KpqhPELfEMbhAGRwZrzn) by Joy of Code
 - [KitQL - The native SvelteKit library for GraphQL](https://www.youtube.com/watch?v=6pH4fnFN70w) by Jean-Yves COUËT
 
-
 **Libraries, Tools & Components**
+
 - [gosvelte](https://github.com/sachinbhutani/gosvelte) is a proof of concept to serve Svelte-generated pages on GoLang HTTP server with server data being sent as props to svelte components
 - [svelte-ethers-store](https://www.npmjs.com/package/svelte-ethers-store) uses the ethers.js library as a collection of readable Svelte stores for Svelte, Sapper or SvelteKit
 - [Fluid Grid](https://fluid-grid.com/) is a CSS grid system for future web

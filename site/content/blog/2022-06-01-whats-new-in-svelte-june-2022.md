@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: June 2022"
-description: "Cancellable dispatched events, deeper {@const} declarations and more!"
+description: 'Cancellable dispatched events, deeper {@const} declarations and more!'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -10,17 +10,19 @@ With last month's [Svelte Summit](https://www.youtube.com/watch?v=qqj2cBockqE) b
 Let's dive in!
 
 ## What's new in Svelte
+
 - Custom events can now be cancelled in the `createEventDispatcher` function (**3.48.0**, [Docs](https://svelte.dev/docs#run-time-svelte-createeventdispatcher), [PR](https://github.com/sveltejs/svelte/pull/7064))
 - The `{@const}` tag can now be used in `{#if}` blocks to conditionally define variables (**3.48.0**, [Docs](https://svelte.dev/docs#template-syntax-const), [PR](https://github.com/sveltejs/svelte/pull/7451))
 - Lots of bug fixes across `<svelte:element>`, animations and various DOM elements. Check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3480) for a deeper dive!
 
-
 ## What's new in SvelteKit
+
 - Vite 2.9.9 was released as one of the last Vite 2 releases. The Svelte team has been hard at work contributing to the Vite 3 release to make the integration between SvelteKit and Vite smoother than ever ([Vite 3.0 Milestone](https://github.com/vitejs/vite/milestone/5))
 - `config.kit.alias` lets you more easily declare a custom alias to replace values in `import` statements ([Docs](https://kit.svelte.dev/docs/configuration#alias), [PR](https://github.com/sveltejs/kit/pull/4964))
 - Pages marked for prerendering will now fail during SSR at runtime ([PR](https://github.com/sveltejs/kit/pull/4812))
 
 **Breaking Changes**
+
 - Node 14 is no longer supported ([PR](https://github.com/sveltejs/kit/pull/4922))
 - Requests to `/favicon.ico` will no longer be suppressed and will instead be handled as a valid route ([PR](https://github.com/sveltejs/kit/pull/5046))
 - AMP support has been moved to a separate `@sveltejs/amp` package ([Docs](https://kit.svelte.dev/docs/seo#manual-setup-amp), [PR](https://github.com/sveltejs/kit/pull/4710))
@@ -34,6 +36,7 @@ Let's dive in!
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Plantarium](https://github.com/jim-fx/plantarium) is a tool for the procedural generation of 3D plants.
 - [SPATULA](https://github.com/AlexWarnes/lamina-spatula) is a tool for building shading materials that are exportable as code material in any project that uses lamina and threejs
 - [Waaard](https://waaard.com/) lets you create and send protected links with a variety of SSO providers
@@ -48,10 +51,10 @@ Let's dive in!
 
 Looking for a great SvelteKit website to contribute to? [Help build the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
-
 **Learning Resources**
 
 _To Read_
+
 - [Component party](https://component-party.dev/) is a site that compares common patterns in different frameworks
 - [Quick tip: style prop defaults](https://geoffrich.net/posts/style-prop-defaults/) by Geoff Rich
 - [Working with reduced motion in Svelte](https://ghostdev.xyz/posts/working-with-reduced-motion-in-svelte) by GHOST
@@ -61,6 +64,7 @@ _To Read_
 _To Watch_
 
 From Svelte Society:
+
 - [The Svelte Summit Spring 2022 stream recording](https://www.youtube.com/watch?v=qqj2cBockqE) has been updated with chapter markers to make it easy to watch again and again
 - [The full recording of Svelte London, April 2022](https://www.youtube.com/watch?v=zIxzJzTnoxA) is up! Check out the amazing talks from across the Svelte London community
 - [Persian Svelte Society](https://www.youtube.com/channel/UCfWH9lCsXN3j8oXq8dru82Q) is making Persian-language videos about Svelte
@@ -70,8 +74,8 @@ From Svelte Society:
   - [Rendering your Svelte apps on Render](https://www.youtube.com/watch?v=SnV_hMLVyqs) on May 24
   - [The story behind the (unofficial) Svelte newsletter](https://www.youtube.com/watch?v=aK0xXm3hPxk&list=PL8bMgX1kyZThkJ_Rk6AAFI4eY24g5XKwK&index=7) on May 27
 
-
 Across the Web:
+
 - [Building vite-plugin-svelte-inspector](https://www.youtube.com/watch?v=udYB24IMtsY), [What is Singleton?](https://www.youtube.com/watch?v=xhi0m1QZue0) and [What is Navigation?](https://www.youtube.com/watch?v=Ym-OnGUps2c) by lihautan
 - [Auto Import Components In Svelte Kit - Weekly Svelte](https://www.youtube.com/watch?v=JXvKBtTPr64) by LevelUpTuts
 - [🧪 Test SvelteKit with TDD & VITEST 🧪](https://www.youtube.com/watch?v=5bQD3dCoyHA) by Johnny Magrippis
@@ -80,6 +84,7 @@ Across the Web:
 - [SvelteKit Shiki Syntax Highlighting: Markdown Codeblocks](https://rodneylab.com/sveltekit-shiki-syntax-highlighting/) and [Svelte Capsize Styling: Typography Tooling](https://rodneylab.com/svelte-capsize-styling/) by Rodney Lab
 
 _To Hear_
+
 - Svelte Radio has been putting out weekly episodes:
   - [The Adventures of Running a Svelte Meetup](https://www.svelteradio.com/episodes/the-adventures-of-running-a-svelte-meetup)
   - [The other Rich! Geoff! (feat. Geoff Rich)](https://www.svelteradio.com/episodes/the-other-rich-geoff)
@@ -87,8 +92,8 @@ _To Hear_
   - [Stores Galore](https://www.svelteradio.com/episodes/stores-galore)
 - [Svelte and the Future of Frontend Development (feat. Rich Harris)](https://thenewstack.io/svelte-and-the-future-of-front-end-development/) from The New Stack
 
-
 **Libraries, Tools & Components**
+
 - [vite-plugin-svelte-console-remover](https://github.com/jhubbardsf/vite-plugin-svelte-console-remover) is a Vite plugin that removes all console statements (log, group, dir, error, etc) from Svelte, JS, and TS files during build so they don't leak into production
 - [Svelte Headless Tables](https://github.com/bryanmylee/svelte-headless-table) is an unopinionated and extensible data tables for Svelte
 - [y-presence](https://github.com/nimeshnayaju/y-presence) is a lightweight set of libraries to easily add presence (live cursors/avatars) to any web application (now with Svelte support!)
@@ -104,7 +109,6 @@ There were lots of Svelte stores released this month from a number of authors...
 - [svelte-mutable-store](https://github.com/feltcoop/svelte-mutable-store) is a Svelte store for mutable values with the `immutable` compiler option
 - [svelte-damped-store](https://github.com/aredridel/svelte-damped-store) is a derived writable store that can suspend updates while [svelte-lens-store](https://github.com/aredridel/svelte-lens-store) is a functional lens over Svelte stores
 - [svelte-persistent-store](https://github.com/furudean/svelte-persistent-store) is a writable svelte store that saves and loads data from `Window.localStorage` or `Window.sessionStorage`.
-
 
 Did we miss anything? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs) to add your voice.
 

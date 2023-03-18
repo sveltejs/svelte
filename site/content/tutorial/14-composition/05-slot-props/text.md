@@ -2,11 +2,11 @@
 title: Slot props
 ---
 
-In this app, we have a `<Hoverable>` component that tracks whether the mouse is currently over it. It needs to pass that data *back* to the parent component, so that we can update the slotted contents.
+In this app, we have a `<Hoverable>` component that tracks whether the mouse is currently over it. It needs to pass that data _back_ to the parent component, so that we can update the slotted contents.
 
-For this, we use *slot props*. In `Hoverable.svelte`, pass the `hovering` value into the slot:
+For this, we use _slot props_. In `Hoverable.svelte`, pass the `hovering` value into the slot:
 
-```html
+```svelte
 <div on:mouseenter={enter} on:mouseleave={leave}>
 	<slot hovering={hovering}></slot>
 </div>
@@ -16,7 +16,7 @@ For this, we use *slot props*. In `Hoverable.svelte`, pass the `hovering` value 
 
 Then, to expose `hovering` to the contents of the `<Hoverable>` component, we use the `let` directive:
 
-```html
+```svelte
 <Hoverable let:hovering={hovering}>
 	<div class:active={hovering}>
 		{#if hovering}
@@ -30,7 +30,7 @@ Then, to expose `hovering` to the contents of the `<Hoverable>` component, we us
 
 You can rename the variable, if you want — let's call it `active` in the parent component:
 
-```html
+```svelte
 <Hoverable let:hovering={active}>
 	<div class:active>
 		{#if active}

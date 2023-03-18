@@ -6,17 +6,17 @@ authorURL: https://twitter.com/Rich_Harris
 draft: true
 ---
 
-*__Coming soon__*
+_**Coming soon**_
 
 This post will walk you through setting up your editor so that it recognises Svelte files:
 
-* eslint-plugin-svelte3
-* svelte-vscode
-* associating .svelte files with HTML in VSCode, Sublime, etc.
+- eslint-plugin-svelte3
+- svelte-vscode
+- associating .svelte files with HTML in VSCode, Sublime, etc.
 
 ## Atom
 
-To treat `*.svelte` files as HTML, open *__Edit → Config...__* and add the following lines to your `core` section:
+To treat `*.svelte` files as HTML, open _**Edit → Config...**_ and add the following lines to your `core` section:
 
 ```cson
 "*":
@@ -62,4 +62,4 @@ The [Svelte Framework Integration](https://plugins.jetbrains.com/plugin/12375-sv
 
 Open any `.svelte` file.
 
-Go to *__View → Syntax → Open all with current extension as... → HTML__*.
+Go to _**View → Syntax → Open all with current extension as... → HTML**_.

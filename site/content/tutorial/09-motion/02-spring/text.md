@@ -6,7 +6,7 @@ The `spring` function is an alternative to `tweened` that often works better for
 
 In this example we have two stores — one representing the circle's coordinates, and one representing its size. Let's convert them to springs:
 
-```html
+```svelte
 <script>
 	import { spring } from "svelte/motion";
 

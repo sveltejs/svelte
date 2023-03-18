@@ -4,7 +4,7 @@ title: Binding to component instances
 
 Just as you can bind to DOM elements, you can bind to component instances themselves. For example, we can bind the instance of `<InputField>` to a variable named `field` in the same way we did when binding DOM Elements
 
-```html
+```svelte
 <script>
 	let field;
 </script>
@@ -14,7 +14,7 @@ Just as you can bind to DOM elements, you can bind to component instances themse
 
 Now we can programmatically interact with this component using `field`.
 
-```html
+```svelte
 <button on:click="{() => field.focus()}">
 	Focus field
 </button>

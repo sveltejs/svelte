@@ -1,6 +1,6 @@
 ---
 title: "Accelerating Svelte's Development"
-description: "Scaling the team, building partnerships, and growing the community"
+description: 'Scaling the team, building partnerships, and growing the community'
 author: Ben McCann
 authorURL: https://www.benmccann.com/
 ---
@@ -16,6 +16,7 @@ To help developers build fully-featured applications with Svelte without worryin
 Rich Harris, Svelte’s creator, has [joined Vercel to work on Svelte full-time](https://vercel.com/blog/vercel-welcomes-rich-harris-creator-of-svelte). We’re incredibly excited to have Rich’s level of involvement in Svelte increase even more and have him steward Svelte into the future.
 
 Svelte has been made possible by the work of a large, dedicated community. Svelte has added numerous core maintainers over the course of the pandemic, including three this past week. In alphabetical order:
+
 - [benmccann](https://github.com/benmccann) - primary maintainer of SvelteKit for much of 2021
 - [bluwy](https://github.com/bluwy) - major contributor across SvelteKit, vite-plugin-svelte, and Vite
 - [dominikg](https://github.com/dominikg) - creator of vite-plugin-svelte
@@ -42,7 +43,8 @@ We’ve also been working closely with the [Vite](https://vitejs.dev) team to ir
 
 [SvelteSociety](https://sveltesociety.dev/) just hosted the [4th Svelte Summit](https://sveltesummit.com/) — [read a summary here](https://svelte.dev/blog/whats-new-in-svelte-december-2021#what-happened-at-svelte-summit) — and Kevin Åberg Kultalahti is [going full-time to lead SvelteSociety](https://twitter.com/kevmodrome/status/1463151477174714373). In addition to hosting Svelte Summit, Kevin and SvelteSociety host and manage the [Svelte Radio podcast](https://www.svelteradio.com/), the [SvelteSociety YouTube channel](https://www.youtube.com/SvelteSociety), and the [Svelte subreddit](https://www.reddit.com/r/sveltejs). SvelteSociety has become the home of all things related to the Svelte community, with the sveltejs/community and sveltejs/integrations repos being retired in favor of [sveltesociety.dev](https://sveltesociety.dev/), which has been redesigned and rebuilt in SvelteKit. In October [Brittney Postma](https://github.com/brittneypostma), [Willow aka GHOST](https://ghostdev.xyz), [Steph Dietz](https://github.com/StephDietz), and [Gen Ashley](https://twitter.com/coderinheels) founded [Svelte Sirens](https://sveltesirens.dev/), a group for women & non-binary community members and their allies.
 
-Hundreds of developers join the Svelte Discord every week to chat about Svelte. You may have noticed that, as of recently, some members of the server have purple names. These are people with the ambassadors role, which was created to recognise some of the community’s most valued members and help manage the demands of a rapidly growing community. Svelte ambassadors are people who are well known for their helpfulness and contributions and for upholding Svelte’s reputation as a friendly, welcoming community, and we’re deeply grateful for their involvement.  The initial ambassadors in alphabetical order are:
+Hundreds of developers join the Svelte Discord every week to chat about Svelte. You may have noticed that, as of recently, some members of the server have purple names. These are people with the ambassadors role, which was created to recognise some of the community’s most valued members and help manage the demands of a rapidly growing community. Svelte ambassadors are people who are well known for their helpfulness and contributions and for upholding Svelte’s reputation as a friendly, welcoming community, and we’re deeply grateful for their involvement. The initial ambassadors in alphabetical order are:
+
 - [babichjacob](https://github.com/babichjacob)
 - [brady fractal](https://github.com/FractalHQ)
 - [brittney postma](https://github.com/brittneypostma)
@@ -56,7 +58,7 @@ Hundreds of developers join the Svelte Discord every week to chat about Svelte. 
 - [swyx](https://github.com/sw-yx)
 - [theo](https://github.com/theo-steiner)
 
-We’re also testing out [GitHub discussions on SvelteKit](https://github.com/sveltejs/kit/discussions) and may bring this to other repos in the Svelte organization if feedback is positive. 
+We’re also testing out [GitHub discussions on SvelteKit](https://github.com/sveltejs/kit/discussions) and may bring this to other repos in the Svelte organization if feedback is positive.
 
 ## Things to watch
 

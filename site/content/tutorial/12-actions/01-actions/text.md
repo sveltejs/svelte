@@ -12,12 +12,12 @@ Actions are essentially element-level lifecycle functions. They're useful for th
 In this app, we want to make the orange modal close when the user clicks outside it. It has an event handler for the `outclick` event, but it isn't a native DOM event. We have to dispatch it ourselves. First, import the `clickOutside` function...
 
 ```js
-import { clickOutside } from "./click_outside.js";
+import { clickOutside } from './click_outside.js';
 ```
 
 ...then use it with the element:
 
-```html
+```svelte
 <div class="box" use:clickOutside on:outclick="{() => (showModal = false)}">
 	Click outside me!
 </div>
@@ -31,15 +31,15 @@ We want to fire the `outclick` event when the user clicks outside the orange box
 export function clickOutside(node) {
 	const handleClick = (event) => {
 		if (!node.contains(event.target)) {
-			node.dispatchEvent(new CustomEvent("outclick"));
+			node.dispatchEvent(new CustomEvent('outclick'));
 		}
 	};
 
-	document.addEventListener("click", handleClick, true);
+	document.addEventListener('click', handleClick, true);
 
 	return {
 		destroy() {
-			document.removeEventListener("click", handleClick, true);
+			document.removeEventListener('click', handleClick, true);
 		},
 	};
 }

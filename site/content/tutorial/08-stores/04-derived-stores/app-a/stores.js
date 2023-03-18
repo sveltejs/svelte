@@ -12,7 +12,4 @@ export const time = readable(new Date(), function start(set) {
 
 const start = new Date();
 
-export const elapsed = derived(
-	time,
-	$time => {}
-);
+export const elapsed = derived(time, ($time) => {});

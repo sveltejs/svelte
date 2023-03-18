@@ -4,7 +4,7 @@ title: Component events
 
 Components can also dispatch events. To do so, they must create an event dispatcher. Update `Inner.svelte`:
 
-```html
+```svelte
 <script>
 	import { createEventDispatcher } from 'svelte';
 

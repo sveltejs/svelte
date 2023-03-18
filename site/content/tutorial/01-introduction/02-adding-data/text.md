@@ -6,7 +6,7 @@ A component that just renders some static markup isn't very interesting. Let's a
 
 First, add a script tag to your component and declare a `name` variable:
 
-```html
+```svelte
 <script>
 	let name = 'world';
 </script>
@@ -16,7 +16,7 @@ First, add a script tag to your component and declare a `name` variable:
 
 Then, we can refer to `name` in the markup:
 
-```html
+```svelte
 <h1>Hello {name}!</h1>
 ```
 

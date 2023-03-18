@@ -1,15 +1,12 @@
 [![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
 
-
 [![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
-
 
 ## What is Svelte?
 
 Svelte is a new way to build web applications. It's a compiler that takes your declarative components and converts them into efficient JavaScript that surgically updates the DOM.
 
 Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord chatroom](https://svelte.dev/chat).
-
 
 ## Supporting Svelte
 
@@ -19,11 +16,9 @@ Svelte is an MIT-licensed open source project with its ongoing development made 
 
 Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
 
-
 ## Roadmap
 
 You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what we're currently working on.
-
 
 ## Development
 
@@ -53,7 +48,6 @@ npm run dev
 
 The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin in order to get syntax highlighting and code hints, etc.
 
-
 ### Running Tests
 
 ```bash
@@ -65,7 +59,6 @@ To filter tests, use `-g` (aka `--grep`). For example, to only run tests involvi
 ```bash
 npm run test -- -g transition
 ```
-
 
 ## svelte.dev
 

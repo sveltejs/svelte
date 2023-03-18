@@ -4,7 +4,7 @@ title: The class directive
 
 Like any other attribute, you can specify classes with a JavaScript attribute, seen here:
 
-```html
+```svelte
 <button
 	class="{current === 'foo' ? 'selected' : ''}"
 	on:click="{() => current = 'foo'}"
@@ -13,7 +13,7 @@ Like any other attribute, you can specify classes with a JavaScript attribute, s
 
 This is such a common pattern in UI development that Svelte includes a special directive to simplify it:
 
-```html
+```svelte
 <button
 	class:selected="{current === 'foo'}"
 	on:click="{() => current = 'foo'}"

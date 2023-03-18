@@ -12,6 +12,7 @@ Also, don't miss out on [Svelte Summit](https://sveltesummit.com/) on November 2
 Now onto what's new!
 
 ## New in Svelte and SvelteKit
+
 - [svelte.dev](https://svelte.dev/) now runs on SvelteKit alongside [sveltesociety.dev](https://sveltesociety.dev). svelte.dev is a relatively complicated site with live code editing, authentication, and a markdown-based blog - making it a great way for us to really test out SvelteKit
 - A new compiler option, `enableSourcemap`, provides more control over the compiler output for JS and CSS sourcemaps (**3.44.0**). With this new feature, SvelteKit and the Vite Svelte plugin can now properly handle environment variables in `.svelte` templates (See [sveltejs/kit#720](https://github.com/sveltejs/kit/issues/720) and [sveltejs/vite-plugin-svelte#201](https://github.com/sveltejs/vite-plugin-svelte/pull/201))
 - The Svelte Language Tools now support reading the configuration of the VS Code CSS settings ([#1219](https://github.com/sveltejs/language-tools/issues/1219))
@@ -20,15 +21,14 @@ Now onto what's new!
 - SvelteKit no longer supports Node 12 ([2604](https://github.com/sveltejs/kit/pull/2604))
 - SvelteKit was upgraded from Vite 2.6.0 to Vite 2.6.12 fixing an issue where Vite would corrupt the Svelte runtime (https://github.com/vitejs/vite/issues/4306). It also included two fixes from the SvelteKit team to avoid or make diagnosing Vite issues in SvelteKit templates easier (https://github.com/vitejs/vite/pull/5192 and https://github.com/vitejs/vite/pull/5193). Vite 2.7 is currently available in beta with additional fixes for SSR
 
-
 To see all updates to Svelte and SvelteKit, check out the [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), respectively.
-
 
 ---
 
 ## Community Showcase
 
 **Apps & Sites**
+
 - [Tangent](http://tangentnotes.com/) is a clean and powerful notes app for Mac & Windows
 - [The Pudding](https://pudding.cool/) is a digital publication that explains ideas debated in culture with visual essays - rebuilt in SvelteKit
 - [Power Switcher](https://powerswitcher.axpo.com/) is an interactive overview of the development of the power supply in Switzerland, as energy sources migrate to cleaner sources
@@ -44,6 +44,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [Palitra App](https://palitra.app/) is a search-based color palette generator
 
 **Podcasts Featuring Svelte**
+
 - [Svelte Radio](https://www.svelteradio.com/episodes/svelte-summit-is-coming-up-and-svelte-is-growing) dives into the tech behind the recently released Svelte Summit website and a bunch of other fun stuff!
 - [PodRocket](https://podrocket.logrocket.com/rich-harris), LogRocket's podcast, talks Svelte with Rich Harris
 - [PodRocket also dove deep](https://podrocket.logrocket.com/elderjs) into Elder.js with Nick Reese
@@ -51,6 +52,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [devtools.fm](https://devtools.fm/episode/15) talks with Rich Harris about developing engaging data visualizations and building the tools of tomorrow
 
 **Educational Content**
+
 - [Have Single-Page Apps Ruined the Web?](https://www.youtube.com/watch?v=860d8usGC0o) Rich Harris answers the controversial question at this year's Jamstack Conf
 - [Svelte vs SvelteKit - What's The Difference?](https://www.youtube.com/watch?v=IKhtnhQKjxQ) LevelUpTuts provides a quick guide to explaining the relationship between the two projects. You can check out the rest of Scott Tolinski's guides to Svelte in his new series, ["Weekly Svelte"](https://www.youtube.com/playlist?list=PLLnpHn493BHF-Onm1MQgKC1psvW-rJuYi)
 - [WebJeda's SvelteKit Hooks](https://www.youtube.com/watch?v=RarufLoEL08&list=PLm_Qt4aKpfKgzcTiMT2cgWGBDBIPK06DQ) series continues this month with Part 3 - Cookie Session Authentication
@@ -61,6 +63,7 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [What Svelte's accessibility warnings won't tell you](https://geoffrich.net/posts/svelte-a11y-limits/) explains how Svelte's a11y warnings work and why you shouldn't count on them to make your app accessible
 
 **Libraries, Tools & Components**
+
 - [svelte-adapter-azure-swa](https://github.com/geoffrich/svelte-adapter-azure-swa) is an adapter for Svelte apps that creates an Azure Static Web App, using an Azure function for dynamic server rendering
 - [Inlang](https://docs.inlang.dev/getting-started/svelte-kit) is a localization and internationalization toolkit that now supports SvelteKit
 - [svelte-translate-tools](https://github.com/noelmugnier/svelte-translate-tools) extract/generate/compile translation files for your Svelte App at build time

@@ -1,6 +1,9 @@
 /*.js
+/*.mjs
 /package.json
 elements/*
 scripts/*
 /src
 /test
+.svelte-kit
+types

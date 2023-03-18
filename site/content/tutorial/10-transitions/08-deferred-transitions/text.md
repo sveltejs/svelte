@@ -2,7 +2,7 @@
 title: Deferred transitions
 ---
 
-A particularly powerful feature of Svelte's transition engine is the ability to *defer* transitions, so that they can be coordinated between multiple elements.
+A particularly powerful feature of Svelte's transition engine is the ability to _defer_ transitions, so that they can be coordinated between multiple elements.
 
 Take this pair of todo lists, in which toggling a todo sends it to the opposite list. In the real world, objects don't behave like that — instead of disappearing and reappearing in another place, they move through a series of intermediate positions. Using motion can go a long way towards helping users understand what's happening in your app.
 
@@ -10,7 +10,7 @@ We can achieve this effect using the `crossfade` function, which creates a pair 
 
 Find the `<label>` element on line 65, and add the `send` and `receive` transitions:
 
-```html
+```svelte
 <label
 	in:receive="{{key: todo.id}}"
 	out:send="{{key: todo.id}}"
@@ -19,7 +19,7 @@ Find the `<label>` element on line 65, and add the `send` and `receive` transiti
 
 Do the same for the next `<label>` element:
 
-```html
+```svelte
 <label
 	class="done"
 	in:receive="{{key: todo.id}}"

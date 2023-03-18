@@ -20,6 +20,7 @@ July was the most active month for the Svelte core repo since late 2019 as we re
 For a full list of features and bug fixes, check out the [Svelte changelog](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## SvelteKit Updates
+
 - `prerender.force` is now `prerender.onError` which lets you fine-tune which errors fail the build and which do not ([#2007](https://github.com/sveltejs/kit/pull/2007))
 - esbuild's configuration is now exposed for use with SvelteKit adapters ([#1914](https://github.com/sveltejs/kit/pull/1914))
 - Error messages are friendlier now for common config errors ([#1910](https://github.com/sveltejs/kit/pull/1910)) and compiler errors ([#1827](https://github.com/sveltejs/kit/pull/1827))
@@ -30,7 +31,8 @@ For a full list of features and bug fixes, check out the [Svelte changelog](http
 
 To see all updates to SvelteKit, check out the [SvelteKit changelog](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
-## Features & bug fixes from around svelte/*
+## Features & bug fixes from around svelte/\*
+
 - Language Tools now better support the "Workplace Trust" functionality (used in VS Code)
 - In svelte2tsx, ambient type declarations are now renamed to avoid conflicting declarations in the future. Users are now expected to provide the ambient type definitions themselves - fixing JS output
 - Sapper released v0.29.2 which fixes regex routes, status codes when requesting a directory, and exports when a user has not provided a `base` tag ([changelog](https://github.com/sveltejs/sapper/blob/master/CHANGELOG.md))
@@ -40,6 +42,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 ## Community Showcase
 
 **Apps & Sites**
+
 - [Parsnip](https://www.parsnip.ai/) is a mobile-first, progressive-web-app that helps you to learn to cook at home. Check out the [conversation on Reddit](https://www.reddit.com/r/sveltejs/comments/oearb9/learning_to_cook_at_home_with_parsnip_built/) for all the geeky details.
 - [Central Bank Digital Currency (CBDC) tracker](https://www.atlanticcouncil.org/cbdctracker/) is a site that keeps track of how countries around the world are adopting digital currencies.
 - [Svelte Commerce](https://github.com/itswadesh/svelte-commerce) is an advanced frontend platform for eCommerce based on Sveltekit.
@@ -48,6 +51,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
 **Educational Content**
+
 - [How I Built a Cross-Platform Desktop Application with Svelte, Redis, and Rust](https://css-tricks.com/how-i-built-a-cross-platform-desktop-application-with-svelte-redis-and-rust/) is a blog post by Luke Edwards, Svelte maintainer and Developer Advocate from Cloudflare.
 - [How to Create a Blog with SvelteKit and Strapi](https://strapi.io/blog/how-to-create-a-blog-with-svelte-kit-strapi) is a step-by-step tutorial by Aarnav Pai from Strapi
 - [Sveltekit Markdown Blog](https://www.youtube.com/watch?v=sKKgT0SEioI&list=PLm_Qt4aKpfKgonq1zwaCS6kOD-nbOKx7V) is a YouTube tutorial series by WebJeda.
@@ -56,6 +60,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [How to add Magic Link to a SvelteKit application](https://magic.link/posts/magic-svelte) is a guide to the popular password-less login pattern.
 
 **Libraries, Tools & Components**
+
 - [Svelte-Capacitor](https://github.com/drannex42/svelte-capacitor/) just released v2.0.0 - making it even easier to build hybrid mobile apps for iOS and Android using Svelte and Capacitor with near native performance.
 - [svelte-remixicon](https://github.com/ABarnob/svelte-remixicon) is an icon library for Svelte based on Remix Icon, consisting of more than 2000 icons.
 - [SveltePress](https://github.com/GeopJr/SveltePress) is a documentation tool built on top of SvelteKit.
@@ -64,7 +69,6 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [typesafe-i18n](https://github.com/ivanhofer/typesafe-i18n) is an opinionated, fully type-safe, lightweight localization library for TypeScript and JavaScript projects with no external dependencies.
 
 Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates/) for more templates, adders and adapters from across the Svelte ecosystem.
-
 
 ## See you next month!
 

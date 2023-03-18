@@ -60,7 +60,7 @@ Boolean attributes are included on the element if their value is [truthy](https:
 
 All other attributes are included unless their value is [nullish](https://developer.mozilla.org/en-US/docs/Glossary/Nullish) (`null` or `undefined`).
 
-```html
+```svelte
 <input required="{false}" placeholder="This input field is not required" />
 <div title="{null}">This div has no title attribute</div>
 ```
@@ -115,7 +115,7 @@ _`$$props`_ references all props that are passed to a component, including ones 
 
 _`$$restProps`_ contains only the props which are _not_ declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as _`$$props`_, and is likewise not recommended.
 
-```html
+```svelte
 <input {...$$restProps} />
 ```
 

@@ -10,17 +10,17 @@ Lots to cover this month with releases from across the Svelte ecosystem. Most im
 Let's dive into the news 🐬
 
 ## What's new in `sveltejs/svelte`
-* SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples/custom-stores) and [Server-side component API ](https://svelte.dev/docs#run-time-server-side-component-api))
-* Multiple instances of the same action are now allowed on an element (**3.32.0**, [example](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
-* The new `foreign` namespace should make it easier for alternative compile targets (like Svelte Native and SvelteGUI) by disabling certain HTML5-specific behaviour and checks (**3.32.0**, [more info](https://github.com/sveltejs/svelte/pull/5652))
-* Support for inline comment sourcemaps in code from preprocessors (**3.32.0**)
-* Destructured defaults are now allowed to refer to other variables (**3.33.0**, [example](https://svelte.dev/repl/0ee7227e1b45465b9b47d7a5ae2d1252?version=3.33.0))
-* Custom elements will now call `onMount` functions when connecting and clean up when disconnecting (**3.33.0**, checkout [this PR](https://github.com/sveltejs/svelte/pull/4522) for an interesting conversation on how folks are using Svelte with Web Components)
-* A `cssHash` option has been added to the compiler options to control the classname used for CSS scoping (**3.34.0**, [docs](https://svelte.dev/docs#compile-time-svelte-compile))
-* Continued improvement to TypeScript definitions
+
+- SSR store handling has been reworked to subscribe and unsubscribe as in DOM mode. SSR stores should work much more consistently now (**3.31.2**, see [custom stores](https://svelte.dev/examples/custom-stores) and [Server-side component API ](https://svelte.dev/docs#run-time-server-side-component-api))
+- Multiple instances of the same action are now allowed on an element (**3.32.0**, [example](https://svelte.dev/repl/01a14375951749dab9579cb6860eccde?version=3.32.0))
+- The new `foreign` namespace should make it easier for alternative compile targets (like Svelte Native and SvelteGUI) by disabling certain HTML5-specific behaviour and checks (**3.32.0**, [more info](https://github.com/sveltejs/svelte/pull/5652))
+- Support for inline comment sourcemaps in code from preprocessors (**3.32.0**)
+- Destructured defaults are now allowed to refer to other variables (**3.33.0**, [example](https://svelte.dev/repl/0ee7227e1b45465b9b47d7a5ae2d1252?version=3.33.0))
+- Custom elements will now call `onMount` functions when connecting and clean up when disconnecting (**3.33.0**, checkout [this PR](https://github.com/sveltejs/svelte/pull/4522) for an interesting conversation on how folks are using Svelte with Web Components)
+- A `cssHash` option has been added to the compiler options to control the classname used for CSS scoping (**3.34.0**, [docs](https://svelte.dev/docs#compile-time-svelte-compile))
+- Continued improvement to TypeScript definitions
 
 For a complete list of changes, including bug fixes and links to PRs, check out [the CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md)
-
 
 ## New from `sveltejs/language-tools`
 
@@ -45,7 +45,7 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 **Apps & Sites**
 
 - [Tracking the Coronavirus](https://www.nytimes.com/interactive/2021/us/new-york-city-new-york-covid-cases.html) from NYTimes is an example of SvelteKit in production
-- [Budibase](https://github.com/Budibase/budibase) is an open-source low-code platform, helping developers and IT professionals build, automate, and ship internal tools 50x faster on their own infrastructure. 
+- [Budibase](https://github.com/Budibase/budibase) is an open-source low-code platform, helping developers and IT professionals build, automate, and ship internal tools 50x faster on their own infrastructure.
 - [Track the Parcel](https://tracktheparcel.com/) is a one-stop tool for tracking parcel status with all major package shippers.
 - [Memo](https://sendmemo.app/features/) is a replacement for email that uses Svelte for modern messaging
 - [Userscripts Safari](https://github.com/quoid/userscripts) is an open-source userscript editor for Safari... a native Svelte app for Mac OS!
@@ -60,8 +60,6 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 - [heroeswearmasks.fun](https://heroeswearmasks.fun/) is a client-side machine learning tool that determines whether or not you're wearing a mask.
 - [weatherify](https://brdtheo-weatherify.netlify.app/) is a very pretty (and [open source](https://github.com/brdtheo/weatherify)) weather app
 - [DSN Live](https://dsn-live.netlify.app/#/) lets you monitor connections between NASA/JPL and interplanetary spacecraft missions in real time.
-
-
 
 **Demos, Libraries, Tools & Components**
 
@@ -85,7 +83,6 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 - [supabase-ui-svelte](https://github.com/joshnuss/supabase-ui-svelte) are UI components for Supabase authentication
 
 **Have your own Svelte Component to share?** Check out the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
-
 
 **Learning Resources & Starters**
 

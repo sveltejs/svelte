@@ -4,7 +4,7 @@ title: The animate directive
 
 In the [previous chapter](/tutorial/deferred-transitions), we used deferred transitions to create the illusion of motion as elements move from one todo list to the other.
 
-To complete the illusion, we also need to apply motion to the elements that *aren't* transitioning. For this, we use the `animate` directive.
+To complete the illusion, we also need to apply motion to the elements that _aren't_ transitioning. For this, we use the `animate` directive.
 
 First, import the `flip` function — flip stands for ['First, Last, Invert, Play'](https://aerotwist.com/blog/flip-your-animations/) — from `svelte/animate`:
 
@@ -14,7 +14,7 @@ import { flip } from 'svelte/animate';
 
 Then add it to the `<label>` elements:
 
-```html
+```svelte
 <label
 	in:receive="{{key: todo.id}}"
 	out:send="{{key: todo.id}}"
@@ -24,7 +24,7 @@ Then add it to the `<label>` elements:
 
 The movement is a little slow in this case, so we can add a `duration` parameter:
 
-```html
+```svelte
 <label
 	in:receive="{{key: todo.id}}"
 	out:send="{{key: todo.id}}"

@@ -11,10 +11,9 @@ If there are things that don't make sense, or that we're glossing over, feel fre
 
 If you get stuck at any point following this guide, the best place to ask for help is in the [chatroom](https://svelte.dev/chat).
 
-
 ## First things first
 
-You'll be using the *command line*, also known as the terminal. On Windows, you can access it by running **Command Prompt** from the Start menu; on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. On most Linux systems, `Ctrl-Alt-T` brings up the command line.
+You'll be using the _command line_, also known as the terminal. On Windows, you can access it by running **Command Prompt** from the Start menu; on a Mac, hit `Cmd` and `Space` together to bring up **Spotlight**, then start typing `Terminal.app`. On most Linux systems, `Ctrl-Alt-T` brings up the command line.
 
 The command line is a way to interact with your computer (or another computer! but that's a topic for another time) with more power and control than the GUI (graphical user interface) that most people use day-to-day.
 
@@ -33,10 +32,9 @@ cd svelte-projects
 
 A full introduction to the command line is out of the scope of this guide, but here are a few more useful commands:
 
-* `cd ..` — navigates to the parent of the current directory
-* `cat my-file.txt` — on Mac/Linux (`type my-file.txt` on Windows), lists the contents of `my-file.txt`
-* `open .` (or `start .` on Windows) — opens the current directory in Finder or File Explorer
-
+- `cd ..` — navigates to the parent of the current directory
+- `cat my-file.txt` — on Mac/Linux (`type my-file.txt` on Windows), lists the contents of `my-file.txt`
+- `open .` (or `start .` on Windows) — opens the current directory in Finder or File Explorer
 
 ## Installing Node.js
 
@@ -44,15 +42,13 @@ A full introduction to the command line is out of the scope of this guide, but h
 
 Once installed, you'll have access to three new commands:
 
-* `node my-file.js` — runs the JavaScript in `my-file.js`
-* `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/package/svelte) package
-* `npx [subcommand]` — a convenient way to run programs available on npm without permanently installing them
-
+- `node my-file.js` — runs the JavaScript in `my-file.js`
+- `npm [subcommand]` — [npm](https://www.npmjs.com/) is a way to install 'packages' that your application depends on, such as the [svelte](https://www.npmjs.com/package/svelte) package
+- `npx [subcommand]` — a convenient way to run programs available on npm without permanently installing them
 
 ## Installing a text editor
 
 To write code, you need a good editor. The most popular choice is [Visual Studio Code](https://code.visualstudio.com/) or VSCode, and justifiably so — it's well-designed and fully-featured, and has a wealth of extensions ([including one for Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode), which provides syntax highlighting and diagnostic messages when you're writing components).
-
 
 ## Creating a project
 
@@ -78,10 +74,9 @@ npm run dev
 
 Running the `dev` script starts a program called [Vite](https://vitejs.dev/). Vite's job is to take your application's source files, pass them to other programs (including Svelte, in our case) and convert them into the code that will actually run when you open the application in a browser.
 
-Speaking of which, open a browser and navigate to http://localhost:5173. This is your application running on a local *web server* (hence 'localhost') on port 5173.
+Speaking of which, open a browser and navigate to http://localhost:5173. This is your application running on a local _web server_ (hence 'localhost') on port 5173.
 
 Try changing `src/App.svelte` and saving it. The application will update with your changes.
-
 
 ## Building your app
 

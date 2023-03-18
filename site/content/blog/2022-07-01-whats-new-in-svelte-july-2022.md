@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: July 2022"
-description: "Faster SSR, language tools improvements and a new paid contributor!"
+description: 'Faster SSR, language tools improvements and a new paid contributor!'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -16,13 +16,14 @@ Svelte supporters have donated approximately $80,000 to [the project on OpenColl
 We will also be utilizing OpenCollective funds to allow Svelte core maintainers to attend [Svelte Summit](https://www.sveltesummit.com/) in person this fall. Thanks to everyone who has donated so far!
 
 ## What's new in Svelte & Language Tools
+
 - [learn.svelte.dev](https://learn.svelte.dev/) is a new way to learn Svelte and SvelteKit from the ground up that is currently in development
 - Faster SSR is coming in the next Svelte release. A PR two years in the making, resulting in up to 3x faster rendering in some benchmarking tests! ([PR](https://github.com/sveltejs/svelte/pull/5701))
 - "Find File References" ([0.14.28](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.28)) and "Find Component References" ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29)) in the latest versions of the Svelte extension shows where Svelte files and components have been imported and used ([Demo](https://twitter.com/dummdidumm_/status/1532459709604716544/photo/1))
 - The Svelte extension now supports CSS path completion ([0.14.29](https://github.com/sveltejs/language-tools/releases/tag/language-server-0.14.29))
 
-
 ## What's new in SvelteKit
+
 - Introduced `@sveltejs/kit/experimental/vite` which allows SvelteKit to interoperate with other tools in the Vite ecosystem like Vitest and Storybook ([#5094](https://github.com/sveltejs/kit/pull/5094)). Please [leave feedback](https://github.com/sveltejs/kit/issues/5184) as to whether the feature works and is helpful as we consider taking it out of experimental and making `vite.config.js` required for all users
 - Streaming in endpoints is now supported ([#3419](https://github.com/sveltejs/kit/issues/3419)). This was enabled by switching to the Undici `fetch` implementation ([#5117](https://github.com/sveltejs/kit/pull/5117))
 - Static assets can now be symlinked in development environments ([#5089](https://github.com/sveltejs/kit/pull/5089))
@@ -33,6 +34,7 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Virtual Maker](https://www.virtualmaker.net/) lets you make interactive 3D and VR scenes in your browser
 - [Apple Beta Music](https://www.reddit.com/r/sveltejs/comments/v7ic2s/apple_beta_music_uses_svelte/) appears to have been written in some combination of Svelte and web components
 - [Itatiaia](https://www.itatiaia.com.br/), the largest radio station in the country of Brazil just relaunched its news portal in SvelteKit
@@ -51,15 +53,16 @@ We will also be utilizing OpenCollective funds to allow Svelte core maintainers 
 
 Want to contribute to a site using the latest SvelteKit features? [Help build the Svelte Society site](https://github.com/svelte-society/sveltesociety.dev/issues)!
 
-
 **Learning Resources**
 
 _Starring the Svelte team_
+
 - [Svelte Origins: A JavaScript Documentary](https://www.youtube.com/watch?v=kMlkCYL9qo0) by OfferZen Origins
 - [Full Stack Documentation (announcing learn.svelte.dev)](https://portal.gitnation.org/contents/full-stack-documentation) by Rich Harris @ JSNation 2022
 - [All About the Sirens](https://www.svelteradio.com/episodes/all-about-the-sirens) by Svelte Radio
 
 _To Watch_
+
 - [SvelteKit Page Endpoints](https://www.youtube.com/watch?v=yQRf2wmTu5w), [Named Layouts](https://www.youtube.com/watch?v=UHX9TJ0BxZY) and [Passing data from page component to layout component with $page.stuff](https://www.youtube.com/watch?v=CXaCstU5pcw) by lihautan
 - [🍞 & 🧈: Magically load data with SvelteKit Endpoints](https://www.youtube.com/watch?v=f6prqYlbTE4) by Johnny Magrippis
 - [Svelte for React developers](https://www.youtube.com/watch?v=7tsrwrx5HtQ) by frontendtier
@@ -68,6 +71,7 @@ _To Watch_
 - [Svelte + websockets: Build a real-time Auction app](https://www.youtube.com/watch?v=CqgsWFrwQIU) by Evgeny Maksimov
 
 _To Read_
+
 - [Up-To-Date Analytics on a Static Website](https://paullj.github.io/posts/up-to-date-analytics-on-a-static-website) and [Fast, Lightweight Fuzzy Search using Fuse.js](https://paullj.github.io/posts/fast-lightweight-fuzzy-search-using-fuse.js) by paullj
 - [Use SvelteKit as a handler in the ExpressJs project](https://chientrm.medium.com/use-sveltekit-as-a-handler-in-the-expressjs-project-15524b01128f) by Tran Chien
 - [Creating a desktop application with Tauri and SvelteKit](https://github.com/Stijn-B/tauri-sveltekit-example) by Stijn-B
@@ -76,8 +80,8 @@ _To Read_
 - [SvelteKit Hooks. Everything You Need To Know](https://kudadam.com/blog/understanding-sveltekit-hooks) by Lucretius K. Biah
 - [3 tips for upgrading the performance of your Svelte stores](https://www.mathiaspicker.com/posts/3-tips-for-upgrading-the-performance-of-your-svelte-stores) by Mathias Picker
 
-
 **Libraries, Tools & Components**
+
 - [Svend3r](https://github.com/oslabs-beta/svend3r) is a plug and play D3 charting library for Svelte
 - [Svelte Hover Draw SVG](https://github.com/davipon/svelte-hover-draw-svg) is a lightweight Svelte component to draw SVG on hover
 - [Svelte French Toast](https://svelte-french-toast.com/) provides buttery smooth toast notifications that are lightweight, customizable, and beautiful by default
@@ -89,7 +93,6 @@ _To Read_
 - [Slidy](https://github.com/Valexr/Slidy) is a simple, configurable & reusable carousel sliding action script with templates & some useful plugins
 - [Svelte Component Snippets](https://marketplace.visualstudio.com/items?itemName=brysonbw.svelte-component-snippets) is a VS Code extension with access to common Svelte snippets
 - [Svelte Confetti](https://github.com/Mitcheljager/svelte-confetti) adds a little bit of flair to your app with some confetti 🎊
-
 
 What did we miss? Let us know on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs) to add your voice.
 

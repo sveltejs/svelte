@@ -12,6 +12,7 @@ Also, [@dummdidumm](https://github.com/dummdidumm) (Simon H) [has joined Vercel 
 Now onto the rest of the updates...
 
 ## What's new in SvelteKit
+
 - Dynamically imported styles are now included during SSR ([#5138](https://github.com/sveltejs/kit/pull/5138))
 - Improvements to routes and prop updates to prevent unnecessary rerendering ([#5654](https://github.com/sveltejs/kit/pull/5654), [#5671](https://github.com/sveltejs/kit/pull/5671))
 - Lots of improvements to error handling ([#4665](https://github.com/sveltejs/kit/pull/4665), [#5622](https://github.com/sveltejs/kit/pull/5622), [#5619](https://github.com/sveltejs/kit/pull/5619), [#5616](https://github.com/sveltejs/kit/pull/5616))
@@ -22,6 +23,7 @@ Now onto the rest of the updates...
 - `vite-plugin-svelte` has reached 1.0 and now supports Vite 3. You'll notice new default ports for `dev` (port 5173) and `preview` (port 4173) ([#5005](https://github.com/sveltejs/kit/pull/5005), [vite-plugin-svelte CHANGELOG](https://github.com/sveltejs/vite-plugin-svelte/blob/main/packages/vite-plugin-svelte/CHANGELOG.md))
 
 **Breaking changes:**
+
 - `mode`, `prod` and `server` are no longer available in `$app/env` ([#5602](https://github.com/sveltejs/kit/pull/5602))
 - `svelte-kit` CLI commands are now run using the `vite` command and `vite.config.js` is required. This will allow first-class support with other projects in the Vite ecosystem like Vitest and Storybook ([#5332](https://github.com/sveltejs/kit/pull/5332), [Docs](https://kit.svelte.dev/docs/project-structure#project-files-vite-config-js))
 - `endpointExtensions` is now `moduleExtensions` and can be used to filter param matchers ([#5085](https://github.com/sveltejs/kit/pull/5085), [Docs](https://kit.svelte.dev/docs/configuration#moduleextensions))
@@ -35,18 +37,18 @@ Now onto the rest of the updates...
 
 For a full list of changes, check out kit's [CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md).
 
-
 ## What's new in Svelte & Language Tools
+
 - The `@layer` [CSS at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/@layer) is now supported in Svelte components (**3.49.0**, [PR](https://github.com/sveltejs/svelte/issues/7504))
 - The `inert` [HTML attribute](https://html.spec.whatwg.org/multipage/interaction.html#the-inert-attribute) is now supported in Svelte's language tools and plugins (**105.20.0**, [PR](https://github.com/sveltejs/language-tools/pull/1565))
 - The Svelte plugin will now use `SvelteComponentTyped` typings, if available (**105.19.0**, [PR](https://github.com/sveltejs/language-tools/pull/1548))
-
 
 ---
 
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [PocketBase](https://github.com/pocketbase/pocketbase) is an open source Go backend with a single file and an admin dashboard built with Svelte
 - [Hondo](https://www.playhondo.com/how-to-play) is a word guessing game with multiple rounds
 - [Hexapipes](https://github.com/gereleth/hexapipes) is a site for playing hexagonal pipes puzzle
@@ -64,6 +66,7 @@ For a full list of changes, check out kit's [CHANGELOG](https://github.com/svelt
 **Learning Resources**
 
 _Starring the Svelte team_
+
 - [The Svelte Documentary is out!](https://www.svelteradio.com/episodes/the-svelte-documentary-is-out) on Svelte Radio
 - [Beginner SvelteKit](https://vercel.com/docs/beginner-sveltekit) by Vercel
 - [Challenge: Explore Svelte by Building a Bubble Popping Game](https://prismic.io/blog/try-svelte-build-game) by Brittney Postma
@@ -71,6 +74,7 @@ _Starring the Svelte team_
 - [Svelte Sirens July Talk - Testing in Svelte with Jess Sachs](https://sveltesirens.dev/event/testing-in-svelte)
 
 _To Watch_
+
 - [10 Awesome Svelte UI Component Libraries](https://www.youtube.com/watch?v=RkD88ARvucM) by LevelUpTuts
 - [Learn How SvelteKit Works](https://www.youtube.com/watch?v=VizuTy3uSNE) and [SvelteKit Endpoints](https://www.youtube.com/watch?v=XnVxDLTgCgo) by Joy of Code
 - [SvelteKit using TS, and Storybook setup](https://www.youtube.com/watch?v=L4F5dSu0FcQ) by Jarrod Kane
@@ -78,6 +82,7 @@ _To Watch_
 - [SvelteKit authentication, the better way - Tutorial](https://www.youtube.com/watch?v=Y98KipzwVdM) by Pilcrow
 
 _To Read_
+
 - [Some assorted Svelte demos](https://geoffrich.net/posts/assorted-svelte-demos/) by Geoff Rich
 - [Three ways to bootstrap a Svelte project](https://maier.tech/posts/three-ways-to-bootstrap-a-svelte-project) by Thilo Maier
 - [Design & build an app with Svelte](https://bootcamp.uxdesign.cc/design-build-an-app-with-svelte-ecd7ed0729da) by Hugo
@@ -90,16 +95,17 @@ _To Read_
 - [Transitional Apps with Phoenix and Svelte](https://nathancahill.com/phoenix-svelte) by Nathan Cahill
 
 _Tech Demos_
+
 - [Bringing the best GraphQL experience to Svelte](https://www.the-guild.dev/blog/houdini-and-kitql) by The Guild
 - [Style your Svelte website faster with Stylify CSS](https://stylifycss.com/blog/style-your-svelte-website-faster-with-stylify-css/) by Stylify
 - [Revamped Auth Helpers for Supabase (with SvelteKit support)](https://supabase.com/blog/2022/07/13/supabase-auth-helpers-with-sveltekit-support) by Supabase
 
-
 **Libraries, Tools & Components**
+
 - [Lucia](https://github.com/pilcrowOnPaper/lucia-sveltekit) is a simple, JWT based authentication library for SvelteKit that connects your SvelteKit app with your database
 - [Skeleton](https://github.com/Brain-Bones/skeleton) is a UI component library for use with Svelte + Tailwind
 - [pass-composer](https://pass-composer.vercel.app/) helps you compose your postprocessing passes for threlte scenes
-- [@crikey/stores-*](https://whenderson.github.io/stores-mono/) is a collection of libraries to extend Svelte stores for common use-cases
+- [@crikey/stores-\*](https://whenderson.github.io/stores-mono/) is a collection of libraries to extend Svelte stores for common use-cases
 - [Svelte Chrome Storage](https://github.com/shaun-wild/svelte-chrome-storage) is a lightweight abstraction between Svelte stores and Chrome extension storage
 - [Svelte Schema Form](https://github.com/restspace/svelte-schema-form) is a form generator for JSON schema
 - [svelte-gesture](https://github.com/wobsoriano/svelte-gesture) is a library that lets you bind richer mouse and touch events to any component or view

@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: January 2022"
-description: "Faster builds with SvelteKit and a much anticipated REPL feature"
+description: 'Faster builds with SvelteKit and a much anticipated REPL feature'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -8,6 +8,7 @@ authorURL: https://dreamindani.com
 Happy new year, Svelte Community! Lots to share this month across Svelte, SvelteKit, Language Tools and the Showcase. Thanks to everyone who made 2021 a great year to use Svelte. Looking forward to the next one 🚀
 
 ## What's new in SvelteKit
+
 - `@sveltejs/adapter-static` for SvelteKit now has a `precompress` option to make brotli compression of assets and pages easier to do out of the box ([#3079](https://github.com/sveltejs/kit/pull/3079))
 - Concurrency mode in SvelteKit will now prerender pages in parallel ([#3120](https://github.com/sveltejs/kit/pull/3120)). It is enabled by default in `1.0.0-next.205` and later
 - CSS is now automatically included before JS for improved page performance ([d13efe](https://github.com/sveltejs/kit/commit/d138efe21692f5925f1e89afc0a33f42d6a1a711))
@@ -17,18 +18,18 @@ Happy new year, Svelte Community! Lots to share this month across Svelte, Svelte
 - After the [update to Vite 2.7](https://github.com/sveltejs/kit/pull/3018), SvelteKit users are [reporting significant performance improvements](https://www.reddit.com/r/sveltejs/comments/rljhfc/sveltekit_massive_compiler_improvement_by/) and loading third-parties libraries in SSR has also been greatly improved
 - SvelteKit server will now automatically restart when the config files is changed ([vite-plugin-svelte#237](https://github.com/sveltejs/vite-plugin-svelte/pull/237))
 
-
 ## Other new bits from `svelte/*`
+
 - [Svelte 3.44.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3443) is out with a few bug fixes in the binding and loop code
 - Svelte Language Tools has introduced support for the then/catch shorthands from Svelte 3.41 and TypeScript's "go to" functionality ([105.8.0 and later](https://github.com/sveltejs/language-tools/releases/tag/extensions-105.8.0))
 - The Svelte REPL got a nice upgrade as well - letting you delete saved REPLs. Try it out by logging in at [svelte.dev/apps](https://svelte.dev/apps)
-
 
 ---
 
 ## Community Showcase
 
 **Apps & Sites**
+
 - [Discover Twitter Spaces](https://github.com/navneetsharmaui/discover-twitter-spaces) is a tool that helps you find the Twitter Spaces
 - [Modern Fluid Typography Editor](https://github.com/codeAdrian/modern-fluid-typography-editor) helps create beautiful fluid typography using CSS clamp
 - [Unnwhiteboard](https://github.com/AviKKi/unnwhiteboard) is a job board for companies (or teams) that don't do "whiteboard" interviews
@@ -41,10 +42,10 @@ A lot of work this month has gone into migrating the Svelte main website and Sve
 
 If you're looking for a fun SvelteKit project to work on, [you can contribute to the Svelte Society site rewrite](https://github.com/svelte-society/sveltesociety-2021/issues) 💅
 
-
 **Learning and Listening**
 
 _To Read_
+
 - [Mutating Query Params in SvelteKit Without Page Reloads or Navigations](https://dev.to/mohamadharith/mutating-query-params-in-sveltekit-without-page-reloads-or-navigations-2i2b) by Mohamad Harith
 - [Svelte for Reactaholics : A guide for React developers](https://www.100ms.live/blog/svelte-guide-for-react-developers) by Puru Vijay
 - [Svelte's lifecycle methods can be used anywhere](https://geoffrich.net/posts/svelte-lifecycle-examples/) and [The many meanings of $ in Svelte](https://geoffrich.net/posts/svelte-$-meanings/) by Geoff Rich
@@ -54,6 +55,7 @@ _To Read_
 - [What happened in #Svelte language tools this year](https://twitter.com/dummdidumm_/status/1474158105395179525?t=ytj2K2Q52iD5-lNyLnQaAQ&s=19) by Simon H
 
 _To Watch_
+
 - [The Future of Svelte (Interview with Rich Harris)](https://www.youtube.com/watch?v=uQntFkK8Z54) by Lee Robinson, Director of Developer Relations at Vercel
 - [Svelte is becoming the go-to framework](https://www.youtube.com/watch?v=fo6BKY2xR2w&t=1834s) for Obsidian plugin developers
 - [Sveltekit WordPress Headless Blog](https://www.youtube.com/watch?v=c0UDVgjPxFw) by WebJeda
@@ -61,10 +63,12 @@ _To Watch_
 - [Deploy a full-stack SvelteKit app on Cloudflare Pages](https://www.youtube.com/watch?v=Wc1_U6Dy5Tw) by 1nf
 
 _To Listen To_
+
 - [Syntax podcast: How To Do Things In Svelte](https://podcasts.apple.com/ca/podcast/how-to-do-things-in-svelte/id1253186678?i=1000544796072)
 - [JS Party #205: So much Sveltey goodness (w/ Rich Harris)](https://changelog.com/jsparty/205)
 
 **Libraries, Tools & Components**
+
 - [svelte-headlessui](https://github.com/rgossiaux/svelte-headlessui) is an unofficial, complete Svelte port of the Headless UI component library
 - [svelte-forms v2](https://chainlist.github.io/svelte-forms/) has been released - the author is [looking for feedback](https://www.reddit.com/r/sveltejs/comments/r6354j/svelteforms_v2_has_been_released/)
 - [Percival](https://github.com/ekzhang/percival) is a declarative data query and visualization language

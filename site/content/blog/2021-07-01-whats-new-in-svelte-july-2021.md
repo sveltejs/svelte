@@ -8,22 +8,22 @@ authorURL: https://dreamindani.com
 As the northern hemisphere heats up, Svelte has stayed cool with lots of performance and bug fixes, better TypeScript support, and lots of new components & tools from around the ecosystem. Let's take a peek 👀
 
 ## New in SvelteKit
+
 - `adapter-node` now precompresses assets using gzip & brotli ([#1693](https://github.com/sveltejs/kit/pull/1693))
 - Support for TypeScript transpilation has been added to the `svelte-kit package` tooling ([#1633](https://github.com/sveltejs/kit/pull/1633))
 - Improved caching defaults in `adapter-node` ([#1416](https://github.com/sveltejs/kit/pull/1416))
 - Allow configuring Rollup output options ([#1572](https://github.com/sveltejs/kit/pull/1572))
 - Fixed usage of SSL with HMR ([#1517](https://github.com/sveltejs/kit/pull/1517))
 
+## Features & bug fixes from around svelte/\*
 
-
-## Features & bug fixes from around svelte/*
 - [Svelte 3.38.3](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md#3383) (released June 22) includes a bunch of performance and bug fixes - including hydration optimizations, `this` preservation in bubbled events, and more!
 - The latest language tools releases added support for prop renaming from outside of a component, PostCSS syntax grammar, and a `.d.ts` output target in `svelte2tsx` which can be used to create type definitions from Svelte files.
 - Also in language tools, some long-awaited experimental features for enhanced TypeScript support were added - including explicitly typing all possible component events or slots, and using generics. Have a look at [the RFC](https://github.com/sveltejs/rfcs/pull/38) for more details and leave feedback in [this issue](https://github.com/sveltejs/language-tools/issues/442) if you are using it.
 - `svelte-scroller` got some quality-of-life fixes in 2.0.7 - fixing an initial width bug and updating its `index` more conservatively
 
-
 ## Coming soon to Svelte
+
 - Constants in markup ([RFC](https://github.com/sveltejs/rfcs/blob/master/text/0000-markup-constants.md)): Adds a new `{@const ...}` tag that defines a local constant ([PR](https://github.com/sveltejs/svelte/pull/6413))
 
 ---
@@ -31,12 +31,13 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 ## Community Showcase
 
 **Apps & Sites**
+
 - [SvelteThemes](https://sveltethemes.dev/) is a curated list of Svelte themes and templates built using svelte, sveltekit, elderjs, routify etc.
 - [Beatbump](https://github.com/snuffyDev/Beatbump) is an alternative frontend for YouTube Music created using Svelte/SvelteKit.
 - [Sveltuir](https://github.com/webspaceadam/sveltuir) is an app help you memorize the guitar fretboard
 
-
 **Educational Content**
+
 - [Svelte Radio: A Jolly Good Svelte Summer](https://share.transistor.fm/s/60880542) is a conversation about what's new in Svelte and a celebration of Svelte Radio's 1-year anniversary
 - [Class properties in Svelte](https://navillus.dev/blog/svelte-class-props) is a refresher on the power of `class` for developers switching over to Svelte from React
 - [Sveltekit Tutorial for Beginners](https://www.youtube.com/playlist?list=PLm_Qt4aKpfKjf77S8UD79Ockhwp_699Ms) is a video playlist for learning SvelteKit by WebJeda
@@ -47,8 +48,8 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 - [Render Katex with Svelte from zero to hero](https://www.youtube.com/watch?v=euowJs9CblA) demonstrates how to implement Katex in a Svelte project
 - [Using Custom Elements in Svelte](https://css-tricks.com/using-custom-elements-in-svelte/) shows some of the quirks to look out for when using custom elements in a Svelte site
 
-
 **Libraries, Tools & Components**
+
 - [svelte-pipeline](https://github.com/novacbn/svelte-pipeline) provides custom JavaScript contexts and the Svelte Compiler as Svelte Stores, for REPLs, Editors, etc.
 - [Sveltotron](https://github.com/Salemmous/sveltotron) is an Electron-based app made to inspect your Svelte app
 - [svelte-qr-reader-writer](https://github.com/pleasemarkdarkly/svelte-qr-reader-writer) is a Svelte component that helps read and write data from QR codes
@@ -56,9 +57,7 @@ As the northern hemisphere heats up, Svelte has stayed cool with lots of perform
 - [svelte-typed-context](https://www.npmjs.com/package/svelte-typed-context) provides an interface which, when provided to `getContext` or `setContext`, allows for stricter types
 - [svelte-modals](https://svelte-modals.mattjennings.io/) is a simple, flexible, zero-dependency modal manager for Svelte
 
-
 **Want to contribute a component? Interested in helping make Svelte's presence on the web better?** Submit a Component to the Svelte Society site by making [a PR to this file](https://github.com/svelte-society/sveltesociety-2021/blob/main/src/routes/components/components.json) or check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
-
 
 ## See you next month!
 

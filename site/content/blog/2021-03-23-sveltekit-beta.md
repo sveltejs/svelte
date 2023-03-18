@@ -28,7 +28,6 @@ You'll find documentation at [kit.svelte.dev/docs](https://kit.svelte.dev/docs).
 
 The source code is available at [github.com/sveltejs/kit](https://github.com/sveltejs/kit). Issues and pull requests are disabled while we finish getting our house in order, but we'll be making it fully open in the near future.
 
-
 ## Wait, what is SvelteKit?
 
 Think of it as [Next](https://nextjs.org/) for Svelte. It's a framework for building apps with Svelte, complete with server-side rendering, routing, code-splitting for JS and CSS, adapters for different serverless platforms and so on.
@@ -44,7 +43,6 @@ Snowpack created an entirely new category of dev tooling. Rather than _bundling_
 Vite falls into the same category as Snowpack. While Vite 1 wasn't suitable for SvelteKit — it was Vue-centric (Vite and Vue are both created by [Evan You](https://twitter.com/youyuxi)) and made server-side rendering difficult — Vite 2 is framework-agnostic and designed with SSR at the core. It also has powerful features, like CSS code-splitting, that we previously had to implement ourselves. When we evaluated the two technologies side-by-side we were forced to conclude that Vite is a closer match for SvelteKit's requirements and would give us the best chance to deliver the framework of our imaginations.
 
 We owe a deep debt of gratitude to the Snowpack team, both for the close collaboration earlier in development and for lighting the path that web development will take over the next few years. It's a wonderful tool, and you should absolutely try it out.
-
 
 ## Dogfooding as extreme sport
 

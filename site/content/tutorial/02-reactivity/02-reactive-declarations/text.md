@@ -13,8 +13,8 @@ $: doubled = count * 2;
 
 Let's use `doubled` in our markup:
 
-```html
+```svelte
 <p>{count} doubled is {doubled}</p>
 ```
 
-Of course, you could just write `{count * 2}` in the markup instead — you don't have to use reactive values. Reactive values become particularly valuable when you need to reference them multiple times, or you have values that depend on *other* reactive values.
+Of course, you could just write `{count * 2}` in the markup instead — you don't have to use reactive values. Reactive values become particularly valuable when you need to reference them multiple times, or you have values that depend on _other_ reactive values.

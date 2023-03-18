@@ -4,7 +4,7 @@ title: Dimensions
 
 Every block-level element has `clientWidth`, `clientHeight`, `offsetWidth` and `offsetHeight` bindings:
 
-```html
+```svelte
 <div bind:clientWidth={w} bind:clientHeight={h}>
 	<span style="font-size: {size}px">{text}</span>
 </div>

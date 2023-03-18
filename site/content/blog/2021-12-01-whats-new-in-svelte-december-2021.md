@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: December 2021"
-description: "Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, and Kevin goes full-time on Svelte Society"
+description: 'Svelte Summit Fall 2021 Recap, Rich Harris joins Vercel, and Kevin goes full-time on Svelte Society'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -9,12 +9,12 @@ With SvelteKit getting more and more stable each day, there's not much to cover 
 
 If you want to dive deep into the last month's worth of bug fixes, check out the [Svelte](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md) and [SvelteKit](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md) changelogs, respectively.
 
-
 ## What happened at Svelte Summit?
 
 If you missed Svelte Summit, you can watch the entire live stream on [YouTube](https://www.youtube.com/watch?v=1Df-9EKvZr0) and catch a recap in the [#svelte-summit channel on Discord](https://discord.gg/YmHcdnhu).
 
 Here are the highlights:
+
 - [Rich Harris](https://twitter.com/rich_harris) took us through a tour of Svelte's history and announced [his move to Vercel](https://vercel.com/blog/vercel-welcomes-rich-harris-creator-of-svelte) - where he will be helping maintain Svelte full-time! ([20:00](https://www.youtube.com/watch?v=1Df-9EKvZr0&t=1200s))
 - [Steph Dietz](https://twitter.com/steph_dietz_) explained how Svelte's simple abstractions makes it easy for beginners and experts alike to learn and use JavaScript - without the boilerplate ([29:00](https://www.youtube.com/watch?v=1Df-9EKvZr0&t=1740s))
 - [Kevin Bridges](https://twitter.com/kevinast) dove deep into Svelte's reactivity logic by visualizing it through `ReflectiveCounter` and showing how to "fine tune" it, as needed. A full "syllabus" for the presentation is available on [Kevin's site](https://wiibridges.com/presentations/ResponsiveSvelte/). ([42:55](https://www.youtube.com/watch?v=1Df-9EKvZr0&t=2575s))
@@ -38,17 +38,17 @@ Thanks to [Kevin](https://twitter.com/kevmodrome) and all the Svelte Society vol
 
 If you have feedback on the Svelte Summit, Kev is [looking for feedback on the Svelte subreddit](https://www.reddit.com/r/sveltejs/comments/qzgo3k/svelte_summit_feedback/) 👀
 
-
 ---
 
 ## Community Showcase
 
 **Apps & Sites**
+
 - [pixeldrain](https://github.com/Fornaxian/pixeldrain_web) is a free-to-use file sharing platform
 - [LifeHash](http://lifehash.info/) generates beautiful visual hashes from Blockchain Commons
 - [simple-cloud-music](https://github.com/dufu1991/simple-cloud-music) is a lightweight third-party NetEase cloud music player for modern browsers (likely only works on Chrome)
 - [palette.rocks](https://palette.rocks/) is a color palette generator with contrast-checking built-in
-- [Kadium](https://github.com/probablykasper/kadium) is an app for staying on top of YouTube channel uploads 
+- [Kadium](https://github.com/probablykasper/kadium) is an app for staying on top of YouTube channel uploads
 - [Multi-Monitor Calculator](https://multimonitorcalculator.com/) is a tool for planning your multi-monitor setup
 - [Your Home](https://yourhome.fb.com/) is an interactive overview of Facebook's privacy settings
 - [Svelte Crush](https://svelte-crush.netlify.app/) is a Candy Crush style match-3 game
@@ -56,8 +56,8 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 
 **Looking for a Svelte project to work on? Interested in helping make Svelte's presence on the web better?** Check out [the list of open issues](https://github.com/svelte-society/sveltesociety-2021/issues) if you'd like to contribute to the Svelte Society rewrite in SvelteKit.
 
-
 **Videos, Blogs and Podcasts**
+
 - [How To Make and Publish a Svelte Library](https://www.youtube.com/watch?v=_TymiadmPrc)
 - [SvelteKit is now fully supported in WebContainers](https://blog.stackblitz.com/posts/sveltekit-supported-in-webcontainers/)
 - [Introducing Svelte, and Comparing Svelte with React and Vue](https://joshcollinsworth.com/blog/introducing-svelte-comparing-with-react-vue)
@@ -72,6 +72,7 @@ If you have feedback on the Svelte Summit, Kev is [looking for feedback on the S
 - [Building SvelteKit applications with Serverless Redis](https://blog.upstash.com/svelte-with-serverless-redis)
 
 **Libraries, Tools & Components**
+
 - [svelte-cubed](https://github.com/Rich-Harris/svelte-cubed) is a Three.js component library for Svelte - created by Rich Harris for his presentation at Svelte Summit Fall 2021
 - [svelte-fsm](https://github.com/kenkunz/svelte-fsm) is a tiny, simple, expressive, pragmatic Finite State Machine (FSM) library, optimized for Svelte
 - [bromb](https://github.com/samuelstroschein/bromb) is a feedback widget for websites/web apps that is small and easy to integration/self-host

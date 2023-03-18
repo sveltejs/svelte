@@ -21,25 +21,25 @@ module.exports = {
 		'prefer-const': [2, { destructuring: 'all' }],
 		'arrow-spacing': 2,
 		'no-inner-declarations': 0,
-		'require-atomic-updates': 0
+		'require-atomic-updates': 0,
 	},
 	env: {
 		es6: true,
 		browser: true,
 		node: true,
-		mocha: true
+		mocha: true,
 	},
 	extends: ['eslint:recommended', 'plugin:import/errors', 'plugin:import/warnings'],
 	plugins: ['svelte3'],
 	overrides: [
 		{
 			files: ['*.svelte'],
-			processor: 'svelte3/svelte3'
-		}
+			processor: 'svelte3/svelte3',
+		},
 	],
 	parserOptions: {
 		ecmaVersion: 9,
-		sourceType: 'module'
+		sourceType: 'module',
 	},
 	settings: {
 		'import/core-modules': ['svelte'],
@@ -49,6 +49,6 @@ module.exports = {
 			} catch (e) {
 				return null;
 			}
-		})()
-	}
+		})(),
+	},
 };

@@ -14,6 +14,6 @@ export async function POST({ request }) {
 	result.id = result.id.replace(/-/g, '');
 
 	return json(result, {
-		status: 201
+		status: 201,
 	});
 }

@@ -3,7 +3,7 @@ import * as eases from 'svelte/easing';
 const processed_eases = {};
 
 for (const ease in eases) {
-	if (ease === "linear") {
+	if (ease === 'linear') {
 		processed_eases.linear = eases.linear;
 	} else {
 		const name = ease.replace(/In$|InOut$|Out$/, '');
@@ -37,7 +37,7 @@ const sorted_eases = new Map([
 export const types = [
 	['Ease In', 'In'],
 	['Ease Out', 'Out'],
-	['Ease In Out', 'InOut']
+	['Ease In Out', 'InOut'],
 ];
 
 export { sorted_eases as eases };

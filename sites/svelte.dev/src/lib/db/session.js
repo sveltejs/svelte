@@ -15,7 +15,7 @@ export async function create(user, access_token) {
 		user_github_id: user.github_id,
 		user_github_name: user.github_name,
 		user_github_login: user.github_login,
-		user_github_avatar_url: user.github_avatar_url
+		user_github_avatar_url: user.github_avatar_url,
 	});
 
 	if (error) {
@@ -26,12 +26,12 @@ export async function create(user, access_token) {
 		id: data.userid,
 		github_name: user.github_name,
 		github_login: user.github_login,
-		github_avatar_url: user.github_avatar_url
+		github_avatar_url: user.github_avatar_url,
 	});
 
 	return {
 		sessionid: data.sessionid,
-		expires: new Date(data.expires)
+		expires: new Date(data.expires),
 	};
 }
 

@@ -5,10 +5,9 @@ author: Rich Harris
 authorURL: https://twitter.com/Rich_Harris
 ---
 
-If you've used JavaScript frameworks in the last few years, you've probably heard the phrase 'the virtual DOM is fast', often said to mean that it's faster than the *real* DOM. It's a surprisingly resilient meme — for example people have asked how Svelte can be fast when it doesn't use a virtual DOM.
+If you've used JavaScript frameworks in the last few years, you've probably heard the phrase 'the virtual DOM is fast', often said to mean that it's faster than the _real_ DOM. It's a surprisingly resilient meme — for example people have asked how Svelte can be fast when it doesn't use a virtual DOM.
 
 It's time to take a closer look.
-
 
 ## What is the virtual DOM?
 
@@ -16,11 +15,7 @@ In many frameworks, you build an app by creating `render()` functions, like this
 
 ```js
 function HelloMessage(props) {
-	return (
-		<div className="greeting">
-			Hello {props.name}
-		</div>
-	);
+	return <div className="greeting">Hello {props.name}</div>;
 }
 ```
 
@@ -28,17 +23,11 @@ You can do the same thing without JSX...
 
 ```js
 function HelloMessage(props) {
-	return React.createElement(
-		'div',
-		{ className: 'greeting' },
-		'Hello ',
-		props.name
-	);
+	return React.createElement('div', { className: 'greeting' }, 'Hello ', props.name);
 }
 ```
 
-...but the result is the same — an object representing how the page should now look. That object is the virtual DOM. Every time your app's state updates (for example when the `name` prop changes), you create a new one. The framework's job is to *reconcile* the new one against the old one, to figure out what changes are necessary and apply them to the real DOM.
-
+...but the result is the same — an object representing how the page should now look. That object is the virtual DOM. Every time your app's state updates (for example when the `name` prop changes), you create a new one. The framework's job is to _reconcile_ the new one against the old one, to figure out what changes are necessary and apply them to the real DOM.
 
 ## How did the meme start?
 
@@ -51,7 +40,7 @@ Misunderstood claims about virtual DOM performance date back to the launch of Re
 	<figcaption>Screenshot from <a href="https://www.youtube.com/watch?v=x7cQ3mrcKaY">Rethinking Best Practices</a> at JSConfEU 2013</figcaption>
 </figure>
 
-But hang on a minute! The virtual DOM operations are *in addition to* the eventual operations on the real DOM. The only way it could be faster is if we were comparing it to a less efficient framework (there were plenty to go around back in 2013!), or arguing against a straw man — that the alternative is to do something no-one actually does:
+But hang on a minute! The virtual DOM operations are _in addition to_ the eventual operations on the real DOM. The only way it could be faster is if we were comparing it to a less efficient framework (there were plenty to go around back in 2013!), or arguing against a straw man — that the alternative is to do something no-one actually does:
 
 ```js
 onEveryStateChange(() => {
@@ -65,16 +54,13 @@ Pete clarifies soon after...
 
 ...but that's not the part that stuck.
 
-
-
-## So... is the virtual DOM *slow*?
+## So... is the virtual DOM _slow_?
 
 Not exactly. It's more like 'the virtual DOM is usually fast enough', but with certain caveats.
 
 The original promise of React was that you could re-render your entire app on every single state change without worrying about performance. In practice, I don't think that's turned out to be accurate. If it was, there'd be no need for optimisations like `shouldComponentUpdate` (which is a way of telling React when it can safely skip a component).
 
 Even with `shouldComponentUpdate`, updating your entire app's virtual DOM in one go is a lot of work. A while back, the React team introduced something called React Fiber which allows the update to be broken into smaller chunks. This means (among other things) that updates don't block the main thread for long periods of time, though it doesn't reduce the total amount of work or the time an update takes.
-
 
 ## Where does the overhead come from?
 
@@ -92,8 +78,7 @@ if (changed.name) {
 }
 ```
 
-(This is almost exactly the update code that Svelte generates. Unlike traditional UI frameworks, Svelte is a compiler that knows at *build time* how things could change in your app, rather than waiting to do the work at *run time*.)
-
+(This is almost exactly the update code that Svelte generates. Unlike traditional UI frameworks, Svelte is a compiler that knows at _build time_ how things could change in your app, rather than waiting to do the work at _run time_.)
 
 ## It's not just the diffing though
 
@@ -103,9 +88,7 @@ The diffing algorithms used by React and other virtual DOM frameworks are fast. 
 function StrawManComponent(props) {
 	const value = expensivelyCalculateValue(props.foo);
 
-	return (
-		<p>the value is {value}</p>
-	);
+	return <p>the value is {value}</p>;
 }
 ```
 
@@ -120,20 +103,18 @@ function MoreRealisticComponent(props) {
 			<p>Selected {selected ? selected.name : 'nothing'}</p>
 
 			<ul>
-				{props.items.map(item =>
+				{props.items.map((item) => (
 					<li>
-						<button onClick={() => setSelected(item)}>
-							{item.name}
-						</button>
+						<button onClick={() => setSelected(item)}>{item.name}</button>
 					</li>
-				)}
+				))}
 			</ul>
 		</div>
 	);
 }
 ```
 
-Here, we're generating a new array of virtual `<li>` elements — each with their own inline event handler — on every state change, regardless of whether `props.items` has changed. Unless you're unhealthily obsessed with performance, you're not going to optimise that. There's no point. It's plenty fast enough. But you know what would be even faster? *Not doing that.*
+Here, we're generating a new array of virtual `<li>` elements — each with their own inline event handler — on every state change, regardless of whether `props.items` has changed. Unless you're unhealthily obsessed with performance, you're not going to optimise that. There's no point. It's plenty fast enough. But you know what would be even faster? _Not doing that._
 
 <aside><p><a href="https://reactjs.org/docs/hooks-intro.html">React Hooks</a> doubles down on defaulting to doing unnecessary work, with <a href="https://twitter.com/thekitze/status/1078582382201131008">predictable results</a>.</p></aside>
 
@@ -141,9 +122,8 @@ The danger of defaulting to doing unnecessary work, even if that work is trivial
 
 Svelte is explicitly designed to prevent you from ending up in that situation.
 
-
 ## Why do frameworks use the virtual DOM then?
 
-It's important to understand that virtual DOM *isn't a feature*. It's a means to an end, the end being declarative, state-driven UI development. Virtual DOM is valuable because it allows you to build apps without thinking about state transitions, with performance that is *generally good enough*. That means less buggy code, and more time spent on creative tasks instead of tedious ones.
+It's important to understand that virtual DOM _isn't a feature_. It's a means to an end, the end being declarative, state-driven UI development. Virtual DOM is valuable because it allows you to build apps without thinking about state transitions, with performance that is _generally good enough_. That means less buggy code, and more time spent on creative tasks instead of tedious ones.
 
 But it turns out that we can achieve a similar programming model without using virtual DOM — and that's where Svelte comes in.

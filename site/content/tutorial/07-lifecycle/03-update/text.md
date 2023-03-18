@@ -13,7 +13,7 @@ let div;
 let autoscroll;
 
 beforeUpdate(() => {
-	autoscroll = div && (div.offsetHeight + div.scrollTop) > (div.scrollHeight - 20);
+	autoscroll = div && div.offsetHeight + div.scrollTop > div.scrollHeight - 20;
 });
 
 afterUpdate(() => {

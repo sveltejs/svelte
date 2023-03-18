@@ -14,7 +14,6 @@ We think it'll give you a much nicer development experience — one that also sc
 	<figcaption>Image of TypeScript + Svelte in VS Code (theme is <a href="https://marketplace.visualstudio.com/items?itemName=karyfoundation.theme-karyfoundation-themes">Kary Pro</a>.)</figcaption>
 </figure>
 
-
 ## Try it now
 
 You can start a new Svelte TypeScript project using the [normal template](https://github.com/sveltejs/template) and by running `node scripts/setupTypeScript.js` before you do anything else:
@@ -36,10 +35,10 @@ A week before COVID was declared a pandemic, [I pitched a consolidation](https:/
 
 When we say that Svelte now supports TypeScript, we mean a few different things:
 
-* You can use TypeScript inside your `<script>` blocks — just add the `lang="ts"` attribute
-* Components with TypeScript can be type-checked with the `svelte-check` command
-* You get autocompletion hints and type-checking as you're writing components, even in expressions inside markup
-* TypeScript files understand the Svelte component API — no more red squiggles when you import a `.svelte` file into a `.ts` module
+- You can use TypeScript inside your `<script>` blocks — just add the `lang="ts"` attribute
+- Components with TypeScript can be type-checked with the `svelte-check` command
+- You get autocompletion hints and type-checking as you're writing components, even in expressions inside markup
+- TypeScript files understand the Svelte component API — no more red squiggles when you import a `.svelte` file into a `.ts` module
 
 ### How does it work?
 
@@ -51,13 +50,11 @@ The Svelte compiler support for TypeScript is handled by [Christian Kaisermann](
 
 For the editor level, we took inspiration from [Pine's](https://github.com/octref) work in the [Vue](https://vuejs.org) ecosystem via [Vetur](https://github.com/vuejs/vetur). Vetur provides an [LSP](https://github.com/vuejs/vetur/blob/master/server), a VS Code extension and a [CLI](https://github.com/vuejs/vetur/blob/master/vti). Svelte now also has an [LSP](https://github.com/sveltejs/language-tools/blob/master/packages/language-server), a [VS Code extension](https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode) and a [CLI](https://github.com/sveltejs/language-tools/blob/master/packages/svelte-check).
 
-
 ### `*.svelte` Introspection
 
 For the official Svelte VS Code extension, we built off the foundations which [James Birtles](https://github.com/UnwrittenFun) has created in [`UnwrittenFun/svelte-vscode`](https://github.com/UnwrittenFun/svelte-vscode) and [`UnwrittenFun/svelte-language-server`](https://github.com/UnwrittenFun/svelte-language-server/).
 
 [Simon Holthausen](https://github.com/dummdidumm) and [Lyu, Wei-Da](https://github.com/jasonlyu123) have done great work improving the JavaScript and TypeScript introspection, including integrating [@halfnelson](https://github.com/halfnelson)'s [svelte2tsx](https://github.com/sveltejs/language-tools/tree/master/packages/svelte2tsx#svelte2tsx) which powers understanding the props on components in your codebase.
-
 
 ## Adding TypeScript to an existing project
 
@@ -94,10 +91,10 @@ To configure TypeScript, you will need to create a `tsconfig.json` in the root o
 
 ```json
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
+	"extends": "@tsconfig/svelte/tsconfig.json",
 
-  "include": ["src/**/*", "src/node_modules"],
-  "exclude": ["node_modules/*", "__sapper__/*", "public/*"],
+	"include": ["src/**/*", "src/node_modules"],
+	"exclude": ["node_modules/*", "__sapper__/*", "public/*"]
 }
 ```
 

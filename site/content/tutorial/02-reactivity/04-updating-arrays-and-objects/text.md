@@ -25,7 +25,7 @@ function addNumber() {
 
 The same rule applies to array methods such as `pop`, `shift`, and `splice` and to object methods such as `Map.set`, `Set.add`, etc.
 
-Assignments to *properties* of arrays and objects — e.g. `obj.foo += 1` or `array[i] = x` — work the same way as assignments to the values themselves.
+Assignments to _properties_ of arrays and objects — e.g. `obj.foo += 1` or `array[i] = x` — work the same way as assignments to the values themselves.
 
 ```js
 function addNumber() {
@@ -40,7 +40,7 @@ const foo = obj.foo;
 foo.bar = 'baz';
 ```
 
-or 
+or
 
 ```js
 function quox(thing) {

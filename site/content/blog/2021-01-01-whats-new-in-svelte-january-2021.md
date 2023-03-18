@@ -13,13 +13,11 @@ A new minor release replaces the `SvelteComponent` class with a `SvelteComponent
 
 If you're using `SvelteComponent` or the new `SvelteComponentTyped` in your project or library, let us know what you're using it for and we'll add it to the showcase!
 
-
 ## What's going on in Sapper?
 
 More quality of life features are landing in the upcoming release every day. `0.29.0` will include new TypeScript definitions, fixes to scroll tracking and prefetching behavior, and improvements to the runtime router to support encoded query parameters.
 
 If you're upgrading from 0.28.x, check out [the migration guide](https://sapper.svelte.dev/migrating/#0_28_to_0_29) for steps on updating to Sapper 0.29.
-
 
 ## Is SvelteKit ready yet?
 
@@ -28,7 +26,6 @@ To avoid too much churn during development, SvelteKit is still being worked on i
 In the meantime, you can explore the current build by running `npm init svelte@next` from your command line.
 
 As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats-the-deal-with-sveltekit)_, there are no docs or support available yet... So use at your own risk / for your own enjoyment!
-
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: December 2022"
-description: "Rounding the corner to SvelteKit 1.0"
+description: 'Rounding the corner to SvelteKit 1.0'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -10,6 +10,7 @@ SvelteKit 1.0 is just around the corner! With [99% of the milestone issues compl
 Let's get to it!
 
 ## What's new in SvelteKit
+
 - Use the `willUnload` property to find out if the navigation will result the app being unloaded (full page reload/closing/leaving to another page). ([#6813](https://github.com/sveltejs/kit/pull/6813))
 - `__data.json` requests now allows for caching while ensuring we cache matching responses for all invalidation scenarios ([#7532](https://github.com/sveltejs/kit/pull/7532))
 - Linking to `<a name="hash">` tags is now supported ([#7596](https://github.com/sveltejs/kit/pull/7596))
@@ -19,8 +20,8 @@ Let's get to it!
 - `version` is now available via `$app/environment` ([#7689](https://github.com/sveltejs/kit/pull/7689), [#7694](https://github.com/sveltejs/kit/pull/7694))
 - `handleError` can now return a promise ([#7780](https://github.com/sveltejs/kit/pull/7780))
 
-
 **Breaking changes:**
+
 - `routeId` is now `route.id` ([#7450](https://github.com/sveltejs/kit/pull/7450))
 - 'load' has been renamed to 'enter' and 'unload' to 'leave' in the `beforeNavigate` and `afterNavigate` methods. `beforeNavigate` is now called once with type 'unload' on external navigation and will no longer run during redirects ([#7502](https://github.com/sveltejs/kit/pull/7502), [#7529](https://github.com/sveltejs/kit/pull/7529), [#7588](https://github.com/sveltejs/kit/pull/7588))
 - The `redirect` helper will now only allow status codes between 300-308 for redirects and only `error` status codes between 400-599 are allowed ([#7767](https://github.com/sveltejs/kit/pull/7767)) ([#7615](https://github.com/sveltejs/kit/pull/7615), [#7767](https://github.com/sveltejs/kit/pull/7767))
@@ -35,6 +36,7 @@ Let's get to it!
 - `SubmitFunction` has been moved from `$app/forms` into `@sveltejs/kit` ([#7003](https://github.com/sveltejs/kit/pull/7003))
 
 ## New in Svelte
+
 - The css compiler options of `css: false` and `css: true` have been replaced with `'external' | 'injected' | 'none'` settings to speed up compilation for `ssr` builds and improve clarity (**3.53.0**)
 
 For all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
@@ -44,6 +46,7 @@ For all the changes to the Svelte compiler, including unreleased changes, check 
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Appwrite's new console](https://github.com/appwrite/console) makes its secure backend server for web, mobile & Flutter developers avaiable in the browser
 - [RepoMagic](https://www.repomagic.com/) is a search and analytics tool for GitHub
 - [Podman Desktop](https://github.com/containers/podman-desktop) is a graphical tool for developing on containers and Kubernetes
@@ -54,34 +57,35 @@ For all the changes to the Svelte compiler, including unreleased changes, check 
 - [Let's premortem](https://letspremortem.com/) helps avoid lengthy, frustrating post-mortems after a project fails
 - [BLKMARKET.COM](https://beta.blkmarket.com/) is an illustration library for commercial and personal use
 - [Sigil](https://sigilspace.com/) is a canvas for anything with spaces organized by the most-voted content
-- [corpus-activity-streams](https://github.com/ryanatkn/corpus-activity-streams) is an unofficial ActivityStreams 2.0 vocabulary data set and alternative docs 
+- [corpus-activity-streams](https://github.com/ryanatkn/corpus-activity-streams) is an unofficial ActivityStreams 2.0 vocabulary data set and alternative docs
 - [nodeMyAdmin](https://github.com/Andrea055/nodeMyAdmin) is an alternative to phpMyAdmin written with SvelteKit
 - [Image to Pattern Conversion](https://www.thread-bare.com/convert) is a cross-stitch pattern conversion tool with [a list of pre-made patterns](https://www.thread-bare.com/store) to start with
 - [Verbums](https://verbums.vdoc.dev/) is an English vocabulary trainer to improve language comprehension
 - [SVGPS](https://svgps.app/) removes the burden of working with a cluster of SVG files by converting your icons into a single JSON file
 - [This 3D retro-themed asteroid shooter](https://photon-alexwarnes.vercel.app/showcase/asteroids) was made with threlte
 
-
 **Learning Resources**
 
 _To Hear_
+
 - [Catching up after Svelte Summit](https://www.svelteradio.com/episodes/catching-up) and [3D, WebGL and AI](https://www.svelteradio.com/episodes/3d-webgl-and-ai) by Svelte Radio
 
 _To Watch_
+
 - [Domenik Reitzner - The easy way, an introduction to Sveltekit](https://www.youtube.com/watch?v=t-LKRrNedps) from Svelte Society Vienna
 - [Sirens: Form Actions](https://www.youtube.com/watch?v=2OISk5-EHek) - Kev joins the Sirens again to chat about Form actions in SvelteKit and create a new form for speaker submissions on SvelteSirens.dev
 - [Introduction To 3D With Svelte (Threlte)](https://www.youtube.com/watch?v=89LYeHOncVk), [How To Use Global Styles In SvelteKit](https://www.youtube.com/watch?v=jHSwChkx3TQ) and [Progressive Form Enhancement With SvelteKit](https://www.youtube.com/watch?v=6pv70d7i-3Q) by Joy of Code
 
 _To Read_
+
 - [Building tic-tac-toe with Svelte](https://geoffrich.net/posts/tic-tac-toe/) by Geoff Rich
 - [Speed up SvelteKit Pages With a Redis Cache](https://www.captaincodeman.com/speed-up-sveltekit-pages-with-a-redis-cache) by Captain Codeman
 - [Understanding environment variables in SvelteKit](https://www.okupter.com/blog/environment-variables-in-sveltekit), [Form validation with SvelteKit and Zod](https://www.okupter.com/blog/sveltekit-form-validation-with-zod) and [Build a SvelteKit application with Docker](https://www.okupter.com/blog/build-a-sveltekit-application-with-docker) by Justin Ahinon
 - [Why I failed to create the "Solid.js's store" for Svelte, and announcing svelte-store-tree v0.3.1](https://dev.to/igrep/why-i-failed-to-create-the-solidjss-store-for-svelte-and-announcing-svelte-store-tree-v031-1am2) by YAMAMOTO Yuji
 - [Create an offline-first and installable PWA with SvelteKit and workbox-precaching](https://www.sarcevic.dev/offline-first-installable-pwa-sveltekit-workbox-precaching) by Antonio Sarcevic
 
-
-
 **Libraries, Tools & Components**
+
 - [Skeleton](https://www.skeleton.dev/) is a UI toolkit to build fast and reactive web interfaces using Svelte + Tailwind CSS
 - [svelte-svg-spinners](https://github.com/luluvia/svelte-svg-spinners) is a collection of SVG Spinners components
 - [Svelte Floating UI](https://github.com/fedorovvvv/svelte-floating-ui) enables floating UIs with actions - no wrapper components or component bindings required
@@ -95,7 +99,6 @@ _To Read_
 - [Svelte-HeadlessUI](https://captaincodeman.github.io/svelte-headlessui/) is an unofficial implementation of Tailwind HeadlessUI for Svelte
 - [svelte-lazyimage-cache](https://github.com/binsarjr/svelte-lazyimage-cache) is a Lazy Image component with IntersectionObserver and cache action
 - [threlte v5.0](https://www.reddit.com/r/sveltejs/comments/ywit18/threlte_v50_is_here_a_completely_new_developer/) is a completely new developer experience that is faster, more powerful, and incredibly flexible
-
 
 That's it for this month! Let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte)
 

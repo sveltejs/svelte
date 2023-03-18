@@ -351,7 +351,7 @@ If you want to make @keyframes that are accessible globally, you need to prepend
 
 The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
 
-```html
+```svelte
 <style>
 	@keyframes -global-my-animation-name {
 		/* code goes here */
@@ -367,7 +367,7 @@ However, it is possible to have `<style>` tag nested inside other elements or lo
 
 In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
 
-```html
+```svelte
 <div>
 	<style>
 		/* this style tag will be inserted as-is */
