@@ -19,6 +19,7 @@ const meta_tags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:options', 'Options'],
 	['svelte:window', 'Window'],
+	['svelte:document', 'Document'],
 	['svelte:body', 'Body']
 ]);
 
