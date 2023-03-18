@@ -8,7 +8,7 @@ export const binding_callbacks = [];
 let render_callbacks = [];
 const flush_callbacks = [];
 
-const resolved_promise = Promise.resolve();
+const resolved_promise = /* @__PURE__ */ Promise.resolve();
 let update_scheduled = false;
 
 export function schedule_update() {

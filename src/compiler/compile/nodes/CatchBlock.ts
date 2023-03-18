@@ -17,6 +17,7 @@ export default class CatchBlock extends AbstractBlock {
 		this.scope = scope.child();
 		if (parent.catch_node) {
 			parent.catch_contexts.forEach(context => {
+				if (context.type !== 'DestructuredVariable') return;
 				this.scope.add(context.key.name, parent.expression.dependencies, this);
 			});
 		}
