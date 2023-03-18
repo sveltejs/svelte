@@ -581,14 +581,16 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
-export function set_data(text: Text, data: unknown, is_contenteditable: boolean | undefined) {
+export function set_data(text: Text, data: unknown) {
 	data = '' + data;
-	if (is_contenteditable) {
-		if (text.wholeText === data) return;
-	} else {
-		if (text.data === data) return;
-	}
-	 text.data = (data as string);
+	if (text.data === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	text.data = (data as string);
 }
 
 export function set_input_value(input, value) {

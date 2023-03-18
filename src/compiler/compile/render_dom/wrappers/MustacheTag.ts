@@ -17,19 +17,19 @@ export default class MustacheTagWrapper extends Tag {
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier, data: Record<string, unknown> | undefined) {
-		const contenteditable =
+		const contenteditable_attributes =
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.name === 'contenteditable');
 
-		const spread_attres =
+		const spread_attributes =
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.is_spread);
 
 		let is_contenteditable: Expression | undefined = undefined;
-		if (contenteditable.length > 0) {
-			const value = (contenteditable[0] as AttributeWrapper).get_value(block);
+		if (contenteditable_attributes.length > 0) {
+			const value = (contenteditable_attributes[0] as AttributeWrapper).get_value(block);
 			is_contenteditable = x`~@contenteditable_truly_values.indexOf(${value})`;
-		}	else if (spread_attres.length > 0 && data.element_data_name) {
+		}	else if (spread_attributes.length > 0 && data.element_data_name) {
 			is_contenteditable = x`~@contenteditable_truly_values.indexOf(${data.element_data_name}['contenteditable'])`;
 		}
 
@@ -37,7 +37,7 @@ export default class MustacheTagWrapper extends Tag {
 			block,
 			value => {
 				if (is_contenteditable) {
-					return x`@set_data(${this.var}, ${value}, ${is_contenteditable})`;
+					return x`@set_data_contenteditable(${this.var}, ${value}, ${is_contenteditable})`;
 				} else {
 					return x`@set_data(${this.var}, ${value})`;
 				}

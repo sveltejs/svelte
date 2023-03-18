@@ -83,13 +83,16 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-export function set_data_dev(text: Text, data: unknown, is_contenteditable: boolean | undefined) {
+export function set_data_dev(text: Text, data: unknown) {
 	data = '' + data;
-	if (is_contenteditable) {
-		if (text.wholeText === data) return;
-	} else {
-		if (text.data === data) return;
-	}
+	if (text.data === data) return;
+	dispatch_dev('SvelteDOMSetData', { node: text, data });
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable_dev(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
 	text.data = (data as string);
 }
