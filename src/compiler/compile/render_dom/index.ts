@@ -390,13 +390,13 @@ export default function dom(
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter(store => {
 			const variable = component.var_lookup.get(store.name.slice(1));
-			return variable && (variable.reassigned || variable.export_name) && !variable.is_reactive_static;
+			return variable && (variable.reassigned || variable.export_name);
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
 
 	if (has_definition) {
-		const reactive_declarations: Node[] = [];
-		const fixed_reactive_declarations: Array<Node | Node[]> = []; // not really 'reactive' but whatever
+		const reactive_declarations: (Node | Node[]) = [];
+		const fixed_reactive_declarations: Node[] = []; // not really 'reactive' but whatever
 
 		component.reactive_declarations.forEach(d => {
 			const dependencies = Array.from(d.dependencies);
@@ -417,15 +417,6 @@ export default function dom(
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
-				for (const assignee of d.assignees) {
-					const variable = component.var_lookup.get(assignee);
-					if (variable && variable.subscribable) {
-						fixed_reactive_declarations.push(b`
-							${component.compile_options.dev && b`@validate_store(${assignee}, '${assignee}');`}
-							@component_subscribe($$self, ${assignee}, $$value => $$invalidate(${renderer.context_lookup.get('$' + assignee).index}, ${'$' + assignee} = $$value));
-						`);
-					}
-				}
 			}
 		});
 
@@ -439,7 +430,7 @@ export default function dom(
 			const name = $name.slice(1);
 
 			const store = component.var_lookup.get(name);
-			if (store && (store.reassigned || store.export_name) && !store.is_reactive_static) {
+			if (store && (store.reassigned || store.export_name)) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;

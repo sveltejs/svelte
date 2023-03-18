@@ -359,7 +359,7 @@ export function get_binding_group_value(group, __value, checked) {
 	return Array.from(value);
 }
 
-export function init_binding_group(group) {
+export function init_binding_group(group: HTMLInputElement[]) {
 	let _inputs: HTMLInputElement[];
 	return {
 		/* push */ p(...inputs: HTMLInputElement[]) {
@@ -606,7 +606,7 @@ export function set_style(node, key, value, important) {
 	}
 }
 
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -616,7 +616,9 @@ export function select_option(select, value) {
 		}
 	}
 
-	select.selectedIndex = -1; // no option should be selected
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 export function select_options(select, value) {
@@ -626,16 +628,8 @@ export function select_options(select, value) {
 	}
 }
 
-function first_enabled_option(select) {
-	for (const option of select.options) {
-		if (!option.disabled) {
-			return option;
-		}
-	}
-}
-
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || first_enabled_option(select);
+	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 

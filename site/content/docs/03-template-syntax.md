@@ -691,7 +691,12 @@ When the value of an `<option>` matches its text content, the attribute can be o
 
 ---
 
-Elements with the `contenteditable` attribute support `innerHTML` and `textContent` bindings.
+Elements with the `contenteditable` attribute support the following bindings:
+- [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
+- [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
+- [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
+
+There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
 ```sv
 <div contenteditable="true" bind:innerHTML={html}></div>
@@ -1746,6 +1751,25 @@ All except `scrollX` and `scrollY` are readonly.
 
 > Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
 
+### `<svelte:document>`
+
+```sv
+<svelte:document on:event={handler}/>
+```
+
+---
+
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on `document`.
+
+As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
+
+```sv
+<svelte:document
+	on:visibilitychange={handleVisibilityChange}
+	use:someAction
+/>
+```
+
 ### `<svelte:body>`
 
 ```sv
@@ -1756,7 +1780,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
-As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
+As with `<svelte:window>` and `<svelte:document>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:body
@@ -1777,7 +1801,7 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-As with `<svelte:window>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
+As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:head>
