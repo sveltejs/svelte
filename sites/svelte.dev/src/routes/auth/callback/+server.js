@@ -12,7 +12,7 @@ export async function GET({ url }) {
 				stringify({
 					code: url.searchParams.get('code'),
 					client_id,
-					client_secret
+					client_secret,
 				})
 		);
 		const access_token = new URLSearchParams(await r1.text()).get('access_token');
@@ -21,8 +21,8 @@ export async function GET({ url }) {
 		const r2 = await fetch('https://api.github.com/user', {
 			headers: {
 				'User-Agent': 'svelte.dev',
-				Authorization: `token ${access_token}`
-			}
+				Authorization: `token ${access_token}`,
+			},
 		});
 
 		const profile = await r2.json();
@@ -33,7 +33,7 @@ export async function GET({ url }) {
 			github_id: profile.id,
 			github_name: profile.name,
 			github_login: profile.login,
-			github_avatar_url: profile.avatar_url
+			github_avatar_url: profile.avatar_url,
 		};
 
 		const { sessionid, expires } = await session.create(user, access_token);
@@ -52,10 +52,10 @@ export async function GET({ url }) {
 						expires: new Date(expires),
 						path: '/',
 						httpOnly: true,
-						secure: url.protocol === 'https'
+						secure: url.protocol === 'https',
 					}),
-					'Content-Type': 'text/html; charset=utf-8'
-				}
+					'Content-Type': 'text/html; charset=utf-8',
+				},
 			}
 		);
 	} catch (err) {
