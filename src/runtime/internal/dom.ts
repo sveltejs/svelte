@@ -581,15 +581,14 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
-export function set_data(text, data) {
+export function set_data(text: Text, data: unknown, is_contenteditable: boolean | undefined) {
 	data = '' + data;
-	// In particular, when the property is contentEditable, ' 'TEXT_NODE is inserted into the text
-    if (text.textContent === '' && text.wholeText !== '') {
+	if (is_contenteditable) {
 		if (text.wholeText === data) return;
 	} else {
-		if (text.textContent === data) return;
+		if (text.data === data) return;
 	}
-	 text.data = data;
+	 text.data = (data as string);
 }
 
 export function set_input_value(input, value) {

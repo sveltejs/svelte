@@ -1,5 +1,5 @@
 export default {
-	html: '<div contenteditable=""></div>',
+	html: '<div contenteditable="true"></div>',
 
 	async test({ assert, target, window }) {
 		const div = target.querySelector('div');
