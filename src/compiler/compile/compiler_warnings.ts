@@ -167,7 +167,7 @@ export default {
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
 	},
 	a11y_interactive_supports_focus: (role: string) => ({
-		code: 'a11y-no-noninteractive-element-interactions',
+		code: 'a11y-interactive-supports-focus',
 		message: `A11y: Elements with the '${role}' interactive role must have a tabindex value.`
 	}),
 	a11y_label_has_associated_control: {
