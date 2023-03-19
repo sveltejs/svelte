@@ -76,12 +76,30 @@ const a11y_labelable = new Set([
 ]);
 
 const a11y_interactive_handlers = new Set([
-	'click',
-	'mousedown',
-	'mouseup',
+	// Keyboard events
 	'keypress',
 	'keydown',
-	'keyup'
+	'keyup',
+
+	// Click events
+	'click',
+	'contextmenu',
+	'dblclick',
+	'drag',
+	'dragend',
+	'dragenter',
+	'dragexit',
+	'dragleave',
+	'dragover',
+	'dragstart',
+	'drop',
+	'mousedown',
+	'mouseenter',
+	'mouseleave',
+	'mousemove',
+	'mouseout',
+	'mouseover',
+	'mouseup'
 ]);
 
 const a11y_nested_implicit_semantics = new Map([
