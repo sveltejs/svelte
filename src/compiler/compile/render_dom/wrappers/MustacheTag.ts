@@ -28,9 +28,9 @@ export default class MustacheTagWrapper extends Tag {
 		let is_contenteditable: Expression | undefined = undefined;
 		if (contenteditable_attributes.length > 0) {
 			const value = (contenteditable_attributes[0] as AttributeWrapper).get_value(block);
-			is_contenteditable = x`~@contenteditable_truly_values.indexOf(${value})`;
+			is_contenteditable = x`~@contenteditable_truthy_values.indexOf(${value})`;
 		}	else if (spread_attributes.length > 0 && data.element_data_name) {
-			is_contenteditable = x`~@contenteditable_truly_values.indexOf(${data.element_data_name}['contenteditable'])`;
+			is_contenteditable = x`~@contenteditable_truthy_values.indexOf(${data.element_data_name}['contenteditable'])`;
 		}
 
 		const { init } = this.rename_this_method(

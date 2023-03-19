@@ -195,4 +195,4 @@ export function split_css_unit(value: number | string): [number, string] {
 	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value as number, 'px'];
 }
 
-export const contenteditable_truly_values = ['', true, 1, 'true', 'contenteditable'];
+export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];
