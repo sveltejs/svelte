@@ -1586,6 +1586,7 @@ export interface SvelteHTMLElements {
 
 	// Svelte specific
 	'svelte:window': SvelteWindowAttributes;
+	'svelte:document': HTMLAttributes<Document>;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
 	'svelte:options': { [name: string]: any };
