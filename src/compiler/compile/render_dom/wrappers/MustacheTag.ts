@@ -25,19 +25,19 @@ export default class MustacheTagWrapper extends Tag {
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.is_spread);
 
-		let is_contenteditable: Expression | undefined = undefined;
+		let contenteditable_attr_value: Expression | undefined = undefined;
 		if (contenteditable_attributes.length > 0) {
 			const value = (contenteditable_attributes[0] as AttributeWrapper).get_value(block);
-			is_contenteditable = x`~@contenteditable_truthy_values.indexOf(${value})`;
+			contenteditable_attr_value = x`${value}`;
 		}	else if (spread_attributes.length > 0 && data.element_data_name) {
-			is_contenteditable = x`~@contenteditable_truthy_values.indexOf(${data.element_data_name}['contenteditable'])`;
+			contenteditable_attr_value = x`${data.element_data_name}['contenteditable']`;
 		}
 
 		const { init } = this.rename_this_method(
 			block,
 			value => {
-				if (is_contenteditable) {
-					return x`${is_contenteditable} ? @set_data_contenteditable(${this.var}, ${value}) : @set_data(${this.var}, ${value})`
+				if (contenteditable_attr_value) {
+					return x`@set_data_maybe_contenteditable(${this.var}, ${value}, ${contenteditable_attr_value})`
 				} else {
 					return x`@set_data(${this.var}, ${value})`;
 				}
