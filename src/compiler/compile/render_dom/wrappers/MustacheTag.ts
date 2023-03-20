@@ -37,7 +37,7 @@ export default class MustacheTagWrapper extends Tag {
 			block,
 			value => {
 				if (is_contenteditable) {
-					return x`@set_data_contenteditable(${this.var}, ${value}, ${is_contenteditable})`;
+					return x`${is_contenteditable} ? @set_data_contenteditable(${this.var}, ${value}) : @set_data(${this.var}, ${value})`
 				} else {
 					return x`@set_data(${this.var}, ${value})`;
 				}
