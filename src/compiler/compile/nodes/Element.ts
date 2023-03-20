@@ -184,7 +184,7 @@ const a11y_non_interactive_element_to_interactive_role_exceptions = {
 		'radiogroup',
 		'tablist',
 		'tree',
-		'treegrid',
+		'treegrid'
 	],
 	ol: [
 		'listbox',
@@ -193,12 +193,12 @@ const a11y_non_interactive_element_to_interactive_role_exceptions = {
 		'radiogroup',
 		'tablist',
 		'tree',
-		'treegrid',
+		'treegrid'
 	],
 	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
 	table: ['grid'],
 	td: ['gridcell'],
-	fieldset: ['radiogroup', 'presentation'],
+	fieldset: ['radiogroup', 'presentation']
 };
 
 const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
