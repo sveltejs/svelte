@@ -88,9 +88,9 @@ export function createEventDispatcher<EventMap extends {} = any>(): <
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail, { cancelable });
-			callbacks.slice().forEach(fn => {
-				fn.call(component, event);
-			});
+			
+			invoke_callbacks(callbacks, component, event);
+
 			return !event.defaultPrevented;
 		}
 
@@ -151,6 +151,25 @@ export function bubble(component, event) {
 
 	if (callbacks) {
 		// @ts-ignore
-		callbacks.slice().forEach(fn => fn.call(this, event));
+		invoke_callbacks(callbacks, this, event);
 	}
+}
+
+// Invoke all callbacks, even if an error occur
+function invoke_callbacks(callbacks, source, event) {
+	callbacks.slice().forEach(fn => {
+		try {
+			return fn.call(source, event);
+		} catch (err) {
+			// @ts-ignore
+			if (window.reportError) {
+				// @ts-ignore
+				window.reportError(err);
+			} else {
+				setTimeout(() => {
+					throw err;
+				}, 0);
+			}
+		}
+	});
 }
