@@ -172,6 +172,35 @@ const input_type_to_implicit_role = new Map([
   ['url', 'textbox']
 ]);
 
+/** 
+ * Exceptions to the rule which follows common A11y conventions
+ * TODO make this configurable by the user
+ */
+const a11y_non_interactive_element_to_interactive_role_exceptions = {
+	ul: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	ol: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
+	table: ['grid'],
+	td: ['gridcell'],
+	fieldset: ['radiogroup', 'presentation']
+};
+
 const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
 
 function input_implicit_role(attribute_map: Map<string, Attribute>) {
@@ -651,7 +680,7 @@ export default class Element extends Node {
 						}
 
 						// no-noninteractive-element-to-interactive-role
-						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
+						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role) && !a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(current_role)) {
 							component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
 						}
 					});
