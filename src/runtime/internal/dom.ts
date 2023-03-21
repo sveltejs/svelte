@@ -587,11 +587,15 @@ export function set_data(text: Text, data: unknown) {
 	text.data = (data as string);
 }
 
+export function set_data_contenteditable(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	text.data = (data as string);
+}
+
 export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
 	if (~contenteditable_truthy_values.indexOf(attr_value)) {
-		data = '' + data;
-		if (text.wholeText === data) return;
-		text.data = (data as string);
+		set_data_contenteditable(text, data)
 	} else {
 		set_data(text, data);
 	}

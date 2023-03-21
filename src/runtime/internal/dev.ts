@@ -91,12 +91,16 @@ export function set_data_dev(text: Text, data: unknown) {
 	text.data = (data as string);
 }
 
+export function set_data_contenteditable_dev(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	dispatch_dev('SvelteDOMSetData', { node: text, data });
+	text.data = (data as string);
+}
+
 export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
 	if (~contenteditable_truthy_values.indexOf(attr_value)) {
-		data = '' + data;
-		if (text.wholeText === data) return;
-		dispatch_dev('SvelteDOMSetData', { node: text, data });
-		text.data = (data as string);
+		set_data_contenteditable_dev(text, data);
 	} else {
 		set_data_dev(text, data);
 	}

@@ -25,10 +25,14 @@ export default class MustacheTagWrapper extends Tag {
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.is_spread);
 
-		let contenteditable_attr_value: Expression | undefined = undefined;
+		let contenteditable_attr_value: Expression | true | undefined = undefined;
 		if (contenteditable_attributes.length > 0) {
-			const value = (contenteditable_attributes[0] as AttributeWrapper).get_value(block);
-			contenteditable_attr_value = x`${value}`;
+			const attribute = contenteditable_attributes[0] as AttributeWrapper;
+			if ([true, 'true', ''].includes(attribute.node.get_static_value())) {
+				contenteditable_attr_value = true;
+			} else {
+				contenteditable_attr_value = x`${attribute.get_value(block)}`;
+			}
 		}	else if (spread_attributes.length > 0 && data.element_data_name) {
 			contenteditable_attr_value = x`${data.element_data_name}['contenteditable']`;
 		}
@@ -37,7 +41,11 @@ export default class MustacheTagWrapper extends Tag {
 			block,
 			value => {
 				if (contenteditable_attr_value) {
-					return x`@set_data_maybe_contenteditable(${this.var}, ${value}, ${contenteditable_attr_value})`;
+					if (contenteditable_attr_value === true) {
+						return x`@set_data_contenteditable(${this.var}, ${value})`;
+					} else {
+						return x`@set_data_maybe_contenteditable(${this.var}, ${value}, ${contenteditable_attr_value})`;
+					}
 				} else {
 					return x`@set_data(${this.var}, ${value})`;
 				}
