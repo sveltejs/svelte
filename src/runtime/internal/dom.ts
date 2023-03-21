@@ -595,7 +595,7 @@ export function set_data_contenteditable(text: Text, data: unknown) {
 
 export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
 	if (~contenteditable_truthy_values.indexOf(attr_value)) {
-		set_data_contenteditable(text, data)
+		set_data_contenteditable(text, data);
 	} else {
 		set_data(text, data);
 	}
