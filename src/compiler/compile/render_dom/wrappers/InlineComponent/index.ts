@@ -112,7 +112,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			return;
 		}
 
-    const ignores = extract_ignores_above_node(this.node);  
+    const ignores = extract_ignores_above_node(this.node);
     this.renderer.component.push_ignores(ignores);
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
 			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
@@ -309,6 +309,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				}`);
 		}
 
+
+		const is_key_block_child = this.parent && this.parent.node.type === 'KeyBlock';
+		const key_called = '_called';
 		const munged_bindings = this.node.bindings.map(binding => {
 			component.has_reactive_assignments = true;
 
@@ -397,7 +400,8 @@ export default class InlineComponentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(body);
 
-			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}));`;
+			const run_call_back = is_key_block_child && x`!${block.name}.${key_called}`;
+			return b`@binding_callbacks.push(() => @bind(${this.var}, '${binding.name}', ${id}, ${run_call_back}));`;
 		});
 
 		const munged_handlers = this.node.handlers.map(handler => {
@@ -523,9 +527,9 @@ export default class InlineComponentWrapper extends Wrapper {
 				${props && b`let ${props} = ${attribute_object};`}`}
 				${statements}
 				${name} = new ${expression}(${component_opts});
-
 				${munged_bindings}
 				${munged_handlers}
+				${is_key_block_child && x`${block.name}.${key_called} = true`}
 			`);
 
 			if (has_css_custom_properties) {
