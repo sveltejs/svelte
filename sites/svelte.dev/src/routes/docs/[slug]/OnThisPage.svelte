@@ -191,6 +191,6 @@
 		height: 30px;
 		border-left: 2px solid transparent;
 		border-left-color: var(--sk-theme-1);
-		transition: transform 0.15s ease-out;
+		/* transition: transform 0.15s ease-out; */
 	}
 </style>
