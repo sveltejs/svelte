@@ -872,12 +872,12 @@ export default class ElementWrapper extends Wrapper {
 					? x`@set_dynamic_element_data(${this.node.tag_expr.manipulate(block)})`
 					: x`@set_attributes`;
 
-		block.chunks.hydrate.unshift(
+		block.chunks.hydrate.push(
 			b`${fn}(${this.var}, ${this.element_data_name});`
 		);
 
 		if (this.has_dynamic_attribute) {
-			block.chunks.update.unshift(b`
+			block.chunks.update.push(b`
 				${fn}(${this.var}, ${this.element_data_name} = @get_spread_update(${levels}, [
 					${updates}
 				]));

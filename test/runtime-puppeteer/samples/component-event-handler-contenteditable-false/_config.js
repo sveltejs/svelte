@@ -1,3 +1,4 @@
+// A puppeteer test because JSDOM doesn't support contenteditable
 export default {
 	html: '<div contenteditable="false"></div>',
 
