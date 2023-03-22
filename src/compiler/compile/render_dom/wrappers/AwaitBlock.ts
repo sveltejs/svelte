@@ -99,9 +99,7 @@ class AwaitBlockBranch extends Wrapper {
 	}
 
 	render_get_context() {
-    if (this.has_consts(this.node)) {
-      resolve_computed_prop_conflicts(this.block, this.value_contexts, this.node.const_tags);
-    }
+    resolve_computed_prop_conflicts(this.block, this.is_destructured ? this.value_contexts : [], this.has_consts(this.node) ? this.node.const_tags : []);
 
 		const props = this.is_destructured ? this.value_contexts.map(prop => {
 			if (prop.type === 'ComputedProperty') {
