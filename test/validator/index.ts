@@ -166,9 +166,9 @@ describe('validate', () => {
 		assert.throws(() => {
 			svelte.compile('<div></div>', {
 				name: 'test',
-				namespace: 'foriegn'
+				namespace: 'foreign'
 			});
-		}, /Invalid namespace 'foriegn' \(did you mean 'foreign'\?\)/);
+		}, /Invalid namespace 'foreign' \(did you mean 'foreign'\?\)/);
 	});
 
 	it('does not throw error if \'this\' is bound for foreign element', () => {
