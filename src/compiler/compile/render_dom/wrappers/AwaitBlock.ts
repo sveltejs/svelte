@@ -12,6 +12,7 @@ import { Context } from '../../nodes/shared/Context';
 import { Identifier, Literal, Node } from 'estree';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 import Expression from '../../nodes/shared/Expression';
+import { resolve_computed_prop_conflicts } from '../../utils/resolve_computed_props';
 
 type Status = 'pending' | 'then' | 'catch';
 
@@ -98,6 +99,10 @@ class AwaitBlockBranch extends Wrapper {
 	}
 
 	render_get_context() {
+    if (this.has_consts(this.node)) {
+      resolve_computed_prop_conflicts(this.block, this.value_contexts, this.node.const_tags);
+    }
+
 		const props = this.is_destructured ? this.value_contexts.map(prop => {
 			if (prop.type === 'ComputedProperty') {
 				const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
