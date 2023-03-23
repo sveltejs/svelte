@@ -4,7 +4,7 @@ import Body from './Body';
 import DebugTag from './DebugTag';
 import Document from './Document';
 import EachBlock from './EachBlock';
-import Element from './Element/index';
+import Element from './Element';
 import Head from './Head';
 import IfBlock from './IfBlock';
 import KeyBlock from './KeyBlock';
