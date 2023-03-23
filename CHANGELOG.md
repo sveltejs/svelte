@@ -3,6 +3,9 @@
 ## Unreleased
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
+* Relax `a11y-no-noninteractive-element-to-interactive-role` warning ([#8402](https://github.com/sveltejs/svelte/pull/8402))
+* Add `a11y-interactive-supports-focus` warning ([#8392](https://github.com/sveltejs/svelte/pull/8392))
+* Fix equality check when updating dynamic text ([#5931](https://github.com/sveltejs/svelte/issues/5931))
 
 ## 3.57.0
 
