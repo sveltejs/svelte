@@ -546,6 +546,11 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
