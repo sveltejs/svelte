@@ -92,7 +92,7 @@
 	@media (min-width: 832px) {
 		.sidebar {
 			columns: 1;
-			padding-left: 0;
+			padding-left: 3.2rem;
 			padding-right: 0;
 			width: var(--sidebar-menu-width);
 			margin: 0 0 0 auto;
