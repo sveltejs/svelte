@@ -9,7 +9,7 @@
 </script>
 
 <div class="container">
-	<div class="page content ">
+	<div class="page content">
 		{#if title}
 			<h1>{title}</h1>
 		{/if}
@@ -24,7 +24,7 @@
 
 <style>
 	.container {
-		--sidebar-menu-width: 20rem;
+		--sidebar-menu-width: 28rem;
 		--sidebar-width: var(--sidebar-menu-width);
 		--ts-toggle-height: 4.2rem;
 	}
@@ -38,13 +38,13 @@
 		display: none;
 	}
 
-	.content {
+	/* .content {
 		width: 100%;
 		margin: 0;
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side);
 		tab-size: 2;
 		-moz-tab-size: 2;
-	}
+	} */
 
 	@media (min-width: 832px) {
 		/* can't use vars in @media :( */
@@ -229,34 +229,6 @@
 		cursor: pointer;
 	}
 
-	.content :global(blockquote) {
-		color: var(--sk-text-1);
-		background-color: rgba(255, 62, 0, 0.1);
-		border-left: 4px solid var(--sk-theme-1-variant);
-		padding: 1rem;
-	}
-
-	.content :global(blockquote) :global(:first-child) {
-		margin-top: 0;
-	}
-
-	.content :global(blockquote) :global(:last-child) {
-		margin-bottom: 0;
-	}
-
-	.content :global(blockquote) :global(code) {
-		background: var(--sk-code-bg);
-	}
-
-	.content :global(section) :global(a):hover {
-		text-decoration: underline;
-	}
-
-	.content :global(section) :global(a) :global(code) {
-		color: inherit;
-		background: rgba(255, 62, 0, 0.1) !important;
-	}
-
 	/* this replaces the offset-anchor hack, which we should remove from this CSS
 	   once https://github.com/sveltejs/action-deploy-docs/issues/1 is closed */
 	.content :global(h2[id]),
@@ -289,7 +261,7 @@
 	@media (min-width: 832px) {
 		.toc-container {
 			width: var(--sidebar-width);
-			height: calc(100vh - var(--sk-nav-height) - var(--ts-toggle-height));
+			height: calc(100vh - var(--sk-nav-height));
 			position: fixed;
 			left: 0;
 			top: var(--sk-nav-height);
@@ -323,7 +295,7 @@
 
 	@media (min-width: 1200px) {
 		.container {
-			--sidebar-width: max(20rem, 18vw);
+			--sidebar-width: max(28rem, 23vw);
 		}
 
 		.page {

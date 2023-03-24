@@ -9,7 +9,9 @@
 	<title>{data.page.title} - Svelte</title>
 </svelte:head>
 
-{@html data.page.content}
+<div class="text">
+	{@html data.page.content}
+</div>
 
 {#if data.page.sections.length !== 0}
 	<OnThisPage details={data.page} />
