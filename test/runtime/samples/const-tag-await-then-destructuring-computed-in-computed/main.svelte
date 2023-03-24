@@ -15,7 +15,7 @@
 </script>
 
 {#await promise1 then { length, width, height }}
-	{@const { 0: a, 1: b, 2: c } = permutation}
+	{@const { [0]: a, [1]: b, [2]: c } = permutation}
 	{@const { [`${a}-Dimensions`]: { [c - 1]: first }, [`${b}-Dimensions`]: { [b - 1]: second }, [`${c}-Dimensions`]: { [a - 1]: third } } = calculate(length, width, height) }
 	<p>{first}, {second}, {third}</p>
 {/await}
