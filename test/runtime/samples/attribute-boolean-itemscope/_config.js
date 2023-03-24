@@ -1,11 +1,4 @@
+// There is no relationship between the attribute name and the document node https://developer.mozilla.org/en-US/docs/Web/HTML/Microdata
 export default {
-	props: {
-		itemscope: true
-	},
-	test({ assert, target, component }) {
-		const div = target.querySelector('div');
-		assert.ok(div.itemscope);
-		component.itemscope = false;
-		assert.ok(!div.itemscope);
-	}
+	html: '<div itemscope />'
 };

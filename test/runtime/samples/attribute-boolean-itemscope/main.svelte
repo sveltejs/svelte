@@ -1,5 +1,1 @@
-<script>
-export let itemscope;
-</script>
-
-<div {itemscope}  />
+<div itemscope />
