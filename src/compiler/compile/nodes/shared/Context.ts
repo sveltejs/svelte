@@ -127,7 +127,7 @@ export function unpack_destructuring({
 
 				if (property.computed) {
 					// e.g { [computedProperty]: ... }
-					const property_name = x`computed_property` as Identifier;
+					const property_name = component.get_unique_name('computed_property');
 
 					contexts.push({
 						type: 'ComputedProperty',

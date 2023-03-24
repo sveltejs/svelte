@@ -10,7 +10,6 @@ import { Identifier, Node } from 'estree';
 import get_object from '../../utils/get_object';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 import Expression from '../../nodes/shared/Expression';
-import { resolve_computed_prop_conflicts } from '../../utils/resolve_computed_props';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -364,8 +363,6 @@ export default class EachBlockWrapper extends Wrapper {
 		if (this.else) {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
-
-    resolve_computed_prop_conflicts(this.block, this.node.contexts, this.node.const_tags);
 
 		this.context_props = this.node.contexts.map(prop => {
 			if (prop.type === 'DestructuredVariable') {
