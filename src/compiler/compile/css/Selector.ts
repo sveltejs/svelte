@@ -483,11 +483,11 @@ function find_previous_sibling_ignoring_slots(node: INode): INode {
 		}
 
 		// @ts-ignore
-		if (!current_node.prev && current_node.parent.type === 'Slot') {
-			current_node = current_node.parent.prev;
-		} else {
-			current_node = current_node.prev;
+		while (!current_node.prev && current_node.parent && current_node.parent.type === 'Slot') {
+			current_node = current_node.parent;
 		}
+		current_node = current_node.prev;
+
 	// @ts-ignore
 	} while (current_node && current_node.type === 'Slot');
 
