@@ -470,10 +470,34 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
+function find_previous_sibling_ignoring_slots(node: INode): INode {
+	let current_node: INode = node;
+	do { 
+		// @ts-ignore
+		if (current_node.type === 'Slot') {
+			const slot_children = (current_node as Element).children;
+			if (slot_children.length > 0) {
+				current_node = slot_children.slice(-1)[0]; // go to its last child first
+				continue;
+			}
+		}
+
+		// @ts-ignore
+		if (!current_node.prev && current_node.parent.type === 'Slot') {
+			current_node = current_node.parent.prev;
+		} else {
+			current_node = current_node.prev;
+		}
+	// @ts-ignore
+	} while (current_node && current_node.type === 'Slot');
+
+	return current_node;
+}
+
 function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 	let prev: INode = node;
-	while (prev = prev.prev) {
+	while (prev = find_previous_sibling_ignoring_slots(prev)) {
 		if (prev.type === 'Element') {
 			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
 				result.set(prev, NodeExist.Definitely);
