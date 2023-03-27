@@ -9,8 +9,6 @@ A component can change its category altogether with `<svelte:component>`. Instea
 	<RedThing/>
 {:else if selected.color === 'green'}
 	<GreenThing/>
-{:else if selected.color === 'blue'}
-	<BlueThing/>
 {/if}
 ```
 
