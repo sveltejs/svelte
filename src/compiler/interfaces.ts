@@ -63,7 +63,7 @@ interface BaseExpressionDirective extends BaseDirective {
 }
 
 export interface Element extends BaseNode {
-	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Document' | 'Body';
 	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
 	name: string;
 }
@@ -179,7 +179,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: boolean;
 	tag?: string;
-	css?: boolean;
+	css?: 'injected' | 'external' | 'none' | boolean;
 	loopGuardTimeout?: number;
 	namespace?: string;
 	cssHash?: CssHashGetter;
@@ -191,6 +191,7 @@ export interface CompileOptions {
 export interface ParserOptions {
 	filename?: string;
 	customElement?: boolean;
+	css?: 'injected' | 'external' | 'none' | boolean;
 }
 
 export interface Visitor {

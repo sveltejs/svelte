@@ -40,3 +40,10 @@ export interface PreprocessorGroup {
 	style?: Preprocessor;
 	script?: Preprocessor;
 }
+
+export interface SveltePreprocessor<
+	PreprocessorType extends keyof PreprocessorGroup,
+	Options = any
+> {
+	(options?: Options): Required<Pick<PreprocessorGroup, PreprocessorType>>;
+}

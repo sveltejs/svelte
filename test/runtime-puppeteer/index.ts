@@ -56,9 +56,7 @@ async function launchPuppeteer() {
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', function() {
-	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
-	this.timeout(10000);
+describe('runtime (puppeteer)', () => {
 	before(async () => {
 		svelte = loadSvelte(false);
 		console.log('[runtime-puppeteer] Loaded Svelte');
@@ -75,8 +73,11 @@ describe('runtime (puppeteer)', function() {
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate) {
+	function runTest(dir, hydrate, is_first_run) {
 		if (dir[0] === '.') return;
+		// MEMO: puppeteer can not execute Chromium properly with Node8,10 on Linux at GitHub actions.
+		const { version } = process;
+		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
@@ -117,8 +118,12 @@ describe('runtime (puppeteer)', function() {
 						load(id) {
 							if (id === 'main') {
 								return `
-									import SvelteComponent from ${JSON.stringify(path.join(__dirname, 'samples', dir, 'main.svelte'))};
-									import config from ${JSON.stringify(path.join(__dirname, 'samples', dir, '_config.js'))};
+									import SvelteComponent from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, 'main.svelte')
+									)};
+									import config from ${JSON.stringify(
+										path.join(__dirname, 'samples', dir, '_config.js')
+									)};
 									import * as assert from 'assert';
 
 									export default async function (target) {
@@ -140,6 +145,14 @@ describe('runtime (puppeteer)', function() {
 
 											const component = new SvelteComponent(options);
 
+											const waitUntil = async (fn, ms = 500) => {
+												const start = new Date().getTime();
+												do {
+													if (fn()) return;
+													await new Promise(resolve => window.setTimeout(resolve, 1));
+												} while (new Date().getTime() <= start + ms);
+											};
+
 											if (config.html) {
 												assert.htmlEqual(target.innerHTML, config.html);
 											}
@@ -150,6 +163,7 @@ describe('runtime (puppeteer)', function() {
 													component,
 													target,
 													window,
+													waitUntil,
 												});
 
 												component.$destroy();
@@ -238,11 +252,14 @@ describe('runtime (puppeteer)', function() {
 					prettyPrintPuppeteerAssertionError(err.message);
 					assertWarnings();
 				});
-		});
+		}).timeout(is_first_run ? 20000 : 10000);
 	}
 
+	// Increase the timeout on the first run in preparation for restarting Chromium due to SIGSEGV.
+	let first_run = true;
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
-		runTest(dir, false);
-		runTest(dir, true);
+		runTest(dir, false, first_run);
+		runTest(dir, true, first_run);
+		first_run = false;
 	});
 });
