@@ -6,6 +6,11 @@
 * Relax `a11y-no-noninteractive-element-to-interactive-role` warning ([#8402](https://github.com/sveltejs/svelte/pull/8402))
 * Add `a11y-interactive-supports-focus` warning ([#8392](https://github.com/sveltejs/svelte/pull/8392))
 * Fix equality check when updating dynamic text ([#5931](https://github.com/sveltejs/svelte/issues/5931))
+* Make `preserveComments` effective in DOM renderer ([#7182](https://github.com/sveltejs/svelte/pull/7182))
+* Add CSS container queries support ([#6969](https://github.com/sveltejs/svelte/issues/6969))
+* Properly handle microdata attributes ([#8414](https://github.com/sveltejs/svelte/pull/8414))
+* Prevent name collision when using computed destructuring variables ([#8417](https://github.com/sveltejs/svelte/issues/8417))
+* Allow use of `document` for `target` in typings ([#7554](https://github.com/sveltejs/svelte/pull/7554))
 
 ## 3.57.0
 
