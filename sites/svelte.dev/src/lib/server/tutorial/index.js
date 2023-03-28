@@ -21,7 +21,7 @@ const languages = {
 export async function get_parsed_tutorial(tutorial_data, slug) {
 	const tutorial = tutorial_data
 		.find(({ tutorials }) => tutorials.find((t) => t.slug === slug))
-		.tutorials.find((t) => t.slug === slug);
+		?.tutorials?.find((t) => t.slug === slug);
 
 	if (!tutorial) return null;
 
