@@ -30,7 +30,7 @@
     "@resvg/resvg-js": "^2.4.1",
     "@sveltejs/adapter-auto": "^2.0.0",
     "@sveltejs/kit": "^1.12.0",
-    "@sveltejs/site-kit": "^3.2.2",
+    "@sveltejs/site-kit": "^3.3.6",
     "@sveltejs/vite-plugin-svelte": "^2.0.3",
     "@types/marked": "^4.0.8",
     "@types/prismjs": "^1.26.0",
