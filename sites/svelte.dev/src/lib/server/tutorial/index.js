@@ -1,18 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { createShikiHighlighter } from 'shiki-twoslash';
-import { extract_frontmatter, transform } from '../markdown';
-// import { render, replace_placeholders } from './render.js';
-// import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
-import { createHash } from 'crypto';
-import { normalizeSlugify } from '../docs';
-
-const base = '../../site/content/tutorial/';
+import { transform } from '../markdown';
 
 const languages = {
 	bash: 'bash',
 	env: 'bash',
-	html: 'html',
+	html: 'svelte',
 	svelte: 'svelte',
 	sv: 'svelte',
 	js: 'javascript',
@@ -23,7 +15,7 @@ const languages = {
 };
 
 /**
- * @param {import('./get-tutorial-data').TutorialData} tutorial_data
+ * @param {import('./types').TutorialData} tutorial_data
  * @param {string} slug
  */
 export async function get_parsed_tutorial(tutorial_data, slug) {

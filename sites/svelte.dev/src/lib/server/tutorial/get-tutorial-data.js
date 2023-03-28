@@ -4,21 +4,8 @@ import { extract_frontmatter } from '../markdown';
 
 const base = '../../site/content/tutorial/';
 
-/** @typedef {{
- *  title: string;
- *  slug: string;
- *  tutorials: {
- *    title: string;
- *    slug: string;
- * 		dir: string;
- * 		content: string;
- * 		initial: { name: string; type: string; content: string }[]
- * 		complete: { name: string; type: string; content: string }[]
- *  }[];
- * }[]} TutorialData */
-
 /**
- * @returns {TutorialData}
+ * @returns {import('./types').TutorialData}
  */
 export function get_tutorial_data() {
 	const tutorials = [];
@@ -80,7 +67,7 @@ export function get_tutorial_data() {
 }
 
 /**
- * @param {TutorialData} tutorial_data
+ * @param {import('./types').TutorialData} tutorial_data
  * @returns {import('./types').TutorialsList}
  */
 export function get_tutorial_list(tutorial_data) {
