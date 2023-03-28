@@ -1,4 +1,4 @@
-import { init, inited, search } from '$lib/search/search.js';
+import { init, inited, search } from '@sveltejs/site-kit/search';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ url, fetch }) {
@@ -16,6 +16,6 @@ export async function load({ url, fetch }) {
 
 	return {
 		query,
-		results
+		results,
 	};
 }
