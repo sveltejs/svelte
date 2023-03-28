@@ -103,6 +103,13 @@
 
 <svelte:window bind:innerWidth={width} />
 
+<!-- HACK: To prerender all tutorial pages -->
+{#each data.tutorials_list as { tutorials }}
+	{#each tutorials as { slug }}
+		<a style="display: hidden" aria-hidden="true" href="/tutorial/{slug}">Random text</a>
+	{/each}
+{/each}
+
 <div class="tutorial-outer">
 	<div class="viewport offset-{offset}">
 		<div class="tutorial-text">
