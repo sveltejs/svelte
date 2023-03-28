@@ -101,16 +101,14 @@
 		position: fixed;
 		padding: 0 var(--sk-page-padding-side) 0 0;
 		width: min(280px, calc(var(--sidebar-width) - var(--sk-page-padding-side)));
-		/* top: calc(var(--sk-page-padding-top) + var(--sk-nav-height)); */
 		top: var(--sk-nav-height);
 		left: calc(100vw - (var(--sidebar-width)));
 	}
 
 	h2 {
 		text-transform: uppercase;
-		font-size: 1.4rem;
+		font-size: 1.4rem !important;
 		font-weight: 400;
-		line-height: 0;
 		margin: 0 0 1rem 0 !important;
 		padding: 0 0 0 0.6rem;
 		color: var(--sk-text-3);
@@ -125,8 +123,6 @@
 		padding: 0.3rem 0.5rem;
 		color: var(--sk-text-3);
 		border-left: 2px solid transparent;
-
-		font-size: 1.3rem;
 	}
 
 	a:hover {

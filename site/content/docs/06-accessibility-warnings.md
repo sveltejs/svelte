@@ -137,6 +137,17 @@ Enforce that attributes important for accessibility have a valid value. For exam
 
 ---
 
+### `a11y-interactive-supports-focus`
+
+Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
+
+```sv
+<!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
+<div role="button" on:keypress={() => {}} />
+```
+
+---
+
 ### `a11y-label-has-associated-control`
 
 Enforce that a label tag has a text label and an associated control.

@@ -1,6 +1,7 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
+import { contenteditable_truthy_values } from './utils';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -83,12 +84,26 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-export function set_data_dev(text, data) {
+export function set_data_dev(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.data === data) return;
+	dispatch_dev('SvelteDOMSetData', { node: text, data });
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable_dev(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.wholeText === data) return;
-
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable_dev(text, data);
+	} else {
+		set_data_dev(text, data);
+	}
 }
 
 export function validate_each_argument(arg) {

@@ -166,6 +166,10 @@ export default {
 		code: 'a11y-img-redundant-alt',
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
 	},
+	a11y_interactive_supports_focus: (role: string) => ({
+		code: 'a11y-interactive-supports-focus',
+		message: `A11y: Elements with the '${role}' interactive role must have a tabindex value.`
+	}),
 	a11y_label_has_associated_control: {
 		code: 'a11y-label-has-associated-control',
 		message: 'A11y: A form label must be associated with a control.'

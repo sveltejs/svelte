@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { PUBLIC_API_BASE } from '$env/static/public';
 
 export async function load({ fetch, params, setHeaders }) {
+	// TODO: Use local data
 	const tutorial = await fetch(`${PUBLIC_API_BASE}/docs/svelte/tutorial/${params.slug}`);
 
 	if (!tutorial.ok) {
