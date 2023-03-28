@@ -106,7 +106,7 @@
 <!-- HACK: To prerender all tutorial pages -->
 {#each data.tutorials_list as { tutorials }}
 	{#each tutorials as { slug }}
-		<a style="display: hidden" aria-hidden="true" href="/tutorial/{slug}">Random text</a>
+		<a style="display: none" aria-hidden="true" href="/tutorial/{slug}">Random text</a>
 	{/each}
 {/each}
 
