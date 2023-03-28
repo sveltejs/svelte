@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import Icon from '@sveltejs/site-kit/components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit/components';
 
 	export let sections;
 	export let slug;

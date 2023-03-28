@@ -43,8 +43,9 @@ const config = {
 			'codemirror/addon/fold/markdown-fold.js',
 			'codemirror/addon/fold/comment-fold.js',
 		],
-		exclude: ['@sveltejs/repl'],
+		exclude: ['@sveltejs/repl', '@sveltejs/site-kit'],
 	},
+	ssr: {noExternal: ['@sveltejs/site-kit']},
 	server: {
 		fs: {
 			strict: false,

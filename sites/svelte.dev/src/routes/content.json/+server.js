@@ -1,4 +1,4 @@
-import { content } from '$lib/search/content';
+import { content } from './content.server';
 import { json } from '@sveltejs/kit';
 
 export const prerender = true;
