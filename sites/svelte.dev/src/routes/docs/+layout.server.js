@@ -6,7 +6,6 @@ export const prerender = true;
 
 const base_dir = '../../site/content/docs/';
 
-/** @type {import('./$types').LayoutServerLoad} */
 export function load() {
 	const sections = fs.readdirSync(base_dir).map((file) => {
 		const { title } = extract_frontmatter(fs.readFileSync(`${base_dir}/${file}`, 'utf-8')).metadata;

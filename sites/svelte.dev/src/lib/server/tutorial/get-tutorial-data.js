@@ -1,0 +1,94 @@
+// @ts-check
+import fs from 'node:fs';
+import { extract_frontmatter } from '../markdown';
+
+const base = '../../site/content/tutorial/';
+
+/** @typedef {{
+ *  title: string;
+ *  slug: string;
+ *  tutorials: {
+ *    title: string;
+ *    slug: string;
+ * 		dir: string;
+ * 		content: string;
+ * 		initial: { name: string; type: string; content: string }[]
+ * 		complete: { name: string; type: string; content: string }[]
+ *  }[];
+ * }[]} TutorialData */
+
+/**
+ * @returns {TutorialData}
+ */
+export function get_tutorial_data() {
+	const tutorials = [];
+
+	for (const subdir of fs.readdirSync(base)) {
+		const section = {
+			title: '', // Initialise with empty
+			slug: subdir.split('-').slice(1).join('-'),
+			tutorials: [],
+		};
+
+		if (!(fs.statSync(`${base}/${subdir}`).isDirectory() || subdir.endsWith('meta.json'))) continue;
+
+		if (!subdir.endsWith('meta.json'))
+			section.title = JSON.parse(fs.readFileSync(`${base}/${subdir}/meta.json`, 'utf-8')).title;
+
+		for (const section_dir of fs.readdirSync(`${base}/${subdir}`)) {
+			const match = /\d{2}-(.+)/.exec(section_dir);
+			if (!match) continue;
+
+			const slug = match[1];
+
+			const tutorial_base_dir = `${base}/${subdir}/${section_dir}`;
+
+			// Read the file, get frontmatter
+			const contents = fs.readFileSync(`${tutorial_base_dir}/text.md`, 'utf-8');
+			const { metadata, body } = extract_frontmatter(contents);
+
+			// Get the contents of the apps.
+			const completionStatesData = { initial: [], complete: [] };
+			for (const appDir of fs.readdirSync(tutorial_base_dir)) {
+				if (!appDir.startsWith('app-')) continue;
+
+				const appDirPath = `${tutorial_base_dir}/${appDir}`;
+				const appContents = fs.readdirSync(appDirPath, 'utf-8');
+
+				for (const file of appContents) {
+					completionStatesData[appDir === 'app-a' ? 'initial' : 'complete'].push({
+						name: file,
+						type: file.split('.').at(-1),
+						content: fs.readFileSync(`${appDirPath}/${file}`, 'utf-8'),
+					});
+				}
+			}
+
+			section.tutorials.push({
+				title: metadata.title,
+				slug,
+				content: body,
+				dir: `${subdir}/${section_dir}`,
+				...completionStatesData,
+			});
+		}
+
+		tutorials.push(section);
+	}
+
+	return tutorials;
+}
+
+/**
+ * @param {TutorialData} tutorial_data
+ * @returns {import('./types').TutorialsList}
+ */
+export function get_tutorial_list(tutorial_data) {
+	return tutorial_data.map((section) => ({
+		title: section.title,
+		tutorials: section.tutorials.map((tutorial) => ({
+			title: tutorial.title,
+			slug: tutorial.slug,
+		})),
+	}));
+}

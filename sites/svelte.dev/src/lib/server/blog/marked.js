@@ -14,13 +14,13 @@ const escape_replacements = {
 	'<': '&lt;',
 	'>': '&gt;',
 	'"': '&quot;',
-	"'": '&#39;'
+	"'": '&#39;',
 };
 const get_escape_replacement = (ch) => escape_replacements[ch];
 
 /**
  * @param {string} html
- * @param {boolean} encode
+ * @param {boolean} [encode]
  */
 export function escape(html, encode) {
 	if (encode) {
@@ -45,7 +45,7 @@ const prism_languages = {
 	css: 'css',
 	diff: 'diff',
 	ts: 'typescript',
-	'': ''
+	'': '',
 };
 
 /** @type {Partial<import('marked').Renderer>} */
@@ -165,7 +165,7 @@ const default_renderer = {
 
 	text(text) {
 		return text;
-	}
+	},
 };
 
 /**
@@ -179,8 +179,8 @@ export function transform(markdown, renderer = {}) {
 			// options are global, and merged in confusing ways. You can't do e.g.
 			// `new Marked(options).parse(markdown)`
 			...default_renderer,
-			...renderer
-		}
+			...renderer,
+		},
 	});
 
 	return marked(markdown);

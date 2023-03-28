@@ -181,7 +181,7 @@
 	}
 
 	.content :global(code) {
-		padding: 0.4rem;
+		/* padding: 0.4rem; */
 		margin: 0 0.2rem;
 		top: -0.1rem;
 		background: var(--sk-back-4);
