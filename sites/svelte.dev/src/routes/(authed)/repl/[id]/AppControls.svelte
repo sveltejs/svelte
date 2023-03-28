@@ -1,7 +1,7 @@
 <script>
 	import { createEventDispatcher, getContext } from 'svelte';
 	import UserMenu from './UserMenu.svelte';
-	import Icon from '@sveltejs/site-kit/components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit/components';
 	import * as doNotZip from 'do-not-zip';
 	import downloadBlob from './downloadBlob.js';
 	import { enter } from '$lib/utils/events.js';

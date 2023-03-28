@@ -1,5 +1,5 @@
 <script>
-	import Blurb from '@sveltejs/site-kit/components/Blurb.svelte';
+	import { Blurb } from '@sveltejs/site-kit/components';
 	import Supporters from './_components/Supporters/index.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';

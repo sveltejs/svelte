@@ -1,6 +1,6 @@
 <script>
 	import { getContext } from 'svelte';
-	import Icon from '@sveltejs/site-kit/components/Icon.svelte';
+	import { Icon } from '@sveltejs/site-kit/components';
 	import { ago } from '$lib/time';
 	import { goto, invalidate } from '$app/navigation';
 
