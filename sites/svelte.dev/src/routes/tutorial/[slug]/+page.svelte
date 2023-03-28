@@ -103,13 +103,6 @@
 
 <svelte:window bind:innerWidth={width} />
 
-<!-- HACK: To prerender all tutorial pages -->
-{#each data.tutorials_list as { tutorials }}
-	{#each tutorials as { slug }}
-		<a style="display: none" aria-hidden="true" href="/tutorial/{slug}">Random text</a>
-	{/each}
-{/each}
-
 <div class="tutorial-outer">
 	<div class="viewport offset-{offset}">
 		<div class="tutorial-text">
@@ -159,6 +152,13 @@
 		<ScreenToggle bind:offset labels={['tutorial', 'input', 'output']} />
 	{/if}
 </div>
+
+<!-- HACK: To prerender all tutorial pages -->
+{#each data.tutorials_list as { tutorials }}
+	{#each tutorials as { slug }}
+		<a style="display: none" href="/tutorial/{slug}">.</a>
+	{/each}
+{/each}
 
 <style>
 	.tutorial-outer {
