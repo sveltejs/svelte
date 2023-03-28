@@ -20,7 +20,7 @@ One way we could solve the problem is adding `createEventDispatcher` to `Outer.s
 	}
 </script>
 
-<Inner on:message={forward}/>
+<Inner on:message={forward} />
 ```
 
 But that's a lot of code to write, so Svelte gives us an equivalent shorthand â€” an `on:message` event directive without a value means 'forward all `message` events'.
@@ -30,5 +30,5 @@ But that's a lot of code to write, so Svelte gives us an equivalent shorthand â€
 	import Inner from './Inner.svelte';
 </script>
 
-<Inner on:message/>
+<Inner on:message />
 ```

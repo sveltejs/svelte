@@ -11,7 +11,7 @@ export function keyEvent(code) {
 		return {
 			destroy() {
 				node.removeEventListener('keydown', handleKeydown);
-			},
+			}
 		};
 	};
 }

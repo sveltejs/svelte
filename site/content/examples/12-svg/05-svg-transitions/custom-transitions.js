@@ -9,6 +9,6 @@ export function expand(node, params) {
 		delay,
 		duration,
 		easing,
-		css: (t) => `opacity: ${t}; stroke-width: ${t * w}`,
+		css: (t) => `opacity: ${t}; stroke-width: ${t * w}`
 	};
 }

@@ -32,12 +32,10 @@ Then, add elements with corresponding `slot="..."` attributes inside the `<Conta
 
 ```svelte
 <ContactCard>
-	<span slot="name">
-		P. Sherman
-	</span>
+	<span slot="name"> P. Sherman </span>
 
 	<span slot="address">
-		42 Wallaby Way<br>
+		42 Wallaby Way<br />
 		Sydney
 	</span>
 </ContactCard>

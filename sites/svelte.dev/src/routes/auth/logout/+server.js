@@ -11,8 +11,8 @@ export async function GET({ request }) {
 				maxAge: -1,
 				path: '/',
 				httpOnly: true,
-				secure: request.url.protocol === 'https',
-			}),
-		},
+				secure: request.url.protocol === 'https'
+			})
+		}
 	});
 }

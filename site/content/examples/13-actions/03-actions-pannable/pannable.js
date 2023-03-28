@@ -8,7 +8,7 @@ export function pannable(node) {
 
 		node.dispatchEvent(
 			new CustomEvent('panstart', {
-				detail: { x, y },
+				detail: { x, y }
 			})
 		);
 
@@ -24,7 +24,7 @@ export function pannable(node) {
 
 		node.dispatchEvent(
 			new CustomEvent('panmove', {
-				detail: { x, y, dx, dy },
+				detail: { x, y, dx, dy }
 			})
 		);
 	}
@@ -35,7 +35,7 @@ export function pannable(node) {
 
 		node.dispatchEvent(
 			new CustomEvent('panend', {
-				detail: { x, y },
+				detail: { x, y }
 			})
 		);
 
@@ -48,6 +48,6 @@ export function pannable(node) {
 	return {
 		destroy() {
 			node.removeEventListener('mousedown', handleMousedown);
-		},
+		}
 	};
 }

@@ -9,6 +9,6 @@ export function GET({ params: { path } }) {
 		return new Response(undefined, { status: 403 });
 	}
 	return new Response(readFileSync(join(local_svelte_path, path)), {
-		headers: { 'Content-Type': 'text/javascript' },
+		headers: { 'Content-Type': 'text/javascript' }
 	});
 }

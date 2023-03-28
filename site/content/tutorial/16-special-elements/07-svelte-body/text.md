@@ -6,6 +6,7 @@ Similar to `<svelte:window>` and `<svelte:document>`, the `<svelte:body>` elemen
 
 Add the `mouseenter` and `mouseleave` handlers to the `<svelte:body>` tag:
 
+<!-- prettier-ignore -->
 ```svelte
 <svelte:body
 	on:mouseenter={handleMouseenter}

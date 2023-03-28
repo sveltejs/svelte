@@ -13,6 +13,6 @@ We can easily specify default values for props in `Nested.svelte`:
 If we now add a second component _without_ an `answer` prop, it will fall back to the default:
 
 ```svelte
-<Nested answer={42}/>
-<Nested/>
+<Nested answer={42} />
+<Nested />
 ```

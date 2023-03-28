@@ -4,6 +4,6 @@ export const prerender = true;
 
 export async function load() {
 	return {
-		posts: get_index(),
+		posts: get_index()
 	};
 }

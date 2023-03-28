@@ -540,7 +540,7 @@ If the initial value is `undefined` or `null`, the first value change will take 
 ```js
 const size = tweened(undefined, {
 	duration: 300,
-	easing: cubicOut,
+	easing: cubicOut
 });
 
 $: $size = big ? 100 : 10;
@@ -555,11 +555,7 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 	import { interpolateLab } from 'd3-interpolate';
 	import { tweened } from 'svelte/motion';
 
-	const colors = [
-		'rgb(255, 62, 0)',
-		'rgb(64, 179, 255)',
-		'rgb(103, 103, 120)'
-	];
+	const colors = ['rgb(255, 62, 0)', 'rgb(64, 179, 255)', 'rgb(103, 103, 120)'];
 
 	const color = tweened(colors[0], {
 		duration: 800,
@@ -568,11 +564,8 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 </script>
 
 {#each colors as c}
-	<button
-		style="background-color: {c}; color: white; border: none;"
-		on:click={e => color.set(c)}
-	>
-	{c}
+	<button style="background-color: {c}; color: white; border: none;" on:click={(e) => color.set(c)}>
+		{c}
 	</button>
 {/each}
 
@@ -1004,7 +997,7 @@ To set compile options, or to use a custom file extension, call the `register` h
 ```js
 require('svelte/register')({
 	extensions: ['.customextension'], // defaults to ['.html', '.svelte']
-	preserveComments: true,
+	preserveComments: true
 });
 ```
 
@@ -1026,8 +1019,8 @@ const app = new App({
 	props: {
 		// assuming App.svelte contains something like
 		// `export let answer`:
-		answer: 42,
-	},
+		answer: 42
+	}
 });
 ```
 
@@ -1057,7 +1050,7 @@ import App from './App.svelte';
 
 const app = new App({
 	target: document.querySelector('#server-rendered-html'),
-	hydrate: true,
+	hydrate: true
 });
 ```
 
@@ -1210,7 +1203,7 @@ require('svelte/register');
 const App = require('./App.svelte').default;
 
 const { head, html, css } = App.render({
-	answer: 42,
+	answer: 42
 });
 ```
 
@@ -1235,7 +1228,7 @@ const { head, html, css } = App.render(
 	{ answer: 42 },
 	// options
 	{
-		context: new Map([['context-key', 'context-value']]),
+		context: new Map([['context-key', 'context-value']])
 	}
 );
 ```

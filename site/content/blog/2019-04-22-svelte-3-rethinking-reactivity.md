@@ -38,7 +38,7 @@ In old Svelte, you would tell the computer that some state had changed by callin
 ```js
 const { count } = this.get();
 this.set({
-	count: count + 1,
+	count: count + 1
 });
 ```
 
@@ -47,7 +47,7 @@ That would cause the component to _react_. Speaking of which, `this.set` is almo
 ```js
 const { count } = this.state;
 this.setState({
-	count: count + 1,
+	count: count + 1
 });
 ```
 

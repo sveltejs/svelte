@@ -29,18 +29,18 @@ export const GET = async ({ params, url }) => {
 				name: 'Overpass',
 				data: Buffer.from(OverpassRegular),
 				style: 'normal',
-				weight: 400,
-			},
+				weight: 400
+			}
 		],
 		height,
-		width,
+		width
 	});
 
 	const resvg = new Resvg(svg, {
 		fitTo: {
 			mode: 'width',
-			value: width,
-		},
+			value: width
+		}
 	});
 
 	const image = resvg.render();
@@ -48,7 +48,7 @@ export const GET = async ({ params, url }) => {
 	return new Response(image.asPng(), {
 		headers: {
 			'content-type': 'image/png',
-			'cache-control': 'public, max-age=600', // cache for 10 minutes
-		},
+			'cache-control': 'public, max-age=600' // cache for 10 minutes
+		}
 	});
 };

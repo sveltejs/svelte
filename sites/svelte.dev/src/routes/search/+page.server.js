@@ -16,6 +16,6 @@ export async function load({ url, fetch }) {
 
 	return {
 		query,
-		results,
+		results
 	};
 }

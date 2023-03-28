@@ -14,7 +14,7 @@ function raw(ext) {
 				const buffer = fs.readFileSync(id);
 				return { code: `export default ${JSON.stringify(buffer)}`, map: null };
 			}
-		},
+		}
 	};
 }
 
@@ -41,16 +41,16 @@ const config = {
 			'codemirror/addon/fold/xml-fold.js',
 			'codemirror/addon/fold/indent-fold.js',
 			'codemirror/addon/fold/markdown-fold.js',
-			'codemirror/addon/fold/comment-fold.js',
+			'codemirror/addon/fold/comment-fold.js'
 		],
-		exclude: ['@sveltejs/repl', '@sveltejs/site-kit'],
+		exclude: ['@sveltejs/repl', '@sveltejs/site-kit']
 	},
-	ssr: {noExternal: ['@sveltejs/site-kit']},
+	ssr: { noExternal: ['@sveltejs/site-kit'] },
 	server: {
 		fs: {
-			strict: false,
-		},
-	},
+			strict: false
+		}
+	}
 };
 
 export default config;

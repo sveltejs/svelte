@@ -31,13 +31,13 @@ const sorted_eases = new Map([
 	['circ', processed_eases.circ],
 	['back', processed_eases.back],
 	['elastic', processed_eases.elastic],
-	['bounce', processed_eases.bounce],
+	['bounce', processed_eases.bounce]
 ]);
 
 export const types = [
 	['Ease In', 'In'],
 	['Ease Out', 'Out'],
-	['Ease In Out', 'InOut'],
+	['Ease In Out', 'InOut']
 ];
 
 export { sorted_eases as eases };

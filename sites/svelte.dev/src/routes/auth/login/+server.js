@@ -9,7 +9,7 @@ export const GET = client_id
 				stringify({
 					scope: 'read:user',
 					client_id,
-					redirect_uri: `${url.origin}/auth/callback`,
+					redirect_uri: `${url.origin}/auth/callback`
 				});
 
 			throw redirect(302, Location);
@@ -28,7 +28,7 @@ export const GET = client_id
 				{
 					status: 500,
 					headers: {
-						'Content-Type': 'text/html; charset=utf-8',
-					},
+						'Content-Type': 'text/html; charset=utf-8'
+					}
 				}
 			);

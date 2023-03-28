@@ -26,7 +26,7 @@ You now declared `unsubscribe`, but it still needs to be called, for example thr
 
 	let countValue;
 
-	const unsubscribe = count.subscribe(value => {
+	const unsubscribe = count.subscribe((value) => {
 		countValue = value;
 	});
 

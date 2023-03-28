@@ -21,6 +21,6 @@ export function longpress(node, duration) {
 		destroy() {
 			node.removeEventListener('mousedown', handleMousedown);
 			node.removeEventListener('mouseup', handleMouseup);
-		},
+		}
 	};
 }

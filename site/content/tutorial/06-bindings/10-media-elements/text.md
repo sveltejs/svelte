@@ -16,8 +16,9 @@ On line 62, add `currentTime={time}`, `duration` and `paused` bindings:
 	on:mouseup={handleMouseup}
 	bind:currentTime={time}
 	bind:duration
-	bind:paused>
-	<track kind="captions">
+	bind:paused
+>
+	<track kind="captions" />
 </video>
 ```
 

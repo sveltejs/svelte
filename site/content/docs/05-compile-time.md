@@ -231,12 +231,12 @@ const { code } = await svelte.preprocess(
 			s.overwrite(pos, pos + 3, 'bar', { storeName: true });
 			return {
 				code: s.toString(),
-				map: s.generateMap(),
+				map: s.generateMap()
 			};
-		},
+		}
 	},
 	{
-		filename: 'App.svelte',
+		filename: 'App.svelte'
 	}
 );
 ```
@@ -264,7 +264,7 @@ const { code, dependencies } = await svelte.preprocess(
 					{
 						file: filename,
 						data: content,
-						includePaths: [dirname(filename)],
+						includePaths: [dirname(filename)]
 					},
 					(err, result) => {
 						if (err) reject(err);
@@ -275,12 +275,12 @@ const { code, dependencies } = await svelte.preprocess(
 
 			return {
 				code: css.toString(),
-				dependencies: stats.includedFiles,
+				dependencies: stats.includedFiles
 			};
-		},
+		}
 	},
 	{
-		filename: 'App.svelte',
+		filename: 'App.svelte'
 	}
 );
 ```
@@ -304,7 +304,7 @@ const { code } = await svelte.preprocess(
 			},
 			style: () => {
 				console.log('this runs fifth');
-			},
+			}
 		},
 		{
 			markup: () => {
@@ -315,11 +315,11 @@ const { code } = await svelte.preprocess(
 			},
 			style: () => {
 				console.log('this runs sixth');
-			},
-		},
+			}
+		}
 	],
 	{
-		filename: 'App.svelte',
+		filename: 'App.svelte'
 	}
 );
 ```
@@ -350,7 +350,7 @@ svelte.walk(ast, {
 	},
 	leave(node, parent, prop, index) {
 		do_something_else(node);
-	},
+	}
 });
 ```
 

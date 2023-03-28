@@ -15,7 +15,7 @@ function escapeHTML(html) {
 		"'": '#39',
 		'&': 'amp',
 		'<': 'lt',
-		'>': 'gt',
+		'>': 'gt'
 	};
 
 	return html.replace(/["'&<>]/g, (c) => `&${chars[c]};`);
@@ -63,7 +63,7 @@ export async function GET() {
 	return new Response(get_rss(posts), {
 		headers: {
 			'Cache-Control': `max-age=${30 * 60 * 1e3}`,
-			'Content-Type': 'application/rss+xml',
-		},
+			'Content-Type': 'application/rss+xml'
+		}
 	});
 }

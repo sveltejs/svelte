@@ -11,7 +11,7 @@ function fade(node, { delay = 0, duration = 400 }) {
 	return {
 		delay,
 		duration,
-		css: (t) => `opacity: ${t * o}`,
+		css: (t) => `opacity: ${t * o}`
 	};
 }
 ```
@@ -58,7 +58,7 @@ We can get a lot more creative though. Let's make something truly gratuitous:
 	function spin(node, { duration }) {
 		return {
 			duration,
-			css: t => {
+			css: (t) => {
 				const eased = elasticOut(t);
 
 				return `
@@ -67,7 +67,7 @@ We can get a lot more creative though. Let's make something truly gratuitous:
 						${Math.trunc(t * 360)},
 						${Math.min(100, 1000 - 1000 * t)}%,
 						${Math.min(50, 500 - 500 * t)}%
-					);`
+					);`;
 			}
 		};
 	}

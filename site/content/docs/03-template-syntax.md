@@ -61,8 +61,8 @@ Boolean attributes are included on the element if their value is [truthy](https:
 All other attributes are included unless their value is [nullish](https://developer.mozilla.org/en-US/docs/Glossary/Nullish) (`null` or `undefined`).
 
 ```svelte
-<input required="{false}" placeholder="This input field is not required" />
-<div title="{null}">This div has no title attribute</div>
+<input required={false} placeholder="This input field is not required" />
+<div title={null}>This div has no title attribute</div>
 ```
 
 ---

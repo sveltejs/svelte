@@ -12,7 +12,7 @@ To do that, we specify a unique identifier (or "key") for the `each` block:
 
 ```svelte
 {#each things as thing (thing.id)}
-	<Thing name={thing.name}/>
+	<Thing name={thing.name} />
 {/each}
 ```
 

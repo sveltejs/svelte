@@ -7,13 +7,11 @@ DOM event handlers can have _modifiers_ that alter their behaviour. For example,
 ```svelte
 <script>
 	function handleClick() {
-		alert('no more alerts')
+		alert('no more alerts');
 	}
 </script>
 
-<button on:click|once={handleClick}>
-	Click me
-</button>
+<button on:click|once={handleClick}> Click me </button>
 ```
 
 The full list of modifiers:

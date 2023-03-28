@@ -27,7 +27,7 @@ import type { ServerLoadEvent } from '@sveltejs/kit';
 
 export async function load(event: ServerLoadEvent) {
 	return {
-		post: await database.getPost(event.params.post),
+		post: await database.getPost(event.params.post)
 	};
 }
 ```
@@ -56,13 +56,13 @@ After we have loaded our data, we want to display it in our `+page.svelte`. The 
 ```svelte
 <!-- src/routes/blog/[slug]/+page.svelte -->
 <script lang="ts">
-    import type { PageData } from './$types';
+	import type { PageData } from './$types';
 
-    export let data: PageData;
+	export let data: PageData;
 </script>
 
-
 <h1>{data.post.title}</h1>
+
 <div>{@html data.post.content}</div>
 ```
 

@@ -18,9 +18,7 @@ import { clickOutside } from './click_outside.js';
 ...then use it with the element:
 
 ```svelte
-<div class="box" use:clickOutside on:outclick="{() => (showModal = false)}">
-	Click outside me!
-</div>
+<div class="box" use:clickOutside on:outclick={() => (showModal = false)}>Click outside me!</div>
 ```
 
 Open the `click_outside.js` file. Like transition functions, an action function receives a `node` (which is the element that the action is applied to) and some optional parameters, and returns an action object. That object can have a `destroy` function, which is called when the element is unmounted.
@@ -40,7 +38,7 @@ export function clickOutside(node) {
 	return {
 		destroy() {
 			document.removeEventListener('click', handleClick, true);
-		},
+		}
 	};
 }
 ```

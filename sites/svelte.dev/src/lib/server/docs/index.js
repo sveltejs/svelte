@@ -62,7 +62,7 @@ const languages = {
 	css: 'css',
 	diff: 'diff',
 	ts: 'typescript',
-	'': '',
+	'': ''
 };
 
 /**
@@ -310,7 +310,7 @@ export async function read_file(file) {
 				// }) +
 				'</code>'
 			);
-		},
+		}
 	});
 
 	return {
@@ -318,7 +318,7 @@ export async function read_file(file) {
 		slug: match[1],
 		title: metadata.title,
 		content,
-		sections,
+		sections
 	};
 }
 
@@ -370,14 +370,14 @@ function parse({ file, body, code, codespan }) {
 				section = {
 					title,
 					slug,
-					sections: [],
+					sections: []
 				};
 
 				sections.push(section);
 			} else if (level === 4 || level === 5) {
 				(section?.sections ?? sections).push({
 					title,
-					slug,
+					slug
 				});
 			} else {
 				throw new Error(`Unexpected <h${level}> in ${file}`);
@@ -388,12 +388,12 @@ function parse({ file, body, code, codespan }) {
 			} id="${slug}">${html}<a href="#${slug}" class="permalink"><span class="visually-hidden">permalink</span></a></h${level}>`;
 		},
 		code: (source, language) => code(source, language, current),
-		codespan,
+		codespan
 	});
 
 	return {
 		sections,
-		content,
+		content
 	};
 }
 
@@ -585,7 +585,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 					name,
 					generics
 						.replaceAll('*', '') // get rid of JSDoc asterisks
-						.replace('  }>', '}>'), // unindent closing brace
+						.replace('  }>', '}>') // unindent closing brace
 				];
 			}
 		}

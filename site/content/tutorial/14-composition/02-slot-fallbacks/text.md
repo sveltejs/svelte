@@ -20,5 +20,5 @@ We can now create instances of `<Box>` without any children:
 	<p>This is a box. It can contain anything.</p>
 </Box>
 
-<Box/>
+<Box />
 ```

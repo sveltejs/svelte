@@ -20,7 +20,7 @@ function typewriter(node, { speed = 1 }) {
 		tick: (t) => {
 			const i = Math.trunc(text.length * t);
 			node.textContent = text.slice(0, i);
-		},
+		}
 	};
 }
 ```

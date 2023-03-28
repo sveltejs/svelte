@@ -5,7 +5,7 @@ title: Inline handlers
 You can also declare event handlers inline:
 
 ```svelte
-<div on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}">
+<div on:mousemove={(e) => (m = { x: e.clientX, y: e.clientY })}>
 	The mouse position is {m.x} x {m.y}
 </div>
 ```

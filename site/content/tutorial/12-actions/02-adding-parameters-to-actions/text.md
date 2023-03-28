@@ -36,7 +36,7 @@ To change that, we can add an `update` method in `longpress.js`. This will be ca
 return {
 	update(newDuration) {
 		duration = newDuration;
-	},
+	}
 	// ...
 };
 ```

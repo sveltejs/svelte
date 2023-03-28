@@ -8,7 +8,7 @@ In this example we have two stores — one representing the circle's coordinates
 
 ```svelte
 <script>
-	import { spring } from "svelte/motion";
+	import { spring } from 'svelte/motion';
 
 	let coords = spring({ x: 50, y: 50 });
 	let size = spring(10);
@@ -22,7 +22,7 @@ let coords = spring(
 	{ x: 50, y: 50 },
 	{
 		stiffness: 0.1,
-		damping: 0.25,
+		damping: 0.25
 	}
 );
 ```

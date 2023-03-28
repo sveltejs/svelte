@@ -20,7 +20,7 @@ Next, wrap the `comments` slot and its wrapping `<div>` in an `if` block that ch
 {#if $$slots.comments}
 	<div class="discussion">
 		<h3>Comments</h3>
-		<slot name="comments"></slot>
+		<slot name="comments" />
 	</div>
 {/if}
 ```

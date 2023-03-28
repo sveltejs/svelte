@@ -10,7 +10,7 @@ export async function load({ fetch, params, setHeaders }) {
 	}
 
 	setHeaders({
-		'cache-control': 'public, max-age=60',
+		'cache-control': 'public, max-age=60'
 	});
 
 	return { tutorial: await tutorial.json(), slug: params.slug };

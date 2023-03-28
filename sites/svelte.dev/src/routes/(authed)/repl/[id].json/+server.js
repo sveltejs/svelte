@@ -47,7 +47,7 @@ export async function GET({ params }) {
 		if (!res.ok) {
 			return new Response(await res.json(), {
 				status: res.status,
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json' }
 			});
 		}
 
@@ -58,7 +58,7 @@ export async function GET({ params }) {
 			name: example.name,
 			owner: null,
 			relaxed: example.relaxed, // TODO is this right?
-			components: munge(example.files),
+			components: munge(example.files)
 		});
 	}
 
@@ -83,7 +83,7 @@ export async function GET({ params }) {
 		name: app.name,
 		owner: app.userid,
 		relaxed: false,
-		components: munge(app.files),
+		components: munge(app.files)
 	});
 }
 

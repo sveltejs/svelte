@@ -11,7 +11,7 @@ For example, we can add a `setInterval` function when our component initialises,
 	import { onDestroy } from 'svelte';
 
 	let counter = 0;
-	const interval = setInterval(() => counter += 1, 1000);
+	const interval = setInterval(() => (counter += 1), 1000);
 
 	onDestroy(() => clearInterval(interval));
 </script>
@@ -38,7 +38,7 @@ export function onInterval(callback, milliseconds) {
 	import { onInterval } from './utils.js';
 
 	let counter = 0;
-	onInterval(() => counter += 1, 1000);
+	onInterval(() => (counter += 1), 1000);
 </script>
 ```
 

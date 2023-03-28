@@ -9,7 +9,7 @@ Anything exported from a `context="module"` script block becomes an export from 
 	const elements = new Set();
 
 	export function stopAll() {
-		elements.forEach(element => {
+		elements.forEach((element) => {
 			element.pause();
 		});
 	}
@@ -27,9 +27,7 @@ Anything exported from a `context="module"` script block becomes an export from 
 ...and use it in an event handler:
 
 ```svelte
-<button on:click={stopAll}>
-	stop all audio
-</button>
+<button on:click={stopAll}> stop all audio </button>
 ```
 
 > You can't have a default export, because the component _is_ the default export.

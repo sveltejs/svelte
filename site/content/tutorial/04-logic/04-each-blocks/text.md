@@ -7,9 +7,11 @@ If you need to loop over lists of data, use an `each` block:
 ```svelte
 <ul>
 	{#each cats as cat}
-		<li><a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
-			{cat.name}
-		</a></li>
+		<li>
+			<a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
+				{cat.name}
+			</a>
+		</li>
 	{/each}
 </ul>
 ```
@@ -20,9 +22,11 @@ You can get the current _index_ as a second argument, like so:
 
 ```svelte
 {#each cats as cat, i}
-	<li><a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
-		{i + 1}: {cat.name}
-	</a></li>
+	<li>
+		<a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
+			{i + 1}: {cat.name}
+		</a>
+	</li>
 {/each}
 ```
 

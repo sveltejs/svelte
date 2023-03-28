@@ -9,7 +9,7 @@ const escapeReplacements = {
 	'<': '&lt;',
 	'>': '&gt;',
 	'"': '&quot;',
-	"'": '&#39;',
+	"'": '&#39;'
 };
 
 /**
@@ -153,7 +153,7 @@ const default_renderer = {
 
 	text(text) {
 		return text;
-	},
+	}
 };
 
 /**
@@ -167,8 +167,8 @@ export function transform(markdown, renderer = {}) {
 			// options are global, and merged in confusing ways. You can't do e.g.
 			// `new Marked(options).parse(markdown)`
 			...default_renderer,
-			...renderer,
-		},
+			...renderer
+		}
 	});
 
 	return marked(markdown);

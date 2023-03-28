@@ -10,7 +10,7 @@ export async function list(user, { offset, search }) {
 		list_search: search || '',
 		list_userid: user.id,
 		list_count: PAGE_SIZE,
-		list_start: offset,
+		list_start: offset
 	});
 
 	if (error) throw new Error(error.message);
@@ -22,7 +22,7 @@ export async function list(user, { offset, search }) {
 
 	return {
 		gists: data.slice(0, PAGE_SIZE),
-		next: data.length > PAGE_SIZE ? offset + PAGE_SIZE : null,
+		next: data.length > PAGE_SIZE ? offset + PAGE_SIZE : null
 	};
 }
 
@@ -35,7 +35,7 @@ export async function create(user, gist) {
 	const { data, error } = await client.rpc('gist_create', {
 		name: gist.name,
 		files: gist.files,
-		userid: user.id,
+		userid: user.id
 	});
 
 	if (error) {
@@ -71,7 +71,7 @@ export async function update(user, gistid, gist) {
 		gist_id: gistid,
 		gist_name: gist.name,
 		gist_files: gist.files,
-		gist_userid: user.id,
+		gist_userid: user.id
 	});
 
 	if (error) {
@@ -88,7 +88,7 @@ export async function update(user, gistid, gist) {
 export async function destroy(userid, ids) {
 	const { error } = await client.rpc('gist_destroy', {
 		gist_ids: ids,
-		gist_userid: userid,
+		gist_userid: userid
 	});
 
 	if (error) {

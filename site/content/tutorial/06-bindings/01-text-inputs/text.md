@@ -9,7 +9,7 @@ Sometimes it's useful to break that rule. Take the case of the `<input>` element
 Instead, we can use the `bind:value` directive:
 
 ```svelte
-<input bind:value={name}>
+<input bind:value={name} />
 ```
 
 This means that not only will changes to the value of `name` update the input value, but changes to the input value will update `name`.

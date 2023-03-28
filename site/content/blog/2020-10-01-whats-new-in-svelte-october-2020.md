@@ -19,17 +19,17 @@ Welcome to the first edition of our "What's new in Svelte" series! We'll try to 
 
 ```svelte
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
-    const dispatch = createEventDispatcher<{
-        /**
-         * you can also add docs
-         */
-        checked: boolean; // Will translate to `CustomEvent<boolean>`
-        hello: string;
-    }>();
+	const dispatch = createEventDispatcher<{
+		/**
+		 * you can also add docs
+		 */
+		checked: boolean; // Will translate to `CustomEvent<boolean>`
+		hello: string;
+	}>();
 
-    // ...
+	// ...
 </script>
 ```
 

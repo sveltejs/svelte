@@ -24,7 +24,7 @@ export function get_index() {
 				date,
 				title: metadata.title,
 				description: metadata.description,
-				draft: !!metadata.draft,
+				draft: !!metadata.draft
 			};
 		});
 }
@@ -50,10 +50,10 @@ export function get_post(slug) {
 			description: metadata.description,
 			author: {
 				name: metadata.author,
-				url: metadata.authorURL,
+				url: metadata.authorURL
 			},
 			draft: !!metadata.draft,
-			content: transform(body),
+			content: transform(body)
 		};
 	}
 }
