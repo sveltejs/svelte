@@ -2,43 +2,25 @@
 import {
 	WhiteSpace,
 	Comment,
-	Function,
 	Ident,
 	LeftParenthesis
 } from 'css-tree/tokenizer';
 
 import { lookahead_is_range } from './lookahead_is_range';
 
-const CONTAINER_QUERY_KEYWORDS = new Set(['none', 'and', 'not', 'or']);
-
-export const name = 'ContainerQuery';
+export const name = 'MediaQuery';
 export const structure = {
-	name: 'Identifier',
 	children: [[
 		'Identifier',
 		'QueryFeature',
 		'QueryFeatureRange',
-		'ContainerFeatureStyle',
 		'WhiteSpace'
 	]]
 };
 
 export function parse() {
-	const start = this.tokenStart;
 	const children = this.createList();
 	let child = null;
-	let name = null;
-
-	// Parse potential container name.
-	if (this.tokenType === Ident) {
-		const container_name = this.substring(this.tokenStart, this.tokenEnd);
-
-		// Container name doesn't match a query keyword, so assign it as container name.
-		if (!CONTAINER_QUERY_KEYWORDS.has(container_name.toLowerCase())) {
-			name = container_name;
-			this.eatIdent(container_name);
-		}
-	}
 
 	this.skipSC();
 
@@ -52,10 +34,6 @@ export function parse() {
 
 				case Ident:
 					child = this.Identifier();
-					break;
-
-				case Function:
-					child = this.ContainerFeatureStyle();
 					break;
 
 				case LeftParenthesis:
@@ -75,18 +53,12 @@ export function parse() {
 	}
 
 	return {
-		type: 'ContainerQuery',
-		loc: this.getLocation(start, this.tokenStart - 1),
-		name,
+		type: 'MediaQuery',
+		loc: this.getLocationFromList(children),
 		children
 	};
 }
 
 export function generate(node) {
-	if (typeof node.name === 'string') {
-		this.token(Ident, node.name);
-	}
-
 	this.children(node);
 }
-

@@ -10,7 +10,7 @@ import {
 	Delim
 } from 'css-tree/tokenizer';
 
-export const name = 'ContainerFeature';
+export const name = 'QueryFeature';
 export const structure = {
 	name: String,
 	value: ['Identifier', 'Number', 'Dimension', 'QueryCSSFunction', 'Ratio', null]
@@ -62,7 +62,7 @@ export function parse() {
 	this.eat(RightParenthesis);
 
 	return {
-		type: 'ContainerFeature',
+		type: 'QueryFeature',
 		loc: this.getLocation(start, this.tokenStart),
 		name,
 		value

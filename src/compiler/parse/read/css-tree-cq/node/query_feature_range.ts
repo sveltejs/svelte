@@ -10,7 +10,7 @@ import {
 	WhiteSpace
 } from 'css-tree/tokenizer';
 
-export const name = 'ContainerFeatureRange';
+export const name = 'QueryFeatureRange';
 export const structure = {
 	name: String,
 	value: ['Identifier', 'Number', 'Comparison', 'Dimension', 'QueryCSSFunction', 'Ratio', null]
@@ -30,6 +30,7 @@ function lookup_non_WS_type_and_value(offset, type, referenceStr) {
 }
 
 export function parse() {
+	const start = this.tokenStart;
 	const children = this.createList();
 	let child = null;
 
@@ -75,8 +76,8 @@ export function parse() {
 	this.eat(RightParenthesis);
 
 	return {
-		type: 'ContainerFeatureRange',
-		loc: this.getLocationFromList(children),
+		type: 'QueryFeatureRange',
+		loc: this.getLocation(start, this.tokenStart),
 		children
 	};
 }
