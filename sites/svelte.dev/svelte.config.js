@@ -12,12 +12,13 @@ export default {
 		prerender: {
 			// TODO: REMOVE
 			handleMissingId: 'ignore',
-			entries: [
-				'*',
-				...get_tutorial_list(get_tutorial_data()).flatMap(({ tutorials }) =>
-					tutorials.map((tutorial) => /** @type {`/${string}`} */ ('/tutorial/' + tutorial.slug))
-				),
-			],
+			entries: ['*', ...tutorial_entries()],
 		},
 	},
 };
+
+function tutorial_entries() {
+	return get_tutorial_list(get_tutorial_data()).flatMap(({ tutorials }) =>
+		tutorials.map((tutorial) => /** @type {`/${string}`} */ ('/tutorial/' + tutorial.slug))
+	);
+}
