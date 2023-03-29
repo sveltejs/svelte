@@ -60,7 +60,7 @@ export async function GET({ params }) {
 			});
 		}
 	} catch (e) {
-		console.warn(e);
+		console.warn('Cant use filesystem');
 	}
 
 	if (dev && !client) {
