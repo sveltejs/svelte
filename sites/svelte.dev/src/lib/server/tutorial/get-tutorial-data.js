@@ -1,8 +1,10 @@
 // @ts-check
 import fs from 'node:fs';
-import { extract_frontmatter } from '../markdown';
+import { extract_frontmatter } from '../markdown/index.js';
 
-const base = '../../site/content/tutorial/';
+const base = new URL('../../../../../../site/content/tutorial/', import.meta.url).pathname;
+
+console.log(base);
 
 /**
  * @returns {import('./types').TutorialData}
