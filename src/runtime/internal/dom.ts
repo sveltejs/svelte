@@ -321,7 +321,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute .indexOf(key) === -1) {
+		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
