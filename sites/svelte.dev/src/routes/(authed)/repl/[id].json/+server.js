@@ -1,7 +1,6 @@
-import { building, dev } from '$app/environment';
+import { dev } from '$app/environment';
 import { client } from '$lib/db/client';
 import * as gist from '$lib/db/gist';
-import * as session from '$lib/db/session';
 import { get_example } from '$lib/server/examples';
 import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
 import { error, json } from '@sveltejs/kit';
@@ -39,7 +38,8 @@ export async function GET({ params }) {
 	// Currently, these pages(that are in examples/) are prerendered. To avoid making any FS requests,
 	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
 	// is accessed, this function won't be run at all, as it will be served from the filesystem
-	if (building || dev) {
+
+	try {
 		const examples_data = get_examples_data();
 		examples = new Set(
 			get_examples_list(examples_data)
@@ -59,6 +59,8 @@ export async function GET({ params }) {
 				components: munge(example.files),
 			});
 		}
+	} catch (e) {
+		console.warn(e);
 	}
 
 	if (dev && !client) {
@@ -86,14 +88,3 @@ export async function GET({ params }) {
 		components: munge(app.files),
 	});
 }
-
-// // TODO reimplement as an action
-// export async function PUT({ params, request }) {
-// 	const user = await session.from_cookie(request.headers.get('cookie'));
-// 	if (!user) throw error(401, 'Unauthorized');
-
-// 	const body = await request.json();
-// 	await gist.update(user, params.id, body);
-
-// 	return new Response(undefined, { status: 204 });
-// }
