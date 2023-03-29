@@ -57,7 +57,7 @@
 					repl.set({ components });
 				});
 		} else if (example) {
-			fetch(`/examples/${example}.json`).then(async (response) => {
+			fetch(`/examples/api/${example}.json`).then(async (response) => {
 				if (response.ok) {
 					const data = await response.json();
 					const components = process_example(data.files);
