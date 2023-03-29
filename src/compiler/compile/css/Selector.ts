@@ -470,7 +470,11 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
-function find_previous_sibling_ignoring_slots(node: INode): INode {
+function find_previous_sibling_considering_slots(node: INode): INode {
+	if (node.component.compile_options.customElement) {
+		return node.prev;
+	}
+
 	let current_node: INode = node;
 	do { 
 		// @ts-ignore
@@ -497,7 +501,7 @@ function find_previous_sibling_ignoring_slots(node: INode): INode {
 function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 	let prev: INode = node;
-	while (prev = find_previous_sibling_ignoring_slots(prev)) {
+	while (prev = find_previous_sibling_considering_slots(prev)) {
 		if (prev.type === 'Element') {
 			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
 				result.set(prev, NodeExist.Definitely);
