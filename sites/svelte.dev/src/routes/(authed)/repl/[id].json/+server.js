@@ -10,8 +10,6 @@ export const prerender = 'auto';
 
 const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
 
-const examples_data = get_examples_data();
-
 /** @type {Set<string>} */
 let examples;
 
@@ -42,6 +40,7 @@ export async function GET({ params }) {
 	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
 	// is accessed, this function won't be run at all, as it will be served from the filesystem
 	if (building || dev) {
+		const examples_data = get_examples_data();
 		examples = new Set(
 			get_examples_list(examples_data)
 				.map((category) => category.examples)
