@@ -1,31 +1,32 @@
 <script>
-	import '@sveltejs/site-kit/styles/code.css';
-	import { browser } from '$app/environment';
-	import { getContext } from 'svelte';
-
 	import Repl from '@sveltejs/repl';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
-	import TableOfContents from './_TableOfContents.svelte';
+	import TableOfContents from './TableOfContents.svelte';
 
-	import {
-		mapbox_setup, // needed for context API tutorial
-		svelteUrl,
-	} from '../../../config.js';
+	import { browser } from '$app/environment';
+	import { mapbox_setup, svelteUrl } from '../../../config.js';
 
-	/** @type {import('./$types').PageData} */
+	import '@sveltejs/site-kit/styles/code.css';
+
 	export let data;
 
-	const { sections } = getContext('tutorial');
-
+	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 	let prev;
 	let scrollable;
+	/** @type {Map<string, {
+	 * 	slug: string,
+	 * 	section: import('$lib/server/tutorial/types').TutorialSection,
+	 * 	chapter: import('$lib/server/tutorial/types').Tutorial,
+	 *  prev: { slug: string, section: import('$lib/server/tutorial/types').TutorialSection, chapter: import('$lib/server/tutorial/types').Tutorial }
+	 *  next?: { slug: string, section: import('$lib/server/tutorial/types').TutorialSection, chapter: import('$lib/server/tutorial/types').Tutorial }
+	 * }>} */
 	const lookup = new Map();
 
 	let width = browser ? window.innerWidth : 1000;
 	let offset = 0;
 
-	sections.forEach((section) => {
+	data.tutorials_list.forEach((section) => {
 		section.tutorials.forEach((chapter) => {
 			const obj = {
 				slug: chapter.slug,
@@ -93,11 +94,11 @@
 </script>
 
 <svelte:head>
-	<title>{selected.section.name} / {selected.chapter.name} • Svelte Tutorial</title>
+	<title>{selected.section.title} / {selected.chapter.title} • Svelte Tutorial</title>
 
 	<meta name="twitter:title" content="Svelte tutorial" />
-	<meta name="twitter:description" content="{selected.section.name} / {selected.chapter.name}" />
-	<meta name="Description" content="{selected.section.name} / {selected.chapter.name}" />
+	<meta name="twitter:description" content="{selected.section.title} / {selected.chapter.title}" />
+	<meta name="Description" content="{selected.section.title} / {selected.chapter.title}" />
 </svelte:head>
 
 <svelte:window bind:innerWidth={width} />
@@ -106,10 +107,10 @@
 	<div class="viewport offset-{offset}">
 		<div class="tutorial-text">
 			<div class="table-of-contents">
-				<TableOfContents {sections} slug={data.slug} {selected} />
+				<TableOfContents sections={data.tutorials_list} slug={data.slug} {selected} />
 			</div>
 
-			<div class="chapter-markup" bind:this={scrollable}>
+			<div class="chapter-markup content" bind:this={scrollable}>
 				{@html data.tutorial.content}
 
 				<div class="controls">
@@ -151,6 +152,16 @@
 		<ScreenToggle bind:offset labels={['tutorial', 'input', 'output']} />
 	{/if}
 </div>
+
+<!-- HACK to prerender -->
+<p style="display: none;">
+	{#each data.tutorials_list as { tutorials }}
+		{#each tutorials as { slug }}
+			<!-- svelte-ignore a11y-missing-content -->
+			<a href="/tutorial/{slug}" />
+		{/each}
+	{/each}
+</p>
 
 <style>
 	.tutorial-outer {
@@ -265,13 +276,27 @@
 		top: -0.1em;
 	}
 
-	.chapter-markup :global(:where(pre.language-markup)) {
-		background-color: var(--sk-code-bg);
-		color: var(--sk-code-base);
+	.chapter-markup :global(code) {
+		/* padding: 0.4rem; */
+		margin: 0 0.2rem;
+		top: -0.1rem;
+		background: var(--sk-back-4);
+	}
+
+	.chapter-markup :global(pre) :global(code) {
+		padding: 0;
+		margin: 0;
+		top: 0;
+		background: transparent;
+	}
+
+	.chapter-markup :global(pre) {
+		margin: 0 0 2rem 0;
+		width: 100%;
+		max-width: var(--sk-line-max-width);
+		padding: 1rem 1rem;
+		box-shadow: inset 1px 1px 6px hsla(205.7, 63.6%, 30.8%, 0.06);
 		border-radius: 0.5rem;
-		padding: 1rem;
-		margin: 0 0 1rem;
-		font-size: 14px;
 	}
 
 	.controls {

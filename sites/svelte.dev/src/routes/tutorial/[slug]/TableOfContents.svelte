@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Icon } from '@sveltejs/site-kit/components';
 
+	/** @type {import('$lib/server/tutorial/types').TutorialsList} */
 	export let sections;
 	export let slug;
 	export let selected;
@@ -13,7 +14,6 @@
 
 <nav>
 	<a
-		rel="prefetch"
 		aria-label="Previous tutorial step"
 		class="no-underline"
 		href="/tutorial/{(selected.prev || selected).slug}"
@@ -28,16 +28,16 @@
 				<span style="position: relative; top: -0.1em; margin: 0 0.5em 0 0"
 					><Icon name="menu" /></span
 				>
-				{selected.section.name} /
+				{selected.section.title} /
 			</strong>
-			{selected.chapter.name}
+			{selected.chapter.title}
 		</span>
 
 		<select value={slug} on:change={navigate}>
 			{#each sections as section, i}
-				<optgroup label="{i + 1}. {section.name}">
+				<optgroup label="{i + 1}. {section.title}">
 					{#each section.tutorials as chapter, i}
-						<option value={chapter.slug}>{String.fromCharCode(i + 97)}. {chapter.name}</option>
+						<option value={chapter.slug}>{String.fromCharCode(i + 97)}. {chapter.title}</option>
 					{/each}
 				</optgroup>
 			{/each}
@@ -45,7 +45,6 @@
 	</div>
 
 	<a
-		rel="prefetch"
 		aria-label="Next tutorial step"
 		class="no-underline"
 		href="/tutorial/{(selected.next || selected).slug}"
@@ -108,6 +107,6 @@
 		height: 100%;
 		opacity: 0.0001;
 		cursor: pointer;
-		-webkit-appearance: none;
+		appearance: none;
 	}
 </style>
