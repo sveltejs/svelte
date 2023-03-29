@@ -1,12 +1,12 @@
 // @ts-check
 import fs from 'node:fs';
 
-const base = '../../site/content/examples/';
+const BASE = '../../site/content/examples/';
 
 /**
  * @returns {import('./types').ExamplesData}
  */
-export function get_examples_data() {
+export function get_examples_data(base = BASE) {
 	const examples = [];
 
 	for (const subdir of fs.readdirSync(base)) {
