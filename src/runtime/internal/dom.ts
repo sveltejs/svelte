@@ -309,7 +309,7 @@ export function attr(node: Element, attribute: string, value?: string) {
  * accepts numeric values, but the attribute can also be set to a string like `50%`.
  * If this list becomes too big, rethink this approach.
  */
-const always_set_through_attr = ['width', 'height'];
+const always_set_through_set_attribute = ['width', 'height'];
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	// @ts-ignore
