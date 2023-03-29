@@ -32,7 +32,7 @@
 				slug: chapter.slug,
 				section,
 				chapter,
-				prev,
+				prev
 			};
 
 			lookup.set(chapter.slug, obj);
@@ -54,13 +54,13 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content,
+		source: file.content
 	});
 
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
@@ -68,13 +68,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone),
+			components: data.tutorial.complete.map(clone)
 		});
 	}
 
@@ -154,11 +154,14 @@
 </div>
 
 <!-- HACK: To prerender all tutorial pages -->
-{#each data.tutorials_list as { tutorials }}
-	{#each tutorials as { slug }}
-		<a style="display: none" href="/tutorial/{slug}">.</a>
+<div style="display: none">
+	{#each data.tutorials_list as { tutorials }}
+		{#each tutorials as { slug }}
+			<!-- svelte-ignore a11y-missing-content -->
+			<a href="/tutorial/{slug}" />
+		{/each}
 	{/each}
-{/each}
+</div>
 
 <style>
 	.tutorial-outer {
