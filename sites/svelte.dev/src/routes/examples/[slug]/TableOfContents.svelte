@@ -15,7 +15,7 @@
 <ul class="examples-toc">
 	{#each sections as section}
 		<li>
-			<span class="section-title">{section.name}</span>
+			<span class="section-title">{section.title}</span>
 
 			{#each section.examples as example}
 				<div class="row" class:active={example.slug === active_section} class:loading={isLoading}>
@@ -31,7 +31,7 @@
 							src="/examples/thumbnails/{example.slug}.jpg"
 						/>
 
-						<span>{example.name}</span>
+						<span>{example.title}</span>
 					</a>
 					{#if example.slug === active_section}
 						<a bind:this={active_el} href="/repl/{example.slug}" class="repl-link">REPL</a>
@@ -109,7 +109,7 @@
 	}
 
 	.thumbnail {
-		background-color: var(--sk-back-1);
+		background-color: #fff;
 		object-fit: contain;
 		width: 5rem;
 		height: 5rem;

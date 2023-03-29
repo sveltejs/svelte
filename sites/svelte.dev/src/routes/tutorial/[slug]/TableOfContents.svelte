@@ -14,7 +14,6 @@
 
 <nav>
 	<a
-		rel="prefetch"
 		aria-label="Previous tutorial step"
 		class="no-underline"
 		href="/tutorial/{(selected.prev || selected).slug}"
@@ -109,6 +108,6 @@
 		height: 100%;
 		opacity: 0.0001;
 		cursor: pointer;
-		-webkit-appearance: none;
+		appearance: none;
 	}
 </style>
