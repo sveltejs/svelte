@@ -1,0 +1,14 @@
+[
+  {
+    "code": "css-unused-selector",
+    "end": {
+      "column": 11,
+      "line": 10
+    },
+    "message": "Unused CSS selector \"h1 + span\"",
+    "start": {
+      "column": 2,
+      "line": 10
+    }
+  }
+]
