@@ -1,7 +1,7 @@
 // @ts-check
 import fs from 'node:fs';
 
-const base = new URL('../../../../../../site/content/examples/', import.meta.url).pathname;
+const base = '../../site/content/examples/';
 
 /**
  * @returns {import('./types').ExamplesData}
