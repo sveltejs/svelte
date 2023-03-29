@@ -1,11 +1,16 @@
 <script>
 	import { Blurb } from '@sveltejs/site-kit/components';
-	import Supporters from './_components/Supporters/index.svelte';
+	import { setContext } from 'svelte';
+	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
+	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
-	import Demo from './_components/Demo.svelte';
+	import Supporters from './_components/Supporters/index.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
+
+	export let data;
+
+	setContext('repl_widget_examples', data.examples);
 </script>
 
 <svelte:head>

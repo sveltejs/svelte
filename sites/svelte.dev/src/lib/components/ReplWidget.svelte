@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { process_example } from '$lib/utils/examples';
 	import Repl from '@sveltejs/repl';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 
 	export let version = '3';
 	export let gist = null;
@@ -57,15 +57,12 @@
 					repl.set({ components });
 				});
 		} else if (example) {
-			fetch(`/examples/api/${example}.json`).then(async (response) => {
-				if (response.ok) {
-					const data = await response.json();
-					const components = process_example(data.files);
+			const components = process_example(
+				getContext('repl_widget_examples').find(({ id }) => id === example).files
+			);
 
-					repl.set({
-						components,
-					});
-				}
+			repl.set({
+				components,
 			});
 		}
 	}
