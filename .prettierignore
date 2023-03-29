@@ -1,6 +1,7 @@
 /*.js
 /*.mjs
 /package.json
+package-lock.json
 elements/*
 scripts/*
 /src
