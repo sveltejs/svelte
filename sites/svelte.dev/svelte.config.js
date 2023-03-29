@@ -1,9 +1,5 @@
 // @ts-check
 import adapter from '@sveltejs/adapter-auto';
-import {
-	get_tutorial_data,
-	get_tutorial_list,
-} from './src/lib/server/tutorial/get-tutorial-data.js';
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
@@ -12,13 +8,6 @@ export default {
 		prerender: {
 			// TODO: REMOVE
 			handleMissingId: 'ignore',
-			entries: ['*', ...tutorial_entries()],
 		},
 	},
 };
-
-function tutorial_entries() {
-	return get_tutorial_list(get_tutorial_data()).flatMap(({ tutorials }) =>
-		tutorials.map((tutorial) => /** @type {`/${string}`} */ ('/tutorial/' + tutorial.slug))
-	);
-}

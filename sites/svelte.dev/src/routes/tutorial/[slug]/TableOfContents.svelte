@@ -45,7 +45,6 @@
 	</div>
 
 	<a
-		rel="prefetch"
 		aria-label="Next tutorial step"
 		class="no-underline"
 		href="/tutorial/{(selected.next || selected).slug}"

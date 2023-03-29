@@ -2,9 +2,7 @@
 import fs from 'node:fs';
 import { extract_frontmatter } from '../markdown/index.js';
 
-const base = new URL('../../../../../../site/content/tutorial/', import.meta.url).pathname;
-
-console.log(base);
+const base = '../../site/content/tutorial/';
 
 /**
  * @returns {import('./types').TutorialData}
@@ -37,18 +35,18 @@ export function get_tutorial_data() {
 			const { metadata, body } = extract_frontmatter(contents);
 
 			// Get the contents of the apps.
-			const completionStatesData = { initial: [], complete: [] };
-			for (const appDir of fs.readdirSync(tutorial_base_dir)) {
-				if (!appDir.startsWith('app-')) continue;
+			const completion_states_data = { initial: [], complete: [] };
+			for (const app_dir of fs.readdirSync(tutorial_base_dir)) {
+				if (!app_dir.startsWith('app-')) continue;
 
-				const appDirPath = `${tutorial_base_dir}/${appDir}`;
-				const appContents = fs.readdirSync(appDirPath, 'utf-8');
+				const app_dir_path = `${tutorial_base_dir}/${app_dir}`;
+				const app_contents = fs.readdirSync(app_dir_path, 'utf-8');
 
-				for (const file of appContents) {
-					completionStatesData[appDir === 'app-a' ? 'initial' : 'complete'].push({
+				for (const file of app_contents) {
+					completion_states_data[app_dir === 'app-a' ? 'initial' : 'complete'].push({
 						name: file,
 						type: file.split('.').at(-1),
-						content: fs.readFileSync(`${appDirPath}/${file}`, 'utf-8'),
+						content: fs.readFileSync(`${app_dir_path}/${file}`, 'utf-8'),
 					});
 				}
 			}
@@ -58,7 +56,7 @@ export function get_tutorial_data() {
 				slug,
 				content: body,
 				dir: `${subdir}/${section_dir}`,
-				...completionStatesData,
+				...completion_states_data,
 			});
 		}
 
