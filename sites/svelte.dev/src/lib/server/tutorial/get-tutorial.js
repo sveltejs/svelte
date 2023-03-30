@@ -2,12 +2,12 @@
 import fs from 'node:fs';
 import { extract_frontmatter } from '../markdown/index.js';
 
-const base = '../../site/content/tutorial/';
+const BASE = '../../site/content/tutorial/';
 
 /**
  * @returns {import('./types').TutorialData}
  */
-export function get_tutorial_data() {
+export function get_tutorial_data(base = BASE) {
 	const tutorials = [];
 
 	for (const subdir of fs.readdirSync(base)) {
