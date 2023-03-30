@@ -16,7 +16,6 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 	return get_attribute_value(attribute);
 }
 
-
 export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	if (attribute.chunks.length === 0) return x`""`;
 
