@@ -52,8 +52,6 @@ export function get_docs_data(base = BASE) {
 			});
 		}
 
-		console.log(category.pages);
-
 		docs_data.push(category);
 	}
 

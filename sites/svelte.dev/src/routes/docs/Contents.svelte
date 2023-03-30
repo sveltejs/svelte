@@ -3,8 +3,6 @@
 
 	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
 	export let contents = [];
-
-	console.log(contents);
 </script>
 
 <nav aria-label="Docs">
