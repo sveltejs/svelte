@@ -46,7 +46,7 @@ export function content() {
 
 			const { body, metadata } = extract_frontmatter(markdown);
 
-			const sections = body.trim().split(/^### /m);
+			const sections = body.trim().split(/^## /m);
 			const intro = sections.shift().trim();
 			const rank = +metadata.rank || undefined;
 
@@ -59,32 +59,32 @@ export function content() {
 
 			for (const section of sections) {
 				const lines = section.split('\n');
-				const h3 = lines.shift();
+				const h2 = lines.shift();
 				const content = lines.join('\n');
 
-				const subsections = content.trim().split('### ');
+				const subsections = content.trim().split('## ');
 
 				const intro = subsections.shift().trim();
 
 				blocks.push({
-					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h3)],
-					href: category.href([slug, normalizeSlugify(h3)]),
+					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h2)],
+					href: category.href([slug, normalizeSlugify(h2)]),
 					content: plaintext(intro),
 					rank
 				});
 
 				for (const subsection of subsections) {
 					const lines = subsection.split('\n');
-					const h4 = lines.shift();
+					const h3 = lines.shift();
 
 					blocks.push({
 						breadcrumbs: [
 							...breadcrumbs,
 							removeMarkdown(metadata.title),
-							removeMarkdown(h3),
-							removeMarkdown(h4)
+							removeMarkdown(h2),
+							removeMarkdown(h3)
 						],
-						href: category.href([slug, normalizeSlugify(h3), normalizeSlugify(h4)]),
+						href: category.href([slug, normalizeSlugify(h2), normalizeSlugify(h3)]),
 						content: plaintext(lines.join('\n').trim()),
 						rank
 					});

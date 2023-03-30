@@ -1,7 +1,13 @@
 // @ts-check
 import { base as app_base } from '$app/paths';
 import fs from 'fs';
-import { extract_frontmatter, normalizeSlugify, removeMarkdown, transform } from '../markdown';
+import {
+	escape,
+	extract_frontmatter,
+	normalizeSlugify,
+	removeMarkdown,
+	transform
+} from '../markdown';
 
 const BASE = '../../site/content/docs/';
 
@@ -79,11 +85,12 @@ function get_sections(markdown) {
 	while ((match = headingRegex.exec(markdown)) !== null) {
 		secondLevelHeadings.push({
 			title: removeMarkdown(
-				transform(match[1], { paragraph: (txt) => txt })
+				escape(transform(match[1], { paragraph: (txt) => txt }))
 					.replace(/<\/?code>/g, '')
 					.replace(/&quot;/g, '"')
 					.replace(/&lt;/g, '<')
 					.replace(/&gt;/g, '>')
+					.replace(/<(\/)?(em|b|strong|code)>/g, '')
 			),
 			slug: normalizeSlugify(match[1])
 		});

@@ -51,12 +51,13 @@ export function slugify(title) {
 /** @param {string} markdown */
 export function removeMarkdown(markdown) {
 	return markdown
-		.replace(/\*\*(.+?)\*\*/g, '$1')
-		.replace(/\*(.+?)\*/g, '$1')
-		.replace(/`(.+?)`/g, '$1')
-		.replace(/~~(.+?)~~/g, '$1')
-		.replace(/\[(.+?)\]\(.+?\)/g, '$1')
-		.replace(/\n/g, ' ')
+		.replace(/\*\*(.+?)\*\*/g, '$1') // bold
+		.replace(/_(.+?)_/g, '$1') // Italics
+		.replace(/\*(.+?)\*/g, '$1') // Italics
+		.replace(/`(.+?)`/g, '$1') // Inline code
+		.replace(/~~(.+?)~~/g, '$1') // Strikethrough
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Link
+		.replace(/\n/g, ' ') // New line
 		.replace(/ {2,}/g, ' ')
 		.trim();
 }
