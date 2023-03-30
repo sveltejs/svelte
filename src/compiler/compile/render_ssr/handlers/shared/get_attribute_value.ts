@@ -16,12 +16,15 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 	return get_attribute_value(attribute);
 }
 
-/**
- * For value attribute of textarea, it will render as child node of `<textarea>` element.
- * Therefore, we need to escape as content (not attribute).
- */
-export function get_attribute_value(attribute: Attribute, is_textarea_value = false): ESTreeExpression {
+
+export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	if (attribute.chunks.length === 0) return x`""`;
+
+	/**
+	 * For value attribute of textarea, it will render as child node of `<textarea>` element.
+	 * Therefore, we need to escape as content (not attribute).
+	 */
+	const is_textarea_value = attribute.parent.name.toLowerCase() === 'textarea' && attribute.name.toLowerCase() === 'value';
 
 	return attribute.chunks
 		.map((chunk) => {
