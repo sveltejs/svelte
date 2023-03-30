@@ -1,102 +1,83 @@
 ---
-title: Accessibility warnings
+title: 'Accessibility warnings'
 ---
 
 Accessibility (shortened to a11y) isn't always easy to get right, but Svelte will help by warning you at compile time if you write inaccessible markup. However, keep in mind that many accessibility issues can only be identified at runtime using other automated tools and by manually testing your application.
 
 Here is a list of accessibility checks Svelte will do for you.
 
----
-
-### `a11y-accesskey`
+## `a11y-accesskey`
 
 Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
 
-```sv
-<!-- A11y: Avoid using accesskey -->
-<div accessKey='z'></div>
+```svelte
+<!-- A11y: Avoid using accesskey --><div accessKey="z" />
 ```
 
----
-
-### `a11y-aria-activedescendant-has-tabindex`
+## `a11y-aria-activedescendant-has-tabindex`
 
 An element with `aria-activedescendant` must be tabbable, so it must either have an inherent `tabindex` or declare `tabindex` as an attribute.
 
-```sv
+```svelte
 <!-- A11y: Elements with attribute aria-activedescendant should have tabindex value -->
 <div aria-activedescendant="some-id" />
-
 ```
 
----
-
-### `a11y-aria-attributes`
+## `a11y-aria-attributes`
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `aria-*` props.
 
-```sv
+```svelte
 <!-- A11y: <meta> should not have aria-* attributes -->
-<meta aria-hidden="false">
+<meta aria-hidden="false" />
 ```
 
----
-
-### `a11y-autofocus`
+## `a11y-autofocus`
 
 Enforce that `autofocus` is not used on elements. Autofocusing elements can cause usability issues for sighted and non-sighted users alike.
 
-```sv
+```svelte
 <!-- A11y: Avoid using autofocus -->
-<input autofocus>
+<input autofocus />
 ```
 
----
-
-### `a11y-click-events-have-key-events`
+## `a11y-click-events-have-key-events`
 
 Enforce `on:click` is accompanied by at least one of the following: `on:keyup`, `on:keydown`, `on:keypress`. Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
 
 This does not apply for interactive or hidden elements.
 
-```sv
+```svelte
 <!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event. -->
 <div on:click={() => {}} />
 ```
 
 Note that the `keypress` event is now deprecated, so it is officially recommended to use either the `keyup` or `keydown` event instead, accordingly.
 
----
-
-### `a11y-distracting-elements`
+## `a11y-distracting-elements`
 
 Enforces that no distracting elements are used. Elements that can be visually distracting can cause accessibility issues with visually impaired users. Such elements are most likely deprecated, and should be avoided.
 
 The following elements are visually distracting: `<marquee>` and `<blink>`.
 
-```sv
+```svelte
 <!-- A11y: Avoid <marquee> elements -->
 <marquee />
 ```
 
----
-
-### `a11y-hidden`
+## `a11y-hidden`
 
 Certain DOM elements are useful for screen reader navigation and should not be hidden.
 
-```sv
-<!-- A11y: <h2> element should not be hidden -->
-<h2 aria-hidden="true">invisible header</h2>
+```svelte
+<!-- A11y: <h2> element should not be hidden --><h2 aria-hidden="true">invisible header</h2>
 ```
 
----
-
-### `a11y-img-redundant-alt`
+## `a11y-img-redundant-alt`
 
 Enforce img alt attribute does not contain the word image, picture, or photo. Screen readers already announce `img` elements as an image. There is no need to use words such as _image_, _photo_, and/or _picture_.
 
-```sv
+```svelte
 <img src="foo" alt="Foo eating a sandwich." />
 
 <!-- aria-hidden, won't be announced by screen reader -->
@@ -112,43 +93,35 @@ Enforce img alt attribute does not contain the word image, picture, or photo. Sc
 <img src="foo" alt="Picture of baz fixing a bug." />
 ```
 
----
-
-### `a11y-incorrect-aria-attribute-type`
+## `a11y-incorrect-aria-attribute-type`
 
 Enforce that only the correct type of value is used for aria attributes. For example, `aria-hidden`
 should only receive a boolean.
 
-```sv
+```svelte
 <!-- A11y: The value of 'aria-hidden' must be exactly one of true or false -->
-<div aria-hidden="yes"/>
+<div aria-hidden="yes" />
 ```
 
----
-
-### `a11y-invalid-attribute`
+## `a11y-invalid-attribute`
 
 Enforce that attributes important for accessibility have a valid value. For example, `href` should not be empty, `'#'`, or `javascript:`.
 
-```sv
+```svelte
 <!-- A11y: '' is not a valid href attribute -->
-<a href=''>invalid</a>
+<a href="">invalid</a>
 ```
 
----
-
-### `a11y-interactive-supports-focus`
+## `a11y-interactive-supports-focus`
 
 Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
 
-```sv
+```svelte
 <!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
 <div role="button" on:keypress={() => {}} />
 ```
 
----
-
-### `a11y-label-has-associated-control`
+## `a11y-label-has-associated-control`
 
 Enforce that a label tag has a text label and an associated control.
 
@@ -157,7 +130,7 @@ There are two supported ways to associate a label with a control:
 - Wrapping a control in a label tag.
 - Adding `for` to a label and assigning it the ID of an input on the page.
 
-```sv
+```svelte
 <label for="id">B</label>
 
 <label>C <input type="text" /></label>
@@ -166,51 +139,42 @@ There are two supported ways to associate a label with a control:
 <label>A</label>
 ```
 
----
-
-### `a11y-media-has-caption`
+## `a11y-media-has-caption`
 
 Providing captions for media is essential for deaf users to follow along. Captions should be a transcription or translation of the dialogue, sound effects, relevant musical cues, and other relevant audio information. Not only is this important for accessibility, but can also be useful for all users in the case that the media is unavailable (similar to `alt` text on an image when an image is unable to load).
 
 The captions should contain all important and relevant information to understand the corresponding media. This may mean that the captions are not a 1:1 mapping of the dialogue in the media content. However, captions are not necessary for video components with the `muted` attribute.
 
-```sv
-<video><track kind="captions"/></video>
+```svelte
+<video><track kind="captions" /></video>
 
-<audio muted></audio>
+<audio muted />
 
 <!-- A11y: Media elements must have a <track kind=\"captions\"> -->
-<video></video>
+<video />
 
 <!-- A11y: Media elements must have a <track kind=\"captions\"> -->
 <video><track /></video>
 ```
 
----
-
-### `a11y-misplaced-role`
+## `a11y-misplaced-role`
 
 Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `role` props.
 
-```sv
+```svelte
 <!-- A11y: <meta> should not have role attribute -->
-<meta role="tooltip">
+<meta role="tooltip" />
 ```
 
----
-
-### `a11y-misplaced-scope`
+## `a11y-misplaced-scope`
 
 The scope attribute should only be used on `<th>` elements.
 
-```sv
-<!-- A11y: The scope attribute should only be used with <th> elements -->
-<div scope="row" />
+```svelte
+<!-- A11y: The scope attribute should only be used with <th> elements --><div scope="row" />
 ```
 
----
-
-### `a11y-missing-attribute`
+## `a11y-missing-attribute`
 
 Enforce that attributes required for accessibility are present on an element. This includes the following checks:
 
@@ -222,38 +186,34 @@ Enforce that attributes required for accessibility are present on an element. Th
 - `<object>` should have title, aria-label, or aria-labelledby
 - `<input type="image">` should have alt, aria-label, or aria-labelledby
 
-```sv
+```svelte
 <!-- A11y: <input type=\"image\"> element should have an alt, aria-label or aria-labelledby attribute -->
-<input type="image">
+<input type="image" />
 
 <!-- A11y: <html> element should have a lang attribute -->
-<html></html>
+<html />
 
 <!-- A11y: <a> element should have an href attribute -->
 <a>text</a>
 ```
 
----
-
-### `a11y-missing-content`
+## `a11y-missing-content`
 
 Enforce that heading elements (`h1`, `h2`, etc.) and anchors have content and that the content is accessible to screen readers
 
-```sv
+```svelte
 <!-- A11y: <a> element should have child content -->
-<a href='/foo'></a>
+<a href="/foo" />
 
 <!-- A11y: <h1> element should have child content -->
-<h1></h1>
+<h1 />
 ```
 
----
-
-### `a11y-mouse-events-have-key-events`
+## `a11y-mouse-events-have-key-events`
 
 Enforce that `on:mouseover` and `on:mouseout` are accompanied by `on:focus` and `on:blur`, respectively. This helps to ensure that any functionality triggered by these mouse events is also accessible to keyboard users.
 
-```sv
+```svelte
 <!-- A11y: on:mouseover must be accompanied by on:focus -->
 <div on:mouseover={handleMouseover} />
 
@@ -261,13 +221,11 @@ Enforce that `on:mouseover` and `on:mouseout` are accompanied by `on:focus` and 
 <div on:mouseout={handleMouseout} />
 ```
 
----
-
-### `a11y-no-redundant-roles`
+## `a11y-no-redundant-roles`
 
 Some HTML elements have default ARIA roles. Giving these elements an ARIA role that is already set by the browser [has no effect](https://www.w3.org/TR/using-aria/#aria-does-nothing) and is redundant.
 
-```sv
+```svelte
 <!-- A11y: Redundant role 'button' -->
 <button role="button" />
 
@@ -275,68 +233,54 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 <img role="img" src="foo.jpg" />
 ```
 
----
-
-### `a11y-no-interactive-element-to-noninteractive-role`
+## `a11y-no-interactive-element-to-noninteractive-role`
 
 [WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert an interactive element to a non-interactive element. Non-interactive ARIA roles include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
 
-```sv
+```svelte
 <!-- A11y: <textarea> cannot have role 'listitem' -->
 <textarea role="listitem" />
 ```
 
----
-
-### `a11y-no-noninteractive-element-to-interactive-role`
+## `a11y-no-noninteractive-element-to-interactive-role`
 
 [WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
 
-```sv
+```svelte
 <!-- A11y: Non-interactive element <h3> cannot have interactive role 'searchbox' -->
 <h3 role="searchbox">Button</h3>
 ```
 
----
-
-### `a11y-no-noninteractive-tabindex`
+## `a11y-no-noninteractive-tabindex`
 
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
-```sv
-<!-- A11y: noninteractive element cannot have nonnegative tabIndex value -->
-<div tabindex='0' />
+```svelte
+<!-- A11y: noninteractive element cannot have nonnegative tabIndex value --><div tabindex="0" />
 ```
 
----
-
-### `a11y-positive-tabindex`
+## `a11y-positive-tabindex`
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
 
-```sv
-<!-- A11y: avoid tabindex values above zero -->
-<div tabindex='1'/>
+```svelte
+<!-- A11y: avoid tabindex values above zero --><div tabindex="1" />
 ```
 
----
-
-### `a11y-role-has-required-aria-props`
+## `a11y-role-has-required-aria-props`
 
 Elements with ARIA roles must have all required attributes for that role.
 
-```sv
+```svelte
 <!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
-<span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
+<span role="checkbox" aria-labelledby="foo" tabindex="0" />
 ```
 
----
-
-### `a11y-role-supports-aria-props`
+## `a11y-role-supports-aria-props`
 
 Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
 
-```sv
+```svelte
 <!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
 <div role="link" aria-multiline />
 
@@ -344,37 +288,30 @@ Elements with explicit or implicit roles defined contain only `aria-*` propertie
 <li aria-required />
 ```
 
----
-
-### `a11y-structure`
+## `a11y-structure`
 
 Enforce that certain DOM elements have the correct structure.
 
-```sv
+```svelte
 <!-- A11y: <figcaption> must be an immediate child of <figure> -->
 <div>
 	<figcaption>Image caption</figcaption>
 </div>
 ```
 
----
-
-### `a11y-unknown-aria-attribute`
+## `a11y-unknown-aria-attribute`
 
 Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA States and Properties spec](https://www.w3.org/WAI/PF/aria-1.1/states_and_properties).
 
-```sv
+```svelte
 <!-- A11y: Unknown aria attribute 'aria-labeledby' (did you mean 'labelledby'?) -->
-<input type="image" aria-labeledby="foo">
+<input type="image" aria-labeledby="foo" />
 ```
 
----
-
-### `a11y-unknown-role`
+## `a11y-unknown-role`
 
 Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
 
-```sv
-<!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) -->
-<div role="toooltip"></div>
+```svelte
+<!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) --><div role="toooltip" />
 ```

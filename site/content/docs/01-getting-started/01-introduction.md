@@ -1,5 +1,5 @@
 ---
-title: Before we begin
+title: Introduction
 ---
 
 This page contains detailed API reference documentation. It's intended to be a resource for people who already have some familiarity with Svelte.

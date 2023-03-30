@@ -1,7 +1,6 @@
 <script>
 	import OnThisPage from './OnThisPage.svelte';
 
-	/** @type {import('./$types').PageData}*/
 	export let data;
 </script>
 

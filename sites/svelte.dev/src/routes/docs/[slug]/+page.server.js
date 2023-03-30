@@ -1,24 +1,13 @@
-import fs from 'fs';
-// import { read_file } from '$lib/server/docs';
+import { get_parsed_docs } from '$lib/server/docs';
+import { get_docs_data } from '$lib/server/docs/get-docs';
 import { error } from '@sveltejs/kit';
-import { read_file } from '$lib/server/docs';
 
 export const prerender = true;
 
-const base = '../../site/content/docs/';
-
-/**
- * ASSUMPTION FOR FUTURE: This assumes the directory structure of docs is flat. AKA, no nested folders
- */
-/** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	for (const file of fs.readdirSync(`${base}`)) {
-		if (file.slice(3, -3) === params.slug) {
-			return {
-				page: await read_file(file)
-			};
-		}
-	}
+	const processed_page = get_parsed_docs(get_docs_data(), params.slug);
 
-	throw error(404);
+	if (!processed_page) throw error(404);
+
+	return { page: processed_page };
 }

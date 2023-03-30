@@ -89,7 +89,7 @@
 		<ul>
 			<li><a href="{base}/docs/{details.slug}" class:active={hash === ''}>{details.title}</a></li>
 			{#each details.sections as { title, slug }}
-				<li><a href={`#${slug}`} class:active={`#${slug}` === hash}>{title}</a></li>
+				<li><a href={`#${slug}`} class:active={`#${slug}` === hash}>{@html title}</a></li>
 			{/each}
 		</ul>
 	</nav>
@@ -99,10 +99,12 @@
 	.on-this-page {
 		display: var(--on-this-page-display);
 		position: fixed;
-		padding: 0 var(--sk-page-padding-side) 0 0;
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 0 0;
 		width: min(280px, calc(var(--sidebar-width) - var(--sk-page-padding-side)));
+		height: calc(100vh - var(--sk-nav-height));
 		top: var(--sk-nav-height);
 		left: calc(100vw - (var(--sidebar-width)));
+		overflow-y: auto;
 	}
 
 	h2 {
