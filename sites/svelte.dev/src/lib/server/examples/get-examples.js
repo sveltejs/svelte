@@ -16,7 +16,7 @@ export function get_examples_data() {
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
-			examples: [],
+			examples: []
 		};
 
 		if (!(fs.statSync(`${base}/${subdir}`).isDirectory() || subdir.endsWith('meta.json'))) continue;
@@ -44,7 +44,7 @@ export function get_examples_data() {
 				files.push({
 					filename: file,
 					type: file.split('.').at(-1),
-					content: fs.readFileSync(`${example_base_dir}/${file}`, 'utf-8'),
+					content: fs.readFileSync(`${example_base_dir}/${file}`, 'utf-8')
 				});
 			}
 
@@ -66,7 +66,7 @@ export function get_examples_list(examples_data) {
 		title: section.title,
 		examples: section.examples.map((example) => ({
 			title: example.title,
-			slug: example.slug,
-		})),
+			slug: example.slug
+		}))
 	}));
 }

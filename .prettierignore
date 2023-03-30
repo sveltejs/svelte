@@ -8,3 +8,4 @@ scripts/*
 /test
 .svelte-kit
 types
+.vercel
