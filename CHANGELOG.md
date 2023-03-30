@@ -1,6 +1,6 @@
 # Svelte changelog
 
-## Unreleased
+## 3.58.0
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
 * Add support for CSS `@container` queries ([#6969](https://github.com/sveltejs/svelte/issues/6969))
