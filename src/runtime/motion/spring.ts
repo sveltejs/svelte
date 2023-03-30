@@ -115,7 +115,7 @@ export function spring<T=any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
 
 				last_time = Math.max(last_time, now - tick * limit);
-				while ( last_time < now ) {
+				while (last_time < now) {
 					const elapsed = Math.min(tick, now - last_time);
 					last_time += elapsed;
 
