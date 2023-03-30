@@ -43,8 +43,6 @@ Note: If you want to render regular `<slot>` element, You can use `<svelte:eleme
 
 ### <slot name="`_name_`">
 
----
-
 Named slots allow consumers to target specific areas. They can also have fallback content.
 
 ```svelte
@@ -85,8 +83,6 @@ In order to place content in a slot without using a wrapper element, you can use
 
 ### $$slots
 
----
-
 `$$slots` is an object whose keys are the names of the slots passed into the component by the parent. If the parent does not pass in a slot with a particular name, that name will not be present in `$$slots`. This allows components to render a slot (and other elements, like wrappers for styling) only if the parent provides it.
 
 Note that explicitly passing in an empty named slot will add that slot's name to `$$slots`. For example, if a parent passes `<div slot="title" />` to a child component, `$$slots.title` will be truthy within the child.
@@ -111,8 +107,6 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 
 ### <slot key={`_value_`}>
 
----
-
 Slots can be rendered zero or more times and can pass values _back_ to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
@@ -132,8 +126,6 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 	<div>{thing.text}</div>
 </FancyList>
 ```
-
----
 
 Named slots can also expose values. The `let:` directive goes on the element with the `slot` attribute.
 
@@ -158,8 +150,6 @@ Named slots can also expose values. The `let:` directive goes on the element wit
 
 ## `<svelte:self>`
 
----
-
 The `<svelte:self>` element allows a component to include itself, recursively.
 
 It cannot appear at the top level of your markup; it must be inside an if or each block or passed to a component's slot to prevent an infinite loop.
@@ -183,8 +173,6 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 <svelte:component this={expression} />
 ```
 
----
-
 The `<svelte:component>` element renders a component dynamically, using the component constructor specified as the `this` property. When the property changes, the component is destroyed and recreated.
 
 If `this` is falsy, no component is rendered.
@@ -198,8 +186,6 @@ If `this` is falsy, no component is rendered.
 ```svelte
 <svelte:element this={expression} />
 ```
-
----
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 

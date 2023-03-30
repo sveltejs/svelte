@@ -78,7 +78,13 @@ function get_sections(markdown) {
 
 	while ((match = headingRegex.exec(markdown)) !== null) {
 		secondLevelHeadings.push({
-			title: removeMarkdown(transform(match[1], { paragraph: (txt) => txt })),
+			title: removeMarkdown(
+				transform(match[1], { paragraph: (txt) => txt })
+					.replace(/<\/?code>/g, '')
+					.replace(/&quot;/g, '"')
+					.replace(/&lt;/g, '<')
+					.replace(/&gt;/g, '>')
+			),
 			slug: normalizeSlugify(match[1])
 		});
 	}

@@ -89,7 +89,7 @@
 		<ul>
 			<li><a href="{base}/docs/{details.slug}" class:active={hash === ''}>{details.title}</a></li>
 			{#each details.sections as { title, slug }}
-				<li><a href={`#${slug}`} class:active={`#${slug}` === hash}>{@html title}</a></li>
+				<li><a href={`#${slug}`} class:active={`#${slug}` === hash}>{title}</a></li>
 			{/each}
 		</ul>
 	</nav>
