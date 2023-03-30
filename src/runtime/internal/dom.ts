@@ -1,5 +1,5 @@
 import { ResizeObserverSingleton } from './ResizeObserverSingleton';
-import { has_prop } from './utils';
+import { contenteditable_truthy_values, has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -253,6 +253,10 @@ export function space() {
 
 export function empty() {
 	return text('');
+}
+
+export function comment(content: string) {
+	return document.createComment(content);
 }
 
 export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
@@ -551,6 +555,19 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
+export function claim_comment(nodes:ChildNodeArray, data) {
+	return claim_node<Comment>(
+		nodes,
+		(node: ChildNode): node is Comment => node.nodeType === 8,
+		(node: Comment) => {
+			node.data =  '' + data;
+			return undefined;
+		},
+		() => comment(data),
+		true
+	);
+}
+
 function find_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
@@ -582,9 +599,24 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
-export function set_data(text, data) {
+export function set_data(text: Text, data: unknown) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	if (text.data === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable(text, data);
+	} else {
+		set_data(text, data);
+	}
 }
 
 export function set_input_value(input, value) {

@@ -173,7 +173,7 @@ class Atrule {
 	}
 
 	apply(node: Element) {
-		if (this.node.name === 'media' || this.node.name === 'supports' || this.node.name === 'layer') {
+		if (this.node.name === 'container' || this.node.name === 'media' || this.node.name === 'supports' || this.node.name === 'layer') {
 			this.children.forEach(child => {
 				child.apply(node);
 			});

@@ -13,7 +13,6 @@ const _boolean_attributes = [
 	'hidden',
 	'inert',
 	'ismap',
-	'itemscope',
 	'loop',
 	'multiple',
 	'muted',
