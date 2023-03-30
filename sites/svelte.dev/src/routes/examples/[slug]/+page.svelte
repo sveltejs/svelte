@@ -1,16 +1,12 @@
 <!-- FIXME sometimes it adds a trailing slash when landing -->
 <script>
-	import { getContext } from 'svelte';
+	// @ts-check
 	import { navigating } from '$app/stores';
-	import Repl from '@sveltejs/repl';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
-	import {
-		mapbox_setup, // see site/content/examples/15-context/00-context-api
-		svelteUrl,
-	} from '../../../config';
-	import TableOfContents from './_TableOfContents.svelte';
+	import Repl from '@sveltejs/repl';
+	import { mapbox_setup, svelteUrl } from '../../../config';
+	import TableOfContents from './TableOfContents.svelte';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 
 	/** @type {number} */
@@ -19,10 +15,8 @@
 	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 
-	const { sections } = getContext('examples');
-
 	const clone = (file) => ({
-		name: file.name.replace(/.\w+$/, ''),
+		name: file.filename.replace(/.\w+$/, ''),
 		type: file.type,
 		source: file.content,
 	});
@@ -34,7 +28,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.example.name} {data.example.name ? '•' : ''} Svelte Examples</title>
+	<title>{data.example.title} {data.example.title ? '•' : ''} Svelte Examples</title>
 
 	<meta name="twitter:title" content="Svelte examples" />
 	<meta name="twitter:description" content="Cybernetically enhanced web apps" />
@@ -44,7 +38,11 @@
 <h1 class="visually-hidden">Examples</h1>
 <div class="examples-container" bind:clientWidth={width}>
 	<div class="viewport offset-{offset}">
-		<TableOfContents {sections} active_section={data.example.slug} isLoading={!!$navigating} />
+		<TableOfContents
+			sections={data.examples_list}
+			active_section={data.example.slug}
+			isLoading={!!$navigating}
+		/>
 		<div class="repl-container" class:loading={$navigating}>
 			<Repl
 				bind:this={repl}

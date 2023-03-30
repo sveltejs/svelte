@@ -42,7 +42,7 @@
 							return {
 								name: file.slice(0, dot),
 								type: file.slice(dot + 1),
-								source
+								source,
 							};
 						})
 						.filter((x) => x.type === 'svelte' || x.type === 'js')
@@ -64,7 +64,7 @@
 					const components = process_example(data.files);
 
 					repl.set({
-						components
+						components,
 					});
 				}
 			});
