@@ -69,7 +69,7 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 	return style_object;
 }
 
-const ATTR_REGEX = /[&"]/g;
+const ATTR_REGEX = /[&"<]/g;
 const CONTENT_REGEX = /[&<]/g;
 
 /**
