@@ -15,10 +15,7 @@ const categories = [
 		slug: 'docs',
 		label: null,
 		/** @param {string[]} parts */
-		href: (parts) => {
-			console.log(parts);
-			return parts.length > 1 ? `/docs/${parts[0]}#${parts.at(-1)}` : `/docs/${parts[0]}`;
-		}
+		href: (parts) => (parts.length > 1 ? `/docs/${parts[0]}#${parts.at(-1)}` : `/docs/${parts[0]}`)
 	},
 	{
 		slug: 'faq',
