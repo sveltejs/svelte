@@ -63,7 +63,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
 				const name = attribute.name.toLowerCase();
 				if (name === 'value' && node.name.toLowerCase() === 'textarea') {
-					node_contents = get_attribute_value(attribute);
+					node_contents = get_attribute_value(attribute, true);
 				} else if (attribute.is_true) {
 					args.push(x`{ ${attr_name}: true }`);
 				} else if (
@@ -90,7 +90,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			const name = attribute.name.toLowerCase();
 			const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
 			if (name === 'value' && node.name.toLowerCase() === 'textarea') {
-				node_contents = get_attribute_value(attribute);
+				node_contents = get_attribute_value(attribute, true);
 			} else if (attribute.is_true) {
 				renderer.add_string(` ${attr_name}`);
 			} else if (

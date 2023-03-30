@@ -16,14 +16,18 @@ export function get_class_attribute_value(attribute: Attribute): ESTreeExpressio
 	return get_attribute_value(attribute);
 }
 
-export function get_attribute_value(attribute: Attribute): ESTreeExpression {
+/**
+ * For value attribute of textarea, it will render as child node of `<textarea>` element.
+ * Therefore, we need to escape as content (not attribute).
+ */
+export function get_attribute_value(attribute: Attribute, is_textarea_value = false): ESTreeExpression {
 	if (attribute.chunks.length === 0) return x`""`;
 
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
 				? string_literal(chunk.data.replace(regex_double_quotes, '&quot;')) as ESTreeExpression
-				: x`@escape(${chunk.node}, true)`;
+				: x`@escape(${chunk.node}, ${is_textarea_value ? 'false' : 'true'})`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
