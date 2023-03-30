@@ -39,6 +39,10 @@
 		display: none;
 	}
 
+	.page :global(:where(h2, h3) code) {
+		all: unset;
+	}
+
 	/* .content {
 		width: 100%;
 		margin: 0;
