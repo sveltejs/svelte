@@ -136,34 +136,29 @@
 	/** @type {Map<RegExp, string>}*/
 	const pages_regex_map = new Map([
 		// Basic ones
-		[/before-we-begin$/i, 'introduction'],
-		[/getting-started$/i, 'introduction'],
-		[/component-format$/i, 'component-format'],
+		[/(before-we-begin|getting-started)$/i, 'introduction'],
+		[/(component-format)$/i, '$1'],
 		[/template-syntax$/i, 'template-syntax-basics'],
 		[/run-time$/i, 'svelte'],
 		[/compile-time$/i, 'svelte-compiler'],
-		[/accessibility-warnings$/i, 'accessibility-warnings'],
+		[/(accessibility-warnings)$/i, '$1'],
 
 		// component-format-
 		[/(component-format)-(style)$/i, '$1#$2'],
-		[/(component-format)-(script)/i, '$1#$2'],
-		[/(component-format)-(script)(?:-?(.*))$/i, '$1#$3'],
+		[/(component-format)-(script)$/i, '$1#$2'],
+		[/(component-format)-(?:script)(?:-?(.*))$/i, '$1#$2'],
 
 		// template-syntax
-		[/template-syntax-(element-directives)-?(.*)/i, '$1#$2'],
-		[/template-syntax-(component-directives)-?(.*)/i, '$1#$2'],
-		[/template-syntax-slot/i, 'special-elements#slot'],
-		[/template-syntax-(slot)-?(.*)/i, 'special-elements#$2'],
+		[/template-syntax-((?:element|component)-directives)-?(.*)/i, '$1#$2'],
+		[/template-syntax-slot$/i, 'special-elements#slot'],
+		[/template-syntax-(?:slot)-?(.*)/i, 'special-elements#$1'],
 		[/template-syntax-(if|each|await|key)/i, 'logic-blocks#$1'],
 		[/template-syntax-(const|debug|html)/i, 'special-tags#$1'],
 		// !!!! This one should stay at the bottom of `template-syntax`, or it may end up hijacking logic blocks and special tags
 		[/template-syntax-(.+)/i, 'template-syntax-basics#$1'],
 
 		// run-time
-		[/run-time-(svelte-store)-?(.*)/i, '$1#$2'],
-		[/run-time-(svelte-motion)-?(.*)/i, '$1#$2'],
-		[/run-time-(svelte-transition)-?(.*)/i, '$1#$2'],
-		[/run-time-(svelte-animate)-?(.*)/i, '$1#$2'],
+		[/run-time-(svelte-(?:store|motion|transition|animate))-?(.*)/i, '$1#$2'],
 		[/run-time-(svelte-easing)/i, '$1'],
 		[/run-time-(client-side-component-api)-?(.*)/i, '$1#$2'],
 		[/run-time-(server-side-component-api)/i, '$1'],
@@ -191,7 +186,7 @@
 						old_id
 							.replace(regex, replacement)
 							.replace(/#$/, '') // Replace trailing # at the end
-							.replace('---', '-') // have to do the -- replacement because of --style-props in old being style-props in new
+							.replace('#--', '#') // have to do the -- replacement because of --style-props in old being style-props in new
 					);
 					continue old_id_block;
 				}
@@ -202,6 +197,7 @@
 	}
 
 	function getURlToRedirectTo() {
+		console.log(get_old_new_ids_map());
 		const hash = $page.url.hash.replace(/^#/i, '');
 
 		if (!hash) return '/docs/introduction';
