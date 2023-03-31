@@ -23,9 +23,11 @@ export function get_docs_data(base = BASE) {
 		const category_slug = match[1];
 
 		// Read the meta.json
-		const category_title = JSON.parse(
+		const { title: category_title, draft = 'false' } = JSON.parse(
 			fs.readFileSync(`${base}/${category_dir}/meta.json`, 'utf-8')
-		).title;
+		);
+
+		if (draft === 'true') continue;
 
 		/** @type {import('./types').Category} */
 		const category = {
@@ -45,6 +47,9 @@ export function get_docs_data(base = BASE) {
 			const page_data = extract_frontmatter(
 				fs.readFileSync(`${base}/${category_dir}/${page_md}`, 'utf-8')
 			);
+
+			if (page_data.metadata.draft === 'true') continue;
+
 			const page_title = page_data.metadata.title;
 			const page_content = page_data.body;
 
