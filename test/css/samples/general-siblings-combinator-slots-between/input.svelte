@@ -8,7 +8,15 @@
 <p>Paragraph 2</p>
 
 <style>
+	h1 ~ span {
+		color: green;
+	}
+
   h1 ~ p {
     color: red;
   }
+
+	span ~ p {
+		color: blue;
+	}
 </style>
