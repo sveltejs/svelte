@@ -14,6 +14,8 @@
 
 	let mounted = false;
 
+	const repl_widget_examples = getContext('repl_widget_examples');
+
 	function load(gist, example) {
 		if (version !== 'local') {
 			fetch(`https://unpkg.com/svelte@${version}/package.json`)
@@ -58,7 +60,7 @@
 				});
 		} else if (example) {
 			const components = process_example(
-				getContext('repl_widget_examples').find(({ id }) => id === example).files
+				repl_widget_examples.find(({ id }) => id === example).files
 			);
 
 			repl.set({
