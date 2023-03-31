@@ -41,7 +41,7 @@ Note: If you want to render regular `<slot>` element, You can use `<svelte:eleme
 
 Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
 
-### <slot name="`_name_`">
+### `<slot name="`_name_`">`
 
 Named slots allow consumers to target specific areas. They can also have fallback content.
 
@@ -105,7 +105,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 </Card>
 ```
 
-### <slot key={`_value_`}>
+### `<slot key={`_value_`}>`
 
 Slots can be rendered zero or more times and can pass values _back_ to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
