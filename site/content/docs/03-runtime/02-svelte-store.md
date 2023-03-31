@@ -2,11 +2,11 @@
 title: 'svelte/store'
 ---
 
-The `svelte/store` module exports functions for creating [readable](/docs/run-time#svelte-store-readable), [writable](/docs/run-time#svelte-store-writable) and [derived](/docs/run-time#svelte-store-derived) stores.
+The `svelte/store` module exports functions for creating [readable](/docs/svelte-store#readable), [writable](/docs/svelte-store#writable) and [derived](/docs/svelte-store#derived) stores.
 
-Keep in mind that you don't _have_ to use these functions to enjoy the [reactive `$store` syntax](/docs/component-format#script-4-prefix-stores-with-$-to-access-their-values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](/docs/run-time#svelte-store-derived).
+Keep in mind that you don't _have_ to use these functions to enjoy the [reactive `$store` syntax](/docs/component-format#4-prefix-stores-with-$-to-access-their-values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](/docs/svelte-store#derived).
 
-This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](/docs/component-format#script-4-prefix-stores-with-$-to-access-their-values-store-contract) to see what a correct implementation looks like.
+This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](/docs/component-format#4-prefix-stores-with-$-to-access-their-values) to see what a correct implementation looks like.
 
 ## `writable`
 

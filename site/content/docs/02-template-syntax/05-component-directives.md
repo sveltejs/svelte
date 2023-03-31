@@ -8,7 +8,7 @@ title: Component Directives
 on:eventname={handler}
 ```
 
-Components can emit events using [createEventDispatcher](/docs/run-time#svelte-createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Components can emit events using [createEventDispatcher](/docs/svelte#createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
 
 ```svelte
 <SomeComponent on:whatever={handler} />

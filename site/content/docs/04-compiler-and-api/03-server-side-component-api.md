@@ -10,7 +10,7 @@ Unlike client-side components, server-side components don't have a lifespan afte
 
 A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
 
-You can import a Svelte component directly into Node using [`svelte/register`](/docs/run-time#svelte-register).
+You can import a Svelte component directly into Node using [`svelte/register`](/docs/svelte-register).
 
 ```js
 require('svelte/register');

@@ -14,7 +14,7 @@ Tweened stores update their values over a fixed duration. The following options 
 
 - `delay` (`number`, default 0) — milliseconds before starting
 - `duration` (`number` | `function`, default 400) — milliseconds the tween lasts
-- `easing` (`function`, default `t => t`) — an [easing function](/docs/run-time#svelte-easing)
+- `easing` (`function`, default `t => t`) — an [easing function](/docs/svelte-easing)
 - `interpolate` (`function`) — see below
 
 `store.set` and `store.update` can accept a second `options` argument that will override the options passed in upon instantiation.
@@ -100,7 +100,7 @@ size.damping = 0.4;
 size.precision = 0.005;
 ```
 
-As with [`tweened`](/docs/run-time#svelte-motion-tweened) stores, `set` and `update` return a Promise that resolves if the spring settles.
+As with [`tweened`](/docs/svelte-motion#tweened) stores, `set` and `update` return a Promise that resolves if the spring settles.
 
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
