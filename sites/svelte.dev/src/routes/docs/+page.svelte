@@ -137,16 +137,13 @@
 	const pages_regex_map = new Map([
 		// Basic ones
 		[/(before-we-begin|getting-started)$/i, 'introduction'],
-		[/(component-format)$/i, 'dot-svelte-files'],
-		[/template-syntax$/i, 'dot-svelte-files'],
+		[/(component-format|template-syntax)$/i, 'dot-svelte-files'],
 		[/run-time$/i, 'svelte'],
 		[/compile-time$/i, 'svelte-compiler'],
 		[/(accessibility-warnings)$/i, '$1'],
 
 		// component-format-
-		[/component-format-(style)$/i, 'dot-svelte-files#$1'],
-		[/component-format-(script)$/i, 'dot-svelte-files#$1'],
-		[/component-format-(script-context-module)$/i, 'dot-svelte-files#$1'],
+		[/component-format-(script|style|script-context-module)$/i, 'dot-svelte-files#$1'],
 		[/component-format-(?:script)(?:-?(.*))$/i, 'dot-svelte-files#$1'],
 
 		// template-syntax
@@ -155,16 +152,20 @@
 		[/template-syntax-(?:slot)-?(.*)/i, 'special-elements#$1'],
 		[/template-syntax-(if|each|await|key)$/i, 'logic-blocks#$1'],
 		[/template-syntax-(const|debug|html)$/i, 'special-tags#$1'],
+		[
+			/template-syntax-(tags|attributes-and-props|text-expressions|comments)$/i,
+			'dot-svelte-files#$1',
+		],
 		// !!!! This one should stay at the bottom of `template-syntax`, or it may end up hijacking logic blocks and special tags
-		[/template-syntax-(.+)/i, 'dot-svelte-files#$1'],
+		[/template-syntax-(.+)/i, 'special-elements#$1'],
 
 		// run-time
 		[/run-time-(svelte-(?:store|motion|transition|animate))-?(.*)/i, '$1#$2'],
-		[/run-time-(svelte-easing)$/i, '$1'],
 		[/run-time-(client-side-component-api)-?(.*)/i, '$1#$2'],
-		[/run-time-(server-side-component-api)$/i, '$1'],
-		[/run-time-(custom-element-api)$/i, '$1'],
-		[/run-time-(svelte-register)$/i, '$1'],
+		[
+			/run-time-(svelte-easing|server-side-component-api|custom-element-api|svelte-register)$/i,
+			'$1',
+		],
 		// Catch all, should be at the end or will include store, motion, transition and other modules starting with svelte
 		[/run-time-(svelte)(?:-(.+))?/i, '$1#$2'],
 
