@@ -10,9 +10,6 @@ export function get_examples_data(base = BASE) {
 	const examples = [];
 
 	for (const subdir of fs.readdirSync(base)) {
-		// Exclude embeds
-		if (subdir.endsWith('99-embeds')) continue;
-
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
