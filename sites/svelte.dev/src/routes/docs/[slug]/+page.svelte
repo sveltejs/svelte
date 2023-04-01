@@ -12,6 +12,4 @@
 	{@html data.page.content}
 </div>
 
-{#if data.page.sections.length !== 0}
-	<OnThisPage details={data.page} />
-{/if}
+<OnThisPage details={data.page} />
