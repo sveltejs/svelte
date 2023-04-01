@@ -1015,7 +1015,7 @@ export default class Component {
 		let scope = instance_scope;
 
 		walk(this.ast.instance.content, {
-			enter(node: Node) {
+			enter(node: Node, parent: Node, key, index) {
 				if (regex_contains_term_function.test(node.type)) {
 					return this.skip();
 				}
@@ -1138,11 +1138,16 @@ export default class Component {
 							}
 						}
 
-						this.replace(b`
-							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${props} } = $$props;`}
-							${inserts}
-						` as any);
+            if (inserts.length > 0) {
+              parent[key].splice(index + 1, 0, ...inserts);
+            }
+            if (props.length > 0) {
+              parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
+            }
+            if (node.declarations.length == 0) {
+              parent[key].splice(index, 1);
+            }
+
 						return this.skip();
 					}
 				}
