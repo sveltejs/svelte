@@ -4,6 +4,7 @@ import * as gist from '$lib/db/gist';
 import { get_example } from '$lib/server/examples';
 import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
 import { error, json } from '@sveltejs/kit';
+import examples_data from './examples-data.js';
 
 export const prerender = 'auto';
 
@@ -39,28 +40,23 @@ export async function GET({ params }) {
 	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
 	// is accessed, this function won't be run at all, as it will be served from the filesystem
 
-	try {
-		const examples_data = get_examples_data();
-		examples = new Set(
-			get_examples_list(examples_data)
-				.map((category) => category.examples)
-				.flat()
-				.map((example) => example.slug)
-		);
+	examples = new Set(
+		get_examples_list(examples_data)
+			.map((category) => category.examples)
+			.flat()
+			.map((example) => example.slug)
+	);
 
-		if (examples.has(params.id)) {
-			const example = get_example(examples_data, params.id);
+	if (examples.has(params.id)) {
+		const example = get_example(examples_data, params.id);
 
-			return json({
-				id: params.id,
-				name: example.title,
-				owner: null,
-				relaxed: false, // TODO is this right? EDIT: It was example.relaxed before, which no example return to my knowledge. By @PuruVJ
-				components: munge(example.files),
-			});
-		}
-	} catch (e) {
-		console.warn('Cant use filesystem');
+		return json({
+			id: params.id,
+			name: example.title,
+			owner: null,
+			relaxed: false, // TODO is this right? EDIT: It was example.relaxed before, which no example return to my knowledge. By @PuruVJ
+			components: munge(example.files),
+		});
 	}
 
 	if (dev && !client) {
