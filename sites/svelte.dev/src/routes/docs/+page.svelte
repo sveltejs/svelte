@@ -130,24 +130,24 @@
 		'accessibility-warnings-a11y-role-supports-aria-props',
 		'accessibility-warnings-a11y-structure',
 		'accessibility-warnings-a11y-unknown-aria-attribute',
-		'accessibility-warnings-a11y-unknown-role'
+		'accessibility-warnings-a11y-unknown-role',
 	];
 
 	/** @type {Map<RegExp, string>}*/
 	const pages_regex_map = new Map([
 		// Basic ones
 		[/(before-we-begin|getting-started)$/i, 'introduction'],
-		[/(component-format)$/i, '$1'],
-		[/template-syntax$/i, 'template-syntax-basics'],
+		[/(component-format)$/i, 'dot-svelte-files'],
+		[/template-syntax$/i, 'dot-svelte-files'],
 		[/run-time$/i, 'svelte'],
 		[/compile-time$/i, 'svelte-compiler'],
 		[/(accessibility-warnings)$/i, '$1'],
 
 		// component-format-
-		[/(component-format)-(style)$/i, '$1#$2'],
-		[/(component-format)-(script)$/i, '$1#$2'],
-		[/(component-format)-(script-context-module)$/i, '$1#$2'],
-		[/(component-format)-(?:script)(?:-?(.*))$/i, '$1#$2'],
+		[/component-format-(style)$/i, 'dot-svelte-files#$1'],
+		[/component-format-(script)$/i, 'dot-svelte-files#$1'],
+		[/component-format-(script-context-module)$/i, 'dot-svelte-files#$1'],
+		[/component-format-(?:script)(?:-?(.*))$/i, 'dot-svelte-files#$1'],
 
 		// template-syntax
 		[/template-syntax-((?:element|component)-directives)-?(.*)/i, '$1#$2'],
@@ -156,7 +156,7 @@
 		[/template-syntax-(if|each|await|key)$/i, 'logic-blocks#$1'],
 		[/template-syntax-(const|debug|html)$/i, 'special-tags#$1'],
 		// !!!! This one should stay at the bottom of `template-syntax`, or it may end up hijacking logic blocks and special tags
-		[/template-syntax-(.+)/i, 'template-syntax-basics#$1'],
+		[/template-syntax-(.+)/i, 'dot-svelte-files#$1'],
 
 		// run-time
 		[/run-time-(svelte-(?:store|motion|transition|animate))-?(.*)/i, '$1#$2'],
@@ -172,7 +172,7 @@
 		[/compile-time-?(.*)/i, 'svelte-compiler#$1'],
 
 		// Accessibility warnings
-		[/(accessibility-warnings)-?(.+)/i, '$1#$2']
+		[/(accessibility-warnings)-?(.+)/i, '$1#$2'],
 	]);
 
 	function get_old_new_ids_map() {

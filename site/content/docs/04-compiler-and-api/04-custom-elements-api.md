@@ -1,5 +1,5 @@
 ---
-title: 'Custom Elements API'
+title: 'Custom elements API'
 ---
 
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](/docs/special-elements#svelte-options).

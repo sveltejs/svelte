@@ -1,5 +1,5 @@
 ---
-title: Element Directives
+title: Element directives
 ---
 
 As well as attributes, elements can have _directives_, which control the element's behaviour in some way.

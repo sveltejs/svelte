@@ -1,5 +1,5 @@
 ---
-title: Logic Blocks
+title: Logic blocks
 ---
 
 ## {#if ...}

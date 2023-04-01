@@ -1,5 +1,5 @@
 ---
-title: Special Tags
+title: Special tags
 ---
 
 ## {@html ...}
