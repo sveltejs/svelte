@@ -1,7 +1,5 @@
 import { error } from '@sveltejs/kit';
 
-// export const prerender = 'auto';
-
 export async function load({ fetch, params, url }) {
 	const res = await fetch(`/repl/${params.id}.json`);
 
