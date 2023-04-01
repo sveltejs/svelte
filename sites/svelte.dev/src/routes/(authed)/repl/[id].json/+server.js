@@ -66,7 +66,16 @@ export async function GET({ params }) {
 	if (dev && !client) {
 		// in dev with no local Supabase configured, proxy to production
 		// this lets us at least load saved REPLs
-		return await fetch(`https://svelte.dev/repl/${params.id}.json`);
+		const res = await fetch(`https://svelte.dev/repl/${params.id}.json`);
+
+		// returning the response directly results in a bizarre
+		// content encoding error, so we create a new one
+		return new Response(await res.text(), {
+			status: res.status,
+			headers: {
+				'content-type': 'application/json',
+			},
+		});
 	}
 
 	if (!UUID_REGEX.test(params.id)) {
