@@ -1138,15 +1138,15 @@ export default class Component {
 							}
 						}
 
-            if (inserts.length > 0) {
-              parent[key].splice(index + 1, 0, ...inserts);
-            }
-            if (props.length > 0) {
-              parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
-            }
-            if (node.declarations.length == 0) {
-              parent[key].splice(index, 1);
-            }
+						if (inserts.length > 0) {
+							parent[key].splice(index + 1, 0, ...inserts);
+						}
+						if (props.length > 0) {
+							parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
+						}
+						if (node.declarations.length == 0) {
+							parent[key].splice(index, 1);
+						}
 
 						return this.skip();
 					}
