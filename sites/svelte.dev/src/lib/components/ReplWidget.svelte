@@ -2,21 +2,20 @@
 	import { browser } from '$app/environment';
 	import { process_example } from '$lib/utils/examples';
 	import Repl from '@sveltejs/repl';
-	import { getContext, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let version = '3';
 	export let gist = null;
 	export let example = null;
 	export let embedded = false;
 
+	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 	let name = 'loading...';
 
 	let mounted = false;
 
-	const repl_widget_examples = getContext('repl_widget_examples');
-
-	function load(gist, example) {
+	async function load(gist, example) {
 		if (version !== 'local') {
 			fetch(`https://unpkg.com/svelte@${version}/package.json`)
 				.then((r) => r.json())
@@ -60,7 +59,8 @@
 				});
 		} else if (example) {
 			const components = process_example(
-				repl_widget_examples.find(({ id }) => id === example).files
+				// repl_widget_examples.find(({ id }) => id === example).files
+				(await fetch(`/examples/api/${example}.json`).then((r) => r.json())).files
 			);
 
 			repl.set({

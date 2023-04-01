@@ -1,9 +1,32 @@
 <script>
-	import { getContext } from 'svelte';
 	import Example from './Example.svelte';
 	import Section from './Section.svelte';
 
-	const examples = getContext('repl_widget_examples');
+	const examples = [
+		{
+			id: 'hello-world',
+			title: 'Hello World',
+			description: 'Svelte components are built on top of HTML. Just add data.',
+		},
+		{
+			id: 'nested-components',
+			title: 'Scoped CSS',
+			description:
+				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.',
+		},
+		{
+			id: 'reactive-assignments',
+			title: 'Reactivity',
+			description:
+				'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.',
+		},
+		{
+			id: 'svg-transitions',
+			title: 'Transitions',
+			description:
+				'Build beautiful UIs with a powerful, performant transition engine built right into the framework.',
+		},
+	];
 
 	$: selected = examples[0];
 </script>

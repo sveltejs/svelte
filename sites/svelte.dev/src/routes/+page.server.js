@@ -1,5 +1,5 @@
 import { get_example } from '$lib/server/examples';
-import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
+import { get_examples_data } from '$lib/server/examples/get-examples';
 
 export const prerender = true;
 
