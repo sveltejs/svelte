@@ -188,7 +188,7 @@
 						old_id
 							.replace(regex, replacement)
 							.replace(/#$/, '') // Replace trailing # at the end
-							.replace('#--', '#') // have to do the -- replacement because of --style-props in old being style-props in new
+							.replace('#--', '#') // have to do the -- replacement because of `--style-props` in old being `style-props` in new
 					);
 					continue old_id_block;
 				}
