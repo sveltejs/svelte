@@ -6,7 +6,7 @@ The `<audio>` and `<video>` elements have several properties that you can bind t
 
 On line 62, add `currentTime={time}`, `duration` and `paused` bindings:
 
-```html
+```svelte
 <video
 	poster="https://sveltejs.github.io/assets/caminandes-llamigos.jpg"
 	src="https://sveltejs.github.io/assets/caminandes-llamigos.mp4"
@@ -16,8 +16,9 @@ On line 62, add `currentTime={time}`, `duration` and `paused` bindings:
 	on:mouseup={handleMouseup}
 	bind:currentTime={time}
 	bind:duration
-	bind:paused>
-	<track kind="captions">
+	bind:paused
+>
+	<track kind="captions" />
 </video>
 ```
 
@@ -27,21 +28,21 @@ Now, when you click on the video, it will update `time`, `duration` and `paused`
 
 > Ordinarily on the web, you would track `currentTime` by listening for `timeupdate` events. But these events fire too infrequently, resulting in choppy UI. Svelte does better — it checks `currentTime` using `requestAnimationFrame`.
 
-The complete set of bindings for `<audio>` and `<video>` is as follows — six *readonly* bindings...
+The complete set of bindings for `<audio>` and `<video>` is as follows — six _readonly_ bindings...
 
-* `duration` (readonly) — the total duration of the video, in seconds
-* `buffered` (readonly) — an array of `{start, end}` objects
-* `seekable` (readonly) — ditto
-* `played` (readonly) — ditto
-* `seeking` (readonly) — boolean
-* `ended` (readonly) — boolean
+- `duration` (readonly) — the total duration of the video, in seconds
+- `buffered` (readonly) — an array of `{start, end}` objects
+- `seekable` (readonly) — ditto
+- `played` (readonly) — ditto
+- `seeking` (readonly) — boolean
+- `ended` (readonly) — boolean
 
-...and five *two-way* bindings:
+...and five _two-way_ bindings:
 
-* `currentTime` — the current point in the video, in seconds
-* `playbackRate` — how fast to play the video, where `1` is 'normal'
-* `paused` — this one should be self-explanatory
-* `volume` — a value between 0 and 1
-* `muted` — a boolean value where true is muted
+- `currentTime` — the current point in the video, in seconds
+- `playbackRate` — how fast to play the video, where `1` is 'normal'
+- `paused` — this one should be self-explanatory
+- `volume` — a value between 0 and 1
+- `muted` — a boolean value where true is muted
 
 Videos additionally have readonly `videoWidth` and `videoHeight` bindings.

@@ -12,14 +12,14 @@ const categories = [
 		label: null,
 		/** @param {string[]} parts */
 		href: (parts) =>
-			parts.length > 1 ? `/docs/${parts[0]}#${parts.slice(1).join('-')}` : `/docs/${parts[0]}`,
+			parts.length > 1 ? `/docs/${parts[0]}#${parts.slice(1).join('-')}` : `/docs/${parts[0]}`
 	},
 	{
 		slug: 'faq',
 		label: 'FAQ',
 		/** @param {string[]} parts */
-		href: (parts) => `/faq#${parts.join('-')}`,
-	},
+		href: (parts) => `/faq#${parts.join('-')}`
+	}
 ];
 
 export function content() {
@@ -50,7 +50,7 @@ export function content() {
 				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
 				href: category.href([slug]),
 				content: plaintext(intro),
-				rank,
+				rank
 			});
 
 			for (const section of sections) {
@@ -66,7 +66,7 @@ export function content() {
 					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h3)],
 					href: category.href([slug, normalizeSlugify(h3)]),
 					content: plaintext(intro),
-					rank,
+					rank
 				});
 
 				for (const subsection of subsections) {
@@ -78,11 +78,11 @@ export function content() {
 							...breadcrumbs,
 							removeMarkdown(metadata.title),
 							removeMarkdown(h3),
-							removeMarkdown(h4),
+							removeMarkdown(h4)
 						],
 						href: category.href([slug, normalizeSlugify(h3), normalizeSlugify(h4)]),
 						content: plaintext(lines.join('\n').trim()),
-						rank,
+						rank
 					});
 				}
 			}
@@ -122,7 +122,7 @@ function plaintext(markdown) {
 		del: inline,
 		link: (href, title, text) => text,
 		image: (href, title, text) => text,
-		text: inline,
+		text: inline
 	})
 		.replace(/&lt;/g, '<')
 		.replace(/&gt;/g, '>')

@@ -8,7 +8,7 @@ Very occasionally, you'll need to run some code outside of an individual compone
 
 We can do that by declaring a `<script context="module">` block. Code contained inside it will run once, when the module first evaluates, rather than when a component is instantiated. Place this at the top of `AudioPlayer.svelte`:
 
-```html
+```svelte
 <script context="module">
 	let current;
 </script>

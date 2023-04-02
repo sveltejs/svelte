@@ -55,7 +55,7 @@ export async function GET({ params }) {
 			name: example.title,
 			owner: null,
 			relaxed: false, // TODO is this right? EDIT: It was example.relaxed before, which no example return to my knowledge. By @PuruVJ
-			components: munge(example.files),
+			components: munge(example.files)
 		});
 	}
 
@@ -69,8 +69,8 @@ export async function GET({ params }) {
 		return new Response(await res.text(), {
 			status: res.status,
 			headers: {
-				'content-type': 'application/json',
-			},
+				'content-type': 'application/json'
+			}
 		});
 	}
 
@@ -90,6 +90,6 @@ export async function GET({ params }) {
 		owner: app.userid,
 		relaxed: false,
 		// @ts-expect-error app.files has a `source` property
-		components: munge(app.files),
+		components: munge(app.files)
 	});
 }

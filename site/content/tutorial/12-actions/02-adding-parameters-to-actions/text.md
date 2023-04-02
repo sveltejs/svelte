@@ -14,9 +14,7 @@ export function longpress(node, duration) {
 
 	const handleMousedown = () => {
 		timer = setTimeout(() => {
-			node.dispatchEvent(
-				new CustomEvent('longpress')
-			);
+			node.dispatchEvent(new CustomEvent('longpress'));
 		}, duration);
 	};
 
@@ -26,11 +24,11 @@ export function longpress(node, duration) {
 
 Back in `App.svelte`, we can pass the `duration` value to the action:
 
-```html
+```svelte
 <button use:longpress={duration}
 ```
 
-This *almost* works — the event now only fires after 2 seconds. But if you slide the duration down, it will still take two seconds.
+This _almost_ works — the event now only fires after 2 seconds. But if you slide the duration down, it will still take two seconds.
 
 To change that, we can add an `update` method in `longpress.js`. This will be called whenever the argument changes:
 
@@ -38,7 +36,7 @@ To change that, we can add an `update` method in `longpress.js`. This will be ca
 return {
 	update(newDuration) {
 		duration = newDuration;
-	},
+	}
 	// ...
 };
 ```

@@ -28,7 +28,7 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 
 ---
 
-Svelte uses the `export` keyword to mark a variable declaration as a *property* or *prop*, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs#template-syntax-attributes-and-props) for more information).
+Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs/template-syntax#attributes-and-props) for more information).
 
 ```sv
 <script>
@@ -44,7 +44,7 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 
 You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that whenever a prop is removed by the consumer, its value is set to `undefined` rather than the initial value.
 
-In development mode (see the [compiler options](/docs#compile-time-svelte-compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
+In development mode (see the [compiler options](/docs/compile-time#svelte-compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
 ```sv
 <script>
@@ -71,7 +71,7 @@ If you export a `const`, `class` or `function`, it is readonly from outside the 
 </script>
 ```
 
-Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs#template-syntax-component-directives-bind-this).
+Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs/template-syntax#component-directives-bind-this).
 
 ---
 
@@ -174,11 +174,11 @@ Only values which directly appear within the `$:` block will become dependencies
 <script>
 	let x = 0;
 	let y = 0;
-	
+
 	function yPlusAValue(value) {
 		return value + y;
 	}
-	
+
 	$: total = yPlusAValue(x);
 </script>
 
@@ -193,17 +193,18 @@ Total: {total}
 ```
 
 ---
+
 It is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that `yDependent` will not be updated when `x` is updated in the following example:
 
 ```sv
 <script>
 	let x = 0;
 	let y = 0;
-	
+
 	const setY = (value) => {
 		y = value;
 	}
-	
+
 	$: yDependent = y;
 	$: setY(x);
 </script>
@@ -230,7 +231,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ---
 
-A *store* is an object that allows reactive access to a value via a simple *store contract*. The [`svelte/store` module](/docs#run-time-svelte-store) contains minimal store implementations which fulfil this contract.
+A _store_ is an object that allows reactive access to a value via a simple _store contract_. The [`svelte/store` module](/docs/run-time#svelte-store) contains minimal store implementations which fulfil this contract.
 
 Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.
 
@@ -238,7 +239,7 @@ Assignments to `$`-prefixed variables require that the variable be a writable st
 
 Note that the store must be declared at the top level of the component — not inside an `if` block or a function, for example.
 
-Local variables (that do not represent store values) must *not* have a `$` prefix.
+Local variables (that do not represent store values) must _not_ have a `$` prefix.
 
 ```sv
 <script>
@@ -261,14 +262,13 @@ Local variables (that do not represent store values) must *not* have a `$` prefi
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
-You can create your own stores without relying on [`svelte/store`](/docs#run-time-svelte-store), by implementing the *store contract*:
+You can create your own stores without relying on [`svelte/store`](/docs/run-time#svelte-store), by implementing the _store contract_:
 
 1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
 2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
-3. A store may *optionally* contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a *writable store*.
+3. A store may _optionally_ contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a _writable store_.
 
 For interoperability with RxJS Observables, the `.subscribe` method is also allowed to return an object with an `.unsubscribe` method, rather than return the unsubscription function directly. Note however that unless `.subscribe` synchronously calls the subscription (which is not required by the Observable spec), Svelte will see the value of the store as `undefined` until it does.
-
 
 ### &lt;script context="module"&gt;
 
@@ -280,7 +280,7 @@ You can `export` bindings from this block, and they will become exports of the c
 
 You cannot `export default`, since the default export is the component itself.
 
-> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs#run-time-svelte-store).
+> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs/run-time#svelte-store).
 
 ```sv
 <script context="module">
@@ -298,7 +298,6 @@ You cannot `export default`, since the default export is the component itself.
 	console.log(`total number of times this component has been created: ${totalComponents}`);
 </script>
 ```
-
 
 ### &lt;style&gt;
 
@@ -336,11 +335,11 @@ To apply styles to a selector globally, use the `:global(...)` modifier.
 	}
 
 	p:global(.red) {
-		/* this will apply to all <p> elements belonging to this 
+		/* this will apply to all <p> elements belonging to this
 			 component with a class of red, even if class="red" does
-			 not initially appear in the markup, and is instead 
-			 added at runtime. This is useful when the class 
-			 of the element is dynamically applied, for instance 
+			 not initially appear in the markup, and is instead
+			 added at runtime. This is useful when the class
+			 of the element is dynamically applied, for instance
 			 when updating the element's classList property directly. */
 	}
 </style>
@@ -352,9 +351,11 @@ If you want to make @keyframes that are accessible globally, you need to prepend
 
 The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
 
-```html
+```svelte
 <style>
-	@keyframes -global-my-animation-name {...}
+	@keyframes -global-my-animation-name {
+		/* code goes here */
+	}
 </style>
 ```
 
@@ -366,7 +367,7 @@ However, it is possible to have `<style>` tag nested inside other elements or lo
 
 In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
 
-```html
+```svelte
 <div>
 	<style>
 		/* this style tag will be inserted as-is */

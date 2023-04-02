@@ -6,7 +6,7 @@ The context API provides a mechanism for components to 'talk' to each other with
 
 Take this example app using a [Mapbox GL](https://docs.mapbox.com/mapbox-gl-js/overview/) map. We'd like to display the markers, using the `<MapMarker>` component, but we don't want to have to pass around a reference to the underlying Mapbox instance as a prop on each component.
 
-There are two halves to the context API — `setContext` and `getContext`. If a component calls `setContext(key, context)`, then any *child* component can retrieve the context with `const context = getContext(key)`.
+There are two halves to the context API — `setContext` and `getContext`. If a component calls `setContext(key, context)`, then any _child_ component can retrieve the context with `const context = getContext(key)`.
 
 Let's set the context first. In `Map.svelte`, import `setContext` from `svelte` and `key` from `mapbox.js` and call `setContext`:
 
@@ -47,7 +47,7 @@ Technically, we can use any value as a key — we could do `setContext('mapbox',
 
 ## Contexts vs. stores
 
-Contexts and stores seem similar. They differ in that stores are available to *any* part of an app, while a context is only available to *a component and its descendants*. This can be helpful if you want to use several instances of a component without the state of one interfering with the state of the others.
+Contexts and stores seem similar. They differ in that stores are available to _any_ part of an app, while a context is only available to _a component and its descendants_. This can be helpful if you want to use several instances of a component without the state of one interfering with the state of the others.
 
 In fact, you might use the two together. Since context is not reactive, values that change over time should be represented as stores:
 

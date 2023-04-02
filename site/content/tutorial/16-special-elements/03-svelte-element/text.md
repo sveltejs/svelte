@@ -4,7 +4,7 @@ title: <svelte:element>
 
 Sometimes we don't know in advance what kind of DOM element to render. `<svelte:element>` comes in handy here. Instead of a sequence of `if` blocks...
 
-```html
+```svelte
 {#if selected === 'h1'}
 	<h1>I'm a h1 tag</h1>
 {:else if selected === 'h3'}
@@ -16,7 +16,7 @@ Sometimes we don't know in advance what kind of DOM element to render. `<svelte:
 
 ...we can have a single dynamic component:
 
-```html
+```svelte
 <svelte:element this={selected}>I'm a {selected} tag</svelte:element>
 ```
 

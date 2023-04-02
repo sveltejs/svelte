@@ -12,11 +12,11 @@ export function load() {
 
 		return {
 			title,
-			path: `${base}/docs/${file.slice(3, -3)}`,
+			path: `${base}/docs/${file.slice(3, -3)}`
 		};
 	});
 
 	return {
-		sections,
+		sections
 	};
 }

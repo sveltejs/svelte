@@ -2,19 +2,21 @@ import fs from 'fs';
 import { extract_frontmatter } from '../markdown';
 import { transform } from './marked';
 
+const base = '../../site/content/blog';
+
 /**
  * @returns {import('./types').BlogPostSummary[]}
  */
 export function get_index() {
 	return fs
-		.readdirSync('content/blog')
+		.readdirSync(base)
 		.reverse()
 		.map((file) => {
 			if (!file.endsWith('.md')) return;
 
 			const { date, slug } = get_date_and_slug(file);
 
-			const content = fs.readFileSync(`content/blog/${file}`, 'utf-8');
+			const content = fs.readFileSync(`${base}/${file}`, 'utf-8');
 			const { metadata } = extract_frontmatter(content);
 
 			return {
@@ -22,7 +24,7 @@ export function get_index() {
 				date,
 				title: metadata.title,
 				description: metadata.description,
-				draft: !!metadata.draft,
+				draft: !!metadata.draft
 			};
 		});
 }
@@ -32,13 +34,13 @@ export function get_index() {
  * @returns {import('./types').BlogPost}
  */
 export function get_post(slug) {
-	for (const file of fs.readdirSync('content/blog')) {
+	for (const file of fs.readdirSync(`${base}`)) {
 		if (!file.endsWith('.md')) continue;
 		if (file.slice(11, -3) !== slug) continue;
 
 		const { date, date_formatted } = get_date_and_slug(file);
 
-		const content = fs.readFileSync(`content/blog/${file}`, 'utf-8');
+		const content = fs.readFileSync(`${base}/${file}`, 'utf-8');
 		const { metadata, body } = extract_frontmatter(content);
 
 		return {
@@ -48,10 +50,10 @@ export function get_post(slug) {
 			description: metadata.description,
 			author: {
 				name: metadata.author,
-				url: metadata.authorURL,
+				url: metadata.authorURL
 			},
 			draft: !!metadata.draft,
-			content: transform(body),
+			content: transform(body)
 		};
 	}
 }

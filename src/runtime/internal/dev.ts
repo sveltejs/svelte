@@ -303,7 +303,7 @@ export class SvelteComponentTyped<
  * dynamic components using `<svelte:component>`.
  *
  * Example:
- * ```html
+ * ```svelte
  * <script lang="ts">
  * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
  * 	import Component1 from './Component1.svelte';
@@ -325,7 +325,7 @@ export type ComponentType<Component extends SvelteComponentTyped = SvelteCompone
 
 /**
  * Convenience type to get the props the given component expects. Example:
- * ```html
+ * ```svelte
  * <script lang="ts">
  * 	import type { ComponentProps } from 'svelte';
  * 	import Component from './Component.svelte';
@@ -340,7 +340,7 @@ export type ComponentProps<Component extends SvelteComponent> = Component extend
 
 /**
  * Convenience type to get the events the given component expects. Example:
- * ```html
+ * ```svelte
  * <script lang="ts">
  *    import type { ComponentEvents } from 'svelte';
  *    import Component from './Component.svelte';

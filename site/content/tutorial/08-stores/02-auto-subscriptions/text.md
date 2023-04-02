@@ -2,20 +2,21 @@
 title: Auto-subscriptions
 ---
 
-The app in the previous example works, but there's a subtle bug — the store is subscribed to, but never unsubscribed. If the component was instantiated and destroyed many times, this would result in a *memory leak*.
+The app in the previous example works, but there's a subtle bug — the store is subscribed to, but never unsubscribed. If the component was instantiated and destroyed many times, this would result in a _memory leak_.
 
 Start by declaring `unsubscribe` in `App.svelte`:
 
 ```js
-const unsubscribe = count.subscribe(value => {
+const unsubscribe = count.subscribe((value) => {
 	countValue = value;
 });
 ```
+
 > Calling a `subscribe` method returns an `unsubscribe` function.
 
 You now declared `unsubscribe`, but it still needs to be called, for example through the `onDestroy` [lifecycle hook](/tutorial/ondestroy):
 
-```html
+```svelte
 <script>
 	import { onDestroy } from 'svelte';
 	import { count } from './stores.js';
@@ -25,7 +26,7 @@ You now declared `unsubscribe`, but it still needs to be called, for example thr
 
 	let countValue;
 
-	const unsubscribe = count.subscribe(value => {
+	const unsubscribe = count.subscribe((value) => {
 		countValue = value;
 	});
 
@@ -37,7 +38,7 @@ You now declared `unsubscribe`, but it still needs to be called, for example thr
 
 It starts to get a bit boilerplatey though, especially if your component subscribes to multiple stores. Instead, Svelte has a trick up its sleeve — you can reference a store value by prefixing the store name with `$`:
 
-```html
+```svelte
 <script>
 	import { count } from './stores.js';
 	import Incrementer from './Incrementer.svelte';

@@ -6,7 +6,7 @@ In the DOM, everything is a string. That's unhelpful when you're dealing with nu
 
 With `bind:value`, Svelte takes care of it for you:
 
-```html
-<input type=number bind:value={a} min=0 max=10>
-<input type=range bind:value={a} min=0 max=10>
+```svelte
+<input type="number" bind:value={a} min="0" max="10" />
+<input type="range" bind:value={a} min="0" max="10" />
 ```

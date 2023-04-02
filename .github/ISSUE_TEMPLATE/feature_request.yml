@@ -1,4 +1,4 @@
-name: "Feature Request"
+name: 'Feature Request'
 description: Request a new Svelte feature
 labels: [enhancement]
 body:

@@ -14,7 +14,7 @@ export function get_tutorial_data(base = BASE) {
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
-			tutorials: [],
+			tutorials: []
 		};
 
 		if (!(fs.statSync(`${base}/${subdir}`).isDirectory() || subdir.endsWith('meta.json'))) continue;
@@ -46,7 +46,7 @@ export function get_tutorial_data(base = BASE) {
 					completion_states_data[app_dir === 'app-a' ? 'initial' : 'complete'].push({
 						name: file,
 						type: file.split('.').at(-1),
-						content: fs.readFileSync(`${app_dir_path}/${file}`, 'utf-8'),
+						content: fs.readFileSync(`${app_dir_path}/${file}`, 'utf-8')
 					});
 				}
 			}
@@ -56,7 +56,7 @@ export function get_tutorial_data(base = BASE) {
 				slug,
 				content: body,
 				dir: `${subdir}/${section_dir}`,
-				...completion_states_data,
+				...completion_states_data
 			});
 		}
 
@@ -75,7 +75,7 @@ export function get_tutorial_list(tutorial_data) {
 		title: section.title,
 		tutorials: section.tutorials.map((tutorial) => ({
 			title: tutorial.title,
-			slug: tutorial.slug,
-		})),
+			slug: tutorial.slug
+		}))
 	}));
 }

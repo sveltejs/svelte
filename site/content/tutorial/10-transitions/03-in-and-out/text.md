@@ -10,10 +10,8 @@ import { fade, fly } from 'svelte/transition';
 
 ...then replace the `transition` directive with separate `in` and `out` directives:
 
-```html
-<p in:fly="{{ y: 200, duration: 2000 }}" out:fade>
-	Flies in, fades out
-</p>
+```svelte
+<p in:fly={{ y: 200, duration: 2000 }} out:fade>Flies in, fades out</p>
 ```
 
-In this case, the transitions are *not* reversed.
+In this case, the transitions are _not_ reversed.

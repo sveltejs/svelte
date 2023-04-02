@@ -6,6 +6,6 @@ export const prerender = true;
 /** @type {import('./$types').RequestHandler} */
 export function GET() {
 	return json({
-		blocks: content(),
+		blocks: content()
 	});
 }

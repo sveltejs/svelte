@@ -8,12 +8,10 @@ export default {
 	kit: {
 		adapter: adapter(),
 		prerender: {
-			// TODO: REMOVE
-			handleMissingId: 'ignore',
 			// TODO use route entries instead, once https://github.com/sveltejs/kit/pull/9571 is merged
-			entries: ['*', ...repl_json_entries(), ...tutorial_entries()],
-		},
-	},
+			entries: ['*', ...repl_json_entries(), ...tutorial_entries()]
+		}
+	}
 };
 
 function repl_json_entries() {

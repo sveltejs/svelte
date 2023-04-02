@@ -4,15 +4,15 @@ title: Default values
 
 We can easily specify default values for props in `Nested.svelte`:
 
-```html
+```svelte
 <script>
 	export let answer = 'a mystery';
 </script>
 ```
 
-If we now add a second component *without* an `answer` prop, it will fall back to the default:
+If we now add a second component _without_ an `answer` prop, it will fall back to the default:
 
-```html
-<Nested answer={42}/>
-<Nested/>
+```svelte
+<Nested answer={42} />
+<Nested />
 ```

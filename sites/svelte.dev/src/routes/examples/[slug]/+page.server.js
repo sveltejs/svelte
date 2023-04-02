@@ -12,6 +12,6 @@ export async function load({ params }) {
 	return {
 		examples_list,
 		example,
-		slug: params.slug,
+		slug: params.slug
 	};
 }

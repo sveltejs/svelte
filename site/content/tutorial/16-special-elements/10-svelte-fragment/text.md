@@ -15,7 +15,7 @@ In the example notice how we applied a flex layout with a gap of `1em` to the bo
 </div>
 
 <style>
-	.box {		
+	.box {
 		display: flex;
 		flex-direction: column;
 		gap: 1em;

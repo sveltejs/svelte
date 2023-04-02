@@ -11,7 +11,7 @@ const languages = {
 	css: 'css',
 	diff: 'diff',
 	ts: 'typescript',
-	'': '',
+	'': ''
 };
 
 /**
@@ -82,7 +82,7 @@ export async function get_parsed_tutorial(tutorial_data, slug) {
 
 			return html;
 		},
-		codespan: (text) => '<code>' + text + '</code>',
+		codespan: (text) => '<code>' + text + '</code>'
 	});
 
 	return { ...tutorial, content };

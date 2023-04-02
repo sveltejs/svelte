@@ -4,7 +4,7 @@ title: Else-if blocks
 
 Multiple conditions can be 'chained' together with `else if`:
 
-```html
+```svelte
 {#if x > 10}
 	<p>{x} is greater than 10</p>
 {:else if 5 > x}

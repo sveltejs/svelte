@@ -14,7 +14,7 @@ function raw(ext) {
 				const buffer = fs.readFileSync(id);
 				return { code: `export default ${JSON.stringify(buffer)}`, map: null };
 			}
-		},
+		}
 	};
 }
 
@@ -41,16 +41,32 @@ const config = {
 			'codemirror/addon/fold/xml-fold.js',
 			'codemirror/addon/fold/indent-fold.js',
 			'codemirror/addon/fold/markdown-fold.js',
-			'codemirror/addon/fold/comment-fold.js',
+			'codemirror/addon/fold/comment-fold.js'
 		],
-		exclude: ['@sveltejs/repl', '@sveltejs/site-kit'],
+		exclude: ['@sveltejs/repl', '@sveltejs/site-kit']
 	},
-	ssr: {noExternal: ['@sveltejs/site-kit']},
+	ssr: { noExternal: ['@sveltejs/site-kit'] },
 	server: {
 		fs: {
-			strict: false,
-		},
+			strict: false
+		}
 	},
+	// !HACK: Remove once vite 4.3 is out
+	worker: {
+		plugins: [
+			{
+				name: 'remove-manifest',
+				configResolved(c) {
+					const manifestPlugin = c.worker.plugins.findIndex((p) => p.name === 'vite:manifest');
+					c.worker.plugins.splice(manifestPlugin, 1);
+					const ssrManifestPlugin = c.worker.plugins.findIndex(
+						(p) => p.name === 'vite:ssr-manifest'
+					);
+					c.plugins.splice(ssrManifestPlugin, 1);
+				}
+			}
+		]
+	}
 };
 
 export default config;

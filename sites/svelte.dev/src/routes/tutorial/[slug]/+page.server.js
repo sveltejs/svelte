@@ -15,6 +15,6 @@ export async function load({ params }) {
 	return {
 		tutorials_list,
 		tutorial,
-		slug: params.slug,
+		slug: params.slug
 	};
 }

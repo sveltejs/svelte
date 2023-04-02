@@ -1,0 +1,11 @@
+/*.js
+/*.mjs
+/package.json
+package-lock.json
+elements/*
+scripts/*
+/src
+/test
+.svelte-kit
+types
+.vercel

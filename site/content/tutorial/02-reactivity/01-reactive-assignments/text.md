@@ -2,11 +2,11 @@
 title: Assignments
 ---
 
-At the heart of Svelte is a powerful system of *reactivity* for keeping the DOM in sync with your application state — for example, in response to an event.
+At the heart of Svelte is a powerful system of _reactivity_ for keeping the DOM in sync with your application state — for example, in response to an event.
 
 To demonstrate it, we first need to wire up an event handler. Replace line 9 with this:
 
-```html
+```svelte
 <button on:click={incrementCount}>
 ```
 

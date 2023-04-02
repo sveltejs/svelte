@@ -1,16 +1,14 @@
 export function longpress(node, duration) {
 	let timer;
-	
+
 	const handleMousedown = () => {
 		timer = setTimeout(() => {
-			node.dispatchEvent(
-				new CustomEvent('longpress')
-			);
+			node.dispatchEvent(new CustomEvent('longpress'));
 		}, duration);
 	};
-	
+
 	const handleMouseup = () => {
-		clearTimeout(timer)
+		clearTimeout(timer);
 	};
 
 	node.addEventListener('mousedown', handleMousedown);
