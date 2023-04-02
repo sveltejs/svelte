@@ -16,7 +16,7 @@
 		"test": "uvu -r ts-node/register src/lib/server/markdown"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.13.0",
+		"@supabase/supabase-js": "^2.13.1",
 		"@sveltejs/repl": "^0.2.0",
 		"cookie": "^0.5.0",
 		"devalue": "^4.3.0",
