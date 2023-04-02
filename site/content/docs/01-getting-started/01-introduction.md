@@ -2,7 +2,7 @@
 title: Introduction
 ---
 
-This page contains detailed API reference documentation. It's intended to be a resource for people who already have some familiarity with Svelte.
+Welcome to Svelte reference docs. These are for folks who are already familiar with Svelte and want to learn more about the details of how it works.
 
 If that's not you (yet), you may prefer to visit the [interactive tutorial](/tutorial) or the [examples](/examples) before consulting this reference.
 
@@ -28,3 +28,11 @@ If you don't need a full-fledged app framework and instead want to build a simpl
 The Svelte team maintains a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) and there are integrations with various other [editors](https://sveltesociety.dev/tools#editor-support) and tools as well.
 
 If you're having trouble, get help on [Discord](https://svelte.dev/chat) or [StackOverflow](https://stackoverflow.com/questions/tagged/svelte).
+
+## Differences from SvelteKit
+
+Svelte renders UI components. You can compose these components and render an entire page with just Svelte, but you need more than just Svelte to write an entire app.
+
+SvelteKit provides basic functionality like a [router](https://kit.svelte.dev/glossary#routing) — which updates the UI when a link is clicked — and [server-side rendering (SSR)](https://kit.svelte.dev/glossary#ssr). But beyond that, building an app with all the modern best practices is fiendishly complicated. Those practices include [build optimizations](https://vitejs.dev/guide/features.html#build-optimizations), so that you load only the minimal required code; [offline support](https://kit.svelte.devservice-workers); [preloading](https://kit.svelte.dev/link-options#data-sveltekit-preload-data) pages before the user initiates navigation; [configurable rendering](https://kit.svelte.dev/page-options) that allows you to render different parts of your app on the server with [SSR](https://kit.svelte.dev/glossary#ssr), in the browser [client-side rendering](https://kit.svelte.dev/glossary#csr), or at build-time with [prerendering](https://kit.svelte.dev/glossary#prerendering); and many other things. SvelteKit does all the boring stuff for you so that you can get on with the creative part.
+
+It reflects changes to your code in the browser instantly to provide a lightning-fast and feature-rich development experience by leveraging [Vite](https://vitejs.dev/) with a [Svelte plugin](https://github.com/sveltejs/vite-plugin-svelte) to do [Hot Module Replacement (HMR)](https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/config.md#hot).
