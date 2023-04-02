@@ -1,21 +1,21 @@
 <script>
-	import Repl from '@sveltejs/repl';
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { process_example } from '$lib/utils/examples';
-	import { PUBLIC_API_BASE } from '$env/static/public';
+	import Repl from '@sveltejs/repl';
+	import { onMount } from 'svelte';
 
 	export let version = '3';
 	export let gist = null;
 	export let example = null;
 	export let embedded = false;
 
+	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 	let name = 'loading...';
 
 	let mounted = false;
 
-	function load(gist, example) {
+	async function load(gist, example) {
 		if (version !== 'local') {
 			fetch(`https://unpkg.com/svelte@${version}/package.json`)
 				.then((r) => r.json())
@@ -58,15 +58,12 @@
 					repl.set({ components });
 				});
 		} else if (example) {
-			fetch(`${PUBLIC_API_BASE}/docs/svelte/examples/${example}`).then(async (response) => {
-				if (response.ok) {
-					const data = await response.json();
-					const components = process_example(data.files);
+			const components = process_example(
+				(await fetch(`/examples/api/${example}.json`).then((r) => r.json())).files
+			);
 
-					repl.set({
-						components,
-					});
-				}
+			repl.set({
+				components,
 			});
 		}
 	}

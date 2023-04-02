@@ -106,7 +106,7 @@
 			// ~> Any missing files are considered deleted!
 			const { components } = repl.toJSON();
 
-			const r = await fetch(`/repl/${gist.id}.json`, {
+			const r = await fetch(`/repl/save/${gist.id}.json`, {
 				method: 'PUT',
 				credentials: 'include',
 				headers: {

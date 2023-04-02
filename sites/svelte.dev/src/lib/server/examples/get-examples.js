@@ -1,18 +1,15 @@
 // @ts-check
 import fs from 'node:fs';
 
-const base = '../../site/content/examples/';
+const BASE = '../../site/content/examples/';
 
 /**
  * @returns {import('./types').ExamplesData}
  */
-export function get_examples_data() {
+export function get_examples_data(base = BASE) {
 	const examples = [];
 
 	for (const subdir of fs.readdirSync(base)) {
-		// Exclude embeds
-		if (subdir.endsWith('99-embeds')) continue;
-
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
@@ -42,7 +39,7 @@ export function get_examples_data() {
 				.readdirSync(example_base_dir)
 				.filter((file) => !file.endsWith('meta.json'))) {
 				files.push({
-					filename: file,
+					name: file,
 					type: file.split('.').at(-1),
 					content: fs.readFileSync(`${example_base_dir}/${file}`, 'utf-8'),
 				});

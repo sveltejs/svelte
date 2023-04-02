@@ -1,15 +1,19 @@
-import { error, json } from '@sveltejs/kit';
 import { dev } from '$app/environment';
-import * as session from '$lib/db/session';
 import { client } from '$lib/db/client';
 import * as gist from '$lib/db/gist';
-import { PUBLIC_API_BASE } from '$env/static/public';
+import { get_example } from '$lib/server/examples';
+import { get_examples_list } from '$lib/server/examples/get-examples';
+import { error, json } from '@sveltejs/kit';
+import examples_data from '$lib/generated/examples-data.js';
+
+export const prerender = 'auto';
 
 const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
 
 /** @type {Set<string>} */
 let examples;
 
+/** @param {import('$lib/server/examples/types').ExamplesData[number]['examples'][number]['files'][number][]} files  */
 function munge(files) {
 	return files
 		.map((file) => {
@@ -18,6 +22,7 @@ function munge(files) {
 			let type = file.name.slice(dot + 1);
 
 			if (type === 'html') type = 'svelte';
+			// @ts-expect-error what is file.source? by @PuruVJ
 			return { name, type, source: file.source ?? file.content ?? '' };
 		})
 		.sort((a, b) => {
@@ -31,33 +36,25 @@ function munge(files) {
 }
 
 export async function GET({ params }) {
-	if (!examples) {
-		const res = await fetch(`${PUBLIC_API_BASE}/docs/svelte/examples`);
-		examples = new Set(
-			(await res.json())
-				.map((category) => category.examples)
-				.flat()
-				.map((example) => example.slug)
-		);
-	}
+	// Currently, these pages(that are in examples/) are prerendered. To avoid making any FS requests,
+	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
+	// is accessed, this function won't be run at all, as it will be served from the filesystem
+
+	examples = new Set(
+		get_examples_list(examples_data)
+			.map((category) => category.examples)
+			.flat()
+			.map((example) => example.slug)
+	);
 
 	if (examples.has(params.id)) {
-		const res = await fetch(`${PUBLIC_API_BASE}/docs/svelte/examples/${params.id}`);
-
-		if (!res.ok) {
-			return new Response(await res.json(), {
-				status: res.status,
-				headers: { 'Content-Type': 'application/json' },
-			});
-		}
-
-		const example = await res.json();
+		const example = get_example(examples_data, params.id);
 
 		return json({
 			id: params.id,
-			name: example.name,
+			name: example.title,
 			owner: null,
-			relaxed: example.relaxed, // TODO is this right?
+			relaxed: false, // TODO is this right? EDIT: It was example.relaxed before, which no example return to my knowledge. By @PuruVJ
 			components: munge(example.files),
 		});
 	}
@@ -65,7 +62,16 @@ export async function GET({ params }) {
 	if (dev && !client) {
 		// in dev with no local Supabase configured, proxy to production
 		// this lets us at least load saved REPLs
-		return await fetch(`https://svelte.dev/repl/${params.id}.json`);
+		const res = await fetch(`https://svelte.dev/repl/${params.id}.json`);
+
+		// returning the response directly results in a bizarre
+		// content encoding error, so we create a new one
+		return new Response(await res.text(), {
+			status: res.status,
+			headers: {
+				'content-type': 'application/json',
+			},
+		});
 	}
 
 	if (!UUID_REGEX.test(params.id)) {
@@ -83,17 +89,7 @@ export async function GET({ params }) {
 		name: app.name,
 		owner: app.userid,
 		relaxed: false,
+		// @ts-expect-error app.files has a `source` property
 		components: munge(app.files),
 	});
-}
-
-// TODO reimplement as an action
-export async function PUT({ params, request }) {
-	const user = await session.from_cookie(request.headers.get('cookie'));
-	if (!user) throw error(401, 'Unauthorized');
-
-	const body = await request.json();
-	await gist.update(user, params.id, body);
-
-	return new Response(undefined, { status: 204 });
 }
