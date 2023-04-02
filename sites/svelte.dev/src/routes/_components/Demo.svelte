@@ -28,7 +28,7 @@
 		},
 	];
 
-	$: selected = examples[0];
+	let selected = examples[0];
 </script>
 
 <Section --background="radial-gradient(circle at 40% 30%, rgb(110, 113, 118), rgb(81, 93, 106))">
