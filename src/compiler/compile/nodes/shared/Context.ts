@@ -11,7 +11,7 @@ export type Context = DestructuredVariable | ComputedProperty;
 
 interface ComputedProperty {
 	type: 'ComputedProperty';
-  property_name: string;
+  property_name: Identifier;
   key: Expression | PrivateIdentifier;
 }
  
@@ -30,8 +30,7 @@ export function unpack_destructuring({
 	default_modifier = (node) => node,
 	scope,
 	component,
-	context_rest_properties,
-	number_of_computed_props = { n: 0 }
+	context_rest_properties
 }: {
 	contexts: Context[];
 	node: Node;
@@ -40,10 +39,6 @@ export function unpack_destructuring({
 	scope: TemplateScope;
 	component: Component;
 	context_rest_properties: Map<string, Node>;
-	// we want to pass this by reference, as a sort of global variable, because 
-	// if we pass this by value, we could get computed_property_# variable collisions
-	// when we deal with nested object destructuring
-	number_of_computed_props?: { n: number }; 
 }) {
 	if (!node) return;
 
@@ -72,8 +67,7 @@ export function unpack_destructuring({
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties,
-					number_of_computed_props
+					context_rest_properties
 				});
 				context_rest_properties.set((element.argument as Identifier).name, element);
 			} else if (element && element.type === 'AssignmentPattern') {
@@ -93,8 +87,7 @@ export function unpack_destructuring({
 						)}` as Node,
 					scope,
 					component,
-					context_rest_properties,
-					number_of_computed_props
+					context_rest_properties
 				});
 			} else {
 				unpack_destructuring({
@@ -104,8 +97,7 @@ export function unpack_destructuring({
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties,
-					number_of_computed_props
+					context_rest_properties
 				});
 			}
 		});
@@ -124,8 +116,7 @@ export function unpack_destructuring({
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties,
-					number_of_computed_props
+					context_rest_properties
 				});
 				context_rest_properties.set((property.argument as Identifier).name, property);
 			} else if (property.type === 'Property') {
@@ -136,8 +127,7 @@ export function unpack_destructuring({
 
 				if (property.computed) {
 					// e.g { [computedProperty]: ... }
-					const property_name = `computed_property_${number_of_computed_props.n}`;
-					number_of_computed_props.n += 1;
+					const property_name = component.get_unique_name('computed_property');
 
 					contexts.push({
 						type: 'ComputedProperty',
@@ -178,8 +168,7 @@ export function unpack_destructuring({
 							)}` as Node,
 						scope,
 						component,
-						context_rest_properties,
-						number_of_computed_props
+						context_rest_properties
 					});
 				} else {
 					// e.g. { property } or { property: newName }
@@ -190,8 +179,7 @@ export function unpack_destructuring({
 						default_modifier,
 						scope,
 						component,
-						context_rest_properties,
-						number_of_computed_props
+						context_rest_properties
 					});
 				}
 			}

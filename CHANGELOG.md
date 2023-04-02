@@ -1,11 +1,17 @@
 # Svelte changelog
 
-## Unreleased
+## 3.58.0
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
-* Relax `a11y-no-noninteractive-element-to-interactive-role` warning ([#8402](https://github.com/sveltejs/svelte/pull/8402))
+* Add support for CSS `@container` queries ([#6969](https://github.com/sveltejs/svelte/issues/6969))
+* Respect `preserveComments` in DOM output ([#7182](https://github.com/sveltejs/svelte/pull/7182))
+* Allow use of `document` for `target` in typings ([#7554](https://github.com/sveltejs/svelte/pull/7554))
 * Add `a11y-interactive-supports-focus` warning ([#8392](https://github.com/sveltejs/svelte/pull/8392))
 * Fix equality check when updating dynamic text ([#5931](https://github.com/sveltejs/svelte/issues/5931))
+* Relax `a11y-no-noninteractive-element-to-interactive-role` warning ([#8402](https://github.com/sveltejs/svelte/pull/8402))
+* Properly handle microdata attributes ([#8413](https://github.com/sveltejs/svelte/issues/8413))
+* Prevent name collision when using computed destructuring variables ([#8417](https://github.com/sveltejs/svelte/issues/8417))
+* Fix escaping `<textarea value={...}>` values in SSR ([#8429](https://github.com/sveltejs/svelte/issues/8429))
 
 ## 3.57.0
 

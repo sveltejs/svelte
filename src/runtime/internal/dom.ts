@@ -254,6 +254,10 @@ export function empty() {
 	return text('');
 }
 
+export function comment(content: string) {
+	return document.createComment(content);
+}
+
 export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
@@ -548,6 +552,19 @@ export function claim_text(nodes: ChildNodeArray, data) {
 
 export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
+}
+
+export function claim_comment(nodes:ChildNodeArray, data) {
+	return claim_node<Comment>(
+		nodes,
+		(node: ChildNode): node is Comment => node.nodeType === 8,
+		(node: Comment) => {
+			node.data =  '' + data;
+			return undefined;
+		},
+		() => comment(data),
+		true
+	);
 }
 
 function find_comment(nodes, text, start) {
