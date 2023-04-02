@@ -48,10 +48,12 @@
 			<a href="/examples">more <span class="large-show">&nbsp;examples</span> &rarr;</a>
 		</div>
 
-		<Example id={selected.id} />
+		{#if selected}
+			<Example id={selected?.id} />
+		{/if}
 	</div>
 
-	<p class="description">{@html selected.description}</p>
+	<p class="description">{@html selected?.description}</p>
 </Section>
 
 <style>

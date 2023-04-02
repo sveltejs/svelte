@@ -2,7 +2,6 @@
 	import { browser } from '$app/environment';
 	import ReplWidget from '$lib/components/ReplWidget.svelte';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
