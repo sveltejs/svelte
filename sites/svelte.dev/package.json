@@ -4,8 +4,8 @@
 	"description": "Docs and examples for Svelte",
 	"type": "module",
 	"scripts": {
-		"dev": "node scripts/update.js && vite dev",
-		"build": "node scripts/update.js && vite build",
+		"dev": "node scripts/generate_examples.js && node scripts/update.js && vite dev",
+		"build": "node scripts/generate_examples.js && node scripts/update.js && vite build",
 		"update": "node scripts/update.js --force=true",
 		"preview": "vite preview",
 		"start": "node build",
@@ -23,12 +23,11 @@
 		"do-not-zip": "^1.0.0",
 		"flexsearch": "^0.7.31",
 		"flru": "^1.0.2",
-		"sourcemap-codec": "^1.4.8",
-		"svelte-local-storage-store": "^0.4.0"
+		"sourcemap-codec": "^1.4.8"
 	},
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.4.1",
-		"@sveltejs/adapter-auto": "^2.0.0",
+		"@sveltejs/adapter-vercel": "^2.4.1",
 		"@sveltejs/kit": "^1.15.0",
 		"@sveltejs/site-kit": "^3.3.6",
 		"@sveltejs/vite-plugin-svelte": "^2.0.4",

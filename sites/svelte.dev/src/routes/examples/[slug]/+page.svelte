@@ -16,7 +16,7 @@
 	let repl;
 
 	const clone = (file) => ({
-		name: file.filename.replace(/.\w+$/, ''),
+		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
 		source: file.content,
 	});

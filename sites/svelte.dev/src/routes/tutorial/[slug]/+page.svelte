@@ -153,16 +153,6 @@
 	{/if}
 </div>
 
-<!-- HACK to prerender -->
-<p style="display: none;">
-	{#each data.tutorials_list as { tutorials }}
-		{#each tutorials as { slug }}
-			<!-- svelte-ignore a11y-missing-content -->
-			<a href="/tutorial/{slug}" />
-		{/each}
-	{/each}
-</p>
-
 <style>
 	.tutorial-outer {
 		position: relative;

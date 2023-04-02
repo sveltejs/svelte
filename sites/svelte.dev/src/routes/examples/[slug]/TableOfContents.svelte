@@ -14,31 +14,33 @@
 
 <ul class="examples-toc">
 	{#each sections as section}
-		<li>
-			<span class="section-title">{section.title}</span>
+		{#if section.title !== undefined}
+			<li>
+				<span class="section-title">{section.title}</span>
 
-			{#each section.examples as example}
-				<div class="row" class:active={example.slug === active_section} class:loading={isLoading}>
-					<a
-						href="/examples/{example.slug}"
-						class="row"
-						class:active={example.slug === active_section}
-						class:loading={isLoading}
-					>
-						<img
-							class="thumbnail"
-							alt="{example.title} thumbnail"
-							src="/examples/thumbnails/{example.slug}.jpg"
-						/>
+				{#each section.examples as example}
+					<div class="row" class:active={example.slug === active_section} class:loading={isLoading}>
+						<a
+							href="/examples/{example.slug}"
+							class="row"
+							class:active={example.slug === active_section}
+							class:loading={isLoading}
+						>
+							<img
+								class="thumbnail"
+								alt="{example.title} thumbnail"
+								src="/examples/thumbnails/{example.slug}.jpg"
+							/>
 
-						<span>{example.title}</span>
-					</a>
-					{#if example.slug === active_section}
-						<a bind:this={active_el} href="/repl/{example.slug}" class="repl-link">REPL</a>
-					{/if}
-				</div>
-			{/each}
-		</li>
+							<span>{example.title}</span>
+						</a>
+						{#if example.slug === active_section}
+							<a bind:this={active_el} href="/repl/{example.slug}" class="repl-link">REPL</a>
+						{/if}
+					</div>
+				{/each}
+			</li>
+		{/if}
 	{/each}
 </ul>
 
