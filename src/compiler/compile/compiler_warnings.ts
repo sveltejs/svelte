@@ -119,10 +119,25 @@ export default {
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
 	}),
+	a11y_no_noninteractive_element_to_interactive_role: (role: string | boolean, element: string) => ({
+		code: 'a11y-no-noninteractive-element-to-interactive-role',
+		message: `A11y: Non-interactive element <${element}> cannot have interactive role '${role}'`
+	}),
 	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
 	}),
+  a11y_role_supports_aria_props: (attribute: string, role: string, is_implicit: boolean, name: string) => {
+    let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
+    if (is_implicit) {
+      message += ` This role is implicit on the element <${name}>.`;
+    }
+
+    return {
+      code: 'a11y-role-supports-aria-props',
+      message: `A11y: ${message}`
+    };
+  },
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'
@@ -151,6 +166,10 @@ export default {
 		code: 'a11y-img-redundant-alt',
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
 	},
+	a11y_interactive_supports_focus: (role: string) => ({
+		code: 'a11y-interactive-supports-focus',
+		message: `A11y: Elements with the '${role}' interactive role must have a tabindex value.`
+	}),
 	a11y_label_has_associated_control: {
 		code: 'a11y-label-has-associated-control',
 		message: 'A11y: A form label must be associated with a control.'
@@ -175,17 +194,21 @@ export default {
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
-	a11y_click_events_have_key_events: () => ({
+	a11y_click_events_have_key_events: {
 		code: 'a11y-click-events-have-key-events',
 		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
-	}),
+	},
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
 	a11y_no_noninteractive_tabindex: {
 		code: 'a11y-no-noninteractive-tabindex',
-		message: 'A11y: not interactive element cannot have positive tabIndex value'
+		message: 'A11y: noninteractive element cannot have nonnegative tabIndex value'
+	},
+	a11y_aria_activedescendant_has_tabindex: {
+		code: 'a11y-aria-activedescendant-has-tabindex',
+		message: 'A11y: Elements with attribute aria-activedescendant should have tabindex value'
 	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
@@ -197,6 +220,10 @@ export default {
 	},
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
-		message: `...${rest_element_name} operator will create a new object and binding propogation with original object will not work`
-	})
+		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
+	}),
+	avoid_mouse_events_on_document: {
+		code: 'avoid-mouse-events-on-document',
+		message: 'Mouse enter/leave events on the document are not supported in all browsers and should be avoided'
+	}
 };

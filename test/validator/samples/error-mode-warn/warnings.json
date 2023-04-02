@@ -2,29 +2,23 @@
 	{
 		"code": "invalid-binding",
 		"message": "Cannot bind to a variable which is not writable",
-		"pos": 61,
 		"start": {
 			"line": 5,
-			"column": 19,
-			"character": 61
+			"column": 19
 		},
 		"end": {
 			"line": 5,
-			"column": 24,
-			"character": 66
+			"column": 24
 		}
 	},
 	{
 		"code": "missing-declaration",
 		"message": "'undeclared' is not defined",
-		"pos": 88,
 		"start": {
-			"character": 88,
 			"column": 19,
 			"line": 6
 		},
 		"end": {
-			"character": 98,
 			"column": 29,
 			"line": 6
 		}
@@ -32,14 +26,11 @@
 	{
 		"code": "binding-undeclared",
 		"message": "undeclared is not declared",
-		"pos": 88,
 		"end": {
-			"character": 98,
 			"column": 29,
 			"line": 6
 		},
 		"start": {
-			"character": 88,
 			"column": 19,
 			"line": 6
 		}

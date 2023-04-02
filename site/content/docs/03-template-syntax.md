@@ -124,6 +124,10 @@ An element or component can have multiple spread attributes, interspersed with r
 
 > The `value` attribute of an `input` element or its children `option` elements must not be set with spread attributes when using `bind:group` or `bind:checked`. Svelte needs to be able to see the element's `value` directly in the markup in these cases so that it can link it to the bound variable.
 
+> Sometimes, the attribute order matters as Svelte sets attributes sequentially in JavaScript. For example, `<input type="range" min="0" max="1" value={0.5} step="0.1"/>`, Svelte will attempt to set the value to `1` (rounding up from 0.5 as the step by default is 1), and then set the step to `0.1`. To fix this, change it to `<input type="range" min="0" max="1" step="0.1" value={0.5}/>`.
+
+> Another example is `<img src="..." loading="lazy" />`. Svelte will set the img `src` before making the img element `loading="lazy"`, which is probably too late. Change this to `<img loading="lazy" src="...">` to make the image lazily loaded.
+
 ---
 
 ### Text expressions
@@ -158,7 +162,7 @@ You can use HTML comments inside components.
 
 ---
 
-Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually these are accessibility warnings; make sure that you're disabling them for a good reason.
+Comments beginning with `svelte-ignore` disable warnings for the next block of markup. Usually, these are accessibility warnings; make sure that you're disabling them for a good reason.
 
 ```sv
 <!-- svelte-ignore a11y-autofocus -->
@@ -202,6 +206,7 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {/if}
 ```
 
+(Blocks don't have to wrap elements, they can also wrap text within elements!)
 
 ### {#each ...}
 
@@ -534,6 +539,7 @@ The following modifiers are available:
 
 * `preventDefault` — calls `event.preventDefault()` before running the handler
 * `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
+* `stopImmediatePropagation` - calls `event.stopImmediatePropagation()`, preventing other listeners of the same event from being fired.
 * `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
 * `nonpassive` — explicitly set `passive: false`
 * `capture` — fires the handler during the *capture* phase instead of the *bubbling* phase
@@ -593,7 +599,7 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 
 ---
 
-If the name matches the value, you can use a shorthand.
+If the name matches the value, you can use shorthand.
 
 ```sv
 <!-- These are equivalent -->
@@ -659,7 +665,7 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 
 ---
 
-A `<select multiple>` element behaves similarly to a checkbox group.
+A `<select multiple>` element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the `value` property of each selected `<option>`.
 
 ```sv
 <select multiple bind:value={fillings}>
@@ -685,7 +691,12 @@ When the value of an `<option>` matches its text content, the attribute can be o
 
 ---
 
-Elements with the `contenteditable` attribute support `innerHTML` and `textContent` bindings.
+Elements with the `contenteditable` attribute support the following bindings:
+- [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
+- [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
+- [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
+
+There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
 ```sv
 <div contenteditable="true" bind:innerHTML={html}></div>
@@ -708,7 +719,7 @@ Elements with the `contenteditable` attribute support `innerHTML` and `textConte
 
 ---
 
-Media elements (`<audio>` and `<video>`) have their own set of bindings — six *readonly* ones...
+Media elements (`<audio>` and `<video>`) have their own set of bindings — seven *readonly* ones...
 
 * `duration` (readonly) — the total duration of the video, in seconds
 * `buffered` (readonly) — an array of `{start, end}` objects
@@ -716,6 +727,7 @@ Media elements (`<audio>` and `<video>`) have their own set of bindings — six 
 * `seekable` (readonly) — ditto
 * `seeking` (readonly) — boolean
 * `ended` (readonly) — boolean
+* `readyState` (readonly) — number between (and including) 0 and 4
 
 ...and five *two-way* bindings:
 
@@ -736,6 +748,7 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:seekable
 	bind:seeking
 	bind:ended
+	bind:readyState
 	bind:currentTime
 	bind:playbackRate
 	bind:paused
@@ -746,11 +759,27 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 ></video>
 ```
 
+##### Image element bindings
+
+---
+
+Image elements (`<img>`) have two readonly bindings:
+
+* `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
+* `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
+
+```sv
+<img
+	bind:naturalWidth
+	bind:naturalHeight
+></img>
+```
+
 ##### Block-level element bindings
 
 ---
 
-Block-level elements have 4 readonly bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
+Block-level elements have 4 read-only bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
 
 * `clientWidth`
 * `clientHeight`
@@ -874,6 +903,9 @@ The `style:` directive provides a shorthand for setting multiple styles on an el
 
 <!-- Multiple styles can be included -->
 <div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
+
+<!-- Styles can be marked as important -->
+<div style:color|important="red">...</div>
 ```
 
 ---
@@ -968,7 +1000,7 @@ transition:fn|local={params}
 
 
 ```js
-transition = (node: HTMLElement, params: any) => {
+transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
 	easing?: (t: number) => number,
@@ -981,7 +1013,7 @@ transition = (node: HTMLElement, params: any) => {
 
 A transition is triggered by an element entering or leaving the DOM as a result of a state change.
 
-When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has completed.
+When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has been completed.
 
 The `transition:` directive indicates a *bidirectional* transition, which means it can be smoothly reversed while the transition is in progress.
 
@@ -1017,7 +1049,7 @@ Like actions, transitions can have parameters.
 
 Transitions can use custom functions. If the returned object has a `css` function, Svelte will create a CSS animation that plays on the element.
 
-The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. *In* transitions run from `0` to `1`, *out* transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
 
 The function is called repeatedly *before* the transition begins, with different `t` and `u` arguments.
 
@@ -1088,6 +1120,11 @@ A custom transition function can also return a `tick` function, which is called 
 
 If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](/tutorial/deferred-transitions) possible.
 
+Transition functions also receive a third argument, `options`, which contains information about the transition.
+
+Available values in the `options` object are:
+
+* `direction` - one of `in`, `out`, or `both` depending on the type of transition
 
 ##### Transition events
 
@@ -1241,7 +1278,7 @@ As with actions and transitions, animations can have parameters.
 
 ---
 
-Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
+Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, and the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
 
 If the returned object has a `css` method, Svelte will create a CSS animation that plays on the element.
 
@@ -1295,14 +1332,12 @@ A custom animation function can also return a `tick` function, which is called *
 		const d = Math.sqrt(dx * dx + dy * dy);
 
 		return {
-		delay: 0,
-		duration: Math.sqrt(d) * 120,
-		easing: cubicOut,
-		tick: (t, u) =>
-			Object.assign(node.style, {
-				color: t > 0.5 ? 'Pink' : 'Blue'
-			});
-	};
+			delay: 0,
+			duration: Math.sqrt(d) * 120,
+			easing: cubicOut,
+			tick: (t, u) =>
+				Object.assign(node.style, { color: t > 0.5 ? 'Pink' : 'Blue' })
+		};
 	}
 </script>
 
@@ -1390,7 +1425,7 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 
 ---
 
-Svelte's CSS Variables support allows for easily themable components:
+Svelte's CSS Variables support allows for easily themeable components:
 
 ```sv
 <!-- Slider.svelte -->
@@ -1403,7 +1438,7 @@ Svelte's CSS Variables support allows for easily themable components:
 
 ---
 
-So you can set a high level theme color:
+So you can set a high-level theme color:
 
 ```css
 /* global.css */
@@ -1490,6 +1525,8 @@ The content is exposed in the child component using the `<slot>` element, which 
 </Widget>
 ```
 
+Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
+
 #### `<slot name="`*name*`">`
 
 ---
@@ -1563,7 +1600,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 
 ---
 
-Slots can be rendered zero or more times, and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
+Slots can be rendered zero or more times and can pass values *back* to the parent using props. The parent exposes the values to the slot template using the `let:` directive.
 
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
@@ -1654,11 +1691,11 @@ If `this` is falsy, no component is rendered.
 
 The `<svelte:element>` element lets you render an element of a dynamically specified type. This is useful for example when displaying rich text content from a CMS. Any properties and event listeners present will be applied to the element.
 
-The only supported binding is `bind:this`, since the element type specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) does not work with a dynamic tag type.
+The only supported binding is `bind:this`, since the element type-specific bindings that Svelte does at build time (e.g. `bind:value` for input elements) do not work with a dynamic tag type.
 
 If `this` has a nullish value, the element and its children will not be rendered.
 
-If `this` is the name of a void tag (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
+If `this` is the name of a [void element](https://developer.mozilla.org/en-US/docs/Glossary/Void_element) (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
 
 ```sv
 <script>
@@ -1704,7 +1741,7 @@ You can also bind to the following properties:
 * `outerHeight`
 * `scrollX`
 * `scrollY`
-* `online` — an alias for window.navigator.onLine
+* `online` — an alias for `window.navigator.onLine`
 
 All except `scrollX` and `scrollY` are readonly.
 
@@ -1713,6 +1750,25 @@ All except `scrollX` and `scrollY` are readonly.
 ```
 
 > Note that the page will not be scrolled to the initial value to avoid accessibility issues. Only subsequent changes to the bound variable of `scrollX` and `scrollY` will cause scrolling. However, if the scrolling behaviour is desired, call `scrollTo()` in `onMount()`.
+
+### `<svelte:document>`
+
+```sv
+<svelte:document on:event={handler}/>
+```
+
+---
+
+Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on `document`.
+
+As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
+
+```sv
+<svelte:document
+	on:visibilitychange={handleVisibilityChange}
+	use:someAction
+/>
+```
 
 ### `<svelte:body>`
 
@@ -1724,7 +1780,7 @@ All except `scrollX` and `scrollY` are readonly.
 
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document.body`, such as `mouseenter` and `mouseleave`, which don't fire on `window`. It also lets you use [actions](/docs#template-syntax-element-directives-use-action) on the `<body>` element.
 
-As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
+As with `<svelte:window>` and `<svelte:document>`, this element may only appear the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:body
@@ -1745,7 +1801,7 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 
 This element makes it possible to insert elements into `document.head`. During server-side rendering, `head` content is exposed separately to the main `html` content.
 
-As with `<svelte:window>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
+As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```sv
 <svelte:head>

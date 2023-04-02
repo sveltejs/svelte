@@ -147,7 +147,7 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 ```sv
 <script>
 	export let title;
-	export let person
+	export let person;
 
 	// this will update `document.title` whenever
 	// the `title` prop changes
@@ -209,7 +209,7 @@ It is important to note that the reactive blocks are ordered via simple static a
 </script>
 ```
 
-Moving the line `$: yDependent = y` bellow `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
+Moving the line `$: yDependent = y` below `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
 
 ---
 
