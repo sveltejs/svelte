@@ -17,7 +17,6 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.11.0",
-		"@sveltejs/adapter-vercel": "^2.4.1",
 		"@sveltejs/repl": "^0.2.0",
 		"cookie": "^0.5.0",
 		"devalue": "^4.3.0",
@@ -29,6 +28,7 @@
 	},
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.4.1",
+		"@sveltejs/adapter-vercel": "^2.4.1",
 		"@sveltejs/kit": "^1.12.0",
 		"@sveltejs/site-kit": "^3.3.6",
 		"@sveltejs/vite-plugin-svelte": "^2.0.3",
