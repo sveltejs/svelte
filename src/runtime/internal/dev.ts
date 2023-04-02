@@ -164,8 +164,9 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
+
 export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element | ShadowRoot;
+	target: Element | Document | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;
