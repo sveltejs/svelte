@@ -59,7 +59,6 @@
 				});
 		} else if (example) {
 			const components = process_example(
-				// repl_widget_examples.find(({ id }) => id === example).files
 				(await fetch(`/examples/api/${example}.json`).then((r) => r.json())).files
 			);
 
