@@ -10,23 +10,24 @@ export default {
 		prerender: {
 			// TODO: REMOVE
 			handleMissingId: 'ignore',
-			entries: ['*', ...replJsonEntries(), ...tutorialEntries()],
+			// TODO use route entries instead, once https://github.com/sveltejs/kit/pull/9571 is merged
+			entries: ['*', ...repl_json_entries(), ...tutorial_entries()],
 		},
 	},
 };
 
-/** @returns {('*' | `/${string}`)[]} */
-function replJsonEntries() {
-	// @ts-ignore
+function repl_json_entries() {
 	return get_examples_list(
 		get_examples_data(new URL('../../site/content/examples', import.meta.url).pathname)
-	).flatMap(({ examples }) => examples.map(({ slug }) => `/repl/${slug}.json`));
+	).flatMap(({ examples }) =>
+		examples.map(({ slug }) => /** @type {(`/${string}`)} */ (`/repl/${slug}.json`))
+	);
 }
 
-/** @returns {('*' | `/${string}`)[]} */
-function tutorialEntries() {
-	// @ts-ignore
+function tutorial_entries() {
 	return get_tutorial_list(
 		get_tutorial_data(new URL('../../site/content/tutorial', import.meta.url).pathname)
-	).flatMap(({ tutorials }) => tutorials.map(({ slug }) => `/tutorial/${slug}`));
+	).flatMap(({ tutorials }) =>
+		tutorials.map(({ slug }) => /** @type {(`/${string}`)} */ (`/tutorial/${slug}`))
+	);
 }
