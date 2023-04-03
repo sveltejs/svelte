@@ -29,6 +29,7 @@ import is_dynamic from '../shared/is_dynamic';
 import { is_name_contenteditable, has_contenteditable_attr } from '../../../utils/contenteditable';
 import create_debugging_comment from '../shared/create_debugging_comment';
 import { push_array } from '../../../../utils/push_array';
+import CommentWrapper from '../Comment';
 
 interface BindingGroup {
 	events: string[];
@@ -499,7 +500,7 @@ export default class ElementWrapper extends Wrapper {
 				};
 
 				const can_use_raw_text = !this.node.can_use_innerhtml && can_use_textcontent;
-				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
+				to_html((this.fragment.nodes as unknown as Array<ElementWrapper | CommentWrapper | TextWrapper>), block, literal, state, can_use_raw_text);
 				literal.quasis.push(state.quasi as any);
 
 				if (hydratable) {
@@ -1250,9 +1251,11 @@ export default class ElementWrapper extends Wrapper {
 const regex_backticks = /`/g;
 const regex_dollar_signs = /\$/g;
 
-function to_html(wrappers: Array<ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
+function to_html(wrappers: Array<CommentWrapper | ElementWrapper | TextWrapper | MustacheTagWrapper | RawMustacheTagWrapper>, block: Block, literal: any, state: any, can_use_raw_text?: boolean) {
 	wrappers.forEach(wrapper => {
-		if (wrapper instanceof TextWrapper) {
+		if (wrapper instanceof CommentWrapper) {
+			state.quasi.value.raw += wrapper.text();
+		} else if (wrapper instanceof TextWrapper) {
 			// Don't add the <pre>/<textarea> newline logic here because pre/textarea.innerHTML
 			// would keep the leading newline, too, only someParent.innerHTML = '..<pre/textarea>..' won't
 

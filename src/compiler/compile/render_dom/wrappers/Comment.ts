@@ -38,4 +38,10 @@ export default class CommentWrapper extends Wrapper {
 			parent_node
 		);
 	}
+
+	text() {
+	    if (!this.renderer.options.preserveComments) return '';
+
+		return `<!--${this.node.data}-->`;
+	}
 }
