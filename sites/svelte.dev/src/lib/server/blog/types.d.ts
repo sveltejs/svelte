@@ -3,6 +3,7 @@ export interface BlogPost {
 	description: string;
 	date: string;
 	date_formatted: string;
+	slug: string;
 	author: {
 		name: string;
 		url?: string;
@@ -10,6 +11,8 @@ export interface BlogPost {
 	draft: boolean;
 	content: string;
 }
+
+export type BlogData = BlogPost[];
 
 export interface BlogPostSummary {
 	slug: string;

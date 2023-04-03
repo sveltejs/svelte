@@ -17,6 +17,19 @@ const escapeReplacements = {
  */
 const getEscapeReplacement = (ch) => escapeReplacements[ch];
 
+export const SHIKI_LANGUAGE_MAP = {
+	bash: 'bash',
+	env: 'bash',
+	html: 'svelte',
+	svelte: 'svelte',
+	sv: 'svelte',
+	js: 'javascript',
+	css: 'css',
+	diff: 'diff',
+	ts: 'typescript',
+	'': ''
+};
+
 /**
  * @param {string} html
  * @param {boolean} encode

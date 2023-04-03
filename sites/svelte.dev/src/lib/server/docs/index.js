@@ -1,18 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { renderCodeToHTML, runTwoSlash, createShikiHighlighter } from 'shiki-twoslash';
-import PrismJS from 'prismjs';
-import 'prismjs/components/prism-bash.js';
-import 'prismjs/components/prism-diff.js';
-import 'prismjs/components/prism-typescript.js';
-import 'prism-svelte';
-import { escape, extract_frontmatter, transform } from '../markdown';
+// import 'prism-svelte';
+// import 'prismjs/components/prism-bash.js';
+// import 'prismjs/components/prism-diff.js';
+// import 'prismjs/components/prism-typescript.js';
+import { createShikiHighlighter } from 'shiki-twoslash';
+import { SHIKI_LANGUAGE_MAP, extract_frontmatter, transform } from '../markdown';
 // import { render, replace_placeholders } from './render.js';
 // import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
-import ts, { ScriptTarget } from 'typescript';
-import MagicString from 'magic-string';
-import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
+import MagicString from 'magic-string';
+import ts from 'typescript';
 
 /** @param {string} title */
 export function slugify(title) {
@@ -51,19 +49,6 @@ export const normalizeSlugify = (str) => {
 };
 
 const base = '../../site/content/docs/';
-
-const languages = {
-	bash: 'bash',
-	env: 'bash',
-	html: 'html',
-	svelte: 'svelte',
-	sv: 'svelte',
-	js: 'javascript',
-	css: 'css',
-	diff: 'diff',
-	ts: 'typescript',
-	'': ''
-};
 
 /**
  * @param {string} file
@@ -124,7 +109,7 @@ export async function read_file(file) {
 			}
 
 			// TODO: Replace later
-			html = highlighter.codeToHtml(source, { lang: languages[language] });
+			html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
 
 			// if (language === 'dts') {
 			// 	// @ts-ignore
