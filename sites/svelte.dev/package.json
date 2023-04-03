@@ -29,7 +29,7 @@
 		"@resvg/resvg-js": "^2.4.1",
 		"@sveltejs/adapter-vercel": "^2.4.1",
 		"@sveltejs/kit": "^1.15.0",
-		"@sveltejs/site-kit": "^3.3.6",
+		"@sveltejs/site-kit": "^3.3.7",
 		"@sveltejs/vite-plugin-svelte": "^2.0.4",
 		"@types/marked": "^4.0.8",
 		"@types/prismjs": "^1.26.0",

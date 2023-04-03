@@ -3,25 +3,12 @@
 // import 'prismjs/components/prism-diff.js';
 // import 'prismjs/components/prism-typescript.js';
 import { createShikiHighlighter } from 'shiki-twoslash';
-import { normalizeSlugify, transform } from '../markdown';
+import { SHIKI_LANGUAGE_MAP, normalizeSlugify, transform } from '../markdown';
 // import { render, replace_placeholders } from './render.js';
 // import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
 import { createHash } from 'crypto';
 import MagicString from 'magic-string';
 import ts from 'typescript';
-
-const languages = {
-	bash: 'bash',
-	env: 'bash',
-	html: 'html',
-	svelte: 'svelte',
-	sv: 'svelte',
-	js: 'javascript',
-	css: 'css',
-	diff: 'diff',
-	ts: 'typescript',
-	'': ''
-};
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -83,24 +70,7 @@ export async function get_parsed_docs(docs_data, slug) {
 				}
 
 				// TODO: Replace later
-				html = highlighter.codeToHtml(source, { lang: languages[language] });
-
-				// if (language === 'dts') {
-				// 	// @ts-ignore
-				// 	html = renderCodeToHTML(source, 'ts', { twoslash: false }, {}, highlighter);
-				// } else if (language === 'js' || language === 'ts') {
-				// 	try {
-				// 		const injected = [];
-				// 		if (
-				// 			source.includes('$app/') ||
-				// 			source.includes('$service-worker') ||
-				// 			source.includes('@sveltejs/kit/')
-				// 		) {
-				// 			injected.push(
-				// 				`// @filename: ambient-kit.d.ts`,
-				// 				`/// <reference types="@sveltejs/kit" />`
-				// 			);
-				// 		}
+				html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
 
 				// 		if (source.includes('$env/')) {
 				// 			// TODO we're hardcoding static env vars that are used in code examples

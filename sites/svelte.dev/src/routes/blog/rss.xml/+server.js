@@ -1,4 +1,4 @@
-import { get_index } from '$lib/server/blog';
+import { get_blog_data, get_blog_list } from '$lib/server/blog/get-blog-data';
 
 export const prerender = true;
 
@@ -58,7 +58,7 @@ const get_rss = (posts) =>
 		.trim();
 
 export async function GET() {
-	const posts = get_index();
+	const posts = get_blog_list(get_blog_data());
 
 	return new Response(get_rss(posts), {
 		headers: {

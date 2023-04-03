@@ -1,19 +1,6 @@
 // @ts-check
 import { createShikiHighlighter } from 'shiki-twoslash';
-import { transform } from '../markdown';
-
-const languages = {
-	bash: 'bash',
-	env: 'bash',
-	html: 'svelte',
-	svelte: 'svelte',
-	sv: 'svelte',
-	js: 'javascript',
-	css: 'css',
-	diff: 'diff',
-	ts: 'typescript',
-	'': ''
-};
+import { SHIKI_LANGUAGE_MAP, transform } from '../markdown';
 
 /**
  * @param {import('./types').FAQData} faq_data
@@ -55,7 +42,7 @@ export async function get_parsed_faq(faq_data) {
 							})
 							.replace(/\*\\\//g, '*/');
 
-						html = highlighter.codeToHtml(source, { lang: languages[language] });
+						html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
 
 						html = html
 							.replace(
