@@ -113,7 +113,7 @@ describe('ssr', () => {
 					try {
 						assert.htmlEqualWithOptions(
 							head,
-							fs.readFileSync(`${dir}/_expected-head.html`, "utf-8"),
+							fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8'),
 							{ preserveComments: compileOptions.hydratable }
 						);
 					} catch (error) {
