@@ -11,6 +11,7 @@ import CatchBlock from '../../nodes/CatchBlock';
 import { Context } from '../../nodes/shared/Context';
 import { Identifier, Literal, Node } from 'estree';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import Expression from '../../nodes/shared/Expression';
 
 type Status = 'pending' | 'then' | 'catch';
 
@@ -69,6 +70,7 @@ class AwaitBlockBranch extends Wrapper {
 			this.renderer.add_to_context(this.value, true);
 		} else {
 			contexts.forEach(context => {
+				if (context.type !== 'DestructuredVariable') return;
 				this.renderer.add_to_context(context.key.name, true);
 			});
 			this.value = this.block.parent.get_unique_name('value').name;
@@ -96,7 +98,15 @@ class AwaitBlockBranch extends Wrapper {
 	}
 
 	render_get_context() {
-		const props = this.is_destructured ? this.value_contexts.map(prop => b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), name => this.renderer.reference(name))};`) : null;
+		const props = this.is_destructured ? this.value_contexts.map(prop => {
+			if (prop.type === 'ComputedProperty') {
+				const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
+				return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
+			} else {
+				const to_ctx = name => this.renderer.reference(name);
+				return b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), to_ctx)};`;
+			}
+		}) : null;
 
 		const const_tags_props = this.has_consts(this.node) ? add_const_tags(this.block, this.node.const_tags, '#ctx') : null;
 

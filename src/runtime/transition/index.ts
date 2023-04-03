@@ -1,5 +1,5 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, is_function } from 'svelte/internal';
+import { assign, split_css_unit, is_function } from 'svelte/internal';
 
 export type EasingFunction = (t: number) => number;
 
@@ -15,7 +15,7 @@ export interface BlurParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	amount?: number;
+	amount?: number | string;
 	opacity?: number;
 }
 
@@ -31,12 +31,12 @@ export function blur(node: Element, {
 	const f = style.filter === 'none' ? '' : style.filter;
 
 	const od = target_opacity * (1 - opacity);
-
+	const [value, unit] = split_css_unit(amount);
 	return {
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
+		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * value}${unit});`
 	};
 }
 
@@ -65,8 +65,8 @@ export interface FlyParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	x?: number;
-	y?: number;
+	x?: number | string;
+	y?: number | string;
 	opacity?: number;
 }
 
@@ -83,13 +83,14 @@ export function fly(node: Element, {
 	const transform = style.transform === 'none' ? '' : style.transform;
 
 	const od = target_opacity * (1 - opacity);
-
+	const [xValue, xUnit] = split_css_unit(x);
+	const [yValue, yUnit] = split_css_unit(y);
 	return {
 		delay,
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
+			transform: ${transform} translate(${(1 - t) * xValue}${xUnit}, ${(1 - t) * yValue}${yUnit});
 			opacity: ${target_opacity - (od * u)}`
 	};
 }

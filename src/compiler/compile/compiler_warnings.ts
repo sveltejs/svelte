@@ -119,6 +119,10 @@ export default {
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
 	}),
+	a11y_no_noninteractive_element_to_interactive_role: (role: string | boolean, element: string) => ({
+		code: 'a11y-no-noninteractive-element-to-interactive-role',
+		message: `A11y: Non-interactive element <${element}> cannot have interactive role '${role}'`
+	}),
 	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
@@ -162,6 +166,10 @@ export default {
 		code: 'a11y-img-redundant-alt',
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
 	},
+	a11y_interactive_supports_focus: (role: string) => ({
+		code: 'a11y-interactive-supports-focus',
+		message: `A11y: Elements with the '${role}' interactive role must have a tabindex value.`
+	}),
 	a11y_label_has_associated_control: {
 		code: 'a11y-label-has-associated-control',
 		message: 'A11y: A form label must be associated with a control.'
@@ -213,5 +221,9 @@ export default {
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
 		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
-	})
+	}),
+	avoid_mouse_events_on_document: {
+		code: 'avoid-mouse-events-on-document',
+		message: 'Mouse enter/leave events on the document are not supported in all browsers and should be avoided'
+	}
 };

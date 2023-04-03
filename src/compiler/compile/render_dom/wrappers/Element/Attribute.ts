@@ -82,6 +82,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 			if (node.name === 'value') {
 				handle_select_value_binding(this, node.dependencies);
+				this.parent.has_dynamic_value = true;
 			}
 		}
 
@@ -175,6 +176,17 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				${updater}
 				${update_value};
 			`;
+		}
+
+		if (this.node.name === 'value' && dependencies.length > 0) {
+			if (this.parent.bindings.some(binding => binding.node.name === 'group')) {
+				this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
+				block.add_variable(this.parent.dynamic_value_condition, x`false`);
+				updater = b`
+					${updater}
+					${this.parent.dynamic_value_condition} = true;
+				`;
+			}
 		}
 
 		if (dependencies.length > 0) {
@@ -349,7 +361,6 @@ const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [k
 	indeterminate: { applies_to: ['input'] },
 	inert: {},
 	ismap: { property_name: 'isMap', applies_to: ['img'] },
-	itemscope: {},
 	loop: { applies_to: ['audio', 'bgsound', 'video'] },
 	multiple: { applies_to: ['input', 'select'] },
 	muted: { applies_to: ['audio', 'video'] },
