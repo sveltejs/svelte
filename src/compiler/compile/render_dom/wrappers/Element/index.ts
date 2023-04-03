@@ -602,7 +602,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 
 		if (to_optimise_hydration) {
-			attributes.push(p`["data-svelte"]: true`);
+			attributes.push(p`["data-svelte-h"]: true`);
 		}
 
 		if (this.node.namespace === namespaces.svg) {

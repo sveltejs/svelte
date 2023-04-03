@@ -353,7 +353,7 @@ export function xlink_attr(node, attribute, value) {
 }
 
 export function get_svelte_dataset(node: HTMLElement) {
-	return node.dataset.svelte;
+	return node.dataset.svelteH;
 }
 
 export function get_binding_group_value(group, __value, checked) {

@@ -145,7 +145,7 @@ export function normalizeHtml(window, html, { removeDataSvelte = false, preserve
 		const node = window.document.createElement('div');
 		node.innerHTML = html
 			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
-			.replace(/(data-svelte="[^"]+")/g, removeDataSvelte ? '' : '$1')
+			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 		cleanChildren(node);
@@ -174,10 +174,10 @@ export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
 	assert.htmlEqualWithOptions = (actual: string, expected: string, { preserveComments, withoutNormalizeHtml }: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => {
 		assert.deepEqual(
 			withoutNormalizeHtml
-				? normalizeNewline(actual).replace(/(\sdata-svelte="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				? normalizeNewline(actual).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
 				: normalizeHtml(window, actual, { ...options, preserveComments }),
 			withoutNormalizeHtml
-				? normalizeNewline(expected).replace(/(\sdata-svelte="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				? normalizeNewline(expected).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
 				: normalizeHtml(window, expected, { ...options, preserveComments }),
 			message
 		);
