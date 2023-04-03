@@ -29,4 +29,4 @@ let coords = spring(
 
 Waggle your mouse around, and try dragging the sliders to get a feel for how they affect the spring's behaviour. Notice that you can adjust the values while the spring is still in motion.
 
-Consult the [API reference](/docs/run-time#svelte-motion-spring) for more information.
+Consult the [API reference](/docs/svelte-motion#spring) for more information.

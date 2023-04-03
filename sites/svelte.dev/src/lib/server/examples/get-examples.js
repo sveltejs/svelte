@@ -19,7 +19,8 @@ export function get_examples_data(base = BASE) {
 		if (!(fs.statSync(`${base}/${subdir}`).isDirectory() || subdir.endsWith('meta.json'))) continue;
 
 		if (!subdir.endsWith('meta.json'))
-			section.title = JSON.parse(fs.readFileSync(`${base}/${subdir}/meta.json`, 'utf-8')).title;
+			section.title =
+				JSON.parse(fs.readFileSync(`${base}/${subdir}/meta.json`, 'utf-8')).title ?? 'Embeds';
 
 		for (const section_dir of fs.readdirSync(`${base}/${subdir}`)) {
 			const match = /\d{2}-(.+)/.exec(section_dir);

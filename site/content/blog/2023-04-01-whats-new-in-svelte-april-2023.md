@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: April 2023"
-description: "Loads of new Svelte compiler features, plus Svelte Summit and SvelteHack"
+description: 'Loads of new Svelte compiler features, plus Svelte Summit and SvelteHack'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -14,6 +14,7 @@ Don't forget! Svelte Summit Spring, Svelte's 6th virtual conference, will be hap
 Now let's jump into this month's changes...
 
 ## What's new in Svelte
+
 - A bunch of new features are now available as of **3.56.0**!
   - Add `|stopImmediatePropagation` event modifier for `on:eventname` ([#5085](https://github.com/sveltejs/svelte/issues/5085), [Docs](https://svelte.dev/docs#template-syntax-element-directives-on-eventname))
   - Add `axis` parameter to `slide` transition ([#6182](https://github.com/sveltejs/svelte/issues/6182), [Docs](https://svelte.dev/docs#run-time-svelte-transition-slide))
@@ -31,15 +32,18 @@ Now let's jump into this month's changes...
 For all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/CHANGELOG.md).
 
 ## What's new in SvelteKit
+
 - You can now get all cookies for a request with `cookies.getAll` (**1.10.0**, [#9287](https://github.com/sveltejs/kit/pull/9287), [Docs](https://kit.svelte.dev/docs/types#public-types-cookies))
 - Easily manage the submission status of (multiple) forms with the new exposed `submitter` parameter in `use:enhance` (**1.12.0**, [#9425](https://github.com/sveltejs/kit/pull/9425), [Docs](https://kit.svelte.dev/docs/types#public-types-submitfunction))
 - The default error page now has dark mode styles (**1.13.0**, [#9460](https://github.com/sveltejs/kit/pull/9460))
 - You can now omit types on all methods and variables with special meaning to SvelteKit and still benefit from full type safety! Read more about it in the [announcement blog post](https://svelte.dev/blog/zero-config-type-safety)
+
 ---
 
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Peerbeer](https://peer.beer/) lets you share files peer-to-peer (p2p) without any third parties or data limits
 - [unplaneted](https://unplaneted.com/) is an interface for exploring very large space images
 - [PokeBook](https://github.com/pokegh0st/pokebook) is a digital notebook for writing poetry that provides a beautiful distraction-free environment and autosave
@@ -55,6 +59,7 @@ For all the changes to the Svelte compiler, including unreleased changes, check 
 **Learning Resources**
 
 _Featuring Svelte Contributors and Ambassadors_
+
 - [Streaming, snapshots, and other new features since SvelteKit 1.0](https://svelte.dev/blog/streaming-snapshots-sveltekit) by Geoff Rich on the svelte.dev Blog
 - [Dev Vlog: Rich Harris shows us what's new in Svelte and Kit, March 2023](https://www.youtube.com/watch?v=vgXgex5E-8g) from Svelte Society
   - If you missed this one live, check out [the next one](https://www.youtube.com/watch?v=MJHO6FSioPI) - scheduled for April 5th
@@ -71,13 +76,14 @@ _Featuring Svelte Contributors and Ambassadors_
   - [2023 March 23 - SvelteKit 1.13.0, Vitest and Playwright overview](https://www.youtube.com/watch?v=vpbhsbg2otg)
 
 _To Watch or Hear_
+
 - [Full Stack SvelteKit App Deployment Using Vercel And Supabase For $0](https://www.youtube.com/watch?v=uAF4Yd-gddo) by Joy of Code
 - [Why Is Svelte.js so Popular?](https://www.youtube.com/watch?v=73Y8Yyg54zc) by Prismic
 - [Interactive Tables in SvelteKit with TanStack Table](https://www.youtube.com/watch?v=-Zuo3UWjjI8) by hartenfellerdev
 - [SvelteKit + GraphQL with Houdini](https://www.youtube.com/watch?v=ADnaRwQZfqw&list=PLm0ILX0LGQk_220vvpsbyXH2VesRlCm-E) by Aftab Alam
 
-
 _To Read_
+
 - [Thoughts on Svelte](https://tyhopp.com/notes/thoughts-on-svelte) by Ty Hopp
 - [Storybook](https://storybook.js.org/blog/storybook-for-sveltekit/) on why (and how) it supports SvelteKit
 - [Svelte Authentication Tutorial with Authorizer](https://thethinks.vercel.app/blog/svelte-authorizer) by The Thinks
@@ -89,18 +95,19 @@ _To Read_
 - [Secure Authentication in Svelte using Hooks](https://dev.to/brewhousedigital/secure-authentication-in-svelte-using-hooks-k5j) by Brewhouse Digital
 
 **Libraries, Tools & Components**
+
 - [@vavite/node-loader](https://github.com/cyco130/vavite/tree/main/packages/node-loader) is a Node ESM loader that uses Vite to transpile modules to enable sourcemap and breakpoints support in SvelteKit (or any Vite) project
 - [Inlang](https://github.com/inlang/inlang) is building i18n for SvelteKit and is [looking for feedback](https://www.reddit.com/r/sveltejs/comments/11ydtui/sveltekit_and_i18n_lets_finally_solve_this_never/)
 - [Skeleton](https://www.skeleton.dev/) - the UI toolkit for Svelte and Tailwind - is now 1.0 🎉
 - [SvelteKit-integrated-WebSocket](https://github.com/suhaildawood/SvelteKit-integrated-WebSocket) provides first-class support for WebSockets within SvelteKit by attaching a WebSocket server to the global state
-- [Svelte Legos](https://github.com/ankurrsinghal/svelte-legos) is a collection of essential Svelte Composition Utilities 
+- [Svelte Legos](https://github.com/ankurrsinghal/svelte-legos) is a collection of essential Svelte Composition Utilities
 - [svelte-stored-writable](https://github.com/efstajas/svelte-stored-writable) is a drop-in extension of Svelte's writable that additionally stores and restores its contents using localStorage.
 - [svelte-virtual](https://github.com/ghostebony/svelte-virtual) provides Svelte components for efficiently rendering large lists.
 - ChatGPT Clones and Starters
   - [chatwithme.chat](https://github.com/kierangilliam/chatwithme.chat) is an open source ChatGPT UI
   - [SlickGPT](https://github.com/ShipBit/slickgpt) is a light-weight "use-your-own-API-key" web client for the OpenAI API written in Svelte
   - [AI Chat Bestie](https://github.com/KTruong008/aichatbestie) is an unofficial ChatGPT app
-  - [chatgpt-svelte](https://github.com/ichbtrv/chatgpt-svelte) is a simple UI for the ChatGPT Open AI API 
+  - [chatgpt-svelte](https://github.com/ichbtrv/chatgpt-svelte) is a simple UI for the ChatGPT Open AI API
 
 Thanks for reading! And don't forget to try your hand at the [Svelte Hackathon](https://hack.sveltesociety.dev/) 🧑‍💻
 

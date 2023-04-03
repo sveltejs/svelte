@@ -34,4 +34,4 @@ const app = new App({
 });
 ```
 
-You can then interact with `app` using the [component API](/docs/run-time#client-side-component-api) if you need to.
+You can then interact with `app` using the [component API](/docs/client-side-component-api) if you need to.

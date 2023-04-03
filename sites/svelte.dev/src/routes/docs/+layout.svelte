@@ -2,10 +2,11 @@
 	import { page } from '$app/stores';
 	import Contents from './Contents.svelte';
 
-	/** @type {import('./$types').LayoutServerData}*/
 	export let data;
 
-	$: title = data.sections.find((val) => val.path === $page.url.pathname)?.title;
+	$: title = data.sections
+		.find(({ pages }) => pages.find(({ path }) => path === $page.url.pathname))
+		?.pages.find(({ path }) => path === $page.url.pathname).title;
 </script>
 
 <div class="container">
@@ -38,6 +39,10 @@
 		display: none;
 	}
 
+	.page :global(:where(h2, h3) code) {
+		all: unset;
+	}
+
 	/* .content {
 		width: 100%;
 		margin: 0;
@@ -51,191 +56,6 @@
 		.content {
 			padding-left: calc(var(--sidebar-width) + var(--sk-page-padding-side));
 		}
-	}
-
-	.content :global(h1) {
-		font-size: 3.2rem;
-		margin: 0 0 0.5em 0;
-	}
-
-	.content :global(h2) {
-		margin-top: 8rem;
-		padding: 2rem 1.6rem 2rem 0.2rem;
-		border-bottom: 1px solid hsl(0, 0%, 87%, 0.2);
-		line-height: 1;
-		font-size: var(--sk-text-m);
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-	}
-
-	.content :global(section):first-of-type > :global(h2) {
-		margin-top: 0;
-	}
-
-	.content :global(h4) {
-		margin: 2em 0 1em 0;
-	}
-
-	.content :global(.offset-anchor) {
-		position: relative;
-		display: block;
-		top: calc(-1 * var(--sk-page-padding-top));
-		width: 0;
-		height: 0;
-	}
-
-	.content :global(a.permalink) {
-		position: absolute;
-		display: block;
-		background: url(/icons/link.svg) 0 50% no-repeat;
-		background-size: 1em 1em;
-		width: 1.4em;
-		height: 1em;
-		left: -1.3em;
-		bottom: 0.3rem;
-		opacity: 0;
-		transition: opacity 0.2s;
-		user-select: none;
-	}
-
-	.content :global(h2) :global(.permalink) {
-		bottom: 2rem;
-	}
-
-	.content :global(h3) :global(.permalink) {
-		bottom: 1rem;
-	}
-
-	@media (min-width: 400px) {
-		.content :global(h1) {
-			font-size: 4.2rem;
-		}
-	}
-
-	@media (min-width: 768px) {
-		.content :global(h1) {
-			font-size: 5.4rem;
-		}
-
-		.content :global(.anchor:focus),
-		.content :global(:where(h2, h3, h4, h5, h6):hover .permalink) {
-			opacity: 1;
-		}
-	}
-
-	.content :global(h3),
-	.content :global(h3 > code) {
-		margin: 6.4rem 0 1rem 0;
-		padding: 0 0 1rem 0;
-		color: var(--sk-text-2);
-		max-width: var(--sk-line-max-width);
-		border-bottom: 1px solid hsl(0, 0%, 87%, 0.2);
-		background: transparent;
-		line-height: 1;
-	}
-
-	.content :global(h3):first-child {
-		border: none;
-		margin: 0;
-	}
-
-	/* avoid doubled border-top */
-	.content :global(h3 > code) {
-		border-radius: 0 0 0 0;
-		border: none;
-		font-size: inherit;
-	}
-
-	.content :global(h4),
-	.content :global(h4 > code) {
-		font-family: inherit;
-		font-weight: 600;
-		font-size: 2.4rem;
-		color: var(--sk-text-2);
-		margin: 6.4rem 0 1.6rem 0;
-		padding-left: 0;
-		background: transparent;
-		line-height: 1;
-		padding-top: 0;
-		top: 0;
-	}
-
-	.content :global(h4::before) {
-		display: inline;
-		content: ' ';
-		block-size: var(--sk-nav-height);
-		margin-block-start: calc(-1 * var(--sk-nav-height));
-	}
-
-	.content :global(h4 > em) {
-		opacity: 0.7;
-	}
-
-	.content :global(h4 > .anchor) {
-		top: 0.05em;
-	}
-
-	.content :global(h5) {
-		font-size: 2.4rem;
-		margin: 2em 0 0.5em 0;
-	}
-
-	.content :global(code) {
-		/* padding: 0.4rem; */
-		margin: 0 0.2rem;
-		top: -0.1rem;
-		background: var(--sk-back-4);
-	}
-
-	.content :global(pre) :global(code) {
-		padding: 0;
-		margin: 0;
-		top: 0;
-		background: transparent;
-	}
-
-	.content :global(pre) {
-		margin: 0 0 2rem 0;
-		width: 100%;
-		max-width: var(--sk-line-max-width);
-		padding: 1rem 1rem;
-		box-shadow: inset 1px 1px 6px hsla(205.7, 63.6%, 30.8%, 0.06);
-	}
-
-	.content :global(.icon) {
-		width: 2rem;
-		height: 2rem;
-		stroke: currentColor;
-		stroke-width: 2;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		fill: none;
-	}
-
-	.content :global(table) {
-		margin: 0 0 2em 0;
-	}
-
-	.content :global(section) :global(p) {
-		max-width: var(--sk-line-max-width);
-		margin: 1em 0;
-	}
-
-	.content :global(small) {
-		font-size: var(--sk-text-s);
-		float: right;
-		pointer-events: all;
-		color: var(--sk-theme-1);
-		cursor: pointer;
-	}
-
-	/* this replaces the offset-anchor hack, which we should remove from this CSS
-	   once https://github.com/sveltejs/action-deploy-docs/issues/1 is closed */
-	.content :global(h2[id]),
-	.content :global(h3[id]) {
-		padding-top: 10rem;
-		margin-top: -2rem;
-		border-top: none;
 	}
 
 	/* .content :global(h2[id])::after {

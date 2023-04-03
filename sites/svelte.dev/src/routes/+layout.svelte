@@ -14,8 +14,8 @@
 	{/if}
 </svelte:head>
 
-<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
-	{#if $page.url.pathname !== '/repl/embed'}
+<div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
+	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
 		<Nav logo="/svelte-logo.svg">
 			<svelte:fragment slot="nav-center">
 				{#if $page.url.pathname !== '/search'}
@@ -46,10 +46,10 @@
 				</NavItem>
 			</svelte:fragment>
 		</Nav>
-	{/if}
 
-	<slot />
-</Shell>
+		<slot />
+	</Shell>
+</div>
 
 {#if browser}
 	<SearchBox />

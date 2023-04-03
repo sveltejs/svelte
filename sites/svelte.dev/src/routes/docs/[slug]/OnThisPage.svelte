@@ -1,8 +1,8 @@
 <script>
-	import { onMount } from 'svelte';
 	import { afterNavigate } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
+	import { afterUpdate, onMount } from 'svelte';
 
 	/** @type {import('./$types').PageData['page']} */
 	export let details;
@@ -22,9 +22,13 @@
 	/** @type {number[]} */
 	let positions = [];
 
+	/** @type {HTMLElement} */
+	let containerEl;
+
+	let show_contents = false;
+
 	onMount(async () => {
 		await document.fonts.ready;
-
 		update();
 		highlight();
 	});
@@ -37,21 +41,17 @@
 	function update() {
 		content = document.querySelector('.content');
 		const { top } = content.getBoundingClientRect();
-
 		headings = content.querySelectorAll('h2[id]');
-
 		positions = Array.from(headings).map((heading) => {
 			const style = getComputedStyle(heading);
 			return heading.getBoundingClientRect().top - parseFloat(style.scrollMarginTop) - top;
 		});
-
 		height = window.innerHeight;
 	}
 
 	function highlight() {
 		const { top, bottom } = content.getBoundingClientRect();
 		let i = headings.length;
-
 		while (i--) {
 			if (bottom - height < 50 || positions[i] + top < 100) {
 				const heading = headings[i];
@@ -59,7 +59,6 @@
 				return;
 			}
 		}
-
 		hash = '';
 	}
 
@@ -69,7 +68,6 @@
 		setTimeout(() => {
 			hash = url.hash;
 		});
-
 		// ...and braces
 		window.addEventListener(
 			'scroll',
@@ -79,11 +77,37 @@
 			{ once: true }
 		);
 	}
+
+	afterUpdate(() => {
+		// bit of a hack — prevent sidebar scrolling if
+		// TOC is open on mobile, or scroll came from within sidebar
+		if (show_contents && window.innerWidth < 832) return;
+		const active = containerEl.querySelector('.active');
+		if (active) {
+			const { top, bottom } = active.getBoundingClientRect();
+			const min = 100;
+			const max = window.innerHeight - 100;
+
+			if (top > max) {
+				containerEl.scrollBy({
+					top: top - max,
+					left: 0,
+					behavior: 'smooth',
+				});
+			} else if (bottom < min) {
+				containerEl.scrollBy({
+					top: bottom - min,
+					left: 0,
+					behavior: 'smooth',
+				});
+			}
+		}
+	});
 </script>
 
 <svelte:window on:scroll={highlight} on:resize={update} on:hashchange={() => select($page.url)} />
 
-<aside class="on-this-page">
+<aside class="on-this-page" bind:this={containerEl}>
 	<h2>On this page</h2>
 	<nav>
 		<ul>
@@ -99,10 +123,12 @@
 	.on-this-page {
 		display: var(--on-this-page-display);
 		position: fixed;
-		padding: 0 var(--sk-page-padding-side) 0 0;
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 0 0;
 		width: min(280px, calc(var(--sidebar-width) - var(--sk-page-padding-side)));
+		height: calc(100vh - var(--sk-nav-height) - var(--sk-page-padding-top));
 		top: var(--sk-nav-height);
 		left: calc(100vw - (var(--sidebar-width)));
+		overflow-y: auto;
 	}
 
 	h2 {

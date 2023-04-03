@@ -1,22 +1,32 @@
 <script>
 	import { page } from '$app/stores';
 
-	/** @type {{title: string, path: string}[]} */
-	export let contents;
+	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
+	export let contents = [];
 </script>
 
 <nav aria-label="Docs">
 	<ul class="sidebar">
-		{#each contents as { title, path }}
+		{#each contents as section}
 			<li>
-				<a
-					data-sveltekit-preload-data
-					class="page"
-					class:active={path === $page.url.pathname}
-					href={path}
-				>
-					{title}
-				</a>
+				<span class="section">
+					{section.title}
+				</span>
+
+				<ul>
+					{#each section.pages as { title, path }}
+						<li>
+							<a
+								data-sveltekit-preload-data
+								class="page"
+								class:active={path === $page.url.pathname}
+								href={path}
+							>
+								{title}
+							</a>
+						</li>
+					{/each}
+				</ul>
 			</li>
 		{/each}
 	</ul>
@@ -43,7 +53,7 @@
 		display: block;
 		line-height: 1.2;
 		margin: 0;
-		margin-bottom: 1rem;
+		margin-bottom: 4rem;
 	}
 
 	li:last-child {
@@ -59,6 +69,15 @@
 		user-select: none;
 	}
 
+	.section {
+		display: block;
+		padding-bottom: 0.8rem;
+		font-size: var(--sk-text-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-weight: 600;
+	}
+
 	.page {
 		display: block;
 		font-size: 1.6rem;
@@ -71,6 +90,7 @@
 		color: var(--sk-text-1);
 	}
 
+	ul ul,
 	ul ul li {
 		margin: 0;
 	}
@@ -78,7 +98,7 @@
 	@media (min-width: 600px) {
 		.sidebar {
 			columns: 2;
-			/* padding-left: var(--sk-page-padding-side); */
+			padding-left: var(--sk-page-padding-side);
 			padding-right: var(--sk-page-padding-side);
 		}
 	}

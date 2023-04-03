@@ -1,7 +1,6 @@
 <script>
 	import OnThisPage from './OnThisPage.svelte';
 
-	/** @type {import('./$types').PageData}*/
 	export let data;
 </script>
 
@@ -13,6 +12,4 @@
 	{@html data.page.content}
 </div>
 
-{#if data.page.sections.length !== 0}
-	<OnThisPage details={data.page} />
-{/if}
+<OnThisPage details={data.page} />
