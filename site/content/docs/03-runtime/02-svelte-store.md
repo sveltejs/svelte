@@ -157,22 +157,6 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 });
 ```
 
-## `get`
-
-```js
-value: any = get(store);
-```
-
-Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
-
-> This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
-
-```js
-import { get } from 'svelte/store';
-
-const value = get(store);
-```
-
 ## `readonly`
 
 ```js
@@ -191,4 +175,20 @@ readableStore.subscribe(console.log);
 
 writableStore.set(2); // console: 2
 readableStore.set(2); // ERROR
+```
+
+## `get`
+
+```js
+value: any = get(store);
+```
+
+Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
+
+> This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
+
+```js
+import { get } from 'svelte/store';
+
+const value = get(store);
 ```
