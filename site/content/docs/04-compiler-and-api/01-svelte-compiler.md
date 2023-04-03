@@ -22,7 +22,7 @@ result: {
 This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const result = svelte.compile(source, {
 	// options
@@ -160,7 +160,7 @@ ast: object = svelte.parse(
 The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const ast = svelte.parse(source, { filename: 'App.svelte' });
 ```
@@ -208,8 +208,8 @@ The `markup` function receives the entire component source text, along with the 
 > Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
-const svelte = require('svelte/compiler');
-const MagicString = require('magic-string');
+import svelte from 'svelte/compiler';
+import MagicString from 'magic-string';
 
 const { code } = await svelte.preprocess(
 	source,
@@ -238,8 +238,8 @@ The `script` and `style` functions receive the contents of `<script>` and `<styl
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
-const svelte = require('svelte/compiler');
-const sass = require('node-sass');
+import svelte from 'svelte/compiler';
+import sass from 'node-sass';
 const { dirname } = require('path');
 
 const { code, dependencies } = await svelte.preprocess(
