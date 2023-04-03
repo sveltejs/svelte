@@ -12,7 +12,6 @@ import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribut
 import { namespaces } from '../../../utils/namespaces';
 import { regex_starts_with_newline } from '../../../utils/patterns';
 import { Node, Expression as ESExpression } from 'estree';
-import hash from '../../utils/hash';
 
 export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 

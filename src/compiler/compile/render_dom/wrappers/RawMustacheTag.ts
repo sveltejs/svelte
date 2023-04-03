@@ -9,7 +9,6 @@ import MustacheTag from '../../nodes/MustacheTag';
 import RawMustacheTag from '../../nodes/RawMustacheTag';
 import { is_head } from './shared/is_head';
 import { Identifier, Node } from 'estree';
-import hash from '../../utils/hash';
 
 export default class RawMustacheTagWrapper extends Tag {
 	var: Identifier = { type: 'Identifier', name: 'raw' };
