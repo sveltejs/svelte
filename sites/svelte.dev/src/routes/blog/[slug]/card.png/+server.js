@@ -2,9 +2,10 @@ import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 import OverpassRegular from './Overpass-Regular.ttf';
 import { html as toReactNode } from 'satori-html';
-import { get_post } from '$lib/server/blog/index.js';
+import { get_processed_blog_post } from '$lib/server/blog/index.js';
 import { error } from '@sveltejs/kit';
 import Card from './Card.svelte';
+import { get_blog_data } from '$lib/server/blog/get-blog-data';
 
 const height = 630;
 const width = 1200;
@@ -13,7 +14,7 @@ export const prerender = true;
 
 /** @type {import('./$types').RequestHandler} */
 export const GET = async ({ params, url }) => {
-	const post = get_post(params.slug);
+	const post = get_processed_blog_post(get_blog_data(), params.slug);
 
 	if (!post) {
 		throw error(404);
