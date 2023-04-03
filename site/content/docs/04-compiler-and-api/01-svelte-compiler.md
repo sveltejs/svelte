@@ -235,37 +235,28 @@ const { code } = await svelte.preprocess(
 
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
-import svelte from 'svelte/compiler';
-import sass from 'node-sass';
+import { preprocess } from 'svelte/compiler';
+import sass from 'sass';
 import { dirname } from 'path';
 
-const { code, dependencies } = await svelte.preprocess(
+const { code, dependencies } = await preprocess(
 	source,
 	{
 		style: async ({ content, attributes, filename }) => {
 			// only process <style lang="sass">
-			if (attributes.lang !== 'sass') return;
+			if (attributes.lang !== 'sass' && attributes.lang !== 'scss') return;
 
-			const { css, stats } = await new Promise((resolve, reject) =>
-				sass.render(
-					{
-						file: filename,
-						data: content,
-						includePaths: [dirname(filename)]
-					},
-					(err, result) => {
-						if (err) reject(err);
-						else resolve(result);
-					}
-				)
-			);
+			const { css, loadedUrls } = await sass.compileStringAsync(content, {
+				data: content,
+				includePaths: [dirname(filename)]
+			});
 
 			return {
-				code: css.toString(),
-				dependencies: stats.includedFiles
+				code: css,
+				dependencies: loadedUrls
 			};
 		}
 	},
