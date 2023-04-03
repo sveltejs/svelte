@@ -6,8 +6,8 @@ export type ExamplesData = {
 		slug: string;
 		files: {
 			content: string;
-			type: 'svelte' | 'js';
-			filename: string;
+			type: string;
+			name: string;
 		}[];
 	}[];
 }[];

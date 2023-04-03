@@ -1,7 +1,6 @@
 <script>
 	import '@sveltejs/site-kit/styles/code.css';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
@@ -85,11 +84,7 @@
 
 	@media (min-width: 768px) {
 		.faqs :global(.anchor:focus),
-		.faqs :global(h2):hover :global(.anchor),
-		.faqs :global(h3):hover :global(.anchor),
-		.faqs :global(h4):hover :global(.anchor),
-		.faqs :global(h5):hover :global(.anchor),
-		.faqs :global(h6):hover :global(.anchor) {
+		.faqs :global(:where(h2, h3, h4, h5, h6)):hover :global(.anchor) {
 			opacity: 1;
 		}
 

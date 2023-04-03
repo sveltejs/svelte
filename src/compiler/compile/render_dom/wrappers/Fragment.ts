@@ -14,6 +14,7 @@ import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import SlotTemplate from './SlotTemplate';
 import Text from './Text';
+import Comment from './Comment';
 import Title from './Title';
 import Window from './Window';
 import { INode } from '../../nodes/interfaces';
@@ -27,7 +28,7 @@ import { regex_starts_with_whitespace } from '../../../utils/patterns';
 const wrappers = {
 	AwaitBlock,
 	Body,
-	Comment: null,
+	Comment,
 	DebugTag,
 	Document,
 	EachBlock,
@@ -118,7 +119,7 @@ export default class FragmentWrapper {
 				link(last_child, last_child = wrapper);
 			} else {
 				const Wrapper = wrappers[child.type];
-				if (!Wrapper) continue;
+				if (!Wrapper || (child.type === 'Comment' && !renderer.options.preserveComments)) continue;
 
 				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
 				this.nodes.unshift(wrapper);

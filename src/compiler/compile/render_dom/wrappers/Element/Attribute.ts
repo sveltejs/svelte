@@ -364,7 +364,6 @@ const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [k
 	indeterminate: { applies_to: ['input'] },
 	inert: {},
 	ismap: { property_name: 'isMap', applies_to: ['img'] },
-	itemscope: {},
 	loop: { applies_to: ['audio', 'bgsound', 'video'] },
 	multiple: { applies_to: ['input', 'select'] },
 	muted: { applies_to: ['audio', 'video'] },
