@@ -35,6 +35,43 @@ export function escape(html, encode = false) {
 	return html;
 }
 
+/** @param {string} title */
+export function slugify(title) {
+	return title
+		.toLowerCase()
+		.replace(/&#39;/g, '')
+		.replace(/&lt;/g, '')
+		.replace(/&gt;/g, '')
+		.replace(/[^a-z0-9-$]/g, '-')
+		.replace(/-{2,}/g, '-')
+		.replace(/^-/, '')
+		.replace(/-$/, '');
+}
+
+/** @param {string} markdown */
+export function removeMarkdown(markdown) {
+	return markdown
+		.replace(/\*\*(.+?)\*\*/g, '$1') // bold
+		.replace(/_(.+?)_/g, '$1') // Italics
+		.replace(/\*(.+?)\*/g, '$1') // Italics
+		.replace(/`(.+?)`/g, '$1') // Inline code
+		.replace(/~~(.+?)~~/g, '$1') // Strikethrough
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Link
+		.replace(/\n/g, ' ') // New line
+		.replace(/ {2,}/g, ' ')
+		.trim();
+}
+
+/** @param {string} html */
+export function removeHTMLEntities(html) {
+	return html.replace(/&.+?;/g, '');
+}
+
+/** @param {string} str */
+export const normalizeSlugify = (str) => {
+	return slugify(removeHTMLEntities(removeMarkdown(str))).replace(/(<([^>]+)>)/gi, '');
+};
+
 /** @type {Partial<import('marked').Renderer>} */
 const default_renderer = {
 	code(code, infostring, escaped) {
@@ -184,8 +221,11 @@ export function extract_frontmatter(markdown) {
 	const metadata = {};
 	frontmatter.split('\n').forEach((pair) => {
 		const i = pair.indexOf(':');
-		metadata[pair.slice(0, i).trim()] = pair.slice(i + 1).trim();
+		metadata[pair.slice(0, i).trim()] = removeQuotes(pair.slice(i + 1).trim());
 	});
 
 	return { metadata, body };
 }
+
+/** @param {string} str */
+const removeQuotes = (str) => str.replace(/(^["']|["']$)/g, '');

@@ -18,7 +18,7 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<article class="post listify">
+<article class="post listify text">
 	<h1>{data.post.title}</h1>
 	<p class="standfirst">{data.post.description}</p>
 

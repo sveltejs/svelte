@@ -3,6 +3,8 @@ import { get_example } from '$lib/server/examples';
 import { get_examples_list } from '$lib/server/examples/get-examples';
 import { error, json } from '@sveltejs/kit';
 
+export const prerender = true;
+
 export const GET = ({ params }) => {
 	const examples = new Set(
 		get_examples_list(examples_data)

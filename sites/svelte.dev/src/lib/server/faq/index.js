@@ -12,7 +12,7 @@ const languages = {
 	css: 'css',
 	diff: 'diff',
 	ts: 'typescript',
-	'': '',
+	'': ''
 };
 
 /**
@@ -79,8 +79,8 @@ export async function get_parsed_faq(faq_data) {
 
 						return html;
 					},
-					codespan: (text) => '<code>' + text + '</code>',
-				}),
+					codespan: (text) => '<code>' + text + '</code>'
+				})
 			};
 		})
 	);

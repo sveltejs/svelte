@@ -1,22 +1,9 @@
-import { extract_frontmatter } from '$lib/server/markdown';
-import fs from 'fs';
-import { base } from '$app/paths';
+import { get_docs_data, get_docs_list } from '$lib/server/docs/get-docs';
 
 export const prerender = true;
 
-const base_dir = '../../site/content/docs/';
-
 export function load() {
-	const sections = fs.readdirSync(base_dir).map((file) => {
-		const { title } = extract_frontmatter(fs.readFileSync(`${base_dir}/${file}`, 'utf-8')).metadata;
-
-		return {
-			title,
-			path: `${base}/docs/${file.slice(3, -3)}`
-		};
-	});
-
 	return {
-		sections
+		sections: get_docs_list(get_docs_data())
 	};
 }

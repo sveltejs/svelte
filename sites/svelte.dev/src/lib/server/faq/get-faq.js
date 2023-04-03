@@ -16,7 +16,7 @@ export function get_faq_data() {
 		faqs.push({
 			title: metadata.question, // Initialise with empty
 			slug: file.split('-').slice(1).join('-').replace('.md', ''),
-			content: body,
+			content: body
 		});
 	}
 

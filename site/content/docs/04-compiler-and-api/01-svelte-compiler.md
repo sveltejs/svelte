@@ -1,12 +1,12 @@
 ---
-title: Compile time
+title: 'svelte/compiler'
 ---
 
 Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin. The bundler plugin that the Svelte team most recommends and invests in is [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte). The [SvelteKit](https://kit.svelte.dev/) framework provides a setup leveraging `vite-plugin-svelte` to build applications as well as a [tool for packaging Svelte component libraries](https://kit.svelte.dev/docs/packaging). Svelte Society maintains a list of [other bundler plugins](https://sveltesociety.dev/tools/#bundling) for additional tools like Rollup and Webpack.
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
-### `svelte.compile`
+## `svelte.compile`
 
 ```js
 result: {
@@ -18,8 +18,6 @@ result: {
 	stats
 } = svelte.compile(source: string, options?: {...})
 ```
-
----
 
 This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
 
@@ -82,8 +80,6 @@ The following options can be passed to the compiler. None are required:
 | `cssOutputFilename`  | `null`                                      | A `string` used for your CSS sourcemap.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `sveltePath`         | `"svelte"`                                  | The location of the `svelte` package. Any imports from `svelte` or `svelte/[module]` will be modified accordingly.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `namespace`          | `"html"`                                    | The namespace of the element; e.g., `"mathml"`, `"svg"`, `"foreign"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-
----
 
 The returned `result` object contains the code for your component, along with useful bits of metadata.
 
@@ -149,7 +145,7 @@ compiled: {
 
 -->
 
-### `svelte.parse`
+## `svelte.parse`
 
 ```js
 ast: object = svelte.parse(
@@ -161,8 +157,6 @@ ast: object = svelte.parse(
 )
 ```
 
----
-
 The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 ```js
@@ -171,7 +165,7 @@ const svelte = require('svelte/compiler');
 const ast = svelte.parse(source, { filename: 'App.svelte' });
 ```
 
-### `svelte.preprocess`
+## `svelte.preprocess`
 
 A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
@@ -202,8 +196,6 @@ result: {
 	}
 )
 ```
-
----
 
 The `preprocess` function provides convenient hooks for arbitrarily transforming component source code. For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
 
@@ -240,8 +232,6 @@ const { code } = await svelte.preprocess(
 	}
 );
 ```
-
----
 
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
@@ -285,8 +275,6 @@ const { code, dependencies } = await svelte.preprocess(
 );
 ```
 
----
-
 Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
 
 ```js
@@ -324,7 +312,7 @@ const { code } = await svelte.preprocess(
 );
 ```
 
-### `svelte.walk`
+## `svelte.walk`
 
 ```js
 walk(ast: Node, {
@@ -332,8 +320,6 @@ walk(ast: Node, {
 	leave(node: Node, parent: Node, prop: string, index: number)?: void
 })
 ```
-
----
 
 The `walk` function provides a way to walk the abstract syntax trees generated by the parser, using the compiler's own built-in instance of [estree-walker](https://github.com/Rich-Harris/estree-walker).
 
@@ -354,9 +340,7 @@ svelte.walk(ast, {
 });
 ```
 
-### `svelte.VERSION`
-
----
+## `svelte.VERSION`
 
 The current version, as set in package.json.
 
