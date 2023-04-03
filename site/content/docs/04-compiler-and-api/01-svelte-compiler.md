@@ -22,7 +22,7 @@ result: {
 This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const result = svelte.compile(source, {
 	// options
@@ -160,7 +160,7 @@ ast: object = svelte.parse(
 The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const ast = svelte.parse(source, { filename: 'App.svelte' });
 ```
@@ -208,8 +208,8 @@ The `markup` function receives the entire component source text, along with the 
 > Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
-const svelte = require('svelte/compiler');
-const MagicString = require('magic-string');
+import svelte from 'svelte/compiler';
+import MagicString from 'magic-string';
 
 const { code } = await svelte.preprocess(
 	source,
@@ -235,37 +235,27 @@ const { code } = await svelte.preprocess(
 
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```js
-const svelte = require('svelte/compiler');
-const sass = require('node-sass');
-const { dirname } = require('path');
+import { preprocess } from 'svelte/compiler';
+import sass from 'sass';
+import { dirname } from 'path';
 
-const { code, dependencies } = await svelte.preprocess(
+const { code, dependencies } = await preprocess(
 	source,
 	{
 		style: async ({ content, attributes, filename }) => {
 			// only process <style lang="sass">
-			if (attributes.lang !== 'sass') return;
+			if (attributes.lang !== 'sass' && attributes.lang !== 'scss') return;
 
-			const { css, stats } = await new Promise((resolve, reject) =>
-				sass.render(
-					{
-						file: filename,
-						data: content,
-						includePaths: [dirname(filename)]
-					},
-					(err, result) => {
-						if (err) reject(err);
-						else resolve(result);
-					}
-				)
-			);
+			const { css, loadedUrls } = await sass.compileStringAsync(content, {
+				loadPaths: [dirname(filename)]
+			});
 
 			return {
-				code: css.toString(),
-				dependencies: stats.includedFiles
+				code: css,
+				dependencies: loadedUrls
 			};
 		}
 	},
@@ -278,7 +268,7 @@ const { code, dependencies } = await svelte.preprocess(
 Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const { code } = await svelte.preprocess(
 	source,
@@ -326,7 +316,8 @@ The `walk` function provides a way to walk the abstract syntax trees generated b
 The walker takes an abstract syntax tree to walk and an object with two optional methods: `enter` and `leave`. For each node, `enter` is called (if present). Then, unless `this.skip()` is called during `enter`, each of the children are traversed, and then `leave` is called on the node.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
+
 svelte.walk(ast, {
 	enter(node, parent, prop, index) {
 		do_something(node);
@@ -345,6 +336,6 @@ svelte.walk(ast, {
 The current version, as set in package.json.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 console.log(`running svelte version ${svelte.VERSION}`);
 ```
