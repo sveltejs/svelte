@@ -240,7 +240,7 @@ If a `dependencies` array is returned, it will be included in the result object.
 ```js
 import svelte from 'svelte/compiler';
 import sass from 'node-sass';
-const { dirname } = require('path');
+import { dirname } from 'path';
 
 const { code, dependencies } = await svelte.preprocess(
 	source,
@@ -278,7 +278,7 @@ const { code, dependencies } = await svelte.preprocess(
 Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 
 const { code } = await svelte.preprocess(
 	source,
@@ -326,7 +326,8 @@ The `walk` function provides a way to walk the abstract syntax trees generated b
 The walker takes an abstract syntax tree to walk and an object with two optional methods: `enter` and `leave`. For each node, `enter` is called (if present). Then, unless `this.skip()` is called during `enter`, each of the children are traversed, and then `leave` is called on the node.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
+
 svelte.walk(ast, {
 	enter(node, parent, prop, index) {
 		do_something(node);
@@ -345,6 +346,6 @@ svelte.walk(ast, {
 The current version, as set in package.json.
 
 ```js
-const svelte = require('svelte/compiler');
+import svelte from 'svelte/compiler';
 console.log(`running svelte version ${svelte.VERSION}`);
 ```
