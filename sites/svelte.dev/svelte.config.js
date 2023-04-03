@@ -9,7 +9,7 @@ export default {
 		adapter: adapter(),
 		prerender: {
 			// TODO use route entries instead, once https://github.com/sveltejs/kit/pull/9571 is merged
-			entries: ['*', ...repl_json_entries(), ...tutorial_entries()]
+			entries: ['*', ...repl_json_entries(), ...tutorial_entries(), ...examples_json_entries()]
 		}
 	}
 };
@@ -27,5 +27,13 @@ function tutorial_entries() {
 		get_tutorial_data(new URL('../../site/content/tutorial', import.meta.url).pathname)
 	).flatMap(({ tutorials }) =>
 		tutorials.map(({ slug }) => /** @type {(`/${string}`)} */ (`/tutorial/${slug}`))
+	);
+}
+
+function examples_json_entries() {
+	return get_examples_list(
+		get_examples_data(new URL('../../site/content/examples', import.meta.url).pathname)
+	).flatMap(({ examples }) =>
+		examples.map(({ slug }) => /** @type {(`/${string}`)} */ (`/examples/api/${slug}.json`))
 	);
 }

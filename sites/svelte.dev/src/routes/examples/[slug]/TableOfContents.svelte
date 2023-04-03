@@ -14,7 +14,8 @@
 
 <ul class="examples-toc">
 	{#each sections as section}
-		{#if section.title !== undefined}
+		<!-- Avoid embeds -->
+		{#if section.title !== 'Embeds'}
 			<li>
 				<span class="section-title">{section.title}</span>
 
