@@ -250,8 +250,7 @@ const { code, dependencies } = await preprocess(
 			if (attributes.lang !== 'sass' && attributes.lang !== 'scss') return;
 
 			const { css, loadedUrls } = await sass.compileStringAsync(content, {
-				data: content,
-				includePaths: [dirname(filename)]
+				loadPaths: [dirname(filename)]
 			});
 
 			return {
