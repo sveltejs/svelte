@@ -36,7 +36,7 @@ export default class RawMustacheTagWrapper extends Tag {
 				content => insert(content)
 			);
 
-			block.chunks.mount.push(b`if (@get_svelte_dataset(${parent_node}) !== "${hash(JSON.stringify(this.node.expression.node))}") ${insert(init)}`);
+			block.chunks.mount.push(insert(init));
 		} else {
 			const needs_anchor = in_head || (this.next ? !this.next.is_dom_node() : (!this.parent || !this.parent.is_dom_node()));
 

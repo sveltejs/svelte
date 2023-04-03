@@ -160,10 +160,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	});
 
 	if (options.hydratable) {
-		if (node.children.length === 1 && node.children[0].type === 'RawMustacheTag') {
-			renderer.add_string(` data-svelte-h="${hash(JSON.stringify(node.children[0].expression.node))}"`);
-			options = { ...options, optimised_html_hydration: true };
-		} else if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
+		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
 			renderer.add_string(` data-svelte-h="${node.hash()}"`);
 			options = { ...options, has_added_svelte_hash: true };
 		}
