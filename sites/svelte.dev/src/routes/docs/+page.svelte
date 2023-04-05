@@ -130,7 +130,7 @@
 		'accessibility-warnings-a11y-role-supports-aria-props',
 		'accessibility-warnings-a11y-structure',
 		'accessibility-warnings-a11y-unknown-aria-attribute',
-		'accessibility-warnings-a11y-unknown-role',
+		'accessibility-warnings-a11y-unknown-role'
 	];
 
 	/** @type {Map<RegExp, string>}*/
@@ -154,7 +154,7 @@
 		[/template-syntax-(const|debug|html)$/i, 'special-tags#$1'],
 		[
 			/template-syntax-(tags|attributes-and-props|text-expressions|comments)$/i,
-			'dot-svelte-files#$1',
+			'dot-svelte-files#$1'
 		],
 		// !!!! This one should stay at the bottom of `template-syntax`, or it may end up hijacking logic blocks and special tags
 		[/template-syntax-(.+)/i, 'special-elements#$1'],
@@ -164,7 +164,7 @@
 		[/run-time-(client-side-component-api)-?(.*)/i, '$1#$2'],
 		[
 			/run-time-(svelte-easing|server-side-component-api|custom-element-api|svelte-register)$/i,
-			'$1',
+			'$1'
 		],
 		// Catch all, should be at the end or will include store, motion, transition and other modules starting with svelte
 		[/run-time-(svelte)(?:-(.+))?/i, '$1#$2'],
@@ -173,7 +173,7 @@
 		[/compile-time-?(.*)/i, 'svelte-compiler#$1'],
 
 		// Accessibility warnings
-		[/(accessibility-warnings)-?(.+)/i, '$1#$2'],
+		[/(accessibility-warnings)-?(.+)/i, '$1#$2']
 	]);
 
 	function get_old_new_ids_map() {
@@ -199,7 +199,6 @@
 	}
 
 	function getURlToRedirectTo() {
-		console.log(get_old_new_ids_map());
 		const hash = $page.url.hash.replace(/^#/i, '');
 
 		if (!hash) return '/docs/introduction';
@@ -212,5 +211,8 @@
 		return `/docs/${old_new_map.get(hash)}`;
 	}
 
-	onMount(() => goto(getURlToRedirectTo(), { replaceState: true }));
+	onMount(() => {
+		console.log(get_old_new_ids_map());
+		goto(getURlToRedirectTo(), { replaceState: true });
+	});
 </script>
