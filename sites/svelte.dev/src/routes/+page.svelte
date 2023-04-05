@@ -1,11 +1,12 @@
 <script>
 	import { Blurb } from '@sveltejs/site-kit/components';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
+	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
+	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
 </script>
 
 <svelte:head>
@@ -21,7 +22,7 @@
 <Hero />
 
 <div class="blurb-shifter">
-	<Blurb>
+	<Blurb --background="var(--sk-back-1)">
 		<div slot="one">
 			<h2>Write less code</h2>
 			<p>
@@ -50,7 +51,7 @@
 
 			<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
 		</div>
-
+		<!-- 
 		<div class="description" slot="four">
 			<p>
 				Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks
@@ -94,9 +95,11 @@ npm run dev
 			</code></pre>
 
 			<a href="/tutorial" class="cta">Learn Svelte</a>
-		</div>
+		</div> -->
 	</Blurb>
 </div>
+
+<Try />
 
 <Demo />
 
@@ -125,10 +128,6 @@ npm run dev
 		margin: 10rem auto;
 		padding: 0 var(--side-nav);
 		max-width: 120rem;
-	}
-
-	.blurb-shifter {
-		margin-top: calc(-10rem + var(--side-nav));
 	}
 
 	footer {
