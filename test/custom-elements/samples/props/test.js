@@ -1,10 +1,8 @@
 import * as assert from 'assert';
-import CustomElement from './main.svelte';
+import './main.svelte';
 
 export default function (target) {
-	new CustomElement({
-		target
-	});
+	target.innerHTML = '<custom-element></custom-element>';
 
 	assert.equal(target.innerHTML, '<custom-element></custom-element>');
 

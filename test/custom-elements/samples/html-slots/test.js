@@ -13,5 +13,5 @@ export default function (target) {
 	const [slot0, slot1] = div.children;
 
 	assert.equal(slot0.assignedNodes()[1], target.querySelector('strong'));
-	assert.equal(slot1.assignedNodes().length, 0);
+	assert.equal(slot1.innerHTML, 'foo fallback content');
 }

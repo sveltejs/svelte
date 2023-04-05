@@ -1,11 +1,8 @@
 import * as assert from 'assert';
-import CustomElement from './main.svelte';
+import './main.svelte';
 
 export default function (target) {
-	new CustomElement({
-		target
-	});
-
+	target.innerHTML = '<custom-element></custom-element>';
 	const icon = target.querySelector('custom-element').shadowRoot.querySelector('.icon');
 	const before = getComputedStyle(icon, '::before');
 

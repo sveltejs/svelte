@@ -6,7 +6,7 @@ import { walk } from 'estree-walker';
 import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
@@ -25,9 +25,6 @@ export default function dom(
 
 	block.has_outro_method = true;
 
-	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.chunks.create.push(b`this.c = @noop;`);
-
 	const body = [];
 
 	if (renderer.file_var) {
@@ -35,7 +32,7 @@ export default function dom(
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+	const css = component.stylesheet.render(options.filename);
 
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
@@ -52,7 +49,6 @@ export default function dom(
 	const add_css = component.get_unique_name('add_css');
 
 	const should_add_css = (
-		!options.customElement &&
 		!!styles &&
 		options.css === 'injected'
 	);
@@ -519,8 +515,35 @@ export default function dom(
 		}
 	}
 
-	if (options.customElement) {
+	const superclass = {
+		type: 'Identifier',
+		name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
+	};
 
+	const optional_parameters = [];
+	if (should_add_css) {
+		optional_parameters.push(add_css);
+	} else if (dirty) {
+		optional_parameters.push(x`null`);
+	}
+	if (dirty) {
+		optional_parameters.push(dirty);
+	}
+
+	const declaration = b`
+		class ${name} extends ${superclass} {
+			constructor(options) {
+				super(${options.dev && 'options'});
+				@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
+				${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
+			}
+		}
+	`[0] as ClassDeclaration;
+
+	push_array(declaration.body.body, accessors);
+	body.push(declaration);
+
+	if (options.customElement && component.tag != null) {
 		let init_props = x`@attribute_to_object(this.attributes)`;
 		if (uses_slots) {
 			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
@@ -553,57 +576,15 @@ export default function dom(
 			}
 		`[0] as ClassDeclaration;
 
-		if (props.length > 0) {
-			declaration.body.body.push({
-				type: 'MethodDefinition',
-				kind: 'get',
-				static: true,
-				computed: false,
-				key: { type: 'Identifier', name: 'observedAttributes' },
-				value: x`function() {
-					return [${props.map(prop => x`"${prop.export_name}"`)}];
-				}` as FunctionExpression
-			});
-		}
-
-		push_array(declaration.body.body, accessors);
-
-		body.push(declaration);
-
-		if (component.tag != null) {
-			body.push(b`
-				@_customElements.define("${component.tag}", ${name});
-			`);
-		}
-	} else {
-		const superclass = {
-			type: 'Identifier',
-			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
-		};
-
-		const optional_parameters = [];
-		if (should_add_css) {
-			optional_parameters.push(add_css);
-		} else if (dirty) {
-			optional_parameters.push(x`null`);
-		}
-		if (dirty) {
-			optional_parameters.push(dirty);
-		}
-
-		const declaration = b`
-			class ${name} extends ${superclass} {
-				constructor(options) {
-					super(${options.dev && 'options'});
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
-					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-				}
-			}
-		`[0] as ClassDeclaration;
-
-		push_array(declaration.body.body, accessors);
-
-		body.push(declaration);
+		const props_str = writable_props.map(prop => `"${prop.export_name}"`).join(',');
+		const slots_str = [...component.slots.keys()].map(key => `"${key}"`).join(',');
+		const accessors_str = accessors
+			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
+			.map(accessor => `"${accessor.key.name}"`)
+			.join(',');
+		body.push(
+			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, [${props_str}], [${slots_str}], [${accessors_str}]));`
+		);
 	}
 
 	return { js: flatten(body), css };

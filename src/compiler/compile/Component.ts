@@ -192,7 +192,7 @@ export default class Component {
 		this.pop_ignores();
 
 		this.elements.forEach(element => this.stylesheet.apply(element));
-		if (!compile_options.customElement) this.stylesheet.reify();
+		this.stylesheet.reify();
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
