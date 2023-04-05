@@ -544,6 +544,9 @@ export default class Component {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
+							if (declarator.init?.type === 'Literal' && typeof declarator.init.value === 'boolean') {
+								variable.is_boolean = true;
+							}
 							if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}

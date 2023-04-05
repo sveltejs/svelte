@@ -576,14 +576,14 @@ export default function dom(
 			}
 		`[0] as ClassDeclaration;
 
-		const props_str = writable_props.map(prop => `"${prop.export_name}"`).join(',');
+		const props_str = JSON.stringify(writable_props.map(prop => prop.is_boolean ? { name: prop.export_name, type: 'boolean' } : prop.export_name));
 		const slots_str = [...component.slots.keys()].map(key => `"${key}"`).join(',');
 		const accessors_str = accessors
 			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
 			.map(accessor => `"${accessor.key.name}"`)
 			.join(',');
 		body.push(
-			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, [${props_str}], [${slots_str}], [${accessors_str}]));`
+			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${props_str}, [${slots_str}], [${accessors_str}]));`
 		);
 	}
 

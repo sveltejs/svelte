@@ -1,7 +1,7 @@
 <svelte:options tag="my-widget" />
 
 <script>
-	export let red;
+	export let red = false;
 	red;
 </script>
 

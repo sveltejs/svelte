@@ -2,7 +2,7 @@
 
 <script>
 	import "./my-widget.svelte";
-	export let red;
+	export let red = false;
 	red;
 </script>
 

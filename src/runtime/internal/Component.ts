@@ -1,7 +1,7 @@
 import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components, tick } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
-import { children, detach, start_hydrating, end_hydrating, set_custom_element_data, get_custom_elements_slots, insert } from './dom';
+import { children, detach, start_hydrating, end_hydrating, get_custom_elements_slots, insert } from './dom';
 import { transition_in } from './transitions';
 import { T$$ } from './types';
 import { ComponentType } from './dev';
@@ -151,6 +151,7 @@ if (typeof HTMLElement === 'function') {
 		private $$connected = false;
 		private $$data = {};
 		private $$reflecting = false;
+		private $$boolean_props: string[] = [];
 
 		constructor(
 			private $$componentCtor: ComponentType,
@@ -171,13 +172,6 @@ if (typeof HTMLElement === 'function') {
 		connectedCallback() {
 			this.$$connected = true;
 			if (!this.$$component) {
-				for (const attribute of this.attributes) {
-					// this.$$data takes precedence over this.attributes
-					if (!(attribute.name in this.$$data)) {
-						this.$$data[attribute.name] = attribute.value;
-					}
-				}
-
 				function create_slot(name: string) {
 					return () => {
 						let node: HTMLSlotElement;
@@ -209,21 +203,24 @@ if (typeof HTMLElement === 'function') {
 					}
 				}
 
+				for (const attribute of this.attributes) {
+					// this.$$data takes precedence over this.attributes
+					if (!(attribute.name in this.$$data)) {
+						this.$$data[attribute.name] = get_custom_element_value(attribute.name, attribute.value, this.$$boolean_props);
+					}
+				}
+
 				// Dilemma: We need to set the component props eagerly or they have the wrong value for actions/onMount etc.
 				// Boolean attributes are represented by the empty string, and we don't know if they represent boolean or string props.
 				this.$$component = new this.$$componentCtor({
 					target: this.shadowRoot!,
 					props: {
+						...this.$$data,
 						$$slots,
 						$$scope: {
 							ctx: []
 						}
 					}
-				});
-				// ensures that <foo-bar boolean-attribute /> works correctly
-				Object.keys(this.$$data).forEach(key => {
-					set_custom_element_data(this, key, this.$$data[key]);
-					this.$$data[key] = this[key]; // "" -> true for boolean attributes
 				});
 			}
 		}
@@ -233,8 +230,8 @@ if (typeof HTMLElement === 'function') {
 		attributeChangedCallback(attr: string, _oldValue: any, newValue: any) {
 			if (this.$$reflecting) return;
 
-			set_custom_element_data(this.$$data, attr, newValue);
-			this.$$component![attr] = this.$$data;
+			this.$$data[attr] = get_custom_element_value(attr, newValue, this.$$boolean_props);
+			this.$$component![attr] = this.$$data[attr];
 		}
 
 		disconnectedCallback() {
@@ -261,6 +258,10 @@ function camelToHyphen(str: string) {
 	return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+function get_custom_element_value(prop, value, boolean_attrs) {
+	return value === '' && boolean_attrs.indexOf(prop) !== -1 ? true : value;
+}
+
 /**
  * Turn a Svelte component into a custom element.
  * @param Component A Svelte component constructor
@@ -272,14 +273,18 @@ function camelToHyphen(str: string) {
  */
 export function create_custom_element(
 	Component: ComponentType,
-	props: string[],
+	props: (string | { name: string; type: 'boolean' })[],
 	slots: string[],
 	accessors: string[],
 	styles?: string,
 ) {
+	const prop_names = props.map((prop) => (typeof prop === 'string' ? prop : prop.name));
+	const boolean_props = props.filter((prop) => typeof prop !== 'string').map((prop) => (prop as { name:string }).name);
+
 	const Class = class extends SvelteElement {
 		constructor() {
 			super(Component, slots);
+			this.$$boolean_props = boolean_props;
 			if (styles) {
 				const style = document.createElement('style');
 				style.textContent = styles;
@@ -288,7 +293,7 @@ export function create_custom_element(
 		}
 
 		static get observedAttributes() {
-			return props;
+			return prop_names;
 		}
 	};
 
@@ -301,26 +306,26 @@ export function create_custom_element(
 			},
 
 			set(value) {
-				this.$$data[prop] = value;
+				this.$$data[prop] = get_custom_element_value(prop, value, boolean_props);
 
 				if (this.$$component) {
-					if(should_reflect.indexOf(typeof value) !== -1) {
-						this.$$reflecting = true;
-						if (value === false || value == null) {
-							this.removeAttribute(prop);
-						} else {
-							this.setAttribute(prop, value);
-						}
-						this.$$reflecting = false;
-					}
-
 					this.$$component[prop] = value;
+				}
+
+				if(should_reflect.indexOf(typeof value) !== -1 || value == null) {
+					this.$$reflecting = true;
+					if (value === false || value == null) {
+						this.removeAttribute(prop);
+					} else {
+						this.setAttribute(prop, value);
+					}
+					this.$$reflecting = false;
 				}
 			}
 		})
 	}
 
-	props.forEach((prop) => {
+	prop_names.forEach((prop) => {
 		createProperty(prop, prop);
 		// <c-e camelCase="foo" /> will be ce.camcelcase = "foo"
 		const lower = prop.toLowerCase();
