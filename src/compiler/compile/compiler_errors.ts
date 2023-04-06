@@ -206,6 +206,11 @@ export default {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
 	},
+	invalid_cePropsDefinition_attribute: {
+		code: 'invalid-cePropsDefinition-attribute',
+		message: "'cePropsDefinition' must be a statically analyzable object literal of the form " +
+			"'{ prop: { attribute?: string; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', reflect?: boolean; } }'"
+	},
 	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
 		code: 'invalid-namespace-property',
 		message: `Invalid namespace '${namespace}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')

@@ -151,7 +151,7 @@ if (typeof HTMLElement === 'function') {
 		private $$connected = false;
 		private $$data = {};
 		private $$reflecting = false;
-		private $$boolean_props: string[] = [];
+		private $$props_definition: Record<string, CustomElementPropDefinition> = {};
 
 		constructor(
 			private $$componentCtor: ComponentType,
@@ -205,13 +205,12 @@ if (typeof HTMLElement === 'function') {
 
 				for (const attribute of this.attributes) {
 					// this.$$data takes precedence over this.attributes
-					if (!(attribute.name in this.$$data)) {
-						this.$$data[attribute.name] = get_custom_element_value(attribute.name, attribute.value, this.$$boolean_props);
+					const name = this.$$get_prop_name(attribute.name);
+					if (!(name in this.$$data)) {
+						this.$$data[name] = get_custom_element_value(name, attribute.value, this.$$props_definition, 'toProp');
 					}
 				}
 
-				// Dilemma: We need to set the component props eagerly or they have the wrong value for actions/onMount etc.
-				// Boolean attributes are represented by the empty string, and we don't know if they represent boolean or string props.
 				this.$$component = new this.$$componentCtor({
 					target: this.shadowRoot!,
 					props: {
@@ -225,12 +224,13 @@ if (typeof HTMLElement === 'function') {
 			}
 		}
 
-		// TODO we don't need this when working within Svelte code, but for compatibility of people using this outside of Svelte
-		// and setting attributes through setAttribute etc, this is probably helpful
+		// We don't need this when working within Svelte code, but for compatibility of people using this outside of Svelte
+		// and setting attributes through setAttribute etc, this is helpful
 		attributeChangedCallback(attr: string, _oldValue: any, newValue: any) {
 			if (this.$$reflecting) return;
 
-			this.$$data[attr] = get_custom_element_value(attr, newValue, this.$$boolean_props);
+			attr = this.$$get_prop_name(attr);
+			this.$$data[attr] = get_custom_element_value(attr, newValue, this.$$props_definition, 'toProp');
 			this.$$component![attr] = this.$$data[attr];
 		}
 
@@ -244,28 +244,54 @@ if (typeof HTMLElement === 'function') {
 				}
 			});
 		}
+
+		private $$get_prop_name(attribute_name: string): string {
+			return Object.keys(this.$$props_definition).find(key => this.$$props_definition[key].attribute === attribute_name) || attribute_name;
+		}
 	};
 }
 
-/**
- * Attribute value types that should be reflected to the DOM. Helpful
- * for people relying on the custom element's attributes to be present,
- * for example when using a CSS selector which relies on an attribute.
- */
-const should_reflect = ['string', 'number', 'boolean'];
-
-function camelToHyphen(str: string) {
-	return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+function get_custom_element_value(prop, value, props_definition: Record<string, CustomElementPropDefinition>, transform?: 'toAttribute' | 'toProp') {
+	value = props_definition[prop]?.type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
+	if (!transform || !props_definition[prop]) {
+		return value;
+	} else if (transform === 'toAttribute') {
+		switch (props_definition[prop].type) {
+			case 'Object':
+			case 'Array':
+				return JSON.stringify(value);
+			case 'Boolean':
+				return value ? '' : null;
+			case 'Number':
+				return value == null ? null : value;
+			default:
+				return value;
+		}
+	} else {
+		switch (props_definition[prop].type) {
+			case 'Object':
+			case 'Array':
+				return JSON.parse(value);
+			case 'Boolean':
+				return value !== null;
+			case 'Number':
+				return value == null ? null : +value;
+			default:
+				return value;
+		}
+	}
 }
 
-function get_custom_element_value(prop, value, boolean_attrs) {
-	return value === '' && boolean_attrs.indexOf(prop) !== -1 ? true : value;
+interface CustomElementPropDefinition {
+	reflect?: boolean;
+	type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object';
+	attribute?: string;
 }
 
 /**
  * Turn a Svelte component into a custom element.
  * @param Component A Svelte component constructor
- * @param props The props to observe
+ * @param props_definition The props to observe
  * @param slots The slots to create
  * @param accessors Other accessors besides the ones for props the component has
  * @param styles Additional styles to apply to the shadow root (not needed for Svelte components compiled with `customElement: true`)
@@ -273,18 +299,15 @@ function get_custom_element_value(prop, value, boolean_attrs) {
  */
 export function create_custom_element(
 	Component: ComponentType,
-	props: (string | { name: string; type: 'boolean' })[],
+	props_definition: Record<string, CustomElementPropDefinition>,
 	slots: string[],
 	accessors: string[],
 	styles?: string,
 ) {
-	const prop_names = props.map((prop) => (typeof prop === 'string' ? prop : prop.name));
-	const boolean_props = props.filter((prop) => typeof prop !== 'string').map((prop) => (prop as { name:string }).name);
-
 	const Class = class extends SvelteElement {
 		constructor() {
 			super(Component, slots);
-			this.$$boolean_props = boolean_props;
+			this.$$props_definition = props_definition;
 			if (styles) {
 				const style = document.createElement('style');
 				style.textContent = styles;
@@ -293,7 +316,7 @@ export function create_custom_element(
 		}
 
 		static get observedAttributes() {
-			return prop_names;
+			return Object.keys(props_definition).map(key => props_definition[key].attribute || key);
 		}
 	};
 
@@ -306,36 +329,35 @@ export function create_custom_element(
 			},
 
 			set(value) {
-				this.$$data[prop] = get_custom_element_value(prop, value, boolean_props);
+				value = get_custom_element_value(prop, value, props_definition);
+				this.$$data[prop] = value;
 
 				if (this.$$component) {
 					this.$$component[prop] = value;
 				}
 
-				if(should_reflect.indexOf(typeof value) !== -1 || value == null) {
+				if(props_definition[prop].reflect) {
 					this.$$reflecting = true;
 					if (value === false || value == null) {
 						this.removeAttribute(prop);
 					} else {
-						this.setAttribute(prop, value);
+						this.setAttribute(
+							props_definition[prop].attribute || prop,
+							get_custom_element_value(prop, value, props_definition, 'toAttribute') as string
+						);
 					}
 					this.$$reflecting = false;
 				}
 			}
-		})
+		});
 	}
 
-	prop_names.forEach((prop) => {
+	Object.keys(props_definition).forEach((prop) => {
 		createProperty(prop, prop);
 		// <c-e camelCase="foo" /> will be ce.camcelcase = "foo"
 		const lower = prop.toLowerCase();
 		if (lower !== prop) {
 			createProperty(lower, prop);
-		}
-		// also support hyphenated version where <c-e camel-case="foo" /> will be ce['camel-case'] = "foo"
-		const hyphen = camelToHyphen(prop);
-		if (hyphen !== lower) {
-			createProperty(hyphen, prop)
 		}
 	});
 

@@ -1,8 +1,11 @@
-<svelte:options tag="custom-element" />
+<svelte:options
+	tag="custom-element"
+	cePropsDefinition={{ red: { reflect: true, type: "Boolean" } }}
+/>
 
 <script>
 	import "./my-widget.svelte";
-	export let red = false;
+	export let red;
 	red;
 </script>
 

@@ -12,7 +12,6 @@ import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
-import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -549,41 +548,20 @@ export default function dom(
 			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
 		}
 
-		const declaration = b`
-			class ${name} extends @SvelteElement {
-				constructor(options) {
-					super();
-
-					${css.code && b`
-						const style = document.createElement('style');
-						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
-						this.shadowRoot.appendChild(style)`}
-
-					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
-
-					if (options) {
-						if (options.target) {
-							@insert(options.target, this, options.anchor);
-						}
-
-						${(props.length > 0 || uses_props || uses_rest) && b`
-						if (options.props) {
-							this.$set(options.props);
-							@flush();
-						}`}
-					}
-				}
+		const props_str = writable_props.reduce((def, prop) => {
+			def[prop.export_name] = component.component_options.cePropsDefinition?.[prop.export_name] || {};
+			if (prop.is_boolean && !def[prop.export_name].type) {
+				def[prop.export_name].type = 'Boolean';
 			}
-		`[0] as ClassDeclaration;
-
-		const props_str = JSON.stringify(writable_props.map(prop => prop.is_boolean ? { name: prop.export_name, type: 'boolean' } : prop.export_name));
+			return def;
+		}, {});
 		const slots_str = [...component.slots.keys()].map(key => `"${key}"`).join(',');
 		const accessors_str = accessors
 			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
 			.map(accessor => `"${accessor.key.name}"`)
 			.join(',');
 		body.push(
-			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${props_str}, [${slots_str}], [${accessors_str}]));`
+			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}]));`
 		);
 	}
 

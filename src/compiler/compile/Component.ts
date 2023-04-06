@@ -25,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, ObjectExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -45,6 +45,7 @@ interface ComponentOptions {
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
+	cePropsDefinition?: Record<string, { reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', attribute?: string }>;
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
@@ -1524,7 +1525,7 @@ function process_component_options(component: Component, nodes) {
 				? component.compile_options.accessors
 				: !!component.compile_options.customElement,
 		preserveWhitespace: !!component.compile_options.preserveWhitespace,
-		namespace: component.compile_options.namespace
+		namespace: component.compile_options.namespace,
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');
@@ -1570,6 +1571,44 @@ function process_component_options(component: Component, nodes) {
 						}
 
 						component_options.tag = tag;
+						break;
+					}
+
+					case 'cePropsDefinition': {
+						const error = () => component.error(attribute, compiler_errors.invalid_cePropsDefinition_attribute);
+						const { value } = attribute;
+						const chunk = value[0];
+						component_options.cePropsDefinition = {};
+
+						if (!chunk) {
+							break;
+						};
+
+						if (value.length > 1 || chunk.expression?.type !== 'ObjectExpression') {
+							return error();
+						}
+
+						const object = chunk.expression as ObjectExpression;
+						for (const property of object.properties) {
+							if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
+								return error();
+							}
+							component_options.cePropsDefinition[property.key.name] = {};
+							for (const prop of property.value.properties) {
+								if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
+									return error();
+								}
+								if (['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
+									prop.key.name === 'type' && ['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(prop.value.value as string) === -1 ||
+									prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean' ||
+									prop.key.name === 'attribute' && typeof prop.value.value !== 'string'
+								) {
+									return error();
+								}
+								component_options.cePropsDefinition[property.key.name][prop.key.name] = prop.value.value;
+							}
+						}
+
 						break;
 					}
 

@@ -1589,7 +1589,11 @@ export interface SvelteHTMLElements {
 	'svelte:document': HTMLAttributes<Document>;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
-	'svelte:options': { [name: string]: any };
+	'svelte:options': {
+		tag?: string | null | undefined;
+		cePropsDefinition?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }> | undefined,
+		[name: string]: any
+	};
 	'svelte:head': { [name: string]: any };
 
 	[name: string]: { [name: string]: any };
