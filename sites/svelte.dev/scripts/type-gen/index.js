@@ -9,46 +9,6 @@ import { get_bundled_types } from './compile-types.js';
 /** @type {Array<{ name: string; comment: string; exports: Extracted[]; types: Extracted[]; exempt?: boolean; }>} */
 const modules = [];
 
-/** @param {string} code */
-function findExportedDeclarations(code) {
-	const sourceFile = ts.createSourceFile('', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-	/** @type {Map<string, ts.Statement>} */
-	const exportedIdentifiers = new Map();
-	const typeChecker = ts.createProgram([code], {}).getTypeChecker();
-
-	/**
-	 * Recursively visit all nodes in the syntax tree, looking for export specifiers.
-	 * When it finds an export specifier, it retrieves the symbol at the specifier location
-	 * and locates the first declaration of the exported identifier.
-	 * @param {ts.Node} node - The current TypeScript node to visit
-	 */
-	function visit(node) {
-		if (ts.isExportSpecifier(node)) {
-			const exportedIdentifier = node.name.getText();
-			const symbol = typeChecker.getSymbolAtLocation(node.name);
-
-			console.log(symbol);
-
-			if (symbol && symbol.declarations && symbol.declarations.length > 0) {
-				const firstDeclaration = symbol.declarations[0];
-				let parent = firstDeclaration;
-				while (parent && !ts.isStatement(parent)) {
-					parent = parent.parent;
-				}
-				if (parent) {
-					exportedIdentifiers.set(exportedIdentifier, parent);
-				}
-			}
-		}
-
-		ts.forEachChild(node, visit);
-	}
-
-	visit(sourceFile);
-
-	return exportedIdentifiers;
-}
-
 /**
  * @param {string} code
  * @param {ts.NodeArray<ts.Statement>} statements
@@ -61,22 +21,11 @@ function get_types(code, statements) {
 	const types = [];
 
 	if (statements) {
-		console.log(findExportedDeclarations(code));
-		console.log(1);
 		for (const statement of statements) {
-			if (!ts.isExportDeclaration(statement)) continue;
-			if (!statement.exportClause) continue;
+			const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
 
-			// console.log(statement.exportClause.elements);
-
-			const exports = statement
-				.getChildAt(1)
-				.getChildAt(1)
-				.getFullText()
-				.replace(/ /g, '')
-				.split(',');
-
-			if (exports.length === 0) continue;
+			const export_modifier = modifiers?.find((modifier) => modifier.kind === 93);
+			if (!export_modifier) continue;
 
 			if (
 				ts.isClassDeclaration(statement) ||
@@ -86,7 +35,6 @@ function get_types(code, statements) {
 				ts.isVariableStatement(statement) ||
 				ts.isFunctionDeclaration(statement)
 			) {
-				console.log(3);
 				const name_node = ts.isVariableStatement(statement)
 					? statement.declarationList.declarations[0]
 					: statement;
@@ -99,7 +47,6 @@ function get_types(code, statements) {
 
 				// @ts-ignore i think typescript is bad at typescript
 				if (statement.jsDoc) {
-					console.log(4);
 					// @ts-ignore
 					comment = statement.jsDoc[0].comment;
 					// @ts-ignore
@@ -115,9 +62,7 @@ function get_types(code, statements) {
 				let snippet_unformatted = code.slice(start, statement.end).trim();
 
 				if (ts.isInterfaceDeclaration(statement)) {
-					console.log(5);
 					if (statement.members.length > 0) {
-						console.log(6);
 						for (const member of statement.members) {
 							children.push(munge_type_element(member));
 						}
@@ -149,8 +94,6 @@ function get_types(code, statements) {
 					})
 					.replace(/\s*(\/\*…\*\/)\s*/g, '/*…*/')
 					.trim();
-
-				// console.log(ts.isVariableStatement(statement) || ts.isFunctionDeclaration(statement));
 
 				const collection =
 					ts.isVariableStatement(statement) || ts.isFunctionDeclaration(statement)
@@ -273,17 +216,16 @@ const bundled_types = await get_bundled_types();
 // 	});
 // }
 
-// // TODO: This is not working yet
-// {
-// 	const code = bundled_types.get('svelte/runtime') ?? '';
-// 	const node = ts.createSourceFile('runtime/index.d.ts', code, ts.ScriptTarget.Latest, true);
+{
+	const code = bundled_types.get('svelte/runtime') ?? '';
+	const node = ts.createSourceFile('runtime/index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// 	modules.push({
-// 		name: 'svelte',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+	modules.push({
+		name: 'svelte',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
 {
 	const code = bundled_types.get('svelte/action') ?? '';
@@ -296,88 +238,86 @@ const bundled_types = await get_bundled_types();
 	});
 }
 
-// {
-// 	const code = bundled_types.get('svelte/animate') ?? '';
-// 	const node = ts.createSourceFile(
-// 		'runtime/animate/index.d.ts',
-// 		code,
-// 		ts.ScriptTarget.Latest,
-// 		true
-// 	);
+{
+	const code = bundled_types.get('svelte/animate') ?? '';
+	const node = ts.createSourceFile(
+		'runtime/animate/index.d.ts',
+		code,
+		ts.ScriptTarget.Latest,
+		true
+	);
 
-// 	modules.push({
-// 		name: 'svelte/animate',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+	modules.push({
+		name: 'svelte/animate',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
-// {
-// 	const code = bundled_types.get('svelte/easing') ?? '';
-// 	const node = ts.createSourceFile('runtime/easing/index.d.ts', code, ts.ScriptTarget.Latest, true);
+{
+	const code = bundled_types.get('svelte/easing') ?? '';
+	const node = ts.createSourceFile('runtime/easing/index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// 	console.log(node.statements);
+	modules.push({
+		name: 'svelte/easing',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
-// 	modules.push({
-// 		name: 'svelte/easing',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+{
+	const code = bundled_types.get('svelte/motion') ?? '';
+	const node = ts.createSourceFile('runtime/motion/index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// {
-// 	const code = bundled_types.get('svelte/motion') ?? '';
-// 	const node = ts.createSourceFile('runtime/motion/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	modules.push({
+		name: 'svelte/motion',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
-// 	modules.push({
-// 		name: 'svelte/motion',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+{
+	const code = bundled_types.get('svelte/store') ?? '';
+	const node = ts.createSourceFile('runtime/store/index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// {
-// 	const code = bundled_types.get('svelte/store') ?? '';
-// 	const node = ts.createSourceFile('runtime/store/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	modules.push({
+		name: 'svelte/store',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
-// 	modules.push({
-// 		name: 'svelte/store',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+{
+	const code = bundled_types.get('svelte/transition') ?? '';
+	const node = ts.createSourceFile(
+		'runtime/transition/index.d.ts',
+		code,
+		ts.ScriptTarget.Latest,
+		true
+	);
 
-// {
-// 	const code = bundled_types.get('svelte/transition') ?? '';
-// 	const node = ts.createSourceFile(
-// 		'runtime/transition/index.d.ts',
-// 		code,
-// 		ts.ScriptTarget.Latest,
-// 		true
-// 	);
+	modules.push({
+		name: 'svelte/transition',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
-// 	modules.push({
-// 		name: 'svelte/transition',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+{
+	const code = bundled_types.get('svelte/internal') ?? '';
+	const node = ts.createSourceFile(
+		'runtime/internal/index.d.ts',
+		code,
+		ts.ScriptTarget.Latest,
+		true
+	);
 
-// {
-// 	const code = bundled_types.get('svelte/internal') ?? '';
-// 	const node = ts.createSourceFile(
-// 		'runtime/internal/index.d.ts',
-// 		code,
-// 		ts.ScriptTarget.Latest,
-// 		true
-// 	);
-
-// 	modules.push({
-// 		name: 'svelte/internal',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+	modules.push({
+		name: 'svelte/internal',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
 // const dir = fileURLToPath(
 // 	new URL('../../../../packages/kit/types/synthetic', import.meta.url).href
@@ -396,27 +336,27 @@ const bundled_types = await get_bundled_types();
 // 	});
 // }
 
-// {
-// 	const code = read_d_ts_file('types/ambient.d.ts');
-// 	const node = ts.createSourceFile('ambient.d.ts', code, ts.ScriptTarget.Latest, true);
+{
+	const code = read_d_ts_file('types/ambient.d.ts');
+	const node = ts.createSourceFile('ambient.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// 	for (const statement of node.statements) {
-// 		if (ts.isModuleDeclaration(statement)) {
-// 			// @ts-ignore
-// 			const name = statement.name.text || statement.name.escapedText;
+	for (const statement of node.statements) {
+		if (ts.isModuleDeclaration(statement)) {
+			// @ts-ignore
+			const name = statement.name.text || statement.name.escapedText;
 
-// 			// @ts-ignore
-// 			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
+			// @ts-ignore
+			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
 
-// 			modules.push({
-// 				name,
-// 				comment,
-// 				// @ts-ignore
-// 				...get_types(code, statement.body?.statements)
-// 			});
-// 		}
-// 	}
-// }
+			modules.push({
+				name,
+				comment,
+				// @ts-ignore
+				...get_types(code, statement.body?.statements)
+			});
+		}
+	}
+}
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
