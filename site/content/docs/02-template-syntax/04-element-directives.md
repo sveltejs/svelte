@@ -276,6 +276,7 @@ Inputs that work together can use `bind:group`.
 ```svelte
 <script>
 	let tortilla = 'Plain';
+	/** @type {Array<string>} */
 	let fillings = [];
 </script>
 
@@ -303,6 +304,7 @@ To get a reference to a DOM node, use `bind:this`.
 <script>
 	import { onMount } from 'svelte';
 
+	/** @type {HTMLCanvasElement} */
 	let canvasElement;
 
 	onMount(() => {
@@ -399,6 +401,7 @@ Actions are functions that are called when an element is created. They can retur
 
 ```svelte
 <script>
+	/** @param {HTMLElement} node */
 	function foo(node) {
 		// the node has been mounted in the DOM
 
@@ -505,6 +508,7 @@ The function is called repeatedly _before_ the transition begins, with different
 <script>
 	import { elasticOut } from 'svelte/easing';
 
+	/** @type {boolean} */
 	export let visible;
 
 	function whoosh(node, params) {
@@ -710,10 +714,17 @@ The `t` argument passed to `css` is a value that goes from `0` and `1` after the
 
 The function is called repeatedly _before_ the animation begins, with different `t` and `u` arguments.
 
+<!-- TODO: Types -->
+
 ```svelte
 <script>
 	import { cubicOut } from 'svelte/easing';
 
+	/**
+	 * @param {HTMLElement} node
+	 * @param {{ from: DOMRect, to: DOMRect }} states
+	 * @param {any} params
+	 */
 	function whizz(node, { from, to }, params) {
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
@@ -742,6 +753,11 @@ A custom animation function can also return a `tick` function, which is called _
 <script>
 	import { cubicOut } from 'svelte/easing';
 
+	/**
+	 * @param {HTMLElement} node
+	 * @param {{ from: DOMRect, to: DOMRect }} states
+	 * @param {any} params
+	 */
 	function whizz(node, { from, to }, params) {
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;

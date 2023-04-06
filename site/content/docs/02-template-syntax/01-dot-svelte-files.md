@@ -69,6 +69,7 @@ You can use reserved words as prop names.
 
 ```svelte
 <script>
+	/** @type {string} */
 	let className;
 
 	// creates a `class` property, even
@@ -192,6 +193,7 @@ If a statement consists entirely of an assignment to an undeclared variable, Sve
 
 ```svelte
 <script>
+	/** @type {number} */
 	export let num;
 
 	// we don't need to declare `squared` and `cubed`

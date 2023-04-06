@@ -70,6 +70,7 @@ Creates a store whose value cannot be set from 'outside', the first argument is 
 ```js
 import { readable } from 'svelte/store';
 
+/** @type {import('svelte/store').Readable<Date>} */
 const time = readable(null, (set) => {
 	set(new Date());
 

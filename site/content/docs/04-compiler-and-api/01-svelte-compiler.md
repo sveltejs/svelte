@@ -172,10 +172,11 @@ A number of [community-maintained preprocessing plugins](https://sveltesociety.d
 You can write your own preprocessor using the `svelte.preprocess` API.
 
 ```js
-result: {
+/** @type {{
 	code: string,
 	dependencies: Array<string>
-} = await svelte.preprocess(
+}} */
+result = await svelte.preprocess(
 	source: string,
 	preprocessors: Array<{
 		markup?: (input: { content: string, filename: string }) => Promise<{

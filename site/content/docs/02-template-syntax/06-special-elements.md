@@ -156,6 +156,7 @@ It cannot appear at the top level of your markup; it must be inside an if or eac
 
 ```svelte
 <script>
+	/** @type {number} */
 	export let count;
 </script>
 
@@ -198,6 +199,8 @@ If `this` is the name of a [void element](https://developer.mozilla.org/en-US/do
 ```svelte
 <script>
 	let tag = 'div';
+
+	/** @type {(e: MouseEvent) => void} */
 	export let handler;
 </script>
 
@@ -220,6 +223,7 @@ Unlike `<svelte:self>`, this element may only appear at the top level of your co
 
 ```svelte
 <script>
+	/** @param {KeyboardEvent} event */
 	function handleKeydown(event) {
 		alert(`pressed the ${event.key} key`);
 	}

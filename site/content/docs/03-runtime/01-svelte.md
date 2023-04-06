@@ -109,7 +109,8 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 ## `tick`
 
 ```js
-promise: Promise = tick();
+/** @type {Promise<void>} */
+promise = tick();
 ```
 
 Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
@@ -127,6 +128,8 @@ Returns a promise that resolves once any pending state changes have been applied
 ```
 
 ## `setContext`
+
+<!-- TODO: Better typing information -->
 
 ```js
 setContext(key: any, context: any)
@@ -165,7 +168,7 @@ Retrieves the context that belongs to the closest parent component with the spec
 ## `hasContext`
 
 ```js
-hasContext: boolean = hasContext(key: any)
+hasContext = hasContext(key: any)
 ```
 
 Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
