@@ -360,6 +360,10 @@ const bundled_types = await get_bundled_types();
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
+try {
+	fs.mkdirSync(new URL('../../src/lib/generated', import.meta.url), { recursive: true });
+} catch {}
+
 fs.writeFileSync(
 	new URL('../../src/lib/generated/type-info.js', import.meta.url),
 	`
