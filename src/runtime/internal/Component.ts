@@ -172,25 +172,36 @@ if (typeof HTMLElement === 'function') {
 		connectedCallback() {
 			this.$$connected = true;
 			if (!this.$$component) {
-				function create_slot(name: string) {
+				function create_slot(name: string, $$c_e = false) {
 					return () => {
 						let node: HTMLSlotElement;
-						return {
+						const obj = {
 							c: function create() {
 								node = document.createElement('slot');
 								if (name !== 'default') {
 									node.setAttribute('name', name);
 								}
+								if (typeof obj.$$c_e === 'object') {
+									(obj.$$c_e as any).c()
+								}
 							},
 							m: function mount(target: HTMLElement, anchor?: HTMLElement) {
 								insert(target, node, anchor);
+								if (typeof obj.$$c_e === 'object') {
+									(obj.$$c_e as any).m(node, anchor)
+								}
 							},
 							d: function destroy(detaching: boolean) {
 								if (detaching) {
+									if (typeof obj.$$c_e === 'object') {
+										(obj.$$c_e as any).d(detaching)
+									}
 									detach(node);
 								}
-							}
+							},
+							$$c_e
 						};
+						return obj;
 					};
 				}
 
@@ -199,6 +210,15 @@ if (typeof HTMLElement === 'function') {
 				for (const name of this.$$slots) {
 					if (name in existing_slots) {
 						$$slots[name] = [create_slot(name)];
+					}
+				}
+
+				if (!Object.keys($$slots).length && this.$$slots.length) {
+					// There are potentially slots, but we didn't find any. This could be due to Svelte adding the child nodes
+					// only after the component is created (in the mount phase). In this case, pass in placeholder slots.
+					// The drawback is that all $$slots properties will be `true`, even if the component doesn't use them.
+					for (const name of this.$$slots) {
+						$$slots[name] = [create_slot(name, true)];
 					}
 				}
 

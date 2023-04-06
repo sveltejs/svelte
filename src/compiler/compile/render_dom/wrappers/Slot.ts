@@ -132,6 +132,10 @@ export default class SlotWrapper extends Wrapper {
 			const ${slot_definition} = ${renderer.reference('#slots')}.${slot_name};
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
+			${has_fallback && this.renderer.options.customElement && this.renderer.component.component_options.tag
+				// This ensures that fallback content is rendered into the <slot> element given by the custom element wrapper
+				? b`if (${slot_or_fallback}.$$c_e) { ${slot_or_fallback}.$$c_e = ${this.fallback.name}(#ctx); }`
+				: null}
 		`);
 
 		block.chunks.create.push(
