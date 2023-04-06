@@ -155,7 +155,7 @@ if (typeof HTMLElement === 'function') {
 
 		constructor(
 			private $$componentCtor: ComponentType,
-			private $$slots: string[],
+			private $$slots: string[]
 		) {
 			super();
 			this.attachShadow({ mode: 'open' });
@@ -187,15 +187,14 @@ if (typeof HTMLElement === 'function') {
 							},
 							d: function destroy(detaching: boolean) {
 								if (detaching) {
-									detach(node)
+									detach(node);
 								}
-							},
-							$$c_e: true
+							}
 						};
 					};
 				}
 
-				let $$slots: Record<string, any> = {};
+				const $$slots: Record<string, any> = {};
 				const existing_slots = get_custom_elements_slots(this);
 				for (const name of this.$$slots) {
 					if (name in existing_slots) {
@@ -251,7 +250,7 @@ if (typeof HTMLElement === 'function') {
 	};
 }
 
-function get_custom_element_value(prop, value, props_definition: Record<string, CustomElementPropDefinition>, transform?: 'toAttribute' | 'toProp') {
+function get_custom_element_value(prop: string, value: any, props_definition: Record<string, CustomElementPropDefinition>, transform?: 'toAttribute' | 'toProp') {
 	value = props_definition[prop]?.type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
 	if (!transform || !props_definition[prop]) {
 		return value;
@@ -259,7 +258,7 @@ function get_custom_element_value(prop, value, props_definition: Record<string, 
 		switch (props_definition[prop].type) {
 			case 'Object':
 			case 'Array':
-				return JSON.stringify(value);
+				return value == null ? null : JSON.stringify(value);
 			case 'Boolean':
 				return value ? '' : null;
 			case 'Number':
@@ -271,11 +270,11 @@ function get_custom_element_value(prop, value, props_definition: Record<string, 
 		switch (props_definition[prop].type) {
 			case 'Object':
 			case 'Array':
-				return JSON.parse(value);
+				return value && JSON.parse(value);
 			case 'Boolean':
-				return value !== null;
+				return value; // conversion already handled above
 			case 'Number':
-				return value == null ? null : +value;
+				return value != null ? +value : value;
 			default:
 				return value;
 		}
@@ -302,7 +301,7 @@ export function create_custom_element(
 	props_definition: Record<string, CustomElementPropDefinition>,
 	slots: string[],
 	accessors: string[],
-	styles?: string,
+	styles?: string
 ) {
 	const Class = class extends SvelteElement {
 		constructor() {
@@ -336,14 +335,15 @@ export function create_custom_element(
 					this.$$component[prop] = value;
 				}
 
-				if(props_definition[prop].reflect) {
+				if (props_definition[prop].reflect) {
 					this.$$reflecting = true;
-					if (value === false || value == null) {
+					const attribute_value = get_custom_element_value(prop, value, props_definition, 'toAttribute');
+					if (attribute_value == null) {
 						this.removeAttribute(prop);
 					} else {
 						this.setAttribute(
 							props_definition[prop].attribute || prop,
-							get_custom_element_value(prop, value, props_definition, 'toAttribute') as string
+							attribute_value as string
 						);
 					}
 					this.$$reflecting = false;
@@ -365,8 +365,8 @@ export function create_custom_element(
 		Object.defineProperty(Class.prototype, accessor, {
 			get() {
 				return this.$$component?.[accessor];
-			},
-		})
+			}
+		});
 	});
 
 	return Class;

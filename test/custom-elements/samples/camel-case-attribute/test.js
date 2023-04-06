@@ -10,15 +10,15 @@ export default function (target) {
 	el.setAttribute('camel-case', 'universe');
 	el.setAttribute('an-array', '[3,4]');
 	assert.equal(el.shadowRoot.innerHTML, '<h1>Hello universe!</h1> <p>3</p><p>4</p>');
-	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[3,4]"></custom-element>')
+	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[3,4]"></custom-element>');
 
 	el.camelCase = 'galaxy';
 	el.anArray = [5, 6];
 	assert.equal(el.shadowRoot.innerHTML, '<h1>Hello galaxy!</h1> <p>5</p><p>6</p>');
-	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[5,6]"></custom-element>')
+	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[5,6]"></custom-element>');
 
 	el.camelcase = 'solar system';
 	el.anarray = [7, 8];
 	assert.equal(el.shadowRoot.innerHTML, '<h1>Hello solar system!</h1> <p>7</p><p>8</p>');
-	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[7,8]"></custom-element>')
+	assert.equal(target.innerHTML, '<custom-element camel-case="universe" an-array="[7,8]"></custom-element>');
 }

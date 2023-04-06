@@ -543,11 +543,6 @@ export default function dom(
 	body.push(declaration);
 
 	if (options.customElement && component.tag != null) {
-		let init_props = x`@attribute_to_object(this.attributes)`;
-		if (uses_slots) {
-			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
-		}
-
 		const props_str = writable_props.reduce((def, prop) => {
 			def[prop.export_name] = component.component_options.cePropsDefinition?.[prop.export_name] || {};
 			if (prop.is_boolean && !def[prop.export_name].type) {
@@ -560,6 +555,7 @@ export default function dom(
 			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
 			.map(accessor => `"${accessor.key.name}"`)
 			.join(',');
+
 		body.push(
 			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}]));`
 		);

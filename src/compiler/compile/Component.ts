@@ -1525,7 +1525,7 @@ function process_component_options(component: Component, nodes) {
 				? component.compile_options.accessors
 				: !!component.compile_options.customElement,
 		preserveWhitespace: !!component.compile_options.preserveWhitespace,
-		namespace: component.compile_options.namespace,
+		namespace: component.compile_options.namespace
 	};
 
 	const node = nodes.find(node => node.name === 'svelte:options');
@@ -1582,7 +1582,7 @@ function process_component_options(component: Component, nodes) {
 
 						if (!chunk) {
 							break;
-						};
+						}
 
 						if (value.length > 1 || chunk.expression?.type !== 'ObjectExpression') {
 							return error();
