@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "node scripts/update.js && vite dev",
 		"build": "node scripts/update.js && vite build",
-		"update": "node scripts/update.js --force=true && node scripts/generate-types.js && node scripts/generate_examples.js",
+		"update": "node scripts/update.js --force=true && node scripts/type-gen/index.js && node scripts/generate_examples.js",
 		"preview": "vite preview",
 		"start": "node build",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
