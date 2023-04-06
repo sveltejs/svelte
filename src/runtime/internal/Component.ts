@@ -313,25 +313,18 @@ interface CustomElementPropDefinition {
  * @param props_definition The props to observe
  * @param slots The slots to create
  * @param accessors Other accessors besides the ones for props the component has
- * @param styles Additional styles to apply to the shadow root (not needed for Svelte components compiled with `customElement: true`)
  * @returns A custom element class
  */
 export function create_custom_element(
 	Component: ComponentType,
 	props_definition: Record<string, CustomElementPropDefinition>,
 	slots: string[],
-	accessors: string[],
-	styles?: string
+	accessors: string[]
 ) {
 	const Class = class extends SvelteElement {
 		constructor() {
 			super(Component, slots);
 			this.$$props_definition = props_definition;
-			if (styles) {
-				const style = document.createElement('style');
-				style.textContent = styles;
-				this.shadowRoot!.appendChild(style);
-			}
 		}
 
 		static get observedAttributes() {
