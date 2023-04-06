@@ -139,3 +139,7 @@ If the initial value is `undefined` or `null`, the first value change will take 
 const size = spring();
 $: $size = big ? 100 : 10;
 ```
+
+## Types
+
+> TYPES: svelte/motion

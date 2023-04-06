@@ -262,3 +262,7 @@ The `crossfade` function creates a pair of [transitions](/docs/element-directive
 	<small in:send={{ key }} out:receive={{ key }}>small elem</small>
 {/if}
 ```
+
+## Types
+
+> TYPES: svelte/transition

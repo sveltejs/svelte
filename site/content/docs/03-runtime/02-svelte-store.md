@@ -192,3 +192,7 @@ import { get } from 'svelte/store';
 
 const value = get(store);
 ```
+
+## Types
+
+> TYPES: svelte/store

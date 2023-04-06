@@ -39,3 +39,7 @@ You can see a full example on the [animations tutorial](/tutorial/animate)
 	</div>
 {/each}
 ```
+
+## Types
+
+> TYPES: svelte/animate

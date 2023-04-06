@@ -4,7 +4,7 @@
 // import 'prismjs/components/prism-typescript.js';
 import { createShikiHighlighter } from 'shiki-twoslash';
 import { SHIKI_LANGUAGE_MAP, normalizeSlugify, transform } from '../markdown';
-// import { render, replace_placeholders } from './render.js';
+import { replace_placeholders } from './render.js';
 // import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
 import { createHash } from 'crypto';
 import MagicString from 'magic-string';
@@ -23,11 +23,13 @@ export async function get_parsed_docs(docs_data, slug) {
 
 	const highlighter = await createShikiHighlighter({ theme: 'css-variables' });
 
+	const placeholders_replaced_content = replace_placeholders(page.content);
+
 	return {
 		...page,
 		content: parse({
 			file: page.file,
-			body: generate_ts_from_js(page.content),
+			body: generate_ts_from_js(placeholders_replaced_content),
 			code: (source, language, current) => {
 				const hash = createHash('sha256');
 				hash.update(source + language + current);
