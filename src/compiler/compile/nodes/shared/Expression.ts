@@ -373,6 +373,7 @@ export default class Expression {
 								// add to get_xxx_context
 								// child_ctx[x] = function () { ... }
 								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
+									type: 'DestructuredVariable',
 									key: func_id,
 									modifier: () => func_expression,
 									default_modifier: node => node

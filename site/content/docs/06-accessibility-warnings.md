@@ -137,6 +137,17 @@ Enforce that attributes important for accessibility have a valid value. For exam
 
 ---
 
+### `a11y-interactive-supports-focus`
+
+Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
+
+```sv
+<!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
+<div role="button" on:keypress={() => {}} />
+```
+
+---
+
 ### `a11y-label-has-associated-control`
 
 Enforce that a label tag has a text label and an associated control.
@@ -273,6 +284,17 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 ```sv
 <!-- A11y: <textarea> cannot have role 'listitem' -->
 <textarea role="listitem" />
+```
+
+---
+
+### `a11y-no-noninteractive-element-to-interactive-role`
+
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
+
+```sv
+<!-- A11y: Non-interactive element <h3> cannot have interactive role 'searchbox' -->
+<h3 role="searchbox">Button</h3>
 ```
 
 ---
