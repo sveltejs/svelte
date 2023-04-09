@@ -4,7 +4,7 @@ export const regex_starts_with_whitespace = /^\s/;
 export const regex_starts_with_whitespaces = /^[ \t\r\n]*/;
 export const regex_ends_with_whitespace = /\s$/;
 export const regex_ends_with_whitespaces = /[ \t\r\n]*$/;
-export const regex_only_whitespaces = /^\s+$/;
+export const regex_only_whitespaces = /^[ \t\n\r\f]+$/;
 
 export const regex_whitespace_characters = /\s/g;
 export const regex_non_whitespace_character = /\S/;
