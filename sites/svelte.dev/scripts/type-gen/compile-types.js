@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { rollup } from 'rollup';
 import dts from 'rollup-plugin-dts';
 import ts from 'typescript';
+import { VERSION } from 'svelte/compiler';
 
 export async function get_bundled_types() {
 	const dtsSources = fs.readdirSync(new URL('./dts-sources', import.meta.url));
@@ -14,9 +15,13 @@ export async function get_bundled_types() {
 	for (const file of dtsSources) {
 		const bundle = await rollup({
 			input: new URL(`./dts-sources/${file}`, import.meta.url).pathname,
-			plugins: [dts({ respectExternal: true })],
-			external: ['estree-walker']
+			plugins: [dts({ respectExternal: true })]
+			// external: ['estree-walker']
 		});
+
+		try {
+			fs.mkdirSync(new URL(`../../node_modules/.type-gen`, import.meta.url));
+		} catch {}
 
 		codes.set(
 			(file === 'index.d.ts' ? 'svelte' : `svelte/${file}`).replace('.d.ts', ''),
@@ -29,7 +34,9 @@ export async function get_bundled_types() {
 	return codes;
 }
 
-/** @param {string} str */
+/**
+ * @param {string} str
+ */
 function useExportDeclarations(str) {
 	const magicStr = new MagicString(str);
 
@@ -42,8 +49,8 @@ function useExportDeclarations(str) {
 	);
 
 	// There's only gonna be one because of the output of dts-plugin
-	const exportDeclaration = sourceFile.statements.find(
-		(statement) => statement.kind === ts.SyntaxKind.ExportDeclaration
+	const exportDeclaration = sourceFile.statements.find((statement) =>
+		ts.isExportDeclaration(statement)
 	);
 
 	if (exportDeclaration && !ts.isExportDeclaration(exportDeclaration)) return str;
@@ -59,13 +66,18 @@ function useExportDeclarations(str) {
 				ts.isFunctionDeclaration(statement) ||
 				ts.isInterfaceDeclaration(statement) ||
 				ts.isTypeAliasDeclaration(statement) ||
-				ts.isVariableDeclaration(statement)
+				ts.isVariableStatement(statement)
 			)
 		)
 			continue;
 
 		for (const exportedSymbol of exportedSymbols) {
-			if (statement.name?.getText() === exportedSymbol) {
+			if (
+				(ts.isVariableStatement(statement) &&
+					statement.declarationList.declarations[0].name.getText() === exportedSymbol) ||
+				// @ts-ignore
+				statement.name?.getText() === exportedSymbol
+			) {
 				magicStr.appendLeft(statement.getStart(), 'export ');
 			}
 		}
@@ -73,5 +85,10 @@ function useExportDeclarations(str) {
 
 	magicStr.remove(exportDeclaration?.getStart() ?? 0, exportDeclaration?.getEnd() ?? 0);
 
+	// In case it is export declare VERSION = '__VERSION__', replace it with svelte's real version
+	magicStr.replace('__VERSION__', VERSION);
+
 	return magicStr.toString() ?? str;
 }
+
+get_bundled_types();

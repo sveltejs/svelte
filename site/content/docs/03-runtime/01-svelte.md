@@ -109,7 +109,6 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 ## `tick`
 
 ```js
-/** @type {Promise<void>} */
 promise = tick();
 ```
 

@@ -205,16 +205,17 @@ function read_d_ts_file(str) {
 
 const bundled_types = await get_bundled_types();
 
-// {
-// 	const code = bundled_types.get('svelte/compiler') ?? '';
-// 	const node = ts.createSourceFile('compiler/index.d.ts', code, ts.ScriptTarget.Latest, true);
+{
+	const code = bundled_types.get('svelte/compiler') ?? '';
+	// console.log(code);
+	const node = ts.createSourceFile('compiler/index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-// 	modules.push({
-// 		name: 'svelte/compiler',
-// 		comment: '',
-// 		...get_types(code, node.statements)
-// 	});
-// }
+	modules.push({
+		name: 'svelte/compiler',
+		comment: '',
+		...get_types(code, node.statements)
+	});
+}
 
 {
 	const code = bundled_types.get('svelte/runtime') ?? '';
@@ -336,27 +337,27 @@ const bundled_types = await get_bundled_types();
 // 	});
 // }
 
-{
-	const code = read_d_ts_file('types/ambient.d.ts');
-	const node = ts.createSourceFile('ambient.d.ts', code, ts.ScriptTarget.Latest, true);
+// {
+// 	const code = read_d_ts_file('types/ambient.d.ts');
+// 	const node = ts.createSourceFile('ambient.d.ts', code, ts.ScriptTarget.Latest, true);
 
-	for (const statement of node.statements) {
-		if (ts.isModuleDeclaration(statement)) {
-			// @ts-ignore
-			const name = statement.name.text || statement.name.escapedText;
+// 	for (const statement of node.statements) {
+// 		if (ts.isModuleDeclaration(statement)) {
+// 			// @ts-ignore
+// 			const name = statement.name.text || statement.name.escapedText;
 
-			// @ts-ignore
-			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
+// 			// @ts-ignore
+// 			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
 
-			modules.push({
-				name,
-				comment,
-				// @ts-ignore
-				...get_types(code, statement.body?.statements)
-			});
-		}
-	}
-}
+// 			modules.push({
+// 				name,
+// 				comment,
+// 				// @ts-ignore
+// 				...get_types(code, statement.body?.statements)
+// 			});
+// 		}
+// 	}
+// }
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
