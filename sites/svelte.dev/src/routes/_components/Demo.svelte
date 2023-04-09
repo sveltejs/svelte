@@ -58,12 +58,11 @@
 
 <style>
 	h3 {
-		/* color: white; */
+		font-size: var(--sk-text-xl);
 	}
 
 	.description {
 		color: var(--sk-text-2);
-		height: 12rem; /* prevent layout popping when tab changes */
 	}
 
 	.container {
@@ -78,9 +77,13 @@
 		width: 100%;
 		height: 5rem;
 		grid-template-columns: 4fr 1fr;
-		color: var(--sk-text-2);
+		color: var(--sk-text-1);
 		align-items: center;
 		font-size: var(--h5);
+	}
+
+	a {
+		color: unset;
 	}
 
 	.tabs {
@@ -120,11 +123,6 @@
 
 	.large-show {
 		display: none;
-	}
-
-	a,
-	.description :global(a) {
-		/* color: white; */
 	}
 
 	.description :global(a) {

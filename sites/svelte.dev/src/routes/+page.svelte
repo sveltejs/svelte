@@ -21,48 +21,41 @@
 
 <Hero />
 
-<div class="blurb-shifter">
-	<Blurb --background="var(--sk-back-1)">
-		<div slot="one">
-			<h2>Write less code</h2>
-			<p>
-				Build boilerplate-free components using languages you already know — HTML, CSS and
-				JavaScript
-			</p>
+<Blurb --background="var(--sk-back-1)">
+	<div slot="one">
+		<h2>Write less code</h2>
+		<p>
+			Build boilerplate-free components using languages you already know — HTML, CSS and JavaScript
+		</p>
 
-			<a href="/blog/write-less-code" class="cta">learn more</a>
-		</div>
+		<a href="/blog/write-less-code" class="cta">learn more</a>
+	</div>
 
-		<div slot="two">
-			<h2>No virtual DOM</h2>
-			<p>
-				Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and
-				stays fast
-			</p>
+	<div slot="two">
+		<h2>No virtual DOM</h2>
+		<p>
+			Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and stays
+			fast
+		</p>
 
-			<a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a>
-		</div>
+		<a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a>
+	</div>
 
-		<div slot="three">
-			<h2>Truly reactive</h2>
-			<p>
-				No more complex state management libraries — Svelte brings reactivity to JavaScript itself
-			</p>
+	<div slot="three">
+		<h2>Truly reactive</h2>
+		<p>
+			No more complex state management libraries — Svelte brings reactivity to JavaScript itself
+		</p>
 
-			<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
-		</div>
-	</Blurb>
-</div>
+		<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
+	</div>
+</Blurb>
 
 <Try />
 
 <Demo />
 
-<section>
-	<h3>Who's using Svelte?</h3>
-
-	<WhosUsingSvelte />
-</section>
+<WhosUsingSvelte />
 
 <Supporters />
 
@@ -78,11 +71,8 @@
 </footer>
 
 <style>
-	section {
-		position: relative;
-		margin: 10rem auto;
-		padding: 0 var(--side-nav);
-		max-width: 120rem;
+	h2 {
+		line-height: 1.05;
 	}
 
 	footer {
@@ -97,10 +87,4 @@
 		padding: 0.5rem 1rem;
 		display: block;
 	}
-
-	/* @media (min-width: 900px) {
-		.blurb-shifter {
-			margin-top: -12em;
-		}
-	} */
 </style>

@@ -1,9 +1,10 @@
 <script>
 	import { Section } from '@sveltejs/site-kit/components';
 	import TryTerminal from '@sveltejs/site-kit/components/home/TryTerminal.svelte';
+	import { theme } from '@sveltejs/site-kit/theme';
 </script>
 
-<div class="container">
+<div class="container" class:dark={$theme.current === 'dark'}>
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="try">
@@ -60,6 +61,11 @@
 		--background-2: var(--sk-back-4);
 	}
 
+	.container.dark {
+		--background-1: #222;
+		--background-2: #444;
+	}
+
 	.grid {
 		display: grid;
 		gap: 1em;
@@ -77,12 +83,8 @@
 		}
 	}
 
-	@media (prefers-color-scheme: dark) {
-		.container {
-			/* --background-1: radial-gradient(circle at top right, rgb(49, 49, 49), rgb(77, 77, 77)); */
-			--background-1: #222;
-			--background-2: #444;
-		}
+	.create-an-app {
+		font-size: 0.75em;
 	}
 
 	.grid *::selection {
@@ -92,6 +94,10 @@
 
 	.description {
 		color: var(--sk-text-1);
+	}
+
+	.description p:first-child {
+		margin-top: 0;
 	}
 
 	.try {
