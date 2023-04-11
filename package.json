@@ -158,7 +158,7 @@
     "source-map-support": "^0.5.21",
     "tiny-glob": "^0.2.9",
     "tslib": "^2.5.0",
-    "typescript": "^3.7.5",
+    "typescript": "^4.9.3",
     "util": "^0.12.5"
   }
 }
