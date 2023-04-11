@@ -137,14 +137,15 @@
 	const pages_regex_map = new Map([
 		// Basic ones
 		[/(before-we-begin|getting-started)$/i, 'introduction'],
-		[/(component-format|template-syntax)$/i, 'dot-svelte-files'],
+		[/template-syntax$/i, 'basic-markup'],
+		[/component-format$/i, 'svelte-components'],
 		[/run-time$/i, 'svelte'],
 		[/compile-time$/i, 'svelte-compiler'],
 		[/(accessibility-warnings)$/i, '$1'],
 
 		// component-format-
-		[/component-format-(script|style|script-context-module)$/i, 'dot-svelte-files#$1'],
-		[/component-format-(?:script)(?:-?(.*))$/i, 'dot-svelte-files#$1'],
+		[/component-format-(script|style|script-context-module)$/i, 'svelte-components#$1'],
+		[/component-format-(?:script)(?:-?(.*))$/i, 'svelte-components#$1'],
 
 		// template-syntax
 		[/template-syntax-((?:element|component)-directives)-?(.*)/i, '$1#$2'],
@@ -152,10 +153,7 @@
 		[/template-syntax-(?:slot)-?(.*)/i, 'special-elements#$1'],
 		[/template-syntax-(if|each|await|key)$/i, 'logic-blocks#$1'],
 		[/template-syntax-(const|debug|html)$/i, 'special-tags#$1'],
-		[
-			/template-syntax-(tags|attributes-and-props|text-expressions|comments)$/i,
-			'dot-svelte-files#$1'
-		],
+		[/template-syntax-(tags|attributes-and-props|text-expressions|comments)$/i, 'basic-markup#$1'],
 		// !!!! This one should stay at the bottom of `template-syntax`, or it may end up hijacking logic blocks and special tags
 		[/template-syntax-(.+)/i, 'special-elements#$1'],
 
