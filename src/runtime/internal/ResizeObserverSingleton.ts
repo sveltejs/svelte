@@ -1,3 +1,5 @@
+import { globals } from './globals';
+
 /**
  * Resize observer singleton.
  * One listener per element only!
@@ -15,19 +17,19 @@ export class ResizeObserverSingleton {
 		};
 	}
 
-	static readonly entries: WeakMap<Element, ResizeObserverEntry> = 'WeakMap' in globalThis ? new WeakMap() : undefined;
-
-	private readonly _listeners: WeakMap<Element, Listener> = 'WeakMap' in globalThis ? new WeakMap() : undefined;
+	private readonly _listeners: WeakMap<Element, Listener> = 'WeakMap' in globals ? new WeakMap() : undefined;
 	private _observer?: ResizeObserver;
 	private _getObserver() {
 		return this._observer ?? (this._observer = new ResizeObserver((entries) => {
 			for (const entry of entries) {
-				ResizeObserverSingleton.entries.set(entry.target, entry);
+				(ResizeObserverSingleton as any).entries.set(entry.target, entry);
 				this._listeners.get(entry.target)?.(entry);
 			}
 		}));
 	}
 }
+// Needs to be written like this to pass the tree-shake-test
+(ResizeObserverSingleton as any).entries = 'WeakMap' in globals ? new WeakMap() : undefined;
 
 type Listener = (entry: ResizeObserverEntry)=>any;
 
