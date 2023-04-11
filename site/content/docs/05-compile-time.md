@@ -33,7 +33,7 @@ const result = svelte.compile(source, {
 });
 ```
 
-The following options can be passed to the compiler. None are required:
+The following options (none of which are required) can be passed to the compiler:
 
 <!-- | option | type | default
 | --- | --- | --- |
