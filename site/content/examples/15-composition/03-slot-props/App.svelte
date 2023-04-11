@@ -43,4 +43,8 @@
 		background-color: #ff3e00;
 		color: white;
 	}
+	
+	p {
+		pointer-events: none;
+	}
 </style>

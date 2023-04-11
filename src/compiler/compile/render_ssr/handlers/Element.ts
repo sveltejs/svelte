@@ -1,14 +1,16 @@
 import { is_void } from '../../../../shared/utils/names';
 import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
 import { boolean_attributes } from '../../../../shared/boolean_attributes';
+import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable';
 import Renderer, { RenderOptions } from '../Renderer';
+import Binding from '../../nodes/Binding';
 import Element from '../../nodes/Element';
 import { p, x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
-import { start_newline } from '../../../utils/patterns';
+import { regex_starts_with_newline } from '../../../utils/patterns';
 import { Node, Expression as ESExpression } from 'estree';
 
 export default function (node: Element, renderer: Renderer, options: RenderOptions) {
@@ -18,11 +20,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	// awkward special case
 	let node_contents;
 
-	const contenteditable = (
-		node.name !== 'textarea' &&
-		node.name !== 'input' &&
-		node.attributes.some((attribute) => attribute.name === 'contenteditable')
-	);
+	const contenteditable = is_contenteditable(node);
 
 	if (node.is_dynamic_element) {
 		renderer.push();
@@ -44,7 +42,10 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
 
 	const style_expression_list = node.styles.map(style_directive => {
-		const { name, expression: { node: expression } } = style_directive;
+		let { name, important, expression: { node: expression } } = style_directive;
+		if (important) {
+			expression = x`${expression} + ' !important'`;
+		}
 		return p`"${name}": ${expression}`;
 	});
 
@@ -125,7 +126,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 	}
 
-	node.bindings.forEach(binding => {
+	node.bindings.forEach((binding: Binding) => {
 		const { name, expression } = binding;
 
 		if (binding.is_readonly) {
@@ -141,7 +142,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})` : x`${value} === ${bound}`;
 				renderer.add_expression(x`${condition} ? @add_attribute("checked", true, 1) : ""`);
 			}
-		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
+		} else if (contenteditable && is_name_contenteditable(name)) {
 			node_contents = expression.node;
 
 			// TODO where was this used?
@@ -173,7 +174,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				const value_attribute = node.attributes.find(({ name }) => name === 'value');
 				if (value_attribute) {
 					const first = value_attribute.chunks[0];
-					if (first && first.type === 'Text' && start_newline.test(first.data)) {
+					if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
 						renderer.add_string('\n');
 					}
 				}
@@ -188,7 +189,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
 			// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
 			const first = children[0];
-			if (first && first.type === 'Text' && start_newline.test(first.data)) {
+			if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
 				renderer.add_string('\n');
 			}
 		}

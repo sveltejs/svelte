@@ -4,74 +4,59 @@
     "message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
     "start": {
       "line": 1,
-      "column": 5,
-      "character": 5
+      "column": 5
     },
     "end": {
       "line": 1,
-      "column": 21,
-      "character": 21
-    },
-    "pos": 5
+      "column": 21
+    }
   },
   {
     "code": "a11y-incorrect-aria-attribute-type",
     "message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
     "start": {
       "line": 2,
-      "column": 5,
-      "character": 30
+      "column": 5
     },
     "end": {
       "line": 2,
-      "column": 27,
-      "character": 52
-    },
-    "pos": 30
+      "column": 27
+    }
   },
   {
     "code": "a11y-incorrect-aria-attribute-type",
     "message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
     "start": {
       "line": 3,
-      "column": 5,
-      "character": 61
+      "column": 5
     },
     "end": {
       "line": 3,
-      "column": 18,
-      "character": 74
-    },
-    "pos": 61
+      "column": 18
+    }
   },
   {
     "code": "a11y-incorrect-aria-attribute-type",
     "message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
     "start": {
       "line": 6,
-      "column": 5,
-      "character": 144
+      "column": 5
     },
     "end": {
       "line": 6,
-      "column": 40,
-      "character": 179
-    },
-    "pos": 144
+      "column": 40
+    }
   },
   {
     "code": "a11y-incorrect-aria-attribute-type",
     "message": "A11y: The value of 'aria-relevant' must be a space-separated list of one or more of additions, all, removals, text",
     "start": {
       "line": 7,
-      "column": 5,
-      "character": 188
+      "column": 5
     },
     "end": {
       "line": 7,
-      "column": 41,
-      "character": 224
-    },
-    "pos": 188
+      "column": 41
+    }
   }
 ]

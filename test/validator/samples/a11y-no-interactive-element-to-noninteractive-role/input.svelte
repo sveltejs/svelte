@@ -71,36 +71,34 @@
 <div role="widget" />
 <div role="window" />
 
-<!-- HTML elements with an inherent, non-interactive role, assigned an interactive role. -->
-<main role="button" />
-<area role="button" alt="x" />
-<article role="button" />
-<article role="button" />
-<dd role="button" />
-<dfn role="button" />
-<dt role="button" />
-<fieldset role="button" />
-<figure role="button" />
-<form role="button" />
-<frame role="button" />
-<h1 role="button">title</h1>
-<h2 role="button">title</h2>
-<h3 role="button">title</h3>
-<h4 role="button">title</h4>
-<h5 role="button">title</h5>
-<h6 role="button">title</h6>
-<hr role="button" />
-<img role="button" alt="x" />
-<li role="button" />
-<li role="presentation" />
-<nav role="button" />
-<ol role="button" />
-<table role="button" />
-<tbody role="button" />
-<td role="button" />
-<tfoot role="button" />
-<thead role="button" />
-<ul role="button" />
+<!-- VALID: div elements assigned an interactive role. -->
+<div role="button" />
+<div role="checkbox" aria-checked={true} />
+<div role="columnheader" />
+<div role="combobox" aria-controls={[]} aria-expanded={true} />
+<div role="grid" />
+<div role="gridcell" />
+<div role="link" />
+<div role="listbox" />
+<div role="menu" />
+<div role="menubar" />
+<div role="menuitem" />
+<div role="menuitemcheckbox" aria-checked />
+<div role="menuitemradio" aria-checked />
+<div role="option" aria-selected />
+<div role="progressbar" />
+<div role="radio" aria-checked />
+<div role="radiogroup" />
+<div role="row" />
+<div role="rowheader" />
+<div role="scrollbar" aria-controls={[]} aria-valuenow={0} />
+<div role="searchbox" />
+<div role="slider" aria-valuenow={0} />
+<div role="spinbutton" />
+<div role="switch" aria-checked />
+<div role="tab" />
+<div role="textbox" />
+<div role="treeitem" aria-selected={true} />
 
 <!-- HTML elements attributed with a non-interactive role -->
 <div role="alert" />

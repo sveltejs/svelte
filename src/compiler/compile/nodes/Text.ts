@@ -3,6 +3,7 @@ import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
+import { regex_non_whitespace_character } from '../../utils/patterns';
 
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
@@ -16,6 +17,8 @@ const elements_without_text = new Set([
 	'video'
 ]);
 
+const regex_ends_with_svg = /svg$/;
+
 export default class Text extends Node {
 	type: 'Text';
 	data: string;
@@ -28,7 +31,7 @@ export default class Text extends Node {
 	}
 
 	should_skip() {
-		if (/\S/.test(this.data)) return false;
+		if (regex_non_whitespace_character.test(this.data)) return false;
 
 		const parent_element = this.find_nearest(/(?:Element|InlineComponent|SlotTemplate|Head)/);
 		if (!parent_element) return false;
@@ -37,7 +40,7 @@ export default class Text extends Node {
 		if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && this === parent_element.children[0];
 
 		// svg namespace exclusions
-		if (/svg$/.test(parent_element.namespace)) {
+		if (regex_ends_with_svg.test(parent_element.namespace)) {
 			if (this.prev && this.prev.type === 'Element' && this.prev.name === 'tspan') return false;
 		}
 
