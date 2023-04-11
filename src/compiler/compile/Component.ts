@@ -144,6 +144,7 @@ export default class Component {
 					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		const locator = getLocator(this.source, { offsetLine: 1 });
+		// @ts-ignore - fix the type of CompileOptions.sourcemap
 		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
 		this.locate = (c) => {
 			let location: { line: number, column: number } = locator(c);
