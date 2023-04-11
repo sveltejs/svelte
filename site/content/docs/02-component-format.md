@@ -286,7 +286,7 @@ You cannot `export default`, since the default export is the component itself.
 <script context="module">
 	let totalComponents = 0;
 
-	// the export keyword allows this function to imported as e.g.
+	// the export keyword allows this function to imported with e.g.
 	// `import Example, { alertTotal } from './Example.svelte'`
 	export function alertTotal() {
 		alert(totalComponents);
