@@ -1,4 +1,4 @@
-import { globals } from "./globals";
+import { globals } from './globals';
 
 /**
  * Resize observer singleton.
