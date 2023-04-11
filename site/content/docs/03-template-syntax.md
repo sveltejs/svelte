@@ -1826,6 +1826,7 @@ The `<svelte:options>` element provides a place to specify per-component compile
 * `accessors={false}` — the default
 * `namespace="..."` — the namespace where this component will be used, most commonly "svg"; use the "foreign" namespace to opt out of case-insensitive attribute names and HTML-specific warnings
 * `tag="..."` — the name to use when compiling this component as a custom element
+* `elementInternals` - adds formAssociated static property for custom elements to participate in forms
 
 ```sv
 <svelte:options tag="my-custom-element"/>

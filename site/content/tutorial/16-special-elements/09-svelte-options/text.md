@@ -26,5 +26,6 @@ The options that can be set here are:
 * `accessors={false}` — the default
 * `namespace="..."` — the namespace where this component will be used, most commonly `"svg"`
 * `tag="..."` — the name to use when compiling this component as a custom element
+* `elementInternals` - adds formAssociated static property for custom elements to participate in forms
 
 Consult the [API reference](/docs) for more information on these options.
