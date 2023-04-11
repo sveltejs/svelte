@@ -224,7 +224,7 @@ export default {
 	},
 	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
-		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
+		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable', 'preserveWhitespace' and 'elementInternals' attributes"
 	},
 	css_invalid_global: {
 		code: 'css-invalid-global',

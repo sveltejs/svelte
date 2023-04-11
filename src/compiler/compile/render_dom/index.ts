@@ -553,6 +553,16 @@ export default function dom(
 			}
 		`[0] as ClassDeclaration;
 
+		if (component.component_options.elementInternals) {
+			declaration.body.body.push({
+				type: "PropertyDefinition",
+				static: true,
+				computed: false,
+				key: { type: "Identifier", name: "formAssociated" },
+				value: x`true`,
+			});
+		}
+
 		if (props.length > 0) {
 			declaration.body.body.push({
 				type: 'MethodDefinition',

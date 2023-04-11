@@ -179,6 +179,7 @@ export interface CompileOptions {
 	legacy?: boolean;
 	customElement?: boolean;
 	tag?: string;
+	elementInternals?: boolean;
 	css?: 'injected' | 'external' | 'none' | boolean;
 	loopGuardTimeout?: number;
 	namespace?: string;

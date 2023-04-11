@@ -32,7 +32,8 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash'
+	'cssHash',
+	'elementInternals'
 ];
 
 const valid_css_values = [

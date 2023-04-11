@@ -45,6 +45,7 @@ interface ComponentOptions {
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
+	elementInternals?: boolean;
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
@@ -1567,6 +1568,17 @@ function process_component_options(component: Component, nodes) {
 						}
 
 						component_options.tag = tag;
+						break;
+					}
+
+					case 'elementInternals': {
+						const value = get_value(attribute, compiler_errors.invalid_attribute_value(name));
+
+						if (typeof value !== 'boolean') {
+							return component.error(attribute, compiler_errors.invalid_attribute_value(name));
+						}
+
+						component_options.elementInternals = value;
 						break;
 					}
 
