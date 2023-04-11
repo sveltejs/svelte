@@ -12,10 +12,8 @@ export default {
 		};
 	},
 
-	test(assert, target, snapshot, component) {
+	test(assert, target, _, component) {
 		const p = target.querySelector('p');
-
-		assert.equal(p, snapshot.p);
 
 		component.foo = false;
 		component.bar = true;

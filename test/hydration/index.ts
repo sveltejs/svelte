@@ -106,6 +106,13 @@ describe('hydration', () => {
 					}
 				}
 
+				if (config.snapshot) {
+					const snapshot_after = config.snapshot(target);
+					for (const s in snapshot_after) {
+						assert.equal(snapshot_after[s], snapshot[s], `Expected snapshot key "${s}" to have same value/reference`);
+					}
+				}
+
 				if (config.test) {
 					config.test(assert, target, snapshot, component, window);
 				} else {
