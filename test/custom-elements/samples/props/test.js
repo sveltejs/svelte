@@ -13,7 +13,6 @@ export default async function (target) {
 	const widget = el.shadowRoot.querySelector('my-widget');
 
 	const [p1, p2, p3, p4] = widget.shadowRoot.querySelectorAll('p');
-	console.log('goooo', !!p1, !!p2, !!p3, !!p4)
 
 	assert.equal(p1.textContent, '3 items');
 	assert.equal(p2.textContent, 'a, b, c');
@@ -22,6 +21,7 @@ export default async function (target) {
 
 	el.items = ['d', 'e', 'f', 'g', 'h'];
 	el.flagged = true;
+	await tick();
 
 	assert.equal(p1.textContent, '5 items');
 	assert.equal(p2.textContent, 'd, e, f, g, h');

@@ -238,7 +238,7 @@ if (typeof HTMLElement === 'function') {
 
 			attr = this.$$get_prop_name(attr);
 			this.$$data[attr] = get_custom_element_value(attr, newValue, this.$$props_definition, 'toProp');
-			this.$$component![attr] = this.$$data[attr];
+			this.$$component!.$set({ [attr]: this.$$data[attr] });
 		}
 
 		disconnectedCallback() {
@@ -253,7 +253,10 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		private $$get_prop_name(attribute_name: string): string {
-			return Object.keys(this.$$props_definition).find(key => this.$$props_definition[key].attribute === attribute_name) || attribute_name;
+			return Object.keys(this.$$props_definition).find(
+					key => this.$$props_definition[key].attribute === attribute_name ||
+						(!this.$$props_definition[key].attribute && key.toLowerCase() === attribute_name)
+				) || attribute_name;
 		}
 	};
 }
@@ -316,12 +319,12 @@ export function create_custom_element(
 		}
 
 		static get observedAttributes() {
-			return Object.keys(props_definition).map(key => props_definition[key].attribute || key);
+			return Object.keys(props_definition).map(key => (props_definition[key].attribute || key).toLowerCase());
 		}
 	};
 
-	function createProperty(name: string, prop: string) {
-		Object.defineProperty(Class.prototype, name, {
+	Object.keys(props_definition).forEach((prop) => {
+		Object.defineProperty(Class.prototype, prop, {
 			get() {
 				return this.$$component && prop in this.$$component
 					? this.$$component[prop]
@@ -331,10 +334,7 @@ export function create_custom_element(
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$data[prop] = value;
-
-				if (this.$$component) {
-					this.$$component[prop] = value;
-				}
+				this.$$component?.$set({ [prop]: value });
 
 				if (props_definition[prop].reflect) {
 					this.$$reflecting = true;
@@ -351,15 +351,6 @@ export function create_custom_element(
 				}
 			}
 		});
-	}
-
-	Object.keys(props_definition).forEach((prop) => {
-		createProperty(prop, prop);
-		// <c-e camelCase="foo" /> will be ce.camcelcase = "foo"
-		const lower = prop.toLowerCase();
-		if (lower !== prop) {
-			createProperty(lower, prop);
-		}
 	});
 
 	accessors.forEach(accessor => {

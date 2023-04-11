@@ -10,6 +10,7 @@ export default async function (target) {
 	assert.deepEqual(events, ['foo']);
 
 	el.name = 'bar';
+	await tick();
 	assert.deepEqual(events, ['foo', 'bar']);
 
 	target.innerHTML = '';
