@@ -2,14 +2,11 @@
 	{
 		"code": "a11y-label-has-associated-control",
 		"end": {
-			"character": 82,
 			"column": 16,
 			"line": 5
 		},
 		"message": "A11y: A form label must be associated with a control.",
-		"pos": 66,
 		"start": {
-			"character": 66,
 			"column": 0,
 			"line": 5
 		}
@@ -17,14 +14,11 @@
 	{
 		"code": "a11y-label-has-associated-control",
 		"end": {
-			"character": 215,
 			"column": 30,
 			"line": 10
 		},
 		"message": "A11y: A form label must be associated with a control.",
-		"pos": 185,
 		"start": {
-			"character": 185,
 			"column": 0,
 			"line": 10
 		}

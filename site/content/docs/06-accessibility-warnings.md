@@ -55,7 +55,7 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 
 ### `a11y-click-events-have-key-events`
 
-Enforce `on:click` is accompanied by at least one of the following: `onKeyUp`, `onKeyDown`, `onKeyPress`. Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users. 
+Enforce `on:click` is accompanied by at least one of the following: `on:keyup`, `on:keydown`, `on:keypress`. Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
 
 This does not apply for interactive or hidden elements.
 
@@ -63,6 +63,8 @@ This does not apply for interactive or hidden elements.
 <!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event. -->
 <div on:click={() => {}} />
 ```
+
+Note that the `keypress` event is now deprecated, so it is officially recommended to use either the `keyup` or `keydown` event instead, accordingly.
 
 ---
 
@@ -131,6 +133,17 @@ Enforce that attributes important for accessibility have a valid value. For exam
 ```sv
 <!-- A11y: '' is not a valid href attribute -->
 <a href=''>invalid</a>
+```
+
+---
+
+### `a11y-interactive-supports-focus`
+
+Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
+
+```sv
+<!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
+<div role="button" on:keypress={() => {}} />
 ```
 
 ---
@@ -275,6 +288,17 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 
 ---
 
+### `a11y-no-noninteractive-element-to-interactive-role`
+
+[WAI-ARIA](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) roles should not be used to convert a non-interactive element to an interactive element. Interactive ARIA roles include `button`, `link`, `checkbox`, `menuitem`, `menuitemcheckbox`, `menuitemradio`, `option`, `radio`, `searchbox`, `switch` and `textbox`.
+
+```sv
+<!-- A11y: Non-interactive element <h3> cannot have interactive role 'searchbox' -->
+<h3 role="searchbox">Button</h3>
+```
+
+---
+
 ### `a11y-no-noninteractive-tabindex`
 
 Tab key navigation should be limited to elements on the page that can be interacted with.
@@ -304,6 +328,20 @@ Elements with ARIA roles must have all required attributes for that role.
 ```sv
 <!-- A11y: A11y: Elements with the ARIA role "checkbox" must have the following attributes defined: "aria-checked" -->
 <span role="checkbox" aria-labelledby="foo" tabindex="0"></span>
+```
+
+---
+
+### `a11y-role-supports-aria-props`
+
+Elements with explicit or implicit roles defined contain only `aria-*` properties supported by that role.
+
+```sv
+<!-- A11y: The attribute 'aria-multiline' is not supported by the role 'link'. -->
+<div role="link" aria-multiline />
+
+<!-- A11y: The attribute 'aria-required' is not supported by the role 'listitem'. This role is implicit on the element <li>. -->
+<li aria-required />
 ```
 
 ---

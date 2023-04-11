@@ -1,31 +1,5 @@
-import { has_prop } from './utils';
-import { Fragment } from './types.js';
-
-// marks a part in the code where types
-// 1. should be improved or
-// 2. where casting is needed in order to satisfy TypeScript
-// 	a deeper look at these parts is needed to check if they can be replaced with a normal cast or if they currently contain a potential bug
-type TODO<T = any> = T
-
-type NodeEx = Node & {
-	claim_order?: number,
-	hydrate_init?: true,
-	actual_end_child?: NodeEx,
-	childNodes: NodeListOf<NodeEx>,
-}
-
-type HTMLInputElementEx = HTMLInputElement & {
-	__value: string
-}
-
-type HTMLSelectElementEx = HTMLSelectElement & {
-	__value: string
-	options: HTMLOptionElementEx[]
-}
-
-type HTMLOptionElementEx = HTMLOptionElement & {
-	__value: string
-}
+import { ResizeObserverSingleton } from './ResizeObserverSingleton';
+import { contenteditable_truthy_values, has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -37,6 +11,13 @@ export function start_hydrating() {
 export function end_hydrating() {
 	is_hydrating = false;
 }
+
+type NodeEx = Node & {
+	claim_order?: number,
+	hydrate_init?: true,
+	actual_end_child?: NodeEx,
+	childNodes: NodeListOf<NodeEx>,
+};
 
 function upper_bound(low: number, high: number, key: (index: number) => number, value: number) {
 	// Return first index of value larger than input value in the range [low, high)
@@ -274,33 +255,47 @@ export function empty() {
 	return text('');
 }
 
+export function comment(content: string) {
+	return document.createComment(content);
+}
+
 export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
 
-export function prevent_default<E extends Event>(fn: (event: E) => void) {
-	return function(this: unknown, event: E) {
+export function prevent_default(fn) {
+	return function (event) {
 		event.preventDefault();
 		return fn.call(this, event);
 	};
 }
 
-export function stop_propagation<E extends Event>(fn: (event: E) => void) {
-	return function(this: unknown, event: E) {
+export function stop_propagation(fn) {
+	return function (event) {
 		event.stopPropagation();
 		return fn.call(this, event);
 	};
 }
 
-export function self<E extends Event>(fn: (event: E) => void) {
-	return function(this: unknown, event: E) {
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
+export function self(fn) {
+	return function (event) {
+		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
-export function trusted<E extends Event>(fn: (event: E) => void) {
-	return function(this: unknown, event: E) {
+export function trusted(fn) {
+	return function (event) {
+		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
 }
@@ -310,7 +305,16 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
-export function set_attributes<N extends Element & ElementCSSInlineStyle>(node: N, attributes: { [K in keyof N]: N[K] }) {
+/** 
+ * List of attributes that should always be set through the attr method,
+ * because updating them through the property setter doesn't work reliably.
+ * In the example of `width`/`height`, the problem is that the setter only
+ * accepts numeric values, but the attribute can also be set to a string like `50%`.
+ * If this list becomes too big, rethink this approach.
+ */
+const always_set_through_set_attribute = ['width', 'height'];
+
+export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
@@ -320,7 +324,7 @@ export function set_attributes<N extends Element & ElementCSSInlineStyle>(node: 
 			node.style.cssText = attributes[key] as unknown as TODO<string>;
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set) {
+		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key] as unknown as TODO<string>);
@@ -348,7 +352,11 @@ export function set_custom_element_data(node: Element, prop: string, value: stri
 	}
 }
 
-export function xlink_attr(node: Element, attribute: string, value: string) {
+export function set_dynamic_element_data(tag: string) {
+	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
+}
+
+export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
@@ -363,7 +371,54 @@ export function get_binding_group_value(group: HTMLInputElementEx[], __value: st
 	return Array.from(value);
 }
 
-export function to_number(value: string | number) {
+export function init_binding_group(group: HTMLInputElement[]) {
+	let _inputs: HTMLInputElement[];
+	return {
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			_inputs.forEach(input => group.push(input));
+		},
+
+		/* remove */ r() {
+			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+		}
+	};
+}
+
+export function init_binding_group_dynamic(group, indexes: number[]) {
+	let _group: HTMLInputElement[] = get_binding_group(group);
+	let _inputs: HTMLInputElement[];
+	function get_binding_group(group) {
+		for (let i = 0; i < indexes.length; i++) {
+			group = group[indexes[i]] = group[indexes[i]] || [];
+		}
+		return group;
+	}
+	function push() {
+		_inputs.forEach(input => _group.push(input));
+	}
+	function remove() {
+		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+	}
+	return {
+		/* update */ u(new_indexes: number[]) {
+			indexes = new_indexes;
+			const new_group = get_binding_group(group);
+			if (new_group !== _group) {
+				remove();
+				_group = new_group;
+				push();
+			}
+		},
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			push();
+		},
+		/* remove */ r: remove
+	};
+}
+
+export function to_number(value) {
 	return value === '' ? null : +value;
 }
 
@@ -528,7 +583,20 @@ export function claim_space(nodes: ChildNodeArray) {
 	return claim_text(nodes, ' ');
 }
 
-function find_comment(nodes: ChildNodeArray, text: string, start: number) {
+export function claim_comment(nodes:ChildNodeArray, data) {
+	return claim_node<Comment>(
+		nodes,
+		(node: ChildNode): node is Comment => node.nodeType === 8,
+		(node: Comment) => {
+			node.data =  '' + data;
+			return undefined;
+		},
+		() => comment(data),
+		true
+	);
+}
+
+function find_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeType === 8 /* comment node */ && (node.textContent as TODO<string>).trim() === text) {
@@ -561,9 +629,24 @@ export function claim_html_tag(nodes: ChildNodeArray, is_svg: boolean) {
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
-export function set_data(text: Text, data: string) {
+export function set_data(text: Text, data: unknown) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	if (text.data === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable(text, data);
+	} else {
+		set_data(text, data);
+	}
 }
 
 export function set_input_value(input: HTMLInputElement, value: string | null) {
@@ -586,7 +669,7 @@ export function set_style(node: HTMLElement, key: string, value: string, importa
 	}
 }
 
-export function select_option(select: HTMLSelectElementEx, value: string) {
+export function select_option(select, value, mounting) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -596,7 +679,9 @@ export function select_option(select: HTMLSelectElementEx, value: string) {
 		}
 	}
 
-	select.selectedIndex = -1; // no option should be selected
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 export function select_options(select: HTMLSelectElementEx, value: string) {
@@ -606,8 +691,8 @@ export function select_options(select: HTMLSelectElementEx, value: string) {
 	}
 }
 
-export function select_value(select: HTMLSelectElementEx) {
-	const selected_option = (select.querySelector(':checked') || select.options[0]) as HTMLOptionElementEx;
+export function select_value(select) {
+	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 
@@ -635,7 +720,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-export function add_resize_listener(node: HTMLElement, fn: () => void) {
+export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -662,7 +747,11 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	} else {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
-			unsubscribe = listen(iframe.contentWindow as TODO<Window>, 'resize', fn);
+			unsubscribe = listen(iframe.contentWindow, 'resize', fn);
+
+			// make sure an initial resize event is fired _after_ the iframe is loaded (which is asynchronous)
+			// see https://github.com/sveltejs/svelte/issues/4233
+			fn();
 		};
 	}
 
@@ -679,12 +768,16 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-export function toggle_class(element: HTMLElement, name: string, toggle: true) {
-	// TODO: why not use `element.classList.toggle` ?
+export const resize_observer_content_box = new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export { ResizeObserverSingleton };
+
+export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
+export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, bubbles, cancelable, detail as TODO<T>);
 	return e;
@@ -722,7 +815,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -742,8 +835,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -752,7 +846,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor: Node) {

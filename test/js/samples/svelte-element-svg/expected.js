@@ -2,10 +2,7 @@
 import {
 	SvelteComponent,
 	append,
-	assign,
 	detach,
-	empty,
-	get_spread_update,
 	init,
 	insert,
 	noop,
@@ -17,37 +14,19 @@ import {
 function create_dynamic_element(ctx) {
 	let svelte_element1;
 	let svelte_element0;
-	let svelte_element0_levels = [{ xmlns: "http://www.w3.org/2000/svg" }];
-	let svelte_element0_data = {};
-
-	for (let i = 0; i < svelte_element0_levels.length; i += 1) {
-		svelte_element0_data = assign(svelte_element0_data, svelte_element0_levels[i]);
-	}
-
-	let svelte_element1_levels = [{ xmlns: "http://www.w3.org/2000/svg" }];
-	let svelte_element1_data = {};
-
-	for (let i = 0; i < svelte_element1_levels.length; i += 1) {
-		svelte_element1_data = assign(svelte_element1_data, svelte_element1_levels[i]);
-	}
 
 	return {
 		c() {
 			svelte_element1 = svg_element(/*tag*/ ctx[0].svg);
 			svelte_element0 = svg_element(/*tag*/ ctx[0].path);
-			set_svg_attributes(svelte_element0, svelte_element0_data);
-			set_svg_attributes(svelte_element1, svelte_element1_data);
+			set_svg_attributes(svelte_element0, { xmlns: "http://www.w3.org/2000/svg" });
+			set_svg_attributes(svelte_element1, { xmlns: "http://www.w3.org/2000/svg" });
 		},
 		m(target, anchor) {
 			insert(target, svelte_element1, anchor);
 			append(svelte_element1, svelte_element0);
 		},
-		p(ctx, dirty) {
-			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
-			set_svg_attributes(svelte_element0, svelte_element0_data);
-			svelte_element1_data = get_spread_update(svelte_element1_levels, [{ xmlns: "http://www.w3.org/2000/svg" }]);
-			set_svg_attributes(svelte_element1, svelte_element1_data);
-		},
+		p: noop,
 		d(detaching) {
 			if (detaching) detach(svelte_element1);
 		}
@@ -55,44 +34,23 @@ function create_dynamic_element(ctx) {
 }
 
 function create_fragment(ctx) {
-	let previous_tag = /*tag*/ ctx[0].svg;
-	let svelte_element_anchor;
 	let svelte_element = /*tag*/ ctx[0].svg && create_dynamic_element(ctx);
 
 	return {
 		c() {
 			if (svelte_element) svelte_element.c();
-			svelte_element_anchor = empty();
 		},
 		m(target, anchor) {
 			if (svelte_element) svelte_element.m(target, anchor);
-			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (/*tag*/ ctx[0].svg) {
-				if (!previous_tag) {
-					svelte_element = create_dynamic_element(ctx);
-					svelte_element.c();
-					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
-				} else if (safe_not_equal(previous_tag, /*tag*/ ctx[0].svg)) {
-					svelte_element.d(1);
-					svelte_element = create_dynamic_element(ctx);
-					svelte_element.c();
-					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
-				} else {
-					svelte_element.p(ctx, dirty);
-				}
-			} else if (previous_tag) {
-				svelte_element.d(1);
-				svelte_element = null;
+				svelte_element.p(ctx, dirty);
 			}
-
-			previous_tag = /*tag*/ ctx[0].svg;
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element_anchor);
 			if (svelte_element) svelte_element.d(detaching);
 		}
 	};

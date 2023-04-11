@@ -2,14 +2,11 @@
 	{
 		"code": "invalid-html-attribute",
 		"message": "'className' is not a valid HTML attribute. Did you mean 'class'?",
-		"pos": 5,
 		"start": {
-			"character": 5,
 			"column": 5,
 			"line": 1
 		},
 		"end": {
-			"character": 20,
 			"column": 20,
 			"line": 1
 		}
@@ -17,14 +14,11 @@
 	{
 		"code": "invalid-html-attribute",
 		"message": "'htmlFor' is not a valid HTML attribute. Did you mean 'for'?",
-		"pos": 35,
 		"start": {
-			"character": 35,
 			"column": 7,
 			"line": 2
 		},
 		"end": {
-			"character": 46,
 			"column": 18,
 			"line": 2
 		}
