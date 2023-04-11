@@ -1,3 +1,4 @@
+import { ResizeObserverSingleton } from './ResizeObserverSingleton';
 import { contenteditable_truthy_values, has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
@@ -698,7 +699,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-export function add_resize_listener(node: HTMLElement, fn: () => void) {
+export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -745,6 +746,11 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		detach(iframe);
 	};
 }
+
+export const resize_observer_content_box = new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);

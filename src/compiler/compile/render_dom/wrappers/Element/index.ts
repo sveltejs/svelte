@@ -12,7 +12,7 @@ import { namespaces } from '../../../../utils/namespaces';
 import AttributeWrapper from './Attribute';
 import StyleAttributeWrapper from './StyleAttribute';
 import SpreadAttributeWrapper from './SpreadAttribute';
-import { regex_dimensions, regex_starts_with_newline, regex_backslashes } from '../../../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_backslashes, regex_border_box_size, regex_content_box_size, regex_device_pixel_content_box_size, regex_content_rect } from '../../../../utils/patterns';
 import Binding from './Binding';
 import add_to_set from '../../../utils/add_to_set';
 import { add_event_handler } from '../shared/add_event_handlers';
@@ -64,10 +64,28 @@ const events = [
 		filter: (node: Element, _name: string) =>
 			node.name === 'input' && node.get_static_attribute_value('type') === 'range'
 	},
+	// resize events
 	{
 		event_names: ['elementresize'],
 		filter: (_node: Element, name: string) =>
 			regex_dimensions.test(name)
+	},
+	{
+		event_names: ['elementresizecontentbox'],
+		filter: (_node: Element, name: string) =>
+			regex_content_rect.test(name) ?? regex_content_box_size.test(name)
+	},
+
+	{
+		event_names: ['elementresizeborderbox'],
+		filter: (_node: Element, name: string) => 
+			regex_border_box_size.test(name)
+	},
+
+	{
+		event_names: ['elementresizedevicepixelcontentbox'],
+		filter: (_node: Element, name: string) =>
+			regex_device_pixel_content_box_size.test(name)
 	},
 	// media events
 	{
@@ -747,13 +765,19 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		binding_group.events.forEach(name => {
-			if (name === 'elementresize') {
-				// special case
+			const resizeListenerFunctions = {
+				elementresize: 'add_iframe_resize_listener',
+				elementresizecontentbox: 'resize_observer_content_box.observe',
+				elementresizeborderbox: 'resize_observer_border_box.observe',
+				elementresizedevicepixelcontentbox: 'resize_observer_device_pixel_content_box.observe'
+			};
+
+			if (name in resizeListenerFunctions) {
 				const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 				block.add_variable(resize_listener);
 
 				block.chunks.mount.push(
-					b`${resize_listener} = @add_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
+					b`${resize_listener} = @${resizeListenerFunctions[name]}(${this.var}, ${callee}.bind(${this.var}));`
 				);
 
 				block.chunks.destroy.push(
