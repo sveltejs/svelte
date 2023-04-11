@@ -68,11 +68,15 @@ export function replace_placeholders(content) {
 			const module = modules.find((module) => module.name === name);
 			if (!module) throw new Error(`Could not find module ${name}`);
 
-			if (id) {
-				const exported = module.exports.find((t) => t.name === id);
-
-				return `<div class="ts-block">${fence(exported.snippet)}</div>`;
+			if (!id) {
+				throw new Error(`id is required for module ${name}`);
 			}
+
+			const exported = module.exports.filter((t) => t.name === id);
+
+			return exported
+				.map((exportVal) => `<div class="ts-block">${fence(exportVal.snippet)}</div>`)
+				.join('\n\n');
 		})
 		.replace('> MODULES', () => {
 			return modules

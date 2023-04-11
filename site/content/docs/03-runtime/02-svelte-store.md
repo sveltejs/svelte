@@ -10,6 +10,8 @@ This makes it possible to wrap almost any other reactive state handling library 
 
 ## `writable`
 
+> EXPORT_SNIPPET: svelte/store#writable
+
 ```js
 store = writable(value?: any)
 ```
@@ -61,6 +63,8 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 
 ## `readable`
 
+> EXPORT_SNIPPET: svelte/store#readable
+
 ```js
 store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
 ```
@@ -83,6 +87,8 @@ const time = readable(null, (set) => {
 ```
 
 ## `derived`
+
+> EXPORT_SNIPPET: svelte/store#derived
 
 ```js
 store = derived(a, callback: (a: any) => any)
@@ -160,6 +166,8 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 
 ## `readonly`
 
+> EXPORT_SNIPPET: svelte/store#readonly
+
 ```js
 readableStore = readonly(writableStore);
 ```
@@ -179,6 +187,8 @@ readableStore.set(2); // ERROR
 ```
 
 ## `get`
+
+> EXPORT_SNIPPET: svelte/store#get
 
 ```js
 value: any = get(store);
