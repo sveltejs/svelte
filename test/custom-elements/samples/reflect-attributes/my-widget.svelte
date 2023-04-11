@@ -1,7 +1,4 @@
-<svelte:options
-	tag="my-widget"
-	cePropsDefinition={{ red: { reflect: true } }}
-/>
+<svelte:options tag="my-widget" ceProps={{ red: { reflect: true } }} />
 
 <script>
 	export let red = false;

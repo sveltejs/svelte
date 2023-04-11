@@ -1591,7 +1591,7 @@ export interface SvelteHTMLElements {
 	'svelte:fragment': { slot?: string };
 	'svelte:options': {
 		tag?: string | null | undefined;
-		cePropsDefinition?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }> | undefined,
+		ceProps?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }> | undefined,
 		[name: string]: any
 	};
 	'svelte:head': { [name: string]: any };

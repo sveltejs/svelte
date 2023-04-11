@@ -1,6 +1,6 @@
 <svelte:options
 	tag="custom-element"
-	cePropsDefinition={{
+	ceProps={{
 		name: { reflect: false, type: "String", attribute: "name" },
 	}}
 />

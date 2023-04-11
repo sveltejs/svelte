@@ -1,6 +1,6 @@
 <svelte:options
 	tag="custom-element"
-	cePropsDefinition={{
+	ceProps={{
 		camelCase: { attribute: "camel-case" },
 		camelCase2: { reflect: true },
 		anArray: { attribute: "an-array", type: "Array", reflect: true },

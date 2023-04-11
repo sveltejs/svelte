@@ -1,6 +1,6 @@
 <svelte:options
 	tag="custom-element"
-	cePropsDefinition={{ red: { reflect: true, type: "Boolean" } }}
+	ceProps={{ red: { reflect: true, type: "Boolean" } }}
 />
 
 <script>

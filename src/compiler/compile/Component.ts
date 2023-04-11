@@ -45,7 +45,7 @@ interface ComponentOptions {
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
-	cePropsDefinition?: Record<string, { reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', attribute?: string }>;
+	ceProps?: Record<string, { reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', attribute?: string }>;
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
@@ -1574,11 +1574,11 @@ function process_component_options(component: Component, nodes) {
 						break;
 					}
 
-					case 'cePropsDefinition': {
-						const error = () => component.error(attribute, compiler_errors.invalid_cePropsDefinition_attribute);
+					case 'ceProps': {
+						const error = () => component.error(attribute, compiler_errors.invalid_ceProps_attribute);
 						const { value } = attribute;
 						const chunk = value[0];
-						component_options.cePropsDefinition = {};
+						component_options.ceProps = {};
 
 						if (!chunk) {
 							break;
@@ -1593,7 +1593,7 @@ function process_component_options(component: Component, nodes) {
 							if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
 								return error();
 							}
-							component_options.cePropsDefinition[property.key.name] = {};
+							component_options.ceProps[property.key.name] = {};
 							for (const prop of property.value.properties) {
 								if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
 									return error();
@@ -1605,7 +1605,7 @@ function process_component_options(component: Component, nodes) {
 								) {
 									return error();
 								}
-								component_options.cePropsDefinition[property.key.name][prop.key.name] = prop.value.value;
+								component_options.ceProps[property.key.name][prop.key.name] = prop.value.value;
 							}
 						}
 

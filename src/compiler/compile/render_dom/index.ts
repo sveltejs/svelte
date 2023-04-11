@@ -544,7 +544,7 @@ export default function dom(
 
 	if (options.customElement && component.tag != null) {
 		const props_str = writable_props.reduce((def, prop) => {
-			def[prop.export_name] = component.component_options.cePropsDefinition?.[prop.export_name] || {};
+			def[prop.export_name] = component.component_options.ceProps?.[prop.export_name] || {};
 			if (prop.is_boolean && !def[prop.export_name].type) {
 				def[prop.export_name].type = 'Boolean';
 			}
