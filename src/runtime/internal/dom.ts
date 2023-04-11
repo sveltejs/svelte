@@ -742,9 +742,7 @@ export function toggle_class(element, name, toggle) {
 }
 
 export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
-	const e: CustomEvent<T> = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, cancelable, detail);
-	return e;
+	return new CustomEvent(type, { detail, bubbles, cancelable });
 }
 
 export function query_selector_all(selector: string, parent: HTMLElement = document.body) {
