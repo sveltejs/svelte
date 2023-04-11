@@ -6,6 +6,8 @@ The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [c
 
 ## `onMount`
 
+> EXPORT_SNIPPET: svelte#onMount
+
 ```js
 onMount(callback: () => void)
 ```
@@ -48,6 +50,8 @@ If a function is returned from `onMount`, it will be called when the component i
 
 ## `beforeUpdate`
 
+> EXPORT_SNIPPET: svelte#beforeUpdate
+
 ```js
 beforeUpdate(callback: () => void)
 ```
@@ -67,6 +71,8 @@ Schedules a callback to run immediately before the component is updated after an
 ```
 
 ## `afterUpdate`
+
+> EXPORT_SNIPPET: svelte#afterUpdate
 
 ```js
 afterUpdate(callback: () => void)
@@ -88,6 +94,8 @@ Schedules a callback to run immediately after the component has been updated.
 
 ## `onDestroy`
 
+> EXPORT_SNIPPET: svelte#onDestroy
+
 ```js
 onDestroy(callback: () => void)
 ```
@@ -108,6 +116,8 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 
 ## `tick`
 
+> EXPORT_SNIPPET: svelte#tick
+
 ```js
 promise = tick();
 ```
@@ -127,6 +137,8 @@ Returns a promise that resolves once any pending state changes have been applied
 ```
 
 ## `setContext`
+
+> EXPORT_SNIPPET: svelte#setContext
 
 <!-- TODO: Better typing information -->
 
@@ -150,6 +162,8 @@ Like lifecycle functions, this must be called during component initialisation.
 
 ## `getContext`
 
+> EXPORT_SNIPPET: svelte#getContext
+
 ```js
 context: any = getContext(key: any)
 ```
@@ -165,6 +179,8 @@ Retrieves the context that belongs to the closest parent component with the spec
 ```
 
 ## `hasContext`
+
+> EXPORT_SNIPPET: svelte#hasContext
 
 ```js
 hasContext = hasContext(key: any)
@@ -184,6 +200,8 @@ Checks whether a given `key` has been set in the context of a parent component. 
 
 ## `getAllContexts`
 
+> EXPORT_SNIPPET: svelte#getAllContexts
+
 ```js
 contexts: Map<any, any> = getAllContexts()
 ```
@@ -199,6 +217,8 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 ```
 
 ## `createEventDispatcher`
+
+> EXPORT_SNIPPET: svelte#createEventDispatcher
 
 ```js
 dispatch: ((name: string, detail?: any, options?: DispatchOptions) => boolean) = createEventDispatcher();

@@ -64,6 +64,16 @@ export function replace_placeholders(content) {
 				})
 				.join('')}`;
 		})
+		.replace(/> EXPORT_SNIPPET: (.+?)#(.+)?$/gm, (_, name, id) => {
+			const module = modules.find((module) => module.name === name);
+			if (!module) throw new Error(`Could not find module ${name}`);
+
+			if (id) {
+				const exported = module.exports.find((t) => t.name === id);
+
+				return `<div class="ts-block">${fence(exported.snippet)}</div>`;
+			}
+		})
 		.replace('> MODULES', () => {
 			return modules
 				.map((module) => {
