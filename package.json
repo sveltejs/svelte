@@ -151,7 +151,7 @@
     "magic-string": "^0.30.0",
     "mocha": "^7.0.0",
     "periscopic": "^3.1.0",
-    "puppeteer": "^2.0.0",
+    "puppeteer": "^19.8.5",
     "rollup": "^1.27.14",
     "source-map": "^0.7.4",
     "source-map-support": "^0.5.21",
