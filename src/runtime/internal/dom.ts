@@ -1,5 +1,32 @@
 import { ResizeObserverSingleton } from './ResizeObserverSingleton';
 import { contenteditable_truthy_values, has_prop } from './utils';
+import { Fragment } from './types.js';
+
+// marks a part in the code where types
+// 1. should be improved or
+// 2. where casting is needed in order to satisfy TypeScript
+// 	a deeper look at these parts is needed to check if they can be replaced with a normal cast or if they currently contain a potential bug
+type TODO<T = any> = T
+
+type NodeEx = Node & {
+	claim_order?: number,
+	hydrate_init?: true,
+	actual_end_child?: NodeEx,
+	childNodes: NodeListOf<NodeEx>,
+}
+
+type HTMLInputElementEx = HTMLInputElement & {
+	__value: string
+}
+
+type HTMLSelectElementEx = HTMLSelectElement & {
+	__value: string
+	options: HTMLOptionElementEx[]
+}
+
+type HTMLOptionElementEx = HTMLOptionElement & {
+	__value: string
+}
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -11,13 +38,6 @@ export function start_hydrating() {
 export function end_hydrating() {
 	is_hydrating = false;
 }
-
-type NodeEx = Node & {
-	claim_order?: number,
-	hydrate_init?: true,
-	actual_end_child?: NodeEx,
-	childNodes: NodeListOf<NodeEx>,
-};
 
 function upper_bound(low: number, high: number, key: (index: number) => number, value: number) {
 	// Return first index of value larger than input value in the range [low, high)
@@ -264,38 +284,37 @@ export function listen(node: EventTarget, event: string, handler: EventListenerO
 	return () => node.removeEventListener(event, handler, options);
 }
 
-export function prevent_default(fn) {
-	return function (event) {
+export function prevent_default<E extends Event>(fn: (event: E) => void) {
+	return function(this: unknown, event: E) {
 		event.preventDefault();
 		return fn.call(this, event);
 	};
 }
 
-export function stop_propagation(fn) {
-	return function (event) {
+export function stop_propagation<E extends Event>(fn: (event: E) => void) {
+	return function(this: unknown, event: E) {
 		event.stopPropagation();
 		return fn.call(this, event);
 	};
 }
 
-export function stop_immediate_propagation(fn) {
-	return function (event) {
+export function stop_immediate_propagation<E extends Event>(fn: (event: E) => void) {
+	return function (this: unknown, event: E) {
 		event.stopImmediatePropagation();
 		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
-export function self(fn) {
-	return function (event) {
+export function self<E extends Event>(fn: (event: E) => void) {
+	return function(this: unknown, event: E) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
-export function trusted(fn) {
-	return function (event) {
-		// @ts-ignore
+export function trusted<E extends Event>(fn: (event: E) => void) {
+	return function(this: unknown, event: E) {
 		if (event.isTrusted) fn.call(this, event);
 	};
 }
@@ -356,7 +375,7 @@ export function set_dynamic_element_data(tag: string) {
 	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
 }
 
-export function xlink_attr(node, attribute, value) {
+export function xlink_attr(node: Element, attribute: string, value: string) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
@@ -418,7 +437,7 @@ export function init_binding_group_dynamic(group, indexes: number[]) {
 	};
 }
 
-export function to_number(value) {
+export function to_number(value: string | number) {
 	return value === '' ? null : +value;
 }
 
@@ -596,7 +615,7 @@ export function claim_comment(nodes:ChildNodeArray, data) {
 	);
 }
 
-function find_comment(nodes, text, start) {
+function find_comment(nodes: ChildNodeArray, text: string, start: number) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeType === 8 /* comment node */ && (node.textContent as TODO<string>).trim() === text) {
@@ -605,7 +624,6 @@ function find_comment(nodes, text, start) {
 	}
 	return nodes.length;
 }
-
 
 export function claim_html_tag(nodes: ChildNodeArray, is_svg: boolean) {
 	// find html opening tag
@@ -669,7 +687,7 @@ export function set_style(node: HTMLElement, key: string, value: string, importa
 	}
 }
 
-export function select_option(select, value, mounting) {
+export function select_option(select: HTMLSelectElementEx, value: string, mounting: boolean) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -691,9 +709,9 @@ export function select_options(select: HTMLSelectElementEx, value: string) {
 	}
 }
 
-export function select_value(select) {
+export function select_value(select: HTMLSelectElementEx) {
 	const selected_option = select.querySelector(':checked');
-	return selected_option && selected_option.__value;
+	return selected_option && (selected_option as any).__value;
 }
 
 export function select_multiple_value(select: HTMLSelectElement) {
@@ -773,7 +791,7 @@ export const resize_observer_border_box = new ResizeObserverSingleton({ box: 'bo
 export const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
 export { ResizeObserverSingleton };
 
-export function toggle_class(element, name, toggle) {
+export function toggle_class(element: HTMLElement, name: string, toggle: true) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
