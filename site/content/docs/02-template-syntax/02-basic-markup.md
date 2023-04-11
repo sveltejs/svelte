@@ -1,5 +1,5 @@
 ---
-title: Markup elements
+title: Basic markup
 ---
 
 ## Tags

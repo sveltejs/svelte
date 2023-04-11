@@ -1,5 +1,5 @@
 ---
-title: Svelte file sections
+title: Svelte components
 ---
 
 Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.
