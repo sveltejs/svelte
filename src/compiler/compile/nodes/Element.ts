@@ -12,7 +12,7 @@ import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
 import { is_name_contenteditable, get_contenteditable_attr, has_contenteditable_attr } from '../utils/contenteditable';
-import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -180,6 +180,35 @@ const input_type_to_implicit_role = new Map([
   ['text', 'textbox'],
   ['url', 'textbox']
 ]);
+
+/** 
+ * Exceptions to the rule which follows common A11y conventions
+ * TODO make this configurable by the user
+ */
+const a11y_non_interactive_element_to_interactive_role_exceptions = {
+	ul: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	ol: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
+	table: ['grid'],
+	td: ['gridcell'],
+	fieldset: ['radiogroup', 'presentation']
+};
 
 const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
 
@@ -660,7 +689,7 @@ export default class Element extends Node {
 						}
 
 						// no-noninteractive-element-to-interactive-role
-						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
+						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role) && !a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(current_role)) {
 							component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
 						}
 					});
@@ -1086,7 +1115,10 @@ export default class Element extends Node {
 				} else if (contenteditable && !contenteditable.is_static) {
 					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
-			} else if (name !== 'this') {
+			} else if (
+				name !== 'this' &&
+				!regex_box_size.test(name)
+			) {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});
