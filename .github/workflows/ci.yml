@@ -20,8 +20,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm install
-        env:
-          SKIP_PREPARE: true
       - run: npm run test:integration
         env:
           CI: true

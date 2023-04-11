@@ -95,7 +95,7 @@
     "test:unit": "mocha --config .mocharc.unit.js --exit",
     "quicktest": "mocha --exit",
     "build": "rollup -c && npm run tsd",
-    "prepare": "node scripts/skip_in_ci.js npm run build",
+    "prepare": "npm run build",
     "dev": "rollup -cw",
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
