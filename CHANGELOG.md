@@ -1,5 +1,10 @@
 # Svelte changelog
 
+## Unreleased
+
+* Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
+* Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))
+
 ## 3.58.0
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
