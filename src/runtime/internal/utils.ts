@@ -72,7 +72,6 @@ export function subscribe<T, S extends Readable<T>>(store: S, ...callbacks: Arra
 	if (store == null) {
 		return noop;
 	}
-	// TODO: `store` does not accept an array of callbacks
 	const unsub: any = store.subscribe(...(callbacks as [any]));
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
@@ -86,8 +85,6 @@ export function get_store_value<T, S extends Readable<T>>(store: S): T {
 export function component_subscribe<T, S extends Readable<T>>(component: SvelteComponent, store: S, callback: Subscriber<T>) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
-
-// TODO: find out what types are expected here instead of using `any` everywhere 
 
 export function create_slot(definition: any[], ctx: any[], $$scope: T$$, fn: Function) {
 	if (definition) {
