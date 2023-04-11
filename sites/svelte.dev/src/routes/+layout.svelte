@@ -16,7 +16,11 @@
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
 	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
-		<Nav logo="/svelte-logo.svg">
+		<Nav>
+			<svelte:fragment slot="home">
+				<span><strong>svelte</strong><span>.dev</span></span>
+			</svelte:fragment>
+
 			<svelte:fragment slot="nav-center">
 				{#if $page.url.pathname !== '/search'}
 					<li><Search /></li>
