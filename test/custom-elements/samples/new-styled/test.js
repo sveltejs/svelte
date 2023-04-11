@@ -1,9 +1,11 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<p>unstyled</p>';
 	target.appendChild(document.createElement('custom-element'));
+	await tick();
 
 	const unstyled = target.querySelector('p');
 	const styled = target.querySelector('custom-element').shadowRoot.querySelector('p');

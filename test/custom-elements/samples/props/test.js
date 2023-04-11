@@ -1,8 +1,11 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<custom-element></custom-element>';
+	await tick();
+	await tick();
 
 	assert.equal(target.innerHTML, '<custom-element></custom-element>');
 
@@ -10,6 +13,7 @@ export default function (target) {
 	const widget = el.shadowRoot.querySelector('my-widget');
 
 	const [p1, p2, p3, p4] = widget.shadowRoot.querySelectorAll('p');
+	console.log('goooo', !!p1, !!p2, !!p3, !!p4)
 
 	assert.equal(p1.textContent, '3 items');
 	assert.equal(p2.textContent, 'a, b, c');

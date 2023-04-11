@@ -1,8 +1,10 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
 export default async function (target) {
 	target.innerHTML = '<my-app/>';
+	await tick();
 	const el = target.querySelector('my-app');
 	const button = el.shadowRoot.querySelector('button');
 	const span = el.shadowRoot.querySelector('span');

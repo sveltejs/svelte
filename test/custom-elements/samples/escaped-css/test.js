@@ -1,8 +1,10 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<custom-element></custom-element>';
+	await tick();
 	const icon = target.querySelector('custom-element').shadowRoot.querySelector('.icon');
 	const before = getComputedStyle(icon, '::before');
 

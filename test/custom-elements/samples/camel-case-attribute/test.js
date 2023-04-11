@@ -1,8 +1,10 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<custom-element camel-case="world" an-array="[1,2]"></custom-element>';
+	await tick();
 	const el = target.querySelector('custom-element');
 
 	assert.equal(el.shadowRoot.innerHTML, '<h1>Hello world!</h1> <p>1</p><p>2</p>');

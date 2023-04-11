@@ -1,4 +1,4 @@
-import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components, tick } from './scheduler';
+import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components } from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
 import { children, detach, start_hydrating, end_hydrating, get_custom_elements_slots, insert } from './dom';
@@ -169,10 +169,17 @@ if (typeof HTMLElement === 'function') {
 			super.addEventListener(type, listener, options);
 		}
 
-		connectedCallback() {
+		async connectedCallback() {
 			this.$$connected = true;
 			if (!this.$$component) {
-				function create_slot(name: string, $$c_e = false) {
+				// We wait one tick to let possible child slot elements be created/mounted
+				await Promise.resolve();
+
+				if (!this.$$connected) {
+					return;
+				}
+
+				function create_slot(name: string) {
 					return () => {
 						let node: HTMLSlotElement;
 						const obj = {
@@ -181,25 +188,15 @@ if (typeof HTMLElement === 'function') {
 								if (name !== 'default') {
 									node.setAttribute('name', name);
 								}
-								if (typeof obj.$$c_e === 'object') {
-									(obj.$$c_e as any).c()
-								}
 							},
 							m: function mount(target: HTMLElement, anchor?: HTMLElement) {
 								insert(target, node, anchor);
-								if (typeof obj.$$c_e === 'object') {
-									(obj.$$c_e as any).m(node, anchor)
-								}
 							},
 							d: function destroy(detaching: boolean) {
 								if (detaching) {
-									if (typeof obj.$$c_e === 'object') {
-										(obj.$$c_e as any).d(detaching)
-									}
 									detach(node);
 								}
-							},
-							$$c_e
+							}
 						};
 						return obj;
 					};
@@ -210,15 +207,6 @@ if (typeof HTMLElement === 'function') {
 				for (const name of this.$$slots) {
 					if (name in existing_slots) {
 						$$slots[name] = [create_slot(name)];
-					}
-				}
-
-				if (!Object.keys($$slots).length && this.$$slots.length) {
-					// There are potentially slots, but we didn't find any. This could be due to Svelte adding the child nodes
-					// only after the component is created (in the mount phase). In this case, pass in placeholder slots.
-					// The drawback is that all $$slots properties will be `true`, even if the component doesn't use them.
-					for (const name of this.$$slots) {
-						$$slots[name] = [create_slot(name, true)];
 					}
 				}
 
@@ -256,7 +244,7 @@ if (typeof HTMLElement === 'function') {
 		disconnectedCallback() {
 			this.$$connected = false;
 			// In a microtask, because this could be a move within the DOM
-			tick().then(() => {
+			Promise.resolve().then(() => {
 				if (!this.$$connected) {
 					this.$$component!.$destroy();
 					this.$$component = undefined;

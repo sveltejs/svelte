@@ -4,6 +4,7 @@ import './main.svelte';
 
 export default async function (target) {
 	target.innerHTML = '<my-app prop/>';
+	await tick();
 	const el = target.querySelector('my-app');
 
 	await tick();

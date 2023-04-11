@@ -1,8 +1,11 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<custom-element red white></custom-element>';
+	await tick();
+	await tick();
 	const ceRoot = target.querySelector('custom-element').shadowRoot;
 	const div = ceRoot.querySelector('div');
 	const p = ceRoot.querySelector('p');
