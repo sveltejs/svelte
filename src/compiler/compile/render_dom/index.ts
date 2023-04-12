@@ -555,9 +555,10 @@ export default function dom(
 			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
 			.map(accessor => `"${accessor.key.name}"`)
 			.join(',');
+		const use_shadow_dom = component.component_options.shadowdom !== 'none' ? 'true' : 'false';
 
 		body.push(
-			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}]));`
+			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
 		);
 	}
 

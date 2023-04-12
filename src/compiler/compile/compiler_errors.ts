@@ -206,6 +206,10 @@ export default {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
 	},
+	invalid_shadowdom_attribute: {
+		code: 'invalid-shadowdom-attribute',
+		message: "'shadowdom' must be either 'open' or 'none'"
+	},
 	invalid_ceProps_attribute: {
 		code: 'invalid-ceProps-attribute',
 		message: "'ceProps' must be a statically analyzable object literal of the form " +

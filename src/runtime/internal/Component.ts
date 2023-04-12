@@ -157,10 +157,13 @@ if (typeof HTMLElement === 'function') {
 
 		constructor(
 			private $$componentCtor: ComponentType,
-			private $$slots: string[]
+			private $$slots: string[],
+			use_shadow_dom: boolean
 		) {
 			super();
-			this.attachShadow({ mode: 'open' });
+			if (use_shadow_dom) {
+				this.attachShadow({ mode: 'open' });
+			}
 		}
 
 		addEventListener(type: string, listener: any, options?: any): void {
@@ -237,7 +240,7 @@ if (typeof HTMLElement === 'function') {
 				}
 
 				this.$$component = new this.$$componentCtor({
-					target: this.shadowRoot!,
+					target: this.shadowRoot || this,
 					props: {
 						...this.$$data,
 						$$slots,
@@ -330,17 +333,19 @@ interface CustomElementPropDefinition {
  * @param props_definition The props to observe
  * @param slots The slots to create
  * @param accessors Other accessors besides the ones for props the component has
+ * @param use_shadow_dom Whether to use shadow DOM
  * @returns A custom element class
  */
 export function create_custom_element(
 	Component: ComponentType,
 	props_definition: Record<string, CustomElementPropDefinition>,
 	slots: string[],
-	accessors: string[]
+	accessors: string[],
+	use_shadow_dom: boolean
 ) {
 	const Class = class extends SvelteElement {
 		constructor() {
-			super(Component, slots);
+			super(Component, slots, use_shadow_dom);
 			this.$$props_definition = props_definition;
 		}
 

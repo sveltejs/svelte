@@ -46,6 +46,7 @@ interface ComponentOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 	ceProps?: Record<string, { reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', attribute?: string }>;
+	shadowdom?: 'open' | 'none';
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
@@ -1571,6 +1572,17 @@ function process_component_options(component: Component, nodes) {
 						}
 
 						component_options.tag = tag;
+						break;
+					}
+
+					case 'shadowdom': {
+						const shadowdom = get_value(attribute, compiler_errors.invalid_shadowdom_attribute);
+
+						if (shadowdom !== 'open' && shadowdom !== 'none') {
+							return component.error(attribute, compiler_errors.invalid_shadowdom_attribute);
+						}
+
+						component_options.shadowdom = shadowdom;
 						break;
 					}
 

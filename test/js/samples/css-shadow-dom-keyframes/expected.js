@@ -44,5 +44,5 @@ class Component extends SvelteComponent {
 	}
 }
 
-customElements.define("custom-element", create_custom_element(Component, {}, [], []));
+customElements.define("custom-element", create_custom_element(Component, {}, [], [], true));
 export default Component;
