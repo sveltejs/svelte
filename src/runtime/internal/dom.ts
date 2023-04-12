@@ -1,3 +1,4 @@
+import { ResizeObserverSingleton } from './ResizeObserverSingleton';
 import { contenteditable_truthy_values, has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
@@ -306,6 +307,15 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
+/** 
+ * List of attributes that should always be set through the attr method,
+ * because updating them through the property setter doesn't work reliably.
+ * In the example of `width`/`height`, the problem is that the setter only
+ * accepts numeric values, but the attribute can also be set to a string like `50%`.
+ * If this list becomes too big, rethink this approach.
+ */
+const always_set_through_set_attribute = ['width', 'height'];
+
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
@@ -316,7 +326,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set) {
+		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -689,7 +699,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-export function add_resize_listener(node: HTMLElement, fn: () => void) {
+export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -736,6 +746,11 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 		detach(iframe);
 	};
 }
+
+export const resize_observer_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);

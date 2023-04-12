@@ -12,7 +12,7 @@ import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
 import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
-import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -1090,7 +1090,10 @@ export default class Element extends Node {
 				} else if (contenteditable && !contenteditable.is_static) {
 					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
-			} else if (name !== 'this') {
+			} else if (
+				name !== 'this' &&
+				!regex_box_size.test(name)
+			) {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});

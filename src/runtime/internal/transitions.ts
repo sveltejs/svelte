@@ -376,8 +376,10 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		run(b: INTRO | OUTRO) {
 			if (is_function(config)) {
 				wait().then(() => {
+					const opts: TransitionOptions = { direction: b ? 'in' : 'out' };
+					
 					// @ts-ignore
-					config = config(options);
+					config = config(opts);
 					go(b);
 				});
 			} else {
