@@ -8,14 +8,6 @@ The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [c
 
 > EXPORT_SNIPPET: svelte#onMount
 
-```js
-onMount(callback: () => void)
-```
-
-```js
-onMount(callback: () => () => void)
-```
-
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
 
 `onMount` does not run inside a [server-side component](/docs/server-side-component-api).
@@ -52,10 +44,6 @@ If a function is returned from `onMount`, it will be called when the component i
 
 > EXPORT_SNIPPET: svelte#beforeUpdate
 
-```js
-beforeUpdate(callback: () => void)
-```
-
 Schedules a callback to run immediately before the component is updated after any state change.
 
 > The first time the callback runs will be before the initial `onMount`
@@ -73,10 +61,6 @@ Schedules a callback to run immediately before the component is updated after an
 ## `afterUpdate`
 
 > EXPORT_SNIPPET: svelte#afterUpdate
-
-```js
-afterUpdate(callback: () => void)
-```
 
 Schedules a callback to run immediately after the component has been updated.
 
@@ -96,10 +80,6 @@ Schedules a callback to run immediately after the component has been updated.
 
 > EXPORT_SNIPPET: svelte#onDestroy
 
-```js
-onDestroy(callback: () => void)
-```
-
 Schedules a callback to run immediately before the component is unmounted.
 
 Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
@@ -117,10 +97,6 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 ## `tick`
 
 > EXPORT_SNIPPET: svelte#tick
-
-```js
-promise = tick();
-```
 
 Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
 
@@ -140,12 +116,6 @@ Returns a promise that resolves once any pending state changes have been applied
 
 > EXPORT_SNIPPET: svelte#setContext
 
-<!-- TODO: Better typing information -->
-
-```js
-setContext(key: any, context: any)
-```
-
 Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
 
 Like lifecycle functions, this must be called during component initialisation.
@@ -164,10 +134,6 @@ Like lifecycle functions, this must be called during component initialisation.
 
 > EXPORT_SNIPPET: svelte#getContext
 
-```js
-context: any = getContext(key: any)
-```
-
 Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
 
 ```svelte
@@ -181,10 +147,6 @@ Retrieves the context that belongs to the closest parent component with the spec
 ## `hasContext`
 
 > EXPORT_SNIPPET: svelte#hasContext
-
-```js
-hasContext = hasContext(key: any)
-```
 
 Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
 
@@ -202,10 +164,6 @@ Checks whether a given `key` has been set in the context of a parent component. 
 
 > EXPORT_SNIPPET: svelte#getAllContexts
 
-```js
-contexts: Map<any, any> = getAllContexts()
-```
-
 Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
 
 ```svelte
@@ -219,10 +177,6 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 ## `createEventDispatcher`
 
 > EXPORT_SNIPPET: svelte#createEventDispatcher
-
-```js
-dispatch: ((name: string, detail?: any, options?: DispatchOptions) => boolean) = createEventDispatcher();
-```
 
 Creates an event dispatcher that can be used to dispatch [component events](/docs/component-directives#on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 

@@ -12,14 +12,6 @@ This makes it possible to wrap almost any other reactive state handling library 
 
 > EXPORT_SNIPPET: svelte/store#writable
 
-```js
-store = writable(value?: any)
-```
-
-```js
-store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
-```
-
 Function that creates a store which has values that can be set from 'outside' components. It gets created as an object with additional `set` and `update` methods.
 
 `set` is a method that takes one argument which is the value to be set. The store value gets set to the value of the argument if the store value is not already equal to it.
@@ -65,10 +57,6 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 
 > EXPORT_SNIPPET: svelte/store#readable
 
-```js
-store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
-```
-
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
@@ -89,22 +77,6 @@ const time = readable(null, (set) => {
 ## `derived`
 
 > EXPORT_SNIPPET: svelte/store#derived
-
-```js
-store = derived(a, callback: (a: any) => any)
-```
-
-```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
-```
-
-```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
-```
-
-```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
-```
 
 Derives a store from one or more other stores. The callback runs initially when the first subscriber subscribes and then whenever the store dependencies change.
 
@@ -168,10 +140,6 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 
 > EXPORT_SNIPPET: svelte/store#readonly
 
-```js
-readableStore = readonly(writableStore);
-```
-
 This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
 
 ```js
@@ -191,7 +159,7 @@ readableStore.set(2); // ERROR
 > EXPORT_SNIPPET: svelte/store#get
 
 ```js
-value: any = get(store);
+declare function get<T>(store: Readable<T>): T;
 ```
 
 Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.

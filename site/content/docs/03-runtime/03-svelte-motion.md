@@ -8,10 +8,6 @@ The `svelte/motion` module exports two functions, `tweened` and `spring`, for cr
 
 > EXPORT_SNIPPET: svelte/motion#tweened
 
-```js
-store = tweened(value: any, options)
-```
-
 Tweened stores update their values over a fixed duration. The following options are available:
 
 - `delay` (`number`, default 0) — milliseconds before starting
@@ -84,10 +80,6 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 ## `spring`
 
 > EXPORT_SNIPPET: svelte/motion#spring
-
-```js
-store = spring(value: any, options)
-```
 
 A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
 
