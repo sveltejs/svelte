@@ -122,7 +122,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 			const elapsed = now - start;
 
-			if (elapsed > duration) {
+			if (elapsed > <number> duration) {
 				store.set(value = new_value);
 				return false;
 			}
