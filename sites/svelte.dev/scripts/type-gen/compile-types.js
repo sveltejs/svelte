@@ -6,6 +6,8 @@ import dts from 'rollup-plugin-dts';
 import ts from 'typescript';
 import { VERSION } from 'svelte/compiler';
 
+get_bundled_types();
+
 export async function get_bundled_types() {
 	const dtsSources = fs.readdirSync(new URL('./dts-sources', import.meta.url));
 
@@ -16,19 +18,18 @@ export async function get_bundled_types() {
 		const bundle = await rollup({
 			input: new URL(`./dts-sources/${file}`, import.meta.url).pathname,
 			plugins: [dts({ respectExternal: true })]
-			// external: ['estree-walker']
 		});
 
-		try {
-			fs.mkdirSync(new URL(`../../node_modules/.type-gen`, import.meta.url));
-		} catch {}
+		const moduleName = (file === 'index.d.ts' ? 'svelte' : `svelte/${file}`).replace('.d.ts', '');
+		const code = await bundle.generate({ format: 'esm' }).then(({ output }) => output[0].code);
+		const inlinedExportDeclarationCode = useExportDeclarations(code);
 
-		codes.set(
-			(file === 'index.d.ts' ? 'svelte' : `svelte/${file}`).replace('.d.ts', ''),
-			useExportDeclarations(
-				await bundle.generate({ format: 'esm' }).then(({ output }) => output[0].code)
-			)
-		);
+		codes.set(moduleName, inlinedExportDeclarationCode);
+
+		// !IMPORTANT: This is for debugging purposes only. Do not remove until Svelte d.ts files
+		// !are stable during v4/v5
+		write_to_node_modules('before', file, code);
+		write_to_node_modules('after', file, inlinedExportDeclarationCode);
 	}
 
 	return codes;
@@ -91,4 +92,17 @@ function useExportDeclarations(str) {
 	return magicStr.toString() ?? str;
 }
 
-get_bundled_types();
+/**
+ * @param {'before' | 'after'} label
+ * @param {string} filename
+ * @param {string} code
+ */
+function write_to_node_modules(label, filename, code) {
+	const folder = new URL(`../../node_modules/.type-gen/${label}`, import.meta.url).pathname;
+
+	try {
+		fs.mkdirSync(folder, { recursive: true });
+	} catch {}
+
+	fs.writeFileSync(`${folder}/${filename}`, code);
+}
