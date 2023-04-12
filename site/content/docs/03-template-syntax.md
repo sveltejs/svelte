@@ -1602,7 +1602,7 @@ Note that explicitly passing in an empty named slot will add that slot's name to
 
 Slots can be rendered zero or more times.
 
-The `let:` directive gives a slot template access to variables defined in the component that uses them.
+The `let:` directive gives a slot template access to variables defined in the component that they are provided to.
 The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}`, and `<slot {item}>` is equivalent to `<slot item={item}>`.
 
 ```sv
@@ -1618,7 +1618,7 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 
 <!-- App.svelte -->
 <!-- the `let:itemData={thing}` directive makes the value that `FancyList` pases as the `itemData` prop
-     available to the slot template as the `thing` variable -->
+     available to the slot template as a variable called `thing` -->
 <FancyList {items} let:itemData={thing}>
 	<div>{thing.text}</div>
 </FancyList>
