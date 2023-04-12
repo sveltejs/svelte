@@ -191,18 +191,6 @@ function strip_origin(str) {
 	return str.replace(/https:\/\/svelte\.dev/g, '');
 }
 
-/**
- * @param {string} str
- */
-function read_d_ts_file(str) {
-	// We can't use JSDoc comments inside JSDoc, so we would get ts(7031) errors if
-	// we didn't ignore this error specifically for `/// file:` code examples
-	return str.replace(
-		/(\s*\*\s*)\/\/\/ file:/g,
-		(match, prefix) => prefix + '// @errors: 7031' + match
-	);
-}
-
 const bundled_types = await get_bundled_types();
 
 {
