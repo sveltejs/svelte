@@ -180,18 +180,19 @@ function munge_type_element(member, depth = 1) {
 	};
 }
 
-/**
- * Type declarations include fully qualified URLs so that they become links when
- * you hover over names in an editor with TypeScript enabled. We need to remove
- * the origin so that they become root-relative, so that they work in preview
- * deployments and when developing locally
- * @param {string} str
- */
-function strip_origin(str) {
-	return str.replace(/https:\/\/svelte\.dev/g, '');
-}
-
 const bundled_types = await get_bundled_types();
+
+{
+	const module = bundled_types.get('svelte');
+
+	if (!module) throw new Error('Could not find svelte');
+
+	modules.push({
+		name: 'svelte',
+		comment: '',
+		...get_types(module.code, module.ts_source_file.statements)
+	});
+}
 
 {
 	const module = bundled_types.get('svelte/compiler');

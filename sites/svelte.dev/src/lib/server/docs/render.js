@@ -66,7 +66,7 @@ export function replace_placeholders(content) {
 		})
 		.replace(/> EXPORT_SNIPPET: (.+?)#(.+)?$/gm, (_, name, id) => {
 			const module = modules.find((module) => module.name === name);
-			if (!module) throw new Error(`Could not find module ${name}`);
+			if (!module) throw new Error(`Could not find module ${name} for EXPORT_SNIPPET clause`);
 
 			if (!id) {
 				throw new Error(`id is required for module ${name}`);
