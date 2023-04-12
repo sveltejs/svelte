@@ -747,9 +747,9 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-export const resize_observer_content_box = new ResizeObserverSingleton({ box: 'content-box' });
-export const resize_observer_border_box = new ResizeObserverSingleton({ box: 'border-box' });
-export const resize_observer_device_pixel_content_box = new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export const resize_observer_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
 export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {

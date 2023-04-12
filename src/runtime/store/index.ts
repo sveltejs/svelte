@@ -1,4 +1,4 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from '../internal';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;

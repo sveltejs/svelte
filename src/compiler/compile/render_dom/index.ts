@@ -1,3 +1,4 @@
+import type { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping';
 import { b, x, p } from 'code-red';
 import Component from '../Component';
 import Renderer from './Renderer';
@@ -8,7 +9,6 @@ import { invalidate } from './invalidate';
 import Block from './Block';
 import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
-import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
