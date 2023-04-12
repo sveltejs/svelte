@@ -121,7 +121,7 @@
   "devDependencies": {
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
-    "@jridgewell/trace-mapping": "^0.3.17",
+    "@jridgewell/trace-mapping": "^0.3.18",
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
