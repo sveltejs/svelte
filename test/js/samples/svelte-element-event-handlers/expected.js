@@ -2,20 +2,16 @@
 import {
 	SvelteComponent,
 	append,
-	assign,
 	bubble,
 	detach,
 	element,
-	empty,
-	get_spread_update,
 	init,
 	insert,
 	listen,
 	noop,
 	run_all,
 	safe_not_equal,
-	set_attributes,
-	set_custom_element_data_map
+	set_dynamic_element_data
 } from "svelte/internal";
 
 function create_dynamic_element(ctx) {
@@ -23,36 +19,13 @@ function create_dynamic_element(ctx) {
 	let svelte_element0;
 	let mounted;
 	let dispose;
-	let svelte_element0_levels = [{ class: "inner" }];
-	let svelte_element0_data = {};
-
-	for (let i = 0; i < svelte_element0_levels.length; i += 1) {
-		svelte_element0_data = assign(svelte_element0_data, svelte_element0_levels[i]);
-	}
-
-	let svelte_element1_levels = [{ class: "outer" }];
-	let svelte_element1_data = {};
-
-	for (let i = 0; i < svelte_element1_levels.length; i += 1) {
-		svelte_element1_data = assign(svelte_element1_data, svelte_element1_levels[i]);
-	}
 
 	return {
 		c() {
 			svelte_element1 = element(a);
 			svelte_element0 = element(span);
-
-			if ((/-/).test(span)) {
-				set_custom_element_data_map(svelte_element0, svelte_element0_data);
-			} else {
-				set_attributes(svelte_element0, svelte_element0_data);
-			}
-
-			if ((/-/).test(a)) {
-				set_custom_element_data_map(svelte_element1, svelte_element1_data);
-			} else {
-				set_attributes(svelte_element1, svelte_element1_data);
-			}
+			set_dynamic_element_data(span)(svelte_element0, { class: "inner" });
+			set_dynamic_element_data(a)(svelte_element1, { class: "outer" });
 		},
 		m(target, anchor) {
 			insert(target, svelte_element1, anchor);
@@ -69,23 +42,7 @@ function create_dynamic_element(ctx) {
 				mounted = true;
 			}
 		},
-		p(ctx, dirty) {
-			svelte_element0_data = get_spread_update(svelte_element0_levels, [{ class: "inner" }]);
-
-			if ((/-/).test(span)) {
-				set_custom_element_data_map(svelte_element0, svelte_element0_data);
-			} else {
-				set_attributes(svelte_element0, svelte_element0_data);
-			}
-
-			svelte_element1_data = get_spread_update(svelte_element1_levels, [{ class: "outer" }]);
-
-			if ((/-/).test(a)) {
-				set_custom_element_data_map(svelte_element1, svelte_element1_data);
-			} else {
-				set_attributes(svelte_element1, svelte_element1_data);
-			}
-		},
+		p: noop,
 		d(detaching) {
 			if (detaching) detach(svelte_element1);
 			mounted = false;
@@ -95,44 +52,23 @@ function create_dynamic_element(ctx) {
 }
 
 function create_fragment(ctx) {
-	let previous_tag = a;
-	let svelte_element_anchor;
 	let svelte_element = a && create_dynamic_element(ctx);
 
 	return {
 		c() {
 			if (svelte_element) svelte_element.c();
-			svelte_element_anchor = empty();
 		},
 		m(target, anchor) {
 			if (svelte_element) svelte_element.m(target, anchor);
-			insert(target, svelte_element_anchor, anchor);
 		},
 		p(ctx, [dirty]) {
 			if (a) {
-				if (!previous_tag) {
-					svelte_element = create_dynamic_element(ctx);
-					svelte_element.c();
-					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
-				} else if (safe_not_equal(previous_tag, a)) {
-					svelte_element.d(1);
-					svelte_element = create_dynamic_element(ctx);
-					svelte_element.c();
-					svelte_element.m(svelte_element_anchor.parentNode, svelte_element_anchor);
-				} else {
-					svelte_element.p(ctx, dirty);
-				}
-			} else if (previous_tag) {
-				svelte_element.d(1);
-				svelte_element = null;
+				svelte_element.p(ctx, dirty);
 			}
-
-			previous_tag = a;
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element_anchor);
 			if (svelte_element) svelte_element.d(detaching);
 		}
 	};

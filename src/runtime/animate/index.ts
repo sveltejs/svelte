@@ -1,5 +1,5 @@
-import { cubicOut } from 'svelte/easing';
-import { is_function } from 'svelte/internal';
+import { cubicOut } from '../easing';
+import { is_function } from '../internal';
 
 // todo: same as Transition, should it be shared?
 export interface AnimationConfig {

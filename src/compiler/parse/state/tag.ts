@@ -19,6 +19,7 @@ const meta_tags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:options', 'Options'],
 	['svelte:window', 'Window'],
+	['svelte:document', 'Document'],
 	['svelte:body', 'Body']
 ]);
 
@@ -519,7 +520,7 @@ function read_sequence(parser: Parser, done: () => boolean, location: string): T
 
 	function flush(end: number) {
 		if (current_chunk.raw) {
-			current_chunk.data = decode_character_references(current_chunk.raw);
+			current_chunk.data = decode_character_references(current_chunk.raw, true);
 			current_chunk.end = end;
 			chunks.push(current_chunk);
 		}

@@ -1,4 +1,4 @@
-import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import type { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping';
 import { getLocator } from 'locate-character';
 import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/mapped_code';
 import { decode_map } from './decode_sourcemap';
@@ -57,7 +57,7 @@ class PreprocessResult implements Source {
 
 	to_processed(): Processed {
 		// Combine all the source maps for each preprocessor function into one
-		const map: RawSourceMap = combine_sourcemaps(this.file_basename, this.sourcemap_list);
+		const map = combine_sourcemaps(this.file_basename, this.sourcemap_list);
 
 		return {
 			// TODO return separated output, in future version where svelte.compile supports it:
