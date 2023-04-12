@@ -6,7 +6,7 @@
 
 		// target node v8+ (https://node.green/)
 		// the only missing feature is Array.prototype.values
-		"lib": ["es2017"],
+		"lib": ["es2017", "DOM"],
 		"target": "es2017",
 
 		"declaration": true,
