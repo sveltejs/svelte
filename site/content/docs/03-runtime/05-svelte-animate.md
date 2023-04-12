@@ -6,6 +6,8 @@ The `svelte/animate` module exports one function for use with Svelte [animations
 
 ## `flip`
 
+> EXPORT_SNIPPET: svelte/animate#flip
+
 ```svelte
 animate:flip={params}
 ```

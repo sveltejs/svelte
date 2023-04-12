@@ -8,6 +8,8 @@ Nonetheless, it's useful to understand how to use the compiler, since bundler pl
 
 ## `svelte.compile`
 
+> EXPORT_SNIPPET: svelte/compiler#compile
+
 ```js
 result: {
 	js,
@@ -147,6 +149,8 @@ compiled: {
 
 ## `svelte.parse`
 
+> EXPORT_SNIPPET: svelte/compiler#parse
+
 ```js
 ast: object = svelte.parse(
 	source: string,
@@ -166,6 +170,8 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 ```
 
 ## `svelte.preprocess`
+
+> EXPORT_SNIPPET: svelte/compiler#preprocess
 
 A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
@@ -305,6 +311,8 @@ const { code } = await svelte.preprocess(
 
 ## `svelte.walk`
 
+> EXPORT_SNIPPET: svelte/compiler#walk
+
 ```js
 walk(ast: Node, {
 	enter(node: Node, parent: Node, prop: string, index: number)?: void,
@@ -334,13 +342,11 @@ svelte.walk(ast, {
 
 ## `svelte.VERSION`
 
+> EXPORT_SNIPPET: svelte/compiler#VERSION
+
 The current version, as set in package.json.
 
 ```js
 import svelte from 'svelte/compiler';
 console.log(`running svelte version ${svelte.VERSION}`);
 ```
-
-## Types
-
-> TYPES: svelte/compiler

@@ -108,6 +108,36 @@ export function replace_placeholders(content) {
 						.join('\n\n')}`;
 				})
 				.join('\n\n');
+		})
+		.replace(/> EXPORTS: (.+)/, (_, name) => {
+			const module = modules.find((module) => module.name === name);
+			if (!module) throw new Error(`Could not find module ${name} for EXPORTS: clause`);
+
+			if (module.exports.length === 0 && !module.exempt) return '';
+
+			let import_block = '';
+
+			if (module.exports.length > 0) {
+				// deduplication is necessary for now, because of `error()` overload
+				const exports = Array.from(new Set(module.exports.map((x) => x.name)));
+
+				let declaration = `import { ${exports.join(', ')} } from '${module.name}';`;
+				if (declaration.length > 80) {
+					declaration = `import {\n\t${exports.join(',\n\t')}\n} from '${module.name}';`;
+				}
+
+				import_block = fence(declaration, 'js');
+			}
+
+			return `${import_block}\n\n${module.comment}\n\n${module.exports
+				.map((type) => {
+					const markdown =
+						`<div class="ts-block">${fence(type.snippet)}` +
+						type.children.map(stringify).join('\n\n') +
+						`</div>`;
+					return `### ${type.name}\n\n${type.comment}\n\n${markdown}`;
+				})
+				.join('\n\n')}`;
 		});
 }
 

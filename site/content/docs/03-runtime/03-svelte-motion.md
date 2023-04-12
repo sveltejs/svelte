@@ -6,6 +6,8 @@ The `svelte/motion` module exports two functions, `tweened` and `spring`, for cr
 
 ## `tweened`
 
+> EXPORT_SNIPPET: svelte/motion#tweened
+
 ```js
 store = tweened(value: any, options)
 ```
@@ -80,6 +82,8 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 ```
 
 ## `spring`
+
+> EXPORT_SNIPPET: svelte/motion#spring
 
 ```js
 store = spring(value: any, options)
