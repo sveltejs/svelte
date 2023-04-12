@@ -3,6 +3,7 @@ import Body from '../Body';
 import ConstTag from '../ConstTag';
 import Comment from '../Comment';
 import EachBlock from '../EachBlock';
+import Document from '../Document';
 import Element from '../Element';
 import Head from '../Head';
 import IfBlock from '../IfBlock';
@@ -28,6 +29,7 @@ function get_constructor(type) {
 		case 'Body': return Body;
 		case 'Comment': return Comment;
 		case 'ConstTag': return ConstTag;
+		case 'Document': return Document;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
