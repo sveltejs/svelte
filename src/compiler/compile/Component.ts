@@ -143,6 +143,7 @@ export default class Component {
 					.replace(process.cwd(), '')
 					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
+		// line numbers in stack trace frames are 1-based. source maps are 0-based
 		const locator = getLocator(this.source, { offsetLine: 1 });
 		// @ts-ignore - fix the type of CompileOptions.sourcemap
 		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
