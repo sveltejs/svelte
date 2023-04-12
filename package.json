@@ -130,6 +130,7 @@
     "@rollup/plugin-virtual": "^3.0.1",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.8.0",
     "@types/aria-query": "^5.0.1",
+    "@types/estree": "^1.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
@@ -159,5 +160,9 @@
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
     "util": "^0.12.5"
+  },
+  "packageManager": "pnpm@7.32.0",
+  "engines": {
+    "pnpm": ">=7.0.0"
   }
 }
