@@ -151,8 +151,10 @@ export default class Component {
 			let location: { line: number, column: number } = locator(c);
 			if (tracer) {
 				location = originalPositionFor(tracer, location);
+				// originalPositionFor returns 0-based lines?
+				// https://github.com/jridgewell/trace-mapping/issues/27
+				location.line += 1;
 			}
-			location.line += 1; // make line one based
 			return location;
 		};
 		// styles
