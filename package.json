@@ -152,7 +152,7 @@
     "mocha": "^10.2.0",
     "periscopic": "^3.1.0",
     "puppeteer": "^19.8.5",
-    "rollup": "^2.79.1",
+    "rollup": "^3.20.2",
     "source-map": "^0.7.4",
     "source-map-support": "^0.5.21",
     "tiny-glob": "^0.2.9",

@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, split_css_unit, is_function } from 'svelte/internal';
+import { cubicOut, cubicInOut, linear } from '../easing';
+import { assign, split_css_unit, is_function } from '../internal';
 
 export type EasingFunction = (t: number) => number;
 
