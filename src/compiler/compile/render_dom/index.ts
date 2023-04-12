@@ -555,11 +555,11 @@ export default function dom(
 
 		if (component.component_options.elementInternals) {
 			declaration.body.body.push({
-				type: "PropertyDefinition",
+				type: 'PropertyDefinition',
 				static: true,
 				computed: false,
-				key: { type: "Identifier", name: "formAssociated" },
-				value: x`true`,
+				key: { type: 'Identifier', name: 'formAssociated' },
+				value: x`true`
 			});
 		}
 
