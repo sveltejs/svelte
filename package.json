@@ -119,7 +119,7 @@
   },
   "homepage": "https://svelte.dev",
   "devDependencies": {
-    "@ampproject/remapping": "^0.3.0",
+    "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-json": "^6.0.0",
