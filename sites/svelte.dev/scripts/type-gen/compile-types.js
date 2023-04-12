@@ -62,6 +62,14 @@ function useExportDeclarations(str) {
 		(element) => element.name.text
 	);
 
+	// // find the elements who are being exported as alias, like `export { VERSION as __VERSION__ }`
+	// const aliasedExportedSymbols = new Map(
+	// 	// @ts-ignore Why does TS not identify `elements`
+	// 	exportDeclaration?.exportClause?.elements
+	// 		.filter((element) => element.propertyName)
+	// 		.map((element) => [element.name.text, element.propertyName.text])
+	// );
+
 	for (const statement of sourceFile.statements) {
 		if (
 			!(
@@ -72,6 +80,18 @@ function useExportDeclarations(str) {
 			)
 		)
 			continue;
+
+		// // Now rewrite the aliased exports to be inline. This risk collision, so hope that doesn't happen
+		// if (
+		// 	(ts.isVariableStatement(statement) &&
+		// 		aliasedExportedSymbols.has(statement.declarationList.declarations[0].name.getText())) ||
+		// 	// @ts-ignore
+		// 	aliasedExportedSymbols.has(statement.name?.getText())
+		// )
+		// 	for (const [og, exported] of aliasedExportedSymbols) {
+		// 		// Modify the current statement, change the variable name
+		// 		magicStr.overwrite();
+		// 	}
 
 		for (const exportedSymbol of exportedSymbols) {
 			if (
