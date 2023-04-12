@@ -66,7 +66,7 @@ export default {
 	},
 	missing_contenteditable_attribute: {
 		code: 'missing-contenteditable-attribute',
-		message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
+		message: '\'contenteditable\' attribute is required for textContent, innerHTML and innerText two-way bindings'
 	},
 	dynamic_contenteditable_attribute: {
 		code: 'dynamic-contenteditable-attribute',

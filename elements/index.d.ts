@@ -196,6 +196,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	
+	// Document Events
+	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
@@ -531,13 +534,22 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	is?: string | undefined | null;
 
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:innerHTML'?: string | undefined | null;
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:textContent'?: string | undefined | null;
+	/**
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
+	 */
+	'bind:innerText'?: string | undefined | null;
+
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -866,9 +878,9 @@ export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAtt
 }
 
 export interface HTMLMetaAttributes extends HTMLAttributes<HTMLMetaElement> {
-	charSet?: string | undefined | null;
+	charset?: string | undefined | null;
 	content?: string | undefined | null;
-	httpequiv?: string | undefined | null;
+	'http-equiv'?: string | undefined | null;
 	name?: string | undefined | null;
 	media?: string | undefined | null;
 }
@@ -1579,6 +1591,7 @@ export interface SvelteHTMLElements {
 
 	// Svelte specific
 	'svelte:window': SvelteWindowAttributes;
+	'svelte:document': HTMLAttributes<Document>;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
 	'svelte:options': { [name: string]: any };

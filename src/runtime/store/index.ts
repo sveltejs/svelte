@@ -1,4 +1,4 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from '../internal';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;
@@ -164,7 +164,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 	const auto = fn.length < 2;
 
 	return readable(initial_value, (set) => {
-		let inited = false;
+		let started = false;
 		const values = [];
 
 		let pending = 0;
@@ -188,7 +188,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
-				if (inited) {
+				if (started) {
 					sync();
 				}
 			},
@@ -197,12 +197,16 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			})
 		);
 
-		inited = true;
+		started = true;
 		sync();
 
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
+			// We need to set this to false because callbacks can still happen despite having unsubscribed:
+			// Callbacks might already be placed in the queue which doesn't know it should no longer
+			// invoke this derived store.
+			started = false;
 		};
 	});
 }
