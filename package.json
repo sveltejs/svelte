@@ -99,7 +99,7 @@
     "dev": "rollup -cw",
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
-    "tsd": "node ./generate-type-definitions.js",
+    "tsd": "tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
@@ -119,7 +119,7 @@
   },
   "homepage": "https://svelte.dev",
   "devDependencies": {
-    "@ampproject/remapping": "^0.3.0",
+    "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@rollup/plugin-commonjs": "^11.0.0",
     "@rollup/plugin-json": "^6.0.0",
@@ -157,7 +157,7 @@
     "source-map-support": "^0.5.21",
     "tiny-glob": "^0.2.9",
     "tslib": "^2.5.0",
-    "typescript": "^3.7.5",
+    "typescript": "^5.0.4",
     "util": "^0.12.5"
   }
 }
