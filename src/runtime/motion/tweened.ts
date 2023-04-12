@@ -1,6 +1,6 @@
-import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
-import { linear } from 'svelte/easing';
+import { Readable, writable } from '../store';
+import { assign, loop, now, Task } from '../internal';
+import { linear } from '../easing';
 import { is_date } from './utils';
 
 function get_interpolator(a, b) {
