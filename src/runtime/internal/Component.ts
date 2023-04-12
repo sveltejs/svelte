@@ -152,6 +152,8 @@ if (typeof HTMLElement === 'function') {
 		private $$data = {};
 		private $$reflecting = false;
 		private $$props_definition: Record<string, CustomElementPropDefinition> = {};
+		private $$listeners: Record<string, Function[]> = {};
+		private $$listener_unsubscribe_fns = new Map<Function, Function>();
 
 		constructor(
 			private $$componentCtor: ComponentType,
@@ -165,8 +167,24 @@ if (typeof HTMLElement === 'function') {
 			// We can't determine upfront if the event is a custom event or not, so we have to
 			// listen to both. If someone uses a custom event with the same name as a regular
 			// browser event, this fires twice - we can't avoid that.
-			this.$$component!.$on(type, listener);
+			this.$$listeners[type] = this.$$listeners[type] || [];
+			this.$$listeners[type].push(listener);
+			if (this.$$component) {
+				const unsub = this.$$component!.$on(type, listener);
+				this.$$listener_unsubscribe_fns.set(listener, unsub);
+			}
 			super.addEventListener(type, listener, options);
+		}
+
+		removeEventListener(type: string, listener: any, options?: any): void {
+			super.removeEventListener(type, listener, options);
+			if (this.$$component) {
+				const unsub = this.$$listener_unsubscribe_fns.get(listener);
+				if (unsub) {
+					unsub();
+					this.$$listener_unsubscribe_fns.delete(listener);
+				}
+			}
 		}
 
 		async connectedCallback() {
@@ -228,6 +246,14 @@ if (typeof HTMLElement === 'function') {
 						}
 					}
 				});
+
+				for (const type in this.$$listeners) {
+					for (const listener of this.$$listeners[type]) {
+						const unsub = this.$$component!.$on(type, listener);
+						this.$$listener_unsubscribe_fns.set(listener, unsub);
+					}
+				}
+				this.$$listeners = {};
 			}
 		}
 
