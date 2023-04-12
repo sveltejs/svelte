@@ -83,7 +83,7 @@ export default [
 				}),
 				ts_plugin,
 				{
-					writeBundle(bundle) {
+					writeBundle(_options, bundle) {
 						if (dir === 'internal') {
 							const mod = bundle['index.mjs'];
 							if (mod) {
