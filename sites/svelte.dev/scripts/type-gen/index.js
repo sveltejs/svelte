@@ -118,7 +118,7 @@ function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
-	/** @type {string} */
+	/** @type {string[]} */
 	const children = [];
 
 	const name = member.name?.escapedText;
@@ -206,117 +206,109 @@ function read_d_ts_file(str) {
 const bundled_types = await get_bundled_types();
 
 {
-	const code = bundled_types.get('svelte/compiler') ?? '';
-	// console.log(code);
-	const node = ts.createSourceFile('compiler/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/compiler');
+
+	if (!module) throw new Error('Could not find svelte/compiler');
 
 	modules.push({
 		name: 'svelte/compiler',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/runtime') ?? '';
-	const node = ts.createSourceFile('runtime/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/runtime');
+
+	if (!module) throw new Error('Could not find svelte/runtime');
 
 	modules.push({
-		name: 'svelte',
+		name: 'svelte/runtime',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
-
 {
-	const code = bundled_types.get('svelte/action') ?? '';
-	const node = ts.createSourceFile('runtime/action/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/action');
+
+	if (!module) throw new Error('Could not find svelte/action');
 
 	modules.push({
 		name: 'svelte/action',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/animate') ?? '';
-	const node = ts.createSourceFile(
-		'runtime/animate/index.d.ts',
-		code,
-		ts.ScriptTarget.Latest,
-		true
-	);
+	const module = bundled_types.get('svelte/animate');
+
+	if (!module) throw new Error('Could not find svelte/animate');
 
 	modules.push({
 		name: 'svelte/animate',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/easing') ?? '';
-	const node = ts.createSourceFile('runtime/easing/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/easing');
+
+	if (!module) throw new Error('Could not find svelte/easing');
 
 	modules.push({
 		name: 'svelte/easing',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/motion') ?? '';
-	const node = ts.createSourceFile('runtime/motion/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/motion');
+
+	if (!module) throw new Error('Could not find svelte/motion');
 
 	modules.push({
 		name: 'svelte/motion',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/store') ?? '';
-	const node = ts.createSourceFile('runtime/store/index.d.ts', code, ts.ScriptTarget.Latest, true);
+	const module = bundled_types.get('svelte/store');
+
+	if (!module) throw new Error('Could not find svelte/store');
 
 	modules.push({
 		name: 'svelte/store',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/transition') ?? '';
-	const node = ts.createSourceFile(
-		'runtime/transition/index.d.ts',
-		code,
-		ts.ScriptTarget.Latest,
-		true
-	);
+	const module = bundled_types.get('svelte/transition');
+
+	if (!module) throw new Error('Could not find svelte/transition');
 
 	modules.push({
 		name: 'svelte/transition',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 
 {
-	const code = bundled_types.get('svelte/internal') ?? '';
-	const node = ts.createSourceFile(
-		'runtime/internal/index.d.ts',
-		code,
-		ts.ScriptTarget.Latest,
-		true
-	);
+	const module = bundled_types.get('svelte/internal');
+
+	if (!module) throw new Error('Could not find svelte/internal');
 
 	modules.push({
 		name: 'svelte/internal',
 		comment: '',
-		...get_types(code, node.statements)
+		...get_types(module.code, module.ts_source_file.statements)
 	});
 }
 

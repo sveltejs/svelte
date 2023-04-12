@@ -11,7 +11,7 @@ get_bundled_types();
 export async function get_bundled_types() {
 	const dtsSources = fs.readdirSync(new URL('./dts-sources', import.meta.url));
 
-	/** @type {Map<string, string>} */
+	/** @type {Map<string, {code: string, ts_source_file: ts.SourceFile}>} */
 	const codes = new Map();
 
 	for (const file of dtsSources) {
@@ -22,14 +22,14 @@ export async function get_bundled_types() {
 
 		const moduleName = (file === 'index.d.ts' ? 'svelte' : `svelte/${file}`).replace('.d.ts', '');
 		const code = await bundle.generate({ format: 'esm' }).then(({ output }) => output[0].code);
-		const inlinedExportDeclarationCode = useExportDeclarations(code);
+		const [inlined_export_declaration_code, ts_source_file] = useExportDeclarations(code);
 
-		codes.set(moduleName, inlinedExportDeclarationCode);
+		codes.set(moduleName, { code: inlined_export_declaration_code, ts_source_file });
 
-		// !IMPORTANT: This is for debugging purposes only. Do not remove until Svelte d.ts files
-		// !are stable during v4/v5
+		// !IMPORTANT: This is for debugging purposes only.
+		// !Do not remove until Svelte d.ts files are stable during v4/v5
 		write_to_node_modules('before', file, code);
-		write_to_node_modules('after', file, inlinedExportDeclarationCode);
+		write_to_node_modules('after', file, inlined_export_declaration_code);
 	}
 
 	return codes;
@@ -37,6 +37,7 @@ export async function get_bundled_types() {
 
 /**
  * @param {string} str
+ * @returns {[string, ts.SourceFile]}
  */
 function useExportDeclarations(str) {
 	const magicStr = new MagicString(str);
@@ -54,7 +55,7 @@ function useExportDeclarations(str) {
 		ts.isExportDeclaration(statement)
 	);
 
-	if (exportDeclaration && !ts.isExportDeclaration(exportDeclaration)) return str;
+	if (exportDeclaration && !ts.isExportDeclaration(exportDeclaration)) return [str, sourceFile];
 
 	// @ts-ignore Why does TS not identify `elements`
 	const exportedSymbols = exportDeclaration?.exportClause?.elements.map(
@@ -89,7 +90,16 @@ function useExportDeclarations(str) {
 	// In case it is export declare VERSION = '__VERSION__', replace it with svelte's real version
 	magicStr.replace('__VERSION__', VERSION);
 
-	return magicStr.toString() ?? str;
+	return [
+		magicStr.toString() ?? str,
+		ts.createSourceFile(
+			'index.d.ts',
+			magicStr.toString() ?? str,
+			ts.ScriptTarget.ESNext,
+			true,
+			ts.ScriptKind.TS
+		)
+	];
 }
 
 /**
