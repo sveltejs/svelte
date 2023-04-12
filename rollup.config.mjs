@@ -1,24 +1,58 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import replace from '@rollup/plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import sucrase from '@rollup/plugin-sucrase';
 import typescript from '@rollup/plugin-typescript';
-import pkg from './package.json';
+
+const require = createRequire(import.meta.url);
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
 const is_publish = !!process.env.PUBLISH;
 
 const ts_plugin = is_publish
 	? typescript({
-		include: 'src/**',
 		typescript: require('typescript')
 	})
 	: sucrase({
 		transforms: ['typescript']
 	});
 
-const external = id => id.startsWith('svelte/');
+// The following external and path logic is necessary so that the bundled runtime pieces and the index file
+// reference each other correctly instead of bundling their references to each other
+
+/**
+ * Ensures that relative imports inside `src/runtime` like `./internal` and `../store` are externalized correctly
+ */
+const external = (id, parent_id) => {
+	const parent_segments = parent_id.replace(/\\/g, '/').split('/');
+	// TODO needs to be adjusted when we move to JS modules
+	if (parent_segments[parent_segments.length - 3] === 'runtime') {
+		return /\.\.\/\w+$/.test(id);
+	} else {
+		return id === './internal' && parent_segments[parent_segments.length - 2] === 'runtime';
+	}
+}
+
+/**
+ * Transforms externalized import paths like `../store` into correct relative imports with correct index file extension import
+ */
+const replace_relative_svelte_imports = (id, ending) => {
+	id = id.replace(/\\/g, '/');
+	// TODO needs to be adjusted when we move to JS modules
+	return /src\/runtime\/\w+$/.test(id) && `../${id.split('/').pop()}/${ending}`;
+}
+
+/**
+ * Transforms externalized `./internal` import path into correct relative import with correct index file extension import
+ */
+const replace_relative_internal_import = (id, ending) => {
+	id = id.replace(/\\/g, '/');
+	// TODO needs to be adjusted when we move to JS modules
+	return id.endsWith('src/runtime/internal') && `./internal/${ending}`;
+}
 
 fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index';`);
 
@@ -30,12 +64,12 @@ export default [
 			{
 				file: `index.mjs`,
 				format: 'esm',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.mjs`
+				paths: id => replace_relative_internal_import(id, 'index.mjs')
 			},
 			{
 				file: `index.js`,
 				format: 'cjs',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.js`
+				paths: id => replace_relative_internal_import(id, 'index.js')
 			}
 		],
 		external,
@@ -48,12 +82,12 @@ export default [
 			{
 				file: `ssr.mjs`,
 				format: 'esm',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.mjs`
+				paths: id => replace_relative_internal_import(id, 'index.mjs')
 			},
 			{
 				file: `ssr.js`,
 				format: 'cjs',
-				paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '.')}/index.js`
+				paths: id => replace_relative_internal_import(id, 'index.js')
 			}
 		],
 		external,
@@ -68,12 +102,12 @@ export default [
 				{
 					file: `${dir}/index.mjs`,
 					format: 'esm',
-					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}/index.mjs`
+					paths: id => replace_relative_svelte_imports(id, 'index.mjs')
 				},
 				{
 					file: `${dir}/index.js`,
 					format: 'cjs',
-					paths: id => id.startsWith('svelte/') && `${id.replace('svelte', '..')}/index.js`
+					paths: id => replace_relative_svelte_imports(id, 'index.js')
 				}
 			],
 			external,
@@ -83,7 +117,7 @@ export default [
 				}),
 				ts_plugin,
 				{
-					writeBundle(bundle) {
+					writeBundle(_options, bundle) {
 						if (dir === 'internal') {
 							const mod = bundle['index.mjs'];
 							if (mod) {
