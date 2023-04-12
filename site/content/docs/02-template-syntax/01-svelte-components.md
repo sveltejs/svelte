@@ -24,7 +24,7 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 
 ### 1. `export` creates a component prop
 
-Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](#attributes-and-props) for more information).
+Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs/basic-markup#attributes-and-props) for more information).
 
 ```svelte
 <script>
