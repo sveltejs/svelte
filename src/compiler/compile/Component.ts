@@ -1,3 +1,4 @@
+import type { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -32,7 +33,6 @@ import { print, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
-import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
