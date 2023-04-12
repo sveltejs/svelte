@@ -41,7 +41,7 @@
 	function update() {
 		content = document.querySelector('.content');
 		const { top } = content.getBoundingClientRect();
-		headings = content.querySelectorAll('h2[id]');
+		headings = content.querySelectorAll('h2[id], h3[id]');
 		positions = Array.from(headings).map((heading) => {
 			const style = getComputedStyle(heading);
 			return heading.getBoundingClientRect().top - parseFloat(style.scrollMarginTop) - top;
@@ -92,13 +92,13 @@
 				containerEl.scrollBy({
 					top: top - max,
 					left: 0,
-					behavior: 'smooth',
+					behavior: 'smooth'
 				});
 			} else if (bottom < min) {
 				containerEl.scrollBy({
 					top: bottom - min,
 					left: 0,
-					behavior: 'smooth',
+					behavior: 'smooth'
 				});
 			}
 		}
