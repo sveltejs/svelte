@@ -30,7 +30,7 @@
 		"@resvg/resvg-js": "^2.4.1",
 		"@sveltejs/adapter-vercel": "^2.4.1",
 		"@sveltejs/kit": "^1.15.4",
-		"@sveltejs/site-kit": "^4.0.2",
+		"@sveltejs/site-kit": "^4.1.0",
 		"@types/marked": "^4.0.8",
 		"@types/prismjs": "^1.26.0",
 		"degit": "^2.8.4",
@@ -51,6 +51,7 @@
 		"shiki-twoslash": "^3.1.1",
 		"svelte": "^3.58.0",
 		"svelte-check": "^3.2.0",
+		"ts-morph": "^18.0.0",
 		"typescript": "^5.0.4",
 		"vite": "^4.2.1",
 		"vite-imagetools": "^4.0.18"

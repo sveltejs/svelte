@@ -3,10 +3,11 @@ import MagicString from 'magic-string';
 import fs from 'node:fs';
 import { rollup } from 'rollup';
 import dts from 'rollup-plugin-dts';
-import ts from 'typescript';
 import { VERSION } from 'svelte/compiler';
+import { Project, SyntaxKind } from 'ts-morph';
+import ts from 'typescript';
 
-get_bundled_types();
+// get_bundled_types();
 
 export async function get_bundled_types() {
 	const dtsSources = fs.readdirSync(new URL('./dts-sources', import.meta.url));
@@ -40,69 +41,57 @@ export async function get_bundled_types() {
  * @returns {[string, ts.SourceFile]}
  */
 function useExportDeclarations(str) {
-	const magicStr = new MagicString(str);
-
-	const sourceFile = ts.createSourceFile(
-		'index.d.ts',
-		str,
-		ts.ScriptTarget.ESNext,
-		true,
-		ts.ScriptKind.TS
-	);
+	const project = new Project();
+	const source_file = project.createSourceFile('index.d.ts', str, { overwrite: true });
 
 	// There's only gonna be one because of the output of dts-plugin
-	const exportDeclaration = sourceFile.statements.find((statement) =>
-		ts.isExportDeclaration(statement)
-	);
+	const exportDeclaration = source_file.getExportDeclarations()[0];
+	const exportedSymbols = exportDeclaration
+		.getNamedExports()
+		.map((e) => e.getAliasNode()?.getText() ?? e.getNameNode().getText());
 
-	if (exportDeclaration && !ts.isExportDeclaration(exportDeclaration)) return [str, sourceFile];
+	// console.log(exportedSymbols);
+	if (exportedSymbols.length === 0)
+		return [
+			str,
+			ts.createSourceFile('index.d.ts', str, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS)
+		];
 
-	// @ts-ignore Why does TS not identify `elements`
-	const exportedSymbols = exportDeclaration?.exportClause?.elements.map(
-		(element) => element.name.text
-	);
+	const aliasedExportedSymbols = new Map();
+	const namedExports = exportDeclaration.getNamedExports();
 
-	// // find the elements who are being exported as alias, like `export { VERSION as __VERSION__ }`
-	// const aliasedExportedSymbols = new Map(
-	// 	// @ts-ignore Why does TS not identify `elements`
-	// 	exportDeclaration?.exportClause?.elements
-	// 		.filter((element) => element.propertyName)
-	// 		.map((element) => [element.name.text, element.propertyName.text])
-	// );
-
-	for (const statement of sourceFile.statements) {
-		if (
-			!(
-				ts.isFunctionDeclaration(statement) ||
-				ts.isInterfaceDeclaration(statement) ||
-				ts.isTypeAliasDeclaration(statement) ||
-				ts.isVariableStatement(statement)
-			)
-		)
-			continue;
-
-		// // Now rewrite the aliased exports to be inline. This risk collision, so hope that doesn't happen
-		// if (
-		// 	(ts.isVariableStatement(statement) &&
-		// 		aliasedExportedSymbols.has(statement.declarationList.declarations[0].name.getText())) ||
-		// 	// @ts-ignore
-		// 	aliasedExportedSymbols.has(statement.name?.getText())
-		// )
-		// 	for (const [og, exported] of aliasedExportedSymbols) {
-		// 		// Modify the current statement, change the variable name
-		// 		magicStr.overwrite();
-		// 	}
-
-		for (const exportedSymbol of exportedSymbols) {
-			if (
-				(ts.isVariableStatement(statement) &&
-					statement.declarationList.declarations[0].name.getText() === exportedSymbol) ||
-				// @ts-ignore
-				statement.name?.getText() === exportedSymbol
-			) {
-				magicStr.appendLeft(statement.getStart(), 'export ');
-			}
+	namedExports.forEach((namedExport) => {
+		if (namedExport.getAliasNode()) {
+			const alias = namedExport.getAliasNode()?.getText();
+			const originalName = namedExport.getNameNode().getText();
+			aliasedExportedSymbols.set(alias, originalName);
 		}
+	});
+
+	for (const [exported, og] of aliasedExportedSymbols) {
+		source_file.forEachDescendant((node) => {
+			if (node.getKind() === ts.SyntaxKind.Identifier && node.getText() === og) {
+				node.replaceWithText(exported);
+			}
+		});
+	}
+
+	const magicStr = new MagicString(source_file.getFullText());
+
+	// Find all the identifiers from ewport declaration and prefix export before them
+	const identifiers = [
+		...new Set(
+			source_file
+				.getDescendantsOfKind(SyntaxKind.Identifier)
+				.filter((identifier) => exportedSymbols.includes(identifier.getText()))
+				.filter(
+					(value, index, self) => index === self.findIndex((t) => t.getText() === value.getText())
+				)
+		)
+	];
+
+	for (const identifier of identifiers) {
+		magicStr.appendLeft(identifier?.getFirstAncestor()?.getStartLinePos() ?? 0, 'export ');
 	}
 
 	magicStr.remove(exportDeclaration?.getStart() ?? 0, exportDeclaration?.getEnd() ?? 0);
