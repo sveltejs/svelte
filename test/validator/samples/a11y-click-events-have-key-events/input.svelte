@@ -64,4 +64,5 @@
 <div on:click={noop} role="none" />
 <div on:click={noop} role={dynamicRole} />
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <svelte:element this={Math.random() ? 'button' : 'div'} on:click={noop} />

@@ -57,10 +57,7 @@ export function is_presentation_role(role: ARIARoleDefinitionKey) {
 	return presentation_roles.has(role);
 }
 
-export function is_hidden_from_screen_reader(
-	tag_name: string,
-	attribute_map: Map<string, Attribute>
-) {
+export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Map<string, Attribute>) {
 	if (tag_name === 'input') {
 		const type = attribute_map.get('type')?.get_static_value();
 
@@ -212,21 +209,11 @@ export function is_static_element(tag_name: string, attribute_map: Map<string, A
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
-export function is_semantic_role_element(
-	role: ARIARoleDefinitionKey,
-	tag_name: string,
-	attribute_map: Map<string, Attribute>
-) {
+export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
-		if (
-			schema.name === tag_name &&
-			(!schema.attributes ||
-				schema.attributes.every(
-					(attr) =>
-						attribute_map.has(attr.name) &&
-						attribute_map.get(attr.name).get_static_value() === attr.value
-				))
-		) {
+		if (schema.name === tag_name && (!schema.attributes || schema.attributes.every(
+			(attr) => attribute_map.has(attr.name) && attribute_map.get(attr.name).get_static_value() === attr.value
+		))) {
 			for (const name of ax_object) {
 				const roles = AXObjectRoles.get(name);
 				if (roles) {

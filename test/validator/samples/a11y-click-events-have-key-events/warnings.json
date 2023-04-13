@@ -3,86 +3,47 @@
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-<<<<<<< HEAD
-			"line": 12,
+			"line": 13,
 			"column": 0
 		},
 		"end": {
-			"line": 12,
+			"line": 13,
 			"column": 23
 		}
-=======
-			"line": 13,
-			"column": 0,
-			"character": 249
-		},
-		"end": {
-			"line": 13,
-			"column": 23,
-			"character": 272
-		},
-		"pos": 249
->>>>>>> 752aa35ed (add no-static-element-interactions compiler rule)
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-<<<<<<< HEAD
-			"line": 13,
+			"line": 15,
 			"column": 0
 		},
 		"end": {
-			"line": 13,
+			"line": 15,
 			"column": 43
 		}
-=======
-			"line": 15,
-			"column": 0,
-			"character": 332
-		},
-		"end": {
-			"line": 15,
-			"column": 43,
-			"character": 375
-		},
-		"pos": 332
->>>>>>> 752aa35ed (add no-static-element-interactions compiler rule)
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-<<<<<<< HEAD
-			"line": 15,
+			"line": 18,
 			"column": 0
 		},
 		"end": {
-			"line": 15,
+			"line": 18,
 			"column": 27
 		}
-=======
-			"line": 18,
-			"column": 0,
-			"character": 436
-		},
-		"end": {
-			"line": 18,
-			"column": 27,
-			"character": 463
-		},
-		"pos": 436
->>>>>>> 752aa35ed (add no-static-element-interactions compiler rule)
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-			"line": 16,
+			"line": 19,
 			"column": 0
 		},
 		"end": {
-			"line": 16,
+			"line": 19,
 			"column": 24
 		}
 	},
@@ -90,11 +51,11 @@
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-			"line": 17,
+			"line": 20,
 			"column": 0
 		},
 		"end": {
-			"line": 17,
+			"line": 20,
 			"column": 27
 		}
 	},
@@ -102,50 +63,24 @@
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-<<<<<<< HEAD
-			"line": 18,
+			"line": 22,
 			"column": 0
 		},
 		"end": {
-			"line": 18,
+			"line": 22,
 			"column": 26
 		}
-=======
-			"line": 22,
-			"column": 0,
-			"character": 576
-		},
-		"end": {
-			"line": 22,
-			"column": 26,
-			"character": 602
-		},
-		"pos": 576
->>>>>>> 752aa35ed (add no-static-element-interactions compiler rule)
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
 		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
 		"start": {
-<<<<<<< HEAD
-			"line": 19,
+			"line": 23,
 			"column": 0
 		},
 		"end": {
-			"line": 19,
+			"line": 23,
 			"column": 26
 		}
-=======
-			"line": 23,
-			"column": 0,
-			"character": 603
-		},
-		"end": {
-			"line": 23,
-			"column": 26,
-			"character": 629
-		},
-		"pos": 603
->>>>>>> 752aa35ed (add no-static-element-interactions compiler rule)
 	}
 ]

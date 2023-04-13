@@ -4,6 +4,7 @@
 
 <!-- valid -->
 <button on:click={() => {}} />
+<!-- svelte-ignore a11y-interactive-supports-focus -->
 <div on:keydown={() => {}} role="button" />
 <input type="text" on:click={() => {}} />
 <div on:copy={() => {}} />
