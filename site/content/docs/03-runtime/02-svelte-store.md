@@ -19,6 +19,7 @@ Function that creates a store which has values that can be set from 'outside' co
 `update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
 
 ```js
+/// file: store.js
 import { writable } from 'svelte/store';
 
 const count = writable(0);
@@ -60,6 +61,7 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
+/// file: store.js
 import { readable } from 'svelte/store';
 
 /** @type {import('svelte/store').Readable<Date>} */
@@ -92,6 +94,8 @@ The callback can set a value asynchronously by accepting a second argument, `set
 
 In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
 
+<!-- TODO types -->
+
 ```js
 import { derived } from 'svelte/store';
 
@@ -105,6 +109,8 @@ const delayed = derived(
 ```
 
 If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
+
+<!-- TODO types -->
 
 ```js
 import { derived } from 'svelte/store';
@@ -125,6 +131,8 @@ const tick = derived(
 ```
 
 In both cases, an array of arguments can be passed as the first argument instead of a single store.
+
+<!-- TODO type -->
 
 ```js
 import { derived } from 'svelte/store';
@@ -157,10 +165,6 @@ readableStore.set(2); // ERROR
 ## `get`
 
 > EXPORT_SNIPPET: svelte/store#get
-
-```js
-declare function get<T>(store: Readable<T>): T;
-```
 
 Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
 

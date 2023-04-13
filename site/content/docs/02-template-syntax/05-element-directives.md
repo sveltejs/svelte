@@ -17,9 +17,11 @@ on:eventname|modifiers={handler}
 Use the `on:` directive to listen to DOM events.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let count = 0;
 
+	/** @param {MouseEvent} event */
 	function handleClick(event) {
 		count += 1;
 	}
@@ -70,12 +72,14 @@ If the `on:` directive is used without a value, the component will _forward_ the
 It's possible to have multiple event listeners for the same event:
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let counter = 0;
 	function increment() {
 		counter = counter + 1;
 	}
 
+	/** @param {MouseEvent} event */
 	function track(event) {
 		trackEvent(event);
 	}
@@ -274,8 +278,10 @@ bind:group={variable}
 Inputs that work together can use `bind:group`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let tortilla = 'Plain';
+
 	/** @type {Array<string>} */
 	let fillings = [];
 </script>
@@ -301,6 +307,7 @@ bind:this={dom_node}
 To get a reference to a DOM node, use `bind:this`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { onMount } from 'svelte';
 
@@ -400,8 +407,9 @@ action = (node: HTMLElement, parameters: any) => {
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
-	/** @param {HTMLElement} node */
+	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
 		// the node has been mounted in the DOM
 
@@ -421,9 +429,11 @@ An action can have a parameter. If the returned value has an `update` method, it
 > Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let bar;
 
+	/** @type {import('svelte/action').Action}  */
 	function foo(node, bar) {
 		// the node has been mounted in the DOM
 
@@ -505,6 +515,7 @@ The `t` argument passed to `css` is a value between `0` and `1` after the `easin
 The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { elasticOut } from 'svelte/easing';
 
@@ -717,12 +728,15 @@ The function is called repeatedly _before_ the animation begins, with different 
 <!-- TODO: Types -->
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 
 	/**
 	 * @param {HTMLElement} node
-	 * @param {{ from: DOMRect, to: DOMRect }} states
+	 * @param {Object} states
+	 * @param {DOMRect} states.from
+	 * @param {DOMRect} states.to
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {
@@ -755,7 +769,9 @@ A custom animation function can also return a `tick` function, which is called _
 
 	/**
 	 * @param {HTMLElement} node
-	 * @param {{ from: DOMRect, to: DOMRect }} states
+	 * @param {Object} states
+	 * @param {DOMRect} states.from
+	 * @param {DOMRect} states.to
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {

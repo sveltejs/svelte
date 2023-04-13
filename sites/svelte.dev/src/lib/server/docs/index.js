@@ -7,8 +7,16 @@ import { SHIKI_LANGUAGE_MAP, normalizeSlugify, transform } from '../markdown';
 import { replace_placeholders } from './render.js';
 // import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
 import { createHash } from 'crypto';
+import fs from 'fs';
 import MagicString from 'magic-string';
 import ts from 'typescript';
+
+const FILE_METADATA_REGEX = /(?:<!---\s*file:\s*(.*?)(?:\s*--->)|\/\/\/\s*file:\s*(.*?)(?:$))/i;
+
+const snippet_cache = new URL('../../../../.snippets', import.meta.url).pathname;
+if (!fs.existsSync(snippet_cache)) {
+	fs.mkdirSync(snippet_cache, { recursive: true });
+}
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -35,10 +43,9 @@ export async function get_parsed_docs(docs_data, slug) {
 				hash.update(source + language + current);
 				const digest = hash.digest().toString('base64').replace(/\//g, '-');
 
-				// TODO: cache
-				// if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
-				// 	return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
-				// }
+				if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
+					return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
+				}
 
 				/** @type {Record<string, string>} */
 				const options = {};
@@ -46,10 +53,14 @@ export async function get_parsed_docs(docs_data, slug) {
 				let html = '';
 
 				source = source
-					.replace(/^\/\/\/ (.+?): (.+)\n/gm, (_, key, value) => {
-						options[key] = value;
-						return '';
-					})
+					.replace(
+						/(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm,
+						(_, key, value) => {
+							options[key] = value;
+							console.log(options);
+							return '';
+						}
+					)
 					.replace(/^([\-\+])?((?:    )+)/gm, (match, prefix = '', spaces) => {
 						if (prefix && language !== 'diff') return match;
 
@@ -228,7 +239,7 @@ export async function get_parsed_docs(docs_data, slug) {
 					)
 					.replace(/\/\*…\*\//g, '…');
 
-				// fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
+				fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
 				return html;
 			},
 			codespan: (text) => {
@@ -315,7 +326,7 @@ export function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
-			if (!code.includes('/// file:')) {
+			if (!FILE_METADATA_REGEX.test(code)) {
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}
@@ -335,7 +346,7 @@ export function generate_ts_from_js(markdown) {
 			return (
 				match.replace('svelte', 'original-svelte') +
 				'\n```generated-svelte\n' +
-				code.replace(outer, `<script lang="ts">${ts}</script>`) +
+				code.replace(outer, `<script lang="ts">\n\t${ts.trim()}\n</script>`) +
 				'\n```'
 			);
 		});
@@ -414,11 +425,11 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							throw new Error('Unhandled @type JsDoc->TS conversion: ' + js_code);
 						}
 					} else if (ts.isJSDocParameterTag(tag) && ts.isFunctionDeclaration(node)) {
-						if (node.parameters.length !== 1) {
-							throw new Error(
-								'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
-							);
-						}
+						// if (node.parameters.length !== 1) {
+						// 	throw new Error(
+						// 		'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
+						// 	);
+						// }
 						const [name] = get_type_info(tag);
 						code.appendLeft(node.parameters[0].getEnd(), `: ${name}`);
 

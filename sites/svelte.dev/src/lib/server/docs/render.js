@@ -7,8 +7,6 @@ export function replace_placeholders(content) {
 			const module = modules.find((module) => module.name === name);
 			if (!module) throw new Error(`Could not find module ${name}`);
 
-			console.log(module);
-
 			const type = module.types.find((t) => t.name === id);
 
 			return (
