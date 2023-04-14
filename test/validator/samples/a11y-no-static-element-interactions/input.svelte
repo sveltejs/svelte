@@ -10,6 +10,7 @@
 <div on:copy={() => {}} />
 <a href="/foo" on:click={() => {}}>link</a>
 <div role={dynamicRole} on:click={() => {}} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <footer on:keydown={() => {}} />
 
 <!-- invalid -->

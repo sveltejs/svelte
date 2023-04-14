@@ -16,10 +16,13 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <section on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <main on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <article on:click={noop} />
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <header on:click={noop} />
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <footer on:click={noop} />
 
 <!-- should not warn -->
