@@ -24,10 +24,6 @@ const type_regex = new RegExp(
 
 const type_links = new Map();
 
-// const slugs = {
-// 	'@sveltejs/kit': 'public-types'
-// };
-
 modules.forEach((module) => {
 	const slug = slugify(module.name);
 
@@ -123,12 +119,17 @@ export async function get_parsed_docs(docs_data, slug) {
 								`/// <reference types="svelte/easing" />`,
 								`/// <reference types="svelte/motion" />`,
 								`/// <reference types="svelte/transition" />`,
-								`/// <reference types="svelte/store" />`
+								`/// <reference types="svelte/store" />`,
+								`/// <reference types="svelte/action" />`
 							);
 						}
 
 						if (page.file.includes('svelte-compiler')) {
 							injected.push('// @esModuleInterop');
+						}
+
+						if (page.file.includes('svelte-action')) {
+							injected.push("import type { Action, ActionReturn } from 'svelte/action';");
 						}
 
 						if (injected.length) {
@@ -138,7 +139,13 @@ export async function get_parsed_docs(docs_data, slug) {
 							} else {
 								source = source.replace(
 									/^(?!\/\/ @)/m,
-									`${injected_str}\n\n// @filename: index.${language}\n// ---cut---\n`
+
+									`${injected_str}\n\n// @filename: index.${language}\n` +
+										injected.filter((val) => val.startsWith('import ')).join('\n') +
+										// This exists only for the JSDoc examples for svelte action types
+										'interface Parameter {}; \n' +
+										'// @errors: 2695 7006 2304 1128 1109 1005' +
+										` // ---cut---\n`
 								);
 							}
 						}
