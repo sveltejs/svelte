@@ -115,6 +115,10 @@ export default {
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
 	}),
+	a11y_no_static_element_interactions: (element: string, handlers: string[]) => ({
+		code: 'a11y-no-static-element-interactions',
+		message: `A11y: <${element}> with ${handlers.join(', ')} ${handlers.length === 1 ? 'handler' : 'handlers'} must have an ARIA role`
+	}),
 	a11y_no_interactive_element_to_noninteractive_role: (role: string | boolean, element: string) => ({
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
