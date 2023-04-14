@@ -2,7 +2,9 @@
 
 ## Unreleased (4.0)
 
-* Minimum supported Node version is now Node 14
+* **breaking** Minimum supported Node version is now Node 14
+* **breaking** Minimum supported TypeScript version is now 5 (it will likely work with lower versions, but we make no guarantess about that)
+* **breaking** Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
 
 ## Unreleased (3.0)
 
