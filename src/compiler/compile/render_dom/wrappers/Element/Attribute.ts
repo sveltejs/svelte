@@ -172,7 +172,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		if (is_indirectly_bound_value) {
-			const update_value = b`${element.var}.value = ${element.var}.__value;`;
+			const update_value = b`@set_input_value(${element.var}, ${element.var}.__value);`;
 			block.chunks.hydrate.push(update_value);
 
 			updater = b`
