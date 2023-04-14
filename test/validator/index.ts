@@ -33,13 +33,15 @@ describe('validate', () => {
 					...options
 				});
 
-				assert.deepEqual(warnings.map(w => ({
-					code: w.code,
-					message: w.message,
-					pos: w.pos,
-					start: w.start,
-					end: w.end
-				})), expected_warnings);
+				assert.deepEqual(
+					warnings.map((w) => ({
+						code: w.code,
+						message: w.message,
+						start: { line: w.start.line, column: w.start.column },
+						end: { line: w.end.line, column: w.end.column }
+					})),
+					expected_warnings
+				);
 			} catch (e) {
 				error = e;
 			}
@@ -56,13 +58,17 @@ describe('validate', () => {
 				}
 
 				try {
-					assert.equal(error.code, expected.code);
-					assert.equal(error.message, expected.message);
-					assert.deepEqual(error.start, expected.start);
-					assert.deepEqual(error.end, expected.end);
-					assert.equal(error.pos, expected.pos);
+					assert.deepEqual(
+						{
+							code: error.code,
+							message: error.message,
+							start: { line: error.start.line, column: error.start.column },
+							end: { line: error.end.line, column: error.end.column }
+						},
+						expected
+					);
 				} catch (e) {
-					console.error(error); // eslint-disable-line no-console
+					console.error(error);
 					throw e;
 				}
 			}
@@ -76,6 +82,51 @@ describe('validate', () => {
 				generate: false
 			});
 		}, /options\.name must be a valid identifier/);
+	});
+
+	it('check warning position', () => {
+		const { warnings } = svelte.compile('\n  <img \n src="foo.jpg">\n', {
+			generate: false
+		});
+
+		assert.deepEqual(
+			warnings.map((w) => {
+				return {
+					code: w.code,
+					frame: w.frame,
+					message: w.message,
+					start: {
+						character: w.start.character,
+						column: w.start.column,
+						line: w.start.line
+					},
+					end: {
+						character: w.end.character,
+						column: w.end.column,
+						line: w.end.line
+					},
+					pos: w.pos
+				};
+			}),
+			[
+				{
+					code: 'a11y-missing-attribute',
+					frame: '1: \n2:   <img \n     ^\n3:  src="foo.jpg">\n4: ',
+					message: 'A11y: <img> element should have an alt attribute',
+					start: {
+						character: 3,
+						column: 2,
+						line: 2
+					},
+					end: {
+						character: 24,
+						column: 15,
+						line: 3
+					},
+					pos: 3
+				}
+			]
+		);
 	});
 
 	it('warns if options.name is not capitalised', () => {

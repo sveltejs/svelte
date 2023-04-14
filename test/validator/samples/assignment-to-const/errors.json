@@ -4,14 +4,11 @@
 		"message": "You are assigning to a const",
 		"start": {
 			"line": 16,
-			"column": 2,
-			"character": 225
+			"column": 2
 		},
 		"end": {
 			"line": 16,
-			"column": 18,
-			"character": 241
-		},
-		"pos": 225
+			"column": 18
+		}
 	}
 ]

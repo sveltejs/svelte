@@ -24,7 +24,7 @@ type Owner = INode;
 const regex_contains_term_function_expression = /FunctionExpression/;
 
 export default class Expression {
-	type: 'Expression' = 'Expression';
+	type: 'Expression' = 'Expression' as const;
 	component: Component;
 	owner: Owner;
 	node: Node;
@@ -373,6 +373,7 @@ export default class Expression {
 								// add to get_xxx_context
 								// child_ctx[x] = function () { ... }
 								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
+									type: 'DestructuredVariable',
 									key: func_id,
 									modifier: () => func_expression,
 									default_modifier: node => node

@@ -1,6 +1,7 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
+import { contenteditable_truthy_values } from './utils';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
 	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
@@ -49,10 +50,11 @@ export function detach_after_dev(before: Node) {
 	}
 }
 
-export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean) {
+export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean, has_stop_immediate_propagation?: boolean) {
 	const modifiers = options === true ? [ 'capture' ] : options ? Array.from(Object.keys(options)) : [];
 	if (has_prevent_default) modifiers.push('preventDefault');
 	if (has_stop_propagation) modifiers.push('stopPropagation');
+	if (has_stop_immediate_propagation) modifiers.push('stopImmediatePropagation');
 
 	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
 
@@ -82,12 +84,26 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-export function set_data_dev(text, data) {
+export function set_data_dev(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.data === data) return;
+	dispatch_dev('SvelteDOMSetData', { node: text, data });
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable_dev(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.wholeText === data) return;
-
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable_dev(text, data);
+	} else {
+		set_data_dev(text, data);
+	}
 }
 
 export function validate_each_argument(arg) {
@@ -148,8 +164,9 @@ export interface SvelteComponentDev {
 	$destroy(): void;
 	[accessor: string]: any;
 }
+
 export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element | ShadowRoot;
+	target: Element | Document | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;
