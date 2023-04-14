@@ -56,24 +56,13 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
-	? I
-	: never
-
-type ExtractObjectValues<Object extends Record<any, any>> = Object[keyof Object]
-
-type ConstructDispatchFunction<EventMap extends Record<string, any>, EventKey extends keyof EventMap> =
-	EventMap[EventKey] extends never | null
-	? (type: EventKey, detail?: null, options?: DispatchOptions) => boolean
-	: null extends EventMap[EventKey]
-	? (type: EventKey, detail?: EventMap[EventKey], options?: DispatchOptions) => boolean
-	: (type: EventKey, detail: EventMap[EventKey], options?: DispatchOptions) => boolean
-
-type CreateDispatchFunctionMap<EventMap> = {
-	[Key in keyof EventMap]: ConstructDispatchFunction<EventMap, Key>
+export interface EventDispatcher<EventMap extends Record<string, any>> {
+	<Type extends keyof EventMap>(
+		...args: [EventMap[Type]] extends [never] ? [type: Type, parameter?: null | undefined, options?: DispatchOptions] :
+		null extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		undefined extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		[type: Type, parameter: EventMap[Type], options?: DispatchOptions]): boolean;
 }
-
-type EventDispatcher<EventMap extends Record<string, any>> = UnionToIntersection<ExtractObjectValues<CreateDispatchFunctionMap<EventMap>>>
 
 export interface DispatchOptions {
 	cancelable?: boolean;
@@ -87,7 +76,16 @@ export interface DispatchOptions {
  * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). 
  * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
  * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) 
- * property and can contain any type of data. 
+ * property and can contain any type of data.
+ * 
+ * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
+ * ```ts
+ * const dispatch = createEventDispatcher<{
+ *  loaded: never; // does not take a detail argument
+ *  change: string; // takes a detail argument of type string, which is required
+ *  optional: number | null; // takes an optional detail argument of type number
+ * }>();
+ * ```
  * 
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  */
