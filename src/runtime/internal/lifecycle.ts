@@ -56,6 +56,14 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
+export interface EventDispatcher<EventMap extends Record<string, any>> {
+	<Type extends keyof EventMap>(
+		...args: [EventMap[Type]] extends [never] ? [type: Type, parameter?: null | undefined, options?: DispatchOptions] :
+		null extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		undefined extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		[type: Type, parameter: EventMap[Type], options?: DispatchOptions]): boolean;
+}
+
 export interface DispatchOptions {
 	cancelable?: boolean;
 }
@@ -68,20 +76,23 @@ export interface DispatchOptions {
  * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). 
  * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
  * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) 
- * property and can contain any type of data. 
+ * property and can contain any type of data.
+ * 
+ * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
+ * ```ts
+ * const dispatch = createEventDispatcher<{
+ *  loaded: never; // does not take a detail argument
+ *  change: string; // takes a detail argument of type string, which is required
+ *  optional: number | null; // takes an optional detail argument of type number
+ * }>();
+ * ```
  * 
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  */
-export function createEventDispatcher<EventMap extends {} = any>(): <
-	EventKey extends Extract<keyof EventMap, string>
->(
-	type: EventKey,
-	detail?: EventMap[EventKey],
-	options?: DispatchOptions
-) => boolean {
+export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap> {
 	const component = get_current_component();
 
-	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
+	return ((type: string, detail?: any, { cancelable = false } = {}): boolean => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
@@ -95,7 +106,7 @@ export function createEventDispatcher<EventMap extends {} = any>(): <
 		}
 
 		return true;
-	};
+	}) as EventDispatcher<EventMap>;
 }
 
 /**
