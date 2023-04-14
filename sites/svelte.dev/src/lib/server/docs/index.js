@@ -128,8 +128,9 @@ export async function get_parsed_docs(docs_data, slug) {
 							injected.push('// @esModuleInterop');
 						}
 
+						// Actions JSDoc examples are invalid. Too many errors, edge cases
 						if (page.file.includes('svelte-action')) {
-							injected.push("import type { Action, ActionReturn } from 'svelte/action';");
+							injected.push('// @noErrors');
 						}
 
 						if (injected.length) {
@@ -139,13 +140,7 @@ export async function get_parsed_docs(docs_data, slug) {
 							} else {
 								source = source.replace(
 									/^(?!\/\/ @)/m,
-
-									`${injected_str}\n\n// @filename: index.${language}\n` +
-										injected.filter((val) => val.startsWith('import ')).join('\n') +
-										// This exists only for the JSDoc examples for svelte action types
-										'interface Parameter {}; \n' +
-										'// @errors: 2695 7006 2304 1128 1109 1005' +
-										` // ---cut---\n`
+									`${injected_str}\n\n// @filename: index.${language}\n` + ` // ---cut---\n`
 								);
 							}
 						}
