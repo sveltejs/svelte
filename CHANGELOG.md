@@ -8,6 +8,7 @@
 * **breaking** Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
+* Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
 
 ## Unreleased (3.0)
 
