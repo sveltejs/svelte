@@ -25,7 +25,7 @@ const required1: Action<HTMLElement, boolean> = (node, param) => {
     return {
         update: (p) => p === true,
         destroy: () => {}
-    }
+    };
 };
 required1;
 
@@ -41,7 +41,7 @@ const required3: Action<HTMLElement, boolean> = (node, param) => {
         // @ts-expect-error comparison always resolves to false
         update: (p) => p === 'd',
         destroy: () => {}
-    }
+    };
 };
 required3;
 
@@ -60,7 +60,7 @@ const optional1: Action<HTMLElement, boolean | undefined> = (node, param?) => {
     return {
         update: (p) => p === true,
         destroy: () => {}
-    }
+    };
 };
 optional1;
 
@@ -82,7 +82,7 @@ const optional4: Action<HTMLElement, boolean | undefined> = (node, param?) => {
         // @ts-expect-error comparison always resolves to false
         update: (p) => p === 'd',
         destroy: () => {}
-    }
+    };
 };
 optional4;
 
@@ -99,28 +99,31 @@ const no1: Action<HTMLElement, never> = (node) => {
     node;
     return {
         destroy: () => {}
-    }
+    };
 };
 no1;
 
 // @ts-expect-error param given
-const no2: Action<HTMLElement, never> = (node, param?) => {}
+const no2: Action<HTMLElement, never> = (node, param?) => {};
+no2;
 
 // @ts-expect-error param given
-const no3: Action<HTMLElement, never> = (node, param) => {}
+const no3: Action<HTMLElement, never> = (node, param) => {};
+no3;
 
 // @ts-expect-error update method given
 const no4: Action<HTMLElement, never> = (node) => {
     return {
         update: () => {},
         destroy: () => {}
-    }
-}
+    };
+};
+no4;
 
 // ---------------- ActionReturn
 
 const requiredReturn: ActionReturn<string> = {
-    update: (p) => p.toString(),
+    update: (p) => p.toString()
 };
 requiredReturn;
 
@@ -129,13 +132,13 @@ const optionalReturn: ActionReturn<boolean | undefined> = {
         p === true;
         // @ts-expect-error could be undefined
         p.toString();
-    },
+    }
 };
 optionalReturn;
 
 const invalidProperty: ActionReturn = {
     // @ts-expect-error invalid property
-    invalid: () => {},
+    invalid: () => {}
 };
 invalidProperty;
 
@@ -144,5 +147,7 @@ const attributes: Attributes = { a: 'a' };
 attributes;
 // @ts-expect-error wrong type
 const invalidAttributes1: Attributes = { a: 1 };
+invalidAttributes1;
 // @ts-expect-error missing prop
 const invalidAttributes2: Attributes = {};
+invalidAttributes2;
