@@ -37,8 +37,6 @@ modules.forEach((module) => {
 	});
 });
 
-console.log(type_links);
-
 /**
  * @param {import('./types').DocsData} docs_data
  * @param {string} slug
@@ -218,11 +216,8 @@ export async function get_parsed_docs(docs_data, slug) {
 
 				type_regex.lastIndex = 0;
 
-				console.log(html);
-
 				html = html
 					.replace(type_regex, (match, prefix, name) => {
-						console.log(2);
 						if (options.link === 'false' || name === current) {
 							// we don't want e.g. RequestHandler to link to RequestHandler
 							return match;
@@ -257,8 +252,6 @@ export async function get_parsed_docs(docs_data, slug) {
 				return (
 					'<code>' +
 					text.replace(type_regex, (match, prefix, name) => {
-						console.log(prefix);
-						console.log(1);
 						const link = `<a href="${type_links.get(name)}">${name}</a>`;
 						return `${prefix || ''}${link}`;
 					}) +
