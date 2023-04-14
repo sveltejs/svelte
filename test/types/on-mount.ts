@@ -2,7 +2,7 @@ import { onMount } from '$runtime/index';
 
 // sync and no return
 onMount(() => {
-	console.log("mounted");
+	console.log('mounted');
 });
 
 // sync and return value
@@ -13,7 +13,7 @@ onMount(() => {
 // sync and return sync
 onMount(() => {
 	return () => {
-		return "done";
+		return 'done';
 	};
 });
 
@@ -39,7 +39,7 @@ onMount(async () => {
 // @ts-expect-error async and return sync
 onMount(async () => {
 	return () => {
-		return "done";
+		return 'done';
 	};
 });
 
