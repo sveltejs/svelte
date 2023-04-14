@@ -207,17 +207,6 @@ const bundled_types = await get_bundled_types();
 }
 
 {
-	const module = bundled_types.get('svelte/runtime');
-
-	if (!module) throw new Error('Could not find svelte/runtime');
-
-	modules.push({
-		name: 'svelte/runtime',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-{
 	const module = bundled_types.get('svelte/action');
 
 	if (!module) throw new Error('Could not find svelte/action');
@@ -284,18 +273,6 @@ const bundled_types = await get_bundled_types();
 
 	modules.push({
 		name: 'svelte/transition',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/internal');
-
-	if (!module) throw new Error('Could not find svelte/internal');
-
-	modules.push({
-		name: 'svelte/internal',
 		comment: '',
 		...get_types(module.code, module.ts_source_file.statements)
 	});

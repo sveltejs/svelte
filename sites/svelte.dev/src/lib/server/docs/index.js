@@ -1,18 +1,43 @@
-import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
-import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, transform } from '../markdown';
-import { replace_placeholders } from './render.js';
-// import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
+import { modules } from '$lib/generated/type-info';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import MagicString from 'magic-string';
+import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
 import ts from 'typescript';
+import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, slugify, transform } from '../markdown';
+import { replace_placeholders } from './render.js';
 
-const FILE_METADATA_REGEX = /(?:<!---\s*file:\s*(.*?)(?:\s*--->)|\/\/\/\s*file:\s*(.*?)(?:$))/i;
+const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
 
-const snippet_cache = new URL('../../../../.snippets', import.meta.url).pathname;
+const snippet_cache = new URL('../../../../node_modules/.snippets', import.meta.url).pathname;
 if (!fs.existsSync(snippet_cache)) {
 	fs.mkdirSync(snippet_cache, { recursive: true });
 }
+
+const type_regex = new RegExp(
+	`(import\\(&apos;svelte&apos;\\)\\.)?\\b(${modules
+		.flatMap((module) => module.types)
+		.map((type) => type.name)
+		.join('|')})\\b`,
+	'g'
+);
+
+const type_links = new Map();
+
+// const slugs = {
+// 	'@sveltejs/kit': 'public-types'
+// };
+
+modules.forEach((module) => {
+	const slug = slugify(module.name);
+
+	module.types.forEach((type) => {
+		const link = `/docs/${slug}#type-${slugify(type.name)}`;
+		type_links.set(type.name, link);
+	});
+});
+
+console.log(type_links);
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -39,9 +64,11 @@ export async function get_parsed_docs(docs_data, slug) {
 				hash.update(source + language + current);
 				const digest = hash.digest().toString('base64').replace(/\//g, '-');
 
-				if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
-					return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
-				}
+				try {
+					if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
+						return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
+					}
+				} catch {}
 
 				/** @type {Record<string, string>} */
 				const options = {};
@@ -88,9 +115,6 @@ export async function get_parsed_docs(docs_data, slug) {
 				} else if (language === 'js' || language === 'ts') {
 					try {
 						const injected = [];
-
-						// For the snippets that are not proper JS or TS
-						// if (!source.includes('import')) injected.push('// @errors: 2552 1005 1109 2304');
 
 						if (source.includes('svelte')) {
 							injected.push(
@@ -192,18 +216,21 @@ export async function get_parsed_docs(docs_data, slug) {
 					html = html.replace(/class=('|")/, `class=$1${version_class} `);
 				}
 
-				// type_regex.lastIndex = 0;
+				type_regex.lastIndex = 0;
+
+				console.log(html);
 
 				html = html
-					// .replace(type_regex, (match, prefix, name) => {
-					// 	if (options.link === 'false' || name === current) {
-					// 		// we don't want e.g. RequestHandler to link to RequestHandler
-					// 		return match;
-					// 	}
+					.replace(type_regex, (match, prefix, name) => {
+						console.log(2);
+						if (options.link === 'false' || name === current) {
+							// we don't want e.g. RequestHandler to link to RequestHandler
+							return match;
+						}
 
-					// 	const link = `<a href="${type_links.get(name)}">${name}</a>`;
-					// 	return `${prefix || ''}${link}`;
-					// })
+						const link = `<a href="${type_links.get(name)}">${name}</a>`;
+						return `${prefix || ''}${link}`;
+					})
 					.replace(
 						/^(\s+)<span class="token comment">([\s\S]+?)<\/span>\n/gm,
 						(match, intro_whitespace, content) => {
@@ -229,11 +256,12 @@ export async function get_parsed_docs(docs_data, slug) {
 			codespan: (text) => {
 				return (
 					'<code>' +
-					text +
-					// text.replace(type_regex, (match, prefix, name) => {
-					// 	const link = `<a href="${type_links.get(name)}">${name}</a>`;
-					// 	return `${prefix || ''}${link}`;
-					// }) +
+					text.replace(type_regex, (match, prefix, name) => {
+						console.log(prefix);
+						console.log(1);
+						const link = `<a href="${type_links.get(name)}">${name}</a>`;
+						return `${prefix || ''}${link}`;
+					}) +
 					'</code>'
 				);
 			}
@@ -276,9 +304,16 @@ function parse({ body, code, codespan }) {
 			headings[level] = normalized;
 			headings.length = level;
 
-			const slug = normalizeSlugify(raw);
+			const type_heading_match = /^\[TYPE\]:\s+(.+)/.exec(raw);
 
-			return `<h${level} id="${slug}">${html}<a href="#${slug}" class="permalink"><span class="visually-hidden">permalink</span></a></h${level}>`;
+			const slug = normalizeSlugify(type_heading_match ? `type-${type_heading_match[1]}` : raw);
+
+			return `<h${level} id="${slug}">${html
+				.replace(/<\/?code>/g, '')
+				.replace(
+					/^\[TYPE\]:\s+(.+)/,
+					'$1'
+				)}<a href="#${slug}" class="permalink"><span class="visually-hidden">permalink</span></a></h${level}>`;
 		},
 		code: (source, language) => code(source, language, current),
 		codespan
@@ -310,7 +345,7 @@ export function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
-			if (!FILE_METADATA_REGEX.test(code)) {
+			if (!METADATA_REGEX.test(code)) {
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}

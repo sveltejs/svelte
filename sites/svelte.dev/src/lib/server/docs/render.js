@@ -51,14 +51,9 @@ export function replace_placeholders(content) {
 			return `${module.comment}\n\n${module.types
 				.map((t) => {
 					let children = t.children.map(stringify).join('\n\n');
-					if (t.name === 'Config' || t.name === 'KitConfig') {
-						// special case — we want these to be on a separate page
-						children =
-							'<div class="ts-block-property-details">\n\nSee the [configuration reference](/docs/configuration) for details.</div>';
-					}
 
 					const markdown = `<div class="ts-block">${fence(t.snippet)}` + children + `</div>`;
-					return `### ${t.name}\n\n${t.comment}\n\n${markdown}\n\n`;
+					return `### [TYPE]: ${t.name}\n\n${t.comment}\n\n${markdown}\n\n`;
 				})
 				.join('')}`;
 		})
