@@ -128,6 +128,10 @@ export async function get_parsed_docs(docs_data, slug) {
 							injected.push('// @esModuleInterop');
 						}
 
+						if (page.file.includes('svelte.md')) {
+							injected.push('// @errors: 2304');
+						}
+
 						// Actions JSDoc examples are invalid. Too many errors, edge cases
 						if (page.file.includes('svelte-action')) {
 							injected.push('// @noErrors');

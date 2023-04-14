@@ -23,9 +23,18 @@ export async function get_bundled_types() {
 
 		const moduleName = (file === 'index.d.ts' ? 'svelte' : `svelte/${file}`).replace('.d.ts', '');
 		const code = await bundle.generate({ format: 'esm' }).then(({ output }) => output[0].code);
-		const [inlined_export_declaration_code, ts_source_file] = useExportDeclarations(code);
+		const inlined_export_declaration_code = inlineExportDeclarations(code);
 
-		codes.set(moduleName, { code: inlined_export_declaration_code, ts_source_file });
+		codes.set(moduleName, {
+			code: inlined_export_declaration_code,
+			ts_source_file: ts.createSourceFile(
+				'index.d.ts',
+				inlined_export_declaration_code,
+				ts.ScriptTarget.ESNext,
+				true,
+				ts.ScriptKind.TS
+			)
+		});
 
 		// !IMPORTANT: This is for debugging purposes only.
 		// !Do not remove until Svelte d.ts files are stable during v4/v5
@@ -38,9 +47,8 @@ export async function get_bundled_types() {
 
 /**
  * @param {string} str
- * @returns {[string, ts.SourceFile]}
  */
-function useExportDeclarations(str) {
+function inlineExportDeclarations(str) {
 	const project = new Project();
 	const source_file = project.createSourceFile('index.d.ts', str, { overwrite: true });
 
@@ -51,11 +59,7 @@ function useExportDeclarations(str) {
 		.map((e) => e.getAliasNode()?.getText() ?? e.getNameNode().getText());
 
 	// console.log(exportedSymbols);
-	if (exportedSymbols.length === 0)
-		return [
-			str,
-			ts.createSourceFile('index.d.ts', str, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS)
-		];
+	if (exportedSymbols.length === 0) return str;
 
 	const aliasedExportedSymbols = new Map();
 	const namedExports = exportDeclaration.getNamedExports();
@@ -76,39 +80,37 @@ function useExportDeclarations(str) {
 		});
 	}
 
-	const magicStr = new MagicString(source_file.getFullText());
+	{
+		// Get the symbols and their declarations
+		const exportedSymbols = exportDeclaration
+			.getNamedExports()
+			.map((exp) => exp.getSymbolOrThrow());
 
-	// Find all the identifiers from ewport declaration and prefix export before them
-	const identifiers = [
-		...new Set(
-			source_file
-				.getDescendantsOfKind(SyntaxKind.Identifier)
-				.filter((identifier) => exportedSymbols.includes(identifier.getText()))
-				.filter(
-					(value, index, self) => index === self.findIndex((t) => t.getText() === value.getText())
-				)
-		)
-	];
+		/** @type {import('ts-morph').ExportSpecifier[]} */
+		// @ts-ignore
+		const exportedDeclarations = exportedSymbols.flatMap((symbol) => symbol.getDeclarations());
 
-	for (const identifier of identifiers) {
-		magicStr.appendLeft(identifier?.getFirstAncestor()?.getStartLinePos() ?? 0, 'export ');
+		// Add 'export' keyword to the declarations
+		exportedDeclarations.forEach((declaration) => {
+			if (!declaration.getFirstDescendantByKind(SyntaxKind.ExportKeyword)) {
+				for (const target of declaration.getLocalTargetDeclarations()) {
+					if (target.isKind(SyntaxKind.VariableDeclaration)) {
+						target.getVariableStatement()?.setIsExported(true);
+					} else {
+						// @ts-ignore
+						target.setIsExported(true);
+					}
+				}
+			}
+		});
 	}
 
-	magicStr.remove(exportDeclaration?.getStart() ?? 0, exportDeclaration?.getEnd() ?? 0);
+	exportDeclaration.remove();
 
 	// In case it is export declare VERSION = '__VERSION__', replace it with svelte's real version
-	magicStr.replace('__VERSION__', VERSION);
+	const stringified = source_file.getFullText().replace('__VERSION__', VERSION);
 
-	return [
-		magicStr.toString() ?? str,
-		ts.createSourceFile(
-			'index.d.ts',
-			magicStr.toString() ?? str,
-			ts.ScriptTarget.ESNext,
-			true,
-			ts.ScriptKind.TS
-		)
-	];
+	return stringified;
 }
 
 /**
