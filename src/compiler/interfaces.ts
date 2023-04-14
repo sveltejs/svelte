@@ -63,7 +63,7 @@ interface BaseExpressionDirective extends BaseDirective {
 }
 
 export interface Element extends BaseNode {
-	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Body';
+	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Document' | 'Body';
 	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
 	name: string;
 }
@@ -223,7 +223,6 @@ export interface Var {
 	subscribable?: boolean;
 	is_reactive_dependency?: boolean;
 	imported?: boolean;
-	is_reactive_static?: boolean;
 }
 
 export interface CssResult {

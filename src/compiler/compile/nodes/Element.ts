@@ -11,7 +11,8 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
+import { is_name_contenteditable, get_contenteditable_attr, has_contenteditable_attr } from '../utils/contenteditable';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -24,7 +25,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -72,6 +73,42 @@ const a11y_labelable = new Set([
 	'progress',
 	'select',
 	'textarea'
+]);
+
+const a11y_interactive_handlers = new Set([
+	// Keyboard events
+	'keypress',
+	'keydown',
+	'keyup',
+
+	// Click events
+	'click',
+	'contextmenu',
+	'dblclick',
+	'drag',
+	'dragend',
+	'dragenter',
+	'dragexit',
+	'dragleave',
+	'dragover',
+	'dragstart',
+	'drop',
+	'mousedown',
+	'mouseenter',
+	'mouseleave',
+	'mousemove',
+	'mouseout',
+	'mouseover',
+	'mouseup'
+]);
+
+const a11y_recommended_interactive_handlers = new Set([
+	'click',
+	'mousedown',
+	'mouseup',
+	'keypress',
+	'keydown',
+	'keyup'
 ]);
 
 const a11y_nested_implicit_semantics = new Map([
@@ -143,6 +180,35 @@ const input_type_to_implicit_role = new Map([
   ['text', 'textbox'],
   ['url', 'textbox']
 ]);
+
+/** 
+ * Exceptions to the rule which follows common A11y conventions
+ * TODO make this configurable by the user
+ */
+const a11y_non_interactive_element_to_interactive_role_exceptions = {
+	ul: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	ol: [
+		'listbox',
+		'menu',
+		'menubar',
+		'radiogroup',
+		'tablist',
+		'tree',
+		'treegrid'
+	],
+	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
+	table: ['grid'],
+	td: ['gridcell'],
+	fieldset: ['radiogroup', 'presentation']
+};
 
 const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
 
@@ -602,13 +668,28 @@ export default class Element extends Node {
 							}
 						}
 
+						// interactive-supports-focus
+						if (
+							!has_disabled_attribute(attribute_map) &&
+							!is_hidden_from_screen_reader(this.name, attribute_map) &&
+							!is_presentation_role(current_role) &&
+							is_interactive_roles(current_role) &&
+							is_static_element(this.name, attribute_map) &&
+							!attribute_map.get('tabindex')
+						) {
+							const has_interactive_handlers = handlers.some((handler) => a11y_interactive_handlers.has(handler.name));
+							if (has_interactive_handlers) {
+								component.warn(this, compiler_warnings.a11y_interactive_supports_focus(current_role));
+							}
+						}
+
 						// no-interactive-element-to-noninteractive-role
 						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
 							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
 						}
 
 						// no-noninteractive-element-to-interactive-role
-						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role)) {
+						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role) && !a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(current_role)) {
 							component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
 						}
 					});
@@ -666,8 +747,12 @@ export default class Element extends Node {
 			}
 		}
 
+		const role = attribute_map.get('role');
+		const role_static_value = role?.get_static_value() as ARIARoleDefinitionKey;
+		const role_value = (role ? role_static_value : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
+
 		// no-noninteractive-tabindex
-		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(role_static_value)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -675,8 +760,6 @@ export default class Element extends Node {
 		}
 
 		// role-supports-aria-props
-		const role = attribute_map.get('role');
-		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
 			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
@@ -689,6 +772,45 @@ export default class Element extends Node {
 						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
 					}
 				});
+		}
+
+		// no-noninteractive-element-interactions
+		if (
+			!has_contenteditable_attr(this) &&
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			((!is_interactive_element(this.name, attribute_map) && 
+				is_non_interactive_roles(role_static_value)) ||
+			 (is_non_interactive_element(this.name, attribute_map) && !role))
+		) {
+			const has_interactive_handlers = handlers.some((handler) => a11y_recommended_interactive_handlers.has(handler.name));
+			if (has_interactive_handlers) {
+				component.warn(this, compiler_warnings.a11y_no_noninteractive_element_interactions(this.name));
+			}
+		}
+
+		const has_dynamic_role = attribute_map.get('role') && !attribute_map.get('role').is_static;
+
+		// no-static-element-interactions
+		if (
+			!has_dynamic_role &&
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			!is_interactive_element(this.name, attribute_map) &&
+			!is_interactive_roles(role_static_value) &&
+			!is_non_interactive_element(this.name, attribute_map) &&
+			!is_non_interactive_roles(role_static_value) &&
+			!is_abstract_role(role_static_value)
+		) {
+			const interactive_handlers = handlers
+				.map((handler) => handler.name)
+				.filter((handlerName) => a11y_interactive_handlers.has(handlerName));
+			if (interactive_handlers.length > 0) {
+				component.warn(
+					this,
+					compiler_warnings.a11y_no_static_element_interactions(this.name, interactive_handlers)
+				);
+			}
 		}
 	}
 
@@ -1011,20 +1133,17 @@ export default class Element extends Node {
 				if (this.name !== 'img') {
 					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
 				}
-			} else if (
-				name === 'textContent' ||
-				name === 'innerHTML'
-			) {
-				const contenteditable = this.attributes.find(
-					(attribute: Attribute) => attribute.name === 'contenteditable'
-				);
-
+			} else if (is_name_contenteditable(name)) {
+				const contenteditable = get_contenteditable_attr(this);
 				if (!contenteditable) {
 					return component.error(binding, compiler_errors.missing_contenteditable_attribute);
 				} else if (contenteditable && !contenteditable.is_static) {
 					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
-			} else if (name !== 'this') {
+			} else if (
+				name !== 'this' &&
+				!regex_box_size.test(name)
+			) {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});

@@ -109,11 +109,11 @@ function cleanChildren(node) {
 				node.removeChild(child);
 			}
 
-			child.data = child.data.replace(/\s+/g, '\n');
+			child.data = child.data.replace(/[ \t\n\r\f]+/g, '\n');
 
 			if (previous && previous.nodeType === 3) {
 				previous.data += child.data;
-				previous.data = previous.data.replace(/\s+/g, '\n');
+				previous.data = previous.data.replace(/[ \t\n\r\f]+/g, '\n');
 
 				node.removeChild(child);
 				child = previous;
@@ -130,13 +130,13 @@ function cleanChildren(node) {
 
 	// collapse whitespace
 	if (node.firstChild && node.firstChild.nodeType === 3) {
-		node.firstChild.data = node.firstChild.data.replace(/^\s+/, '');
-		if (!node.firstChild.data) node.removeChild(node.firstChild);
+		node.firstChild.data = node.firstChild.data.replace(/^[ \t\n\r\f]+/, '');
+		if (!node.firstChild.data.length) node.removeChild(node.firstChild);
 	}
 
 	if (node.lastChild && node.lastChild.nodeType === 3) {
-		node.lastChild.data = node.lastChild.data.replace(/\s+$/, '');
-		if (!node.lastChild.data) node.removeChild(node.lastChild);
+		node.lastChild.data = node.lastChild.data.replace(/[ \t\n\r\f]+$/, '');
+		if (!node.lastChild.data.length) node.removeChild(node.lastChild);
 	}
 }
 
@@ -145,7 +145,7 @@ export function normalizeHtml(window, html, preserveComments = false) {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
 			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
-			.replace(/>[\s\r\n]+</g, '><')
+			.replace(/>[ \t\n\r\f]+</g, '><')
 			.trim();
 		cleanChildren(node);
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');

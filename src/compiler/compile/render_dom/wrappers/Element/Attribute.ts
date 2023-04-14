@@ -172,7 +172,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		if (is_indirectly_bound_value) {
-			const update_value = b`${element.var}.value = ${element.var}.__value;`;
+			const update_value = b`@set_input_value(${element.var}, ${element.var}.__value);`;
 			block.chunks.hydrate.push(update_value);
 
 			updater = b`
@@ -364,7 +364,6 @@ const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [k
 	indeterminate: { applies_to: ['input'] },
 	inert: {},
 	ismap: { property_name: 'isMap', applies_to: ['img'] },
-	itemscope: {},
 	loop: { applies_to: ['audio', 'bgsound', 'video'] },
 	multiple: { applies_to: ['input', 'select'] },
 	muted: { applies_to: ['audio', 'video'] },

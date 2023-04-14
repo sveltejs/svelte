@@ -17,6 +17,7 @@ export default class ThenBlock extends AbstractBlock {
 		this.scope = scope.child();
 		if (parent.then_node) {
 			parent.then_contexts.forEach(context => {
+				if (context.type !== 'DestructuredVariable') return;
 				this.scope.add(context.key.name, parent.expression.dependencies, this);
 			});
 		}

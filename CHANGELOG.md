@@ -1,5 +1,46 @@
 # Svelte changelog
 
+## Unreleased (4.0)
+
+* **breaking** Minimum supported Node version is now Node 14
+* **breaking** Minimum supported TypeScript version is now 5 (it will likely work with lower versions, but we make no guarantess about that)
+* **breaking** Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* **breaking** Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
+* Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
+* Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
+
+## Unreleased (3.0)
+
+* Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
+* Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))
+
+## 3.58.0
+
+* Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))
+* Add support for CSS `@container` queries ([#6969](https://github.com/sveltejs/svelte/issues/6969))
+* Respect `preserveComments` in DOM output ([#7182](https://github.com/sveltejs/svelte/pull/7182))
+* Allow use of `document` for `target` in typings ([#7554](https://github.com/sveltejs/svelte/pull/7554))
+* Add `a11y-interactive-supports-focus` warning ([#8392](https://github.com/sveltejs/svelte/pull/8392))
+* Fix equality check when updating dynamic text ([#5931](https://github.com/sveltejs/svelte/issues/5931))
+* Relax `a11y-no-noninteractive-element-to-interactive-role` warning ([#8402](https://github.com/sveltejs/svelte/pull/8402))
+* Properly handle microdata attributes ([#8413](https://github.com/sveltejs/svelte/issues/8413))
+* Prevent name collision when using computed destructuring variables ([#8417](https://github.com/sveltejs/svelte/issues/8417))
+* Fix escaping `<textarea value={...}>` values in SSR ([#8429](https://github.com/sveltejs/svelte/issues/8429))
+
+## 3.57.0
+
+* Add `<svelte:document>` ([#3310](https://github.com/sveltejs/svelte/issues/3310))
+* Add a11y `no-noninteractive-element-to-interactive-role` ([#8167](https://github.com/sveltejs/svelte/pull/8167))
+* Stop intro transition from triggering incorrectly ([#6152](https://github.com/sveltejs/svelte/issues/6152), [#6812](https://github.com/sveltejs/svelte/issues/6812))
+* Support computed and literal properties when destructuring objects in the template ([#6609](https://github.com/sveltejs/svelte/issues/6609))
+* Give `style:` directive precedence over `style=` attribute ([#7475](https://github.com/sveltejs/svelte/issues/7475))
+* Select `<option>` with `selected` attribute when initial state is `undefined` ([#8361](https://github.com/sveltejs/svelte/issues/8361))
+* Prevent derived store callbacks after store is unsubscribed from ([#8364](https://github.com/sveltejs/svelte/issues/8364))
+* Account for `bind:group` members being spread across multiple control flow blocks ([#8372](https://github.com/sveltejs/svelte/issues/8372))
+* Revert buggy reactive statement optimization ([#8374](https://github.com/sveltejs/svelte/issues/8374))
+* Support CSS units in the `fly` and `blur` transitions ([#7623](https://github.com/sveltejs/svelte/pull/7623))
+
 ## 3.56.0
 
 * Add `|stopImmediatePropagation` event modifier ([#5085](https://github.com/sveltejs/svelte/issues/5085))

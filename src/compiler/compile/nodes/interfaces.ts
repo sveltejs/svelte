@@ -12,6 +12,7 @@ import StyleDirective from './StyleDirective';
 import Comment from './Comment';
 import ConstTag from './ConstTag';
 import DebugTag from './DebugTag';
+import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import ElseBlock from './ElseBlock';
@@ -49,6 +50,7 @@ export type INode = Action
 | Comment
 | ConstTag
 | DebugTag
+| Document
 | EachBlock
 | Element
 | ElseBlock

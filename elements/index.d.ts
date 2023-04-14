@@ -534,13 +534,22 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	is?: string | undefined | null;
 
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:innerHTML'?: string | undefined | null;
 	/**
-	 * Elements with the contenteditable attribute support innerHTML and textContent bindings.
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
 	 */
 	'bind:textContent'?: string | undefined | null;
+	/**
+	 * Elements with the contenteditable attribute support `innerHTML`, `textContent` and `innerText` bindings.
+	 */
+	'bind:innerText'?: string | undefined | null;
+
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -1582,6 +1591,7 @@ export interface SvelteHTMLElements {
 
 	// Svelte specific
 	'svelte:window': SvelteWindowAttributes;
+	'svelte:document': HTMLAttributes<Document>;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
 	'svelte:options': { [name: string]: any };

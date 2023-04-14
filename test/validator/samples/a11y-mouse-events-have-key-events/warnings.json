@@ -3,48 +3,48 @@
         "code": "a11y-mouse-events-have-key-events",
         "end": {
             "column": 35,
-            "line": 10
+            "line": 11
         },
         "message": "A11y: on:mouseover must be accompanied by on:focus",
         "start": {
             "column": 0,
-            "line": 10
+            "line": 11
         }
     },
     {
         "code": "a11y-mouse-events-have-key-events",
         "end": {
             "column": 51,
-            "line": 12
+            "line": 15
         },
         "message": "A11y: on:mouseover must be accompanied by on:focus",
         "start": {
             "column": 0,
-            "line": 12
+            "line": 15
         }
     },
     {
         "code": "a11y-mouse-events-have-key-events",
         "end": {
             "column": 34,
-            "line": 13
+            "line": 17
         },
         "message": "A11y: on:mouseout must be accompanied by on:blur",
         "start": {
             "column": 0,
-            "line": 13
+            "line": 17
         }
     },
     {
         "code": "a11y-mouse-events-have-key-events",
         "end": {
             "column": 50,
-            "line": 15
+            "line": 21
         },
         "message": "A11y: on:mouseout must be accompanied by on:blur",
         "start": {
             "column": 0,
-            "line": 15
+            "line": 21
         }
     }
 ]

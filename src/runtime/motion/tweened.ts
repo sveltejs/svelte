@@ -1,6 +1,6 @@
-import { Readable, writable } from 'svelte/store';
-import { assign, loop, now, Task } from 'svelte/internal';
-import { linear } from 'svelte/easing';
+import { Readable, writable } from '../store';
+import { assign, loop, now, Task } from '../internal';
+import { linear } from '../easing';
 import { is_date } from './utils';
 
 function get_interpolator(a, b) {
@@ -122,7 +122,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 			const elapsed = now - start;
 
-			if (elapsed > duration) {
+			if (elapsed > <number> duration) {
 				store.set(value = new_value);
 				return false;
 			}

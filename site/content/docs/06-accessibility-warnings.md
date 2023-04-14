@@ -137,6 +137,17 @@ Enforce that attributes important for accessibility have a valid value. For exam
 
 ---
 
+### `a11y-interactive-supports-focus`
+
+Enforce that elements with an interactive role and interactive handlers (mouse or key press) must be focusable or tabbable.
+
+```sv
+<!-- A11y: Elements with the 'button' interactive role must have a tabindex value. -->
+<div role="button" on:keypress={() => {}} />
+```
+
+---
+
 ### `a11y-label-has-associated-control`
 
 Enforce that a label tag has a text label and an associated control.
@@ -273,6 +284,20 @@ Some HTML elements have default ARIA roles. Giving these elements an ARIA role t
 ```sv
 <!-- A11y: <textarea> cannot have role 'listitem' -->
 <textarea role="listitem" />
+```
+
+---
+
+### `a11y-no-noninteractive-element-interactions`
+
+A non-interactive element does not support event handlers (mouse and key handlers). Non-interactive elements include `<main>`, `<area>`, `<h1>` (,`<h2>`, etc), `<p>`, `<img>`, `<li>`, `<ul>` and `<ol>`. Non-interactive [WAI-ARIA roles](https://www.w3.org/TR/wai-aria-1.1/#usage_intro) include `article`, `banner`, `complementary`, `img`, `listitem`, `main`, `region` and `tooltip`.
+
+```sv
+<!-- `A11y: Non-interactive element <li> should not be assigned mouse or keyboard event listeners.` -->
+<li on:click={() => {}} />
+
+<!-- `A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.` -->
+<div role="listitem" on:click={() => {}} />
 ```
 
 ---
