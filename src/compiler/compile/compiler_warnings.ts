@@ -123,6 +123,10 @@ export default {
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
 	}),
+	a11y_no_noninteractive_element_interactions: (element: string) => ({
+		code: 'a11y-no-noninteractive-element-interactions',
+		message: `A11y: Non-interactive element <${element}> should not be assigned mouse or keyboard event listeners.`
+	}),
 	a11y_no_noninteractive_element_to_interactive_role: (role: string | boolean, element: string) => ({
 		code: 'a11y-no-noninteractive-element-to-interactive-role',
 		message: `A11y: Non-interactive element <${element}> cannot have interactive role '${role}'`

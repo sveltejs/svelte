@@ -11,7 +11,7 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
+import { is_name_contenteditable, get_contenteditable_attr, has_contenteditable_attr } from '../utils/contenteditable';
 import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
@@ -100,6 +100,15 @@ const a11y_interactive_handlers = new Set([
 	'mouseout',
 	'mouseover',
 	'mouseup'
+]);
+
+const a11y_recommended_interactive_handlers = new Set([
+	'click',
+	'mousedown',
+	'mouseup',
+	'keypress',
+	'keydown',
+	'keyup'
 ]);
 
 const a11y_nested_implicit_semantics = new Map([
@@ -738,10 +747,12 @@ export default class Element extends Node {
 			}
 		}
 
-		const role = attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey;
+		const role = attribute_map.get('role');
+		const role_static_value = role?.get_static_value() as ARIARoleDefinitionKey;
+		const role_value = (role ? role_static_value : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 
 		// no-noninteractive-tabindex
-		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(role)) {
+		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(role_static_value)) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -749,7 +760,6 @@ export default class Element extends Node {
 		}
 
 		// role-supports-aria-props
-		const role_value = (role ?? get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
 			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
@@ -764,18 +774,33 @@ export default class Element extends Node {
 				});
 		}
 
+		// no-noninteractive-element-interactions
+		if (
+			!has_contenteditable_attr(this) &&
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			((!is_interactive_element(this.name, attribute_map) && 
+				is_non_interactive_roles(role_static_value)) ||
+			 (is_non_interactive_element(this.name, attribute_map) && !role))
+		) {
+			const has_interactive_handlers = handlers.some((handler) => a11y_recommended_interactive_handlers.has(handler.name));
+			if (has_interactive_handlers) {
+				component.warn(this, compiler_warnings.a11y_no_noninteractive_element_interactions(this.name));
+			}
+		}
+
 		const has_dynamic_role = attribute_map.get('role') && !attribute_map.get('role').is_static;
 
 		// no-static-element-interactions
 		if (
 			!has_dynamic_role &&
 			!is_hidden_from_screen_reader(this.name, attribute_map) &&
-			!is_presentation_role(role) &&
+			!is_presentation_role(role_static_value) &&
 			!is_interactive_element(this.name, attribute_map) &&
-			!is_interactive_roles(role) &&
+			!is_interactive_roles(role_static_value) &&
 			!is_non_interactive_element(this.name, attribute_map) &&
-			!is_non_interactive_roles(role) &&
-			!is_abstract_role(role)
+			!is_non_interactive_roles(role_static_value) &&
+			!is_abstract_role(role_static_value)
 		) {
 			const interactive_handlers = handlers
 				.map((handler) => handler.name)
