@@ -1,5 +1,6 @@
 // @ts-ignore
-import parse from 'css-tree/parser';
+// import parse from 'css-tree/parser'; // When css-tree supports container queries uncomment.
+import { parse } from './css-tree-cq/css_tree_parse'; // Use extended css-tree for container query support.
 import { walk } from 'estree-walker';
 import { Parser } from '../index';
 import { Node } from 'estree';
@@ -78,7 +79,7 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	});
 
 	parser.read(regex_starts_with_closing_style_tag);
-  
+
 	const end = parser.index;
 
 	return {

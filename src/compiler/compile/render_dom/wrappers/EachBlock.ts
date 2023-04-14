@@ -9,6 +9,7 @@ import ElseBlock from '../../nodes/ElseBlock';
 import { Identifier, Node } from 'estree';
 import get_object from '../../utils/get_object';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import Expression from '../../nodes/shared/Expression';
 
 export class ElseBlockWrapper extends Wrapper {
 	node: ElseBlock;
@@ -86,6 +87,7 @@ export default class EachBlockWrapper extends Wrapper {
 		block.add_dependencies(dependencies);
 
 		this.node.contexts.forEach(context => {
+			if (context.type !== 'DestructuredVariable') return;
 			renderer.add_to_context(context.key.name, true);
 		});
 		add_const_tags_context(renderer, this.node.const_tags);
@@ -147,6 +149,7 @@ export default class EachBlockWrapper extends Wrapper {
 		const store = object.type === 'Identifier' && object.name[0] === '$' ? object.name.slice(1) : null;
 
 		node.contexts.forEach(prop => {
+			if (prop.type !== 'DestructuredVariable') return;
 			this.block.bindings.set(prop.key.name, {
 				object: this.vars.each_block_value,
 				property: this.index_name,
@@ -361,7 +364,15 @@ export default class EachBlockWrapper extends Wrapper {
 			this.else.fragment.render(this.else.block, null, x`#nodes` as Identifier);
 		}
 
-		this.context_props = this.node.contexts.map(prop => b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), name => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]` : { type: 'Identifier', name })};`);
+		this.context_props = this.node.contexts.map(prop => {
+			if (prop.type === 'DestructuredVariable') {
+				const to_ctx = (name: string) => renderer.context_lookup.has(name) ? x`child_ctx[${renderer.context_lookup.get(name).index}]` : { type: 'Identifier', name } as Node;
+				return b`child_ctx[${renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`list[i]`), to_ctx)};`;
+			} else {
+				const expression = new Expression(this.renderer.component, this.node, this.node.scope, prop.key);
+				return b`const ${prop.property_name} = ${expression.manipulate(block, 'child_ctx')};`;
+			}
+		});
 
 		if (this.node.has_binding) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.vars.each_block_value.name).index}] = list;`);
 		if (this.node.has_binding || this.node.has_index_binding || this.node.index) this.context_props.push(b`child_ctx[${renderer.context_lookup.get(this.index_name.name).index}] = i;`);

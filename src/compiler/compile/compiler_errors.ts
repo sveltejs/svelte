@@ -66,7 +66,7 @@ export default {
 	},
 	missing_contenteditable_attribute: {
 		code: 'missing-contenteditable-attribute',
-		message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
+		message: '\'contenteditable\' attribute is required for textContent, innerHTML and innerText two-way bindings'
 	},
 	dynamic_contenteditable_attribute: {
 		code: 'dynamic-contenteditable-attribute',
@@ -233,6 +233,10 @@ export default {
 	css_invalid_global_selector: {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
+	},
+	css_invalid_global_selector_position: {
+		code: 'css-invalid-global-selector-position',
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',

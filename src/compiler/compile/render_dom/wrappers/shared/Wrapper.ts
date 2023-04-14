@@ -85,7 +85,7 @@ export default class Wrapper {
 		);
 	}
 
-	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
+	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier, _data: Record<string, any> = undefined) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

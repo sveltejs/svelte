@@ -1,9 +1,8 @@
-import { regex_starts_with_underscore, regex_ends_with_underscore } from '../../utils/patterns';
-
 const regex_percentage_characters = /%/g;
 const regex_file_ending = /\.[^.]+$/;
 const regex_repeated_invalid_variable_identifier_characters = /[^a-zA-Z_$0-9]+/g;
 const regex_starts_with_digit = /^(\d)/;
+const regex_may_starts_or_ends_with_underscore = /^_?(.+?)_?$/;
 
 export default function get_name_from_filename(filename: string) {
 	if (!filename) return null;
@@ -18,12 +17,12 @@ export default function get_name_from_filename(filename: string) {
 		}
 	}
 
-	const base = parts.pop()
+	const base = parts
+		.pop()
 		.replace(regex_percentage_characters, 'u')
 		.replace(regex_file_ending, '')
 		.replace(regex_repeated_invalid_variable_identifier_characters, '_')
-		.replace(regex_starts_with_underscore, '')
-		.replace(regex_ends_with_underscore, '')
+		.replace(regex_may_starts_or_ends_with_underscore, '$1')
 		.replace(regex_starts_with_digit, '_$1');
 
 	if (!base) {

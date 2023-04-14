@@ -19,10 +19,10 @@ export default function get_code_frame(
 	return lines
 		.slice(frame_start, frame_end)
 		.map((str, i) => {
-			const isErrorLine = frame_start + i === line;
+			const is_error_line = frame_start + i === line;
 			const line_num = String(i + frame_start + 1).padStart(digits, ' ');
 
-			if (isErrorLine) {
+			if (is_error_line) {
 				const indicator = ' '.repeat(digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
 				return `${line_num}: ${tabs_to_spaces(str)}\n${indicator}`;
 			}
