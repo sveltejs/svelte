@@ -144,7 +144,14 @@ export function replace_placeholders(content) {
  * @param {string} lang
  */
 function fence(code, lang = 'ts') {
-	return '\n\n```' + lang + '\n' + code + '\n```\n\n';
+	return (
+		'\n\n```' +
+		lang +
+		'\n' +
+		(['js', 'ts'].includes(lang) ? '// @noErrors\n' : '') +
+		code +
+		'\n```\n\n'
+	);
 }
 
 /**

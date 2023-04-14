@@ -36,6 +36,7 @@ count.update((n) => n + 1); // logs '2'
 If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
+/// file: store.js
 import { writable } from 'svelte/store';
 
 const count = writable(0, () => {
@@ -64,8 +65,7 @@ Creates a store whose value cannot be set from 'outside', the first argument is 
 /// file: store.js
 import { readable } from 'svelte/store';
 
-/** @type {import('svelte/store').Readable<Date>} */
-const time = readable(null, (set) => {
+const time = readable(new Date(), (set) => {
 	set(new Date());
 
 	const interval = setInterval(() => {
@@ -84,7 +84,18 @@ Derives a store from one or more other stores. The callback runs initially when 
 
 In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
-```js
+```ts
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const a: Writable<number>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 import { derived } from 'svelte/store';
 
 const doubled = derived(a, ($a) => $a * 2);
@@ -94,9 +105,18 @@ The callback can set a value asynchronously by accepting a second argument, `set
 
 In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
 
-<!-- TODO types -->
-
 ```js
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const a: Writable<number>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 import { derived } from 'svelte/store';
 
 const delayed = derived(
@@ -104,15 +124,24 @@ const delayed = derived(
 	($a, set) => {
 		setTimeout(() => set($a), 1000);
 	},
-	'one moment...'
+	2000
 );
 ```
 
 If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
 
-<!-- TODO types -->
-
 ```js
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const frequency: Writable<number>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 import { derived } from 'svelte/store';
 
 const tick = derived(
@@ -126,15 +155,26 @@ const tick = derived(
 			clearInterval(interval);
 		};
 	},
-	'one moment...'
+	2000
 );
 ```
 
 In both cases, an array of arguments can be passed as the first argument instead of a single store.
 
-<!-- TODO type -->
+```ts
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
 
-```js
+declare global {
+	const a: Writable<number>;
+	const b: Writable<number>;
+}
+
+export {};
+
+// @filename: index.ts
+
+// ---cut---
 import { derived } from 'svelte/store';
 
 const summed = derived([a, b], ([$a, $b]) => $a + $b);
@@ -151,7 +191,7 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
 
 ```js
-import { readonly } from 'svelte/store';
+import { readonly, writable } from 'svelte/store';
 
 const writableStore = writable(1);
 const readableStore = readonly(writableStore);
@@ -159,6 +199,7 @@ const readableStore = readonly(writableStore);
 readableStore.subscribe(console.log);
 
 writableStore.set(2); // console: 2
+// @errors: 2339
 readableStore.set(2); // ERROR
 ```
 
@@ -171,6 +212,17 @@ Generally, you should read the value of a store by subscribing to it and using t
 > This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
 
 ```js
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const store: Writable<string>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 import { get } from 'svelte/store';
 
 const value = get(store);

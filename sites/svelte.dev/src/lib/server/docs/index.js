@@ -1,9 +1,5 @@
-// import 'prism-svelte';
-// import 'prismjs/components/prism-bash.js';
-// import 'prismjs/components/prism-diff.js';
-// import 'prismjs/components/prism-typescript.js';
-import { createShikiHighlighter } from 'shiki-twoslash';
-import { SHIKI_LANGUAGE_MAP, normalizeSlugify, transform } from '../markdown';
+import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
+import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, transform } from '../markdown';
 import { replace_placeholders } from './render.js';
 // import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
 import { createHash } from 'crypto';
@@ -57,7 +53,6 @@ export async function get_parsed_docs(docs_data, slug) {
 						/(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm,
 						(_, key, value) => {
 							options[key] = value;
-							console.log(options);
 							return '';
 						}
 					)
@@ -82,123 +77,112 @@ export async function get_parsed_docs(docs_data, slug) {
 					version_class = 'js-version';
 				}
 
-				// TODO: Replace later
-				html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
+				if (language === 'dts') {
+					html = renderCodeToHTML(
+						source,
+						'ts',
+						{ twoslash: false },
+						{ themeName: 'css-variables' },
+						highlighter
+					);
+				} else if (language === 'js' || language === 'ts') {
+					try {
+						const injected = [];
 
-				// 		if (source.includes('$env/')) {
-				// 			// TODO we're hardcoding static env vars that are used in code examples
-				// 			// in the types, which isn't... totally ideal, but will do for now
-				// 			injected.push(
-				// 				`declare module '$env/dynamic/private' { export const env: Record<string, string> }`,
-				// 				`declare module '$env/dynamic/public' { export const env: Record<string, string> }`,
-				// 				`declare module '$env/static/private' { export const API_KEY: string }`,
-				// 				`declare module '$env/static/public' { export const PUBLIC_BASE_URL: string }`
-				// 			);
-				// 		}
+						// For the snippets that are not proper JS or TS
+						// if (!source.includes('import')) injected.push('// @errors: 2552 1005 1109 2304');
 
-				// 		if (source.includes('./$types') && !source.includes('@filename: $types.d.ts')) {
-				// 			const params = parse_route_id(options.file || `+page.${language}`)
-				// 				.params.map((param) => `${param.name}: string`)
-				// 				.join(', ');
+						if (source.includes('svelte')) {
+							injected.push(
+								`// @filename: ambient.d.ts`,
+								`/// <reference types="svelte" />`,
+								`/// <reference types="svelte/action" />`,
+								`/// <reference types="svelte/compiler" />`,
+								`/// <reference types="svelte/easing" />`,
+								`/// <reference types="svelte/motion" />`,
+								`/// <reference types="svelte/transition" />`,
+								`/// <reference types="svelte/store" />`
+							);
+						}
 
-				// 			injected.push(
-				// 				`// @filename: $types.d.ts`,
-				// 				`import type * as Kit from '@sveltejs/kit';`,
-				// 				`export type PageLoad = Kit.Load<{${params}}>;`,
-				// 				`export type PageServerLoad = Kit.ServerLoad<{${params}}>;`,
-				// 				`export type LayoutLoad = Kit.Load<{${params}}>;`,
-				// 				`export type LayoutServerLoad = Kit.ServerLoad<{${params}}>;`,
-				// 				`export type RequestHandler = Kit.RequestHandler<{${params}}>;`,
-				// 				`export type Action = Kit.Action<{${params}}>;`,
-				// 				`export type Actions = Kit.Actions<{${params}}>;`
-				// 			);
-				// 		}
+						if (page.file.includes('svelte-compiler')) {
+							injected.push('// @esModuleInterop');
+						}
 
-				// 		// special case — we need to make allowances for code snippets coming
-				// 		// from e.g. ambient.d.ts
-				// 		if (file.endsWith('30-modules.md')) {
-				// 			injected.push('// @errors: 7006 7031');
-				// 		}
+						if (injected.length) {
+							const injected_str = injected.join('\n');
+							if (source.includes('// @filename:')) {
+								source = source.replace('// @filename:', `${injected_str}\n\n// @filename:`);
+							} else {
+								source = source.replace(
+									/^(?!\/\/ @)/m,
+									`${injected_str}\n\n// @filename: index.${language}\n// ---cut---\n`
+								);
+							}
+						}
 
-				// 		// another special case
-				// 		if (source.includes('$lib/types')) {
-				// 			injected.push(`declare module '$lib/types' { export interface User {} }`);
-				// 		}
+						const twoslash = runTwoSlash(source, language, {
+							defaultCompilerOptions: {
+								allowJs: true,
+								checkJs: true,
+								target: ts.ScriptTarget.ES2022
+							}
+						});
 
-				// 		if (injected.length) {
-				// 			const injected_str = injected.join('\n');
-				// 			if (source.includes('// @filename:')) {
-				// 				source = source.replace('// @filename:', `${injected_str}\n\n// @filename:`);
-				// 			} else {
-				// 				source = source.replace(
-				// 					/^(?!\/\/ @)/m,
-				// 					`${injected_str}\n\n// @filename: index.${language}\n// ---cut---\n`
-				// 				);
-				// 			}
-				// 		}
+						html = renderCodeToHTML(
+							twoslash.code,
+							'ts',
+							{ twoslash: true },
+							// @ts-ignore Why shiki-twoslash requires a theme name?
+							{},
+							highlighter,
+							twoslash
+						);
+					} catch (e) {
+						console.error(`Error compiling snippet in ${page.file}`);
+						console.error(e.code);
+						throw e;
+					}
 
-				// 		const twoslash = runTwoSlash(source, language, {
-				// 			defaultCompilerOptions: {
-				// 				allowJs: true,
-				// 				checkJs: true,
-				// 				target: 'es2021',
-				// 			},
-				// 		});
+					// we need to be able to inject the LSP attributes as HTML, not text, so we
+					// turn &lt; into &amp;lt;
+					html = html.replace(
+						/<data-lsp lsp='([^']*)'([^>]*)>(\w+)<\/data-lsp>/g,
+						(match, lsp, attrs, name) => {
+							if (!lsp) return name;
+							return `<data-lsp lsp='${lsp.replace(/&/g, '&amp;')}'${attrs}>${name}</data-lsp>`;
+						}
+					);
 
-				// 		html = renderCodeToHTML(
-				// 			twoslash.code,
-				// 			'ts',
-				// 			{ twoslash: true },
-				// 			{},
-				// 			highlighter,
-				// 			twoslash
-				// 		);
-				// 	} catch (e) {
-				// 		console.error(`Error compiling snippet in ${file}`);
-				// 		console.error(e.code);
-				// 		throw e;
-				// 	}
+					// preserve blank lines in output (maybe there's a more correct way to do this?)
+					html = html.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
+				} else if (language === 'diff') {
+					const lines = source.split('\n').map((content) => {
+						let type = null;
+						if (/^[\+\-]/.test(content)) {
+							type = content[0] === '+' ? 'inserted' : 'deleted';
+							content = content.slice(1);
+						}
 
-				// 	// we need to be able to inject the LSP attributes as HTML, not text, so we
-				// 	// turn &lt; into &amp;lt;
-				// 	html = html.replace(
-				// 		/<data-lsp lsp='([^']*)'([^>]*)>(\w+)<\/data-lsp>/g,
-				// 		(match, lsp, attrs, name) => {
-				// 			if (!lsp) return name;
-				// 			return `<data-lsp lsp='${lsp.replace(/&/g, '&amp;')}'${attrs}>${name}</data-lsp>`;
-				// 		}
-				// 	);
+						return {
+							type,
+							content: escape(content)
+						};
+					});
 
-				// 	// preserve blank lines in output (maybe there's a more correct way to do this?)
-				// 	html = html.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
-				// } else if (language === 'diff') {
-				// 	const lines = source.split('\n').map((content) => {
-				// 		let type = null;
-				// 		if (/^[\+\-]/.test(content)) {
-				// 			type = content[0] === '+' ? 'inserted' : 'deleted';
-				// 			content = content.slice(1);
-				// 		}
+					html = `<pre class="language-diff"><code>${lines
+						.map((line) => {
+							if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
+							return line.content + '\n';
+						})
+						.join('')}</code></pre>`;
+				} else {
+					const highlighted = highlighter.codeToHtml(source, {
+						lang: SHIKI_LANGUAGE_MAP[language]
+					});
 
-				// 		return {
-				// 			type,
-				// 			content: escape(content),
-				// 		};
-				// 	});
-
-				// 	html = `<pre class="language-diff"><code>${lines
-				// 		.map((line) => {
-				// 			if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
-				// 			return line.content + '\n';
-				// 		})
-				// 		.join('')}</code></pre>`;
-				// } else {
-				// 	const plang = languages[language];
-				// 	const highlighted = plang
-				// 		? PrismJS.highlight(source, PrismJS.languages[plang], language)
-				// 		: source.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-
-				// 	html = `<pre class='language-${plang}'><code>${highlighted}</code></pre>`;
-				// }
+					html = highlighted.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
+				}
 
 				if (options.file) {
 					html = `<div class="code-block"><span class="filename">${options.file}</span>${html}</div>`;
@@ -417,7 +401,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							if (variable_statement.name.getText() === 'actions') {
 								code.appendLeft(variable_statement.getEnd(), ` satisfies ${name}`);
 							} else {
-								code.appendLeft(variable_statement.name.getEnd(), `: ${name}`);
+								code.appendLeft(variable_statement.name.getEnd(), `: ${name}${generics ?? ''}`);
 							}
 
 							modified = true;

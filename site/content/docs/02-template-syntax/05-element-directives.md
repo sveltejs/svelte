@@ -397,7 +397,8 @@ use:action
 use:action={parameters}
 ```
 
-```js
+```ts
+// @noErrors
 action = (node: HTMLElement, parameters: any) => {
 	update?: (parameters: any) => void,
 	destroy?: () => void
@@ -471,6 +472,7 @@ transition:fn|local={params}
 ```
 
 ```js
+// @noErrors
 transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
 	duration?: number,
@@ -670,6 +672,7 @@ animate:name={params}
 ```
 
 ```js
+// @noErrors
 animation = (node: HTMLElement, { from: DOMRect, to: DOMRect } , params: any) => {
 	delay?: number,
 	duration?: number,
@@ -680,6 +683,7 @@ animation = (node: HTMLElement, { from: DOMRect, to: DOMRect } , params: any) =>
 ```
 
 ```ts
+// @noErrors
 DOMRect {
 	bottom: number,
 	height: number,

@@ -239,7 +239,8 @@ Local variables (that do not represent store values) must _not_ have a `$` prefi
 
 #### Store contract
 
-```js
+```ts
+// @noErrors
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
