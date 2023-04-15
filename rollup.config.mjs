@@ -45,7 +45,7 @@ export default [
 		output: ["esm", "cjs"].map(
 			/** @returns {import('rollup').OutputOptions} */
 			(format) => {
-				const ext = format === "esm" ? "mjs" : "cjs";
+				const ext = format === "esm" ? "mjs" : "js";
 				return {
 					entryFileNames: (entry) => {
 						if (entry.isEntry) {
@@ -95,7 +95,7 @@ export default [
 							`${dir}/package.json`,
 							JSON.stringify(
 								{
-									main: "./index.cjs",
+									main: "./index.js",
 									module: "./index.mjs",
 									types: "./index.d.ts",
 								},
@@ -148,7 +148,7 @@ export default [
 				sourcemap: true,
 			},
 			{
-				file: "compiler.cjs",
+				file: "compiler.js",
 				format: is_publish ? "umd" : "cjs",
 				name: "svelte",
 				sourcemap: true,
