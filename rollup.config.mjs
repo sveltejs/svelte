@@ -1,182 +1,157 @@
-import fs from 'node:fs';
-import { createRequire } from 'node:module';
-import replace from '@rollup/plugin-replace';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import sucrase from '@rollup/plugin-sucrase';
-import typescript from '@rollup/plugin-typescript';
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import replace from "@rollup/plugin-replace";
+import resolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
+import sucrase from "@rollup/plugin-sucrase";
+import typescript from "@rollup/plugin-typescript";
 
 const require = createRequire(import.meta.url);
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8"));
 
 const is_publish = !!process.env.PUBLISH;
 
 const ts_plugin = is_publish
 	? typescript({
-		typescript: require('typescript')
-	})
+			typescript: require("typescript"),
+	  })
 	: sucrase({
-		transforms: ['typescript']
-	});
+			transforms: ["typescript"],
+	  });
 
-// The following external and path logic is necessary so that the bundled runtime pieces and the index file
-// reference each other correctly instead of bundling their references to each other
+fs.writeFileSync(
+	`./compiler.d.ts`,
+	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index';`
+);
 
-/**
- * Ensures that relative imports inside `src/runtime` like `./internal` and `../store` are externalized correctly
- */
-const external = (id, parent_id) => {
-	const parent_segments = parent_id.replace(/\\/g, '/').split('/');
-	// TODO needs to be adjusted when we move to JS modules
-	if (parent_segments[parent_segments.length - 3] === 'runtime') {
-		return /\.\.\/\w+$/.test(id);
-	} else {
-		return id === './internal' && parent_segments[parent_segments.length - 2] === 'runtime';
-	}
-}
+const runtime_entrypoints = Object.fromEntries(
+	fs
+		.readdirSync("src/runtime", { withFileTypes: true })
+		.filter((dirent) => dirent.isDirectory())
+		.map((dirent) => [dirent.name, `src/runtime/${dirent.name}/index.ts`])
+);
 
 /**
- * Transforms externalized import paths like `../store` into correct relative imports with correct index file extension import
+ * @type {import("rollup").RollupOptions[]}
  */
-const replace_relative_svelte_imports = (id, ending) => {
-	id = id.replace(/\\/g, '/');
-	// TODO needs to be adjusted when we move to JS modules
-	return /src\/runtime\/\w+$/.test(id) && `../${id.split('/').pop()}/${ending}`;
-}
-
-/**
- * Transforms externalized `./internal` import path into correct relative import with correct index file extension import
- */
-const replace_relative_internal_import = (id, ending) => {
-	id = id.replace(/\\/g, '/');
-	// TODO needs to be adjusted when we move to JS modules
-	return id.endsWith('src/runtime/internal') && `./internal/${ending}`;
-}
-
-fs.writeFileSync(`./compiler.d.ts`, `export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index';`);
-
 export default [
-	/* runtime */
 	{
-		input: `src/runtime/index.ts`,
-		output: [
-			{
-				file: `index.mjs`,
-				format: 'esm',
-				paths: id => replace_relative_internal_import(id, 'index.mjs')
-			},
-			{
-				file: `index.js`,
-				format: 'cjs',
-				paths: id => replace_relative_internal_import(id, 'index.js')
-			}
-		],
-		external,
-		plugins: [ts_plugin]
-	},
+		input: {
+			...runtime_entrypoints,
+			index: "src/runtime/index.ts",
+			ssr: "src/runtime/ssr.ts",
+		},
+		output: ["esm", "cjs"].map((format) => {
+			const ext = format === "esm" ? "mjs" : "cjs";
+			return {
+				entryFileNames: (entry) => {
+					if (entry.isEntry) {
+						if (entry.name === "index") return `index.${ext}`;
+						else if (entry.name === "ssr") return `ssr.${ext}`;
 
-	{
-		input: `src/runtime/ssr.ts`,
-		output: [
-			{
-				file: `ssr.mjs`,
-				format: 'esm',
-				paths: id => replace_relative_internal_import(id, 'index.mjs')
-			},
-			{
-				file: `ssr.js`,
-				format: 'cjs',
-				paths: id => replace_relative_internal_import(id, 'index.js')
-			}
-		],
-		external,
-		plugins: [ts_plugin]
-	},
-
-	...fs.readdirSync('src/runtime')
-		.filter(dir => fs.statSync(`src/runtime/${dir}`).isDirectory())
-		.map(dir => ({
-			input: `src/runtime/${dir}/index.ts`,
-			output: [
-				{
-					file: `${dir}/index.mjs`,
-					format: 'esm',
-					paths: id => replace_relative_svelte_imports(id, 'index.mjs')
+						return `${entry.name}/index.${ext}`;
+					}
 				},
-				{
-					file: `${dir}/index.js`,
-					format: 'cjs',
-					paths: id => replace_relative_svelte_imports(id, 'index.js')
-				}
-			],
-			external,
-			plugins: [
-				replace({
-					__VERSION__: pkg.version
-				}),
-				ts_plugin,
-				{
-					writeBundle(_options, bundle) {
-						if (dir === 'internal') {
-							const mod = bundle['index.mjs'];
+				manualChunks: (id) => {
+					if (id.endsWith("internal/index.ts")) return "internal";
+				},
+				format,
+				dir: ".",
+			};
+		}),
+		plugins: [
+			replace({
+				preventAssignment: true,
+				values: {
+					__VERSION__: pkg.version,
+				},
+			}),
+			,
+			ts_plugin,
+			{
+				writeBundle(_options, bundle) {
+					for (const [_, entry] of Object.entries(bundle)) {
+						let dir = entry.name;
+						if (!entry.isEntry || !runtime_entrypoints[dir]) continue;
+						if (dir === "internal") {
+							const mod = bundle[`internal/index.mjs`];
 							if (mod) {
-								fs.writeFileSync('src/compiler/compile/internal_exports.ts', `// This file is automatically generated\nexport default new Set(${JSON.stringify(mod.exports)});`);
+								fs.writeFileSync(
+									"src/compiler/compile/internal_exports.ts",
+									`// This file is automatically generated\nexport default new Set(${JSON.stringify(
+										mod.exports
+									)});`
+								);
 							}
 						}
 
-						fs.writeFileSync(`${dir}/package.json`, JSON.stringify({
-							main: './index',
-							module: './index.mjs',
-							types: './index.d.ts'
-						}, null, '  '));
+						fs.writeFileSync(
+							`${dir}/package.json`,
+							JSON.stringify(
+								{
+									main: "./index",
+									module: "./index.mjs",
+									types: "./index.d.ts",
+								},
+								null,
+								"  "
+							)
+						);
 
-						fs.writeFileSync(`${dir}/index.d.ts`, `export * from '../types/runtime/${dir}/index';`);
+						fs.writeFileSync(
+							`${dir}/index.d.ts`,
+							`export * from '../types/runtime/${dir}/index';`
+						);
 					}
-				}
-			]
-		})),
-
+				},
+			},
+		],
+	},
 	/* compiler.js */
 	{
-		input: 'src/compiler/index.ts',
+		input: "src/compiler/index.ts",
 		plugins: [
 			replace({
-				__VERSION__: pkg.version,
-				'process.env.NODE_DEBUG': false // appears inside the util package
+				preventAssignment: true,
+				values: {
+					__VERSION__: pkg.version,
+					"process.env.NODE_DEBUG": false, // appears inside the util package
+				},
 			}),
 			{
 				resolveId(id) {
 					// util is a built-in module in Node.js, but we want a self-contained compiler bundle
 					// that also works in the browser, so we load its polyfill instead
-					if (id === 'util') {
-						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
+					if (id === "util") {
+						return require.resolve("./node_modules/util"); // just 'utils' would resolve this to the built-in module
 					}
-				}
+				},
 			},
 			resolve(),
 			commonjs({
-				include: ['node_modules/**']
+				include: ["node_modules/**"],
 			}),
 			json(),
-			ts_plugin
+			ts_plugin,
 		],
 		output: [
 			{
-				file: 'compiler.js',
-				format: is_publish ? 'umd' : 'cjs',
-				name: 'svelte',
+				file: "compiler.mjs",
+				format: "esm",
+				name: "svelte",
 				sourcemap: true,
 			},
 			{
-				file: 'compiler.mjs',
-				format: 'esm',
-				name: 'svelte',
+				file: "compiler.cjs",
+				format: is_publish ? "umd" : "cjs",
+				name: "svelte",
 				sourcemap: true,
-			}
+			},
 		],
 		external: is_publish
 			? []
-			: id => id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')
-	}
+			: (id) =>
+					id === "acorn" || id === "magic-string" || id.startsWith("css-tree"),
+	},
 ];
