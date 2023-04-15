@@ -6,26 +6,26 @@
 		{
 			id: 'hello-world',
 			title: 'Hello World',
-			description: 'Svelte components are built on top of HTML. Just add data.',
+			description: 'Svelte components are built on top of HTML. Just add data.'
 		},
 		{
 			id: 'nested-components',
 			title: 'Scoped CSS',
 			description:
-				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.',
+				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.'
 		},
 		{
 			id: 'reactive-assignments',
 			title: 'Reactivity',
 			description:
-				'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.',
+				'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.'
 		},
 		{
 			id: 'svg-transitions',
 			title: 'Transitions',
 			description:
-				'Build beautiful UIs with a powerful, performant transition engine built right into the framework.',
-		},
+				'Build beautiful UIs with a powerful, performant transition engine built right into the framework.'
+		}
 	];
 
 	let selected = examples[0];
@@ -80,14 +80,14 @@
 		grid-template-columns: 4fr 1fr;
 		color: white;
 		align-items: center;
-		font-size: var(--h5);
+		font-size: var(--sk-text-s);
 	}
 
 	.tabs {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		height: 100%;
-		border-radius: var(--border-r) var(--border-r) 0 0;
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
 		background-color: rgba(255, 255, 255, 0.1);
 	}
 
@@ -98,7 +98,7 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--border-r) var(--border-r) 0 0;
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
 	}
 
 	button:hover {
@@ -143,7 +143,7 @@
 
 	@media (min-width: 960px) {
 		.controls {
-			font-size: var(--h4);
+			font-size: var(--sk-text-s);
 		}
 
 		.large-show {

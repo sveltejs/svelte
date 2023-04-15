@@ -47,7 +47,7 @@
 		/* position: relative; padding: 0 2em 0 0; */
 		line-height: 1;
 		display: none;
-		font-family: var(--font);
+		font-family: var(--sk-font);
 		font-size: 1.6rem;
 		opacity: 0.7;
 	}
@@ -72,7 +72,7 @@
 		min-width: 10em;
 		top: 3rem;
 		right: -1.6rem;
-		background-color: var(--second);
+		background-color: var(--sk-theme-2);
 		padding: 0.8rem 1.6rem;
 		z-index: 99;
 		text-align: left;
@@ -84,7 +84,7 @@
 	.menu button,
 	.menu a {
 		background-color: transparent;
-		font-family: var(--font);
+		font-family: var(--sk-font);
 		font-size: 1.6rem;
 		opacity: 0.7;
 		padding: 0.4rem 0;

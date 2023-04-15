@@ -45,7 +45,7 @@
 
 <style>
 	.container {
-		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
 	}
 
 	h1,
@@ -64,10 +64,10 @@
 	}
 
 	.error {
-		background-color: var(--second);
+		background-color: var(--sk-theme-2);
 		color: white;
 		padding: 12px 16px;
-		font: 600 16px/1.7 var(--font);
+		font: 600 16px/1.7 var(--sk-font);
 		border-radius: 2px;
 	}
 </style>

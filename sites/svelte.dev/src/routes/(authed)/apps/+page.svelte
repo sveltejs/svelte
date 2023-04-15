@@ -26,11 +26,11 @@
 		const res = await fetch(`/apps/destroy`, {
 			method: 'POST',
 			headers: {
-				'content-type': 'application/json',
+				'content-type': 'application/json'
 			},
 			body: JSON.stringify({
-				ids: selected,
-			}),
+				ids: selected
+			})
 		});
 
 		if (res.ok) {
@@ -142,8 +142,8 @@
 
 <style>
 	.apps {
-		padding: var(--top-offset) var(--side-nav) 6rem var(--side-nav);
-		max-width: var(--main-width);
+		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
+		max-width: var(--sk-page-main-width);
 		margin: 0 auto;
 	}
 
@@ -161,7 +161,7 @@
 		padding: 0 0 0 3.2rem;
 		position: relative;
 		margin: 1rem 0;
-		color: var(--text);
+		color: var(--sk-text-2);
 	}
 
 	.avatar {
@@ -217,7 +217,7 @@
 		line-height: 1;
 		display: flex;
 		border: 1px solid #eee;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		z-index: 2;
 	}
 
@@ -226,7 +226,7 @@
 		gap: 1rem;
 		padding: 0 1rem;
 		height: 100%;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		align-items: center;
 	}
 
@@ -247,8 +247,8 @@
 	}
 
 	h2 {
-		color: var(--text);
-		font-size: var(--h5);
+		color: var(--sk-text-2);
+		font-size: var(--sk-text-s);
 		font-weight: 400;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -256,11 +256,11 @@
 
 	li a {
 		display: block;
-		background: var(--back-light);
+		background: var(--sk-back-3);
 		padding: 1rem 3rem 1rem 1rem;
 		height: 100%;
 		line-height: 1;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		text-decoration: none;
 	}
 
@@ -282,7 +282,7 @@
 	}
 
 	ul:not(.selecting) li:hover a {
-		background-color: var(--second);
+		background-color: var(--sk-theme-2);
 		color: white;
 	}
 

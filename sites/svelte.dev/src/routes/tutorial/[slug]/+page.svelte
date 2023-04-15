@@ -32,7 +32,7 @@
 				slug: chapter.slug,
 				section,
 				chapter,
-				prev,
+				prev
 			};
 
 			lookup.set(chapter.slug, obj);
@@ -54,13 +54,13 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content,
+		source: file.content
 	});
 
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
@@ -68,13 +68,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone),
+			components: data.tutorial.complete.map(clone)
 		});
 	}
 
@@ -188,7 +188,7 @@
 			height: 100%;
 			display: grid;
 			/* TODO */
-			grid-template-columns: minmax(33.333%, var(--sidebar-large-w)) auto;
+			grid-template-columns: minmax(33.333%, 48rem) auto;
 			grid-auto-rows: 100%;
 			transition: none;
 		}
