@@ -42,10 +42,10 @@ export default [
 			index: "src/runtime/index.ts",
 			ssr: "src/runtime/ssr.ts",
 		},
-		output: ["esm", "cjs"].map(
+		output: ["es", "cjs"].map(
 			/** @returns {import('rollup').OutputOptions} */
 			(format) => {
-				const ext = format === "esm" ? "mjs" : "js";
+				const ext = format === "es" ? "mjs" : "js";
 				return {
 					entryFileNames: (entry) => {
 						if (entry.isEntry) {
@@ -75,8 +75,10 @@ export default [
 			}),
 			ts_plugin,
 			{
-				writeBundle(_options, bundle) {
-					for (const [_, entry] of Object.entries(bundle)) {
+				writeBundle(options, bundle) {
+					if (options.format !== "es") return;
+
+					for (const entry of Object.values(bundle)) {
 						const dir = entry.name;
 						if (!entry.isEntry || !runtime_entrypoints[dir]) continue;
 
