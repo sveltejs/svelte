@@ -42,7 +42,7 @@ export function replace_placeholders(content) {
 				const type = module.types.find((t) => t.name === id);
 
 				return (
-					`<div class="ts-block">${fence(type.snippet)}` +
+					`<div class="ts-block">${fence(type.snippet, 'dts')}` +
 					type.children.map(stringify).join('\n\n') +
 					`</div>`
 				);
@@ -50,9 +50,9 @@ export function replace_placeholders(content) {
 
 			return `${module.comment}\n\n${module.types
 				.map((t) => {
-					let children = t.children.map(stringify).join('\n\n');
+					let children = t.children.map((val) => stringify(val, 'dts')).join('\n\n');
 
-					const markdown = `<div class="ts-block">${fence(t.snippet)}` + children + `</div>`;
+					const markdown = `<div class="ts-block">${fence(t.snippet, 'dts')}` + children + `</div>`;
 					return `### [TYPE]: ${t.name}\n\n${t.comment}\n\n${markdown}\n\n`;
 				})
 				.join('')}`;
@@ -68,7 +68,7 @@ export function replace_placeholders(content) {
 			const exported = module.exports.filter((t) => t.name === id);
 
 			return exported
-				.map((exportVal) => `<div class="ts-block">${fence(exportVal.snippet)}</div>`)
+				.map((exportVal) => `<div class="ts-block">${fence(exportVal.snippet, 'dts')}</div>`)
 				.join('\n\n');
 		})
 		.replace('> MODULES', () => {
@@ -125,8 +125,8 @@ export function replace_placeholders(content) {
 			return `${import_block}\n\n${module.comment}\n\n${module.exports
 				.map((type) => {
 					const markdown =
-						`<div class="ts-block">${fence(type.snippet)}` +
-						type.children.map(stringify).join('\n\n') +
+						`<div class="ts-block">${fence(type.snippet, 'dts')}` +
+						type.children.map((val) => stringify(val, 'dts')).join('\n\n') +
 						`</div>`;
 					return `### ${type.name}\n\n${type.comment}\n\n${markdown}`;
 				})
@@ -136,7 +136,7 @@ export function replace_placeholders(content) {
 
 /**
  * @param {string} code
- * @param {string} lang
+ * @param {keyof typeof import('../markdown/index').SHIKI_LANGUAGE_MAP} lang
  */
 function fence(code, lang = 'ts') {
 	return (
@@ -151,8 +151,9 @@ function fence(code, lang = 'ts') {
 
 /**
  * @param {import('./types').Type} member
+ * @param {keyof typeof import('../markdown').SHIKI_LANGUAGE_MAP} [lang]
  */
-function stringify(member) {
+function stringify(member, lang = 'ts') {
 	const bullet_block =
 		member.bullets.length > 0
 			? `\n\n<div class="ts-block-property-bullets">\n\n${member.bullets.join('\n')}</div>`
@@ -161,12 +162,12 @@ function stringify(member) {
 	const child_block =
 		member.children.length > 0
 			? `\n\n<div class="ts-block-property-children">${member.children
-					.map(stringify)
+					.map((val) => stringify(val, lang))
 					.join('\n')}</div>`
 			: '';
 
 	return (
-		`<div class="ts-block-property">${fence(member.snippet)}` +
+		`<div class="ts-block-property">${fence(member.snippet, lang)}` +
 		`<div class="ts-block-property-details">\n\n` +
 		bullet_block +
 		'\n\n' +
