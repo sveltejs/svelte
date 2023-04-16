@@ -69,7 +69,7 @@ export default class SlotWrapper extends Wrapper {
 	) {
 		const { renderer } = this;
 
-		const { slot_name } = this.node;
+		const { slot_name, name_attribute } = this.node;
 
 		if (this.slot_block) {
 			block = this.slot_block;
@@ -128,8 +128,9 @@ export default class SlotWrapper extends Wrapper {
 		const slot_definition = block.get_unique_name(`${sanitize(slot_name)}_slot_template`);
 		const slot_or_fallback = has_fallback ? block.get_unique_name(`${sanitize(slot_name)}_slot_or_fallback`) : slot;
 
+		const slot_expression = name_attribute.get_value(block);
 		block.chunks.init.push(b`
-			const ${slot_definition} = ${renderer.reference('#slots')}.${slot_name};
+			const ${slot_definition} = ${renderer.reference('#slots')}[${slot_expression}];
 			const ${slot} = @create_slot(${slot_definition}, #ctx, ${renderer.reference('$$scope')}, ${get_slot_context_fn});
 			${has_fallback ? b`const ${slot_or_fallback} = ${slot} || ${this.fallback.name}(#ctx);` : null}
 		`);

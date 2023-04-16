@@ -2,6 +2,7 @@ import Renderer, { RenderOptions } from '../Renderer';
 import Slot from '../../nodes/Slot';
 import { x } from 'code-red';
 import get_slot_data from '../../utils/get_slot_data';
+import { get_attribute_value } from './shared/get_attribute_value';
 import { get_slot_scope } from './shared/get_slot_scope';
 
 export default function(node: Slot, renderer: Renderer, options: RenderOptions & {
@@ -19,9 +20,10 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions &
 	renderer.render(node.children, options);
 	const result = renderer.pop();
 
+	const slot_expression = get_attribute_value(node.name_attribute);
 	renderer.add_expression(x`
-		#slots.${node.slot_name}
-			? #slots.${node.slot_name}(${slot_data})
+		#slots[${slot_expression}]
+			? #slots[${slot_expression}](${slot_data})
 			: ${result}
 	`);
 
