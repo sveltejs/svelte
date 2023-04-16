@@ -1756,6 +1756,9 @@ All except `scrollX` and `scrollY` are readonly.
 ```sv
 <svelte:document on:event={handler}/>
 ```
+```sv
+<svelte:document bind:prop={value}/>
+```
 
 ---
 
@@ -1769,6 +1772,15 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 	use:someAction
 />
 ```
+
+---
+
+You can also bind to the following properties:
+
+* `visibilityState`
+* `fullscreenElement`
+
+All except are readonly.
 
 ### `<svelte:body>`
 
