@@ -1243,7 +1243,7 @@ export default class ElementWrapper extends Wrapper {
 			const self_deps = expression.dynamic_dependencies();
 			const all_deps = new Set([
 				...self_deps,
-				...this.dynamic_style_dependencies,
+				...this.dynamic_style_dependencies
 			]);
 
 			let condition = block.renderer.dirty([...all_deps]);
