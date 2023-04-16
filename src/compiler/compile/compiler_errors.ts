@@ -132,10 +132,6 @@ export default {
 		code: 'invalid-slot-directive',
 		message: '<slot> cannot have directives'
 	},
-	dynamic_slot_name: {
-		code: 'dynamic-slot-name',
-		message: '<slot> name cannot be dynamic'
-	},
 	invalid_slot_name: {
 		code: 'invalid-slot-name',
 		message: 'default is a reserved word — it cannot be used as a slot name'
