@@ -26,7 +26,7 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background-color: var(--back);
+		background-color: var(--sk-back-1);
 		overflow: hidden;
 		box-sizing: border-box;
 		--pane-controls-h: 4.2rem;

@@ -6,7 +6,11 @@
 
 <div class="hero">
 	<strong>Cybernetically enhanced web apps</strong>
-	<Image src={Machine} alt="The Svelte compiler packaging up your component code" --max-height="65vh" />
+	<Image
+		src={Machine}
+		alt="The Svelte compiler packaging up your component code"
+		--max-height="65vh"
+	/>
 	<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
 </div>
 
@@ -22,13 +26,13 @@
 
 	strong {
 		position: absolute;
-		font-size: min(4vw, var(--h4));
+		font-size: min(4vw, var(--sk-text-s));
 		max-width: 10em;
 		text-transform: uppercase;
 		font-weight: 700;
 		color: var(--sk-text-2);
 		letter-spacing: 0.05em;
-		left: max(var(--side-nav), 10%);
+		left: max(var(--sk-page-padding-side), 10%);
 		top: 25%;
 	}
 
@@ -55,15 +59,14 @@
 
 		.logotype,
 		strong {
-			left: calc(var(--side-nav) + 4rem);
-			/* left: calc(50% - 56rem + var(--side-nav)); */
+			left: calc(var(--sk-page-padding-side) + 4rem);
 		}
 	}
 
 	@media (min-width: 1200px) {
 		strong,
 		.logotype {
-			left: calc(50% - 56rem + var(--side-nav));
+			left: calc(50% - 56rem + var(--sk-page-padding-side));
 		}
 	}
 

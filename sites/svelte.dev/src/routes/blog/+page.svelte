@@ -36,7 +36,7 @@
 		grid-gap: 1em;
 		min-height: calc(100vh - var(--sk-nav-height));
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
-		max-width: var(--main-width);
+		max-width: var(--sk-page-main-width);
 		margin: 0 auto;
 	}
 
@@ -52,7 +52,7 @@
 	.post:first-child {
 		margin: 0 0 2rem 0;
 		padding: 0 0 4rem 0;
-		border-bottom: var(--border-w) solid #6767785b; /* based on --second */
+		border-bottom: var(--sk-thick-border-width) solid #6767785b; /* based on --second */
 	}
 
 	.post:first-child h2 {

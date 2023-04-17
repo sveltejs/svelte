@@ -1,10 +1,9 @@
 <script>
-	import Repl from '@sveltejs/repl';
-	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
-	import TableOfContents from './TableOfContents.svelte';
-
 	import { browser } from '$app/environment';
+	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
+	import Repl from '@sveltejs/repl';
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
+	import TableOfContents from './TableOfContents.svelte';
 
 	import '@sveltejs/site-kit/styles/code.css';
 
@@ -32,7 +31,7 @@
 				slug: chapter.slug,
 				section,
 				chapter,
-				prev,
+				prev
 			};
 
 			lookup.set(chapter.slug, obj);
@@ -54,13 +53,13 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content,
+		source: file.content
 	});
 
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
@@ -68,13 +67,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone),
+			components: data.tutorial.initial.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone),
+			components: data.tutorial.complete.map(clone)
 		});
 	}
 
@@ -188,7 +187,7 @@
 			height: 100%;
 			display: grid;
 			/* TODO */
-			grid-template-columns: minmax(33.333%, var(--sidebar-large-w)) auto;
+			grid-template-columns: minmax(33.333%, 48rem) auto;
 			grid-auto-rows: 100%;
 			transition: none;
 		}
@@ -204,7 +203,7 @@
 		flex-direction: column;
 		height: 100%;
 		border-right: 1px solid var(--sk-back-4);
-		background-color: var(--sk-back-4);
+		background-color: var(--sk-back-3);
 		color: var(--sk-text-2);
 	}
 
@@ -287,6 +286,7 @@
 		padding: 1rem 1rem;
 		box-shadow: inset 1px 1px 6px hsla(205.7, 63.6%, 30.8%, 0.06);
 		border-radius: 0.5rem;
+		--shiki-color-background: var(--sk-back-1);
 	}
 
 	.controls {

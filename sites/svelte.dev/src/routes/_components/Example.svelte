@@ -17,7 +17,7 @@
 	.repl-container {
 		width: 100%;
 		height: 420px;
-		border-radius: var(--border-r);
+		border-radius: var(--sk-border-radius);
 		overflow: hidden;
 	}
 </style>
