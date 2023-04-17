@@ -4,6 +4,7 @@ import EventHandler from './EventHandler';
 import fuzzymatch from '../../utils/fuzzymatch';
 import Action from './Action';
 import Component from '../Component';
+import list from '../../utils/list';
 import TemplateScope from './shared/TemplateScope';
 import { Element } from '../../interfaces';
 import compiler_warnings from '../compiler_warnings';
@@ -11,6 +12,7 @@ import compiler_errors from '../compiler_errors';
 
 const valid_bindings = [
 	'fullscreenElement',
+	'pictureInPictureElement',
 	'visibilityState'
 ];
 
@@ -28,7 +30,8 @@ export default class Document extends Node {
 				this.handlers.push(new EventHandler(component, this, scope, node));
 			} else if (node.type === 'Binding') {
 				if (!~valid_bindings.indexOf(node.name)) {
-					if (fuzzymatch(node.name, valid_bindings)) {
+					const match = fuzzymatch(node.name, valid_bindings);
+					if (match) {
 						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:document>', ` (did you mean '${match}'?)`));
 					} else {
 						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:document>', ` — valid bindings are ${list(valid_bindings)}`));

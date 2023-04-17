@@ -1777,10 +1777,11 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 
 You can also bind to the following properties:
 
-* `visibilityState`
 * `fullscreenElement`
+* `pictureInPictureElement`
+* `visibilityState`
 
-All except are readonly.
+All are readonly.
 
 ### `<svelte:body>`
 

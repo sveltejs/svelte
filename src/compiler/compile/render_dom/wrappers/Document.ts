@@ -10,12 +10,14 @@ import Renderer from '../Renderer';
 import add_actions from './shared/add_actions';
 
 const associated_events = {
-	fullscreenElement: 'fullscreenchange',
-	visibilityState: 'visibilitychange'
+	fullscreenElement: ['fullscreenchange'],
+	pictureInPictureElement: ['enterpictureinpicture', 'leavepictureinpicture'],
+	visibilityState: ['visibilitychange']
 };
 
 const readonly = new Set([
 	'fullscreenElement',
+	'pictureInPictureElement',
 	'visibilityState'
 ]);
 
@@ -49,13 +51,15 @@ export default class DocumentWrapper extends Wrapper {
 
 			bindings[binding.name] = binding_name;
 
-			const associated_event = associated_events[binding.name];
+			const binding_events = associated_events[binding.name];
 			const property = binding.name;
 
-			if (!events[associated_event]) events[associated_event] = [];
-			events[associated_event].push({
-				name: binding_name,
-				value: property
+			binding_events.forEach(associated_event => {
+				if (!events[associated_event]) events[associated_event] = [];
+				events[associated_event].push({
+					name: binding_name,
+					value: property
+				});
 			});
 		});
 
