@@ -1,10 +1,9 @@
 <script>
-	import Repl from '@sveltejs/repl';
-	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
-	import TableOfContents from './TableOfContents.svelte';
-
 	import { browser } from '$app/environment';
+	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
+	import Repl from '@sveltejs/repl';
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
+	import TableOfContents from './TableOfContents.svelte';
 
 	import '@sveltejs/site-kit/styles/code.css';
 
