@@ -203,7 +203,7 @@
 		flex-direction: column;
 		height: 100%;
 		border-right: 1px solid var(--sk-back-4);
-		background-color: var(--sk-back-4);
+		background-color: var(--sk-back-3);
 		color: var(--sk-text-2);
 	}
 
@@ -286,6 +286,7 @@
 		padding: 1rem 1rem;
 		box-shadow: inset 1px 1px 6px hsla(205.7, 63.6%, 30.8%, 0.06);
 		border-radius: 0.5rem;
+		--shiki-color-background: var(--sk-back-1);
 	}
 
 	.controls {
