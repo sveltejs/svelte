@@ -1617,8 +1617,12 @@ The usual shorthand rules apply — `let:item` is equivalent to `let:item={item}
 </ul>
 
 <!-- App.svelte -->
-<!-- the `let:itemData={thing}` directive makes the value that `FancyList` passes as the `itemData` prop
-     available to the slot template as a variable called `thing` -->
+<!-- `itemData` can now be used in the content you pass into the slot using `let:itemData` -->
+<FancyList {items} let:itemData>
+	<div>{itemData.text}</div>
+</FancyList>
+
+<!-- You can also rename it using the `let:itemData={thing}` syntax. -->
 <FancyList {items} let:itemData={thing}>
 	<div>{thing.text}</div>
 </FancyList>
