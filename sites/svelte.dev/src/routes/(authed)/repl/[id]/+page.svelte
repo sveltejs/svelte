@@ -6,7 +6,6 @@
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 
 	let version = data.version;
