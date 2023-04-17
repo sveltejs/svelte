@@ -22,7 +22,7 @@ const ts_plugin = is_publish
 
 fs.writeFileSync(
 	`./compiler.d.ts`,
-	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index';`
+	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index.js';`
 );
 
 const runtime_entrypoints = Object.fromEntries(
@@ -103,7 +103,7 @@ export default [
 
 						fs.writeFileSync(
 							`${dir}/index.d.ts`,
-							`export * from '../types/runtime/${dir}/index';`
+							`export * from '../types/runtime/${dir}/index.js';`
 						);
 					}
 				},
