@@ -57,6 +57,7 @@ export default [
 					},
 					chunkFileNames: `internal/[name]-[hash].${ext}`,
 					format,
+					minifyInternalExports: false,
 					dir: '.',
 				};
 			}
