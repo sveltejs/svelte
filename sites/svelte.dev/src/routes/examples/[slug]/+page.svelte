@@ -18,7 +18,7 @@
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),
 		type: file.type,
-		source: file.content,
+		source: file.content
 	});
 
 	$: mobile = width < 768; // note: same as per media query below
@@ -112,7 +112,7 @@
 			height: 100%;
 			display: grid;
 			/* TODO */
-			grid-template-columns: var(--sidebar-mid-w) auto;
+			grid-template-columns: 36rem auto;
 			grid-auto-rows: 100%;
 			transition: none;
 		}

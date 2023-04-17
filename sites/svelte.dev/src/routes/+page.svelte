@@ -123,12 +123,12 @@ npm run dev
 	section {
 		position: relative;
 		margin: 10rem auto;
-		padding: 0 var(--side-nav);
+		padding: 0 var(--sk-page-padding-side);
 		max-width: 120rem;
 	}
 
 	.blurb-shifter {
-		margin-top: calc(-10rem + var(--side-nav));
+		margin-top: calc(-10rem + var(--sk-page-padding-side));
 	}
 
 	footer {
@@ -139,7 +139,7 @@ npm run dev
 	}
 
 	footer a {
-		color: var(--text);
+		color: var(--sk-text-2);
 		padding: 0.5rem 1rem;
 		display: block;
 	}

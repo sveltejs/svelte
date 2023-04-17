@@ -42,7 +42,7 @@
 		left: 0;
 		top: 0;
 		height: 100%;
-		background-color: var(--prime);
+		background-color: var(--sk-theme-1);
 		transition: width 0.4s;
 	}
 
