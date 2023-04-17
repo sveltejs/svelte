@@ -55,12 +55,7 @@ export default [
 							return `${entry.name}/index.${ext}`;
 						}
 					},
-
-					manualChunks: (id) => {
-						if (id.endsWith('internal/index.ts')) {
-							return 'internal';
-						}
-					},
+					chunkFileNames: `internal/[name]-[hash].${ext}`,
 					format,
 					dir: '.',
 				};
