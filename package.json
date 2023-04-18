@@ -28,12 +28,8 @@
         "import": "./index.mjs",
         "require": "./index.js"
       },
-      "node": {
-        "import": "./ssr.mjs",
-        "require": "./ssr.js"
-      },
-      "import": "./index.mjs",
-      "require": "./index.js"
+      "import": "./ssr.mjs",
+      "require": "./ssr.js"
     },
     "./compiler": {
       "types": "./types/compiler/index.d.ts",
