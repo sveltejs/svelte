@@ -10,7 +10,7 @@ import typescript from '@rollup/plugin-typescript';
 const require = createRequire(import.meta.url);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-const is_publish = !!process.env.PUBLISH;
+const is_publish = true;!!process.env.PUBLISH;
 
 const ts_plugin = is_publish
 	? typescript({
@@ -40,7 +40,7 @@ export default [
 		input: {
 			...runtime_entrypoints,
 			index: 'src/runtime/index.ts',
-			ssr: 'src/runtime/ssr.ts',
+			ssr: 'src/runtime/ssr.ts'
 		},
 		output: ['es', 'cjs'].map(
 			/** @returns {import('rollup').OutputOptions} */
@@ -107,9 +107,9 @@ export default [
 							`export * from '../types/runtime/${dir}/index.js';`
 						);
 					}
-				},
-			},
-		],
+				}
+			}
+		]
 	},
 	/* compiler.js */
 	{
@@ -133,28 +133,28 @@ export default [
 			},
 			resolve(),
 			commonjs({
-				include: ['node_modules/**'],
+				include: ['node_modules/**']
 			}),
 			json(),
-			ts_plugin,
+			ts_plugin
 		],
 		output: [
 			{
 				file: 'compiler.js',
 				format: is_publish ? 'umd' : 'cjs',
 				name: 'svelte',
-				sourcemap: true,
+				sourcemap: true
 			},
 			{
 				file: 'compiler.mjs',
 				format: 'esm',
 				name: 'svelte',
-				sourcemap: true,
-			},
+				sourcemap: true
+			}
 		],
 		external: is_publish
 			? []
 			: (id) =>
-					id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree'),
-	},
+					id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')
+	}
 ];
