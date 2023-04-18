@@ -90,7 +90,7 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "npm run test:unit && npm run test:integration",
+    "test": "npm run test:unit && npm run test:integration && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "test:integration": "mocha --exit",
     "test:unit": "mocha --config .mocharc.unit.js --exit",
     "quicktest": "mocha --exit",
