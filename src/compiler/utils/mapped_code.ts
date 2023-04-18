@@ -1,4 +1,4 @@
-import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
+import type { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
 import { Source, Processed } from '../preprocess/types';
@@ -216,11 +216,11 @@ export class MappedCode {
 export function combine_sourcemaps(
 	filename: string,
 	sourcemap_list: Array<DecodedSourceMap | RawSourceMap>
-): RawSourceMap {
+) {
 	if (sourcemap_list.length == 0) return null;
 
 	let map_idx = 1;
-	const map: RawSourceMap =
+	const map =
 		sourcemap_list.slice(0, -1)
 			.find(m => m.sources.length !== 1) === undefined
 
