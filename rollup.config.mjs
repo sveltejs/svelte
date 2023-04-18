@@ -119,7 +119,7 @@ export default [
 				preventAssignment: true,
 				values: {
 					__VERSION__: pkg.version,
-					'process.env.NODE_DEBUG': false, // appears inside the util package
+					'process.env.NODE_DEBUG': false // appears inside the util package
 				},
 			}),
 			{
@@ -143,13 +143,13 @@ export default [
 				file: 'compiler.js',
 				format: is_publish ? 'umd' : 'cjs',
 				name: 'svelte',
-				sourcemap: true
+				sourcemap: true,
 			},
 			{
 				file: 'compiler.mjs',
 				format: 'esm',
 				name: 'svelte',
-				sourcemap: true
+				sourcemap: true,
 			}
 		],
 		external: is_publish
