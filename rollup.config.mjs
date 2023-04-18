@@ -10,7 +10,7 @@ import typescript from '@rollup/plugin-typescript';
 const require = createRequire(import.meta.url);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
-const is_publish = true;!!process.env.PUBLISH;
+const is_publish = !!process.env.PUBLISH;
 
 const ts_plugin = is_publish
 	? typescript({
