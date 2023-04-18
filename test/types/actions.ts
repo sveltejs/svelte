@@ -3,15 +3,15 @@ import type { Action, ActionReturn } from '$runtime/action';
 // ---------------- Action
 
 const href: Action<HTMLAnchorElement> = (node) => {
-    node.href = '';
-    // @ts-expect-error
-    node.href = 1;
+	node.href = '';
+	// @ts-expect-error
+	node.href = 1;
 };
 href;
 
 const required: Action<HTMLElement, boolean> = (node, param) => {
-    node;
-    param;
+	node;
+	param;
 };
 required(null as any, true);
 // @ts-expect-error (only in strict mode) boolean missing
@@ -20,34 +20,34 @@ required(null as any);
 required(null as any, 'string');
 
 const required1: Action<HTMLElement, boolean> = (node, param) => {
-    node;
-    param;
-    return {
-        update: (p) => p === true,
-        destroy: () => {}
-    };
+	node;
+	param;
+	return {
+		update: (p) => p === true,
+		destroy: () => {}
+	};
 };
 required1;
 
 const required2: Action<HTMLElement, boolean> = (node) => {
-    node;
+	node;
 };
 required2;
 
 const required3: Action<HTMLElement, boolean> = (node, param) => {
-    node;
-    param;
-    return {
-        // @ts-expect-error comparison always resolves to false
-        update: (p) => p === 'd',
-        destroy: () => {}
-    };
+	node;
+	param;
+	return {
+		// @ts-expect-error comparison always resolves to false
+		update: (p) => p === 'd',
+		destroy: () => {}
+	};
 };
 required3;
 
 const optional: Action<HTMLElement, boolean | undefined> = (node, param?) => {
-    node;
-    param;
+	node;
+	param;
 };
 optional(null as any, true);
 optional(null as any);
@@ -55,39 +55,39 @@ optional(null as any);
 optional(null as any, 'string');
 
 const optional1: Action<HTMLElement, boolean | undefined> = (node, param?) => {
-    node;
-    param;
-    return {
-        update: (p) => p === true,
-        destroy: () => {}
-    };
+	node;
+	param;
+	return {
+		update: (p) => p === true,
+		destroy: () => {}
+	};
 };
 optional1;
 
 const optional2: Action<HTMLElement, boolean | undefined> = (node) => {
-    node;
+	node;
 };
 optional2;
 
 const optional3: Action<HTMLElement, boolean | undefined> = (node, param) => {
-    node;
-    param;
+	node;
+	param;
 };
 optional3;
 
 const optional4: Action<HTMLElement, boolean | undefined> = (node, param?) => {
-    node;
-    param;
-    return {
-        // @ts-expect-error comparison always resolves to false
-        update: (p) => p === 'd',
-        destroy: () => {}
-    };
+	node;
+	param;
+	return {
+		// @ts-expect-error comparison always resolves to false
+		update: (p) => p === 'd',
+		destroy: () => {}
+	};
 };
 optional4;
 
 const no: Action<HTMLElement, never> = (node) => {
-    node;
+	node;
 };
 // @ts-expect-error second param
 no(null as any, true);
@@ -96,10 +96,10 @@ no(null as any);
 no(null as any, 'string');
 
 const no1: Action<HTMLElement, never> = (node) => {
-    node;
-    return {
-        destroy: () => {}
-    };
+	node;
+	return {
+		destroy: () => {}
+	};
 };
 no1;
 
@@ -113,32 +113,32 @@ no3;
 
 // @ts-expect-error update method given
 const no4: Action<HTMLElement, never> = (node) => {
-    return {
-        update: () => {},
-        destroy: () => {}
-    };
+	return {
+		update: () => {},
+		destroy: () => {}
+	};
 };
 no4;
 
 // ---------------- ActionReturn
 
 const requiredReturn: ActionReturn<string> = {
-    update: (p) => p.toString()
+	update: (p) => p.toString()
 };
 requiredReturn;
 
 const optionalReturn: ActionReturn<boolean | undefined> = {
-    update: (p) => {
-        p === true;
-        // @ts-expect-error could be undefined
-        p.toString();
-    }
+	update: (p) => {
+		p === true;
+		// @ts-expect-error could be undefined
+		p.toString();
+	}
 };
 optionalReturn;
 
 const invalidProperty: ActionReturn = {
-    // @ts-expect-error invalid property
-    invalid: () => {}
+	// @ts-expect-error invalid property
+	invalid: () => {}
 };
 invalidProperty;
 

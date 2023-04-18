@@ -27,11 +27,13 @@ export function beforeUpdate(fn: () => any) {
  * It must be called during the component's initialisation (but doesn't need to live *inside* the component; 
  * it can be called from an external module).
  * 
+ * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+ * 
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
  * 
  * https://svelte.dev/docs#run-time-svelte-onmount
  */
-export function onMount(fn: () => any) {
+export function onMount<T>(fn: () => T extends Promise<() => any> ? "Returning a function asynchronously from onMount won't call that function on destroy" : T): void {
 	get_current_component().$$.on_mount.push(fn);
 }
 
