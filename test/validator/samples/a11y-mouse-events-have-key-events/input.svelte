@@ -7,9 +7,15 @@
 	};
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseover={() => void 0} />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseover={() => void 0} on:focus={() => void 0} />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseover={() => void 0} {...otherProps} />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseout={() => void 0} />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseout={() => void 0} on:blur={() => void 0} />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseout={() => void 0} {...otherProps} />

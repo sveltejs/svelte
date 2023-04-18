@@ -24,7 +24,7 @@ type Owner = INode;
 const regex_contains_term_function_expression = /FunctionExpression/;
 
 export default class Expression {
-	type: 'Expression' = 'Expression';
+	type: 'Expression' = 'Expression' as const;
 	component: Component;
 	owner: Owner;
 	node: Node;

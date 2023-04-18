@@ -1,6 +1,17 @@
 # Svelte changelog
 
-## Unreleased
+## Unreleased (4.0)
+
+* **breaking** Minimum supported Node version is now Node 14
+* **breaking** Minimum supported TypeScript version is now 5 (it will likely work with lower versions, but we make no guarantess about that)
+* **breaking** Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* **breaking** Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* **breaking** Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
+* Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
+* Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
+* Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
+
+## Unreleased (3.0)
 
 * Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
 * Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))

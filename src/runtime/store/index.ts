@@ -1,4 +1,4 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from '../internal';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;
@@ -12,8 +12,15 @@ export type Updater<T> = (value: T) => T;
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
-/** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+/** 
+ * Start and stop notification callbacks.
+ * This function is called when the first subscriber subscribes.
+ * 
+ * @param {(value: T) => void} set Function that sets the value of the store.
+ * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
+ * subscriber unsubscribes.
+ */
+export type StartStopNotifier<T> = (set: (value: T) => void) => void | (() => void);
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -48,7 +55,7 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
- * @param {StartStopNotifier}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier} [start] 
  */
 export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
 	return {
@@ -59,7 +66,7 @@ export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @param {*=}value initial value
- * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier=} start
  */
 export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;

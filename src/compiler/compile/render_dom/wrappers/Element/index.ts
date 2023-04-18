@@ -765,20 +765,33 @@ export default class ElementWrapper extends Wrapper {
 		`);
 
 		binding_group.events.forEach(name => {
-			const resizeListenerFunctions = {
-				elementresize: 'add_iframe_resize_listener',
-				elementresizecontentbox: 'resize_observer_content_box.observe',
-				elementresizeborderbox: 'resize_observer_border_box.observe',
-				elementresizedevicepixelcontentbox: 'resize_observer_device_pixel_content_box.observe'
-			};
-
-			if (name in resizeListenerFunctions) {
+			if (['elementresize', 'elementresizecontentbox', 'elementresizeborderbox', 'elementresizedevicepixelcontentbox'].indexOf(name) !== -1) {
 				const resize_listener = block.get_unique_name(`${this.var.name}_resize_listener`);
 				block.add_variable(resize_listener);
 
-				block.chunks.mount.push(
-					b`${resize_listener} = @${resizeListenerFunctions[name]}(${this.var}, ${callee}.bind(${this.var}));`
-				);
+				// Can't dynamically do `@fn[name]`, code-red doesn't know how to resolve it
+				switch (name) {
+					case 'elementresize':
+						block.chunks.mount.push(
+							b`${resize_listener} = @add_iframe_resize_listener(${this.var}, ${callee}.bind(${this.var}));`
+						);
+						break;
+					case 'elementresizecontentbox':
+						block.chunks.mount.push(
+							b`${resize_listener} = @resize_observer_content_box.observe(${this.var}, ${callee}.bind(${this.var}));`
+						);
+						break;
+					case 'elementresizeborderbox':
+						block.chunks.mount.push(
+							b`${resize_listener} = @resize_observer_border_box.observe(${this.var}, ${callee}.bind(${this.var}));`
+						);
+						break;
+					case 'elementresizedevicepixelcontentbox':
+						block.chunks.mount.push(
+							b`${resize_listener} = @resize_observer_device_pixel_content_box.observe(${this.var}, ${callee}.bind(${this.var}));`
+						);
+						break;
+				}
 
 				block.chunks.destroy.push(
 					b`${resize_listener}();`
