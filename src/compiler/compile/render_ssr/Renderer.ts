@@ -29,6 +29,7 @@ const handlers: Record<string, Handler> = {
 	Body: noop,
 	Comment,
 	DebugTag,
+	Document: noop,
 	EachBlock,
 	Element,
 	Head,

@@ -1,6 +1,6 @@
 [{
 	"code": "missing-contenteditable-attribute",
-	"message": "'contenteditable' attribute is required for textContent and innerHTML two-way bindings",
+	"message": "'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings",
 	"start": {
 		"line": 4,
 		"column": 8

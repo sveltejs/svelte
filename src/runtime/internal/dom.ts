@@ -1,4 +1,5 @@
-import { has_prop } from './utils';
+import { ResizeObserverSingleton } from './ResizeObserverSingleton';
+import { contenteditable_truthy_values, has_prop } from './utils';
 
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
@@ -13,7 +14,7 @@ export function end_hydrating() {
 
 type NodeEx = Node & {
 	claim_order?: number,
-	hydrate_init? : true,
+	hydrate_init?: true,
 	actual_end_child?: NodeEx,
 	childNodes: NodeListOf<NodeEx>,
 };
@@ -35,7 +36,7 @@ function init_hydrate(target: NodeEx) {
 	if (target.hydrate_init) return;
 	target.hydrate_init = true;
 
-	type NodeEx2 = NodeEx & {claim_order: number};
+	type NodeEx2 = NodeEx & { claim_order: number };
 
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 	let children: ArrayLike<NodeEx2> = target.childNodes as NodeListOf<NodeEx2>;
@@ -254,13 +255,17 @@ export function empty() {
 	return text('');
 }
 
+export function comment(content: string) {
+	return document.createComment(content);
+}
+
 export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
 
 export function prevent_default(fn) {
-	return function(event) {
+	return function (event) {
 		event.preventDefault();
 		// @ts-ignore
 		return fn.call(this, event);
@@ -268,22 +273,30 @@ export function prevent_default(fn) {
 }
 
 export function stop_propagation(fn) {
-	return function(event) {
+	return function (event) {
 		event.stopPropagation();
 		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
+export function stop_immediate_propagation(fn) {
+	return function (event) {
+		event.stopImmediatePropagation();
+		// @ts-ignore
+		return fn.call(this, event);
+	};
+}
+
 export function self(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 export function trusted(fn) {
-	return function(event) {
+	return function (event) {
 		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
@@ -293,6 +306,15 @@ export function attr(node: Element, attribute: string, value?: string) {
 	if (value == null) node.removeAttribute(attribute);
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
+
+/** 
+ * List of attributes that should always be set through the attr method,
+ * because updating them through the property setter doesn't work reliably.
+ * In the example of `width`/`height`, the problem is that the setter only
+ * accepts numeric values, but the attribute can also be set to a string like `50%`.
+ * If this list becomes too big, rethink this approach.
+ */
+const always_set_through_set_attribute = ['width', 'height'];
 
 export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
 	// @ts-ignore
@@ -304,7 +326,7 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set) {
+		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -351,6 +373,53 @@ export function get_binding_group_value(group, __value, checked) {
 	return Array.from(value);
 }
 
+export function init_binding_group(group: HTMLInputElement[]) {
+	let _inputs: HTMLInputElement[];
+	return {
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			_inputs.forEach(input => group.push(input));
+		},
+
+		/* remove */ r() {
+			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+		}
+	};
+}
+
+export function init_binding_group_dynamic(group, indexes: number[]) {
+	let _group: HTMLInputElement[] = get_binding_group(group);
+	let _inputs: HTMLInputElement[];
+	function get_binding_group(group) {
+		for (let i = 0; i < indexes.length; i++) {
+			group = group[indexes[i]] = group[indexes[i]] || [];
+		}
+		return group;
+	}
+	function push() {
+		_inputs.forEach(input => _group.push(input));
+	}
+	function remove() {
+		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+	}
+	return {
+		/* update */ u(new_indexes: number[]) {
+			indexes = new_indexes;
+			const new_group = get_binding_group(group);
+			if (new_group !== _group) {
+				remove();
+				_group = new_group;
+				push();
+			}
+		},
+		/* push */ p(...inputs: HTMLInputElement[]) {
+			_inputs = inputs;
+			push();
+		},
+		/* remove */ r: remove
+	};
+}
+
 export function to_number(value) {
 	return value === '' ? null : +value;
 }
@@ -384,7 +453,7 @@ export function children(element: Element) {
 
 function init_claim_info(nodes: ChildNodeArray) {
 	if (nodes.claim_info === undefined) {
-		nodes.claim_info = {last_index: 0, total_claimed: 0};
+		nodes.claim_info = { last_index: 0, total_claimed: 0 };
 	}
 }
 
@@ -495,6 +564,19 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
+export function claim_comment(nodes:ChildNodeArray, data) {
+	return claim_node<Comment>(
+		nodes,
+		(node: ChildNode): node is Comment => node.nodeType === 8,
+		(node: Comment) => {
+			node.data =  '' + data;
+			return undefined;
+		},
+		() => comment(data),
+		true
+	);
+}
+
 function find_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
@@ -526,9 +608,24 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 	return new HtmlTagHydration(claimed_nodes, is_svg);
 }
 
-export function set_data(text, data) {
+export function set_data(text: Text, data: unknown) {
 	data = '' + data;
-	if (text.wholeText !== data) text.data = data;
+	if (text.data === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.wholeText === data) return;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable(text, data);
+	} else {
+		set_data(text, data);
+	}
 }
 
 export function set_input_value(input, value) {
@@ -551,7 +648,7 @@ export function set_style(node, key, value, important) {
 	}
 }
 
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	for (let i = 0; i < select.options.length; i += 1) {
 		const option = select.options[i];
 
@@ -561,7 +658,9 @@ export function select_option(select, value) {
 		}
 	}
 
-	select.selectedIndex = -1; // no option should be selected
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 export function select_options(select, value) {
@@ -571,16 +670,8 @@ export function select_options(select, value) {
 	}
 }
 
-function first_enabled_option(select) {
-	for (const option of select.options) {
-		if (!option.disabled) {
-			return option;
-		}
-	}
-}
-
 export function select_value(select) {
-	const selected_option = select.querySelector(':checked') || first_enabled_option(select);
+	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 
@@ -608,7 +699,7 @@ export function is_crossorigin() {
 	return crossorigin;
 }
 
-export function add_resize_listener(node: HTMLElement, fn: () => void) {
+export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	const computed_style = getComputedStyle(node);
 
 	if (computed_style.position === 'static') {
@@ -656,11 +747,16 @@ export function add_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
+export const resize_observer_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'content-box' });
+export const resize_observer_border_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'border-box' });
+export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export { ResizeObserverSingleton };
+
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T=any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
+export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, bubbles, cancelable, detail);
 	return e;
@@ -698,7 +794,7 @@ export class HtmlTag {
 	// html tag nodes
 	n: ChildNode[];
 	// target
-	t: HTMLElement | SVGElement;
+	t: HTMLElement | SVGElement | DocumentFragment;
 	// anchor
 	a: HTMLElement | SVGElement;
 
@@ -718,8 +814,9 @@ export class HtmlTag {
 	) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			else this.e = element(target.nodeName as keyof HTMLElementTagNameMap);
-			this.t = target;
+			/** #7364  target for <template> may be provided as #document-fragment(11) */
+			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
 
@@ -728,7 +825,7 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.childNodes);
+		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
 	}
 
 	i(anchor) {

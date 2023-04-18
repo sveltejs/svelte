@@ -65,6 +65,7 @@ export default class ConstTag extends Node {
 		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
 		this.contexts.forEach(context => {
+			if (context.type !== 'DestructuredVariable') return;
 			const owner = this.scope.get_owner(context.key.name);
 			if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
 				this.component.error(this.node, compiler_errors.invalid_const_declaration(context.key.name));
