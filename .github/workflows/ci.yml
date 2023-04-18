@@ -24,12 +24,14 @@ jobs:
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
-      - run: npm install
-      - run: npm run test:integration
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node node_modules/puppeteer/install.js
+      - run: pnpm test:integration
         env:
           CI: true
   Lint:
@@ -37,10 +39,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
-          cache: npm
-      - run: 'npm i && npm run lint'
+          cache: pnpm
+      - run: 'pnpm i && pnpm lint'
   Unit:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -59,10 +62,11 @@ jobs:
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
-          cache: npm
-      - run: npm install
+          cache: pnpm
+      - run: pnpm install
         env:
           SKIP_PREPARE: true
-      - run: npm run test:unit
+      - run: pnpm test:unit
