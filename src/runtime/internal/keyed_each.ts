@@ -112,7 +112,13 @@ export function validate_each_keys(ctx, list, get_context, get_key) {
 	for (let i = 0; i < list.length; i++) {
 		const key = get_key(get_context(ctx, list, i));
 		if (keys.has(key)) {
-			throw new Error(`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(key)} and ${i} are duplicates`);
+			let value = '';
+			try {
+				value = `with value '${String(key)}' `;
+			} catch (e) {
+				// can't stringify
+			}
+			throw new Error(`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(key)} and ${i} ${value}are duplicates`);
 		}
 		keys.set(key, i);
 	}
