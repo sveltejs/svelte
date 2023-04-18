@@ -39,8 +39,7 @@ export default [
 	{
 		input: {
 			...runtime_entrypoints,
-			index: 'src/runtime/index.ts',
-			ssr: 'src/runtime/ssr.ts'
+			index: 'src/runtime/index.ts'
 		},
 		output: ['es', 'cjs'].map(
 			/** @returns {import('rollup').OutputOptions} */
@@ -50,8 +49,6 @@ export default [
 					entryFileNames: (entry) => {
 						if (entry.isEntry) {
 							if (entry.name === 'index') return `index.${ext}`;
-							else if (entry.name === 'ssr') return `ssr.${ext}`;
-
 							return `${entry.name}/index.${ext}`;
 						}
 					},
