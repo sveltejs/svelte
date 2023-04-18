@@ -157,10 +157,13 @@ export function construct_svelte_component_dev(component, props) {
 	}
 }
 
-type Props = Record<string, any>;
-export interface SvelteComponentDev {
-	$set(props?: Props): void;
-	$on(event: string, callback: ((event: any) => void) | null | undefined): () => void;
+export interface SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
@@ -177,8 +180,33 @@ export interface ComponentConstructorOptions<Props extends Record<string, any> =
 
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
+ * 
+ * Can be used to create strongly typed Svelte components.
+ *
+ * ### Example:
+ *
+ * You have component library on npm called `component-library`, from which
+ * you export a component called `MyComponent`. For Svelte+TypeScript users,
+ * you want to provide typings. Therefore you create a `index.d.ts`:
+ * ```ts
+ * import { SvelteComponent } from "svelte";
+ * export class MyComponent extends SvelteComponent<{foo: string}> {}
+ * ```
+ * Typing this makes it possible for IDEs like VS Code with the Svelte extension
+ * to provide intellisense and to use the component like this in a Svelte file
+ * with TypeScript:
+ * ```svelte
+ * <script lang="ts">
+ * 	import { MyComponent } from "component-library";
+ * </script>
+ * <MyComponent foo={'bar'} />
+ * ```
  */
-export class SvelteComponentDev extends SvelteComponent {
+export class SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponent {
 	/**
 	 * @private
 	 * For type checking capabilities only.
@@ -192,16 +220,16 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
-	$$events_def: any;
+	$$events_def: Events;
 	/**
 	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
-	$$slot_def: any;
+	$$slot_def: Slots;
 
-	constructor(options: ComponentConstructorOptions) {
+	constructor(options: ComponentConstructorOptions<Props>) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
@@ -221,21 +249,15 @@ export class SvelteComponentDev extends SvelteComponent {
 	$inject_state() {}
 }
 
-// TODO https://github.com/microsoft/TypeScript/issues/41770 is the reason
-// why we have to split out SvelteComponentTyped to not break existing usage of SvelteComponent.
-// Try to find a better way for Svelte 4.0.
-
 export interface SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
-> {
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
-	$destroy(): void;
-	[accessor: string]: any;
-}
+	Slots extends Record<string, any> = any
+> extends SvelteComponentDev<Props, Events, Slots> {}
+
 /**
+ * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
+ * 
  * Base class to create strongly typed Svelte components.
  * This only exists for typing purposes and should be used in `.d.ts` files.
  *
@@ -270,33 +292,7 @@ export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
-> extends SvelteComponentDev {
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$prop_def: Props;
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$events_def: Events;
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$slot_def: Slots;
-
-	constructor(options: ComponentConstructorOptions<Props>) {
-		super(options);
-	}
-}
+> extends SvelteComponentDev<Props, Events, Slots> {}
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -305,21 +301,21 @@ export class SvelteComponentTyped<
  * Example:
  * ```html
  * <script lang="ts">
- * 	import type { ComponentType, SvelteComponentTyped } from 'svelte';
+ * 	import type { ComponentType, SvelteComponent } from 'svelte';
  * 	import Component1 from './Component1.svelte';
  * 	import Component2 from './Component2.svelte';
  *
  * 	const component: ComponentType = someLogic() ? Component1 : Component2;
- * 	const componentOfCertainSubType: ComponentType<SvelteComponentTyped<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
  * </script>
  *
  * <svelte:component this={component} />
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped> = new (
+export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = new (
 	options: ComponentConstructorOptions<
-		Component extends SvelteComponentTyped<infer Props> ? Props : Record<string, any>
+		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
 	>
 ) => Component;
 
@@ -334,7 +330,7 @@ export type ComponentType<Component extends SvelteComponentTyped = SvelteCompone
  * </script>
  * ```
  */
-export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentTyped<infer Props>
+export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentDev<infer Props>
 	? Props
 	: never;
 
@@ -354,7 +350,7 @@ export type ComponentProps<Component extends SvelteComponent> = Component extend
  * ```
  */
 export type ComponentEvents<Component extends SvelteComponent> =
-	Component extends SvelteComponentTyped<any, infer Events> ? Events : never;
+	Component extends SvelteComponentDev<any, infer Events> ? Events : never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();

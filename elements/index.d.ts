@@ -84,9 +84,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
 	'on:input'?: FormEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
-	'on:submit'?: EventHandler<Event & { readonly submitter: HTMLElement | null; }, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
+	'on:submit'?: EventHandler<SubmitEvent, T> | undefined | null;
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
-	'on:formdata'?: EventHandler<Event & { readonly formData: FormData; }, T> | undefined | null; // TODO make this FormDataEvent once we require TS>=4.4
+	'on:formdata'?: EventHandler<FormDataEvent, T> | undefined | null;
 
 	// Image Events
 	'on:load'?: EventHandler | undefined | null;
@@ -547,9 +547,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:innerText'?: string | undefined | null;
 
 	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
-	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
-	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -558,6 +558,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
+
+	// allow any data- attribute
+	[key: `data-${string}`]: any;
 }
 
 export type HTMLAttributeAnchorTarget =
