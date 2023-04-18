@@ -1240,19 +1240,27 @@ export default class ElementWrapper extends Wrapper {
 
 			block.chunks.hydrate.push(updater);
 
+			const self_deps = expression.dynamic_dependencies();
+			const all_deps = new Set([
+				...self_deps,
+				...this.dynamic_style_dependencies
+			]);
+
+			let condition = block.renderer.dirty([...all_deps]);
+
 			// Assume that style has changed through the spread attribute
 			if (has_spread) {
+				if (should_cache && all_deps.size) {
+					// Update the cached value
+					block.chunks.update.push(b`
+						if (${condition}) {
+							${cached_snippet} = ${snippet};
+						}`
+					);
+				}
 				block.chunks.update.push(updater);
 			} else {
-				const self_deps = expression.dynamic_dependencies();
-				const all_deps = new Set([
-					...self_deps,
-					...this.dynamic_style_dependencies
-				]);
-
-				if (all_deps.size === 0) return;
-
-				let condition =  block.renderer.dirty([...all_deps]);
+				if (all_deps.size === 0) return;				
 
 				if (should_cache) {
 					condition = x`${condition} && ${cached_snippet} !== (${cached_snippet} = ${snippet})`;
