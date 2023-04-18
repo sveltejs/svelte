@@ -1,7 +1,10 @@
 <script>
 	import Section from '../Section.svelte';
 	import { companies } from './companies.js';
-	import { theme } from '@sveltejs/site-kit/theme';
+	// @ts-ignore Why is theme not found by the extension, its right there 🤔
+	import { theme } from '@sveltejs/site-kit/components';
+
+	$: console.log($theme);
 
 	const sorted = companies.sort((a, b) => (a.alt < b.alt ? -1 : 1));
 </script>

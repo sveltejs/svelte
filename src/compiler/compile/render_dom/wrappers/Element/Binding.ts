@@ -11,6 +11,7 @@ import { Node, Identifier } from 'estree';
 import add_to_set from '../../../utils/add_to_set';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import handle_select_value_binding from './handle_select_value_binding';
+import { regex_box_size } from '../../../../utils/patterns';
 
 export default class BindingWrapper {
 	node: Binding;
@@ -455,7 +456,12 @@ function get_value_from_dom(
 		return x`$$value`;
 	}
 
-	// <select bind:value='selected'>
+	// <div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>
+	if (regex_box_size.test(name)) {
+		return x`@ResizeObserverSingleton.entries.get(this)?.${name}`;
+	}
+
+	// <select bind:value='selected>
 	if (node.name === 'select') {
 		return node.get_static_attribute_value('multiple') === true ?
 			x`@select_multiple_value(this)` :

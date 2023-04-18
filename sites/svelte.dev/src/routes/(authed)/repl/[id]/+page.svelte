@@ -6,7 +6,6 @@
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 
 	let version = data.version;
@@ -41,7 +40,7 @@
 
 	afterNavigate(() => {
 		repl.set({
-			components: data.gist.components,
+			components: data.gist.components
 		});
 	});
 
@@ -99,11 +98,11 @@
 <style>
 	.repl-outer {
 		position: relative;
-		height: calc(100vh - var(--nav-h));
+		height: calc(100vh - var(--sk-nav-height));
 		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
 		overflow: hidden;
-		background-color: var(--back);
+		background-color: var(--sk-back-1);
 		padding: var(--app-controls-h) 0 0 0;
 		/* margin: 0 calc(var(--side-nav) * -1); */
 		box-sizing: border-box;

@@ -26,7 +26,7 @@
 
 	strong {
 		position: absolute;
-		font-size: min(4vw, var(--h4));
+		font-size: min(4vw, var(--sk-text-s));
 		max-width: 10em;
 		text-transform: uppercase;
 		font-weight: 700;
@@ -59,15 +59,14 @@
 
 		.logotype,
 		strong {
-			left: calc(var(--side-nav) + 8rem);
-			/* left: calc(50% - 56rem + var(--side-nav)); */
+			left: calc(var(--sk-page-padding-side) + 8rem);
 		}
 	}
 
 	@media (min-width: 1200px) {
 		strong,
 		.logotype {
-			left: calc(50% - 56rem + var(--side-nav));
+			left: calc(50% - 56rem + var(--sk-page-padding-side));
 		}
 	}
 

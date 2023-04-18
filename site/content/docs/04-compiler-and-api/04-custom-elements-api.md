@@ -33,7 +33,7 @@ document.body.innerHTML = `
 `;
 ```
 
-By default, custom elements are compiled with `accessors: true`, which means that any [props](/docs/dot-svelte-files#attributes-and-props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
+By default, custom elements are compiled with `accessors: true`, which means that any [props](/docs/basic-markup#attributes-and-props) are exposed as properties of the DOM element (as well as being readable/writable as attributes, where possible).
 
 To prevent this, add `accessors={false}` to `<svelte:options>`.
 

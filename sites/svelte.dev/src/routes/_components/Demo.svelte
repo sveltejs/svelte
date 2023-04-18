@@ -79,7 +79,7 @@
 		grid-template-columns: 4fr 1fr;
 		color: var(--sk-text-1);
 		align-items: center;
-		font-size: var(--h5);
+		font-size: var(--sk-text-s);
 	}
 
 	a {
@@ -90,7 +90,7 @@
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		height: 100%;
-		border-radius: var(--border-r) var(--border-r) 0 0;
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
 		background-color: rgba(255, 255, 255, 0.1);
 	}
 
@@ -101,7 +101,7 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--border-r) var(--border-r) 0 0;
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
 	}
 
 	button:hover {
@@ -141,7 +141,7 @@
 
 	@media (min-width: 960px) {
 		.controls {
-			font-size: var(--h4);
+			font-size: var(--sk-text-s);
 		}
 
 		.large-show {

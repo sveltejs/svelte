@@ -1,10 +1,9 @@
 <script>
 	import { Section } from '@sveltejs/site-kit/components';
-	import TryTerminal from '@sveltejs/site-kit/components/home/TryTerminal.svelte';
-	import { theme } from '@sveltejs/site-kit/theme';
+	import { TryTerminal } from '@sveltejs/site-kit/components';
 </script>
 
-<div class="container" class:dark={$theme.current === 'dark'}>
+<div class="try-container">
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="try">
@@ -56,14 +55,28 @@
 </div>
 
 <style>
-	.container {
-		--background-1: radial-gradient(circle at top right, rgb(230, 233, 236), rgb(244, 245, 247));
-		--background-2: var(--sk-back-4);
+	@media (prefers-color-scheme: light) {
+		.try-container {
+			--background-1: radial-gradient(circle at top right, rgb(230, 233, 236), rgb(244, 245, 247));
+			--background-2: var(--sk-back-4);
+		}
+
+		:global(body.dark .try-container) {
+			--background-1: #222;
+			--background-2: #444;
+		}
 	}
 
-	.container.dark {
-		--background-1: #222;
-		--background-2: #444;
+	@media (prefers-color-scheme: dark) {
+		.try-container {
+			--background-1: #222;
+			--background-2: #444;
+		}
+
+		:global(body.light .try-container) {
+			--background-1: radial-gradient(circle at top right, rgb(230, 233, 236), rgb(244, 245, 247));
+			--background-2: var(--sk-back-4);
+		}
 	}
 
 	.grid {

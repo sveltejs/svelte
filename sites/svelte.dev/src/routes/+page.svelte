@@ -83,7 +83,7 @@
 	}
 
 	footer a {
-		color: var(--text);
+		color: var(--sk-text-2);
 		padding: 0.5rem 1rem;
 		display: block;
 	}

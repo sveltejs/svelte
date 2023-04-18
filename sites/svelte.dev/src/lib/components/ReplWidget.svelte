@@ -42,7 +42,7 @@
 							return {
 								name: file.slice(0, dot),
 								type: file.slice(dot + 1),
-								source,
+								source
 							};
 						})
 						.filter((x) => x.type === 'svelte' || x.type === 'js')
@@ -63,7 +63,7 @@
 			);
 
 			repl.set({
-				components,
+				components
 			});
 		}
 	}
@@ -80,10 +80,8 @@
 		browser && version === 'local'
 			? `${location.origin}/repl/local`
 			: `https://unpkg.com/svelte@${version}`;
-
-	const rollupUrl = `https://unpkg.com/rollup@1/dist/rollup.browser.js`;
 </script>
 
 {#if browser}
-	<Repl bind:this={repl} {svelteUrl} {rollupUrl} embedded relaxed />
+	<Repl bind:this={repl} {svelteUrl} embedded relaxed />
 {/if}

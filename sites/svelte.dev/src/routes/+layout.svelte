@@ -18,7 +18,7 @@
 	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
 		<Nav>
 			<svelte:fragment slot="home">
-				<span><strong>svelte</strong><span>.dev</span></span>
+				<strong>svelte</strong>.dev
 			</svelte:fragment>
 
 			<svelte:fragment slot="nav-center">

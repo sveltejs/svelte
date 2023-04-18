@@ -22,3 +22,9 @@ export const regex_ends_with_underscore = /_$/;
 export const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
 
 export const regex_dimensions = /^(?:offset|client)(?:Width|Height)$/;
+
+export const regex_content_rect = /^(?:contentRect)$/;
+export const regex_content_box_size = /^(?:contentBoxSize)$/;
+export const regex_border_box_size = /^(?:borderBoxSize)$/;
+export const regex_device_pixel_content_box_size = /^(?:devicePixelContentBoxSize)$/;
+export const regex_box_size = /^(?:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize)$/;
