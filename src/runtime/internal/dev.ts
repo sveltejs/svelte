@@ -249,6 +249,7 @@ export class SvelteComponentDev<
 	$inject_state() {}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SvelteComponentTyped<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
