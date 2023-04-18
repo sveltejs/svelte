@@ -114,6 +114,6 @@ export function validate_each_keys(ctx, list, get_context, get_key) {
 		if (keys.has(key)) {
 			throw new Error(`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(key)} and ${i} are duplicates`);
 		}
-		keys.add(key, i);
+		keys.set(key, i);
 	}
 }
