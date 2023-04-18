@@ -90,19 +90,6 @@ export default [
 						}
 
 						fs.writeFileSync(
-							`${dir}/package.json`,
-							JSON.stringify(
-								{
-									main: './index.js',
-									module: './index.mjs',
-									types: './index.d.ts',
-								},
-								null,
-								'  '
-							)
-						);
-
-						fs.writeFileSync(
 							`${dir}/index.d.ts`,
 							`export * from '../types/runtime/${dir}/index.js';`
 						);
