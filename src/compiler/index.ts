@@ -4,4 +4,4 @@ export { default as preprocess } from './preprocess/index';
 export { walk } from 'estree-walker';
 export type { CompileOptions, ModuleFormat, EnableSourcemap, CssHashGetter } from './interfaces';
 
-export const VERSION = '__VERSION__';
+export const VERSION: string = '__VERSION__';
