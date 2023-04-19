@@ -21,21 +21,21 @@ function hash(str: string) {
 }
 
 export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string) {
-	const className = `__svelte_${hash(rule)}`;
+	const class_name = `__svelte_${hash(rule)}`;
 	const doc = node.ownerDocument as ExtendedDoc;
 	active_docs.add(doc);
 	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
 	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
 
-	if (!current_rules[className]) {
-		current_rules[className] = true;
-		stylesheet.insertRule(`.${className} {${rule}}`, stylesheet.cssRules.length);
+	if (!current_rules[class_name]) {
+		current_rules[class_name] = true;
+		stylesheet.insertRule(`.${class_name} {${rule}}`, stylesheet.cssRules.length);
 	}
 
-	node.classList.add(className);
+	node.classList.add(class_name);
 
 	active += 1;
-	return className;
+	return class_name;
 }
 
 export function delete_static_rule(node: Element & ElementCSSInlineStyle, name: string) {
