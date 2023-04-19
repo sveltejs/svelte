@@ -444,15 +444,13 @@ export default class ElementWrapper extends Wrapper {
 
 		const { can_use_textcontent, can_optimise_to_html_string } = this.node;
 
-		const to_optimise_hydration = can_optimise_to_html_string || (!is_head(parent_node) && this.node.children.length === 1 && this.node.children[0].type === 'RawMustacheTag');
-
 		if (hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(block, parent_nodes, to_optimise_hydration)};
+					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_to_html_string)};
 				`);
 
-				if (!to_optimise_hydration && !this.void && this.node.children.length > 0) {
+				if (!can_optimise_to_html_string && !this.void && this.node.children.length > 0) {
 					block.chunks.claim.push(b`
 						var ${nodes} = ${children};
 					`);
@@ -566,7 +564,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_styles(block);
 		this.add_manual_style_scoping(block);
 
-		if (nodes && hydratable && !this.void && !to_optimise_hydration) {
+		if (nodes && hydratable && !this.void && !can_optimise_to_html_string) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
