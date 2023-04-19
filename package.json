@@ -90,7 +90,7 @@
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
-    "test": "npm run test:unit && npm run test:integration",
+    "test": "npm run test:unit && npm run test:integration && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "test:integration": "mocha --exit",
     "test:unit": "mocha --config .mocharc.unit.js --exit",
     "quicktest": "mocha --exit",
@@ -131,6 +131,7 @@
     "@rollup/plugin-virtual": "^3.0.1",
     "@sveltejs/eslint-config": "github:sveltejs/eslint-config#v5.8.0",
     "@types/aria-query": "^5.0.1",
+    "@types/estree": "^1.0.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
@@ -160,5 +161,9 @@
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
     "util": "^0.12.5"
+  },
+  "packageManager": "pnpm@7.32.0",
+  "engines": {
+    "pnpm": ">=7.0.0"
   }
 }

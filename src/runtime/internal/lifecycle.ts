@@ -27,11 +27,13 @@ export function beforeUpdate(fn: () => any) {
  * It must be called during the component's initialisation (but doesn't need to live *inside* the component; 
  * it can be called from an external module).
  * 
+ * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
+ * 
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
  * 
  * https://svelte.dev/docs#run-time-svelte-onmount
  */
-export function onMount(fn: () => any) {
+export function onMount<T>(fn: () => T extends Promise<() => any> ? "Returning a function asynchronously from onMount won't call that function on destroy" : T): void {
 	get_current_component().$$.on_mount.push(fn);
 }
 
@@ -56,6 +58,17 @@ export function onDestroy(fn: () => any) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
+export interface EventDispatcher<EventMap extends Record<string, any>> {
+	// Implementation notes:
+	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
+	// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
+	<Type extends keyof EventMap>(
+		...args: [EventMap[Type]] extends [never] ? [type: Type, parameter?: null | undefined, options?: DispatchOptions] :
+		null extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		undefined extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
+		[type: Type, parameter: EventMap[Type], options?: DispatchOptions]): boolean;
+}
+
 export interface DispatchOptions {
 	cancelable?: boolean;
 }
@@ -68,20 +81,23 @@ export interface DispatchOptions {
  * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). 
  * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
  * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) 
- * property and can contain any type of data. 
+ * property and can contain any type of data.
+ * 
+ * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
+ * ```ts
+ * const dispatch = createEventDispatcher<{
+ *  loaded: never; // does not take a detail argument
+ *  change: string; // takes a detail argument of type string, which is required
+ *  optional: number | null; // takes an optional detail argument of type number
+ * }>();
+ * ```
  * 
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  */
-export function createEventDispatcher<EventMap extends {} = any>(): <
-	EventKey extends Extract<keyof EventMap, string>
->(
-	type: EventKey,
-	detail?: EventMap[EventKey],
-	options?: DispatchOptions
-) => boolean {
+export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap> {
 	const component = get_current_component();
 
-	return (type: string, detail?: any, { cancelable = false } = {}): boolean => {
+	return ((type: string, detail?: any, { cancelable = false } = {}): boolean => {
 		const callbacks = component.$$.callbacks[type];
 
 		if (callbacks) {
@@ -95,7 +111,7 @@ export function createEventDispatcher<EventMap extends {} = any>(): <
 		}
 
 		return true;
-	};
+	}) as EventDispatcher<EventMap>;
 }
 
 /**
