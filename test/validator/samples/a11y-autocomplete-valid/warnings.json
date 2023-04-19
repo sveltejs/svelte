@@ -1,0 +1,98 @@
+[
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 31,
+			"line": 14
+		},
+		"message": "A11y: The value 'true' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 14
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 39,
+			"line": 15
+		},
+		"message": "A11y: The value 'off' is not supported by the attribute 'autocomplete' on element <input type=\"hidden\">",
+		"start": {
+			"column": 21,
+			"line": 15
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"message": "A11y: The value 'on' is not supported by the attribute 'autocomplete' on element <input type=\"hidden\">",
+		"end": {
+			"column": 38,
+			"line": 16
+		},
+		"start": {
+			"column": 21,
+			"line": 16
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"message": "A11y: The value '' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"end": {
+			"column": 34,
+			"line": 17
+		},
+		"start": {
+			"column": 19,
+			"line": 17
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 43,
+			"line": 18
+		},
+		"message": "A11y: The value 'incorrect' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 18
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 38,
+			"line": 19
+		},
+		"message": "A11y: The value 'url' is not supported by the attribute 'autocomplete' on element <input type=\"email\">",
+		"start": {
+			"column": 20,
+			"line": 19
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 70,
+			"line": 21
+		},
+		"message": "A11y: The value 'section-blue shipping street-address' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 21
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 42,
+			"line": 22
+		},
+		"message": "A11y: The value 'webauthn' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 22
+		}
+	}
+]
