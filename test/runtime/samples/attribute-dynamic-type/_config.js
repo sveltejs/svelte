@@ -1,12 +1,11 @@
 export default {
-	skip_if_ssr: true,
-
 	props: {
 		inputType: 'text',
 		inputValue: 42
 	},
 
 	html: '<input type="text">',
+	ssrHtml: '<input type="text" value="42">',
 
 	test({ assert, component, target }) {
 		const input = target.querySelector('input');

@@ -1,11 +1,12 @@
 import read_context from '../read/context';
 import read_expression from '../read/expression';
 import { closing_tag_omitted } from '../utils/html';
-import { whitespace } from '../../utils/patterns';
+import { regex_whitespace } from '../../utils/patterns';
 import { trim_start, trim_end } from '../../utils/trim';
 import { to_string } from '../utils/node';
 import { Parser } from '../index';
 import { TemplateNode } from '../../interfaces';
+import parser_errors from '../errors';
 
 function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: boolean) {
 	if (!block.children || block.children.length === 0) return; // AwaitBlock
@@ -31,6 +32,8 @@ function trim_whitespace(block: TemplateNode, trim_before: boolean, trim_after: 
 		trim_whitespace(first_child, trim_before, trim_after);
 	}
 }
+
+const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
 export default function mustache(parser: Parser) {
 	const start = parser.index;
@@ -66,10 +69,7 @@ export default function mustache(parser: Parser) {
 		} else if (block.type === 'KeyBlock') {
 			expected = 'key';
 		} else {
-			parser.error({
-				code: 'unexpected-block-close',
-				message: 'Unexpected block closing tag'
-			});
+			parser.error(parser_errors.unexpected_block_close);
 		}
 
 		parser.eat(expected, true);
@@ -89,8 +89,8 @@ export default function mustache(parser: Parser) {
 		// strip leading/trailing whitespace as necessary
 		const char_before = parser.template[block.start - 1];
 		const char_after = parser.template[parser.index];
-		const trim_before = !char_before || whitespace.test(char_before);
-		const trim_after = !char_after || whitespace.test(char_after);
+		const trim_before = !char_before || regex_whitespace.test(char_before);
+		const trim_after = !char_after || regex_whitespace.test(char_after);
 
 		trim_whitespace(block, trim_before, trim_after);
 
@@ -98,10 +98,7 @@ export default function mustache(parser: Parser) {
 		parser.stack.pop();
 	} else if (parser.eat(':else')) {
 		if (parser.eat('if')) {
-			parser.error({
-				code: 'invalid-elseif',
-				message: "'elseif' should be 'else if'"
-			});
+			parser.error(parser_errors.invalid_elseif);
 		}
 
 		parser.allow_whitespace();
@@ -110,12 +107,11 @@ export default function mustache(parser: Parser) {
 		if (parser.eat('if')) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
-				parser.error({
-					code: 'invalid-elseif-placement',
-					message: parser.stack.some(block => block.type === 'IfBlock')
-						? `Expected to close ${to_string(block)} before seeing {:else if ...} block`
-						: 'Cannot have an {:else if ...} block outside an {#if ...} block'
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'IfBlock')
+						? parser_errors.invalid_elseif_placement_unclosed_block(to_string(block))
+						: parser_errors.invalid_elseif_placement_outside_if
+				);
 			}
 
 			parser.require_whitespace();
@@ -146,12 +142,11 @@ export default function mustache(parser: Parser) {
 			// :else
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
-				parser.error({
-					code: 'invalid-else-placement',
-					message: parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
-						? `Expected to close ${to_string(block)} before seeing {:else} block`
-						: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+						? parser_errors.invalid_else_placement_unclosed_block(to_string(block))
+						: parser_errors.invalid_else_placement_outside_if
+				);
 			}
 
 			parser.allow_whitespace();
@@ -172,21 +167,18 @@ export default function mustache(parser: Parser) {
 
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
-				parser.error({
-					code: 'invalid-then-placement',
-					message: parser.stack.some(block => block.type === 'PendingBlock')
-						? `Expected to close ${to_string(block)} before seeing {:then} block`
-						: 'Cannot have an {:then} block outside an {#await ...} block'
-				});
+				parser.error(
+					parser.stack.some(block => block.type === 'PendingBlock')
+						? parser_errors.invalid_then_placement_unclosed_block(to_string(block))
+						: parser_errors.invalid_then_placement_without_await
+				);
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-				parser.error({
-					code: 'invalid-catch-placement',
-					message: parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
-						? `Expected to close ${to_string(block)} before seeing {:catch} block`
-						: 'Cannot have an {:catch} block outside an {#await ...} block'
-				});
+				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+					? parser_errors.invalid_catch_placement_unclosed_block(to_string(block))
+					: parser_errors.invalid_catch_placement_without_await
+				);
 			}
 		}
 
@@ -224,10 +216,7 @@ export default function mustache(parser: Parser) {
 		} else if (parser.eat('key')) {
 			type = 'KeyBlock';
 		} else {
-			parser.error({
-				code: 'expected-block-type',
-				message: 'Expected if, each, await or key'
-			});
+			parser.error(parser_errors.expected_block_type);
 		}
 
 		parser.require_whitespace();
@@ -286,12 +275,7 @@ export default function mustache(parser: Parser) {
 			if (parser.eat(',')) {
 				parser.allow_whitespace();
 				block.index = parser.read_identifier();
-				if (!block.index) {
-					parser.error({
-						code: 'expected-name',
-						message: 'Expected name'
-					});
-				}
+				if (!block.index) parser.error(parser_errors.expected_name);
 
 				parser.allow_whitespace();
 			}
@@ -308,16 +292,24 @@ export default function mustache(parser: Parser) {
 
 		const await_block_shorthand = type === 'AwaitBlock' && parser.eat('then');
 		if (await_block_shorthand) {
-			parser.require_whitespace();
-			block.value = read_context(parser);
-			parser.allow_whitespace();
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
+				parser.allow_whitespace();
+			} else {
+				parser.require_whitespace();
+				block.value = read_context(parser);
+				parser.allow_whitespace();
+			}
 		}
 
 		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
 		if (await_block_catch_shorthand) {
-			parser.require_whitespace();
-			block.error = read_context(parser);
-			parser.allow_whitespace();
+			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
+				parser.allow_whitespace();
+			} else {
+				parser.require_whitespace();
+				block.error = read_context(parser);
+				parser.allow_whitespace();
+			}
 		}
 
 		parser.eat('}', true);
@@ -360,7 +352,7 @@ export default function mustache(parser: Parser) {
 		let identifiers;
 
 		// Implies {@debug} which indicates "debug all"
-		if (parser.read(/\s*}/)) {
+		if (parser.read(regex_whitespace_with_closing_curly_brace)) {
 			identifiers = [];
 		} else {
 			const expression = read_expression(parser);
@@ -371,10 +363,7 @@ export default function mustache(parser: Parser) {
 
 			identifiers.forEach(node => {
 				if (node.type !== 'Identifier') {
-					parser.error({
-						code: 'invalid-debug-args',
-						message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
-					}, node.start);
+					parser.error(parser_errors.invalid_debug_args, node.start);
 				}
 			});
 
@@ -387,6 +376,28 @@ export default function mustache(parser: Parser) {
 			end: parser.index,
 			type: 'DebugTag',
 			identifiers
+		});
+	} else if (parser.eat('@const')) {
+		// {@const a = b}
+		parser.require_whitespace();
+
+		const expression = read_expression(parser);
+
+		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
+			parser.error({
+				code: 'invalid-const-args',
+				message: '{@const ...} must be an assignment.'
+			}, start);
+		}
+
+		parser.allow_whitespace();
+		parser.eat('}', true);
+
+		parser.current().children.push({
+			start,
+			end: parser.index,
+			type: 'ConstTag',
+			expression
 		});
 	} else {
 		const expression = read_expression(parser);

@@ -38,7 +38,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { data } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("data" in $$props) $$invalidate(0, data = $$props.data);
+		if ('data' in $$props) $$invalidate(0, data = $$props.data);
 	};
 
 	return [data];

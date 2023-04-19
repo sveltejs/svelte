@@ -7,7 +7,7 @@ export default {
 		<p>1 1 1</p>
 	`,
 
-	test({ assert, component, target }) {
+	test({ assert, component }) {
 		assert.equal(component.y, 1);
 		assert.equal(component.z, 1);
 

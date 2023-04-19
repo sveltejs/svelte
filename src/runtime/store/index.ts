@@ -12,8 +12,15 @@ export type Updater<T> = (value: T) => T;
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
-/** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+/** 
+ * Start and stop notification callbacks.
+ * This function is called when the first subscriber subscribes.
+ * 
+ * @param {(value: T) => void} set Function that sets the value of the store.
+ * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
+ * subscriber unsubscribes.
+ */
+export type StartStopNotifier<T> = (set: (value: T) => void) => void | (() => void);
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -48,9 +55,9 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
- * @param {StartStopNotifier}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier} [start] 
  */
-export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> {
+export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
 	return {
 		subscribe: writable(value, start).subscribe
 	};
@@ -59,21 +66,20 @@ export function readable<T>(value: T, start: StartStopNotifier<T>): Readable<T> 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @param {*=}value initial value
- * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier=} start
  */
-export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writable<T> {
+export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
-	const subscribers: Array<SubscribeInvalidateTuple<T>> = [];
+	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
 
 	function set(new_value: T): void {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
 			if (stop) { // store is ready
 				const run_queue = !subscriber_queue.length;
-				for (let i = 0; i < subscribers.length; i += 1) {
-					const s = subscribers[i];
-					s[1]();
-					subscriber_queue.push(s, value);
+				for (const subscriber of subscribers) {
+					subscriber[1]();
+					subscriber_queue.push(subscriber, value);
 				}
 				if (run_queue) {
 					for (let i = 0; i < subscriber_queue.length; i += 2) {
@@ -91,18 +97,15 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 
 	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
-		subscribers.push(subscriber);
-		if (subscribers.length === 1) {
+		subscribers.add(subscriber);
+		if (subscribers.size === 1) {
 			stop = start(set) || noop;
 		}
 		run(value);
 
 		return () => {
-			const index = subscribers.indexOf(subscriber);
-			if (index !== -1) {
-				subscribers.splice(index, 1);
-			}
-			if (subscribers.length === 0) {
+			subscribers.delete(subscriber);
+			if (subscribers.size === 0 && stop) {
 				stop();
 				stop = null;
 			}
@@ -113,7 +116,7 @@ export function writable<T>(value: T, start: StartStopNotifier<T> = noop): Writa
 }
 
 /** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>];
+type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
 type StoresValues<T> = T extends Readable<infer U> ? U :
@@ -139,6 +142,20 @@ export function derived<S extends Stores, T>(
  *
  * @param stores - input stores
  * @param fn - function callback that aggregates the values
+ * @param initial_value - initial value
+ */
+export function derived<S extends Stores, T>(
+	stores: S,
+	fn: (values: StoresValues<S>) => T,
+	initial_value?: T
+): Readable<T>;
+
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @param stores - input stores
+ * @param fn - function callback that aggregates the values
  */
 export function derived<S extends Stores, T>(
 	stores: S,
@@ -154,7 +171,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 	const auto = fn.length < 2;
 
 	return readable(initial_value, (set) => {
-		let inited = false;
+		let started = false;
 		const values = [];
 
 		let pending = 0;
@@ -178,7 +195,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
-				if (inited) {
+				if (started) {
 					sync();
 				}
 			},
@@ -187,14 +204,29 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			})
 		);
 
-		inited = true;
+		started = true;
 		sync();
 
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
+			// We need to set this to false because callbacks can still happen despite having unsubscribed:
+			// Callbacks might already be placed in the queue which doesn't know it should no longer
+			// invoke this derived store.
+			started = false;
 		};
 	});
+}
+
+/**
+ * Takes a store and returns a new one derived from the old one that is readable.
+ *
+ * @param store - store to make readonly
+ */
+export function readonly<T>(store: Readable<T>): Readable<T> {
+	return {
+		subscribe: store.subscribe.bind(store)
+	};
 }
 
 /**

@@ -11,34 +11,34 @@
 <h2>Size</h2>
 
 <label>
-	<input type=radio group={scoops} value={1}>
+	<input type=radio group={scoops} name="scoops" value={1}>
 	One scoop
 </label>
 
 <label>
-	<input type=radio group={scoops} value={2}>
+	<input type=radio group={scoops} name="scoops" value={2}>
 	Two scoops
 </label>
 
 <label>
-	<input type=radio group={scoops} value={3}>
+	<input type=radio group={scoops} name="scoops" value={3}>
 	Three scoops
 </label>
 
 <h2>Flavours</h2>
 
 <label>
-	<input type=checkbox group={flavours} value="Cookies and cream">
+	<input type=checkbox group={flavours} name="flavours" value="Cookies and cream">
 	Cookies and cream
 </label>
 
 <label>
-	<input type=checkbox group={flavours} value="Mint choc chip">
+	<input type=checkbox group={flavours} name="flavours" value="Mint choc chip">
 	Mint choc chip
 </label>
 
 <label>
-	<input type=checkbox group={flavours} value="Raspberry ripple">
+	<input type=checkbox group={flavours} name="flavours" value="Raspberry ripple">
 	Raspberry ripple
 </label>
 

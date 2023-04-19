@@ -18,8 +18,14 @@ import { extract_names } from 'periscopic';
 import mark_each_block_bindings from '../shared/mark_each_block_bindings';
 import { string_to_member_expression } from '../../../utils/string_to_member_expression';
 import SlotTemplate from '../../../nodes/SlotTemplate';
+import { is_head } from '../shared/is_head';
+import compiler_warnings from '../../../compiler_warnings';
+import { namespaces } from '../../../../utils/namespaces';
+import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ignore';
 
 type SlotDefinition = { block: Block; scope: TemplateScope; get_context?: Node; get_changes?: Node };
+
+const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
@@ -63,6 +69,10 @@ export default class InlineComponentWrapper extends Wrapper {
 			}
 		});
 
+		this.node.css_custom_properties.forEach(attr => {
+			block.add_dependencies(attr.dependencies);
+		});
+
 		this.var = {
 			type: 'Identifier',
 			name: (
@@ -102,12 +112,12 @@ export default class InlineComponentWrapper extends Wrapper {
 			return;
 		}
 
+    const ignores = extract_ignores_above_node(this.node);  
+    this.renderer.component.push_ignores(ignores);
 		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
-			this.renderer.component.warn(this.node, {
-				code: 'reactive-component',
-				message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
-			});
+			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
+    this.renderer.component.pop_ignores();
 	}
 
 	render(
@@ -133,7 +143,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			child.render(block, null, x`#nodes` as Identifier);
 		});
 
-		let props;
+		let props: Identifier | undefined;
 		const name_changes = block.get_unique_name(`${name.name}_changes`);
 
 		const uses_spread = !!this.node.attributes.find(a => a.is_spread);
@@ -144,6 +154,14 @@ export default class InlineComponentWrapper extends Wrapper {
 				this.renderer.remove_block(this.slots.get(slot).block);
 				this.slots.delete(slot);
 			}
+		}
+
+		const has_css_custom_properties = this.node.css_custom_properties.length > 0;
+		const is_svg_namespace = this.node.namespace === namespaces.svg;
+		const css_custom_properties_wrapper_element = is_svg_namespace ? 'g' : 'div';
+		const css_custom_properties_wrapper = has_css_custom_properties ? block.get_unique_name(css_custom_properties_wrapper_element) : null;
+		if (has_css_custom_properties) {
+			block.add_variable(css_custom_properties_wrapper);
 		}
 
 		const initial_props = this.slots.size > 0
@@ -220,7 +238,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						: null;
 					const unchanged = dependencies.size === 0;
 
-					let change_object;
+					let change_object: Node | ReturnType<typeof x>;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
 						initial_props.push(value);
@@ -335,7 +353,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				contextual_dependencies.push(object.name, property.name);
 			}
 
-			const params = [x`#value`];
+			const params: Identifier[] = [x`#value` as Identifier];
 			const args = [x`#value`];
 			if (contextual_dependencies.length > 0) {
 
@@ -390,11 +408,21 @@ export default class InlineComponentWrapper extends Wrapper {
 			return b`${name}.$on("${handler.name}", ${snippet});`;
 		});
 
+		const mount_target = has_css_custom_properties ? css_custom_properties_wrapper : (parent_node || '#target');
+		const mount_anchor = has_css_custom_properties ? 'null' : (parent_node ? 'null' : '#anchor');
+		const to_claim = parent_nodes && this.renderer.options.hydratable;
+		let claim_nodes = parent_nodes;
+
 		if (this.node.name === 'svelte:component') {
 			const switch_value = block.get_unique_name('switch_value');
 			const switch_props = block.get_unique_name('switch_props');
 
 			const snippet = this.node.expression.manipulate(block);
+			const dependencies = this.node.expression.dynamic_dependencies();
+
+			if (has_css_custom_properties) {
+				this.set_css_custom_properties(block, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
+			}
 
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
@@ -407,7 +435,7 @@ export default class InlineComponentWrapper extends Wrapper {
 				}
 
 				if (${switch_value}) {
-					${name} = new ${switch_value}(${switch_props}(#ctx));
+					${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 					${munged_bindings}
 					${munged_handlers}
@@ -418,20 +446,13 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`if (${name}) @create_component(${name}.$$.fragment);`
 			);
 
-			if (parent_nodes && this.renderer.options.hydratable) {
-				block.chunks.claim.push(
-					b`if (${name}) @claim_component(${name}.$$.fragment, ${parent_nodes});`
-				);
+			if (css_custom_properties_wrapper) this.create_css_custom_properties_wrapper_mount_chunk(block, parent_node, css_custom_properties_wrapper);
+			block.chunks.mount.push(b`if (${name}) @mount_component(${name}, ${mount_target}, ${mount_anchor});`);
+
+			if (to_claim) {
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
+				block.chunks.claim.push(b`if (${name}) @claim_component(${name}.$$.fragment, ${claim_nodes});`);
 			}
-
-			block.chunks.mount.push(b`
-				if (${name}) {
-					@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});
-				}
-			`);
-
-			const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
-			const update_mount_node = this.get_update_mount_node(anchor);
 
 			if (updates.length) {
 				block.chunks.update.push(b`
@@ -439,19 +460,35 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 			}
 
+			const tmp_anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
+			const anchor = has_css_custom_properties ? 'null' : tmp_anchor;
+			const update_mount_node = has_css_custom_properties ? css_custom_properties_wrapper : this.get_update_mount_node(tmp_anchor);
+			const update_insert =
+				css_custom_properties_wrapper &&
+				(tmp_anchor.name !== 'null'
+					? b`@insert(${tmp_anchor}.parentNode, ${css_custom_properties_wrapper}, ${tmp_anchor});`
+					: b`@insert(${parent_node}, ${css_custom_properties_wrapper}, ${tmp_anchor});`);
+
+			let update_condition = x`${switch_value} !== (${switch_value} = ${snippet})`;
+			if (dependencies.length > 0) {
+				update_condition = x`${block.renderer.dirty(dependencies)} && ${update_condition}`;
+			}
+
 			block.chunks.update.push(b`
-				if (${switch_value} !== (${switch_value} = ${snippet})) {
+				if (${update_condition}) {
 					if (${name}) {
 						@group_outros();
 						const old_component = ${name};
 						@transition_out(old_component.$$.fragment, 1, 0, () => {
 							@destroy_component(old_component, 1);
+							${has_css_custom_properties ? b`@detach(${update_mount_node})` : null}
 						});
 						@check_outros();
 					}
 
 					if (${switch_value}) {
-						${name} = new ${switch_value}(${switch_props}(#ctx));
+						${update_insert}
+						${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
 
 						${munged_bindings}
 						${munged_handlers}
@@ -491,17 +528,18 @@ export default class InlineComponentWrapper extends Wrapper {
 				${munged_handlers}
 			`);
 
+			if (has_css_custom_properties) {
+				this.set_css_custom_properties(block, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
+			}
 			block.chunks.create.push(b`@create_component(${name}.$$.fragment);`);
 
-			if (parent_nodes && this.renderer.options.hydratable) {
-				block.chunks.claim.push(
-					b`@claim_component(${name}.$$.fragment, ${parent_nodes});`
-				);
-			}
+			if (css_custom_properties_wrapper) this.create_css_custom_properties_wrapper_mount_chunk(block, parent_node, css_custom_properties_wrapper);
+			block.chunks.mount.push(b`@mount_component(${name}, ${mount_target}, ${mount_anchor});`);
 
-			block.chunks.mount.push(
-				b`@mount_component(${name}, ${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
-			);
+			if (to_claim) {
+				if (css_custom_properties_wrapper) claim_nodes = this.create_css_custom_properties_wrapper_claim_chunk(block, claim_nodes, css_custom_properties_wrapper, css_custom_properties_wrapper_element, is_svg_namespace);
+				block.chunks.claim.push(b`@claim_component(${name}.$$.fragment, ${claim_nodes});`);
+			}
 
 			block.chunks.intro.push(b`
 				@transition_in(${name}.$$.fragment, #local);
@@ -522,5 +560,71 @@ export default class InlineComponentWrapper extends Wrapper {
 				b`@transition_out(${name}.$$.fragment, #local);`
 			);
 		}
+	}
+
+	private create_css_custom_properties_wrapper_mount_chunk(
+		block: Block,
+		parent_node: Identifier,
+		css_custom_properties_wrapper: Identifier | null
+	) {
+			if (parent_node) {
+				block.chunks.mount.push(b`@append(${parent_node}, ${css_custom_properties_wrapper})`);
+				if (is_head(parent_node)) {
+					block.chunks.destroy.push(b`@detach(${css_custom_properties_wrapper});`);
+				}
+			} else {
+				block.chunks.mount.push(b`@insert(#target, ${css_custom_properties_wrapper}, #anchor);`);
+				// TODO we eventually need to consider what happens to elements
+				// that belong to the same outgroup as an outroing element...
+				block.chunks.destroy.push(b`if (detaching && ${this.var}) @detach(${css_custom_properties_wrapper});`);
+			}
+	}
+
+	private create_css_custom_properties_wrapper_claim_chunk(
+		block: Block,
+		parent_nodes: Identifier,
+		css_custom_properties_wrapper: Identifier | null,
+		css_custom_properties_wrapper_element: string,
+		is_svg_namespace: boolean
+	) {
+		const nodes = block.get_unique_name(`${css_custom_properties_wrapper.name}_nodes`);
+		const claim_element = is_svg_namespace ? x`@claim_svg_element` : x`@claim_element`;
+		block.chunks.claim.push(b`
+			${css_custom_properties_wrapper} = ${claim_element}(${parent_nodes}, "${css_custom_properties_wrapper_element.toUpperCase()}", { style: true })
+			var ${nodes} = @children(${css_custom_properties_wrapper});
+		`);
+		return nodes;
+	}
+
+	private set_css_custom_properties(
+		block: Block,
+		css_custom_properties_wrapper: Identifier,
+		css_custom_properties_wrapper_element: string,
+		is_svg_namespace: boolean
+	) {
+		const element = is_svg_namespace ? x`@svg_element` : x`@element`;
+		block.chunks.create.push(b`${css_custom_properties_wrapper} = ${element}("${css_custom_properties_wrapper_element}");`);
+		if (!is_svg_namespace) block.chunks.hydrate.push(b`@set_style(${css_custom_properties_wrapper}, "display", "contents");`);
+		this.node.css_custom_properties.forEach((attr) => {
+			const dependencies = attr.get_dependencies();
+			const should_cache = attr.should_cache();
+			const last = should_cache &&	block.get_unique_name(`${attr.name.replace(regex_invalid_variable_identifier_characters, '_')}_last`);
+			if (should_cache) block.add_variable(last);
+			const value = attr.get_value(block);
+			const init = should_cache ? x`${last} = ${value}` : value;
+
+			block.chunks.hydrate.push(
+				b`@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${init});`
+			);
+			if (dependencies.length > 0) {
+				let condition = block.renderer.dirty(dependencies);
+				if (should_cache) condition = x`${condition} && (${last} !== (${last} = ${value}))`;
+				block.chunks.update.push(b`
+					if (${condition}) {
+						@set_style(${css_custom_properties_wrapper}, "${attr.name}", ${should_cache ? last : value});
+					}
+				`);
+			}
+		});
 	}
 }

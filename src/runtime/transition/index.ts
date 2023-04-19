@@ -1,5 +1,5 @@
 import { cubicOut, cubicInOut, linear } from 'svelte/easing';
-import { assign, is_function } from 'svelte/internal';
+import { assign, split_css_unit, is_function } from 'svelte/internal';
 
 export type EasingFunction = (t: number) => number;
 
@@ -16,7 +16,7 @@ export interface BlurParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	amount?: number;
+	amount?: number | string;
 	opacity?: number;
 }
 
@@ -32,12 +32,12 @@ export function blur(node: Element, {
 	const f = style.filter === 'none' ? '' : style.filter;
 
 	const od = target_opacity * (1 - opacity);
-
+	const [value, unit] = split_css_unit(amount);
 	return {
 		delay,
 		duration,
 		easing,
-		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * amount}px);`
+		css: (_t, u) => `opacity: ${target_opacity - (od * u)}; filter: ${f} blur(${u * value}${unit});`
 	};
 }
 
@@ -66,8 +66,8 @@ export interface FlyParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
-	x?: number;
-	y?: number;
+	x?: number | string;
+	y?: number | string;
 	opacity?: number;
 }
 
@@ -84,13 +84,14 @@ export function fly(node: Element, {
 	const transform = style.transform === 'none' ? '' : style.transform;
 
 	const od = target_opacity * (1 - opacity);
-
+	const [xValue, xUnit] = split_css_unit(x);
+	const [yValue, yUnit] = split_css_unit(y);
 	return {
 		delay,
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * x}px, ${(1 - t) * y}px);
+			transform: ${transform} translate(${(1 - t) * xValue}${xUnit}, ${(1 - t) * yValue}${yUnit});
 			opacity: ${target_opacity - (od * u)}`
 	};
 }
@@ -99,43 +100,43 @@ export interface SlideParams {
 	delay?: number;
 	duration?: number;
 	easing?: EasingFunction;
+	axis?: 'x' | 'y';
 }
 
 export function slide(node: Element, {
 	delay = 0,
 	duration = 400,
-	easing = cubicOut
+	easing = cubicOut,
+	axis = 'y'
 }: SlideParams = {}): TransitionConfig {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
-	const height = parseFloat(style.height);
-	const padding_top = parseFloat(style.paddingTop);
-	const padding_bottom = parseFloat(style.paddingBottom);
-	const margin_top = parseFloat(style.marginTop);
-	const margin_bottom = parseFloat(style.marginBottom);
-	const border_top_width = parseFloat(style.borderTopWidth);
-	const border_bottom_width = parseFloat(style.borderBottomWidth);
-
-	let displayOverride = '';
-	if (style.display.includes('table')) {
-		displayOverride = 'display: block;';
-	}
+	const primary_property = axis === 'y' ? 'height' : 'width';
+	const primary_property_value = parseFloat(style[primary_property]);
+	const secondary_properties = axis === 'y' ? ['top', 'bottom'] : ['left', 'right'];
+	const capitalized_secondary_properties = secondary_properties.map((e) => `${e[0].toUpperCase()}${e.slice(1)}`);
+	const padding_start_value = parseFloat(style[`padding${capitalized_secondary_properties[0]}`]);
+	const padding_end_value = parseFloat(style[`padding${capitalized_secondary_properties[1]}`]);
+	const margin_start_value = parseFloat(style[`margin${capitalized_secondary_properties[0]}`]);
+	const margin_end_value = parseFloat(style[`margin${capitalized_secondary_properties[1]}`]);
+	const border_width_start_value = parseFloat(style[`border${capitalized_secondary_properties[0]}Width`]);
+	const border_width_end_value = parseFloat(style[`border${capitalized_secondary_properties[1]}Width`]);
+	const display_override = style.display.includes('table') ? 'display:block;' : '';
 
 	return {
 		delay,
 		duration,
 		easing,
-		static_css: displayOverride +
-			'overflow: hidden;',
+		static_css: display_override + 'overflow:hidden;',
 		css: t =>
 			`opacity: ${Math.min(t * 20, 1) * opacity};` +
-			`height: ${t * height}px;` +
-			`padding-top: ${t * padding_top}px;` +
-			`padding-bottom: ${t * padding_bottom}px;` +
-			`margin-top: ${t * margin_top}px;` +
-			`margin-bottom: ${t * margin_bottom}px;` +
-			`border-top-width: ${t * border_top_width}px;` +
-			`border-bottom-width: ${t * border_bottom_width}px;`
+			`${primary_property}: ${t * primary_property_value}px;` +
+			`padding-${secondary_properties[0]}: ${t * padding_start_value}px;` +
+			`padding-${secondary_properties[1]}: ${t * padding_end_value}px;` +
+			`margin-${secondary_properties[0]}: ${t * margin_start_value}px;` +
+			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
+			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
+			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
 	};
 }
 
@@ -185,7 +186,11 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 	duration,
 	easing = cubicInOut
 }: DrawParams = {}): TransitionConfig {
-	const len = node.getTotalLength();
+	let len = node.getTotalLength();
+	const style = getComputedStyle(node);
+	if (style.strokeLinecap !== 'butt') {
+		len += parseInt(style.strokeWidth);
+	}
 
 	if (duration === undefined) {
 		if (speed === undefined) {
@@ -201,7 +206,10 @@ export function draw(node: SVGElement & { getTotalLength(): number }, {
 		delay,
 		duration,
 		easing,
-		css: (t, u) => `stroke-dasharray: ${t * len} ${u * len}`
+		css: (_, u) => `
+			stroke-dasharray: ${len};
+			stroke-dashoffset: ${u * len};
+		`
 	};
 }
 
@@ -211,21 +219,35 @@ export interface CrossfadeParams {
 	easing?: EasingFunction;
 }
 
-type ClientRectMap = Map<any, { rect: ClientRect }>;
+type ClientRectMap = Map<any, Element>;
 
 export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
-	fallback: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
-}) {
+	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
+}): [
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig,
+  (
+    node: Element,
+    params: CrossfadeParams & {
+      key: any;
+    }
+  ) => () => TransitionConfig
+] {
 	const to_receive: ClientRectMap = new Map();
 	const to_send: ClientRectMap = new Map();
 
-	function crossfade(from: ClientRect, node: Element, params: CrossfadeParams): TransitionConfig {
+	function crossfade(from_node: Element, node: Element, params: CrossfadeParams): TransitionConfig {
 		const {
 			delay = 0,
 			duration = d => Math.sqrt(d) * 30,
 			easing = cubicOut
 		} = assign(assign({}, defaults), params);
 
+		const from = from_node.getBoundingClientRect();
 		const to = node.getBoundingClientRect();
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
@@ -251,16 +273,14 @@ export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
 
 	function transition(items: ClientRectMap, counterparts: ClientRectMap, intro: boolean) {
 		return (node: Element, params: CrossfadeParams & { key: any }) => {
-			items.set(params.key, {
-				rect: node.getBoundingClientRect()
-			});
+			items.set(params.key, node);
 
 			return () => {
 				if (counterparts.has(params.key)) {
-					const { rect } = counterparts.get(params.key);
+					const other_node = counterparts.get(params.key);
 					counterparts.delete(params.key);
 
-					return crossfade(rect, node, params);
+					return crossfade(other_node, node, params);
 				}
 
 				// if the node is disappearing altogether

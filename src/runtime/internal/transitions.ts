@@ -5,8 +5,25 @@ import { create_rule, delete_rule, create_static_rule, delete_static_rule } from
 import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 import { TransitionConfig } from '../transition';
+import { Fragment } from './types';
 
-let promise: Promise<void>|null;
+let promise: Promise<void> | null;
+type INTRO = 1;
+type OUTRO = 0;
+interface Outro {
+	/**
+	 * remaining outros
+	 */
+	r: number;
+	/**
+	 * callbacks
+	 */
+	c: Function[];
+	/**
+	 * parent outro
+	 */
+	p: Outro;
+}
 
 function wait() {
 	if (!promise) {
@@ -19,12 +36,12 @@ function wait() {
 	return promise;
 }
 
-function dispatch(node: Element, direction: boolean, kind: 'start' | 'end') {
+function dispatch(node: Element, direction: INTRO | OUTRO | boolean, kind: 'start' | 'end') {
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
 
 const outroing = new Set();
-let outros;
+let outros: Outro;
 
 export function group_outros() {
 	outros = {
@@ -41,14 +58,14 @@ export function check_outros() {
 	outros = outros.p;
 }
 
-export function transition_in(block, local?: 0 | 1) {
+export function transition_in(block: Fragment, local?: 0 | 1) {
 	if (block && block.i) {
 		outroing.delete(block);
 		block.i(local);
 	}
 }
 
-export function transition_out(block, local: 0 | 1, detach?: 0 | 1, callback?) {
+export function transition_out(block: Fragment, local: 0 | 1, detach?: 0 | 1, callback?) {
 	if (block && block.o) {
 		if (outroing.has(block)) return;
 		outroing.add(block);
@@ -62,15 +79,19 @@ export function transition_out(block, local: 0 | 1, detach?: 0 | 1, callback?) {
 		});
 
 		block.o(local);
+	} else if (callback) {
+		callback();
 	}
 }
 
 const null_transition: TransitionConfig = { duration: 0 };
 
-type TransitionFn = (node: Element, params: any) => TransitionConfig;
+type TransitionOptions = { direction: 'in' | 'out' | 'both' };
+type TransitionFn = (node: Element, params: any, options: TransitionOptions) => TransitionConfig;
 
 export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'in' };
+	let config = fn(node, params, options);
 	let running = false;
 	let static_class_name;
 	let animation_name;
@@ -131,10 +152,11 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 		start() {
 			if (started) return;
 
+			started = true;
 			delete_rule(node);
 
 			if (is_function(config)) {
-				config = config();
+				config = config(options);
 				wait().then(go);
 			} else {
 				go();
@@ -155,7 +177,8 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 }
 
 export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'out' };
+	let config = fn(node, params, options);
 	let running = true;
 	let static_class_name;
 	let animation_name;
@@ -211,7 +234,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 	if (is_function(config)) {
 		wait().then(() => {
 			// @ts-ignore
-			config = config();
+			config = config(options);
 			go();
 		});
 	} else {
@@ -233,13 +256,32 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 	};
 }
 
+interface PendingProgram {
+	start: number;
+	b: INTRO | OUTRO;
+	group?: Outro;
+}
+interface Program {
+	a: number;
+	b: INTRO | OUTRO;
+	/**
+	 * direction
+	 */
+	d: 1 | -1;
+	duration: number;
+	start: number;
+	end: number;
+	group?: Outro;
+}
+
 export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
-	let config = fn(node, params);
+	const options: TransitionOptions = { direction: 'both' };
+	let config = fn(node, params, options);
 
 	let t = intro ? 0 : 1;
 
-	let running_program = null;
-	let pending_program = null;
+	let running_program: Program | null = null;
+	let pending_program: PendingProgram | null = null;
 	let animation_name = null;
 	let static_class_name = null;
 
@@ -254,8 +296,8 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		if (animation_name) delete_rule(node, animation_name);
 	}
 
-	function init(program, duration) {
-		const d = program.b - t;
+	function init(program: PendingProgram, duration: number): Program {
+		const d = (program.b - t) as Program['d'];
 		duration *= Math.abs(d);
 
 		return {
@@ -269,7 +311,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		};
 	}
 
-	function go(b) {
+	function go(b: INTRO | OUTRO) {
 		const {
 			delay = 0,
 			duration = 300,
@@ -279,7 +321,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			static_css
 		} = config || null_transition;
 
-		const program = {
+		const program: PendingProgram = {
 			start: now() + delay,
 			b
 		};
@@ -352,11 +394,11 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 	}
 
 	return {
-		run(b) {
+		run(b: INTRO | OUTRO) {
 			if (is_function(config)) {
 				wait().then(() => {
 					// @ts-ignore
-					config = config();
+					config = config(options);
 					go(b);
 				});
 			} else {

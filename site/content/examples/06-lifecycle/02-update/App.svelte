@@ -51,6 +51,20 @@
 	}
 </script>
 
+<div class="chat">
+	<h1>Eliza</h1>
+
+	<div class="scrollable" bind:this={div}>
+		{#each comments as comment}
+			<article class={comment.author}>
+				<span>{comment.text}</span>
+			</article>
+		{/each}
+	</div>
+
+	<input on:keydown={handleKeydown}>
+</div>
+
 <style>
 	.chat {
 		display: flex;
@@ -90,17 +104,3 @@
 		border-radius: 1em 1em 0 1em;
 	}
 </style>
-
-<div class="chat">
-	<h1>Eliza</h1>
-
-	<div class="scrollable" bind:this={div}>
-		{#each comments as comment}
-			<article class={comment.author}>
-				<span>{comment.text}</span>
-			</article>
-		{/each}
-	</div>
-
-	<input on:keydown={handleKeydown}>
-</div>

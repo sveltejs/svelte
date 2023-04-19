@@ -13,7 +13,7 @@ import {
 	toggle_class
 } from "svelte/internal";
 
-import { reactiveStoreVal, unreactiveExport } from "./store";
+import { reactiveStoreVal, unreactiveExport } from './store';
 
 function create_fragment(ctx) {
 	let div0;

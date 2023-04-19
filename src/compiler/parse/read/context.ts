@@ -9,6 +9,8 @@ import {
 } from '../utils/bracket';
 import { parse_expression_at } from '../acorn';
 import { Pattern } from 'estree';
+import parser_errors from '../errors';
+import { regex_not_newline_characters } from '../../utils/patterns';
 
 export default function read_context(
 	parser: Parser
@@ -27,10 +29,7 @@ export default function read_context(
 	}
 
 	if (!is_bracket_open(code)) {
-		parser.error({
-			code: 'unexpected-token',
-			message: 'Expected identifier or destructure pattern'
-		});
+		parser.error(parser_errors.unexpected_token_destructure);
 	}
 
 	const bracket_stack = [code];
@@ -42,12 +41,11 @@ export default function read_context(
 			bracket_stack.push(code);
 		} else if (is_bracket_close(code)) {
 			if (!is_bracket_pair(bracket_stack[bracket_stack.length - 1], code)) {
-				parser.error({
-					code: 'unexpected-token',
-					message: `Expected ${String.fromCharCode(
-						get_bracket_close(bracket_stack[bracket_stack.length - 1])
-					)}`
-				});
+				parser.error(
+					parser_errors.unexpected_token(
+						String.fromCharCode(get_bracket_close(bracket_stack[bracket_stack.length - 1]))
+					)
+				);
 			}
 			bracket_stack.pop();
 			if (bracket_stack.length === 0) {
@@ -68,7 +66,7 @@ export default function read_context(
 		// so we offset it by removing 1 character in the `space_with_newline`
 		// to achieve that, we remove the 1st space encountered,
 		// so it will not affect the `column` of the node
-		let space_with_newline = parser.template.slice(0, start).replace(/[^\n]/g, ' ');
+		let space_with_newline = parser.template.slice(0, start).replace(regex_not_newline_characters, ' ');
 		const first_space = space_with_newline.indexOf(' ');
 		space_with_newline = space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 

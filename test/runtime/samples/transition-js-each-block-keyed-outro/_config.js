@@ -7,7 +7,7 @@ export default {
 		]
 	},
 
-	test({ assert, component, target, window, raf }) {
+	test({ assert, component, target, raf }) {
 		const divs = target.querySelectorAll( 'div' );
 
 		component.things = [

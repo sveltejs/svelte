@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { mapbox } from './mapbox.js';
 
 	// set the context here...
@@ -11,28 +11,34 @@
 	let container;
 	let map;
 
-	onMount(() => {
-		const link = document.createElement('link');
-		link.rel = 'stylesheet';
-		link.href = 'https://unpkg.com/mapbox-gl/dist/mapbox-gl.css';
+	function load() {
+		map = new mapbox.Map({
+			container,
+			style: 'mapbox://styles/mapbox/streets-v9',
+			center: [lon, lat],
+			zoom,
+		});
+	}
 
-		link.onload = () => {
-			map = new mapbox.Map({
-				container,
-				style: 'mapbox://styles/mapbox/streets-v9',
-				center: [lon, lat],
-				zoom
-			});
-		};
-
-		document.head.appendChild(link);
-
-		return () => {
-			map.remove();
-			link.parentNode.removeChild(link);
-		};
+	onDestroy(() => {
+		if (map) map.remove();
 	});
 </script>
+
+<!-- this special element will be explained in a later section -->
+<svelte:head>
+	<link
+		rel="stylesheet"
+		href="https://unpkg.com/mapbox-gl/dist/mapbox-gl.css"
+		on:load={load}
+	/>
+</svelte:head>
+
+<div bind:this={container}>
+	{#if map}
+		<slot />
+	{/if}
+</div>
 
 <style>
 	div {
@@ -40,9 +46,3 @@
 		height: 100%;
 	}
 </style>
-
-<div bind:this={container}>
-	{#if map}
-		<slot></slot>
-	{/if}
-</div>

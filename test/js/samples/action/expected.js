@@ -48,11 +48,11 @@ function link(node) {
 		history.pushState(null, null, event.target.href);
 	}
 
-	node.addEventListener("click", onClick);
+	node.addEventListener('click', onClick);
 
 	return {
 		destroy() {
-			node.removeEventListener("click", onClick);
+			node.removeEventListener('click', onClick);
 		}
 	};
 }

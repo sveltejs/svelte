@@ -244,11 +244,11 @@ function instance($$self, $$props, $$invalidate) {
 	let { e } = $$props;
 
 	$$self.$$set = $$props => {
-		if ("a" in $$props) $$invalidate(0, a = $$props.a);
-		if ("b" in $$props) $$invalidate(1, b = $$props.b);
-		if ("c" in $$props) $$invalidate(2, c = $$props.c);
-		if ("d" in $$props) $$invalidate(3, d = $$props.d);
-		if ("e" in $$props) $$invalidate(4, e = $$props.e);
+		if ('a' in $$props) $$invalidate(0, a = $$props.a);
+		if ('b' in $$props) $$invalidate(1, b = $$props.b);
+		if ('c' in $$props) $$invalidate(2, c = $$props.c);
+		if ('d' in $$props) $$invalidate(3, d = $$props.d);
+		if ('e' in $$props) $$invalidate(4, e = $$props.e);
 	};
 
 	return [a, b, c, d, e];

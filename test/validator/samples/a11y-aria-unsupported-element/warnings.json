@@ -4,30 +4,23 @@
 		"message": "A11y: <meta> should not have aria-* attributes",
 		"start": {
 			"line": 1,
-			"column": 6,
-			"character": 6
+			"column": 6
 		},
 		"end": {
 			"line": 1,
-			"column": 25,
-			"character": 25
-		},
-		"pos": 6
+			"column": 25
+		}
 	},
-
 	{
 		"code": "a11y-misplaced-role",
 		"message": "A11y: <meta> should not have role attribute",
 		"start": {
 			"line": 2,
-			"column": 6,
-			"character": 33
+			"column": 6
 		},
 		"end": {
 			"line": 2,
-			"column": 20,
-			"character": 47
-		},
-		"pos": 33
+			"column": 20
+		}
 	}
 ]

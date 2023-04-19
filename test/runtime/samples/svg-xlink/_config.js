@@ -8,7 +8,7 @@ export default {
 			<use xlink:href='#stamp' x='20' y='20'/>
 		</svg>
 	`,
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const use = target.querySelector('use');
 		const href = use.attributes[ 'xlink:href' ];
 

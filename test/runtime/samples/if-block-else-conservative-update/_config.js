@@ -17,6 +17,11 @@ export default {
 
 	html: '<p>potato</p>',
 
+	before_test() {
+		count_a = 0;
+		count_b = 0;
+	},
+
 	test({ assert, component, target }) {
 		assert.equal(count_a, 1);
 		assert.equal(count_b, 0);

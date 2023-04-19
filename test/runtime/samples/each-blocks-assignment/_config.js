@@ -8,7 +8,7 @@ export default {
 	<span class="content">3</span>
 	<button>Test</button>
 	`,
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		let [incrementBtn, ...buttons] = target.querySelectorAll('button');
 
 		const clickEvent = new window.MouseEvent('click');
@@ -92,6 +92,6 @@ export default {
 			<span class="content">8</span>
 			<button>Test</button>
 		`
-		);		
+		);
 	}
 };

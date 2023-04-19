@@ -8,7 +8,7 @@ export default {
 		<h1></h1>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const header = target.querySelector('h1');
 		const click = new window.MouseEvent('click');
 

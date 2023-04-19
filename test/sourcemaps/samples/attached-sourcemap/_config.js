@@ -14,7 +14,7 @@ function get_processor(tag_name, search, replace) {
 
 			// change line + column
 			const indent = Array.from({ length: indent_size }).join(' ');
-			ms.prependLeft(idx, '\n'+indent);
+			ms.prependLeft(idx, '\n' + indent);
 
 			const map_opts = { source: filename, hires: true, includeContent: false };
 			const map = ms.generateMap(map_opts);

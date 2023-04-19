@@ -1,5 +1,5 @@
 import { nodes_match } from '../../utils/nodes_match';
-import { Scope } from '../utils/scope';
+import { Scope } from 'periscopic';
 import { x } from 'code-red';
 import { Node, Expression } from 'estree';
 import Renderer from './Renderer';
@@ -52,7 +52,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 	if (is_store_value) {
 		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
 	}
-	
+
 	let invalidate;
 	if (!main_execution_context) {
 		const pass_value = (
@@ -80,7 +80,7 @@ export function invalidate(renderer: Renderer, scope: Scope, node: Node, names: 
 	return invalidate;
 }
 
-export function renderer_invalidate(renderer: Renderer, name: string, value?, main_execution_context: boolean = false) {
+export function renderer_invalidate(renderer: Renderer, name: string, value?: unknown, main_execution_context: boolean = false) {
 	const variable = renderer.component.var_lookup.get(name);
 
 	if (variable && (variable.subscribable && (variable.reassigned || variable.export_name))) {
