@@ -5,6 +5,6 @@ export default {
 	snapshot(target) {
 		return {
 			div: target.querySelectorAll('div')[1]
-		}
+		};
 	}
 };

@@ -13,7 +13,6 @@ export default {
 	},
 
 	test(assert, target, _, component) {
-		const p = target.querySelector('p');
 
 		component.foo = false;
 		component.bar = true;
