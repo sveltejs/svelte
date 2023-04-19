@@ -22,6 +22,8 @@ jobs:
             os: ubuntu-latest
           - node-version: 18
             os: ubuntu-latest
+          - node-version: 20
+            os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2.2.4
@@ -59,6 +61,8 @@ jobs:
           - node-version: 16
             os: ubuntu-latest
           - node-version: 18
+            os: ubuntu-latest
+          - node-version: 20
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
