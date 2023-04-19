@@ -28,7 +28,7 @@ export default class EachBlock extends AbstractBlock {
 	has_animation: boolean;
 	has_binding = false;
 	has_index_binding = false;
-
+	context_rest_properties: Map<string, Node>;
 	else?: ElseBlock;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
@@ -40,11 +40,12 @@ export default class EachBlock extends AbstractBlock {
 		this.index = info.index;
 
 		this.scope = scope.child();
-
+		this.context_rest_properties = new Map();
 		this.contexts = [];
-		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component });
+		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, context_rest_properties: this.context_rest_properties });
 
 		this.contexts.forEach(context => {
+			if (context.type !== 'DestructuredVariable') return;
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});
 

@@ -4,14 +4,11 @@
 		"message": ":global(...) must contain a single selector",
 		"start": {
 			"line": 5,
-			"column": 5,
-			"character": 77
+			"column": 5
 		},
 		"end": {
 			"line": 5,
-			"column": 44,
-			"character": 116
-		},
-		"pos": 77
+			"column": 44
+		}
 	}
 ]

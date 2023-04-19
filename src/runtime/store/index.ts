@@ -1,4 +1,4 @@
-import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from 'svelte/internal';
+import { run_all, subscribe, noop, safe_not_equal, is_function, get_store_value } from '../internal';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;
@@ -12,8 +12,15 @@ export type Updater<T> = (value: T) => T;
 /** Cleanup logic callback. */
 type Invalidator<T> = (value?: T) => void;
 
-/** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>) => Unsubscriber | void;
+/** 
+ * Start and stop notification callbacks.
+ * This function is called when the first subscriber subscribes.
+ * 
+ * @param {(value: T) => void} set Function that sets the value of the store.
+ * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
+ * subscriber unsubscribes.
+ */
+export type StartStopNotifier<T> = (set: (value: T) => void) => void | (() => void);
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -48,7 +55,7 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param value initial value
- * @param {StartStopNotifier}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier} [start] 
  */
 export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
 	return {
@@ -59,7 +66,7 @@ export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @param {*=}value initial value
- * @param {StartStopNotifier=}start start and stop notifications for subscriptions
+ * @param {StartStopNotifier=} start
  */
 export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
 	let stop: Unsubscriber;
@@ -98,7 +105,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 
 		return () => {
 			subscribers.delete(subscriber);
-			if (subscribers.size === 0) {
+			if (subscribers.size === 0 && stop) {
 				stop();
 				stop = null;
 			}
@@ -164,7 +171,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 	const auto = fn.length < 2;
 
 	return readable(initial_value, (set) => {
-		let inited = false;
+		let started = false;
 		const values = [];
 
 		let pending = 0;
@@ -188,7 +195,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			(value) => {
 				values[i] = value;
 				pending &= ~(1 << i);
-				if (inited) {
+				if (started) {
 					sync();
 				}
 			},
@@ -197,14 +204,29 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			})
 		);
 
-		inited = true;
+		started = true;
 		sync();
 
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
+			// We need to set this to false because callbacks can still happen despite having unsubscribed:
+			// Callbacks might already be placed in the queue which doesn't know it should no longer
+			// invoke this derived store.
+			started = false;
 		};
 	});
+}
+
+/**
+ * Takes a store and returns a new one derived from the old one that is readable.
+ *
+ * @param store - store to make readonly
+ */
+export function readonly<T>(store: Readable<T>): Readable<T> {
+	return {
+		subscribe: store.subscribe.bind(store)
+	};
 }
 
 /**

@@ -2,14 +2,11 @@
 	{
 		"code": "module-script-reactive-declaration",
 		"message": "\"foo\" is declared in a module script and will not be reactive",
-		"pos": 59,
 		"start": {
-			"character": 59,
 			"column": 4,
 			"line": 5
 		},
 		"end": {
-			"character": 69,
 			"column": 14,
 			"line": 5
 		}

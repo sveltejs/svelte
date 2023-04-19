@@ -1,4 +1,4 @@
-import { Readable } from 'svelte/store';
+import type { Readable } from '../store';
 
 export function noop() {}
 
@@ -10,8 +10,10 @@ export function assign<T, S>(tar: T, src: S): T & S {
 	return tar as T & S;
 }
 
+// Adapted from https://github.com/then/is-promise/blob/master/index.js
+// Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return value && typeof value === 'object' && typeof value.then === 'function';
+	return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
 }
 
 export function add_location(element, file, line, column, char) {
@@ -187,3 +189,10 @@ export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj,
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
+
+export function split_css_unit(value: number | string): [number, string] {
+	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
+	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value as number, 'px'];
+}
+
+export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];

@@ -13,6 +13,8 @@ import { Identifier, Node } from 'estree';
 import { push_array } from '../../../utils/push_array';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
 
+type DetachingOrNull = 'detaching' | null;
+
 function is_else_if(node: ElseBlock) {
 	return (
 		node && node.children.length === 1 && node.children[0].type === 'IfBlock'
@@ -213,7 +215,7 @@ export default class IfBlockWrapper extends Wrapper {
 
 		const vars = { name, anchor, if_exists_condition, has_else, has_transitions };
 
-		const detaching = parent_node && !is_head(parent_node) ? null : 'detaching';
+		const detaching: DetachingOrNull = parent_node && !is_head(parent_node) ? null : 'detaching';
 
 		if (this.node.else) {
 			this.branches.forEach(branch => {
@@ -275,9 +277,9 @@ export default class IfBlockWrapper extends Wrapper {
 		block: Block,
 		parent_node: Identifier,
 		_parent_nodes: Identifier,
-		dynamic,
+		dynamic: boolean,
 		{ name, anchor, has_else, if_exists_condition, has_transitions },
-		detaching
+		detaching: DetachingOrNull
 	) {
 		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
 		const current_block_type = block.get_unique_name('current_block_type');
@@ -414,9 +416,9 @@ export default class IfBlockWrapper extends Wrapper {
 		block: Block,
 		parent_node: Identifier,
 		_parent_nodes: Identifier,
-		dynamic,
+		dynamic: boolean,
 		{ name, anchor, has_else, has_transitions, if_exists_condition },
-		detaching
+		detaching: DetachingOrNull
 	) {
 		const select_block_type = this.renderer.component.get_unique_name('select_block_type');
 		const current_block_type_index = block.get_unique_name('current_block_type_index');
@@ -428,8 +430,8 @@ export default class IfBlockWrapper extends Wrapper {
 		const if_ctx = select_block_ctx ? x`${select_block_ctx}(#ctx, ${current_block_type_index})` : x`#ctx`;
 
 		const if_current_block_type_index = has_else
-			? nodes => nodes
-			: nodes => b`if (~${current_block_type_index}) { ${nodes} }`;
+			? (nodes: Node[]) => nodes
+			: (nodes: Node[]) => b`if (~${current_block_type_index}) { ${nodes} }`;
 
 		block.add_variable(current_block_type_index);
 		block.add_variable(name);
@@ -593,9 +595,9 @@ export default class IfBlockWrapper extends Wrapper {
 		block: Block,
 		parent_node: Identifier,
 		_parent_nodes: Identifier,
-		dynamic,
+		dynamic: boolean,
 		{ name, anchor, if_exists_condition, has_transitions },
-		detaching
+		detaching: DetachingOrNull
 	) {
 		const branch = this.branches[0];
 		const if_ctx = branch.get_ctx_name ? x`${branch.get_ctx_name}(#ctx)` : x`#ctx`;
