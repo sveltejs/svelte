@@ -22,7 +22,7 @@ function hash(str: string) {
 
 export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string) {
 	const class_name = `__svelte_${hash(rule)}`;
-	const doc = node.ownerDocument as ExtendedDoc;
+	const doc = node.ownerDocument;
 	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
 
 	if (!rules[class_name]) {
