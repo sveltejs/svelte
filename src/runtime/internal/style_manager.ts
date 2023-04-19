@@ -22,13 +22,10 @@ function hash(str: string) {
 
 export function create_static_rule(node: Element & ElementCSSInlineStyle, rule: string) {
 	const class_name = `__svelte_${hash(rule)}`;
-	const doc = node.ownerDocument as ExtendedDoc;
-	active_docs.add(doc);
-	const stylesheet = doc.__svelte_stylesheet || (doc.__svelte_stylesheet = doc.head.appendChild(element('style') as HTMLStyleElement).sheet as CSSStyleSheet);
-	const current_rules = doc.__svelte_rules || (doc.__svelte_rules = {});
+	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
 
-	if (!current_rules[class_name]) {
-		current_rules[class_name] = true;
+	if (!rules[class_name]) {
+		rules[class_name] = true;
 		stylesheet.insertRule(`.${class_name} {${rule}}`, stylesheet.cssRules.length);
 	}
 
