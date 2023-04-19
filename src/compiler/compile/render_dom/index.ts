@@ -542,7 +542,7 @@ export default function dom(
 	push_array(declaration.body.body, accessors);
 	body.push(declaration);
 
-	if (options.customElement && component.tag != null) {
+	if (options.customElement) {
 		const props_str = writable_props.reduce((def, prop) => {
 			def[prop.export_name] = component.component_options.ceProps?.[prop.export_name] || {};
 			if (prop.is_boolean && !def[prop.export_name].type) {
@@ -557,9 +557,13 @@ export default function dom(
 			.join(',');
 		const use_shadow_dom = component.component_options.shadowdom !== 'none' ? 'true' : 'false';
 
-		body.push(
-			b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
-		);
+		if (component.tag != null) {
+			body.push(
+				b`@_customElements.define("${component.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
+			);
+		} else {
+			body.push(b`@create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom});`);
+		}
 	}
 
 	return { js: flatten(body), css };

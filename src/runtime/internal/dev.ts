@@ -201,6 +201,9 @@ export class SvelteComponentDev extends SvelteComponent {
 	 */
 	$$slot_def: any;
 
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	static element?: typeof HTMLElement;
+
 	constructor(options: ComponentConstructorOptions) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
@@ -317,11 +320,14 @@ export class SvelteComponentTyped<
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped> = new (
+export type ComponentType<Component extends SvelteComponentTyped = SvelteComponentTyped> = (new (
 	options: ComponentConstructorOptions<
 		Component extends SvelteComponentTyped<infer Props> ? Props : Record<string, any>
 	>
-) => Component;
+) => Component) & {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement
+};
 
 /**
  * Convenience type to get the props the given component expects. Example:

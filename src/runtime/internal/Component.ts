@@ -392,6 +392,8 @@ export function create_custom_element(
 		});
 	});
 
+	Component.element = Class as any;
+
 	return Class;
 }
 
