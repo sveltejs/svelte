@@ -158,6 +158,13 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 	});
 
+	if (options.hydratable) {
+		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
+			renderer.add_string(` data-svelte-h="${node.hash()}"`);
+			options = { ...options, has_added_svelte_hash: true };
+		}
+	}
+
 	renderer.add_string('>');
 
 	if (node_contents !== undefined) {

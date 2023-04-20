@@ -1,18 +1,9 @@
 export default {
 	compileOptions: {
 		preserveWhitespace: true
-	},
-	test({ assert, target }) {
-		// Test for <pre> tag
-		const elementPre = target.querySelector('#pre');
-		// Test for non <pre> tag
-		const elementDiv = target.querySelector('#div');
-		// Test for <pre> tag in non <pre> tag
-		const elementDivWithPre = target.querySelector('#div-with-pre');
+  },
 
-		assert.equal(
-			elementPre.innerHTML,
-			`  A
+  html: `<pre id="pre">  A
   B
   <span>
     C
@@ -20,11 +11,9 @@ export default {
   </span>
   E
   F
-`
-		);
-		assert.equal(
-			elementDiv.innerHTML,
-			`
+</pre>
+
+<div id="div">
   A
   B
   <span>
@@ -33,11 +22,9 @@ export default {
   </span>
   E
   F
-`
-		);
-		assert.equal(
-			elementDivWithPre.innerHTML,
-			`
+</div>
+
+<div id="div-with-pre">
   <pre>    A
     B
     <span>
@@ -47,7 +34,5 @@ export default {
     E
     F
   </pre>
-`
-		);
-	}
+</div>`
 };
