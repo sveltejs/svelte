@@ -2,9 +2,6 @@
 
 ## Unreleased (4.0)
 
-<<<<<<< HEAD
-* Minimum supported Node version is now Node 14
-=======
 * **breaking** Minimum supported Node version is now Node 14
 * **breaking** Minimum supported webpack version is now webpack 5
 * **breaking** Minimum supported TypeScript version is now TypeScript 5 (it will likely work with lower versions, but we make no guarantees about that)
@@ -14,7 +11,6 @@
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
 * Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
->>>>>>> upstream/version-4
 
 ## Unreleased (3.0)
 
