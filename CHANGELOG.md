@@ -4,6 +4,9 @@
 
 * Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
 * Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))
+* Update interpolated style directive properly when using spread ([#8438](https://github.com/sveltejs/svelte/issues/8438))
+* Remove style directive property when value is `undefined` ([#8462](https://github.com/sveltejs/svelte/issues/8462))
+* Ensure version is typed as `string` instead of the literal `__VERSION__` ([#8498](https://github.com/sveltejs/svelte/issues/8498))
 
 ## 3.58.0
 
