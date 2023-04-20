@@ -258,36 +258,6 @@ export interface SvelteComponentTyped<
 
 /**
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
- * 
- * Base class to create strongly typed Svelte components.
- * This only exists for typing purposes and should be used in `.d.ts` files.
- *
- * ### Example:
- *
- * You have component library on npm called `component-library`, from which
- * you export a component called `MyComponent`. For Svelte+TypeScript users,
- * you want to provide typings. Therefore you create a `index.d.ts`:
- * ```ts
- * import { SvelteComponentTyped } from "svelte";
- * export class MyComponent extends SvelteComponentTyped<{foo: string}> {}
- * ```
- * Typing this makes it possible for IDEs like VS Code with the Svelte extension
- * to provide intellisense and to use the component like this in a Svelte file
- * with TypeScript:
- * ```svelte
- * <script lang="ts">
- * 	import { MyComponent } from "component-library";
- * </script>
- * <MyComponent foo={'bar'} />
- * ```
- *
- * #### Why not make this part of `SvelteComponent(Dev)`?
- * Because
- * ```ts
- * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
- * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
- * ```
- * will throw a type error, so we need to separate the more strictly typed class.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
