@@ -101,26 +101,42 @@ export default [
 			}
 		]
 	},
-	/* compiler.js */
+	// compiler.js - ESM version
 	{
 		input: 'src/compiler/index.ts',
 		plugins: [
 			replace({
 				preventAssignment: true,
 				values: {
-					__VERSION__: pkg.version,
-					'process.env.NODE_DEBUG': false // appears inside the util package
+					__VERSION__: pkg.version
 				},
 			}),
+			resolve(),
+			commonjs({
+				include: ['node_modules/**']
+			}),
+			json(),
+			ts_plugin
+		],
+		output: [
 			{
-				resolveId(id) {
-					// util is a built-in module in Node.js, but we want a self-contained compiler bundle
-					// that also works in the browser, so we load its polyfill instead
-					if (id === 'util') {
-						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
-					}
+				file: 'compiler.mjs',
+				format: 'esm',
+				name: 'svelte',
+				sourcemap: true,
+			}
+		]
+	},
+	// compiler.js - UMD version for REPL
+	{
+		input: 'src/compiler/index.ts',
+		plugins: [
+			replace({
+				preventAssignment: true,
+				values: {
+					__VERSION__: pkg.version
 				},
-			},
+			}),
 			resolve(),
 			commonjs({
 				include: ['node_modules/**']
@@ -132,12 +148,6 @@ export default [
 			{
 				file: 'compiler.js',
 				format: is_publish ? 'umd' : 'cjs',
-				name: 'svelte',
-				sourcemap: true,
-			},
-			{
-				file: 'compiler.mjs',
-				format: 'esm',
 				name: 'svelte',
 				sourcemap: true,
 			}
