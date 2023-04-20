@@ -16,7 +16,7 @@
 		"test": "uvu -r ts-node/register src/lib/server/markdown"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.20.0",
+		"@supabase/supabase-js": "^2.21.0",
 		"@sveltejs/repl": "^0.4.0",
 		"cookie": "^0.5.0",
 		"devalue": "^4.3.0",
@@ -29,7 +29,7 @@
 		"@resvg/resvg-js": "^2.4.1",
 		"@sveltejs/adapter-vercel": "^2.4.2",
 		"@sveltejs/kit": "^1.15.7",
-		"@sveltejs/site-kit": "^5.0.3",
+		"@sveltejs/site-kit": "^5.0.4",
 		"@types/marked": "^4.0.8",
 		"@types/prismjs": "^1.26.0",
 		"degit": "^2.8.4",
@@ -41,7 +41,7 @@
 		"prettier-plugin-svelte": "^2.10.0",
 		"prism-svelte": "^0.5.0",
 		"prismjs": "^1.29.0",
-		"satori": "^0.4.11",
+		"satori": "^0.4.14",
 		"satori-html": "^0.3.2",
 		"shelljs": "^0.8.5",
 		"shiki": "^0.14.1",
@@ -49,7 +49,7 @@
 		"svelte": "^3.58.0",
 		"svelte-check": "^3.2.0",
 		"typescript": "^5.0.4",
-		"vite": "^4.2.1",
+		"vite": "^4.3.0",
 		"vite-imagetools": "^4.0.19"
 	}
 }
