@@ -27,6 +27,8 @@ export default class AwaitBlock extends Node {
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
+		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		this.expression = new Expression(component, this, scope, info.expression);
 

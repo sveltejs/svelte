@@ -59,6 +59,11 @@ export default class Attribute extends Node {
 					return expression;
 				});
 		}
+
+		if (this.dependencies.size > 0) {
+			parent.cannot_use_innerhtml();
+			parent.not_static_content();
+		}
 	}
 
 	get_dependencies() {

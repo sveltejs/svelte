@@ -197,6 +197,15 @@ export default class Expression {
 		});
 	}
 
+	dynamic_contextual_dependencies() {
+		return Array.from(this.contextual_dependencies).filter(name => {
+			return Array.from(this.template_scope.dependencies_for_name.get(name)).some(variable_name => {
+				const variable = this.component.var_lookup.get(variable_name);
+				return is_dynamic(variable);
+			});
+		});
+	}
+
 	// TODO move this into a render-dom wrapper?
 	manipulate(block?: Block, ctx?: string | void) {
 		// TODO ideally we wouldn't end up calling this method

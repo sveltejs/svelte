@@ -4,7 +4,7 @@ import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual, expected, message?) => void, htmlEqualWithComments: (actual, expected, message?) => void };
+export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual: string, expected: string, message?: string) => void, htmlEqualWithOptions: (actual: string, expected: string, options: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => void };
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
@@ -140,11 +140,12 @@ function cleanChildren(node) {
 	}
 }
 
-export function normalizeHtml(window, html, preserveComments = false) {
+export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }: { removeDataSvelte?: boolean, preserveComments?: boolean }) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
 			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
+			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
 			.replace(/>[ \t\n\r\f]+</g, '><')
 			.trim();
 		cleanChildren(node);
@@ -154,22 +155,30 @@ export function normalizeHtml(window, html, preserveComments = false) {
 	}
 }
 
-export function setupHtmlEqual() {
+export function normalizeNewline(html: string) {
+	return html.replace(/\r\n/g, '\n');
+}
+
+export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
 	const window = env();
 
 	// eslint-disable-next-line no-import-assign
 	assert.htmlEqual = (actual, expected, message) => {
 		assert.deepEqual(
-			normalizeHtml(window, actual),
-			normalizeHtml(window, expected),
+			normalizeHtml(window, actual, options),
+			normalizeHtml(window, expected, options),
 			message
 		);
 	};
 	// eslint-disable-next-line no-import-assign
-	assert.htmlEqualWithComments = (actual, expected, message) => {
+	assert.htmlEqualWithOptions = (actual: string, expected: string, { preserveComments, withoutNormalizeHtml }: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => {
 		assert.deepEqual(
-			normalizeHtml(window, actual, true),
-			normalizeHtml(window, expected, true),
+			withoutNormalizeHtml
+				? normalizeNewline(actual).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				: normalizeHtml(window, actual, { ...options, preserveComments }),
+			withoutNormalizeHtml
+				? normalizeNewline(expected).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				: normalizeHtml(window, expected, { ...options, preserveComments }),
 			message
 		);
 	};

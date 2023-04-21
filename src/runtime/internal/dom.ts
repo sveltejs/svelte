@@ -362,6 +362,10 @@ export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
 
+export function get_svelte_dataset(node: HTMLElement) {
+	return node.dataset.svelteH;
+}
+
 export function get_binding_group_value(group, __value, checked) {
 	const value = new Set();
 	for (let i = 0; i < group.length; i += 1) {

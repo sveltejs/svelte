@@ -15,6 +15,8 @@ export default class Head extends Node {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
+		this.cannot_use_innerhtml();
+
 		if (info.attributes.length) {
 			component.error(info.attributes[0], compiler_errors.invalid_attribute_head);
 			return;
