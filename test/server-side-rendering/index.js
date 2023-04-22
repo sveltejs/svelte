@@ -67,7 +67,7 @@ describe('ssr', () => {
 					format: 'cjs'
 				};
 
-				require('../../register')(compileOptions);
+				require('../../register.js')(compileOptions);
 
 				const Component = require(`${dir}/main.svelte`).default;
 
@@ -174,7 +174,7 @@ describe('ssr', () => {
 				glob('**/*.svelte', { cwd }).forEach(file => {
 					if (file[0] === '_') return;
 
-					const dir  = `${cwd}/_output/ssr`;
+					const dir = `${cwd}/_output/ssr`;
 					const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 					if (fs.existsSync(out)) {
@@ -208,12 +208,12 @@ describe('ssr', () => {
 
 					if (config.ssrHtml) {
 						assert.htmlEqualWithOptions(html, config.ssrHtml, {
-							preserveComments: compileOptions.preserveComments, 
+							preserveComments: compileOptions.preserveComments,
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					} else if (config.html) {
 						assert.htmlEqualWithOptions(html, config.html, {
-							preserveComments: compileOptions.preserveComments, 
+							preserveComments: compileOptions.preserveComments,
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}

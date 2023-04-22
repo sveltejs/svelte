@@ -16,7 +16,7 @@ const page = `
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('custom-elements', function() {
+describe('custom-elements', function () {
 	// Note: Increase the timeout in preparation for restarting Chromium due to SIGSEGV.
 	this.timeout(10000);
 	let svelte;
@@ -81,6 +81,7 @@ describe('custom-elements', function() {
 			const bundle = await rollup({
 				input: `${__dirname}/samples/${dir}/test.js`,
 				plugins: [
+					// @ts-ignore -- TODO: fix this
 					{
 						resolveId(importee) {
 							if (importee === 'svelte/internal' || importee === './internal') {
