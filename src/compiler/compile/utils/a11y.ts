@@ -287,89 +287,6 @@ const autofill_contact_field_name_tokens = new Set([
 	'impp'
 ]);
 
-const control_group_text_types = new Set(['hidden', 'text', 'search']);
-const control_group_multiline_types = new Set(['hidden']);
-const control_group_password_types = new Set(['hidden', 'text', 'search', 'password']);
-const control_group_url_types = new Set(['hidden', 'text', 'search', 'url']);
-const control_group_username_types = new Set(['hidden', 'text', 'search', 'email']);
-const control_group_telephone_types = new Set(['hidden', 'text', 'search', 'tel']);
-const control_group_numeric_types = new Set(['hidden', 'text', 'search', 'number']);
-const control_group_month_types = new Set(['hidden', 'text', 'search', 'month']);
-const control_group_date_types = new Set(['hidden', 'text', 'search', 'date']);
-
-const appropriate_types_for_field_names = new Map([
-	['name', control_group_text_types],
-	['honorific-prefix', control_group_text_types],
-	['given-name', control_group_text_types],
-	['additional-name', control_group_text_types],
-	['family-name', control_group_text_types],
-	['honorific-suffix', control_group_text_types],
-	['nickname', control_group_text_types],
-	['organization-title', control_group_text_types],
-	['username', control_group_username_types],
-	['new-password', control_group_password_types],
-	['current-password', control_group_password_types],
-	['one-time-code', control_group_password_types],
-	['organization', control_group_text_types],
-	['street-address', control_group_multiline_types],
-	['address-line1', control_group_text_types],
-	['address-line2', control_group_text_types],
-	['address-line3', control_group_text_types],
-	['address-level4', control_group_text_types],
-	['address-level3', control_group_text_types],
-	['address-level2', control_group_text_types],
-	['address-level1', control_group_text_types],
-	['country', control_group_text_types],
-	['country-name', control_group_text_types],
-	['postal-code', control_group_text_types],
-	['cc-name', control_group_text_types],
-	['cc-given-name', control_group_text_types],
-	['cc-additional-name', control_group_text_types],
-	['cc-family-name', control_group_text_types],
-	['cc-number', control_group_text_types],
-	['cc-exp', control_group_month_types],
-	['cc-exp-month', control_group_numeric_types],
-	['cc-exp-year', control_group_numeric_types],
-	['cc-csc', control_group_text_types],
-	['cc-type', control_group_text_types],
-	['transaction-currency', control_group_text_types],
-	['transaction-amount', control_group_numeric_types],
-	['language', control_group_text_types],
-	['bday', control_group_date_types],
-	['bday-day', control_group_numeric_types],
-	['bday-month', control_group_numeric_types],
-	['bday-year', control_group_numeric_types],
-	['sex', control_group_text_types],
-	['url', control_group_url_types],
-	['photo', control_group_url_types],
-	['tel', control_group_telephone_types],
-	['tel-country-code', control_group_text_types],
-	['tel-national', control_group_text_types],
-	['tel-area-code', control_group_text_types],
-	['tel-local', control_group_text_types],
-	['tel-local-prefix', control_group_text_types],
-	['tel-local-suffix', control_group_text_types],
-	['tel-extension', control_group_text_types],
-	['email', control_group_username_types],
-	['impp', control_group_url_types]
-]);
-
-function is_appropriate_type_for_field_name(type: string, field_name: string) {
-  if (autofill_field_name_tokens.has(field_name)) {
-		return appropriate_types_for_field_names.get(field_name)?.has(type);
-	}
-
-	return false;
-}
-
-function is_appropriate_type_for_contact_field_name(type: string, field_name: string) {
-	if (autofill_contact_field_name_tokens.has(field_name)) {
-		return appropriate_types_for_field_names.get(field_name)?.has(type);
-	}
-
-	return false;
-}
-
 export function is_valid_autocomplete(type: null | true | string, autocomplete: null | true | string) {
 	if (typeof autocomplete !== 'string' || typeof type !== 'string') {
 		return false;
@@ -395,14 +312,14 @@ export function is_valid_autocomplete(type: null | true | string, autocomplete: 
 		tokens.shift();
 	}
 
-	if (is_appropriate_type_for_field_name(normalized_type, tokens[0])) {
+	if (autofill_field_name_tokens.has(tokens[0])) {
 		tokens.shift();
 	} else {
 		if (contact_type_tokens.has(tokens[0])) {
 			tokens.shift();
 		}
 
-		if (is_appropriate_type_for_contact_field_name(normalized_type, tokens[0])) {
+		if (autofill_contact_field_name_tokens.has(tokens[0])) {
 			tokens.shift();
 		} else {
 			return false;
