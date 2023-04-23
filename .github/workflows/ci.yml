@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -27,6 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: ${{ matrix.node-version == 20 && 8 || 7 }}
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
@@ -45,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           cache: pnpm
-      - run: 'pnpm i && pnpm lint'
+      - run: "pnpm i && pnpm lint"
   Unit:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
