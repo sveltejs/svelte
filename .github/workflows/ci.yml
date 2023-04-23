@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           cache: pnpm
-      - run: "pnpm i && pnpm lint"
+      - run: 'pnpm i && pnpm lint'
   Unit:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
