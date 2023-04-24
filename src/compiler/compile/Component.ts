@@ -25,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, Statement } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -38,6 +38,7 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import { flatten } from '../utils/flatten';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1138,14 +1139,23 @@ export default class Component {
 							}
 						}
 
-						if (inserts.length > 0) {
-							parent[key].splice(index + 1, 0, ...inserts);
-						}
-						if (props.length > 0) {
-							parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
-						}
-						if (node.declarations.length == 0) {
-							parent[key].splice(index, 1);
+						if (Array.isArray(parent[key])) {
+							if (inserts.length > 0) {
+								inserts.reverse().forEach((insert) => {
+									parent[key].splice(index + 1, 0, ...insert);
+								});
+							}
+							if (props.length > 0) {
+								parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
+						  }
+							if (node.declarations.length == 0) {
+								parent[key].splice(index, 1);
+							}
+						} else if (inserts.length > 0) {
+							this.replace({
+								type: 'BlockStatement',
+								body: flatten([node, inserts]) as Statement[]
+							});
 						}
 
 						return this.skip();
