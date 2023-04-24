@@ -25,10 +25,10 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, Statement } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, Statement, VariableDeclarator } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
-import { print, b } from 'code-red';
+import { print, b, x } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
@@ -1053,6 +1053,16 @@ export default class Component {
 							});
 						}
 
+						function create_insert_vars(name: string, insert: Node[]): VariableDeclarator {
+							return {
+								type: 'VariableDeclarator',
+								id: component.get_unique_name(`_inserts_for_${name}`),
+								init: x`(() => { 
+									${insert}
+								})()`
+							};
+            }
+
 						// transform
 						// ```
 						// export let { x, y = 123 } = OBJ, z = 456
@@ -1065,13 +1075,21 @@ export default class Component {
 						for (let index = 0; index < node.declarations.length; index++) {
 							const declarator = node.declarations[index];
 							if (declarator.id.type !== 'Identifier') {
+                const variable_insert_declarators = [];
+
 								function get_new_name(local) {
 									const variable = component.var_lookup.get(local.name);
+                  const is_props = variable.export_name && variable.writable;
 									if (variable.subscribable) {
-										inserts.push(get_insert(variable));
+                    const insert = get_insert(variable);
+                    if (is_props) {
+										  inserts.push(insert);
+                    } else {
+                      variable_insert_declarators.push(create_insert_vars(local.name, insert));
+                    }
 									}
 
-									if (variable.export_name && variable.writable) {
+									if (is_props) {
 										const alias_name = component.get_unique_name(local.name);
 										add_new_props({ type: 'Identifier', name: variable.export_name }, local, alias_name);
 										return alias_name;
@@ -1125,6 +1143,9 @@ export default class Component {
 								}
 
 								rename_identifiers(declarator.id);
+
+                node.declarations.splice(index + 1, 0, ...variable_insert_declarators);
+                index += variable_insert_declarators.length;
 							} else {
 								const { name } = declarator.id;
 								const variable = component.var_lookup.get(name);
@@ -1134,7 +1155,14 @@ export default class Component {
 									node.declarations.splice(index--, 1);
 								}
 								if (variable.subscribable && (is_props || declarator.init)) {
-									inserts.push(get_insert(variable));
+									const insert = get_insert(variable);
+									if (declarator.init && !is_props) {
+										node.declarations.splice(index + 1, 0, create_insert_vars(name, insert));
+
+                    index += 1;
+									} else {
+										inserts.push(insert);
+									}
 								}
 							}
 						}
