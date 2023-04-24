@@ -69,8 +69,7 @@ jobs:
       - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install
-        env:
-          SKIP_PREPARE: true
       - run: pnpm test:unit
