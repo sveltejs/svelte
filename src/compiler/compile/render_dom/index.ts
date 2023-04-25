@@ -13,6 +13,7 @@ import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
 import { regex_backslashes } from '../../utils/patterns';
+import { get_attribute_value } from '../render_ssr/handlers/shared/get_attribute_value';
 
 export default function dom(
 	component: Component,
@@ -459,6 +460,11 @@ export default function dom(
 			}) as Expression)
 		};
 
+    const slot_list = {
+      type: 'ArrayExpression',
+      elements: [...component.slots.values()].map(slot => get_attribute_value(slot.name_attribute))
+    };
+
 		body.push(b`
 			function ${definition}(${args}) {
 				${injected.map(name => b`let ${name};`)}
@@ -472,11 +478,11 @@ export default function dom(
 				${resubscribable_reactive_store_unsubscribers}
 
 				${component.slots.size || component.compile_options.dev || uses_slots ? b`let { $$slots: #slots = {}, $$scope } = $$props;` : null}
-				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, [${[...component.slots.keys()].map(key => `'${key}'`).join(',')}]);`}
 				${compute_slots}
 
 				${instance_javascript}
 
+				${component.compile_options.dev && b`@validate_slots('${component.tag}', #slots, ${slot_list});`}
 				${missing_props_check}
 				${unknown_props_check}
 
