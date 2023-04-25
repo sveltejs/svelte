@@ -52,10 +52,7 @@ export default class SlotTemplateWrapper extends Wrapper {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
-		this.parent.set_slot(
-			slot_template_name,
-			get_slot_definition(this.block, scope, lets)
-		);
+		this.parent.set_slot(this.node, get_slot_definition(this.block, scope, lets));
 
 		this.fragment = new FragmentWrapper(
 			renderer,

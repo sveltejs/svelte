@@ -9,7 +9,7 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions &
 	slot_scopes: Map<any, any>;
 }) {
 	const slot_data = get_slot_data(node.values);
-	const slot = node.get_static_attribute_value('slot');
+	const slot = node.values.get('slot')?.get_value(null);
 	const nearest_inline_component = node.find_nearest(/InlineComponent/);
 
 	if (slot && nearest_inline_component) {

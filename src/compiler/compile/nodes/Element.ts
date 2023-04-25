@@ -529,10 +529,6 @@ export default class Element extends Node {
 			}
 
 			if (name === 'slot') {
-				if (!attribute.is_static) {
-					return component.error(attribute, compiler_errors.invalid_slot_attribute);
-				}
-
 				if (component.slot_outlets.has(name)) {
 					return component.error(attribute, compiler_errors.duplicate_slot_attribute(name));
 

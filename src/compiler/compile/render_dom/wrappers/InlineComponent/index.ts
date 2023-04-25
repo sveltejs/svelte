@@ -29,7 +29,8 @@ const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
-	slots: Map<string, SlotDefinition> = new Map();
+	slots: Map<SlotTemplate, SlotDefinition> = new Map();
+	staic_slot_names: Set<string> = new Set();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 	children: Array<Wrapper | FragmentWrapper> = [];
@@ -95,14 +96,20 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.add_outro();
 	}
 
-	set_slot(name: string, slot_definition: SlotDefinition) {
-		if (this.slots.has(name)) {
-			if (name === 'default') {
-				throw new Error('Found elements without slot attribute when using slot="default"');
+	set_slot(slot: SlotTemplate, slot_definition: SlotDefinition) {
+		if (slot.is_static) {
+			const name = slot.slot_template_name;
+			if (this.staic_slot_names.has(name)) {
+				if (name === 'default') {
+					throw new Error('Found elements without slot attribute when using slot="default"');
+				}
+				throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
+			} else {
+				this.staic_slot_names.add(name);
 			}
-			throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
 		}
-		this.slots.set(name, slot_definition);
+
+		this.slots.set(slot, slot_definition);
 	}
 
 	warn_if_reactive() {
@@ -167,8 +174,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		const initial_props = this.slots.size > 0
 			? [
 				p`$$slots: {
-					${Array.from(this.slots).map(([name, slot]) => {
-						return p`${name}: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
+					${Array.from(this.slots).map(([slot_template, slot]) => {
+						const { is_static, slot_template_name, slot_attribute } = slot_template;
+						const slot_expression = is_static ? { type: 'Literal', value: slot_template_name } : slot_attribute.get_value(block);
+						return p`[${slot_expression}]: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
 					})}
 				}`,
 				p`$$scope: {

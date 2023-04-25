@@ -29,7 +29,8 @@ export default function(node: SlotTemplate, renderer: Renderer, options: RenderO
 			throw new Error(`Duplicate slot name "${node.slot_template_name}" in <${parent_inline_component.name}>`);
 		}
 
-		options.slot_scopes.set(node.slot_template_name, {
+		const slot_expression = node.is_static ? { type: 'Literal', value: node.slot_template_name } : node.slot_attribute.get_value(null);
+		options.slot_scopes.set(slot_expression, {
 			input: get_slot_scope(node.lets),
 			output: slot_fragment_content,
 			statements: get_const_tags(node.const_tags)

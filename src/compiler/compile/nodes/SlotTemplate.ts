@@ -16,6 +16,7 @@ export default class SlotTemplate extends Node {
 	const_tags: ConstTag[];
 	slot_attribute: Attribute;
 	slot_template_name: string = 'default';
+	is_static: boolean = true;
 
 	constructor(
 		component: Component,
@@ -44,14 +45,17 @@ export default class SlotTemplate extends Node {
 				case 'Attribute': {
 					if (node.name === 'slot') {
 						this.slot_attribute = new Attribute(component, this, scope, node);
-						if (!this.slot_attribute.is_static) {
-							return component.error(node, compiler_errors.invalid_slot_attribute);
+						if (this.slot_attribute.is_static) {
+							const value = this.slot_attribute.get_static_value();
+							if (typeof value === 'boolean') {
+								return component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
+							}
+							this.slot_template_name = value as string;
+							this.is_static = true;
+						} else {
+							this.slot_template_name = component.get_unique_name('dynamic_slot_template').name;
+							this.is_static = false;
 						}
-						const value = this.slot_attribute.get_static_value();
-						if (typeof value === 'boolean') {
-							return component.error(node, compiler_errors.invalid_slot_attribute_value_missing);
-						}
-						this.slot_template_name = value as string;
 						break;
 					}
 					throw new Error(`Invalid attribute '${node.name}' in <svelte:fragment>`);
