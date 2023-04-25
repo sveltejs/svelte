@@ -1007,7 +1007,7 @@ export default class Component {
 		return null;
 	}
 
-	rewrite_props(get_insert: (variable: Var) => Node[]) {
+	rewrite_props_and_add_subscriptions(get_subscriptions: (variable: Var) => Node[]) {
 		if (!this.ast.instance) return;
 
 		const component = this;
@@ -1031,7 +1031,7 @@ export default class Component {
 				if (node.type === 'VariableDeclaration') {
 					// NOTE: `var` does not follow block scoping
 					if (node.kind === 'var' || scope === instance_scope) {
-						const inserts = [];
+						const subscriptions = [];
 						const props = [];
 
 						function add_new_props(exported, local, default_value) {
@@ -1067,7 +1067,7 @@ export default class Component {
 								function get_new_name(local) {
 									const variable = component.var_lookup.get(local.name);
 									if (variable.subscribable) {
-										inserts.push(get_insert(variable));
+										subscriptions.push(get_subscriptions(variable));
 									}
 
 									if (variable.export_name && variable.writable) {
@@ -1133,7 +1133,7 @@ export default class Component {
 									node.declarations.splice(index--, 1);
 								}
 								if (variable.subscribable && (is_props || declarator.init)) {
-									inserts.push(get_insert(variable));
+									subscriptions.push(get_subscriptions(variable));
 								}
 							}
 						}
@@ -1145,10 +1145,10 @@ export default class Component {
 
 						if (Array.isArray(parent[key])) {
 							// If the variable declaration is part of some block, that is, among an array of statements
-							// then, we add the inserts and the $$props declaration after declaration
-							if (inserts.length > 0) {
-								inserts.reverse().forEach((insert) => {
-									parent[key].splice(index + 1, 0, ...insert);
+							// then, we add the subscriptions and the $$props declaration after declaration
+							if (subscriptions.length > 0) {
+								subscriptions.reverse().forEach((subscription) => {
+									parent[key].splice(index + 1, 0, ...subscription);
 								});
 							}
 							if (props.length > 0) {
@@ -1158,14 +1158,14 @@ export default class Component {
 							if (node.declarations.length == 0) {
 								parent[key].splice(index, 1);
 							}
-						} else if (inserts.length > 0) {
+						} else if (subscriptions.length > 0) {
 							// If the variable declaration is not part of a block, we instead get a dummy variable setting
 							// calling an immediately-invoked function expression containing all the subscription functions
               node.declarations.push({
 								type: 'VariableDeclarator',
-								id: component.get_unique_name('$$subscription_inserts', scope),
+								id: component.get_unique_name('$$subscriptions', scope),
 								init: x`(() => { 
-									${inserts}
+									${subscriptions}
 								})()`
 							});
 						}

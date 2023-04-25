@@ -123,7 +123,7 @@ export default function ssr(
 		});
 	}
 
-	component.rewrite_props(({ name, reassigned }) => {
+	component.rewrite_props_and_add_subscriptions(({ name, reassigned }) => {
 		const value = `$${name}`;
 
 		let insert = reassigned

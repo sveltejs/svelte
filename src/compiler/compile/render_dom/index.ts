@@ -306,7 +306,7 @@ export default function dom(
 			}
 		});
 
-		component.rewrite_props(({ name, reassigned, export_name }) => {
+		component.rewrite_props_and_add_subscriptions(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
 			const i = renderer.context_lookup.get(`$${name}`).index;
 
