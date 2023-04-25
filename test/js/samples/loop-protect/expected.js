@@ -68,7 +68,6 @@ function foo() {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots('Component', slots, []);
 	let node;
 
 	{
@@ -107,6 +106,7 @@ function instance($$self, $$props, $$invalidate) {
 		} while (true);
 	}
 
+	validate_slots('Component', slots, []);
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {

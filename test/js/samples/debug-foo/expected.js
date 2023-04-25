@@ -167,9 +167,9 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots('Component', slots, []);
 	let { things } = $$props;
 	let { foo } = $$props;
+	validate_slots('Component', slots, []);
 
 	$$self.$$.on_mount.push(function () {
 		if (things === undefined && !('things' in $$props || $$self.$$.bound[$$self.$$.props['things']])) {

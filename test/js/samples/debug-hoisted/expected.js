@@ -50,9 +50,9 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	validate_slots('Component', slots, []);
 	let obj = { x: 5 };
 	let kobzol = 5;
+	validate_slots('Component', slots, []);
 	const writable_props = [];
 
 	Object.keys($$props).forEach(key => {
