@@ -96,10 +96,6 @@ export default {
 		code: 'illegal-attribute',
 		message: `'${name}' is not a valid attribute name`
 	}),
-	invalid_slot_attribute: {
-		code: 'invalid-slot-attribute',
-		message: 'slot attribute cannot have a dynamic value'
-	},
 	duplicate_slot_attribute: (name: string) => ({
 		code: 'duplicate-slot-attribute',
 		message: `Duplicate '${name}' slot`
