@@ -17,6 +17,7 @@ const valid_bindings = [
 	'outerHeight',
 	'scrollX',
 	'scrollY',
+	'devicePixelRatio',
 	'online'
 ];
 
