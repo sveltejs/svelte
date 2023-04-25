@@ -4,6 +4,7 @@ import remove_whitespace_children from './utils/remove_whitespace_children';
 import { get_slot_scope } from './shared/get_slot_scope';
 import InlineComponent from '../../nodes/InlineComponent';
 import { get_const_tags } from './shared/get_const_tags';
+import { get_attribute_value } from './shared/get_attribute_value';
 
 export default function(node: SlotTemplate, renderer: Renderer, options: RenderOptions & {
 	slot_scopes: Map<any, any>;
@@ -29,7 +30,7 @@ export default function(node: SlotTemplate, renderer: Renderer, options: RenderO
 			throw new Error(`Duplicate slot name "${node.slot_template_name}" in <${parent_inline_component.name}>`);
 		}
 
-		const slot_expression = node.is_static ? { type: 'Literal', value: node.slot_template_name } : node.slot_attribute.get_value(null);
+		const slot_expression = get_attribute_value(node.slot_attribute);
 		options.slot_scopes.set(slot_expression, {
 			input: get_slot_scope(node.lets),
 			output: slot_fragment_content,

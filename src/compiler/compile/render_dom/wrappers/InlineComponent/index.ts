@@ -175,8 +175,8 @@ export default class InlineComponentWrapper extends Wrapper {
 			? [
 				p`$$slots: {
 					${Array.from(this.slots).map(([slot_template, slot]) => {
-						const { is_static, slot_template_name, slot_attribute } = slot_template;
-						const slot_expression = is_static ? { type: 'Literal', value: slot_template_name } : slot_attribute.get_value(block);
+						const { slot_attribute } = slot_template;
+						const slot_expression = slot_attribute.get_value(block);
 						return p`[${slot_expression}]: [${slot.block.name}, ${slot.get_context || null}, ${slot.get_changes || null}]`;
 					})}
 				}`,

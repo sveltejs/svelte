@@ -7,6 +7,7 @@ import { INode } from './interfaces';
 import compiler_errors from '../compiler_errors';
 import get_const_tags from './shared/get_const_tags';
 import ConstTag from './ConstTag';
+import { Attribute as AttributeNode } from '../../interfaces';
 
 export default class SlotTemplate extends Node {
 	type: 'SlotTemplate';
@@ -15,8 +16,8 @@ export default class SlotTemplate extends Node {
 	lets: Let[] = [];
 	const_tags: ConstTag[];
 	slot_attribute: Attribute;
-	slot_template_name: string = 'default';
-	is_static: boolean = true;
+	is_static: boolean;
+	slot_template_name: string;
 
 	constructor(
 		component: Component,
@@ -64,6 +65,16 @@ export default class SlotTemplate extends Node {
 					throw new Error(`Not implemented: ${node.type}`);
 			}
 		});
+
+		if (!this.slot_template_name) {
+			this.slot_template_name = 'default';
+			this.is_static = false;
+			this.slot_attribute = new Attribute(component, this, scope, {
+				type: 'Attribute',
+				name: 'slot',
+				value: [ { type: 'Text', data: 'default' } ]
+			} as AttributeNode);
+		}
 
 		this.scope = scope;
 		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
