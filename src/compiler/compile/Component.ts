@@ -25,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, Statement, VariableDeclarator } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b, x } from 'code-red';
@@ -38,7 +38,6 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
-import { flatten } from '../utils/flatten';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1053,16 +1052,6 @@ export default class Component {
 							});
 						}
 
-						function create_insert_vars(name: string, insert: Node[]): VariableDeclarator {
-							return {
-								type: 'VariableDeclarator',
-								id: component.get_unique_name(`_inserts_for_${name}`),
-								init: x`(() => { 
-									${insert}
-								})()`
-							};
-            }
-
 						// transform
 						// ```
 						// export let { x, y = 123 } = OBJ, z = 456
@@ -1075,21 +1064,13 @@ export default class Component {
 						for (let index = 0; index < node.declarations.length; index++) {
 							const declarator = node.declarations[index];
 							if (declarator.id.type !== 'Identifier') {
-                const variable_insert_declarators = [];
-
 								function get_new_name(local) {
 									const variable = component.var_lookup.get(local.name);
-                  const is_props = variable.export_name && variable.writable;
 									if (variable.subscribable) {
-                    const insert = get_insert(variable);
-                    if (is_props) {
-										  inserts.push(insert);
-                    } else {
-                      variable_insert_declarators.push(create_insert_vars(local.name, insert));
-                    }
+										inserts.push(get_insert(variable));
 									}
 
-									if (is_props) {
+									if (variable.export_name && variable.writable) {
 										const alias_name = component.get_unique_name(local.name);
 										add_new_props({ type: 'Identifier', name: variable.export_name }, local, alias_name);
 										return alias_name;
@@ -1143,9 +1124,6 @@ export default class Component {
 								}
 
 								rename_identifiers(declarator.id);
-
-                node.declarations.splice(index + 1, 0, ...variable_insert_declarators);
-                index += variable_insert_declarators.length;
 							} else {
 								const { name } = declarator.id;
 								const variable = component.var_lookup.get(name);
@@ -1155,34 +1133,40 @@ export default class Component {
 									node.declarations.splice(index--, 1);
 								}
 								if (variable.subscribable && (is_props || declarator.init)) {
-									const insert = get_insert(variable);
-									if (declarator.init && !is_props) {
-										node.declarations.splice(index + 1, 0, create_insert_vars(name, insert));
-
-                    index += 1;
-									} else {
-										inserts.push(insert);
-									}
+									inserts.push(get_insert(variable));
 								}
 							}
 						}
 
+						// Assertion that if we see props, it must be at the top level
+						if (props.length > 0 && !(parent.type === 'Program' && Array.isArray(parent[key]))) {
+							throw new Error('export is not at the top level');
+						}
+
 						if (Array.isArray(parent[key])) {
+							// If the variable declaration is part of some block, that is, among an array of statements
+							// then, we add the inserts and the $$props declaration after declaration
 							if (inserts.length > 0) {
 								inserts.reverse().forEach((insert) => {
 									parent[key].splice(index + 1, 0, ...insert);
 								});
 							}
 							if (props.length > 0) {
+								// b`` might return a Node array, but the $$props declaration will be flattened later
 								parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
 						  }
 							if (node.declarations.length == 0) {
 								parent[key].splice(index, 1);
 							}
 						} else if (inserts.length > 0) {
-							this.replace({
-								type: 'BlockStatement',
-								body: flatten([node, inserts]) as Statement[]
+							// If the variable declaration is not part of a block, we instead get a dummy variable setting
+							// calling an immediately-invoked function expression containing all the subscription functions
+              node.declarations.push({
+								type: 'VariableDeclarator',
+								id: component.get_unique_name('$$subscription_inserts', scope),
+								init: x`(() => { 
+									${inserts}
+								})()`
 							});
 						}
 
