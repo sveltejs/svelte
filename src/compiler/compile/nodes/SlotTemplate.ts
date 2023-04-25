@@ -68,7 +68,7 @@ export default class SlotTemplate extends Node {
 
 		if (!this.slot_template_name) {
 			this.slot_template_name = 'default';
-			this.is_static = false;
+			this.is_static = true;
 			this.slot_attribute = new Attribute(component, this, scope, {
 				type: 'Attribute',
 				name: 'slot',

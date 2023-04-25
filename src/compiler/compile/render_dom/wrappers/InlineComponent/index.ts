@@ -30,7 +30,7 @@ const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 export default class InlineComponentWrapper extends Wrapper {
 	var: Identifier;
 	slots: Map<SlotTemplate, SlotDefinition> = new Map();
-	staic_slot_names: Set<string> = new Set();
+	static_slot_names: Set<string> = new Set();
 	node: InlineComponent;
 	fragment: FragmentWrapper;
 	children: Array<Wrapper | FragmentWrapper> = [];
@@ -99,13 +99,13 @@ export default class InlineComponentWrapper extends Wrapper {
 	set_slot(slot: SlotTemplate, slot_definition: SlotDefinition) {
 		if (slot.is_static) {
 			const name = slot.slot_template_name;
-			if (this.staic_slot_names.has(name)) {
+			if (this.static_slot_names.has(name)) {
 				if (name === 'default') {
 					throw new Error('Found elements without slot attribute when using slot="default"');
 				}
 				throw new Error(`Duplicate slot name "${name}" in <${this.node.name}>`);
 			} else {
-				this.staic_slot_names.add(name);
+				this.static_slot_names.add(name);
 			}
 		}
 
