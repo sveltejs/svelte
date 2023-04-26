@@ -4,11 +4,15 @@ import glob from 'tiny-glob/sync';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as colors from 'kleur';
-export const assert = (assert$1 as unknown) as typeof assert$1 & { htmlEqual: (actual: string, expected: string, message?: string) => void, htmlEqualWithOptions: (actual: string, expected: string, options: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => void };
+
+/**
+ * @type {typeof assert$1 & { htmlEqual: (actual: string, expected: string, message?: string) => void, htmlEqualWithOptions: (actual: string, expected: string, options: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => void }}
+ */
+export const assert = /** @type {any} */ (assert$1);
 
 // for coverage purposes, we need to test source files,
 // but for sanity purposes, we need to test dist files
-export function loadSvelte(test: boolean = false) {
+export function loadSvelte(test = false) {
 	process.env.TEST = test ? 'true' : '';
 
 	const resolved = require.resolve('../compiler.js');
@@ -68,7 +72,7 @@ for (const key of Object.getOwnPropertyNames(global)) {
 }
 
 // implement mock scroll
-window.scrollTo = function(pageXOffset, pageYOffset) {
+window.scrollTo = function (pageXOffset, pageYOffset) {
 	window.pageXOffset = pageXOffset;
 	window.pageYOffset = pageYOffset;
 };
@@ -140,7 +144,14 @@ function cleanChildren(node) {
 	}
 }
 
-export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }: { removeDataSvelte?: boolean, preserveComments?: boolean }) {
+/**
+ *
+ * @param {Window} window
+ * @param {string} html
+ * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
+ * @returns
+ */
+export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
@@ -155,11 +166,18 @@ export function normalizeHtml(window, html, { removeDataSvelte = false, preserve
 	}
 }
 
-export function normalizeNewline(html: string) {
+/**
+ * @param {string} html
+ * @returns {string}
+ */
+export function normalizeNewline(html) {
 	return html.replace(/\r\n/g, '\n');
 }
 
-export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
+/**
+ * @param {{ removeDataSvelte?: boolean }} options
+ */
+export function setupHtmlEqual(options = {}) {
 	const window = env();
 
 	// eslint-disable-next-line no-import-assign
@@ -170,8 +188,15 @@ export function setupHtmlEqual(options: { removeDataSvelte?: boolean } = {}) {
 			message
 		);
 	};
-	// eslint-disable-next-line no-import-assign
-	assert.htmlEqualWithOptions = (actual: string, expected: string, { preserveComments, withoutNormalizeHtml }: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => {
+
+	/**
+	 *
+	 * @param {string} actual
+	 * @param {string} expected
+	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
+	 * @param {string?} message
+	 */
+	assert.htmlEqualWithOptions = (actual, expected, { preserveComments, withoutNormalizeHtml }, message) => {
 		assert.deepEqual(
 			withoutNormalizeHtml
 				? normalizeNewline(actual).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
@@ -252,7 +277,8 @@ const original_set_timeout = global.setTimeout;
 export function useFakeTimers() {
 	const callbacks = [];
 
-	global.setTimeout = function(fn) {
+	// @ts-ignore
+	global.setTimeout = function (fn) {
 		callbacks.push(fn);
 	};
 
@@ -289,7 +315,14 @@ export function prettyPrintPuppeteerAssertionError(message) {
 	}
 }
 
-export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 3, interval: number = 1000): Promise<T> {
+/**
+ *
+ * @param {() => Promise<import ('puppeteer').Browser>} fn
+ * @param {number} maxAttempts
+ * @param {number} interval
+ * @returns {Promise<import ('puppeteer').Browser>}
+ */
+export async function retryAsync(fn, maxAttempts = 3, interval = 1000) {
 	let attempts = 0;
 	while (attempts <= maxAttempts) {
 		try {
@@ -301,8 +334,15 @@ export async function retryAsync<T>(fn: () => Promise<T>, maxAttempts: number = 
 	}
 }
 
-// NOTE: Chromium may exit with SIGSEGV, so retry in that case
-export async function executeBrowserTest<T>(browser, launchPuppeteer: () => Promise<T>, additionalAssertion: () => void, onError: (err: Error) => void) {
+/**
+ * NOTE: Chromium may exit with SIGSEGV, so retry in that case
+ * @param {import ('puppeteer').Browser} browser
+ * @param {() => Promise<import ('puppeteer').Browser>} launchPuppeteer
+ * @param {() => void} additionalAssertion
+ * @param {(err: Error) => void} onError
+ * @returns {Promise<import ('puppeteer').Browser>}
+ */
+export async function executeBrowserTest(browser, launchPuppeteer, additionalAssertion, onError) {
 	let count = 0;
 	do {
 		count++;
@@ -310,6 +350,7 @@ export async function executeBrowserTest<T>(browser, launchPuppeteer: () => Prom
 			const page = await browser.newPage();
 
 			page.on('console', (type) => {
+				// @ts-ignore -- TODO: Fix type
 				console[type._type](type._text);
 			});
 
@@ -318,7 +359,10 @@ export async function executeBrowserTest<T>(browser, launchPuppeteer: () => Prom
 				console.error(error);
 			});
 			await page.goto('http://localhost:6789');
-			const result = await page.evaluate(() => test(document.querySelector('main')));
+			const result = await page.evaluate(() => {
+				// @ts-ignore -- It runs in browser context.
+				return test(document.querySelector('main'));
+			});
 			if (result) console.log(result);
 			additionalAssertion();
 			await page.close();

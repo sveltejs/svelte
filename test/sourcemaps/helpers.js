@@ -2,20 +2,19 @@ import * as assert from 'assert';
 import { getLocator } from 'locate-character';
 import MagicString, { Bundle } from 'magic-string';
 
-type AssertMappedParameters = {
-	code: string;
-	filename?: string;
-	input: string | ReturnType<typeof getLocator>;
-	input_code?: string;
-	preprocessed: any;
-};
+/**
+ * @typedef {{ code: string; filename?: string; input: string | ReturnType<typeof getLocator>; input_code?: string; preprocessed: any; }} AssertMappedParameters
+ */
 
+/**
+ * @param {AssertMappedParameters} param
+ */
 export function assert_mapped(
-	{ code, filename, input, input_code, preprocessed }: AssertMappedParameters
+	{ code, filename, input, input_code, preprocessed }
 ) {
 	const locate_input = typeof input === 'function' ? input : getLocator(input);
 	if (filename === undefined) filename = 'input.svelte';
-	if (input_code === undefined) input_code = code;	
+	if (input_code === undefined) input_code = code;
 
 	const source_loc = locate_input(input_code);
 	assert.notEqual(
@@ -43,14 +42,15 @@ export function assert_mapped(
 	);
 }
 
-type AssertNotMappedParameters = {
-	code: string;
-	filename?: string;
-	preprocessed: any;
-};
+/**
+ * @typedef {{ code: string; filename?: string; preprocessed: any; }} AssertNotMappedParameters
+ */
 
+/**
+ * @param {AssertNotMappedParameters} param
+ */
 export function assert_not_mapped(
-	{ code, filename, preprocessed }: AssertNotMappedParameters
+	{ code, filename, preprocessed }
 ) {
 	if (filename === undefined) filename = 'input.svelte';
 
@@ -73,9 +73,14 @@ export function assert_not_mapped(
 	);
 }
 
+/**
+ * @param {string} code
+ * @param {ReturnType<typeof getLocator>} locate
+ * @param {string} filename
+ */
 export function assert_not_located(
-	code: string,
-	locate: ReturnType<typeof getLocator>,
+	code,
+	locate,
 	filename = 'input.svelte'
 ) {
 	assert.equal(
@@ -85,8 +90,14 @@ export function assert_not_located(
 	);
 }
 
+/**
+ * @param {Array<{ code: string | MagicString, filename: string }>} inputs
+ * @param {string} filename
+ * @param {string} separator
+ * @returns
+ */
 export function magic_string_bundle(
-	inputs: Array<{ code: string | MagicString, filename: string }>,
+	inputs,
 	filename = 'bundle.js',
 	separator = '\n'
 ) {
@@ -107,7 +118,12 @@ export function magic_string_bundle(
 	};
 }
 
-export function magic_string_preprocessor_result(filename: string, src: MagicString) {
+/**
+ * @param {string} filename
+ * @param {MagicString} src
+ * @returns
+ */
+export function magic_string_preprocessor_result(filename, src) {
 	return {
 		code: src.toString(),
 		map: src.generateMap({
@@ -118,7 +134,12 @@ export function magic_string_preprocessor_result(filename: string, src: MagicStr
 	};
 }
 
-export function magic_string_replace_all(src: MagicString, search: string, replace: string) {
+/**
+ * @param {MagicString} src
+ * @param {string} search
+ * @param {string} replace
+ */
+export function magic_string_replace_all(src, search, replace) {
 	let idx = src.original.indexOf(search);
 	if (idx == -1) throw new Error('search not found in src');
 	do {

@@ -19,7 +19,7 @@ describe('hydration', () => {
 	before(() => {
 		const svelte = loadSvelte();
 
-		require.extensions['.svelte'] = function(module, filename) {
+		require.extensions['.svelte'] = function (module, filename) {
 			const options = Object.assign(
 				{
 					filename,
@@ -135,6 +135,6 @@ describe('hydration', () => {
 	}
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
-		runTest(dir, null);
+		runTest(dir);
 	});
 });
