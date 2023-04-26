@@ -27,6 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: ${{ matrix.node-version == 14 && 7 || 8 }}
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
