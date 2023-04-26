@@ -361,7 +361,7 @@ export async function executeBrowserTest(browser, launchPuppeteer, additionalAss
 			await page.goto('http://localhost:6789');
 			const result = await page.evaluate(() => {
 				// @ts-ignore -- It runs in browser context.
-				return test(document.querySelector('main'))
+				return test(document.querySelector('main'));
 			});
 			if (result) console.log(result);
 			additionalAssertion();
