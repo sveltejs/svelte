@@ -823,6 +823,8 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
 
+> `bind:group` only works if the inputs are in the same Svelte component.
+
 #### bind:this
 
 ```sv
