@@ -1742,6 +1742,7 @@ You can also bind to the following properties:
 * `scrollX`
 * `scrollY`
 * `online` — an alias for `window.navigator.onLine`
+* `devicePixelRatio`
 
 All except `scrollX` and `scrollY` are readonly.
 

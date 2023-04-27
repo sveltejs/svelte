@@ -1083,6 +1083,7 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 	readonly 'bind:innerHeight'?: Window['innerHeight'] | undefined | null;
 	readonly 'bind:outerWidth'?: Window['outerWidth'] | undefined | null;
 	readonly 'bind:outerHeight'?: Window['outerHeight'] | undefined | null;
+	readonly 'bind:devicePixelRatio'?: Window['devicePixelRatio'] | undefined | null;
 	'bind:scrollX'?: Window['scrollX'] | undefined | null;
 	'bind:scrollY'?: Window['scrollY'] | undefined | null;
 	readonly 'bind:online'?: Window['navigator']['onLine'] | undefined | null;
