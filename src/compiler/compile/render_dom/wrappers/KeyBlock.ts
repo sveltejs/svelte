@@ -24,9 +24,6 @@ export default class KeyBlockWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.cannot_use_innerhtml();
-		this.not_static_content();
-
 		this.dependencies = node.expression.dynamic_dependencies();
 
 		if (this.dependencies.length) {

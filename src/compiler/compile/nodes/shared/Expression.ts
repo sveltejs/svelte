@@ -24,7 +24,7 @@ type Owner = INode;
 const regex_contains_term_function_expression = /FunctionExpression/;
 
 export default class Expression {
-	type: 'Expression' = 'Expression';
+	type: 'Expression' = 'Expression' as const;
 	component: Component;
 	owner: Owner;
 	node: Node;
@@ -197,6 +197,15 @@ export default class Expression {
 		});
 	}
 
+	dynamic_contextual_dependencies() {
+		return Array.from(this.contextual_dependencies).filter(name => {
+			return Array.from(this.template_scope.dependencies_for_name.get(name)).some(variable_name => {
+				const variable = this.component.var_lookup.get(variable_name);
+				return is_dynamic(variable);
+			});
+		});
+	}
+
 	// TODO move this into a render-dom wrapper?
 	manipulate(block?: Block, ctx?: string | void) {
 		// TODO ideally we wouldn't end up calling this method
@@ -274,21 +283,55 @@ export default class Expression {
 					);
 
 					const declaration = b`const ${id} = ${node}`;
+					const extract_functions = () => {
+						const deps = Array.from(contextual_dependencies);
+						const function_expression = node as FunctionExpression;
+
+						const has_args = function_expression.params.length > 0;
+						function_expression.params = [
+							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
+							...function_expression.params
+						];
+
+						const context_args = deps.map(name => block.renderer.reference(name, ctx));
+
+						component.partly_hoisted.push(declaration);
+
+						block.renderer.add_to_context(id.name);
+						const callee = block.renderer.reference(id);
+
+						this.replace(id as any);
+
+						const func_declaration = has_args
+							? b`function ${id}(...args) {
+								return ${callee}(${context_args}, ...args);
+							}`
+							: b`function ${id}() {
+								return ${callee}(${context_args});
+							}`;
+						return { deps, func_declaration };
+					};
 
 					if (owner.type === 'ConstTag') {
-						let child_scope = scope;
-						walk(node, {
-							enter(node: Node, parent: any) {
-								if (map.has(node)) child_scope = map.get(node);
-								if (node.type === 'Identifier' && is_reference(node, parent)) {
-									if (child_scope.has(node.name)) return;
-									this.replace(block.renderer.reference(node, ctx));
+						// we need a combo block/init recipe
+						if (contextual_dependencies.size === 0) {
+							let child_scope = scope;
+							walk(node, {
+								enter(node: Node, parent: any) {
+									if (map.has(node)) child_scope = map.get(node);
+									if (node.type === 'Identifier' && is_reference(node, parent)) {
+										if (child_scope.has(node.name)) return;
+										this.replace(block.renderer.reference(node, ctx));
+									}
+								},
+								leave(node: Node) {
+									if (map.has(node)) child_scope = child_scope.parent;
 								}
-							},
-							leave(node: Node) {
-								if (map.has(node)) child_scope = child_scope.parent;
-							}
-						});
+							});
+						} else {
+							const { func_declaration } = extract_functions();
+							this.replace(func_declaration[0]);
+						}
 					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
@@ -309,31 +352,7 @@ export default class Expression {
 						this.replace(block.renderer.reference(id));
 					} else {
 						// we need a combo block/init recipe
-						const deps = Array.from(contextual_dependencies);
-						const function_expression = node as FunctionExpression;
-
-						const has_args = function_expression.params.length > 0;
-						function_expression.params = [
-							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
-							...function_expression.params
-						];
-
-						const context_args = deps.map(name => block.renderer.reference(name));
-
-						component.partly_hoisted.push(declaration);
-
-						block.renderer.add_to_context(id.name);
-						const callee = block.renderer.reference(id);
-
-						this.replace(id as any);
-
-						const func_declaration = has_args
-							? b`function ${id}(...args) {
-								return ${callee}(${context_args}, ...args);
-							}`
-							: b`function ${id}() {
-								return ${callee}(${context_args});
-							}`;
+						const { deps, func_declaration } = extract_functions();
 
 						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
 							const dep_scopes = new Set<INode>(deps.map(name => template_scope.get_owner(name)));
@@ -363,6 +382,7 @@ export default class Expression {
 								// add to get_xxx_context
 								// child_ctx[x] = function () { ... }
 								(template_scope.get_owner(deps[0]) as EachBlock).contexts.push({
+									type: 'DestructuredVariable',
 									key: func_id,
 									modifier: () => func_expression,
 									default_modifier: node => node

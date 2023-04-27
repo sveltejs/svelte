@@ -60,5 +60,8 @@ export default class Slot extends Element {
 		}
 
 		component.slots.set(this.slot_name, this);
+
+		this.cannot_use_innerhtml();
+		this.not_static_content();
 	}
 }

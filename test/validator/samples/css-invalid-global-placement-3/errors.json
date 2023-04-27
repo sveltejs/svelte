@@ -3,13 +3,10 @@
 	"message": ":global(...) can be at the start or end of a selector sequence, but not in the middle",
 	"start": {
 		"line": 5,
-		"column": 6,
-		"character": 60
+		"column": 6
 	},
 	"end": {
 		"line": 5,
-		"column": 19,
-		"character": 73
-	},
-	"pos": 60
+		"column": 19
+	}
 }]

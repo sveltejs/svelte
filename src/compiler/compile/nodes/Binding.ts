@@ -3,7 +3,7 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import { regex_dimensions } from '../../utils/patterns';
+import { regex_dimensions, regex_box_size } from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
@@ -22,7 +22,10 @@ const read_only_media_attributes = new Set([
 	'seeking',
 	'ended',
 	'videoHeight',
-	'videoWidth'
+	'videoWidth',
+	'naturalWidth',
+	'naturalHeight',
+	'readyState'
 ]);
 
 export default class Binding extends Node {
@@ -80,7 +83,7 @@ export default class Binding extends Node {
 			variable[this.expression.node.type === 'MemberExpression' ? 'mutated' : 'reassigned'] = true;
 
 			if (info.expression.type === 'Identifier' && !variable.writable) {
-				component.error(this.expression.node as any, compiler_errors.invalid_binding_writibale);
+				component.error(this.expression.node as any, compiler_errors.invalid_binding_writable);
 				return;
 			}
 		}
@@ -89,6 +92,7 @@ export default class Binding extends Node {
 
 		this.is_readonly =
 			regex_dimensions.test(this.name) ||
+			regex_box_size.test(this.name) ||
 			(isElement(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
 					(parent.name === 'input' && type === 'file')) /* TODO others? */);

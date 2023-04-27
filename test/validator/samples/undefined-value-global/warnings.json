@@ -1,15 +1,12 @@
 [{
 	"code": "missing-declaration",
 	"message": "'potato' is not defined",
-	"pos": 46,
 	"start": {
 		"line": 5,
-		"column": 4,
-		"character": 46
+		"column": 4
 	},
 	"end": {
 		"line": 5,
-		"column": 10,
-		"character": 52
+		"column": 10
 	}
 }]

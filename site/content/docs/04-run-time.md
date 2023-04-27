@@ -452,6 +452,29 @@ import { get } from 'svelte/store';
 const value = get(store);
 ```
 
+#### `readonly`
+
+```js
+readableStore = readonly(writableStore);
+```
+
+---
+
+This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
+
+
+```js
+import { readonly } from 'svelte/store';
+
+const writableStore = writable(1);
+const readableStore = readonly(writableStore);
+
+readableStore.subscribe(console.log);
+
+writableStore.set(2); // console: 2
+readableStore.set(2); // ERROR
+```
+
 
 ### `svelte/motion`
 
@@ -670,7 +693,7 @@ Animates a `blur` filter alongside an element's opacity.
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
-* `amount` (`number`, default 5) - the size of the blur in pixels
+* `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
 
 ```sv
 <script>
@@ -698,17 +721,18 @@ out:fly={params}
 
 ---
 
-Animates the x and y positions and the opacity of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
 
 `fly` accepts the following parameters:
 
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
-* `x` (`number`, default 0) - the x offset to animate out to and in from
-* `y` (`number`, default 0) - the y offset to animate out to and in from
+* `x` (`number | string`, default 0) - the x offset to animate out to and in from
+* `y` (`number | string`, default 0) - the y offset to animate out to and in from
 * `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
+x and y use `px` by default but support css units, for example `x: '100vw'` or `y: '50%'`.
 You can see the `fly` transition in action in the [transition tutorial](/tutorial/adding-parameters-to-transitions).
 
 ```sv
@@ -745,6 +769,7 @@ Slides an element in and out.
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number`, default 400) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
+- `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
 
 ```sv
 <script>
@@ -753,8 +778,8 @@ Slides an element in and out.
 </script>
 
 {#if condition}
-	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut }}">
-		slides in and out
+	<div transition:slide="{{delay: 250, duration: 300, easing: quintOut, axis: 'x'}}">
+		slides in and out horizontally
 	</div>
 {/if}
 ```
@@ -853,7 +878,7 @@ The `crossfade` function creates a pair of [transitions](/docs#template-syntax-e
 * `delay` (`number`, default 0) — milliseconds before starting
 * `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
 * `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
-* `fallback` (`function`) — A fallback [transition](/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent. 
+* `fallback` (`function`) — A fallback [transition](/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```sv
 <script>

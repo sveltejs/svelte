@@ -5,11 +5,5 @@ export default {
 		return {
 			div
 		};
-	},
-
-	test(assert, target, snapshot) {
-		const div = target.querySelector('div');
-
-		assert.equal(div, snapshot.div);
 	}
 };

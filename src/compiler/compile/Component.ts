@@ -1,3 +1,4 @@
+import type { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -32,12 +33,12 @@ import { print, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
-import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import Tag from './nodes/shared/Tag';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -109,6 +110,8 @@ export default class Component {
 
 	slots: Map<string, Slot> = new Map();
 	slot_outlets: Set<string> = new Set();
+
+	tags: Tag[] = [];
 
 	constructor(
 		ast: Ast,
@@ -761,6 +764,7 @@ export default class Component {
 
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
+		this.check_if_tags_content_dynamic();
 	}
 
 	post_template_walk() {
@@ -793,20 +797,31 @@ export default class Component {
 				}
 
 				let deep = false;
-				let names: string[] | undefined; 
+				let names: string[] = [];
 
 				if (node.type === 'AssignmentExpression') {
-					deep = node.left.type === 'MemberExpression';
-					names = deep
-						? [get_object(node.left).name]
-						: extract_names(node.left);
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
+										names.push(node.name);
+								}
+							}
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
 				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
 					const { name } = get_object(node.argument);
-					names = [name];
+					names.push(name);
 				}
-
-				if (names) {
+				if (names.length > 0) {
 					names.forEach(name => {
 						let current_scope = scope;
 						let declaration;
@@ -939,7 +954,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -1466,6 +1481,12 @@ export default class Component {
 		};
 
 		unsorted_reactive_declarations.forEach(add_declaration);
+	}
+
+	check_if_tags_content_dynamic() {
+		this.tags.forEach(tag => {
+			tag.check_if_content_dynamic();
+		});
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {

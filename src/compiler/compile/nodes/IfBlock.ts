@@ -18,6 +18,8 @@ export default class IfBlock extends AbstractBlock {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 		this.scope = scope.child();
+		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		this.expression = new Expression(component, this, this.scope, info.expression);
 		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
