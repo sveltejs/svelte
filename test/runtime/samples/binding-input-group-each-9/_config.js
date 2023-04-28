@@ -1,6 +1,6 @@
 // https://github.com/sveltejs/svelte/issues/7633
 export default {
-	async test({ assert, target, component, window }) {
+	async test({ assert, target, component }) {
 		let inputs = target.querySelectorAll('input');
 
 		assert.equal(inputs[0].checked, true);

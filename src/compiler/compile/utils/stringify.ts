@@ -1,4 +1,5 @@
-export function string_literal(data: string) {
+import { Literal } from 'estree';
+export function string_literal(data: string): Literal {
 	return {
 		type: 'Literal',
 		value: data

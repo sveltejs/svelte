@@ -15,6 +15,7 @@ import { is_name_contenteditable, get_contenteditable_attr, has_contenteditable_
 import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import hash from '../utils/hash';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
@@ -503,6 +504,25 @@ export default class Element extends Node {
 		this.optimise();
 
 		component.apply_stylesheet(this);
+
+		if (this.parent) {
+			if (this.actions.length > 0 ||
+				this.animation ||
+				this.bindings.length > 0 ||
+				this.classes.length > 0 ||
+				this.intro || this.outro ||
+				this.handlers.length > 0 ||
+				this.styles.length > 0 ||
+				this.name === 'option' ||
+				this.is_dynamic_element ||
+				this.tag_expr.dynamic_dependencies().length ||
+				this.is_dynamic_element ||
+				component.compile_options.dev
+			) {
+				this.parent.cannot_use_innerhtml(); // need to use add_location
+				this.parent.not_static_content();
+			}
+		}
 	}
 
 	validate() {
@@ -1261,6 +1281,20 @@ export default class Element extends Node {
 				});
 			}
 		});
+	}
+
+	get can_use_textcontent() {
+		return this.is_static_content && this.children.every(node => node.type === 'Text' || node.type === 'MustacheTag');
+	}
+
+	get can_optimise_to_html_string() {
+		const can_use_textcontent = this.can_use_textcontent;
+		const is_template_with_text_content = this.name === 'template' && can_use_textcontent;
+		return !is_template_with_text_content && !this.namespace && (this.can_use_innerhtml || can_use_textcontent) && this.children.length > 0;
+	}
+
+	hash() {
+		return `svelte-${hash(this.component.source.slice(this.start, this.end))}`;
 	}
 }
 

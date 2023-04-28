@@ -18,6 +18,7 @@ const elements_without_text = new Set([
 ]);
 
 const regex_ends_with_svg = /svg$/;
+const regex_non_whitespace_characters = /[\S\u00A0]/;
 
 export default class Text extends Node {
 	type: 'Text';
@@ -62,5 +63,12 @@ export default class Text extends Node {
 		}
 
 		return false;
+	}
+
+	use_space(): boolean {
+		if (this.component.compile_options.preserveWhitespace) return false;
+		if (regex_non_whitespace_characters.test(this.data)) return false;
+
+		return !this.within_pre();
 	}
 }

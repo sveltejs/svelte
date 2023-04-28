@@ -45,7 +45,7 @@ describe('runtime', () => {
 			return module._compile(code, filename);
 		};
 
-		return setupHtmlEqual();
+		return setupHtmlEqual({ removeDataSvelte: true });
 	});
 	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
 
@@ -154,15 +154,23 @@ describe('runtime', () => {
 					window.SvelteComponent = SvelteComponent;
 
 					const target = window.document.querySelector('main');
+					let snapshot = undefined;
 
 					if (hydrate && from_ssr_html) {
 						// ssr into target
 						compileOptions.generate = 'ssr';
 						cleanRequireCache();
+						if (config.before_test) config.before_test();
 						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
+
+						if (config.snapshot) {
+							snapshot = config.snapshot(target);
+						}
+
 						delete compileOptions.generate;
+						if (config.after_test) config.after_test();
 					} else {
 						target.innerHTML = '';
 					}
@@ -199,7 +207,9 @@ describe('runtime', () => {
 					}
 
 					if (config.html) {
-						assert.htmlEqual(target.innerHTML, config.html);
+						assert.htmlEqualWithOptions(target.innerHTML, config.html, {
+							withoutNormalizeHtml: config.withoutNormalizeHtml
+						});
 					}
 
 					if (config.test) {
@@ -208,6 +218,7 @@ describe('runtime', () => {
 							component,
 							mod,
 							target,
+							snapshot,
 							window,
 							raf,
 							compileOptions

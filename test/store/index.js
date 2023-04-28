@@ -101,6 +101,7 @@ describe('store', () => {
 	describe('readable', () => {
 		it('creates a readable store', () => {
 			let running;
+			/** @type {import('svelte/store').Subscriber<unknown>} */
 			let tick;
 
 			const store = readable(undefined, set => {
@@ -163,11 +164,12 @@ describe('store', () => {
 		});
 	});
 
+	/** @type {any} */
 	const fake_observable = {
 		subscribe(fn) {
 			fn(42);
 			return {
-				unsubscribe: () => {}
+				unsubscribe: () => { }
 			};
 		}
 	};
@@ -290,7 +292,7 @@ describe('store', () => {
 		});
 
 		it('derived dependency does not update and shared ancestor updates', () => {
-			const root = writable({ a: 0, b:0 });
+			const root = writable({ a: 0, b: 0 });
 			const values = [];
 
 			const a = derived(root, $root => {
@@ -451,6 +453,7 @@ describe('store', () => {
 			assert.equal(get(readableStore), 2);
 			assert.equal(get(readableStore), get(writableStore));
 
+			// @ts-ignore
 			assert.throws(() => readableStore.set(3));
 		});
 
