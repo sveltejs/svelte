@@ -1081,7 +1081,6 @@ export interface SvelteMediaTimeRange {
 export interface SvelteDocumentAttributes extends HTMLAttributes<Document> {
 	readonly 'bind:fullscreenElement'?: Document['fullscreenElement'] | undefined | null;
 	readonly 'bind:visibilityState'?: Document['visibilityState'] | undefined | null;
-	readonly 'bind:pictureInPictureElement'?: Document['pictureInPictureElement'] | undefined | null;
 }
 
 export interface SvelteWindowAttributes extends HTMLAttributes<Window> {

@@ -11,13 +11,11 @@ import add_actions from './shared/add_actions';
 
 const associated_events = {
 	fullscreenElement: ['fullscreenchange'],
-	pictureInPictureElement: ['enterpictureinpicture', 'leavepictureinpicture'],
 	visibilityState: ['visibilitychange']
 };
 
 const readonly = new Set([
 	'fullscreenElement',
-	'pictureInPictureElement',
 	'visibilityState'
 ]);
 

@@ -1778,7 +1778,6 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 You can also bind to the following properties:
 
 * `fullscreenElement`
-* `pictureInPictureElement`
 * `visibilityState`
 
 All are readonly.

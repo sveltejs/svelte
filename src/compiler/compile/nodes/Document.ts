@@ -12,7 +12,6 @@ import compiler_errors from '../compiler_errors';
 
 const valid_bindings = [
 	'fullscreenElement',
-	'pictureInPictureElement',
 	'visibilityState'
 ];
 
