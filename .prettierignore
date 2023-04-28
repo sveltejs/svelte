@@ -1,0 +1,13 @@
+/*
+!/elements
+!/scripts
+# TODO: after launch new site, format site dir.
+/site
+!/src
+src/compiler/compile/internal_exports.ts
+!/test
+/test/**/*.svelte
+/test/**/_expected*
+/test/**/_actual*
+/test/**/expected*
+/types
