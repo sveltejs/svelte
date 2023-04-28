@@ -428,6 +428,39 @@ describe('store', () => {
 			a.set(false);
 			assert.equal(b_started, false);
 		});
+
+		it('works with undefined stores #1', () => {
+			const a = derived(null, (n) => {
+				return n;
+			});
+			const values = [];
+			const unsubscribe = a.subscribe((value) => values.push(value));
+			unsubscribe();
+			assert.deepEqual(values, [undefined]);
+		});
+
+		it('works with undefined stores #2', () => {
+			const a = writable(1);
+			const b = derived([a, null, undefined], ([n, un1, un2]) => {
+				assert.equal(un1, undefined);
+				assert.equal(un2, undefined);
+				return n * 2;
+			});
+
+			const values = [];
+
+			const unsubscribe = b.subscribe(value => {
+				values.push(value);
+			});
+
+			a.set(2);
+			assert.deepEqual(values, [2, 4]);
+
+			unsubscribe();
+
+			a.set(3);
+			assert.deepEqual(values, [2, 4]);
+		});
 	});
 
 	describe('get', () => {

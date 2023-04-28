@@ -69,7 +69,7 @@ export function validate_store(store, name) {
 export function subscribe(store, ...callbacks) {
 	if (store == null) {
 		for (const callback of callbacks) {
-			callback(store);
+			callback(undefined);
 		}
 		return noop;
 	}
