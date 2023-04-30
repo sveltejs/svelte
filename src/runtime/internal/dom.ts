@@ -307,7 +307,7 @@ export function attr(node: Element, attribute: string, value?: string) {
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
 
-/** 
+/**
  * List of attributes that should always be set through the attr method,
  * because updating them through the property setter doesn't work reliably.
  * In the example of `width`/`height`, the problem is that the setter only
@@ -641,7 +641,7 @@ export function set_input_type(input, type) {
 }
 
 export function set_style(node, key, value, important) {
-	if (value === null) {
+	if (value == null) {
 		node.style.removeProperty(key);
 	} else {
 		node.style.setProperty(key, value, important ? 'important' : '');
