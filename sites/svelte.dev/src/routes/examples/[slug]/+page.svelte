@@ -22,9 +22,10 @@
 	});
 
 	$: mobile = width < 768; // note: same as per media query below
+	/** @type {'columns' | 'rows'} */
 	$: replOrientation = mobile || width > 1080 ? 'columns' : 'rows';
 
-	$: repl && repl.set({ components: data.example.files.map(clone) });
+	$: repl && repl.set({ files: data.example.files.map(clone) });
 </script>
 
 <svelte:head>

@@ -59,7 +59,7 @@
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone)
+			files: data.tutorial.initial.map(clone)
 		});
 	}
 
@@ -67,13 +67,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone)
+			files: data.tutorial.initial.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone)
+			files: data.tutorial.complete.map(clone)
 		});
 	}
 

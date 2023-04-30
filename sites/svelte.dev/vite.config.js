@@ -23,27 +23,8 @@ const config = {
 	logLevel: 'info',
 	plugins: [raw(['.ttf']), imagetools(), sveltekit()],
 	optimizeDeps: {
-		include: [
-			'codemirror',
-			'codemirror/mode/javascript/javascript.js',
-			'codemirror/mode/handlebars/handlebars.js',
-			'codemirror/mode/htmlmixed/htmlmixed.js',
-			'codemirror/mode/xml/xml.js',
-			'codemirror/mode/css/css.js',
-			'codemirror/mode/markdown/markdown.js',
-			'codemirror/addon/edit/closebrackets.js',
-			'codemirror/addon/edit/closetag.js',
-			'codemirror/addon/edit/continuelist.js',
-			'codemirror/addon/comment/comment.js',
-			'codemirror/addon/fold/foldcode.js',
-			'codemirror/addon/fold/foldgutter.js',
-			'codemirror/addon/fold/brace-fold.js',
-			'codemirror/addon/fold/xml-fold.js',
-			'codemirror/addon/fold/indent-fold.js',
-			'codemirror/addon/fold/markdown-fold.js',
-			'codemirror/addon/fold/comment-fold.js'
-		],
-		exclude: ['@sveltejs/repl', '@sveltejs/site-kit']
+		include: ['@codemirror/view', '@codemirror/state'],
+		exclude: ['@sveltejs/site-kit', '@sveltejs/repl', '@puruvj/svelte-repl-next']
 	},
 	ssr: { noExternal: ['@sveltejs/site-kit'] },
 	server: {

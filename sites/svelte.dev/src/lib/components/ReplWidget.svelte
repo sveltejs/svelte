@@ -28,16 +28,17 @@
 			fetch(`/repl/${gist}.json`)
 				.then((r) => r.json())
 				.then((data) => {
-					const { description, files } = data;
+					const { description, components } = data;
+					console.log(description, components);
 
 					name = description;
 
-					const components = Object.keys(files)
+					const files = Object.keys(components)
 						.map((file) => {
 							const dot = file.lastIndexOf('.');
 							if (!~dot) return;
 
-							const source = files[file].content;
+							const source = components[file].content;
 
 							return {
 								name: file.slice(0, dot),
@@ -55,15 +56,15 @@
 							return a.name < b.name ? -1 : 1;
 						});
 
-					repl.set({ components });
+					repl.set({ files });
 				});
 		} else if (example) {
-			const components = process_example(
+			const files = process_example(
 				(await fetch(`/examples/api/${example}.json`).then((r) => r.json())).files
 			);
 
 			repl.set({
-				components
+				files
 			});
 		}
 	}

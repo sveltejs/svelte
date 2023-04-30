@@ -1,5 +1,5 @@
 <script>
-	import Repl from '@sveltejs/repl';
+	import Repl from '@puruvj/svelte-repl-next';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
@@ -10,6 +10,7 @@
 
 	let version = data.version;
 
+	/** @type {import('@puruvj/svelte-repl-next').default} */
 	let repl;
 	let name = data.gist.name;
 	let zen_mode = false;
@@ -40,7 +41,7 @@
 
 	afterNavigate(() => {
 		repl.set({
-			components: data.gist.components
+			files: data.gist.components
 		});
 	});
 
@@ -50,7 +51,7 @@
 	}
 
 	function handle_change(event) {
-		modified_count = event.detail.components.filter((c) => c.modified).length;
+		modified_count = event.detail.files.filter((c) => c.modified).length;
 	}
 
 	$: svelteUrl =
