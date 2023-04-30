@@ -24,7 +24,7 @@ const config = {
 	plugins: [raw(['.ttf']), imagetools(), sveltekit()],
 	optimizeDeps: {
 		include: ['@codemirror/view', '@codemirror/state'],
-		exclude: ['@sveltejs/site-kit', '@sveltejs/repl', '@puruvj/svelte-repl-next']
+		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']
 	},
 	ssr: { noExternal: ['@sveltejs/site-kit'] },
 	server: {

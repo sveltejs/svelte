@@ -1,5 +1,5 @@
 <script>
-	import Repl from '@puruvj/svelte-repl-next';
+	import Repl from '@sveltejs/repl';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
@@ -10,7 +10,7 @@
 
 	let version = data.version;
 
-	/** @type {import('@puruvj/svelte-repl-next').default} */
+	/** @type {import('@sveltejs/repl').default} */
 	let repl;
 	let name = data.gist.name;
 	let zen_mode = false;
