@@ -237,6 +237,7 @@ You can also bind to the following properties:
 - `scrollX`
 - `scrollY`
 - `online` — an alias for `window.navigator.onLine`
+- `devicePixelRatio`
 
 All except `scrollX` and `scrollY` are readonly.
 
@@ -252,6 +253,10 @@ All except `scrollX` and `scrollY` are readonly.
 <svelte:document on:event={handler}/>
 ```
 
+```svelte
+<svelte:document bind:prop={value}/>
+```
+
 Similarly to `<svelte:window>`, this element allows you to add listeners to events on `document`, such as `visibilitychange`, which don't fire on `window`. It also lets you use [actions](/docs/element-directives#use-action) on `document`.
 
 As with `<svelte:window>`, this element may only appear the top level of your component and must never be inside a block or element.
@@ -262,6 +267,13 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 	use:someAction
 />
 ```
+
+You can also bind to the following properties:
+
+- `fullscreenElement`
+- `visibilityState`
+
+All are readonly.
 
 ## `<svelte:body>`
 
