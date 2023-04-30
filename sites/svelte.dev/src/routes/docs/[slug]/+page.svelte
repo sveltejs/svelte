@@ -14,11 +14,11 @@
 </script>
 
 <svelte:head>
-	<title>{data.page.title} • Docs • SvelteKit</title>
+	<title>{data.page.title} • Docs • Svelte</title>
 
-	<meta name="twitter:title" content="SvelteKit docs" />
-	<meta name="twitter:description" content="{data.page.title} • SvelteKit documentation" />
-	<meta name="Description" content="{data.page.title} • SvelteKit documentation" />
+	<meta name="twitter:title" content="Svelte docs" />
+	<meta name="twitter:description" content="{data.page.title} • Svelte documentation" />
+	<meta name="Description" content="{data.page.title} • Svelte documentation" />
 </svelte:head>
 
 <div class="text">
