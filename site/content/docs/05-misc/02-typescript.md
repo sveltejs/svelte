@@ -1,6 +1,7 @@
 ---
 title: TypeScript
-draft: true
 ---
 
-TODO
+## Types
+
+> TYPES: svelte
