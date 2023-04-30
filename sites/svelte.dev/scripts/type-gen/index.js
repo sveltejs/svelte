@@ -319,6 +319,63 @@ const bundled_types = await get_bundled_types();
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
+// Fix the duplicate/messed up types
+// !NOTE: This relies on mutation of `modules`
+$: {
+	const module_with_SvelteComponent = modules.find((m) =>
+		m.types.filter((t) => t.name === 'SvelteComponent')
+	);
+
+	if (!module_with_SvelteComponent) break $;
+
+	const svelte_comp_part = module_with_SvelteComponent?.types.filter(
+		(t) => t.name === 'SvelteComponent'
+	);
+
+	if (svelte_comp_part?.[1]) {
+		// Take the comment from [0], and insert into [1]. Then delete [0]
+		svelte_comp_part[1].comment = svelte_comp_part?.[0].comment;
+		delete svelte_comp_part[0];
+		svelte_comp_part.reverse();
+		svelte_comp_part.length = 1;
+
+		module_with_SvelteComponent.types = module_with_SvelteComponent?.types.filter(
+			(t) => t.name !== 'SvelteComponent'
+		);
+
+		module_with_SvelteComponent.types.push(svelte_comp_part[0]);
+		module_with_SvelteComponent.types.sort((a, b) => (a.name < b.name ? -1 : 1));
+	}
+}
+
+// Fix the duplicate/messed up types
+// !NOTE: This relies on mutation of `modules`
+$: {
+	const module_with_SvelteComponentTyped = modules.find((m) =>
+		m.types.filter((t) => t.name === 'SvelteComponentTyped')
+	);
+
+	if (!module_with_SvelteComponentTyped) break $;
+
+	const svelte_comp_typed_part = module_with_SvelteComponentTyped?.types.filter(
+		(t) => t.name === 'SvelteComponentTyped'
+	);
+
+	if (svelte_comp_typed_part?.[1]) {
+		// Take the comment from [1], and insert into [0]. Then delete [1]
+		svelte_comp_typed_part[0].comment = svelte_comp_typed_part?.[1].comment;
+		delete svelte_comp_typed_part[1];
+		svelte_comp_typed_part.length = 1;
+
+		module_with_SvelteComponentTyped.types = module_with_SvelteComponentTyped?.types.filter(
+			(t) => t.name !== 'SvelteComponentTyped'
+		);
+
+		module_with_SvelteComponentTyped.types.push(svelte_comp_typed_part[0]);
+		module_with_SvelteComponentTyped.types.sort((a, b) => (a.name < b.name ? -1 : 1));
+	}
+}
+
 try {
 	fs.mkdirSync(new URL('../../src/lib/generated', import.meta.url), { recursive: true });
 } catch {}

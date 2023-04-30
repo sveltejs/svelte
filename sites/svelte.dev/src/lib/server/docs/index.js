@@ -110,7 +110,9 @@ export async function get_parsed_docs(docs_data, slug) {
 					try {
 						const injected = [];
 
-						if (source.includes('svelte')) {
+						console.log(page.file);
+
+						if (/(svelte)/.test(source) || page.file.includes('typescript')) {
 							injected.push(
 								`// @filename: ambient.d.ts`,
 								`/// <reference types="svelte" />`,
@@ -135,6 +137,10 @@ export async function get_parsed_docs(docs_data, slug) {
 						// Actions JSDoc examples are invalid. Too many errors, edge cases
 						if (page.file.includes('svelte-action')) {
 							injected.push('// @noErrors');
+						}
+
+						if (page.file.includes('typescript')) {
+							injected.push('// @errors: 2304');
 						}
 
 						if (injected.length) {

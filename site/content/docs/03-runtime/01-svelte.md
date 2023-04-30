@@ -222,3 +222,7 @@ Events can be cancelable by passing a third parameter to the dispatch function. 
 	}
 </script>
 ```
+
+## Types
+
+> TYPES: svelte
