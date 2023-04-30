@@ -227,8 +227,10 @@ export async function get_parsed_docs(docs_data, slug) {
 				type_regex.lastIndex = 0;
 
 				html = html
-					.replace(type_regex, (match, prefix, name) => {
-						if (options.link === 'false' || name === current) {
+					.replace(type_regex, (match, prefix, name, pos, str) => {
+						const char_after = str.slice(pos + match.length, pos + match.length + 1);
+
+						if (options.link === 'false' || name === current || /(\$|\d|\w)/.test(char_after)) {
 							// we don't want e.g. RequestHandler to link to RequestHandler
 							return match;
 						}
