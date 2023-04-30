@@ -43,6 +43,7 @@ export default class Block {
 	binding_groups: Set<BindingGroup> = new Set();
 
 	chunks: {
+		conditional_fragment: Array<Node | Node[]>;
 		declarations: Array<Node | Node[]>;
 		init: Array<Node | Node[]>;
 		create: Array<Node | Node[]>;
@@ -92,6 +93,7 @@ export default class Block {
 		this.bindings = options.bindings;
 
 		this.chunks = {
+			conditional_fragment: [],
 			declarations: [],
 			init: [],
 			create: [],
@@ -381,7 +383,7 @@ export default class Block {
 			}
 		}
 
-		const return_value: any = x`{
+		const return_fragment: any = x`{
 			key: ${properties.key},
 			first: ${properties.first},
 			c: ${properties.create},
@@ -399,6 +401,13 @@ export default class Block {
 		}`;
 
 		const block = dev && this.get_unique_name('block');
+		const conditional_array = {
+			type: 'ArrayExpression',
+			elements: this.chunks.conditional_fragment
+		};
+		const conditional = this.chunks.conditional_fragment.length ? x`${conditional_array}.some(@identity)` : null;
+
+		const return_value = conditional ? x`${conditional} ? ${return_fragment} : null` : return_fragment;
 
 		const body = b`
 			${this.chunks.declarations}

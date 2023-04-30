@@ -34,7 +34,9 @@ export default function(node: Slot, renderer: Renderer, options: RenderOptions &
 		});
 		options.slot_scopes.set(slot, {
 			input: get_slot_scope(node.lets),
-			output: renderer.pop()
+			condition: x`#slots.${node.slot_name}`,
+			output: renderer.pop(),
+			default_value: result
 		});
 	}
 }
