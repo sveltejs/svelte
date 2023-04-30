@@ -31,8 +31,8 @@
 	let selected = examples[0];
 </script>
 
-<Section --background="var(--sk-back-5)">
-	<h3>Why Svelte?</h3>
+<Section --background="var(--sk-back-2)">
+	<h3>why Svelte?</h3>
 
 	<div class="container">
 		<div class="controls">

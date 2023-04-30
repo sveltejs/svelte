@@ -1,17 +1,14 @@
 <script>
 	import Section from '../Section.svelte';
 	import { companies } from './companies.js';
-	// @ts-ignore Why is theme not found by the extension, its right there 🤔
 	import { theme } from '@sveltejs/site-kit/components';
-
-	$: console.log($theme);
 
 	const sorted = companies.sort((a, b) => (a.alt < b.alt ? -1 : 1));
 </script>
 
-<Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#444'}>
+<Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
-		<h3>Who's using Svelte?</h3>
+		<h3>who's using svelte?</h3>
 		<div class="logos">
 			{#each sorted as { href, filename, alt, style, invert, width, height }}
 				<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
