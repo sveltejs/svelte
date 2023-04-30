@@ -110,8 +110,6 @@ export async function get_parsed_docs(docs_data, slug) {
 					try {
 						const injected = [];
 
-						console.log(page.file);
-
 						if (/(svelte)/.test(source) || page.file.includes('typescript')) {
 							injected.push(
 								`// @filename: ambient.d.ts`,
