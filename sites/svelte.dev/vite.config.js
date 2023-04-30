@@ -26,7 +26,7 @@ const config = {
 		include: ['@codemirror/view', '@codemirror/state'],
 		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']
 	},
-	ssr: { noExternal: ['@sveltejs/site-kit'] },
+	ssr: { noExternal: ['@sveltejs/site-kit', '@sveltejs/repl'] },
 	server: {
 		fs: {
 			strict: false
