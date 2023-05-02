@@ -1597,7 +1597,17 @@ export interface SvelteHTMLElements {
 	'svelte:document': HTMLAttributes<Document>;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
-	'svelte:options': { [name: string]: any };
+	'svelte:options': {
+		customElement?: string | undefined | {
+			tag: string;
+			shadow?: 'open' | 'none' | undefined;
+			props?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }> | undefined;
+		};
+		immutable?: boolean | undefined;
+		accessors?: boolean | undefined;
+		namespace?: string | undefined;
+		[name: string]: any
+	};
 	'svelte:head': { [name: string]: any };
 
 	[name: string]: { [name: string]: any };

@@ -1,9 +1,9 @@
-<svelte:options tag="custom-element"/>
+<svelte:options customElement="custom-element" />
 
-<span class='icon'></span>
+<span class="icon" />
 
 <style>
 	.icon::before {
-		content: '\ff'
+		content: "\ff";
 	}
 </style>

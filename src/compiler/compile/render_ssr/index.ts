@@ -33,7 +33,7 @@ export default function ssr(
 	// TODO concatenate CSS maps
 	const css = options.customElement ?
 		{ code: null, map: null } :
-		component.stylesheet.render(options.filename, true);
+		component.stylesheet.render(options.filename);
 
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const props = component.vars.filter(variable => !variable.module && variable.export_name);

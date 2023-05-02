@@ -284,11 +284,14 @@ export class SvelteComponentTyped<
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = new (
+export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = (new (
 	options: ComponentConstructorOptions<
 		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
 	>
-) => Component;
+) => Component) & {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement
+};
 
 /**
  * Convenience type to get the props the given component expects. Example:
