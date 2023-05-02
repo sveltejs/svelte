@@ -329,6 +329,8 @@ interface CustomElementPropDefinition {
 }
 
 /**
+ * @internal
+ *
  * Turn a Svelte component into a custom element.
  * @param Component A Svelte component constructor
  * @param props_definition The props to observe
