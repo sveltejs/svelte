@@ -6,9 +6,9 @@ import { ARIAPropertyDefinition } from 'aria-query';
  * @internal
  */
 export default {
-	custom_element_no_tag: {
-		code: 'custom-element-no-tag',
-		message: 'No custom element \'tag\' option was specified. To automatically register a custom element, specify a name with a hyphen in it, e.g. <svelte:options tag="my-thing"/>. To hide this warning, use <svelte:options tag={null}/>'
+	tag_option_deprecated: {
+		code: 'tag-option-deprecated',
+		message: "'tag' option is deprecated — use 'customElement' instead"
 	},
 	unused_export_let: (component: string, property: string) => ({
 		code: 'unused-export-let',

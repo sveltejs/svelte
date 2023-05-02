@@ -1,4 +1,4 @@
-<svelte:options tag="custom-element" shadowdom="none" />
+<svelte:options customElement={{ tag: "custom-element", shadow: "none" }} />
 
 <script>
 	export let name;

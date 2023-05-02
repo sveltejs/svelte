@@ -1,11 +1,11 @@
-<svelte:options tag="custom-element"/>
+<svelte:options customElement="custom-element" />
 
 <div>
 	<slot>
 		<p>default fallback content</p>
 	</slot>
 
-	<slot name='foo'>
+	<slot name="foo">
 		<p>foo fallback content</p>
 	</slot>
 </div>

@@ -1,4 +1,9 @@
-<svelte:options tag="my-widget" ceProps={{ red: { reflect: true } }} />
+<svelte:options
+	customElement={{
+		tag: "my-widget",
+		props: { red: { reflect: true } },
+	}}
+/>
 
 <script>
 	export let red = false;

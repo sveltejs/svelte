@@ -1,5 +1,3 @@
-<svelte:options tag={null} />
-
 <script>
 	export let name;
 </script>

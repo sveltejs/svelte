@@ -16,7 +16,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
-import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces';
+import { Ast, CompileOptions, Var, Warning, CssResult, Attribute } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
@@ -42,12 +42,14 @@ import Tag from './nodes/shared/Tag';
 
 interface ComponentOptions {
 	namespace?: string;
-	tag?: string;
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
-	ceProps?: Record<string, { reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object', attribute?: string }>;
-	shadowdom?: 'open' | 'none';
+	customElement?: {
+		tag: string | null;
+		shadow?: 'open' | 'none';
+		props?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }>;
+	};
 }
 
 const regex_leading_directory_separator = /^[/\\]/;
@@ -169,16 +171,7 @@ export default class Component {
 			this.component_options.namespace;
 
 		if (compile_options.customElement) {
-			if (
-				this.component_options.tag === undefined &&
-				compile_options.tag === undefined
-			) {
-				const svelteOptions = ast.html.children.find(
-					child => child.name === 'svelte:options'
-				) || { start: 0, end: 0 };
-				this.warn(svelteOptions, compiler_warnings.custom_element_no_tag);
-			}
-			this.tag = this.component_options.tag || compile_options.tag;
+			this.tag = this.component_options.customElement?.tag || compile_options.tag || this.name.name;
 		} else {
 			this.tag = this.name.name;
 		}
@@ -1565,70 +1558,97 @@ function process_component_options(component: Component, nodes) {
 			if (attribute.type === 'Attribute') {
 				const { name } = attribute;
 
+				function parse_tag(attribute: Attribute, tag: string) {
+					if (typeof tag !== 'string' && tag !== null) {
+						return component.error(attribute, compiler_errors.invalid_tag_attribute);
+					}
+
+					if (tag && !regex_valid_tag_name.test(tag)) {
+						return component.error(attribute, compiler_errors.invalid_tag_property);
+					}
+
+					if (tag && !component.compile_options.customElement) {
+						component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
+					}
+
+					component_options.customElement = component_options.customElement || {} as any;
+					component_options.customElement.tag = tag;
+				}
+
 				switch (name) {
 					case 'tag': {
-						const tag = get_value(attribute, compiler_errors.invalid_tag_attribute);
-
-						if (typeof tag !== 'string' && tag !== null) {
-							return component.error(attribute, compiler_errors.invalid_tag_attribute);
-						}
-
-						if (tag && !regex_valid_tag_name.test(tag)) {
-							return component.error(attribute, compiler_errors.invalid_tag_property);
-						}
-
-						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-						}
-
-						component_options.tag = tag;
+						component.warn(attribute, compiler_warnings.tag_option_deprecated)
+						parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
 						break;
 					}
 
-					case 'shadowdom': {
-						const shadowdom = get_value(attribute, compiler_errors.invalid_shadowdom_attribute);
+					case 'customElement': {
+						component_options.customElement = component_options.customElement || {} as any;
 
-						if (shadowdom !== 'open' && shadowdom !== 'none') {
-							return component.error(attribute, compiler_errors.invalid_shadowdom_attribute);
-						}
-
-						component_options.shadowdom = shadowdom;
-						break;
-					}
-
-					case 'ceProps': {
-						const error = () => component.error(attribute, compiler_errors.invalid_ceProps_attribute);
 						const { value } = attribute;
-						const chunk = value[0];
-						component_options.ceProps = {};
 
-						if (!chunk) {
+						if (value[0].type === 'MustacheTag' && value[0].expression?.value === null) {
+							component_options.customElement.tag = null;
 							break;
+						} else if (value[0].type === 'Text') {
+							parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
+							break;
+						} else if (value[0].expression.type !== 'ObjectExpression') {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
 
-						if (value.length > 1 || chunk.expression?.type !== 'ObjectExpression') {
-							return error();
+						const tag = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'tag'
+						);
+						if (tag) {
+							parse_tag(tag, tag.value?.value);
+						} else {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
 
-						const object = chunk.expression as ObjectExpression;
-						for (const property of object.properties) {
-							if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
+						const props = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'props'
+						);
+						if (props) {
+							const error = () => component.error(attribute, compiler_errors.invalid_props_attribute);
+							if (props.value?.type !== 'ObjectExpression') {
 								return error();
 							}
-							component_options.ceProps[property.key.name] = {};
-							for (const prop of property.value.properties) {
-								if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
+
+							component_options.customElement.props = {};
+
+							for (const property of (props.value as ObjectExpression).properties) {
+								if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
 									return error();
 								}
-								if (['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
-									prop.key.name === 'type' && ['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(prop.value.value as string) === -1 ||
-									prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean' ||
-									prop.key.name === 'attribute' && typeof prop.value.value !== 'string'
-								) {
-									return error();
+								component_options.customElement.props[property.key.name] = {};
+								for (const prop of property.value.properties) {
+									if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
+										return error();
+									}
+									if (['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
+										prop.key.name === 'type' && ['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(prop.value.value as string) === -1 ||
+										prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean' ||
+										prop.key.name === 'attribute' && typeof prop.value.value !== 'string'
+									) {
+										return error();
+									}
+									component_options.customElement.props[property.key.name][prop.key.name] = prop.value.value;
 								}
-								component_options.ceProps[property.key.name][prop.key.name] = prop.value.value;
 							}
+						}
+
+						const shadow = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'shadow'
+						);
+						if (shadow) {
+							const shadowdom = shadow.value?.value;
+
+							if (shadowdom !== 'open' && shadowdom !== 'none') {
+								return component.error(shadow, compiler_errors.invalid_shadow_attribute);
+							}
+
+							component_options.customElement.shadow = shadowdom;
 						}
 
 						break;
@@ -1664,7 +1684,7 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
+						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown(name));
 				}
 			} else {
 				return component.error(attribute, compiler_errors.invalid_options_attribute);

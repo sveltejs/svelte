@@ -350,8 +350,7 @@ export async function executeBrowserTest(browser, launchPuppeteer, additionalAss
 			const page = await browser.newPage();
 
 			page.on('console', (type) => {
-				// @ts-ignore -- TODO: Fix type
-				console[type._type](type._text);
+				console[type.type()](type.text());
 			});
 
 			page.on('error', error => {

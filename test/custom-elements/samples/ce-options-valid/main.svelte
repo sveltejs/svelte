@@ -1,7 +1,9 @@
 <svelte:options
-	tag="custom-element"
-	ceProps={{
-		name: { reflect: false, type: "String", attribute: "name" },
+	customElement={{
+		tag: "custom-element",
+		props: {
+			name: { reflect: false, type: "String", attribute: "name" },
+		},
 	}}
 />
 

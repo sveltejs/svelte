@@ -291,11 +291,12 @@ if (typeof HTMLElement === 'function') {
 }
 
 function get_custom_element_value(prop: string, value: any, props_definition: Record<string, CustomElementPropDefinition>, transform?: 'toAttribute' | 'toProp') {
-	value = props_definition[prop]?.type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
+	const type = props_definition[prop]?.type;
+	value = type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
 	if (!transform || !props_definition[prop]) {
 		return value;
 	} else if (transform === 'toAttribute') {
-		switch (props_definition[prop].type) {
+		switch (type) {
 			case 'Object':
 			case 'Array':
 				return value == null ? null : JSON.stringify(value);
@@ -307,7 +308,7 @@ function get_custom_element_value(prop: string, value: any, props_definition: Re
 				return value;
 		}
 	} else {
-		switch (props_definition[prop].type) {
+		switch (type) {
 			case 'Object':
 			case 'Array':
 				return value && JSON.parse(value);
@@ -322,9 +323,9 @@ function get_custom_element_value(prop: string, value: any, props_definition: Re
 }
 
 interface CustomElementPropDefinition {
+	attribute?: string;
 	reflect?: boolean;
 	type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object';
-	attribute?: string;
 }
 
 /**
