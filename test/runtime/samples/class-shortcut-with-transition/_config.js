@@ -17,7 +17,7 @@ export default {
 		raf.tick(150);
 		assert.htmlEqual(
 			target.innerHTML,
-			'<p>foo</p><p class="red svelte-1yszte8 border" style="animation: __svelte_1333973250_0 100ms linear 0ms 1 both;">bar</p>'
+			'<p>foo</p><p class="red svelte-1yszte8 border" style="animation: __svelte_567626776_0 100ms linear 0ms 1 both;">bar</p>'
 		);
 
 		component.open = true;
