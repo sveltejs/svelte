@@ -1577,7 +1577,7 @@ function process_component_options(component: Component, nodes) {
 
 				switch (name) {
 					case 'tag': {
-						component.warn(attribute, compiler_warnings.tag_option_deprecated)
+						component.warn(attribute, compiler_warnings.tag_option_deprecated);
 						parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
 						break;
 					}

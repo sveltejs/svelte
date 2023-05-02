@@ -204,7 +204,7 @@ export default {
 	},
 	invalid_customElement_attribute: {
 		code: 'invalid-customElement-attribute',
-		message: "'customElement' must be a string literal defining a valid custom element name or an object of the form "+
+		message: "'customElement' must be a string literal defining a valid custom element name or an object of the form " +
 		"{ tag: string; shadow?: 'open' | 'none'; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }"
 	},
 	invalid_tag_attribute: {

@@ -32,7 +32,7 @@ export default {
 	}),
 	missing_custom_element_compile_options: {
 		code: 'missing-custom-element-compile-options',
-		message: "The 'tag' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
+		message: "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
 	},
 	css_unused_selector: (selector: string) => ({
 		code: 'css-unused-selector',

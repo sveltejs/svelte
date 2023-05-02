@@ -13,7 +13,7 @@ import {
 } from "svelte/internal";
 
 function add_css(target) {
-	append_styles(target, "svelte-66l35w", "div.svelte-66l35w{animation:svelte-66l35w-foo 1s}@keyframes svelte-66l35w-foo{0%{opacity:0}100%{opacity:1}}");
+	append_styles(target, "svelte-10axo0s", "div.svelte-10axo0s{animation:svelte-10axo0s-foo 1s}@keyframes svelte-10axo0s-foo{0%{opacity:0}100%{opacity:1}}");
 }
 
 function create_fragment(ctx) {
@@ -23,7 +23,7 @@ function create_fragment(ctx) {
 		c() {
 			div = element("div");
 			div.textContent = "fades in";
-			attr(div, "class", "svelte-66l35w");
+			attr(div, "class", "svelte-10axo0s");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
