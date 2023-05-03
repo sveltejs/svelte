@@ -1110,7 +1110,11 @@ export default class Component {
 										}
 
 										case 'RestElement':
-											param.argument = get_new_name(param.argument);
+											if (param.argument.type === 'Identifier') {
+												param.argument = get_new_name(param.argument);
+											} else {
+												rename_identifiers(param.argument);
+											}
 											break;
 
 										case 'AssignmentPattern':
