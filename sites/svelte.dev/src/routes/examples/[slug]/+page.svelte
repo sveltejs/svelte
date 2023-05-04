@@ -4,6 +4,7 @@
 	import { navigating } from '$app/stores';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
+	import { theme } from '@sveltejs/site-kit/components';
 	import { mapbox_setup, svelteUrl } from '../../../config';
 	import TableOfContents from './TableOfContents.svelte';
 
@@ -52,6 +53,7 @@
 				fixed={mobile}
 				relaxed
 				injectedJS={mapbox_setup}
+				previewTheme={$theme.current}
 			/>
 		</div>
 	</div>

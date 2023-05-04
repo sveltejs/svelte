@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { process_example } from '$lib/utils/examples';
 	import Repl from '@sveltejs/repl';
+	import { theme } from '@sveltejs/site-kit/components';
 	import { onMount } from 'svelte';
 
 	export let version = '3';
@@ -84,5 +85,5 @@
 </script>
 
 {#if browser}
-	<Repl bind:this={repl} {svelteUrl} embedded relaxed />
+	<Repl bind:this={repl} {svelteUrl} embedded relaxed previewTheme={$theme.current} />
 {/if}

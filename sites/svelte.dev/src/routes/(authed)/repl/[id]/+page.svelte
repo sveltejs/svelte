@@ -1,8 +1,9 @@
 <script>
-	import Repl from '@sveltejs/repl';
-	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
+	import Repl from '@sveltejs/repl';
+	import { theme } from '@sveltejs/site-kit/components';
+	import { onMount } from 'svelte';
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
 
@@ -92,6 +93,7 @@
 			on:change={handle_change}
 			on:add={handle_change}
 			on:remove={handle_change}
+			previewTheme={$theme.current}
 		/>
 	{/if}
 </div>
