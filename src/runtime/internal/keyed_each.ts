@@ -1,4 +1,5 @@
 import { transition_in, transition_out } from './transitions';
+import { run_all } from './utils';
 
 export function destroy_block(block, lookup) {
 	block.d(1);
@@ -32,6 +33,7 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 	const new_blocks = [];
 	const new_lookup = new Map();
 	const deltas = new Map();
+	const updates = [];
 
 	i = n;
 	while (i--) {
@@ -43,7 +45,8 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 			block = create_each_block(key, child_ctx);
 			block.c();
 		} else if (dynamic) {
-			block.p(child_ctx, dirty);
+			// defer updates until all the DOM shuffling is done
+			updates.push(() => block.p(child_ctx, dirty));
 		}
 
 		new_lookup.set(key, new_blocks[i] = block);
@@ -99,16 +102,24 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 
 	while (n) insert(new_blocks[n - 1]);
 
+	run_all(updates);
+
 	return new_blocks;
 }
 
 export function validate_each_keys(ctx, list, get_context, get_key) {
-	const keys = new Set();
+	const keys = new Map();
 	for (let i = 0; i < list.length; i++) {
 		const key = get_key(get_context(ctx, list, i));
 		if (keys.has(key)) {
-			throw new Error('Cannot have duplicate keys in a keyed each');
+			let value = '';
+			try {
+				value = `with value '${String(key)}' `;
+			} catch (e) {
+				// can't stringify
+			}
+			throw new Error(`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(key)} and ${i} ${value}are duplicates`);
 		}
-		keys.add(key);
+		keys.set(key, i);
 	}
 }

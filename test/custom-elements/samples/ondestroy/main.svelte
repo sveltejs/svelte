@@ -1,8 +1,8 @@
-<svelte:options tag="my-app"/>
+<svelte:options customElement="my-app" />
 
 <script>
-	import { onMount, onDestroy } from 'svelte';
-	
+	import { onMount, onDestroy } from "svelte";
+
 	let el;
 	let parentEl;
 
@@ -11,12 +11,12 @@
 
 		return () => {
 			parentEl.dataset.onMountDestroyed = true;
-		}
+		};
 	});
 
 	onDestroy(() => {
 		parentEl.dataset.destroyed = true;
-	})
+	});
 </script>
 
-<div bind:this={el}></div>
+<div bind:this={el} />

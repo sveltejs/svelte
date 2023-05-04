@@ -33,6 +33,8 @@ export default class EachBlock extends AbstractBlock {
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
+		this.cannot_use_innerhtml();
+		this.not_static_content();
 
 		this.expression = new Expression(component, this, scope, info.expression);
 		this.context = info.context.name || 'each'; // TODO this is used to facilitate binding; currently fails with destructuring
@@ -45,6 +47,7 @@ export default class EachBlock extends AbstractBlock {
 		unpack_destructuring({ contexts: this.contexts, node: info.context, scope, component, context_rest_properties: this.context_rest_properties });
 
 		this.contexts.forEach(context => {
+			if (context.type !== 'DestructuredVariable') return;
 			this.scope.add(context.key.name, this.expression.dependencies, this);
 		});
 

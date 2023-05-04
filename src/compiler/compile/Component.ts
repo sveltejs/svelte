@@ -1,3 +1,4 @@
+import type { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
@@ -15,7 +16,7 @@ import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
-import { Ast, CompileOptions, Var, Warning, CssResult } from '../interfaces';
+import { Ast, CompileOptions, Var, Warning, CssResult, Attribute } from '../interfaces';
 import error from '../utils/error';
 import get_code_frame from '../utils/get_code_frame';
 import flatten_reference from './utils/flatten_reference';
@@ -25,27 +26,35 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, ObjectExpression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code';
 import Element from './nodes/Element';
-import { DecodedSourceMap, RawSourceMap } from '@ampproject/remapping/dist/types/types';
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import Tag from './nodes/shared/Tag';
 
 interface ComponentOptions {
 	namespace?: string;
-	tag?: string;
 	immutable?: boolean;
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
+	customElement?: {
+		tag: string | null;
+		shadow?: 'open' | 'none';
+		props?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }>;
+	};
 }
+
+const regex_leading_directory_separator = /^[/\\]/;
+const regex_starts_with_term_export = /^Export/;
+const regex_contains_term_function = /Function/;
 
 export default class Component {
 	stats: Stats;
@@ -106,6 +115,8 @@ export default class Component {
 	slots: Map<string, Slot> = new Map();
 	slot_outlets: Set<string> = new Set();
 
+	tags: Tag[] = [];
+
 	constructor(
 		ast: Ast,
 		source: string,
@@ -136,7 +147,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-					.replace(/^[/\\]/, '')
+					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -160,16 +171,7 @@ export default class Component {
 			this.component_options.namespace;
 
 		if (compile_options.customElement) {
-			if (
-				this.component_options.tag === undefined &&
-				compile_options.tag === undefined
-			) {
-				const svelteOptions = ast.html.children.find(
-					child => child.name === 'svelte:options'
-				) || { start: 0, end: 0 };
-				this.warn(svelteOptions, compiler_warnings.custom_element_no_tag);
-			}
-			this.tag = this.component_options.tag || compile_options.tag;
+			this.tag = this.component_options.customElement?.tag || compile_options.tag || this.name.name;
 		} else {
 			this.tag = this.name.name;
 		}
@@ -188,7 +190,7 @@ export default class Component {
 		this.pop_ignores();
 
 		this.elements.forEach(element => this.stylesheet.apply(element));
-		if (!compile_options.customElement) this.stylesheet.reify();
+		this.stylesheet.reify();
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
 
@@ -540,6 +542,9 @@ export default class Component {
 						extract_names(declarator.id).forEach(name => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
+							if (declarator.init?.type === 'Literal' && typeof declarator.init.value === 'boolean') {
+								variable.is_boolean = true;
+							}
 							if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
 								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
 							}
@@ -638,7 +643,7 @@ export default class Component {
 				body.splice(i, 1);
 			}
 
-			if (/^Export/.test(node.type)) {
+			if (regex_starts_with_term_export.test(node.type)) {
 				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
@@ -757,6 +762,7 @@ export default class Component {
 
 		this.hoist_instance_declarations();
 		this.extract_reactive_declarations();
+		this.check_if_tags_content_dynamic();
 	}
 
 	post_template_walk() {
@@ -788,6 +794,53 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				let deep = false;
+				let names: string[] = [];
+
+				if (node.type === 'AssignmentExpression') {
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
+										names.push(node.name);
+								}
+							}
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
+				} else if (node.type === 'UpdateExpression') {
+					deep = node.argument.type === 'MemberExpression';
+					const { name } = get_object(node.argument);
+					names.push(name);
+				}
+				if (names.length > 0) {
+					names.forEach(name => {
+						let current_scope = scope;
+						let declaration;
+
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
+							}
+							current_scope = current_scope.parent;
+						}
+
+						if (declaration && declaration.kind === 'const' && !deep) {
+							component.error(node as any, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
+				}
+
 				if (node.type === 'ImportDeclaration') {
 					component.extract_imports(node);
 					// TODO: to use actual remove
@@ -795,7 +848,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				if (/^Export/.test(node.type)) {
+				if (regex_starts_with_term_export.test(node.type)) {
 					const replacement = component.extract_exports(node);
 					if (replacement) {
 						this.replace(replacement);
@@ -899,7 +952,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -918,7 +971,7 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+					if (!((regex_contains_term_function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -965,7 +1018,7 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node: Node) {
-				if (/Function/.test(node.type)) {
+				if (regex_contains_term_function.test(node.type)) {
 					return this.skip();
 				}
 
@@ -1089,7 +1142,7 @@ export default class Component {
 
 						this.replace(b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${ props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
 						` as any);
 						return this.skip();
@@ -1428,6 +1481,12 @@ export default class Component {
 		unsorted_reactive_declarations.forEach(add_declaration);
 	}
 
+	check_if_tags_content_dynamic() {
+		this.tags.forEach(tag => {
+			tag.check_if_content_dynamic();
+		});
+	}
+
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
 			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
@@ -1460,6 +1519,8 @@ export default class Component {
 	}
 }
 
+const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
+
 function process_component_options(component: Component, nodes) {
 	const component_options: ComponentOptions = {
 		immutable: component.compile_options.immutable || false,
@@ -1473,7 +1534,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, {code, message}) {
+	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
 		const chunk = value[0];
 
@@ -1497,23 +1558,99 @@ function process_component_options(component: Component, nodes) {
 			if (attribute.type === 'Attribute') {
 				const { name } = attribute;
 
+				function parse_tag(attribute: Attribute, tag: string) {
+					if (typeof tag !== 'string' && tag !== null) {
+						return component.error(attribute, compiler_errors.invalid_tag_attribute);
+					}
+
+					if (tag && !regex_valid_tag_name.test(tag)) {
+						return component.error(attribute, compiler_errors.invalid_tag_property);
+					}
+
+					if (tag && !component.compile_options.customElement) {
+						component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
+					}
+
+					component_options.customElement = component_options.customElement || {} as any;
+					component_options.customElement.tag = tag;
+				}
+
 				switch (name) {
 					case 'tag': {
-						const tag = get_value(attribute, compiler_errors.invalid_tag_attribute);
+						component.warn(attribute, compiler_warnings.tag_option_deprecated);
+						parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
+						break;
+					}
 
-						if (typeof tag !== 'string' && tag !== null) {
-							return component.error(attribute, compiler_errors.invalid_tag_attribute);
+					case 'customElement': {
+						component_options.customElement = component_options.customElement || {} as any;
+
+						const { value } = attribute;
+
+						if (value[0].type === 'MustacheTag' && value[0].expression?.value === null) {
+							component_options.customElement.tag = null;
+							break;
+						} else if (value[0].type === 'Text') {
+							parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
+							break;
+						} else if (value[0].expression.type !== 'ObjectExpression') {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
-							return component.error(attribute, compiler_errors.invalid_tag_property);
+						const tag = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'tag'
+						);
+						if (tag) {
+							parse_tag(tag, tag.value?.value);
+						} else {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
 
-						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
+						const props = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'props'
+						);
+						if (props) {
+							const error = () => component.error(attribute, compiler_errors.invalid_props_attribute);
+							if (props.value?.type !== 'ObjectExpression') {
+								return error();
+							}
+
+							component_options.customElement.props = {};
+
+							for (const property of (props.value as ObjectExpression).properties) {
+								if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
+									return error();
+								}
+								component_options.customElement.props[property.key.name] = {};
+								for (const prop of property.value.properties) {
+									if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
+										return error();
+									}
+									if (['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
+										prop.key.name === 'type' && ['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(prop.value.value as string) === -1 ||
+										prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean' ||
+										prop.key.name === 'attribute' && typeof prop.value.value !== 'string'
+									) {
+										return error();
+									}
+									component_options.customElement.props[property.key.name][prop.key.name] = prop.value.value;
+								}
+							}
 						}
 
-						component_options.tag = tag;
+						const shadow = value[0].expression.properties.find(
+							(prop: any) => prop.key.name === 'shadow'
+						);
+						if (shadow) {
+							const shadowdom = shadow.value?.value;
+
+							if (shadowdom !== 'open' && shadowdom !== 'none') {
+								return component.error(shadow, compiler_errors.invalid_shadow_attribute);
+							}
+
+							component_options.customElement.shadow = shadowdom;
+						}
+
 						break;
 					}
 
@@ -1547,7 +1684,7 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown);
+						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown(name));
 				}
 			} else {
 				return component.error(attribute, compiler_errors.invalid_options_attribute);

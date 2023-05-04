@@ -1,11 +1,13 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = `
 		<custom-element><span slot="a">hello world</span><span>bye</span><span>world</span></custom-element>
 		<custom-element><span slot="a">hello world</span><span slot="b">hello world</span><span>bye world</span></custom-element>
 	`;
+	await tick();
 
 	const [a, b] = target.querySelectorAll('custom-element');
 

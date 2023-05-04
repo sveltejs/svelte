@@ -1,5 +1,5 @@
-import { Readable, writable } from 'svelte/store';
-import { loop, now, Task } from 'svelte/internal';
+import { Readable, writable } from '../store';
+import { loop, now, Task } from '../internal';
 import { is_date } from './utils';
 
 interface TickContext<T> {

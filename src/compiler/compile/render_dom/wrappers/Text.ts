@@ -7,7 +7,7 @@ import { Identifier } from 'estree';
 
 export default class TextWrapper extends Wrapper {
 	node: Text;
-	data: string;
+	_data: string;
 	skip: boolean;
 	var: Identifier;
 
@@ -21,15 +21,22 @@ export default class TextWrapper extends Wrapper {
 		super(renderer, block, parent, node);
 
 		this.skip = this.node.should_skip();
-		this.data = data;
+		this._data = data;
 		this.var = (this.skip ? null : x`t`) as unknown as Identifier;
 	}
 
 	use_space() {
-		if (this.renderer.component.component_options.preserveWhitespace) return false;
-		if (/[\S\u00A0]/.test(this.data)) return false;
+		return this.node.use_space();
+	}
 
-		return !this.node.within_pre();
+	set data(value: string) {
+		// when updating `this.data` during optimisation
+		// propagate the changes over to the underlying node
+		// so that the node.use_space reflects on the latest `data` value
+		this.node.data = this._data = value;
+	}
+	get data() {
+		return this._data;
 	}
 
 	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {

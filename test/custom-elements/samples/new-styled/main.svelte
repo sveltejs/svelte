@@ -1,4 +1,4 @@
-<svelte:options tag="custom-element"/>
+<svelte:options customElement="custom-element" />
 
 <p>styled</p>
 

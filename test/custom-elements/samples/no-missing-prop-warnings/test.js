@@ -1,7 +1,8 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	const warnings = [];
 	const warn = console.warn;
 
@@ -10,6 +11,7 @@ export default function (target) {
 	};
 
 	target.innerHTML = '<my-app foo=yes />';
+	await tick();
 
 	assert.deepEqual(warnings, [
 		"<my-app> was created without expected prop 'bar'"

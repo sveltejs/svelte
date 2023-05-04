@@ -44,7 +44,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {@const ...}'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
@@ -66,7 +66,7 @@ export default {
 	},
 	missing_contenteditable_attribute: {
 		code: 'missing-contenteditable-attribute',
-		message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
+		message: '\'contenteditable\' attribute is required for textContent, innerHTML and innerText two-way bindings'
 	},
 	dynamic_contenteditable_attribute: {
 		code: 'dynamic-contenteditable-attribute',
@@ -202,9 +202,23 @@ export default {
 		code: 'invalid-tag-property',
 		message: "tag name must be two or more words joined by the '-' character"
 	},
+	invalid_customElement_attribute: {
+		code: 'invalid-customElement-attribute',
+		message: "'customElement' must be a string literal defining a valid custom element name or an object of the form " +
+		"{ tag: string; shadow?: 'open' | 'none'; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }"
+	},
 	invalid_tag_attribute: {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
+	},
+	invalid_shadow_attribute: {
+		code: 'invalid-shadow-attribute',
+		message: "'shadow' must be either 'open' or 'none'"
+	},
+	invalid_props_attribute: {
+		code: 'invalid-props-attribute',
+		message: "'props' must be a statically analyzable object literal of the form " +
+			"'{ [key: string]: { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }'"
 	},
 	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
 		code: 'invalid-namespace-property',
@@ -218,10 +232,10 @@ export default {
 		code: `invalid-${name}-value`,
 		message: `${name} attribute must be true or false`
 	}),
-	invalid_options_attribute_unknown: {
+	invalid_options_attribute_unknown: (name: string) => ({
 		code: 'invalid-options-attribute',
-		message: '<svelte:options> unknown attribute'
-	},
+		message: `<svelte:options> unknown attribute '${name}'`
+	}),
 	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
 		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
@@ -233,6 +247,10 @@ export default {
 	css_invalid_global_selector: {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
+	},
+	css_invalid_global_selector_position: {
+		code: 'css-invalid-global-selector-position',
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',
@@ -281,5 +299,9 @@ export default {
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
-	}
+	},
+	invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	})
 };

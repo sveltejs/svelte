@@ -9,6 +9,7 @@ import EachBlock from '../nodes/EachBlock';
 import IfBlock from '../nodes/IfBlock';
 import AwaitBlock from '../nodes/AwaitBlock';
 import compiler_errors from '../compiler_errors';
+import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../utils/patterns';
 
 enum BlockAppliesToNode {
 	NotPossible,
@@ -24,6 +25,8 @@ const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
 	['dialog', new Set(['open'])]
 ]);
+
+const regex_is_single_css_selector = /[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/;
 
 export default class Selector {
 	node: CssNode;
@@ -73,7 +76,7 @@ export default class Selector {
 		this.blocks.forEach((block, i) => {
 			if (i > 0) {
 				if (block.start - c > 1) {
-					code.overwrite(c, block.start, block.combinator.name || ' ');
+					code.update(c, block.start, block.combinator.name || ' ');
 				}
 			}
 
@@ -109,7 +112,7 @@ export default class Selector {
 				}
 
 				if (selector.type === 'TypeSelector' && selector.name === '*') {
-					code.overwrite(selector.start, selector.end, attr);
+					code.update(selector.start, selector.end, attr);
 				} else {
 					code.appendLeft(selector.end, attr);
 				}
@@ -145,6 +148,7 @@ export default class Selector {
 		}
 
 		this.validate_global_with_multiple_selectors(component);
+		this.validate_global_compound_selector(component);
 		this.validate_invalid_combinator_without_selector(component);
 	}
 
@@ -157,7 +161,7 @@ export default class Selector {
 		for (const block of this.blocks) {
 			for (const selector of block.selectors) {
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
-					if (/[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/.test(selector.children[0].value)) {
+					if (regex_is_single_css_selector.test(selector.children[0].value)) {
 						component.error(selector, compiler_errors.css_invalid_global_selector);
 					}
 				}
@@ -172,6 +176,23 @@ export default class Selector {
 			}
 			if (!block.combinator && block.selectors.length === 0) {
 				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
+			}
+		}
+	}
+
+	validate_global_compound_selector(component: Component) {
+		for (const block of this.blocks) {
+			for (let index = 0; index < block.selectors.length; index++) {
+				const selector = block.selectors[index];
+				if (selector.type === 'PseudoClassSelector' &&
+					selector.name === 'global' &&
+					index !== 0 &&
+					selector.children &&
+					selector.children.length > 0 &&
+					!/[.:#\s]/.test(selector.children[0].value[0])
+				) {
+					component.error(selector, compiler_errors.css_invalid_global_selector_position);
+				}
 			}
 		}
 	}
@@ -209,7 +230,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	}
 
 	if (block.combinator) {
-		if (block.combinator.type === 'WhiteSpace') {
+		if (block.combinator.type === 'Combinator' && block.combinator.name === ' ') {
 			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;
@@ -281,12 +302,14 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 	return true;
 }
 
+const regex_backslash_and_following_character = /\\(.)/g;
+
 function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToNode {
 	let i = block.selectors.length;
 
 	while (i--) {
 		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(/\\(.)/g, '$1');
+		const name = typeof selector.name === 'string' && selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return BlockAppliesToNode.NotPossible;
@@ -345,7 +368,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	const attr = node.attributes.find((attr: CssNode) => attr.name === name);
 	if (!attr) return false;
 	if (attr.is_true) return operator === null;
-	if (!expected_value) return true;
+	if (expected_value == null) return true;
 
 	if (attr.chunks.length === 1) {
 		const value = attr.chunks[0];
@@ -371,7 +394,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 			const start_with_space = [];
 			const remaining = [];
 			current_possible_values.forEach((current_possible_value: string) => {
-				if (/^\s/.test(current_possible_value)) {
+				if (regex_starts_with_whitespace.test(current_possible_value)) {
 					start_with_space.push(current_possible_value);
 				} else {
 					remaining.push(current_possible_value);
@@ -392,7 +415,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 				prev_values = combined;
 
 				start_with_space.forEach((value: string) => {
-					if (/\s$/.test(value)) {
+					if (regex_ends_with_whitespace.test(value)) {
 						possible_values.add(value);
 					} else {
 						prev_values.push(value);
@@ -406,7 +429,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 		}
 
 		current_possible_values.forEach((current_possible_value: string) => {
-			if (/\s$/.test(current_possible_value)) {
+			if (regex_ends_with_whitespace.test(current_possible_value)) {
 				possible_values.add(current_possible_value);
 			} else {
 				prev_values.push(current_possible_value);
@@ -447,10 +470,52 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
+/**
+	* Finds the given node's previous sibling in the DOM
+	*	
+	* Unless the component is a custom element (web component), which in this
+	* case, the <slot> element is actually real, the Svelte <slot> is just a 
+	* placeholder and is not actually real. Any children nodes in <slot>
+	* are 'flattened' and considered as the same level as the <slot>'s siblings
+	*
+	* e.g.
+	* <h1>Heading 1</h1>
+	* <slot>
+	*   <h2>Heading 2</h2>
+	* </slot>
+	*
+	* is considered to look like:
+	* <h1>Heading 1</h1>
+	* <h2>Heading 2</h2>
+	*/
+function find_previous_sibling(node: INode): INode {
+	if (node.component.compile_options.customElement) {
+		return node.prev;
+	}
+
+	let current_node: INode = node;
+	do { 
+		if (current_node.type === 'Slot') {
+			const slot_children = current_node.children;
+			if (slot_children.length > 0) {
+				current_node = slot_children.slice(-1)[0]; // go to its last child first
+				continue;
+			}
+		}
+
+		while (!current_node.prev && current_node.parent && current_node.parent.type === 'Slot') {
+			current_node = current_node.parent;
+		}
+		current_node = current_node.prev;
+	} while (current_node && current_node.type === 'Slot');
+
+	return current_node;
+}
+
 function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 	let prev: INode = node;
-	while (prev = prev.prev) {
+	while (prev = find_previous_sibling(prev)) {
 		if (prev.type === 'Element') {
 			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
 				result.set(prev, NodeExist.Definitely);

@@ -1,15 +1,12 @@
 [{
 	"code": "invalid-directive-value",
 	"message": "Directive value must be a JavaScript expression enclosed in curly braces",
-	"pos": 15,
 	"start": {
 		"line": 1,
-		"column": 15,
-		"character": 15
+		"column": 15
 	},
 	"end": {
 		"line": 1,
-		"column": 15,
-		"character": 15
+		"column": 15
 	}
 }]

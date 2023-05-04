@@ -1,9 +1,12 @@
+const is_unit_test = process.env.UNIT_TEST;
+
 module.exports = {
-	file: [
-		'test/test.ts'
-	],
+	file: is_unit_test ? [] : ['test/test.js'],
 	require: [
 		'sucrase/register'
+	],
+	"node-option": [
+		"experimental-modules"
 	]
 };
 

@@ -2,8 +2,7 @@
 	{
 		"code": "css-invalid-selector",
 		"message": "Invalid selector \"> span\"",
-		"start": { "line": 5, "column": 2, "character": 44 },
-		"end": { "line": 5, "column": 8, "character": 50 },
-		"pos": 44
+		"start": { "line": 5, "column": 2 },
+		"end": { "line": 5, "column": 8 }
 	}
 ]

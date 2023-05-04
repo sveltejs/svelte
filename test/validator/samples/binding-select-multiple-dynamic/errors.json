@@ -3,13 +3,10 @@
 	"message": "'multiple' attribute cannot be dynamic if select uses two-way binding",
 	"start": {
 		"line": 6,
-		"column": 19,
-		"character": 66
+		"column": 19
 	},
 	"end": {
 		"line": 6,
-		"column": 29,
-		"character": 76
-	},
-	"pos": 66
+		"column": 29
+	}
 }]
