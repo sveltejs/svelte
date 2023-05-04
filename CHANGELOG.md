@@ -10,9 +10,11 @@
 * **breaking** Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 * **breaking** Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 * **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
+* **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
 * Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
+* Allow `$store` to be used with changing values including nullish values ([#7555](https://github.com/sveltejs/svelte/issues/7555))
 
 ## Unreleased (3.0)
 

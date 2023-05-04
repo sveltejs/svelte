@@ -164,10 +164,10 @@ export function derived<S extends Stores, T>(
 
 export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Readable<T> {
 	const single = !Array.isArray(stores);
-	const stores_array: Array<Readable<any>> = single
-		// Fall back to readable() for falsy stores in array, else derived store will be forever pending
-		? [(stores || readable()) as Readable<any>]
-		: (stores as Array<Readable<any>>).map(store => store || readable());
+	const stores_array: Array<Readable<any>> = single ? [stores as Readable<any>] : stores as Array<Readable<any>>;
+	if (!stores_array.every(Boolean)) {
+		throw new Error('derived() expects stores as input, got a falsy value')
+	}
 
 	const auto = fn.length < 2;
 
