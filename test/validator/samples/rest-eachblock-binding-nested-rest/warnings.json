@@ -5,7 +5,7 @@
       "column": 37,
       "line": 5
     },
-    "message": "The rest operator (...) will create a new object and binding 'third' with original object will not work",
+    "message": "The rest operator (...) will create a new object and binding 'third' with the original object will not work",
     "start": {
       "column": 32,
       "line": 5
@@ -17,7 +17,7 @@
       "column": 50,
       "line": 5
     },
-    "message": "The rest operator (...) will create a new object and binding 'length' with original object will not work",
+    "message": "The rest operator (...) will create a new object and binding 'length' with the original object will not work",
     "start": {
       "column": 44,
       "line": 5

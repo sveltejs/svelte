@@ -220,7 +220,7 @@ export default {
 	},
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
-		message: `The rest operator (...) will create a new object and binding '${rest_element_name}' with original object will not work`
+		message: `The rest operator (...) will create a new object and binding '${rest_element_name}' with the original object will not work`
 	}),
 	avoid_mouse_events_on_document: {
 		code: 'avoid-mouse-events-on-document',
