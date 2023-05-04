@@ -10,5 +10,8 @@ module.exports = {
 			'estree'
 		],
 		'svelte3/compiler': require('./compiler')
+	},
+	rules: {
+		'@typescript-eslint/no-non-null-assertion': 'off'
 	}
 };

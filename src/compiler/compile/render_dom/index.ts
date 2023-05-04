@@ -7,12 +7,11 @@ import { walk } from 'estree-walker';
 import { extract_names, Scope } from 'periscopic';
 import { invalidate } from './invalidate';
 import Block from './Block';
-import { ImportDeclaration, ClassDeclaration, FunctionExpression, Node, Statement, ObjectExpression, Expression } from 'estree';
+import { ImportDeclaration, ClassDeclaration, Node, Statement, ObjectExpression, Expression } from 'estree';
 import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
 import { flatten } from '../../utils/flatten';
 import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 import { push_array } from '../../utils/push_array';
-import { regex_backslashes } from '../../utils/patterns';
 
 export default function dom(
 	component: Component,
@@ -25,9 +24,6 @@ export default function dom(
 
 	block.has_outro_method = true;
 
-	// prevent fragment being created twice (#1063)
-	if (options.customElement) block.chunks.create.push(b`this.c = @noop;`);
-
 	const body = [];
 
 	if (renderer.file_var) {
@@ -35,7 +31,7 @@ export default function dom(
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
 
-	const css = component.stylesheet.render(options.filename, !options.customElement);
+	const css = component.stylesheet.render(options.filename);
 
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
@@ -52,9 +48,8 @@ export default function dom(
 	const add_css = component.get_unique_name('add_css');
 
 	const should_add_css = (
-		!options.customElement &&
 		!!styles &&
-		options.css === 'injected'
+		(options.customElement || options.css === 'injected')
 	);
 
 	if (should_add_css) {
@@ -519,91 +514,56 @@ export default function dom(
 		}
 	}
 
+	const superclass = {
+		type: 'Identifier',
+		name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
+	};
+
+	const optional_parameters = [];
+	if (should_add_css) {
+		optional_parameters.push(add_css);
+	} else if (dirty) {
+		optional_parameters.push(x`null`);
+	}
+	if (dirty) {
+		optional_parameters.push(dirty);
+	}
+
+	const declaration = b`
+		class ${name} extends ${superclass} {
+			constructor(options) {
+				super(${options.dev && 'options'});
+				@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
+				${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
+			}
+		}
+	`[0] as ClassDeclaration;
+
+	push_array(declaration.body.body, accessors);
+	body.push(declaration);
+
 	if (options.customElement) {
-
-		let init_props = x`@attribute_to_object(this.attributes)`;
-		if (uses_slots) {
-			init_props = x`{ ...${init_props}, $$slots: @get_custom_elements_slots(this) }`;
-		}
-
-		const declaration = b`
-			class ${name} extends @SvelteElement {
-				constructor(options) {
-					super();
-
-					${css.code && b`
-						const style = document.createElement('style');
-						style.textContent = \`${css.code.replace(regex_backslashes, '\\\\')}${css_sourcemap_enabled && options.dev ? `\n/*# sourceMappingURL=${css.map.toUrl()} */` : ''}\`
-						this.shadowRoot.appendChild(style)`}
-
-					@init(this, { target: this.shadowRoot, props: ${init_props}, customElement: true }, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, null, ${dirty});
-
-					if (options) {
-						if (options.target) {
-							@insert(options.target, this, options.anchor);
-						}
-
-						${(props.length > 0 || uses_props || uses_rest) && b`
-						if (options.props) {
-							this.$set(options.props);
-							@flush();
-						}`}
-					}
-				}
+		const props_str = writable_props.reduce((def, prop) => {
+			def[prop.export_name] = component.component_options.customElement?.props?.[prop.export_name] || {};
+			if (prop.is_boolean && !def[prop.export_name].type) {
+				def[prop.export_name].type = 'Boolean';
 			}
-		`[0] as ClassDeclaration;
+			return def;
+		}, {});
+		const slots_str = [...component.slots.keys()].map(key => `"${key}"`).join(',');
+		const accessors_str = accessors
+			.filter(accessor => !writable_props.some(prop => prop.export_name === accessor.key.name))
+			.map(accessor => `"${accessor.key.name}"`)
+			.join(',');
+		const use_shadow_dom = component.component_options.customElement?.shadow !== 'none' ? 'true' : 'false';
 
-		if (props.length > 0) {
-			declaration.body.body.push({
-				type: 'MethodDefinition',
-				kind: 'get',
-				static: true,
-				computed: false,
-				key: { type: 'Identifier', name: 'observedAttributes' },
-				value: x`function() {
-					return [${props.map(prop => x`"${prop.export_name}"`)}];
-				}` as FunctionExpression
-			});
+		if (component.component_options.customElement?.tag) {
+			body.push(
+				b`@_customElements.define("${component.component_options.customElement.tag}", @create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
+			);
+		} else {
+			body.push(b`@create_custom_element(${name}, ${JSON.stringify(props_str)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom});`);
 		}
-
-		push_array(declaration.body.body, accessors);
-
-		body.push(declaration);
-
-		if (component.tag != null) {
-			body.push(b`
-				@_customElements.define("${component.tag}", ${name});
-			`);
-		}
-	} else {
-		const superclass = {
-			type: 'Identifier',
-			name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
-		};
-
-		const optional_parameters = [];
-		if (should_add_css) {
-			optional_parameters.push(add_css);
-		} else if (dirty) {
-			optional_parameters.push(x`null`);
-		}
-		if (dirty) {
-			optional_parameters.push(dirty);
-		}
-
-		const declaration = b`
-			class ${name} extends ${superclass} {
-				constructor(options) {
-					super(${options.dev && 'options'});
-					@init(this, options, ${definition}, ${has_create_fragment ? 'create_fragment' : 'null'}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
-					${options.dev && b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`}
-				}
-			}
-		`[0] as ClassDeclaration;
-
-		push_array(declaration.body.body, accessors);
-
-		body.push(declaration);
 	}
 
 	return { js: flatten(body), css };

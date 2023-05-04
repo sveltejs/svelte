@@ -1,4 +1,4 @@
-<svelte:options tag="my-app"/>
+<svelte:options customElement="my-app" />
 
 <script>
 	export let foo;

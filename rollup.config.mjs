@@ -15,9 +15,12 @@ const is_publish = !!process.env.PUBLISH;
 const ts_plugin = is_publish
 	? typescript({
 			typescript: require('typescript'),
+			paths: {
+				'svelte/*': ['./src/runtime/*']
+			}
 	  })
 	: sucrase({
-			transforms: ['typescript'],
+			transforms: ['typescript']
 	  });
 
 fs.writeFileSync(

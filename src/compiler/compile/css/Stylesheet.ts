@@ -407,7 +407,7 @@ export default class Stylesheet {
 		});
 	}
 
-	render(file: string, should_transform_selectors: boolean) {
+	render(file: string) {
 		if (!this.has_styles) {
 			return { code: null, map: null };
 		}
@@ -421,12 +421,10 @@ export default class Stylesheet {
 			}
 		});
 
-		if (should_transform_selectors) {
-			const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
-			this.children.forEach((child: (Atrule | Rule)) => {
-				child.transform(code, this.id, this.keyframes, max);
-			});
-		}
+		const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
+		this.children.forEach((child: (Atrule | Rule)) => {
+			child.transform(code, this.id, this.keyframes, max);
+		});
 
 		let c = 0;
 		this.children.forEach(child => {

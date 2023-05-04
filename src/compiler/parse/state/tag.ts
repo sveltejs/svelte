@@ -115,7 +115,7 @@ export default function tag(parser: Parser) {
 		: (regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
 			: name === 'svelte:fragment' ? 'SlotTemplate'
 				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-					: name === 'slot' && !parser.customElement ? 'Slot' : 'Element';
+					: name === 'slot' ? 'Slot' : 'Element';
 
 	const element: TemplateNode = {
 		start,
