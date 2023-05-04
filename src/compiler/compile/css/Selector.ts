@@ -470,10 +470,52 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
+/**
+	* Finds the given node's previous sibling in the DOM
+	*	
+	* Unless the component is a custom element (web component), which in this
+	* case, the <slot> element is actually real, the Svelte <slot> is just a 
+	* placeholder and is not actually real. Any children nodes in <slot>
+	* are 'flattened' and considered as the same level as the <slot>'s siblings
+	*
+	* e.g.
+	* <h1>Heading 1</h1>
+	* <slot>
+	*   <h2>Heading 2</h2>
+	* </slot>
+	*
+	* is considered to look like:
+	* <h1>Heading 1</h1>
+	* <h2>Heading 2</h2>
+	*/
+function find_previous_sibling(node: INode): INode {
+	if (node.component.compile_options.customElement) {
+		return node.prev;
+	}
+
+	let current_node: INode = node;
+	do { 
+		if (current_node.type === 'Slot') {
+			const slot_children = current_node.children;
+			if (slot_children.length > 0) {
+				current_node = slot_children.slice(-1)[0]; // go to its last child first
+				continue;
+			}
+		}
+
+		while (!current_node.prev && current_node.parent && current_node.parent.type === 'Slot') {
+			current_node = current_node.parent;
+		}
+		current_node = current_node.prev;
+	} while (current_node && current_node.type === 'Slot');
+
+	return current_node;
+}
+
 function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 	let prev: INode = node;
-	while (prev = prev.prev) {
+	while (prev = find_previous_sibling(prev)) {
 		if (prev.type === 'Element') {
 			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
 				result.set(prev, NodeExist.Definitely);
