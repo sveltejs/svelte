@@ -1,4 +1,4 @@
-<svelte:options tag="custom-element" />
+<svelte:options customElement="custom-element" />
 
 <h1>test</h1>
 <slot>

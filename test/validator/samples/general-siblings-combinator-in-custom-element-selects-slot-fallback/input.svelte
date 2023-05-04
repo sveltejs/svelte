@@ -1,4 +1,4 @@
-<svelte:options tag="my-element" />
+<svelte:options customElement="my-element" />
 
 <h1>Heading 1</h1>
 <span>Span 1</span>
