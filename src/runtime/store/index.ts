@@ -166,7 +166,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 	const single = !Array.isArray(stores);
 	const stores_array: Array<Readable<any>> = single ? [stores as Readable<any>] : stores as Array<Readable<any>>;
 	if (!stores_array.every(Boolean)) {
-		throw new Error('derived() expects stores as input, got a falsy value')
+		throw new Error('derived() expects stores as input, got a falsy value');
 	}
 
 	const auto = fn.length < 2;
