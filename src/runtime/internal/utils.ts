@@ -68,6 +68,9 @@ export function validate_store(store, name) {
 
 export function subscribe(store, ...callbacks) {
 	if (store == null) {
+		for (const callback of callbacks) {
+			callback(undefined);
+		}
 		return noop;
 	}
 	const unsub = store.subscribe(...callbacks);

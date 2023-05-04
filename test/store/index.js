@@ -428,6 +428,21 @@ describe('store', () => {
 			a.set(false);
 			assert.equal(b_started, false);
 		});
+
+		it('errors on undefined stores #1', () => {
+			assert.throws(() => {
+				derived(null, (n) => n);
+			});
+		});
+
+		it('errors on undefined stores #2', () => {
+			assert.throws(() => {
+				const a = writable(1);
+				derived([a, null, undefined], ([n]) => {
+					return n * 2;
+				});
+			});
+		});
 	});
 
 	describe('get', () => {
