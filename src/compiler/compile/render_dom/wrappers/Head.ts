@@ -20,8 +20,6 @@ export default class HeadWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.can_use_innerhtml = false;
-
 		this.fragment = new FragmentWrapper(
 			renderer,
 			block,
@@ -33,10 +31,10 @@ export default class HeadWrapper extends Wrapper {
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		let nodes;
+		let nodes: Identifier;
 		if (this.renderer.options.hydratable && this.fragment.nodes.length) {
 			nodes = block.get_unique_name('head_nodes');
-			block.chunks.claim.push(b`const ${nodes} = @query_selector_all('[data-svelte="${this.node.id}"]', @_document.head);`);
+			block.chunks.claim.push(b`const ${nodes} = @head_selector('${this.node.id}', @_document.head);`);
 		}
 
 		this.fragment.render(block, x`@_document.head` as unknown as Identifier, nodes);

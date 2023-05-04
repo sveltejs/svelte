@@ -1,1 +1,1 @@
-<textarea readonly="{true}"></textarea>
+<textarea readonly={true} data-attr={true} />

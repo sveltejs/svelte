@@ -10,7 +10,7 @@ import Text from '../../../nodes/Text';
 
 export interface StyleProp {
 	key: string;
-	value: Array<Text|Expression>;
+	value: Array<Text | Expression>;
 	important: boolean;
 }
 
@@ -69,7 +69,9 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	}
 }
 
-function optimize_style(value: Array<Text|Expression>) {
+const regex_style_prop_key = /^\s*([\w-]+):\s*/;
+
+function optimize_style(value: Array<Text | Expression>) {
 	const props: StyleProp[] = [];
 	let chunks = value.slice();
 
@@ -78,7 +80,7 @@ function optimize_style(value: Array<Text|Expression>) {
 
 		if (chunk.type !== 'Text') return null;
 
-		const key_match = /^\s*([\w-]+):\s*/.exec(chunk.data);
+		const key_match = regex_style_prop_key.exec(chunk.data);
 		if (!key_match) return null;
 
 		const key = key_match[1];
@@ -106,8 +108,11 @@ function optimize_style(value: Array<Text|Expression>) {
 	return props;
 }
 
+const regex_important_flag = /\s*!important\s*$/;
+const regex_semicolon_or_whitespace = /[;\s]/;
+
 function get_style_value(chunks: Array<Text | Expression>) {
-	const value: Array<Text|Expression> = [];
+	const value: Array<Text | Expression> = [];
 
 	let in_url = false;
 	let quote_mark = null;
@@ -151,7 +156,7 @@ function get_style_value(chunks: Array<Text | Expression>) {
 				} as Text);
 			}
 
-			while (/[;\s]/.test(chunk.data[c])) c += 1;
+			while (regex_semicolon_or_whitespace.test(chunk.data[c])) c += 1;
 			const remaining_data = chunk.data.slice(c);
 
 			if (remaining_data) {
@@ -172,9 +177,9 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	let important = false;
 
 	const last_chunk = value[value.length - 1];
-	if (last_chunk && last_chunk.type === 'Text' && /\s*!important\s*$/.test(last_chunk.data)) {
+	if (last_chunk && last_chunk.type === 'Text' && regex_important_flag.test(last_chunk.data)) {
 		important = true;
-		last_chunk.data = last_chunk.data.replace(/\s*!important\s*$/, '');
+		last_chunk.data = last_chunk.data.replace(regex_important_flag, '');
 		if (!last_chunk.data) value.pop();
 	}
 
@@ -185,6 +190,6 @@ function get_style_value(chunks: Array<Text | Expression>) {
 	};
 }
 
-function is_dynamic(value: Array<Text|Expression>) {
+function is_dynamic(value: Array<Text | Expression>) {
 	return value.length > 1 || value[0].type !== 'Text';
 }

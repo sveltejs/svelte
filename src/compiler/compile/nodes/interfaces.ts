@@ -8,8 +8,11 @@ import Binding from './Binding';
 import Body from './Body';
 import CatchBlock from './CatchBlock';
 import Class from './Class';
+import StyleDirective from './StyleDirective';
 import Comment from './Comment';
+import ConstTag from './ConstTag';
 import DebugTag from './DebugTag';
+import Document from './Document';
 import EachBlock from './EachBlock';
 import Element from './Element';
 import ElseBlock from './ElseBlock';
@@ -26,7 +29,6 @@ import PendingBlock from './PendingBlock';
 import RawMustacheTag from './RawMustacheTag';
 import Slot from './Slot';
 import SlotTemplate from './SlotTemplate';
-import DefaultSlotTemplate from './DefaultSlotTemplate';
 import Text from './Text';
 import ThenBlock from './ThenBlock';
 import Title from './Title';
@@ -44,7 +46,9 @@ export type INode = Action
 | CatchBlock
 | Class
 | Comment
+| ConstTag
 | DebugTag
+| Document
 | EachBlock
 | Element
 | ElseBlock
@@ -61,10 +65,19 @@ export type INode = Action
 | RawMustacheTag
 | Slot
 | SlotTemplate
-| DefaultSlotTemplate
+| StyleDirective
 | Tag
 | Text
 | ThenBlock
 | Title
 | Transition
 | Window;
+
+export type INodeAllowConstTag =
+| IfBlock
+| ElseBlock
+| EachBlock
+| CatchBlock
+| ThenBlock
+| InlineComponent
+| SlotTemplate;

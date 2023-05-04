@@ -40,7 +40,11 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable declared with {#await ... then} or {:catch} blocks'
 	},
-	invalid_binding_writibale: {
+	invalid_binding_const: {
+		code: 'invalid-binding',
+		message: 'Cannot bind to a variable declared with {@const ...}'
+	},
+	invalid_binding_writable: {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
@@ -62,7 +66,7 @@ export default {
 	},
 	missing_contenteditable_attribute: {
 		code: 'missing-contenteditable-attribute',
-		message: '\'contenteditable\' attribute is required for textContent and innerHTML two-way bindings'
+		message: '\'contenteditable\' attribute is required for textContent, innerHTML and innerText two-way bindings'
 	},
 	dynamic_contenteditable_attribute: {
 		code: 'dynamic-contenteditable-attribute',
@@ -186,6 +190,10 @@ export default {
 		code: 'illegal-global',
 		message: `${name} is an illegal variable name`
 	}),
+	illegal_variable_declaration: {
+		code: 'illegal-variable-declaration',
+		message: 'Cannot declare same variable name which is imported inside <script context="module">'
+	},
 	cyclical_reactive_declaration: (cycle: string[]) => ({
 		code: 'cyclical-reactive-declaration',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
@@ -194,9 +202,23 @@ export default {
 		code: 'invalid-tag-property',
 		message: "tag name must be two or more words joined by the '-' character"
 	},
+	invalid_customElement_attribute: {
+		code: 'invalid-customElement-attribute',
+		message: "'customElement' must be a string literal defining a valid custom element name or an object of the form " +
+		"{ tag: string; shadow?: 'open' | 'none'; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }"
+	},
 	invalid_tag_attribute: {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
+	},
+	invalid_shadow_attribute: {
+		code: 'invalid-shadow-attribute',
+		message: "'shadow' must be either 'open' or 'none'"
+	},
+	invalid_props_attribute: {
+		code: 'invalid-props-attribute',
+		message: "'props' must be a statically analyzable object literal of the form " +
+			"'{ [key: string]: { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }'"
 	},
 	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
 		code: 'invalid-namespace-property',
@@ -208,12 +230,12 @@ export default {
 	},
 	invalid_attribute_value: (name: string) => ({
 		code: `invalid-${name}-value`,
-		message: `${name} attribute must be true or false`	
+		message: `${name} attribute must be true or false`
 	}),
-	invalid_options_attribute_unknown: {
+	invalid_options_attribute_unknown: (name: string) => ({
 		code: 'invalid-options-attribute',
-		message: '<svelte:options> unknown attribute'
-	},
+		message: `<svelte:options> unknown attribute '${name}'`
+	}),
 	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
 		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
@@ -226,6 +248,14 @@ export default {
 		code: 'css-invalid-global-selector',
 		message: ':global(...) must contain a single selector'
 	},
+	css_invalid_global_selector_position: {
+		code: 'css-invalid-global-selector-position',
+		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
+	},
+	css_invalid_selector: (selector: string) => ({
+		code: 'css-invalid-selector',
+		message: `Invalid selector "${selector}"`
+	}),
 	duplicate_animation: {
 		code: 'duplicate-animation',
 		message: "An element can only have one 'animate' directive"
@@ -234,12 +264,44 @@ export default {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
 	},
+	invalid_animation_key: {
+		code: 'invalid-animation',
+		message: 'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
+	},
 	invalid_animation_sole: {
 		code: 'invalid-animation',
 		message: 'An element that uses the animate directive must be the sole child of a keyed each block'
 	},
+	invalid_animation_dynamic_element: {
+		code: 'invalid-animation',
+		message: '<svelte:element> cannot have a animate directive'
+	},
 	invalid_directive_value: {
 		code: 'invalid-directive-value',
 		message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
-	}
+	},
+	invalid_const_placement: {
+		code: 'invalid-const-placement',
+		message: '{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
+	},
+	invalid_const_declaration: (name: string) => ({
+		code: 'invalid-const-declaration',
+		message: `'${name}' has already been declared`
+	}),
+	invalid_const_update: (name: string) => ({
+		code: 'invalid-const-update',
+		message: `'${name}' is declared using {@const ...} and is read-only`
+	}),
+	cyclical_const_tags: (cycle: string[]) => ({
+		code: 'cyclical-const-tags',
+		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
+	}),
+	invalid_component_style_directive: {
+		code: 'invalid-component-style-directive',
+		message: 'Style directives cannot be used on components'
+	},
+	invalid_style_directive_modifier: (valid: string) => ({
+		code: 'invalid-style-directive-modifier',
+		message: `Valid modifiers for style directives are: ${valid}`
+	})
 };

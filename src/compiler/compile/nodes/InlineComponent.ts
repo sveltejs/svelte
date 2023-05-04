@@ -10,6 +10,7 @@ import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
 import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
+import { regex_only_whitespaces } from '../../utils/patterns';
 
 export default class InlineComponent extends Node {
 	type: 'InlineComponent';
@@ -22,17 +23,22 @@ export default class InlineComponent extends Node {
 	css_custom_properties: Attribute[] = [];
 	children: INode[];
 	scope: TemplateScope;
+	namespace: string;
 
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
+		this.cannot_use_innerhtml();
+		this.not_static_content();
+
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);
-			component.add_reference(name);
+			component.add_reference(this as any, name);
 		}
 
 		this.name = info.name;
+		this.namespace = get_namespace(parent, component.namespace);
 
 		this.expression = this.name === 'svelte:component'
 			? new Expression(component, this, scope, info.expression)
@@ -71,6 +77,9 @@ export default class InlineComponent extends Node {
 
 				case 'Transition':
 					return component.error(node, compiler_errors.invalid_transition);
+
+				case 'StyleDirective':
+					return component.error(node, compiler_errors.invalid_component_style_directive);
 
 				default:
 					throw new Error(`Not implemented: ${node.type}`);
@@ -126,17 +135,27 @@ export default class InlineComponent extends Node {
 						slot_template.attributes.push(attribute);
 					}
 				}
-		
+				// transfer const
+				for (let i = child.children.length - 1; i >= 0; i--) {
+					const child_child = child.children[i];
+					if (child_child.type === 'ConstTag') {
+						slot_template.children.push(child_child);
+						child.children.splice(i, 1);
+					}
+				}
+
 				children.push(slot_template);
 				info.children.splice(i, 1);
+			} else if (child.type === 'Comment' && children.length > 0) {
+				children[children.length - 1].children.unshift(child);
 			}
 		}
 
 		if (info.children.some(node => not_whitespace_text(node))) {
-			children.push({ 
+			children.push({
 				start: info.start,
 				end: info.end,
-				type: 'SlotTemplate', 
+				type: 'SlotTemplate',
 				name: 'svelte:fragment',
 				attributes: [],
 				children: info.children
@@ -152,5 +171,15 @@ export default class InlineComponent extends Node {
 }
 
 function not_whitespace_text(node) {
-	return !(node.type === 'Text' && /^\s+$/.test(node.data));
+	return !(node.type === 'Text' && regex_only_whitespaces.test(node.data));
+}
+
+function get_namespace(parent: Node, explicit_namespace: string) {
+	const parent_element = parent.find_nearest(/^Element/);
+
+	if (!parent_element) {
+		return explicit_namespace;
+	}
+
+	return parent_element.namespace;
 }

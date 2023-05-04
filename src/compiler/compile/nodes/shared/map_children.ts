@@ -1,7 +1,9 @@
 import AwaitBlock from '../AwaitBlock';
 import Body from '../Body';
+import ConstTag from '../ConstTag';
 import Comment from '../Comment';
 import EachBlock from '../EachBlock';
+import Document from '../Document';
 import Element from '../Element';
 import Head from '../Head';
 import IfBlock from '../IfBlock';
@@ -17,6 +19,7 @@ import Text from '../Text';
 import Title from '../Title';
 import Window from '../Window';
 import { TemplateNode } from '../../../interfaces';
+import { push_array } from '../../../utils/push_array';
 
 export type Children = ReturnType<typeof map_children>;
 
@@ -25,6 +28,8 @@ function get_constructor(type) {
 		case 'AwaitBlock': return AwaitBlock;
 		case 'Body': return Body;
 		case 'Comment': return Comment;
+		case 'ConstTag': return ConstTag;
+		case 'Document': return Document;
 		case 'EachBlock': return EachBlock;
 		case 'Element': return Element;
 		case 'Head': return Head;
@@ -58,7 +63,7 @@ export default function map_children(component, parent, scope, children: Templat
 		if (use_ignores) component.pop_ignores(), ignores = [];
 
 		if (node.type === 'Comment' && node.ignores.length) {
-			ignores.push(...node.ignores);
+			push_array(ignores, node.ignores);
 		}
 
 		if (last) last.next = node;

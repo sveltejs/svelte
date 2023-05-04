@@ -30,7 +30,7 @@
 </label>
 
 {#if visible}
-	<p in:typewriter out:typewriter>
+	<p transition:typewriter>
 		The quick brown fox jumps over the lazy dog
 	</p>
 {/if}

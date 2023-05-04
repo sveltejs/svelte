@@ -1,4 +1,5 @@
-export function string_literal(data: string) {
+import { Literal } from 'estree';
+export function string_literal(data: string): Literal {
 	return {
 		type: 'Literal',
 		value: data
@@ -19,10 +20,14 @@ const escaped = {
 	'>': '&gt;'
 };
 
+const regex_html_characters_to_escape = /["'&<>]/g;
+
 export function escape_html(html) {
-	return String(html).replace(/["'&<>]/g, match => escaped[match]);
+	return String(html).replace(regex_html_characters_to_escape, match => escaped[match]);
 }
 
+const regex_template_characters_to_escape = /(\${|`|\\)/g;
+
 export function escape_template(str) {
-	return str.replace(/(\${|`|\\)/g, '\\$1');
+	return str.replace(regex_template_characters_to_escape, '\\$1');
 }

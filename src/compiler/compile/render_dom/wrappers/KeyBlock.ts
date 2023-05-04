@@ -1,7 +1,6 @@
 import Wrapper from './shared/Wrapper';
 import Renderer from '../Renderer';
 import Block from '../Block';
-import EachBlock from '../../nodes/EachBlock';
 import KeyBlock from '../../nodes/KeyBlock';
 import create_debugging_comment from './shared/create_debugging_comment';
 import FragmentWrapper from './Fragment';
@@ -19,14 +18,11 @@ export default class KeyBlockWrapper extends Wrapper {
 		renderer: Renderer,
 		block: Block,
 		parent: Wrapper,
-		node: EachBlock,
+		node: KeyBlock,
 		strip_whitespace: boolean,
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-
-		this.cannot_use_innerhtml();
-		this.not_static_content();
 
 		this.dependencies = node.expression.dynamic_dependencies();
 
@@ -36,6 +32,7 @@ export default class KeyBlockWrapper extends Wrapper {
 				name: renderer.component.get_unique_name('create_key_block'),
 				type: 'key'
 			});
+			block.add_dependencies(node.expression.dependencies);
 			renderer.blocks.push(block);
 		}
 
@@ -106,7 +103,7 @@ export default class KeyBlockWrapper extends Wrapper {
 			}
 			${this.var} = ${this.block.name}(#ctx);
 			${this.var}.c();
-			${has_transitions && b`@transition_in(${this.var})`}
+			${has_transitions && b`@transition_in(${this.var}, 1)`}
 			${this.var}.m(${this.get_update_mount_node(anchor)}, ${anchor});
 		`;
 

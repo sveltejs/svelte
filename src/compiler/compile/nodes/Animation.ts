@@ -18,7 +18,7 @@ export default class Animation extends Node {
 		component.warn_if_undefined(info.name, info, scope);
 
 		this.name = info.name;
-		component.add_reference(info.name.split('.')[0]);
+		component.add_reference(this as any, info.name.split('.')[0]);
 
 		if (parent.animation) {
 			component.error(this, compiler_errors.duplicate_animation);
@@ -26,9 +26,14 @@ export default class Animation extends Node {
 		}
 
 		const block = parent.parent;
-		if (!block || block.type !== 'EachBlock' || !block.key) {
+		if (!block || block.type !== 'EachBlock') {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, compiler_errors.invalid_animation_immediate);
+			return;
+		}
+
+		if (!block.key) {
+			component.error(this, compiler_errors.invalid_animation_key);
 			return;
 		}
 

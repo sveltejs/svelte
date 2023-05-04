@@ -30,7 +30,7 @@ export default {
 		</label>
 	`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		const change = new window.MouseEvent('change');
 

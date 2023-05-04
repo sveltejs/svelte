@@ -1,15 +1,12 @@
 [{
 	"code": "invalid-binding",
 	"message": "'offsetWidth' is not a valid binding on void elements like <img>. Use a wrapper element instead",
-	"pos": 60,
 	"start": {
 		"line": 5,
-		"column": 22,
-		"character": 60
+		"column": 22
 	},
 	"end": {
 		"line": 5,
-		"column": 38,
-		"character": 76
+		"column": 38
 	}
 }]

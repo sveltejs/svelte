@@ -16,6 +16,7 @@ import Title from './handlers/Title';
 import { AppendTarget, CompileOptions } from '../../interfaces';
 import { INode } from '../nodes/interfaces';
 import { Expression, TemplateLiteral, Identifier } from 'estree';
+import { collapse_template_literal } from '../utils/collapse_template_literal';
 import { escape_template } from '../utils/stringify';
 
 type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
@@ -27,6 +28,7 @@ const handlers: Record<string, Handler> = {
 	Body: noop,
 	Comment,
 	DebugTag,
+	Document: noop,
 	EachBlock,
 	Element,
 	Head,
@@ -46,6 +48,7 @@ const handlers: Record<string, Handler> = {
 export interface RenderOptions extends CompileOptions{
 	locate: (c: number) => { line: number; column: number };
 	head_id?: string;
+	has_added_svelte_hash?: boolean;
 }
 
 export default class Renderer {
@@ -105,6 +108,9 @@ export default class Renderer {
 			this.literal = last.literal;
 			this.current = last.current;
 		}
+
+		// Optimize the TemplateLiteral to remove unnecessary nodes
+		collapse_template_literal(popped.literal);
 
 		return popped.literal;
 	}

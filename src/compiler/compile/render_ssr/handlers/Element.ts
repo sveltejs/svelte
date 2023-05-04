@@ -1,28 +1,33 @@
-import { is_void } from '../../../utils/names';
+import { is_void } from '../../../../shared/utils/names';
 import { get_attribute_expression, get_attribute_value, get_class_attribute_value } from './shared/get_attribute_value';
-import { boolean_attributes } from './shared/boolean_attributes';
+import { boolean_attributes } from '../../../../shared/boolean_attributes';
+import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable';
 import Renderer, { RenderOptions } from '../Renderer';
+import Binding from '../../nodes/Binding';
 import Element from '../../nodes/Element';
-import { x } from 'code-red';
+import { p, x } from 'code-red';
 import Expression from '../../nodes/shared/Expression';
 import remove_whitespace_children from './utils/remove_whitespace_children';
 import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
 import { namespaces } from '../../../utils/namespaces';
+import { regex_starts_with_newline } from '../../../utils/patterns';
+import { Node, Expression as ESExpression } from 'estree';
 
-export default function(node: Element, renderer: Renderer, options: RenderOptions) {
+export default function (node: Element, renderer: Renderer, options: RenderOptions) {
 
 	const children = remove_whitespace_children(node.children, node.next);
 
 	// awkward special case
 	let node_contents;
 
-	const contenteditable = (
-		node.name !== 'textarea' &&
-		node.name !== 'input' &&
-		node.attributes.some((attribute) => attribute.name === 'contenteditable')
-	);
+	const contenteditable = is_contenteditable(node);
 
-	renderer.add_string(`<${node.name}`);
+	if (node.is_dynamic_element) {
+		renderer.push();
+	}
+
+	renderer.add_string('<');
+	add_tag_name();
 
 	const class_expression_list = node.classes.map(class_directive => {
 		const { expression, name } = class_directive;
@@ -35,6 +40,18 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 	const class_expression =
 		class_expression_list.length > 0 &&
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
+
+	const style_expression_list = node.styles.map(style_directive => {
+		let { name, important, expression: { node: expression } } = style_directive;
+		if (important) {
+			expression = x`${expression} + ' !important'`;
+		}
+		return p`"${name}": ${expression}`;
+	});
+
+	const style_expression =
+		style_expression_list.length > 0 &&
+		x`{ ${style_expression_list} }`;
 
 	if (node.attributes.some(attr => attr.is_spread)) {
 		// TODO dry this out
@@ -65,9 +82,10 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 
-		renderer.add_expression(x`@spread([${args}], ${class_expression})`);
+		renderer.add_expression(x`@spread([${args}], { classes: ${class_expression}, styles: ${style_expression} })`);
 	} else {
 		let add_class_attribute = !!class_expression;
+		let add_style_attribute = !!style_expression;
 		node.attributes.forEach(attribute => {
 			const name = attribute.name.toLowerCase();
 			const attr_name = node.namespace === namespaces.foreign ? attribute.name : fix_attribute_casing(attribute.name);
@@ -88,6 +106,9 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				renderer.add_string(` ${attr_name}="`);
 				renderer.add_expression(x`[${get_class_attribute_value(attribute)}, ${class_expression}].join(' ').trim()`);
 				renderer.add_string('"');
+			} else if (name === 'style' && style_expression) {
+				add_style_attribute = false;
+				renderer.add_expression(x`@add_styles(@merge_ssr_styles(${get_attribute_value(attribute)}, ${style_expression}))`);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
 				const snippet = (attribute.chunks[0] as Expression).node;
 				renderer.add_expression(x`@add_attribute("${attr_name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`);
@@ -98,11 +119,14 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 			}
 		});
 		if (add_class_attribute) {
-			renderer.add_expression(x`@add_classes([${class_expression}].join(' ').trim())`);
+			renderer.add_expression(x`@add_classes((${class_expression}).trim())`);
+		}
+		if (add_style_attribute) {
+			renderer.add_expression(x`@add_styles(${style_expression})`);
 		}
 	}
 
-	node.bindings.forEach(binding => {
+	node.bindings.forEach((binding: Binding) => {
 		const { name, expression } = binding;
 
 		if (binding.is_readonly) {
@@ -118,7 +142,7 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 				const condition = type === 'checkbox' ? x`~${bound}.indexOf(${value})` : x`${value} === ${bound}`;
 				renderer.add_expression(x`${condition} ? @add_attribute("checked", true, 1) : ""`);
 			}
-		} else if (contenteditable && (name === 'textContent' || name === 'innerHTML')) {
+		} else if (contenteditable && is_name_contenteditable(name)) {
 			node_contents = expression.node;
 
 			// TODO where was this used?
@@ -134,8 +158,11 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 		}
 	});
 
-	if (options.hydratable && options.head_id) {
-		renderer.add_string(` data-svelte="${options.head_id}"`);
+	if (options.hydratable) {
+		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
+			renderer.add_string(` data-svelte-h="${node.hash()}"`);
+			options = { ...options, has_added_svelte_hash: true };
+		}
 	}
 
 	renderer.add_string('>');
@@ -148,17 +175,66 @@ export default function(node: Element, renderer: Renderer, options: RenderOption
 
 			renderer.add_expression(x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`);
 		} else {
+			if (node.name === 'textarea') {
+				// Two or more leading newlines are required to restore the leading newline immediately after `<textarea>`.
+				// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+				const value_attribute = node.attributes.find(({ name }) => name === 'value');
+				if (value_attribute) {
+					const first = value_attribute.chunks[0];
+					if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
+						renderer.add_string('\n');
+					}
+				}
+			}
 			renderer.add_expression(node_contents);
 		}
 
-		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
-		}
+		add_close_tag();
 	} else {
+		if (node.name === 'pre') {
+			// Two or more leading newlines are required to restore the leading newline immediately after `<pre>`.
+			// see https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element
+			// see https://html.spec.whatwg.org/multipage/syntax.html#element-restrictions
+			const first = children[0];
+			if (first && first.type === 'Text' && regex_starts_with_newline.test(first.data)) {
+				renderer.add_string('\n');
+			}
+		}
+		if (node.is_dynamic_element) renderer.push();
 		renderer.render(children, options);
+		if (node.is_dynamic_element) {
+			const children = renderer.pop();
+			renderer.add_expression(x`@is_void(#tag) ? '' : ${children}`);
+		}
+		add_close_tag();
+	}
 
-		if (!is_void(node.name)) {
-			renderer.add_string(`</${node.name}>`);
+	if (node.is_dynamic_element) {
+		let content: Node = renderer.pop();
+		if (options.dev && node.children.length > 0) content = x`(() => { @validate_void_dynamic_element(#tag); return ${content}; })()`;
+		renderer.add_expression(x`((#tag) => {
+			${options.dev && x`@validate_dynamic_element(#tag)`}
+			return #tag ? ${content} : '';
+		})(${node.tag_expr.node})`);
+	}
+
+	function add_close_tag() {
+		if (node.tag_expr.node.type === 'Literal') {
+			if (!is_void(node.tag_expr.node.value as string)) {
+				renderer.add_string('</');
+				add_tag_name();
+				renderer.add_string('>');
+			}
+			return;
+		}
+		renderer.add_expression(x`@is_void(#tag) ? '' : \`</\${#tag}>\``);
+	}
+
+	function add_tag_name() {
+		if (node.tag_expr.node.type === 'Literal') {
+			renderer.add_string(node.tag_expr.node.value as string);
+		} else {
+			renderer.add_expression(node.tag_expr.node as ESExpression);
 		}
 	}
 }

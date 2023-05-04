@@ -13,8 +13,6 @@ export default class Wrapper {
 	next: Wrapper | null;
 
 	var: Identifier;
-	can_use_innerhtml: boolean;
-	is_static_content: boolean;
 
 	constructor(
 		renderer: Renderer,
@@ -35,20 +33,7 @@ export default class Wrapper {
 			}
 		});
 
-		this.can_use_innerhtml = !renderer.options.hydratable;
-		this.is_static_content = !renderer.options.hydratable;
-
 		block.wrappers.push(this);
-	}
-
-	cannot_use_innerhtml() {
-		this.can_use_innerhtml = false;
-		if (this.parent) this.parent.cannot_use_innerhtml();
-	}
-
-	not_static_content() {
-		this.is_static_content = false;
-		if (this.parent) this.parent.not_static_content();
 	}
 
 	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
@@ -85,7 +70,7 @@ export default class Wrapper {
 		);
 	}
 
-	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
+	render(_block: Block, _parent_node: Identifier, _parent_nodes: Identifier, _data: Record<string, any> = undefined) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

@@ -3,7 +3,7 @@ export default {
 	<button>null</button>
 	<button>invalid</button>`,
 
-	async test({ assert, component, target, window }) {
+	async test({ assert, target, window }) {
 		const [buttonUndef, buttonNull, buttonInvalid] = target.querySelectorAll(
 			'button'
 		);

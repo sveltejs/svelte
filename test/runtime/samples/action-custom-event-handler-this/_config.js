@@ -1,7 +1,7 @@
 export default {
 	html: '<input>',
 
-	test({ assert, component, target, window }) {
+	test({ assert, target, window }) {
 		const input = target.querySelector('input');
 		const event = new window.KeyboardEvent('keydown', {
 			key: 'Enter'

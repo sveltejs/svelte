@@ -2,15 +2,17 @@ const fs = require('fs');
 
 require('source-map-support').install();
 
-process.env.TEST = true;
+process.env.TEST = 'true';
 
-require.extensions['.js'] = function(module, filename) {
+require.extensions['.js'] = function (module, filename) {
 	const exports = [];
 
 	let code = fs.readFileSync(filename, 'utf-8')
-		.replace(/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
-		.replace(/^import (\w+) from ['"]([^'"]+)['"];?/gm, 'var {default: $1} = require("$2");')
+		.replace(/^import \* as (\S+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
 		.replace(/^import {([^}]+)} from ['"](.+)['"];?/gm, 'var {$1} = require("$2");')
+		.replace(/^import (\S+),\s+?{([^}]+)} from ['"](.+)['"];?/gm, 'var {default: $1, $2} = require("$3");')
+		.replace(/^import (\S+) from ['"]([./][^'"]+)['"];?/gm, 'var {default: $1} = require("$2");')
+		.replace(/^import (\S+) from ['"]([^'"]+)['"];?/gm, 'var $1 = require("$2");')
 		.replace(/^export default /gm, 'exports.default = ')
 		.replace(/^export (const|let|var|class|function|async\s+function) (\w+)/gm, (match, type, name) => {
 			exports.push(name);

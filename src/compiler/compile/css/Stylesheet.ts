@@ -8,9 +8,13 @@ import { CssNode } from './interfaces';
 import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
+import { push_array } from '../../utils/push_array';
+import { regex_only_whitespaces, regex_whitespace } from '../../utils/patterns';
+
+const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 
 function remove_css_prefix(name: string): string {
-	return name.replace(/^-((webkit)|(moz)|(o)|(ms))-/, '');
+	return name.replace(regex_css_browser_prefix, '');
 }
 
 const is_keyframes_node = (node: CssNode) =>
@@ -31,7 +35,7 @@ function minify_declarations(
 	declarations.forEach((declaration, i) => {
 		const separator = i > 0 ? ';' : '';
 		if ((declaration.node.start - c) > separator.length) {
-			code.overwrite(c, declaration.node.start, separator);
+			code.update(c, declaration.node.start, separator);
 		}
 		declaration.minify(code);
 		c = declaration.node.end;
@@ -71,7 +75,7 @@ class Rule {
 			if (selector.used) {
 				const separator = started ? ',' : '';
 				if ((selector.node.start - c) > separator.length) {
-					code.overwrite(c, selector.node.start, separator);
+					code.update(c, selector.node.start, separator);
 				}
 
 				selector.minify(code);
@@ -129,7 +133,7 @@ class Declaration {
 				if (block.type === 'Identifier') {
 					const name = block.name;
 					if (keyframes.has(name)) {
-						code.overwrite(block.start, block.end, keyframes.get(name));
+						code.update(block.start, block.end, keyframes.get(name));
 					}
 				}
 			});
@@ -144,18 +148,22 @@ class Declaration {
 			? this.node.value.children[0]
 			: this.node.value;
 
+		// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
+		// treat --foo: ; and --foo:; differently
+		if (first.type === 'Raw' && regex_only_whitespaces.test(first.value)) return;
+
 		let start = first.start;
-		while (/\s/.test(code.original[start])) start += 1;
+		while (regex_whitespace.test(code.original[start])) start += 1;
 
 		if (start - c > 1) {
-			code.overwrite(c, start, ':');
+			code.update(c, start, ':');
 		}
 	}
 }
 
 class Atrule {
 	node: CssNode;
-	children: Array<Atrule|Rule>;
+	children: Array<Atrule | Rule>;
 	declarations: Declaration[];
 
 	constructor(node: CssNode) {
@@ -165,7 +173,7 @@ class Atrule {
 	}
 
 	apply(node: Element) {
-		if (this.node.name === 'media' || this.node.name === 'supports') {
+		if (this.node.name === 'container' || this.node.name === 'media' || this.node.name === 'supports' || this.node.name === 'layer') {
 			this.children.forEach(child => {
 				child.apply(node);
 			});
@@ -196,7 +204,7 @@ class Atrule {
 			code.remove(c, this.node.block.start);
 		} else if (this.node.name === 'supports') {
 			let c = this.node.start + 9;
-			if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+			if (this.node.prelude.start - c > 1) code.update(c, this.node.prelude.start, ' ');
 			this.node.prelude.children.forEach((query: CssNode) => {
 				// TODO minify queries
 				c = query.end;
@@ -205,7 +213,7 @@ class Atrule {
 		} else {
 			let c = this.node.start + this.node.name.length + 1;
 			if (this.node.prelude) {
-				if (this.node.prelude.start - c > 1) code.overwrite(c, this.node.prelude.start, ' ');
+				if (this.node.prelude.start - c > 1) code.update(c, this.node.prelude.start, ' ');
 				c = this.node.prelude.end;
 			}
 			if (this.node.block && this.node.block.start - c > 0) {
@@ -247,7 +255,7 @@ class Atrule {
 							});
 						});
 					} else {
-						code.overwrite(start, end, keyframes.get(name));
+						code.update(start, end, keyframes.get(name));
 					}
 				}
 			});
@@ -290,7 +298,7 @@ export default class Stylesheet {
 	has_styles: boolean;
 	id: string;
 
-	children: Array<Rule|Atrule> = [];
+	children: Array<Rule | Atrule> = [];
 	keyframes: Map<string, string> = new Map();
 
 	nodes_with_css_class: Set<CssNode> = new Set();
@@ -351,7 +359,7 @@ export default class Stylesheet {
 							const at_rule_declarations = node.block.children
 								.filter(node => node.type === 'Declaration')
 								.map(node => new Declaration(node));
-							atrule.declarations.push(...at_rule_declarations);
+							push_array(atrule.declarations, at_rule_declarations);
 						}
 
 						current_atrule = atrule;
@@ -399,7 +407,7 @@ export default class Stylesheet {
 		});
 	}
 
-	render(file: string, should_transform_selectors: boolean) {
+	render(file: string) {
 		if (!this.has_styles) {
 			return { code: null, map: null };
 		}
@@ -413,12 +421,10 @@ export default class Stylesheet {
 			}
 		});
 
-		if (should_transform_selectors) {
-			const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
-			this.children.forEach((child: (Atrule|Rule)) => {
-				child.transform(code, this.id, this.keyframes, max);
-			});
-		}
+		const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
+		this.children.forEach((child: (Atrule | Rule)) => {
+			child.transform(code, this.id, this.keyframes, max);
+		});
 
 		let c = 0;
 		this.children.forEach(child => {

@@ -5,7 +5,7 @@ export default {
 	before_test() {
 		order.length = 0;
 	},
-	test({ assert, component, target, compileOptions }) {
+	test({ assert, compileOptions }) {
 		if (compileOptions.hydratable) {
 			assert.deepEqual(order, [
 				'0: beforeUpdate',

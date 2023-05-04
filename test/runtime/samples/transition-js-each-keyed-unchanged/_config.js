@@ -3,7 +3,7 @@ export default {
 		numbers: [1, 2, 3, 4, 5]
 	},
 
-	test({ assert, component, target, raf }) {
+	test({ assert, component, target }) {
 		const divs1 = target.querySelectorAll('div');
 		assert.equal(divs1[0].foo, undefined);
 

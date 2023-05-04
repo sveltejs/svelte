@@ -1,5 +1,5 @@
 export default {
-	async test({ assert, component, target, window }) {
+	async test({ assert, component, target }) {
 		const select = target.querySelector('select');
 
 		assert.equal(select.value, '1');

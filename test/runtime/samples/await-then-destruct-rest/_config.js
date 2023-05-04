@@ -1,5 +1,5 @@
 export default {
-	async test({ assert, component, target }) {
+	async test({ assert, target }) {
 		await Promise.resolve();
 
 		assert.htmlEqual(

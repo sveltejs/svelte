@@ -7,7 +7,7 @@ export interface Source {
 	source: string;
 	get_location: (search: number) => Location;
 	file_basename: string;
-	filename: string;
+	filename?: string;
 }
 
 export interface Processed {
@@ -19,8 +19,8 @@ export interface Processed {
 
 export type MarkupPreprocessor = (options: {
 	content: string;
-	filename: string;
-}) => Processed | Promise<Processed>;
+	filename?: string;
+}) => Processed | void | Promise<Processed | void>;
 
 export type Preprocessor = (options: {
 	/**
@@ -33,10 +33,17 @@ export type Preprocessor = (options: {
 	 */
 	markup: string;
 	filename?: string;
-}) => Processed | Promise<Processed>;
+}) => Processed | void | Promise<Processed | void>;
 
 export interface PreprocessorGroup {
 	markup?: MarkupPreprocessor;
 	style?: Preprocessor;
 	script?: Preprocessor;
+}
+
+export interface SveltePreprocessor<
+	PreprocessorType extends keyof PreprocessorGroup,
+	Options = any
+> {
+	(options?: Options): Required<Pick<PreprocessorGroup, PreprocessorType>>;
 }

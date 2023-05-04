@@ -1,6 +1,6 @@
 export default {
 	html: '<textarea readonly=""></textarea>',
-	test({ assert, component, target }) {
+	test({ assert, target }) {
 		const textarea = target.querySelector( 'textarea' );
 		assert.ok( textarea.readOnly );
 	}

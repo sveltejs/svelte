@@ -1,8 +1,10 @@
 import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
 import { SvelteComponent } from './Component';
+import { is_void } from '../../shared/utils/names';
+import { contenteditable_truthy_values } from './utils';
 
 export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, true));
+	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -48,10 +50,11 @@ export function detach_after_dev(before: Node) {
 	}
 }
 
-export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean) {
+export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean, has_stop_immediate_propagation?: boolean) {
 	const modifiers = options === true ? [ 'capture' ] : options ? Array.from(Object.keys(options)) : [];
 	if (has_prevent_default) modifiers.push('preventDefault');
 	if (has_stop_propagation) modifiers.push('stopPropagation');
+	if (has_stop_immediate_propagation) modifiers.push('stopImmediatePropagation');
 
 	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
 
@@ -81,12 +84,26 @@ export function dataset_dev(node: HTMLElement, property: string, value?: any) {
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-export function set_data_dev(text, data) {
+export function set_data_dev(text: Text, data: unknown) {
+	data = '' + data;
+	if (text.data === data) return;
+	dispatch_dev('SvelteDOMSetData', { node: text, data });
+	text.data = (data as string);
+}
+
+export function set_data_contenteditable_dev(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.wholeText === data) return;
-
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data;
+	text.data = (data as string);
+}
+
+export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
+	if (~contenteditable_truthy_values.indexOf(attr_value)) {
+		set_data_contenteditable_dev(text, data);
+	} else {
+		set_data_dev(text, data);
+	}
 }
 
 export function validate_each_argument(arg) {
@@ -107,15 +124,52 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-type Props = Record<string, any>;
-export interface SvelteComponentDev {
-	$set(props?: Props): void;
-	$on(event: string, callback: (event: any) => void): () => void;
+export function validate_dynamic_element(tag: unknown) {
+	const is_string = typeof tag === 'string';
+	if (tag && !is_string) {
+		throw new Error('<svelte:element> expects "this" attribute to be a string.');
+	}
+}
+
+export function validate_void_dynamic_element(tag: undefined | string) {
+	if (tag && is_void(tag)) {
+		console.warn(
+			`<svelte:element this="${tag}"> is self-closing and cannot have content.`
+		);
+	}
+}
+
+export function construct_svelte_component_dev(component, props) {
+	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
+	try {
+		const instance = new component(props);
+		if (!instance.$$ || !instance.$set || !instance.$on || !instance.$destroy) {
+			throw new Error(error_message);
+		}
+		return instance;
+	} catch (err) {
+		const { message } = err;
+		if (typeof message === 'string' && message.indexOf('is not a constructor') !== -1) {
+			throw new Error(error_message);
+		} else {
+			throw err;
+		}
+	}
+}
+
+export interface SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
-interface IComponentOptions<Props extends Record<string, any> = Record<string, any>> {
-	target: Element|ShadowRoot;
+
+export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
+	target: Element | Document | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
 	context?: Map<any, any>;
@@ -126,67 +180,8 @@ interface IComponentOptions<Props extends Record<string, any> = Record<string, a
 
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
- */
-export class SvelteComponentDev extends SvelteComponent {
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$prop_def: Props;
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$events_def: any;
-	/**
-	 * @private
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	$$slot_def: any;
-
-	constructor(options: IComponentOptions) {
-		if (!options || (!options.target && !options.$$inline)) {
-			throw new Error("'target' is a required option");
-		}
-
-		super();
-	}
-
-	$destroy() {
-		super.$destroy();
-		this.$destroy = () => {
-			console.warn('Component was already destroyed'); // eslint-disable-line no-console
-		};
-	}
-
-	$capture_state() {}
-
-	$inject_state() {}
-}
-
-// TODO https://github.com/microsoft/TypeScript/issues/41770 is the reason
-// why we have to split out SvelteComponentTyped to not break existing usage of SvelteComponent.
-// Try to find a better way for Svelte 4.0.
-
-export interface SvelteComponentTyped<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
-> {
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: (e: Events[K]) => void): () => void;
-	$destroy(): void;
-	[accessor: string]: any;
-}
-/**
- * Base class to create strongly typed Svelte components.
- * This only exists for typing purposes and should be used in `.d.ts` files.
+ * 
+ * Can be used to create strongly typed Svelte components.
  *
  * ### Example:
  *
@@ -194,8 +189,8 @@ export interface SvelteComponentTyped<
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
  * ```ts
- * import { SvelteComponentTyped } from "svelte";
- * export class MyComponent extends SvelteComponentTyped<{foo: string}> {}
+ * import { SvelteComponent } from "svelte";
+ * export class MyComponent extends SvelteComponent<{foo: string}> {}
  * ```
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
  * to provide intellisense and to use the component like this in a Svelte file
@@ -206,20 +201,12 @@ export interface SvelteComponentTyped<
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
- *
- * #### Why not make this part of `SvelteComponent(Dev)`?
- * Because
- * ```ts
- * class ASubclassOfSvelteComponent extends SvelteComponent<{foo: string}> {}
- * const component: typeof SvelteComponent = ASubclassOfSvelteComponent;
- * ```
- * will throw a type error, so we need to separate the more strictly typed class.
  */
-export class SvelteComponentTyped<
+export class SvelteComponentDev<
 	Props extends Record<string, any> = any,
 	Events extends Record<string, any> = any,
 	Slots extends Record<string, any> = any
-> extends SvelteComponentDev {
+> extends SvelteComponent {
 	/**
 	 * @private
 	 * For type checking capabilities only.
@@ -242,10 +229,102 @@ export class SvelteComponentTyped<
 	 */
 	$$slot_def: Slots;
 
-	constructor(options: IComponentOptions<Props>) {
-		super(options);
+	constructor(options: ComponentConstructorOptions<Props>) {
+		if (!options || (!options.target && !options.$$inline)) {
+			throw new Error("'target' is a required option");
+		}
+
+		super();
 	}
+
+	$destroy() {
+		super.$destroy();
+		this.$destroy = () => {
+			console.warn('Component was already destroyed'); // eslint-disable-line no-console
+		};
+	}
+
+	$capture_state() {}
+
+	$inject_state() {}
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponentDev<Props, Events, Slots> {}
+
+/**
+ * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
+ */
+export class SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponentDev<Props, Events, Slots> {}
+
+/**
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
+ * dynamic components using `<svelte:component>`.
+ *
+ * Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentType, SvelteComponent } from 'svelte';
+ * 	import Component1 from './Component1.svelte';
+ * 	import Component2 from './Component2.svelte';
+ *
+ * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+ * </script>
+ *
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+ * ```
+ */
+export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = (new (
+	options: ComponentConstructorOptions<
+		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
+	>
+) => Component) & {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement
+};
+
+/**
+ * Convenience type to get the props the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentProps } from 'svelte';
+ * 	import Component from './Component.svelte';
+ *
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * </script>
+ * ```
+ */
+export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentDev<infer Props>
+	? Props
+	: never;
+
+/**
+ * Convenience type to get the events the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ *    import type { ComponentEvents } from 'svelte';
+ *    import Component from './Component.svelte';
+ *
+ *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
+ *       console.log(event.detail);
+ *    }
+ * </script>
+ *
+ * <Component on:close={handleCloseEvent} />
+ * ```
+ */
+export type ComponentEvents<Component extends SvelteComponent> =
+	Component extends SvelteComponentDev<any, infer Events> ? Events : never;
 
 export function loop_guard(timeout) {
 	const start = Date.now();
