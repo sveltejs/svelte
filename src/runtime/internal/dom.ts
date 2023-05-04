@@ -157,6 +157,12 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
+	// For transitions to work without 'style-src: unsafe-inline' Content Security Policy,
+	// these empty tags need to be allowed with a hash as a workaround until we move to the Web Animations API.
+	// Using the hash for the empty string (for an empty tag) works in all browsers except Safari.
+	// So as a workaround for the workaround, when we append empty style tags we set their content to /* empty */.
+	// The hash 'sha256-9OlNO0DNEeaVzHL4RZwCLsBHA8WBQ8toBp/4F5XV2nc=' will then work even in Safari.
+	style_element.textContent = '/* empty */';
 	append_stylesheet(get_root_for_style(node), style_element);
 	return style_element.sheet as CSSStyleSheet;
 }

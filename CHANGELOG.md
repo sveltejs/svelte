@@ -16,6 +16,8 @@
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
 * Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
 * Allow `$store` to be used with changing values including nullish values ([#7555](https://github.com/sveltejs/svelte/issues/7555))
+* Initialize stylesheet with `/* empty */` to enable setting CSP directive that also works in Safari ([#7800](https://github.com/sveltejs/svelte/pull/7800))
+* Treat slots as if they don't exist when using CSS adjacent and general sibling combinators ([#8284](https://github.com/sveltejs/svelte/issues/8284))
 
 ## Unreleased (3.0)
 

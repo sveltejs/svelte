@@ -2,12 +2,12 @@
   {
     "code": "css-unused-selector",
     "end": {
-      "column": 11,
+      "column": 17,
       "line": 10
     },
-    "message": "Unused CSS selector \"h1 + span\"",
+    "message": "Unused CSS selector \"h1 + slot > span\"",
     "start": {
-      "column": 2,
+      "column": 1,
       "line": 10
     }
   }
