@@ -1,5 +1,7 @@
 # Svelte changelog
 
+hi
+
 ## Unreleased
 
 * Fix hydration issue with using `{@html}` and components in `svelte:head` ([#4533](https://github.com/sveltejs/svelte/issues/4533), [#6463](https://github.com/sveltejs/svelte/issues/6463), [#7444](https://github.com/sveltejs/svelte/issues/7444))
