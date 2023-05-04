@@ -143,20 +143,6 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  *
  * @param stores - input stores
  * @param fn - function callback that aggregates the values
- * @param initial_value - when used asynchronously
- */
-export function derived<S extends Stores, T>(
-	stores: S,
-	fn: (values: StoresValues<S>, set: Subscriber<T>) => Unsubscriber | void,
-	initial_value?: T
-): Readable<T>;
-
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
  * @param initial_value - initial value
  */
 export function derived<S extends Stores, T>(
@@ -186,7 +172,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
+	return readable(initial_value, (set, update) => {
 		let started = false;
 		const values = [];
 
