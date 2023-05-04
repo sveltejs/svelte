@@ -546,6 +546,11 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 */
 	'bind:innerText'?: string | undefined | null;
 
+	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
+	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
@@ -1073,11 +1078,17 @@ export interface SvelteMediaTimeRange {
 	end: number;
 }
 
+export interface SvelteDocumentAttributes extends HTMLAttributes<Document> {
+	readonly 'bind:fullscreenElement'?: Document['fullscreenElement'] | undefined | null;
+	readonly 'bind:visibilityState'?: Document['visibilityState'] | undefined | null;
+}
+
 export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 	readonly 'bind:innerWidth'?: Window['innerWidth'] | undefined | null;
 	readonly 'bind:innerHeight'?: Window['innerHeight'] | undefined | null;
 	readonly 'bind:outerWidth'?: Window['outerWidth'] | undefined | null;
 	readonly 'bind:outerHeight'?: Window['outerHeight'] | undefined | null;
+	readonly 'bind:devicePixelRatio'?: Window['devicePixelRatio'] | undefined | null;
 	'bind:scrollX'?: Window['scrollX'] | undefined | null;
 	'bind:scrollY'?: Window['scrollY'] | undefined | null;
 	readonly 'bind:online'?: Window['navigator']['onLine'] | undefined | null;
@@ -1586,7 +1597,7 @@ export interface SvelteHTMLElements {
 
 	// Svelte specific
 	'svelte:window': SvelteWindowAttributes;
-	'svelte:document': HTMLAttributes<Document>;
+	'svelte:document': SvelteDocumentAttributes;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
 	'svelte:options': { [name: string]: any };

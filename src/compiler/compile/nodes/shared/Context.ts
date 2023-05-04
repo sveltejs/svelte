@@ -1,5 +1,5 @@
 import { x } from 'code-red';
-import { Node, Identifier, Expression, PrivateIdentifier } from 'estree';
+import { Node, Identifier, Expression, PrivateIdentifier, Pattern } from 'estree';
 import { walk } from 'estree-walker';
 import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
 import { clone } from '../../../utils/clone';
@@ -30,15 +30,17 @@ export function unpack_destructuring({
 	default_modifier = (node) => node,
 	scope,
 	component,
-	context_rest_properties
+	context_rest_properties,
+	in_rest_element = false
 }: {
 	contexts: Context[];
-	node: Node;
+	node: Pattern;
 	modifier?: DestructuredVariable['modifier'];
 	default_modifier?: DestructuredVariable['default_modifier'];
 	scope: TemplateScope;
 	component: Component;
 	context_rest_properties: Map<string, Node>;
+	in_rest_element?: boolean;
 }) {
 	if (!node) return;
 
@@ -49,28 +51,26 @@ export function unpack_destructuring({
 			modifier,
 			default_modifier
 		});
-	} else if (node.type === 'RestElement') {
-		contexts.push({
-			type: 'DestructuredVariable',
-			key: node.argument as Identifier,
-			modifier,
-			default_modifier
-		});
-		context_rest_properties.set((node.argument as Identifier).name, node);
+
+		if (in_rest_element) {
+			context_rest_properties.set(node.name, node);
+		}
 	} else if (node.type === 'ArrayPattern') {
-		node.elements.forEach((element, i) => {
-			if (element && element.type === 'RestElement') {
+		node.elements.forEach((element: Pattern | null, i: number) => {
+			if (!element) {
+				return;
+			} else if (element.type === 'RestElement') {
 				unpack_destructuring({
 					contexts,
-					node: element,
+					node: element.argument,
 					modifier: (node) => x`${modifier(node)}.slice(${i})` as Node,
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties
+					context_rest_properties,
+					in_rest_element: true
 				});
-				context_rest_properties.set((element.argument as Identifier).name, element);
-			} else if (element && element.type === 'AssignmentPattern') {
+			} else if (element.type === 'AssignmentPattern') {
 				const n = contexts.length;
 				mark_referenced(element.right, scope, component);
 
@@ -87,7 +87,8 @@ export function unpack_destructuring({
 						)}` as Node,
 					scope,
 					component,
-					context_rest_properties
+					context_rest_properties,
+					in_rest_element
 				});
 			} else {
 				unpack_destructuring({
@@ -97,7 +98,8 @@ export function unpack_destructuring({
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties
+					context_rest_properties,
+					in_rest_element
 				});
 			}
 		});
@@ -116,9 +118,9 @@ export function unpack_destructuring({
 					default_modifier,
 					scope,
 					component,
-					context_rest_properties
+					context_rest_properties,
+					in_rest_element: true
 				});
-				context_rest_properties.set((property.argument as Identifier).name, property);
 			} else if (property.type === 'Property') {
 				const key = property.key;
 				const value = property.value;
@@ -168,7 +170,8 @@ export function unpack_destructuring({
 							)}` as Node,
 						scope,
 						component,
-						context_rest_properties
+						context_rest_properties,
+						in_rest_element
 					});
 				} else {
 					// e.g. { property } or { property: newName }
@@ -179,7 +182,8 @@ export function unpack_destructuring({
 						default_modifier,
 						scope,
 						component,
-						context_rest_properties
+						context_rest_properties,
+						in_rest_element
 					});
 				}
 			}

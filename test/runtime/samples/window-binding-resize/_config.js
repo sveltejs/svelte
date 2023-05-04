@@ -1,5 +1,5 @@
 export default {
-	html: '<div>1024x768</div>',
+	html: '<div>1024x768</div><div>1</div>',
 
 	before_test() {
 		Object.defineProperties(window, {
@@ -9,6 +9,10 @@ export default {
 			},
 			innerHeight: {
 				value: 768,
+				configurable: true
+			},
+			devicePixelRatio: {
+				value: 1,
 				configurable: true
 			}
 		});
@@ -27,13 +31,17 @@ export default {
 			innerHeight: {
 				value: 456,
 				configurable: true
+			},
+			devicePixelRatio: {
+				value: 2,
+				configurable: true
 			}
 		});
 
 		await window.dispatchEvent(event);
 
 		assert.htmlEqual(target.innerHTML, `
-			<div>567x456</div>
+			<div>567x456</div><div>2</div>
 		`);
 	}
 };

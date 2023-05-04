@@ -42,7 +42,7 @@ Svelte uses the `export` keyword to mark a variable declaration as a *property* 
 
 ---
 
-You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that whenever a prop is removed by the consumer, its value is set to `undefined` rather than the initial value.
+You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that if the values of props are subsequently updated, then any prop whose value is not specified will be set to `undefined` (rather than its initial value).
 
 In development mode (see the [compiler options](/docs#compile-time-svelte-compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
@@ -286,7 +286,7 @@ You cannot `export default`, since the default export is the component itself.
 <script context="module">
 	let totalComponents = 0;
 
-	// this allows an importer to do e.g.
+	// the export keyword allows this function to imported with e.g.
 	// `import Example, { alertTotal } from './Example.svelte'`
 	export function alertTotal() {
 		alert(totalComponents);

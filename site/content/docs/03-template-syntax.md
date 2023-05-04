@@ -823,6 +823,8 @@ Inputs that work together can use `bind:group`.
 <input type="checkbox" bind:group={fillings} value="Guac (extra)">
 ```
 
+> `bind:group` only works if the inputs are in the same Svelte component.
+
 #### bind:this
 
 ```sv
@@ -1742,6 +1744,7 @@ You can also bind to the following properties:
 * `scrollX`
 * `scrollY`
 * `online` — an alias for `window.navigator.onLine`
+* `devicePixelRatio`
 
 All except `scrollX` and `scrollY` are readonly.
 
@@ -1756,6 +1759,9 @@ All except `scrollX` and `scrollY` are readonly.
 ```sv
 <svelte:document on:event={handler}/>
 ```
+```sv
+<svelte:document bind:prop={value}/>
+```
 
 ---
 
@@ -1769,6 +1775,15 @@ As with `<svelte:window>`, this element may only appear the top level of your co
 	use:someAction
 />
 ```
+
+---
+
+You can also bind to the following properties:
+
+* `fullscreenElement`
+* `visibilityState`
+
+All are readonly.
 
 ### `<svelte:body>`
 

@@ -12,7 +12,7 @@ import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
 import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
-import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character } from '../../utils/patterns';
+import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
 import Let from './Let';
@@ -121,6 +121,7 @@ const a11y_implicit_semantics = new Map([
 	['details', 'group'],
 	['dt', 'term'],
 	['fieldset', 'group'],
+	['figure', 'figure'],
 	['form', 'form'],
 	['h1', 'heading'],
 	['h2', 'heading'],
@@ -132,6 +133,7 @@ const a11y_implicit_semantics = new Map([
 	['img', 'img'],
 	['li', 'listitem'],
 	['link', 'link'],
+	['main', 'main'],
 	['menu', 'list'],
 	['meter', 'progressbar'],
 	['nav', 'navigation'],
@@ -142,6 +144,7 @@ const a11y_implicit_semantics = new Map([
 	['progress', 'progressbar'],
 	['section', 'region'],
 	['summary', 'button'],
+	['table', 'table'],
 	['tbody', 'rowgroup'],
 	['textarea', 'textbox'],
 	['tfoot', 'rowgroup'],
@@ -631,9 +634,7 @@ export default class Element extends Node {
 						}
 
 						// no-redundant-roles
-						const has_redundant_role = current_role === get_implicit_role(this.name, attribute_map);
-
-						if (this.name === current_role || has_redundant_role) {
+						if (current_role === get_implicit_role(this.name, attribute_map)) {
 							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
 						}
 
@@ -1090,7 +1091,10 @@ export default class Element extends Node {
 				} else if (contenteditable && !contenteditable.is_static) {
 					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
 				}
-			} else if (name !== 'this') {
+			} else if (
+				name !== 'this' &&
+				!regex_box_size.test(name)
+			) {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});

@@ -3,12 +3,13 @@ import get_object from '../utils/get_object';
 import Expression from './shared/Expression';
 import Component from '../Component';
 import TemplateScope from './shared/TemplateScope';
-import { regex_dimensions } from '../../utils/patterns';
+import { regex_dimensions, regex_box_size } from '../../utils/patterns';
 import { Node as ESTreeNode } from 'estree';
 import { TemplateNode } from '../../interfaces';
 import Element from './Element';
 import InlineComponent from './InlineComponent';
 import Window from './Window';
+import Document from './Document';
 import { clone } from '../../utils/clone';
 import compiler_errors from '../compiler_errors';
 import compiler_warnings from '../compiler_warnings';
@@ -36,7 +37,7 @@ export default class Binding extends Node {
 	is_contextual: boolean;
 	is_readonly: boolean;
 
-	constructor(component: Component, parent: Element | InlineComponent | Window, scope: TemplateScope, info: TemplateNode) {
+	constructor(component: Component, parent: Element | InlineComponent | Window | Document, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
@@ -92,6 +93,7 @@ export default class Binding extends Node {
 
 		this.is_readonly =
 			regex_dimensions.test(this.name) ||
+			regex_box_size.test(this.name) ||
 			(isElement(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
 					(parent.name === 'input' && type === 'file')) /* TODO others? */);
