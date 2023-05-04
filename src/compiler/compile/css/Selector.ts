@@ -471,28 +471,22 @@ function get_element_parent(node: Element): Element | null {
 }
 
 /**
-	* Finds the given node's previous sibling in the DOM
-	*	
-	* Unless the component is a custom element (web component), which in this
-	* case, the <slot> element is actually real, the Svelte <slot> is just a 
-	* placeholder and is not actually real. Any children nodes in <slot>
-	* are 'flattened' and considered as the same level as the <slot>'s siblings
-	*
-	* e.g.
-	* <h1>Heading 1</h1>
-	* <slot>
-	*   <h2>Heading 2</h2>
-	* </slot>
-	*
-	* is considered to look like:
-	* <h1>Heading 1</h1>
-	* <h2>Heading 2</h2>
-	*/
+ * Finds the given node's previous sibling in the DOM
+ *
+ * The Svelte <slot> is just a placeholder and is not actually real. Any children nodes
+ * in <slot> are 'flattened' and considered as the same level as the <slot>'s siblings
+ *
+ * e.g.
+ * <h1>Heading 1</h1>
+ * <slot>
+ *   <h2>Heading 2</h2>
+ * </slot>
+ *
+ * is considered to look like:
+ * <h1>Heading 1</h1>
+ * <h2>Heading 2</h2>
+ */
 function find_previous_sibling(node: INode): INode {
-	if (node.component.compile_options.customElement) {
-		return node.prev;
-	}
-
 	let current_node: INode = node;
 	do { 
 		if (current_node.type === 'Slot') {

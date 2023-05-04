@@ -8,13 +8,13 @@
 </slot>
 
 <style>
-	/* This will not get picked up */
-	h1 ~ p {
+	/* This will not be picked up */
+	h1 ~ slot > p {
 		color: red;
 	}
 
-	/* This will be picked up */
-	h1 ~ slot > p {
+	/* This will get picked up */
+	h1 ~ p {
 		color: red;
 	}
 </style>

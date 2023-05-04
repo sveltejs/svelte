@@ -7,12 +7,12 @@
 
 <style>
 	/* This will not be picked up */
-  h1 + span {
-    color: red;
-  }
+	h1 + slot > span {
+		color: red;
+	}
 
 	/* This will be picked up */
-	h1 + slot > span {
+	h1 + span {
 		color: red;
 	}
 </style>
