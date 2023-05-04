@@ -11,6 +11,7 @@
 * **breaking** Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 * **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
 * **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
+* **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
 * Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))

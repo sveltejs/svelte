@@ -17,10 +17,11 @@ type Invalidator<T> = (value?: T) => void;
  * This function is called when the first subscriber subscribes.
  * 
  * @param {(value: T) => void} set Function that sets the value of the store.
+ * @param {(value: Updater<T>) => void} set Function that sets the value of the store after passing the current value to the update function.
  * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
  * subscriber unsubscribes.
  */
-export type StartStopNotifier<T> = (set: (value: T) => void) => void | (() => void);
+export type StartStopNotifier<T> = (set: (value: T) => void, update: (fn: Updater<T>) => void) => void | (() => void);
 
 /** Readable interface for subscribing. */
 export interface Readable<T> {
@@ -99,7 +100,7 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
-			stop = start(set) || noop;
+			stop = start(set, update) || noop;
 		}
 		run(value);
 
@@ -130,9 +131,9 @@ type StoresValues<T> = T extends Readable<infer U> ? U :
  * @param fn - function callback that aggregates the values
  * @param initial_value - when used asynchronously
  */
-export function derived<S extends Stores, T>(
+ export function derived<S extends Stores, T>(
 	stores: S,
-	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	fn: (values: StoresValues<S>, set: Subscriber<T>, update: (fn: Updater<T>) => void) => Unsubscriber | void,
 	initial_value?: T
 ): Readable<T>;
 
@@ -171,7 +172,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 
 	const auto = fn.length < 2;
 
-	return readable(initial_value, (set) => {
+	return readable(initial_value, (set, update) => {
 		let started = false;
 		const values = [];
 
@@ -183,7 +184,7 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				return;
 			}
 			cleanup();
-			const result = fn(single ? values[0] : values, set);
+			const result = fn(single ? values[0] : values, set, update);
 			if (auto) {
 				set(result as T);
 			} else {

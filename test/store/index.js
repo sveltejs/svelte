@@ -137,6 +137,50 @@ describe('store', () => {
 			assert.deepEqual(values, [0, 1, 2]);
 		});
 
+		it('passes an optional update function', () => {
+			let running;
+			let tick;
+			let add;
+
+			const store = readable(undefined, (set, update) => {
+				tick = set;
+				running = true;
+				add = n => update(value => value + n);
+
+				set(0);
+
+				return () => {
+					tick = () => { };
+					add = _ => { };
+					running = false;
+				};
+			});
+
+			assert.ok(!running);
+
+			const values = [];
+
+			const unsubscribe = store.subscribe(value => {
+				values.push(value);
+			});
+
+			assert.ok(running);
+			tick(1);
+			tick(2);
+			add(3);
+			add(4);
+			tick(5);
+			add(6);
+
+			unsubscribe();
+
+			assert.ok(!running);
+			tick(7);
+			add(8);
+
+			assert.deepEqual(values, [0, 1, 2, 5, 9, 5, 11]);
+		});
+
 		it('creates an undefined readable store', () => {
 			const store = readable();
 			const values = [];
@@ -239,6 +283,39 @@ describe('store', () => {
 			number.set(7);
 			number.set(8);
 			assert.deepEqual(values, [0, 2, 4]);
+		});
+
+		it('passes optional set and update functions', () => {
+			const number = writable(1);
+			const evensAndSquaresOf4 = derived(number, (n, set, update) => {
+				if (n % 2 === 0) set(n);
+				if (n % 4 === 0) update(n => n * n);
+			}, 0);
+
+			const values = [];
+
+			const unsubscribe = evensAndSquaresOf4.subscribe(value => {
+				values.push(value);
+			});
+
+			number.set(2);
+			number.set(3);
+			number.set(4);
+			number.set(5);
+			number.set(6);
+			assert.deepEqual(values, [0, 2, 4, 16, 6]);
+
+			number.set(7);
+			number.set(8);
+			number.set(9);
+			number.set(10);
+			assert.deepEqual(values, [0, 2, 4, 16, 6, 8, 64, 10]);
+
+			unsubscribe();
+
+			number.set(11);
+			number.set(12);
+			assert.deepEqual(values, [0, 2, 4, 16, 6, 8, 64, 10]);
 		});
 
 		it('prevents glitches', () => {
