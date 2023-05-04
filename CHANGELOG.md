@@ -12,12 +12,15 @@
 * **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
 * **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
 * **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
+* Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
 * Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
+* Improve duplicate key error for keyed `each` blocks ([#8411](https://github.com/sveltejs/svelte/pull/8411))
 * Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
 * Allow `$store` to be used with changing values including nullish values ([#7555](https://github.com/sveltejs/svelte/issues/7555))
 * Initialize stylesheet with `/* empty */` to enable setting CSP directive that also works in Safari ([#7800](https://github.com/sveltejs/svelte/pull/7800))
 * Treat slots as if they don't exist when using CSS adjacent and general sibling combinators ([#8284](https://github.com/sveltejs/svelte/issues/8284))
+* Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 
 ## Unreleased (3.0)
 
