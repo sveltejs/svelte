@@ -30,8 +30,6 @@ export default class SlotWrapper extends Wrapper {
 		next_sibling: Wrapper
 	) {
 		super(renderer, block, parent, node);
-		this.cannot_use_innerhtml();
-		this.not_static_content();
 
 		if (this.node.children.length) {
 			this.fallback = block.child({

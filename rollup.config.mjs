@@ -15,9 +15,12 @@ const is_publish = !!process.env.PUBLISH;
 const ts_plugin = is_publish
 	? typescript({
 			typescript: require('typescript'),
+			paths: {
+				'svelte/*': ['./src/runtime/*']
+			}
 	  })
 	: sucrase({
-			transforms: ['typescript'],
+			transforms: ['typescript']
 	  });
 
 fs.writeFileSync(
@@ -88,19 +91,6 @@ export default [
 								);
 							}
 						}
-
-						fs.writeFileSync(
-							`${dir}/package.json`,
-							JSON.stringify(
-								{
-									main: './index.js',
-									module: './index.mjs',
-									types: './index.d.ts',
-								},
-								null,
-								'  '
-							)
-						);
 
 						fs.writeFileSync(
 							`${dir}/index.d.ts`,

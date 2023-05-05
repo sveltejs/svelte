@@ -15,6 +15,7 @@ export default class Node {
 	next?: INode;
 
 	can_use_innerhtml: boolean;
+	is_static_content: boolean;
 	var: string;
 	attributes: Attribute[];
 
@@ -33,6 +34,9 @@ export default class Node {
 				value: parent
 			}
 		});
+
+		this.can_use_innerhtml = true;
+		this.is_static_content = true;
 	}
 
 	cannot_use_innerhtml() {
@@ -40,6 +44,11 @@ export default class Node {
 			this.can_use_innerhtml = false;
 			if (this.parent) this.parent.cannot_use_innerhtml();
 		}
+	}
+
+	not_static_content() {
+		this.is_static_content = false;
+		if (this.parent) this.parent.not_static_content();
 	}
 
 	find_nearest(selector: RegExp) {

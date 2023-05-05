@@ -27,7 +27,6 @@ function get_each_context(ctx, list, i) {
 function create_each_block(ctx) {
 	let div;
 	let strong;
-	let t0;
 	let t1;
 	let span;
 	let t2_value = /*comment*/ ctx[4].author + "";
@@ -44,7 +43,7 @@ function create_each_block(ctx) {
 		c() {
 			div = element("div");
 			strong = element("strong");
-			t0 = text(/*i*/ ctx[6]);
+			strong.textContent = `${/*i*/ ctx[6]}`;
 			t1 = space();
 			span = element("span");
 			t2 = text(t2_value);
@@ -60,7 +59,6 @@ function create_each_block(ctx) {
 		m(target, anchor) {
 			insert(target, div, anchor);
 			append(div, strong);
-			append(strong, t0);
 			append(div, t1);
 			append(div, span);
 			append(span, t2);

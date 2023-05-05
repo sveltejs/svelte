@@ -5,7 +5,9 @@ export default {
 		<h1>tag is h1.</h1>
 	`,
 	props: {
-		logs
+		pushLogs(log) {
+			logs.push(log);
+		}
 	},
 	after_test() {
 		logs = [];

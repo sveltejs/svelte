@@ -20,8 +20,6 @@ export default class HeadWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.can_use_innerhtml = false;
-
 		this.fragment = new FragmentWrapper(
 			renderer,
 			block,

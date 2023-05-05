@@ -1,1 +1,1 @@
-<svelte:options tag="invalid"/>
+<svelte:options customElement="invalid" />

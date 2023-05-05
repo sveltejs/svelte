@@ -5,7 +5,9 @@ import Element from '../../nodes/Element';
 
 export default function(node: Text, renderer: Renderer, _options: RenderOptions) {
 	let text = node.data;
-	if (
+	if (node.use_space()) {
+		text = ' ';
+	} else if (
 		!node.parent ||
 		node.parent.type !== 'Element' ||
 		((node.parent as Element).name !== 'script' && (node.parent as Element).name !== 'style')

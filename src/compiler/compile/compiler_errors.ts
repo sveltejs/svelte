@@ -202,9 +202,23 @@ export default {
 		code: 'invalid-tag-property',
 		message: "tag name must be two or more words joined by the '-' character"
 	},
+	invalid_customElement_attribute: {
+		code: 'invalid-customElement-attribute',
+		message: "'customElement' must be a string literal defining a valid custom element name or an object of the form " +
+		"{ tag: string; shadow?: 'open' | 'none'; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }"
+	},
 	invalid_tag_attribute: {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
+	},
+	invalid_shadow_attribute: {
+		code: 'invalid-shadow-attribute',
+		message: "'shadow' must be either 'open' or 'none'"
+	},
+	invalid_props_attribute: {
+		code: 'invalid-props-attribute',
+		message: "'props' must be a statically analyzable object literal of the form " +
+			"'{ [key: string]: { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }'"
 	},
 	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
 		code: 'invalid-namespace-property',
@@ -218,10 +232,10 @@ export default {
 		code: `invalid-${name}-value`,
 		message: `${name} attribute must be true or false`
 	}),
-	invalid_options_attribute_unknown: {
+	invalid_options_attribute_unknown: (name: string) => ({
 		code: 'invalid-options-attribute',
-		message: '<svelte:options> unknown attribute'
-	},
+		message: `<svelte:options> unknown attribute '${name}'`
+	}),
 	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
 		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"

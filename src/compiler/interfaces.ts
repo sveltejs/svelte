@@ -206,7 +206,10 @@ export interface AppendTarget {
 
 export interface Var {
 	name: string;
-	export_name?: string; // the `bar` in `export { foo as bar }`
+	/** the `bar` in `export { foo as bar }` or `export let bar` */
+	export_name?: string;
+	/** true if assigned a boolean default value (`export let foo = true`) */
+	is_boolean?: boolean;
 	injected?: boolean;
 	module?: boolean;
 	mutated?: boolean;
