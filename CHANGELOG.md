@@ -23,11 +23,18 @@
 * Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 
-## Unreleased (3.0)
+## 3.59.0
 
-* Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
-* Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))
-
+* Add `ResizeObserver` bindings `contentRect`/`contentBoxSize`/`borderBoxSize`/`devicePixelContentBoxSize` ([#8022](https://github.com/sveltejs/svelte/pull/8022))
+* Add `devicePixelRatio` binding for `<svelte:window>` ([#8285](https://github.com/sveltejs/svelte/issues/8285))
+* Add `fullscreenElement` and `visibilityState` bindings for `<svelte:document>` ([#8507](https://github.com/sveltejs/svelte/pull/8507))
+* Add `a11y-autocomplete-valid` warning ([#8520](https://github.com/sveltejs/svelte/pull/8520))
+* Fix handling of `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
+* Fix updating of interpolated `style:` directive when using spread ([#8438](https://github.com/sveltejs/svelte/issues/8438))
+* Remove `style:` directive property when value is `undefined` ([#8462](https://github.com/sveltejs/svelte/issues/8462))
+* Fix type of `VERSION` compiler export ([#8498](https://github.com/sveltejs/svelte/issues/8498))
+* Relax `a11y-no-redundant-roles` warning ([#8536](https://github.com/sveltejs/svelte/pull/8536))
+* Handle nested array rest destructuring ([#8552](https://github.com/sveltejs/svelte/issues/8552), [#8554](https://github.com/sveltejs/svelte/issues/8554))
 ## 3.58.0
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))

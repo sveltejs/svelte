@@ -62,6 +62,8 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 
 ## Pull requests
 
+> HEADS UP: The Svelte repo is currently in the process of heavy restructuring for Svelte 4. After that, work on Svelte 5 will likely change a lot on the compiler aswell. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but feature PRs will likely not be merged.
+
 ### Proposing a change
 
 If you would like to request a new feature or enhancement but are not yet thinking about opening a pull request, you can also file an issue with [feature template](https://github.com/sveltejs/svelte/issues/new?template=feature_request.yml).

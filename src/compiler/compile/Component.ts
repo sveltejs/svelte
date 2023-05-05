@@ -26,7 +26,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, VariableDeclarator, ObjectExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, VariableDeclarator, ObjectExpression, Pattern, Expression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -1036,7 +1036,7 @@ export default class Component {
 						const inserts = [];
 						const props = [];
 
-						function add_new_props(exported, local, default_value) {
+						function add_new_props(exported: Identifier, local: Pattern, default_value: Expression) {
 							props.push({
 								type: 'Property',
 								method: false,
@@ -1066,7 +1066,7 @@ export default class Component {
 						for (let index = 0; index < node.declarations.length; index++) {
 							const declarator = node.declarations[index];
 							if (declarator.id.type !== 'Identifier') {
-								function get_new_name(local) {
+								function get_new_name(local: Identifier): Identifier {
 									const variable = component.var_lookup.get(local.name);
 									if (variable.subscribable) {
 										inserts.push(get_insert(variable));
@@ -1080,7 +1080,7 @@ export default class Component {
 									return local;
 								}
 
-								function rename_identifiers(param: Node) {
+								function rename_identifiers(param: Pattern) {
 									switch (param.type) {
 										case 'ObjectPattern': {
 											const handle_prop = (prop: Property | RestElement) => {
@@ -1089,7 +1089,7 @@ export default class Component {
 												} else if (prop.value.type === 'Identifier') {
 													prop.value = get_new_name(prop.value);
 												} else {
-													rename_identifiers(prop.value);
+													rename_identifiers(prop.value as Pattern);
 												}
 											};
 
@@ -1097,7 +1097,7 @@ export default class Component {
 											break;
 										}
 										case 'ArrayPattern': {
-											const handle_element = (element: Node, index: number, array: Node[]) => {
+											const handle_element = (element: Pattern | null, index: number, array: Array<Pattern | null>) => {
 												if (element) {
 													if (element.type === 'Identifier') {
 														array[index] = get_new_name(element);
@@ -1112,7 +1112,11 @@ export default class Component {
 										}
 
 										case 'RestElement':
-											param.argument = get_new_name(param.argument);
+											if (param.argument.type === 'Identifier') {
+												param.argument = get_new_name(param.argument);
+											} else {
+												rename_identifiers(param.argument);
+											}
 											break;
 
 										case 'AssignmentPattern':

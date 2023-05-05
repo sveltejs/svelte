@@ -170,6 +170,10 @@ export default {
 		code: 'a11y-missing-attribute',
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	}),
+	a11y_autocomplete_valid: (type: null | true | string, value: null | true | string) => ({
+		code: 'a11y-autocomplete-valid',
+		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type}">`
+	}),
 	a11y_img_redundant_alt: {
 		code: 'a11y-img-redundant-alt',
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
@@ -228,7 +232,7 @@ export default {
 	},
 	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
 		code: 'invalid-rest-eachblock-binding',
-		message: `...${rest_element_name} operator will create a new object and binding propagation with original object will not work`
+		message: `The rest operator (...) will create a new object and binding '${rest_element_name}' with the original object will not work`
 	}),
 	avoid_mouse_events_on_document: {
 		code: 'avoid-mouse-events-on-document',
