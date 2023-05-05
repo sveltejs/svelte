@@ -3,45 +3,9 @@
 		"code": "a11y-autocomplete-valid",
 		"end": {
 			"column": 31,
-			"line": 16
-		},
-		"message": "A11y: The value 'true' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
-		"start": {
-			"column": 19,
-			"line": 16
-		}
-	},
-	{
-		"code": "a11y-autocomplete-valid",
-		"end": {
-			"column": 39,
-			"line": 17
-		},
-		"message": "A11y: The value 'off' is not supported by the attribute 'autocomplete' on element <input type=\"hidden\">",
-		"start": {
-			"column": 21,
-			"line": 17
-		}
-	},
-	{
-		"code": "a11y-autocomplete-valid",
-		"message": "A11y: The value 'on' is not supported by the attribute 'autocomplete' on element <input type=\"hidden\">",
-		"end": {
-			"column": 38,
-			"line": 18
-		},
-		"start": {
-			"column": 21,
-			"line": 18
-		}
-	},
-	{
-		"code": "a11y-autocomplete-valid",
-		"message": "A11y: The value '' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
-		"end": {
-			"column": 34,
 			"line": 19
 		},
+		"message": "A11y: The value 'true' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
 		"start": {
 			"column": 19,
 			"line": 19

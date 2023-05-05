@@ -853,8 +853,8 @@ export default class Element extends Node {
 			const autocomplete = attribute_map.get('autocomplete');
 
 			if (type && autocomplete) {
-				const type_value: null | true | string = type.get_static_value();
-				const autocomplete_value: null | true | string = autocomplete.get_static_value();
+				const type_value = type.get_static_value();
+				const autocomplete_value = autocomplete.get_static_value();
 
 				if (!is_valid_autocomplete(type_value, autocomplete_value)) {
 					component.warn(autocomplete, compiler_warnings.a11y_autocomplete_valid(type_value, autocomplete_value));

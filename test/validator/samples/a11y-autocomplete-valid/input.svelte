@@ -11,11 +11,11 @@
 <input type="TEXT" autocomplete="ON" />
 <input type="email" autocomplete="url" />
 <input type="text" autocomplete="section-blue shipping street-address" />
-
-<!-- INVALID -->
-<input type="text" autocomplete />
 <input type="hidden" autocomplete="off" />
 <input type="hidden" autocomplete="on" />
 <input type="text" autocomplete="" />
+
+<!-- INVALID -->
+<input type="text" autocomplete />
 <input type="text" autocomplete="incorrect" />
 <input type="text" autocomplete="webauthn" />

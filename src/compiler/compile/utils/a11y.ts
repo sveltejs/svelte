@@ -228,6 +228,9 @@ export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: 
 // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofilling-form-controls:-the-autocomplete-attribute
 const address_type_tokens = new Set(['shipping', 'billing']);
 const autofill_field_name_tokens = new Set([
+	'',
+	'on',
+	'off',
 	'name',
 	'honorific-prefix',
 	'given-name',
@@ -293,16 +296,6 @@ export function is_valid_autocomplete(type: null | true | string, autocomplete: 
 	}
 
 	const tokens = autocomplete.trim().toLowerCase().split(regex_whitespaces);
-	const normalized_type = type.toLowerCase();
-
-	const input_wears_autofill_anchor_mantle = normalized_type === 'hidden';
-	const input_wears_autofill_expectation_mantle = !input_wears_autofill_anchor_mantle;
-
-	if (input_wears_autofill_expectation_mantle) {
-		if (tokens[0] === 'on' || tokens[0] === 'off') {
-			return tokens.length === 1;
-		}
-	}
 
 	if (typeof tokens[0] === 'string' && tokens[0].startsWith('section-')) {
 		tokens.shift();
