@@ -38,6 +38,7 @@ import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
 import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
+import { flatten } from '../utils/flatten';
 
 interface ComponentOptions {
 	namespace?: string;
@@ -1136,7 +1137,9 @@ export default class Component {
 									add_new_props({ type: 'Identifier', name: variable.export_name }, declarator.id, declarator.init);
 									node.declarations.splice(index--, 1);
 								}
-								if (variable.subscribable && (is_props || declarator.init)) {
+
+								const for_in_of_loop_init = key === 'left' && (parent.type === 'ForInStatement' || parent.type === 'ForOfStatement');
+								if (variable.subscribable && (is_props || declarator.init || for_in_of_loop_init)) {
 									subscriptions.push(get_subscriptions(variable));
 								}
 							}
@@ -1147,31 +1150,52 @@ export default class Component {
 							throw new Error('export is not at the top level');
 						}
 
+						const flattened_subscriptions = flatten(subscriptions);
+						// parent.type === 'Program' or 'BlockStatement' or 'SwitchCase' and key === 'body'
 						if (Array.isArray(parent[key])) {
 							// If the variable declaration is part of some block, that is, among an array of statements
 							// then, we add the subscriptions and the $$props declaration after declaration
 							if (subscriptions.length > 0) {
-								subscriptions.reverse().forEach((subscription) => {
-									parent[key].splice(index + 1, 0, ...subscription);
-								});
+								parent[key].splice(index + 1, 0, ...flattened_subscriptions);
 							}
 							if (props.length > 0) {
 								// b`` might return a Node array, but the $$props declaration will be flattened later
 								parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
-						  }
+							}
 							if (node.declarations.length == 0) {
 								parent[key].splice(index, 1);
 							}
 						} else if (subscriptions.length > 0) {
-							// If the variable declaration is not part of a block, we instead get a dummy variable setting
-							// calling an immediately-invoked function expression containing all the subscription functions
-              node.declarations.push({
-								type: 'VariableDeclarator',
-								id: component.get_unique_name('$$subscriptions', scope),
-								init: x`(() => { 
-									${subscriptions}
-								})()`
-							});
+							// if it is for (var x in array) or for (var x of array)
+							// we are transforming from:
+							// 
+							// for (var x of array) {
+							//   // body
+							// }
+							// to:
+							// for (var x of array) {
+							//   // subscription inserts
+							//   // body
+							// }
+							if (key === 'left' && (parent.type === 'ForInStatement' || parent.type === 'ForOfStatement')) {
+								if (parent.body.type !== 'BlockStatement') {
+									parent.body = {
+										type: 'BlockStatement',
+										body: [parent.body]
+									};
+								}
+								parent.body.body.unshift(...flattened_subscriptions);
+							} else {
+								// If the variable declaration is not part of a block, we instead get a dummy variable setting
+								// calling an immediately-invoked function expression containing all the subscription functions
+								node.declarations.push({
+									type: 'VariableDeclarator',
+									id: component.get_unique_name('$$subscriptions', scope),
+									init: x`(() => { 
+										${flattened_subscriptions}
+									})()`
+								});
+							}
 						}
 
 						return this.skip();
