@@ -1163,21 +1163,26 @@ export default class Component {
 								parent[key].splice(index + 1, 0, b`let { ${props} } = $$props;`);
 							}
 							if (node.declarations.length == 0) {
+								// After extracting all the prop names, remove if there are no declarations left
 								parent[key].splice(index, 1);
 							}
 						} else if (subscriptions.length > 0) {
-							// if it is for (var x in array) or for (var x of array)
-							// we are transforming from:
-							// 
-							// for (var x of array) {
-							//   // body
-							// }
-							// to:
-							// for (var x of array) {
-							//   // subscription inserts
-							//   // body
-							// }
+							
 							if (key === 'left' && (parent.type === 'ForInStatement' || parent.type === 'ForOfStatement')) {
+								// if it is for (var x in array) or for (var x of array)
+								// we are transforming from:
+								// 
+								// for (var x of array) {
+								//	 // body
+								// } 
+								// or
+								// for (var x of array)
+								//	 // statement
+								// to:
+								// for (var x of array) {
+								//	 // subscription inserts
+								//	 // body or statement
+								// }
 								if (parent.body.type !== 'BlockStatement') {
 									parent.body = {
 										type: 'BlockStatement',
@@ -1185,9 +1190,10 @@ export default class Component {
 									};
 								}
 								parent.body.body.unshift(...flattened_subscriptions);
-							} else {
-								// If the variable declaration is not part of a block, we instead get a dummy variable setting
+							} else if (key === 'init' && parent.type === 'ForStatement') {
+								// If the variable declaration is like for (var i = writable(1); ...), we instead get a dummy variable setting
 								// calling an immediately-invoked function expression containing all the subscription functions
+								// e.g. for (var i = writable(1), $$subscriptions = (() => { subscription inserts })(); ...)
 								node.declarations.push({
 									type: 'VariableDeclarator',
 									id: component.get_unique_name('$$subscriptions', scope),
@@ -1195,6 +1201,21 @@ export default class Component {
 										${flattened_subscriptions}
 									})()`
 								});
+							} else {
+								// Variable declaration is a statement without a parent list of statements, so we transform it by
+								// putting the var in a block statement and call subscription inserts
+								// e.g.
+								// if (condition)
+								//	 var a = writable(1);
+								// turns into
+								// if (condition) {
+								//	 var a = writable(1);
+								//	 // subscription inserts here
+								// }
+								parent[key] = {
+									type: 'BlockStatement',
+									body: [parent[key], ...flattened_subscriptions]
+								};
 							}
 						}
 
