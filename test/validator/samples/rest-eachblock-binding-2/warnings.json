@@ -1,8 +1,8 @@
 [
   {
     "code": "invalid-rest-eachblock-binding",
-    "message": "...rest operator will create a new object and binding propagation with original object will not work",
-    "start": { "line": 8, "column": 24 },
+    "message": "The rest operator (...) will create a new object and binding 'rest' with the original object will not work",
+    "start": { "line": 8, "column": 27 },
 		"end": { "line": 8, "column": 31 }
   }
 ]

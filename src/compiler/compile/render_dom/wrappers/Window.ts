@@ -14,6 +14,7 @@ const associated_events = {
 	innerHeight: 'resize',
 	outerWidth: 'resize',
 	outerHeight: 'resize',
+	devicePixelRatio: 'resize',
 
 	scrollX: 'scroll',
 	scrollY: 'scroll'
@@ -29,6 +30,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
+	'devicePixelRatio',
 	'online'
 ]);
 

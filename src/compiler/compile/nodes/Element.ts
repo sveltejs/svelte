@@ -121,6 +121,7 @@ const a11y_implicit_semantics = new Map([
 	['details', 'group'],
 	['dt', 'term'],
 	['fieldset', 'group'],
+	['figure', 'figure'],
 	['form', 'form'],
 	['h1', 'heading'],
 	['h2', 'heading'],
@@ -132,6 +133,7 @@ const a11y_implicit_semantics = new Map([
 	['img', 'img'],
 	['li', 'listitem'],
 	['link', 'link'],
+	['main', 'main'],
 	['menu', 'list'],
 	['meter', 'progressbar'],
 	['nav', 'navigation'],
@@ -142,6 +144,7 @@ const a11y_implicit_semantics = new Map([
 	['progress', 'progressbar'],
 	['section', 'region'],
 	['summary', 'button'],
+	['table', 'table'],
 	['tbody', 'rowgroup'],
 	['textarea', 'textbox'],
 	['tfoot', 'rowgroup'],
@@ -631,9 +634,7 @@ export default class Element extends Node {
 						}
 
 						// no-redundant-roles
-						const has_redundant_role = current_role === get_implicit_role(this.name, attribute_map);
-
-						if (this.name === current_role || has_redundant_role) {
+						if (current_role === get_implicit_role(this.name, attribute_map)) {
 							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
 						}
 
