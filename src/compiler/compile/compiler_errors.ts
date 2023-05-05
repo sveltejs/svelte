@@ -300,6 +300,10 @@ export default {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
 	},
+	invalid_var_declaration: {
+		code: 'invalid_var_declaration',
+		message: '"var" scope should not extend outside the reactive block'
+	},
 	invalid_style_directive_modifier: (valid: string) => ({
 		code: 'invalid-style-directive-modifier',
 		message: `Valid modifiers for style directives are: ${valid}`
