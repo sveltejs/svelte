@@ -149,6 +149,14 @@ Text can also contain JavaScript expressions:
 <div>{(/^[A-Za-z ]+$/).test(value) ? x : y}</div>
 ```
 
+---
+
+To include regular curly braces in the HTML, they must either be included as string Javascript expressions or their [HTML Entity](https://developer.mozilla.org/docs/Glossary/Entity) strings used
+
+```html
+{'{'} in curly braces {'}'} or &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;
+```
+
 ### Comments
 
 ---
