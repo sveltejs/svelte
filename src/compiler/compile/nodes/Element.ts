@@ -25,7 +25,7 @@ import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
 import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute } from '../utils/a11y';
+import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute, is_valid_autocomplete } from '../utils/a11y';
 
 const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
 const aria_attribute_set = new Set(aria_attributes);
@@ -847,6 +847,18 @@ export default class Element extends Node {
 
 				if (!has_attribute) {
 					should_have_attribute(this, required_attributes, 'input type="image"');
+				}
+			}
+
+			// autocomplete-valid
+			const autocomplete = attribute_map.get('autocomplete');
+
+			if (type && autocomplete) {
+				const type_value = type.get_static_value();
+				const autocomplete_value = autocomplete.get_static_value();
+
+				if (!is_valid_autocomplete(type_value, autocomplete_value)) {
+					component.warn(autocomplete, compiler_warnings.a11y_autocomplete_valid(type_value, autocomplete_value));
 				}
 			}
 		}

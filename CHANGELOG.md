@@ -7,6 +7,11 @@
 * Update interpolated style directive properly when using spread ([#8438](https://github.com/sveltejs/svelte/issues/8438))
 * Remove style directive property when value is `undefined` ([#8462](https://github.com/sveltejs/svelte/issues/8462))
 * Ensure version is typed as `string` instead of the literal `__VERSION__` ([#8498](https://github.com/sveltejs/svelte/issues/8498))
+* Add `a11y-autocomplete-valid` warning ([#8520](https://github.com/sveltejs/svelte/pull/8520))
+* Handle nested array rest destructuring ([#8554](https://github.com/sveltejs/svelte/issues/8554), [#8552](https://github.com/sveltejs/svelte/issues/8552))
+* Add `fullscreenElement` and `visibilityState` bindings for `<svelte:document>` ([#8507](https://github.com/sveltejs/svelte/pull/8507))
+* Add `devicePixelRatio` binding for `<svelte:window>` ([#8285](https://github.com/sveltejs/svelte/issues/8285))
+* Relax `a11y-no-redundant-roles` warning ([#8536](https://github.com/sveltejs/svelte/pull/8536))
 
 ## 3.58.0
 

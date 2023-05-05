@@ -1,0 +1,38 @@
+[
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 31,
+			"line": 19
+		},
+		"message": "A11y: The value 'true' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 19
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 43,
+			"line": 20
+		},
+		"message": "A11y: The value 'incorrect' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 20
+		}
+	},
+	{
+		"code": "a11y-autocomplete-valid",
+		"end": {
+			"column": 42,
+			"line": 21
+		},
+		"message": "A11y: The value 'webauthn' is not supported by the attribute 'autocomplete' on element <input type=\"text\">",
+		"start": {
+			"column": 19,
+			"line": 21
+		}
+	}
+]
