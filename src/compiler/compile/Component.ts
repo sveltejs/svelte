@@ -1356,7 +1356,7 @@ export default class Component {
 				const module_dependencies = new Set<string>();
 
 				let scope = this.instance_scope;
-				const {declarations: outset_scope_decalarations} = this.instance_scope;
+				const { declarations: outset_scope_decalarations } = this.instance_scope;
 				const map = this.instance_scope_map;
 
 				walk(node.body, {
