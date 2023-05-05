@@ -51,6 +51,7 @@ export default [
 						if (entry.isEntry) {
 							if (entry.name === 'index') return `index.${ext}`;
 							else if (entry.name === 'ssr') return `ssr.${ext}`;
+
 							return `${entry.name}/index.${ext}`;
 						}
 					},
