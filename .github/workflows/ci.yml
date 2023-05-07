@@ -12,23 +12,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 14
-            os: ubuntu-latest
-          - node-version: 14
-            os: windows-latest
-          - node-version: 14
-            os: macOS-latest
-          - node-version: 16
-            os: ubuntu-latest
           - node-version: 18
             os: ubuntu-latest
+          - node-version: 18
+            os: windows-latest
+          - node-version: 18
+            os: macOS-latest
           - node-version: 20
             os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2.2.4
-        with:
-          version: ${{ matrix.node-version == 14 && 7 || 8 }}
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
@@ -46,6 +40,7 @@ jobs:
       - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
+          node-version: 18
           cache: pnpm
       - run: 'pnpm i && pnpm lint'
   Unit:
@@ -54,16 +49,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 14
-            os: ubuntu-latest
-          - node-version: 14
-            os: windows-latest
-          - node-version: 14
-            os: macOS-latest
-          - node-version: 16
-            os: ubuntu-latest
           - node-version: 18
             os: ubuntu-latest
+          - node-version: 18
+            os: windows-latest
+          - node-version: 18
+            os: macOS-latest
           - node-version: 20
             os: ubuntu-latest
     steps:
