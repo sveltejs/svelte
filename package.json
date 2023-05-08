@@ -77,7 +77,7 @@
     }
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=16"
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
