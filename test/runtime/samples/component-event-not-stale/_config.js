@@ -8,7 +8,7 @@ export default {
 		const click = new window.MouseEvent('click');
 
 		const events = [];
-		component.$on('value', event => {
+		component.$on('value', (event) => {
 			events.push(event.detail);
 		});
 
@@ -20,11 +20,6 @@ export default {
 		buttons[0].dispatchEvent(click);
 		buttons[1].dispatchEvent(click);
 
-		assert.deepEqual(events, [
-			{ value: 1 },
-			{ value: 1 },
-			{ value: 2 },
-			{ value: 2 }
-		]);
+		assert.deepEqual(events, [{ value: 1 }, { value: 1 }, { value: 2 }, { value: 2 }]);
 	}
 };

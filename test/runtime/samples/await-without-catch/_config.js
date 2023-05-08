@@ -1,6 +1,6 @@
 let fulfil;
 
-let promise = new Promise(f => {
+let promise = new Promise((f) => {
 	fulfil = f;
 });
 
@@ -17,29 +17,35 @@ export default {
 		fulfil(42);
 
 		return promise
-		.then(() => {
-			assert.htmlEqual(target.innerHTML, `
+			.then(() => {
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 				<p>loaded</p>
-			`);
+			`
+				);
 
-			let reject;
+				let reject;
 
-			promise = new Promise((f, r) => {
-				reject = r;
-			});
+				promise = new Promise((f, r) => {
+					reject = r;
+				});
 
-			component.promise = promise;
+				component.promise = promise;
 
-			assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 				<p>loading...</p>
-			`);
+			`
+				);
 
-			reject(new Error('this error should be thrown'));
-			return promise;
-		})
-		.catch((err) => {
-			assert.equal(err.message, 'this error should be thrown');
-			assert.htmlEqual(target.innerHTML, '');
-		});
+				reject(new Error('this error should be thrown'));
+				return promise;
+			})
+			.catch((err) => {
+				assert.equal(err.message, 'this error should be thrown');
+				assert.htmlEqual(target.innerHTML, '');
+			});
 	}
 };

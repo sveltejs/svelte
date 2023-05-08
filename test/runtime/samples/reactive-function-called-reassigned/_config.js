@@ -1,7 +1,7 @@
 let value;
 let called = 0;
 function callback(_value) {
-	called ++;
+	called++;
 	value = _value;
 }
 

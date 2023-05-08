@@ -12,10 +12,7 @@ function try_require(file) {
 }
 
 function normalize_warning(warning) {
-	warning.frame = warning.frame
-		.replace(/^\n/, '')
-		.replace(/^\t+/gm, '')
-		.replace(/\s+$/gm, '');
+	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
 	delete warning.filename;
 	delete warning.toString;
 	return warning;
@@ -25,7 +22,7 @@ function create(code) {
 	const fn = new Function('module', 'exports', 'require', code);
 
 	const module = { exports: {} };
-	fn(module, module.exports, id => {
+	fn(module, module.exports, (id) => {
 		if (id === 'svelte') return require('../../index.js');
 		if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../'));
 
@@ -40,7 +37,7 @@ describe('css', () => {
 		setupHtmlEqual();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -84,7 +81,9 @@ describe('css', () => {
 				css: read(`${__dirname}/samples/${dir}/expected.css`)
 			};
 
-			const actual_css = dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+			const actual_css = dom.css.code.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) =>
+				$1 ? m : 'svelte-xyz'
+			);
 			try {
 				assert.equal(actual_css, expected.css);
 			} catch (error) {
@@ -128,7 +127,9 @@ describe('css', () => {
 
 					fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
 
-					const actual_html = html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+					const actual_html = html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) =>
+						$1 ? m : 'svelte-xyz'
+					);
 					assert.htmlEqual(actual_html, expected.html);
 
 					window.document.head.innerHTML = ''; // remove added styles
@@ -139,7 +140,10 @@ describe('css', () => {
 
 				// ssr
 				try {
-					const actual_ssr = ServerComponent.render(config.props).html.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => $1 ? m : 'svelte-xyz');
+					const actual_ssr = ServerComponent.render(config.props).html.replace(
+						/svelte(-ref)?-[a-z0-9]+/g,
+						(m, $1) => ($1 ? m : 'svelte-xyz')
+					);
 					assert.htmlEqual(actual_ssr, expected.html);
 				} catch (err) {
 					console.log(ssr.js.code);

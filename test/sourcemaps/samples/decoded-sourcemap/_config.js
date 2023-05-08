@@ -2,7 +2,6 @@ import MagicString from 'magic-string';
 import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers';
 
 export default {
-
 	js_map_sources: ['input.svelte'],
 
 	preprocess: {

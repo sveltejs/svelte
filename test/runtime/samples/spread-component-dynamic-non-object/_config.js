@@ -46,6 +46,5 @@ export default {
 		// test number
 		component.props = 123;
 		assert.htmlEqual(target.innerHTML, html);
-
 	}
 };

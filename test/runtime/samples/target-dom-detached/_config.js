@@ -8,9 +8,6 @@ export default {
 			window.document.head.innerHTML,
 			'<style id="svelte-xyz">div.svelte-xyz{color:red}</style>'
 		);
-		assert.htmlEqual(
-			component.div.innerHTML,
-			'<div class="svelte-xyz">Hello World</div>'
-		);
+		assert.htmlEqual(component.div.innerHTML, '<div class="svelte-xyz">Hello World</div>');
 	}
 };

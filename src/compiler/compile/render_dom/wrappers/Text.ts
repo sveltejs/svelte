@@ -11,13 +11,7 @@ export default class TextWrapper extends Wrapper {
 	skip: boolean;
 	var: Identifier;
 
-	constructor(
-		renderer: Renderer,
-		block: Block,
-		parent: Wrapper,
-		node: Text,
-		data: string
-	) {
+	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Text, data: string) {
 		super(renderer, block, parent, node);
 
 		this.skip = this.node.should_skip();
@@ -55,7 +49,10 @@ export default class TextWrapper extends Wrapper {
 		block.add_element(
 			this.var,
 			use_space ? x`@space()` : x`@text(${string_literal})`,
-			parent_nodes && (use_space ? x`@claim_space(${parent_nodes})` : x`@claim_text(${parent_nodes}, ${string_literal})`),
+			parent_nodes &&
+				(use_space
+					? x`@claim_space(${parent_nodes})`
+					: x`@claim_text(${parent_nodes}, ${string_literal})`),
 			parent_node as Identifier
 		);
 	}

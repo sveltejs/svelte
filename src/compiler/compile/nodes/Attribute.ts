@@ -48,16 +48,16 @@ export default class Attribute extends Node {
 
 			this.chunks = this.is_true
 				? []
-				: info.value.map(node => {
-					if (node.type === 'Text') return node;
+				: info.value.map((node) => {
+						if (node.type === 'Text') return node;
 
-					this.is_static = false;
+						this.is_static = false;
 
-					const expression = new Expression(component, this, scope, node.expression);
+						const expression = new Expression(component, this, scope, node.expression);
 
-					add_to_set(this.dependencies, expression.dependencies);
-					return expression;
-				});
+						add_to_set(this.dependencies, expression.dependencies);
+						return expression;
+				  });
 		}
 
 		if (this.dependencies.size > 0) {
@@ -70,7 +70,7 @@ export default class Attribute extends Node {
 		if (this.is_spread) return this.expression.dynamic_dependencies();
 
 		const dependencies: Set<string> = new Set();
-		this.chunks.forEach(chunk => {
+		this.chunks.forEach((chunk) => {
 			if (chunk.type === 'Expression') {
 				add_to_set(dependencies, chunk.dynamic_dependencies());
 			}
@@ -90,7 +90,9 @@ export default class Attribute extends Node {
 		}
 
 		let expression = this.chunks
-			.map(chunk => chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block))
+			.map((chunk) =>
+				chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block)
+			)
 			.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 		if (this.chunks[0].type !== 'Text') {
@@ -106,17 +108,17 @@ export default class Attribute extends Node {
 		return this.is_true
 			? true
 			: this.chunks[0]
-				// method should be called only when `is_static = true`
-				? (this.chunks[0] as Text).data
-				: '';
+			? // method should be called only when `is_static = true`
+			  (this.chunks[0] as Text).data
+			: '';
 	}
 
 	should_cache() {
 		return this.is_static
 			? false
 			: this.chunks.length === 1
-				// @ts-ignore todo: probably error
-				? this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
-				: true;
+			? // @ts-ignore todo: probably error
+			  this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
+			: true;
 	}
 }

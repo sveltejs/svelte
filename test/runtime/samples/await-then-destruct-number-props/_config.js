@@ -1,6 +1,6 @@
 export default {
 	props: {
-		thePromise: new Promise(_ => {})
+		thePromise: new Promise((_) => {})
 	},
 
 	html: `
@@ -46,7 +46,7 @@ export default {
 		);
 
 		try {
-		  await (component.thePromise = Promise.reject({ 0: 40, 2: 42, 5: 45 }));
+			await (component.thePromise = Promise.reject({ 0: 40, 2: 42, 5: 45 }));
 		} catch (e) {
 			// do nothing
 		}

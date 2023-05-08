@@ -40,8 +40,11 @@ export default {
 
 		await window.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>567x456</div><div>2</div>
-		`);
+		`
+		);
 	}
 };

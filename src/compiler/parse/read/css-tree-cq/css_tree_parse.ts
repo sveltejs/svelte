@@ -11,13 +11,12 @@ import * as node from './node';
  * The new nodes are located in `./node`.
  */
 const cqSyntax = fork({
-	atrule: { // extend or override at-rule dictionary
+	atrule: {
+		// extend or override at-rule dictionary
 		container: {
 			parse: {
 				prelude() {
-					return this.createSingleNodeList(
-						this.ContainerQuery()
-					);
+					return this.createSingleNodeList(this.ContainerQuery());
 				},
 				block(isStyleBlock = false) {
 					return this.Block(isStyleBlock);

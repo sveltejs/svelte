@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { svelte, loadConfig, tryToLoadJson } from '../helpers';
 
 describe('validate', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -17,7 +17,10 @@ describe('validate', () => {
 		(solo ? it.only : skip ? it.skip : it)(dir, () => {
 			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8').replace(/\s+$/, '').replace(/\r/g, '');
+			const input = fs
+				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
+				.replace(/\s+$/, '')
+				.replace(/\r/g, '');
 			const expected_warnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`) || [];
 			const expected_errors = tryToLoadJson(`${__dirname}/samples/${dir}/errors.json`);
 			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`);
@@ -135,13 +138,18 @@ describe('validate', () => {
 			generate: false
 		});
 
-		assert.deepEqual(warnings.map(w => ({
-			code: w.code,
-			message: w.message
-		})), [{
-			code: 'options-lowercase-name',
-			message: 'options.name should be capitalised'
-		}]);
+		assert.deepEqual(
+			warnings.map((w) => ({
+				code: w.code,
+				message: w.message
+			})),
+			[
+				{
+					code: 'options-lowercase-name',
+					message: 'options.name should be capitalised'
+				}
+			]
+		);
 	});
 
 	it('does not warn if options.name begins with non-alphabetic character', () => {
@@ -171,16 +179,19 @@ describe('validate', () => {
 		}, /Invalid namespace 'foriegn' \(did you mean 'foreign'\?\)/);
 	});
 
-	it('does not throw error if \'this\' is bound for foreign element', () => {
+	it("does not throw error if 'this' is bound for foreign element", () => {
 		assert.doesNotThrow(() => {
-			svelte.compile(`
+			svelte.compile(
+				`
 			<script>
 				let whatever;
 			</script>
-			<div bind:this={whatever} />`, {
-				name: 'test',
-				namespace: 'foreign'
-			});
+			<div bind:this={whatever} />`,
+				{
+					name: 'test',
+					namespace: 'foreign'
+				}
+			);
 		});
 	});
 });

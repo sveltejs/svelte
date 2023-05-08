@@ -53,6 +53,6 @@ onMount(async () => {
 
 // @ts-expect-error async and return any
 onMount(async () => {
-    const a: any = null as any;
+	const a: any = null as any;
 	return a;
 });

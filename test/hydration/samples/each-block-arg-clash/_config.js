@@ -1,11 +1,7 @@
 export default {
 	props: {
 		things: {
-			foo: [
-				'animal',
-				'vegetable',
-				'mineral'
-			]
+			foo: ['animal', 'vegetable', 'mineral']
 		}
 	},
 

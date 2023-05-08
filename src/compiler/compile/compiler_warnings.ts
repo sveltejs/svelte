@@ -24,15 +24,22 @@ export default {
 	},
 	module_script_variable_reactive_declaration: (names: string[]) => ({
 		code: 'module-script-reactive-declaration',
-		message: `${names.map(name => `"${name}"`).join(', ')} ${names.length > 1 ? 'are' : 'is'} declared in a module script and will not be reactive`
+		message: `${names.map((name) => `"${name}"`).join(', ')} ${
+			names.length > 1 ? 'are' : 'is'
+		} declared in a module script and will not be reactive`
 	}),
 	missing_declaration: (name: string, has_script: boolean) => ({
 		code: 'missing-declaration',
-		message: `'${name}' is not defined` + (has_script ? '' : `. Consider adding a <script> block with 'export let ${name}' to declare a prop`)
+		message:
+			`'${name}' is not defined` +
+			(has_script
+				? ''
+				: `. Consider adding a <script> block with 'export let ${name}' to declare a prop`)
 	}),
 	missing_custom_element_compile_options: {
 		code: 'missing-custom-element-compile-options',
-		message: "The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
+		message:
+			"The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
 	},
 	css_unused_selector: (selector: string) => ({
 		code: 'css-unused-selector',
@@ -52,7 +59,7 @@ export default {
 	}),
 	avoid_is: {
 		code: 'avoid-is',
-		message: 'The \'is\' attribute is not supported cross-browser and should be avoided'
+		message: "The 'is' attribute is not supported cross-browser and should be avoided"
 	},
 	invalid_html_attribute: (name: string, suggestion: string) => ({
 		code: 'invalid-html-attribute',
@@ -78,10 +85,14 @@ export default {
 				message = `The value of '${attribute}' must be exactly one of true, false, or mixed`;
 				break;
 			case 'token':
-				message = `The value of '${attribute}' must be exactly one of ${(schema.values || []).join(', ')}`;
+				message = `The value of '${attribute}' must be exactly one of ${(schema.values || []).join(
+					', '
+				)}`;
 				break;
 			case 'tokenlist':
-				message = `The value of '${attribute}' must be a space-separated list of one or more of ${(schema.values || []).join(', ')}`;
+				message = `The value of '${attribute}' must be a space-separated list of one or more of ${(
+					schema.values || []
+				).join(', ')}`;
 				break;
 			default:
 				message = `The value of '${attribute}' must be of type ${schema.type}`;
@@ -93,7 +104,9 @@ export default {
 	},
 	a11y_unknown_aria_attribute: (attribute: string, suggestion?: string) => ({
 		code: 'a11y-unknown-aria-attribute',
-		message: `A11y: Unknown aria attribute 'aria-${attribute}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
+		message:
+			`A11y: Unknown aria attribute 'aria-${attribute}'` +
+			(suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
 	a11y_hidden: (name: string) => ({
 		code: 'a11y-hidden',
@@ -117,9 +130,14 @@ export default {
 	}),
 	a11y_no_static_element_interactions: (element: string, handlers: string[]) => ({
 		code: 'a11y-no-static-element-interactions',
-		message: `A11y: <${element}> with ${handlers.join(', ')} ${handlers.length === 1 ? 'handler' : 'handlers'} must have an ARIA role`
+		message: `A11y: <${element}> with ${handlers.join(', ')} ${
+			handlers.length === 1 ? 'handler' : 'handlers'
+		} must have an ARIA role`
 	}),
-	a11y_no_interactive_element_to_noninteractive_role: (role: string | boolean, element: string) => ({
+	a11y_no_interactive_element_to_noninteractive_role: (
+		role: string | boolean,
+		element: string
+	) => ({
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
 	}),
@@ -127,25 +145,35 @@ export default {
 		code: 'a11y-no-noninteractive-element-interactions',
 		message: `A11y: Non-interactive element <${element}> should not be assigned mouse or keyboard event listeners.`
 	}),
-	a11y_no_noninteractive_element_to_interactive_role: (role: string | boolean, element: string) => ({
+	a11y_no_noninteractive_element_to_interactive_role: (
+		role: string | boolean,
+		element: string
+	) => ({
 		code: 'a11y-no-noninteractive-element-to-interactive-role',
 		message: `A11y: Non-interactive element <${element}> cannot have interactive role '${role}'`
 	}),
 	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
 		code: 'a11y-role-has-required-aria-props',
-		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props.map(name => `"${name}"`).join(', ')}`
+		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props
+			.map((name) => `"${name}"`)
+			.join(', ')}`
 	}),
-  a11y_role_supports_aria_props: (attribute: string, role: string, is_implicit: boolean, name: string) => {
-    let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
-    if (is_implicit) {
-      message += ` This role is implicit on the element <${name}>.`;
-    }
+	a11y_role_supports_aria_props: (
+		attribute: string,
+		role: string,
+		is_implicit: boolean,
+		name: string
+	) => {
+		let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
+		if (is_implicit) {
+			message += ` This role is implicit on the element <${name}>.`;
+		}
 
-    return {
-      code: 'a11y-role-supports-aria-props',
-      message: `A11y: ${message}`
-    };
-  },
+		return {
+			code: 'a11y-role-supports-aria-props',
+			message: `A11y: ${message}`
+		};
+	},
 	a11y_accesskey: {
 		code: 'a11y-accesskey',
 		message: 'A11y: Avoid using accesskey'
@@ -172,7 +200,9 @@ export default {
 	}),
 	a11y_autocomplete_valid: (type: null | true | string, value: null | true | string) => ({
 		code: 'a11y-autocomplete-valid',
-		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type || '...'}">`
+		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${
+			type || '...'
+		}">`
 	}),
 	a11y_img_redundant_alt: {
 		code: 'a11y-img-redundant-alt',
@@ -208,7 +238,8 @@ export default {
 	}),
 	a11y_click_events_have_key_events: {
 		code: 'a11y-click-events-have-key-events',
-		message: 'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
+		message:
+			'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
 	},
 	a11y_missing_content: (name: string) => ({
 		code: 'a11y-missing-content',
@@ -224,7 +255,7 @@ export default {
 	},
 	redundant_event_modifier_for_touch: {
 		code: 'redundant-event-modifier',
-		message: 'Touch event handlers that don\'t use the \'event\' object are passive by default'
+		message: "Touch event handlers that don't use the 'event' object are passive by default"
 	},
 	redundant_event_modifier_passive: {
 		code: 'redundant-event-modifier',
@@ -236,6 +267,7 @@ export default {
 	}),
 	avoid_mouse_events_on_document: {
 		code: 'avoid-mouse-events-on-document',
-		message: 'Mouse enter/leave events on the document are not supported in all browsers and should be avoided'
+		message:
+			'Mouse enter/leave events on the document are not supported in all browsers and should be avoided'
 	}
 };

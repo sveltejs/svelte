@@ -13,9 +13,9 @@ export function get_current_component() {
 
 /**
  * Schedules a callback to run immediately before the component is updated after any state change.
- * 
+ *
  * The first time the callback runs will be before the initial `onMount`
- * 
+ *
  * https://svelte.dev/docs#run-time-svelte-beforeupdate
  */
 export function beforeUpdate(fn: () => any) {
@@ -23,35 +23,39 @@ export function beforeUpdate(fn: () => any) {
 }
 
 /**
- * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. 
- * It must be called during the component's initialisation (but doesn't need to live *inside* the component; 
+ * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
+ * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
  * it can be called from an external module).
- * 
+ *
  * If a function is returned _synchronously_ from `onMount`, it will be called when the component is unmounted.
- * 
+ *
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
- * 
+ *
  * https://svelte.dev/docs#run-time-svelte-onmount
  */
-export function onMount<T>(fn: () => T extends Promise<() => any> ? "Returning a function asynchronously from onMount won't call that function on destroy" : T): void {
+export function onMount<T>(
+	fn: () => T extends Promise<() => any>
+		? "Returning a function asynchronously from onMount won't call that function on destroy"
+		: T
+): void {
 	get_current_component().$$.on_mount.push(fn);
 }
 
 /**
  * Schedules a callback to run immediately after the component has been updated.
- * 
- * The first time the callback runs will be after the initial `onMount` 
+ *
+ * The first time the callback runs will be after the initial `onMount`
  */
 export function afterUpdate(fn: () => any) {
 	get_current_component().$$.after_update.push(fn);
 }
 
-/** 
+/**
  * Schedules a callback to run immediately before the component is unmounted.
- * 
- * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the 
+ *
+ * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
  * only one that runs inside a server-side component.
- * 
+ *
  * https://svelte.dev/docs#run-time-svelte-ondestroy
  */
 export function onDestroy(fn: () => any) {
@@ -63,10 +67,14 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 	// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
 	<Type extends keyof EventMap>(
-		...args: [EventMap[Type]] extends [never] ? [type: Type, parameter?: null | undefined, options?: DispatchOptions] :
-		null extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
-		undefined extends EventMap[Type] ? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions] :
-		[type: Type, parameter: EventMap[Type], options?: DispatchOptions]): boolean;
+		...args: [EventMap[Type]] extends [never]
+			? [type: Type, parameter?: null | undefined, options?: DispatchOptions]
+			: null extends EventMap[Type]
+			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
+			: undefined extends EventMap[Type]
+			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
+			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+	): boolean;
 }
 
 export interface DispatchOptions {
@@ -74,15 +82,15 @@ export interface DispatchOptions {
 }
 
 /**
- * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname). 
+ * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
- * 
- * Component events created with `createEventDispatcher` create a 
- * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). 
+ *
+ * Component events created with `createEventDispatcher` create a
+ * [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent).
  * These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture).
- * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) 
+ * The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail)
  * property and can contain any type of data.
- * 
+ *
  * The event dispatcher can be typed to narrow the allowed event names and the type of the `detail` argument:
  * ```ts
  * const dispatch = createEventDispatcher<{
@@ -91,10 +99,12 @@ export interface DispatchOptions {
  *  optional: number | null; // takes an optional detail argument of type number
  * }>();
  * ```
- * 
+ *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  */
-export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap> {
+export function createEventDispatcher<
+	EventMap extends Record<string, any> = any
+>(): EventDispatcher<EventMap> {
 	const component = get_current_component();
 
 	return ((type: string, detail?: any, { cancelable = false } = {}): boolean => {
@@ -104,7 +114,7 @@ export function createEventDispatcher<EventMap extends Record<string, any> = any
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
 			const event = custom_event(type, detail, { cancelable });
-			callbacks.slice().forEach(fn => {
+			callbacks.slice().forEach((fn) => {
 				fn.call(component, event);
 			});
 			return !event.defaultPrevented;
@@ -115,12 +125,12 @@ export function createEventDispatcher<EventMap extends Record<string, any> = any
 }
 
 /**
- * Associates an arbitrary `context` object with the current component and the specified `key` 
- * and returns that object. The context is then available to children of the component 
+ * Associates an arbitrary `context` object with the current component and the specified `key`
+ * and returns that object. The context is then available to children of the component
  * (including slotted content) with `getContext`.
- * 
- * Like lifecycle functions, this must be called during component initialisation. 
- * 
+ *
+ * Like lifecycle functions, this must be called during component initialisation.
+ *
  * https://svelte.dev/docs#run-time-svelte-setcontext
  */
 export function setContext<T>(key, context: T): T {
@@ -129,9 +139,9 @@ export function setContext<T>(key, context: T): T {
 }
 
 /**
- * Retrieves the context that belongs to the closest parent component with the specified `key`. 
- * Must be called during component initialisation. 
- * 
+ * Retrieves the context that belongs to the closest parent component with the specified `key`.
+ * Must be called during component initialisation.
+ *
  * https://svelte.dev/docs#run-time-svelte-getcontext
  */
 export function getContext<T>(key): T {
@@ -139,10 +149,10 @@ export function getContext<T>(key): T {
 }
 
 /**
- * Retrieves the whole context map that belongs to the closest parent component. 
- * Must be called during component initialisation. Useful, for example, if you 
+ * Retrieves the whole context map that belongs to the closest parent component.
+ * Must be called during component initialisation. Useful, for example, if you
  * programmatically create a component and want to pass the existing context to it.
- * 
+ *
  * https://svelte.dev/docs#run-time-svelte-getallcontexts
  */
 export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
@@ -150,13 +160,13 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
 }
 
 /**
- * Checks whether a given `key` has been set in the context of a parent component. 
- * Must be called during component initialisation. 
- * 
+ * Checks whether a given `key` has been set in the context of a parent component.
+ * Must be called during component initialisation.
+ *
  * https://svelte.dev/docs#run-time-svelte-hascontext
  */
 export function hasContext(key): boolean {
-	return get_current_component().$$.context.has(key);	
+	return get_current_component().$$.context.has(key);
 }
 
 // TODO figure out if we still want to support
@@ -167,6 +177,6 @@ export function bubble(component, event) {
 
 	if (callbacks) {
 		// @ts-ignore
-		callbacks.slice().forEach(fn => fn.call(this, event));
+		callbacks.slice().forEach((fn) => fn.call(this, event));
 	}
 }

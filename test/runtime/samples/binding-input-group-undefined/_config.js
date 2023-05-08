@@ -1,5 +1,4 @@
 export default {
-
 	async test({ assert, target, component, window }) {
 		const [input1, input2, input3] = target.querySelectorAll('input');
 		const event = new window.Event('change');

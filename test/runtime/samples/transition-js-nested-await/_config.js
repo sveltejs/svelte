@@ -1,6 +1,6 @@
 let fulfil;
 
-const promise = new Promise(f => {
+const promise = new Promise((f) => {
 	fulfil = f;
 });
 

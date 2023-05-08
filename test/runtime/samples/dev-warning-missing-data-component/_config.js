@@ -3,7 +3,5 @@ export default {
 		dev: true
 	},
 
-	warnings: [
-		"<Foo> was created without expected prop 'y'"
-	]
+	warnings: ["<Foo> was created without expected prop 'y'"]
 };

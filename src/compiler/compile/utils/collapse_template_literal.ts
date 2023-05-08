@@ -3,7 +3,7 @@ import { escape_template } from './stringify';
 
 /**
  * Collapse string literals together
- */ 
+ */
 export function collapse_template_literal(literal: TemplateLiteral) {
 	if (!literal.quasis.length) return;
 

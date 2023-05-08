@@ -12,11 +12,14 @@ export default {
 		tagList.push('two');
 		component.tagList = tagList;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<i>one</i>
 				<i>two</i>
 			</div>
-		`);
+		`
+		);
 	}
 };

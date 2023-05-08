@@ -11,12 +11,12 @@ export type Context = DestructuredVariable | ComputedProperty;
 
 interface ComputedProperty {
 	type: 'ComputedProperty';
-  property_name: Identifier;
-  key: Expression | PrivateIdentifier;
+	property_name: Identifier;
+	key: Expression | PrivateIdentifier;
 }
- 
+
 interface DestructuredVariable {
-	type: 'DestructuredVariable'
+	type: 'DestructuredVariable';
 	key: Identifier;
 	name?: string;
 	modifier: (node: Node) => Node;
@@ -112,9 +112,7 @@ export function unpack_destructuring({
 					contexts,
 					node: property.argument,
 					modifier: (node) =>
-						x`@object_without_properties(${modifier(
-							node
-						)}, [${used_properties}])` as Node,
+						x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node,
 					default_modifier,
 					scope,
 					component,
@@ -125,7 +123,7 @@ export function unpack_destructuring({
 				const key = property.key;
 				const value = property.value;
 
-				let new_modifier: (node: Node) => Node; 
+				let new_modifier: (node: Node) => Node;
 
 				if (property.computed) {
 					// e.g { [computedProperty]: ... }
@@ -150,7 +148,7 @@ export function unpack_destructuring({
 					new_modifier = (node) => x`${modifier(node)}["${property_name}"]`;
 					used_properties.push(x`"${property_name}"`);
 				}
-				
+
 				if (value.type === 'AssignmentPattern') {
 					// e.g. { property = default } or { property: newName = default }
 					const n = contexts.length;
@@ -200,7 +198,7 @@ function update_reference(
 	const find_from_context = (node: Identifier) => {
 		for (let i = n; i < contexts.length; i++) {
 			const cur_context = contexts[i];
-			if (cur_context.type !== 'DestructuredVariable') continue; 
+			if (cur_context.type !== 'DestructuredVariable') continue;
 			const { key } = cur_context;
 			if (node.name === key.name) {
 				throw new Error(`Cannot access '${node.name}' before initialization`);
@@ -217,12 +215,7 @@ function update_reference(
 	expression = clone(expression) as Expression;
 	walk(expression, {
 		enter(node, parent: Node) {
-			if (
-				is_reference(
-					node as NodeWithPropertyDefinition,
-					parent as NodeWithPropertyDefinition
-				)
-			) {
+			if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
 				this.replace(find_from_context(node as Identifier));
 				this.skip();
 			}
@@ -232,11 +225,7 @@ function update_reference(
 	return expression;
 }
 
-function mark_referenced(
-	node: Node,
-	scope: TemplateScope,
-	component: Component
-) {
+function mark_referenced(node: Node, scope: TemplateScope, component: Component) {
 	walk(node, {
 		enter(node: any, parent: any) {
 			if (is_reference(node, parent)) {

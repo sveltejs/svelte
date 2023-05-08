@@ -1,14 +1,10 @@
 const regex_tabs = /^\t+/;
 
 function tabs_to_spaces(str: string) {
-	return str.replace(regex_tabs, match => match.split('\t').join('  '));
+	return str.replace(regex_tabs, (match) => match.split('\t').join('  '));
 }
 
-export default function get_code_frame(
-	source: string,
-	line: number,
-	column: number
-) {
+export default function get_code_frame(source: string, line: number, column: number) {
 	const lines = source.split('\n');
 
 	const frame_start = Math.max(0, line - 2);
@@ -23,7 +19,8 @@ export default function get_code_frame(
 			const line_num = String(i + frame_start + 1).padStart(digits, ' ');
 
 			if (is_error_line) {
-				const indicator = ' '.repeat(digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
+				const indicator =
+					' '.repeat(digits + 2 + tabs_to_spaces(str.slice(0, column)).length) + '^';
 				return `${line_num}: ${tabs_to_spaces(str)}\n${indicator}`;
 			}
 

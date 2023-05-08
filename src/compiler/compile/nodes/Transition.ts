@@ -25,8 +25,11 @@ export default class Transition extends Node {
 		this.is_local = info.modifiers.includes('local');
 
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
-			const parent_transition = (parent.intro || parent.outro);
-			component.error(info, compiler_errors.duplicate_transition(this.directive, parent_transition.directive));
+			const parent_transition = parent.intro || parent.outro;
+			component.error(
+				info,
+				compiler_errors.duplicate_transition(this.directive, parent_transition.directive)
+			);
 			return;
 		}
 

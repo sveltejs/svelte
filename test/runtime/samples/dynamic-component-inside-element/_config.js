@@ -10,8 +10,11 @@ export default {
 	test({ assert, component, target }) {
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><p>false, therefore Bar</p></div>
-		`);
+		`
+		);
 	}
 };

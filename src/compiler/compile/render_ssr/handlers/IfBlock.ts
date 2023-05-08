@@ -10,12 +10,14 @@ export default function (node: IfBlock, renderer: Renderer, options: RenderOptio
 	renderer.push();
 	renderer.render(node.children, options);
 	let consequent: Node = renderer.pop();
-	if (node.const_tags.length > 0) consequent = x`(() => { ${get_const_tags(node.const_tags)}; return ${consequent} })()`;
+	if (node.const_tags.length > 0)
+		consequent = x`(() => { ${get_const_tags(node.const_tags)}; return ${consequent} })()`;
 
 	renderer.push();
 	if (node.else) renderer.render(node.else.children, options);
 	let alternate: Node = renderer.pop();
-	if (node.else && node.else.const_tags.length > 0) alternate = x`(() => { ${get_const_tags(node.else.const_tags)}; return ${alternate} })()`;
+	if (node.else && node.else.const_tags.length > 0)
+		alternate = x`(() => { ${get_const_tags(node.else.const_tags)}; return ${alternate} })()`;
 
 	renderer.add_expression(x`${condition} ? ${consequent} : ${alternate}`);
 }

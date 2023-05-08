@@ -5,8 +5,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.width = 50;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>10 - 40</p>
-		`);
+		`
+		);
 	}
 };

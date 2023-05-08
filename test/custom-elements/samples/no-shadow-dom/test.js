@@ -10,7 +10,7 @@ export default async function (target) {
 	const h1 = el.querySelector('h1');
 
 	assert.equal(el.name, 'world');
-    assert.equal(el.shadowRoot, null);
+	assert.equal(el.shadowRoot, null);
 	assert.equal(h1.innerHTML, 'Hello world!');
 	assert.equal(getComputedStyle(h1).color, 'rgb(255, 0, 0)');
 }

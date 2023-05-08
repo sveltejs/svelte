@@ -35,12 +35,17 @@ describe('runtime', () => {
 		svelte = loadSvelte(false);
 		svelte$ = loadSvelte(true);
 
-		require.extensions['.svelte'] = function(module, filename) {
-			const options = Object.assign({
-				filename
-			}, compileOptions);
+		require.extensions['.svelte'] = function (module, filename) {
+			const options = Object.assign(
+				{
+					filename
+				},
+				compileOptions
+			);
 
-			const { js: { code } } = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
+			const {
+				js: { code }
+			} = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
 
 			return module._compile(code, filename);
 		};
@@ -64,7 +69,9 @@ describe('runtime', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		const testName = `${dir} ${hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''}`;
+		const testName = `${dir} ${
+			hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''
+		}`;
 		(config.skip ? it.skip : solo ? it.only : it)(testName, (done) => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
@@ -93,7 +100,7 @@ describe('runtime', () => {
 
 			const window = env();
 
-			glob('**/*.svelte', { cwd }).forEach(file => {
+			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
 
 				const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
@@ -106,13 +113,10 @@ describe('runtime', () => {
 				mkdirp(dir);
 
 				try {
-					const { js } = compile(
-						fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''),
-						{
-							...compileOptions,
-							filename: file
-						}
-					);
+					const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''), {
+						...compileOptions,
+						filename: file
+					});
 
 					fs.writeFileSync(out, js.code);
 				} catch (err) {
@@ -128,13 +132,13 @@ describe('runtime', () => {
 					const raf = {
 						time: 0,
 						callback: null,
-						tick: now => {
+						tick: (now) => {
 							raf.time = now;
 							if (raf.callback) raf.callback();
 						}
 					};
 					set_now(() => raf.time);
-					set_raf(cb => {
+					set_raf((cb) => {
 						raf.callback = () => {
 							raf.callback = null;
 							cb(raf.time);
@@ -179,16 +183,20 @@ describe('runtime', () => {
 
 					const warnings = [];
 					const warn = console.warn;
-					console.warn = warning => {
+					console.warn = (warning) => {
 						warnings.push(warning);
 					};
 
-					const options = Object.assign({}, {
-						target,
-						hydrate,
-						props: config.props,
-						intro: config.intro
-					}, config.options || {});
+					const options = Object.assign(
+						{},
+						{
+							target,
+							hydrate,
+							props: config.props,
+							intro: config.intro
+						},
+						config.options || {}
+					);
 
 					const component = new SvelteComponent(options);
 
@@ -213,16 +221,18 @@ describe('runtime', () => {
 					}
 
 					if (config.test) {
-						return Promise.resolve(config.test({
-							assert,
-							component,
-							mod,
-							target,
-							snapshot,
-							window,
-							raf,
-							compileOptions
-						})).then(() => {
+						return Promise.resolve(
+							config.test({
+								assert,
+								component,
+								mod,
+								target,
+								snapshot,
+								window,
+								raf,
+								compileOptions
+							})
+						).then(() => {
 							component.$destroy();
 
 							if (unhandled_rejection) {
@@ -238,7 +248,7 @@ describe('runtime', () => {
 						}
 					}
 				})
-				.catch(err => {
+				.catch((err) => {
 					if (config.error && !unintendedError) {
 						if (typeof config.error === 'function') {
 							config.error(assert, err);
@@ -248,12 +258,13 @@ describe('runtime', () => {
 					} else {
 						throw err;
 					}
-				}).catch(err => {
+				})
+				.catch((err) => {
 					failed.add(dir);
 					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
 					throw err;
 				})
-				.catch(err => {
+				.catch((err) => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
 					done(err);
@@ -272,7 +283,7 @@ describe('runtime', () => {
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir, false);
 		runTest(dir, true, false);
 		runTest(dir, true, true);
@@ -307,9 +318,7 @@ describe('runtime', () => {
 			name: 'App'
 		});
 
-		return eval(
-			`(function () { ${result.output[0].code}; return App; }())`
-		);
+		return eval(`(function () { ${result.output[0].code}; return App; }())`);
 	}
 
 	it('fails if options.target is missing in dev mode', async () => {

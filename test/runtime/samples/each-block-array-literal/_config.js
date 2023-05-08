@@ -5,10 +5,13 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		assert.htmlEqual(target.innerHTML,`
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>racoon</button>
 			<button>eagle</button>
-		`);
+		`
+		);
 
 		const button = target.querySelector('button');
 		const event = new window.MouseEvent('click');

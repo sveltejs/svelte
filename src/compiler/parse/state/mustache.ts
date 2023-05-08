@@ -52,7 +52,12 @@ export default function mustache(parser: Parser) {
 			block = parser.current();
 		}
 
-		if (block.type === 'ElseBlock' || block.type === 'PendingBlock' || block.type === 'ThenBlock' || block.type === 'CatchBlock') {
+		if (
+			block.type === 'ElseBlock' ||
+			block.type === 'PendingBlock' ||
+			block.type === 'ThenBlock' ||
+			block.type === 'CatchBlock'
+		) {
 			block.end = start;
 			parser.stack.pop();
 			block = parser.current();
@@ -108,7 +113,7 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock') {
 				parser.error(
-					parser.stack.some(block => block.type === 'IfBlock')
+					parser.stack.some((block) => block.type === 'IfBlock')
 						? parser_errors.invalid_elseif_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_elseif_placement_outside_if
 				);
@@ -143,7 +148,7 @@ export default function mustache(parser: Parser) {
 			const block = parser.current();
 			if (block.type !== 'IfBlock' && block.type !== 'EachBlock') {
 				parser.error(
-					parser.stack.some(block => block.type === 'IfBlock' || block.type === 'EachBlock')
+					parser.stack.some((block) => block.type === 'IfBlock' || block.type === 'EachBlock')
 						? parser_errors.invalid_else_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_else_placement_outside_if
 				);
@@ -168,16 +173,17 @@ export default function mustache(parser: Parser) {
 		if (is_then) {
 			if (block.type !== 'PendingBlock') {
 				parser.error(
-					parser.stack.some(block => block.type === 'PendingBlock')
+					parser.stack.some((block) => block.type === 'PendingBlock')
 						? parser_errors.invalid_then_placement_unclosed_block(to_string(block))
 						: parser_errors.invalid_then_placement_without_await
 				);
 			}
 		} else {
 			if (block.type !== 'ThenBlock' && block.type !== 'PendingBlock') {
-				parser.error(parser.stack.some(block => block.type === 'ThenBlock' || block.type === 'PendingBlock')
-					? parser_errors.invalid_catch_placement_unclosed_block(to_string(block))
-					: parser_errors.invalid_catch_placement_without_await
+				parser.error(
+					parser.stack.some((block) => block.type === 'ThenBlock' || block.type === 'PendingBlock')
+						? parser_errors.invalid_catch_placement_unclosed_block(to_string(block))
+						: parser_errors.invalid_catch_placement_without_await
 				);
 			}
 		}
@@ -223,43 +229,44 @@ export default function mustache(parser: Parser) {
 
 		const expression = read_expression(parser);
 
-		const block: TemplateNode = type === 'AwaitBlock' ?
-			{
-				start,
-				end: null,
-				type,
-				expression,
-				value: null,
-				error: null,
-				pending: {
-					start: null,
-					end: null,
-					type: 'PendingBlock',
-					children: [],
-					skip: true
-				},
-				then: {
-					start: null,
-					end: null,
-					type: 'ThenBlock',
-					children: [],
-					skip: true
-				},
-				catch: {
-					start: null,
-					end: null,
-					type: 'CatchBlock',
-					children: [],
-					skip: true
-				}
-			} :
-			{
-				start,
-				end: null,
-				type,
-				expression,
-				children: []
-			};
+		const block: TemplateNode =
+			type === 'AwaitBlock'
+				? {
+						start,
+						end: null,
+						type,
+						expression,
+						value: null,
+						error: null,
+						pending: {
+							start: null,
+							end: null,
+							type: 'PendingBlock',
+							children: [],
+							skip: true
+						},
+						then: {
+							start: null,
+							end: null,
+							type: 'ThenBlock',
+							children: [],
+							skip: true
+						},
+						catch: {
+							start: null,
+							end: null,
+							type: 'CatchBlock',
+							children: [],
+							skip: true
+						}
+				  }
+				: {
+						start,
+						end: null,
+						type,
+						expression,
+						children: []
+				  };
 
 		parser.allow_whitespace();
 
@@ -301,7 +308,8 @@ export default function mustache(parser: Parser) {
 			}
 		}
 
-		const await_block_catch_shorthand = !await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
+		const await_block_catch_shorthand =
+			!await_block_shorthand && type === 'AwaitBlock' && parser.eat('catch');
 		if (await_block_catch_shorthand) {
 			if (parser.match_regex(regex_whitespace_with_closing_curly_brace)) {
 				parser.allow_whitespace();
@@ -357,11 +365,10 @@ export default function mustache(parser: Parser) {
 		} else {
 			const expression = read_expression(parser);
 
-			identifiers = expression.type === 'SequenceExpression'
-				? expression.expressions
-				: [expression];
+			identifiers =
+				expression.type === 'SequenceExpression' ? expression.expressions : [expression];
 
-			identifiers.forEach(node => {
+			identifiers.forEach((node) => {
 				if (node.type !== 'Identifier') {
 					parser.error(parser_errors.invalid_debug_args, node.start);
 				}
@@ -384,10 +391,13 @@ export default function mustache(parser: Parser) {
 		const expression = read_expression(parser);
 
 		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
-			parser.error({
-				code: 'invalid-const-args',
-				message: '{@const ...} must be an assignment.'
-			}, start);
+			parser.error(
+				{
+					code: 'invalid-const-args',
+					message: '{@const ...} must be an assignment.'
+				},
+				start
+			);
 		}
 
 		parser.allow_whitespace();

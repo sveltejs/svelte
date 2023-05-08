@@ -24,7 +24,6 @@ export default {
 		</div>
 	`,
 	test({ target, window, assert, component }) {
-
 		function assert_slider_1() {
 			const railColor1 = target.querySelector('#component1 p');
 			const trackColor1 = target.querySelector('#component1 span');

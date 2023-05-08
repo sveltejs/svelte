@@ -5,7 +5,7 @@ export default {
 
 	test({ assert, target, window, component }) {
 		const div = target.querySelector('div');
-		const styles = window.getComputedStyle(div);		
+		const styles = window.getComputedStyle(div);
 		assert.equal(styles.backgroundColor, 'rgb(255, 0, 0)');
 
 		{

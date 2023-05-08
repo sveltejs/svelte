@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: 16
           cache: pnpm
-      - run: 'pnpm i && pnpm lint'
+      - run: 'pnpm i && pnpm format:check && pnpm lint'
   Unit:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10

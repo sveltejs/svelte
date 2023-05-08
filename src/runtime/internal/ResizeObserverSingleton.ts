@@ -17,53 +17,57 @@ export class ResizeObserverSingleton {
 		};
 	}
 
-	private readonly _listeners: WeakMap<Element, Listener> = 'WeakMap' in globals ? new WeakMap() : undefined;
+	private readonly _listeners: WeakMap<Element, Listener> =
+		'WeakMap' in globals ? new WeakMap() : undefined;
 	private _observer?: ResizeObserver;
 	private _getObserver() {
-		return this._observer ?? (this._observer = new ResizeObserver((entries) => {
-			for (const entry of entries) {
-				(ResizeObserverSingleton as any).entries.set(entry.target, entry);
-				this._listeners.get(entry.target)?.(entry);
-			}
-		}));
+		return (
+			this._observer ??
+			(this._observer = new ResizeObserver((entries) => {
+				for (const entry of entries) {
+					(ResizeObserverSingleton as any).entries.set(entry.target, entry);
+					this._listeners.get(entry.target)?.(entry);
+				}
+			}))
+		);
 	}
 }
 // Needs to be written like this to pass the tree-shake-test
 (ResizeObserverSingleton as any).entries = 'WeakMap' in globals ? new WeakMap() : undefined;
 
-type Listener = (entry: ResizeObserverEntry)=>any;
+type Listener = (entry: ResizeObserverEntry) => any;
 
 // TODO: Remove this
 interface ResizeObserverSize {
-    readonly blockSize: number;
-    readonly inlineSize: number;
+	readonly blockSize: number;
+	readonly inlineSize: number;
 }
 
 interface ResizeObserverEntry {
-    readonly borderBoxSize: readonly ResizeObserverSize[];
-    readonly contentBoxSize: readonly ResizeObserverSize[];
-    readonly contentRect: DOMRectReadOnly;
-    readonly devicePixelContentBoxSize: readonly ResizeObserverSize[];
-    readonly target: Element;
+	readonly borderBoxSize: readonly ResizeObserverSize[];
+	readonly contentBoxSize: readonly ResizeObserverSize[];
+	readonly contentRect: DOMRectReadOnly;
+	readonly devicePixelContentBoxSize: readonly ResizeObserverSize[];
+	readonly target: Element;
 }
 
 type ResizeObserverBoxOptions = 'border-box' | 'content-box' | 'device-pixel-content-box';
 
 interface ResizeObserverOptions {
-    box?: ResizeObserverBoxOptions;
+	box?: ResizeObserverBoxOptions;
 }
 
 interface ResizeObserver {
-    disconnect(): void;
-    observe(target: Element, options?: ResizeObserverOptions): void;
-    unobserve(target: Element): void;
+	disconnect(): void;
+	observe(target: Element, options?: ResizeObserverOptions): void;
+	unobserve(target: Element): void;
 }
 
 interface ResizeObserverCallback {
-    (entries: ResizeObserverEntry[], observer: ResizeObserver): void;
+	(entries: ResizeObserverEntry[], observer: ResizeObserver): void;
 }
 
 declare let ResizeObserver: {
-    prototype: ResizeObserver;
-    new(callback: ResizeObserverCallback): ResizeObserver;
+	prototype: ResizeObserver;
+	new (callback: ResizeObserverCallback): ResizeObserver;
 };

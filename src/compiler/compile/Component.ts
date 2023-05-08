@@ -6,12 +6,7 @@ import { reserved, is_valid } from '../utils/names';
 import globals from '../utils/globals';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
-import {
-	create_scopes,
-	extract_names,
-	Scope,
-	extract_identifiers
-} from './utils/scope';
+import { create_scopes, extract_names, Scope, extract_identifiers } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
 import { test } from '../config';
 import Fragment from './nodes/Fragment';
@@ -26,7 +21,25 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, VariableDeclarator, ObjectExpression, Pattern, Expression } from 'estree';
+import {
+	Node,
+	ImportDeclaration,
+	ExportNamedDeclaration,
+	Identifier,
+	ExpressionStatement,
+	AssignmentExpression,
+	Literal,
+	Property,
+	RestElement,
+	ExportDefaultDeclaration,
+	ExportAllDeclaration,
+	FunctionDeclaration,
+	FunctionExpression,
+	VariableDeclarator,
+	ObjectExpression,
+	Pattern,
+	Expression
+} from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -36,7 +49,10 @@ import Element from './nodes/Element';
 import { clone } from '../utils/clone';
 import compiler_warnings from './compiler_warnings';
 import compiler_errors from './compiler_errors';
-import { extract_ignores_above_position, extract_svelte_ignore_from_comments } from '../utils/extract_svelte_ignore';
+import {
+	extract_ignores_above_position,
+	extract_svelte_ignore_from_comments
+} from '../utils/extract_svelte_ignore';
 import check_enable_sourcemap from './utils/check_enable_sourcemap';
 import Tag from './nodes/shared/Tag';
 
@@ -48,7 +64,14 @@ interface ComponentOptions {
 	customElement?: {
 		tag: string | null;
 		shadow?: 'open' | 'none';
-		props?: Record<string, { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }>;
+		props?: Record<
+			string,
+			{
+				attribute?: string;
+				reflect?: boolean;
+				type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object';
+			}
+		>;
 	};
 }
 
@@ -86,8 +109,8 @@ export default class Component {
 
 	hoistable_nodes: Set<Node> = new Set();
 	node_for_declaration: Map<string, Node> = new Map();
-	partly_hoisted: Array<(Node | Node[])> = [];
-	fully_hoisted: Array<(Node | Node[])> = [];
+	partly_hoisted: Array<Node | Node[]> = [];
+	fully_hoisted: Array<Node | Node[]> = [];
 	reactive_declarations: Array<{
 		assignees: Set<string>;
 		dependencies: Set<string>;
@@ -146,8 +169,8 @@ export default class Component {
 			compile_options.filename &&
 			(typeof process !== 'undefined'
 				? compile_options.filename
-					.replace(process.cwd(), '')
-					.replace(regex_leading_directory_separator, '')
+						.replace(process.cwd(), '')
+						.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -162,13 +185,9 @@ export default class Component {
 		});
 		this.stylesheet.validate(this);
 
-		this.component_options = process_component_options(
-			this,
-			this.ast.html.children
-		);
+		this.component_options = process_component_options(this, this.ast.html.children);
 		this.namespace =
-			namespaces[this.component_options.namespace] ||
-			this.component_options.namespace;
+			namespaces[this.component_options.namespace] || this.component_options.namespace;
 
 		if (compile_options.customElement) {
 			this.tag = this.component_options.customElement?.tag || compile_options.tag || this.name.name;
@@ -178,18 +197,26 @@ export default class Component {
 
 		this.walk_module_js();
 
-		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
+		this.push_ignores(
+			this.ast.instance
+				? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children)
+				: []
+		);
 		this.walk_instance_js_pre_template();
 		this.pop_ignores();
 
 		this.fragment = new Fragment(this, ast.html);
 		this.name = this.get_unique_name(name);
 
-		this.push_ignores(this.ast.instance ? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children) : []);
+		this.push_ignores(
+			this.ast.instance
+				? extract_ignores_above_position(this.ast.instance.start, this.ast.html.children)
+				: []
+		);
 		this.walk_instance_js_post_template();
 		this.pop_ignores();
 
-		this.elements.forEach(element => this.stylesheet.apply(element));
+		this.elements.forEach((element) => this.stylesheet.apply(element));
 		this.stylesheet.reify();
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
@@ -341,17 +368,15 @@ export default class Component {
 				referenced_globals,
 				this.imports,
 				this.vars
-					.filter(variable => variable.module && variable.export_name)
-					.map(variable => ({
+					.filter((variable) => variable.module && variable.export_name)
+					.map((variable) => ({
 						name: variable.name,
 						as: variable.export_name
 					})),
 				this.exports_from
 			);
 
-			css = compile_options.customElement
-				? { code: null, map: null }
-				: result.css;
+			css = compile_options.customElement ? { code: null, map: null } : result.css;
 
 			const js_sourcemap_enabled = check_enable_sourcemap(compile_options.enableSourcemap, 'js');
 
@@ -365,15 +390,15 @@ export default class Component {
 					sourceMapSource: sourcemap_source_filename
 				});
 
-				js.map.sources = [
-					sourcemap_source_filename
-				];
+				js.map.sources = [sourcemap_source_filename];
 
-				js.map.sourcesContent = [
-					this.source
-				];
+				js.map.sourcesContent = [this.source];
 
-				js.map = apply_preprocessor_sourcemap(sourcemap_source_filename, js.map, compile_options.sourcemap as (string | RawSourceMap | DecodedSourceMap));
+				js.map = apply_preprocessor_sourcemap(
+					sourcemap_source_filename,
+					js.map,
+					compile_options.sourcemap as string | RawSourceMap | DecodedSourceMap
+				);
 			}
 		}
 
@@ -435,13 +460,14 @@ export default class Component {
 	get_vars_report(): Var[] {
 		const { compile_options, vars } = this;
 
-		const vars_report = compile_options.varsReport === false
-			? []
-			: compile_options.varsReport === 'full'
+		const vars_report =
+			compile_options.varsReport === false
+				? []
+				: compile_options.varsReport === 'full'
 				? vars
-				: vars.filter(v => !v.global && !v.internal);
+				: vars.filter((v) => !v.global && !v.internal);
 
-		return vars_report.map(v => ({
+		return vars_report.map((v) => ({
 			name: v.name,
 			export_name: v.export_name || null,
 			injected: v.injected || false,
@@ -505,8 +531,7 @@ export default class Component {
 			end,
 			pos: pos.start,
 			filename: this.compile_options.filename,
-			toString: () =>
-				`${warning.message} (${start.line}:${start.column})\n${frame}`
+			toString: () => `${warning.message} (${start.line}:${start.column})\n${frame}`
 		});
 	}
 
@@ -522,7 +547,10 @@ export default class Component {
 		return result;
 	}
 
-	private _extract_exports(node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration, module_script: boolean) {
+	private _extract_exports(
+		node: ExportDefaultDeclaration | ExportNamedDeclaration | ExportAllDeclaration,
+		module_script: boolean
+	) {
 		if (node.type === 'ExportDefaultDeclaration') {
 			return this.error(node as any, compiler_errors.default_export);
 		}
@@ -538,15 +566,25 @@ export default class Component {
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
-					node.declaration.declarations.forEach(declarator => {
-						extract_names(declarator.id).forEach(name => {
+					node.declaration.declarations.forEach((declarator) => {
+						extract_names(declarator.id).forEach((name) => {
 							const variable = this.var_lookup.get(name);
 							variable.export_name = name;
-							if (declarator.init?.type === 'Literal' && typeof declarator.init.value === 'boolean') {
+							if (
+								declarator.init?.type === 'Literal' &&
+								typeof declarator.init.value === 'boolean'
+							) {
 								variable.is_boolean = true;
 							}
-							if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-								this.warn(declarator as any, compiler_warnings.unused_export_let(this.name.name, name));
+							if (
+								!module_script &&
+								variable.writable &&
+								!(variable.referenced || variable.referenced_from_script || variable.subscribable)
+							) {
+								this.warn(
+									declarator as any,
+									compiler_warnings.unused_export_let(this.name.name, name)
+								);
 							}
 						});
 					});
@@ -559,14 +597,21 @@ export default class Component {
 
 				return node.declaration;
 			} else {
-				node.specifiers.forEach(specifier => {
+				node.specifiers.forEach((specifier) => {
 					const variable = this.var_lookup.get(specifier.local.name);
 
 					if (variable) {
 						variable.export_name = specifier.exported.name;
 
-						if (!module_script && variable.writable && !(variable.referenced || variable.referenced_from_script || variable.subscribable)) {
-							this.warn(specifier as any, compiler_warnings.unused_export_let(this.name.name, specifier.exported.name));
+						if (
+							!module_script &&
+							variable.writable &&
+							!(variable.referenced || variable.referenced_from_script || variable.subscribable)
+						) {
+							this.warn(
+								specifier as any,
+								compiler_warnings.unused_export_let(this.name.name, specifier.exported.name)
+							);
 						}
 					}
 				});
@@ -579,7 +624,7 @@ export default class Component {
 	extract_javascript(script) {
 		if (!script) return null;
 
-		return script.content.body.filter(node => {
+		return script.content.body.filter((node) => {
 			if (!node) return false;
 			if (this.hoistable_nodes.has(node)) return false;
 			if (this.reactive_declaration_nodes.has(node)) return false;
@@ -610,7 +655,8 @@ export default class Component {
 				return this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
-			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const writable =
+				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
 			const imported = node.type.startsWith('Import');
 
 			this.add_var(node, {
@@ -659,7 +705,7 @@ export default class Component {
 		if (!script) return;
 
 		// inject vars for reactive declarations
-		script.content.body.forEach(node => {
+		script.content.body.forEach((node) => {
 			if (node.type !== 'LabeledStatement') return;
 			if (node.body.type !== 'ExpressionStatement') return;
 
@@ -667,16 +713,14 @@ export default class Component {
 			if (expression.type !== 'AssignmentExpression') return;
 			if (expression.left.type === 'MemberExpression') return;
 
-			extract_names(expression.left).forEach(name => {
+			extract_names(expression.left).forEach((name) => {
 				if (!this.var_lookup.has(name) && name[0] !== '$') {
 					this.injected_reactive_declaration_vars.add(name);
 				}
 			});
 		});
 
-		const { scope: instance_scope, map, globals } = create_scopes(
-			script.content
-		);
+		const { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
 
@@ -685,7 +729,8 @@ export default class Component {
 				return this.error(node as any, compiler_errors.illegal_declaration);
 			}
 
-			const writable = node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const writable =
+				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
 			const imported = node.type.startsWith('Import');
 
 			this.add_var(node, {
@@ -702,11 +747,11 @@ export default class Component {
 		// as `$store` will mark `store` variable as referenced and subscribable
 		const global_keys = Array.from(globals.keys());
 		const sorted_globals = [
-			...global_keys.filter(key => key[0] !== '$'),
-			...global_keys.filter(key => key[0] === '$')
+			...global_keys.filter((key) => key[0] !== '$'),
+			...global_keys.filter((key) => key[0] === '$')
 		];
 
-		sorted_globals.forEach(name => {
+		sorted_globals.forEach((name) => {
 			if (this.var_lookup.has(name)) return;
 			const node = globals.get(name);
 
@@ -786,8 +831,8 @@ export default class Component {
 
 		walk(content, {
 			enter(node: Node, parent: Node, prop, index) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
-					current_function_stack.push(current_function = node);
+				if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
+					current_function_stack.push((current_function = node));
 				}
 
 				if (map.has(node)) {
@@ -801,18 +846,18 @@ export default class Component {
 					if (node.left.type === 'ArrayPattern') {
 						walk(node.left, {
 							enter(node: Node, parent: Node) {
-								if (node.type === 'Identifier' &&
+								if (
+									node.type === 'Identifier' &&
 									parent.type !== 'MemberExpression' &&
-									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
-										names.push(node.name);
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)
+								) {
+									names.push(node.name);
 								}
 							}
 						});
 					} else {
 						deep = node.left.type === 'MemberExpression';
-						names = deep
-							? [get_object(node.left).name]
-							: extract_names(node.left);
+						names = deep ? [get_object(node.left).name] : extract_names(node.left);
 					}
 				} else if (node.type === 'UpdateExpression') {
 					deep = node.argument.type === 'MemberExpression';
@@ -820,7 +865,7 @@ export default class Component {
 					names.push(name);
 				}
 				if (names.length > 0) {
-					names.forEach(name => {
+					names.forEach((name) => {
 						let current_scope = scope;
 						let declaration;
 
@@ -863,14 +908,22 @@ export default class Component {
 			},
 
 			leave(node: Node) {
-				if ((node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression')) {
+				if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
 					current_function_stack.pop();
 					current_function = current_function_stack[current_function_stack.length - 1];
 				}
 
 				// do it on leave, to prevent infinite loop
-				if (component.compile_options.dev && component.compile_options.loopGuardTimeout > 0 && (!current_function || (!current_function.generator && !current_function.async))) {
-					const to_replace_for_loop_protect = component.loop_protect(node, scope, component.compile_options.loopGuardTimeout);
+				if (
+					component.compile_options.dev &&
+					component.compile_options.loopGuardTimeout > 0 &&
+					(!current_function || (!current_function.generator && !current_function.async))
+				) {
+					const to_replace_for_loop_protect = component.loop_protect(
+						node,
+						scope,
+						component.compile_options.loopGuardTimeout
+					);
 					if (to_replace_for_loop_protect) {
 						this.replace(to_replace_for_loop_protect);
 						scope_updated = true;
@@ -922,7 +975,7 @@ export default class Component {
 
 					const deep = assignee.type === 'MemberExpression';
 
-					names.forEach(name => {
+					names.forEach((name) => {
 						const scope_owner = scope.find_owner(name);
 						if (
 							scope_owner !== null
@@ -952,12 +1005,13 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
-		if (
-			node.type === 'LabeledStatement' &&
-			node.label.name === '$' &&
-			parent.type !== 'Program'
-		) {
+	warn_on_undefined_store_value_references(
+		node: Node,
+		parent: Node,
+		prop: string | number | symbol,
+		scope: Scope
+	) {
+		if (node.type === 'LabeledStatement' && node.label.name === '$' && parent.type !== 'Program') {
 			this.warn(node as any, compiler_warnings.non_top_level_reactive_declaration);
 		}
 
@@ -970,8 +1024,17 @@ export default class Component {
 					this.warn_if_undefined(name, object, null);
 				}
 
-				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((regex_contains_term_function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+				if (
+					name[1] !== '$' &&
+					scope.has(name.slice(1)) &&
+					scope.find_owner(name.slice(1)) !== this.instance_scope
+				) {
+					if (
+						!(
+							(regex_contains_term_function.test(parent.type) && prop === 'params') ||
+							(parent.type === 'VariableDeclarator' && prop === 'id')
+						)
+					) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -980,9 +1043,11 @@ export default class Component {
 	}
 
 	loop_protect(node, scope: Scope, timeout: number): Node | null {
-		if (node.type === 'WhileStatement' ||
+		if (
+			node.type === 'WhileStatement' ||
 			node.type === 'ForStatement' ||
-			node.type === 'DoWhileStatement') {
+			node.type === 'DoWhileStatement'
+		) {
 			const guard = this.get_unique_name('guard', scope);
 			this.used_names.add(guard.name);
 
@@ -1000,10 +1065,7 @@ export default class Component {
 
 			return {
 				type: 'BlockStatement',
-				body: [
-					before[0],
-					node
-				]
+				body: [before[0], node]
 			};
 		}
 		return null;
@@ -1036,7 +1098,11 @@ export default class Component {
 						const inserts = [];
 						const props = [];
 
-						function add_new_props(exported: Identifier, local: Pattern, default_value: Expression) {
+						function add_new_props(
+							exported: Identifier,
+							local: Pattern,
+							default_value: Expression
+						) {
 							props.push({
 								type: 'Property',
 								method: false,
@@ -1046,10 +1112,10 @@ export default class Component {
 								key: exported,
 								value: default_value
 									? {
-										type: 'AssignmentPattern',
-										left: local,
-										right: default_value
-									}
+											type: 'AssignmentPattern',
+											left: local,
+											right: default_value
+									  }
 									: local
 							});
 						}
@@ -1074,7 +1140,11 @@ export default class Component {
 
 									if (variable.export_name && variable.writable) {
 										const alias_name = component.get_unique_name(local.name);
-										add_new_props({ type: 'Identifier', name: variable.export_name }, local, alias_name);
+										add_new_props(
+											{ type: 'Identifier', name: variable.export_name },
+											local,
+											alias_name
+										);
 										return alias_name;
 									}
 									return local;
@@ -1097,7 +1167,11 @@ export default class Component {
 											break;
 										}
 										case 'ArrayPattern': {
-											const handle_element = (element: Pattern | null, index: number, array: Array<Pattern | null>) => {
+											const handle_element = (
+												element: Pattern | null,
+												index: number,
+												array: Array<Pattern | null>
+											) => {
 												if (element) {
 													if (element.type === 'Identifier') {
 														array[index] = get_new_name(element);
@@ -1135,7 +1209,11 @@ export default class Component {
 								const variable = component.var_lookup.get(name);
 								const is_props = variable.export_name && variable.writable;
 								if (is_props) {
-									add_new_props({ type: 'Identifier', name: variable.export_name }, declarator.id, declarator.init);
+									add_new_props(
+										{ type: 'Identifier', name: variable.export_name },
+										declarator.id,
+										declarator.init
+									);
 									node.declarations.splice(index--, 1);
 								}
 								if (variable.subscribable && (is_props || declarator.init)) {
@@ -1144,11 +1222,13 @@ export default class Component {
 							}
 						}
 
-						this.replace(b`
+						this.replace(
+							b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${props} } = $$props;`}
+							${props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
-						` as any);
+						` as any
+						);
 						return this.skip();
 					}
 				}
@@ -1168,12 +1248,7 @@ export default class Component {
 		// reference instance variables other than other
 		// hoistable functions. TODO others?
 
-		const {
-			hoistable_nodes,
-			var_lookup,
-			injected_reactive_declaration_vars,
-			imports
-		} = this;
+		const { hoistable_nodes, var_lookup, injected_reactive_declaration_vars, imports } = this;
 
 		const top_level_function_declarations = new Map();
 
@@ -1183,7 +1258,7 @@ export default class Component {
 			const node = body[i];
 
 			if (node.type === 'VariableDeclaration') {
-				const all_hoistable = node.declarations.every(d => {
+				const all_hoistable = node.declarations.every((d) => {
 					if (!d.init) return false;
 					if (d.init.type !== 'Literal') return false;
 
@@ -1198,11 +1273,7 @@ export default class Component {
 					if (v.export_name) return false;
 
 					if (this.var_lookup.get(name).reassigned) return false;
-					if (
-						this.vars.find(
-							variable => variable.name === name && variable.module
-						)
-					) {
+					if (this.vars.find((variable) => variable.name === name && variable.module)) {
 						return false;
 					}
 
@@ -1210,7 +1281,7 @@ export default class Component {
 				});
 
 				if (all_hoistable) {
-					node.declarations.forEach(d => {
+					node.declarations.forEach((d) => {
 						const variable = this.var_lookup.get((d.id as Identifier).name);
 						variable.hoistable = true;
 					});
@@ -1238,7 +1309,7 @@ export default class Component {
 		const checked = new Set();
 		const walking = new Set();
 
-		const is_hoistable = fn_declaration => {
+		const is_hoistable = (fn_declaration) => {
 			if (fn_declaration.type === 'ExportNamedDeclaration') {
 				fn_declaration = fn_declaration.declaration;
 			}
@@ -1260,7 +1331,9 @@ export default class Component {
 						scope = map.get(node);
 					}
 
-					if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
+					if (
+						is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)
+					) {
 						const { name } = flatten_reference(node);
 						const owner = scope.find_owner(name);
 
@@ -1278,9 +1351,7 @@ export default class Component {
 							if (variable.hoistable) return;
 
 							if (top_level_function_declarations.has(name)) {
-								const other_declaration = top_level_function_declarations.get(
-									name
-								);
+								const other_declaration = top_level_function_declarations.get(name);
 
 								if (walking.has(other_declaration)) {
 									hoistable = false;
@@ -1347,7 +1418,7 @@ export default class Component {
 			declaration: Node;
 		}> = [];
 
-		this.ast.instance.content.body.forEach(node => {
+		this.ast.instance.content.body.forEach((node) => {
 			const ignores = extract_svelte_ignore_from_comments(node);
 			if (ignores.length) this.push_ignores(ignores);
 
@@ -1384,7 +1455,7 @@ export default class Component {
 						if (node.type === 'AssignmentExpression') {
 							const left = get_object(node.left);
 
-							extract_identifiers(left).forEach(node => {
+							extract_identifiers(left).forEach((node) => {
 								assignee_nodes.add(node);
 								assignees.add(node.name);
 							});
@@ -1395,7 +1466,9 @@ export default class Component {
 						} else if (node.type === 'UpdateExpression') {
 							const identifier = get_object(node.argument);
 							assignees.add(identifier.name);
-						} else if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
+						} else if (
+							is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)
+						) {
 							const identifier = get_object(node);
 							if (!assignee_nodes.has(identifier)) {
 								const { name } = identifier;
@@ -1410,8 +1483,7 @@ export default class Component {
 										module_dependencies.add(name);
 									}
 								}
-								const is_writable_or_mutated =
-									variable && (variable.writable || variable.mutated);
+								const is_writable_or_mutated = variable && (variable.writable || variable.mutated);
 								if (
 									should_add_as_dependency &&
 									(!owner || owner === component.instance_scope) &&
@@ -1433,7 +1505,12 @@ export default class Component {
 				});
 
 				if (module_dependencies.size > 0 && dependencies.size === 0) {
-					component.warn(node.body as any, compiler_warnings.module_script_variable_reactive_declaration(Array.from(module_dependencies)));
+					component.warn(
+						node.body as any,
+						compiler_warnings.module_script_variable_reactive_declaration(
+							Array.from(module_dependencies)
+						)
+					);
 				}
 
 				const { expression } = node.body as ExpressionStatement;
@@ -1452,8 +1529,8 @@ export default class Component {
 
 		const lookup = new Map();
 
-		unsorted_reactive_declarations.forEach(declaration => {
-			declaration.assignees.forEach(name => {
+		unsorted_reactive_declarations.forEach((declaration) => {
+			declaration.assignees.forEach((name) => {
 				if (!lookup.has(name)) {
 					lookup.set(name, []);
 				}
@@ -1464,16 +1541,18 @@ export default class Component {
 			});
 		});
 
-		const cycle = check_graph_for_cycles(unsorted_reactive_declarations.reduce((acc, declaration) => {
-			declaration.assignees.forEach(v => {
-				declaration.dependencies.forEach(w => {
-					if (!declaration.assignees.has(w)) {
-						acc.push([v, w]);
-					}
+		const cycle = check_graph_for_cycles(
+			unsorted_reactive_declarations.reduce((acc, declaration) => {
+				declaration.assignees.forEach((v) => {
+					declaration.dependencies.forEach((w) => {
+						if (!declaration.assignees.has(w)) {
+							acc.push([v, w]);
+						}
+					});
 				});
-			});
-			return acc;
-		}, []));
+				return acc;
+			}, [])
+		);
 
 		if (cycle && cycle.length) {
 			const declarationList = lookup.get(cycle[0]);
@@ -1481,10 +1560,10 @@ export default class Component {
 			return this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
 		}
 
-		const add_declaration = declaration => {
+		const add_declaration = (declaration) => {
 			if (this.reactive_declarations.includes(declaration)) return;
 
-			declaration.dependencies.forEach(name => {
+			declaration.dependencies.forEach((name) => {
 				if (declaration.assignees.has(name)) return;
 				const earlier_declarations = lookup.get(name);
 				if (earlier_declarations) {
@@ -1499,14 +1578,14 @@ export default class Component {
 	}
 
 	check_if_tags_content_dynamic() {
-		this.tags.forEach(tag => {
+		this.tags.forEach((tag) => {
 			tag.check_if_content_dynamic();
 		});
 	}
 
 	warn_if_undefined(name: string, node, template_scope: TemplateScope) {
 		if (name[0] === '$') {
-			if (name === '$' || name[1] === '$' && !is_reserved_keyword(name)) {
+			if (name === '$' || (name[1] === '$' && !is_reserved_keyword(name))) {
 				return this.error(node, compiler_errors.illegal_global(name));
 			}
 
@@ -1549,7 +1628,7 @@ function process_component_options(component: Component, nodes) {
 		namespace: component.compile_options.namespace
 	};
 
-	const node = nodes.find(node => node.name === 'svelte:options');
+	const node = nodes.find((node) => node.name === 'svelte:options');
 
 	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
@@ -1571,7 +1650,7 @@ function process_component_options(component: Component, nodes) {
 	}
 
 	if (node) {
-		node.attributes.forEach(attribute => {
+		node.attributes.forEach((attribute) => {
 			if (attribute.type === 'Attribute') {
 				const { name } = attribute;
 
@@ -1588,7 +1667,7 @@ function process_component_options(component: Component, nodes) {
 						component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
 					}
 
-					component_options.customElement = component_options.customElement || {} as any;
+					component_options.customElement = component_options.customElement || ({} as any);
 					component_options.customElement.tag = tag;
 				}
 
@@ -1600,7 +1679,7 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					case 'customElement': {
-						component_options.customElement = component_options.customElement || {} as any;
+						component_options.customElement = component_options.customElement || ({} as any);
 
 						const { value } = attribute;
 
@@ -1614,9 +1693,7 @@ function process_component_options(component: Component, nodes) {
 							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
 
-						const tag = value[0].expression.properties.find(
-							(prop: any) => prop.key.name === 'tag'
-						);
+						const tag = value[0].expression.properties.find((prop: any) => prop.key.name === 'tag');
 						if (tag) {
 							parse_tag(tag, tag.value?.value);
 						} else {
@@ -1627,7 +1704,8 @@ function process_component_options(component: Component, nodes) {
 							(prop: any) => prop.key.name === 'props'
 						);
 						if (props) {
-							const error = () => component.error(attribute, compiler_errors.invalid_props_attribute);
+							const error = () =>
+								component.error(attribute, compiler_errors.invalid_props_attribute);
 							if (props.value?.type !== 'ObjectExpression') {
 								return error();
 							}
@@ -1635,22 +1713,37 @@ function process_component_options(component: Component, nodes) {
 							component_options.customElement.props = {};
 
 							for (const property of (props.value as ObjectExpression).properties) {
-								if (property.type !== 'Property' || property.computed || property.key.type !== 'Identifier' || property.value.type !== 'ObjectExpression') {
+								if (
+									property.type !== 'Property' ||
+									property.computed ||
+									property.key.type !== 'Identifier' ||
+									property.value.type !== 'ObjectExpression'
+								) {
 									return error();
 								}
 								component_options.customElement.props[property.key.name] = {};
 								for (const prop of property.value.properties) {
-									if (prop.type !== 'Property' || prop.computed || prop.key.type !== 'Identifier' || prop.value.type !== 'Literal') {
-										return error();
-									}
-									if (['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
-										prop.key.name === 'type' && ['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(prop.value.value as string) === -1 ||
-										prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean' ||
-										prop.key.name === 'attribute' && typeof prop.value.value !== 'string'
+									if (
+										prop.type !== 'Property' ||
+										prop.computed ||
+										prop.key.type !== 'Identifier' ||
+										prop.value.type !== 'Literal'
 									) {
 										return error();
 									}
-									component_options.customElement.props[property.key.name][prop.key.name] = prop.value.value;
+									if (
+										['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
+										(prop.key.name === 'type' &&
+											['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(
+												prop.value.value as string
+											) === -1) ||
+										(prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean') ||
+										(prop.key.name === 'attribute' && typeof prop.value.value !== 'string')
+									) {
+										return error();
+									}
+									component_options.customElement.props[property.key.name][prop.key.name] =
+										prop.value.value;
 								}
 							}
 						}
@@ -1680,7 +1773,10 @@ function process_component_options(component: Component, nodes) {
 
 						if (valid_namespaces.indexOf(ns) === -1) {
 							const match = fuzzymatch(ns, valid_namespaces);
-							return component.error(attribute, compiler_errors.invalid_namespace_property(ns, match));
+							return component.error(
+								attribute,
+								compiler_errors.invalid_namespace_property(ns, match)
+							);
 						}
 
 						component_options.namespace = ns;
@@ -1701,7 +1797,10 @@ function process_component_options(component: Component, nodes) {
 					}
 
 					default:
-						return component.error(attribute, compiler_errors.invalid_options_attribute_unknown(name));
+						return component.error(
+							attribute,
+							compiler_errors.invalid_options_attribute_unknown(name)
+						);
 				}
 			} else {
 				return component.error(attribute, compiler_errors.invalid_options_attribute);

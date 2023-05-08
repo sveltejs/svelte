@@ -3,28 +3,15 @@ export default {
 		categories: [
 			{
 				name: 'animals',
-				things: [
-					{ name: 'aardvark' },
-					{ name: 'buffalo' },
-					{ name: 'chinchilla' }
-				]
+				things: [{ name: 'aardvark' }, { name: 'buffalo' }, { name: 'chinchilla' }]
 			},
 			{
 				name: 'countries',
-				things: [
-					{ name: 'albania' },
-					{ name: 'brazil' },
-					{ name: 'china' }
-				]
+				things: [{ name: 'albania' }, { name: 'brazil' }, { name: 'china' }]
 			},
 			{
 				name: 'people',
-				things: [
-					{ name: 'alice' },
-					{ name: 'bob' },
-					{ name: 'carol' },
-					{ name: 'dave' }
-				]
+				things: [{ name: 'alice' }, { name: 'bob' }, { name: 'carol' }, { name: 'dave' }]
 			}
 		]
 	},

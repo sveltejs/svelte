@@ -14,10 +14,7 @@ const associated_events = {
 	visibilityState: ['visibilitychange']
 };
 
-const readonly = new Set([
-	'fullscreenElement',
-	'visibilityState'
-]);
+const readonly = new Set(['fullscreenElement', 'visibilityState']);
 
 export default class DocumentWrapper extends Wrapper {
 	node: Document;
@@ -25,7 +22,7 @@ export default class DocumentWrapper extends Wrapper {
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
-		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
+		this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
@@ -38,7 +35,7 @@ export default class DocumentWrapper extends Wrapper {
 		add_event_handlers(block, x`@_document`, this.handlers);
 		add_actions(block, x`@_document`, this.node.actions);
 
-		this.node.bindings.forEach(binding => {
+		this.node.bindings.forEach((binding) => {
 			// TODO: what if it's a MemberExpression?
 			const binding_name = (binding.expression.node as Identifier).name;
 
@@ -52,7 +49,7 @@ export default class DocumentWrapper extends Wrapper {
 			const binding_events = associated_events[binding.name];
 			const property = binding.name;
 
-			binding_events.forEach(associated_event => {
+			binding_events.forEach((associated_event) => {
 				if (!events[associated_event]) events[associated_event] = [];
 				events[associated_event].push({
 					name: binding_name,
@@ -61,17 +58,15 @@ export default class DocumentWrapper extends Wrapper {
 			});
 		});
 
-		Object.keys(events).forEach(event => {
+		Object.keys(events).forEach((event) => {
 			const id = block.get_unique_name(`ondocument${event}`);
 			const props = events[event];
 
 			renderer.add_to_context(id.name);
 			const fn = renderer.reference(id.name);
 
-			props.forEach(prop => {
-				renderer.meta_bindings.push(
-					b`this._state.${prop.name} = @_document.${prop.value};`
-				);
+			props.forEach((prop) => {
+				renderer.meta_bindings.push(b`this._state.${prop.name} = @_document.${prop.value};`);
 			});
 
 			block.event_listeners.push(x`
@@ -80,7 +75,7 @@ export default class DocumentWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => renderer.invalidate(prop.name, x`${prop.name} = @_document.${prop.value}`))}
+					${props.map((prop) => renderer.invalidate(prop.name, x`${prop.name} = @_document.${prop.value}`))}
 				}
 			`);
 

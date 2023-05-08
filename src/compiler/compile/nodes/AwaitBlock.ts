@@ -37,12 +37,24 @@ export default class AwaitBlock extends Node {
 
 		if (this.then_node) {
 			this.then_contexts = [];
-			unpack_destructuring({ contexts: this.then_contexts, node: info.value, scope, component, context_rest_properties: this.context_rest_properties });
+			unpack_destructuring({
+				contexts: this.then_contexts,
+				node: info.value,
+				scope,
+				component,
+				context_rest_properties: this.context_rest_properties
+			});
 		}
 
 		if (this.catch_node) {
 			this.catch_contexts = [];
-			unpack_destructuring({ contexts: this.catch_contexts, node: info.error, scope, component, context_rest_properties: this.context_rest_properties });
+			unpack_destructuring({
+				contexts: this.catch_contexts,
+				node: info.error,
+				scope,
+				component,
+				context_rest_properties: this.context_rest_properties
+			});
 		}
 
 		this.pending = new PendingBlock(component, this, scope, info.pending);

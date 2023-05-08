@@ -32,7 +32,7 @@ export default {
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, true);
 
-		(component.current = 'b');
+		component.current = 'b';
 		await Promise.resolve();
 
 		inputs = target.querySelectorAll('input');

@@ -17,7 +17,7 @@ function get_interpolator(a, b) {
 			return get_interpolator(a[i], bi);
 		});
 
-		return t => arr.map(fn => fn(t));
+		return (t) => arr.map((fn) => fn(t));
 	}
 
 	if (type === 'object') {
@@ -27,19 +27,19 @@ function get_interpolator(a, b) {
 			a = a.getTime();
 			b = b.getTime();
 			const delta = b - a;
-			return t => new Date(a + t * delta);
+			return (t) => new Date(a + t * delta);
 		}
 
 		const keys = Object.keys(b);
 		const interpolators = {};
 
-		keys.forEach(key => {
+		keys.forEach((key) => {
 			interpolators[key] = get_interpolator(a[key], b[key]);
 		});
 
-		return t => {
+		return (t) => {
 			const result = {};
-			keys.forEach(key => {
+			keys.forEach((key) => {
 				result[key] = interpolators[key](t);
 			});
 			return result;
@@ -48,7 +48,7 @@ function get_interpolator(a, b) {
 
 	if (type === 'number') {
 		const delta = b - a;
-		return t => a + t * delta;
+		return (t) => a + t * delta;
 	}
 
 	throw new Error(`Cannot interpolate ${type} values`);
@@ -77,7 +77,7 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 	function set(new_value: T, opts?: Options<T>) {
 		if (value == null) {
-			store.set(value = new_value);
+			store.set((value = new_value));
 			return Promise.resolve();
 		}
 
@@ -99,14 +99,14 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 				previous_task = null;
 			}
 
-			store.set(value = target_value);
+			store.set((value = target_value));
 			return Promise.resolve();
 		}
 
 		const start = now() + delay;
 		let fn;
 
-		task = loop(now => {
+		task = loop((now) => {
 			if (now < start) return true;
 
 			if (!started) {
@@ -122,13 +122,13 @@ export function tweened<T>(value?: T, defaults: Options<T> = {}): Tweened<T> {
 
 			const elapsed = now - start;
 
-			if (elapsed > <number> duration) {
-				store.set(value = new_value);
+			if (elapsed > <number>duration) {
+				store.set((value = new_value));
 				return false;
 			}
 
 			// @ts-ignore
-			store.set(value = fn(easing(elapsed / duration)));
+			store.set((value = fn(easing(elapsed / duration))));
 			return true;
 		});
 

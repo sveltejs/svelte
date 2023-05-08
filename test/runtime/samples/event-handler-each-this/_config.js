@@ -15,7 +15,7 @@ export default {
 
 		const clicked = [];
 
-		component.$on('clicked', event => {
+		component.$on('clicked', (event) => {
 			clicked.push(event.detail.node);
 		});
 

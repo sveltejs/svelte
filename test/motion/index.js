@@ -23,7 +23,7 @@ describe('motion', () => {
 		it('sets immediately when duration is 0', () => {
 			const size = tweened(0);
 
-			size.set(100, { duration : 0 });
+			size.set(100, { duration: 0 });
 			assert.equal(get(size), 100);
 		});
 	});

@@ -2,8 +2,8 @@
  * INTERNAL, DO NOT USE. Code may change at any time.
  */
 export interface Fragment {
-  key: string | null;
-  first: null;
+	key: string | null;
+	first: null;
 	/* create  */ c: () => void;
 	/* claim   */ l: (nodes: any) => void;
 	/* hydrate */ h: () => void;
@@ -35,5 +35,5 @@ export interface T$$ {
 	on_destroy: any[];
 	skip_bound: boolean;
 	on_disconnect: any[];
-	root:Element | ShadowRoot
+	root: Element | ShadowRoot;
 }

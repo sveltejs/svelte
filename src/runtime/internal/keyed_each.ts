@@ -22,7 +22,20 @@ export function fix_and_outro_and_destroy_block(block, lookup) {
 	outro_and_destroy_block(block, lookup);
 }
 
-export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+export function update_keyed_each(
+	old_blocks,
+	dirty,
+	get_key,
+	dynamic,
+	ctx,
+	list,
+	lookup,
+	node,
+	destroy,
+	create_each_block,
+	next,
+	get_context
+) {
 	let o = old_blocks.length;
 	let n = list.length;
 
@@ -49,7 +62,7 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 			updates.push(() => block.p(child_ctx, dirty));
 		}
 
-		new_lookup.set(key, new_blocks[i] = block);
+		new_lookup.set(key, (new_blocks[i] = block));
 
 		if (key in old_indexes) deltas.set(key, Math.abs(i - old_indexes[key]));
 	}
@@ -84,11 +97,9 @@ export function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list
 			insert(new_block);
 		} else if (did_move.has(old_key)) {
 			o--;
-
 		} else if (deltas.get(new_key) > deltas.get(old_key)) {
 			did_move.add(new_key);
 			insert(new_block);
-
 		} else {
 			will_move.add(old_key);
 			o--;
@@ -118,7 +129,11 @@ export function validate_each_keys(ctx, list, get_context, get_key) {
 			} catch (e) {
 				// can't stringify
 			}
-			throw new Error(`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(key)} and ${i} ${value}are duplicates`);
+			throw new Error(
+				`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(
+					key
+				)} and ${i} ${value}are duplicates`
+			);
 		}
 		keys.set(key, i);
 	}

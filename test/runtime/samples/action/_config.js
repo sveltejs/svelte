@@ -9,14 +9,20 @@ export default {
 		const eventLeave = new window.MouseEvent('mouseleave');
 
 		await button.dispatchEvent(eventEnter);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>action</button>
 			<div class="tooltip">Perform an Action</div>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(eventLeave);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>action</button>
-		`);
+		`
+		);
 	}
 };

@@ -14,4 +14,9 @@ export {
 	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
 } from './internal';
-export type { ComponentType, ComponentConstructorOptions, ComponentProps, ComponentEvents } from './internal';
+export type {
+	ComponentType,
+	ComponentConstructorOptions,
+	ComponentProps,
+	ComponentEvents
+} from './internal';

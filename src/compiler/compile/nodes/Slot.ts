@@ -7,7 +7,7 @@ import { TemplateNode } from '../../interfaces';
 import compiler_errors from '../compiler_errors';
 
 export default class Slot extends Element {
-	// @ts-ignore Slot elements have the 'Slot' type, but TypeScript doesn't allow us to have 'Slot' when it extends Element 
+	// @ts-ignore Slot elements have the 'Slot' type, but TypeScript doesn't allow us to have 'Slot' when it extends Element
 	type: 'Slot';
 	name: string;
 	children: INode[];
@@ -17,7 +17,7 @@ export default class Slot extends Element {
 	constructor(component: Component, parent: INode, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
-		info.attributes.forEach(attr => {
+		info.attributes.forEach((attr) => {
 			if (attr.type !== 'Attribute' && attr.type !== 'Spread') {
 				return component.error(attr, compiler_errors.invalid_slot_directive);
 			}

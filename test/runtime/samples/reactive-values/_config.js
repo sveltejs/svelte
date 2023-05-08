@@ -8,9 +8,12 @@ export default {
 		component.a = 3;
 		assert.equal(component.c, 5);
 		assert.equal(component.cSquared, 25);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>3 + 2 = 5</p>
 			<p>5 * 5 = 25</p>
-		`);
+		`
+		);
 	}
 };

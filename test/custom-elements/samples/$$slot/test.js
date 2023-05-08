@@ -11,19 +11,25 @@ export default async function (target) {
 
 	const [a, b] = target.querySelectorAll('custom-element');
 
-	assert.htmlEqual(a.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		a.shadowRoot.innerHTML,
+		`
 		<slot></slot>
 		<slot name="a"></slot>
 		<p>$$slots: {"a":true,"default":true}</p>
 		<p>Slot b is not available</p>
-	`);
+	`
+	);
 
-	assert.htmlEqual(b.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		b.shadowRoot.innerHTML,
+		`
 		<slot></slot>
 		<slot name="a"></slot>
 		<p>$$slots: {"a":true,"b":true,"default":true}</p>
 		<div><slot name="b"></slot></div>
-	`);
+	`
+	);
 
 	assert.equal(a.getData(), '');
 	assert.equal(b.getData(), 'foo');

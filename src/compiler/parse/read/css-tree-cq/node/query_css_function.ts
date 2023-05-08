@@ -1,7 +1,5 @@
 // @ts-nocheck
-import {
-	RightParenthesis
-} from 'css-tree/tokenizer';
+import { RightParenthesis } from 'css-tree/tokenizer';
 
 const QUERY_CSS_FUNCTIONS = new Set(['calc', 'clamp', 'min', 'max']);
 

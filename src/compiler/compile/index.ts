@@ -35,13 +35,7 @@ const valid_options = [
 	'cssHash'
 ];
 
-const valid_css_values = [
-	true,
-	false,
-	'injected',
-	'external',
-	'none'
-];
+const valid_css_values = [true, false, 'injected', 'external', 'none'];
 
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 const regex_starts_with_lowercase_character = /^[a-z]/;
@@ -49,7 +43,7 @@ const regex_starts_with_lowercase_character = /^[a-z]/;
 function validate_options(options: CompileOptions, warnings: Warning[]) {
 	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
 
-	Object.keys(options).forEach(key => {
+	Object.keys(options).forEach((key) => {
 		if (!valid_options.includes(key)) {
 			const match = fuzzymatch(key, valid_options);
 			let message = `Unrecognized option '${key}'`;
@@ -84,7 +78,9 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 	}
 
 	if (valid_css_values.indexOf(css) === -1) {
-		throw new Error(`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`);
+		throw new Error(
+			`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`
+		);
 	}
 
 	if (css === true || css === false) {
@@ -111,7 +107,10 @@ function validate_options(options: CompileOptions, warnings: Warning[]) {
 }
 
 export default function compile(source: string, options: CompileOptions = {}) {
-	options = Object.assign({ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' }, options);
+	options = Object.assign(
+		{ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' },
+		options
+	);
 
 	const stats = new Stats();
 	const warnings = [];
@@ -133,9 +132,10 @@ export default function compile(source: string, options: CompileOptions = {}) {
 	);
 	stats.stop('create component');
 
-	const result = options.generate === false
-		? null
-		: options.generate === 'ssr'
+	const result =
+		options.generate === false
+			? null
+			: options.generate === 'ssr'
 			? render_ssr(component, options)
 			: render_dom(component, options);
 

@@ -35,7 +35,9 @@ export default {
 	async test({ assert, component, target }) {
 		await component.done;
 		assert.equal(component.getCounter(), 13);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div data-id="3">
 				<inner>0</inner>
 				<inner>1</inner>
@@ -48,6 +50,7 @@ export default {
 				<inner>0</inner>
 				<inner>1</inner>
 			</div>
-		`);
+		`
+		);
 	}
 };

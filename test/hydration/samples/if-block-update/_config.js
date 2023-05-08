@@ -13,7 +13,6 @@ export default {
 	},
 
 	test(assert, target, _, component) {
-
 		component.foo = false;
 		component.bar = true;
 		assert.htmlEqual(target.innerHTML, '<p>bar!</p>');

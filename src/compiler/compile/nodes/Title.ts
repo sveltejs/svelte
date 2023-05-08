@@ -19,17 +19,15 @@ export default class Title extends Node {
 			return;
 		}
 
-		info.children.forEach(child => {
+		info.children.forEach((child) => {
 			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
 				return component.error(child, compiler_errors.illegal_structure_title);
 			}
 		});
 
-		this.should_cache = info.children.length === 1
-			? (
-				info.children[0].type !== 'Identifier' ||
-				scope.names.has(info.children[0].name)
-			)
-			: true;
+		this.should_cache =
+			info.children.length === 1
+				? info.children[0].type !== 'Identifier' || scope.names.has(info.children[0].name)
+				: true;
 	}
 }

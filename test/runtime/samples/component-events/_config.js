@@ -8,7 +8,7 @@ export default {
 	test({ assert, component }) {
 		let count = 0;
 
-		component.$on('widgetTornDown', function() {
+		component.$on('widgetTornDown', function () {
 			assert.equal(this, component);
 			count += 1;
 		});

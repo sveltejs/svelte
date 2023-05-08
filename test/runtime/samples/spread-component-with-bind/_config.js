@@ -15,9 +15,12 @@ export default {
 		input.value = 'bar';
 		await input.dispatchEvent(new window.Event('input'));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>bar</p>
 			<input>
-		`);
+		`
+		);
 	}
 };

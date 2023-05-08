@@ -7,9 +7,12 @@ export default async function (target) {
 	await tick();
 	const el = target.querySelector('custom-element');
 
-	assert.htmlEqual(el.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		el.shadowRoot.innerHTML,
+		`
 		<p>name: world</p>
 		<p>$$props: {"name":"world","answer":"42","test":"svelte"}</p>
 		<p>$$restProps: {"answer":"42","test":"svelte"}</p>
-	`);
+	`
+	);
 }

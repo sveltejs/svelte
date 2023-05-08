@@ -8,8 +8,11 @@ export default {
 		const button = target.querySelector('button');
 
 		await button.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>4</button>
-		`);
+		`
+		);
 	}
 };

@@ -62,11 +62,12 @@ describe('custom-elements', function () {
 		if (browser) await browser.close();
 	});
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 		// MEMO: puppeteer can not execute Chromium properly with Node8,10 on Linux at GitHub actions.
 		const { version } = process;
-		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux') return;
+		if ((version.startsWith('v8.') || version.startsWith('v10.')) && process.platform === 'linux')
+			return;
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
@@ -100,7 +101,7 @@ describe('custom-elements', function () {
 									dev: config.dev
 								});
 
-								compiled.warnings.forEach(w => warnings.push(w));
+								compiled.warnings.forEach((w) => warnings.push(w));
 
 								return compiled.js;
 							}
@@ -118,24 +119,23 @@ describe('custom-elements', function () {
 
 			function assertWarnings() {
 				if (expected_warnings) {
-					deepEqual(warnings.map(w => ({
-						code: w.code,
-						message: w.message,
-						pos: w.pos,
-						start: w.start,
-						end: w.end
-					})), expected_warnings);
+					deepEqual(
+						warnings.map((w) => ({
+							code: w.code,
+							message: w.message,
+							pos: w.pos,
+							start: w.start,
+							end: w.end
+						})),
+						expected_warnings
+					);
 				}
 			}
 
-			browser = await executeBrowserTest(
-				browser,
-				launchPuppeteer,
-				assertWarnings,
-				() => {
-					console.log(addLineNumbers(code));
-					assertWarnings();
-				});
+			browser = await executeBrowserTest(browser, launchPuppeteer, assertWarnings, () => {
+				console.log(addLineNumbers(code));
+				assertWarnings();
+			});
 		});
 	});
 });

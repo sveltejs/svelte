@@ -9,7 +9,7 @@ import Attribute from '../nodes/Attribute';
 import { regex_whitespaces } from '../../utils/patterns';
 
 const aria_roles = roles_map.keys();
-const abstract_roles = new Set(aria_roles.filter(role => roles_map.get(role).abstract));
+const abstract_roles = new Set(aria_roles.filter((role) => roles_map.get(role).abstract));
 const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.has(name));
 
 const non_interactive_roles = new Set(
@@ -33,10 +33,11 @@ const non_interactive_roles = new Set(
 );
 
 const interactive_roles = new Set(
-	non_abstract_roles.filter((name) => 
-		!non_interactive_roles.has(name) &&
-		// 'generic' is meant to have no semantic meaning.
-		name !== 'generic'
+	non_abstract_roles.filter(
+		(name) =>
+			!non_interactive_roles.has(name) &&
+			// 'generic' is meant to have no semantic meaning.
+			name !== 'generic'
 	)
 );
 
@@ -58,7 +59,10 @@ export function is_presentation_role(role: ARIARoleDefinitionKey) {
 	return presentation_roles.has(role);
 }
 
-export function is_hidden_from_screen_reader(tag_name: string, attribute_map: Map<string, Attribute>) {
+export function is_hidden_from_screen_reader(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+) {
 	if (tag_name === 'input') {
 		const type = attribute_map.get('type')?.get_static_value();
 
@@ -113,7 +117,9 @@ const interactive_ax_objects = new Set(
 );
 
 const non_interactive_ax_objects = new Set(
-	[...AXObjects.keys()].filter((name) => ['windows', 'structure'].includes(AXObjects.get(name).type))
+	[...AXObjects.keys()].filter((name) =>
+		['windows', 'structure'].includes(AXObjects.get(name).type)
+	)
 );
 
 const interactive_element_ax_object_schemas: ARIARoleRelationConcept[] = [];
@@ -142,10 +148,7 @@ function match_schema(
 	return schema.attributes.every((schema_attribute) => {
 		const attribute = attribute_map.get(schema_attribute.name);
 		if (!attribute) return false;
-		if (
-			schema_attribute.value &&
-			schema_attribute.value !== attribute.get_static_value()
-		) {
+		if (schema_attribute.value && schema_attribute.value !== attribute.get_static_value()) {
 			return false;
 		}
 		return true;
@@ -155,7 +158,7 @@ function match_schema(
 export enum ElementInteractivity {
 	Interactive = 'interactive',
 	NonInteractive = 'non-interactive',
-	Static = 'static',
+	Static = 'static'
 }
 
 export function element_interactivity(
@@ -163,15 +166,13 @@ export function element_interactivity(
 	attribute_map: Map<string, Attribute>
 ): ElementInteractivity {
 	if (
-		interactive_element_role_schemas.some((schema) =>
-			match_schema(schema, tag_name, attribute_map)
-		)
+		interactive_element_role_schemas.some((schema) => match_schema(schema, tag_name, attribute_map))
 	) {
 		return ElementInteractivity.Interactive;
 	}
 
 	if (
-		tag_name !== 'header' && 
+		tag_name !== 'header' &&
 		non_interactive_element_role_schemas.some((schema) =>
 			match_schema(schema, tag_name, attribute_map)
 		)
@@ -198,23 +199,42 @@ export function element_interactivity(
 	return ElementInteractivity.Static;
 }
 
-export function is_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+export function is_interactive_element(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+): boolean {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Interactive;
 }
 
-export function is_non_interactive_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+export function is_non_interactive_element(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+): boolean {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.NonInteractive;
 }
 
-export function is_static_element(tag_name: string, attribute_map: Map<string, Attribute>): boolean {
+export function is_static_element(
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+): boolean {
 	return element_interactivity(tag_name, attribute_map) === ElementInteractivity.Static;
 }
 
-export function is_semantic_role_element(role: ARIARoleDefinitionKey, tag_name: string, attribute_map: Map<string, Attribute>) {
+export function is_semantic_role_element(
+	role: ARIARoleDefinitionKey,
+	tag_name: string,
+	attribute_map: Map<string, Attribute>
+) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
-		if (schema.name === tag_name && (!schema.attributes || schema.attributes.every(
-			(attr) => attribute_map.has(attr.name) && attribute_map.get(attr.name).get_static_value() === attr.value
-		))) {
+		if (
+			schema.name === tag_name &&
+			(!schema.attributes ||
+				schema.attributes.every(
+					(attr) =>
+						attribute_map.has(attr.name) &&
+						attribute_map.get(attr.name).get_static_value() === attr.value
+				))
+		) {
 			for (const name of ax_object) {
 				const roles = AXObjectRoles.get(name);
 				if (roles) {

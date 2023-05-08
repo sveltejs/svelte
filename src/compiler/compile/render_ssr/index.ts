@@ -15,7 +15,7 @@ import check_enable_sourcemap from '../utils/check_enable_sourcemap';
 export default function ssr(
 	component: Component,
 	options: CompileOptions
-): {js: Node[]; css: CssResult} {
+): { js: Node[]; css: CssResult } {
 	const renderer = new Renderer({
 		name: component.name
 	});
@@ -23,28 +23,40 @@ export default function ssr(
 	const { name } = component;
 
 	// create $$render function
-	renderer.render(trim(component.fragment.children), Object.assign({
-		locate: component.locate
-	}, options));
+	renderer.render(
+		trim(component.fragment.children),
+		Object.assign(
+			{
+				locate: component.locate
+			},
+			options
+		)
+	);
 
 	// TODO put this inside the Renderer class
 	const literal = renderer.pop();
 
 	// TODO concatenate CSS maps
-	const css = options.customElement ?
-		{ code: null, map: null } :
-		component.stylesheet.render(options.filename);
+	const css = options.customElement
+		? { code: null, map: null }
+		: component.stylesheet.render(options.filename);
 
 	const uses_rest = component.var_lookup.has('$$restProps');
-	const props = component.vars.filter(variable => !variable.module && variable.export_name);
-	const rest = uses_rest ? b`let $$restProps = @compute_rest_props($$props, [${props.map(prop => `"${prop.export_name}"`).join(',')}]);` : null;
+	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
+	const rest = uses_rest
+		? b`let $$restProps = @compute_rest_props($$props, [${props
+				.map((prop) => `"${prop.export_name}"`)
+				.join(',')}]);`
+		: null;
 
 	const uses_slots = component.var_lookup.has('$$slots');
 	const slots = uses_slots ? b`let $$slots = @compute_slots(#slots);` : null;
 
-	const reactive_stores = component.vars.filter(variable => variable.name[0] === '$' && variable.name[1] !== '$');
+	const reactive_stores = component.vars.filter(
+		(variable) => variable.name[0] === '$' && variable.name[1] !== '$'
+	);
 	const reactive_store_subscriptions = reactive_stores
-		.filter(store => {
+		.filter((store) => {
 			const variable = component.var_lookup.get(store.name.slice(1));
 			return !variable || variable.hoistable;
 		})
@@ -59,19 +71,18 @@ export default function ssr(
 		({ name }) => b`${`$$unsubscribe_${name.slice(1)}`}()`
 	);
 
-	const reactive_store_declarations = reactive_stores
-		.map(({ name }) => {
-			const store_name = name.slice(1);
-			const store = component.var_lookup.get(store_name);
+	const reactive_store_declarations = reactive_stores.map(({ name }) => {
+		const store_name = name.slice(1);
+		const store = component.var_lookup.get(store_name);
 
-			if (store && store.reassigned) {
-				const unsubscribe = `$$unsubscribe_${store_name}`;
-				const subscribe = `$$subscribe_${store_name}`;
+		if (store && store.reassigned) {
+			const unsubscribe = `$$unsubscribe_${store_name}`;
+			const subscribe = `$$subscribe_${store_name}`;
 
-				return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), ${store_name})`;
-			}
-			return b`let ${name}, ${`$$unsubscribe_${store_name}`};`;
-		});
+			return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), ${store_name})`;
+		}
+		return b`let ${name}, ${`$$unsubscribe_${store_name}`};`;
+	});
 
 	// instrument get/set store value
 	if (component.ast.instance) {
@@ -96,27 +107,19 @@ export default function ssr(
 
 					for (const name of names) {
 						const variable = component.var_lookup.get(name);
-						if (variable &&
+						if (
+							variable &&
 							!variable.hoistable &&
 							!variable.global &&
 							!variable.module &&
-							(
-								variable.subscribable || variable.name[0] === '$'
-							)) {
-								to_invalidate.add(variable.name);
-							}
+							(variable.subscribable || variable.name[0] === '$')
+						) {
+							to_invalidate.add(variable.name);
+						}
 					}
 
 					if (to_invalidate.size) {
-						this.replace(
-							invalidate(
-								{ component } as any,
-								scope,
-								node,
-								to_invalidate,
-								true
-							)
-						);
+						this.replace(invalidate({ component } as any, scope, node, to_invalidate, true));
 					}
 				}
 			}
@@ -142,23 +145,24 @@ export default function ssr(
 	// TODO only do this for props with a default value
 	const parent_bindings = instance_javascript
 		? component.vars
-			.filter(variable => !variable.module && variable.export_name)
-			.map(prop => {
-				return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
-			})
+				.filter((variable) => !variable.module && variable.export_name)
+				.map((prop) => {
+					return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
+				})
 		: [];
 
-	const injected = Array.from(component.injected_reactive_declaration_vars).filter(name => {
+	const injected = Array.from(component.injected_reactive_declaration_vars).filter((name) => {
 		const variable = component.var_lookup.get(name);
 		return variable.injected;
 	});
 
-	const reactive_declarations = component.reactive_declarations.map(d => {
+	const reactive_declarations = component.reactive_declarations.map((d) => {
 		const body: Statement = (d.node as LabeledStatement).body;
 
 		let statement = b`${body}`;
 
-		if (!d.declaration) { // TODO do not add label if it's not referenced
+		if (!d.declaration) {
+			// TODO do not add label if it's not referenced
 			statement = b`$: { ${statement} }`;
 		}
 
@@ -190,7 +194,7 @@ export default function ssr(
 			return ${literal};`;
 
 	const blocks = [
-		...injected.map(name => b`let ${name};`),
+		...injected.map((name) => b`let ${name};`),
 		rest,
 		slots,
 		...reactive_store_declarations,
@@ -204,11 +208,15 @@ export default function ssr(
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 
 	const js = b`
-		${css.code ? b`
+		${
+			css.code
+				? b`
 		const #css = {
 			code: "${css.code}",
 			map: ${css_sourcemap_enabled && css.map ? string_literal(css.map.toString()) : 'null'}
-		};` : null}
+		};`
+				: null
+		}
 
 		${component.extract_javascript(component.ast.module)}
 
@@ -219,7 +227,7 @@ export default function ssr(
 		});
 	`;
 
-	return {js, css};
+	return { js, css };
 }
 
 function trim(nodes: TemplateNode[]) {

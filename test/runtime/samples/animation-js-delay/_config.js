@@ -19,8 +19,8 @@ export default {
 
 	test({ assert, component, window, raf }) {
 		let divs = window.document.querySelectorAll('div');
-		divs.forEach(div => {
-			div.getBoundingClientRect = function() {
+		divs.forEach((div) => {
+			div.getBoundingClientRect = function () {
 				const index = [...this.parentNode.children].indexOf(this);
 				const top = index * 30;
 

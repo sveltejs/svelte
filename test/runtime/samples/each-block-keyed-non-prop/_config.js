@@ -14,10 +14,13 @@ export default {
 
 		component.words = ['foo', 'baz'];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>foo</p>
 			<p>baz</p>
-		`);
+		`
+		);
 
 		const [p4, p5] = target.querySelectorAll('p');
 

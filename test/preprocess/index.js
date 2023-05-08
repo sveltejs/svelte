@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { loadConfig, svelte } from '../helpers';
 
 describe('preprocess', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
@@ -25,7 +25,10 @@ describe('preprocess', () => {
 			);
 			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, result.code);
 			if (result.map) {
-				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html.map`, JSON.stringify(result.map, null, 2));
+				fs.writeFileSync(
+					`${__dirname}/samples/${dir}/_actual.html.map`,
+					JSON.stringify(result.map, null, 2)
+				);
 			}
 
 			assert.equal(result.code, expected);

@@ -3,7 +3,7 @@ import { env, useFakeTimers } from '../../../helpers';
 let clock;
 
 export default {
-	before_test()  {
+	before_test() {
 		clock = useFakeTimers();
 
 		const window = env();

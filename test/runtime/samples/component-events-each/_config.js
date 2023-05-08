@@ -16,7 +16,7 @@ export default {
 
 		const clicks = [];
 
-		component.$on('foo', event => {
+		component.$on('foo', (event) => {
 			clicks.push(event.detail);
 		});
 

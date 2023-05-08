@@ -11,10 +11,13 @@ export default {
 
 	test({ assert, component, target }) {
 		component.flag = false;
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>Before</span>
 			<span>Component</span>
 			<span>After</span>
-		`);
+		`
+		);
 	}
 };

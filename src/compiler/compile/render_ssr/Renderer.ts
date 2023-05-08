@@ -45,7 +45,7 @@ const handlers: Record<string, Handler> = {
 	Window: noop
 };
 
-export interface RenderOptions extends CompileOptions{
+export interface RenderOptions extends CompileOptions {
 	locate: (c: number) => { line: number; column: number };
 	head_id?: string;
 	has_added_svelte_hash?: boolean;
@@ -83,13 +83,13 @@ export default class Renderer {
 	}
 
 	push() {
-		const current = this.current = { value: '' };
+		const current = (this.current = { value: '' });
 
-		const literal = this.literal = {
+		const literal = (this.literal = {
 			type: 'TemplateLiteral',
 			expressions: [],
 			quasis: []
-		};
+		});
 
 		this.stack.push({ current, literal });
 	}
@@ -116,7 +116,7 @@ export default class Renderer {
 	}
 
 	render(nodes: INode[], options: RenderOptions) {
-		nodes.forEach(node => {
+		nodes.forEach((node) => {
 			const handler = handlers[node.type];
 
 			if (!handler) {

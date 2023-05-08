@@ -7,15 +7,27 @@ const regex_svelte_ignore = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 
 export function extract_svelte_ignore(text: string): string[] {
 	const match = regex_svelte_ignore.exec(text);
-	return match ? match[1].split(regex_whitespace).map(x => x.trim()).filter(Boolean) : [];
+	return match
+		? match[1]
+				.split(regex_whitespace)
+				.map((x) => x.trim())
+				.filter(Boolean)
+		: [];
 }
 
-export function extract_svelte_ignore_from_comments<Node extends { leadingComments?: Array<{value: string}> }>(node: Node): string[] {
-	return flatten((node.leadingComments || []).map(comment => extract_svelte_ignore(comment.value)));
+export function extract_svelte_ignore_from_comments<
+	Node extends { leadingComments?: Array<{ value: string }> }
+>(node: Node): string[] {
+	return flatten(
+		(node.leadingComments || []).map((comment) => extract_svelte_ignore(comment.value))
+	);
 }
 
-export function extract_ignores_above_position(position: number, template_nodes: TemplateNode[]): string[] {
-	const previous_node_idx = template_nodes.findIndex(child => child.end === position);
+export function extract_ignores_above_position(
+	position: number,
+	template_nodes: TemplateNode[]
+): string[] {
+	const previous_node_idx = template_nodes.findIndex((child) => child.end === position);
 	if (previous_node_idx === -1) {
 		return [];
 	}
@@ -36,23 +48,23 @@ export function extract_ignores_above_position(position: number, template_nodes:
 }
 
 export function extract_ignores_above_node(node: INode): string[] {
-  /**
-    * This utilizes the fact that node has a prev and a next attribute
-    * which means that it can find svelte-ignores along
-    * the nodes on the same level as itself who share the same parent. 
-    */
-  let cur_node = node.prev;
-  while (cur_node) {
-    if (cur_node.type !== 'Comment' && cur_node.type !== 'Text') {
-      return [];
-	  }
+	/**
+	 * This utilizes the fact that node has a prev and a next attribute
+	 * which means that it can find svelte-ignores along
+	 * the nodes on the same level as itself who share the same parent.
+	 */
+	let cur_node = node.prev;
+	while (cur_node) {
+		if (cur_node.type !== 'Comment' && cur_node.type !== 'Text') {
+			return [];
+		}
 
-	  if (cur_node.type === 'Comment' && cur_node.ignores.length) {
-      return cur_node.ignores;
-	  }
+		if (cur_node.type === 'Comment' && cur_node.ignores.length) {
+			return cur_node.ignores;
+		}
 
-    cur_node = cur_node.prev;
-  }
+		cur_node = cur_node.prev;
+	}
 
-  return [];
+	return [];
 }

@@ -14,9 +14,12 @@ export default {
 		input.value = 'abc';
 		await input.dispatchEvent(new window.Event('input'));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			{"value":"abc"}
-		`);
+		`
+		);
 	}
 };

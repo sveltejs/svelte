@@ -8,8 +8,11 @@ export default {
 	test({ assert, component, target }) {
 		component.myClass = 'one';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="one three"></div>
-		`);
+		`
+		);
 	}
 };

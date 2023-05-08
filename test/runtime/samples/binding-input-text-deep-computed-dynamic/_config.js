@@ -28,10 +28,13 @@ export default {
 		input.value = 'e';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<pre>{"foo":"a","bar":"e","baz":"c"}</pre>
-		`);
+		`
+		);
 
 		// edit baz
 		component.prop = 'baz';
@@ -40,10 +43,13 @@ export default {
 		input.value = 'f';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<pre>{"foo":"a","bar":"e","baz":"f"}</pre>
-		`);
+		`
+		);
 
 		// edit foo
 		component.prop = 'foo';
@@ -52,9 +58,12 @@ export default {
 		input.value = 'd';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<pre>{"foo":"d","bar":"e","baz":"f"}</pre>
-		`);
+		`
+		);
 	}
 };

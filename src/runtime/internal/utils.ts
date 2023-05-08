@@ -2,7 +2,7 @@ import type { Readable } from '../store';
 
 export function noop() {}
 
-export const identity = x => x;
+export const identity = (x) => x;
 
 export function assign<T, S>(tar: T, src: S): T & S {
 	// @ts-ignore
@@ -13,7 +13,11 @@ export function assign<T, S>(tar: T, src: S): T & S {
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
+	return (
+		!!value &&
+		(typeof value === 'object' || typeof value === 'function') &&
+		typeof value.then === 'function'
+	);
 }
 
 export function add_location(element, file, line, column, char) {
@@ -39,7 +43,7 @@ export function is_function(thing: any): thing is Function {
 }
 
 export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
+	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 let src_url_equal_anchor;
@@ -79,7 +83,7 @@ export function subscribe(store, ...callbacks) {
 
 export function get_store_value<T>(store: Readable<T>): T {
 	let value;
-	subscribe(store, _ => value = _)();
+	subscribe(store, (_) => (value = _))();
 	return value;
 }
 
@@ -95,9 +99,7 @@ export function create_slot(definition, ctx, $$scope, fn) {
 }
 
 function get_slot_context(definition, ctx, $$scope, fn) {
-	return definition[1] && fn
-		? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
-		: $$scope.ctx;
+	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 
 export function get_slot_changes(definition, $$scope, dirty, fn) {
@@ -124,14 +126,29 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	return $$scope.dirty;
 }
 
-export function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
+export function update_slot_base(
+	slot,
+	slot_definition,
+	ctx,
+	$$scope,
+	slot_changes,
+	get_slot_context_fn
+) {
 	if (slot_changes) {
 		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
 		slot.p(slot_context, slot_changes);
 	}
 }
 
-export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+export function update_slot(
+	slot,
+	slot_definition,
+	ctx,
+	$$scope,
+	dirty,
+	get_slot_changes_fn,
+	get_slot_context_fn
+) {
 	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
 	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
 }
@@ -171,7 +188,7 @@ export function compute_slots(slots) {
 
 export function once(fn) {
 	let ran = false;
-	return function(this: any, ...args) {
+	return function (this: any, ...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);

@@ -9,14 +9,20 @@ export default async function (target) {
 
 	const ce = target.querySelector('my-widget');
 
-	assert.htmlEqual(ce.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		ce.shadowRoot.innerHTML,
+		`
 		<slot></slot>
 		<p>named fallback</p>
-	`);
+	`
+	);
 
 	component.name = 'slot2';
-	assert.htmlEqual(ce.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		ce.shadowRoot.innerHTML,
+		`
 		<slot></slot>
 		<p>named fallback</p>
-	`);
+	`
+	);
 }

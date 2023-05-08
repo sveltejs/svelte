@@ -37,18 +37,19 @@ export interface ConstTag extends BaseNode {
 
 interface DebugTag extends BaseNode {
 	type: 'DebugTag';
-	identifiers: Node[]
+	identifiers: Node[];
 }
 
-export type DirectiveType = 'Action'
-| 'Animation'
-| 'Binding'
-| 'Class'
-| 'StyleDirective'
-| 'EventHandler'
-| 'Let'
-| 'Ref'
-| 'Transition';
+export type DirectiveType =
+	| 'Action'
+	| 'Animation'
+	| 'Binding'
+	| 'Class'
+	| 'StyleDirective'
+	| 'EventHandler'
+	| 'Let'
+	| 'Ref'
+	| 'Transition';
 
 interface BaseDirective extends BaseNode {
 	type: DirectiveType;
@@ -63,7 +64,17 @@ interface BaseExpressionDirective extends BaseDirective {
 }
 
 export interface Element extends BaseNode {
-	type: 'InlineComponent' | 'SlotTemplate' | 'Title' | 'Slot' | 'Element' | 'Head' | 'Options' | 'Window' | 'Document' | 'Body';
+	type:
+		| 'InlineComponent'
+		| 'SlotTemplate'
+		| 'Title'
+		| 'Slot'
+		| 'Element'
+		| 'Head'
+		| 'Options'
+		| 'Window'
+		| 'Document'
+		| 'Body';
 	attributes: Array<BaseDirective | Attribute | SpreadAttribute>;
 	name: string;
 }
@@ -87,17 +98,18 @@ export interface Transition extends BaseExpressionDirective {
 
 export type Directive = BaseDirective | BaseExpressionDirective | Transition;
 
-export type TemplateNode = Text
-| ConstTag
-| DebugTag
-| MustacheTag
-| BaseNode
-| Element
-| Attribute
-| SpreadAttribute
-| Directive
-| Transition
-| Comment;
+export type TemplateNode =
+	| Text
+	| ConstTag
+	| DebugTag
+	| MustacheTag
+	| BaseNode
+	| Element
+	| Attribute
+	| SpreadAttribute
+	| Directive
+	| Transition
+	| Comment;
 
 export interface Parser {
 	readonly template: string;
@@ -214,8 +226,8 @@ export interface Var {
 	module?: boolean;
 	mutated?: boolean;
 	reassigned?: boolean;
-	referenced?: boolean;  // referenced from template scope
-	referenced_from_script?: boolean;        // referenced from script
+	referenced?: boolean; // referenced from template scope
+	referenced_from_script?: boolean; // referenced from script
 	writable?: boolean;
 
 	// used internally, but not exposed

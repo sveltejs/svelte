@@ -43,7 +43,9 @@ export default {
 		await input.dispatchEvent(change);
 
 		assert.ok(component.tasks[0].done);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<select>
 				<option value='[object Object]'>put your left leg in</option>
 				<option value='[object Object]'>your left leg out</option>
@@ -59,7 +61,8 @@ export default {
 			<p>your left leg out</p>
 			<p>in, out, in, out</p>
 			<p>shake it all about</p>
-		`);
+		`
+		);
 
 		options[1].selected = true;
 		await select.dispatchEvent(change);
@@ -70,7 +73,9 @@ export default {
 		await input.dispatchEvent(change);
 
 		assert.ok(component.tasks[1].done);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<select>
 				<option value='[object Object]'>put your left leg in</option>
 				<option value='[object Object]'>your left leg out</option>
@@ -85,6 +90,7 @@ export default {
 			<h2>Pending tasks</h2>
 			<p>in, out, in, out</p>
 			<p>shake it all about</p>
-		`);
+		`
+		);
 	}
 };

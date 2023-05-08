@@ -21,17 +21,23 @@ export default {
 		await input.dispatchEvent(event);
 
 		assert.equal(input.value, 'H');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>H</p>
-		`);
+		`
+		);
 
 		input.value = 'he';
 		await input.dispatchEvent(event);
 		assert.equal(input.value, 'HE');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>HE</p>
-		`);
+		`
+		);
 	}
 };

@@ -14,14 +14,14 @@ export function test({ input, preprocessed }) {
 		input: input.locate,
 		preprocessed
 	});
-	
+
 	// markup (middle)
 	assert_mapped({
 		code: '<div>{name}</div>',
 		input: input.locate,
 		preprocessed
 	});
-	
+
 	// style content (preprocessed without map, content changed)
 	assert_not_mapped({
 		code: 'font-weight: bold;',

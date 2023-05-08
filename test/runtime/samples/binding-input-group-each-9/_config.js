@@ -9,7 +9,7 @@ export default {
 
 		await component.moveDown(0);
 		await component.moveDown(1);
-		
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -32,7 +32,7 @@ export default {
 		assert.equal(inputs[2].checked, true);
 
 		await (component.current = 'b');
-		
+
 		inputs = target.querySelectorAll('input');
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);

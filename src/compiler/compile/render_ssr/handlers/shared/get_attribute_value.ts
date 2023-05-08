@@ -23,12 +23,13 @@ export function get_attribute_value(attribute: Attribute): ESTreeExpression {
 	 * For value attribute of textarea, it will render as child node of `<textarea>` element.
 	 * Therefore, we need to escape as content (not attribute).
 	 */
-	const is_textarea_value = attribute.parent.name.toLowerCase() === 'textarea' && attribute.name.toLowerCase() === 'value';
+	const is_textarea_value =
+		attribute.parent.name.toLowerCase() === 'textarea' && attribute.name.toLowerCase() === 'value';
 
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? string_literal(chunk.data.replace(regex_double_quotes, '&quot;')) as ESTreeExpression
+				? (string_literal(chunk.data.replace(regex_double_quotes, '&quot;')) as ESTreeExpression)
 				: x`@escape(${chunk.node}, ${is_textarea_value ? 'false' : 'true'})`;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);

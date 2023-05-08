@@ -1,4 +1,4 @@
-const items = [ {}, {} ];
+const items = [{}, {}];
 
 export default {
 	skip_if_ssr: true,
@@ -9,14 +9,14 @@ export default {
 	},
 
 	test({ assert, component, target }) {
-		const options = target.querySelectorAll( 'option' );
+		const options = target.querySelectorAll('option');
 
-		assert.equal( options[0].selected, true );
-		assert.equal( options[1].selected, false );
+		assert.equal(options[0].selected, true);
+		assert.equal(options[1].selected, false);
 
 		component.foo = items[1];
 
-		assert.equal( options[0].selected, false );
-		assert.equal( options[1].selected, true );
+		assert.equal(options[0].selected, false);
+		assert.equal(options[1].selected, true);
 	}
 };

@@ -86,41 +86,39 @@ describe('runtime (puppeteer)', () => {
 			throw new Error('Forgot to remove `solo: true` from test');
 		}
 
-		(skip ? it.skip : solo ? it.only : it)(`${dir} ${hydrate ? '(with hydration)' : ''}`, async () => {
-			if (failed.has(dir)) {
-				// this makes debugging easier, by only printing compiled output once
-				throw new Error('skipping test, already failed');
-			}
+		(skip ? it.skip : solo ? it.only : it)(
+			`${dir} ${hydrate ? '(with hydration)' : ''}`,
+			async () => {
+				if (failed.has(dir)) {
+					// this makes debugging easier, by only printing compiled output once
+					throw new Error('skipping test, already failed');
+				}
 
-			const warnings = [];
+				const warnings = [];
 
-			const bundle = await rollup({
-				input: 'main',
-				plugins: [
-					{
-						name: 'testing-runtime-puppeteer',
-						resolveId(importee) {
-							if (importee === 'svelte/internal' || importee === './internal') {
-								return internal;
-							}
+				const bundle = await rollup({
+					input: 'main',
+					plugins: [
+						{
+							name: 'testing-runtime-puppeteer',
+							resolveId(importee) {
+								if (importee === 'svelte/internal' || importee === './internal') {
+									return internal;
+								}
 
-							if (importee === 'svelte') {
-								return index;
-							}
+								if (importee === 'svelte') {
+									return index;
+								}
 
-							if (importee === 'main') {
-								return 'main';
-							}
-						},
-						load(id) {
-							if (id === 'main') {
-								return `
-									import SvelteComponent from ${JSON.stringify(
-										path.join(__dirname, 'samples', dir, 'main.svelte')
-									)};
-									import config from ${JSON.stringify(
-										path.join(__dirname, 'samples', dir, '_config.js')
-									)};
+								if (importee === 'main') {
+									return 'main';
+								}
+							},
+							load(id) {
+								if (id === 'main') {
+									return `
+									import SvelteComponent from ${JSON.stringify(path.join(__dirname, 'samples', dir, 'main.svelte'))};
+									import config from ${JSON.stringify(path.join(__dirname, 'samples', dir, '_config.js'))};
 									import * as assert from 'assert';
 
 									export default async function (target) {
@@ -189,72 +187,74 @@ describe('runtime (puppeteer)', () => {
 										}
 									}
 								`;
-							}
-							return null;
-						},
-						transform(code, id) {
-							if (id.endsWith('.svelte')) {
-								const compiled = svelte.compile(code.replace(/\r/g, ''), {
-									...config.compileOptions,
-									hydratable: hydrate,
-									immutable: config.immutable,
-									accessors: 'accessors' in config ? config.accessors : true
-								});
-
-								const out_dir = `${__dirname}/samples/${dir}/_output/${hydrate ? 'hydratable' : 'normal'}`;
-								const out = `${out_dir}/${path.basename(id).replace(/\.svelte$/, '.js')}`;
-
-								if (fs.existsSync(out)) {
-									fs.unlinkSync(out);
 								}
+								return null;
+							},
+							transform(code, id) {
+								if (id.endsWith('.svelte')) {
+									const compiled = svelte.compile(code.replace(/\r/g, ''), {
+										...config.compileOptions,
+										hydratable: hydrate,
+										immutable: config.immutable,
+										accessors: 'accessors' in config ? config.accessors : true
+									});
 
-								mkdirp(out_dir);
-								fs.writeFileSync(out, compiled.js.code, 'utf8');
+									const out_dir = `${__dirname}/samples/${dir}/_output/${
+										hydrate ? 'hydratable' : 'normal'
+									}`;
+									const out = `${out_dir}/${path.basename(id).replace(/\.svelte$/, '.js')}`;
 
-								compiled.warnings.forEach(w => warnings.push(w));
+									if (fs.existsSync(out)) {
+										fs.unlinkSync(out);
+									}
 
-								return compiled.js;
+									mkdirp(out_dir);
+									fs.writeFileSync(out, compiled.js.code, 'utf8');
+
+									compiled.warnings.forEach((w) => warnings.push(w));
+
+									return compiled.js;
+								}
 							}
-						}
-					},
-					virtual({ assert })
-				]
-			});
+						},
+						virtual({ assert })
+					]
+				});
 
-			const result = await bundle.generate({ format: 'iife', name: 'test' });
-			code = result.output[0].code;
+				const result = await bundle.generate({ format: 'iife', name: 'test' });
+				code = result.output[0].code;
 
-			function assertWarnings() {
-				if (config.warnings) {
-					deepEqual(warnings.map(w => ({
-						code: w.code,
-						message: w.message,
-						pos: w.pos,
-						start: w.start,
-						end: w.end
-					})), config.warnings);
-				} else if (warnings.length) {
-					failed.add(dir);
-					/* eslint-disable no-unsafe-finally */
-					throw new Error('Received unexpected warnings');
+				function assertWarnings() {
+					if (config.warnings) {
+						deepEqual(
+							warnings.map((w) => ({
+								code: w.code,
+								message: w.message,
+								pos: w.pos,
+								start: w.start,
+								end: w.end
+							})),
+							config.warnings
+						);
+					} else if (warnings.length) {
+						failed.add(dir);
+						/* eslint-disable no-unsafe-finally */
+						throw new Error('Received unexpected warnings');
+					}
 				}
-			}
 
-			browser = await executeBrowserTest(
-				browser,
-				launchPuppeteer,
-				assertWarnings,
-				(err) => {
+				browser = await executeBrowserTest(browser, launchPuppeteer, assertWarnings, (err) => {
 					failed.add(dir);
 					prettyPrintPuppeteerAssertionError(err.message);
 					assertWarnings();
 				});
-		}).timeout(is_first_run ? 20000 : 10000);
+			}
+		).timeout(is_first_run ? 20000 : 10000);
 	}
 
 	// Increase the timeout on the first run in preparation for restarting Chromium due to SIGSEGV.
 	let first_run = true;
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir, false, first_run);
 		runTest(dir, true, first_run);
 		first_run = false;

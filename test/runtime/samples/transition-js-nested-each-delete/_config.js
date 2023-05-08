@@ -5,18 +5,24 @@ export default {
 	},
 
 	test({ assert, component, target, raf }) {
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
 			<div>b</div>
 			<div>c</div>
-		`);
+		`
+		);
 
 		component.things = ['a'];
 
 		raf.tick(100);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
-		`);
+		`
+		);
 
 		component.visible = false;
 

@@ -18,7 +18,7 @@ export default async function (target) {
 
 	await tick();
 
-	el.addEventListener('custom', e => {
+	el.addEventListener('custom', (e) => {
 		events.push(e.detail);
 	});
 	el.addEventListener('click', () => {

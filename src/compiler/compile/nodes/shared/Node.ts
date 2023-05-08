@@ -57,9 +57,11 @@ export default class Node {
 	}
 
 	get_static_attribute_value(name: string) {
-		const attribute = this.attributes && this.attributes.find(
-			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
-		);
+		const attribute =
+			this.attributes &&
+			this.attributes.find(
+				(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
+			);
 
 		if (!attribute) return null;
 
@@ -74,8 +76,6 @@ export default class Node {
 	}
 
 	has_ancestor(type: string) {
-		return this.parent ?
-			this.parent.type === type || this.parent.has_ancestor(type) :
-			false;
+		return this.parent ? this.parent.type === type || this.parent.has_ancestor(type) : false;
 	}
 }
