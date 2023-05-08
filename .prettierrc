@@ -6,9 +6,16 @@
 	"plugins": ["prettier-plugin-svelte"],
 	"overrides": [
 		{
-			"files": "site/**/*.md",
+			"files": ["*.svelte"],
 			"options": {
-				"requirePragma": true
+				"bracketSameLine": false
+			}
+		},
+		{
+			"files": ["README.md", "packages/*/README.md"],
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
 			}
 		}
 	],
