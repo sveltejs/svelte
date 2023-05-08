@@ -69,7 +69,7 @@ class AwaitBlockBranch extends Wrapper {
 			this.value = node.name;
 			this.renderer.add_to_context(this.value, true);
 		} else {
-			contexts.forEach(context => {
+			contexts.forEach((context) => {
 				if (context.type !== 'DestructuredVariable') return;
 				this.renderer.add_to_context(context.key.name, true);
 			});
@@ -98,17 +98,28 @@ class AwaitBlockBranch extends Wrapper {
 	}
 
 	render_get_context() {
-		const props = this.is_destructured ? this.value_contexts.map(prop => {
-			if (prop.type === 'ComputedProperty') {
-				const expression = new Expression(this.renderer.component, this.node, this.has_consts(this.node) ? this.node.scope : null, prop.key);
-				return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
-			} else {
-				const to_ctx = name => this.renderer.reference(name);
-				return b`#ctx[${this.block.renderer.context_lookup.get(prop.key.name).index}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), to_ctx)};`;
-			}
-		}) : null;
+		const props = this.is_destructured
+			? this.value_contexts.map((prop) => {
+					if (prop.type === 'ComputedProperty') {
+						const expression = new Expression(
+							this.renderer.component,
+							this.node,
+							this.has_consts(this.node) ? this.node.scope : null,
+							prop.key
+						);
+						return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
+					} else {
+						const to_ctx = (name) => this.renderer.reference(name);
+						return b`#ctx[${
+							this.block.renderer.context_lookup.get(prop.key.name).index
+						}] = ${prop.default_modifier(prop.modifier(x`#ctx[${this.value_index}]`), to_ctx)};`;
+					}
+			  })
+			: null;
 
-		const const_tags_props = this.has_consts(this.node) ? add_const_tags(this.block, this.node.const_tags, '#ctx') : null;
+		const const_tags_props = this.has_consts(this.node)
+			? add_const_tags(this.block, this.node.const_tags, '#ctx')
+			: null;
 
 		const get_context = this.block.renderer.component.get_unique_name(`get_${this.status}_context`);
 		this.block.renderer.blocks.push(b`
@@ -176,7 +187,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			this[status] = branch;
 		});
 
-		['pending', 'then', 'catch'].forEach(status => {
+		['pending', 'then', 'catch'].forEach((status) => {
 			this[status].block.has_update_method = is_dynamic;
 			this[status].block.has_intro_method = has_intros;
 			this[status].block.has_outro_method = has_outros;
@@ -187,11 +198,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		}
 	}
 
-	render(
-		block: Block,
-		parent_node: Identifier,
-		parent_nodes: Identifier
-	) {
+	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
 
@@ -238,7 +245,8 @@ export default class AwaitBlockWrapper extends Wrapper {
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : '#anchor';
 
-		const has_transitions = this.pending.block.has_intro_method || this.pending.block.has_outro_method;
+		const has_transitions =
+			this.pending.block.has_intro_method || this.pending.block.has_outro_method;
 
 		block.chunks.mount.push(b`
 			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node});
@@ -260,9 +268,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
 
-			block.chunks.update.push(
-				b`${info}.ctx = #ctx;`
-			);
+			block.chunks.update.push(b`${info}.ctx = #ctx;`);
 
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
@@ -300,7 +306,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 			${info} = null;
 		`);
 
-		[this.pending, this.then, this.catch].forEach(branch => {
+		[this.pending, this.then, this.catch].forEach((branch) => {
 			branch.render(branch.block, null, x`#nodes` as Identifier);
 		});
 	}

@@ -5,8 +5,11 @@ export default {
 	async test({ component, target, assert }) {
 		component.a = 5;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>9</div>
-		`);
+		`
+		);
 	}
 };

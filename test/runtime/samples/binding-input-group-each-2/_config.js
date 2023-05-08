@@ -36,7 +36,9 @@ export default {
 		inputs[0].checked = false;
 		await inputs[0].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type="checkbox" value="1"> 1
 			</label>
@@ -48,14 +50,17 @@ export default {
 			</label>
 
 			<p>2, 3</p>
-		`);
+		`
+		);
 
 		component.selected = [[1, 3]];
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, true);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type="checkbox" value="1"> 1
 			</label>
@@ -67,6 +72,7 @@ export default {
 			</label>
 
 			<p>1, 3</p>		
-		`);
+		`
+		);
 	}
 };

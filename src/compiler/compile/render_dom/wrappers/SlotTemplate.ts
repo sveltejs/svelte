@@ -30,8 +30,8 @@ export default class SlotTemplateWrapper extends Wrapper {
 
 		const { scope, lets, const_tags, slot_template_name } = this.node;
 
-		lets.forEach(l => {
-			extract_names(l.value || l.name).forEach(name => {
+		lets.forEach((l) => {
+			extract_names(l.value || l.name).forEach((name) => {
 				renderer.add_to_context(name, true);
 			});
 		});
@@ -40,22 +40,17 @@ export default class SlotTemplateWrapper extends Wrapper {
 
 		this.block = block.child({
 			comment: create_debugging_comment(this.node, this.renderer.component),
-			name: this.renderer.component.get_unique_name(
-				`create_${sanitize(slot_template_name)}_slot`
-			),
+			name: this.renderer.component.get_unique_name(`create_${sanitize(slot_template_name)}_slot`),
 			type: 'slot'
 		});
 		this.renderer.blocks.push(this.block);
 
-		const seen = new Set(lets.map(l => l.name.name));
-		this.parent.node.lets.forEach(l => {
+		const seen = new Set(lets.map((l) => l.name.name));
+		this.parent.node.lets.forEach((l) => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
 
-		this.parent.set_slot(
-			slot_template_name,
-			get_slot_definition(this.block, scope, lets)
-		);
+		this.parent.set_slot(slot_template_name, get_slot_definition(this.block, scope, lets));
 
 		this.fragment = new FragmentWrapper(
 			renderer,

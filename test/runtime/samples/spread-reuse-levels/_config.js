@@ -12,9 +12,12 @@ export default {
 	test({ assert, component, target }) {
 		component.a = 2;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<pre>{"a":2,"b":[1],"c":42}</pre>
 			<pre>{"a":true,"b":false,"c":false}</pre>
-		`);
+		`
+		);
 	}
 };

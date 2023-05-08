@@ -12,9 +12,12 @@ export default {
 
 	test({ assert, component, target }) {
 		component.value = 'goodbye!';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>goodbye!</p>
 			<p>goodbye!</p>
-		`);
+		`
+		);
 	}
 };

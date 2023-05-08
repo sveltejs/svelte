@@ -14,11 +14,13 @@ function decoded_sourcemap_from_generator(generator: any) {
 	let result_segment;
 	let mapping;
 
-	const source_idx = generator._sources.toArray()
-		.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+	const source_idx = generator._sources
+		.toArray()
+		.reduce((acc, val, idx) => ((acc[val] = idx), acc), {});
 
-	const name_idx = generator._names.toArray()
-		.reduce((acc, val, idx) => (acc[val] = idx, acc), {});
+	const name_idx = generator._names
+		.toArray()
+		.reduce((acc, val, idx) => ((acc[val] = idx), acc), {});
 
 	const mappings = generator._mappings.toArray();
 	result_line = converted_mappings[0];
@@ -42,7 +44,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 				mapping.generatedLine === previous_mapping.generatedLine &&
 				mapping.originalLine === previous_mapping.originalLine &&
 				mapping.source === previous_mapping.source
-		) {
+			) {
 				continue;
 			}
 		}
@@ -50,11 +52,13 @@ function decoded_sourcemap_from_generator(generator: any) {
 		result_segment = result_line[result_line.length - 1];
 
 		if (mapping.source != null) {
-			result_segment.push(...[
-				source_idx[mapping.source],
-				mapping.originalLine - 1, // line is one-based
-				mapping.originalColumn
-			]);
+			result_segment.push(
+				...[
+					source_idx[mapping.source],
+					mapping.originalLine - 1, // line is one-based
+					mapping.originalColumn
+				]
+			);
 			if (mapping.name != null) {
 				result_segment.push(name_idx[mapping.name]);
 			}
@@ -76,7 +80,7 @@ function decoded_sourcemap_from_generator(generator: any) {
 
 export function decode_map(processed: Processed) {
 	let decoded_map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
-	if (typeof(decoded_map.mappings) === 'string') {
+	if (typeof decoded_map.mappings === 'string') {
 		decoded_map.mappings = decode_mappings(decoded_map.mappings);
 	}
 	if ((decoded_map as any)._mappings && decoded_map.constructor.name === 'SourceMapGenerator') {

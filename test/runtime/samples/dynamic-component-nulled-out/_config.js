@@ -12,8 +12,11 @@ export default {
 
 		component.Bar = Bar;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>Foo</p>
-		`);
+		`
+		);
 	}
 };

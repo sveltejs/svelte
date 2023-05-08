@@ -15,7 +15,7 @@ export default {
 		// If due to some refactoring this test fails, it's probably fine to ignore it since
 		// this is a very specific edge case and the behavior is unstable anyway.
 		const div = target.querySelector('div');
-		const text =  window.document.createTextNode('a');
+		const text = window.document.createTextNode('a');
 		div.insertBefore(text, null);
 		const event = new window.InputEvent('input');
 		await div.dispatchEvent(event);

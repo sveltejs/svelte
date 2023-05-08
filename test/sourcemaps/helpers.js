@@ -9,19 +9,13 @@ import MagicString, { Bundle } from 'magic-string';
 /**
  * @param {AssertMappedParameters} param
  */
-export function assert_mapped(
-	{ code, filename, input, input_code, preprocessed }
-) {
+export function assert_mapped({ code, filename, input, input_code, preprocessed }) {
 	const locate_input = typeof input === 'function' ? input : getLocator(input);
 	if (filename === undefined) filename = 'input.svelte';
 	if (input_code === undefined) input_code = code;
 
 	const source_loc = locate_input(input_code);
-	assert.notEqual(
-		source_loc,
-		undefined,
-		`failed to locate "${input_code}" in "${filename}"`
-	);
+	assert.notEqual(source_loc, undefined, `failed to locate "${input_code}" in "${filename}"`);
 
 	const transformed_loc = preprocessed.locate_1(code);
 	assert.notEqual(
@@ -49,9 +43,7 @@ export function assert_mapped(
 /**
  * @param {AssertNotMappedParameters} param
  */
-export function assert_not_mapped(
-	{ code, filename, preprocessed }
-) {
+export function assert_not_mapped({ code, filename, preprocessed }) {
 	if (filename === undefined) filename = 'input.svelte';
 
 	const transformed_loc = preprocessed.locate_1(code);
@@ -78,11 +70,7 @@ export function assert_not_mapped(
  * @param {ReturnType<typeof getLocator>} locate
  * @param {string} filename
  */
-export function assert_not_located(
-	code,
-	locate,
-	filename = 'input.svelte'
-) {
+export function assert_not_located(code, locate, filename = 'input.svelte') {
 	assert.equal(
 		locate(code),
 		undefined,
@@ -96,11 +84,7 @@ export function assert_not_located(
  * @param {string} separator
  * @returns
  */
-export function magic_string_bundle(
-	inputs,
-	filename = 'bundle.js',
-	separator = '\n'
-) {
+export function magic_string_bundle(inputs, filename = 'bundle.js', separator = '\n') {
 	const bundle = new Bundle({ separator });
 	inputs.forEach(({ code, filename }) => {
 		bundle.addSource({

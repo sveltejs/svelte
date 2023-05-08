@@ -20,10 +20,13 @@ export default {
 		raf.tick(100);
 
 		component.x = false;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>snaps if x changes</div>
 			<div>transitions if x changes</div>
-		`);
+		`
+		);
 
 		raf.tick(150);
 		assert.equal(divs[0].foo, undefined);
@@ -37,10 +40,13 @@ export default {
 		component.x = true;
 		component.y = true;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>snaps if x changes</div>
 			<div>transitions if x changes</div>
-		`);
+		`
+		);
 		divs = target.querySelectorAll('div');
 
 		raf.tick(250);
@@ -52,10 +58,13 @@ export default {
 		assert.equal(divs[1].foo, 1);
 
 		component.y = false;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>snaps if x changes</div>
 			<div>transitions if x changes</div>
-		`);
+		`
+		);
 
 		raf.tick(320);
 		assert.equal(divs[0].foo, 0.8);

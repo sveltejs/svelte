@@ -1,8 +1,4 @@
-const values = [
-	{ name: 'Alpha' },
-	{ name: 'Beta' },
-	{ name: 'Gamma' }
-];
+const values = [{ name: 'Alpha' }, { name: 'Beta' }, { name: 'Gamma' }];
 
 export default {
 	props: {
@@ -51,7 +47,9 @@ export default {
 		inputs[0].checked = true;
 		await inputs[0].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type="checkbox" value="[object Object]"> Alpha
 			</label>
@@ -65,14 +63,17 @@ export default {
 			</label>
 
 			<p>Alpha, Beta</p>
-		`);
+		`
+		);
 
 		component.selected = [values[1], values[2]];
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, true);
 		assert.equal(inputs[2].checked, true);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type="checkbox" value="[object Object]"> Alpha
 			</label>
@@ -86,6 +87,7 @@ export default {
 			</label>
 
 			<p>Beta, Gamma</p>
-		`);
+		`
+		);
 	}
 };

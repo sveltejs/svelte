@@ -3,8 +3,11 @@ export default {
 		component.q = 42;
 		component.foo = true;
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>42</p>
-		` );
+		`
+		);
 	}
 };

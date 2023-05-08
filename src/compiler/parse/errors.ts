@@ -64,8 +64,7 @@ export default {
 	}),
 	invalid_debug_args: {
 		code: 'invalid-debug-args',
-		message:
-			'{@debug ...} arguments must be identifiers, not arbitrary expressions'
+		message: '{@debug ...} arguments must be identifiers, not arbitrary expressions'
 	},
 	invalid_declaration: {
 		code: 'invalid-declaration',
@@ -77,7 +76,7 @@ export default {
 	},
 	invalid_elseif: {
 		code: 'invalid-elseif',
-		message: '\'elseif\' should be \'else if\''
+		message: "'elseif' should be 'else if'"
 	},
 	invalid_elseif_placement_outside_if: {
 		code: 'invalid-elseif-placement',
@@ -125,7 +124,8 @@ export default {
 	},
 	invalid_self_placement: {
 		code: 'invalid-self-placement',
-		message: '<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components'
+		message:
+			'<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components'
 	},
 	invalid_script_instance: {
 		code: 'invalid-script',
@@ -167,7 +167,7 @@ export default {
 	}),
 	missing_component_definition: {
 		code: 'missing-component-definition',
-		message: '<svelte:component> must have a \'this\' attribute'
+		message: "<svelte:component> must have a 'this' attribute"
 	},
 	missing_attribute_value: {
 		code: 'missing-attribute-value',
@@ -175,7 +175,7 @@ export default {
 	},
 	missing_element_definition: {
 		code: 'missing-element-definition',
-		message: '<svelte:element> must have a \'this\' attribute'
+		message: "<svelte:element> must have a 'this' attribute"
 	},
 	unclosed_script: {
 		code: 'unclosed-script',

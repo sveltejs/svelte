@@ -18,8 +18,11 @@ export default {
 
 		await button.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>show modal</button>
-		`);
+		`
+		);
 	}
 };

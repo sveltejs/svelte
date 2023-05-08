@@ -23,16 +23,22 @@ export default {
 		await input.dispatchEvent(event);
 
 		assert.equal(component.count, 43);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type='range'>
 			<p>number 43</p>
-		`);
+		`
+		);
 
 		component.count = 44;
 		assert.equal(input.value, '44');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type='range'>
 			<p>number 44</p>
-		`);
+		`
+		);
 	}
 };

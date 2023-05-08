@@ -11,17 +11,23 @@ export default {
 		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 11);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>+1</button>
 			<p>count: 11</p>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 12);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>+1</button>
 			<p>count: 12</p>
-		`);
+		`
+		);
 	}
 };

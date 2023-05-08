@@ -85,5 +85,4 @@ describe('contenteditable', () => {
 			assert.equal(get_contenteditable_attr(node), undefined);
 		});
 	});
-
 });

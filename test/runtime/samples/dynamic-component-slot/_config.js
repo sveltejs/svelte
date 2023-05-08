@@ -19,7 +19,9 @@ export default {
 	test({ assert, component, target }) {
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Bar</h1>
 			<p>element</p>
 			you're it
@@ -30,6 +32,7 @@ export default {
 			<span>c</span>
 			<div>baz</div>
 			<div slot='other'>what goes up must come down</div>
-		`);
+		`
+		);
 	}
 };

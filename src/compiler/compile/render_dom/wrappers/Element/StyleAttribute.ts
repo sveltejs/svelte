@@ -29,7 +29,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 				const prop_dependencies: Set<string> = new Set();
 
 				value = prop.value
-					.map(chunk => {
+					.map((chunk) => {
 						if (chunk.type === 'Text') {
 							return string_literal(chunk.data);
 						} else {

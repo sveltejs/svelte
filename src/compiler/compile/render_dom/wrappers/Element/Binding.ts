@@ -20,7 +20,7 @@ export default class BindingWrapper {
 	object: string;
 	handler: {
 		uses_context: boolean;
-		mutation: (Node | Node[]);
+		mutation: Node | Node[];
 		contextual_dependencies: Set<string>;
 		lhs?: Node;
 	};
@@ -52,13 +52,19 @@ export default class BindingWrapper {
 		}
 
 		// view to model
-		this.handler = get_event_handler(this, parent.renderer, block, this.object, this.node.raw_expression);
+		this.handler = get_event_handler(
+			this,
+			parent.renderer,
+			block,
+			this.object,
+			this.node.raw_expression
+		);
 
 		this.snippet = this.node.expression.manipulate(block);
 
 		this.is_readonly = this.node.is_readonly;
 
-		this.needs_lock = this.node.name === 'currentTime';  // TODO others?
+		this.needs_lock = this.node.name === 'currentTime'; // TODO others?
 	}
 
 	get_dependencies() {
@@ -67,14 +73,14 @@ export default class BindingWrapper {
 		this.node.expression.dependencies.forEach((prop: string) => {
 			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
 			if (indirect_dependencies) {
-				indirect_dependencies.forEach(indirect_dependency => {
+				indirect_dependencies.forEach((indirect_dependency) => {
 					dependencies.add(indirect_dependency);
 				});
 			}
 		});
 
 		if (this.binding_group) {
-			this.binding_group.list_dependencies.forEach(dep => dependencies.add(dep));
+			this.binding_group.list_dependencies.forEach((dep) => dependencies.add(dep));
 		}
 
 		return dependencies;
@@ -93,9 +99,10 @@ export default class BindingWrapper {
 
 		const result = new Set(dependencies);
 		dependencies.forEach((dependency) => {
-			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(dependency);
+			const indirect_dependencies =
+				this.parent.renderer.component.indirect_dependencies.get(dependency);
 			if (indirect_dependencies) {
-				indirect_dependencies.forEach(indirect_dependency => {
+				indirect_dependencies.forEach((indirect_dependency) => {
 					result.add(indirect_dependency);
 				});
 			}
@@ -135,13 +142,9 @@ export default class BindingWrapper {
 				type === 'search' ||
 				type === 'url'
 			) {
-				update_conditions.push(
-					x`${parent.var}.${this.node.name} !== ${this.snippet}`
-				);
+				update_conditions.push(x`${parent.var}.${this.node.name} !== ${this.snippet}`);
 			} else if (type === 'number') {
-				update_conditions.push(
-					x`@to_number(${parent.var}.${this.node.name}) !== ${this.snippet}`
-				);
+				update_conditions.push(x`@to_number(${parent.var}.${this.node.name}) !== ${this.snippet}`);
 			}
 		}
 
@@ -151,13 +154,12 @@ export default class BindingWrapper {
 
 		// special cases
 		switch (this.node.name) {
-			case 'group':
-			{
+			case 'group': {
 				block.renderer.add_to_context('$$binding_groups');
 				this.binding_group.add_element(block, this.parent.var);
 
-				if ((this.parent as ElementWrapper).has_dynamic_value) {	
-					update_or_condition = (this.parent as ElementWrapper).dynamic_value_condition;	
+				if ((this.parent as ElementWrapper).has_dynamic_value) {
+					update_or_condition = (this.parent as ElementWrapper).dynamic_value_condition;
 				}
 				break;
 			}
@@ -166,7 +168,7 @@ export default class BindingWrapper {
 				update_conditions.push(x`${this.snippet} !== ${parent.var}.textContent`);
 				mount_conditions.push(x`${this.snippet} !== void 0`);
 				break;
-			
+
 			case 'innerText':
 				update_conditions.push(x`${this.snippet} !== ${parent.var}.innerText`);
 				mount_conditions.push(x`${this.snippet} !== void 0`);
@@ -188,8 +190,7 @@ export default class BindingWrapper {
 				mount_conditions.push(x`!@_isNaN(${this.snippet})`);
 				break;
 
-			case 'paused':
-			{
+			case 'paused': {
 				// this is necessary to prevent audio restarting by itself
 				const last = block.get_unique_name(`${parent.var.name}_is_paused`);
 				block.add_variable(last, x`true`);
@@ -254,18 +255,20 @@ function get_dom_updater(
 	}
 
 	if (node.name === 'select') {
-		return node.get_static_attribute_value('multiple') === true ?
-			b`@select_options(${element.var}, ${binding.snippet})` :
-			mounting ? b`@select_option(${element.var}, ${binding.snippet}, true)` :
-			b`@select_option(${element.var}, ${binding.snippet})`;
+		return node.get_static_attribute_value('multiple') === true
+			? b`@select_options(${element.var}, ${binding.snippet})`
+			: mounting
+			? b`@select_option(${element.var}, ${binding.snippet}, true)`
+			: b`@select_option(${element.var}, ${binding.snippet})`;
 	}
 
 	if (binding.node.name === 'group') {
 		const type = node.get_static_attribute_value('type');
 
-		const condition = type === 'checkbox'
-			? x`~(${binding.snippet} || []).indexOf(${element.var}.__value)`
-			: x`${element.var}.__value === ${binding.snippet}`;
+		const condition =
+			type === 'checkbox'
+				? x`~(${binding.snippet} || []).indexOf(${element.var}.__value)`
+				: x`${element.var}.__value === ${binding.snippet}`;
 
 		return b`${element.var}.checked = ${condition};`;
 	}
@@ -335,7 +338,7 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 		 */
 		const elements = new Map<Block, any>();
 
-		contexts.forEach(context => {
+		contexts.forEach((context) => {
 			renderer.add_to_context(context, true);
 		});
 
@@ -344,7 +347,7 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 				let obj = x`$$binding_groups[${index}]`;
 
 				if (contexts.length > 0) {
-					contexts.forEach(secondary_index => {
+					contexts.forEach((secondary_index) => {
 						obj = x`${obj}[${secondary_index}]`;
 					});
 				}
@@ -364,24 +367,25 @@ function get_binding_group(renderer: Renderer, binding: BindingWrapper, block: B
 				const binding_group = block.renderer.reference('$$binding_groups');
 				block.add_variable(local_name);
 				if (contexts.length > 0) {
-					const indexes = { type: 'ArrayExpression', elements: contexts.map(name => block.renderer.reference(name)) };
+					const indexes = {
+						type: 'ArrayExpression',
+						elements: contexts.map((name) => block.renderer.reference(name))
+					};
 					block.chunks.init.push(
 						b`${local_name} = @init_binding_group_dynamic(${binding_group}[${index}], ${indexes})`
 					);
 					block.chunks.update.push(
-						b`if (${block.renderer.dirty(Array.from(list_dependencies))}) ${local_name}.u(${indexes})`
+						b`if (${block.renderer.dirty(
+							Array.from(list_dependencies)
+						)}) ${local_name}.u(${indexes})`
 					);
 				} else {
 					block.chunks.init.push(
 						b`${local_name} = @init_binding_group(${binding_group}[${index}])`
 					);
 				}
-				block.chunks.hydrate.push(
-					b`${local_name}.p(${elements.get(block)})`
-				);
-				block.chunks.destroy.push(
-					b`${local_name}.r()`
-				);
+				block.chunks.hydrate.push(b`${local_name}.p(${elements.get(block)})`);
+				block.chunks.destroy.push(b`${local_name}.r()`);
 			}
 		});
 	}
@@ -401,7 +405,7 @@ function get_event_handler(
 	lhs: Node
 ): {
 	uses_context: boolean;
-	mutation: (Node | Node[]);
+	mutation: Node | Node[];
 	contextual_dependencies: Set<string>;
 	lhs?: Node;
 } {
@@ -463,9 +467,9 @@ function get_value_from_dom(
 
 	// <select bind:value='selected>
 	if (node.name === 'select') {
-		return node.get_static_attribute_value('multiple') === true ?
-			x`@select_multiple_value(this)` :
-			x`@select_value(this)`;
+		return node.get_static_attribute_value('multiple') === true
+			? x`@select_multiple_value(this)`
+			: x`@select_value(this)`;
 	}
 
 	const type = node.get_static_attribute_value('type');
@@ -486,7 +490,7 @@ function get_value_from_dom(
 		return x`@to_number(this.${name})`;
 	}
 
-	if ((name === 'buffered' || name === 'seekable' || name === 'played')) {
+	if (name === 'buffered' || name === 'seekable' || name === 'played') {
 		return x`@time_ranges_to_array(this.${name})`;
 	}
 

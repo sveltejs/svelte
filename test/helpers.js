@@ -52,8 +52,8 @@ export function tryToReadFile(file) {
 
 export function cleanRequireCache() {
 	Object.keys(require.cache)
-		.filter(x => x.endsWith('.svelte'))
-		.forEach(file => delete require.cache[file]);
+		.filter((x) => x.endsWith('.svelte'))
+		.forEach((file) => delete require.cache[file]);
 }
 
 const virtualConsole = new jsdom.VirtualConsole();
@@ -93,16 +93,16 @@ function cleanChildren(node) {
 		return a.name < b.name ? -1 : 1;
 	});
 
-	attributes.forEach(attr => {
+	attributes.forEach((attr) => {
 		node.removeAttribute(attr.name);
 	});
 
-	attributes.forEach(attr => {
+	attributes.forEach((attr) => {
 		node.setAttribute(attr.name, attr.value);
 	});
 
 	// recurse
-	[...node.childNodes].forEach(child => {
+	[...node.childNodes].forEach((child) => {
 		if (child.nodeType === 3) {
 			// text
 			if (
@@ -151,7 +151,11 @@ function cleanChildren(node) {
  * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
  * @returns
  */
-export function normalizeHtml(window, html, { removeDataSvelte = false, preserveComments = false }) {
+export function normalizeHtml(
+	window,
+	html,
+	{ removeDataSvelte = false, preserveComments = false }
+) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
@@ -196,13 +200,24 @@ export function setupHtmlEqual(options = {}) {
 	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
 	 * @param {string?} message
 	 */
-	assert.htmlEqualWithOptions = (actual, expected, { preserveComments, withoutNormalizeHtml }, message) => {
+	assert.htmlEqualWithOptions = (
+		actual,
+		expected,
+		{ preserveComments, withoutNormalizeHtml },
+		message
+	) => {
 		assert.deepEqual(
 			withoutNormalizeHtml
-				? normalizeNewline(actual).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				? normalizeNewline(actual).replace(
+						/(\sdata-svelte-h="[^"]+")/g,
+						options.removeDataSvelte ? '' : '$1'
+				  )
 				: normalizeHtml(window, actual, { ...options, preserveComments }),
 			withoutNormalizeHtml
-				? normalizeNewline(expected).replace(/(\sdata-svelte-h="[^"]+")/g, options.removeDataSvelte ? '' : '$1')
+				? normalizeNewline(expected).replace(
+						/(\sdata-svelte-h="[^"]+")/g,
+						options.removeDataSvelte ? '' : '$1'
+				  )
 				: normalizeHtml(window, expected, { ...options, preserveComments }),
 			message
 		);
@@ -233,15 +248,14 @@ export function addLineNumbers(code) {
 			while (i.length < 3) i = ` ${i}`;
 
 			return (
-				colors.gray(`  ${i}: `) +
-				line.replace(/^\t+/, match => match.split('\t').join('    '))
+				colors.gray(`  ${i}: `) + line.replace(/^\t+/, (match) => match.split('\t').join('    '))
 			);
 		})
 		.join('\n');
 }
 
 export function showOutput(cwd, options = {}, compile = svelte.compile) {
-	glob('**/*.svelte', { cwd }).forEach(file => {
+	glob('**/*.svelte', { cwd }).forEach((file) => {
 		if (file[0] === '_') return;
 
 		try {
@@ -252,8 +266,11 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 				})
 			);
 
-			console.log( // eslint-disable-line no-console
-				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors.cyan().bold(file)}`
+			console.log(
+				// eslint-disable-line no-console
+				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors
+					.cyan()
+					.bold(file)}`
 			);
 		} catch (err) {
 			console.log(`failed to generate output: ${err.message}`);
@@ -284,7 +301,7 @@ export function useFakeTimers() {
 
 	return {
 		flush() {
-			callbacks.forEach(fn => fn());
+			callbacks.forEach((fn) => fn());
 			callbacks.splice(0, callbacks.length);
 		},
 		removeFakeTimers() {
@@ -329,7 +346,7 @@ export async function retryAsync(fn, maxAttempts = 3, interval = 1000) {
 			return await fn();
 		} catch (err) {
 			if (++attempts >= maxAttempts) throw err;
-			await new Promise(resolve => setTimeout(resolve, interval));
+			await new Promise((resolve) => setTimeout(resolve, interval));
 		}
 	}
 }
@@ -353,7 +370,7 @@ export async function executeBrowserTest(browser, launchPuppeteer, additionalAss
 				console[type.type()](type.text());
 			});
 
-			page.on('error', error => {
+			page.on('error', (error) => {
 				console.log('>>> an error happened');
 				console.error(error);
 			});

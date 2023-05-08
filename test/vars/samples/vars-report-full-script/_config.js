@@ -15,7 +15,8 @@ export default {
 				referenced: true,
 				referenced_from_script: false,
 				writable: true
-			}, {
+			},
+			{
 				name: 'bar',
 				export_name: null,
 				injected: false,

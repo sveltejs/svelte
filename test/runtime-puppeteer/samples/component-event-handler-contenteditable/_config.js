@@ -16,14 +16,14 @@ export default {
 		let event = new window.InputEvent('input');
 		await div.dispatchEvent(event);
 		assert.equal(div.textContent, 'a');
-		
+
 		// When a user types a newline, the browser inserts a <div> element
 		const inner_div = window.document.createElement('div');
 		div.insertBefore(inner_div, null);
 		event = new window.InputEvent('input');
 		await div.dispatchEvent(event);
 		assert.equal(div.textContent, 'a');
-		
+
 		text = window.document.createTextNode('b');
 		inner_div.insertBefore(text, null);
 		event = new window.InputEvent('input');

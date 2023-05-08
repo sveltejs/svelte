@@ -7,10 +7,13 @@ export default {
 
 	test({ assert, target }) {
 		return promise.then(() => {
-			assert.htmlEqual(target.innerHTML, `
+			assert.htmlEqual(
+				target.innerHTML,
+				`
 				<p>42</p>
 				<p>true</p>
-			`);
+			`
+			);
 		});
 	}
 };

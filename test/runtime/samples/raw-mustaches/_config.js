@@ -1,5 +1,4 @@
 export default {
-
 	props: {
 		raw: '<span><em>raw html!!!\\o/</span></em>'
 	},

@@ -1,7 +1,7 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-        "rootDir": "../..",
+		"rootDir": "../..",
 		"baseUrl": "../../",
 		"paths": {
 			"$runtime/*": ["src/runtime/*"]
@@ -10,7 +10,7 @@
 		"allowUnreachableCode": false,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
-		"strict": true,
+		"strict": true
 	},
 	"include": ["."]
 }

@@ -1,6 +1,6 @@
 let fulfil;
 
-const promise = new Promise(f => {
+const promise = new Promise((f) => {
 	fulfil = f;
 });
 
@@ -15,7 +15,7 @@ export default {
 		component.condition = false;
 
 		fulfil();
-		await new Promise(f => setTimeout(f, 0));
+		await new Promise((f) => setTimeout(f, 0));
 
 		assert.htmlEqual(target.innerHTML, '');
 	}

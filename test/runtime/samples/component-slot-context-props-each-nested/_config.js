@@ -13,10 +13,7 @@ export default {
 		assert.deepEqual(component.log, ['setKey(a, value-a-c, c)']);
 
 		await btn2.dispatchEvent(click);
-		assert.deepEqual(component.log, [
-			'setKey(a, value-a-c, c)',
-			'setKey(b, value-b-c, c)'
-		]);
+		assert.deepEqual(component.log, ['setKey(a, value-a-c, c)', 'setKey(b, value-b-c, c)']);
 
 		await btn3.dispatchEvent(click);
 		assert.deepEqual(component.log, [

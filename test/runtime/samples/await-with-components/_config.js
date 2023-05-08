@@ -2,7 +2,7 @@ export default {
 	async test({ assert, component, target }) {
 		let resolve;
 		let reject;
-		let promise = new Promise(ok => resolve = ok);
+		let promise = new Promise((ok) => (resolve = ok));
 
 		component.promise = promise;
 		assert.htmlEqual(target.innerHTML, 'Loading...');
@@ -11,7 +11,7 @@ export default {
 		await promise;
 		assert.htmlEqual(target.innerHTML, '42');
 
-		promise = new Promise((ok, fail) => reject = fail);
+		promise = new Promise((ok, fail) => (reject = fail));
 		component.promise = promise;
 		assert.htmlEqual(target.innerHTML, 'Loading...');
 
@@ -19,7 +19,7 @@ export default {
 		await promise.then(null, () => {});
 		assert.htmlEqual(target.innerHTML, '99');
 
-		promise = new Promise(ok => resolve = ok);
+		promise = new Promise((ok) => (resolve = ok));
 		component.promise = promise;
 		assert.htmlEqual(target.innerHTML, 'Loading...');
 

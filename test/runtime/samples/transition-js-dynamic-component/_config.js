@@ -10,10 +10,13 @@ export default {
 	test({ assert, component, target, raf }) {
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
 			<div>b</div>
-		`);
+		`
+		);
 
 		const [a, b] = target.querySelectorAll('div');
 
@@ -27,8 +30,11 @@ export default {
 		assert.equal(a.a, 0);
 		assert.equal(b.b, 1);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>b</div>
-		`);
+		`
+		);
 	}
 };

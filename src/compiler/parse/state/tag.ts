@@ -23,7 +23,12 @@ const meta_tags = new Map([
 	['svelte:body', 'Body']
 ]);
 
-const valid_meta_tags = Array.from(meta_tags.keys()).concat('svelte:self', 'svelte:component', 'svelte:fragment', 'svelte:element');
+const valid_meta_tags = Array.from(meta_tags.keys()).concat(
+	'svelte:self',
+	'svelte:component',
+	'svelte:fragment',
+	'svelte:element'
+);
 
 const specials = new Map([
 	[
@@ -112,10 +117,15 @@ export default function tag(parser: Parser) {
 
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
-		: (regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component') ? 'InlineComponent'
-			: name === 'svelte:fragment' ? 'SlotTemplate'
-				: name === 'title' && parent_is_head(parser.stack) ? 'Title'
-					: name === 'slot' ? 'Slot' : 'Element';
+		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
+		? 'InlineComponent'
+		: name === 'svelte:fragment'
+		? 'SlotTemplate'
+		: name === 'title' && parent_is_head(parser.stack)
+		? 'Title'
+		: name === 'slot'
+		? 'Slot'
+		: 'Element';
 
 	const element: TemplateNode = {
 		start,
@@ -138,9 +148,10 @@ export default function tag(parser: Parser) {
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element') {
-				const error = parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
-					? parser_errors.invalid_closing_tag_autoclosed(name, parser.last_auto_closed_tag.reason)
-					: parser_errors.invalid_closing_tag_unopened(name);
+				const error =
+					parser.last_auto_closed_tag && parser.last_auto_closed_tag.tag === name
+						? parser_errors.invalid_closing_tag_autoclosed(name, parser.last_auto_closed_tag.reason)
+						: parser_errors.invalid_closing_tag_unopened(name);
 				parser.error(error, start);
 			}
 
@@ -177,13 +188,19 @@ export default function tag(parser: Parser) {
 	}
 
 	if (name === 'svelte:component') {
-		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
+		const index = element.attributes.findIndex(
+			(attr) => attr.type === 'Attribute' && attr.name === 'this'
+		);
 		if (index === -1) {
 			parser.error(parser_errors.missing_component_definition, start);
 		}
 
 		const definition = element.attributes.splice(index, 1)[0];
-		if (definition.value === true || definition.value.length !== 1 || definition.value[0].type === 'Text') {
+		if (
+			definition.value === true ||
+			definition.value.length !== 1 ||
+			definition.value[0].type === 'Text'
+		) {
 			parser.error(parser_errors.invalid_component_definition, definition.start);
 		}
 
@@ -191,7 +208,9 @@ export default function tag(parser: Parser) {
 	}
 
 	if (name === 'svelte:element') {
-		const index = element.attributes.findIndex(attr => attr.type === 'Attribute' && attr.name === 'this');
+		const index = element.attributes.findIndex(
+			(attr) => attr.type === 'Attribute' && attr.name === 'this'
+		);
 		if (index === -1) {
 			parser.error(parser_errors.missing_element_definition, start);
 		}
@@ -257,7 +276,11 @@ function read_tag_name(parser: Parser) {
 
 		while (i--) {
 			const fragment = parser.stack[i];
-			if (fragment.type === 'IfBlock' || fragment.type === 'EachBlock' || fragment.type === 'InlineComponent') {
+			if (
+				fragment.type === 'IfBlock' ||
+				fragment.type === 'EachBlock' ||
+				fragment.type === 'InlineComponent'
+			) {
 				legal = true;
 				break;
 			}
@@ -282,10 +305,7 @@ function read_tag_name(parser: Parser) {
 	if (name.startsWith('svelte:')) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
 
-		parser.error(
-			parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match),
-			start
-		);
+		parser.error(parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match), start);
 	}
 
 	if (!valid_tag_name.test(name)) {
@@ -342,17 +362,19 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				end: parser.index,
 				type: 'Attribute',
 				name,
-				value: [{
-					start: value_start,
-					end: value_start + name.length,
-					type: 'AttributeShorthand',
-					expression: {
+				value: [
+					{
 						start: value_start,
 						end: value_start + name.length,
-						type: 'Identifier',
-						name
+						type: 'AttributeShorthand',
+						expression: {
+							start: value_start,
+							end: value_start + name.length,
+							type: 'Identifier',
+							name
+						}
 					}
-				}]
+				]
 			};
 		}
 	}
@@ -470,22 +492,28 @@ function get_directive_type(name: string): DirectiveType {
 function read_attribute_value(parser: Parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
-		return [{
-			start: parser.index - 1,
-			end: parser.index - 1,
-			type: 'Text',
-			raw: '',
-			data: ''
-		}];
+		return [
+			{
+				start: parser.index - 1,
+				end: parser.index - 1,
+				type: 'Text',
+				raw: '',
+				data: ''
+			}
+		];
 	}
 
 	let value;
 	try {
-		value = read_sequence(parser, () => {
-			// handle common case of quote marks existing outside of regex for performance reasons
-			if (quote_mark) return parser.match(quote_mark);
-			return !!parser.match_regex(regex_starts_with_invalid_attr_value);
-		}, 'in attribute value');
+		value = read_sequence(
+			parser,
+			() => {
+				// handle common case of quote marks existing outside of regex for performance reasons
+				if (quote_mark) return parser.match(quote_mark);
+				return !!parser.match_regex(regex_starts_with_invalid_attr_value);
+			},
+			'in attribute value'
+		);
 	} catch (error) {
 		if (error.code === 'parse-error') {
 			// if the attribute value didn't close + self-closing tag

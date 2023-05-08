@@ -1,9 +1,9 @@
 export default {
 	compileOptions: {
 		preserveWhitespace: true
-  },
+	},
 
-  html: `<pre id="pre">  A
+	html: `<pre id="pre">  A
   B
   <span>
     C

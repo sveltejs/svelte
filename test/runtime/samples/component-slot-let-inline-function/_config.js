@@ -19,7 +19,7 @@ export default {
 
 		assert.deepEqual(logs, ['a: a, b: b']);
 
-		component.a = '1'; 
+		component.a = '1';
 		component.b = '2';
 		await button.dispatchEvent(new window.MouseEvent('click'));
 		assert.deepEqual(logs, ['a: a, b: b', 'a: 1, b: 2']);

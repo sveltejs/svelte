@@ -15,9 +15,12 @@ export default {
 
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>select bar</button>
-		`);
+		`
+		);
 
 		target.querySelector('button').dispatchEvent(click);
 		assert.equal(component.selected, 'bar');

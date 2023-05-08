@@ -15,11 +15,14 @@ export default {
 	async test({ assert, component, target }) {
 		component.value = 'foo';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input />
 				<div class="foo"></div>
 			</div>
-		`);
+		`
+		);
 	}
 };

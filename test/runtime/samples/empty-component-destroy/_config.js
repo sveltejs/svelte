@@ -15,11 +15,14 @@ export default {
 		const button = target.querySelector('button');
 		const event = new window.MouseEvent('click');
 		const messages = [];
-		console.log = msg => messages.push(msg);
+		console.log = (msg) => messages.push(msg);
 		await button.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>destroy component</button>
-		`);
+		`
+		);
 		assert.deepEqual(messages, ['destroy']);
 	}
 };

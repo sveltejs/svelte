@@ -51,7 +51,10 @@ function trimmable_at(child: INode, next_sibling: Wrapper): boolean {
 	// Whitespace is trimmable if one of the following is true:
 	// The child and its sibling share a common nearest each block (not at an each block boundary)
 	// The next sibling's previous node is an each block
-	return (next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/)) || next_sibling.node.prev.type === 'EachBlock';
+	return (
+		next_sibling.node.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/) ||
+		next_sibling.node.prev.type === 'EachBlock'
+	);
 }
 
 export default class FragmentWrapper {
@@ -95,9 +98,11 @@ export default class FragmentWrapper {
 				// We want to remove trailing whitespace inside an element/component/block,
 				// *unless* there is no whitespace between this node and its next sibling
 				if (this.nodes.length === 0) {
-					const should_trim = (
-						next_sibling ? (next_sibling.node.type === 'Text' && regex_starts_with_whitespace.test(next_sibling.node.data) && trimmable_at(child, next_sibling)) : !child.has_ancestor('EachBlock')
-					);
+					const should_trim = next_sibling
+						? next_sibling.node.type === 'Text' &&
+						  regex_starts_with_whitespace.test(next_sibling.node.data) &&
+						  trimmable_at(child, next_sibling)
+						: !child.has_ancestor('EachBlock');
 
 					if (should_trim && !child.keep_space()) {
 						data = trim_end(data);
@@ -116,15 +121,22 @@ export default class FragmentWrapper {
 
 				this.nodes.unshift(wrapper);
 
-				link(last_child, last_child = wrapper);
+				link(last_child, (last_child = wrapper));
 			} else {
 				const Wrapper = wrappers[child.type];
 				if (!Wrapper || (child.type === 'Comment' && !renderer.options.preserveComments)) continue;
 
-				const wrapper = new Wrapper(renderer, block, parent, child, strip_whitespace, last_child || next_sibling);
+				const wrapper = new Wrapper(
+					renderer,
+					block,
+					parent,
+					child,
+					strip_whitespace,
+					last_child || next_sibling
+				);
 				this.nodes.unshift(wrapper);
 
-				link(last_child, last_child = wrapper);
+				link(last_child, (last_child = wrapper));
 			}
 		}
 

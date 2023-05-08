@@ -56,7 +56,9 @@ export default {
 
 		component.filter = 'remaining';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input type="checkbox">
 				<input type="text"><p>one</p>
@@ -67,11 +69,14 @@ export default {
 			</div>
 
 			<p>remaining:one / done:two / remaining:three</p>
-		`);
+		`
+		);
 
 		await set_text(1, 'four');
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input type="checkbox">
 				<input type="text"><p>one</p>
@@ -82,7 +87,8 @@ export default {
 			</div>
 
 			<p>remaining:one / done:two / remaining:four</p>
-		`);
+		`
+		);
 
 		assert.deepEqual(component.items, [
 			{ done: false, text: 'one' },
@@ -92,14 +98,17 @@ export default {
 
 		await set_done(0, true);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input type="checkbox">
 				<input type="text"><p>four</p>
 			</div>
 
 			<p>done:one / done:two / remaining:four</p>
-		`);
+		`
+		);
 
 		assert.deepEqual(component.items, [
 			{ done: true, text: 'one' },
@@ -109,7 +118,9 @@ export default {
 
 		component.filter = 'done';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input type="checkbox">
 				<input type="text"><p>one</p>
@@ -120,6 +131,7 @@ export default {
 			</div>
 
 			<p>done:one / done:two / remaining:four</p>
-		`);
+		`
+		);
 	}
 };

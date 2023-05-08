@@ -2,9 +2,7 @@ export default {
 	html: '<button>bar</button>',
 
 	async test({ assert, target, window }) {
-		const [button] = target.querySelectorAll(
-			'button'
-		);
+		const [button] = target.querySelectorAll('button');
 
 		const event = new window.MouseEvent('click');
 

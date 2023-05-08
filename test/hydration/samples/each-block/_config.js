@@ -1,10 +1,6 @@
 export default {
 	props: {
-		things: [
-			'animal',
-			'vegetable',
-			'mineral'
-		]
+		things: ['animal', 'vegetable', 'mineral']
 	},
 
 	snapshot(target) {

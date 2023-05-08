@@ -2,11 +2,7 @@ import Component from '../../../Component';
 import { INode } from '../../../nodes/interfaces';
 import { regex_whitespace_characters } from '../../../../utils/patterns';
 
-
-export default function create_debugging_comment(
-	node: INode,
-	component: Component
-) {
+export default function create_debugging_comment(node: INode, component: Component) {
 	const { locate, source } = component;
 
 	let c = node.start;

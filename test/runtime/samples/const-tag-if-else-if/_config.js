@@ -15,7 +15,7 @@ export default {
 			<div>40 x 70</div>
 		`
 		);
-		
+
 		component.boxes = [];
 
 		assert.htmlEqual(target.innerHTML, '');

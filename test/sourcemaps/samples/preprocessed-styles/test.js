@@ -9,12 +9,16 @@ export function test({ assert, input, css }) {
 		column: start.column
 	});
 
-	assert.deepEqual(actualbar, {
-		source: 'input.svelte',
-		name: null,
-		line: expectedBar.line + 1,
-		column: expectedBar.column
-	}, "couldn't find bar in source");
+	assert.deepEqual(
+		actualbar,
+		{
+			source: 'input.svelte',
+			name: null,
+			line: expectedBar.line + 1,
+			column: expectedBar.column
+		},
+		"couldn't find bar in source"
+	);
 
 	start = css.locate('--baz');
 
@@ -23,10 +27,14 @@ export function test({ assert, input, css }) {
 		column: start.column
 	});
 
-	assert.deepEqual(actualbaz, {
-		source: 'input.svelte',
-		name: null,
-		line: expectedBaz.line + 1,
-		column: expectedBaz.column
-	}, "couldn't find baz in source");
+	assert.deepEqual(
+		actualbaz,
+		{
+			source: 'input.svelte',
+			name: null,
+			line: expectedBaz.line + 1,
+			column: expectedBaz.column
+		},
+		"couldn't find baz in source"
+	);
 }

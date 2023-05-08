@@ -7,7 +7,7 @@ export function clone(val) {
 	let k, out, tmp;
 
 	if (Array.isArray(val)) {
-		out = Array(k = val.length);
+		out = Array((k = val.length));
 		while (k--) out[k] = (tmp = val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
 		return out;
 	}
@@ -22,7 +22,8 @@ export function clone(val) {
 					enumerable: true,
 					writable: true
 				});
-			} else if (typeof val[k] !== 'function') { // MODIFICATION: skip functions
+			} else if (typeof val[k] !== 'function') {
+				// MODIFICATION: skip functions
 				out[k] = (tmp = val[k]) && typeof tmp === 'object' ? clone(tmp) : tmp;
 			}
 		}

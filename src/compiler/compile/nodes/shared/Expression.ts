@@ -36,12 +36,18 @@ export default class Expression {
 	scope: Scope;
 	scope_map: WeakMap<Node, Scope>;
 
-	declarations: Array<(Node | Node[])> = [];
+	declarations: Array<Node | Node[]> = [];
 	uses_context = false;
 
 	manipulated: Node;
 
-	constructor(component: Component, owner: Owner, template_scope: TemplateScope, info: Node, lazy?: boolean) {
+	constructor(
+		component: Component,
+		owner: Owner,
+		template_scope: TemplateScope,
+		info: Node,
+		lazy?: boolean
+	) {
 		// TODO revert to direct property access in prod?
 		Object.defineProperties(this, {
 			component: {
@@ -105,7 +111,9 @@ export default class Expression {
 						const is_index = owner.type === 'EachBlock' && owner.key && name === owner.index;
 
 						if (!lazy || is_index) {
-							template_scope.dependencies_for_name.get(name).forEach(name => dependencies.add(name));
+							template_scope.dependencies_for_name
+								.get(name)
+								.forEach((name) => dependencies.add(name));
 						}
 					} else {
 						if (!lazy) {
@@ -128,19 +136,19 @@ export default class Expression {
 						deep = node.left.type === 'MemberExpression';
 						names = extract_names(deep ? get_object(node.left) : node.left);
 					} else if (node.type === 'UpdateExpression') {
-                        deep = node.argument.type === 'MemberExpression';
+						deep = node.argument.type === 'MemberExpression';
 						names = extract_names(get_object(node.argument));
 					}
 				}
 
 				if (names) {
-					names.forEach(name => {
+					names.forEach((name) => {
 						if (template_scope.names.has(name)) {
 							if (template_scope.is_const(name)) {
 								component.error(node, compiler_errors.invalid_const_update(name));
 							}
 
-							template_scope.dependencies_for_name.get(name).forEach(name => {
+							template_scope.dependencies_for_name.get(name).forEach((name) => {
 								const variable = component.var_lookup.get(name);
 								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
 							});
@@ -188,7 +196,7 @@ export default class Expression {
 	}
 
 	dynamic_dependencies() {
-		return Array.from(this.dependencies).filter(name => {
+		return Array.from(this.dependencies).filter((name) => {
 			if (this.template_scope.is_let(name)) return true;
 			if (is_reserved_keyword(name)) return true;
 
@@ -198,11 +206,13 @@ export default class Expression {
 	}
 
 	dynamic_contextual_dependencies() {
-		return Array.from(this.contextual_dependencies).filter(name => {
-			return Array.from(this.template_scope.dependencies_for_name.get(name)).some(variable_name => {
-				const variable = this.component.var_lookup.get(variable_name);
-				return is_dynamic(variable);
-			});
+		return Array.from(this.contextual_dependencies).filter((name) => {
+			return Array.from(this.template_scope.dependencies_for_name.get(name)).some(
+				(variable_name) => {
+					const variable = this.component.var_lookup.get(variable_name);
+					return is_dynamic(variable);
+				}
+			);
 		});
 	}
 
@@ -212,13 +222,7 @@ export default class Expression {
 		// multiple times
 		if (this.manipulated) return this.manipulated;
 
-		const {
-			component,
-			declarations,
-			scope_map: map,
-			template_scope,
-			owner
-		} = this;
+		const { component, declarations, scope_map: map, template_scope, owner } = this;
 		let scope = this.scope;
 
 		let function_expression;
@@ -246,7 +250,7 @@ export default class Expression {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
 
-							template_scope.dependencies_for_name.get(name).forEach(dependency => {
+							template_scope.dependencies_for_name.get(name).forEach((dependency) => {
 								dependencies.add(dependency);
 							});
 						} else {
@@ -278,9 +282,7 @@ export default class Expression {
 				if (map.has(node)) scope = scope.parent;
 
 				if (node === function_expression) {
-					const id = component.get_unique_name(
-						sanitize(get_function_name(node, owner))
-					);
+					const id = component.get_unique_name(sanitize(get_function_name(node, owner)));
 
 					const declaration = b`const ${id} = ${node}`;
 					const extract_functions = () => {
@@ -289,11 +291,11 @@ export default class Expression {
 
 						const has_args = function_expression.params.length > 0;
 						function_expression.params = [
-							...deps.map(name => ({ type: 'Identifier', name } as Identifier)),
+							...deps.map((name) => ({ type: 'Identifier', name } as Identifier)),
 							...function_expression.params
 						];
 
-						const context_args = deps.map(name => block.renderer.reference(name, ctx));
+						const context_args = deps.map((name) => block.renderer.reference(name, ctx));
 
 						component.partly_hoisted.push(declaration);
 
@@ -355,7 +357,7 @@ export default class Expression {
 						const { deps, func_declaration } = extract_functions();
 
 						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
-							const dep_scopes = new Set<INode>(deps.map(name => template_scope.get_owner(name)));
+							const dep_scopes = new Set<INode>(deps.map((name) => template_scope.get_owner(name)));
 							// find the nearest scopes
 							let node: INode = owner.parent;
 							while (node && !dep_scopes.has(node)) {
@@ -385,7 +387,7 @@ export default class Expression {
 									type: 'DestructuredVariable',
 									key: func_id,
 									modifier: () => func_expression,
-									default_modifier: node => node
+									default_modifier: (node) => node
 								});
 								this.replace(block.renderer.reference(func_id));
 							}
@@ -417,10 +419,10 @@ export default class Expression {
 					const names = new Set(extract_names(assignee as Node));
 
 					const traced: Set<string> = new Set();
-					names.forEach(name => {
+					names.forEach((name) => {
 						const dependencies = template_scope.dependencies_for_name.get(name);
 						if (dependencies) {
-							dependencies.forEach(name => traced.add(name));
+							dependencies.forEach((name) => traced.add(name));
 						} else {
 							traced.add(name);
 						}
@@ -450,7 +452,7 @@ export default class Expression {
 
 		if (declarations.length > 0) {
 			block.maintain_context = true;
-			declarations.forEach(declaration => {
+			declarations.forEach((declaration) => {
 				block.chunks.init.push(declaration);
 			});
 		}

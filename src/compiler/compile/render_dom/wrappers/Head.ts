@@ -34,15 +34,15 @@ export default class HeadWrapper extends Wrapper {
 		let nodes: Identifier;
 		if (this.renderer.options.hydratable && this.fragment.nodes.length) {
 			nodes = block.get_unique_name('head_nodes');
-			block.chunks.claim.push(b`const ${nodes} = @head_selector('${this.node.id}', @_document.head);`);
+			block.chunks.claim.push(
+				b`const ${nodes} = @head_selector('${this.node.id}', @_document.head);`
+			);
 		}
 
 		this.fragment.render(block, x`@_document.head` as unknown as Identifier, nodes);
 
 		if (nodes && this.renderer.options.hydratable) {
-			block.chunks.claim.push(
-				b`${nodes}.forEach(@detach);`
-			);
+			block.chunks.claim.push(b`${nodes}.forEach(@detach);`);
 		}
 	}
 }

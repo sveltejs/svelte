@@ -14,7 +14,9 @@ export default {
 	`,
 	async test({ component, target, assert }) {
 		component.constant = 20;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>12 240 140, 60+4=64</div>
 			<div>12 240 140, 60+4=64</div>
 			<div>12 240 140, 60+4=64</div>
@@ -26,10 +28,13 @@ export default {
 			</div>
 			<div>12 240 140, 60+4=64</div>
 			<div>12 240 140, 60+4=64</div>
-		`);
+		`
+		);
 
-		component.box = {width: 5, height: 6};
-		assert.htmlEqual(target.innerHTML, `
+		component.box = { width: 5, height: 6 };
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>30 600 220, 100+6=106</div>
 			<div>30 600 220, 100+6=106</div>
 			<div>30 600 220, 100+6=106</div>
@@ -41,6 +46,7 @@ export default {
 			</div>
 			<div>30 600 220, 100+6=106</div>
 			<div>30 600 220, 100+6=106</div>
-		`);
+		`
+		);
 	}
 };

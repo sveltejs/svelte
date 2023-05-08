@@ -27,4 +27,5 @@ export const regex_content_rect = /^(?:contentRect)$/;
 export const regex_content_box_size = /^(?:contentBoxSize)$/;
 export const regex_border_box_size = /^(?:borderBoxSize)$/;
 export const regex_device_pixel_content_box_size = /^(?:devicePixelContentBoxSize)$/;
-export const regex_box_size = /^(?:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize)$/;
+export const regex_box_size =
+	/^(?:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize)$/;

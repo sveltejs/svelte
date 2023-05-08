@@ -22,11 +22,9 @@ export default class IfBlock extends AbstractBlock {
 		this.not_static_content();
 
 		this.expression = new Expression(component, this, this.scope, info.expression);
-		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
+		[this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
 
-		this.else = info.else
-			? new ElseBlock(component, this, scope, info.else)
-			: null;
+		this.else = info.else ? new ElseBlock(component, this, scope, info.else) : null;
 
 		this.warn_if_empty_block();
 	}

@@ -13,13 +13,15 @@ export default class Tag extends Node {
 
 		this.expression = new Expression(component, this, scope, info.expression);
 
-		this.should_cache = (
+		this.should_cache =
 			info.expression.type !== 'Identifier' ||
-			(this.expression.dependencies.size && scope.names.has(info.expression.name))
-		);
+			(this.expression.dependencies.size && scope.names.has(info.expression.name));
 	}
 	is_dependencies_static() {
-		return this.expression.dynamic_contextual_dependencies().length === 0 && this.expression.dynamic_dependencies().length === 0;
+		return (
+			this.expression.dynamic_contextual_dependencies().length === 0 &&
+			this.expression.dynamic_dependencies().length === 0
+		);
 	}
 	check_if_content_dynamic() {
 		if (!this.is_dependencies_static()) {

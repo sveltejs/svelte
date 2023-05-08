@@ -7,7 +7,7 @@ export function test({ assert, input, js }) {
 		column: start.column
 	});
 
-	assert.deepEqual( actual, {
+	assert.deepEqual(actual, {
 		source: 'input.svelte',
 		name: null,
 		line: expected.line + 1,

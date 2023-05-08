@@ -24,19 +24,25 @@ export default {
 
 		assert.equal(component.indeterminate, false);
 		assert.equal(component.checked, true);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type="checkbox">
 			<p>checked? true</p>
 			<p>indeterminate? false</p>
-		`);
+		`
+		);
 
 		component.indeterminate = true;
 		assert.equal(input.indeterminate, true);
 		assert.equal(input.checked, true);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type="checkbox">
 			<p>checked? true</p>
 			<p>indeterminate? true</p>
-		`);
+		`
+		);
 	}
 };

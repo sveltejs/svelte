@@ -15,7 +15,7 @@ export default class ElseBlock extends AbstractBlock {
 		super(component, parent, scope, info);
 
 		this.scope = scope.child();
-		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
+		[this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
 
 		this.warn_if_empty_block();
 	}

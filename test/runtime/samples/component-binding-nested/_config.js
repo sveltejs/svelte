@@ -22,7 +22,9 @@ export default {
 		await buttons[0].dispatchEvent(click);
 
 		assert.equal(component.x, 'p');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>x: p</p>
 			<button class="foo">foo</button>
 			<p>foo x: p</p>
@@ -30,12 +32,15 @@ export default {
 			<p>bar x: p</p>
 			<button class="baz">baz</button>
 			<p>baz x: p</p>
-		`);
+		`
+		);
 
 		await buttons[1].dispatchEvent(click);
 
 		assert.equal(component.x, 'q');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>x: q</p>
 			<button class="foo">foo</button>
 			<p>foo x: q</p>
@@ -43,12 +48,15 @@ export default {
 			<p>bar x: q</p>
 			<button class="baz">baz</button>
 			<p>baz x: q</p>
-		`);
+		`
+		);
 
 		await buttons[2].dispatchEvent(click);
 
 		assert.equal(component.x, 'r');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>x: r</p>
 			<button class="foo">foo</button>
 			<p>foo x: r</p>
@@ -56,6 +64,7 @@ export default {
 			<p>bar x: r</p>
 			<button class="baz">baz</button>
 			<p>baz x: r</p>
-		`);
+		`
+		);
 	}
 };

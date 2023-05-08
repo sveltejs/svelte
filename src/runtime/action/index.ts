@@ -26,7 +26,10 @@
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-export interface ActionReturn<Parameter = never, Attributes extends Record<string, any> = Record<never, any>> {
+export interface ActionReturn<
+	Parameter = never,
+	Attributes extends Record<string, any> = Record<never, any>
+> {
 	update?: [Parameter] extends [never] ? never : (parameter: Parameter) => void;
 	destroy?: () => void;
 	/**
@@ -54,8 +57,18 @@ export interface ActionReturn<Parameter = never, Attributes extends Record<strin
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  */
-export interface Action<Element = HTMLElement, Parameter = never, Attributes extends Record<string, any> = Record<never, any>> {
-	<Node extends Element>(...args: [Parameter] extends [never] ? [node: Node] : undefined extends Parameter ? [node: Node, parameter?: Parameter] : [node: Node, parameter: Parameter]): void | ActionReturn<Parameter, Attributes>;
+export interface Action<
+	Element = HTMLElement,
+	Parameter = never,
+	Attributes extends Record<string, any> = Record<never, any>
+> {
+	<Node extends Element>(
+		...args: [Parameter] extends [never]
+			? [node: Node]
+			: undefined extends Parameter
+			? [node: Node, parameter?: Parameter]
+			: [node: Node, parameter: Parameter]
+	): void | ActionReturn<Parameter, Attributes>;
 }
 
 // Implementation notes:

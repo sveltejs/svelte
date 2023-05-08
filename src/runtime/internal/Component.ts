@@ -1,7 +1,20 @@
-import { add_render_callback, flush, flush_render_callbacks, schedule_update, dirty_components } from './scheduler';
+import {
+	add_render_callback,
+	flush,
+	flush_render_callbacks,
+	schedule_update,
+	dirty_components
+} from './scheduler';
 import { current_component, set_current_component } from './lifecycle';
 import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
-import { children, detach, start_hydrating, end_hydrating, get_custom_elements_slots, insert } from './dom';
+import {
+	children,
+	detach,
+	start_hydrating,
+	end_hydrating,
+	get_custom_elements_slots,
+	insert
+} from './dom';
 import { transition_in } from './transitions';
 import { T$$ } from './types';
 import { ComponentType } from './dev';
@@ -29,7 +42,6 @@ export function mount_component(component, target, anchor) {
 
 	// onMount happens before the initial afterUpdate
 	add_render_callback(() => {
-
 		const new_on_destroy = component.$$.on_mount.map(run).filter(is_function);
 		// if the component was destroyed immediately
 		// it will update the `$$.on_destroy` reference to `null`.
@@ -69,14 +81,23 @@ function make_dirty(component, i) {
 		schedule_update();
 		component.$$.dirty.fill(0);
 	}
-	component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
+	component.$$.dirty[(i / 31) | 0] |= 1 << i % 31;
 }
 
-export function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
+export function init(
+	component,
+	options,
+	instance,
+	create_fragment,
+	not_equal,
+	props,
+	append_styles,
+	dirty = [-1]
+) {
 	const parent_component = current_component;
 	set_current_component(component);
 
-	const $$: T$$ = component.$$ = {
+	const $$: T$$ = (component.$$ = {
 		fragment: null,
 		ctx: [],
 
@@ -99,7 +120,7 @@ export function init(component, options, instance, create_fragment, not_equal, p
 		dirty,
 		skip_bound: false,
 		root: options.target || parent_component.$$.root
-	};
+	});
 
 	append_styles && append_styles($$.root);
 
@@ -107,13 +128,13 @@ export function init(component, options, instance, create_fragment, not_equal, p
 
 	$$.ctx = instance
 		? instance(component, options.props || {}, (i, ret, ...rest) => {
-			const value = rest.length ? rest[0] : ret;
-			if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-				if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
-				if (ready) make_dirty(component, i);
-			}
-			return ret;
-		})
+				const value = rest.length ? rest[0] : ret;
+				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = value))) {
+					if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
+					if (ready) make_dirty(component, i);
+				}
+				return ret;
+		  })
 		: [];
 
 	$$.update();
@@ -235,7 +256,12 @@ if (typeof HTMLElement === 'function') {
 					// this.$$data takes precedence over this.attributes
 					const name = this.$$get_prop_name(attribute.name);
 					if (!(name in this.$$data)) {
-						this.$$data[name] = get_custom_element_value(name, attribute.value, this.$$props_definition, 'toProp');
+						this.$$data[name] = get_custom_element_value(
+							name,
+							attribute.value,
+							this.$$props_definition,
+							'toProp'
+						);
 					}
 				}
 
@@ -266,7 +292,12 @@ if (typeof HTMLElement === 'function') {
 			if (this.$$reflecting) return;
 
 			attr = this.$$get_prop_name(attr);
-			this.$$data[attr] = get_custom_element_value(attr, newValue, this.$$props_definition, 'toProp');
+			this.$$data[attr] = get_custom_element_value(
+				attr,
+				newValue,
+				this.$$props_definition,
+				'toProp'
+			);
 			this.$$component!.$set({ [attr]: this.$$data[attr] });
 		}
 
@@ -282,15 +313,23 @@ if (typeof HTMLElement === 'function') {
 		}
 
 		private $$get_prop_name(attribute_name: string): string {
-			return Object.keys(this.$$props_definition).find(
-					key => this.$$props_definition[key].attribute === attribute_name ||
+			return (
+				Object.keys(this.$$props_definition).find(
+					(key) =>
+						this.$$props_definition[key].attribute === attribute_name ||
 						(!this.$$props_definition[key].attribute && key.toLowerCase() === attribute_name)
-				) || attribute_name;
+				) || attribute_name
+			);
 		}
 	};
 }
 
-function get_custom_element_value(prop: string, value: any, props_definition: Record<string, CustomElementPropDefinition>, transform?: 'toAttribute' | 'toProp') {
+function get_custom_element_value(
+	prop: string,
+	value: any,
+	props_definition: Record<string, CustomElementPropDefinition>,
+	transform?: 'toAttribute' | 'toProp'
+) {
 	const type = props_definition[prop]?.type;
 	value = type === 'Boolean' && typeof value !== 'boolean' ? value != null : value;
 	if (!transform || !props_definition[prop]) {
@@ -353,7 +392,9 @@ export function create_custom_element(
 		}
 
 		static get observedAttributes() {
-			return Object.keys(props_definition).map(key => (props_definition[key].attribute || key).toLowerCase());
+			return Object.keys(props_definition).map((key) =>
+				(props_definition[key].attribute || key).toLowerCase()
+			);
 		}
 	};
 
@@ -372,14 +413,16 @@ export function create_custom_element(
 
 				if (props_definition[prop].reflect) {
 					this.$$reflecting = true;
-					const attribute_value = get_custom_element_value(prop, value, props_definition, 'toAttribute');
+					const attribute_value = get_custom_element_value(
+						prop,
+						value,
+						props_definition,
+						'toAttribute'
+					);
 					if (attribute_value == null) {
 						this.removeAttribute(prop);
 					} else {
-						this.setAttribute(
-							props_definition[prop].attribute || prop,
-							attribute_value as string
-						);
+						this.setAttribute(props_definition[prop].attribute || prop, attribute_value as string);
 					}
 					this.$$reflecting = false;
 				}
@@ -387,7 +430,7 @@ export function create_custom_element(
 		});
 	});
 
-	accessors.forEach(accessor => {
+	accessors.forEach((accessor) => {
 		Object.defineProperty(Class.prototype, accessor, {
 			get() {
 				return this.$$component?.[accessor];
@@ -416,7 +459,7 @@ export class SvelteComponent {
 		if (!is_function(callback)) {
 			return noop;
 		}
-		const callbacks = (this.$$.callbacks[type] || (this.$$.callbacks[type] = []));
+		const callbacks = this.$$.callbacks[type] || (this.$$.callbacks[type] = []);
 		callbacks.push(callback);
 
 		return () => {

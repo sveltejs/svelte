@@ -22,29 +22,38 @@ export default {
 		input.value = 'foo';
 		await input.dispatchEvent(inputEvent);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 		<input>
 		<div>foo</div>
 		<div>foo</div>
 		<button>click me</button>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(clickEvent);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 		<input>
 		<div>foo</div>
 		<div>clicked</div>
 		<button>click me</button>
-		`);
+		`
+		);
 
 		input.value = 'bar';
 		await input.dispatchEvent(inputEvent);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 		<input>
 		<div>bar</div>
 		<div>bar</div>
 		<button>click me</button>
-		`);
+		`
+		);
 	}
 };

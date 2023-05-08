@@ -109,7 +109,11 @@ describe('hydration', () => {
 				if (config.snapshot) {
 					const snapshot_after = config.snapshot(target);
 					for (const s in snapshot_after) {
-						assert.equal(snapshot_after[s], snapshot[s], `Expected snapshot key "${s}" to have same value/reference`);
+						assert.equal(
+							snapshot_after[s],
+							snapshot[s],
+							`Expected snapshot key "${s}" to have same value/reference`
+						);
 					}
 				}
 
@@ -134,7 +138,7 @@ describe('hydration', () => {
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir);
 	});
 });

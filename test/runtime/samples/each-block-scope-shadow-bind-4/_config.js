@@ -31,7 +31,6 @@ export default {
       `
 		);
 
-
 		await button.dispatchEvent(new window.MouseEvent('click'));
 
 		assert.htmlEqual(

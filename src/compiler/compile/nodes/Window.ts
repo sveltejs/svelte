@@ -30,7 +30,7 @@ export default class Window extends Node {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
-		info.attributes.forEach(node => {
+		info.attributes.forEach((node) => {
 			if (node.type === 'EventHandler') {
 				this.handlers.push(new EventHandler(component, this, scope, node));
 			} else if (node.type === 'Binding') {
@@ -42,16 +42,31 @@ export default class Window extends Node {
 				}
 
 				if (!~valid_bindings.indexOf(node.name)) {
-					const match = (
-						node.name === 'width' ? 'innerWidth' :
-							node.name === 'height' ? 'innerHeight' :
-								fuzzymatch(node.name, valid_bindings)
-					);
+					const match =
+						node.name === 'width'
+							? 'innerWidth'
+							: node.name === 'height'
+							? 'innerHeight'
+							: fuzzymatch(node.name, valid_bindings);
 
 					if (match) {
-						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` (did you mean '${match}'?)`));
+						return component.error(
+							node,
+							compiler_errors.invalid_binding_on(
+								node.name,
+								'<svelte:window>',
+								` (did you mean '${match}'?)`
+							)
+						);
 					} else {
-						return component.error(node, compiler_errors.invalid_binding_on(node.name, '<svelte:window>', ` — valid bindings are ${list(valid_bindings)}`));
+						return component.error(
+							node,
+							compiler_errors.invalid_binding_on(
+								node.name,
+								'<svelte:window>',
+								` — valid bindings are ${list(valid_bindings)}`
+							)
+						);
 					}
 				}
 

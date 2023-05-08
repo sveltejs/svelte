@@ -118,7 +118,7 @@ const invalidProperty: ActionReturn = {
 };
 invalidProperty;
 
-type Attributes = ActionReturn<never, { a: string; }>['$$_attributes'];
+type Attributes = ActionReturn<never, { a: string }>['$$_attributes'];
 const attributes: Attributes = { a: 'a' };
 attributes;
 // @ts-expect-error wrong type

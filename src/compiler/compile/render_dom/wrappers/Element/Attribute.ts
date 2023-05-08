@@ -40,7 +40,7 @@ export class BaseAttributeWrapper {
 		}
 	}
 
-	render(_block: Block) { }
+	render(_block: Block) {}
 }
 
 const regex_minus_sign = /-/;
@@ -72,7 +72,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				}
 
 				if (select && select.select_binding_dependencies) {
-					select.select_binding_dependencies.forEach(prop => {
+					select.select_binding_dependencies.forEach((prop) => {
 						this.node.dependencies.forEach((dependency: string) => {
 							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
 						});
@@ -106,7 +106,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		this.is_src = this.name === 'src' && (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
+		this.is_src =
+			this.name === 'src' &&
+			(!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
 
@@ -120,10 +122,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const method = regex_minus_sign.test(element.node.name)
 			? '@set_custom_element_data'
 			: name.slice(0, 6) === 'xlink:'
-				? '@xlink_attr'
-				: '@attr';
+			? '@xlink_attr'
+			: '@attr';
 
-		const is_legacy_input_type = element.renderer.component.compile_options.legacy && name === 'type' && this.parent.node.name === 'input';
+		const is_legacy_input_type =
+			element.renderer.component.compile_options.legacy &&
+			name === 'type' &&
+			this.parent.node.name === 'input';
 
 		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
@@ -132,9 +137,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const init = this.get_init(block, value);
 
 		if (is_legacy_input_type) {
-			block.chunks.hydrate.push(
-				b`@set_input_type(${element.var}, ${init});`
-			);
+			block.chunks.hydrate.push(b`@set_input_type(${element.var}, ${init});`);
 			updater = b`@set_input_type(${element.var}, ${should_cache ? this.last : value});`;
 		} else if (this.is_select_value_attribute) {
 			// annoying special case
@@ -155,16 +158,12 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
-			block.chunks.hydrate.push(
-				b`${element.var}.${property_name} = ${init};`
-			);
+			block.chunks.hydrate.push(b`${element.var}.${property_name} = ${init};`);
 			updater = block.renderer.options.dev
 				? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? this.last : value});`
 				: b`${element.var}.${property_name} = ${should_cache ? this.last : value};`;
 		} else {
-			block.chunks.hydrate.push(
-				b`${method}(${element.var}, "${name}", ${init});`
-			);
+			block.chunks.hydrate.push(b`${method}(${element.var}, "${name}", ${init});`);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		}
 
@@ -179,7 +178,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 
 		if (this.node.name === 'value' && dependencies.length > 0) {
-			if (this.parent.bindings.some(binding => binding.node.name === 'group')) {
+			if (this.parent.bindings.some((binding) => binding.node.name === 'group')) {
 				this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
 				block.add_variable(this.parent.dynamic_value_condition, x`false`);
 				updater = b`
@@ -208,9 +207,14 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 	}
 
 	get_init(block: Block, value) {
-		this.last = this.should_cache && block.get_unique_name(
-			`${this.parent.var.name}_${this.name.replace(regex_invalid_variable_identifier_characters, '_')}_value`
-		);
+		this.last =
+			this.should_cache &&
+			block.get_unique_name(
+				`${this.parent.var.name}_${this.name.replace(
+					regex_invalid_variable_identifier_characters,
+					'_'
+				)}_value`
+			);
 
 		if (this.should_cache) block.add_variable(this.last);
 
@@ -233,7 +237,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
 			if (type !== true && !non_textlike_input_types.has(type)) {
-				condition = x`${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
+				condition = x`${condition} && ${element.var}.${property_name} !== ${
+					should_cache ? last : value
+				}`;
 			}
 		}
 
@@ -251,7 +257,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		node_dependencies.forEach((prop: string) => {
 			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
 			if (indirect_dependencies) {
-				indirect_dependencies.forEach(indirect_dependency => {
+				indirect_dependencies.forEach((indirect_dependency) => {
 					dependencies.add(indirect_dependency);
 				});
 			}
@@ -263,7 +269,8 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 	get_metadata() {
 		if (this.parent.node.namespace) return null;
 		const metadata = attribute_lookup[this.name];
-		if (metadata && metadata.applies_to && !metadata.applies_to.includes(this.parent.node.name)) return null;
+		if (metadata && metadata.applies_to && !metadata.applies_to.includes(this.parent.node.name))
+			return null;
 		return metadata;
 	}
 
@@ -284,9 +291,10 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				: (this.node.chunks[0] as Expression).manipulate(block);
 		}
 
-		let value = this.node.name === 'class'
-			? this.get_class_name_text(block)
-			: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
+		let value =
+			this.node.name === 'class'
+				? this.get_class_name_text(block)
+				: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 		// '{foo} {bar}' — treat as string concatenation
 		if (this.node.chunks[0].type !== 'Text') {
@@ -324,17 +332,21 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const value = this.node.chunks;
 		if (value.length === 0) return '=""';
 
-		return `="${value.map(chunk => {
-			return chunk.type === 'Text'
-				? chunk.data.replace(regex_double_quotes, '\\"')
-				: `\${${chunk.manipulate()}}`;
-		}).join('')}"`;
+		return `="${value
+			.map((chunk) => {
+				return chunk.type === 'Text'
+					? chunk.data.replace(regex_double_quotes, '\\"')
+					: `\${${chunk.manipulate()}}`;
+			})
+			.join('')}"`;
 	}
 }
 
 // source: https://html.spec.whatwg.org/multipage/indices.html
-type AttributeMetadata = { property_name?: string, applies_to?: string[] };
-const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [key in string]: AttributeMetadata } = {
+type AttributeMetadata = { property_name?: string; applies_to?: string[] };
+const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & {
+	[key in string]: AttributeMetadata;
+} = {
 	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
 	allowpaymentrequest: { property_name: 'allowPaymentRequest', applies_to: ['iframe'] },
 	async: { applies_to: ['script'] },
@@ -387,7 +399,7 @@ const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & { [k
 	}
 };
 
-Object.keys(attribute_lookup).forEach(name => {
+Object.keys(attribute_lookup).forEach((name) => {
 	const metadata = attribute_lookup[name];
 	if (!metadata.property_name) metadata.property_name = name;
 });
@@ -400,10 +412,12 @@ const regex_contains_checked_or_group = /checked|group/;
 
 function is_indirectly_bound_value(attribute: AttributeWrapper) {
 	const element = attribute.parent;
-	return attribute.name === 'value' &&
+	return (
+		attribute.name === 'value' &&
 		(element.node.name === 'option' || // TODO check it's actually bound
 			(element.node.name === 'input' &&
-				element.node.bindings.some(
-					(binding) => regex_contains_checked_or_group.test(binding.name)
-				)));
+				element.node.bindings.some((binding) =>
+					regex_contains_checked_or_group.test(binding.name)
+				)))
+	);
 }

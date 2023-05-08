@@ -1,5 +1,4 @@
 export default {
-
 	props: {
 		foo: false
 	},

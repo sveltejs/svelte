@@ -18,7 +18,9 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		await button1.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				hello world 1 hello
 				<button>Increment</button>
@@ -31,10 +33,13 @@ export default {
 				hello world 0 hello
 				<button>Increment</button>
 			</div>
-		`);
+		`
+		);
 
 		await button2.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				hello world 1 hello
 				<button>Increment</button>
@@ -47,10 +52,13 @@ export default {
 				hello world 0 hello
 				<button>Increment</button>
 			</div>
-		`);
+		`
+		);
 
 		await button3.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				hello world 1 hello
 				<button>Increment</button>
@@ -63,6 +71,7 @@ export default {
 				hello world 1 hello
 				<button>Increment</button>
 			</div>
-		`);
+		`
+		);
 	}
 };

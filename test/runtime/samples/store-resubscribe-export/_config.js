@@ -1,7 +1,7 @@
 let unsubscribeCalled = false;
 
-const fakeStore = val => ({
-	subscribe: cb => {
+const fakeStore = (val) => ({
+	subscribe: (cb) => {
 		cb(val);
 		return {
 			unsubscribe: () => {

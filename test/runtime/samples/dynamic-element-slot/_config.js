@@ -16,7 +16,9 @@ export default {
 	test({ assert, component, target }) {
 		component.tag = 'h2';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Foo</h1>
 			<div id="default">
 				<h2>This is default slot</h2>
@@ -24,6 +26,7 @@ export default {
 			<div id="other">
 				<h2 slot='other'>This is other slot</h2>
 			</div>
-		`);
+		`
+		);
 	}
 };

@@ -1,6 +1,6 @@
 let fulfil;
 
-let thePromise = new Promise(f => {
+let thePromise = new Promise((f) => {
 	fulfil = f;
 });
 
@@ -16,9 +16,12 @@ export default {
 
 		return thePromise
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<p>the value is 42</p>
-				`);
+				`
+				);
 
 				let reject;
 
@@ -35,9 +38,12 @@ export default {
 				return thePromise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<p>oh no! something broke</p>
-				`);
+				`
+				);
 			});
 	}
 };

@@ -10,7 +10,7 @@ export default {
 	`,
 	test({ assert, target }) {
 		const use = target.querySelector('use');
-		const href = use.attributes[ 'xlink:href' ];
+		const href = use.attributes['xlink:href'];
 
 		assert.equal(href.namespaceURI, 'http://www.w3.org/1999/xlink');
 	}

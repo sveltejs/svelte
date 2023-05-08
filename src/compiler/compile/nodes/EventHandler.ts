@@ -17,7 +17,12 @@ export default class EventHandler extends Node {
 	uses_context = false;
 	can_make_passive = false;
 
-	constructor(component: Component, parent: Node, template_scope: TemplateScope, info: TemplateNode) {
+	constructor(
+		component: Component,
+		parent: Node,
+		template_scope: TemplateScope,
+		info: TemplateNode
+	) {
 		super(component, parent, template_scope, info);
 
 		this.name = info.name;
@@ -27,7 +32,10 @@ export default class EventHandler extends Node {
 			this.expression = new Expression(component, this, template_scope, info.expression);
 			this.uses_context = this.expression.uses_context;
 
-			if (regex_contains_term_function_expression.test(info.expression.type) && info.expression.params.length === 0) {
+			if (
+				regex_contains_term_function_expression.test(info.expression.type) &&
+				info.expression.params.length === 0
+			) {
 				// TODO make this detection more accurate — if `event.preventDefault` isn't called, and
 				// `event` is passed to another function, we can make it passive
 				this.can_make_passive = true;
@@ -37,11 +45,19 @@ export default class EventHandler extends Node {
 				if (node) {
 					if (node.type === 'VariableDeclaration') {
 						// for `const handleClick = () => {...}`, we want the [arrow] function expression node
-						const declarator = node.declarations.find(d => (d.id as Identifier).name === info.expression.name);
+						const declarator = node.declarations.find(
+							(d) => (d.id as Identifier).name === info.expression.name
+						);
 						node = declarator && declarator.init;
 					}
 
-					if (node && (node.type === 'FunctionExpression' || node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') && node.params.length === 0) {
+					if (
+						node &&
+						(node.type === 'FunctionExpression' ||
+							node.type === 'FunctionDeclaration' ||
+							node.type === 'ArrowFunctionExpression') &&
+						node.params.length === 0
+					) {
 						this.can_make_passive = true;
 					}
 				}

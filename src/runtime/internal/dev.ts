@@ -1,10 +1,21 @@
-import { custom_event, append, append_hydration, insert, insert_hydration, detach, listen, attr } from './dom';
+import {
+	custom_event,
+	append,
+	append_hydration,
+	insert,
+	insert_hydration,
+	detach,
+	listen,
+	attr
+} from './dom';
 import { SvelteComponent } from './Component';
 import { is_void } from '../../shared/utils/names';
 import { contenteditable_truthy_values } from './utils';
 
-export function dispatch_dev<T=any>(type: string, detail?: T) {
-	document.dispatchEvent(custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true }));
+export function dispatch_dev<T = any>(type: string, detail?: T) {
+	document.dispatchEvent(
+		custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true })
+	);
 }
 
 export function append_dev(target: Node, node: Node) {
@@ -50,8 +61,17 @@ export function detach_after_dev(before: Node) {
 	}
 }
 
-export function listen_dev(node: Node, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions, has_prevent_default?: boolean, has_stop_propagation?: boolean, has_stop_immediate_propagation?: boolean) {
-	const modifiers = options === true ? [ 'capture' ] : options ? Array.from(Object.keys(options)) : [];
+export function listen_dev(
+	node: Node,
+	event: string,
+	handler: EventListenerOrEventListenerObject,
+	options?: boolean | AddEventListenerOptions | EventListenerOptions,
+	has_prevent_default?: boolean,
+	has_stop_propagation?: boolean,
+	has_stop_immediate_propagation?: boolean
+) {
+	const modifiers =
+		options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
 	if (has_prevent_default) modifiers.push('preventDefault');
 	if (has_stop_propagation) modifiers.push('stopPropagation');
 	if (has_stop_immediate_propagation) modifiers.push('stopImmediatePropagation');
@@ -88,14 +108,14 @@ export function set_data_dev(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.data === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = (data as string);
+	text.data = data as string;
 }
 
 export function set_data_contenteditable_dev(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.wholeText === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = (data as string);
+	text.data = data as string;
 }
 
 export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
@@ -133,9 +153,7 @@ export function validate_dynamic_element(tag: unknown) {
 
 export function validate_void_dynamic_element(tag: undefined | string) {
 	if (tag && is_void(tag)) {
-		console.warn(
-			`<svelte:element this="${tag}"> is self-closing and cannot have content.`
-		);
+		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
 	}
 }
 
@@ -163,12 +181,17 @@ export interface SvelteComponentDev<
 	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
 > {
 	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
+	$on<K extends Extract<keyof Events, string>>(
+		type: K,
+		callback: ((e: Events[K]) => void) | null | undefined
+	): () => void;
 	$destroy(): void;
 	[accessor: string]: any;
 }
 
-export interface ComponentConstructorOptions<Props extends Record<string, any> = Record<string, any>> {
+export interface ComponentConstructorOptions<
+	Props extends Record<string, any> = Record<string, any>
+> {
 	target: Element | Document | ShadowRoot;
 	anchor?: Element;
 	props?: Props;
@@ -180,7 +203,7 @@ export interface ComponentConstructorOptions<Props extends Record<string, any> =
 
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
- * 
+ *
  * Can be used to create strongly typed Svelte components.
  *
  * ### Example:
@@ -290,7 +313,7 @@ export type ComponentType<Component extends SvelteComponentDev = SvelteComponent
 	>
 ) => Component) & {
 	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-	element?: typeof HTMLElement
+	element?: typeof HTMLElement;
 };
 
 /**
@@ -304,9 +327,8 @@ export type ComponentType<Component extends SvelteComponentDev = SvelteComponent
  * </script>
  * ```
  */
-export type ComponentProps<Component extends SvelteComponent> = Component extends SvelteComponentDev<infer Props>
-	? Props
-	: never;
+export type ComponentProps<Component extends SvelteComponent> =
+	Component extends SvelteComponentDev<infer Props> ? Props : never;
 
 /**
  * Convenience type to get the events the given component expects. Example:

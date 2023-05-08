@@ -20,7 +20,9 @@ export default {
 		input.value = 4;
 		await input.dispatchEvent(new window.Event('input'));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type='number'>
 			<ol>
 				<li>id-0: value is zero</li>
@@ -28,6 +30,7 @@ export default {
 				<li>id-2: value is two</li>
 				<li>id-3: value is three</li>
 			</ol>
-		`);
+		`
+		);
 	}
 };

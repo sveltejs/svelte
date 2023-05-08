@@ -16,24 +16,30 @@ export default {
 		const event = new window.Event('input');
 
 		const names = [];
-		const unsubscribe = component.user.subscribe(user => {
+		const unsubscribe = component.user.subscribe((user) => {
 			names.push(user.name);
 		});
 
 		input.value = 'everybody';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello everybody</p>
-		`);
+		`
+		);
 
 		await component.user.set({ name: 'goodbye' });
 		assert.equal(input.value, 'goodbye');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello goodbye</p>
-		`);
+		`
+		);
 
 		assert.deepEqual(names, ['world', 'everybody', 'goodbye']);
 		unsubscribe();

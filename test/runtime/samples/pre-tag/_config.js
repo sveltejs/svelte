@@ -29,9 +29,13 @@ function get_html(ssr) {
     </span>
     E
     F
-  </pre></div> <div id="pre-with-leading-newline"><pre>leading newline</pre> <pre>  leading newline and spaces</pre> <pre>${ssr ? '\n' : ''}
+  </pre></div> <div id="pre-with-leading-newline"><pre>leading newline</pre> <pre>  leading newline and spaces</pre> <pre>${
+		ssr ? '\n' : ''
+	}
 leading newlines</pre></div> <div id="pre-without-leading-newline"><pre>without spaces</pre> <pre>  with spaces  </pre> <pre> 
-newline after leading space</pre></div> <pre id="pre-with-multiple-leading-newlines">${ssr ? '\n' : ''}
+newline after leading space</pre></div> <pre id="pre-with-multiple-leading-newlines">${
+		ssr ? '\n' : ''
+	}
 
 multiple leading newlines</pre>`;
 }

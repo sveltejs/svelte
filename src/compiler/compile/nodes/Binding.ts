@@ -37,7 +37,12 @@ export default class Binding extends Node {
 	is_contextual: boolean;
 	is_readonly: boolean;
 
-	constructor(component: Component, parent: Element | InlineComponent | Window | Document, scope: TemplateScope, info: TemplateNode) {
+	constructor(
+		component: Component,
+		parent: Element | InlineComponent | Window | Document,
+		scope: TemplateScope,
+		info: TemplateNode
+	) {
 		super(component, parent, scope, info);
 
 		if (info.expression.type !== 'Identifier' && info.expression.type !== 'MemberExpression') {
@@ -51,7 +56,9 @@ export default class Binding extends Node {
 
 		const { name } = get_object(this.expression.node);
 
-		this.is_contextual = Array.from(this.expression.references).some(name => scope.names.has(name));
+		this.is_contextual = Array.from(this.expression.references).some((name) =>
+			scope.names.has(name)
+		);
 		if (this.is_contextual) this.validate_binding_rest_properties(scope);
 
 		// make sure we track this as a mutable ref
@@ -67,7 +74,7 @@ export default class Binding extends Node {
 				component.error(this, compiler_errors.invalid_binding_const);
 			}
 
-			scope.dependencies_for_name.get(name).forEach(name => {
+			scope.dependencies_for_name.get(name).forEach((name) => {
 				const variable = component.var_lookup.get(name);
 				if (variable) {
 					variable.mutated = true;
@@ -96,7 +103,7 @@ export default class Binding extends Node {
 			regex_box_size.test(this.name) ||
 			(isElement(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
-					(parent.name === 'input' && type === 'file')) /* TODO others? */);
+					(parent.name === 'input' && type === 'file'))) /* TODO others? */;
 	}
 
 	is_readonly_media_attribute() {
@@ -104,12 +111,15 @@ export default class Binding extends Node {
 	}
 
 	validate_binding_rest_properties(scope: TemplateScope) {
-		this.expression.references.forEach(name => {
+		this.expression.references.forEach((name) => {
 			const each_block = scope.get_owner(name);
 			if (each_block && each_block.type === 'EachBlock') {
 				const rest_node = each_block.context_rest_properties.get(name);
 				if (rest_node) {
-					this.component.warn(rest_node as any, compiler_warnings.invalid_rest_eachblock_binding(name));
+					this.component.warn(
+						rest_node as any,
+						compiler_warnings.invalid_rest_eachblock_binding(name)
+					);
 				}
 			}
 		});

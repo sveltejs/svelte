@@ -1,6 +1,6 @@
 let fulfil;
 
-let thePromise = new Promise(f => {
+let thePromise = new Promise((f) => {
 	fulfil = f;
 });
 
@@ -29,19 +29,25 @@ export default {
 
 		component.thePromise = thePromise;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<br />
 			<p>the promise is pending</p>
-		`);
+		`
+		);
 
 		reject(new Error());
 
 		await thePromise.catch(() => {});
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>oh no! Something broke!</p>
 			<br />
 			<p>oh no! Something broke!</p>
-		`);
+		`
+		);
 	}
 };

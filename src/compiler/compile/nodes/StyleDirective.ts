@@ -16,12 +16,7 @@ export default class StyleDirective extends Node {
 	expression: Expression;
 	should_cache: boolean;
 
-	constructor(
-		component: Component,
-		parent: Node,
-		scope: TemplateScope,
-		info: TemplateNode
-	) {
+	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
 		this.name = info.name;
@@ -31,9 +26,7 @@ export default class StyleDirective extends Node {
 			if (!valid_modifiers.has(modifier)) {
 				component.error(
 					this,
-					compiler_errors.invalid_style_directive_modifier(
-						list([...valid_modifiers])
-					)
+					compiler_errors.invalid_style_directive_modifier(list([...valid_modifiers]))
 				);
 			}
 		}
@@ -41,14 +34,15 @@ export default class StyleDirective extends Node {
 		// Convert the value array to an expression so it's easier to handle
 		// the StyleDirective going forward.
 		if (info.value === true || (info.value.length === 1 && info.value[0].type === 'MustacheTag')) {
-			const identifier = info.value === true
-				? {
-					type: 'Identifier',
-					start: info.end - info.name.length,
-					end: info.end,
-					name: info.name
-				} as any
-				: info.value[0].expression;
+			const identifier =
+				info.value === true
+					? ({
+							type: 'Identifier',
+							start: info.end - info.name.length,
+							end: info.end,
+							name: info.name
+					  } as any)
+					: info.value[0].expression;
 			this.expression = new Expression(component, this, scope, identifier);
 			this.should_cache = false;
 		} else {

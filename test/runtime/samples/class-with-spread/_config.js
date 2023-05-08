@@ -14,8 +14,11 @@ export default {
 			'aria-label': 'Test'
 		};
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="one" aria-label="Test"></div>
-		`);
+		`
+		);
 	}
 };

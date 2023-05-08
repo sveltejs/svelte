@@ -9,16 +9,18 @@ import { Node } from 'estree';
 export default class Tag extends Wrapper {
 	node: MustacheTag | RawMustacheTag;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: MustacheTag | RawMustacheTag) {
+	constructor(
+		renderer: Renderer,
+		block: Block,
+		parent: Wrapper,
+		node: MustacheTag | RawMustacheTag
+	) {
 		super(renderer, block, parent, node);
 
 		block.add_dependencies(node.expression.dependencies);
 	}
 
-	rename_this_method(
-		block: Block,
-		update: ((value: Node) => (Node | Node[]))
-	) {
+	rename_this_method(block: Block, update: (value: Node) => Node | Node[]) {
 		const dependencies = this.node.expression.dynamic_dependencies();
 		let snippet = this.node.expression.manipulate(block);
 

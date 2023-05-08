@@ -1,6 +1,6 @@
 export default {
 	compileOptions: {
-		preserveComments:true
+		preserveComments: true
 	},
 	snapshot(target) {
 		return {

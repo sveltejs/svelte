@@ -10,8 +10,11 @@ export default {
 	test({ assert, component, target }) {
 		component.x = 2;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>Foo 2</p>
-		`);
+		`
+		);
 	}
 };

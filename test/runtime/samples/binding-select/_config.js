@@ -28,7 +28,9 @@ export default {
 		await select.dispatchEvent(change);
 
 		assert.equal(component.selected, 'two');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>selected: two</p>
 
 			<select>
@@ -38,7 +40,8 @@ export default {
 			</select>
 
 			<p>selected: two</p>
-		`);
+		`
+		);
 
 		component.selected = 'three';
 	}

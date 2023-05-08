@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { svelte, loadConfig, tryToLoadJson } from '../helpers';
 
 describe('stats', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		// add .solo to a sample directory name to only run that test
@@ -19,9 +19,7 @@ describe('stats', () => {
 			const filename = `${__dirname}/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
-			const expectedError = tryToLoadJson(
-				`${__dirname}/samples/${dir}/error.json`
-			);
+			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 			let result;
 			let error;

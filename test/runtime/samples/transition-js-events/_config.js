@@ -13,13 +13,16 @@ export default {
 	async test({ assert, component, target, raf }) {
 		component.visible = true;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>introstart</p>
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
 			<p>d</p>
-		`);
+		`
+		);
 
 		raf.tick(50);
 		assert.deepEqual(component.intros.sort(), ['a', 'b', 'c', 'd']);
@@ -28,23 +31,29 @@ export default {
 		await raf.tick(100);
 		assert.equal(component.intro_count, 0);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>introend</p>
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
 			<p>d</p>
-		`);
+		`
+		);
 
 		component.visible = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>outrostart</p>
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
 			<p>d</p>
-		`);
+		`
+		);
 
 		raf.tick(150);
 		assert.deepEqual(component.outros.sort(), ['a', 'b', 'c', 'd']);
@@ -59,12 +68,15 @@ export default {
 		assert.deepEqual(component.intros.sort(), ['a', 'a', 'b', 'b', 'c', 'c', 'd', 'd']);
 		assert.equal(component.intro_count, 4);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>introstart</p>
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
 			<p>d</p>
-		`);
+		`
+		);
 	}
 };

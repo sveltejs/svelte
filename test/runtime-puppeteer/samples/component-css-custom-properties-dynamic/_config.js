@@ -23,7 +23,9 @@ export default {
 		component.railColor1 = 'yellow';
 		component.trackColor2 = 'orange';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div style="display: contents; --rail-color:yellow; --track-color:red;">
 				<div id="slider-1">
 					<p class="svelte-17ay6rc">Slider</p>
@@ -36,6 +38,7 @@ export default {
 					<span class="svelte-17ay6rc">Track</span>
 				</div>
 			</div>
-		`);
+		`
+		);
 	}
 };

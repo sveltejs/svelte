@@ -49,7 +49,8 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// tidy up AST
 	walk(ast, {
-		enter: (node: any) => { // `any` because this isn't an ESTree node
+		enter: (node: any) => {
+			// `any` because this isn't an ESTree node
 			// replace `ref:a` nodes
 			if (node.type === 'Selector') {
 				for (let i = 0; i < node.children.length; i += 1) {
@@ -62,7 +63,11 @@ export default function read_style(parser: Parser, start: number, attributes: No
 				}
 			}
 
-			if (node.type === 'Declaration' && node.value.type === 'Value' && node.value.children.length === 0) {
+			if (
+				node.type === 'Declaration' &&
+				node.value.type === 'Value' &&
+				node.value.children.length === 0
+			) {
 				parser.error(parser_errors.invalid_declaration, node.start);
 			}
 
@@ -96,12 +101,9 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	};
 }
 
-function is_ref_selector(a: any, b: any) { // TODO add CSS node types
+function is_ref_selector(a: any, b: any) {
+	// TODO add CSS node types
 	if (!b) return false;
 
-	return (
-		a.type === 'TypeSelector' &&
-		a.name === 'ref' &&
-		b.type === 'PseudoClassSelector'
-	);
+	return a.type === 'TypeSelector' && a.name === 'ref' && b.type === 'PseudoClassSelector';
 }

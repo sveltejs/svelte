@@ -26,7 +26,9 @@ export default {
 		assert.equal(select.value, 'a');
 		assert.ok(options[0].selected);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>selected: a</p>
 
 			<select>
@@ -36,7 +38,8 @@ export default {
 			</select>
 
 			<p>selected: a</p>
-		`);
+		`
+		);
 
 		component.selected = 'd'; // doesn't match an option
 
@@ -45,7 +48,9 @@ export default {
 		assert.equal(select.selectedIndex, -1);
 		assert.ok(!options[0].selected);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>selected: d</p>
 
 			<select>
@@ -55,13 +60,16 @@ export default {
 			</select>
 
 			<p>selected: d</p>
-		`);
+		`
+		);
 
 		component.selected = 'b'; // second option should now be selected
 		assert.equal(select.value, 'b');
 		assert.ok(options[1].selected);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>selected: b</p>
 
 			<select>
@@ -71,7 +79,8 @@ export default {
 			</select>
 
 			<p>selected: b</p>
-		`);
+		`
+		);
 
 		component.selected = undefined; // also doesn't match an option
 
@@ -80,7 +89,9 @@ export default {
 		assert.equal(select.selectedIndex, -1);
 		assert.ok(!options[0].selected);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>selected: undefined</p>
 
 			<select>
@@ -90,6 +101,7 @@ export default {
 			</select>
 
 			<p>selected: undefined</p>
-		`);
+		`
+		);
 	}
 };

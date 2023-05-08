@@ -16,10 +16,7 @@ export default {
 
 		component.props = { disabled: false };
 
-		assert.htmlEqual(
-			target.innerHTML,
-			'<button>click me</button>'
-		);
+		assert.htmlEqual(target.innerHTML, '<button>click me</button>');
 		assert.ok(!button.disabled);
 	}
 };

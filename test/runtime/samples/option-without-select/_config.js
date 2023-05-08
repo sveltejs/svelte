@@ -7,8 +7,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.foo = 'goodbye';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<option value='goodbye'>goodbye</option>
-		`);
+		`
+		);
 	}
 };

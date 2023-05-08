@@ -9,7 +9,7 @@ const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
 
 function get_context(parser: Parser, attributes: any[], start: number): string {
-	const context = attributes.find(attribute => attribute.name === 'context');
+	const context = attributes.find((attribute) => attribute.name === 'context');
 	if (!context) return 'default';
 
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
@@ -32,7 +32,8 @@ export default function read_script(parser: Parser, start: number, attributes: N
 		parser.error(parser_errors.unclosed_script);
 	}
 
-	const source = parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
+	const source =
+		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
 	let ast: Program;

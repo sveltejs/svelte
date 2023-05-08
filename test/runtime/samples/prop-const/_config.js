@@ -15,9 +15,12 @@ export default {
 			b: 6
 		});
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>a: 5</p>
 			<p>b: 2</p>
-		`);
+		`
+		);
 	}
 };

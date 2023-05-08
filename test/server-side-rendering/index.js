@@ -35,10 +35,10 @@ describe('ssr', () => {
 	});
 
 	let saved_window;
-	before(() => saved_window = global.window);
-	after(() => global.window = saved_window);
+	before(() => (saved_window = global.window));
+	after(() => (global.window = saved_window));
 
-	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
+	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
@@ -53,9 +53,7 @@ describe('ssr', () => {
 		}
 
 		(solo ? it.only : it)(dir, (done) => {
-
 			try {
-
 				dir = path.resolve(`${__dirname}/samples`, dir);
 
 				cleanRequireCache();
@@ -83,7 +81,10 @@ describe('ssr', () => {
 				if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 				try {
-					assert.htmlEqualWithOptions(html, expectedHtml, { preserveComments: compileOptions.preserveComments, withoutNormalizeHtml: config.withoutNormalizeHtml });
+					assert.htmlEqualWithOptions(html, expectedHtml, {
+						preserveComments: compileOptions.preserveComments,
+						withoutNormalizeHtml: config.withoutNormalizeHtml
+					});
 				} catch (error) {
 					if (shouldUpdateExpected()) {
 						fs.writeFileSync(`${dir}/_expected.html`, html);
@@ -143,7 +144,7 @@ describe('ssr', () => {
 	runRuntimeSamples('runtime-puppeteer');
 
 	function runRuntimeSamples(suite) {
-		fs.readdirSync(`test/${suite}/samples`).forEach(dir => {
+		fs.readdirSync(`test/${suite}/samples`).forEach((dir) => {
 			if (dir[0] === '.') return;
 
 			const config = loadConfig(`./${suite}/samples/${dir}/_config.js`);
@@ -171,7 +172,7 @@ describe('ssr', () => {
 
 				require('../../register')(compileOptions);
 
-				glob('**/*.svelte', { cwd }).forEach(file => {
+				glob('**/*.svelte', { cwd }).forEach((file) => {
 					if (file[0] === '_') return;
 
 					const dir = `${cwd}/_output/ssr`;
@@ -184,13 +185,10 @@ describe('ssr', () => {
 					mkdirp(dir);
 
 					try {
-						const { js } = compile(
-							fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-							{
-								...compileOptions,
-								filename: file
-							}
-						);
+						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8'), {
+							...compileOptions,
+							filename: file
+						});
 
 						fs.writeFileSync(out, js.code);
 					} catch (err) {
@@ -203,7 +201,7 @@ describe('ssr', () => {
 
 					const Component = require(`../${suite}/samples/${dir}/main.svelte`).default;
 					const { html } = Component.render(config.props, {
-						store: (config.store !== true) && config.store
+						store: config.store !== true && config.store
 					});
 
 					if (config.ssrHtml) {

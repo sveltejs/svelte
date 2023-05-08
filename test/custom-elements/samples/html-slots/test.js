@@ -7,7 +7,7 @@ export default async function (target) {
 		<custom-element>
 			<strong>slotted</strong>
 		</custom-element>`;
-		await tick();
+	await tick();
 
 	const el = target.querySelector('custom-element');
 

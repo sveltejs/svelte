@@ -1,5 +1,5 @@
 export default {
-  compile_options: {
-    enableSourcemap: false
-  }
+	compile_options: {
+		enableSourcemap: false
+	}
 };

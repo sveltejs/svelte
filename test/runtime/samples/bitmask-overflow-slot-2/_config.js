@@ -47,7 +47,9 @@ export default {
 		component._1 = 'b';
 		component._2 = 'c';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>d1</p>
 			<p>d2</p>
 			<p>d3</p>
@@ -86,7 +88,8 @@ export default {
 			<p>a</p>
 			<p>b</p>
 			<p>c</p>
-		`);
+		`
+		);
 
 		assert.deepEqual(component.reads, {
 			_0: 2,

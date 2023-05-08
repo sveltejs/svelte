@@ -4,12 +4,8 @@ import Action from '../../../nodes/Action';
 import { Expression, Node } from 'estree';
 import is_contextual from '../../../nodes/shared/is_contextual';
 
-export default function add_actions(
-	block: Block,
-	target: string | Expression,
-	actions: Action[]
-) {
-	actions.forEach(action => add_action(block, target, action));
+export default function add_actions(block: Block, target: string | Expression, actions: Action[]) {
+	actions.forEach((action) => add_action(block, target, action));
 }
 
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
@@ -54,8 +50,6 @@ export function add_action(block: Block, target: string | Expression, action: Ac
 			condition = x`${condition} && ${block.renderer.dirty(dependencies)}`;
 		}
 
-		block.chunks.update.push(
-			b`if (${condition}) ${id}.update.call(null, ${snippet});`
-		);
+		block.chunks.update.push(b`if (${condition}) ${id}.update.call(null, ${snippet});`);
 	}
 }

@@ -1,10 +1,10 @@
 import { createEventDispatcher } from '$runtime/internal/lifecycle';
 
 const dispatch = createEventDispatcher<{
-	loaded: never
-	change: string
-	valid: boolean
-	optional: number | null
+	loaded: never;
+	change: string;
+	valid: boolean;
+	optional: number | null;
 }>();
 
 // @ts-expect-error: dispatch invalid event

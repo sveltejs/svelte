@@ -10,12 +10,15 @@ export default {
 
 		await button.dispatchEvent(new window.Event('click'));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<section>
 				<div>First</div>
 				<div>Second</div>
 			</section>
 			<button>Click</button>
-		`);
+		`
+		);
 	}
 };
