@@ -290,9 +290,11 @@ const autofill_contact_field_name_tokens = new Set([
 	'impp'
 ]);
 
-export function is_valid_autocomplete(type: null | true | string, autocomplete: null | true | string) {
-	if (typeof autocomplete !== 'string' || typeof type !== 'string') {
+export function is_valid_autocomplete(autocomplete: null | true | string) {
+	if (autocomplete === true) {
 		return false;
+	} else if (!autocomplete) {
+		return true; // dynamic value
 	}
 
 	const tokens = autocomplete.trim().toLowerCase().split(regex_whitespaces);

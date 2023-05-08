@@ -164,7 +164,7 @@ export default {
 	}),
 	a11y_autocomplete_valid: (type: null | true | string, value: null | true | string) => ({
 		code: 'a11y-autocomplete-valid',
-		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type}">`
+		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${type || '...'}">`
 	}),
 	a11y_img_redundant_alt: {
 		code: 'a11y-img-redundant-alt',
