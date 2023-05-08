@@ -25,6 +25,10 @@
 * Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 
+## 3.59.1
+
+* Handle dynamic values in `a11y-autocomplete-valid` ([#8567](https://github.com/sveltejs/svelte/pull/8567))
+
 ## 3.59.0
 
 * Add `ResizeObserver` bindings `contentRect`/`contentBoxSize`/`borderBoxSize`/`devicePixelContentBoxSize` ([#8022](https://github.com/sveltejs/svelte/pull/8022))
@@ -37,6 +41,7 @@
 * Fix type of `VERSION` compiler export ([#8498](https://github.com/sveltejs/svelte/issues/8498))
 * Relax `a11y-no-redundant-roles` warning ([#8536](https://github.com/sveltejs/svelte/pull/8536))
 * Handle nested array rest destructuring ([#8552](https://github.com/sveltejs/svelte/issues/8552), [#8554](https://github.com/sveltejs/svelte/issues/8554))
+
 ## 3.58.0
 
 * Add `bind:innerText` for `contenteditable` elements ([#3311](https://github.com/sveltejs/svelte/issues/3311))

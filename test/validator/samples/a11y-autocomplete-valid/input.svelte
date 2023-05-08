@@ -1,3 +1,7 @@
+<script>
+    let dynamic = '';
+</script>
+
 <!-- VALID -->
 <input type="text" />
 <input type="text" autocomplete="name" />
@@ -14,6 +18,8 @@
 <input type="hidden" autocomplete="off" />
 <input type="hidden" autocomplete="on" />
 <input type="text" autocomplete="" />
+<input type="{dynamic}" autocomplete="" />
+<input type="text" autocomplete="{dynamic}" />
 
 <!-- INVALID -->
 <input type="text" autocomplete />
