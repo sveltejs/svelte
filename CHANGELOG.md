@@ -2,7 +2,7 @@
 
 ## 3.59.1 (Unreleased)
 
-* Handle dynamic values in `a11y-autocomplete-valid` ([#])
+* Handle dynamic values in `a11y-autocomplete-valid` ([#8567](https://github.com/sveltejs/svelte/pull/8567))
 
 ## 3.59.0
 

@@ -1,3 +1,7 @@
+<script>
+    let dynamic = '';
+</script>
+
 <!-- VALID -->
 <input type="text" />
 <input type="text" autocomplete="name" />
