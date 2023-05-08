@@ -2,7 +2,7 @@
 
 ## Unreleased (4.0)
 
-* **breaking** Minimum supported Node version is now Node 14 ([#8482](https://github.com/sveltejs/svelte/pull/8482))
+* **breaking** Minimum supported Node version is now Node 16 ([#8566](https://github.com/sveltejs/svelte/pull/8566))
 * **breaking** Minimum supported webpack version is now webpack 5 ([#8515](https://github.com/sveltejs/svelte/pull/8515))
 * **breaking** Bundlers must specify the `browser` condition when building a frontend bundle for the browser ([#8516](https://github.com/sveltejs/svelte/pull/8516))
 * **breaking** Minimum supported vite-plugin-svelte version is now 2.1.1. SvelteKit users can upgrade to 1.15.9 or newer to ensure a compatible version ([#8516](https://github.com/sveltejs/svelte/pull/8516))

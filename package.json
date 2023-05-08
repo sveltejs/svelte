@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "3.59.0",
+  "version": "4.0.0-next.0",
   "description": "Cybernetically enhanced web apps",
   "module": "index.mjs",
   "main": "index",
@@ -77,7 +77,7 @@
     }
   },
   "engines": {
-    "node": ">= 14"
+    "node": ">=16"
   },
   "types": "types/runtime/index.d.ts",
   "scripts": {
@@ -152,8 +152,5 @@
     "typescript": "^5.0.4",
     "util": "^0.12.5"
   },
-  "packageManager": "pnpm@7.32.0",
-  "engines": {
-    "pnpm": ">=7.0.0"
-  }
+  "packageManager": "pnpm@8.4.0"
 }
