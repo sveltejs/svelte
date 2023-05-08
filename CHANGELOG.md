@@ -1,5 +1,9 @@
 # Svelte changelog
 
+## 3.59.1 (Unreleased)
+
+* Handle dynamic values in `a11y-autocomplete-valid` ([#8567](https://github.com/sveltejs/svelte/pull/8567))
+
 ## 3.59.0
 
 * Add `ResizeObserver` bindings `contentRect`/`contentBoxSize`/`borderBoxSize`/`devicePixelContentBoxSize` ([#8022](https://github.com/sveltejs/svelte/pull/8022))
