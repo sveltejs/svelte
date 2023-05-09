@@ -8,7 +8,7 @@
 
 <Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
-		<h3>who's using svelte?</h3>
+		<h3>Who's using svelte?</h3>
 		<div class="logos">
 			{#each sorted as { href, filename, alt, style, invert, width, height }}
 				<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
