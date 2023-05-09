@@ -1,17 +1,19 @@
 import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
-import { contenteditable_truthy_values, has_prop } from './utils';
+import { contenteditable_truthy_values, has_prop } from './utils.js';
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
 let is_hydrating = false;
 
 /**
- * @returns {void} */
+ * @returns {void}
+ */
 export function start_hydrating() {
 	is_hydrating = true;
 }
 
 /**
- * @returns {void} */
+ * @returns {void}
+ */
 export function end_hydrating() {
 	is_hydrating = false;
 }
@@ -46,7 +48,8 @@ function init_hydrate(target) {
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 
 	/**
-	 * @type {ArrayLike<NodeEx2>} */
+	 * @type {ArrayLike<NodeEx2>}
+	 */
 	let children = target.childNodes;
 	// If target is <head>, there may be children without claim_order
 	if (target.nodeName === 'HEAD') {
@@ -100,12 +103,14 @@ function init_hydrate(target) {
 	// The longest increasing subsequence of nodes (initially reversed)
 
 	/**
-	 * @type {NodeEx2[]} */
+	 * @type {NodeEx2[]}
+	 */
 	const lis = [];
 	// The rest of the nodes, nodes that will be moved
 
 	/**
-	 * @type {NodeEx2[]} */
+	 * @type {NodeEx2[]}
+	 */
 	const toMove = [];
 	let last = children.length - 1;
 	for (let cur = m[longest] + 1; cur != 0; cur = p[cur - 1]) {
@@ -1187,7 +1192,11 @@ export function construct_svelte_component(component, props) {
  * 	childNodes: NodeListOf<NodeEx>;
  * }} NodeEx
  */
+
 /** @typedef {ChildNode & NodeEx} ChildNodeEx */
+
+/** @typedef {NodeEx & { claim_order: number }} NodeEx2 */
+
 /**
  * @typedef {ChildNodeEx[] & {
  * 	claim_info?: {
