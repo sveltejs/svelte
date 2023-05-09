@@ -1,6 +1,6 @@
 <script>
 	import { Blurb } from '@sveltejs/site-kit/components';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
+	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&as=picture';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';

@@ -1,10 +1,10 @@
 import { dev } from '$app/environment';
 import { client } from '$lib/db/client';
 import * as gist from '$lib/db/gist';
-import { get_example } from '$lib/server/examples';
-import { get_examples_list } from '$lib/server/examples/get-examples';
-import { error, json } from '@sveltejs/kit';
 import examples_data from '$lib/generated/examples-data.js';
+import { get_example } from '$lib/server/examples';
+import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
+import { error, json } from '@sveltejs/kit';
 
 export const prerender = 'auto';
 
@@ -87,9 +87,17 @@ export async function GET({ params }) {
 	return json({
 		id: params.id,
 		name: app.name,
+		// @ts-ignore
 		owner: app.userid,
 		relaxed: false,
 		// @ts-expect-error app.files has a `source` property
 		components: munge(app.files)
 	});
+}
+
+/** @type {import('./$types.js').EntryGenerator}  */
+export async function entries() {
+	return get_examples_list(get_examples_data())
+		.map(({ examples }) => examples)
+		.flatMap((val) => val.map(({ slug }) => ({ id: slug })));
 }

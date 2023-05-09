@@ -7,10 +7,10 @@
 </script>
 
 <picture>
-	{#each Object.entries(src.sources) as [format, images]}
-		<source srcset={images.map((i) => `${i.src} ${i.w}w`).join(', ')} type={'image/' + format} />
+	{#each Object.entries(src?.sources ?? {}) as [format, images]}
+		<source srcset={images?.map((i) => `${i?.src} ${i?.w}w`).join(', ')} type="image/{format}" />
 	{/each}
-	<img src={src.fallback.src} {alt} />
+	<img src={src?.img?.src} {alt} />
 </picture>
 
 <style>
