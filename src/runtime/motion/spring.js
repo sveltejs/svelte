@@ -1,7 +1,9 @@
-import { writable } from '../store';
-import { loop, now } from '../internal';
-import { is_date } from './utils';
-/** @param {TickContext<T>} ctx
+import { writable } from '../store.js';
+import { loop, now } from '../internal.js';
+import { is_date } from './utils.js';
+
+/**
+ * @param {TickContext<T>} ctx
  * @param {T} last_value
  * @param {T} current_value
  * @param {T} target_value
@@ -41,7 +43,9 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 		throw new Error(`Cannot spring ${typeof current_value} values`);
 	}
 }
-/** @param {T} value
+
+/**
+ * @param {T} value
  * @param {SpringOpts} opts
  * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/spring.ts-to-jsdoc").Spring<T>}
  */
@@ -128,22 +132,29 @@ export function spring(value, opts = {}) {
  * @template T
  */
 
-/** @typedef {Object} TickContext
+/**
+ * @typedef {Object} TickContext
  * @property {number} inv_mass
  * @property {number} dt
  * @property {Spring<T>} opts
  * @property {boolean} settled
  */
-/** @typedef {Object} SpringOpts
+
+/**
+ * @typedef {Object} SpringOpts
  * @property {number} [stiffness]
  * @property {number} [damping]
  * @property {number} [precision]
  */
-/** @typedef {Object} SpringUpdateOpts
+
+/**
+ * @typedef {Object} SpringUpdateOpts
  * @property {any} [hard]
  * @property {string|number|boolean} [soft]
  */
-/** @typedef {Object} Spring
+
+/**
+ * @typedef {Object} Spring
  * @property {(new_value:T,opts?:SpringUpdateOpts)=>Promise<void>} set
  * @property {(fn:Updater<T>,opts?:SpringUpdateOpts)=>Promise<void>} update
  * @property {number} precision
