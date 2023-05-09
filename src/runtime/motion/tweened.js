@@ -1,7 +1,8 @@
-import { writable } from '../store';
-import { assign, loop, now } from '../internal';
-import { linear } from '../easing';
-import { is_date } from './utils';
+import { writable } from '../store.js';
+import { assign, loop, now } from '../internal.js';
+import { linear } from '../easing.js';
+import { is_date } from './utils.js';
+
 /** @returns {(t: any) => any} */
 function get_interpolator(a, b) {
 	if (a === b || a !== a) return () => a;
@@ -42,7 +43,9 @@ function get_interpolator(a, b) {
 	}
 	throw new Error(`Cannot interpolate ${type} values`);
 }
-/** @param {T} value
+
+/**
+ * @param {T} value
  * @param {Options<T>} defaults
  * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/tweened.ts-to-jsdoc").Tweened<T>}
  */
@@ -51,7 +54,8 @@ export function tweened(value, defaults = {}) {
 	/** @type {Task} */
 	let task;
 	let target_value = value;
-	/** @param {T} new_value
+	/**
+	 * @param {T} new_value
 	 * @param {Options<T>} opts
 	 * @returns {any}
 	 */
@@ -113,7 +117,8 @@ export function tweened(value, defaults = {}) {
  * @template T
  */
 
-/** @typedef {Object} Options
+/**
+ * @typedef {Object} Options
  * @property {number} [delay]
  * @property {number|((from:T,to:T)=>number)} [duration]
  * @property {(t:number)=>number} [easing]
