@@ -3,7 +3,8 @@ import { now } from './environment.js';
 import { loop } from './loop.js';
 import { create_rule, delete_rule } from './style_manager.js';
 
-/** @param {Element & ElementCSSInlineStyle} node
+/**
+ * @param {Element & ElementCSSInlineStyle} node
  * @param {PositionRect} from
  * @param {AnimationFn} fn
  * @returns {any}
@@ -69,7 +70,8 @@ export function create_animation(node, from, fn, params) {
 	return stop;
 }
 
-/** @param {Element & ElementCSSInlineStyle} node
+/**
+ * @param {Element & ElementCSSInlineStyle} node
  * @returns {void}
  */
 export function fix_position(node) {
@@ -84,7 +86,8 @@ export function fix_position(node) {
 	}
 }
 
-/** @param {Element & ElementCSSInlineStyle} node
+/**
+ * @param {Element & ElementCSSInlineStyle} node
  * @param {PositionRect} a
  * @returns {void}
  */

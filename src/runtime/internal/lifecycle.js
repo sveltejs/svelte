@@ -172,6 +172,7 @@ export function bubble(component, event) {
 }
 
 /** @typedef {Object} EventDispatcher */
-/** @typedef {Object} DispatchOptions
+/**
+ * @typedef {Object} DispatchOptions
  * @property {boolean} [cancelable]
  */

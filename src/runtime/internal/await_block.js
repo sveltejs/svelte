@@ -97,7 +97,8 @@ export function update_await_block_branch(info, ctx, dirty) {
 	info.block.p(child_ctx, dirty);
 }
 
-/** @typedef {Object} PromiseInfo
+/**
+ * @typedef {Object} PromiseInfo
  * @property {null|any} ctx
  * @property {{}} token
  * @property {boolean} hasCatch

@@ -12,7 +12,8 @@ import { SvelteComponent } from './Component.js';
 import { is_void } from '../../shared/utils/names.js';
 import { contenteditable_truthy_values } from './utils.js';
 
-/** @param {string} type
+/**
+ * @param {string} type
  * @param {T} detail
  * @returns {void}
  */
@@ -22,7 +23,8 @@ export function dispatch_dev(type, detail) {
 	);
 }
 
-/** @param {Node} target
+/**
+ * @param {Node} target
  * @param {Node} node
  * @returns {void}
  */
@@ -31,7 +33,8 @@ export function append_dev(target, node) {
 	append(target, node);
 }
 
-/** @param {Node} target
+/**
+ * @param {Node} target
  * @param {Node} node
  * @returns {void}
  */
@@ -40,7 +43,8 @@ export function append_hydration_dev(target, node) {
 	append_hydration(target, node);
 }
 
-/** @param {Node} target
+/**
+ * @param {Node} target
  * @param {Node} node
  * @param {Node} anchor
  * @returns {void}
@@ -60,7 +64,8 @@ export function insert_hydration_dev(target, node, anchor) {
 	insert_hydration(target, node, anchor);
 }
 
-/** @param {Node} node
+/**
+ * @param {Node} node
  * @returns {void}
  */
 export function detach_dev(node) {
@@ -68,7 +73,8 @@ export function detach_dev(node) {
 	detach(node);
 }
 
-/** @param {Node} before
+/**
+ * @param {Node} before
  * @param {Node} after
  * @returns {void}
  */
@@ -78,7 +84,8 @@ export function detach_between_dev(before, after) {
 	}
 }
 
-/** @param {Node} after
+/**
+ * @param {Node} after
  * @returns {void}
  */
 export function detach_before_dev(after) {
@@ -87,7 +94,8 @@ export function detach_before_dev(after) {
 	}
 }
 
-/** @param {Node} before
+/**
+ * @param {Node} before
  * @returns {void}
  */
 export function detach_after_dev(before) {
@@ -96,7 +104,8 @@ export function detach_after_dev(before) {
 	}
 }
 
-/** @param {Node} node
+/**
+ * @param {Node} node
  * @param {string} event
  * @param {EventListenerOrEventListenerObject} handler
  * @param {boolean | AddEventListenerOptions | EventListenerOptions} options
@@ -127,7 +136,8 @@ export function listen_dev(
 	};
 }
 
-/** @param {Element} node
+/**
+ * @param {Element} node
  * @param {string} attribute
  * @param {string} value
  * @returns {void}
@@ -138,7 +148,8 @@ export function attr_dev(node, attribute, value) {
 	else dispatch_dev('SvelteDOMSetAttribute', { node, attribute, value });
 }
 
-/** @param {Element} node
+/**
+ * @param {Element} node
  * @param {string} property
  * @param {any} value
  * @returns {void}
@@ -148,7 +159,8 @@ export function prop_dev(node, property, value) {
 	dispatch_dev('SvelteDOMSetProperty', { node, property, value });
 }
 
-/** @param {HTMLElement} node
+/**
+ * @param {HTMLElement} node
  * @param {string} property
  * @param {any} value
  * @returns {void}
@@ -158,7 +170,8 @@ export function dataset_dev(node, property, value) {
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-/** @param {Text} text
+/**
+ * @param {Text} text
  * @param {unknown} data
  * @returns {void}
  */
@@ -169,7 +182,8 @@ export function set_data_dev(text, data) {
 	text.data = data;
 }
 
-/** @param {Text} text
+/**
+ * @param {Text} text
  * @param {unknown} data
  * @returns {void}
  */
@@ -180,7 +194,8 @@ export function set_data_contenteditable_dev(text, data) {
 	text.data = data;
 }
 
-/** @param {Text} text
+/**
+ * @param {Text} text
  * @param {unknown} data
  * @param {string} attr_value
  * @returns {void}
@@ -193,7 +208,8 @@ export function set_data_maybe_contenteditable_dev(text, data, attr_value) {
 	}
 }
 
-/** @returns {void} */
+/**
+ * @returns {void} */
 export function validate_each_argument(arg) {
 	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
 		let msg = '{#each} only iterates over array-like objects.';
@@ -204,7 +220,8 @@ export function validate_each_argument(arg) {
 	}
 }
 
-/** @returns {void} */
+/**
+ * @returns {void} */
 export function validate_slots(name, slot, keys) {
 	for (const slot_key of Object.keys(slot)) {
 		if (!~keys.indexOf(slot_key)) {
@@ -213,7 +230,8 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-/** @param {unknown} tag
+/**
+ * @param {unknown} tag
  * @returns {void}
  */
 export function validate_dynamic_element(tag) {
@@ -223,7 +241,8 @@ export function validate_dynamic_element(tag) {
 	}
 }
 
-/** @param {undefined | string} tag
+/**
+ * @param {undefined | string} tag
  * @returns {void}
  */
 export function validate_void_dynamic_element(tag) {
@@ -345,7 +364,8 @@ export function loop_guard(timeout) {
  */
 
 /** @typedef {Object} SvelteComponentDev */
-/** @typedef {Object} ComponentConstructorOptions
+/**
+ * @typedef {Object} ComponentConstructorOptions
  * @property {Element|Document|ShadowRoot} target
  * @property {Element} [anchor]
  * @property {Props} [props]

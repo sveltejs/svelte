@@ -299,7 +299,8 @@ if (typeof HTMLElement === 'function') {
 	};
 }
 
-/** @param {string} prop
+/**
+ * @param {string} prop
  * @param {any} value
  * @param {Record<string, CustomElementPropDefinition>} props_definition
  * @param {'toAttribute' | 'toProp'} transform
