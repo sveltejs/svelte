@@ -92,7 +92,7 @@ export function onDestroy(fn) {
  *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  * @template {Record<string, any>} EventMap
- * @returns {import('./lifecycle').EventDispatcher<EventMap>}
+ * @returns {import('./public.d.ts').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component = get_current_component();
@@ -175,9 +175,3 @@ export function bubble(component, event) {
 		callbacks.slice().forEach((fn) => fn.call(this, event));
 	}
 }
-
-/** @typedef {Object} EventDispatcher */
-/**
- * @typedef {Object} DispatchOptions
- * @property {boolean} [cancelable]
- */

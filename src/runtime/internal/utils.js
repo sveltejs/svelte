@@ -19,8 +19,10 @@ export function assign(tar, src) {
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
-/** @param {any} value
- * @returns {boolean}
+/**
+ * @template T
+ * @param {any} value
+ * @returns {value is PromiseLike<T>}
  */
 export function is_promise(value) {
 	return (
@@ -47,15 +49,17 @@ export function blank_object() {
 	return Object.create(null);
 }
 
-/** @param {Function[]} fns
+/**
+ * @param {Function[]} fns
  * @returns {void}
  */
 export function run_all(fns) {
 	fns.forEach(run);
 }
 
-/** @param {any} thing
- * @returns {boolean}
+/**
+ * @param {any} thing
+ * @returns {thing is Function}
  */
 export function is_function(thing) {
 	return typeof thing === 'function';

@@ -3,6 +3,7 @@ import { raf } from './environment.js';
 
 // we need to store the information for multiple documents because a Svelte application could also contain iframes
 // https://github.com/sveltejs/svelte/issues/3624
+/** @type {Map<Document | ShadowRoot, import('./private.d.ts').StyleInformation>} */
 const managed_styles = new Map();
 
 let active = 0;
@@ -96,9 +97,3 @@ export function clear_rules() {
 		managed_styles.clear();
 	});
 }
-
-/**
- * @typedef {Object} StyleInformation
- * @property {CSSStyleSheet} stylesheet
- * @property {Record<string,true>} rules
- */

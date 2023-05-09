@@ -27,11 +27,11 @@ export function clear_loops() {
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
- * @param {TaskCallback} callback
- * @returns {Task}
+ * @param {import('./private.d.ts').TaskCallback} callback
+ * @returns {import('./public.d.ts').Task}
  */
 export function loop(callback) {
-	/** @type {TaskEntry} */
+	/** @type {import('./private.d.ts').TaskEntry} */
 	let task;
 	if (tasks.size === 0) raf(run_tasks);
 	return {
@@ -43,12 +43,3 @@ export function loop(callback) {
 		}
 	};
 }
-
-/** @typedef {(now: number) => boolean | void} TaskCallback */
-/** @typedef {{ c: TaskCallback; f: () => void }} TaskEntry */
-
-/**
- * @typedef {Object} Task
- * @property {() => void} abort
- * @property {Promise<void>} promise
- */

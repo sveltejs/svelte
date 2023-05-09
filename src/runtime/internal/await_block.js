@@ -6,13 +6,13 @@ import { get_current_component, set_current_component } from './lifecycle.js';
 /**
  * @template T
  * @param {Promise<T>} promise
- * @param {PromiseInfo<T>} info
+ * @param {import('./private.d.ts').PromiseInfo<T>} info
  * @returns {boolean}
  */
 export function handle_promise(promise, info) {
 	const token = (info.token = {});
 	/**
-	 * @param {import('.').FragmentFactory} type
+	 * @param {import('./public.d.ts').FragmentFactory} type
 	 * @param {0 | 1 | 2} index
 	 * @param {number} [key]
 	 * @param {any} [value]
@@ -98,22 +98,3 @@ export function update_await_block_branch(info, ctx, dirty) {
 	}
 	info.block.p(child_ctx, dirty);
 }
-
-/**
- * @typedef {Object} PromiseInfo
- * @template T
- * @property {null|any} ctx
- * @property {{}} token
- * @property {boolean} hasCatch
- * @property {FragmentFactory} pending
- * @property {FragmentFactory} then
- * @property {FragmentFactory} catch
- * @property {number} value
- * @property {number} error
- * @property {T} [resolved]
- * @property {FragmentFactory|null} current
- * @property {Fragment|null} block
- * @property {[null|Fragment,null|Fragment,null|Fragment]} blocks
- * @property {()=>HTMLElement} mount
- * @property {HTMLElement} anchor
- */

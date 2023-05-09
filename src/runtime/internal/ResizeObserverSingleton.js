@@ -13,7 +13,7 @@ export class ResizeObserverSingleton {
 
 	/**
 	 * @param {Element} element
-	 * @param {Listener} listener
+	 * @param {import('./private.d.ts').Listener} listener
 	 * @returns {() => void}
 	 */
 	observe(element, listener) {
@@ -53,30 +53,3 @@ export class ResizeObserverSingleton {
 
 // Needs to be written like this to pass the tree-shake-test
 ResizeObserverSingleton.entries = 'WeakMap' in globals ? new WeakMap() : undefined;
-
-/** @typedef {(entry: ResizeObserverEntry) => any} Listener */
-/** @typedef {'border-box' | 'content-box' | 'device-pixel-content-box'} ResizeObserverBoxOptions */
-
-/**
- * @typedef {Object} ResizeObserverSize
- * @property {number} blockSize
- * @property {number} inlineSize
- */
-
-/**
- * @typedef {Object} ResizeObserverEntry
- * @property {readonly ResizeObserverSize[]} borderBoxSize
- * @property {readonly ResizeObserverSize[]} contentBoxSize
- * @property {DOMRectReadOnly} contentRect
- * @property {readonly ResizeObserverSize[]} devicePixelContentBoxSize
- * @property {Element} target
- */
-
-/**
- * @typedef {Object} ResizeObserverOptions
- * @property {ResizeObserverBoxOptions} [box]
- */
-
-/** @typedef {Object} ResizeObserver */
-
-/** @typedef {Object} ResizeObserverCallback */
