@@ -1,6 +1,6 @@
-import { writable } from '../store.js';
-import { assign, loop, now } from '../internal.js';
-import { linear } from '../easing.js';
+import { writable } from '../store';
+import { assign, loop, now } from '../internal';
+import { linear } from '../easing';
 import { is_date } from './utils.js';
 
 /** @returns {(t: any) => any} */

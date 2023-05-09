@@ -1,5 +1,5 @@
-import { writable } from '../store.js';
-import { loop, now } from '../internal.js';
+import { writable } from '../store';
+import { loop, now } from '../internal';
 import { is_date } from './utils.js';
 
 /**

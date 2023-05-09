@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut, linear } from '../easing.js';
-import { assign, split_css_unit, is_function } from '../internal.js';
+import { cubicOut, cubicInOut, linear } from '../easing';
+import { assign, split_css_unit, is_function } from '../internal';
 
 /**
  * @param {Element} node
