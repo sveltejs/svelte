@@ -2,13 +2,12 @@ import { custom_event } from './dom';
 export let current_component;
 /** @returns {void} */
 export function set_current_component(component) {
-    current_component = component;
+	current_component = component;
 }
 /** @returns {any} */
 export function get_current_component() {
-    if (!current_component)
-        throw new Error('Function called outside component initialization');
-    return current_component;
+	if (!current_component) throw new Error('Function called outside component initialization');
+	return current_component;
 }
 /**
  * Schedules a callback to run immediately before the component is updated after any state change.
@@ -20,7 +19,7 @@ export function get_current_component() {
  * @returns {void}
  */
 export function beforeUpdate(fn) {
-    get_current_component().$$.before_update.push(fn);
+	get_current_component().$$.before_update.push(fn);
 }
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -38,7 +37,7 @@ export function beforeUpdate(fn) {
  * @returns {void}
  */
 export function onMount(fn) {
-    get_current_component().$$.on_mount.push(fn);
+	get_current_component().$$.on_mount.push(fn);
 }
 /**
  * Schedules a callback to run immediately after the component has been updated.
@@ -48,7 +47,7 @@ export function onMount(fn) {
  * @returns {void}
  */
 export function afterUpdate(fn) {
-    get_current_component().$$.after_update.push(fn);
+	get_current_component().$$.after_update.push(fn);
 }
 /**
  * Schedules a callback to run immediately before the component is unmounted.
@@ -61,7 +60,7 @@ export function afterUpdate(fn) {
  * @returns {void}
  */
 export function onDestroy(fn) {
-    get_current_component().$$.on_destroy.push(fn);
+	get_current_component().$$.on_destroy.push(fn);
 }
 /**
  * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
@@ -86,20 +85,20 @@ export function onDestroy(fn) {
  * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/lifecycle.ts-to-jsdoc").EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
-    const component = get_current_component();
-    return ((type, detail, { cancelable = false } = {}) => {
-        const callbacks = component.$$.callbacks[type];
-        if (callbacks) {
-            // TODO are there situations where events could be dispatched
-            // in a server (non-DOM) environment?
-            const event = custom_event(type, detail, { cancelable });
-            callbacks.slice().forEach((fn) => {
-                fn.call(component, event);
-            });
-            return !event.defaultPrevented;
-        }
-        return true;
-    });
+	const component = get_current_component();
+	return (type, detail, { cancelable = false } = {}) => {
+		const callbacks = component.$$.callbacks[type];
+		if (callbacks) {
+			// TODO are there situations where events could be dispatched
+			// in a server (non-DOM) environment?
+			const event = custom_event(type, detail, { cancelable });
+			callbacks.slice().forEach((fn) => {
+				fn.call(component, event);
+			});
+			return !event.defaultPrevented;
+		}
+		return true;
+	};
 }
 /**
  * Associates an arbitrary `context` object with the current component and the specified `key`
@@ -113,8 +112,8 @@ export function createEventDispatcher() {
  * @returns {T}
  */
 export function setContext(key, context) {
-    get_current_component().$$.context.set(key, context);
-    return context;
+	get_current_component().$$.context.set(key, context);
+	return context;
 }
 /**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
@@ -124,7 +123,7 @@ export function setContext(key, context) {
  * @returns {T}
  */
 export function getContext(key) {
-    return get_current_component().$$.context.get(key);
+	return get_current_component().$$.context.get(key);
 }
 /**
  * Retrieves the whole context map that belongs to the closest parent component.
@@ -135,7 +134,7 @@ export function getContext(key) {
  * @returns {T}
  */
 export function getAllContexts() {
-    return get_current_component().$$.context;
+	return get_current_component().$$.context;
 }
 /**
  * Checks whether a given `key` has been set in the context of a parent component.
@@ -145,24 +144,21 @@ export function getAllContexts() {
  * @returns {boolean}
  */
 export function hasContext(key) {
-    return get_current_component().$$.context.has(key);
+	return get_current_component().$$.context.has(key);
 }
 // TODO figure out if we still want to support
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
 /** @returns {void} */
 export function bubble(component, event) {
-    const callbacks = component.$$.callbacks[event.type];
-    if (callbacks) {
-        // @ts-ignore
-        callbacks.slice().forEach((fn) => fn.call(this, event));
-    }
+	const callbacks = component.$$.callbacks[event.type];
+	if (callbacks) {
+		// @ts-ignore
+		callbacks.slice().forEach((fn) => fn.call(this, event));
+	}
 }
-
-
-
 
 /** @typedef {Object} EventDispatcher */
 /** @typedef {Object} DispatchOptions
- * @property {boolean} [cancelable] 
+ * @property {boolean} [cancelable]
  */
