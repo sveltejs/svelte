@@ -1,6 +1,8 @@
 import { cubicOut } from '../easing';
 import { is_function } from '../internal';
-/** @param {Element} node
+
+/**
+ * @param {Element} node
  * @param {{ from: DOMRect; to: DOMRect }}
  * @param {FlipParams} params
  * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").AnimationConfig}
@@ -26,14 +28,17 @@ export function flip(node, { from, to }, params = {}) {
 	};
 }
 
-/** @typedef {Object} AnimationConfig
+/**
+ * @typedef {Object} AnimationConfig
  * @property {number} [delay]
  * @property {number} [duration]
  * @property {(t:number)=>number} [easing]
  * @property {(t:number,u:number)=>string} [css]
  * @property {(t:number,u:number)=>void} [tick]
  */
-/** @typedef {Object} FlipParams
+
+/**
+ * @typedef {Object} FlipParams
  * @property {number} [delay]
  * @property {number|((len:number)=>number)} [duration]
  * @property {(t:number)=>number} [easing]
