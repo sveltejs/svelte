@@ -29,6 +29,7 @@ export function get_spread_update(levels, updates) {
 	}
 	return update;
 }
+
 /** @returns {any} */
 export function get_spread_object(spread_props) {
 	return typeof spread_props === 'object' && spread_props !== null ? spread_props : {};
