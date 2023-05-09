@@ -25,6 +25,7 @@ const _boolean_attributes = [
 	'reversed',
 	'selected'
 ];
+
 /**
  * List of HTML boolean attributes (e.g. `<input disabled>`).
  * Source: https://html.spec.whatwg.org/multipage/indices.html
