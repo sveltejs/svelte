@@ -1,4 +1,5 @@
 export {};
+
 // Implementation notes:
 // - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 // - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
@@ -31,7 +32,7 @@ export {};
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
  * @typedef {Object} ActionReturn
- * @property {[Parameter]extends[never]?never:(parameter:Parameter)=>void} [update]
+ * @property {[Parameter] extends [never] ? never : (parameter: Parameter) => void} [update]
  * @property {()=>void} [destroy]
  * @property {Attributes} [$$_attributes]
  * ### DO NOT USE THIS
