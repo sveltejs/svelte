@@ -1,12 +1,18 @@
-import { run_all } from './utils';
-import { current_component, set_current_component } from './lifecycle';
+import { run_all } from './utils.js';
+import { current_component, set_current_component } from './lifecycle.js';
+
 export const dirty_components = [];
 export const intros = { enabled: false };
 export const binding_callbacks = [];
+
 let render_callbacks = [];
+
 const flush_callbacks = [];
+
 const resolved_promise = /* @__PURE__ */ Promise.resolve();
+
 let update_scheduled = false;
+
 /** @returns {void} */
 export function schedule_update() {
 	if (!update_scheduled) {
@@ -14,19 +20,23 @@ export function schedule_update() {
 		resolved_promise.then(flush);
 	}
 }
+
 /** @returns {Promise<void>} */
 export function tick() {
 	schedule_update();
 	return resolved_promise;
 }
+
 /** @returns {void} */
 export function add_render_callback(fn) {
 	render_callbacks.push(fn);
 }
+
 /** @returns {void} */
 export function add_flush_callback(fn) {
 	flush_callbacks.push(fn);
 }
+
 // flush() calls callbacks in this order:
 // 1. All beforeUpdate callbacks, in order: parents before children
 // 2. All bind:this callbacks, in reverse order: children before parents.
@@ -46,7 +56,9 @@ export function add_flush_callback(fn) {
 //    callback called a second time; the seen_callbacks set, outside the flush()
 //    function, guarantees this behavior.
 const seen_callbacks = new Set();
+
 let flushidx = 0; // Do *not* move this inside the flush() function
+
 /** @returns {void} */
 export function flush() {
 	// Do not reenter flush while dirty components are updated, as this can
@@ -96,6 +108,7 @@ export function flush() {
 	seen_callbacks.clear();
 	set_current_component(saved_component);
 }
+
 /** @returns {void} */
 function update($$) {
 	if ($$.fragment !== null) {
@@ -107,6 +120,7 @@ function update($$) {
 		$$.after_update.forEach(add_render_callback);
 	}
 }
+
 /**
  * Useful for example to execute remaining `afterUpdate` callbacks before executing `destroy`.
  * @param {Function[]} fns
