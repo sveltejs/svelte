@@ -1,16 +1,18 @@
 import { noop } from './utils';
-
 export const is_client = typeof window !== 'undefined';
-
-export let now: () => number = is_client ? () => window.performance.now() : () => Date.now();
-
+/** @type {() => number} */
+export let now = is_client ? () => window.performance.now() : () => Date.now();
 export let raf = is_client ? (cb) => requestAnimationFrame(cb) : noop;
-
 // used internally for testing
+/** @returns {void} */
 export function set_now(fn) {
-	now = fn;
+    now = fn;
+}
+/** @returns {void} */
+export function set_raf(fn) {
+    raf = fn;
 }
 
-export function set_raf(fn) {
-	raf = fn;
-}
+
+
+
