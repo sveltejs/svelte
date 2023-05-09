@@ -3,9 +3,6 @@ export {};
 // - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 // - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
 
-
-
-
 /**
  * Actions can return an object containing the two properties defined in this interface. Both are optional.
  * - update: An action can have a parameter. This method will be called whenever that parameter changes,
@@ -36,7 +33,7 @@ export {};
  * @typedef {Object} ActionReturn
  * @property {[Parameter]extends[never]?never:(parameter:Parameter)=>void} [update]
  * @property {()=>void} [destroy]
- * @property {Attributes} [$$_attributes] 
+ * @property {Attributes} [$$_attributes]
  * ### DO NOT USE THIS
  * This exists solely for type-checking and has no effect at runtime.
  * Set this through the `Attributes` generic instead.
