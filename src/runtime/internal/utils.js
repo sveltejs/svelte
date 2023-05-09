@@ -1,7 +1,9 @@
 /** @returns {void} */
 export function noop() {}
+
 /** @returns {any} */
 export const identity = (x) => x;
+
 /** @param {T} tar
  * @param {S} src
  * @returns {T & S}
@@ -11,6 +13,7 @@ export function assign(tar, src) {
 	for (const k in src) tar[k] = src[k];
 	return tar;
 }
+
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 /** @param {any} value
@@ -23,37 +26,45 @@ export function is_promise(value) {
 		typeof value.then === 'function'
 	);
 }
+
 /** @returns {void} */
 export function add_location(element, file, line, column, char) {
 	element.__svelte_meta = {
 		loc: { file, line, column, char }
 	};
 }
+
 /** @returns {any} */
 export function run(fn) {
 	return fn();
 }
+
 /** @returns {any} */
 export function blank_object() {
 	return Object.create(null);
 }
+
 /** @param {Function[]} fns
  * @returns {void}
  */
 export function run_all(fns) {
 	fns.forEach(run);
 }
+
 /** @param {any} thing
  * @returns {boolean}
  */
 export function is_function(thing) {
 	return typeof thing === 'function';
 }
+
 /** @returns {boolean} */
 export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
+
 let src_url_equal_anchor;
+
 /** @returns {boolean} */
 export function src_url_equal(element_src, url) {
 	if (!src_url_equal_anchor) {
@@ -62,20 +73,24 @@ export function src_url_equal(element_src, url) {
 	src_url_equal_anchor.href = url;
 	return element_src === src_url_equal_anchor.href;
 }
+
 /** @returns {boolean} */
 export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
+
 /** @returns {boolean} */
 export function is_empty(obj) {
 	return Object.keys(obj).length === 0;
 }
+
 /** @returns {void} */
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
 	}
 }
+
 /** @returns {any} */
 export function subscribe(store, ...callbacks) {
 	if (store == null) {
@@ -87,6 +102,7 @@ export function subscribe(store, ...callbacks) {
 	const unsub = store.subscribe(...callbacks);
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
+
 /** @param {Readable<T>} store
  * @returns {T}
  */
@@ -95,10 +111,12 @@ export function get_store_value(store) {
 	subscribe(store, (_) => (value = _))();
 	return value;
 }
+
 /** @returns {void} */
 export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
+
 /** @returns {any} */
 export function create_slot(definition, ctx, $$scope, fn) {
 	if (definition) {
@@ -106,10 +124,12 @@ export function create_slot(definition, ctx, $$scope, fn) {
 		return definition[0](slot_ctx);
 	}
 }
+
 /** @returns {any} */
 function get_slot_context(definition, ctx, $$scope, fn) {
 	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
+
 /** @returns {any} */
 export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
@@ -129,6 +149,7 @@ export function get_slot_changes(definition, $$scope, dirty, fn) {
 	}
 	return $$scope.dirty;
 }
+
 /** @returns {void} */
 export function update_slot_base(
 	slot,
@@ -143,6 +164,7 @@ export function update_slot_base(
 		slot.p(slot_context, slot_changes);
 	}
 }
+
 /** @returns {void} */
 export function update_slot(
 	slot,
@@ -156,6 +178,7 @@ export function update_slot(
 	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
 	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
 }
+
 /** @returns {any[] | -1} */
 export function get_all_dirty_from_scope($$scope) {
 	if ($$scope.ctx.length > 32) {
@@ -168,12 +191,14 @@ export function get_all_dirty_from_scope($$scope) {
 	}
 	return -1;
 }
+
 /** @returns {{}} */
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
 }
+
 /** @returns {{}} */
 export function compute_rest_props(props, keys) {
 	const rest = {};
@@ -181,6 +206,7 @@ export function compute_rest_props(props, keys) {
 	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
 	return rest;
 }
+
 /** @returns {{}} */
 export function compute_slots(slots) {
 	const result = {};
@@ -189,6 +215,7 @@ export function compute_slots(slots) {
 	}
 	return result;
 }
+
 /** @returns {(this: any, ...args: any[]) => void} */
 export function once(fn) {
 	let ran = false;
@@ -198,21 +225,26 @@ export function once(fn) {
 		fn.call(this, ...args);
 	};
 }
+
 /** @returns {any} */
 export function null_to_empty(value) {
 	return value == null ? '' : value;
 }
+
 /** @returns {any} */
 export function set_store_value(store, ret, value) {
 	store.set(value);
 	return ret;
 }
+
 /** @returns {any} */
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+
 /** @returns {any} */
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
+
 /** @param {number | string} value
  * @returns {[number, string]}
  */
@@ -220,4 +252,5 @@ export function split_css_unit(value) {
 	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
 	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value, 'px'];
 }
+
 export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];
