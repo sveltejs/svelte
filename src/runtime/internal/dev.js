@@ -7,10 +7,11 @@ import {
 	detach,
 	listen,
 	attr
-} from './dom';
-import { SvelteComponent } from './Component';
-import { is_void } from '../../shared/utils/names';
-import { contenteditable_truthy_values } from './utils';
+} from './dom.js';
+import { SvelteComponent } from './Component.js';
+import { is_void } from '../../shared/utils/names.js';
+import { contenteditable_truthy_values } from './utils.js';
+
 /** @param {string} type
  * @param {T} detail
  * @returns {void}
@@ -20,6 +21,7 @@ export function dispatch_dev(type, detail) {
 		custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true })
 	);
 }
+
 /** @param {Node} target
  * @param {Node} node
  * @returns {void}
@@ -28,6 +30,7 @@ export function append_dev(target, node) {
 	dispatch_dev('SvelteDOMInsert', { target, node });
 	append(target, node);
 }
+
 /** @param {Node} target
  * @param {Node} node
  * @returns {void}
@@ -36,6 +39,7 @@ export function append_hydration_dev(target, node) {
 	dispatch_dev('SvelteDOMInsert', { target, node });
 	append_hydration(target, node);
 }
+
 /** @param {Node} target
  * @param {Node} node
  * @param {Node} anchor
@@ -45,6 +49,7 @@ export function insert_dev(target, node, anchor) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert(target, node, anchor);
 }
+
 /** @param {Node} target
  * @param {Node} node
  * @param {Node} anchor
@@ -54,6 +59,7 @@ export function insert_hydration_dev(target, node, anchor) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert_hydration(target, node, anchor);
 }
+
 /** @param {Node} node
  * @returns {void}
  */
@@ -61,6 +67,7 @@ export function detach_dev(node) {
 	dispatch_dev('SvelteDOMRemove', { node });
 	detach(node);
 }
+
 /** @param {Node} before
  * @param {Node} after
  * @returns {void}
@@ -70,6 +77,7 @@ export function detach_between_dev(before, after) {
 		detach_dev(before.nextSibling);
 	}
 }
+
 /** @param {Node} after
  * @returns {void}
  */
@@ -78,6 +86,7 @@ export function detach_before_dev(after) {
 		detach_dev(after.previousSibling);
 	}
 }
+
 /** @param {Node} before
  * @returns {void}
  */
@@ -86,6 +95,7 @@ export function detach_after_dev(before) {
 		detach_dev(before.nextSibling);
 	}
 }
+
 /** @param {Node} node
  * @param {string} event
  * @param {EventListenerOrEventListenerObject} handler
@@ -116,6 +126,7 @@ export function listen_dev(
 		dispose();
 	};
 }
+
 /** @param {Element} node
  * @param {string} attribute
  * @param {string} value
@@ -126,6 +137,7 @@ export function attr_dev(node, attribute, value) {
 	if (value == null) dispatch_dev('SvelteDOMRemoveAttribute', { node, attribute });
 	else dispatch_dev('SvelteDOMSetAttribute', { node, attribute, value });
 }
+
 /** @param {Element} node
  * @param {string} property
  * @param {any} value
@@ -135,6 +147,7 @@ export function prop_dev(node, property, value) {
 	node[property] = value;
 	dispatch_dev('SvelteDOMSetProperty', { node, property, value });
 }
+
 /** @param {HTMLElement} node
  * @param {string} property
  * @param {any} value
@@ -144,6 +157,7 @@ export function dataset_dev(node, property, value) {
 	node.dataset[property] = value;
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
+
 /** @param {Text} text
  * @param {unknown} data
  * @returns {void}
@@ -154,6 +168,7 @@ export function set_data_dev(text, data) {
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
 	text.data = data;
 }
+
 /** @param {Text} text
  * @param {unknown} data
  * @returns {void}
@@ -164,6 +179,7 @@ export function set_data_contenteditable_dev(text, data) {
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
 	text.data = data;
 }
+
 /** @param {Text} text
  * @param {unknown} data
  * @param {string} attr_value
@@ -176,6 +192,7 @@ export function set_data_maybe_contenteditable_dev(text, data, attr_value) {
 		set_data_dev(text, data);
 	}
 }
+
 /** @returns {void} */
 export function validate_each_argument(arg) {
 	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
@@ -186,6 +203,7 @@ export function validate_each_argument(arg) {
 		throw new Error(msg);
 	}
 }
+
 /** @returns {void} */
 export function validate_slots(name, slot, keys) {
 	for (const slot_key of Object.keys(slot)) {
@@ -194,6 +212,7 @@ export function validate_slots(name, slot, keys) {
 		}
 	}
 }
+
 /** @param {unknown} tag
  * @returns {void}
  */
@@ -203,6 +222,7 @@ export function validate_dynamic_element(tag) {
 		throw new Error('<svelte:element> expects "this" attribute to be a string.');
 	}
 }
+
 /** @param {undefined | string} tag
  * @returns {void}
  */
@@ -211,6 +231,7 @@ export function validate_void_dynamic_element(tag) {
 		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
 	}
 }
+
 /** @returns {any} */
 export function construct_svelte_component_dev(component, props) {
 	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
@@ -229,6 +250,7 @@ export function construct_svelte_component_dev(component, props) {
 		}
 	}
 }
+
 /**
  * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
  *
