@@ -15,3 +15,11 @@ export async function load({ params }) {
 		slug: params.slug
 	};
 }
+
+/** @type {import('./$types').EntryGenerator} */
+export async function entries() {
+	const examples_list = get_examples_list(get_examples_data());
+	return examples_list
+		.map(({ examples }) => examples)
+		.flatMap((val) => val.map(({ slug }) => ({ slug })));
+}
