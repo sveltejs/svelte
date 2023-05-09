@@ -4,9 +4,9 @@ import {
 	flush_render_callbacks,
 	schedule_update,
 	dirty_components
-} from './scheduler';
-import { current_component, set_current_component } from './lifecycle';
-import { blank_object, is_empty, is_function, run, run_all, noop } from './utils';
+} from './scheduler.js';
+import { current_component, set_current_component } from './lifecycle.js';
+import { blank_object, is_empty, is_function, run, run_all, noop } from './utils.js';
 import {
 	children,
 	detach,
@@ -14,8 +14,9 @@ import {
 	end_hydrating,
 	get_custom_elements_slots,
 	insert
-} from './dom';
-import { transition_in } from './transitions';
+} from './dom.js';
+import { transition_in } from './transitions.js';
+
 /** @returns {void} */
 export function bind(component, name, callback) {
 	const index = component.$$.props[name];
@@ -24,14 +25,17 @@ export function bind(component, name, callback) {
 		callback(component.$$.ctx[index]);
 	}
 }
+
 /** @returns {void} */
 export function create_component(block) {
 	block && block.c();
 }
+
 /** @returns {void} */
 export function claim_component(block, parent_nodes) {
 	block && block.l(parent_nodes);
 }
+
 /** @returns {void} */
 export function mount_component(component, target, anchor) {
 	const { fragment, after_update } = component.$$;
@@ -53,6 +57,7 @@ export function mount_component(component, target, anchor) {
 	});
 	after_update.forEach(add_render_callback);
 }
+
 /** @returns {void} */
 export function destroy_component(component, detaching) {
 	const $$ = component.$$;
@@ -66,6 +71,7 @@ export function destroy_component(component, detaching) {
 		$$.ctx = [];
 	}
 }
+
 /** @returns {void} */
 function make_dirty(component, i) {
 	if (component.$$.dirty[0] === -1) {
@@ -75,6 +81,7 @@ function make_dirty(component, i) {
 	}
 	component.$$.dirty[(i / 31) | 0] |= 1 << i % 31;
 }
+
 /** @returns {void} */
 export function init(
 	component,
@@ -145,7 +152,9 @@ export function init(
 	}
 	set_current_component(parent_component);
 }
+
 export let SvelteElement;
+
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
 		$$componentCtor;
@@ -289,6 +298,7 @@ if (typeof HTMLElement === 'function') {
 		}
 	};
 }
+
 /** @param {string} prop
  * @param {any} value
  * @param {Record<string, CustomElementPropDefinition>} props_definition
@@ -326,6 +336,7 @@ function get_custom_element_value(prop, value, props_definition, transform) {
 		}
 	}
 }
+
 /**
  * @internal
  *
@@ -394,6 +405,7 @@ export function create_custom_element(
 	Component.element = Class;
 	return Class;
 }
+
 /**
  * Base class for Svelte components. Used when dev=false.
  */
