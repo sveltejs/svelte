@@ -166,6 +166,7 @@ if (typeof HTMLElement === 'function') {
 		$$props_definition = {};
 		$$listeners = {};
 		$$listener_unsubscribe_fns = new Map();
+
 		constructor($$componentCtor, $$slots, use_shadow_dom) {
 			super();
 			this.$$componentCtor = $$componentCtor;
@@ -174,6 +175,7 @@ if (typeof HTMLElement === 'function') {
 				this.attachShadow({ mode: 'open' });
 			}
 		}
+
 		addEventListener(type, listener, options) {
 			// We can't determine upfront if the event is a custom event or not, so we have to
 			// listen to both. If someone uses a custom event with the same name as a regular
@@ -186,6 +188,7 @@ if (typeof HTMLElement === 'function') {
 			}
 			super.addEventListener(type, listener, options);
 		}
+
 		removeEventListener(type, listener, options) {
 			super.removeEventListener(type, listener, options);
 			if (this.$$component) {
@@ -196,6 +199,7 @@ if (typeof HTMLElement === 'function') {
 				}
 			}
 		}
+
 		async connectedCallback() {
 			this.$$connected = true;
 			if (!this.$$component) {
@@ -264,6 +268,7 @@ if (typeof HTMLElement === 'function') {
 				this.$$listeners = {};
 			}
 		}
+
 		// We don't need this when working within Svelte code, but for compatibility of people using this outside of Svelte
 		// and setting attributes through setAttribute etc, this is helpful
 		attributeChangedCallback(attr, _oldValue, newValue) {
@@ -277,6 +282,7 @@ if (typeof HTMLElement === 'function') {
 			);
 			this.$$component.$set({ [attr]: this.$$data[attr] });
 		}
+
 		disconnectedCallback() {
 			this.$$connected = false;
 			// In a microtask, because this could be a move within the DOM
@@ -287,6 +293,7 @@ if (typeof HTMLElement === 'function') {
 				}
 			});
 		}
+
 		$$get_prop_name(attribute_name) {
 			return (
 				Object.keys(this.$$props_definition).find(
@@ -415,11 +422,13 @@ export class SvelteComponent {
 	$$ = undefined;
 	/** */
 	$$set = undefined;
+
 	/** @returns {void} */
 	$destroy() {
 		destroy_component(this, 1);
 		this.$destroy = noop;
 	}
+
 	/** @returns {any} */
 	$on(type, callback) {
 		if (!is_function(callback)) {
@@ -432,6 +441,7 @@ export class SvelteComponent {
 			if (index !== -1) callbacks.splice(index, 1);
 		};
 	}
+
 	/** @returns {void} */
 	$set($$props) {
 		if (this.$$set && !is_empty($$props)) {
@@ -442,7 +452,8 @@ export class SvelteComponent {
 	}
 }
 
-/** @typedef {Object} CustomElementPropDefinition
+/**
+ * @typedef {Object} CustomElementPropDefinition
  * @property {string} [attribute]
  * @property {boolean} [reflect]
  * @property {'String'|'Boolean'|'Number'|'Array'|'Object'} [type]
