@@ -1,4 +1,5 @@
-/** @param {any} obj
+/**
+ * @param {any} obj
  * @returns {boolean}
  */
 export function is_date(obj) {
