@@ -106,5 +106,5 @@ export function add_transform(node, a) {
  * 	node: Element,
  * 	{ from, to }: { from: PositionRect; to: PositionRect },
  * 	params: any
- * ) => AnimationConfig} AnimationFn
+ * ) => import('../animate').AnimationConfig} AnimationFn
  */

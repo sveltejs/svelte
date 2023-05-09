@@ -28,7 +28,7 @@ export function clear_loops() {
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
  * @param {TaskCallback} callback
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/loop.ts-to-jsdoc").Task}
+ * @returns {Task}
  */
 export function loop(callback) {
 	/** @type {TaskEntry} */
@@ -49,5 +49,6 @@ export function loop(callback) {
 
 /**
  * @typedef {Object} Task
+ * @property {() => void} abort
  * @property {Promise<void>} promise
  */

@@ -66,7 +66,7 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 
 /**
  * @param {Element & ElementCSSInlineStyle} node
- * @param {string} name
+ * @param {string} [name]
  * @returns {void}
  */
 export function delete_rule(node, name) {

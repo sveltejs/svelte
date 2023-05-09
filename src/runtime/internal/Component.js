@@ -95,7 +95,7 @@ export function init(
 ) {
 	const parent_component = current_component;
 	set_current_component(component);
-	/** @type {T$$} */
+	/** @type {import('.').T$$} */
 	const $$ = (component.$$ = {
 		fragment: null,
 		ctx: [],
@@ -163,8 +163,11 @@ if (typeof HTMLElement === 'function') {
 		$$connected = false;
 		$$data = {};
 		$$reflecting = false;
+		/** @type {Record<string, CustomElementPropDefinition>} */
 		$$props_definition = {};
+		/** @type {Record<string, Function[]>} */
 		$$listeners = {};
+		/** @type {Map<Function, Function>} */
 		$$listener_unsubscribe_fns = new Map();
 
 		constructor($$componentCtor, $$slots, use_shadow_dom) {
@@ -310,7 +313,7 @@ if (typeof HTMLElement === 'function') {
  * @param {string} prop
  * @param {any} value
  * @param {Record<string, CustomElementPropDefinition>} props_definition
- * @param {'toAttribute' | 'toProp'} transform
+ * @param {'toAttribute' | 'toProp'} [transform]
  * @returns {any}
  */
 function get_custom_element_value(prop, value, props_definition, transform) {
@@ -349,12 +352,11 @@ function get_custom_element_value(prop, value, props_definition, transform) {
  * @internal
  *
  * Turn a Svelte component into a custom element.
- * @param {ComponentType} Component  A Svelte component constructor
+ * @param {import('./dev').ComponentType} Component  A Svelte component constructor
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
  * @param {string[]} accessors  Other accessors besides the ones for props the component has
  * @param {boolean} use_shadow_dom  Whether to use shadow DOM
- * @returns {Class<Class>} A custom element class
  */
 export function create_custom_element(
 	Component,
@@ -410,7 +412,7 @@ export function create_custom_element(
 			}
 		});
 	});
-	Component.element = Class;
+	Component.element = /** @type {any} */ (Class);
 	return Class;
 }
 

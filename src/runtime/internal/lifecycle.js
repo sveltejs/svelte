@@ -36,6 +36,7 @@ export function beforeUpdate(fn) {
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
  *
  * https://svelte.dev/docs#run-time-svelte-onmount
+ * @template T
  * @param {() => T extends Promise<() => any>
  * 		? "Returning a function asynchronously from onMount won't call that function on destroy"
  * 		: T} fn
@@ -90,7 +91,8 @@ export function onDestroy(fn) {
  * ```
  *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/lifecycle.ts-to-jsdoc").EventDispatcher<EventMap>}
+ * @template {Record<string, any>} EventMap
+ * @returns {import('./lifecycle').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component = get_current_component();
@@ -99,7 +101,7 @@ export function createEventDispatcher() {
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail, { cancelable });
+			const event = custom_event(/** @type {string} */ (type), detail, { cancelable });
 			callbacks.slice().forEach((fn) => {
 				fn.call(component, event);
 			});
@@ -117,6 +119,7 @@ export function createEventDispatcher() {
  * Like lifecycle functions, this must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-setcontext
+ * @template T
  * @param {T} context
  * @returns {T}
  */
@@ -130,6 +133,7 @@ export function setContext(key, context) {
  * Must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-getcontext
+ * @template T
  * @returns {T}
  */
 export function getContext(key) {
@@ -142,6 +146,7 @@ export function getContext(key) {
  * programmatically create a component and want to pass the existing context to it.
  *
  * https://svelte.dev/docs#run-time-svelte-getallcontexts
+ * @template T
  * @returns {T}
  */
 export function getAllContexts() {

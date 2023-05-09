@@ -13,6 +13,7 @@ import { is_void } from '../../shared/utils/names.js';
 import { contenteditable_truthy_values } from './utils.js';
 
 /**
+ * @template T
  * @param {string} type
  * @param {T} detail
  * @returns {void}
@@ -179,7 +180,7 @@ export function set_data_dev(text, data) {
 	data = '' + data;
 	if (text.data === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data;
+	text.data = /** @type {string} */ (data);
 }
 
 /**
@@ -191,7 +192,7 @@ export function set_data_contenteditable_dev(text, data) {
 	data = '' + data;
 	if (text.wholeText === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data;
+	text.data = /** @type {string} */ (data);
 }
 
 /**
@@ -293,6 +294,9 @@ export function construct_svelte_component_dev(component, props) {
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any>} Events
+ * @template {Record<string, any>} Slots
  * @extends SvelteComponent
  */
 export class SvelteComponentDev extends SvelteComponent {
@@ -302,6 +306,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
+	/** @type {Props} */
 	$$prop_def = undefined;
 	/**
 	 * @private
@@ -309,6 +314,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
+	/** @type {Events} */
 	$$events_def = undefined;
 	/**
 	 * @private
@@ -316,13 +322,16 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 */
+	/** @type {Slots} */
 	$$slot_def = undefined;
+
 	constructor(options) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
 		super();
 	}
+
 	/** @returns {void} */
 	$destroy() {
 		super.$destroy();
@@ -330,16 +339,22 @@ export class SvelteComponentDev extends SvelteComponent {
 			console.warn('Component was already destroyed'); // eslint-disable-line no-console
 		};
 	}
+
 	/** @returns {void} */
 	$capture_state() {}
+
 	/** @returns {void} */
 	$inject_state() {}
 }
 /**
+ * @template {Record<string, any>} Props
+ * @template {Record<string, any>} Events
+ * @template {Record<string, any>} Slots
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
  * @extends SvelteComponentDev<Props, Events, Slots>
  */
 export class SvelteComponentTyped extends SvelteComponentDev {}
+
 /** @returns {() => void} */
 export function loop_guard(timeout) {
 	const start = Date.now();
@@ -349,29 +364,3 @@ export function loop_guard(timeout) {
 		}
 	};
 }
-
-/**
- * @typedef {Class<HTMLElement>} ComponentType
- * @template {SvelteComponentDev} [Component=SvelteComponentDev]
- */
-/**
- * @typedef {Component extends SvelteComponentDev<infer Props> ? Props : never} ComponentProps
- * @template {SvelteComponent} Component
- */
-/**
- * @typedef {Component extends SvelteComponentDev<any, infer Events> ? Events : never} ComponentEvents
- * @template {SvelteComponent} Component
- */
-
-/** @typedef {Object} SvelteComponentDev */
-/**
- * @typedef {Object} ComponentConstructorOptions
- * @property {Element|Document|ShadowRoot} target
- * @property {Element} [anchor]
- * @property {Props} [props]
- * @property {Map<any,any>} [context]
- * @property {boolean} [hydrate]
- * @property {boolean} [intro]
- * @property {boolean} [$$inline]
- */
-/** @typedef {Object} SvelteComponentTyped */

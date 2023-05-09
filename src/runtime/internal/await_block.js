@@ -4,6 +4,7 @@ import { flush } from './scheduler.js';
 import { get_current_component, set_current_component } from './lifecycle.js';
 
 /**
+ * @template T
  * @param {Promise<T>} promise
  * @param {PromiseInfo<T>} info
  * @returns {boolean}
@@ -11,9 +12,10 @@ import { get_current_component, set_current_component } from './lifecycle.js';
 export function handle_promise(promise, info) {
 	const token = (info.token = {});
 	/**
-	 * @param {FragmentFactory} type
+	 * @param {import('.').FragmentFactory} type
 	 * @param {0 | 1 | 2} index
-	 * @param {number} key
+	 * @param {number} [key]
+	 * @param {any} [value]
 	 * @returns {void}
 	 */
 	function update(type, index, key, value) {
@@ -99,6 +101,7 @@ export function update_await_block_branch(info, ctx, dirty) {
 
 /**
  * @typedef {Object} PromiseInfo
+ * @template T
  * @property {null|any} ctx
  * @property {{}} token
  * @property {boolean} hasCatch

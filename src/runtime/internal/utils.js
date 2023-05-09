@@ -4,14 +4,17 @@ export function noop() {}
 /** @returns {any} */
 export const identity = (x) => x;
 
-/** @param {T} tar
+/**
+ * @template T
+ * @template S
+ * @param {T} tar
  * @param {S} src
  * @returns {T & S}
  */
 export function assign(tar, src) {
 	// @ts-ignore
 	for (const k in src) tar[k] = src[k];
-	return tar;
+	return /** @type {T & S} */ (tar);
 }
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
@@ -103,7 +106,9 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-/** @param {Readable<T>} store
+/**
+ * @template T
+ * @param {import('../store').Readable<T>} store
  * @returns {T}
  */
 export function get_store_value(store) {

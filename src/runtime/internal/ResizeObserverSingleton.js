@@ -65,10 +65,10 @@ ResizeObserverSingleton.entries = 'WeakMap' in globals ? new WeakMap() : undefin
 
 /**
  * @typedef {Object} ResizeObserverEntry
- * @property {readonlyResizeObserverSize[]} borderBoxSize
- * @property {readonlyResizeObserverSize[]} contentBoxSize
+ * @property {readonly ResizeObserverSize[]} borderBoxSize
+ * @property {readonly ResizeObserverSize[]} contentBoxSize
  * @property {DOMRectReadOnly} contentRect
- * @property {readonlyResizeObserverSize[]} devicePixelContentBoxSize
+ * @property {readonly ResizeObserverSize[]} devicePixelContentBoxSize
  * @property {Element} target
  */
 

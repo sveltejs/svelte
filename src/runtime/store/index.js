@@ -13,7 +13,7 @@ const subscriber_queue = [];
  * Creates a `Readable` store that allows reading by subscription.
  * @param {T} value  initial value
  * @param {StartStopNotifier<T>} start  undefined
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Readable<T>}
+ * @returns {Readable<T>}
  */
 export function readable(value, start) {
 	return {

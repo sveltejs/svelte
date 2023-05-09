@@ -1,0 +1,94 @@
+import type { SvelteComponent } from './Component';
+
+export interface SvelteComponentDev<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
+> {
+	$set(props?: Partial<Props>): void;
+	$on<K extends Extract<keyof Events, string>>(
+		type: K,
+		callback: ((e: Events[K]) => void) | null | undefined
+	): () => void;
+	$destroy(): void;
+	[accessor: string]: any;
+}
+
+export interface ComponentConstructorOptions<
+	Props extends Record<string, any> = Record<string, any>
+> {
+	target: Element | Document | ShadowRoot;
+	anchor?: Element;
+	props?: Props;
+	context?: Map<any, any>;
+	hydrate?: boolean;
+	intro?: boolean;
+	$$inline?: boolean;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponentDev<Props, Events, Slots> {}
+
+/**
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
+ * dynamic components using `<svelte:component>`.
+ *
+ * Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentType, SvelteComponent } from 'svelte';
+ * 	import Component1 from './Component1.svelte';
+ * 	import Component2 from './Component2.svelte';
+ *
+ * 	const component: ComponentType = someLogic() ? Component1 : Component2;
+ * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
+ * </script>
+ *
+ * <svelte:component this={component} />
+ * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
+ * ```
+ */
+export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = (new (
+	options: ComponentConstructorOptions<
+		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
+	>
+) => Component) & {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement;
+};
+
+/**
+ * Convenience type to get the props the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ * 	import type { ComponentProps } from 'svelte';
+ * 	import Component from './Component.svelte';
+ *
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * </script>
+ * ```
+ */
+export type ComponentProps<Component extends SvelteComponent> =
+	Component extends SvelteComponentDev<infer Props> ? Props : never;
+
+/**
+ * Convenience type to get the events the given component expects. Example:
+ * ```html
+ * <script lang="ts">
+ *    import type { ComponentEvents } from 'svelte';
+ *    import Component from './Component.svelte';
+ *
+ *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
+ *       console.log(event.detail);
+ *    }
+ * </script>
+ *
+ * <Component on:close={handleCloseEvent} />
+ * ```
+ */
+export type ComponentEvents<Component extends SvelteComponent> =
+	Component extends SvelteComponentDev<any, infer Events> ? Events : never;
