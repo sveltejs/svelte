@@ -1,6 +1,9 @@
-import { raf } from './environment';
+import { raf } from './environment.js';
+
 const tasks = new Set();
-/** @param {number} now
+
+/**
+ * @param {number} now
  * @returns {void}
  */
 function run_tasks(now) {
@@ -12,6 +15,7 @@ function run_tasks(now) {
 	});
 	if (tasks.size !== 0) raf(run_tasks);
 }
+
 /**
  * For testing purposes only!
  * @returns {void}
@@ -19,6 +23,7 @@ function run_tasks(now) {
 export function clear_loops() {
 	tasks.clear();
 }
+
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
@@ -42,6 +47,7 @@ export function loop(callback) {
 /** @typedef {(now: number) => boolean | void} TaskCallback */
 /** @typedef {{ c: TaskCallback; f: () => void }} TaskEntry */
 
-/** @typedef {Object} Task
+/**
+ * @typedef {Object} Task
  * @property {Promise<void>} promise
  */
