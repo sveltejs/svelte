@@ -22,5 +22,5 @@ export async function entries() {
 	const examples_list = get_examples_list(get_examples_data());
 	return examples_list
 		.map(({ examples }) => examples)
-		.flatMap((val) => val.map(({ slug }) => ({ slug: slug + '.json' })));
+		.flatMap((val) => val.map(({ slug }) => ({ slug })));
 }

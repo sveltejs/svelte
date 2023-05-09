@@ -99,5 +99,5 @@ export async function GET({ params }) {
 export async function entries() {
 	return get_examples_list(get_examples_data())
 		.map(({ examples }) => examples)
-		.flatMap((val) => val.map(({ slug }) => ({ id: slug + '.json' })));
+		.flatMap((val) => val.map(({ slug }) => ({ id: slug })));
 }
