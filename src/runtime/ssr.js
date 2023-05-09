@@ -1,11 +1,17 @@
-export { onDestroy, setContext, getContext, getAllContexts, hasContext, tick, createEventDispatcher, SvelteComponent, SvelteComponentTyped } from './index';
+export {
+	onDestroy,
+	setContext,
+	getContext,
+	getAllContexts,
+	hasContext,
+	tick,
+	createEventDispatcher,
+	SvelteComponent,
+	SvelteComponentTyped
+} from './index';
 /** @returns {void} */
-export function onMount() { }
+export function onMount() {}
 /** @returns {void} */
-export function beforeUpdate() { }
+export function beforeUpdate() {}
 /** @returns {void} */
-export function afterUpdate() { }
-
-
-
-
+export function afterUpdate() {}
