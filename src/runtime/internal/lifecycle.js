@@ -1,14 +1,18 @@
-import { custom_event } from './dom';
+import { custom_event } from './dom.js';
+
 export let current_component;
+
 /** @returns {void} */
 export function set_current_component(component) {
 	current_component = component;
 }
+
 /** @returns {any} */
 export function get_current_component() {
 	if (!current_component) throw new Error('Function called outside component initialization');
 	return current_component;
 }
+
 /**
  * Schedules a callback to run immediately before the component is updated after any state change.
  *
@@ -21,6 +25,7 @@ export function get_current_component() {
 export function beforeUpdate(fn) {
 	get_current_component().$$.before_update.push(fn);
 }
+
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
  * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
@@ -39,6 +44,7 @@ export function beforeUpdate(fn) {
 export function onMount(fn) {
 	get_current_component().$$.on_mount.push(fn);
 }
+
 /**
  * Schedules a callback to run immediately after the component has been updated.
  *
@@ -49,6 +55,7 @@ export function onMount(fn) {
 export function afterUpdate(fn) {
 	get_current_component().$$.after_update.push(fn);
 }
+
 /**
  * Schedules a callback to run immediately before the component is unmounted.
  *
@@ -62,6 +69,7 @@ export function afterUpdate(fn) {
 export function onDestroy(fn) {
 	get_current_component().$$.on_destroy.push(fn);
 }
+
 /**
  * Creates an event dispatcher that can be used to dispatch [component events](/docs#template-syntax-component-directives-on-eventname).
  * Event dispatchers are functions that can take two arguments: `name` and `detail`.
@@ -100,6 +108,7 @@ export function createEventDispatcher() {
 		return true;
 	};
 }
+
 /**
  * Associates an arbitrary `context` object with the current component and the specified `key`
  * and returns that object. The context is then available to children of the component
@@ -115,6 +124,7 @@ export function setContext(key, context) {
 	get_current_component().$$.context.set(key, context);
 	return context;
 }
+
 /**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
@@ -125,6 +135,7 @@ export function setContext(key, context) {
 export function getContext(key) {
 	return get_current_component().$$.context.get(key);
 }
+
 /**
  * Retrieves the whole context map that belongs to the closest parent component.
  * Must be called during component initialisation. Useful, for example, if you
@@ -136,6 +147,7 @@ export function getContext(key) {
 export function getAllContexts() {
 	return get_current_component().$$.context;
 }
+
 /**
  * Checks whether a given `key` has been set in the context of a parent component.
  * Must be called during component initialisation.
@@ -146,6 +158,7 @@ export function getAllContexts() {
 export function hasContext(key) {
 	return get_current_component().$$.context.has(key);
 }
+
 // TODO figure out if we still want to support
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
