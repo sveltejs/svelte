@@ -7,8 +7,6 @@ import { VERSION } from 'svelte/compiler';
 import { Project, SyntaxKind } from 'ts-morph';
 import ts from 'typescript';
 
-// get_bundled_types();
-
 export async function get_bundled_types() {
 	const dtsSources = fs.readdirSync(new URL('./dts-sources', import.meta.url));
 
