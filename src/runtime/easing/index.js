@@ -2,7 +2,7 @@
 Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
 */
-export { identity as linear } from '../internal';
+export { identity as linear } from '../internal/index.js';
 
 /**
  * @param {number} t

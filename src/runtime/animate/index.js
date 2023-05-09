@@ -1,5 +1,5 @@
-import { cubicOut } from '../easing';
-import { is_function } from '../internal';
+import { cubicOut } from '../easing/index.js';
+import { is_function } from '../internal/index.js';
 
 /**
  * @param {Element} node

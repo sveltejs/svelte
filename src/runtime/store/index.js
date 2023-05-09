@@ -5,7 +5,7 @@ import {
 	safe_not_equal,
 	is_function,
 	get_store_value
-} from '../internal';
+} from '../internal/index.js';
 
 const subscriber_queue = [];
 
