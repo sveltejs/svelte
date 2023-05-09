@@ -6,13 +6,9 @@ export let raf = is_client ? (cb) => requestAnimationFrame(cb) : noop;
 // used internally for testing
 /** @returns {void} */
 export function set_now(fn) {
-    now = fn;
+	now = fn;
 }
 /** @returns {void} */
 export function set_raf(fn) {
-    raf = fn;
+	raf = fn;
 }
-
-
-
-
