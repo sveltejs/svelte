@@ -18,3 +18,10 @@ export async function load({ params }) {
 		slug: params.slug
 	};
 }
+
+export async function entries() {
+	const tutorials_list = get_tutorial_list(get_tutorial_data());
+	return tutorials_list
+		.map(({ tutorials }) => tutorials)
+		.flatMap((val) => val.map(({ slug }) => ({ slug })));
+}
