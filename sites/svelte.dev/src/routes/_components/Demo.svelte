@@ -32,7 +32,7 @@
 </script>
 
 <Section --background="var(--sk-back-2)">
-	<h3>why Svelte?</h3>
+	<h3>Why Svelte?</h3>
 
 	<div class="container">
 		<div class="controls">
