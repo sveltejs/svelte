@@ -1,11 +1,13 @@
-import { set_current_component, current_component } from './lifecycle';
-import { run_all, blank_object } from './utils';
-import { boolean_attributes } from '../../shared/boolean_attributes';
-export { is_void } from '../../shared/utils/names';
+import { set_current_component, current_component } from './lifecycle.js';
+import { run_all, blank_object } from './utils.js';
+import { boolean_attributes } from '../../shared/boolean_attributes.js';
+export { is_void } from '../../shared/utils/names.js';
+
 export const invalid_attribute_name_character =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 // https://html.spec.whatwg.org/multipage/syntax.html#attributes-2
 // https://infra.spec.whatwg.org/#noncharacter
+
 /** @returns {string} */
 export function spread(args, attrs_to_add) {
 	const attributes = Object.assign({}, ...args);
@@ -42,6 +44,7 @@ export function spread(args, attrs_to_add) {
 	});
 	return str;
 }
+
 /** @returns {{}} */
 export function merge_ssr_styles(style_attribute, style_directive) {
 	const style_object = {};
@@ -62,8 +65,10 @@ export function merge_ssr_styles(style_attribute, style_directive) {
 	}
 	return style_object;
 }
+
 const ATTR_REGEX = /[&"]/g;
 const CONTENT_REGEX = /[&<]/g;
+
 /**
  * Note: this method is performance sensitive and has been optimized
  * https://github.com/sveltejs/svelte/pull/5701
@@ -84,12 +89,14 @@ export function escape(value, is_attr = false) {
 	}
 	return escaped + str.substring(last);
 }
+
 /** @returns {any} */
 export function escape_attribute_value(value) {
 	// keep booleans, null, and undefined for the sake of `spread`
 	const should_escape = typeof value === 'string' || (value && typeof value === 'object');
 	return should_escape ? escape(value, true) : value;
 }
+
 /** @returns {{}} */
 export function escape_object(obj) {
 	const result = {};
@@ -98,6 +105,7 @@ export function escape_object(obj) {
 	}
 	return result;
 }
+
 /** @returns {string} */
 export function each(items, fn) {
 	let str = '';
@@ -106,9 +114,11 @@ export function each(items, fn) {
 	}
 	return str;
 }
+
 export const missing_component = {
 	$$render: () => ''
 };
+
 /** @returns {any} */
 export function validate_component(component, name) {
 	if (!component || !component.$$render) {
@@ -119,13 +129,16 @@ export function validate_component(component, name) {
 	}
 	return component;
 }
+
 /** @returns {string} */
 export function debug(file, line, column, values) {
 	console.log(`{@debug} ${file ? file + ' ' : ''}(${line}:${column})`); // eslint-disable-line no-console
 	console.log(values); // eslint-disable-line no-console
 	return '';
 }
+
 let on_destroy;
+
 /** @returns {{ render: (props?: {}, { $$slots, context }?: { $$slots?: {}; context?: Map<any, any>; }) => { html: any; css: { code: string; map: any; }; head: string; }; $$render: (result: any, props: any, bindings: any, slots: any, context: any) => any; }} */
 export function create_ssr_component(fn) {
 	/** @returns {any} */
@@ -165,16 +178,19 @@ export function create_ssr_component(fn) {
 		$$render
 	};
 }
+
 /** @returns {string} */
 export function add_attribute(name, value, boolean) {
 	if (value == null || (boolean && !value)) return '';
 	const assignment = boolean && value === true ? '' : `="${escape(value, true)}"`;
 	return ` ${name}${assignment}`;
 }
+
 /** @returns {string} */
 export function add_classes(classes) {
 	return classes ? ` class="${classes}"` : '';
 }
+
 /** @returns {string} */
 function style_object_to_string(style_object) {
 	return Object.keys(style_object)
@@ -182,6 +198,7 @@ function style_object_to_string(style_object) {
 		.map((key) => `${key}: ${escape_attribute_value(style_object[key])};`)
 		.join(' ');
 }
+
 /** @returns {string} */
 export function add_styles(style_object) {
 	const styles = style_object_to_string(style_object);
