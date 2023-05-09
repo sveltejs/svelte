@@ -5,8 +5,10 @@ import {
 	safe_not_equal,
 	is_function,
 	get_store_value
-} from '../internal';
+} from '../internal.js';
+
 const subscriber_queue = [];
+
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @param {T} value  initial value
@@ -18,6 +20,7 @@ export function readable(value, start) {
 		subscribe: writable(value, start).subscribe
 	};
 }
+
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @param {T} value  initial value
@@ -51,13 +54,15 @@ export function writable(value, start = noop) {
 			}
 		}
 	}
-	/** @param {Updater<T>} fn
+	/**
+	 * @param {Updater<T>} fn
 	 * @returns {void}
 	 */
 	function update(fn) {
 		set(fn(value));
 	}
-	/** @param {Subscriber<T>} run
+	/**
+	 * @param {Subscriber<T>} run
 	 * @param {Invalidator<T>} invalidate
 	 * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Unsubscriber}
 	 */
@@ -79,7 +84,9 @@ export function writable(value, start = noop) {
 	}
 	return { set, update, subscribe };
 }
-/** @param {Stores} stores
+
+/**
+ * @param {Stores} stores
  * @param {Function} fn
  * @param {T} initial_value
  * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Readable<T>}
@@ -136,6 +143,7 @@ export function derived(stores, fn, initial_value) {
 		};
 	});
 }
+
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
@@ -147,6 +155,7 @@ export function readonly(store) {
 		subscribe: store.subscribe.bind(store)
 	};
 }
+
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
  * @param store readable
@@ -157,15 +166,19 @@ export { get_store_value as get };
  * @typedef {(value: T) => void} Subscriber
  * @template T
  */
+
 /** @typedef {() => void} Unsubscriber */
+
 /**
  * @typedef {(value: T) => T} Updater
  * @template T
  */
+
 /**
  * @typedef {(value?: T) => void} Invalidator
  * @template T
  */
+
 /**
  * @typedef {(
  * 	set: (value: T) => void,
@@ -173,11 +186,14 @@ export { get_store_value as get };
  * ) => void | (() => void)} StartStopNotifier
  * @template T
  */
+
 /**
  * @typedef {[Subscriber<T>, Invalidator<T>]} SubscribeInvalidateTuple
  * @template T
  */
+
 /** @typedef {Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>} Stores */
+
 /**
  * @typedef {T extends Readable<infer U>
  * 	? U
@@ -189,6 +205,7 @@ export { get_store_value as get };
  * Readable interface for subscribing.
  * @typedef {Object} Readable
  */
+
 /**
  * Writable interface for both updating and subscribing.
  * @typedef {Object} Writable
