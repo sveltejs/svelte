@@ -1,11 +1,15 @@
-import { append_empty_stylesheet, detach, get_root_for_style } from './dom';
-import { raf } from './environment';
+import { append_empty_stylesheet, detach, get_root_for_style } from './dom.js';
+import { raf } from './environment.js';
+
 // we need to store the information for multiple documents because a Svelte application could also contain iframes
 // https://github.com/sveltejs/svelte/issues/3624
 const managed_styles = new Map();
+
 let active = 0;
+
 // https://github.com/darkskyapp/string-hash/blob/master/index.js
-/** @param {string} str
+/**
+ * @param {string} str
  * @returns {number}
  */
 function hash(str) {
@@ -14,7 +18,9 @@ function hash(str) {
 	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
 	return hash >>> 0;
 }
-/** @param {Document | ShadowRoot} doc
+
+/**
+ * @param {Document | ShadowRoot} doc
  * @param {Element & ElementCSSInlineStyle} node
  * @returns {{ stylesheet: any; rules: {}; }}
  */
@@ -23,7 +29,9 @@ function create_style_information(doc, node) {
 	managed_styles.set(doc, info);
 	return info;
 }
-/** @param {Element & ElementCSSInlineStyle} node
+
+/**
+ * @param {Element & ElementCSSInlineStyle} node
  * @param {number} a
  * @param {number} b
  * @param {number} duration
@@ -55,7 +63,9 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	active += 1;
 	return name;
 }
-/** @param {Element & ElementCSSInlineStyle} node
+
+/**
+ * @param {Element & ElementCSSInlineStyle} node
  * @param {string} name
  * @returns {void}
  */
@@ -73,6 +83,7 @@ export function delete_rule(node, name) {
 		if (!active) clear_rules();
 	}
 }
+
 /** @returns {void} */
 export function clear_rules() {
 	raf(() => {
@@ -86,7 +97,8 @@ export function clear_rules() {
 	});
 }
 
-/** @typedef {Object} StyleInformation
+/**
+ * @typedef {Object} StyleInformation
  * @property {CSSStyleSheet} stylesheet
  * @property {Record<string,true>} rules
  */
