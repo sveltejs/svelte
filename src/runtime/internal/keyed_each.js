@@ -1,26 +1,31 @@
-import { transition_in, transition_out } from './transitions';
-import { run_all } from './utils';
+import { transition_in, transition_out } from './transitions.js';
+import { run_all } from './utils.js';
+
 /** @returns {void} */
 export function destroy_block(block, lookup) {
 	block.d(1);
 	lookup.delete(block.key);
 }
+
 /** @returns {void} */
 export function outro_and_destroy_block(block, lookup) {
 	transition_out(block, 1, 1, () => {
 		lookup.delete(block.key);
 	});
 }
+
 /** @returns {void} */
 export function fix_and_destroy_block(block, lookup) {
 	block.f();
 	destroy_block(block, lookup);
 }
+
 /** @returns {void} */
 export function fix_and_outro_and_destroy_block(block, lookup) {
 	block.f();
 	outro_and_destroy_block(block, lookup);
 }
+
 /** @returns {any[]} */
 export function update_keyed_each(
 	old_blocks,
@@ -104,6 +109,7 @@ export function update_keyed_each(
 	run_all(updates);
 	return new_blocks;
 }
+
 /** @returns {void} */
 export function validate_each_keys(ctx, list, get_context, get_key) {
 	const keys = new Map();
