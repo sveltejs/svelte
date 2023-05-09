@@ -1,3 +1,11 @@
+export {};
+// Implementation notes:
+// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
+// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
+
+
+
+
 /**
  * Actions can return an object containing the two properties defined in this interface. Both are optional.
  * - update: An action can have a parameter. This method will be called whenever that parameter changes,
@@ -25,21 +33,14 @@
  * ```
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
+ * @typedef {Object} ActionReturn
+ * @property {[Parameter]extends[never]?never:(parameter:Parameter)=>void} [update]
+ * @property {()=>void} [destroy]
+ * @property {Attributes} [$$_attributes] 
+ * ### DO NOT USE THIS
+ * This exists solely for type-checking and has no effect at runtime.
+ * Set this through the `Attributes` generic instead.
  */
-export interface ActionReturn<
-	Parameter = never,
-	Attributes extends Record<string, any> = Record<never, any>
-> {
-	update?: [Parameter] extends [never] ? never : (parameter: Parameter) => void;
-	destroy?: () => void;
-	/**
-	 * ### DO NOT USE THIS
-	 * This exists solely for type-checking and has no effect at runtime.
-	 * Set this through the `Attributes` generic instead.
-	 */
-	$$_attributes?: Attributes;
-}
-
 /**
  * Actions are functions that are called when an element is created.
  * You can use this interface to type such actions.
@@ -56,21 +57,5 @@ export interface ActionReturn<
  * See interface `ActionReturn` for more details.
  *
  * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
+ * @typedef {Object} Action
  */
-export interface Action<
-	Element = HTMLElement,
-	Parameter = never,
-	Attributes extends Record<string, any> = Record<never, any>
-> {
-	<Node extends Element>(
-		...args: [Parameter] extends [never]
-			? [node: Node]
-			: undefined extends Parameter
-			? [node: Node, parameter?: Parameter]
-			: [node: Node, parameter: Parameter]
-	): void | ActionReturn<Parameter, Attributes>;
-}
-
-// Implementation notes:
-// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
-// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
