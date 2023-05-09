@@ -6,11 +6,13 @@ import { custom_event } from './dom';
 import { add_render_callback } from './scheduler';
 
 /**
- * @type {Promise<void> | null} */
+ * @type {Promise<void> | null}
+ */
 let promise;
 
 /**
- * @returns {Promise<void>} */
+ * @returns {Promise<void>}
+ */
 function wait() {
 	if (!promise) {
 		promise = Promise.resolve();
@@ -33,7 +35,8 @@ function dispatch(node, direction, kind) {
 const outroing = new Set();
 
 /**
- * @type {Outro} */
+ * @type {Outro}
+ */
 let outros;
 
 /**
@@ -56,7 +59,7 @@ export function check_outros() {
 }
 
 /**
- * @param {Fragment} block
+ * @param {import('./public.js').Fragment} block
  * @param {0 | 1} local
  * @returns {void}
  */
@@ -68,7 +71,7 @@ export function transition_in(block, local) {
 }
 
 /**
- * @param {Fragment} block
+ * @param {import('./public.js').Fragment} block
  * @param {0 | 1} local
  * @param {0 | 1} detach
  * @returns {void}
@@ -91,7 +94,8 @@ export function transition_out(block, local, detach, callback) {
 }
 
 /**
- * @type {TransitionConfig} */
+ * @type {import('types/transition').TransitionConfig}
+ */
 const null_transition = { duration: 0 };
 
 /**
@@ -396,26 +400,27 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 /** @typedef {1} INTRO */
 /** @typedef {0} OUTRO */
 /** @typedef {{ direction: 'in' | 'out' | 'both' }} TransitionOptions */
-/** @typedef {(node: Element, params: any, options: TransitionOptions) => TransitionConfig} TransitionFn */
+/** @typedef {(node: Element, params: any, options: TransitionOptions) => import('types/transition').TransitionConfig} TransitionFn */
 
-/** @typedef {Object} Outro
+/**
+ * @typedef {Object} Outro
  * @property {number} r
- * remaining outros
  * @property {Function[]} c
- * callbacks
  * @property {Object} p
- * parent outro
  */
-/** @typedef {Object} PendingProgram
+
+/**
+ * @typedef {Object} PendingProgram
  * @property {number} start
  * @property {INTRO|OUTRO} b
  * @property {Outro} [group]
  */
-/** @typedef {Object} Program
+
+/**
+ * @typedef {Object} Program
  * @property {number} a
  * @property {INTRO|OUTRO} b
  * @property {1|-1} d
- * direction
  * @property {number} duration
  * @property {number} start
  * @property {number} end

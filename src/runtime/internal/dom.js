@@ -1200,9 +1200,7 @@ export function construct_svelte_component(component, props) {
 /**
  * @typedef {ChildNodeEx[] & {
  * 	claim_info?: {
- *
  * 		last_index: number;
- *
  * 		total_claimed: number;
  * 	};
  * }} ChildNodeArray
