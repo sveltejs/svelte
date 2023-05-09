@@ -1,218 +1,216 @@
-import type { Readable } from '../store';
-
-export function noop() {}
-
+/** @returns {void} */
+export function noop() { }
+/** @returns {any} */
 export const identity = (x) => x;
-
-export function assign<T, S>(tar: T, src: S): T & S {
-	// @ts-ignore
-	for (const k in src) tar[k] = src[k];
-	return tar as T & S;
+/** @param {T} tar
+ * @param {S} src
+ * @returns {T & S}
+ */
+export function assign(tar, src) {
+    // @ts-ignore
+    for (const k in src)
+        tar[k] = src[k];
+    return tar;
 }
-
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
-export function is_promise<T = any>(value: any): value is PromiseLike<T> {
-	return (
-		!!value &&
-		(typeof value === 'object' || typeof value === 'function') &&
-		typeof value.then === 'function'
-	);
+/** @param {any} value
+ * @returns {boolean}
+ */
+export function is_promise(value) {
+    return (!!value &&
+        (typeof value === 'object' || typeof value === 'function') &&
+        typeof value.then === 'function');
 }
-
+/** @returns {void} */
 export function add_location(element, file, line, column, char) {
-	element.__svelte_meta = {
-		loc: { file, line, column, char }
-	};
+    element.__svelte_meta = {
+        loc: { file, line, column, char }
+    };
 }
-
+/** @returns {any} */
 export function run(fn) {
-	return fn();
+    return fn();
 }
-
+/** @returns {any} */
 export function blank_object() {
-	return Object.create(null);
+    return Object.create(null);
 }
-
-export function run_all(fns: Function[]) {
-	fns.forEach(run);
+/** @param {Function[]} fns
+ * @returns {void}
+ */
+export function run_all(fns) {
+    fns.forEach(run);
 }
-
-export function is_function(thing: any): thing is Function {
-	return typeof thing === 'function';
+/** @param {any} thing
+ * @returns {boolean}
+ */
+export function is_function(thing) {
+    return typeof thing === 'function';
 }
-
+/** @returns {boolean} */
 export function safe_not_equal(a, b) {
-	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
+    return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
-
 let src_url_equal_anchor;
-
+/** @returns {boolean} */
 export function src_url_equal(element_src, url) {
-	if (!src_url_equal_anchor) {
-		src_url_equal_anchor = document.createElement('a');
-	}
-	src_url_equal_anchor.href = url;
-	return element_src === src_url_equal_anchor.href;
+    if (!src_url_equal_anchor) {
+        src_url_equal_anchor = document.createElement('a');
+    }
+    src_url_equal_anchor.href = url;
+    return element_src === src_url_equal_anchor.href;
 }
-
+/** @returns {boolean} */
 export function not_equal(a, b) {
-	return a != a ? b == b : a !== b;
+    return a != a ? b == b : a !== b;
 }
-
+/** @returns {boolean} */
 export function is_empty(obj) {
-	return Object.keys(obj).length === 0;
+    return Object.keys(obj).length === 0;
 }
-
+/** @returns {void} */
 export function validate_store(store, name) {
-	if (store != null && typeof store.subscribe !== 'function') {
-		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-	}
+    if (store != null && typeof store.subscribe !== 'function') {
+        throw new Error(`'${name}' is not a store with a 'subscribe' method`);
+    }
 }
-
+/** @returns {any} */
 export function subscribe(store, ...callbacks) {
-	if (store == null) {
-		for (const callback of callbacks) {
-			callback(undefined);
-		}
-		return noop;
-	}
-	const unsub = store.subscribe(...callbacks);
-	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+    if (store == null) {
+        for (const callback of callbacks) {
+            callback(undefined);
+        }
+        return noop;
+    }
+    const unsub = store.subscribe(...callbacks);
+    return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
-
-export function get_store_value<T>(store: Readable<T>): T {
-	let value;
-	subscribe(store, (_) => (value = _))();
-	return value;
+/** @param {Readable<T>} store
+ * @returns {T}
+ */
+export function get_store_value(store) {
+    let value;
+    subscribe(store, (_) => (value = _))();
+    return value;
 }
-
+/** @returns {void} */
 export function component_subscribe(component, store, callback) {
-	component.$$.on_destroy.push(subscribe(store, callback));
+    component.$$.on_destroy.push(subscribe(store, callback));
 }
-
+/** @returns {any} */
 export function create_slot(definition, ctx, $$scope, fn) {
-	if (definition) {
-		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
-		return definition[0](slot_ctx);
-	}
+    if (definition) {
+        const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
+        return definition[0](slot_ctx);
+    }
 }
-
+/** @returns {any} */
 function get_slot_context(definition, ctx, $$scope, fn) {
-	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
+    return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
-
+/** @returns {any} */
 export function get_slot_changes(definition, $$scope, dirty, fn) {
-	if (definition[2] && fn) {
-		const lets = definition[2](fn(dirty));
-
-		if ($$scope.dirty === undefined) {
-			return lets;
-		}
-
-		if (typeof lets === 'object') {
-			const merged = [];
-			const len = Math.max($$scope.dirty.length, lets.length);
-			for (let i = 0; i < len; i += 1) {
-				merged[i] = $$scope.dirty[i] | lets[i];
-			}
-
-			return merged;
-		}
-
-		return $$scope.dirty | lets;
-	}
-
-	return $$scope.dirty;
+    if (definition[2] && fn) {
+        const lets = definition[2](fn(dirty));
+        if ($$scope.dirty === undefined) {
+            return lets;
+        }
+        if (typeof lets === 'object') {
+            const merged = [];
+            const len = Math.max($$scope.dirty.length, lets.length);
+            for (let i = 0; i < len; i += 1) {
+                merged[i] = $$scope.dirty[i] | lets[i];
+            }
+            return merged;
+        }
+        return $$scope.dirty | lets;
+    }
+    return $$scope.dirty;
 }
-
-export function update_slot_base(
-	slot,
-	slot_definition,
-	ctx,
-	$$scope,
-	slot_changes,
-	get_slot_context_fn
-) {
-	if (slot_changes) {
-		const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
-		slot.p(slot_context, slot_changes);
-	}
+/** @returns {void} */
+export function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
+    if (slot_changes) {
+        const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+        slot.p(slot_context, slot_changes);
+    }
 }
-
-export function update_slot(
-	slot,
-	slot_definition,
-	ctx,
-	$$scope,
-	dirty,
-	get_slot_changes_fn,
-	get_slot_context_fn
-) {
-	const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
-	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
+/** @returns {void} */
+export function update_slot(slot, slot_definition, ctx, $$scope, dirty, get_slot_changes_fn, get_slot_context_fn) {
+    const slot_changes = get_slot_changes(slot_definition, $$scope, dirty, get_slot_changes_fn);
+    update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
 }
-
+/** @returns {any[] | -1} */
 export function get_all_dirty_from_scope($$scope) {
-	if ($$scope.ctx.length > 32) {
-		const dirty = [];
-		const length = $$scope.ctx.length / 32;
-		for (let i = 0; i < length; i++) {
-			dirty[i] = -1;
-		}
-		return dirty;
-	}
-	return -1;
+    if ($$scope.ctx.length > 32) {
+        const dirty = [];
+        const length = $$scope.ctx.length / 32;
+        for (let i = 0; i < length; i++) {
+            dirty[i] = -1;
+        }
+        return dirty;
+    }
+    return -1;
 }
-
+/** @returns {{}} */
 export function exclude_internal_props(props) {
-	const result = {};
-	for (const k in props) if (k[0] !== '$') result[k] = props[k];
-	return result;
+    const result = {};
+    for (const k in props)
+        if (k[0] !== '$')
+            result[k] = props[k];
+    return result;
 }
-
+/** @returns {{}} */
 export function compute_rest_props(props, keys) {
-	const rest = {};
-	keys = new Set(keys);
-	for (const k in props) if (!keys.has(k) && k[0] !== '$') rest[k] = props[k];
-	return rest;
+    const rest = {};
+    keys = new Set(keys);
+    for (const k in props)
+        if (!keys.has(k) && k[0] !== '$')
+            rest[k] = props[k];
+    return rest;
 }
-
+/** @returns {{}} */
 export function compute_slots(slots) {
-	const result = {};
-	for (const key in slots) {
-		result[key] = true;
-	}
-	return result;
+    const result = {};
+    for (const key in slots) {
+        result[key] = true;
+    }
+    return result;
 }
-
+/** @returns {(this: any, ...args: any[]) => void} */
 export function once(fn) {
-	let ran = false;
-	return function (this: any, ...args) {
-		if (ran) return;
-		ran = true;
-		fn.call(this, ...args);
-	};
+    let ran = false;
+    return function (...args) {
+        if (ran)
+            return;
+        ran = true;
+        fn.call(this, ...args);
+    };
 }
-
+/** @returns {any} */
 export function null_to_empty(value) {
-	return value == null ? '' : value;
+    return value == null ? '' : value;
 }
-
+/** @returns {any} */
 export function set_store_value(store, ret, value) {
-	store.set(value);
-	return ret;
+    store.set(value);
+    return ret;
 }
-
+/** @returns {any} */
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
-
+/** @returns {any} */
 export function action_destroyer(action_result) {
-	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
+    return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
-
-export function split_css_unit(value: number | string): [number, string] {
-	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
-	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value as number, 'px'];
+/** @param {number | string} value
+ * @returns {[number, string]}
+ */
+export function split_css_unit(value) {
+    const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
+    return split ? [parseFloat(split[1]), split[2] || 'px'] : [value, 'px'];
 }
-
 export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];
+
+
+
+
