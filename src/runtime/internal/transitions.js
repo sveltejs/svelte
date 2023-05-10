@@ -32,6 +32,7 @@ function wait() {
 function dispatch(node, direction, kind) {
 	node.dispatchEvent(custom_event(`${direction ? 'intro' : 'outro'}${kind}`));
 }
+
 const outroing = new Set();
 
 /**
@@ -60,7 +61,7 @@ export function check_outros() {
 
 /**
  * @param {import('./public.js').Fragment} block
- * @param {0 | 1} local
+ * @param {0 | 1} [local]
  * @returns {void}
  */
 export function transition_in(block, local) {
@@ -285,7 +286,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 	 * @returns {Program}
 	 */
 	function init(program, duration) {
-		const d = program.b - t;
+		const d = /** @type {Program['d']} */ (program.b - t);
 		duration *= Math.abs(d);
 		return {
 			a: t,

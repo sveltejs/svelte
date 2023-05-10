@@ -82,7 +82,7 @@ export function handle_promise(promise, info) {
 			update(info.then, 1, info.value, promise);
 			return true;
 		}
-		info.resolved = promise;
+		info.resolved = /** @type {T} */ (promise);
 	}
 }
 

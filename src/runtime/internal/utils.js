@@ -21,14 +21,14 @@ export function assign(tar, src) {
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 /**
  * @template T
- * @param {any} value
+ * @param {T} value
  * @returns {value is PromiseLike<T>}
  */
 export function is_promise(value) {
 	return (
 		!!value &&
 		(typeof value === 'object' || typeof value === 'function') &&
-		typeof value.then === 'function'
+		typeof (/** @type {any} */ (value).then) === 'function'
 	);
 }
 
@@ -259,7 +259,7 @@ export function action_destroyer(action_result) {
  */
 export function split_css_unit(value) {
 	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
-	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value, 'px'];
+	return split ? [parseFloat(split[1]), split[2] || 'px'] : [/** @type {number} */ (value), 'px'];
 }
 
 export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];

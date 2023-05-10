@@ -47,10 +47,7 @@ function init_hydrate(target) {
 	target.hydrate_init = true;
 	// We know that all children have claim_order values since the unclaimed have been detached if target is not <head>
 
-	/**
-	 * @type {ArrayLike<NodeEx2>}
-	 */
-	let children = target.childNodes;
+	let children = /** @type {ArrayLike<NodeEx2>} */ (target.childNodes);
 	// If target is <head>, there may be children without claim_order
 	if (target.nodeName === 'HEAD') {
 		const myChildren = [];
@@ -168,8 +165,8 @@ export function append_styles(target, style_sheet_id, styles) {
 export function get_root_for_style(node) {
 	if (!node) return document;
 	const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
-	if (root && root.host) {
-		return root;
+	if (root && /** @type {ShadowRoot} */ (root).host) {
+		return /** @type {ShadowRoot} */ (root);
 	}
 	return node.ownerDocument;
 }
@@ -196,7 +193,7 @@ export function append_empty_stylesheet(node) {
  * @returns {CSSStyleSheet}
  */
 function append_stylesheet(node, style) {
-	append(node.head || node, style);
+	append(/** @type {Document} */ (node).head || node, style);
 	return style.sheet;
 }
 
@@ -274,6 +271,7 @@ export function destroy_each(iterations, detaching) {
 }
 
 /**
+ * @template {keyof HTMLElementTagNameMap} K
  * @param {K} name
  * @returns {HTMLElementTagNameMap[K]}
  */
@@ -282,6 +280,7 @@ export function element(name) {
 }
 
 /**
+ * @template {keyof HTMLElementTagNameMap} K
  * @param {K} name
  * @param {string} is
  * @returns {HTMLElementTagNameMap[K]}
@@ -291,12 +290,14 @@ export function element_is(name, is) {
 }
 
 /**
+ * @template T
+ * @template {keyof T} K
  * @param {T} obj
  * @param {K[]} exclude
  * @returns {Pick<T, Exclude<keyof T, K>>}
  */
 export function object_without_properties(obj, exclude) {
-	const target = {};
+	const target = /** @type {Pick<T, Exclude<keyof T, K>>} */ ({});
 	for (const k in obj) {
 		if (
 			has_prop(obj, k) &&
@@ -311,6 +312,7 @@ export function object_without_properties(obj, exclude) {
 }
 
 /**
+ * @template {keyof SVGElementTagNameMap} K
  * @param {K} name
  * @returns {SVGElement}
  */
@@ -350,7 +352,7 @@ export function comment(content) {
  * @param {EventTarget} node
  * @param {string} event
  * @param {EventListenerOrEventListenerObject} handler
- * @param {boolean | AddEventListenerOptions | EventListenerOptions} options
+ * @param {boolean | AddEventListenerOptions | EventListenerOptions} [options]
  * @returns {() => void}
  */
 export function listen(node, event, handler, options) {
@@ -439,7 +441,7 @@ export function set_attributes(node, attributes) {
 		} else if (key === 'style') {
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
-			node.value = node[key] = attributes[key];
+			/** @type {any} */ (node).value = node[key] = attributes[key];
 		} else if (
 			descriptors[key] &&
 			descriptors[key].set &&
@@ -485,14 +487,14 @@ export function set_custom_element_data(node, prop, value) {
 
 /**
  * @param {string} tag
- * @returns {Class<import>}
  */
 export function set_dynamic_element_data(tag) {
 	return /-/.test(tag) ? set_custom_element_data_map : set_attributes;
 }
 
 /**
- * @returns {void} */
+ * @returns {void}
+ */
 export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
 }
@@ -623,6 +625,7 @@ function init_claim_info(nodes) {
 }
 
 /**
+ * @template {ChildNodeEx} R
  * @param {ChildNodeArray} nodes
  * @param {(node: ChildNodeEx) => node is R} predicate
  * @param {(node: ChildNodeEx) => ChildNodeEx | undefined} processNode
@@ -688,7 +691,9 @@ function claim_node(nodes, predicate, processNode, createNode, dontUpdateLastInd
 function claim_element_base(nodes, name, attributes, create_element) {
 	return claim_node(
 		nodes,
+		/** @returns {node is Element | SVGElement} */
 		(node) => node.nodeName === name,
+		/** @param {Element} node */
 		(node) => {
 			const remove = [];
 			for (let j = 0; j < node.attributes.length; j++) {
@@ -731,7 +736,9 @@ export function claim_svg_element(nodes, name, attributes) {
 export function claim_text(nodes, data) {
 	return claim_node(
 		nodes,
+		/** @returns {node is Text} */
 		(node) => node.nodeType === 3,
+		/** @param {Text} node */
 		(node) => {
 			const dataStr = '' + data;
 			if (node.data.startsWith(dataStr)) {
@@ -760,7 +767,9 @@ export function claim_space(nodes) {
 export function claim_comment(nodes, data) {
 	return claim_node(
 		nodes,
+		/** @returns {node is Comment} */
 		(node) => node.nodeType === 8,
+		/** @param {Comment} node */
 		(node) => {
 			node.data = '' + data;
 			return undefined;
@@ -784,7 +793,7 @@ function find_comment(nodes, text, start) {
 
 /**
  * @param {boolean} is_svg
- * @returns {import("C:/repos/svelte/svelte/dom.ts-to-jsdoc").HtmlTagHydration}
+ * @returns {HtmlTagHydration}
  */
 export function claim_html_tag(nodes, is_svg) {
 	// find html opening tag
@@ -813,7 +822,7 @@ export function claim_html_tag(nodes, is_svg) {
 export function set_data(text, data) {
 	data = '' + data;
 	if (text.data === data) return;
-	text.data = data;
+	text.data = /** @type {string} */ (data);
 }
 
 /**
@@ -824,7 +833,7 @@ export function set_data(text, data) {
 export function set_data_contenteditable(text, data) {
 	data = '' + data;
 	if (text.wholeText === data) return;
-	text.data = data;
+	text.data = /** @type {string} */ (data);
 }
 
 /**
@@ -947,13 +956,18 @@ export function add_iframe_resize_listener(node, fn) {
 	const crossorigin = is_crossorigin();
 
 	/**
-	 * @type {() => void} */
+	 * @type {() => void}
+	 */
 	let unsubscribe;
 	if (crossorigin) {
 		iframe.src = "data:text/html,<script>onresize=function(){parent.postMessage(0,'*')}</script>";
-		unsubscribe = listen(window, 'message', (event) => {
-			if (event.source === iframe.contentWindow) fn();
-		});
+		unsubscribe = listen(
+			window,
+			'message',
+			/** @param {MessageEvent} event */ (event) => {
+				if (event.source === iframe.contentWindow) fn();
+			}
+		);
 	} else {
 		iframe.src = 'about:blank';
 		iframe.onload = () => {
@@ -991,8 +1005,9 @@ export function toggle_class(element, name, toggle) {
 }
 
 /**
+ * @template T
  * @param {string} type
- * @param {T} detail
+ * @param {T} [detail]
  * @returns {CustomEvent<T>}
  */
 export function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
@@ -1076,10 +1091,18 @@ export class HtmlTag {
 	 */
 	m(html, target, anchor = null) {
 		if (!this.e) {
-			if (this.is_svg) this.e = svg_element(target.nodeName);
+			if (this.is_svg)
+				this.e = svg_element(/** @type {keyof SVGElementTagNameMap} */ (target.nodeName));
 			/** #7364  target for <template> may be provided as #document-fragment(11) */ else
-				this.e = element(target.nodeType === 11 ? 'TEMPLATE' : target.nodeName);
-			this.t = target.tagName !== 'TEMPLATE' ? target : target.content;
+				this.e = element(
+					/** @type {keyof HTMLElementTagNameMap} */ (
+						target.nodeType === 11 ? 'TEMPLATE' : target.nodeName
+					)
+				);
+			this.t =
+				target.tagName !== 'TEMPLATE'
+					? target
+					: /** @type {HTMLTemplateElement} */ (target).content;
 			this.c(html);
 		}
 		this.i(anchor);
@@ -1172,9 +1195,11 @@ export function attribute_to_object(attributes) {
  */
 export function get_custom_elements_slots(element) {
 	const result = {};
-	element.childNodes.forEach((node) => {
-		result[node.slot || 'default'] = true;
-	});
+	element.childNodes.forEach(
+		/** @param {Element} node */ (node) => {
+			result[node.slot || 'default'] = true;
+		}
+	);
 	return result;
 }
 
