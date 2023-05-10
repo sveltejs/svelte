@@ -1,9 +1,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as register from '../register';
 
 import {
 	assert,
-	showOutput,
 	loadConfig,
 	loadSvelte,
 	env,
@@ -11,34 +11,16 @@ import {
 	shouldUpdateExpected
 } from '../helpers';
 
-let compileOptions = null;
-
-const sveltePath = process.cwd();
+let svelte;
 
 describe('hydration', () => {
 	before(() => {
-		const svelte = loadSvelte();
-
-		require.extensions['.svelte'] = function(module, filename) {
-			const options = Object.assign(
-				{
-					filename,
-					hydratable: true,
-					format: 'cjs',
-					sveltePath
-				},
-				compileOptions
-			);
-
-			const { js } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
-
-			return module._compile(js.code, filename);
-		};
+		svelte = loadSvelte();
 
 		return setupHtmlEqual();
 	});
 
-	function runTest(dir) {
+	function runTest(dir: string) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`./hydration/samples/${dir}/_config.js`);
@@ -51,8 +33,15 @@ describe('hydration', () => {
 		(config.skip ? it.skip : solo ? it.only : it)(dir, () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			compileOptions = config.compileOptions || {};
-			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
+			register.setCompileOptions({
+				...config.compileOptions,
+				accessors: 'accessors' in config ? config.accessors : true,
+				hydratable: true
+			});
+			register.setCompile(svelte.compile);
+			register.setOutputFolderName('hydratable');
+			register.clearRequireCache();
+			register.clearCompileOutputCache();
 
 			const window = env();
 
@@ -113,21 +102,14 @@ describe('hydration', () => {
 					assert.equal(target.innerHTML, '');
 				}
 			} catch (err) {
-				showOutput(cwd, {
-					hydratable: true
-				});
+				// saves the compiled output into file system
+				register.writeCompileOutputCacheToFile();
 				throw err;
-			}
-
-			if (config.show) {
-				showOutput(cwd, {
-					hydratable: true
-				});
 			}
 		});
 	}
 
 	fs.readdirSync(`${__dirname}/samples`).forEach(dir => {
-		runTest(dir, null);
+		runTest(dir);
 	});
 });
