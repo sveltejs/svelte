@@ -38,7 +38,11 @@
 		<div class="controls">
 			<div class="tabs">
 				{#each examples as example, i}
-					<button on:click={() => (selected = example)} class:selected={selected === example}>
+					<button
+						class="tab"
+						class:selected={selected === example}
+						on:click={() => (selected = example)}
+					>
 						<span class="small-show">{i + 1}</span>
 						<span class="small-hide">{example.title}</span>
 					</button>
@@ -90,8 +94,8 @@
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		height: 100%;
-		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
-		background-color: rgba(255, 255, 255, 0.1);
+		background-color: var(--sk-back-1);
+		border-radius: var(--sk-border-radius);
 	}
 
 	button,
@@ -101,16 +105,40 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
+		border-right: 0.5px solid var(--sk-text-4);
+		background-color: var(--sk-back-4);
+		transition: 0.15s ease;
+		transition-property: transform, background-color, color;
 	}
 
 	button:hover {
 		background-color: rgba(255, 255, 255, 0.2);
 	}
 
+	button:has(+ .selected) {
+		border-right: initial;
+	}
+
+	button:first-child {
+		border-radius: var(--sk-border-radius) 0 0 0;
+	}
+	button:last-child {
+		border-radius: 0 var(--sk-border-radius) 0 0;
+		border-right: initial;
+	}
+
 	button.selected {
 		background-color: var(--sk-back-1);
 		color: var(--sk-text-2);
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
+		border-right: initial;
+		transform: translateY(-5px);
+	}
+
+	a {
+		border-right: initial;
+		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
+		background-color: initial;
 	}
 
 	.small-show {
