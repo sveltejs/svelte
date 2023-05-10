@@ -1,58 +1,17 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as http from 'http';
-import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
-import puppeteer from 'puppeteer';
+import * as fs from 'fs';
+import * as path from 'path';
+import { rollup } from 'rollup';
 
-import {
-	loadConfig,
-	loadSvelte,
-	mkdirp,
-	prettyPrintPuppeteerAssertionError,
-	retryAsync,
-	executeBrowserTest
-} from '../helpers';
+import { chromium } from '@playwright/test';
 import { deepEqual } from 'assert';
-
-const page = `
-<body>
-	<main></main>
-	<script src='/bundle.js'></script>
-</body>
-`;
+import { loadConfig, loadSvelte, mkdirp, prettyPrintPuppeteerAssertionError } from '../helpers';
 
 let svelte;
-let server;
-let code;
 let browser;
 
 const internal = path.resolve('internal/index.mjs');
 const index = path.resolve('index.mjs');
-
-function create_server() {
-	return new Promise((fulfil, reject) => {
-		const server = http.createServer((req, res) => {
-			if (req.url === '/') {
-				res.end(page);
-			}
-
-			if (req.url === '/bundle.js') {
-				res.end(code);
-			}
-		});
-
-		server.on('error', reject);
-
-		server.listen('6789', () => {
-			fulfil(server);
-		});
-	});
-}
-
-async function launchPuppeteer() {
-	return await retryAsync(() => puppeteer.launch());
-}
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
@@ -60,14 +19,12 @@ describe('runtime (puppeteer)', () => {
 	before(async () => {
 		svelte = loadSvelte(false);
 		console.log('[runtime-puppeteer] Loaded Svelte');
-		server = await create_server();
-		console.log('[runtime-puppeteer] Started server');
-		browser = await launchPuppeteer();
+
+		browser = await chromium.launch();
 		console.log('[runtime-puppeteer] Launched puppeteer browser');
 	});
 
 	after(async () => {
-		if (server) server.close();
 		if (browser) await browser.close();
 	});
 
@@ -221,8 +178,7 @@ describe('runtime (puppeteer)', () => {
 					]
 				});
 
-				const result = await bundle.generate({ format: 'iife', name: 'test' });
-				code = result.output[0].code;
+				const generated_bundle = await bundle.generate({ format: 'iife', name: 'test' });
 
 				function assertWarnings() {
 					if (config.warnings) {
@@ -243,11 +199,24 @@ describe('runtime (puppeteer)', () => {
 					}
 				}
 
-				browser = await executeBrowserTest(browser, launchPuppeteer, assertWarnings, (err) => {
+				try {
+					const page = await browser.newPage();
+					page.on('console', (type) => {
+						console[type.type()](type.text());
+					});
+					await page.setContent('<main></main>');
+					await page.evaluate(generated_bundle.output[0].code);
+					const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+
+					if (test_result) console.log(test_result);
+					assertWarnings();
+					await page.close();
+				} catch (err) {
 					failed.add(dir);
 					prettyPrintPuppeteerAssertionError(err.message);
 					assertWarnings();
-				});
+					throw err;
+				}
 			}
 		).timeout(is_first_run ? 20000 : 10000);
 	}
