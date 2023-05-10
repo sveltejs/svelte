@@ -6,7 +6,7 @@
 	import Supporters from './_components/Supporters/index.svelte';
 	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&picture';
+	import Balls from './svelte-balls.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
 </script>
 
 <svelte:head>
