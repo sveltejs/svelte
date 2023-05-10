@@ -278,45 +278,6 @@ const bundled_types = await get_bundled_types();
 	});
 }
 
-// const dir = fileURLToPath(
-// 	new URL('../../../../packages/kit/types/synthetic', import.meta.url).href
-// );
-// for (const file of fs.readdirSync(dir)) {
-// 	if (!file.endsWith('.md')) continue;
-
-// 	const comment = strip_origin(read_d_ts_file(`${dir}/${file}`));
-
-// 	modules.push({
-// 		name: file.replace(/\+/g, '/').slice(0, -3),
-// 		comment,
-// 		exports: [],
-// 		types: [],
-// 		exempt: true
-// 	});
-// }
-
-// {
-// 	const code = read_d_ts_file('types/ambient.d.ts');
-// 	const node = ts.createSourceFile('ambient.d.ts', code, ts.ScriptTarget.Latest, true);
-
-// 	for (const statement of node.statements) {
-// 		if (ts.isModuleDeclaration(statement)) {
-// 			// @ts-ignore
-// 			const name = statement.name.text || statement.name.escapedText;
-
-// 			// @ts-ignore
-// 			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
-
-// 			modules.push({
-// 				name,
-// 				comment,
-// 				// @ts-ignore
-// 				...get_types(code, statement.body?.statements)
-// 			});
-// 		}
-// 	}
-// }
-
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
 // Fix the duplicate/messed up types
