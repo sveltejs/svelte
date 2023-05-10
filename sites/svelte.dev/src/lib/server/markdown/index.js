@@ -212,6 +212,8 @@ const default_renderer = {
  */
 export function transform(markdown, renderer = {}) {
 	marked.use({
+		mangle: false,
+		headerIds: false,
 		renderer: {
 			// we have to jump through these hoops because of marked's API design choices —
 			// options are global, and merged in confusing ways. You can't do e.g.
