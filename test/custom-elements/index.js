@@ -2,39 +2,21 @@ import { chromium } from '@playwright/test';
 import virtual from '@rollup/plugin-virtual';
 import { deepStrictEqual } from 'assert';
 import * as fs from 'fs';
-import * as http from 'http';
 import * as path from 'path';
 import { rollup } from 'rollup';
 import { loadConfig, loadSvelte } from '../helpers';
 
-/**
- * @param {string} id
- * @returns
- */
-const page_content = (id, code) => `
-<body>
-	<main></main>
-	<script>${code}</script>
-</body>
-`;
-
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function () {
-	this.timeout(10000);
-
 	let svelte;
 	/** @type {import('@playwright/test').Browser} */
 	let browser;
 
-	async function launchBrowser() {
-		return await chromium.launch();
-	}
-
 	before(async () => {
 		svelte = loadSvelte();
 		console.log('[custom-element] Loaded Svelte');
-		browser = await launchBrowser();
+		browser = await chromium.launch();
 		console.log('[custom-element] Launched playwright browser');
 	});
 
@@ -111,9 +93,8 @@ describe('custom-elements', function () {
 			page.on('console', (type) => {
 				console[type.type()](type.text());
 			});
-
-			await page.setContent(page_content(dir, generated_bundle.output[0].code));
-			await page.waitForFunction('typeof test !== "undefined"');
+			await page.setContent('<main></main>');
+			await page.evaluate(generated_bundle.output[0].code);
 			const test_result = await page.evaluate(`test(document.querySelector('main'))`);
 
 			if (test_result) console.log(test_result);
