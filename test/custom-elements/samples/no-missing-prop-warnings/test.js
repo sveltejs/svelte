@@ -2,6 +2,8 @@ import * as assert from 'assert';
 import { tick } from 'svelte';
 import './main.svelte';
 
+console.log('ello');
+
 export default async function (target) {
 	const warnings = [];
 	const warn = console.warn;

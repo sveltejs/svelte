@@ -370,7 +370,7 @@ export async function executeBrowserTest(browser, launchPuppeteer, additionalAss
 				console[type.type()](type.text());
 			});
 
-			page.on('error', (error) => {
+			page.on('pageerror', (error) => {
 				console.log('>>> an error happened');
 				console.error(error);
 			});
