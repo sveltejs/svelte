@@ -15,13 +15,13 @@ const index = path.resolve('index.mjs');
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', () => {
+describe('runtime (playwright)', () => {
 	before(async () => {
 		svelte = loadSvelte(false);
-		console.log('[runtime-puppeteer] Loaded Svelte');
+		console.log('[runtime-playwright] Loaded Svelte');
 
 		browser = await chromium.launch();
-		console.log('[runtime-puppeteer] Launched puppeteer browser');
+		console.log('[runtime-playwright] Launchedplaywrightr browser');
 	});
 
 	after(async () => {
@@ -57,7 +57,7 @@ describe('runtime (puppeteer)', () => {
 					input: 'main',
 					plugins: [
 						{
-							name: 'testing-runtime-puppeteer',
+							name: 'testing-runtime-playwright',
 							resolveId(importee) {
 								if (importee === 'svelte/internal' || importee === './internal') {
 									return internal;
