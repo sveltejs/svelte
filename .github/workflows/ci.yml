@@ -30,7 +30,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node node_modules/puppeteer/install.js
+      - run: pnpm playwright install chromium
       - run: pnpm test:integration
         env:
           CI: true

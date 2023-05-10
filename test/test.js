@@ -9,7 +9,7 @@ require('../internal');
 console.clear();
 
 const test_folders = glob('*/index.js', { cwd: 'test' });
-const solo_folders = test_folders.filter((folder) => /custom-elements/.test(folder));
+const solo_folders = test_folders.filter((folder) => /(puppeteer)/.test(folder));
 
 if (solo_folders.length) {
 	if (process.env.CI) {
