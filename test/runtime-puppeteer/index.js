@@ -21,7 +21,7 @@ describe('runtime (playwright)', () => {
 		console.log('[runtime-playwright] Loaded Svelte');
 
 		browser = await chromium.launch();
-		console.log('[runtime-playwright] Launchedplaywrightr browser');
+		console.log('[runtime-playwright] Launched playwright browser');
 	});
 
 	after(async () => {
