@@ -34,6 +34,7 @@ class CompileError extends Error {
 	 * @type {string}
 	 */
 	frame = undefined;
+
 	toString() {
 		return `${this.message} (${this.start.line}:${this.start.column})\n${this.frame}`;
 	}
