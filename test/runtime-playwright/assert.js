@@ -44,7 +44,7 @@ function normalizeHtml(window, html) {
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 
-		cleanStyle(node);
+		normalizeStyles(node);
 
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
@@ -52,14 +52,14 @@ function normalizeHtml(window, html) {
 	}
 }
 
-function cleanStyle(node) {
+function normalizeStyles(node) {
 	if (node.nodeType === 1) {
 		if (node.hasAttribute('style')) {
 			node.style = node.style.cssText;
 		}
 
 		for (const child of node.childNodes) {
-			cleanStyle(child);
+			normalizeStyles(child);
 		}
 	}
 }

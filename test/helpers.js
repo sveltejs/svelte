@@ -324,7 +324,7 @@ export function mkdirp(dir) {
 	}
 }
 
-export function prettyPrintPuppeteerAssertionError(message) {
+export function prettyPrintBrowserAssertionError(message) {
 	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
 
 	if (match) {

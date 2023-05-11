@@ -5,7 +5,7 @@ import { rollup } from 'rollup';
 
 import { chromium } from '@playwright/test';
 import { deepStrictEqual } from 'assert';
-import { loadConfig, loadSvelte, mkdirp, prettyPrintPuppeteerAssertionError } from '../helpers';
+import { loadConfig, loadSvelte, mkdirp, prettyPrintBrowserAssertionError } from '../helpers';
 
 const internal = path.resolve('internal/index.mjs');
 const index = path.resolve('index.mjs');
@@ -214,7 +214,7 @@ describe('runtime (playwright)', () => {
 					await page.close();
 				} catch (err) {
 					failed.add(dir);
-					prettyPrintPuppeteerAssertionError(err.message);
+					prettyPrintBrowserAssertionError(err.message);
 					assertWarnings();
 					throw err;
 				}
