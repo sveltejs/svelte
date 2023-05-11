@@ -4,11 +4,11 @@ import {
 	parse_attached_sourcemap,
 	sourcemap_add_offset,
 	combine_sourcemaps
-} from '../utils/mapped_code';
+} from '../utils/mapped_code.js';
 import { decode_map } from './decode_sourcemap.js';
-import { replace_in_code, slice_source } from './replace_in_code';
-import { regex_whitespaces } from '../utils/patterns';
-export * from './types';
+import { replace_in_code, slice_source } from './replace_in_code.js';
+import { regex_whitespaces } from '../utils/patterns.js';
+
 const regex_filepath_separator = /[/\\]/;
 
 /**
@@ -17,19 +17,23 @@ const regex_filepath_separator = /[/\\]/;
 function get_file_basename(filename) {
 	return filename.split(regex_filepath_separator).pop();
 }
+
 /**
  * Represents intermediate states of the preprocessing.
  */
 class PreprocessResult {
+	/** @type {string} */
 	source;
+	/** @type {string | undefined} */
 	filename;
+
 	// sourcemap_list is sorted in reverse order from last map (index 0) to first map (index -1)
 	// so we use sourcemap_list.unshift() to add new maps
 	// https://github.com/ampproject/remapping#multiple-transformations-of-a-file
 
 	/**
 	 * @default []
-	 * @type {Array<DecodedSourceMap | RawSourceMap>}
+	 * @type {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>}
 	 */
 	sourcemap_list = [];
 
@@ -45,9 +49,15 @@ class PreprocessResult {
 	file_basename = undefined;
 
 	/**
-	 * @type {Class<getLocator>>}
+	 * @type {ReturnType<typeof getLocator>}
 	 */
 	get_location = undefined;
+
+	/**
+	 *
+	 * @param {string} source
+	 * @param {string} [filename]
+	 */
 	constructor(source, filename) {
 		this.source = source;
 		this.filename = filename;
@@ -57,7 +67,7 @@ class PreprocessResult {
 	}
 
 	/**
-	 * @param {SourceUpdate}
+	 * @param {import('./private.js').SourceUpdate} opts
 	 */
 	update_source({ string: source, map, dependencies }) {
 		if (source != null) {
@@ -73,7 +83,7 @@ class PreprocessResult {
 	}
 
 	/**
-	 * @returns {Processed}
+	 * @returns {import('./public.js').Processed}
 	 */
 	to_processed() {
 		// Combine all the source maps for each preprocessor function into one
@@ -92,8 +102,8 @@ class PreprocessResult {
 }
 /**
  * Convert preprocessor output for the tag content into MappedCode
- * @param {Processed} processed
- * @param {SourceLocation} location
+ * @param {import('./public.js').Processed} processed
+ * @param {import('../utils/mapped_code.js').SourceLocation} location
  * @param {string} file_basename
  * @returns {MappedCode}
  */
@@ -101,7 +111,7 @@ function processed_content_to_code(processed, location, file_basename) {
 	// Convert the preprocessed code and its sourcemap to a MappedCode
 
 	/**
-	 * @type {DecodedSourceMap}
+	 * @type {import('@ampproject/remapping').DecodedSourceMap}
 	 */
 	let decoded_map;
 	if (processed.map) {
@@ -120,10 +130,10 @@ function processed_content_to_code(processed, location, file_basename) {
 /**
  * Given the whole tag including content, return a `MappedCode`
  * representing the tag content replaced with `processed`.
- * @param {Processed} processed
+ * @param {import('./public.js').Processed} processed
  * @param {'style' | 'script'} tag_name
  * @param {string} attributes
- * @param {Source} source
+ * @param {import('./private.js').Source} source
  * @returns {MappedCode}
  */
 function processed_tag_to_code(processed, tag_name, attributes, source) {
@@ -164,14 +174,16 @@ function parse_tag_attributes(str) {
 			return { ...attrs, [key]: unquoted ?? value ?? true };
 		}, {});
 }
+
 const regex_style_tags = /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi;
 const regex_script_tags = /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
+
 /**
  * Calculate the updates required to process all instances of the specified tag.
  * @param {'style' | 'script'} tag_name
- * @param {Preprocessor} preprocessor
- * @param {Source} source
- * @returns {Promise<SourceUpdate>}
+ * @param {import('./public.js').Preprocessor} preprocessor
+ * @param {import('./private.js').Source} source
+ * @returns {Promise<import('./private.js').SourceUpdate>}
  */
 async function process_tag(tag_name, preprocessor, source) {
 	const { filename, source: markup } = source;
@@ -212,8 +224,8 @@ async function process_tag(tag_name, preprocessor, source) {
 }
 
 /**
- * @param {MarkupPreprocessor} process
- * @param {Source} source
+ * @param {import('./public.js').MarkupPreprocessor} process
+ * @param {import('./private.js').Source} source
  */
 async function process_markup(process, source) {
 	const processed = await process({
@@ -238,15 +250,15 @@ async function process_markup(process, source) {
 
 /**
  * @param {string} source
- * @param {PreprocessorGroup | PreprocessorGroup[]} preprocessor
+ * @param {import('./public.js').PreprocessorGroup | import('./public.js').PreprocessorGroup[]} preprocessor
  * @param {{ filename?: string }} options
- * @returns {Promise<Processed>}
+ * @returns {Promise<import('./public.js').Processed>}
  */
 export default async function preprocess(source, preprocessor, options) {
 	/**
 	 * @type {string | undefined}
 	 */
-	const filename = (options && options.filename) || preprocessor.filename; // legacy
+	const filename = (options && options.filename) || /** @type {any} */ (preprocessor).filename; // legacy
 	const preprocessors = preprocessor
 		? Array.isArray(preprocessor)
 			? preprocessor
@@ -269,9 +281,3 @@ export default async function preprocess(source, preprocessor, options) {
 	}
 	return result.to_processed();
 }
-
-/** @typedef {Object} SourceUpdate
- * @property {string} [string]
- * @property {DecodedSourceMap} [map]
- * @property {string[]} [dependencies]
- */
