@@ -103,7 +103,7 @@ class PreprocessResult {
 /**
  * Convert preprocessor output for the tag content into MappedCode
  * @param {import('./public.js').Processed} processed
- * @param {import('../utils/mapped_code.js').SourceLocation} location
+ * @param {{ line: number; column: number; }} location
  * @param {string} file_basename
  * @returns {MappedCode}
  */

@@ -1,5 +1,6 @@
 import { flatten } from './flatten.js';
-import { regex_whitespace } from './patterns';
+import { regex_whitespace } from './patterns.js';
+
 const regex_svelte_ignore = /^\s*svelte-ignore\s+([\s\S]+)\s*$/m;
 
 /**
@@ -17,7 +18,7 @@ export function extract_svelte_ignore(text) {
 }
 
 /**
- * @param {Node} node
+ * @param {import('estree').Node} node
  * @returns {string[]}
  */
 export function extract_svelte_ignore_from_comments(node) {
@@ -28,7 +29,7 @@ export function extract_svelte_ignore_from_comments(node) {
 
 /**
  * @param {number} position
- * @param {TemplateNode[]} template_nodes
+ * @param {import('../interfaces.js').TemplateNode[]} template_nodes
  * @returns {string[]}
  */
 export function extract_ignores_above_position(position, template_nodes) {
@@ -51,7 +52,7 @@ export function extract_ignores_above_position(position, template_nodes) {
 }
 
 /**
- * @param {INode} node
+ * @param {import('../compile/nodes/interfaces.js').INode} node
  * @returns {string[]}
  */
 export function extract_ignores_above_node(node) {
