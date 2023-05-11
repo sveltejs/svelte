@@ -7,6 +7,9 @@ devDependencies:
   '@jridgewell/sourcemap-codec':
     specifier: ^1.4.15
     version: 1.4.15
+  '@playwright/test':
+    specifier: ^1.33.0
+    version: 1.33.0
   '@rollup/plugin-commonjs':
     specifier: ^24.1.0
     version: 24.1.0(rollup@3.20.2)
@@ -275,6 +278,17 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
+    dev: true
+
+  /@playwright/test@1.33.0:
+    resolution: {integrity: sha512-YunBa2mE7Hq4CfPkGzQRK916a4tuZoVx/EpLjeWlTVOnD4S2+fdaQZE0LJkbfhN5FTSKNLdcl7MoT5XB37bTkg==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dependencies:
+      '@types/node': 14.14.31
+      playwright-core: 1.33.0
+    optionalDependencies:
+      fsevents: 2.3.2
     dev: true
 
   /@puppeteer/browsers@0.4.0(typescript@5.0.4):
@@ -2558,6 +2572,12 @@ packages:
   /pirates@4.0.5:
     resolution: {integrity: sha512-8V9+HQPupnaXMA23c5hvl69zXvTwTzyAYasnkb0Tts4XvO4CliqONMOnvlq26rkhLC3nWDFBJf73LU1e1VZLaQ==}
     engines: {node: '>= 6'}
+    dev: true
+
+  /playwright-core@1.33.0:
+    resolution: {integrity: sha512-aizyPE1Cj62vAECdph1iaMILpT0WUDCq3E6rW6I+dleSbBoGbktvJtzS6VHkZ4DKNEOG9qJpiom/ZxO+S15LAw==}
+    engines: {node: '>=14'}
+    hasBin: true
     dev: true
 
   /prelude-ls@1.1.2:

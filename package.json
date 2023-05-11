@@ -114,6 +114,7 @@
   "devDependencies": {
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@playwright/test": "^1.33.0",
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
