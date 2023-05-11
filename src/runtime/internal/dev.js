@@ -252,7 +252,6 @@ export function validate_void_dynamic_element(tag) {
 	}
 }
 
-/** @returns {any} */
 export function construct_svelte_component_dev(component, props) {
 	const error_message = 'this={...} of <svelte:component> should specify a Svelte component.';
 	try {

@@ -7,7 +7,6 @@ import { create_rule, delete_rule } from './style_manager.js';
  * @param {Element & ElementCSSInlineStyle} node
  * @param {import('./private.js').PositionRect} from
  * @param {import('./private.js').AnimationFn} fn
- * @returns {any}
  */
 export function create_animation(node, from, fn, params) {
 	if (!from) return noop;

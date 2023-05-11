@@ -1,7 +1,6 @@
 /** @returns {void} */
 export function noop() {}
 
-/** @returns {any} */
 export const identity = (x) => x;
 
 /**
@@ -39,12 +38,10 @@ export function add_location(element, file, line, column, char) {
 	};
 }
 
-/** @returns {any} */
 export function run(fn) {
 	return fn();
 }
 
-/** @returns {any} */
 export function blank_object() {
 	return Object.create(null);
 }
@@ -98,7 +95,6 @@ export function validate_store(store, name) {
 	}
 }
 
-/** @returns {any} */
 export function subscribe(store, ...callbacks) {
 	if (store == null) {
 		for (const callback of callbacks) {
@@ -126,7 +122,6 @@ export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
 
-/** @returns {any} */
 export function create_slot(definition, ctx, $$scope, fn) {
 	if (definition) {
 		const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
@@ -134,12 +129,10 @@ export function create_slot(definition, ctx, $$scope, fn) {
 	}
 }
 
-/** @returns {any} */
 function get_slot_context(definition, ctx, $$scope, fn) {
 	return definition[1] && fn ? assign($$scope.ctx.slice(), definition[1](fn(ctx))) : $$scope.ctx;
 }
 
-/** @returns {any} */
 export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
@@ -235,21 +228,17 @@ export function once(fn) {
 	};
 }
 
-/** @returns {any} */
 export function null_to_empty(value) {
 	return value == null ? '' : value;
 }
 
-/** @returns {any} */
 export function set_store_value(store, ret, value) {
 	store.set(value);
 	return ret;
 }
 
-/** @returns {any} */
 export const has_prop = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
 
-/** @returns {any} */
 export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }

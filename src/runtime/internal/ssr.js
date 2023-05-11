@@ -90,7 +90,6 @@ export function escape(value, is_attr = false) {
 	return escaped + str.substring(last);
 }
 
-/** @returns {any} */
 export function escape_attribute_value(value) {
 	// keep booleans, null, and undefined for the sake of `spread`
 	const should_escape = typeof value === 'string' || (value && typeof value === 'object');
@@ -119,7 +118,6 @@ export const missing_component = {
 	$$render: () => ''
 };
 
-/** @returns {any} */
 export function validate_component(component, name) {
 	if (!component || !component.$$render) {
 		if (name === 'svelte:component') name += ' this={...}';
@@ -141,7 +139,6 @@ let on_destroy;
 
 /** @returns {{ render: (props?: {}, { $$slots, context }?: { $$slots?: {}; context?: Map<any, any>; }) => { html: any; css: { code: string; map: any; }; head: string; }; $$render: (result: any, props: any, bindings: any, slots: any, context: any) => any; }} */
 export function create_ssr_component(fn) {
-	/** @returns {any} */
 	function $$render(result, props, bindings, slots, context) {
 		const parent_component = current_component;
 		const $$ = {

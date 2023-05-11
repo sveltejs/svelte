@@ -2,7 +2,6 @@ import * as code_red from 'code-red';
 
 /**
  * @param {string} source
- * @returns {any}
  */
 export const parse = (source) =>
 	code_red.parse(source, {
@@ -14,7 +13,6 @@ export const parse = (source) =>
 /**
  * @param {string} source
  * @param {number} index
- * @returns {any}
  */
 export const parse_expression_at = (source, index) =>
 	code_red.parseExpressionAt(source, index, {

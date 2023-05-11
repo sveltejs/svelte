@@ -7,7 +7,6 @@ export function set_current_component(component) {
 	current_component = component;
 }
 
-/** @returns {any} */
 export function get_current_component() {
 	if (!current_component) throw new Error('Function called outside component initialization');
 	return current_component;

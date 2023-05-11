@@ -314,7 +314,6 @@ if (typeof HTMLElement === 'function') {
  * @param {any} value
  * @param {Record<string, CustomElementPropDefinition>} props_definition
  * @param {'toAttribute' | 'toProp'} [transform]
- * @returns {any}
  */
 function get_custom_element_value(prop, value, props_definition, transform) {
 	const type = props_definition[prop]?.type;
@@ -431,7 +430,6 @@ export class SvelteComponent {
 		this.$destroy = noop;
 	}
 
-	/** @returns {any} */
 	$on(type, callback) {
 		if (!is_function(callback)) {
 			return noop;

@@ -552,8 +552,6 @@ export function init_binding_group_dynamic(group, indexes) {
 	 * @type {HTMLInputElement[]} */
 	let _inputs;
 
-	/**
-	 * @returns {any} */
 	function get_binding_group(group) {
 		for (let i = 0; i < indexes.length; i++) {
 			group = group[indexes[i]] = group[indexes[i]] || [];
@@ -779,8 +777,6 @@ export function claim_comment(nodes, data) {
 	);
 }
 
-/**
- * @returns {any} */
 function find_comment(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
@@ -900,15 +896,11 @@ export function select_options(select, value) {
 	}
 }
 
-/**
- * @returns {any} */
 export function select_value(select) {
 	const selected_option = select.querySelector(':checked');
 	return selected_option && selected_option.__value;
 }
 
-/**
- * @returns {any} */
 export function select_multiple_value(select) {
 	return [].map.call(select.querySelectorAll(':checked'), (option) => option.__value);
 }
@@ -1203,8 +1195,6 @@ export function get_custom_elements_slots(element) {
 	return result;
 }
 
-/**
- * @returns {any} */
 export function construct_svelte_component(component, props) {
 	return new component(props);
 }
