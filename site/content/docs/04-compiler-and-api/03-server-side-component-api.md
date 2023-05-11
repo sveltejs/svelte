@@ -3,6 +3,7 @@ title: 'Server-side component API'
 ---
 
 ```js
+// @noErrors
 const result = Component.render(...)
 ```
 
@@ -13,6 +14,7 @@ A server-side component exposes a `render` method that can be called with option
 You can import a Svelte component directly into Node using [`svelte/register`](/docs/svelte-register).
 
 ```js
+// @noErrors
 require('svelte/register');
 
 const App = require('./App.svelte').default;
@@ -36,6 +38,7 @@ The `options` object takes in the following options:
 | `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component |
 
 ```js
+// @noErrors
 const { head, html, css } = App.render(
 	// props
 	{ answer: 42 },

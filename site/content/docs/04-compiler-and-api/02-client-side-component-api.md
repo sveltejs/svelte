@@ -4,13 +4,33 @@ title: 'Client-side component API'
 
 ## Creating a component
 
-```js
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var options: ComponentConstructorOptions<Record<string, any>>;
+}
+
+// @filename: index.ts
+// ---cut---
 const component = new Component(options);
 ```
 
 A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
-```js
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare module './App.svelte' {
+	class Component extends SvelteComponent {}
+	export default Component;
+}
+
+// @filename: index.ts
+// ---cut---
 import App from './App.svelte';
 
 const app = new App({
@@ -42,7 +62,18 @@ Whereas children of `target` are normally left alone, `hydrate: true` will cause
 
 The existing DOM doesn't need to match the component — Svelte will 'repair' the DOM as it goes.
 
-```js
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare module './App.svelte' {
+	class Component extends SvelteComponent {}
+	export default Component;
+}
+
+// @filename: index.ts
+// @errors: 2322
+// ---cut---
 import App from './App.svelte';
 
 const app = new App({
@@ -53,7 +84,20 @@ const app = new App({
 
 ## `$set`
 
-```js
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+	var props: Record<string, any>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 component.$set(props);
 ```
 
@@ -61,22 +105,60 @@ Programmatically sets props on an instance. `component.$set({ x: 1 })` is equiva
 
 Calling this method schedules an update for the next microtask — the DOM is _not_ updated synchronously.
 
-```js
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
 component.$set({ answer: 42 });
 ```
 
 ## `$on`
 
-```js
-component.$on(event, callback);
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+	var ev: string;
+	var callback: (event: CustomEvent) => void;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
+component.$on(ev, callback);
 ```
 
 Causes the `callback` function to be called whenever the component dispatches an `event`.
 
 A function is returned that will remove the event listener when called.
 
-```js
-const off = app.$on('selected', (event) => {
+```ts
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
+const off = component.$on('selected', (event) => {
 	console.log(event.detail.selection);
 });
 
@@ -86,6 +168,18 @@ off();
 ## `$destroy`
 
 ```js
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+}
+
+export {}
+
+// @filename: index.ts
+// ---cut---
 component.$destroy();
 ```
 
@@ -94,10 +188,35 @@ Removes a component from the DOM and triggers any `onDestroy` handlers.
 ## Component props
 
 ```js
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+}
+
+export {}
+
+// @filename: index.ts
+// ---cut---
 component.prop;
 ```
 
 ```js
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+	var value: unknown;
+}
+
+export {}
+
+// @filename: index.ts
+// ---cut---
 component.prop = value;
 ```
 
@@ -106,6 +225,19 @@ If a component is compiled with `accessors: true`, each instance will have gette
 By default, `accessors` is `false`, unless you're compiling as a custom element.
 
 ```js
-console.log(app.count);
-app.count += 1;
+// @filename: ambiend.d.ts
+import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
+
+declare global {
+	class Component extends SvelteComponent {}
+	var component: Component;
+	var props: Record<string, any>;
+}
+
+export {}
+
+// @filename: index.ts
+// ---cut---
+console.log(component.count);
+component.count += 1;
 ```

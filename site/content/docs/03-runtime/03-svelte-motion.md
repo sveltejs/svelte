@@ -6,9 +6,7 @@ The `svelte/motion` module exports two functions, `tweened` and `spring`, for cr
 
 ## `tweened`
 
-```js
-store = tweened(value: any, options)
-```
+> EXPORT_SNIPPET: svelte/motion#tweened
 
 Tweened stores update their values over a fixed duration. The following options are available:
 
@@ -46,7 +44,19 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 
 If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
 
-```js
+```ts
+// @filename: ambient.d.ts
+declare global {
+	var $size: number;
+	var big: number;
+}
+
+export {};
+// @filename: motion.ts
+// ---cut---
+import { tweened } from 'svelte/motion';
+import { cubicOut } from 'svelte/easing';
+
 const size = tweened(undefined, {
 	duration: 300,
 	easing: cubicOut
@@ -81,9 +91,7 @@ The `interpolate` option allows you to tween between _any_ arbitrary values. It 
 
 ## `spring`
 
-```js
-store = spring(value: any, options)
-```
+> EXPORT_SNIPPET: svelte/motion#spring
 
 A `spring` store gradually changes to its target value based on its `stiffness` and `damping` parameters. Whereas `tweened` stores change their values over a fixed duration, `spring` stores change over a duration that is determined by their existing velocity, allowing for more natural-seeming motion in many situations. The following options are available:
 
@@ -94,6 +102,8 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 All of the options above can be changed while the spring is in motion, and will take immediate effect.
 
 ```js
+import { spring } from 'svelte/motion';
+
 const size = spring(100);
 size.stiffness = 0.3;
 size.damping = 0.4;
@@ -105,6 +115,8 @@ As with [`tweened`](/docs/svelte-motion#tweened) stores, `set` and `update` retu
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
 ```js
+import { spring } from 'svelte/motion';
+
 const coords = spring({ x: 50, y: 50 });
 // updates the value immediately
 coords.set({ x: 100, y: 200 }, { hard: true });
@@ -135,7 +147,23 @@ coords.update(
 
 If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
 
-```js
+```ts
+// @filename: ambient.d.ts
+declare global {
+	var $size: number;
+	var big: number;
+}
+
+export {};
+
+// @filename: motion.ts
+// ---cut---
+import { spring } from 'svelte/motion';
+
 const size = spring();
 $: $size = big ? 100 : 10;
 ```
+
+## Types
+
+> TYPES: svelte/motion

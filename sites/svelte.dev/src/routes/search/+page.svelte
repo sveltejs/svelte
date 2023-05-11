@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Search • SvelteKit</title>
+	<title>Search • Svelte</title>
 </svelte:head>
 
 <main>

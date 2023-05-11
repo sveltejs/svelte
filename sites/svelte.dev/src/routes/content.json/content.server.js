@@ -1,3 +1,4 @@
+import { replace_placeholders } from '$lib/server/docs/render';
 import {
 	extract_frontmatter,
 	normalizeSlugify,
@@ -41,7 +42,7 @@ export function content() {
 
 			const filepath = `${base}/${category.slug}/${file}`;
 			// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
-			const markdown = fs.readFileSync(filepath, 'utf-8');
+			const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
 
 			const { body, metadata } = extract_frontmatter(markdown);
 

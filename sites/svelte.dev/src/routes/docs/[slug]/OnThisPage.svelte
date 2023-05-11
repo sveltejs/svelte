@@ -92,13 +92,13 @@
 				containerEl.scrollBy({
 					top: top - max,
 					left: 0,
-					behavior: 'smooth',
+					behavior: 'smooth'
 				});
 			} else if (bottom < min) {
 				containerEl.scrollBy({
 					top: bottom - min,
 					left: 0,
-					behavior: 'smooth',
+					behavior: 'smooth'
 				});
 			}
 		}

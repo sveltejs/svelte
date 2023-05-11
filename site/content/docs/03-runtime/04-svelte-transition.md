@@ -6,6 +6,8 @@ The `svelte/transition` module exports seven functions: `fade`, `blur`, `fly`, `
 
 ## `fade`
 
+> EXPORT_SNIPPET: svelte/transition#fade
+
 ```svelte
 transition:fade={params}
 ```
@@ -40,6 +42,8 @@ You can see the `fade` transition in action in the [transition tutorial](/tutori
 
 ## `blur`
 
+> EXPORT_SNIPPET: svelte/transition#blur
+
 ```svelte
 transition:blur={params}
 ```
@@ -73,6 +77,8 @@ Animates a `blur` filter alongside an element's opacity.
 ```
 
 ## `fly`
+
+> EXPORT_SNIPPET: svelte/transition#fly
 
 ```svelte
 transition:fly={params}
@@ -117,6 +123,8 @@ You can see the `fly` transition in action in the [transition tutorial](/tutoria
 
 ## `slide`
 
+> EXPORT_SNIPPET: svelte/transition#slide
+
 ```svelte
 transition:slide={params}
 ```
@@ -154,6 +162,8 @@ Slides an element in and out.
 
 ## `scale`
 
+> EXPORT_SNIPPET: svelte/transition#scale
+
 ```svelte
 transition:scale={params}
 ```
@@ -190,6 +200,8 @@ Animates the opacity and scale of an element. `in` transitions animate from an e
 ```
 
 ## `draw`
+
+> EXPORT_SNIPPET: svelte/transition#draw
 
 ```svelte
 transition:draw={params}
@@ -236,6 +248,8 @@ The `speed` parameter is a means of setting the duration of the transition relat
 
 ## `crossfade`
 
+> EXPORT_SNIPPET: svelte/transition#crossfade
+
 The `crossfade` function creates a pair of [transitions](/docs/element-directives#transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 
 `crossfade` accepts the following parameters:
@@ -262,3 +276,7 @@ The `crossfade` function creates a pair of [transitions](/docs/element-directive
 	<small in:send={{ key }} out:receive={{ key }}>small elem</small>
 {/if}
 ```
+
+## Types
+
+> TYPES: svelte/transition
