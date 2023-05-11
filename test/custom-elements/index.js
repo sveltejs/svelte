@@ -8,7 +8,7 @@ import { loadConfig, loadSvelte } from '../helpers';
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe.only('custom-elements', function () {
+describe('custom-elements', function () {
 	let svelte;
 	/** @type {import('@playwright/test').Browser} */
 	let browser;
