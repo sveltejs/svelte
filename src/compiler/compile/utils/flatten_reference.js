@@ -1,6 +1,7 @@
-import { Node, Identifier } from 'estree';
-
-export default function flatten_reference(node: Node) {
+/**
+ * @param {import('estree').Node} node
+ */
+export default function flatten_reference(node) {
 	const nodes = [];
 	const parts = [];
 
@@ -8,7 +9,7 @@ export default function flatten_reference(node: Node) {
 		nodes.unshift(node.property);
 
 		if (!node.computed) {
-			parts.unshift((node.property as Identifier).name);
+			parts.unshift(/** @type {import('estree').Identifier} */ (node.property).name);
 		} else {
 			const computed_property = to_string(node.property);
 			if (computed_property) {
@@ -28,7 +29,10 @@ export default function flatten_reference(node: Node) {
 	return { name, nodes, parts };
 }
 
-function to_string(node: Node) {
+/**
+ * @param {import('estree').Node} node
+ */
+function to_string(node) {
 	switch (node.type) {
 		case 'Literal':
 			return String(node.value);

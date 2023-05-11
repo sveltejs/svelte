@@ -1,7 +1,9 @@
-import { Node } from 'estree';
 import { analyze, Scope, extract_names, extract_identifiers } from 'periscopic';
 
-export function create_scopes(expression: Node) {
+/**
+ * @param {import('estree').Node} expression
+ */
+export function create_scopes(expression) {
 	return analyze(expression);
 }
 

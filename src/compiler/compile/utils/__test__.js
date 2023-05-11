@@ -1,14 +1,14 @@
 import * as assert from 'assert';
-import get_name_from_filename from './get_name_from_filename';
+import get_name_from_filename from './get_name_from_filename.js';
 import {
 	is_contenteditable,
 	has_contenteditable_attr,
 	is_name_contenteditable,
 	get_contenteditable_attr,
 	CONTENTEDITABLE_BINDINGS
-} from './contenteditable';
-import Element from '../nodes/Element';
-import Attribute from '../nodes/Attribute';
+} from './contenteditable.js';
+import Element from '../nodes/Element.js';
+import Attribute from '../nodes/Attribute.js';
 
 describe('get_name_from_filename', () => {
 	it('uses the basename', () => {
@@ -33,34 +33,34 @@ describe('get_name_from_filename', () => {
 describe('contenteditable', () => {
 	describe('is_contenteditable', () => {
 		it('returns false if node is input', () => {
-			const node = { name: 'input' } as Element;
+			const node = /** @type {Element} */ ({ name: 'input' });
 			assert.equal(is_contenteditable(node), false);
 		});
 		it('returns false if node is textarea', () => {
-			const node = { name: 'textarea' } as Element;
+			const node = /** @type {Element} */ ({ name: 'textarea' });
 			assert.equal(is_contenteditable(node), false);
 		});
 		it('returns false if node is not input or textarea AND it is not contenteditable', () => {
-			const attr = { name: 'href' } as Attribute;
-			const node = { name: 'a', attributes: [attr] } as Element;
+			const attr = /** @type {Attribute} */ ({ name: 'href' });
+			const node = /** @type {Element} */ ({ name: 'a', attributes: [attr] });
 			assert.equal(is_contenteditable(node), false);
 		});
 		it('returns true if node is not input or textarea AND it is contenteditable', () => {
-			const attr = { name: 'contenteditable' } as Attribute;
-			const node = { name: 'a', attributes: [attr] } as Element;
+			const attr = /** @type {Attribute} */ ({ name: 'contenteditable' });
+			const node = /** @type {Element} */ ({ name: 'a', attributes: [attr] });
 			assert.equal(is_contenteditable(node), true);
 		});
 	});
 
 	describe('has_contenteditable_attr', () => {
 		it('returns true if attribute is contenteditable', () => {
-			const attr = { name: 'contenteditable' } as Attribute;
-			const node = { attributes: [attr] } as Element;
+			const attr = /** @type {Attribute} */ ({ name: 'contenteditable' });
+			const node = /** @type {Element} */ ({ attributes: [attr] });
 			assert.equal(has_contenteditable_attr(node), true);
 		});
 		it('returns false if attribute is not contenteditable', () => {
-			const attr = { name: 'href' } as Attribute;
-			const node = { attributes: [attr] } as Element;
+			const attr = /** @type {Attribute} */ ({ name: 'href' });
+			const node = /** @type {Element} */ ({ attributes: [attr] });
 			assert.equal(has_contenteditable_attr(node), false);
 		});
 	});
@@ -76,12 +76,12 @@ describe('contenteditable', () => {
 
 	describe('get_contenteditable_attr', () => {
 		it('returns the contenteditable Attribute if it exists', () => {
-			const attr = { name: 'contenteditable' } as Attribute;
-			const node = { name: 'div', attributes: [attr] } as Element;
+			const attr = /** @type {Attribute} */ ({ name: 'contenteditable' });
+			const node = /** @type {Element} */ ({ name: 'div', attributes: [attr] });
 			assert.equal(get_contenteditable_attr(node), attr);
 		});
 		it('returns undefined if contenteditable attribute cannot be found', () => {
-			const node = { name: 'div', attributes: [] } as Element;
+			const node = /** @type {Element} */ ({ name: 'div', attributes: [] });
 			assert.equal(get_contenteditable_attr(node), undefined);
 		});
 	});

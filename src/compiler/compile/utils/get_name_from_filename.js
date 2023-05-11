@@ -4,7 +4,10 @@ const regex_repeated_invalid_variable_identifier_characters = /[^a-zA-Z_$0-9]+/g
 const regex_starts_with_digit = /^(\d)/;
 const regex_may_starts_or_ends_with_underscore = /^_?(.+?)_?$/;
 
-export default function get_name_from_filename(filename: string) {
+/**
+ * @param {string} filename
+ */
+export default function get_name_from_filename(filename) {
 	if (!filename) return null;
 
 	const parts = filename.split(/[/\\]/).map(encodeURI);
