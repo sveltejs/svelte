@@ -1,12 +1,13 @@
 <script>
-	import { Blurb } from '@sveltejs/site-kit/components';
+	import { Blurb, theme } from '@sveltejs/site-kit/components';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
 	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	import BallsLight from './svelte-collective-light.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	import BallsDark from './svelte-collective-dark.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
 </script>
 
 <svelte:head>
@@ -61,7 +62,13 @@
 
 <Supporters />
 
-<Image src={Balls} alt="The Svelte logo in a ball pit" />
+<div style="aspect-ratio: 4490 / 990;">
+	{#if $theme.current === 'light'}
+		<Image src={BallsLight} alt="The Svelte logo in a ball pit" />
+	{:else}
+		<Image src={BallsDark} alt="The Svelte logo in a ball pit" />
+	{/if}
+</div>
 
 <footer>
 	<a href="/tutorial">Tutorial</a>
