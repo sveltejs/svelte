@@ -11,6 +11,22 @@
 		<meta name="twitter:site" content="@sveltejs" />
 		<meta name="twitter:creator" content="@sveltejs" />
 
+		<!-- add inline style and blocking script to prevent content flash/jump -->
+		<style>
+			.ts-version {
+				display: none;
+			}
+			.prefers-ts .js-version {
+				display: none;
+			}
+			.prefers-ts .ts-version {
+				display: block;
+			}
+			.no-js .ts-toggle {
+				display: none;
+			}
+		</style>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-prefetch>

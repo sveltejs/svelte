@@ -52,10 +52,12 @@ In development mode (see the [compiler options](/docs/svelte-compiler#svelte-com
 If you export a `const`, `class` or `function`, it is readonly from outside the component. Functions are valid prop values, however, as shown below.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	// these are readonly
 	export const thisIs = 'readonly';
 
+	/** @param {string} name */
 	export function greet(name) {
 		alert(`hello ${name}!`);
 	}
@@ -70,7 +72,9 @@ Readonly props can be accessed as properties on the element, tied to the compone
 You can use reserved words as prop names.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
+	/** @type {string} */
 	let className;
 
 	// creates a `class` property, even
@@ -155,10 +159,12 @@ Any top-level statement (i.e. not inside a block or a function) can be made reac
 Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` changes, but not `y`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let x = 0;
 	let y = 0;
 
+	/** @param {number} value */
 	function yPlusAValue(value) {
 		return value + y;
 	}
@@ -179,9 +185,10 @@ It is important to note that the reactive blocks are ordered via simple static a
 	let x = 0;
 	let y = 0;
 
-	const setY = (value) => {
+	/** @param {number} value */
+	function setY(value) {
 		y = value;
-	};
+	}
 
 	$: yDependent = y;
 	$: setY(x);
@@ -193,7 +200,9 @@ Moving the line `$: yDependent = y` below `$: setY(x)` will cause `yDependent` t
 If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
+	/** @type {number} */
 	export let num;
 
 	// we don't need to declare `squared` and `cubed`
@@ -232,7 +241,8 @@ Local variables (that do not represent store values) must _not_ have a `$` prefi
 
 #### Store contract
 
-```js
+```ts
+// @noErrors
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 

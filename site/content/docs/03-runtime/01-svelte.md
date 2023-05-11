@@ -6,13 +6,7 @@ The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [c
 
 ## `onMount`
 
-```js
-onMount(callback: () => void)
-```
-
-```js
-onMount(callback: () => () => void)
-```
+> EXPORT_SNIPPET: svelte#onMount
 
 The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
 
@@ -48,9 +42,7 @@ If a function is returned from `onMount`, it will be called when the component i
 
 ## `beforeUpdate`
 
-```js
-beforeUpdate(callback: () => void)
-```
+> EXPORT_SNIPPET: svelte#beforeUpdate
 
 Schedules a callback to run immediately before the component is updated after any state change.
 
@@ -68,9 +60,7 @@ Schedules a callback to run immediately before the component is updated after an
 
 ## `afterUpdate`
 
-```js
-afterUpdate(callback: () => void)
-```
+> EXPORT_SNIPPET: svelte#afterUpdate
 
 Schedules a callback to run immediately after the component has been updated.
 
@@ -88,9 +78,7 @@ Schedules a callback to run immediately after the component has been updated.
 
 ## `onDestroy`
 
-```js
-onDestroy(callback: () => void)
-```
+> EXPORT_SNIPPET: svelte#onDestroy
 
 Schedules a callback to run immediately before the component is unmounted.
 
@@ -108,9 +96,7 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 
 ## `tick`
 
-```js
-promise: Promise = tick();
-```
+> EXPORT_SNIPPET: svelte#tick
 
 Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
 
@@ -128,9 +114,7 @@ Returns a promise that resolves once any pending state changes have been applied
 
 ## `setContext`
 
-```js
-setContext(key: any, context: any)
-```
+> EXPORT_SNIPPET: svelte#setContext
 
 Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
 
@@ -148,9 +132,7 @@ Like lifecycle functions, this must be called during component initialisation.
 
 ## `getContext`
 
-```js
-context: any = getContext(key: any)
-```
+> EXPORT_SNIPPET: svelte#getContext
 
 Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
 
@@ -164,9 +146,7 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 ## `hasContext`
 
-```js
-hasContext: boolean = hasContext(key: any)
-```
+> EXPORT_SNIPPET: svelte#hasContext
 
 Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
 
@@ -182,9 +162,7 @@ Checks whether a given `key` has been set in the context of a parent component. 
 
 ## `getAllContexts`
 
-```js
-contexts: Map<any, any> = getAllContexts()
-```
+> EXPORT_SNIPPET: svelte#getAllContexts
 
 Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
 
@@ -198,9 +176,7 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 
 ## `createEventDispatcher`
 
-```js
-dispatch: ((name: string, detail?: any, options?: DispatchOptions) => boolean) = createEventDispatcher();
-```
+> EXPORT_SNIPPET: svelte#createEventDispatcher
 
 Creates an event dispatcher that can be used to dispatch [component events](/docs/component-directives#on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
 
@@ -246,3 +222,7 @@ Events can be cancelable by passing a third parameter to the dispatch function. 
 	}
 </script>
 ```
+
+## Types
+
+> TYPES: svelte

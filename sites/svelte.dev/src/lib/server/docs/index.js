@@ -1,14 +1,37 @@
-// import 'prism-svelte';
-// import 'prismjs/components/prism-bash.js';
-// import 'prismjs/components/prism-diff.js';
-// import 'prismjs/components/prism-typescript.js';
-import { createShikiHighlighter } from 'shiki-twoslash';
-import { SHIKI_LANGUAGE_MAP, normalizeSlugify, transform } from '../markdown';
-// import { render, replace_placeholders } from './render.js';
-// import { parse_route_id } from '../../../../../../packages/kit/src/utils/routing.js';
+import { modules } from '$lib/generated/type-info';
 import { createHash } from 'crypto';
+import fs from 'fs';
 import MagicString from 'magic-string';
+import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
 import ts from 'typescript';
+import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, slugify, transform } from '../markdown';
+import { replace_placeholders } from './render.js';
+
+const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
+
+const snippet_cache = new URL('../../../../node_modules/.snippets', import.meta.url).pathname;
+if (!fs.existsSync(snippet_cache)) {
+	fs.mkdirSync(snippet_cache, { recursive: true });
+}
+
+const type_regex = new RegExp(
+	`(import\\(&apos;svelte&apos;\\)\\.)?\\b(${modules
+		.flatMap((module) => module.types)
+		.map((type) => type.name)
+		.join('|')})\\b`,
+	'g'
+);
+
+const type_links = new Map();
+
+modules.forEach((module) => {
+	const slug = slugify(module.name);
+
+	module.types.forEach((type) => {
+		const link = `/docs/${slug}#type-${slugify(type.name)}`;
+		type_links.set(type.name, link);
+	});
+});
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -23,20 +46,23 @@ export async function get_parsed_docs(docs_data, slug) {
 
 	const highlighter = await createShikiHighlighter({ theme: 'css-variables' });
 
+	const placeholders_replaced_content = replace_placeholders(page.content);
+
 	return {
 		...page,
 		content: parse({
 			file: page.file,
-			body: generate_ts_from_js(page.content),
+			body: generate_ts_from_js(placeholders_replaced_content),
 			code: (source, language, current) => {
 				const hash = createHash('sha256');
 				hash.update(source + language + current);
 				const digest = hash.digest().toString('base64').replace(/\//g, '-');
 
-				// TODO: cache
-				// if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
-				// 	return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
-				// }
+				try {
+					if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
+						return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
+					}
+				} catch {}
 
 				/** @type {Record<string, string>} */
 				const options = {};
@@ -44,10 +70,13 @@ export async function get_parsed_docs(docs_data, slug) {
 				let html = '';
 
 				source = source
-					.replace(/^\/\/\/ (.+?): (.+)\n/gm, (_, key, value) => {
-						options[key] = value;
-						return '';
-					})
+					.replace(
+						/(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm,
+						(_, key, value) => {
+							options[key] = value;
+							return '';
+						}
+					)
 					.replace(/^([\-\+])?((?:    )+)/gm, (match, prefix = '', spaces) => {
 						if (prefix && language !== 'diff') return match;
 
@@ -69,123 +98,123 @@ export async function get_parsed_docs(docs_data, slug) {
 					version_class = 'js-version';
 				}
 
-				// TODO: Replace later
-				html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
+				if (language === 'dts') {
+					html = renderCodeToHTML(
+						source,
+						'ts',
+						{ twoslash: false },
+						{ themeName: 'css-variables' },
+						highlighter
+					);
+				} else if (language === 'js' || language === 'ts') {
+					try {
+						const injected = [];
 
-				// 		if (source.includes('$env/')) {
-				// 			// TODO we're hardcoding static env vars that are used in code examples
-				// 			// in the types, which isn't... totally ideal, but will do for now
-				// 			injected.push(
-				// 				`declare module '$env/dynamic/private' { export const env: Record<string, string> }`,
-				// 				`declare module '$env/dynamic/public' { export const env: Record<string, string> }`,
-				// 				`declare module '$env/static/private' { export const API_KEY: string }`,
-				// 				`declare module '$env/static/public' { export const PUBLIC_BASE_URL: string }`
-				// 			);
-				// 		}
+						if (/(svelte)/.test(source) || page.file.includes('typescript')) {
+							injected.push(
+								`// @filename: ambient.d.ts`,
+								`/// <reference types="svelte" />`,
+								`/// <reference types="svelte/action" />`,
+								`/// <reference types="svelte/compiler" />`,
+								`/// <reference types="svelte/easing" />`,
+								`/// <reference types="svelte/motion" />`,
+								`/// <reference types="svelte/transition" />`,
+								`/// <reference types="svelte/store" />`,
+								`/// <reference types="svelte/action" />`
+							);
+						}
 
-				// 		if (source.includes('./$types') && !source.includes('@filename: $types.d.ts')) {
-				// 			const params = parse_route_id(options.file || `+page.${language}`)
-				// 				.params.map((param) => `${param.name}: string`)
-				// 				.join(', ');
+						if (page.file.includes('svelte-compiler')) {
+							injected.push('// @esModuleInterop');
+						}
 
-				// 			injected.push(
-				// 				`// @filename: $types.d.ts`,
-				// 				`import type * as Kit from '@sveltejs/kit';`,
-				// 				`export type PageLoad = Kit.Load<{${params}}>;`,
-				// 				`export type PageServerLoad = Kit.ServerLoad<{${params}}>;`,
-				// 				`export type LayoutLoad = Kit.Load<{${params}}>;`,
-				// 				`export type LayoutServerLoad = Kit.ServerLoad<{${params}}>;`,
-				// 				`export type RequestHandler = Kit.RequestHandler<{${params}}>;`,
-				// 				`export type Action = Kit.Action<{${params}}>;`,
-				// 				`export type Actions = Kit.Actions<{${params}}>;`
-				// 			);
-				// 		}
+						if (page.file.includes('svelte.md')) {
+							injected.push('// @errors: 2304');
+						}
 
-				// 		// special case — we need to make allowances for code snippets coming
-				// 		// from e.g. ambient.d.ts
-				// 		if (file.endsWith('30-modules.md')) {
-				// 			injected.push('// @errors: 7006 7031');
-				// 		}
+						// Actions JSDoc examples are invalid. Too many errors, edge cases
+						if (page.file.includes('svelte-action')) {
+							injected.push('// @noErrors');
+						}
 
-				// 		// another special case
-				// 		if (source.includes('$lib/types')) {
-				// 			injected.push(`declare module '$lib/types' { export interface User {} }`);
-				// 		}
+						if (page.file.includes('typescript')) {
+							injected.push('// @errors: 2304');
+						}
 
-				// 		if (injected.length) {
-				// 			const injected_str = injected.join('\n');
-				// 			if (source.includes('// @filename:')) {
-				// 				source = source.replace('// @filename:', `${injected_str}\n\n// @filename:`);
-				// 			} else {
-				// 				source = source.replace(
-				// 					/^(?!\/\/ @)/m,
-				// 					`${injected_str}\n\n// @filename: index.${language}\n// ---cut---\n`
-				// 				);
-				// 			}
-				// 		}
+						if (injected.length) {
+							const injected_str = injected.join('\n');
+							if (source.includes('// @filename:')) {
+								source = source.replace('// @filename:', `${injected_str}\n\n// @filename:`);
+							} else {
+								source = source.replace(
+									/^(?!\/\/ @)/m,
+									`${injected_str}\n\n// @filename: index.${language}\n` + ` // ---cut---\n`
+								);
+							}
+						}
 
-				// 		const twoslash = runTwoSlash(source, language, {
-				// 			defaultCompilerOptions: {
-				// 				allowJs: true,
-				// 				checkJs: true,
-				// 				target: 'es2021',
-				// 			},
-				// 		});
+						const twoslash = runTwoSlash(source, language, {
+							defaultCompilerOptions: {
+								allowJs: true,
+								checkJs: true,
+								target: ts.ScriptTarget.ES2022
+							}
+						});
 
-				// 		html = renderCodeToHTML(
-				// 			twoslash.code,
-				// 			'ts',
-				// 			{ twoslash: true },
-				// 			{},
-				// 			highlighter,
-				// 			twoslash
-				// 		);
-				// 	} catch (e) {
-				// 		console.error(`Error compiling snippet in ${file}`);
-				// 		console.error(e.code);
-				// 		throw e;
-				// 	}
+						html = renderCodeToHTML(
+							twoslash.code,
+							'ts',
+							{ twoslash: true },
+							// @ts-ignore Why shiki-twoslash requires a theme name?
+							{},
+							highlighter,
+							twoslash
+						);
+					} catch (e) {
+						console.error(`Error compiling snippet in ${page.file}`);
+						console.error(e.code);
+						throw e;
+					}
 
-				// 	// we need to be able to inject the LSP attributes as HTML, not text, so we
-				// 	// turn &lt; into &amp;lt;
-				// 	html = html.replace(
-				// 		/<data-lsp lsp='([^']*)'([^>]*)>(\w+)<\/data-lsp>/g,
-				// 		(match, lsp, attrs, name) => {
-				// 			if (!lsp) return name;
-				// 			return `<data-lsp lsp='${lsp.replace(/&/g, '&amp;')}'${attrs}>${name}</data-lsp>`;
-				// 		}
-				// 	);
+					// we need to be able to inject the LSP attributes as HTML, not text, so we
+					// turn &lt; into &amp;lt;
+					html = html.replace(
+						/<data-lsp lsp='([^']*)'([^>]*)>(\w+)<\/data-lsp>/g,
+						(match, lsp, attrs, name) => {
+							if (!lsp) return name;
+							return `<data-lsp lsp='${lsp.replace(/&/g, '&amp;')}'${attrs}>${name}</data-lsp>`;
+						}
+					);
 
-				// 	// preserve blank lines in output (maybe there's a more correct way to do this?)
-				// 	html = html.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
-				// } else if (language === 'diff') {
-				// 	const lines = source.split('\n').map((content) => {
-				// 		let type = null;
-				// 		if (/^[\+\-]/.test(content)) {
-				// 			type = content[0] === '+' ? 'inserted' : 'deleted';
-				// 			content = content.slice(1);
-				// 		}
+					// preserve blank lines in output (maybe there's a more correct way to do this?)
+					html = html.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
+				} else if (language === 'diff') {
+					const lines = source.split('\n').map((content) => {
+						let type = null;
+						if (/^[\+\-]/.test(content)) {
+							type = content[0] === '+' ? 'inserted' : 'deleted';
+							content = content.slice(1);
+						}
 
-				// 		return {
-				// 			type,
-				// 			content: escape(content),
-				// 		};
-				// 	});
+						return {
+							type,
+							content: escape(content)
+						};
+					});
 
-				// 	html = `<pre class="language-diff"><code>${lines
-				// 		.map((line) => {
-				// 			if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
-				// 			return line.content + '\n';
-				// 		})
-				// 		.join('')}</code></pre>`;
-				// } else {
-				// 	const plang = languages[language];
-				// 	const highlighted = plang
-				// 		? PrismJS.highlight(source, PrismJS.languages[plang], language)
-				// 		: source.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+					html = `<pre class="language-diff"><code>${lines
+						.map((line) => {
+							if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
+							return line.content + '\n';
+						})
+						.join('')}</code></pre>`;
+				} else {
+					const highlighted = highlighter.codeToHtml(source, {
+						lang: SHIKI_LANGUAGE_MAP[language]
+					});
 
-				// 	html = `<pre class='language-${plang}'><code>${highlighted}</code></pre>`;
-				// }
+					html = highlighted.replace(/<div class='line'><\/div>/g, '<div class="line"> </div>');
+				}
 
 				if (options.file) {
 					html = `<div class="code-block"><span class="filename">${options.file}</span>${html}</div>`;
@@ -195,18 +224,20 @@ export async function get_parsed_docs(docs_data, slug) {
 					html = html.replace(/class=('|")/, `class=$1${version_class} `);
 				}
 
-				// type_regex.lastIndex = 0;
+				type_regex.lastIndex = 0;
 
 				html = html
-					// .replace(type_regex, (match, prefix, name) => {
-					// 	if (options.link === 'false' || name === current) {
-					// 		// we don't want e.g. RequestHandler to link to RequestHandler
-					// 		return match;
-					// 	}
+					.replace(type_regex, (match, prefix, name, pos, str) => {
+						const char_after = str.slice(pos + match.length, pos + match.length + 1);
 
-					// 	const link = `<a href="${type_links.get(name)}">${name}</a>`;
-					// 	return `${prefix || ''}${link}`;
-					// })
+						if (options.link === 'false' || name === current || /(\$|\d|\w)/.test(char_after)) {
+							// we don't want e.g. RequestHandler to link to RequestHandler
+							return match;
+						}
+
+						const link = `<a href="${type_links.get(name)}">${name}</a>`;
+						return `${prefix || ''}${link}`;
+					})
 					.replace(
 						/^(\s+)<span class="token comment">([\s\S]+?)<\/span>\n/gm,
 						(match, intro_whitespace, content) => {
@@ -226,17 +257,16 @@ export async function get_parsed_docs(docs_data, slug) {
 					)
 					.replace(/\/\*…\*\//g, '…');
 
-				// fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
+				fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
 				return html;
 			},
 			codespan: (text) => {
 				return (
 					'<code>' +
-					text +
-					// text.replace(type_regex, (match, prefix, name) => {
-					// 	const link = `<a href="${type_links.get(name)}">${name}</a>`;
-					// 	return `${prefix || ''}${link}`;
-					// }) +
+					text.replace(type_regex, (match, prefix, name) => {
+						const link = `<a href="${type_links.get(name)}">${name}</a>`;
+						return `${prefix || ''}${link}`;
+					}) +
 					'</code>'
 				);
 			}
@@ -279,9 +309,16 @@ function parse({ body, code, codespan }) {
 			headings[level] = normalized;
 			headings.length = level;
 
-			const slug = normalizeSlugify(raw);
+			const type_heading_match = /^\[TYPE\]:\s+(.+)/.exec(raw);
 
-			return `<h${level} id="${slug}">${html}<a href="#${slug}" class="permalink"><span class="visually-hidden">permalink</span></a></h${level}>`;
+			const slug = normalizeSlugify(type_heading_match ? `type-${type_heading_match[1]}` : raw);
+
+			return `<h${level} id="${slug}">${html
+				.replace(/<\/?code>/g, '')
+				.replace(
+					/^\[TYPE\]:\s+(.+)/,
+					'$1'
+				)}<a href="#${slug}" class="permalink"><span class="visually-hidden">permalink</span></a></h${level}>`;
 		},
 		code: (source, language) => code(source, language, current),
 		codespan
@@ -313,7 +350,7 @@ export function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
-			if (!code.includes('/// file:')) {
+			if (!METADATA_REGEX.test(code)) {
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}
@@ -333,7 +370,7 @@ export function generate_ts_from_js(markdown) {
 			return (
 				match.replace('svelte', 'original-svelte') +
 				'\n```generated-svelte\n' +
-				code.replace(outer, `<script lang="ts">${ts}</script>`) +
+				code.replace(outer, `<script lang="ts">\n\t${ts.trim()}\n</script>`) +
 				'\n```'
 			);
 		});
@@ -404,7 +441,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							if (variable_statement.name.getText() === 'actions') {
 								code.appendLeft(variable_statement.getEnd(), ` satisfies ${name}`);
 							} else {
-								code.appendLeft(variable_statement.name.getEnd(), `: ${name}`);
+								code.appendLeft(variable_statement.name.getEnd(), `: ${name}${generics ?? ''}`);
 							}
 
 							modified = true;
@@ -412,11 +449,11 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							throw new Error('Unhandled @type JsDoc->TS conversion: ' + js_code);
 						}
 					} else if (ts.isJSDocParameterTag(tag) && ts.isFunctionDeclaration(node)) {
-						if (node.parameters.length !== 1) {
-							throw new Error(
-								'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
-							);
-						}
+						// if (node.parameters.length !== 1) {
+						// 	throw new Error(
+						// 		'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
+						// 	);
+						// }
 						const [name] = get_type_info(tag);
 						code.appendLeft(node.parameters[0].getEnd(), `: ${name}`);
 
