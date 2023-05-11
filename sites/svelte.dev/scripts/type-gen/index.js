@@ -4,7 +4,7 @@ import prettier from 'prettier';
 import ts from 'typescript';
 import { get_bundled_types } from './compile-types.js';
 
-/** @typedef {{ name: string; comment: string; markdown: string; }} Extracted */
+/** @typedef {{ name: string; comment: string; markdown: string; snippet: string; children: Extracted[] }} Extracted */
 
 /** @type {Array<{ name: string; comment: string; exports: Extracted[]; types: Extracted[]; exempt?: boolean; }>} */
 const modules = [];
@@ -335,6 +335,21 @@ $: {
 		module_with_SvelteComponentTyped.types.push(svelte_comp_typed_part[0]);
 		module_with_SvelteComponentTyped.types.sort((a, b) => (a.name < b.name ? -1 : 1));
 	}
+}
+
+// Remove $$_attributes from ActionReturn
+
+$: {
+	const module_with_ActionReturn = modules.find((m) =>
+		m.types.find((t) => t.name === 'ActionReturn')
+	);
+
+	const new_children =
+		module_with_ActionReturn?.types[1].children.filter((c) => c.name !== '$$_attributes') || [];
+
+	if (!module_with_ActionReturn) break $;
+
+	module_with_ActionReturn.types[1].children = new_children;
 }
 
 try {
