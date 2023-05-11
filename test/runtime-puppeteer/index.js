@@ -4,7 +4,7 @@ import * as path from 'path';
 import { rollup } from 'rollup';
 
 import { chromium } from '@playwright/test';
-import { deepEqual } from 'assert';
+import { deepStrictEqual } from 'assert';
 import { loadConfig, loadSvelte, mkdirp, prettyPrintPuppeteerAssertionError } from '../helpers';
 
 let svelte;
@@ -30,7 +30,7 @@ describe('runtime (playwright)', () => {
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate, is_first_run) {
+	function runTest(dir, hydrate) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
@@ -182,7 +182,7 @@ describe('runtime (playwright)', () => {
 
 				function assertWarnings() {
 					if (config.warnings) {
-						deepEqual(
+						deepStrictEqual(
 							warnings.map((w) => ({
 								code: w.code,
 								message: w.message,
@@ -218,14 +218,11 @@ describe('runtime (playwright)', () => {
 					throw err;
 				}
 			}
-		).timeout(is_first_run ? 20000 : 10000);
+		);
 	}
 
-	// Increase the timeout on the first run in preparation for restarting Chromium due to SIGSEGV.
-	let first_run = true;
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
-		runTest(dir, false, first_run);
-		runTest(dir, true, first_run);
-		first_run = false;
+		runTest(dir, false);
+		runTest(dir, true);
 	});
 });
