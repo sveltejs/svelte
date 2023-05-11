@@ -57,7 +57,7 @@ export class Parser {
 	meta_tags = {};
 
 	/**
-	 * @type {LastAutoClosedTag}
+	 * @type {{tag: string; reason: string; depth: number;}}
 	 */
 	last_auto_closed_tag = undefined;
 
@@ -80,6 +80,11 @@ export class Parser {
 			children: []
 		};
 		this.stack.push(this.html);
+
+		/**
+		 * @typedef {(parser: Parser) => ParserState | void} ParserState
+		 */
+
 		/** @type {ParserState} */
 		let state = fragment;
 		while (this.index < this.template.length) {
@@ -278,16 +283,3 @@ export default function parse(template, options = {}) {
 		module: module_scripts[0]
 	};
 }
-
-/**
- * @internal
- * @typedef {(parser: Parser) => ParserState | void} ParserState
- */
-
-/**
- * @internal
- * @typedef {Object} LastAutoClosedTag
- * @property {string} tag
- * @property {string} reason
- * @property {number} depth
- */

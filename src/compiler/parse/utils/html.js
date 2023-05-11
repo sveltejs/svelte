@@ -128,7 +128,7 @@ const disallowed_contents = new Map([
 
 /**
  * @param {string} current
- * @param {string} next
+ * @param {string} [next]
  */
 export function closing_tag_omitted(current, next) {
 	if (disallowed_contents.has(current)) {

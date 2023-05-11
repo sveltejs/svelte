@@ -379,7 +379,8 @@ function read_attribute(parser, unique_names) {
 		const first_value = value[0];
 		let expression = null;
 		if (first_value) {
-			const attribute_contains_text = value.length > 1 || first_value.type === 'Text';
+			const attribute_contains_text =
+				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
 				parser.error(parser_errors.invalid_directive_value, first_value.start);
 			} else {
