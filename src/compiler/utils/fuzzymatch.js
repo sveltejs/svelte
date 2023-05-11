@@ -7,6 +7,7 @@ export default function fuzzymatch(name, names) {
 	const matches = set.get(name);
 	return matches && matches[0] && matches[0][0] > 0.7 ? matches[0][1] : null;
 }
+
 // adapted from https://github.com/Glench/fuzzyset.js/blob/master/lib/fuzzyset.js
 // BSD Licensed
 const GRAM_SIZE_LOWER = 2;
@@ -31,6 +32,7 @@ function _distance(str1, str2) {
 		return 1 - distance / str2.length;
 	}
 }
+
 // helper functions
 
 /**
@@ -61,6 +63,7 @@ function levenshtein(str1, str2) {
 	}
 	return current.pop();
 }
+
 const non_word_regex = /[^\w, ]+/;
 
 /**
@@ -108,22 +111,15 @@ function gram_counter(value, gram_size = 2) {
 function sort_descending(a, b) {
 	return b[0] - a[0];
 }
-/** */
+
 class FuzzySet {
-	/**
-	 * @default {}
-	 */
 	exact_set = {};
-
-	/**
-	 * @default {}
-	 */
 	match_dict = {};
+	items = {};
 
 	/**
-	 * @default {}
+	 * @param {string[]} arr
 	 */
-	items = {};
 	constructor(arr) {
 		// initialization
 		for (let i = GRAM_SIZE_LOWER; i < GRAM_SIZE_UPPER + 1; ++i) {
