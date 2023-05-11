@@ -2,24 +2,18 @@ import { x } from 'code-red';
 import { get_const_tags } from './shared/get_const_tags.js';
 
 /**
- * @param {AwaitBlock} node
- * @param {Renderer} renderer
- * @param {import('../Renderer').RenderOptions} options
+ * @param {import('../../nodes/AwaitBlock.js').default} node
+ * @param {import('../Renderer.js').default} renderer
+ * @param {import('../Renderer.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	renderer.push();
 	renderer.render(node.pending.children, options);
 
-	/**
-	 * @type {undefined}
-	 */
 	const pending = renderer.pop();
 	renderer.push();
 	renderer.render(node.then.children, options);
 
-	/**
-	 * @type {undefined}
-	 */
 	const then = renderer.pop();
 	renderer.add_expression(x`
 		function(__value) {

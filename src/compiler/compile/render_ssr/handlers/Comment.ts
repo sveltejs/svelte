@@ -1,8 +1,14 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import Comment from '../../nodes/Comment';
-
-export default function (node: Comment, renderer: Renderer, options: RenderOptions) {
-	if (options.preserveComments) {
-		renderer.add_string(`<!--${node.data}-->`);
-	}
+/**
+ * @param {import('../../nodes/Comment.js').default} node
+ * @param {import('../Renderer.js').default} renderer
+ * @param {import('../Renderer.js').RenderOptions} options
+ */
+export default function (node, renderer, options) {
+    if (options.preserveComments) {
+        renderer.add_string(`<!--${node.data}-->`);
+    }
 }
+
+
+
+
