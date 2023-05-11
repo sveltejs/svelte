@@ -1,5 +1,6 @@
 // All parser errors should be listed and accessed from here
 import list from '../utils/list.js';
+
 /**
  * @internal
  */

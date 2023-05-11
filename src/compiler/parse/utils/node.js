@@ -1,6 +1,7 @@
-import { TemplateNode } from '../../interfaces';
-
-export function to_string(node: TemplateNode) {
+/**
+ * @param {import("../../interfaces.js").TemplateNode} node
+ */
+export function to_string(node) {
 	switch (node.type) {
 		case 'IfBlock':
 			return '{#if} block';

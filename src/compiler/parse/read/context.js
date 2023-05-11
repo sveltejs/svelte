@@ -1,18 +1,20 @@
-import { Parser } from '../index';
 import { isIdentifierStart } from 'acorn';
-import full_char_code_at from '../../utils/full_char_code_at';
+import full_char_code_at from '../../utils/full_char_code_at.js';
 import {
 	is_bracket_open,
 	is_bracket_close,
 	is_bracket_pair,
 	get_bracket_close
-} from '../utils/bracket';
-import { parse_expression_at } from '../acorn';
-import { Pattern } from 'estree';
-import parser_errors from '../errors';
-import { regex_not_newline_characters } from '../../utils/patterns';
+} from '../utils/bracket.js';
+import { parse_expression_at } from '../acorn.js';
+import parser_errors from '../errors.js';
+import { regex_not_newline_characters } from '../../utils/patterns.js';
 
-export default function read_context(parser: Parser): Pattern & { start: number; end: number } {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {Pattern & { start: number; end: number }}
+ */
+export default function read_context(parser) {
 	const start = parser.index;
 	let i = parser.index;
 

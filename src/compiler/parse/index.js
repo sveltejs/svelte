@@ -6,7 +6,7 @@ import full_char_code_at from '../utils/full_char_code_at';
 import error from '../utils/error';
 import parser_errors from './errors';
 const regex_position_indicator = / \(\d+:\d+\)$/;
-/** */
+
 export class Parser {
 	/**
 	 * @readonly
@@ -32,39 +32,39 @@ export class Parser {
 	 */
 	css_mode = undefined;
 
-	/**
-	 * @default 0 */
 	index = 0;
 
 	/**
-	 * @default []
-	 * @type {TemplateNode[]}
+	 * @type {import('../interfaces.js').TemplateNode[]}
 	 */
 	stack = [];
 
 	/**
-	 * @type {Fragment} */
+	 * @type {import('../interfaces.js').Fragment}
+	 */
 	html = undefined;
 
 	/**
-	 * @default []
-	 * @type {Style[]}
+	 * @type {import('../interfaces.js').Style[]}
 	 */
 	css = [];
 
 	/**
-	 * @default []
-	 * @type {Script[]}
+	 * @type {import('../interfaces.js').Script[]}
 	 */
 	js = [];
 
-	/**
-	 * @default {} */
 	meta_tags = {};
 
 	/**
-	 * @type {LastAutoClosedTag} */
+	 * @type {LastAutoClosedTag}
+	 */
 	last_auto_closed_tag = undefined;
+
+	/**
+	 * @param {string} template
+	 * @param {import('../interfaces.js').ParserOptions} options
+	 */
 	constructor(template, options) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
@@ -80,6 +80,7 @@ export class Parser {
 			children: []
 		};
 		this.stack.push(this.html);
+		/** @type {ParserState} */
 		let state = fragment;
 		while (this.index < this.template.length) {
 			state = state(this) || fragment;
@@ -118,7 +119,8 @@ export class Parser {
 	}
 
 	/**
-	 * @param {any} err */
+	 * @param {any} err
+	 */
 	acorn_error(err) {
 		this.error(
 			{
@@ -130,7 +132,8 @@ export class Parser {
 	}
 
 	/**
-	 * @param {{ code: string; message: string }} */
+	 * @param {{ code: string; message: string }} err
+	 */
 	error({ code, message }, index = this.index) {
 		error(message, {
 			name: 'ParseError',
@@ -143,8 +146,8 @@ export class Parser {
 
 	/**
 	 * @param {string} str
-	 * @param {boolean} required
-	 * @param {{ code: string; message: string }} error
+	 * @param {boolean} [required]
+	 * @param {{ code: string; message: string }} [error]
 	 */
 	eat(str, required, error) {
 		if (this.match(str)) {
@@ -163,7 +166,8 @@ export class Parser {
 	}
 
 	/**
-	 * @param {string} str */
+	 * @param {string} str
+	 */
 	match(str) {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
@@ -216,7 +220,7 @@ export class Parser {
 
 	/**
 	 * @param {RegExp} pattern
-	 * @param {Parameters<Parser['error']>[0]} error_message
+	 * @param {Parameters<Parser['error']>[0]} [error_message]
 	 */
 	read_until(pattern, error_message) {
 		if (this.index >= this.template.length) {
@@ -249,8 +253,8 @@ export class Parser {
 
 /**
  * @param {string} template
- * @param {ParserOptions} options
- * @returns {Ast}
+ * @param {import('../interfaces.js').ParserOptions} options
+ * @returns {import('../interfaces.js').Ast}
  */
 export default function parse(template, options = {}) {
 	const parser = new Parser(template, options);
@@ -275,9 +279,14 @@ export default function parse(template, options = {}) {
 	};
 }
 
-/** @typedef {(parser: Parser) => ParserState | void} ParserState */
+/**
+ * @internal
+ * @typedef {(parser: Parser) => ParserState | void} ParserState
+ */
 
-/** @typedef {Object} LastAutoClosedTag
+/**
+ * @internal
+ * @typedef {Object} LastAutoClosedTag
  * @property {string} tag
  * @property {string} reason
  * @property {number} depth
