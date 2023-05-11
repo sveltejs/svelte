@@ -12,7 +12,7 @@ const index = path.resolve('index.mjs');
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (playwright)', function () {
+describe('runtime (browser)', function () {
 	this.timeout(20000);
 
 	let svelte;
@@ -20,10 +20,10 @@ describe('runtime (playwright)', function () {
 
 	before(async () => {
 		svelte = loadSvelte(false);
-		console.log('[runtime-playwright] Loaded Svelte');
+		console.log('[runtime-browser] Loaded Svelte');
 
 		browser = await chromium.launch();
-		console.log('[runtime-playwright] Launched playwright browser');
+		console.log('[runtime-browser] Launched browser');
 	});
 
 	after(async () => {
@@ -59,7 +59,7 @@ describe('runtime (playwright)', function () {
 					input: 'main',
 					plugins: [
 						{
-							name: 'testing-runtime-playwright',
+							name: 'testing-runtime-browser',
 							resolveId(importee) {
 								if (importee === 'svelte/internal' || importee === './internal') {
 									return internal;

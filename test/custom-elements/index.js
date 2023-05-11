@@ -17,9 +17,9 @@ describe('custom-elements', function () {
 
 	before(async function () {
 		svelte = loadSvelte();
-		console.log('[custom-element] Loaded Svelte');
+		console.log('[custom-elements] Loaded Svelte');
 		browser = await chromium.launch();
-		console.log('[custom-element] Launched playwright browser');
+		console.log('[custom-elements] Launched browser');
 	});
 
 	after(async () => {
