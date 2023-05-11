@@ -12,12 +12,13 @@ const index = path.resolve('index.mjs');
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (playwright)', () => {
+describe('runtime (playwright)', function () {
+	this.timeout(10000);
+
 	let svelte;
 	let browser;
 
-	before(async function () {
-		this.timeout(10000);
+	before(async () => {
 		svelte = loadSvelte(false);
 		console.log('[runtime-playwright] Loaded Svelte');
 
