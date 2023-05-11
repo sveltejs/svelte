@@ -1,13 +1,13 @@
-import read_context from '../read/context';
-import read_expression from '../read/expression';
-import { closing_tag_omitted } from '../utils/html';
-import { regex_whitespace } from '../../utils/patterns';
-import { trim_start, trim_end } from '../../utils/trim';
-import { to_string } from '../utils/node';
-import parser_errors from '../errors';
+import read_context from '../read/context.js';
+import read_expression from '../read/expression.js';
+import { closing_tag_omitted } from '../utils/html.js';
+import { regex_whitespace } from '../../utils/patterns.js';
+import { trim_start, trim_end } from '../../utils/trim.js';
+import { to_string } from '../utils/node.js';
+import parser_errors from '../errors.js';
 
 /**
- * @param {TemplateNode} block
+ * @param {import('../../interfaces.js').TemplateNode} block
  * @param {boolean} trim_before
  * @param {boolean} trim_after
  */
@@ -33,7 +33,7 @@ function trim_whitespace(block, trim_before, trim_after) {
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  */
 export default function mustache(parser) {
 	const start = parser.index;
