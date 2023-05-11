@@ -2,7 +2,6 @@
 	import { page } from '$app/stores';
 	import '@sveltejs/site-kit/styles/code.css';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
@@ -18,7 +17,8 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<article class="post listify text">
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+<article class="post listify text" id="main" tabindex="0">
 	<h1>{data.post.title}</h1>
 	<p class="standfirst">{data.post.description}</p>
 
@@ -97,12 +97,12 @@
 		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
 	}
 
-	.post :global(code) {
+	/* .post :global(code) {
 		padding: 0.3rem 0.8rem 0.3rem;
 		margin: 0 0.2rem;
 		top: -0.1rem;
 		background: var(--sk-back-4);
-	}
+	} */
 
 	.post :global(pre) :global(code) {
 		padding: 0;

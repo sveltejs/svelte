@@ -132,7 +132,8 @@
 			</div>
 		</div>
 
-		<div class="tutorial-repl">
+		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+		<div class="tutorial-repl" id="main" tabindex="0">
 			{#if browser}
 				<Repl
 					bind:this={repl}
