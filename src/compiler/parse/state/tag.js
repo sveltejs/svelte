@@ -1,11 +1,12 @@
-import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
-import fuzzymatch from '../../utils/fuzzymatch';
-import { is_void } from '../../../shared/utils/names';
-import parser_errors from '../errors';
-import read_expression from '../read/expression';
-import read_script from '../read/script';
-import read_style from '../read/style';
-import { closing_tag_omitted, decode_character_references } from '../utils/html';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import fuzzymatch from '../../utils/fuzzymatch.js';
+import { is_void } from '../../../shared/utils/names.js';
+import parser_errors from '../errors.js';
+import read_expression from '../read/expression.js';
+import read_script from '../read/script.js';
+import read_style from '../read/style.js';
+import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
+
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
 /** Invalid attribute characters if the attribute is not surrounded by quotes */
@@ -57,7 +58,7 @@ const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  */
 export default function tag(parser) {
 	const start = parser.index++;
@@ -111,7 +112,7 @@ export default function tag(parser) {
 		: 'Element';
 
 	/**
-	 * @type {TemplateNode}
+	 * @type {import('../../interfaces.js').TemplateNode}
 	 */
 	const element = {
 		start,
@@ -233,7 +234,7 @@ export default function tag(parser) {
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  */
 function read_tag_name(parser) {
 	const start = parser.index;
@@ -277,7 +278,7 @@ const regex_token_ending_character = /[\s=\/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  * @param {Set<string>} unique_names
  */
 function read_attribute(parser, unique_names) {
@@ -421,7 +422,7 @@ function read_attribute(parser, unique_names) {
 
 /**
  * @param {string} name
- * @returns {DirectiveType}
+ * @returns {import('../../interfaces.js').DirectiveType}
  */
 function get_directive_type(name) {
 	if (name === 'use') return 'Action';
@@ -436,7 +437,7 @@ function get_directive_type(name) {
 }
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
@@ -482,14 +483,14 @@ function read_attribute_value(parser) {
 }
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  * @param {() => boolean} done
  * @param {string} location
- * @returns {TemplateNode[]}
+ * @returns {import('../../interfaces.js').TemplateNode[]}
  */
 function read_sequence(parser, done, location) {
 	/**
-	 * @type {Text}
+	 * @type {import('../../interfaces.js').Text}
 	 */
 	let current_chunk = {
 		start: parser.index,
@@ -500,7 +501,7 @@ function read_sequence(parser, done, location) {
 	};
 
 	/**
-	 * @type {TemplateNode[]}
+	 * @type {import('../../interfaces.js').TemplateNode[]}
 	 */
 	const chunks = [];
 
