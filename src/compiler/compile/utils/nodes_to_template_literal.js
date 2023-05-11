@@ -1,12 +1,12 @@
 /**
  * Transforms a list of Text and MustacheTags into a TemplateLiteral expression.
  * Start/End positions on the elements of the expression are not set.
- * @param {Array<Text | MustacheTag>} value
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").TemplateLiteral}
+ * @param {Array<import('../../interfaces.js').Text | import('../../interfaces.js').MustacheTag>} value
+ * @returns {import('estree').TemplateLiteral}
  */
 export function nodes_to_template_literal(value) {
 	/**
-	 * @type {TemplateLiteral}
+	 * @type {import('estree').TemplateLiteral}
 	 */
 	const literal = {
 		type: 'TemplateLiteral',
@@ -15,7 +15,7 @@ export function nodes_to_template_literal(value) {
 	};
 
 	/**
-	 * @type {TemplateElement}
+	 * @type {import('estree').TemplateElement}
 	 */
 	let quasi = {
 		type: 'TemplateElement',
@@ -27,7 +27,7 @@ export function nodes_to_template_literal(value) {
 			quasi.value.raw += node.raw;
 		} else if (node.type === 'MustacheTag') {
 			literal.quasis.push(quasi);
-			literal.expressions.push(node.expression);
+			literal.expressions.push(/** @type {any} */ (node.expression));
 			quasi = {
 				type: 'TemplateElement',
 				value: { raw: '', cooked: null },
