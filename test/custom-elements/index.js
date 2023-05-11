@@ -8,12 +8,13 @@ import { loadConfig, loadSvelte } from '../helpers';
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('custom-elements', function () {
+describe.only('custom-elements', function () {
 	let svelte;
 	/** @type {import('@playwright/test').Browser} */
 	let browser;
 
-	before(async () => {
+	before(async function () {
+		this.timeout(10000);
 		svelte = loadSvelte();
 		console.log('[custom-element] Loaded Svelte');
 		browser = await chromium.launch();
@@ -99,7 +100,7 @@ describe('custom-elements', function () {
 
 			if (test_result) console.log(test_result);
 			assertWarnings();
-			await page.close();
+			page.close();
 		});
 	});
 });

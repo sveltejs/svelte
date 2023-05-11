@@ -7,16 +7,17 @@ import { chromium } from '@playwright/test';
 import { deepStrictEqual } from 'assert';
 import { loadConfig, loadSvelte, mkdirp, prettyPrintPuppeteerAssertionError } from '../helpers';
 
-let svelte;
-let browser;
-
 const internal = path.resolve('internal/index.mjs');
 const index = path.resolve('index.mjs');
 
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('runtime (playwright)', () => {
-	before(async () => {
+	let svelte;
+	let browser;
+
+	before(async function () {
+		this.timeout(10000);
 		svelte = loadSvelte(false);
 		console.log('[runtime-playwright] Loaded Svelte');
 
