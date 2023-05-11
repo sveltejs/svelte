@@ -1,4 +1,5 @@
 import { decode as decode_mappings } from '@jridgewell/sourcemap-codec';
+
 /**
  * Import decoded sourcemap from mozilla/source-map/SourceMapGenerator
  * Forked from source-map/lib/source-map-generator.js
@@ -67,7 +68,7 @@ function decoded_sourcemap_from_generator(generator) {
 }
 
 /**
- * @param {Processed} processed
+ * @param {import('./public.js').Processed} processed
  */
 export function decode_map(processed) {
 	let decoded_map = typeof processed.map === 'string' ? JSON.parse(processed.map) : processed.map;
