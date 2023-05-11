@@ -102,7 +102,7 @@ function cleanChildren(node) {
 	});
 
 	// recurse
-	[...node.childNodes].forEach((child) => {
+	for (let child of node.childNodes) {
 		if (child.nodeType === 3) {
 			// text
 			if (
@@ -130,7 +130,7 @@ function cleanChildren(node) {
 		}
 
 		previous = child;
-	});
+	}
 
 	// collapse whitespace
 	if (node.firstChild && node.firstChild.nodeType === 3) {
