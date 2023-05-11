@@ -112,7 +112,8 @@
 	}
 
 	button:hover {
-		background-color: rgba(255, 255, 255, 0.2);
+		background-color: var(--sk-back-3);
+		background-color: color-mix(in srgb, var(--sk-back-4) 70%, var(--sk-back-1) 30%);
 	}
 
 	button:has(+ .selected) {
