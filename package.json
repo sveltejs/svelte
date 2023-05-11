@@ -149,7 +149,6 @@
     "periscopic": "^3.1.0",
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.0",
-    "puppeteer": "^19.8.5",
     "rollup": "^3.20.2",
     "source-map": "^0.7.4",
     "source-map-support": "^0.5.21",
