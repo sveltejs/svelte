@@ -115,6 +115,9 @@ devDependencies:
   rollup:
     specifier: ^3.20.2
     version: 3.20.2
+  rollup-plugin-dts:
+    specifier: ^5.3.0
+    version: 5.3.0(rollup@3.20.2)(typescript@5.0.4)
   source-map:
     specifier: ^0.7.4
     version: 0.7.4
@@ -2734,6 +2737,20 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+    dev: true
+
+  /rollup-plugin-dts@5.3.0(rollup@3.20.2)(typescript@5.0.4):
+    resolution: {integrity: sha512-8FXp0ZkyZj1iU5klkIJYLjIq/YZSwBoERu33QBDxm/1yw5UU4txrEtcmMkrq+ZiKu3Q4qvPCNqc3ovX6rjqzbQ==}
+    engines: {node: '>=v14'}
+    peerDependencies:
+      rollup: ^3.0.0
+      typescript: ^4.1 || ^5.0
+    dependencies:
+      magic-string: 0.30.0
+      rollup: 3.20.2
+      typescript: 5.0.4
+    optionalDependencies:
+      '@babel/code-frame': 7.21.4
     dev: true
 
   /rollup@3.20.2:
