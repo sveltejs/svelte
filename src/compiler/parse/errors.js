@@ -4,8 +4,10 @@ import list from '../utils/list';
  * @internal
  */
 export default {
-	css_syntax_error: /**
-	 * @returns {{ code: string; message: any; }} */ (message) => ({
+	/**
+	 * @param {string} message
+	 */
+	css_syntax_error: (message) => ({
 		code: 'css-syntax-error',
 		message
 	}),
@@ -13,11 +15,11 @@ export default {
 		code: 'duplicate-attribute',
 		message: 'Attributes need to be unique'
 	},
-	duplicate_element: /**
+	/**
 	 * @param {string} slug
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (slug, name) => ({
+	 */
+	duplicate_element: (slug, name) => ({
 		code: `duplicate-${slug}`,
 		message: `A component can only have one <${name}> tag`
 	}),
@@ -29,10 +31,10 @@ export default {
 		code: 'empty-attribute-shorthand',
 		message: 'Attribute shorthand cannot be empty'
 	},
-	empty_directive_name: /**
+	/**
 	 * @param {string} type
-	 * @returns {{ code: string; message: string; }}
-	 */ (type) => ({
+	 */
+	empty_directive_name: (type) => ({
 		code: 'empty-directive-name',
 		message: `${type} name cannot be empty`
 	}),
@@ -48,8 +50,8 @@ export default {
 		code: 'expected-name',
 		message: 'Expected name'
 	},
-	invalid_catch_placement_unclosed_block: /**
-	 * @returns {{ code: string; message: string; }} */ (block) => ({
+	/** @param {string} block */
+	invalid_catch_placement_unclosed_block: (block) => ({
 		code: 'invalid-catch-placement',
 		message: `Expected to close ${block} before seeing {:catch} block`
 	}),
@@ -61,18 +63,18 @@ export default {
 		code: 'invalid-component-definition',
 		message: 'invalid component definition'
 	},
-	invalid_closing_tag_unopened: /**
+	/**
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (name) => ({
+	 */
+	invalid_closing_tag_unopened: (name) => ({
 		code: 'invalid-closing-tag',
 		message: `</${name}> attempted to close an element that was not open`
 	}),
-	invalid_closing_tag_autoclosed: /**
+	/**
 	 * @param {string} name
 	 * @param {string} reason
-	 * @returns {{ code: string; message: string; }}
-	 */ (name, reason) => ({
+	 */
+	invalid_closing_tag_autoclosed: (name, reason) => ({
 		code: 'invalid-closing-tag',
 		message: `</${name}> attempted to close <${name}> that was already automatically closed by <${reason}>`
 	}),
@@ -96,8 +98,10 @@ export default {
 		code: 'invalid-elseif-placement',
 		message: 'Cannot have an {:else if ...} block outside an {#if ...} block'
 	},
-	invalid_elseif_placement_unclosed_block: /**
-	 * @returns {{ code: string; message: string; }} */ (block) => ({
+	/**
+	 * @param {string} block
+	 */
+	invalid_elseif_placement_unclosed_block: (block) => ({
 		code: 'invalid-elseif-placement',
 		message: `Expected to close ${block} before seeing {:else if ...} block`
 	}),
@@ -105,16 +109,18 @@ export default {
 		code: 'invalid-else-placement',
 		message: 'Cannot have an {:else} block outside an {#if ...} or {#each ...} block'
 	},
-	invalid_else_placement_unclosed_block: /**
-	 * @returns {{ code: string; message: string; }} */ (block) => ({
+	/**
+	 * @param {string} block
+	 */
+	invalid_else_placement_unclosed_block: (block) => ({
 		code: 'invalid-else-placement',
 		message: `Expected to close ${block} before seeing {:else} block`
 	}),
-	invalid_element_content: /**
+	/**
 	 * @param {string} slug
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (slug, name) => ({
+	 */
+	invalid_element_content: (slug, name) => ({
 		code: `invalid-${slug}-content`,
 		message: `<${name}> cannot have children`
 	}),
@@ -122,34 +128,34 @@ export default {
 		code: 'invalid-element-definition',
 		message: 'Invalid element definition'
 	},
-	invalid_element_placement: /**
+	/**
 	 * @param {string} slug
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (slug, name) => ({
+	 */
+	invalid_element_placement: (slug, name) => ({
 		code: `invalid-${slug}-placement`,
 		message: `<${name}> tags cannot be inside elements or blocks`
 	}),
-	invalid_logic_block_placement: /**
+	/**
 	 * @param {string} location
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (location, name) => ({
+	 */
+	invalid_logic_block_placement: (location, name) => ({
 		code: 'invalid-logic-block-placement',
 		message: `{#${name}} logic block cannot be ${location}`
 	}),
-	invalid_tag_placement: /**
+	/**
 	 * @param {string} location
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (location, name) => ({
+	 */
+	invalid_tag_placement: (location, name) => ({
 		code: 'invalid-tag-placement',
 		message: `{@${name}} tag cannot be ${location}`
 	}),
-	invalid_ref_directive: /**
+	/**
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (name) => ({
+	 */
+	invalid_ref_directive: (name) => ({
 		code: 'invalid-ref-directive',
 		message: `The ref directive is no longer supported — use \`bind:this={${name}}\` instead`
 	}),
@@ -182,18 +188,18 @@ export default {
 		code: 'invalid-tag-name',
 		message: 'Expected valid tag name'
 	},
-	invalid_tag_name_svelte_element: /**
+	/**
 	 * @param {string[]} tags
 	 * @param {string} match
-	 * @returns {{ code: string; message: string; }}
-	 */ (tags, match) => ({
+	 */
+	invalid_tag_name_svelte_element: (tags, match) => ({
 		code: 'invalid-tag-name',
 		message: `Valid <svelte:...> tag names are ${list(tags)}${
 			match ? ' (did you mean ' + match + '?)' : ''
 		}`
 	}),
-	invalid_then_placement_unclosed_block: /**
-	 * @returns {{ code: string; message: string; }} */ (block) => ({
+	/** @param {string} block */
+	invalid_then_placement_unclosed_block: (block) => ({
 		code: 'invalid-then-placement',
 		message: `Expected to close ${block} before seeing {:then} block`
 	}),
@@ -201,10 +207,10 @@ export default {
 		code: 'invalid-then-placement',
 		message: 'Cannot have an {:then} block outside an {#await ...} block'
 	},
-	invalid_void_content: /**
+	/**
 	 * @param {string} name
-	 * @returns {{ code: string; message: string; }}
-	 */ (name) => ({
+	 */
+	invalid_void_content: (name) => ({
 		code: 'invalid-void-content',
 		message: `<${name}> is a void element and cannot have children, or a closing tag`
 	}),
@@ -232,10 +238,10 @@ export default {
 		code: 'unclosed-comment',
 		message: 'comment was left open, expected -->'
 	},
-	unclosed_attribute_value: /**
+	/**
 	 * @param {string} token
-	 * @returns {{ code: string; message: string; }}
-	 */ (token) => ({
+	 */
+	unclosed_attribute_value: (token) => ({
 		code: 'unclosed-attribute-value',
 		message: `Expected to close the attribute value with ${token}`
 	}),
@@ -247,17 +253,17 @@ export default {
 		code: 'unexpected-eof',
 		message: 'Unexpected end of input'
 	},
-	unexpected_eof_token: /**
+	/**
 	 * @param {string} token
-	 * @returns {{ code: string; message: string; }}
-	 */ (token) => ({
+	 */
+	unexpected_eof_token: (token) => ({
 		code: 'unexpected-eof',
 		message: `Unexpected ${token}`
 	}),
-	unexpected_token: /**
+	/**
 	 * @param {string} token
-	 * @returns {{ code: string; message: string; }}
-	 */ (token) => ({
+	 */
+	unexpected_token: (token) => ({
 		code: 'unexpected-token',
 		message: `Expected ${token}`
 	}),
