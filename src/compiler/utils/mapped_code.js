@@ -10,8 +10,8 @@ function last_line_length(s) {
 // mutate map in-place
 
 /**
- * @param {DecodedSourceMap} map
- * @param {SourceLocation} offset
+ * @param {import('@ampproject/remapping').DecodedSourceMap} map
+ * @param {{ line: number; column: number; }} offset
  * @param {number} source_index
  */
 export function sourcemap_add_offset(map, offset, source_index) {
@@ -35,6 +35,7 @@ export function sourcemap_add_offset(map, offset, source_index) {
 }
 
 /**
+ * @template T
  * @param {T[]} this_table
  * @param {T[]} other_table
  * @returns {[T[], number[], boolean, boolean]}
@@ -73,7 +74,7 @@ export class MappedCode {
 	string = undefined;
 
 	/**
-	 * @type {DecodedSourceMap}
+	 * @type {import('@ampproject/remapping').DecodedSourceMap}
 	 */
 	map = undefined;
 	constructor(string = '', map = null) {
@@ -93,7 +94,7 @@ export class MappedCode {
 	 * concat in-place (mutable), return this (chainable)
 	 * will also mutate the `other` object
 	 * @param {MappedCode} other
-	 * @returns {import("C:/repos/svelte/svelte/mapped_code.ts-to-jsdoc").MappedCode}
+	 * @returns {MappedCode}
 	 */
 	concat(other) {
 		// noop: if one is empty, return the other
@@ -168,8 +169,8 @@ export class MappedCode {
 	/**
 	 * @static
 	 * @param {string} string
-	 * @param {DecodedSourceMap} [map]
-	 * @returns {import("C:/repos/svelte/svelte/mapped_code.ts-to-jsdoc").MappedCode}
+	 * @param {import('@ampproject/remapping').DecodedSourceMap} [map]
+	 * @returns {MappedCode}
 	 */
 	static from_processed(string, map) {
 		const line_count = string.split('\n').length;
@@ -192,18 +193,18 @@ export class MappedCode {
 
 	/**
 	 * @static
-	 * @param {Source}
-	 * @returns {import("C:/repos/svelte/svelte/mapped_code.ts-to-jsdoc").MappedCode}
+	 * @param {import('../preprocess/private.js').Source} opts
+	 * @returns {MappedCode}
 	 */
 	static from_source({ source, file_basename, get_location }) {
 		/**
-		 * @type {SourceLocation}
+		 * @type {{ line: number; column: number; }}
 		 */
 		let offset = get_location(0);
 		if (!offset) offset = { line: 0, column: 0 };
 
 		/**
-		 * @type {DecodedSourceMap}
+		 * @type {import('@ampproject/remapping').DecodedSourceMap}
 		 */
 		const map = { version: 3, names: [], sources: [file_basename], mappings: [] };
 		if (source == '') return new MappedCode(source, map);
@@ -231,7 +232,7 @@ export class MappedCode {
 
 /**
  * @param {string} filename
- * @param {Array<DecodedSourceMap | RawSourceMap>} sourcemap_list
+ * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
  */
 export function combine_sourcemaps(filename, sourcemap_list) {
 	if (sourcemap_list.length == 0) return null;
@@ -271,9 +272,9 @@ const b64dec = typeof atob == 'function' ? atob : (a) => Buffer.from(a, 'base64'
 
 /**
  * @param {string} filename
- * @param {SourceMap} svelte_map
- * @param {string | DecodedSourceMap | RawSourceMap} preprocessor_map_input
- * @returns {SourceMap}
+ * @param {import('magic-string').SourceMap} svelte_map
+ * @param {string | import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap} preprocessor_map_input
+ * @returns {import('magic-string').SourceMap}
  */
 export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_input) {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
@@ -298,13 +299,13 @@ export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_
 			}
 		}
 	});
-	return result_map;
+	return /** @type {import('magic-string').SourceMap} */ (result_map);
 }
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
 // parse attached sourcemap in processed.code
 
 /**
- * @param {Processed} processed
+ * @param {import('../preprocess/public.js').Processed} processed
  * @param {'script' | 'style'} tag_name
  * @returns {void}
  */
@@ -354,10 +355,3 @@ export function parse_attached_sourcemap(processed, tag_name) {
 		return ''; // remove from processed.code
 	});
 }
-
-/**
- * @typedef {{
- * 	line: number;
- * 	column: number;
- * }} SourceLocation
- */
