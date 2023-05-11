@@ -4,11 +4,7 @@
  * @param {import('../Renderer.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
-    if (options.preserveComments) {
-        renderer.add_string(`<!--${node.data}-->`);
-    }
+	if (options.preserveComments) {
+		renderer.add_string(`<!--${node.data}-->`);
+	}
 }
-
-
-
-
