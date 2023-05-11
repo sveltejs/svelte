@@ -1,6 +1,7 @@
 import { roles as roles_map, elementRoles } from 'aria-query';
 import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
 import { regex_whitespaces } from '../../utils/patterns.js';
+
 const aria_roles = roles_map.keys();
 const abstract_roles = new Set(aria_roles.filter((role) => roles_map.get(role).abstract));
 const non_abstract_roles = aria_roles.filter((name) => !abstract_roles.has(name));
@@ -33,21 +34,21 @@ const interactive_roles = new Set(
 );
 
 /**
- * @param {ARIARoleDefinitionKey} role
+ * @param {import('aria-query').ARIARoleDefinitionKey} role
  */
 export function is_non_interactive_roles(role) {
 	return non_interactive_roles.has(role);
 }
 
 /**
- * @param {ARIARoleDefinitionKey} role
+ * @param {import('aria-query').ARIARoleDefinitionKey} role
  */
 export function is_interactive_roles(role) {
 	return interactive_roles.has(role);
 }
 
 /**
- * @param {ARIARoleDefinitionKey} role
+ * @param {import('aria-query').ARIARoleDefinitionKey} role
  */
 export function is_abstract_role(role) {
 	return abstract_roles.has(role);
@@ -55,7 +56,7 @@ export function is_abstract_role(role) {
 const presentation_roles = new Set(['presentation', 'none']);
 
 /**
- * @param {ARIARoleDefinitionKey} role
+ * @param {import('aria-query').ARIARoleDefinitionKey} role
  */
 export function is_presentation_role(role) {
 	return presentation_roles.has(role);
@@ -63,7 +64,7 @@ export function is_presentation_role(role) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  */
 export function is_hidden_from_screen_reader(tag_name, attribute_map) {
 	if (tag_name === 'input') {
@@ -80,7 +81,7 @@ export function is_hidden_from_screen_reader(tag_name, attribute_map) {
 }
 
 /**
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  */
 export function has_disabled_attribute(attribute_map) {
 	const disabled_attr = attribute_map.get('disabled');
@@ -99,7 +100,7 @@ export function has_disabled_attribute(attribute_map) {
 }
 
 /**
- * @type {ARIARoleRelationConcept[]}
+ * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const non_interactive_element_role_schemas = [];
 elementRoles.entries().forEach(([schema, roles]) => {
@@ -109,7 +110,7 @@ elementRoles.entries().forEach(([schema, roles]) => {
 });
 
 /**
- * @type {ARIARoleRelationConcept[]}
+ * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const interactive_element_role_schemas = [];
 elementRoles.entries().forEach(([schema, roles]) => {
@@ -127,7 +128,7 @@ const non_interactive_ax_objects = new Set(
 );
 
 /**
- * @type {ARIARoleRelationConcept[]}
+ * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const interactive_element_ax_object_schemas = [];
 elementAXObjects.entries().forEach(([schema, ax_object]) => {
@@ -137,7 +138,7 @@ elementAXObjects.entries().forEach(([schema, ax_object]) => {
 });
 
 /**
- * @type {ARIARoleRelationConcept[]}
+ * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const non_interactive_element_ax_object_schemas = [];
 elementAXObjects.entries().forEach(([schema, ax_object]) => {
@@ -147,9 +148,9 @@ elementAXObjects.entries().forEach(([schema, ax_object]) => {
 });
 
 /**
- * @param {ARIARoleRelationConcept} schema
+ * @param {import('aria-query').ARIARoleRelationConcept} schema
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  */
 function match_schema(schema, tag_name, attribute_map) {
 	if (schema.name !== tag_name) return false;
@@ -163,17 +164,17 @@ function match_schema(schema, tag_name, attribute_map) {
 		return true;
 	});
 }
-export var ElementInteractivity;
-(function (ElementInteractivity) {
-	ElementInteractivity['Interactive'] = 'interactive';
-	ElementInteractivity['NonInteractive'] = 'non-interactive';
-	ElementInteractivity['Static'] = 'static';
-})(ElementInteractivity || (ElementInteractivity = {}));
+
+export const ElementInteractivity = /** @type {const} */ ({
+	Interactive: 'interactive',
+	NonInteractive: 'non-interactive',
+	Static: 'static'
+});
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
- * @returns {import("C:/repos/svelte/svelte/a11y.ts-to-jsdoc").ElementInteractivity}
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
+ * @returns {ElementInteractivity[keyof ElementInteractivity]}
  */
 export function element_interactivity(tag_name, attribute_map) {
 	if (
@@ -208,7 +209,7 @@ export function element_interactivity(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  * @returns {boolean}
  */
 export function is_interactive_element(tag_name, attribute_map) {
@@ -217,7 +218,7 @@ export function is_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  * @returns {boolean}
  */
 export function is_non_interactive_element(tag_name, attribute_map) {
@@ -226,7 +227,7 @@ export function is_non_interactive_element(tag_name, attribute_map) {
 
 /**
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  * @returns {boolean}
  */
 export function is_static_element(tag_name, attribute_map) {
@@ -234,9 +235,9 @@ export function is_static_element(tag_name, attribute_map) {
 }
 
 /**
- * @param {ARIARoleDefinitionKey} role
+ * @param {import('aria-query').ARIARoleDefinitionKey} role
  * @param {string} tag_name
- * @param {Map<string, Attribute>} attribute_map
+ * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  */
 export function is_semantic_role_element(role, tag_name, attribute_map) {
 	for (const [schema, ax_object] of elementAXObjects.entries()) {
