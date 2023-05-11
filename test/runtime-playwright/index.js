@@ -48,6 +48,7 @@ describe('runtime (playwright)', function () {
 		(skip ? it.skip : solo ? it.only : it)(
 			`${dir} ${hydrate ? '(with hydration)' : ''}`,
 			async () => {
+				first_run = false;
 				if (failed.has(dir)) {
 					// this makes debugging easier, by only printing compiled output once
 					throw new Error('skipping test, already failed');
@@ -220,9 +221,10 @@ describe('runtime (playwright)', function () {
 					throw err;
 				}
 			}
-		);
+		).timeout(first_run ? 20000 : 10000);
 	}
 
+	let first_run = true;
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		runTest(dir, false);
 		runTest(dir, true);

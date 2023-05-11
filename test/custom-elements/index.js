@@ -9,8 +9,6 @@ import { loadConfig, loadSvelte } from '../helpers';
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function () {
-	this.timeout(10000);
-
 	let svelte;
 	/** @type {import('@playwright/test').Browser} */
 	let browser;
@@ -26,6 +24,8 @@ describe('custom-elements', function () {
 		if (browser) await browser.close();
 	});
 
+	let first_run = true;
+
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
 		if (dir[0] === '.') return;
 
@@ -36,6 +36,7 @@ describe('custom-elements', function () {
 		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
+			first_run = false;
 			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 			const expected_warnings = config.warnings || [];
 
@@ -102,6 +103,6 @@ describe('custom-elements', function () {
 			if (test_result) console.log(test_result);
 			assertWarnings();
 			page.close();
-		});
+		}).timeout(first_run ? 20000 : 10000);
 	});
 });
