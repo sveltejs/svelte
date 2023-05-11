@@ -1,11 +1,12 @@
-import * as acorn from '../acorn';
-import parser_errors from '../errors';
-import { regex_not_newline_characters } from '../../utils/patterns';
+import * as acorn from '../acorn.js';
+import parser_errors from '../errors.js';
+import { regex_not_newline_characters } from '../../utils/patterns.js';
+
 const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  * @param {any[]} attributes
  * @param {number} start
  * @returns {string}
@@ -24,10 +25,10 @@ function get_context(parser, attributes, start) {
 }
 
 /**
- * @param {Parser} parser
+ * @param {import('../index.js').Parser} parser
  * @param {number} start
- * @param {Node[]} attributes
- * @returns {Script}
+ * @param {import('estree').Node[]} attributes
+ * @returns {import('../../interfaces.js').Script}
  */
 export default function read_script(parser, start, attributes) {
 	const script_start = parser.index;
@@ -40,7 +41,7 @@ export default function read_script(parser, start, attributes) {
 	parser.read(regex_starts_with_closing_script_tag);
 
 	/**
-	 * @type {Program}
+	 * @type {import('estree').Program}
 	 */
 	let ast;
 	try {
@@ -49,7 +50,7 @@ export default function read_script(parser, start, attributes) {
 		parser.acorn_error(err);
 	}
 	// TODO is this necessary?
-	ast.start = script_start;
+	/** @type {any} */ (ast).start = script_start;
 	return {
 		type: 'Script',
 		start,
