@@ -50,6 +50,7 @@ export function add_flush_callback(fn) {
 //    callback called a second time; the seen_callbacks set, outside the flush()
 //    function, guarantees this behavior.
 const seen_callbacks = new Set();
+let previous_dirty_components = new Set();
 let flushidx = 0;  // Do *not* move this inside the flush() function
 export function flush() {
 	// Do not reenter flush while dirty components are updated, as this can
@@ -69,10 +70,12 @@ export function flush() {
 				const component = dirty_components[flushidx];
 				flushidx++;
 				set_current_component(component);
-				update(component.$$);
+				const is_previous_dirty = previous_dirty_components.has(component);
+				update(component.$$, is_previous_dirty);
 			}
 		} catch (e) {
 			// reset dirty state to not end up in a deadlocked state and then rethrow
+			previous_dirty_components.clear();
 			dirty_components.length = 0;
 			flushidx = 0;
 			throw e;
@@ -83,8 +86,10 @@ export function flush() {
 		dirty_components.length = 0;
 		flushidx = 0;
 
-		while (binding_callbacks.length) binding_callbacks.pop()();
-
+		while (binding_callbacks.length) {
+			binding_callbacks.pop()();
+		}
+		previous_dirty_components = new Set(dirty_components);
 		// then, once components are updated, call
 		// afterUpdate functions. This may cause
 		// subsequent updates...
@@ -108,17 +113,18 @@ export function flush() {
 
 	update_scheduled = false;
 	seen_callbacks.clear();
+	previous_dirty_components.clear();
 	set_current_component(saved_component);
 }
 
-function update($$) {
+function update($$, is_previous_dirty) {
 	if ($$.fragment !== null) {
 		$$.update();
-		run_all($$.before_update);
+		if (!is_previous_dirty) run_all($$.before_update);
 		const dirty = $$.dirty;
 		$$.dirty = [-1];
 		$$.fragment && $$.fragment.p($$.ctx, dirty);
-
+		// if (!is_previous_dirty) run_all($$.after_update);
 		$$.after_update.forEach(add_render_callback);
 	}
 }
