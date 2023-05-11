@@ -32,7 +32,7 @@ const runtime_entrypoints = Object.fromEntries(
 	fs
 		.readdirSync('src/runtime', { withFileTypes: true })
 		.filter((dirent) => dirent.isDirectory())
-		.map((dirent) => [dirent.name, `src/runtime/${dirent.name}/index.ts`])
+		.map((dirent) => [dirent.name, `src/runtime/${dirent.name}/index.js`])
 );
 
 /**
@@ -42,8 +42,8 @@ export default [
 	{
 		input: {
 			...runtime_entrypoints,
-			index: 'src/runtime/index.ts',
-			ssr: 'src/runtime/ssr.ts'
+			index: 'src/runtime/index.js',
+			ssr: 'src/runtime/ssr.js'
 		},
 		output: ['es', 'cjs'].map(
 			/** @returns {import('rollup').OutputOptions} */

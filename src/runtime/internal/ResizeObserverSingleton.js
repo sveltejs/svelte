@@ -6,14 +6,30 @@ import { globals } from './globals.js';
  * https://groups.google.com/a/chromium.org/g/blink-dev/c/z6ienONUb5A/m/F5-VcUZtBAAJ
  */
 export class ResizeObserverSingleton {
+	/**
+	 * @private
+	 * @readonly
+	 * @type {WeakMap<Element, import('./private.js').Listener>}
+	 */
+	_listeners = 'WeakMap' in globals ? new WeakMap() : undefined;
+
+	/**
+	 * @private
+	 * @type {ResizeObserver}
+	 */
+	_observer = undefined;
+
+	/** @type {ResizeObserverOptions} */
 	options;
+
+	/** @param {ResizeObserverOptions} options */
 	constructor(options) {
 		this.options = options;
 	}
 
 	/**
 	 * @param {Element} element
-	 * @param {import('./private.d.ts').Listener} listener
+	 * @param {import('./private.js').Listener} listener
 	 * @returns {() => void}
 	 */
 	observe(element, listener) {
@@ -27,16 +43,6 @@ export class ResizeObserverSingleton {
 
 	/**
 	 * @private
-	 * @readonly
-	 * @default 'WeakMap' in globals ? new WeakMap() : undefined
-	 */
-	_listeners = 'WeakMap' in globals ? new WeakMap() : undefined;
-
-	/** @private */
-	_observer = undefined;
-
-	/** @private
-	 * @returns {ResizeObserver}
 	 */
 	_getObserver() {
 		return (

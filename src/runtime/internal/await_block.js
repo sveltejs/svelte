@@ -6,13 +6,13 @@ import { get_current_component, set_current_component } from './lifecycle.js';
 /**
  * @template T
  * @param {Promise<T>} promise
- * @param {import('./private.d.ts').PromiseInfo<T>} info
+ * @param {import('./private.js').PromiseInfo<T>} info
  * @returns {boolean}
  */
 export function handle_promise(promise, info) {
 	const token = (info.token = {});
 	/**
-	 * @param {import('./public.d.ts').FragmentFactory} type
+	 * @param {import('./private.js').FragmentFactory} type
 	 * @param {0 | 1 | 2} index
 	 * @param {number} [key]
 	 * @param {any} [value]

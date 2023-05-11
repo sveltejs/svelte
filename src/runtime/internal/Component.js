@@ -95,7 +95,7 @@ export function init(
 ) {
 	const parent_component = current_component;
 	set_current_component(component);
-	/** @type {import('./public.d.ts').T$$} */
+	/** @type {import('./private.js').T$$} */
 	const $$ = (component.$$ = {
 		fragment: null,
 		ctx: [],
@@ -352,7 +352,7 @@ function get_custom_element_value(prop, value, props_definition, transform) {
  * @internal
  *
  * Turn a Svelte component into a custom element.
- * @param {import('./public.d.ts').ComponentType} Component  A Svelte component constructor
+ * @param {import('./public.js').ComponentType} Component  A Svelte component constructor
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
  * @param {string[]} accessors  Other accessors besides the ones for props the component has

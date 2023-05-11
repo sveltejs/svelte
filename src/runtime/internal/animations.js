@@ -5,8 +5,8 @@ import { create_rule, delete_rule } from './style_manager.js';
 
 /**
  * @param {Element & ElementCSSInlineStyle} node
- * @param {import('./private.d.ts').PositionRect} from
- * @param {import('./private.d.ts').AnimationFn} fn
+ * @param {import('./private.js').PositionRect} from
+ * @param {import('./private.js').AnimationFn} fn
  * @returns {any}
  */
 export function create_animation(node, from, fn, params) {
@@ -88,7 +88,7 @@ export function fix_position(node) {
 
 /**
  * @param {Element & ElementCSSInlineStyle} node
- * @param {import('./private.d.ts').PositionRect} a
+ * @param {import('./private.js').PositionRect} a
  * @returns {void}
  */
 export function add_transform(node, a) {

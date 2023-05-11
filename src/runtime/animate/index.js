@@ -4,8 +4,8 @@ import { is_function } from '../internal/index.js';
 /**
  * @param {Element} node
  * @param {{ from: DOMRect; to: DOMRect }} fromTo
- * @param {import('.').FlipParams} params
- * @returns {import('.').AnimationConfig}
+ * @param {import('./public.js').FlipParams} params
+ * @returns {import('./public.js').AnimationConfig}
  */
 export function flip(node, { from, to }, params = {}) {
 	const style = getComputedStyle(node);

@@ -294,9 +294,9 @@ export function construct_svelte_component_dev(component, props) {
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
- * @template {Record<string, any>} Props
- * @template {Record<string, any>} Events
- * @template {Record<string, any>} Slots
+ * @template {Record<string, any>} [Props=any]
+ * @template {Record<string, any>} [Events=any]
+ * @template {Record<string, any>} [Slots=any]
  * @extends SvelteComponent
  */
 export class SvelteComponentDev extends SvelteComponent {
@@ -325,6 +325,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	/** @type {Slots} */
 	$$slot_def = undefined;
 
+	/** @param {import('./public.js').ComponentConstructorOptions<Props>} options */
 	constructor(options) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
@@ -347,9 +348,9 @@ export class SvelteComponentDev extends SvelteComponent {
 	$inject_state() {}
 }
 /**
- * @template {Record<string, any>} Props
- * @template {Record<string, any>} Events
- * @template {Record<string, any>} Slots
+ * @template {Record<string, any>} [Props=any]
+ * @template {Record<string, any>} [Events=any]
+ * @template {Record<string, any>} [Slots=any]
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
  * @extends SvelteComponentDev<Props, Events, Slots>
  */

@@ -112,7 +112,7 @@ export function subscribe(store, ...callbacks) {
 
 /**
  * @template T
- * @param {import('../store').Readable<T>} store
+ * @param {import('../store/public.js').Readable<T>} store
  * @returns {T}
  */
 export function get_store_value(store) {

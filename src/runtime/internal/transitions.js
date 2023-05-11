@@ -60,7 +60,7 @@ export function check_outros() {
 }
 
 /**
- * @param {import('./public.js').Fragment} block
+ * @param {import('./private.js').Fragment} block
  * @param {0 | 1} [local]
  * @returns {void}
  */
@@ -72,7 +72,7 @@ export function transition_in(block, local) {
 }
 
 /**
- * @param {import('./public.js').Fragment} block
+ * @param {import('./private.js').Fragment} block
  * @param {0 | 1} local
  * @param {0 | 1} detach
  * @returns {void}
@@ -95,7 +95,7 @@ export function transition_out(block, local, detach, callback) {
 }
 
 /**
- * @type {import('types/transition').TransitionConfig}
+ * @type {import('../transition/public.js').TransitionConfig}
  */
 const null_transition = { duration: 0 };
 
@@ -401,7 +401,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 /** @typedef {1} INTRO */
 /** @typedef {0} OUTRO */
 /** @typedef {{ direction: 'in' | 'out' | 'both' }} TransitionOptions */
-/** @typedef {(node: Element, params: any, options: TransitionOptions) => import('types/transition').TransitionConfig} TransitionFn */
+/** @typedef {(node: Element, params: any, options: TransitionOptions) => import('../transition/public.js').TransitionConfig} TransitionFn */
 
 /**
  * @typedef {Object} Outro

@@ -1,4 +1,3 @@
-import './ambient.js';
 export {
 	onMount,
 	onDestroy,

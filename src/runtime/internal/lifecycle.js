@@ -92,7 +92,7 @@ export function onDestroy(fn) {
  *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
  * @template {Record<string, any>} EventMap
- * @returns {import('./public.d.ts').EventDispatcher<EventMap>}
+ * @returns {import('./public.js').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
 	const component = get_current_component();
@@ -120,6 +120,7 @@ export function createEventDispatcher() {
  *
  * https://svelte.dev/docs#run-time-svelte-setcontext
  * @template T
+ * @param {string} key
  * @param {T} context
  * @returns {T}
  */
@@ -134,6 +135,7 @@ export function setContext(key, context) {
  *
  * https://svelte.dev/docs#run-time-svelte-getcontext
  * @template T
+ * @param {string} key
  * @returns {T}
  */
 export function getContext(key) {
@@ -146,7 +148,7 @@ export function getContext(key) {
  * programmatically create a component and want to pass the existing context to it.
  *
  * https://svelte.dev/docs#run-time-svelte-getallcontexts
- * @template T
+ * @template {Map<any, any>} [T=Map<any, any>]
  * @returns {T}
  */
 export function getAllContexts() {
@@ -158,6 +160,7 @@ export function getAllContexts() {
  * Must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-hascontext
+ * @param {string} key
  * @returns {boolean}
  */
 export function hasContext(key) {
@@ -167,7 +170,11 @@ export function hasContext(key) {
 // TODO figure out if we still want to support
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
-/** @returns {void} */
+/**
+ * @param component
+ * @param event
+ * @returns {void}
+ */
 export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
 	if (callbacks) {

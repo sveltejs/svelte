@@ -3,7 +3,8 @@ import { loop, now } from '../internal/index.js';
 import { is_date } from './utils.js';
 
 /**
- * @param {TickContext<T>} ctx
+ * @template T
+ * @param {import('./private.js').TickContext<T>} ctx
  * @param {T} last_value
  * @param {T} current_value
  * @param {T} target_value
@@ -45,16 +46,17 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 }
 
 /**
+ * @template T
  * @param {T} value
- * @param {SpringOpts} opts
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/spring.ts-to-jsdoc").Spring<T>}
+ * @param {import('./private.js').SpringOpts} opts
+ * @returns {import('./public.js').Spring<T>}
  */
 export function spring(value, opts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 	/** @type {number} */
 	let last_time;
-	/** @type {Task} */
+	/** @type {import('../internal/private.js').Task} */
 	let task;
 	/** @type {object} */
 	let current_token;
@@ -65,8 +67,9 @@ export function spring(value, opts = {}) {
 	let inv_mass = 1;
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
-	/** @param {T} new_value
-	 * @param {SpringUpdateOpts} opts
+	/**
+	 * @param {T} new_value
+	 * @param {import('./private.js').SpringUpdateOpts} opts
 	 * @returns {Promise<void>}
 	 */
 	function set(new_value, opts = {}) {
@@ -115,7 +118,7 @@ export function spring(value, opts = {}) {
 			});
 		});
 	}
-	/** @type {Spring<T>} */
+	/** @type {import('./public.js').Spring<T>} */
 	const spring = {
 		set,
 		update: (fn, opts) => set(fn(target_value, value), opts),
@@ -126,38 +129,3 @@ export function spring(value, opts = {}) {
 	};
 	return spring;
 }
-
-/**
- * @typedef {(target_value: T, value: T) => T} Updater
- * @template T
- */
-
-/**
- * @typedef {Object} TickContext
- * @property {number} inv_mass
- * @property {number} dt
- * @property {Spring<T>} opts
- * @property {boolean} settled
- */
-
-/**
- * @typedef {Object} SpringOpts
- * @property {number} [stiffness]
- * @property {number} [damping]
- * @property {number} [precision]
- */
-
-/**
- * @typedef {Object} SpringUpdateOpts
- * @property {any} [hard]
- * @property {string|number|boolean} [soft]
- */
-
-/**
- * @typedef {Object} Spring
- * @property {(new_value:T,opts?:SpringUpdateOpts)=>Promise<void>} set
- * @property {(fn:Updater<T>,opts?:SpringUpdateOpts)=>Promise<void>} update
- * @property {number} precision
- * @property {number} damping
- * @property {number} stiffness
- */

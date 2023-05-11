@@ -3,8 +3,8 @@ import { assign, split_css_unit, is_function } from '../internal';
 
 /**
  * @param {Element} node
- * @param {BlurParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').BlurParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function blur(
 	node,
@@ -25,8 +25,8 @@ export function blur(
 
 /**
  * @param {Element} node
- * @param {FadeParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').FadeParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
 	const o = +getComputedStyle(node).opacity;
@@ -40,8 +40,8 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
 
 /**
  * @param {Element} node
- * @param {FlyParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').FlyParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function fly(
 	node,
@@ -65,8 +65,8 @@ export function fly(
 
 /**
  * @param {Element} node
- * @param {SlideParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').SlideParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
@@ -106,8 +106,8 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
 
 /**
  * @param {Element} node
- * @param {ScaleParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').ScaleParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function scale(
 	node,
@@ -131,8 +131,8 @@ export function scale(
 
 /**
  * @param {SVGElement & { getTotalLength(): number }} node
- * @param {DrawParams}
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+ * @param {import('./public').DrawParams} [params]
+ * @returns {import('./public').TransitionConfig}
  */
 export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } = {}) {
 	let len = node.getTotalLength();
@@ -161,21 +161,21 @@ export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } =
 }
 
 /**
- * @param {CrossfadeParams & {
- * 	fallback?: (node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig;
- * }}
- * @returns {[(node: any, params: import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").CrossfadeParams & { key: any; }) => () => import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig, (node: any, params: import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").CrossfadeParams & { key: any; }) => () => import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig]}
+ * @param {import('./public').CrossfadeParams & {
+ * 	fallback?: (node: Element, params: import('./public').CrossfadeParams, intro: boolean) => import('./public').TransitionConfig;
+ * }} params
+ * @returns {[(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig, (node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig]}
  */
 export function crossfade({ fallback, ...defaults }) {
-	/** @type {ClientRectMap} */
+	/** @type {Map<any, Element>} */
 	const to_receive = new Map();
-	/** @type {ClientRectMap} */
+	/** @type {Map<any, Element>} */
 	const to_send = new Map();
 	/**
 	 * @param {Element} from_node
 	 * @param {Element} node
-	 * @param {CrossfadeParams} params
-	 * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+	 * @param {import('./public').CrossfadeParams} params
+	 * @returns {import('./public').TransitionConfig}
 	 */
 	function crossfade(from_node, node, params) {
 		const {
@@ -208,10 +208,10 @@ export function crossfade({ fallback, ...defaults }) {
 	}
 
 	/**
-	 * @param {ClientRectMap} items
-	 * @param {ClientRectMap} counterparts
+	 * @param {Map<any, Element>} items
+	 * @param {Map<any, Element>} counterparts
 	 * @param {boolean} intro
-	 * @returns {(node: any, params: import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").CrossfadeParams & { key: any; }) => () => import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").TransitionConfig}
+	 * @returns {(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig}
 	 */
 	function transition(items, counterparts, intro) {
 		return (node, params) => {
@@ -232,73 +232,3 @@ export function crossfade({ fallback, ...defaults }) {
 	}
 	return [transition(to_send, to_receive, false), transition(to_receive, to_send, true)];
 }
-
-/** @typedef {(t: number) => number} EasingFunction */
-/** @typedef {Map<any, Element>} ClientRectMap */
-
-/**
- * @typedef {Object} TransitionConfig
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- * @property {(t:number,u:number)=>string} [css]
- * @property {(t:number,u:number)=>void} [tick]
- */
-
-/**
- * @typedef {Object} BlurParams
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- * @property {number|string} [amount]
- * @property {number} [opacity]
- */
-
-/**
- * @typedef {Object} FadeParams
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- */
-
-/**
- * @typedef {Object} FlyParams
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- * @property {number|string} [x]
- * @property {number|string} [y]
- * @property {number} [opacity]
- */
-
-/**
- * @typedef {Object} SlideParams
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- * @property {'x'|'y'} [axis]
- */
-
-/**
- * @typedef {Object} ScaleParams
- * @property {number} [delay]
- * @property {number} [duration]
- * @property {EasingFunction} [easing]
- * @property {number} [start]
- * @property {number} [opacity]
- */
-
-/**
- * @typedef {Object} DrawParams
- * @property {number} [delay]
- * @property {number} [speed]
- * @property {number|((len:number)=>number)} [duration]
- * @property {EasingFunction} [easing]
- */
-
-/**
- * @typedef {Object} CrossfadeParams
- * @property {number} [delay]
- * @property {number|((len:number)=>number)} [duration]
- * @property {EasingFunction} [easing]
- */

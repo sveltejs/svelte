@@ -11,9 +11,10 @@ const subscriber_queue = [];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
- * @param {T} value  initial value
- * @param {StartStopNotifier<T>} start  undefined
- * @returns {Readable<T>}
+ * @template T
+ * @param {T} value initial value
+ * @param {import('./public.js').StartStopNotifier<T>} start
+ * @returns {import('./public.js').Readable<T>}
  */
 export function readable(value, start) {
 	return {
@@ -23,14 +24,15 @@ export function readable(value, start) {
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
- * @param {T} value  initial value
- * @param {StartStopNotifier<T>} start  undefined
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Writable<T>}
+ * @template T
+ * @param {T} value initial value
+ * @param {import('./public.js').StartStopNotifier<T>} start
+ * @returns {import('./public.js').Writable<T>}
  */
 export function writable(value, start = noop) {
-	/** @type {Unsubscriber} */
+	/** @type {import('./public.js').Unsubscriber} */
 	let stop;
-	/** @type {Set<SubscribeInvalidateTuple<T>>} */
+	/** @type {Set<import('./public.js').SubscribeInvalidateTuple<T>>} */
 	const subscribers = new Set();
 	/** @param {T} new_value
 	 * @returns {void}
@@ -55,19 +57,19 @@ export function writable(value, start = noop) {
 		}
 	}
 	/**
-	 * @param {Updater<T>} fn
+	 * @param {import('./public.js').Updater<T>} fn
 	 * @returns {void}
 	 */
 	function update(fn) {
 		set(fn(value));
 	}
 	/**
-	 * @param {Subscriber<T>} run
-	 * @param {Invalidator<T>} invalidate
-	 * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Unsubscriber}
+	 * @param {import('./public.js').Subscriber<T>} run
+	 * @param {import('./public.js').Invalidator<T>} invalidate
+	 * @returns {import('./public.js').Unsubscriber}
 	 */
 	function subscribe(run, invalidate = noop) {
-		/** @type {SubscribeInvalidateTuple<T>} */
+		/** @type {import('./public.js').SubscribeInvalidateTuple<T>} */
 		const subscriber = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
@@ -86,14 +88,42 @@ export function writable(value, start = noop) {
 }
 
 /**
- * @param {Stores} stores
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @template {import('./public.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores - input stores
+ * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {T} [initial_value] - initial value
+ * @returns {import('./public.js').Readable<T>}
+ */
+
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @template {import('./public.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores - input stores
+ * @param {(values: import('./public.js').StoresValues<S>) => T} fn - function callback that aggregates the values
+ * @param {T} [initial_value] - initial value
+ * @returns {import('./public.js').Readable<T>}
+ */
+
+/**
+ * @template {import('./public.js').Stores} S
+ * @template T
+ * @param {S} stores
  * @param {Function} fn
- * @param {T} initial_value
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Readable<T>}
+ * @param {T} [initial_value]
+ * @returns {import('./public.js').Readable<T>}
  */
 export function derived(stores, fn, initial_value) {
 	const single = !Array.isArray(stores);
-	/** @type {Array<Readable<any>>} */
+	/** @type {Array<import('./public.js').Readable<any>>} */
 	const stores_array = single ? [stores] : stores;
 	if (!stores_array.every(Boolean)) {
 		throw new Error('derived() expects stores as input, got a falsy value');
@@ -147,8 +177,9 @@ export function derived(stores, fn, initial_value) {
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
- * @param {Readable<T>} store  - store to make readonly
- * @returns {import("/Users/elliottjohnson/dev/sveltejs/svelte/index.ts-to-jsdoc").Readable<T>}
+ * @template T
+ * @param {import('./public.js').Readable<T>} store  - store to make readonly
+ * @returns {import('./public.js').Readable<T>}
  */
 export function readonly(store) {
 	return {
@@ -158,55 +189,8 @@ export function readonly(store) {
 
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
- * @param store readable
+ * @template T
+ * @param {import('./public.js').Readable<T>} store readable
+ * @returns {T}
  */
 export { get_store_value as get };
-
-/**
- * @typedef {(value: T) => void} Subscriber
- * @template T
- */
-
-/** @typedef {() => void} Unsubscriber */
-
-/**
- * @typedef {(value: T) => T} Updater
- * @template T
- */
-
-/**
- * @typedef {(value?: T) => void} Invalidator
- * @template T
- */
-
-/**
- * @typedef {(
- * 	set: (value: T) => void,
- * 	update: (fn: Updater<T>) => void
- * ) => void | (() => void)} StartStopNotifier
- * @template T
- */
-
-/**
- * @typedef {[Subscriber<T>, Invalidator<T>]} SubscribeInvalidateTuple
- * @template T
- */
-
-/** @typedef {Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>} Stores */
-
-/**
- * @typedef {T extends Readable<infer U>
- * 	? U
- * 	: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never }} StoresValues
- * @template T
- */
-
-/**
- * Readable interface for subscribing.
- * @typedef {Object} Readable
- */
-
-/**
- * Writable interface for both updating and subscribing.
- * @typedef {Object} Writable
- */
