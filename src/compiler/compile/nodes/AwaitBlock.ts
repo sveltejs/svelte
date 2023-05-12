@@ -1,64 +1,82 @@
-import Node from './shared/Node';
-import PendingBlock from './PendingBlock';
-import ThenBlock from './ThenBlock';
-import CatchBlock from './CatchBlock';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import { Context, unpack_destructuring } from './shared/Context';
-import { Node as ESTreeNode } from 'estree';
+import Node from './shared/Node.js';
+import PendingBlock from './PendingBlock.js';
+import ThenBlock from './ThenBlock.js';
+import CatchBlock from './CatchBlock.js';
+import Expression from './shared/Expression.js';
+import { unpack_destructuring } from './shared/Context.js';
 
+/** @extends Node */
 export default class AwaitBlock extends Node {
-	type: 'AwaitBlock';
-	expression: Expression;
 
-	then_contexts: Context[];
-	catch_contexts: Context[];
+    /** @type {'AwaitBlock'} */
+    type;
 
-	then_node: ESTreeNode | null;
-	catch_node: ESTreeNode | null;
+    /** @type {import('./shared/Expression.js').default} */
+    expression;
 
-	pending: PendingBlock;
-	then: ThenBlock;
-	catch: CatchBlock;
+    /** @type {import('./shared/Context.js').Context[]} */
+    then_contexts;
 
-	context_rest_properties: Map<string, ESTreeNode> = new Map();
+    /** @type {import('./shared/Context.js').Context[]} */
+    catch_contexts;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
-		super(component, parent, scope, info);
-		this.cannot_use_innerhtml();
-		this.not_static_content();
+    /** @type {ESTreeNode | null} */
+    then_node;
 
-		this.expression = new Expression(component, this, scope, info.expression);
+    /** @type {ESTreeNode | null} */
+    catch_node;
 
-		this.then_node = info.value;
-		this.catch_node = info.error;
+    /** @type {import('./PendingBlock.js').default} */
+    pending;
 
-		if (this.then_node) {
-			this.then_contexts = [];
-			unpack_destructuring({
-				contexts: this.then_contexts,
-				node: info.value,
-				scope,
-				component,
-				context_rest_properties: this.context_rest_properties
-			});
-		}
+    /** @type {import('./ThenBlock.js').default} */
+    then;
 
-		if (this.catch_node) {
-			this.catch_contexts = [];
-			unpack_destructuring({
-				contexts: this.catch_contexts,
-				node: info.error,
-				scope,
-				component,
-				context_rest_properties: this.context_rest_properties
-			});
-		}
+    /** @type {import('./CatchBlock.js').default} */
+    catch;
 
-		this.pending = new PendingBlock(component, this, scope, info.pending);
-		this.then = new ThenBlock(component, this, scope, info.then);
-		this.catch = new CatchBlock(component, this, scope, info.catch);
-	}
+    /** @type {Map<string, ESTreeNode>} */
+    context_rest_properties = new Map();
+
+ /**
+  * @param {import('../Component.js').default} component  *
+     * @param {import('./shared/Node.js').default} parent  *
+     * @param {import('./shared/TemplateScope.js').default} scope  *
+     * @param {import('../../interfaces.js').TemplateNode} info  undefined
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+        this.cannot_use_innerhtml();
+        this.not_static_content();
+        this.expression = new Expression(component, this, scope, info.expression);
+        this.then_node = info.value;
+        this.catch_node = info.error;
+        if (this.then_node) {
+            this.then_contexts = [];
+            unpack_destructuring({
+                contexts: this.then_contexts,
+                node: info.value,
+                scope,
+                component,
+                context_rest_properties: this.context_rest_properties
+            });
+        }
+        if (this.catch_node) {
+            this.catch_contexts = [];
+            unpack_destructuring({
+                contexts: this.catch_contexts,
+                node: info.error,
+                scope,
+                component,
+                context_rest_properties: this.context_rest_properties
+            });
+        }
+        this.pending = new PendingBlock(component, this, scope, info.pending);
+        this.then = new ThenBlock(component, this, scope, info.then);
+        this.catch = new CatchBlock(component, this, scope, info.catch);
+    }
 }
+
+
+
+
