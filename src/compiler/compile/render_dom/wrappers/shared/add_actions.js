@@ -9,6 +9,7 @@ import is_contextual from '../../../nodes/shared/is_contextual.js';
 export default function add_actions(block, target, actions) {
 	actions.forEach((action) => add_action(block, target, action));
 }
+
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
 
 /**
