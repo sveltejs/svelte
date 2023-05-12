@@ -15,8 +15,10 @@ describe('vars', () => {
 
 		desc(dir, () => {
 			test.each(['dom', 'ssr', false])(`generate: %s`, async (generate) => {
-				const filename = `${__dirname}/samples/${dir}/input.svelte`;
-				const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
+				const input = (await import(`./samples/${dir}/input.svelte?raw`)).default
+					.replace(/\s+$/, '')
+					.replace(/\r/g, '');
+
 				const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
 				/**
