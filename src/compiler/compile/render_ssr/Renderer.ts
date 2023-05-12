@@ -1,129 +1,136 @@
-import AwaitBlock from './handlers/AwaitBlock';
-import Comment from './handlers/Comment';
-import DebugTag from './handlers/DebugTag';
-import EachBlock from './handlers/EachBlock';
-import Element from './handlers/Element';
-import Head from './handlers/Head';
-import HtmlTag from './handlers/HtmlTag';
-import IfBlock from './handlers/IfBlock';
-import InlineComponent from './handlers/InlineComponent';
-import KeyBlock from './handlers/KeyBlock';
-import Slot from './handlers/Slot';
-import SlotTemplate from './handlers/SlotTemplate';
-import Tag from './handlers/Tag';
-import Text from './handlers/Text';
-import Title from './handlers/Title';
-import { AppendTarget, CompileOptions } from '../../interfaces';
-import { INode } from '../nodes/interfaces';
-import { Expression, TemplateLiteral, Identifier } from 'estree';
-import { collapse_template_literal } from '../utils/collapse_template_literal';
-import { escape_template } from '../utils/stringify';
+import AwaitBlock from './handlers/AwaitBlock.js';
+import Comment from './handlers/Comment.js';
+import DebugTag from './handlers/DebugTag.js';
+import EachBlock from './handlers/EachBlock.js';
+import Element from './handlers/Element.js';
+import Head from './handlers/Head.js';
+import HtmlTag from './handlers/HtmlTag.js';
+import IfBlock from './handlers/IfBlock.js';
+import InlineComponent from './handlers/InlineComponent.js';
+import KeyBlock from './handlers/KeyBlock.js';
+import Slot from './handlers/Slot.js';
+import SlotTemplate from './handlers/SlotTemplate.js';
+import Tag from './handlers/Tag.js';
+import Text from './handlers/Text.js';
+import Title from './handlers/Title.js';
+import { collapse_template_literal } from '../utils/collapse_template_literal.js';
+import { escape_template } from '../utils/stringify.js';
+function noop() { }
 
-type Handler = (node: any, renderer: Renderer, options: CompileOptions) => void;
-
-function noop() {}
-
-const handlers: Record<string, Handler> = {
-	AwaitBlock,
-	Body: noop,
-	Comment,
-	DebugTag,
-	Document: noop,
-	EachBlock,
-	Element,
-	Head,
-	IfBlock,
-	InlineComponent,
-	KeyBlock,
-	MustacheTag: Tag, // TODO MustacheTag is an anachronism
-	Options: noop,
-	RawMustacheTag: HtmlTag,
-	Slot,
-	SlotTemplate,
-	Text,
-	Title,
-	Window: noop
+/** @type {Record<string, Handler>} */
+const handlers = {
+    AwaitBlock,
+    Body: noop,
+    Comment,
+    DebugTag,
+    Document: noop,
+    EachBlock,
+    Element,
+    Head,
+    IfBlock,
+    InlineComponent,
+    KeyBlock,
+    MustacheTag: Tag,
+    Options: noop,
+    RawMustacheTag: HtmlTag,
+    Slot,
+    SlotTemplate,
+    Text,
+    Title,
+    Window: noop
 };
-
-export interface RenderOptions extends CompileOptions {
-	locate: (c: number) => { line: number; column: number };
-	head_id?: string;
-	has_added_svelte_hash?: boolean;
-}
-
+/** */
 export default class Renderer {
-	has_bindings = false;
 
-	name: Identifier;
+    /** @default false */
+    has_bindings = false;
 
-	stack: Array<{ current: { value: string }; literal: TemplateLiteral }> = [];
-	current: { value: string }; // TODO can it just be `current: string`?
-	literal: TemplateLiteral;
+    /** @type {import('estree').Identifier} */
+    name = undefined;
 
-	targets: AppendTarget[] = [];
+ /**
+  * @default []
+     * @type {Array<{ current: { value: string }; literal: TemplateLiteral }>}
+     */
+    stack = [];
 
-	constructor({ name }) {
-		this.name = name;
-		this.push();
-	}
+    /** @type {{ value: string }} */
+    current = undefined; // TODO can it just be `current: string`?
 
-	add_string(str: string) {
-		this.current.value += escape_template(str);
-	}
+    /** @type {import('estree').TemplateLiteral} */
+    literal = undefined;
 
-	add_expression(node: Expression) {
-		this.literal.quasis.push({
-			type: 'TemplateElement',
-			value: { raw: this.current.value, cooked: null },
-			tail: false
-		});
+ /**
+  * @default []
+     * @type {AppendTarget[]}
+     */
+    targets = [];
+    constructor({ name }) {
+        this.name = name;
+        this.push();
+    }
 
-		this.literal.expressions.push(node);
-		this.current.value = '';
-	}
+    /** @param {string} str */
+    add_string(str) {
+        this.current.value += escape_template(str);
+    }
 
-	push() {
-		const current = (this.current = { value: '' });
+    /** @param {import('estree').Expression} node */
+    add_expression(node) {
+        this.literal.quasis.push({
+            type: 'TemplateElement',
+            value: { raw: this.current.value, cooked: null },
+            tail: false
+        });
+        this.literal.expressions.push(node);
+        this.current.value = '';
+    }
+    push() {
+        const current = (this.current = { value: '' });
+        const literal = (this.literal = {
+            type: 'TemplateLiteral',
+            expressions: [],
+            quasis: []
+        });
+        this.stack.push({ current, literal });
+    }
+    pop() {
+        this.literal.quasis.push({
+            type: 'TemplateElement',
+            value: { raw: this.current.value, cooked: null },
+            tail: true
+        });
+        const popped = this.stack.pop();
+        const last = this.stack[this.stack.length - 1];
+        if (last) {
+            this.literal = last.literal;
+            this.current = last.current;
+        }
+        // Optimize the TemplateLiteral to remove unnecessary nodes
+        collapse_template_literal(popped.literal);
+        return popped.literal;
+    }
 
-		const literal = (this.literal = {
-			type: 'TemplateLiteral',
-			expressions: [],
-			quasis: []
-		});
-
-		this.stack.push({ current, literal });
-	}
-
-	pop() {
-		this.literal.quasis.push({
-			type: 'TemplateElement',
-			value: { raw: this.current.value, cooked: null },
-			tail: true
-		});
-
-		const popped = this.stack.pop();
-		const last = this.stack[this.stack.length - 1];
-
-		if (last) {
-			this.literal = last.literal;
-			this.current = last.current;
-		}
-
-		// Optimize the TemplateLiteral to remove unnecessary nodes
-		collapse_template_literal(popped.literal);
-
-		return popped.literal;
-	}
-
-	render(nodes: INode[], options: RenderOptions) {
-		nodes.forEach((node) => {
-			const handler = handlers[node.type];
-
-			if (!handler) {
-				throw new Error(`No handler for '${node.type}' nodes`);
-			}
-
-			handler(node, this, options);
-		});
-	}
+ /**
+  * @param {INode[]} nodes
+     * @param {RenderOptions} options
+     */
+    render(nodes, options) {
+        nodes.forEach((node) => {
+            const handler = handlers[node.type];
+            if (!handler) {
+                throw new Error(`No handler for '${node.type}' nodes`);
+            }
+            handler(node, this, options);
+        });
+    }
 }
+
+
+/** @typedef {(node: any, renderer: Renderer, options: CompileOptions) => void} Handler */
+
+/** @typedef {Object} RenderOptions
+ * @property {(c:number)=>{line:number;column:number}} locate
+ * @property {string} [head_id]
+ * @property {boolean} [has_added_svelte_hash] 
+ */

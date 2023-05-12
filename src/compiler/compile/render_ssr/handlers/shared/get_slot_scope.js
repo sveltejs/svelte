@@ -1,6 +1,6 @@
 /**
- * @param {Let[]} lets
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").ObjectPattern}
+ * @param {import('../../../nodes/Let.js').default[]} lets
+ * @returns {import('estree').ObjectPattern}
  */
 export function get_slot_scope(lets) {
 	if (lets.length === 0) return null;
