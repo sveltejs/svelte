@@ -37,6 +37,7 @@ import {
 import create_debugging_comment from '../shared/create_debugging_comment.js';
 import { push_array } from '../../../../utils/push_array.js';
 import CommentWrapper from '../Comment.js';
+
 const regex_contains_radio_or_checkbox_or_file = /radio|checkbox|file/;
 const regex_contains_radio_or_checkbox_or_range_or_file = /radio|checkbox|range|file/;
 const events = [
@@ -504,6 +505,7 @@ export default class ElementWrapper extends Wrapper {
 		// skip textcontent for <template>.  append nodes to TemplateElement.content instead
 		if (can_optimise_to_html_string) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
+				/** @type {import('estree').Node} */
 				let text = string_literal(
 					/** @type {import('../Text.js').default} */ (this.fragment.nodes[0]).data
 				);
@@ -525,6 +527,7 @@ export default class ElementWrapper extends Wrapper {
 						value: { raw: '' }
 					}
 				};
+				/** @type {import('estree').Node} */
 				let literal = {
 					type: 'TemplateLiteral',
 					expressions: [],
@@ -633,15 +636,15 @@ export default class ElementWrapper extends Wrapper {
 					}: true`
 			);
 
-		/** @type {Class<x>>} */
+		/** @type {string | ReturnType<typeof x>} */
 		let reference;
 		if (this.node.tag_expr.node.type === 'Literal') {
 			if (this.node.namespace) {
 				reference = `"${this.node.tag_expr.node.value}"`;
 			} else {
-				reference = `"${(
-					/** @type {String} */ (this.node.tag_expr.node.value) || ''
-				).toUpperCase()}"`;
+				reference = `"${
+					/** @type {String} */ (this.node.tag_expr.node.value || '').toUpperCase()
+				}"`;
 			}
 		} else if (this.node.namespace) {
 			reference = x`${this.node.tag_expr.manipulate(block)}`;
@@ -660,6 +663,8 @@ export default class ElementWrapper extends Wrapper {
 
 	/** @param {import('../../Block.js').default} block */
 	add_directives_in_order(block) {
+		/** @typedef {EventHandler | BindingGroup | Binding | Action} OrderedAttribute */
+
 		const binding_groups = events
 			.map((event) => ({
 				events: event.event_names,
@@ -1121,7 +1126,7 @@ export default class ElementWrapper extends Wrapper {
 			${outro && b`@add_transform(${this.var}, ${rect});`}
 		`);
 
-		/** @type {Class<x>>} */
+		/** @type {import('estree').Node | ReturnType<typeof x>} */
 		let params;
 		if (this.node.animation.expression) {
 			params = this.node.animation.expression.manipulate(block);
