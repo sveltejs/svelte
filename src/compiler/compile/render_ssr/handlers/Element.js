@@ -3,14 +3,14 @@ import {
 	get_attribute_expression,
 	get_attribute_value,
 	get_class_attribute_value
-} from './shared/get_attribute_value';
-import { boolean_attributes } from '../../../../shared/boolean_attributes';
-import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable';
+} from './shared/get_attribute_value.js';
+import { boolean_attributes } from '../../../../shared/boolean_attributes.js';
+import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable.js';
 import { p, x } from 'code-red';
-import remove_whitespace_children from './utils/remove_whitespace_children';
-import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
-import { namespaces } from '../../../utils/namespaces';
-import { regex_starts_with_newline } from '../../../utils/patterns';
+import remove_whitespace_children from './utils/remove_whitespace_children.js';
+import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing.js';
+import { namespaces } from '../../../utils/namespaces.js';
+import { regex_starts_with_newline } from '../../../utils/patterns.js';
 
 /**
  * @param {import('../../nodes/Element.js').default} node

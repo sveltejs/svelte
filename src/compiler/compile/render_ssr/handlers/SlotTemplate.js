@@ -1,12 +1,12 @@
 import SlotTemplate from '../../nodes/SlotTemplate.js';
-import remove_whitespace_children from './utils/remove_whitespace_children';
-import { get_slot_scope } from './shared/get_slot_scope';
-import { get_const_tags } from './shared/get_const_tags';
+import remove_whitespace_children from './utils/remove_whitespace_children.js';
+import { get_slot_scope } from './shared/get_slot_scope.js';
+import { get_const_tags } from './shared/get_const_tags.js';
 
 /**
  * @param {import('../../nodes/SlotTemplate.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {RenderOptions & {
+ * @param {import('../Renderer.js').RenderOptions & {
  * 		slot_scopes: Map<any, any>;
  * 	}} options
  */

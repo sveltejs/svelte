@@ -1,6 +1,6 @@
 import { x } from 'code-red';
 import get_slot_data from '../../utils/get_slot_data.js';
-import { get_slot_scope } from './shared/get_slot_scope';
+import { get_slot_scope } from './shared/get_slot_scope.js';
 
 /**
  * @param {import('../../nodes/Slot.js').default} node
