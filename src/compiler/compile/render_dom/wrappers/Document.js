@@ -3,6 +3,7 @@ import { b, x } from 'code-red';
 import EventHandler from './Element/EventHandler.js';
 import add_event_handlers from './shared/add_event_handlers.js';
 import add_actions from './shared/add_actions.js';
+
 const associated_events = {
 	fullscreenElement: ['fullscreenchange'],
 	visibilityState: ['visibilitychange']

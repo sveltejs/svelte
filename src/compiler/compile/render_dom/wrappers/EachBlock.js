@@ -419,7 +419,7 @@ export default class EachBlockWrapper extends Wrapper {
 	 * 		initial_mount_node: import('estree').Identifier;
 	 * 		update_anchor_node: import('estree').Identifier;
 	 * 		update_mount_node: import('estree').Identifier;
-	 * 	}}
+	 * 	}} params
 	 */
 	render_keyed({
 		block,
