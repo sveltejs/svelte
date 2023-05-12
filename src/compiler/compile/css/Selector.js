@@ -1,22 +1,26 @@
 import { gather_possible_values, UNKNOWN } from './gather_possible_values.js';
 import compiler_errors from '../compiler_errors.js';
 import { regex_starts_with_whitespace, regex_ends_with_whitespace } from '../../utils/patterns.js';
-let BlockAppliesToNode;
-(function (BlockAppliesToNode) {
-	BlockAppliesToNode[(BlockAppliesToNode['NotPossible'] = 0)] = 'NotPossible';
-	BlockAppliesToNode[(BlockAppliesToNode['Possible'] = 1)] = 'Possible';
-	BlockAppliesToNode[(BlockAppliesToNode['UnknownSelectorType'] = 2)] = 'UnknownSelectorType';
-})(BlockAppliesToNode || (BlockAppliesToNode = {}));
-let NodeExist;
-(function (NodeExist) {
-	NodeExist[(NodeExist['Probably'] = 1)] = 'Probably';
-	NodeExist[(NodeExist['Definitely'] = 2)] = 'Definitely';
-})(NodeExist || (NodeExist = {}));
+
+const BlockAppliesToNode = /** @type {const} */ ({
+	NotPossible: 0,
+	Possible: 1,
+	UnknownSelectorType: 2
+});
+
+const NodeExist = /** @type {const} */ ({
+	Probably: 0,
+	Definitely: 1
+});
+
+/** @typedef {typeof NodeExist[keyof typeof NodeExist]} NodeExistsValue */
+
 const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
 	['dialog', new Set(['open'])]
 ]);
 const regex_is_single_css_selector = /[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/;
+
 export default class Selector {
 	/** @type {import('./private.js').CssNode} */
 	node;
@@ -217,6 +221,7 @@ export default class Selector {
 			}
 		}
 	}
+
 	get_amount_class_specificity_increased() {
 		let count = 0;
 		for (const block of this.blocks) {
@@ -314,12 +319,13 @@ function apply_selector(blocks, node, to_encapsulate) {
 	to_encapsulate.push({ node, block });
 	return true;
 }
+
 const regex_backslash_and_following_character = /\\(.)/g;
 
 /**
  * @param {Block} block
  * @param {import('../nodes/Element.js').default} node
- * @returns {BlockAppliesToNode}
+ * @returns {typeof BlockAppliesToNode[keyof typeof BlockAppliesToNode]}
  */
 function block_might_apply_to_node(block, node) {
 	let i = block.selectors.length;
@@ -519,6 +525,7 @@ function get_element_parent(node) {
 	while ((parent = parent.parent) && parent.type !== 'Element');
 	return /** @type {import('../nodes/Element.js').default | null} */ (parent);
 }
+
 /**
  * Finds the given node's previous sibling in the DOM
  *
@@ -559,10 +566,10 @@ function find_previous_sibling(node) {
 /**
  * @param {import('../nodes/interfaces.js').INode} node
  * @param {boolean} adjacent_only
- * @returns {Map<import('../nodes/Element.js').default, NodeExist>}
+ * @returns {Map<import('../nodes/Element.js').default, NodeExistsValue>}
  */
 function get_possible_element_siblings(node, adjacent_only) {
-	/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+	/** @type {Map<import('../nodes/Element.js').default, NodeExistsValue>} */
 	const result = new Map();
 
 	/** @type {import('../nodes/interfaces.js').INode} */
@@ -622,16 +629,18 @@ function get_possible_element_siblings(node, adjacent_only) {
 /**
  * @param {import('../nodes/EachBlock.js').default | import('../nodes/IfBlock.js').default | import('../nodes/AwaitBlock.js').default} block
  * @param {boolean} adjacent_only
- * @returns {Map<import('../nodes/Element.js').default, NodeExist>}
+ * @returns {Map<import('../nodes/Element.js').default, NodeExistsValue>}
  */
 function get_possible_last_child(block, adjacent_only) {
-	/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+	/** @typedef {Map<import('../nodes/Element.js').default, NodeExistsValue>} NodeMap */
+
+	/** @type {NodeMap} */
 	const result = new Map();
 	if (block.type === 'EachBlock') {
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const each_result = loop_child(block.children, adjacent_only);
 
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const else_result = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
 		const not_exhaustive = !has_definite_elements(else_result);
 		if (not_exhaustive) {
@@ -641,10 +650,10 @@ function get_possible_last_child(block, adjacent_only) {
 		add_to_map(each_result, result);
 		add_to_map(else_result, result);
 	} else if (block.type === 'IfBlock') {
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const if_result = loop_child(block.children, adjacent_only);
 
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const else_result = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
 		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
 		if (not_exhaustive) {
@@ -654,15 +663,15 @@ function get_possible_last_child(block, adjacent_only) {
 		add_to_map(if_result, result);
 		add_to_map(else_result, result);
 	} else if (block.type === 'AwaitBlock') {
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const pending_result = block.pending
 			? loop_child(block.pending.children, adjacent_only)
 			: new Map();
 
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const then_result = block.then ? loop_child(block.then.children, adjacent_only) : new Map();
 
-		/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+		/** @type {NodeMap} */
 		const catch_result = block.catch ? loop_child(block.catch.children, adjacent_only) : new Map();
 		const not_exhaustive =
 			!has_definite_elements(pending_result) ||
@@ -681,7 +690,7 @@ function get_possible_last_child(block, adjacent_only) {
 }
 
 /**
- * @param {Map<import('../nodes/Element.js').default, NodeExist>} result
+ * @param {Map<import('../nodes/Element.js').default, NodeExistsValue>} result
  * @returns {boolean}
  */
 function has_definite_elements(result) {
@@ -695,8 +704,9 @@ function has_definite_elements(result) {
 }
 
 /**
- * @param {Map<import('../nodes/Element.js').default, NodeExist>} from
- * @param {Map<import('../nodes/Element.js').default, NodeExist>} to
+ * @param {Map<import('../nodes/Element.js').default, NodeExistsValue>} from
+ * @param {Map<import('../nodes/Element.js').default, NodeExistsValue>} to
+ * @returns {void}
  */
 function add_to_map(from, to) {
 	from.forEach((exist, element) => {
@@ -705,16 +715,16 @@ function add_to_map(from, to) {
 }
 
 /**
- * @param {NodeExist | null} exist1
- * @param {NodeExist | null} exist2
- * @returns {NodeExist}
+ * @param {NodeExistsValue | null} exist1
+ * @param {NodeExistsValue | null} exist2
+ * @returns {NodeExistsValue}
  */
 function higher_existence(exist1, exist2) {
 	if (exist1 === undefined || exist2 === undefined) return exist1 || exist2;
 	return exist1 > exist2 ? exist1 : exist2;
 }
 
-/** @param {Map<import('../nodes/Element.js').default, NodeExist>} result */
+/** @param {Map<import('../nodes/Element.js').default, NodeExistsValue>} result */
 function mark_as_probably(result) {
 	for (const key of result.keys()) {
 		result.set(key, NodeExist.Probably);
@@ -726,7 +736,7 @@ function mark_as_probably(result) {
  * @param {boolean} adjacent_only
  */
 function loop_child(children, adjacent_only) {
-	/** @type {Map<import('../nodes/Element.js').default, NodeExist>} */
+	/** @type {Map<import('../nodes/Element.js').default, NodeExistsValue>} */
 	const result = new Map();
 	for (let i = children.length - 1; i >= 0; i--) {
 		const child = children[i];
@@ -749,6 +759,7 @@ function loop_child(children, adjacent_only) {
 	}
 	return result;
 }
+
 class Block {
 	/** @type {boolean} */
 	host;
