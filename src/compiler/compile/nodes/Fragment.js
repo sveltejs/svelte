@@ -17,8 +17,8 @@ export default class Fragment extends Node {
 	scope;
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, info) {
 		const scope = new TemplateScope();
