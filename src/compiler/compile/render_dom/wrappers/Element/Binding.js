@@ -11,7 +11,7 @@ export default class BindingWrapper {
 	/** @type {import('../../../nodes/Binding.js').default} */
 	node = undefined;
 
-	/** @type {ElementWrapper | InlineComponentWrapper} */
+	/** @type {import('./index.js').default | import('../InlineComponent/index.js').default} */
 	parent = undefined;
 
 	/** @type {string} */
@@ -19,9 +19,9 @@ export default class BindingWrapper {
 	/**
 	 * @type {{
 	 * 		uses_context: boolean;
-	 * 		mutation: Node | Node[];
+	 * 		mutation: import('estree').Node | import('estree').Node[];
 	 * 		contextual_dependencies: Set<string>;
-	 * 		lhs?: Node;
+	 * 		lhs?: import('estree').Node;
 	 * 	}}
 	 */
 	handler = undefined;
@@ -41,7 +41,7 @@ export default class BindingWrapper {
 	/**
 	 * @param {import('../../Block.js').default} block
 	 * @param {import('../../../nodes/Binding.js').default} node
-	 * @param {ElementWrapper | InlineComponentWrapper} parent
+	 * @param {import('./index.js').default | import('../InlineComponent/index.js').default} parent
 	 */
 	constructor(block, node, parent) {
 		this.node = node;
@@ -154,8 +154,8 @@ export default class BindingWrapper {
 			case 'group': {
 				block.renderer.add_to_context('$$binding_groups');
 				this.binding_group.add_element(block, this.parent.var);
-				if (/** @type {import('../Element.js').default} */ (this.parent).has_dynamic_value) {
-					update_or_condition = /** @type {import('../Element.js').default} */ (this.parent)
+				if (/** @type {import('./index.js').default} */ (this.parent).has_dynamic_value) {
+					update_or_condition = /** @type {import('./index.js').default} */ (this.parent)
 						.dynamic_value_condition;
 				}
 				break;
@@ -225,7 +225,7 @@ export default class BindingWrapper {
 }
 
 /**
- * @param {ElementWrapper | InlineComponentWrapper} element
+ * @param {import('./index.js').default | import('../InlineComponent/index.js').default} element
  * @param {BindingWrapper} binding
  * @param {boolean} mounting
  */
@@ -385,7 +385,7 @@ function get_event_handler(binding, renderer, block, name, lhs) {
 	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
 	const context = block.bindings.get(name);
 
-	/** @type {Node[] | undefined} */
+	/** @type {import('estree').Node[] | undefined} */
 	let set_store;
 	if (context) {
 		const { object, property, store, snippet } = context;
@@ -418,7 +418,7 @@ function get_event_handler(binding, renderer, block, name, lhs) {
 
 /**
  * @param {import('../../Renderer.js').default} _renderer
- * @param {ElementWrapper | InlineComponentWrapper} element
+ * @param {import('./index.js').default | import('../InlineComponent/index.js').default} element
  * @param {BindingWrapper} binding
  * @param {Set<string>} contextual_dependencies
  */
