@@ -379,7 +379,7 @@ function get_binding_group(renderer, binding, block) {
  * @param {import('../../Block.js').default} block
  * @param {string} name
  * @param {import('estree').Node} lhs
- * @returns {{ uses_context: boolean; mutation: import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Node | import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Node[]; contextual_dependencies: Set<string>; lhs?: import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Node; }}
+ * @returns {{ uses_context: boolean; mutation: import('estree').Node | import('estree').Node[]; contextual_dependencies: Set<string>; lhs?: import('estree').Node; }}
  */
 function get_event_handler(binding, renderer, block, name, lhs) {
 	const contextual_dependencies = new Set(binding.node.expression.contextual_dependencies);
