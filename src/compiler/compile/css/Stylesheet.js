@@ -6,6 +6,7 @@ import compiler_warnings from '../compiler_warnings.js';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore.js';
 import { push_array } from '../../utils/push_array.js';
 import { regex_only_whitespaces, regex_whitespace } from '../../utils/patterns.js';
+
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 
 /**
@@ -20,7 +21,7 @@ function remove_css_prefix(name) {
 const is_keyframes_node = (node) => remove_css_prefix(node.name) === 'keyframes';
 
 /**
- * @param {import('./private.js').CssNode}
+ * @param {import('./private.js').CssNode} param
  * @returns {true}
  */
 const at_rule_has_declaration = ({ block }) =>
@@ -212,7 +213,7 @@ class Atrule {
 				child.apply(node);
 			});
 		} else if (is_keyframes_node(this.node)) {
-			this.children.forEach((rule) => {
+			this.children.forEach((/** @type {Rule} */ rule) => {
 				rule.selectors.forEach((selector) => {
 					selector.used = true;
 				});
@@ -288,7 +289,7 @@ class Atrule {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
-						this.children.forEach((rule) => {
+						this.children.forEach((/** @type {Rule} */ rule) => {
 							rule.selectors.forEach((selector) => {
 								selector.used = true;
 							});
@@ -356,6 +357,7 @@ export default class Stylesheet {
 
 	/** @type {Set<import('./private.js').CssNode>} */
 	nodes_with_css_class = new Set();
+
 	/**
 	 * @param {{
 	 * 		source: string;
@@ -364,7 +366,7 @@ export default class Stylesheet {
 	 * 		component_name: string | undefined;
 	 * 		dev: boolean;
 	 * 		get_css_hash: import('../../interfaces.js').CssHashGetter;
-	 * 	}}
+	 * 	}} params
 	 */
 	constructor({ source, ast, component_name, filename, dev, get_css_hash = get_default_css_hash }) {
 		this.source = source;
@@ -387,7 +389,7 @@ export default class Stylesheet {
 			/** @type {Atrule} */
 			let current_atrule = null;
 			walk(/** @type {any} */ (ast.css), {
-				enter: (node) => {
+				enter: (/** @type {any} */ node) => {
 					if (node.type === 'Atrule') {
 						const atrule = new Atrule(node);
 						stack.push(atrule);
@@ -420,7 +422,7 @@ export default class Stylesheet {
 					}
 					depth += 1;
 				},
-				leave: (node) => {
+				leave: (/** @type {any} */ node) => {
 					if (node.type === 'Atrule') {
 						stack.pop();
 						current_atrule = stack[stack.length - 1];
@@ -454,7 +456,7 @@ export default class Stylesheet {
 		}
 		const code = new MagicString(this.source);
 		walk(/** @type {any} */ (this.ast.css), {
-			enter: (node) => {
+			enter: (/** @type {any} */ node) => {
 				code.addSourcemapLocation(node.start);
 				code.addSourcemapLocation(node.end);
 			}

@@ -1,26 +1,35 @@
-import Block from '../../render_dom/Block';
-import Component from '../../Component';
-import Node from './Node';
-import { INode } from '../interfaces';
-import compiler_warnings from '../../compiler_warnings';
-
+import Node from './Node.js';
+import compiler_warnings from '../../compiler_warnings.js';
 const regex_non_whitespace_characters = /[^ \r\n\f\v\t]/;
 
+/** @extends Node */
 export default class AbstractBlock extends Node {
-	block: Block;
-	children: INode[];
 
-	constructor(component: Component, parent, scope, info: any) {
-		super(component, parent, scope, info);
-	}
+    /** @type {import('../../render_dom/Block.js').default} */
+    block;
 
-	warn_if_empty_block() {
-		if (!this.children || this.children.length > 1) return;
+    /** @type {import('../interfaces.js').INode[]} */
+    children;
 
-		const child = this.children[0];
-
-		if (!child || (child.type === 'Text' && !regex_non_whitespace_characters.test(child.data))) {
-			this.component.warn(this, compiler_warnings.empty_block);
-		}
-	}
+ /**
+  * @param {import('../../Component.js').default} component
+     * @param {any} parent
+     * @param {any} scope
+     * @param {any} info
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+    }
+    warn_if_empty_block() {
+        if (!this.children || this.children.length > 1)
+            return;
+        const child = this.children[0];
+        if (!child || (child.type === 'Text' && !regex_non_whitespace_characters.test(child.data))) {
+            this.component.warn(this, compiler_warnings.empty_block);
+        }
+    }
 }
+
+
+
+
