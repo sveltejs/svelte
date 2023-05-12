@@ -6,8 +6,8 @@
 	import Supporters from './_components/Supporters/index.svelte';
 	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
-	import BallsLight from './svelte-collective-light.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
-	import BallsDark from './svelte-collective-dark.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	import CollectiveLight from './svelte-collective-light.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	import CollectiveDark from './svelte-collective-dark.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
 </script>
 
 <svelte:head>
@@ -63,9 +63,9 @@
 <Supporters />
 
 {#if $theme.current === 'light'}
-	<Image lazy src={BallsLight} alt="The Svelte logo in a ball pit" />
+	<Image lazy src={CollectiveLight} alt="The Svelte logo in a ball pit" />
 {:else}
-	<Image lazy src={BallsDark} alt="The Svelte logo in a ball pit" />
+	<Image lazy src={CollectiveDark} alt="The Svelte logo in a ball pit" />
 {/if}
 
 <footer>
