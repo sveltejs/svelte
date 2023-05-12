@@ -8,7 +8,6 @@ import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import { create_scopes, extract_names, Scope, extract_identifiers } from './utils/scope';
 import Stylesheet from './css/Stylesheet';
-import { test } from '../config';
 import Fragment from './nodes/Fragment';
 import internal_exports from './internal_exports';
 import { Ast, CompileOptions, Var, Warning, CssResult, Attribute } from '../interfaces';
@@ -413,7 +412,6 @@ export default class Component {
 	}
 
 	get_unique_name(name: string, scope?: Scope): Identifier {
-		if (test) name = `${name}$`;
 		let alias = name;
 		for (
 			let i = 1;
@@ -422,8 +420,10 @@ export default class Component {
 			this.used_names.has(alias) ||
 			this.globally_used_names.has(alias) ||
 			(scope && scope.has(alias));
-			alias = `${name}_${i++}`
-		);
+
+		) {
+			alias = `${name}_${i++}`;
+		}
 		this.used_names.add(alias);
 		return { type: 'Identifier', name: alias };
 	}
@@ -440,7 +440,6 @@ export default class Component {
 		this.var_lookup.forEach((_value, key) => add(key));
 
 		return (name: string): Identifier => {
-			if (test) name = `${name}$`;
 			let alias = name;
 			for (
 				let i = 1;

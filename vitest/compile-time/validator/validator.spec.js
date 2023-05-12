@@ -41,7 +41,6 @@ describe('validate', () => {
 					generate: false,
 					customElement: config.customElement,
 					...options,
-					filename: 'component'
 				});
 
 				assert.deepEqual(
