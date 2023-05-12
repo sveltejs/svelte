@@ -13,10 +13,10 @@ export default class Tag extends Node {
 	should_cache;
 
 	/**
-	 * @param {any} component  *
-	 * @param {any} parent  *
-	 * @param {any} scope  *
-	 * @param {any} info  undefined
+	 * @param {any} component
+	 * @param {any} parent
+	 * @param {any} scope
+	 * @param {any} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);

@@ -1,69 +1,83 @@
-import EachBlock from '../EachBlock';
-import ThenBlock from '../ThenBlock';
-import CatchBlock from '../CatchBlock';
-import InlineComponent from '../InlineComponent';
-import Element from '../Element';
-import SlotTemplate from '../SlotTemplate';
-import ConstTag from '../ConstTag';
-
-type NodeWithScope =
-	| EachBlock
-	| ThenBlock
-	| CatchBlock
-	| InlineComponent
-	| Element
-	| SlotTemplate
-	| ConstTag;
-
 export default class TemplateScope {
-	names: Set<string>;
-	dependencies_for_name: Map<string, Set<string>>;
-	owners: Map<string, NodeWithScope> = new Map();
-	parent?: TemplateScope;
 
-	constructor(parent?: TemplateScope) {
-		this.parent = parent;
-		this.names = new Set(parent ? parent.names : []);
-		this.dependencies_for_name = new Map(parent ? parent.dependencies_for_name : []);
-	}
+    /** @type {Set<string>} */
+    names;
 
-	add(name, dependencies: Set<string>, owner) {
-		this.names.add(name);
-		this.dependencies_for_name.set(name, dependencies);
-		this.owners.set(name, owner);
-		return this;
-	}
+    /** @type {Map<string, Set<string>>} */
+    dependencies_for_name;
 
-	child() {
-		const child = new TemplateScope(this);
-		return child;
-	}
+    /** @type {Map<string, NodeWithScope>} */
+    owners = new Map();
 
-	is_top_level(name: string) {
-		return !this.parent || (!this.names.has(name) && this.parent.is_top_level(name));
-	}
+    /** @type {TemplateScope} */
+    parent;
 
-	get_owner(name: string): NodeWithScope {
-		return this.owners.get(name) || (this.parent && this.parent.get_owner(name));
-	}
+    /** @param {TemplateScope} [parent]  undefined */
+    constructor(parent) {
+        this.parent = parent;
+        this.names = new Set(parent ? parent.names : []);
+        this.dependencies_for_name = new Map(parent ? parent.dependencies_for_name : []);
+    }
 
-	is_let(name: string) {
-		const owner = this.get_owner(name);
-		return (
-			owner &&
-			(owner.type === 'Element' ||
-				owner.type === 'InlineComponent' ||
-				owner.type === 'SlotTemplate')
-		);
-	}
+ /**
+  * @param {any} name
+     * @param {Set<string>} dependencies
+     * @param {any} owner
+     */
+    add(name, dependencies, owner) {
+        this.names.add(name);
+        this.dependencies_for_name.set(name, dependencies);
+        this.owners.set(name, owner);
+        return this;
+    }
+    child() {
+        const child = new TemplateScope(this);
+        return child;
+    }
 
-	is_await(name: string) {
-		const owner = this.get_owner(name);
-		return owner && (owner.type === 'ThenBlock' || owner.type === 'CatchBlock');
-	}
+    /** @param {string} name */
+    is_top_level(name) {
+        return !this.parent || (!this.names.has(name) && this.parent.is_top_level(name));
+    }
 
-	is_const(name: string) {
-		const owner = this.get_owner(name);
-		return owner && owner.type === 'ConstTag';
-	}
+ /**
+  * @param {string} name
+     * @returns {any}
+     */
+    get_owner(name) {
+        return this.owners.get(name) || (this.parent && this.parent.get_owner(name));
+    }
+
+    /** @param {string} name */
+    is_let(name) {
+        const owner = this.get_owner(name);
+        return (owner &&
+            (owner.type === 'Element' ||
+                owner.type === 'InlineComponent' ||
+                owner.type === 'SlotTemplate'));
+    }
+
+    /** @param {string} name */
+    is_await(name) {
+        const owner = this.get_owner(name);
+        return owner && (owner.type === 'ThenBlock' || owner.type === 'CatchBlock');
+    }
+
+    /** @param {string} name */
+    is_const(name) {
+        const owner = this.get_owner(name);
+        return owner && owner.type === 'ConstTag';
+    }
 }
+
+
+/**
+ * @typedef {| EachBlock
+ * 	| ThenBlock
+ * 	| CatchBlock
+ * 	| InlineComponent
+ * 	| Element
+ * 	| SlotTemplate
+ * 	| ConstTag} NodeWithScope
+ */
+
