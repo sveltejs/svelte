@@ -1,7 +1,7 @@
 // This script generates the TypeScript definitions
 
 import { execSync } from 'child_process';
-import { readFileSync, writeFileSync, readdirSync, existsSync, copyFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, copyFileSync, statSync } from 'fs';
 
 execSync('tsc -p src/compiler --emitDeclarationOnly && tsc -p src/runtime --emitDeclarationOnly', { stdio: 'inherit' });
 
@@ -94,24 +94,33 @@ function adjust(input) {
 	return [import_statements, ...renamed_generics].join("\n");
 }
 
-for (const dir of readdirSync('types/runtime')) {
-	if (dir.endsWith('.d.ts')) continue;
+function walk(dir) {
+	const files = readdirSync(dir);
+	const _dir = dir.slice('types/'.length)
 
-	modify(
-		`types/runtime/${dir}/index.d.ts`,
-		content => {
-			// TODO adjust all d.ts files
-			content = adjust(content);
-			
-			if (existsSync(`src/runtime/${dir}/public.d.ts`)) {
-				copyFileSync(`src/runtime/${dir}/public.d.ts`, `types/runtime/${dir}/public.d.ts`);
-				content + "\nexport * from './public.js'";
+	for (const file of files) {
+		const path = `${dir}/${file}`;
+		if (file.endsWith('.d.ts')) {
+			modify(path, content => {
+				content = adjust(content);
+				
+				if (file === 'index.d.ts' && existsSync(`src/${_dir}/public.d.ts`)) {
+					copyFileSync(`src/${_dir}/public.d.ts`, `${dir}/public.d.ts`);
+					content + "\nexport * from './public.js'";
+				}
+	
+				return content;
+			});
+		} else if (statSync(path).isDirectory()) {
+			if (existsSync(`src/${_dir}/private.d.ts`)) {
+				copyFileSync(`src/${_dir}/private.d.ts`, `${dir}/private.d.ts`);
 			}
-
-			return content;
+			walk(path);
 		}
-	);
+	}
 }
+
+walk('types');
 
 copyFileSync(`src/runtime/ambient.d.ts`, `types/runtime/ambient.d.ts`);
 modify(`types/runtime/index.d.ts`, content => content + "\nimport './ambient.js'");
