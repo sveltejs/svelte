@@ -15,122 +15,120 @@ import Text from './handlers/Text.js';
 import Title from './handlers/Title.js';
 import { collapse_template_literal } from '../utils/collapse_template_literal.js';
 import { escape_template } from '../utils/stringify.js';
-function noop() { }
+function noop() {}
 
 /** @type {Record<string, Handler>} */
 const handlers = {
-    AwaitBlock,
-    Body: noop,
-    Comment,
-    DebugTag,
-    Document: noop,
-    EachBlock,
-    Element,
-    Head,
-    IfBlock,
-    InlineComponent,
-    KeyBlock,
-    MustacheTag: Tag,
-    Options: noop,
-    RawMustacheTag: HtmlTag,
-    Slot,
-    SlotTemplate,
-    Text,
-    Title,
-    Window: noop
+	AwaitBlock,
+	Body: noop,
+	Comment,
+	DebugTag,
+	Document: noop,
+	EachBlock,
+	Element,
+	Head,
+	IfBlock,
+	InlineComponent,
+	KeyBlock,
+	MustacheTag: Tag,
+	Options: noop,
+	RawMustacheTag: HtmlTag,
+	Slot,
+	SlotTemplate,
+	Text,
+	Title,
+	Window: noop
 };
 /** */
 export default class Renderer {
+	/** @default false */
+	has_bindings = false;
 
-    /** @default false */
-    has_bindings = false;
+	/** @type {import('estree').Identifier} */
+	name = undefined;
 
-    /** @type {import('estree').Identifier} */
-    name = undefined;
+	/**
+	 * @default []
+	 * @type {Array<{ current: { value: string }; literal: TemplateLiteral }>}
+	 */
+	stack = [];
 
- /**
-  * @default []
-     * @type {Array<{ current: { value: string }; literal: TemplateLiteral }>}
-     */
-    stack = [];
+	/** @type {{ value: string }} */
+	current = undefined; // TODO can it just be `current: string`?
 
-    /** @type {{ value: string }} */
-    current = undefined; // TODO can it just be `current: string`?
+	/** @type {import('estree').TemplateLiteral} */
+	literal = undefined;
 
-    /** @type {import('estree').TemplateLiteral} */
-    literal = undefined;
+	/**
+	 * @default []
+	 * @type {AppendTarget[]}
+	 */
+	targets = [];
+	constructor({ name }) {
+		this.name = name;
+		this.push();
+	}
 
- /**
-  * @default []
-     * @type {AppendTarget[]}
-     */
-    targets = [];
-    constructor({ name }) {
-        this.name = name;
-        this.push();
-    }
+	/** @param {string} str */
+	add_string(str) {
+		this.current.value += escape_template(str);
+	}
 
-    /** @param {string} str */
-    add_string(str) {
-        this.current.value += escape_template(str);
-    }
+	/** @param {import('estree').Expression} node */
+	add_expression(node) {
+		this.literal.quasis.push({
+			type: 'TemplateElement',
+			value: { raw: this.current.value, cooked: null },
+			tail: false
+		});
+		this.literal.expressions.push(node);
+		this.current.value = '';
+	}
+	push() {
+		const current = (this.current = { value: '' });
+		const literal = (this.literal = {
+			type: 'TemplateLiteral',
+			expressions: [],
+			quasis: []
+		});
+		this.stack.push({ current, literal });
+	}
+	pop() {
+		this.literal.quasis.push({
+			type: 'TemplateElement',
+			value: { raw: this.current.value, cooked: null },
+			tail: true
+		});
+		const popped = this.stack.pop();
+		const last = this.stack[this.stack.length - 1];
+		if (last) {
+			this.literal = last.literal;
+			this.current = last.current;
+		}
+		// Optimize the TemplateLiteral to remove unnecessary nodes
+		collapse_template_literal(popped.literal);
+		return popped.literal;
+	}
 
-    /** @param {import('estree').Expression} node */
-    add_expression(node) {
-        this.literal.quasis.push({
-            type: 'TemplateElement',
-            value: { raw: this.current.value, cooked: null },
-            tail: false
-        });
-        this.literal.expressions.push(node);
-        this.current.value = '';
-    }
-    push() {
-        const current = (this.current = { value: '' });
-        const literal = (this.literal = {
-            type: 'TemplateLiteral',
-            expressions: [],
-            quasis: []
-        });
-        this.stack.push({ current, literal });
-    }
-    pop() {
-        this.literal.quasis.push({
-            type: 'TemplateElement',
-            value: { raw: this.current.value, cooked: null },
-            tail: true
-        });
-        const popped = this.stack.pop();
-        const last = this.stack[this.stack.length - 1];
-        if (last) {
-            this.literal = last.literal;
-            this.current = last.current;
-        }
-        // Optimize the TemplateLiteral to remove unnecessary nodes
-        collapse_template_literal(popped.literal);
-        return popped.literal;
-    }
-
- /**
-  * @param {INode[]} nodes
-     * @param {RenderOptions} options
-     */
-    render(nodes, options) {
-        nodes.forEach((node) => {
-            const handler = handlers[node.type];
-            if (!handler) {
-                throw new Error(`No handler for '${node.type}' nodes`);
-            }
-            handler(node, this, options);
-        });
-    }
+	/**
+	 * @param {INode[]} nodes
+	 * @param {RenderOptions} options
+	 */
+	render(nodes, options) {
+		nodes.forEach((node) => {
+			const handler = handlers[node.type];
+			if (!handler) {
+				throw new Error(`No handler for '${node.type}' nodes`);
+			}
+			handler(node, this, options);
+		});
+	}
 }
-
 
 /** @typedef {(node: any, renderer: Renderer, options: CompileOptions) => void} Handler */
 
 /** @typedef {Object} RenderOptions
  * @property {(c:number)=>{line:number;column:number}} locate
  * @property {string} [head_id]
- * @property {boolean} [has_added_svelte_hash] 
+ * @property {boolean} [has_added_svelte_hash]
  */
