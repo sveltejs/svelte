@@ -1,6 +1,6 @@
 <script>
 	import Image from './Image.svelte';
-	import Machine from './svelte-machine.png?w=640;1280;2560;3840&q=95;format=avif;webp;png&as=picture';
+	import Machine from './svelte-machine.png?w=640;1280;2560;3840&q=95&format=avif;webp;png&as=picture';
 	import SvelteLogotype from './svelte-logotype.svg';
 </script>
 
@@ -10,7 +10,7 @@
 	<Image
 		src={Machine}
 		alt="The Svelte compiler packaging up your component code"
-		--max-height="65vh"
+		--max-height="60vh"
 	/>
 
 	<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
@@ -50,18 +50,18 @@
 			position: absolute;
 			display: block;
 			width: min(30vw, 36rem);
-			bottom: 58%;
-			left: 10%;
+			bottom: 54%;
+			left: 15%;
 		}
 
 		strong {
 			max-width: 16em;
-			top: 45%;
+			top: 49%;
 		}
 
 		.logotype,
 		strong {
-			left: calc(var(--sk-page-padding-side) + 4rem);
+			left: calc(var(--sk-page-padding-side) + 8rem);
 		}
 	}
 
@@ -72,24 +72,22 @@
 		}
 	}
 
-	@media (prefers-color-scheme: dark) {
-		.hero {
-			background: radial-gradient(
-					64.14% 72.25% at 47.58% 31.75%,
-					hsl(209deg 6% 47% / 52%) 0%,
-					hsla(0, 0%, 100%, 0) 100%
-				),
-				linear-gradient(
-					92.4deg,
-					hsl(210, 7%, 16%) 14.67%,
-					hsl(0deg 0% 0% / 48%) 54.37%,
-					hsla(207, 22%, 13%, 0.62) 92.49%
-				),
-				linear-gradient(0deg, hsl(204, 38%, 20%), hsl(204, 10%, 90%));
-		}
+	:global(body.dark) .hero {
+		background: radial-gradient(
+				64.14% 72.25% at 47.58% 31.75%,
+				hsl(209deg 6% 47% / 52%) 0%,
+				hsla(0, 0%, 100%, 0) 100%
+			),
+			linear-gradient(
+				92.4deg,
+				hsl(210, 7%, 16%) 14.67%,
+				hsl(0deg 0% 0% / 48%) 54.37%,
+				hsla(207, 22%, 13%, 0.62) 92.49%
+			),
+			linear-gradient(0deg, hsl(204, 38%, 20%), hsl(204, 10%, 90%));
+	}
 
-		.logotype {
-			filter: invert(4) brightness(1.2);
-		}
+	:global(body.dark) .logotype {
+		filter: invert(4) brightness(1.2);
 	}
 </style>

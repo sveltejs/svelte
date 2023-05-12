@@ -1,20 +1,30 @@
 <script>
+	import Section from '../Section.svelte';
 	import { companies } from './companies.js';
+	import { theme } from '@sveltejs/site-kit/components';
 
 	const sorted = companies.sort((a, b) => (a.alt < b.alt ? -1 : 1));
 </script>
 
-<div class="logos">
-	{#each sorted as { href, filename, alt, style, invert, width, height }}
-		<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
-			<img src="/whos-using-svelte/{filename}" {alt} {width} {height} loading="lazy" />
-		</a>
+<Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
+	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
+		<h3>Who's using svelte?</h3>
+		<div class="logos">
+			{#each sorted as { href, filename, alt, style, invert, width, height }}
+				<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
+					<img src="/whos-using-svelte/{filename}" {alt} {width} {height} loading="lazy" />
+				</a>
 
-		<span class="spacer" />
-	{/each}
-</div>
+				<span class="spacer" />
+			{/each}
+		</div>
+	</section>
+</Section>
 
 <style>
+	h3 {
+		font-size: var(--sk-text-xl);
+	}
 	.logos {
 		display: flex;
 		margin: 6rem 0 0 0;
@@ -55,6 +65,7 @@
 		min-width: 0; /* Avoid image overflow in Safari */
 		width: 100%;
 		height: auto;
+		/* mix-blend-mode: multiply; */
 	}
 
 	@media (min-width: 640px) {
@@ -74,10 +85,8 @@
 		}
 	}
 
-	@media (prefers-color-scheme: dark) {
-		a {
-			--invert: 1;
-			filter: grayscale(1) contrast(4) opacity(0.7) invert(var(--invert, 0));
-		}
+	:global(body.dark) .logos a {
+		--invert: 1;
+		filter: grayscale(1) contrast(4) opacity(0.7) invert(var(--invert, 0));
 	}
 </style>

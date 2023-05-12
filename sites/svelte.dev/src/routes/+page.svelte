@@ -1,11 +1,13 @@
 <script>
-	import { Blurb } from '@sveltejs/site-kit/components';
-	import Balls from './svelte-balls.png?w=640;1280;2560;3840&format=avif;webp;png&as=picture';
+	import { Blurb, theme } from '@sveltejs/site-kit/components';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
+	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
+	import CollectiveLight from './svelte-collective-light.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	import CollectiveDark from './svelte-collective-dark.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
 </script>
 
 <svelte:head>
@@ -20,95 +22,51 @@
 
 <Hero />
 
-<div class="blurb-shifter">
-	<Blurb>
-		<div slot="one">
-			<h2>Write less code</h2>
-			<p>
-				Build boilerplate-free components using languages you already know — HTML, CSS and
-				JavaScript
-			</p>
+<Blurb --background="var(--sk-back-1)">
+	<div slot="one">
+		<h2>compiled</h2>
+		<p>
+			Svelte shifts as much work as possible out of the browser and into your build step. No more
+			manual optimisations — just faster, more efficient apps.
+		</p>
 
-			<a href="/blog/write-less-code" class="cta">learn more</a>
-		</div>
+		<!-- <a href="/blog/write-less-code" class="cta">learn more</a> -->
+	</div>
 
-		<div slot="two">
-			<h2>No virtual DOM</h2>
-			<p>
-				Svelte compiles your code to tiny, framework-less vanilla JS — your app starts fast and
-				stays fast
-			</p>
+	<div slot="two">
+		<h2>compact</h2>
+		<p>
+			Write breathtakingly concise components using languages you already know — HTML, CSS and
+			JavaScript. Oh, and your application bundles will be tiny as well.
+		</p>
 
-			<a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a>
-		</div>
+		<!-- <a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a> -->
+	</div>
 
-		<div slot="three">
-			<h2>Truly reactive</h2>
-			<p>
-				No more complex state management libraries — Svelte brings reactivity to JavaScript itself
-			</p>
+	<div slot="three">
+		<h2>complete</h2>
+		<p>
+			Built-in scoped styling, state management, motion primitives, form bindings and more — don't
+			waste time trawling npm for the bare essentials. It's all here.
+		</p>
 
-			<a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a>
-		</div>
+		<!-- <a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a> -->
+	</div>
+</Blurb>
 
-		<div class="description" slot="four">
-			<p>
-				Svelte is a radical new approach to building user interfaces. Whereas traditional frameworks
-				like React and Vue do the bulk of their work in the <em>browser</em>, Svelte shifts that
-				work into a
-				<em>compile step</em> that happens when you build your app.
-			</p>
-
-			<p>
-				Instead of using techniques like virtual DOM diffing, Svelte writes code that surgically
-				updates the DOM when the state of your app changes.
-			</p>
-
-			<p>
-				We're proud that Svelte was recently voted the <a
-					href="https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks"
-					>most loved web framework</a
-				>
-				with the
-				<a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/"
-					>most satisfied developers</a
-				>
-				drawing the
-				<a
-					href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
-					>most interest in learning it</a
-				>
-				in a trio of industry surveys. We think you'll love it too.
-				<a href="/blog/svelte-3-rethinking-reactivity" class="cta"
-					>Read the introductory blog post</a
-				> to learn more.
-			</p>
-		</div>
-
-		<div slot="five">
-			<pre><code
-					>npm create svelte@latest myapp
-cd myapp
-npm install
-npm run dev
-			</code></pre>
-
-			<a href="/tutorial" class="cta">Learn Svelte</a>
-		</div>
-	</Blurb>
-</div>
+<Try />
 
 <Demo />
 
-<section>
-	<h3>Who's using Svelte?</h3>
-
-	<WhosUsingSvelte />
-</section>
+<WhosUsingSvelte />
 
 <Supporters />
 
-<Image src={Balls} alt="The Svelte logo in a ball pit" />
+{#if $theme.current === 'light'}
+	<Image lazy src={CollectiveLight} alt="The Svelte logo in a ball pit" />
+{:else}
+	<Image lazy src={CollectiveDark} alt="The Svelte logo in a ball pit" />
+{/if}
 
 <footer>
 	<a href="/tutorial">Tutorial</a>
@@ -120,15 +78,8 @@ npm run dev
 </footer>
 
 <style>
-	section {
-		position: relative;
-		margin: 10rem auto;
-		padding: 0 var(--sk-page-padding-side);
-		max-width: 120rem;
-	}
-
-	.blurb-shifter {
-		margin-top: calc(-10rem + var(--sk-page-padding-side));
+	h2 {
+		line-height: 1.05;
 	}
 
 	footer {
@@ -144,9 +95,7 @@ npm run dev
 		display: block;
 	}
 
-	/* @media (min-width: 900px) {
-		.blurb-shifter {
-			margin-top: -12em;
-		}
-	} */
+	p {
+		font-size: var(--sk-text-m);
+	}
 </style>
