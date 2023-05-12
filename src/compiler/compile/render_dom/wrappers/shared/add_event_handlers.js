@@ -4,7 +4,7 @@
  * @param {import('../Element/EventHandler.js').default[]} handlers
  */
 export default function add_event_handlers(block, target, handlers) {
-    handlers.forEach((handler) => add_event_handler(block, target, handler));
+	handlers.forEach((handler) => add_event_handler(block, target, handler));
 }
 
 /**
@@ -13,9 +13,5 @@ export default function add_event_handlers(block, target, handlers) {
  * @param {import('../Element/EventHandler.js').default} handler
  */
 export function add_event_handler(block, target, handler) {
-    handler.render(block, target);
+	handler.render(block, target);
 }
-
-
-
-
