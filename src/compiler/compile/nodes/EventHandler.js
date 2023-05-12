@@ -1,6 +1,7 @@
 import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 import { sanitize } from '../../utils/names.js';
+
 const regex_contains_term_function_expression = /FunctionExpression/;
 
 /** @extends Node */
@@ -25,10 +26,10 @@ export default class EventHandler extends Node {
 	can_make_passive = false;
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./shared/Node.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} template_scope  *
-	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} template_scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, parent, template_scope, info) {
 		super(component, parent, template_scope, info);
