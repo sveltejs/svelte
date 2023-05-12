@@ -20,6 +20,8 @@ import Title from '../Title.js';
 import Window from '../Window.js';
 import { push_array } from '../../../utils/push_array.js';
 
+/** @typedef {ReturnType<typeof map_children>} Children */
+
 /** @param {any} type */
 function get_constructor(type) {
 	switch (type) {
@@ -94,5 +96,3 @@ export default function map_children(component, parent, scope, children) {
 		}
 	);
 }
-
-/** @typedef {Class<map_children>>} Children */
