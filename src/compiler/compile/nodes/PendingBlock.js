@@ -3,25 +3,20 @@ import AbstractBlock from './shared/AbstractBlock.js';
 
 /** @extends AbstractBlock */
 export default class PendingBlock extends AbstractBlock {
+	/** @type {'PendingBlock'} */
+	type;
 
-    /** @type {'PendingBlock'} */
-    type;
-
- /**
-  * @param {import('../Component.js').default} component
-     * @param {import('./shared/Node.js').default} parent
-     * @param {import('./shared/TemplateScope.js').default} scope
-     * @param {import('../../interfaces.js').TemplateNode} info
-     */
-    constructor(component, parent, scope, info) {
-        super(component, parent, scope, info);
-        this.children = map_children(component, parent, scope, info.children);
-        if (!info.skip) {
-            this.warn_if_empty_block();
-        }
-    }
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
+		super(component, parent, scope, info);
+		this.children = map_children(component, parent, scope, info.children);
+		if (!info.skip) {
+			this.warn_if_empty_block();
+		}
+	}
 }
-
-
-
-
