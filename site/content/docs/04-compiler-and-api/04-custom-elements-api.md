@@ -18,6 +18,7 @@ Svelte components can also be compiled to custom elements (aka web components) u
 Alternatively, use `tag={null}` to indicate that the consumer of the custom element should name it.
 
 ```js
+// @noErrors
 import MyElement from './MyElement.svelte';
 
 customElements.define('my-element', MyElement);
@@ -38,6 +39,7 @@ By default, custom elements are compiled with `accessors: true`, which means tha
 To prevent this, add `accessors={false}` to `<svelte:options>`.
 
 ```js
+// @noErrors
 const el = document.querySelector('my-element');
 
 // get the current value of the 'name' prop

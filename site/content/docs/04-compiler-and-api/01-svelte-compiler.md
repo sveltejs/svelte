@@ -8,23 +8,23 @@ Nonetheless, it's useful to understand how to use the compiler, since bundler pl
 
 ## `svelte.compile`
 
-```js
-result: {
-	js,
-	css,
-	ast,
-	warnings,
-	vars,
-	stats
-} = svelte.compile(source: string, options?: {...})
-```
+> EXPORT_SNIPPET: svelte/compiler#compile
 
 This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
 
 ```js
-import svelte from 'svelte/compiler';
+// @filename: ambient.d.ts
+declare global {
+	var source: string
+}
 
-const result = svelte.compile(source, {
+export {}
+
+// @filename: index.ts
+// ---cut---
+import { compile } from 'svelte/compiler';
+
+const result = compile(source, {
 	// options
 });
 ```
@@ -83,8 +83,18 @@ The following options can be passed to the compiler. None are required:
 
 The returned `result` object contains the code for your component, along with useful bits of metadata.
 
-```js
-const { js, css, ast, warnings, vars, stats } = svelte.compile(source);
+```ts
+// @filename: ambient.d.ts
+declare global {
+	const source: string;
+}
+
+export {};
+
+// @filename: main.ts
+import { compile } from 'svelte/compiler';
+// ---cut---
+const { js, css, ast, warnings, vars, stats } = compile(source);
 ```
 
 - `js` and `css` are objects with the following properties:
@@ -147,55 +157,32 @@ compiled: {
 
 ## `svelte.parse`
 
-```js
-ast: object = svelte.parse(
-	source: string,
-	options?: {
-		filename?: string,
-		customElement?: boolean
-	}
-)
-```
+> EXPORT_SNIPPET: svelte/compiler#parse
 
 The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
 
 ```js
-import svelte from 'svelte/compiler';
+// @filename: ambient.d.ts
+declare global {
+	var source: string;
+}
 
-const ast = svelte.parse(source, { filename: 'App.svelte' });
+export {};
+
+// @filename: main.ts
+// ---cut---
+import { parse } from 'svelte/compiler';
+
+const ast = parse(source, { filename: 'App.svelte' });
 ```
 
 ## `svelte.preprocess`
 
+> EXPORT_SNIPPET: svelte/compiler#preprocess
+
 A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
-
-```js
-result: {
-	code: string,
-	dependencies: Array<string>
-} = await svelte.preprocess(
-	source: string,
-	preprocessors: Array<{
-		markup?: (input: { content: string, filename: string }) => Promise<{
-			code: string,
-			dependencies?: Array<string>
-		}>,
-		script?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
-			code: string,
-			dependencies?: Array<string>
-		}>,
-		style?: (input: { content: string, markup: string, attributes: Record<string, string>, filename: string }) => Promise<{
-			code: string,
-			dependencies?: Array<string>
-		}>
-	}>,
-	options?: {
-		filename?: string
-	}
-)
-```
 
 The `preprocess` function provides convenient hooks for arbitrarily transforming component source code. For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
 
@@ -208,10 +195,19 @@ The `markup` function receives the entire component source text, along with the 
 > Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
 
 ```js
-import svelte from 'svelte/compiler';
+// @filename: ambient.d.ts
+declare global {
+	var source: string;
+}
+
+export {};
+
+// @filename: main.ts
+// ---cut---
+import { preprocess } from 'svelte/compiler';
 import MagicString from 'magic-string';
 
-const { code } = await svelte.preprocess(
+const { code } = await preprocess(
 	source,
 	{
 		markup: ({ content, filename }) => {
@@ -237,10 +233,21 @@ The `script` and `style` functions receive the contents of `<script>` and `<styl
 
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
-```js
+```ts
+// @filename: ambient.d.ts
+declare global {
+	var source: string;
+}
+
+export {};
+
+// @filename: main.ts
+// @errors: 2322 2345
+/// <reference types="@types/node" />
+// ---cut---
+import { dirname } from 'node:path';
 import { preprocess } from 'svelte/compiler';
 import sass from 'sass';
-import { dirname } from 'path';
 
 const { code, dependencies } = await preprocess(
 	source,
@@ -268,9 +275,18 @@ const { code, dependencies } = await preprocess(
 Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
 
 ```js
-import svelte from 'svelte/compiler';
+// @filename: ambient.d.ts
+declare global {
+	var source: string;
+}
 
-const { code } = await svelte.preprocess(
+export {};
+
+// @filename: main.ts
+// ---cut---
+import { preprocess } from 'svelte/compiler';
+
+const { code } = await preprocess(
 	source,
 	[
 		{
@@ -304,21 +320,28 @@ const { code } = await svelte.preprocess(
 
 ## `svelte.walk`
 
-```js
-walk(ast: Node, {
-	enter(node: Node, parent: Node, prop: string, index: number)?: void,
-	leave(node: Node, parent: Node, prop: string, index: number)?: void
-})
-```
+> EXPORT_SNIPPET: svelte/compiler#walk
 
 The `walk` function provides a way to walk the abstract syntax trees generated by the parser, using the compiler's own built-in instance of [estree-walker](https://github.com/Rich-Harris/estree-walker).
 
 The walker takes an abstract syntax tree to walk and an object with two optional methods: `enter` and `leave`. For each node, `enter` is called (if present). Then, unless `this.skip()` is called during `enter`, each of the children are traversed, and then `leave` is called on the node.
 
 ```js
-import svelte from 'svelte/compiler';
+// @filename: ambient.d.ts
+declare global {
+	var ast: import('estree').Node;
+	function do_something(node: import('estree').Node): void;
+	function do_something_else(node: import('estree').Node): void;
+	function should_skip_children(node: import('estree').Node): boolean;
+}
 
-svelte.walk(ast, {
+export {};
+
+// @filename: main.ts
+// ---cut---
+import { walk } from 'svelte/compiler';
+
+walk(ast, {
 	enter(node, parent, prop, index) {
 		do_something(node);
 		if (should_skip_children(node)) {
@@ -333,9 +356,11 @@ svelte.walk(ast, {
 
 ## `svelte.VERSION`
 
+> EXPORT_SNIPPET: svelte/compiler#VERSION
+
 The current version, as set in package.json.
 
 ```js
-import svelte from 'svelte/compiler';
-console.log(`running svelte version ${svelte.VERSION}`);
+import { VERSION } from 'svelte/compiler';
+console.log(`running svelte version ${VERSION}`);
 ```

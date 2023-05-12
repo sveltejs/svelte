@@ -5,11 +5,12 @@ title: 'svelte/register'
 To render Svelte components in Node.js without bundling, use `require('svelte/register')`. After that, you can use `require` to include any `.svelte` file.
 
 ```js
+// @noErrors
 require('svelte/register');
 
 const App = require('./App.svelte').default;
 
-...
+// ...
 
 const { html, css, head } = App.render({ answer: 42 });
 ```
@@ -19,6 +20,7 @@ const { html, css, head } = App.render({ answer: 42 });
 To set compile options, or to use a custom file extension, call the `register` hook as a function:
 
 ```js
+// @noErrors
 require('svelte/register')({
 	extensions: ['.customextension'], // defaults to ['.html', '.svelte']
 	preserveComments: true

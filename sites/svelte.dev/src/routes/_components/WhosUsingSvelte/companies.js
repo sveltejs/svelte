@@ -8,10 +8,10 @@ export const companies = [
 	},
 	{
 		href: 'https://www.alaskaair.com/',
-		style: 'background-color: black',
+		// style: 'background-color: black',
 		filename: 'alaskaairlines.svg',
 		alt: 'Alaska Airlines logo',
-		invert: true,
+		// invert: true,
 		width: 113,
 		height: 48
 	},
@@ -24,10 +24,9 @@ export const companies = [
 	},
 	{
 		href: 'https://chess.com',
-		style: 'background-color: black',
 		filename: 'chess.svg',
 		alt: 'Chess.com logo',
-		invert: true,
+
 		width: 300,
 		height: 85
 	},
