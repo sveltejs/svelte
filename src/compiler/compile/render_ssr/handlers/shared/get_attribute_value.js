@@ -4,7 +4,7 @@ import { regex_double_quotes } from '../../../../utils/patterns.js';
 
 /**
  * @param {import('../../../nodes/Attribute.js').default} attribute
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Expression}
+ * @returns {import('estree').Expression}
  */
 export function get_class_attribute_value(attribute) {
 	// handle special case — `class={possiblyUndefined}` with scoped CSS
@@ -24,7 +24,7 @@ export function get_class_attribute_value(attribute) {
 
 /**
  * @param {import('../../../nodes/Attribute.js').default} attribute
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Expression}
+ * @returns {import('estree').Expression}
  */
 export function get_attribute_value(attribute) {
 	if (attribute.chunks.length === 0) return x`""`;
@@ -37,7 +37,7 @@ export function get_attribute_value(attribute) {
 	return attribute.chunks
 		.map((chunk) => {
 			return chunk.type === 'Text'
-				? /** @type {ESTreeExpression} */ (
+				? /** @type {import('estree').Expression} */ (
 						string_literal(chunk.data.replace(regex_double_quotes, '&quot;'))
 				  )
 				: x`@escape(${chunk.node}, ${is_textarea_value ? 'false' : 'true'})`;
@@ -47,11 +47,11 @@ export function get_attribute_value(attribute) {
 
 /**
  * @param {import('../../../nodes/Attribute.js').default} attribute
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Expression}
+ * @returns {import('estree').Expression}
  */
 export function get_attribute_expression(attribute) {
 	if (attribute.chunks.length === 1 && attribute.chunks[0].type === 'Expression') {
-		return /** @type {ESTreeExpression} */ (
+		return /** @type {import('estree').Expression} */ (
 			/** @type {import('../../../nodes/shared/Expression.js').default} */ (attribute.chunks[0])
 				.node
 		);
