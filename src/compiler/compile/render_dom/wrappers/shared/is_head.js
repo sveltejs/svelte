@@ -1,6 +1,7 @@
-import { Node } from 'estree';
-
-export function is_head(node: Node) {
+/**
+ * @param {import("estree").Node} node
+ */
+export function is_head(node) {
 	return (
 		node &&
 		node.type === 'MemberExpression' &&
