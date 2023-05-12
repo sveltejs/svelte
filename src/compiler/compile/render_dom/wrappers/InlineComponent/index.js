@@ -14,10 +14,20 @@ import { is_head } from '../shared/is_head.js';
 import compiler_warnings from '../../../compiler_warnings.js';
 import { namespaces } from '../../../../utils/namespaces.js';
 import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ignore.js';
+
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 /** @extends Wrapper */
 export default class InlineComponentWrapper extends Wrapper {
+	/**
+	 * @typedef {{
+	 * 	block: import('../../Block.js').default;
+	 * 	scope: import('../../../nodes/shared/TemplateScope.js').default;
+	 * 	get_context?: import('estree').Node;
+	 * 	get_changes?: import('estree').Node;
+	 * }} SlotDefinition
+	 */
+
 	/** @type {import('estree').Identifier} */
 	var;
 
@@ -133,10 +143,10 @@ export default class InlineComponentWrapper extends Wrapper {
 		block.add_variable(name);
 		const component_opts = /** @type {import('estree').ObjectExpression} */ (x`{}`);
 
-		/** @type {Array<Node | import('estree').Node[]>} */
+		/** @type {Array<import('estree').Node | import('estree').Node[]>} */
 		const statements = [];
 
-		/** @type {Array<Node | import('estree').Node[]>} */
+		/** @type {Array<import('estree').Node | import('estree').Node[]>} */
 		const updates = [];
 		this.children.forEach((child) => {
 			this.renderer.add_to_context('$$scope', true);
@@ -235,7 +245,7 @@ export default class InlineComponentWrapper extends Wrapper {
 							: null;
 					const unchanged = dependencies.size === 0;
 
-					/** @type {Class<x>>} */
+					/** @type {import('estree').Node | ReturnType<typeof x>} */
 					let change_object;
 					if (attr.is_spread) {
 						const value = attr.expression.manipulate(block);
@@ -650,12 +660,3 @@ export default class InlineComponentWrapper extends Wrapper {
 		});
 	}
 }
-
-/**
- * @typedef {{
- * 	block: Block;
- * 	scope: TemplateScope;
- * 	get_context?: Node;
- * 	get_changes?: Node;
- * }} SlotDefinition
- */
