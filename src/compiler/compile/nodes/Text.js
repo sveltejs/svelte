@@ -1,5 +1,6 @@
 import Node from './shared/Node.js';
 import { regex_non_whitespace_character } from '../../utils/patterns.js';
+
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
 // list is almost certainly very incomplete)
