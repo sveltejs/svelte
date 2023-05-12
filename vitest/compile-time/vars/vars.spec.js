@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import {describe, test, assert, expect} from "vitest";
-import {   tryToLoadJson } from '../../helpers.js';
-import * as svelte from "../../../compiler.mjs"
+import { assert, describe, test } from 'vitest';
+import { compile } from '../../../compiler.mjs';
+import { tryToLoadJson } from '../../helpers.js';
 
 describe('vars', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -11,44 +11,37 @@ describe('vars', () => {
 		const solo = /\.solo/.test(dir);
 		const skip = /\.skip/.test(dir);
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
+		const desc = solo ? describe.only : skip ? describe.skip : describe;
 
-		const test_fn = solo ? test.only : skip ? test.skip : test;
-
-		for (const generate of ['dom', 'ssr', false]) {
-			test_fn(`${dir}, generate: ${generate}`, async () => {
+		desc(dir, () => {
+			test.each(['dom', 'ssr', false])(`generate: %s`, async (generate) => {
 				const filename = `${__dirname}/samples/${dir}/input.svelte`;
 				const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
+				const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
-				let result;
-				let error;
-
+				/**
+				 * @type {{ options: any, test: (assert: typeof assert, vars: any[]) => void }}}
+				 */
 				const { options, test } = (await import(`./samples/${dir}/_config.mjs`)).default;
 
 				try {
-					result = svelte.compile(input, { ...options, generate });
-					test(assert, result.vars)
-				} catch (e) {
-					error = e;
-				}
-
-				if (error || expectedError) {
-					if (error && !expectedError) {
+					const { vars } = compile(input, { ...options, generate });
+					test(assert, vars);
+				} catch (error) {
+					if (expectedError) {
+						assert.equal(error.message, expectedError.message);
+						assert.deepEqual(error.start, expectedError.start);
+						assert.deepEqual(error.end, expectedError.end);
+						assert.equal(error.pos, expectedError.pos);
+					} else {
 						throw error;
 					}
+				}
 
-					if (expectedError && !error) {
-						throw new Error(`Expected an error: ${expectedError.message}`);
-					}
-
-					assert.equal(error.message, expectedError.message);
-					assert.deepEqual(error.start, expectedError.start);
-					assert.deepEqual(error.end, expectedError.end);
-					assert.equal(error.pos, expectedError.pos);
+				if (expectedError) {
+					assert.fail(`Expected an error: ${JSON.stringify(expectedError)}`);
 				}
 			});
-		}
+		});
 	});
 });

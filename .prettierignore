@@ -11,3 +11,4 @@ src/compiler/compile/internal_exports.ts
 /test/**/_actual*
 /test/**/expected*
 /types
+!/vitest
