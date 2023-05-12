@@ -6,6 +6,7 @@ import Action from './Action.js';
 import list from '../../utils/list.js';
 import compiler_warnings from '../compiler_warnings.js';
 import compiler_errors from '../compiler_errors.js';
+
 const valid_bindings = ['fullscreenElement', 'visibilityState'];
 
 /** @extends Node */
@@ -23,10 +24,10 @@ export default class Document extends Node {
 	actions = [];
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./shared/Node.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {import('../../interfaces.js').Element} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').Element} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
