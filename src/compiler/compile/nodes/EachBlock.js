@@ -51,10 +51,10 @@ export default class EachBlock extends AbstractBlock {
 	else;
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('estree').Node} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('estree').Node} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -95,7 +95,7 @@ export default class EachBlock extends AbstractBlock {
 			if (this.children.length !== 1) {
 				const child = this.children.find(
 					/** @param {any} child */ (child) =>
-						!!/** @type {import('./Element.js').default} */ (child).animation
+						!!(/** @type {import('./Element.js').default} */ (child).animation)
 				);
 				component.error(
 					/** @type {import('./Element.js').default} */ (child).animation,
