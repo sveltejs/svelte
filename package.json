@@ -155,7 +155,8 @@
     "tiny-glob": "^0.2.9",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vitest": "^0.31.0"
   },
   "packageManager": "pnpm@8.4.0"
 }
