@@ -1,3 +1,0 @@
-{#each foo as bar}
-	<span>{bar}</span>
-{/each}

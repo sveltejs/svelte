@@ -1,9 +1,5 @@
-
 import * as fs from 'fs';
 import { createRequire } from 'module';
-
-
-
 
 export function tryToLoadJson(file) {
 	try {
@@ -23,21 +19,9 @@ export function tryToReadFile(file) {
 	}
 }
 
-const require = createRequire(import.meta.url);
-
-export function loadConfig(file) {
-	try {
-		const resolved = require.resolve(file);
-		delete require.cache[resolved];
-
-		const config = require(resolved);
-		return config.default || config;
-	} catch (err) {
-		if (err.code === 'MODULE_NOT_FOUND') {
-			return {};
-		}
-
-		throw err;
-	}
+export function try_load_config(path,) {
+	return import(path).then(
+		(mod) => mod.default,
+		() => ({})
+	);
 }
-
