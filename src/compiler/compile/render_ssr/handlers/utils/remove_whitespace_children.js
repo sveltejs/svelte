@@ -1,17 +1,18 @@
 import { trim_end, trim_start } from '../../../../utils/trim.js';
-import { link } from '../../../../utils/link';
-import { regex_starts_with_whitespace } from '../../../../utils/patterns';
+import { link } from '../../../../utils/link.js';
+import { regex_starts_with_whitespace } from '../../../../utils/patterns.js';
+
 // similar logic from `compile/render_dom/wrappers/Fragment`
 // We want to remove trailing whitespace inside an element/component/block,
 // *unless* there is no whitespace between this node and its next sibling
 
 /**
- * @param {INode[]} children
+ * @param {import('../../../nodes/interfaces.js').INode[]} children
  * @param {import('../../../nodes/interfaces.js').INode} [next]
- * @returns {INode[]}
+ * @returns {import('../../../nodes/interfaces.js').INode[]}
  */
 export default function remove_whitespace_children(children, next) {
-	/** @type {INode[]} */
+	/** @type {import('../../../nodes/interfaces.js').INode[]} */
 	const nodes = [];
 
 	/** @type {import('../../../nodes/interfaces.js').INode} */
