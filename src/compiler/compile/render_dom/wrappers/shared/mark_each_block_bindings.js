@@ -1,5 +1,5 @@
 /**
- * @param {import('../Element.js').default | import('../InlineComponent.js').default} parent
+ * @param {import('../Element/index.js').default | import('../InlineComponent/index.js').default} parent
  * @param {import('../../../nodes/Binding.js').default} binding
  */
 export default function mark_each_block_bindings(parent, binding) {
