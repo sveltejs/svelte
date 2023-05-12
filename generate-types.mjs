@@ -115,6 +115,9 @@ function walk(dir) {
 			if (existsSync(`src/${_dir}/private.d.ts`)) {
 				copyFileSync(`src/${_dir}/private.d.ts`, `${dir}/private.d.ts`);
 			}
+			if (existsSync(`src/${_dir}/interfaces.d.ts`)) {
+				copyFileSync(`src/${_dir}/interfaces.d.ts`, `${dir}/interfaces.d.ts`);
+			}
 			walk(path);
 		}
 	}
