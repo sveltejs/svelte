@@ -105,7 +105,8 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-right: 0.5px solid var(--sk-back-4);
+		border-right: 0.5px solid var(--sk-text-4);
+		border-right: 0.5px solid color-mix(in hsl, var(--sk-text-4), transparent 40%);
 		background-color: var(--sk-back-4);
 		transition: 0.15s ease;
 		transition-property: transform, background-color, color;
