@@ -14,10 +14,10 @@ export default class Body extends Node {
 	actions = [];
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./shared/Node.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {import('../../interfaces.js').Element} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').Element} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
