@@ -1,42 +1,51 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Comment from '../../nodes/Comment';
-import Wrapper from './shared/Wrapper';
+import Wrapper from './shared/Wrapper.js';
 import { x } from 'code-red';
-import { Identifier } from 'estree';
 
+/** @extends Wrapper */
 export default class CommentWrapper extends Wrapper {
-	node: Comment;
-	var: Identifier;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: Comment) {
-		super(renderer, block, parent, node);
-		this.var = x`c` as Identifier;
-	}
+    /** @type {import('../../nodes/Comment.js').default} */
+    node;
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		if (!this.renderer.options.preserveComments) return;
+    /** @type {import('estree').Identifier} */
+    var;
 
-		const string_literal = {
-			type: 'Literal',
-			value: this.node.data,
-			loc: {
-				start: this.renderer.locate(this.node.start),
-				end: this.renderer.locate(this.node.end)
-			}
-		};
+ /**
+  * @param {import('../Renderer.js').default} renderer
+     * @param {import('../Block.js').default} block
+     * @param {import('./shared/Wrapper.js').default} parent
+     * @param {import('../../nodes/Comment.js').default} node
+     */
+    constructor(renderer, block, parent, node) {
+        super(renderer, block, parent, node);
+        this.var = /** @type {import('estree').Identifier} */ (x `c`);
+    }
 
-		block.add_element(
-			this.var,
-			x`@comment(${string_literal})`,
-			parent_nodes && x`@claim_comment(${parent_nodes}, ${string_literal})`,
-			parent_node
-		);
-	}
-
-	text() {
-		if (!this.renderer.options.preserveComments) return '';
-
-		return `<!--${this.node.data}-->`;
-	}
+ /**
+  * @param {import('../Block.js').default} block
+     * @param {import('estree').Identifier} parent_node
+     * @param {import('estree').Identifier} parent_nodes
+     */
+    render(block, parent_node, parent_nodes) {
+        if (!this.renderer.options.preserveComments)
+            return;
+        const string_literal = {
+            type: 'Literal',
+            value: this.node.data,
+            loc: {
+                start: this.renderer.locate(this.node.start),
+                end: this.renderer.locate(this.node.end)
+            }
+        };
+        block.add_element(this.var, x `@comment(${string_literal})`, parent_nodes && x `@claim_comment(${parent_nodes}, ${string_literal})`, parent_node);
+    }
+    text() {
+        if (!this.renderer.options.preserveComments)
+            return '';
+        return `<!--${this.node.data}-->`;
+    }
 }
+
+
+
+
