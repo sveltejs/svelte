@@ -1,4 +1,5 @@
 import { x } from 'code-red';
+
 export default class Wrapper {
 	/** @type {import('../../Renderer.js').default} */
 	renderer;
@@ -66,7 +67,7 @@ export default class Wrapper {
 
 	/**
 	 * @param {import('estree').Identifier} anchor
-	 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Identifier}
+	 * @returns {import('estree').Identifier}
 	 */
 	get_update_mount_node(anchor) {
 		return /** @type {import('estree').Identifier} */ (
