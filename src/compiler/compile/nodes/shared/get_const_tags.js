@@ -8,17 +8,17 @@ import compiler_errors from '../../compiler_errors.js';
  * @param {import('../../Component.js').default} component
  * @param {import('../interfaces.js').INodeAllowConstTag} node
  * @param {import('../interfaces.js').INode} parent
- * @returns {[import('../../../interfaces.js').ConstTag[], never[]]}
+ * @returns {[ConstTag[], Array<Exclude<import('../interfaces.js').INode, ConstTag>>]}
  */
 export default function get_const_tags(children, component, node, parent) {
-	/** @type {ConstTagType[]} */
+	/** @type {import('../../../interfaces.js').ConstTag[]} */
 	const const_tags = [];
 
-	/** @type {Array<Exclude<import('../../../interfaces.js').TemplateNode, ConstTagType>>} */
+	/** @type {Array<Exclude<import('../../../interfaces.js').TemplateNode, import('../../../interfaces.js').ConstTag>>} */
 	const others = [];
 	for (const child of children) {
 		if (child.type === 'ConstTag') {
-			const_tags.push(/** @type {ConstTagType} */ (child));
+			const_tags.push(/** @type {import('../../../interfaces.js').ConstTag} */ (child));
 		} else {
 			others.push(child);
 		}
@@ -31,17 +31,17 @@ export default function get_const_tags(children, component, node, parent) {
 	const children_nodes = map_children(component, parent, node.scope, others);
 	return [
 		sorted_consts_nodes,
-		/** @type {Array<Exclude<import('../interfaces.js').INode, import('../../../interfaces.js').ConstTag>>} */ (
-			children_nodes
-		)
+		/** @type {Array<Exclude<import('../interfaces.js').INode, ConstTag>>} */ (children_nodes)
 	];
 }
 
 /**
- * @param {import('../../../interfaces.js').ConstTag[]} consts_nodes
+ * @param {ConstTag[]} consts_nodes
  * @param {import('../../Component.js').default} component
  */
 function sort_consts_nodes(consts_nodes, component) {
+	/** @typedef {{ assignees: Set<string>; dependencies: Set<string>; node: ConstTag; }} ConstNode */
+
 	/** @type {ConstNode[]} */
 	const sorted_consts_nodes = [];
 
