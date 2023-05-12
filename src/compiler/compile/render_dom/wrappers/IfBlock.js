@@ -422,7 +422,7 @@ export default class IfBlockWrapper extends Wrapper {
 	 * @param {import('estree').Identifier} parent_node
 	 * @param {import('estree').Identifier} _parent_nodes
 	 * @param {boolean} dynamic
-	 * @param {any}
+	 * @param {any} opts
 	 * @param {DetachingOrNull} detaching
 	 */
 	render_compound_with_outros(
@@ -609,7 +609,7 @@ export default class IfBlockWrapper extends Wrapper {
 	 * @param {import('estree').Identifier} parent_node
 	 * @param {import('estree').Identifier} _parent_nodes
 	 * @param {boolean} dynamic
-	 * @param {any}
+	 * @param {any} opts
 	 * @param {DetachingOrNull} detaching
 	 */
 	render_simple(

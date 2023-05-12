@@ -11,13 +11,14 @@ import { push_array } from '../../utils/push_array.js';
 /**
  * @param {import('../Component.js').default} component
  * @param {import('../../interfaces.js').CompileOptions} options
- * @returns {{ js: import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Node[]; css: import('../../interfaces.js').CssResult; }}
+ * @returns {{ js: import('estree').Node[]; css: import('../../interfaces.js').CssResult; }}
  */
 export default function dom(component, options) {
 	const { name } = component;
 	const renderer = new Renderer(component, options);
 	const { block } = renderer;
 	block.has_outro_method = true;
+	/** @type {import('estree').Node[][]} */
 	const body = [];
 	if (renderer.file_var) {
 		const file = component.file ? x`"${component.file}"` : x`undefined`;
@@ -537,7 +538,7 @@ export default function dom(component, options) {
 	if (renderer.context_overflow) {
 		dirty = x`[]`;
 		for (let i = 0; i < renderer.context.length; i += 31) {
-			dirty.elements.push(x`-1`);
+			/** @type {any} */ (dirty).elements.push(x`-1`);
 		}
 	}
 	const superclass = {
@@ -570,7 +571,7 @@ export default function dom(component, options) {
 	`[0]
 	);
 	push_array(declaration.body.body, accessors);
-	body.push(declaration);
+	body.push(/** @type {any} */ (declaration));
 	if (options.customElement) {
 		const props_str = writable_props.reduce((def, prop) => {
 			def[prop.export_name] =

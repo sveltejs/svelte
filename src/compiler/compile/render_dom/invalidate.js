@@ -7,6 +7,7 @@ import { x } from 'code-red';
  * @param {import('estree').Node} node
  * @param {Set<string>} names
  * @param {boolean} main_execution_context
+ * @returns {any}
  */
 export function invalidate(renderer, scope, node, names, main_execution_context = false) {
 	const { component } = renderer;
@@ -59,6 +60,7 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 	if (is_store_value) {
 		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
 	}
+
 	let invalidate;
 	if (!main_execution_context) {
 		const pass_value =
@@ -88,8 +90,9 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 /**
  * @param {import('./Renderer.js').default} renderer
  * @param {string} name
- * @param {unknown} [value]
+ * @param {any} [value]
  * @param {boolean} main_execution_context
+ * @returns {import('estree').Node}
  */
 export function renderer_invalidate(renderer, name, value, main_execution_context = false) {
 	const variable = renderer.component.var_lookup.get(name);

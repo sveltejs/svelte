@@ -1,8 +1,10 @@
-import { Node } from 'estree';
-
 export const UNKNOWN = {};
 
-export function gather_possible_values(node: Node, set: Set<string | {}>) {
+/**
+ * @param {import("estree").Node} node
+ * @param {Set<string | {}>} set
+ */
+export function gather_possible_values(node, set) {
 	if (node.type === 'Literal') {
 		set.add(node.value);
 	} else if (node.type === 'ConditionalExpression') {

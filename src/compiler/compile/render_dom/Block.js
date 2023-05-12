@@ -16,7 +16,7 @@ export default class Block {
 	 * @property {Block} [parent]
 	 * @property {import('estree').Identifier} name
 	 * @property {string} type
-	 * @property {import('./Renderer.js').default} renderer
+	 * @property {import('./Renderer.js').default} [renderer]
 	 * @property {string} [comment]
 	 * @property {import('estree').Identifier} [key]
 	 * @property {Map<string,Bindings>} [bindings]

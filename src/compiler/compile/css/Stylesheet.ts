@@ -4,7 +4,7 @@ import Selector from './Selector';
 import Element from '../nodes/Element';
 import { Ast, CssHashGetter } from '../../interfaces';
 import Component from '../Component';
-import { CssNode } from './interfaces';
+import { CssNode } from './private';
 import hash from '../utils/hash';
 import compiler_warnings from '../compiler_warnings';
 import { extract_ignores_above_position } from '../../utils/extract_svelte_ignore';
