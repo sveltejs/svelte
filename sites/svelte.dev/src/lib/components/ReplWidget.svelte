@@ -30,7 +30,6 @@
 				.then((r) => r.json())
 				.then((data) => {
 					const { description, components } = data;
-					console.log(description, components);
 
 					name = description;
 
