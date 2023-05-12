@@ -62,13 +62,11 @@
 
 <Supporters />
 
-<div style="aspect-ratio: 4490 / 990;">
-	{#if $theme.current === 'light'}
-		<Image src={BallsLight} alt="The Svelte logo in a ball pit" />
-	{:else}
-		<Image src={BallsDark} alt="The Svelte logo in a ball pit" />
-	{/if}
-</div>
+{#if $theme.current === 'light'}
+	<Image src={BallsLight} alt="The Svelte logo in a ball pit" />
+{:else}
+	<Image src={BallsDark} alt="The Svelte logo in a ball pit" />
+{/if}
 
 <footer>
 	<a href="/tutorial">Tutorial</a>
