@@ -10,7 +10,7 @@
 	<Image
 		src={Machine}
 		alt="The Svelte compiler packaging up your component code"
-		--max-height="65vh"
+		--max-height="60vh"
 	/>
 
 	<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
