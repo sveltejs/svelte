@@ -1,7 +1,8 @@
 import { b, x, p } from 'code-red';
+
 const TRUE = x`true`;
 const FALSE = x`false`;
-/** */
+
 export default class EventHandlerWrapper {
 	/** @type {import('../../../nodes/EventHandler.js').default} */
 	node;
