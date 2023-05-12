@@ -1,124 +1,146 @@
-import { string_literal } from '../utils/stringify';
-import add_to_set from '../utils/add_to_set';
-import Component from '../Component';
-import Node from './shared/Node';
-import Element from './Element';
-import Text from './Text';
-import Expression from './shared/Expression';
-import TemplateScope from './shared/TemplateScope';
+import { string_literal } from '../utils/stringify.js';
+import add_to_set from '../utils/add_to_set.js';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
 import { x } from 'code-red';
-import { TemplateNode } from '../../interfaces';
 
+/** @extends Node */
 export default class Attribute extends Node {
-	type: 'Attribute' | 'Spread';
-	start: number;
-	end: number;
-	scope: TemplateScope;
 
-	component: Component;
-	parent: Element;
-	name: string;
-	is_spread: boolean;
-	is_true: boolean;
-	is_static: boolean;
-	expression?: Expression;
-	chunks: Array<Text | Expression>;
-	dependencies: Set<string>;
+    /** @type {'Attribute' | 'Spread'} */
+    type;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
-		super(component, parent, scope, info);
-		this.scope = scope;
+    /** @type {number} */
+    start;
 
-		if (info.type === 'Spread') {
-			this.name = null;
-			this.is_spread = true;
-			this.is_true = false;
+    /** @type {number} */
+    end;
 
-			this.expression = new Expression(component, this, scope, info.expression);
-			this.dependencies = this.expression.dependencies;
-			this.chunks = null;
+    /** @type {import('./shared/TemplateScope.js').default} */
+    scope;
 
-			this.is_static = false;
-		} else {
-			this.name = info.name;
-			this.is_true = info.value === true;
-			this.is_static = true;
+    /** @type {import('../Component.js').default} */
+    component;
 
-			this.dependencies = new Set();
+    /** @type {import('./Element.js').default} */
+    parent;
 
-			this.chunks = this.is_true
-				? []
-				: info.value.map((node) => {
-						if (node.type === 'Text') return node;
+    /** @type {string} */
+    name;
 
-						this.is_static = false;
+    /** @type {boolean} */
+    is_spread;
 
-						const expression = new Expression(component, this, scope, node.expression);
+    /** @type {boolean} */
+    is_true;
 
-						add_to_set(this.dependencies, expression.dependencies);
-						return expression;
-				  });
-		}
+    /** @type {boolean} */
+    is_static;
 
-		if (this.dependencies.size > 0) {
-			parent.cannot_use_innerhtml();
-			parent.not_static_content();
-		}
-	}
+    /** @type {import('./shared/Expression.js').default} */
+    expression;
 
-	get_dependencies() {
-		if (this.is_spread) return this.expression.dynamic_dependencies();
+    /** @type {Array<import('./Text.js').default | import('./shared/Expression.js').default>} */
+    chunks;
 
-		const dependencies: Set<string> = new Set();
-		this.chunks.forEach((chunk) => {
-			if (chunk.type === 'Expression') {
-				add_to_set(dependencies, chunk.dynamic_dependencies());
-			}
-		});
+    /** @type {Set<string>} */
+    dependencies;
 
-		return Array.from(dependencies);
-	}
+ /**
+  * @param {import('../Component.js').default} component  *
+     * @param {import('./shared/Node.js').default} parent  *
+     * @param {import('./shared/TemplateScope.js').default} scope  *
+     * @param {import('../../interfaces.js').TemplateNode} info  undefined
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+        this.scope = scope;
+        if (info.type === 'Spread') {
+            this.name = null;
+            this.is_spread = true;
+            this.is_true = false;
+            this.expression = new Expression(component, this, scope, info.expression);
+            this.dependencies = this.expression.dependencies;
+            this.chunks = null;
+            this.is_static = false;
+        }
+        else {
+            this.name = info.name;
+            this.is_true = info.value === true;
+            this.is_static = true;
+            this.dependencies = new Set();
+            this.chunks = this.is_true
+                ? []
+                : info.value.map(/** @param {any} node */ (node) => {
+                    if (node.type === 'Text')
+                        return node;
+                    this.is_static = false;
+                    const expression = new Expression(component, this, scope, node.expression);
+                    add_to_set(this.dependencies, expression.dependencies);
+                    return expression;
+                });
+        }
+        if (this.dependencies.size > 0) {
+            parent.cannot_use_innerhtml();
+            parent.not_static_content();
+        }
+    }
+    get_dependencies() {
+        if (this.is_spread)
+            return this.expression.dynamic_dependencies();
 
-	get_value(block) {
-		if (this.is_true) return x`true`;
-		if (this.chunks.length === 0) return x`""`;
+        /** @type {Set<string>} */
+        const dependencies = new Set();
+        this.chunks.forEach(/** @param {any} chunk */ (chunk) => {
+            if (chunk.type === 'Expression') {
+                add_to_set(dependencies, chunk.dynamic_dependencies());
+            }
+        });
+        return Array.from(dependencies);
+    }
 
-		if (this.chunks.length === 1) {
-			return this.chunks[0].type === 'Text'
-				? string_literal((this.chunks[0] as Text).data)
-				: (this.chunks[0] as Expression).manipulate(block);
-		}
-
-		let expression = this.chunks
-			.map((chunk) =>
-				chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block)
-			)
-			.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
-
-		if (this.chunks[0].type !== 'Text') {
-			expression = x`"" + ${expression}`;
-		}
-
-		return expression;
-	}
-
-	get_static_value() {
-		if (!this.is_static) return null;
-
-		return this.is_true
-			? true
-			: this.chunks[0]
-			? // method should be called only when `is_static = true`
-			  (this.chunks[0] as Text).data
-			: '';
-	}
-
-	should_cache() {
-		return this.is_static
-			? false
-			: this.chunks.length === 1
-			? // @ts-ignore todo: probably error
-			  this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
-			: true;
-	}
+    /** @param {any} block */
+    get_value(block) {
+        if (this.is_true)
+            return x `true`;
+        if (this.chunks.length === 0)
+            return x `""`;
+        if (this.chunks.length === 1) {
+            return this.chunks[0].type === 'Text'
+                ? string_literal(( /** @type {import('./Text.js').default} */(this.chunks[0])).data)
+                : ( /** @type {import('./shared/Expression.js').default} */(this.chunks[0])).manipulate(block);
+        }
+        let expression = this.chunks
+            .map(/** @param {any} chunk */ (chunk) => chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block))
+            .reduce(/**
+ * @param {any} lhs
+         * @param {any} rhs
+         */ (lhs, rhs) => x `${lhs} + ${rhs}`);
+        if (this.chunks[0].type !== 'Text') {
+            expression = x `"" + ${expression}`;
+        }
+        return expression;
+    }
+    get_static_value() {
+        if (!this.is_static)
+            return null;
+        return this.is_true
+            ? true
+            : this.chunks[0]
+                ? // method should be called only when `is_static = true`
+                    ( /** @type {import('./Text.js').default} */(this.chunks[0])).data
+                : '';
+    }
+    should_cache() {
+        return this.is_static
+            ? false
+            : this.chunks.length === 1
+                ? // @ts-ignore todo: probably error
+                    this.chunks[0].node.type !== 'Identifier' || this.scope.names.has(this.chunks[0].node.name)
+                : true;
+    }
 }
+
+
+
+
