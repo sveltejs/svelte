@@ -2,7 +2,9 @@
  * @param {import('estree').Node} node
  */
 export default function flatten_reference(node) {
+	/** @type {any[]} */
 	const nodes = [];
+	/** @type {string[]} */
 	const parts = [];
 
 	while (node.type === 'MemberExpression') {

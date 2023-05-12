@@ -18,6 +18,7 @@ export default function (node, renderer, options) {
 	if (node.else) {
 		renderer.push();
 		renderer.render(node.else.children, options);
+		/** @type {import('estree').Node} */
 		let alternate = renderer.pop();
 		if (node.else.const_tags.length > 0)
 			alternate = x`(() => { ${get_const_tags(node.else.const_tags)}; return ${alternate} })()`;

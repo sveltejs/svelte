@@ -9,7 +9,7 @@ import check_enable_sourcemap from '../utils/check_enable_sourcemap.js';
 /**
  * @param {import('../Component.js').default} component
  * @param {import('../../interfaces.js').CompileOptions} options
- * @returns {{ js: import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").Node[]; css: CssResult; }}
+ * @returns {{ js: import('estree').Node[]; css: import('../../interfaces.js').CssResult; }}
  */
 export default function ssr(component, options) {
 	const renderer = new Renderer({
@@ -197,7 +197,7 @@ export default function ssr(component, options) {
 	return { js, css };
 }
 
-/** @param {TemplateNode[]} nodes */
+/** @param {import('../nodes/interfaces.js').INode[]} nodes */
 function trim(nodes) {
 	let start = 0;
 	for (; start < nodes.length; start += 1) {
