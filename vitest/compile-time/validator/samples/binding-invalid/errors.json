@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "'whatever' is not a valid binding",
+		"start": {
+			"line": 5,
+			"column": 5
+		},
+		"end": {
+			"line": 5,
+			"column": 18
+		}
+	}
+]

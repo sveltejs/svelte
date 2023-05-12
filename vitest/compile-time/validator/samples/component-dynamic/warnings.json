@@ -1,0 +1,38 @@
+[
+	{
+		"code": "reactive-component",
+		"message": "<Let/> will not be reactive if Let changes. Use <svelte:component this={Let}/> if you want this reactivity.",
+		"end": {
+			"column": 7,
+			"line": 15
+		},
+		"start": {
+			"column": 0,
+			"line": 15
+		}
+	},
+	{
+		"message": "<ExportLet/> will not be reactive if ExportLet changes. Use <svelte:component this={ExportLet}/> if you want this reactivity.",
+		"code": "reactive-component",
+		"end": {
+			"column": 13,
+			"line": 16
+		},
+		"start": {
+			"column": 0,
+			"line": 16
+		}
+	},
+	{
+		"message": "<Reactive/> will not be reactive if Reactive changes. Use <svelte:component this={Reactive}/> if you want this reactivity.",
+		"code": "reactive-component",
+		"end": {
+			"column": 12,
+			"line": 17
+		},
+		"start": {
+			"column": 0,
+			"line": 17
+		}
+	}
+]

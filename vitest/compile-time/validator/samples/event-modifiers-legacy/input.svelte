@@ -1,0 +1,1 @@
+<button on:click|once="{handleClick}"></button>

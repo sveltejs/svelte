@@ -1,0 +1,86 @@
+[
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 13,
+			"column": 0
+		},
+		"end": {
+			"line": 13,
+			"column": 23
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 15,
+			"column": 0
+		},
+		"end": {
+			"line": 15,
+			"column": 43
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 18,
+			"column": 0
+		},
+		"end": {
+			"line": 18,
+			"column": 27
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 20,
+			"column": 0
+		},
+		"end": {
+			"line": 20,
+			"column": 24
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 22,
+			"column": 0
+		},
+		"end": {
+			"line": 22,
+			"column": 27
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 24,
+			"column": 0
+		},
+		"end": {
+			"line": 24,
+			"column": 26
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"line": 26,
+			"column": 0
+		},
+		"end": {
+			"line": 26,
+			"column": 26
+		}
+	}
+]

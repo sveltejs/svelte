@@ -1,0 +1,1 @@
+<div on:click="invalid"></div>

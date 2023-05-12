@@ -1,0 +1,14 @@
+[
+	{
+		"code": "a11y-positive-tabindex",
+		"message": "A11y: avoid tabindex values above zero",
+		"start": {
+			"line": 7,
+			"column": 8
+		},
+		"end": {
+			"line": 7,
+			"column": 20
+		}
+	}
+]

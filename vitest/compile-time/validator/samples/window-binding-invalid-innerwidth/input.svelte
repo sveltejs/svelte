@@ -1,0 +1,1 @@
+<svelte:window bind:innerwidth={w}/>

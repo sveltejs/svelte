@@ -1,0 +1,50 @@
+[
+	{
+		"code": "a11y-media-has-caption",
+		"end": {
+			"column": 15,
+			"line": 2
+		},
+		"message": "A11y: <video> elements must have a <track kind=\"captions\">",
+		"start": {
+			"column": 0,
+			"line": 2
+		}
+	},
+	{
+		"code": "a11y-media-has-caption",
+		"end": {
+			"column": 24,
+			"line": 3
+		},
+		"message": "A11y: <video> elements must have a <track kind=\"captions\">",
+		"start": {
+			"column": 0,
+			"line": 3
+		}
+	},
+	{
+		"code": "a11y-media-has-caption",
+		"end": {
+			"column": 27,
+			"line": 5
+		},
+		"message": "A11y: <video> elements must have a <track kind=\"captions\">",
+		"start": {
+			"column": 0,
+			"line": 5
+		}
+	},
+	{
+		"code": "a11y-media-has-caption",
+		"end": {
+			"column": 35,
+			"line": 6
+		},
+		"message": "A11y: <video> elements must have a <track kind=\"captions\">",
+		"start": {
+			"column": 0,
+			"line": 6
+		}
+	}
+]

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "unexpected-reserved-word",
+		"message": "'this' is a reserved word in JavaScript and cannot be used here",
+		"start": {
+			"line": 2,
+			"column": 18
+		},
+		"end": {
+			"line": 2,
+			"column": 18
+		}
+	}
+]

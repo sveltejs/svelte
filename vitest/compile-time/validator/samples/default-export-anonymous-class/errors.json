@@ -1,0 +1,14 @@
+[
+	{
+		"code": "default-export",
+		"message": "A component cannot have a default export",
+		"start": {
+			"line": 2,
+			"column": 1
+		},
+		"end": {
+			"line": 2,
+			"column": 30
+		}
+	}
+]
