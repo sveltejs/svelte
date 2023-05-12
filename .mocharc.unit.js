@@ -1,6 +1,6 @@
 module.exports = {
 	spec: [
-		'src/**/__test__.ts',
+		'src/**/__test__.js',
 	],
 	require: [
 		'sucrase/register'

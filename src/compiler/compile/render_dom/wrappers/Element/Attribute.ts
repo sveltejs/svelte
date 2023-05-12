@@ -1,423 +1,416 @@
-import Attribute from '../../../nodes/Attribute';
-import Block from '../../Block';
-import fix_attribute_casing from './fix_attribute_casing';
-import ElementWrapper from './index';
-import { string_literal } from '../../../utils/stringify';
+import fix_attribute_casing from './fix_attribute_casing.js';
+import { string_literal } from '../../../utils/stringify.js';
 import { b, x } from 'code-red';
-import Expression from '../../../nodes/shared/Expression';
-import Text from '../../../nodes/Text';
-import handle_select_value_binding from './handle_select_value_binding';
-import { Identifier, Node } from 'estree';
-import { namespaces } from '../../../../utils/namespaces';
-import { BooleanAttributes, boolean_attributes } from '../../../../../shared/boolean_attributes';
-import { regex_double_quotes } from '../../../../utils/patterns';
-
+import handle_select_value_binding from './handle_select_value_binding.js';
+import { namespaces } from '../../../../utils/namespaces.js';
+import { boolean_attributes } from '../../../../../shared/boolean_attributes.js';
+import { regex_double_quotes } from '../../../../utils/patterns.js';
 const non_textlike_input_types = new Set([
-	'button',
-	'checkbox',
-	'color',
-	'date',
-	'datetime-local',
-	'file',
-	'hidden',
-	'image',
-	'radio',
-	'range',
-	'reset',
-	'submit'
+    'button',
+    'checkbox',
+    'color',
+    'date',
+    'datetime-local',
+    'file',
+    'hidden',
+    'image',
+    'radio',
+    'range',
+    'reset',
+    'submit'
 ]);
-
+/** */
 export class BaseAttributeWrapper {
-	node: Attribute;
-	parent: ElementWrapper;
 
-	constructor(parent: ElementWrapper, block: Block, node: Attribute) {
-		this.node = node;
-		this.parent = parent;
+    /** @type {import('../../../nodes/Attribute.js').default} */
+    node;
 
-		if (node.dependencies.size > 0) {
-			block.add_dependencies(node.dependencies);
-		}
-	}
+    /** @type {import('./index.js').default} */
+    parent;
+    constructor(parent, block, node) {
+        this.node = node;
+        this.parent = parent;
+        if (node.dependencies.size > 0) {
+            block.add_dependencies(node.dependencies);
+        }
+    }
 
-	render(_block: Block) {}
+    /** @param {import('../../Block.js').default} _block */
+    render(_block) { }
 }
-
 const regex_minus_sign = /-/;
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
+/** @extends BaseAttributeWrapper */
 export default class AttributeWrapper extends BaseAttributeWrapper {
-	node: Attribute;
-	parent: ElementWrapper;
-	metadata: any;
-	name: string;
-	property_name: string;
-	is_indirectly_bound_value: boolean;
-	is_src: boolean;
-	is_select_value_attribute: boolean;
-	is_input_value: boolean;
-	should_cache: boolean;
-	last: Identifier;
 
-	constructor(parent: ElementWrapper, block: Block, node: Attribute) {
-		super(parent, block, node);
+    /** @type {import('../../../nodes/Attribute.js').default} */
+    node;
 
-		if (node.dependencies.size > 0) {
-			// special case — <option value={foo}> — see below
-			if (this.parent.node.name === 'option' && node.name === 'value') {
-				let select: ElementWrapper = this.parent;
-				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) {
-					// @ts-ignore todo: doublecheck this, but looks to be correct
-					select = select.parent;
-				}
+    /** @type {import('./index.js').default} */
+    parent;
 
-				if (select && select.select_binding_dependencies) {
-					select.select_binding_dependencies.forEach((prop) => {
-						this.node.dependencies.forEach((dependency: string) => {
-							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
-						});
-					});
-				}
-			}
+    /** @type {any} */
+    metadata;
 
-			if (node.name === 'value') {
-				handle_select_value_binding(this, node.dependencies);
-				this.parent.has_dynamic_value = true;
-			}
-		}
+    /** @type {string} */
+    name;
 
-		if (this.parent.node.namespace == namespaces.foreign) {
-			// leave attribute case alone for elements in the "foreign" namespace
-			this.name = this.node.name;
-			this.metadata = this.get_metadata();
-			this.is_indirectly_bound_value = false;
-			this.property_name = null;
-			this.is_select_value_attribute = false;
-			this.is_input_value = false;
-		} else {
-			this.name = fix_attribute_casing(this.node.name);
-			this.metadata = this.get_metadata();
-			this.is_indirectly_bound_value = is_indirectly_bound_value(this);
-			this.property_name = this.is_indirectly_bound_value
-				? '__value'
-				: this.metadata && this.metadata.property_name;
-			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
-			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
-		}
+    /** @type {string} */
+    property_name;
 
-		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
-		this.is_src =
-			this.name === 'src' &&
-			(!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
-		this.should_cache = should_cache(this);
-	}
+    /** @type {boolean} */
+    is_indirectly_bound_value;
 
-	render(block: Block) {
-		const element = this.parent;
-		const { name, property_name, should_cache, is_indirectly_bound_value } = this;
+    /** @type {boolean} */
+    is_src;
 
-		// xlink is a special case... we could maybe extend this to generic
-		// namespaced attributes but I'm not sure that's applicable in
-		// HTML5?
-		const method = regex_minus_sign.test(element.node.name)
-			? '@set_custom_element_data'
-			: name.slice(0, 6) === 'xlink:'
-			? '@xlink_attr'
-			: '@attr';
+    /** @type {boolean} */
+    is_select_value_attribute;
 
-		const is_legacy_input_type =
-			element.renderer.component.compile_options.legacy &&
-			name === 'type' &&
-			this.parent.node.name === 'input';
+    /** @type {boolean} */
+    is_input_value;
 
-		const dependencies = this.get_dependencies();
-		const value = this.get_value(block);
+    /** @type {boolean} */
+    should_cache;
 
-		let updater: Node[];
-		const init = this.get_init(block, value);
+    /** @type {import('estree').Identifier} */
+    last;
+    constructor(parent, block, node) {
+        super(parent, block, node);
+        if (node.dependencies.size > 0) {
+            // special case — <option value={foo}> — see below
+            if (this.parent.node.name === 'option' && node.name === 'value') {
+                let select = this.parent;
+                while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) {
+                    // @ts-ignore todo: doublecheck this, but looks to be correct
+                    select = select.parent;
+                }
+                if (select && select.select_binding_dependencies) {
+                    select.select_binding_dependencies.forEach((prop) => {
+                        this.node.dependencies.forEach((dependency) => {
+                            this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
+                        });
+                    });
+                }
+            }
+            if (node.name === 'value') {
+                handle_select_value_binding(this, node.dependencies);
+                this.parent.has_dynamic_value = true;
+            }
+        }
+        if (this.parent.node.namespace == namespaces.foreign) {
+            // leave attribute case alone for elements in the "foreign" namespace
+            this.name = this.node.name;
+            this.metadata = this.get_metadata();
+            this.is_indirectly_bound_value = false;
+            this.property_name = null;
+            this.is_select_value_attribute = false;
+            this.is_input_value = false;
+        }
+        else {
+            this.name = fix_attribute_casing(this.node.name);
+            this.metadata = this.get_metadata();
+            this.is_indirectly_bound_value = is_indirectly_bound_value(this);
+            this.property_name = this.is_indirectly_bound_value
+                ? '__value'
+                : this.metadata && this.metadata.property_name;
+            this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
+            this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
+        }
+        // TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
+        this.is_src =
+            this.name === 'src' &&
+                (!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
+        this.should_cache = should_cache(this);
+    }
 
-		if (is_legacy_input_type) {
-			block.chunks.hydrate.push(b`@set_input_type(${element.var}, ${init});`);
-			updater = b`@set_input_type(${element.var}, ${should_cache ? this.last : value});`;
-		} else if (this.is_select_value_attribute) {
-			// annoying special case
-			const is_multiple_select = element.node.get_static_attribute_value('multiple');
+    /** @param {import('../../Block.js').default} block */
+    render(block) {
+        const element = this.parent;
+        const { name, property_name, should_cache, is_indirectly_bound_value } = this;
+        // xlink is a special case... we could maybe extend this to generic
+        // namespaced attributes but I'm not sure that's applicable in
+        // HTML5?
+        const method = regex_minus_sign.test(element.node.name)
+            ? '@set_custom_element_data'
+            : name.slice(0, 6) === 'xlink:'
+                ? '@xlink_attr'
+                : '@attr';
+        const is_legacy_input_type = element.renderer.component.compile_options.legacy &&
+            name === 'type' &&
+            this.parent.node.name === 'input';
+        const dependencies = this.get_dependencies();
+        const value = this.get_value(block);
 
-			if (is_multiple_select) {
-				updater = b`@select_options(${element.var}, ${value});`;
-			} else {
-				updater = b`@select_option(${element.var}, ${value});`;
-			}
-
-			block.chunks.mount.push(b`
+        /** @type {Node[]} */
+        let updater;
+        const init = this.get_init(block, value);
+        if (is_legacy_input_type) {
+            block.chunks.hydrate.push(b `@set_input_type(${element.var}, ${init});`);
+            updater = b `@set_input_type(${element.var}, ${should_cache ? this.last : value});`;
+        }
+        else if (this.is_select_value_attribute) {
+            // annoying special case
+            const is_multiple_select = element.node.get_static_attribute_value('multiple');
+            if (is_multiple_select) {
+                updater = b `@select_options(${element.var}, ${value});`;
+            }
+            else {
+                updater = b `@select_option(${element.var}, ${value});`;
+            }
+            block.chunks.mount.push(b `
 				${updater}
 			`);
-		} else if (this.is_src) {
-			block.chunks.hydrate.push(
-				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
-			);
-			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
-		} else if (property_name) {
-			block.chunks.hydrate.push(b`${element.var}.${property_name} = ${init};`);
-			updater = block.renderer.options.dev
-				? b`@prop_dev(${element.var}, "${property_name}", ${should_cache ? this.last : value});`
-				: b`${element.var}.${property_name} = ${should_cache ? this.last : value};`;
-		} else {
-			block.chunks.hydrate.push(b`${method}(${element.var}, "${name}", ${init});`);
-			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
-		}
-
-		if (is_indirectly_bound_value) {
-			const update_value = b`@set_input_value(${element.var}, ${element.var}.__value);`;
-			block.chunks.hydrate.push(update_value);
-
-			updater = b`
+        }
+        else if (this.is_src) {
+            block.chunks.hydrate.push(b `if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`);
+            updater = b `${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
+        }
+        else if (property_name) {
+            block.chunks.hydrate.push(b `${element.var}.${property_name} = ${init};`);
+            updater = block.renderer.options.dev
+                ? b `@prop_dev(${element.var}, "${property_name}", ${should_cache ? this.last : value});`
+                : b `${element.var}.${property_name} = ${should_cache ? this.last : value};`;
+        }
+        else {
+            block.chunks.hydrate.push(b `${method}(${element.var}, "${name}", ${init});`);
+            updater = b `${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
+        }
+        if (is_indirectly_bound_value) {
+            const update_value = b `@set_input_value(${element.var}, ${element.var}.__value);`;
+            block.chunks.hydrate.push(update_value);
+            updater = b `
 				${updater}
 				${update_value};
 			`;
-		}
-
-		if (this.node.name === 'value' && dependencies.length > 0) {
-			if (this.parent.bindings.some((binding) => binding.node.name === 'group')) {
-				this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
-				block.add_variable(this.parent.dynamic_value_condition, x`false`);
-				updater = b`
+        }
+        if (this.node.name === 'value' && dependencies.length > 0) {
+            if (this.parent.bindings.some((binding) => binding.node.name === 'group')) {
+                this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
+                block.add_variable(this.parent.dynamic_value_condition, x `false`);
+                updater = b `
 					${updater}
 					${this.parent.dynamic_value_condition} = true;
 				`;
-			}
-		}
-
-		if (dependencies.length > 0) {
-			const condition = this.get_dom_update_conditions(block, block.renderer.dirty(dependencies));
-
-			block.chunks.update.push(b`
+            }
+        }
+        if (dependencies.length > 0) {
+            const condition = this.get_dom_update_conditions(block, block.renderer.dirty(dependencies));
+            block.chunks.update.push(b `
 				if (${condition}) {
 					${updater}
 				}`);
-		}
+        }
+        // special case – autofocus. has to be handled in a bit of a weird way
+        if (name === 'autofocus') {
+            block.autofocus = {
+                element_var: element.var,
+                condition_expression: this.node.is_true ? undefined : value
+            };
+        }
+    }
 
-		// special case – autofocus. has to be handled in a bit of a weird way
-		if (name === 'autofocus') {
-			block.autofocus = {
-				element_var: element.var,
-				condition_expression: this.node.is_true ? undefined : value
-			};
-		}
-	}
+ /**
+  * @param {import('../../Block.js').default} block
+     * @param {any} value
+     */
+    get_init(block, value) {
+        this.last =
+            this.should_cache &&
+                block.get_unique_name(`${this.parent.var.name}_${this.name.replace(regex_invalid_variable_identifier_characters, '_')}_value`);
+        if (this.should_cache)
+            block.add_variable(this.last);
+        return this.should_cache ? x `${this.last} = ${value}` : value;
+    }
 
-	get_init(block: Block, value) {
-		this.last =
-			this.should_cache &&
-			block.get_unique_name(
-				`${this.parent.var.name}_${this.name.replace(
-					regex_invalid_variable_identifier_characters,
-					'_'
-				)}_value`
-			);
+ /**
+  * @param {import('../../Block.js').default} block
+     * @param {import('estree').Node} dependency_condition
+     */
+    get_dom_update_conditions(block, dependency_condition) {
+        const { property_name, should_cache, last } = this;
+        const element = this.parent;
+        const value = this.get_value(block);
+        let condition = dependency_condition;
+        if (should_cache) {
+            condition = this.is_src
+                ? x `${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
+                : x `${condition} && (${last} !== (${last} = ${value}))`;
+        }
+        if (this.is_input_value) {
+            const type = element.node.get_static_attribute_value('type');
+            if (type !== true && !non_textlike_input_types.has(type)) {
+                condition = x `${condition} && ${element.var}.${property_name} !== ${should_cache ? last : value}`;
+            }
+        }
+        if (block.has_outros) {
+            condition = x `!#current || ${condition}`;
+        }
+        return condition;
+    }
+    get_dependencies() {
+        const node_dependencies = this.node.get_dependencies();
+        const dependencies = new Set(node_dependencies);
+        node_dependencies.forEach((prop) => {
+            const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
+            if (indirect_dependencies) {
+                indirect_dependencies.forEach((indirect_dependency) => {
+                    dependencies.add(indirect_dependency);
+                });
+            }
+        });
+        return Array.from(dependencies);
+    }
+    get_metadata() {
+        if (this.parent.node.namespace)
+            return null;
+        const metadata = attribute_lookup[this.name];
+        if (metadata && metadata.applies_to && !metadata.applies_to.includes(this.parent.node.name))
+            return null;
+        return metadata;
+    }
 
-		if (this.should_cache) block.add_variable(this.last);
+    /** @param {import('../../Block.js').default} block */
+    get_value(block) {
+        if (this.node.is_true) {
+            if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
+                return x `true`;
+            }
+            return x `""`;
+        }
+        if (this.node.chunks.length === 0)
+            return x `""`;
+        // TODO some of this code is repeated in Tag.ts — would be good to
+        // DRY it out if that's possible without introducing crazy indirection
+        if (this.node.chunks.length === 1) {
+            return this.node.chunks[0].type === 'Text'
+                ? string_literal(( /** @type {import('../../../nodes/Text.js').default} */(this.node.chunks[0])).data)
+                : ( /** @type {import('../../../nodes/shared/Expression.js').default} */(this.node.chunks[0])).manipulate(block);
+        }
+        let value = this.node.name === 'class'
+            ? this.get_class_name_text(block)
+            : this.render_chunks(block).reduce((lhs, rhs) => x `${lhs} + ${rhs}`);
+        // '{foo} {bar}' — treat as string concatenation
+        if (this.node.chunks[0].type !== 'Text') {
+            value = x `"" + ${value}`;
+        }
+        return value;
+    }
 
-		return this.should_cache ? x`${this.last} = ${value}` : value;
-	}
+    /** @param {import('../../Block.js').default} block */
+    get_class_name_text(block) {
+        const scoped_css = this.node.chunks.some((chunk) => chunk.synthetic);
+        const rendered = this.render_chunks(block);
+        if (scoped_css && rendered.length === 2) {
+            // we have a situation like class={possiblyUndefined}
+            rendered[0] = x `@null_to_empty(${rendered[0]})`;
+        }
+        return rendered.reduce((lhs, rhs) => x `${lhs} + ${rhs}`);
+    }
 
-	get_dom_update_conditions(block: Block, dependency_condition: Node) {
-		const { property_name, should_cache, last } = this;
-		const element = this.parent;
-		const value = this.get_value(block);
-
-		let condition = dependency_condition;
-
-		if (should_cache) {
-			condition = this.is_src
-				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
-				: x`${condition} && (${last} !== (${last} = ${value}))`;
-		}
-
-		if (this.is_input_value) {
-			const type = element.node.get_static_attribute_value('type');
-			if (type !== true && !non_textlike_input_types.has(type)) {
-				condition = x`${condition} && ${element.var}.${property_name} !== ${
-					should_cache ? last : value
-				}`;
-			}
-		}
-
-		if (block.has_outros) {
-			condition = x`!#current || ${condition}`;
-		}
-
-		return condition;
-	}
-
-	get_dependencies() {
-		const node_dependencies = this.node.get_dependencies();
-		const dependencies = new Set(node_dependencies);
-
-		node_dependencies.forEach((prop: string) => {
-			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
-			if (indirect_dependencies) {
-				indirect_dependencies.forEach((indirect_dependency) => {
-					dependencies.add(indirect_dependency);
-				});
-			}
-		});
-
-		return Array.from(dependencies);
-	}
-
-	get_metadata() {
-		if (this.parent.node.namespace) return null;
-		const metadata = attribute_lookup[this.name];
-		if (metadata && metadata.applies_to && !metadata.applies_to.includes(this.parent.node.name))
-			return null;
-		return metadata;
-	}
-
-	get_value(block: Block) {
-		if (this.node.is_true) {
-			if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
-				return x`true`;
-			}
-			return x`""`;
-		}
-		if (this.node.chunks.length === 0) return x`""`;
-
-		// TODO some of this code is repeated in Tag.ts — would be good to
-		// DRY it out if that's possible without introducing crazy indirection
-		if (this.node.chunks.length === 1) {
-			return this.node.chunks[0].type === 'Text'
-				? string_literal((this.node.chunks[0] as Text).data)
-				: (this.node.chunks[0] as Expression).manipulate(block);
-		}
-
-		let value =
-			this.node.name === 'class'
-				? this.get_class_name_text(block)
-				: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
-
-		// '{foo} {bar}' — treat as string concatenation
-		if (this.node.chunks[0].type !== 'Text') {
-			value = x`"" + ${value}`;
-		}
-
-		return value;
-	}
-
-	get_class_name_text(block: Block) {
-		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
-		const rendered = this.render_chunks(block);
-
-		if (scoped_css && rendered.length === 2) {
-			// we have a situation like class={possiblyUndefined}
-			rendered[0] = x`@null_to_empty(${rendered[0]})`;
-		}
-
-		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
-	}
-
-	render_chunks(block: Block) {
-		return this.node.chunks.map((chunk) => {
-			if (chunk.type === 'Text') {
-				return string_literal(chunk.data);
-			}
-
-			return chunk.manipulate(block);
-		});
-	}
-
-	stringify() {
-		if (this.node.is_true) return '';
-
-		const value = this.node.chunks;
-		if (value.length === 0) return '=""';
-
-		return `="${value
-			.map((chunk) => {
-				return chunk.type === 'Text'
-					? chunk.data.replace(regex_double_quotes, '\\"')
-					: `\${${chunk.manipulate()}}`;
-			})
-			.join('')}"`;
-	}
+    /** @param {import('../../Block.js').default} block */
+    render_chunks(block) {
+        return this.node.chunks.map((chunk) => {
+            if (chunk.type === 'Text') {
+                return string_literal(chunk.data);
+            }
+            return chunk.manipulate(block);
+        });
+    }
+    stringify() {
+        if (this.node.is_true)
+            return '';
+        const value = this.node.chunks;
+        if (value.length === 0)
+            return '=""';
+        return `="${value
+            .map((chunk) => {
+            return chunk.type === 'Text'
+                ? chunk.data.replace(regex_double_quotes, '\\"')
+                : `\${${chunk.manipulate()}}`;
+        })
+            .join('')}"`;
+    }
 }
-
-// source: https://html.spec.whatwg.org/multipage/indices.html
-type AttributeMetadata = { property_name?: string; applies_to?: string[] };
-const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & {
-	[key in string]: AttributeMetadata;
-} = {
-	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
-	allowpaymentrequest: { property_name: 'allowPaymentRequest', applies_to: ['iframe'] },
-	async: { applies_to: ['script'] },
-	autofocus: { applies_to: ['button', 'input', 'keygen', 'select', 'textarea'] },
-	autoplay: { applies_to: ['audio', 'video'] },
-	checked: { applies_to: ['input'] },
-	controls: { applies_to: ['audio', 'video'] },
-	default: { applies_to: ['track'] },
-	defer: { applies_to: ['script'] },
-	disabled: {
-		applies_to: [
-			'button',
-			'fieldset',
-			'input',
-			'keygen',
-			'optgroup',
-			'option',
-			'select',
-			'textarea'
-		]
-	},
-	formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
-	hidden: {},
-	indeterminate: { applies_to: ['input'] },
-	inert: {},
-	ismap: { property_name: 'isMap', applies_to: ['img'] },
-	loop: { applies_to: ['audio', 'bgsound', 'video'] },
-	multiple: { applies_to: ['input', 'select'] },
-	muted: { applies_to: ['audio', 'video'] },
-	nomodule: { property_name: 'noModule', applies_to: ['script'] },
-	novalidate: { property_name: 'noValidate', applies_to: ['form'] },
-	open: { applies_to: ['details', 'dialog'] },
-	playsinline: { property_name: 'playsInline', applies_to: ['video'] },
-	readonly: { property_name: 'readOnly', applies_to: ['input', 'textarea'] },
-	required: { applies_to: ['input', 'select', 'textarea'] },
-	reversed: { applies_to: ['ol'] },
-	selected: { applies_to: ['option'] },
-	value: {
-		applies_to: [
-			'button',
-			'option',
-			'input',
-			'li',
-			'meter',
-			'progress',
-			'param',
-			'select',
-			'textarea'
-		]
-	}
+/**
+ * @type {{ [key in BooleanAttributes]: AttributeMetadata } & {
+ * 	[key in string]: AttributeMetadata;
+ * }}
+ */
+const attribute_lookup = {
+    allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
+    allowpaymentrequest: { property_name: 'allowPaymentRequest', applies_to: ['iframe'] },
+    async: { applies_to: ['script'] },
+    autofocus: { applies_to: ['button', 'input', 'keygen', 'select', 'textarea'] },
+    autoplay: { applies_to: ['audio', 'video'] },
+    checked: { applies_to: ['input'] },
+    controls: { applies_to: ['audio', 'video'] },
+    default: { applies_to: ['track'] },
+    defer: { applies_to: ['script'] },
+    disabled: {
+        applies_to: [
+            'button',
+            'fieldset',
+            'input',
+            'keygen',
+            'optgroup',
+            'option',
+            'select',
+            'textarea'
+        ]
+    },
+    formnovalidate: { property_name: 'formNoValidate', applies_to: ['button', 'input'] },
+    hidden: {},
+    indeterminate: { applies_to: ['input'] },
+    inert: {},
+    ismap: { property_name: 'isMap', applies_to: ['img'] },
+    loop: { applies_to: ['audio', 'bgsound', 'video'] },
+    multiple: { applies_to: ['input', 'select'] },
+    muted: { applies_to: ['audio', 'video'] },
+    nomodule: { property_name: 'noModule', applies_to: ['script'] },
+    novalidate: { property_name: 'noValidate', applies_to: ['form'] },
+    open: { applies_to: ['details', 'dialog'] },
+    playsinline: { property_name: 'playsInline', applies_to: ['video'] },
+    readonly: { property_name: 'readOnly', applies_to: ['input', 'textarea'] },
+    required: { applies_to: ['input', 'select', 'textarea'] },
+    reversed: { applies_to: ['ol'] },
+    selected: { applies_to: ['option'] },
+    value: {
+        applies_to: [
+            'button',
+            'option',
+            'input',
+            'li',
+            'meter',
+            'progress',
+            'param',
+            'select',
+            'textarea'
+        ]
+    }
 };
-
 Object.keys(attribute_lookup).forEach((name) => {
-	const metadata = attribute_lookup[name];
-	if (!metadata.property_name) metadata.property_name = name;
+    const metadata = attribute_lookup[name];
+    if (!metadata.property_name)
+        metadata.property_name = name;
 });
 
-function should_cache(attribute: AttributeWrapper) {
-	return attribute.is_src || attribute.node.should_cache();
+/** @param {AttributeWrapper} attribute */
+function should_cache(attribute) {
+    return attribute.is_src || attribute.node.should_cache();
 }
-
 const regex_contains_checked_or_group = /checked|group/;
 
-function is_indirectly_bound_value(attribute: AttributeWrapper) {
-	const element = attribute.parent;
-	return (
-		attribute.name === 'value' &&
-		(element.node.name === 'option' || // TODO check it's actually bound
-			(element.node.name === 'input' &&
-				element.node.bindings.some((binding) =>
-					regex_contains_checked_or_group.test(binding.name)
-				)))
-	);
+/** @param {AttributeWrapper} attribute */
+function is_indirectly_bound_value(attribute) {
+    const element = attribute.parent;
+    return (attribute.name === 'value' &&
+        (element.node.name === 'option' || // TODO check it's actually bound
+            (element.node.name === 'input' &&
+                element.node.bindings.some((binding) => regex_contains_checked_or_group.test(binding.name)))));
 }
+
+
+/** @typedef {{ property_name?: string; applies_to?: string[] }} AttributeMetadata */
+
