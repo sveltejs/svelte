@@ -3,7 +3,7 @@ import { x } from 'code-red';
 /**
  * @param {import('../../nodes/Title.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions} options
+ * @param {import('../private.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	renderer.push();

@@ -4,7 +4,7 @@ import { get_const_tags } from './shared/get_const_tags.js';
 /**
  * @param {import('../../nodes/AwaitBlock.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions} options
+ * @param {import('../private.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	renderer.push();

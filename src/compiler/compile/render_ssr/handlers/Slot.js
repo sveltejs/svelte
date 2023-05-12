@@ -5,7 +5,7 @@ import { get_slot_scope } from './shared/get_slot_scope.js';
 /**
  * @param {import('../../nodes/Slot.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions & {
+ * @param {import('../private.js').RenderOptions & {
  * 		slot_scopes: Map<any, any>;
  * 	}} options
  */

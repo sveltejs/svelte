@@ -15,7 +15,7 @@ import { regex_starts_with_newline } from '../../../utils/patterns.js';
 /**
  * @param {import('../../nodes/Element.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions} options
+ * @param {import('../private.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	const children = remove_whitespace_children(node.children, node.next);

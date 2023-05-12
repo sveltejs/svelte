@@ -6,7 +6,7 @@ import { get_const_tags } from './shared/get_const_tags.js';
 /**
  * @param {import('../../nodes/SlotTemplate.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions & {
+ * @param {import('../private.js').RenderOptions & {
  * 		slot_scopes: Map<any, any>;
  * 	}} options
  */

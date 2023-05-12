@@ -1,7 +1,7 @@
 /**
  * @param {import('../../nodes/Comment.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions} options
+ * @param {import('../private.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	if (options.preserveComments) {

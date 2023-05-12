@@ -15,9 +15,10 @@ import Text from './handlers/Text.js';
 import Title from './handlers/Title.js';
 import { collapse_template_literal } from '../utils/collapse_template_literal.js';
 import { escape_template } from '../utils/stringify.js';
+
 function noop() {}
 
-/** @type {Record<string, Handler>} */
+/** @type {Record<string, {(node: any, renderer: Renderer, options: import('../../interfaces.js').CompileOptions): void}>} */
 const handlers = {
 	AwaitBlock,
 	Body: noop,
@@ -39,18 +40,14 @@ const handlers = {
 	Title,
 	Window: noop
 };
-/** */
+
 export default class Renderer {
-	/** @default false */
 	has_bindings = false;
 
 	/** @type {import('estree').Identifier} */
 	name = undefined;
 
-	/**
-	 * @default []
-	 * @type {Array<{ current: { value: string }; literal: TemplateLiteral }>}
-	 */
+	/** @type {Array<{ current: { value: string }; literal: import('estree').TemplateLiteral }>} */
 	stack = [];
 
 	/** @type {{ value: string }} */
@@ -59,10 +56,7 @@ export default class Renderer {
 	/** @type {import('estree').TemplateLiteral} */
 	literal = undefined;
 
-	/**
-	 * @default []
-	 * @type {AppendTarget[]}
-	 */
+	/** @type {import('../../interfaces.js').AppendTarget[]} */
 	targets = [];
 	constructor({ name }) {
 		this.name = name;
@@ -111,8 +105,8 @@ export default class Renderer {
 	}
 
 	/**
-	 * @param {INode[]} nodes
-	 * @param {RenderOptions} options
+	 * @param {import('../nodes/interfaces.js').INode[]} nodes
+	 * @param {import('./private.js').RenderOptions} options
 	 */
 	render(nodes, options) {
 		nodes.forEach((node) => {
@@ -124,11 +118,3 @@ export default class Renderer {
 		});
 	}
 }
-
-/** @typedef {(node: any, renderer: Renderer, options: CompileOptions) => void} Handler */
-
-/** @typedef {Object} RenderOptions
- * @property {(c:number)=>{line:number;column:number}} locate
- * @property {string} [head_id]
- * @property {boolean} [has_added_svelte_hash]
- */

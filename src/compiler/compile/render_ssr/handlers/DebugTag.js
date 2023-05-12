@@ -3,7 +3,7 @@ import { x, p } from 'code-red';
 /**
  * @param {import('../../nodes/DebugTag.js').default} node
  * @param {import('../Renderer.js').default} renderer
- * @param {import('../Renderer.js').RenderOptions} options
+ * @param {import('../private.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
 	if (!options.dev) return;
