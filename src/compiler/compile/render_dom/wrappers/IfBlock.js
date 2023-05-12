@@ -100,6 +100,8 @@ class IfBlockBranch extends Wrapper {
 
 /** @extends Wrapper */
 export default class IfBlockWrapper extends Wrapper {
+	/** @typedef {'detaching' | null} DetachingOrNull */
+
 	/** @type {import('../../nodes/IfBlock.js').default} */
 	node;
 
@@ -272,7 +274,7 @@ export default class IfBlockWrapper extends Wrapper {
 	 * @param {import('estree').Identifier} parent_node
 	 * @param {import('estree').Identifier} _parent_nodes
 	 * @param {boolean} dynamic
-	 * @param {any}
+	 * @param {any} opts
 	 * @param {DetachingOrNull} detaching
 	 */
 	render_compound(
@@ -692,5 +694,3 @@ export default class IfBlockWrapper extends Wrapper {
 		}
 	}
 }
-
-/** @typedef {'detaching' | null} DetachingOrNull */
