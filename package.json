@@ -2,6 +2,7 @@
   "name": "svelte",
   "version": "4.0.0-next.0",
   "description": "Cybernetically enhanced web apps",
+  "type": "module",
   "module": "index.mjs",
   "main": "index",
   "files": [
@@ -85,7 +86,7 @@
     "format:check": "prettier . --cache --plugin-search-dir=. --check",
     "test": "npm run test:unit && npm run test:integration && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "test:integration": "mocha --exit",
-    "test:unit": "mocha --config .mocharc.unit.js --exit",
+    "test:unit": "mocha --config .mocharc.unit.cjs --exit",
     "quicktest": "mocha --exit",
     "build": "rollup -c && npm run tsd",
     "prepare": "npm run build",
