@@ -3,7 +3,7 @@ import Body from './Body.js';
 import DebugTag from './DebugTag.js';
 import Document from './Document.js';
 import EachBlock from './EachBlock.js';
-import Element from './Element.js';
+import Element from './Element/index.js';
 import Head from './Head.js';
 import IfBlock from './IfBlock.js';
 import KeyBlock from './KeyBlock.js';
@@ -19,6 +19,7 @@ import Window from './Window.js';
 import { trim_start, trim_end } from '../../../utils/trim.js';
 import { link } from '../../../utils/link.js';
 import { regex_starts_with_whitespace } from '../../../utils/patterns.js';
+
 const wrappers = {
 	AwaitBlock,
 	Body,
@@ -55,6 +56,7 @@ function trimmable_at(child, next_sibling) {
 		next_sibling.node.prev.type === 'EachBlock'
 	);
 }
+
 export default class FragmentWrapper {
 	/** @type {import('./shared/Wrapper.js').default[]} */
 	nodes;
