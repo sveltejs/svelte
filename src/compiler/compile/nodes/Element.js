@@ -44,6 +44,7 @@ import {
 	has_disabled_attribute,
 	is_valid_autocomplete
 } from '../utils/a11y.js';
+
 const aria_attributes =
 	'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(
 		' '
@@ -395,9 +396,9 @@ export default class Element extends Node {
 	}
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./shared/Node.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
 	 * @param {any} info  undefined
 	 */
 	constructor(component, parent, scope, info) {

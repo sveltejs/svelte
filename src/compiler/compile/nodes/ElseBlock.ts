@@ -1,22 +1,32 @@
-import AbstractBlock from './shared/AbstractBlock';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import Node from './shared/Node';
-import ConstTag from './ConstTag';
-import get_const_tags from './shared/get_const_tags';
+import AbstractBlock from './shared/AbstractBlock.js';
+import get_const_tags from './shared/get_const_tags.js';
 
+/** @extends AbstractBlock */
 export default class ElseBlock extends AbstractBlock {
-	type: 'ElseBlock';
-	scope: TemplateScope;
-	const_tags: ConstTag[];
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
-		super(component, parent, scope, info);
+    /** @type {'ElseBlock'} */
+    type;
 
-		this.scope = scope.child();
-		[this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
+    /** @type {import('./shared/TemplateScope.js').default} */
+    scope;
 
-		this.warn_if_empty_block();
-	}
+    /** @type {import('./ConstTag.js').default[]} */
+    const_tags;
+
+ /**
+  * @param {import('../Component.js').default} component  *
+     * @param {import('./shared/Node.js').default} parent  *
+     * @param {import('./shared/TemplateScope.js').default} scope  *
+     * @param {import('../../interfaces.js').TemplateNode} info  undefined
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+        this.scope = scope.child();
+        [this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
+        this.warn_if_empty_block();
+    }
 }
+
+
+
+
