@@ -1,10 +1,10 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
 import fragment from './state/fragment.js';
-import { regex_whitespace } from '../utils/patterns';
-import { reserved } from '../utils/names';
-import full_char_code_at from '../utils/full_char_code_at';
-import error from '../utils/error';
-import parser_errors from './errors';
+import { regex_whitespace } from '../utils/patterns.js';
+import { reserved } from '../utils/names.js';
+import full_char_code_at from '../utils/full_char_code_at.js';
+import error from '../utils/error.js';
+import parser_errors from './errors.js';
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 export class Parser {

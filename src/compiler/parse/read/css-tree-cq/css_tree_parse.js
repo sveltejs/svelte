@@ -1,9 +1,10 @@
 // @ts-nocheck
 // Note: Must import from the `css-tree` browser bundled distribution due to `createRequire` usage if importing from
 // `css-tree` Node module directly. This allows the production build of Svelte to work correctly.
-import { fork } from '../../../../../node_modules/css-tree/dist/csstree.esm.js';
+// import { fork } from '../../../../../node_modules/css-tree/dist/csstree.esm.js';
+import { fork } from 'css-tree';
 
-import * as node from './node';
+import * as node from './node/index.js';
 
 /**
  * Extends `css-tree` for container query support by forking and adding new nodes and at-rule support for `@container`.

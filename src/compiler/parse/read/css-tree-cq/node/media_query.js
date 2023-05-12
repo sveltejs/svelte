@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { WhiteSpace, Comment, Ident, LeftParenthesis } from 'css-tree/tokenizer';
 
-import { lookahead_is_range } from './lookahead_is_range';
+import { lookahead_is_range } from './lookahead_is_range.js';
 
 export const name = 'MediaQuery';
 export const structure = {

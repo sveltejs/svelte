@@ -1,11 +1,11 @@
 import { b, x } from 'code-red';
-import get_object from '../../../utils/get_object';
-import replace_object from '../../../utils/replace_object';
-import flatten_reference from '../../../utils/flatten_reference';
-import add_to_set from '../../../utils/add_to_set';
-import mark_each_block_bindings from '../shared/mark_each_block_bindings';
-import handle_select_value_binding from './handle_select_value_binding';
-import { regex_box_size } from '../../../../utils/patterns';
+import get_object from '../../../utils/get_object.js';
+import replace_object from '../../../utils/replace_object.js';
+import flatten_reference from '../../../utils/flatten_reference.js';
+import add_to_set from '../../../utils/add_to_set.js';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings.js';
+import handle_select_value_binding from './handle_select_value_binding.js';
+import { regex_box_size } from '../../../../utils/patterns.js';
 /** */
 export default class BindingWrapper {
 	/** @type {import('../../../nodes/Binding.js').default} */
