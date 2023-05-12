@@ -4,9 +4,8 @@ import compiler_errors from '../compiler_errors.js';
 
 /** @extends Element */
 export default class Slot extends Element {
-	// @ts-ignore Slot elements have the 'Slot' type, but TypeScript doesn't allow us to have 'Slot' when it extends Element
-
 	/** @type {'Slot'} */
+	// @ts-ignore Slot elements have the 'Slot' type, but TypeScript doesn't allow us to have 'Slot' when it extends Element
 	type;
 
 	/** @type {string} */
