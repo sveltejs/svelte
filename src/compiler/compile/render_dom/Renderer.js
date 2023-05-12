@@ -4,7 +4,25 @@ import { x } from 'code-red';
 import flatten_reference from '../utils/flatten_reference.js';
 import { reserved_keywords } from '../utils/reserved_keywords.js';
 import { renderer_invalidate } from './invalidate.js';
+
 export default class Renderer {
+	/**
+	 * @typedef {Object} ContextMember
+	 * @property {string} name
+	 * @property {import('estree').Literal} index
+	 * @property {boolean} is_contextual
+	 * @property {boolean} is_non_contextual
+	 * @property {import('../../interfaces.js').Var} variable
+	 * @property {number} priority
+	 */
+
+	/**
+	 * @typedef {Array<{
+	 * 	n: number;
+	 * 	names: string[];
+	 * }>} BitMasks
+	 */
+
 	/** @type {import('../Component.js').default} */
 	component; // TODO Maybe Renderer shouldn't know about Component?
 
@@ -181,7 +199,7 @@ export default class Renderer {
 	/**
 	 * @param {string[]} names
 	 * @param {any} is_reactive_declaration
-	 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Expression}
+	 * @returns {import('estree').Expression}
 	 */
 	dirty(names, is_reactive_declaration = false) {
 		const renderer = this;
@@ -237,7 +255,7 @@ export default class Renderer {
 	// NOTE: this method may be called before this.context_overflow / this.context is fully defined
 	// therefore, they can only be evaluated later in a getter function
 
-	/** @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').UnaryExpression | import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').ArrayExpression} */
+	/** @returns {import('estree').UnaryExpression | import('estree').ArrayExpression} */
 	get_initial_dirty() {
 		const _this = this;
 		// TODO: context-overflow make it less gross
@@ -295,25 +313,11 @@ export default class Renderer {
 }
 
 /**
- * @typedef {Array<{
- * 	n: number;
- * 	names: string[];
- * }>} BitMasks
- */
-
-/** @typedef {Object} ContextMember
- * @property {string} name
- * @property {Literal} index
- * @property {boolean} is_contextual
- * @property {boolean} is_non_contextual
- * @property {Var} variable
- * @property {number} priority
- */
-/** @typedef {Object} BindingGroup
- * @property {(to_reference?:boolean)=>Node} binding_group
+ * @typedef {Object} BindingGroup
+ * @property {(to_reference?:boolean)=>import('estree').Node} binding_group
  * @property {string[]} contexts
  * @property {Set<string>} list_dependencies
  * @property {string} keypath
- * @property {(block:Block,element:Identifier)=>void} add_element
+ * @property {(block:Block,element:import('estree').PrivateIdentifier) => void} add_element
  * @property {(block:Block)=>void} render
  */
