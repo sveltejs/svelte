@@ -8,7 +8,7 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 	/** @type {import('../../../nodes/Attribute.js').default} */
 	node;
 
-	/** @type {import('../Element.js').default} */
+	/** @type {import('./index.js').default} */
 	parent;
 
 	/** @param {import('../../Block.js').default} block */
@@ -57,9 +57,9 @@ export default class StyleAttributeWrapper extends AttributeWrapper {
 }
 const regex_style_prop_key = /^\s*([\w-]+):\s*/;
 
-/** @param {Array<Text | import('../../../nodes/shared/Expression.js').default>} value */
+/** @param {Array<import('../../../nodes/Text.js').default | import('../../../nodes/shared/Expression.js').default>} value */
 function optimize_style(value) {
-	/** @type {StyleProp[]} */
+	/** @type {Array<{ key: string; value: Array<import('../../../nodes/Text.js').default | import('../../../nodes/shared/Expression.js').default>; important: boolean; }>} */
 	const props = [];
 	let chunks = value.slice();
 	while (chunks.length) {
@@ -89,9 +89,9 @@ function optimize_style(value) {
 const regex_important_flag = /\s*!important\s*$/;
 const regex_semicolon_or_whitespace = /[;\s]/;
 
-/** @param {Array<Text | import('../../../nodes/shared/Expression.js').default>} chunks */
+/** @param {Array<import('../../../nodes/Text.js').default | import('../../../nodes/shared/Expression.js').default>} chunks */
 function get_style_value(chunks) {
-	/** @type {Array<Text | import('../../../nodes/shared/Expression.js').default>} */
+	/** @type {Array<import('../../../nodes/Text.js').default | import('../../../nodes/shared/Expression.js').default>} */
 	const value = [];
 	let in_url = false;
 	let quote_mark = null;
@@ -162,13 +162,7 @@ function get_style_value(chunks) {
 	};
 }
 
-/** @param {Array<Text | import('../../../nodes/shared/Expression.js').default>} value */
+/** @param {Array<import('../../../nodes/Text.js').default | import('../../../nodes/shared/Expression.js').default>} value */
 function is_dynamic(value) {
 	return value.length > 1 || value[0].type !== 'Text';
 }
-
-/** @typedef {Object} StyleProp
- * @property {string} key
- * @property {Array<Text|Expression>} value
- * @property {boolean} important
- */
