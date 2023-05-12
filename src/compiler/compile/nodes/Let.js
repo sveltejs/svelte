@@ -1,6 +1,7 @@
 import Node from './shared/Node.js';
 import { walk } from 'estree-walker';
 import compiler_errors from '../compiler_errors.js';
+
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
 /** @extends Node */
