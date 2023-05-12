@@ -29,9 +29,11 @@ import {
 	extract_svelte_ignore_from_comments
 } from '../utils/extract_svelte_ignore.js';
 import check_enable_sourcemap from './utils/check_enable_sourcemap.js';
+
 const regex_leading_directory_separator = /^[/\\]/;
 const regex_starts_with_term_export = /^Export/;
 const regex_contains_term_function = /Function/;
+
 export default class Component {
 	/** @type {import('../Stats.js').default} */
 	stats;
@@ -439,7 +441,7 @@ export default class Component {
 	/**
 	 * @param {string} name
 	 * @param {import('./utils/scope.js').Scope} [scope]
-	 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Identifier}
+	 * @returns {import('estree').Identifier}
 	 */
 	get_unique_name(name, scope) {
 		if (test) name = `${name}$`;
@@ -474,9 +476,9 @@ export default class Component {
 
 		/**
 		 * @param {string} name
-		 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Identifier}
+		 * @returns {import('estree').Identifier}
 		 */
-		const fn = (name) => {
+		return (name) => {
 			if (test) name = `${name}$`;
 			let alias = name;
 			for (
@@ -491,7 +493,6 @@ export default class Component {
 				name: alias
 			};
 		};
-		return fn;
 	}
 
 	/** @returns {import('../interfaces.js').Var[]} */
@@ -1098,7 +1099,7 @@ export default class Component {
 	 * @param {any} node
 	 * @param {import('./utils/scope.js').Scope} scope
 	 * @param {number} timeout
-	 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Node}
+	 * @returns {import('estree').Node}
 	 */
 	loop_protect(node, scope, timeout) {
 		if (
@@ -1186,7 +1187,7 @@ export default class Component {
 							if (declarator.id.type !== 'Identifier') {
 								/**
 								 * @param {import('estree').Identifier} local
-								 * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Identifier}
+								 * @returns {import('estree').Identifier}
 								 */
 								function get_new_name(local) {
 									const variable = component.var_lookup.get(local.name);
