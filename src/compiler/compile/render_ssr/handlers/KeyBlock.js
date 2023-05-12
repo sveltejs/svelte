@@ -4,9 +4,5 @@
  * @param {import('../Renderer.js').RenderOptions} options
  */
 export default function (node, renderer, options) {
-    renderer.render(node.children, options);
+	renderer.render(node.children, options);
 }
-
-
-
-
