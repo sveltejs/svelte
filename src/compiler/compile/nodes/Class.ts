@@ -1,21 +1,33 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import { TemplateNode } from '../../interfaces';
-import TemplateScope from './shared/TemplateScope';
-import Component from '../Component';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
 
+/** @extends Node */
 export default class Class extends Node {
-	type: 'Class';
-	name: string;
-	expression: Expression;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
-		super(component, parent, scope, info);
+    /** @type {'Class'} */
+    type;
 
-		this.name = info.name;
+    /** @type {string} */
+    name;
 
-		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression)
-			: null;
-	}
+    /** @type {import('./shared/Expression.js').default} */
+    expression;
+
+ /**
+  * @param {import('../Component.js').default} component  *
+     * @param {import('./shared/Node.js').default} parent  *
+     * @param {import('./shared/TemplateScope.js').default} scope  *
+     * @param {import('../../interfaces.js').TemplateNode} info  undefined
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+        this.name = info.name;
+        this.expression = info.expression
+            ? new Expression(component, this, scope, info.expression)
+            : null;
+    }
 }
+
+
+
+
