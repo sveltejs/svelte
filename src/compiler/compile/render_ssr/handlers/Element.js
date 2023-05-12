@@ -73,10 +73,16 @@ export default function (node, renderer, options) {
 				) {
 					// a boolean attribute with one non-Text chunk
 					args.push(
-						x`{ ${attr_name}: ${/** @type {Expression} */ (attribute.chunks[0]).node} || null }`
+						x`{ ${attr_name}: ${
+							/** @type {import('../../nodes/shared/Expression.js').default} */ (
+								attribute.chunks[0]
+							).node
+						} || null }`
 					);
 				} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
-					const snippet = /** @type {Expression} */ (attribute.chunks[0]).node;
+					const snippet = /** @type {import('../../nodes/shared/Expression.js').default} */ (
+						attribute.chunks[0]
+					).node;
 					args.push(x`{ ${attr_name}: @escape_attribute_value(${snippet}) }`);
 				} else {
 					args.push(x`{ ${attr_name}: ${get_attribute_value(attribute)} }`);
@@ -107,7 +113,10 @@ export default function (node, renderer, options) {
 				// a boolean attribute with one non-Text chunk
 				renderer.add_string(' ');
 				renderer.add_expression(
-					x`${/** @type {Expression} */ (attribute.chunks[0]).node} ? "${attr_name}" : ""`
+					x`${
+						/** @type {import('../../nodes/shared/Expression.js').default} */ (attribute.chunks[0])
+							.node
+					} ? "${attr_name}" : ""`
 				);
 			} else if (name === 'class' && class_expression) {
 				add_class_attribute = false;
@@ -122,7 +131,9 @@ export default function (node, renderer, options) {
 					x`@add_styles(@merge_ssr_styles(${get_attribute_value(attribute)}, ${style_expression}))`
 				);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
-				const snippet = /** @type {Expression} */ (attribute.chunks[0]).node;
+				const snippet = /** @type {import('../../nodes/shared/Expression.js').default} */ (
+					attribute.chunks[0]
+				).node;
 				renderer.add_expression(
 					x`@add_attribute("${attr_name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`
 				);
@@ -221,6 +232,7 @@ export default function (node, renderer, options) {
 		add_close_tag();
 	}
 	if (node.is_dynamic_element) {
+		/** @type {import('estree').Node} */
 		let content = renderer.pop();
 		if (options.dev && node.children.length > 0)
 			content = x`(() => { @validate_void_dynamic_element(#tag); return ${content}; })()`;
@@ -244,7 +256,7 @@ export default function (node, renderer, options) {
 		if (node.tag_expr.node.type === 'Literal') {
 			renderer.add_string(/** @type {string} */ (node.tag_expr.node.value));
 		} else {
-			renderer.add_expression(/** @type {ESExpression} */ (node.tag_expr.node));
+			renderer.add_expression(/** @type {import('estree').Expression} */ (node.tag_expr.node));
 		}
 	}
 }
