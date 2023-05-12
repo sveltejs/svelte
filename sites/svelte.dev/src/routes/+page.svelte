@@ -63,9 +63,9 @@
 <Supporters />
 
 {#if $theme.current === 'light'}
-	<Image src={BallsLight} alt="The Svelte logo in a ball pit" />
+	<Image lazy src={BallsLight} alt="The Svelte logo in a ball pit" />
 {:else}
-	<Image src={BallsDark} alt="The Svelte logo in a ball pit" />
+	<Image lazy src={BallsDark} alt="The Svelte logo in a ball pit" />
 {/if}
 
 <footer>
