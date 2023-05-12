@@ -933,7 +933,7 @@ export default class Component {
 								}
 								current_scope = current_scope.parent;
 							}
-							if (declaration && declaration.kind === 'const' && !deep) {
+							if (declaration && /** @type {any} */ (declaration).kind === 'const' && !deep) {
 								component.error(/** @type {any} */ (node), {
 									code: 'assignment-to-const',
 									message: 'You are assigning to a const'
