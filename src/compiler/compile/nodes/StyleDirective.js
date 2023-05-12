@@ -3,6 +3,7 @@ import compiler_errors from '../compiler_errors.js';
 import { nodes_to_template_literal } from '../utils/nodes_to_template_literal.js';
 import Expression from './shared/Expression.js';
 import Node from './shared/Node.js';
+
 const valid_modifiers = new Set(['important']);
 
 /** @extends Node */
