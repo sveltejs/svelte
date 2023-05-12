@@ -12,7 +12,9 @@ import replace_object from '../../utils/replace_object.js';
 import is_contextual from './is_contextual.js';
 import { clone } from '../../../utils/clone.js';
 import compiler_errors from '../../compiler_errors.js';
+
 const regex_contains_term_function_expression = /FunctionExpression/;
+
 export default class Expression {
 	/** @type {'Expression'} */
 	type = 'Expression';
@@ -20,7 +22,7 @@ export default class Expression {
 	/** @type {import('../../Component.js').default} */
 	component;
 
-	/** @type {Owner} */
+	/** @type {import('../interfaces.js').INode} */
 	owner;
 
 	/** @type {import('estree').Node} */
@@ -54,7 +56,7 @@ export default class Expression {
 
 	/**
 	 * @param {import('../../Component.js').default} component  *
-	 * @param {Owner} owner  *
+	 * @param {import('../interfaces.js').INode} owner  *
 	 * @param {import('./TemplateScope.js').default} template_scope  *
 	 * @param {import('estree').Node} info  *
 	 * @param {boolean} [lazy]  undefined
@@ -362,6 +364,7 @@ export default class Expression {
 						// we need a combo block/init recipe
 						const { deps, func_declaration } = extract_functions();
 						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
+							/** @type {Set<import('../interfaces.js').INode>} */
 							const dep_scopes = new Set(
 								deps.map(/** @param {any} name */ (name) => template_scope.get_owner(name))
 							);
@@ -480,5 +483,3 @@ function get_function_name(_node, parent) {
 	}
 	return 'func';
 }
-
-/** @typedef {INode} Owner */
