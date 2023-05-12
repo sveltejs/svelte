@@ -19,10 +19,10 @@ export default class AwaitBlock extends Node {
 	/** @type {import('./shared/Context.js').Context[]} */
 	catch_contexts;
 
-	/** @type {ESTreeNode | null} */
+	/** @type {import('estree').Node | null} */
 	then_node;
 
-	/** @type {ESTreeNode | null} */
+	/** @type {import('estree').Node | null} */
 	catch_node;
 
 	/** @type {import('./PendingBlock.js').default} */
@@ -34,14 +34,14 @@ export default class AwaitBlock extends Node {
 	/** @type {import('./CatchBlock.js').default} */
 	catch;
 
-	/** @type {Map<string, ESTreeNode>} */
+	/** @type {Map<string, import('estree').Node>} */
 	context_rest_properties = new Map();
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./shared/Node.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
