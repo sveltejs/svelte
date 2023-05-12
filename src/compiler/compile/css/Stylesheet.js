@@ -326,7 +326,7 @@ class Atrule {
 	}
 }
 
-/** @param {any} */
+/** @param {any} params */
 const get_default_css_hash = ({ css, hash }) => {
 	return `svelte-${hash(css)}`;
 };

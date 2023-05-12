@@ -103,7 +103,7 @@ export default [
 	},
 	/* compiler.js */
 	{
-		input: 'src/compiler/index.ts',
+		input: 'src/compiler/index.js',
 		plugins: [
 			replace({
 				preventAssignment: true,

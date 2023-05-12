@@ -21,7 +21,16 @@ function collapse_timings(timings) {
 	);
 	return result;
 }
+
 export default class Stats {
+	/**
+	 * @typedef {Object} Timing
+	 * @property {string} label
+	 * @property {number} start
+	 * @property {number} end
+	 * @property {Timing[]} children
+	 */
+
 	/** @type {number} */
 	start_time;
 
@@ -80,10 +89,3 @@ export default class Stats {
 		};
 	}
 }
-
-/** @typedef {Object} Timing
- * @property {string} label
- * @property {number} start
- * @property {number} end
- * @property {Timing[]} children
- */
