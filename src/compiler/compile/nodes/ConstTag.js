@@ -6,6 +6,7 @@ import { extract_identifiers } from 'periscopic';
 import is_reference from 'is-reference';
 import get_object from '../utils/get_object.js';
 import compiler_errors from '../compiler_errors.js';
+
 const allowed_parents = new Set([
 	'EachBlock',
 	'CatchBlock',
@@ -18,7 +19,7 @@ const allowed_parents = new Set([
 
 /** @extends Node */
 export default class ConstTag extends Node {
-	/** @type {'import('../../interfaces.js').ConstTag'} */
+	/** @type {'ConstTag'} */
 	type;
 
 	/** @type {import('./shared/Expression.js').default} */
@@ -27,13 +28,13 @@ export default class ConstTag extends Node {
 	/** @type {import('./shared/Context.js').Context[]} */
 	contexts = [];
 
-	/** @type {ConstTagType} */
+	/** @type {import('../../interfaces.js').ConstTag} */
 	node;
 
 	/** @type {import('./shared/TemplateScope.js').default} */
 	scope;
 
-	/** @type {Map<string, ESTreeNode>} */
+	/** @type {Map<string, import('estree').Node>} */
 	context_rest_properties = new Map();
 
 	/** @type {Set<string>} */
@@ -43,10 +44,10 @@ export default class ConstTag extends Node {
 	dependencies = new Set();
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./interfaces.js').INodeAllowConstTag} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {ConstTagType} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./interfaces.js').INodeAllowConstTag} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').ConstTag} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -84,6 +85,7 @@ export default class ConstTag extends Node {
 			}
 		});
 	}
+
 	parse_expression() {
 		unpack_destructuring({
 			contexts: this.contexts,
