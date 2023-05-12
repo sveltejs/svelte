@@ -1,5 +1,6 @@
 import Node from './Node.js';
 import compiler_warnings from '../../compiler_warnings.js';
+
 const regex_non_whitespace_characters = /[^ \r\n\f\v\t]/;
 
 /** @extends Node */
