@@ -6,35 +6,30 @@ import add_actions from './shared/add_actions.js';
 
 /** @extends Wrapper */
 export default class BodyWrapper extends Wrapper {
+	/** @type {import('../../nodes/Body.js').default} */
+	node;
 
-    /** @type {import('../../nodes/Body.js').default} */
-    node;
+	/** @type {import('./Element/EventHandler.js').default[]} */
+	handlers;
 
-    /** @type {import('./Element/EventHandler.js').default[]} */
-    handlers;
+	/**
+	 * @param {import('../Renderer.js').default} renderer
+	 * @param {import('../Block.js').default} block
+	 * @param {import('./shared/Wrapper.js').default} parent
+	 * @param {import('../../../interfaces.js').TemplateNode} node
+	 */
+	constructor(renderer, block, parent, node) {
+		super(renderer, block, parent, node);
+		this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
+	}
 
- /**
-  * @param {import('../Renderer.js').default} renderer
-     * @param {import('../Block.js').default} block
-     * @param {import('./shared/Wrapper.js').default} parent
-     * @param {import('../../../interfaces.js').TemplateNode} node
-     */
-    constructor(renderer, block, parent, node) {
-        super(renderer, block, parent, node);
-        this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
-    }
-
- /**
-  * @param {import('../Block.js').default} block
-     * @param {import('estree').Identifier} _parent_node
-     * @param {import('estree').Identifier} _parent_nodes
-     */
-    render(block, _parent_node, _parent_nodes) {
-        add_event_handlers(block, x `@_document.body`, this.handlers);
-        add_actions(block, x `@_document.body`, this.node.actions);
-    }
+	/**
+	 * @param {import('../Block.js').default} block
+	 * @param {import('estree').Identifier} _parent_node
+	 * @param {import('estree').Identifier} _parent_nodes
+	 */
+	render(block, _parent_node, _parent_nodes) {
+		add_event_handlers(block, x`@_document.body`, this.handlers);
+		add_actions(block, x`@_document.body`, this.node.actions);
+	}
 }
-
-
-
-
