@@ -1,7 +1,28 @@
 import { b, x } from 'code-red';
 import { is_head } from './wrappers/shared/is_head.js';
 import { regex_double_quotes } from '../../utils/patterns.js';
+
 export default class Block {
+	/**
+	 * @typedef {Object} Bindings
+	 * @property {import('estree').Identifier} object
+	 * @property {import('estree').Identifier} property
+	 * @property {import('estree').Node} snippet
+	 * @property {string} store
+	 * @property {(node:import('estree').Node) => import('estree').Node} modifier
+	 */
+	/**
+	 * @typedef {Object} BlockOptions
+	 * @property {Block} [parent]
+	 * @property {import('estree').Identifier} name
+	 * @property {string} type
+	 * @property {import('./Renderer.js').default} renderer
+	 * @property {string} [comment]
+	 * @property {import('estree').Identifier} [key]
+	 * @property {Map<string,Bindings>} [bindings]
+	 * @property {Set<string>} [dependencies]
+	 */
+
 	/** @type {Block} */
 	parent;
 
@@ -131,6 +152,7 @@ export default class Block {
 		this.aliases = new Map();
 		if (this.key) this.aliases.set('key', this.get_unique_name('key'));
 	}
+
 	assign_variable_names() {
 		/** @type {Set<string>} */
 		const seen = new Set();
@@ -206,6 +228,7 @@ export default class Block {
 		this.outros += 1;
 		if (!local && this.parent) this.parent.add_outro();
 	}
+
 	add_animation() {
 		this.has_animation = true;
 	}
@@ -431,6 +454,7 @@ export default class Block {
 			this.has_animation
 		);
 	}
+
 	render() {
 		const key = this.key && this.get_unique_name('key');
 
@@ -486,21 +510,3 @@ export default class Block {
 		}
 	}
 }
-
-/** @typedef {Object} Bindings
- * @property {Identifier} object
- * @property {Identifier} property
- * @property {Node} snippet
- * @property {string} store
- * @property {(node:Node)=>Node} modifier
- */
-/** @typedef {Object} BlockOptions
- * @property {Block} [parent]
- * @property {Identifier} name
- * @property {string} type
- * @property {Renderer} [renderer]
- * @property {string} [comment]
- * @property {Identifier} [key]
- * @property {Map<string,Bindings>} [bindings]
- * @property {Set<string>} [dependencies]
- */
