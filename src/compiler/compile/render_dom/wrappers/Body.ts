@@ -1,25 +1,40 @@
-import Block from '../Block';
-import Wrapper from './shared/Wrapper';
+import Wrapper from './shared/Wrapper.js';
 import { x } from 'code-red';
-import Body from '../../nodes/Body';
-import { Identifier } from 'estree';
-import EventHandler from './Element/EventHandler';
-import add_event_handlers from './shared/add_event_handlers';
-import { TemplateNode } from '../../../interfaces';
-import Renderer from '../Renderer';
-import add_actions from './shared/add_actions';
+import EventHandler from './Element/EventHandler.js';
+import add_event_handlers from './shared/add_event_handlers.js';
+import add_actions from './shared/add_actions.js';
 
+/** @extends Wrapper */
 export default class BodyWrapper extends Wrapper {
-	node: Body;
-	handlers: EventHandler[];
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
-		super(renderer, block, parent, node);
-		this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
-	}
+    /** @type {import('../../nodes/Body.js').default} */
+    node;
 
-	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		add_event_handlers(block, x`@_document.body`, this.handlers);
-		add_actions(block, x`@_document.body`, this.node.actions);
-	}
+    /** @type {import('./Element/EventHandler.js').default[]} */
+    handlers;
+
+ /**
+  * @param {import('../Renderer.js').default} renderer
+     * @param {import('../Block.js').default} block
+     * @param {import('./shared/Wrapper.js').default} parent
+     * @param {import('../../../interfaces.js').TemplateNode} node
+     */
+    constructor(renderer, block, parent, node) {
+        super(renderer, block, parent, node);
+        this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
+    }
+
+ /**
+  * @param {import('../Block.js').default} block
+     * @param {import('estree').Identifier} _parent_node
+     * @param {import('estree').Identifier} _parent_nodes
+     */
+    render(block, _parent_node, _parent_nodes) {
+        add_event_handlers(block, x `@_document.body`, this.handlers);
+        add_actions(block, x `@_document.body`, this.node.actions);
+    }
 }
+
+
+
+

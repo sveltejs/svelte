@@ -9,6 +9,8 @@ import Expression from '../../nodes/shared/Expression.js';
 
 /** @extends Wrapper */
 class AwaitBlockBranch extends Wrapper {
+	/** @typedef {'pending' | 'then' | 'catch'} Status */
+
 	/** @type {AwaitBlockWrapper} */
 	parent;
 
@@ -97,7 +99,7 @@ class AwaitBlockBranch extends Wrapper {
 
 	/**
 	 * @param {import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default} node
-	 * @returns {boolean}
+	 * @returns {node is import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default}
 	 */
 	has_consts(node) {
 		return node instanceof ThenBlock || node instanceof CatchBlock;
@@ -182,7 +184,7 @@ export default class AwaitBlockWrapper extends Wrapper {
 		let is_dynamic = false;
 		let has_intros = false;
 		let has_outros = false;
-		['pending', 'then', 'catch'].forEach((status) => {
+		/** @type {const} */ (['pending', 'then', 'catch']).forEach((status) => {
 			const child = this.node[status];
 			const branch = new AwaitBlockBranch(
 				status,
@@ -312,5 +314,3 @@ export default class AwaitBlockWrapper extends Wrapper {
 		});
 	}
 }
-
-/** @typedef {'pending' | 'then' | 'catch'} Status */
