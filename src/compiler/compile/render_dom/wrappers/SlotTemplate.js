@@ -18,7 +18,7 @@ export default class SlotTemplateWrapper extends Wrapper {
 	/** @type {import('../Block.js').default} */
 	block;
 
-	/** @type {import('./InlineComponent.js').default} */
+	/** @type {import('./InlineComponent/index.js').default} */
 	parent;
 
 	/**
