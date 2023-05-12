@@ -6,6 +6,7 @@ import Component from './Component.js';
 import fuzzymatch from '../utils/fuzzymatch.js';
 import get_name_from_filename from './utils/get_name_from_filename.js';
 import { valid_namespaces } from '../utils/namespaces.js';
+
 const valid_options = [
 	'format',
 	'name',

@@ -4,7 +4,7 @@
 # TODO: after launch new site, format site dir.
 /site
 !/src
-src/compiler/compile/internal_exports.ts
+src/compiler/compile/internal_exports.js
 !/test
 /test/**/*.svelte
 /test/**/_expected*
