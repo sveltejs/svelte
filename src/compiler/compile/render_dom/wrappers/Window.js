@@ -3,6 +3,7 @@ import { b, x } from 'code-red';
 import add_event_handlers from './shared/add_event_handlers.js';
 import add_actions from './shared/add_actions.js';
 import EventHandler from './Element/EventHandler.js';
+
 const associated_events = {
 	innerWidth: 'resize',
 	innerHeight: 'resize',
