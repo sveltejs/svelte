@@ -5,6 +5,7 @@ import handle_select_value_binding from './handle_select_value_binding.js';
 import { namespaces } from '../../../../utils/namespaces.js';
 import { boolean_attributes } from '../../../../../shared/boolean_attributes.js';
 import { regex_double_quotes } from '../../../../utils/patterns.js';
+
 const non_textlike_input_types = new Set([
 	'button',
 	'checkbox',
@@ -19,13 +20,19 @@ const non_textlike_input_types = new Set([
 	'reset',
 	'submit'
 ]);
-/** */
+
 export class BaseAttributeWrapper {
 	/** @type {import('../../../nodes/Attribute.js').default} */
 	node;
 
 	/** @type {import('./index.js').default} */
 	parent;
+
+	/**
+	 * @param {import('./index.js').default} parent
+	 * @param {import('../../Block.js').default} block
+	 * @param {import('../../../nodes/Attribute.js').default} node
+	 */
 	constructor(parent, block, node) {
 		this.node = node;
 		this.parent = parent;
@@ -141,7 +148,7 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
 
-		/** @type {Node[]} */
+		/** @type {import('estree').Node[]} */
 		let updater;
 		const init = this.get_init(block, value);
 		if (is_legacy_input_type) {
@@ -304,7 +311,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 
 	/** @param {import('../../Block.js').default} block */
 	get_class_name_text(block) {
-		const scoped_css = this.node.chunks.some((chunk) => chunk.synthetic);
+		const scoped_css = this.node.chunks.some(
+			(/** @type {import('../../../nodes/Text.js').default} */ chunk) => chunk.synthetic
+		);
 		const rendered = this.render_chunks(block);
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
@@ -336,9 +345,10 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 	}
 }
 /**
- * @type {{ [key in BooleanAttributes]: AttributeMetadata } & {
- * 	[key in string]: AttributeMetadata;
- * }}
+ * @type {{
+ *  [key in import('../../../../../shared/boolean_attributes.js').BooleanAttributes]: { property_name?: string; applies_to?: string[] } } &
+ *  { [key in string]: { property_name?: string; applies_to?: string[] }; }
+ * }
  */
 const attribute_lookup = {
 	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
@@ -415,5 +425,3 @@ function is_indirectly_bound_value(attribute) {
 				)))
 	);
 }
-
-/** @typedef {{ property_name?: string; applies_to?: string[] }} AttributeMetadata */
