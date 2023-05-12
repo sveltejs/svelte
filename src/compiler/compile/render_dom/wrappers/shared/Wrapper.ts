@@ -1,76 +1,88 @@
-import Renderer from '../../Renderer';
-import Block from '../../Block';
 import { x } from 'code-red';
-import { TemplateNode } from '../../../../interfaces';
-import { Identifier } from 'estree';
-
 export default class Wrapper {
-	renderer: Renderer;
-	parent: Wrapper;
-	node: TemplateNode;
 
-	prev: Wrapper | null;
-	next: Wrapper | null;
+    /** @type {import('../../Renderer.js').default} */
+    renderer;
 
-	var: Identifier;
+    /** @type {Wrapper} */
+    parent;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
-		this.node = node;
+    /** @type {import('../../../../interfaces.js').TemplateNode} */
+    node;
 
-		// make these non-enumerable so that they can be logged sensibly
-		// (TODO in dev only?)
-		Object.defineProperties(this, {
-			renderer: {
-				value: renderer
-			},
-			parent: {
-				value: parent
-			}
-		});
+    /** @type {Wrapper | null} */
+    prev;
 
-		block.wrappers.push(this);
-	}
+    /** @type {Wrapper | null} */
+    next;
 
-	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		// TODO use this in EachBlock and IfBlock — tricky because
-		// children need to be created first
-		const needs_anchor = this.next
-			? !this.next.is_dom_node()
-			: !parent_node || !this.parent.is_dom_node();
-		const anchor = needs_anchor
-			? block.get_unique_name(`${this.var.name}_anchor`)
-			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
+    /** @type {import('estree').Identifier} */
+    var;
 
-		if (needs_anchor) {
-			block.add_element(
-				anchor,
-				x`@empty()`,
-				parent_nodes && x`@empty()`,
-				parent_node as Identifier
-			);
-		}
+ /**
+  * @param {import('../../Renderer.js').default} renderer
+     * @param {import('../../Block.js').default} block
+     * @param {Wrapper} parent
+     * @param {import('../../../../interfaces.js').TemplateNode} node
+     */
+    constructor(renderer, block, parent, node) {
+        this.node = node;
+        // make these non-enumerable so that they can be logged sensibly
+        // (TODO in dev only?)
+        Object.defineProperties(this, {
+            renderer: {
+                value: renderer
+            },
+            parent: {
+                value: parent
+            }
+        });
+        block.wrappers.push(this);
+    }
 
-		return anchor;
-	}
+ /**
+  * @param {import('../../Block.js').default} block
+     * @param {import('estree').Identifier} parent_node
+     * @param {import('estree').Identifier} parent_nodes
+     */
+    get_or_create_anchor(block, parent_node, parent_nodes) {
+        // TODO use this in EachBlock and IfBlock — tricky because
+        // children need to be created first
+        const needs_anchor = this.next
+            ? !this.next.is_dom_node()
+            : !parent_node || !this.parent.is_dom_node();
+        const anchor = needs_anchor
+            ? block.get_unique_name(`${this.var.name}_anchor`)
+            : (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
+        if (needs_anchor) {
+            block.add_element(anchor, x `@empty()`, parent_nodes && x `@empty()`, 
+            /** @type {import('estree').Identifier} */ (parent_node));
+        }
+        return anchor;
+    }
 
-	get_update_mount_node(anchor: Identifier): Identifier {
-		return (
-			this.parent && this.parent.is_dom_node() ? this.parent.var : x`${anchor}.parentNode`
-		) as Identifier;
-	}
+ /**
+  * @param {import('estree').Identifier} anchor
+     * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Identifier}
+     */
+    get_update_mount_node(anchor) {
+        return /** @type {import('estree').Identifier} */ ((this.parent && this.parent.is_dom_node() ? this.parent.var : x `${anchor}.parentNode`));
+    }
+    is_dom_node() {
+        return (this.node.type === 'Element' || this.node.type === 'Text' || this.node.type === 'MustacheTag');
+    }
 
-	is_dom_node() {
-		return (
-			this.node.type === 'Element' || this.node.type === 'Text' || this.node.type === 'MustacheTag'
-		);
-	}
-
-	render(
-		_block: Block,
-		_parent_node: Identifier,
-		_parent_nodes: Identifier,
-		_data: Record<string, any> = undefined
-	) {
-		throw Error('Wrapper class is not renderable');
-	}
+ /**
+  * @param {import('../../Block.js').default} _block
+     * @param {import('estree').Identifier} _parent_node
+     * @param {import('estree').Identifier} _parent_nodes
+     * @param {Record<string, any>} _data
+     */
+    render(_block, _parent_node, _parent_nodes, _data = undefined) {
+        throw Error('Wrapper class is not renderable');
+    }
 }
+
+
+
+
