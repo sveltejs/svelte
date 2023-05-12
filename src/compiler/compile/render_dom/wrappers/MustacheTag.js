@@ -1,6 +1,6 @@
 import Tag from './shared/Tag.js';
 import { x } from 'code-red';
-import ElementWrapper from './Element.js';
+import ElementWrapper from './Element/index.js';
 
 /** @extends Tag */
 export default class MustacheTagWrapper extends Tag {
