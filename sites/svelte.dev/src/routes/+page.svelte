@@ -22,8 +22,7 @@
 
 <div class="blurb-shifter">
 	<Blurb>
-		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-		<div slot="one" id="main" tabindex="0">
+		<div slot="one">
 			<h2>Write less code</h2>
 			<p>
 				Build boilerplate-free components using languages you already know — HTML, CSS and

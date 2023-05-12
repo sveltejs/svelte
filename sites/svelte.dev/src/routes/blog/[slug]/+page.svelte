@@ -17,8 +17,7 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-<article class="post listify text" id="main" tabindex="0">
+<article class="post listify">
 	<h1>{data.post.title}</h1>
 	<p class="standfirst">{data.post.description}</p>
 
