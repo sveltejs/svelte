@@ -5,6 +5,7 @@ import { regex_dimensions, regex_box_size } from '../../utils/patterns.js';
 import { clone } from '../../utils/clone.js';
 import compiler_errors from '../compiler_errors.js';
 import compiler_warnings from '../compiler_warnings.js';
+
 // TODO this should live in a specific binding
 const read_only_media_attributes = new Set([
 	'duration',
@@ -31,7 +32,7 @@ export default class Binding extends Node {
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 
-	/** @type {ESTreeNode} */
+	/** @type {import('estree').Node} */
 	raw_expression; // TODO exists only for bind:this — is there a more elegant solution?
 
 	/** @type {boolean} */
@@ -41,10 +42,10 @@ export default class Binding extends Node {
 	is_readonly;
 
 	/**
-	 * @param {import('../Component.js').default} component  *
-	 * @param {import('./Element.js').default | import('./InlineComponent.js').default | import('./Window.js').default | import('./Document.js').default} parent  *
-	 * @param {import('./shared/TemplateScope.js').default} scope  *
-	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./Element.js').default | import('./InlineComponent.js').default | import('./Window.js').default | import('./Document.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -131,8 +132,8 @@ export default class Binding extends Node {
 
 /**
  * @param {import('./shared/Node.js').default} node
- * @returns {boolean}
+ * @returns {node is import('./Element.js').default}
  */
 function isElement(node) {
-	return !!/** @type {any} */ (node).is_media_node;
+	return !!(/** @type {any} */ (node).is_media_node);
 }
