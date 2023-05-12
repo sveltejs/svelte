@@ -1,4 +1,14 @@
 export default class TemplateScope {
+	/**
+	 * @typedef {import('../EachBlock').default
+	 * 	| import('../ThenBlock').default
+	 * 	| import('../CatchBlock').default
+	 * 	| import('../InlineComponent').default
+	 * 	| import('../Element').default
+	 * 	| import('../SlotTemplate').default
+	 * 	| import('../ConstTag').default} NodeWithScope
+	 */
+
 	/** @type {Set<string>} */
 	names;
 
@@ -41,7 +51,7 @@ export default class TemplateScope {
 
 	/**
 	 * @param {string} name
-	 * @returns {any}
+	 * @returns {NodeWithScope}
 	 */
 	get_owner(name) {
 		return this.owners.get(name) || (this.parent && this.parent.get_owner(name));
@@ -70,13 +80,3 @@ export default class TemplateScope {
 		return owner && owner.type === 'ConstTag';
 	}
 }
-
-/**
- * @typedef {| EachBlock
- * 	| ThenBlock
- * 	| CatchBlock
- * 	| InlineComponent
- * 	| Element
- * 	| SlotTemplate
- * 	| ConstTag} NodeWithScope
- */

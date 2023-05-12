@@ -13,7 +13,7 @@ import flatten_reference from '../../utils/flatten_reference.js';
  * 	component: import('../../Component.js').default;
  * 	context_rest_properties: Map<string, import('estree').Node>;
  * 	in_rest_element?: boolean;
- * }}
+ * }} params
  */
 export function unpack_destructuring({
 	contexts,
@@ -175,7 +175,7 @@ export function unpack_destructuring({
  * @param {number} n
  * @param {import('estree').Expression} expression
  * @param {(name: string) => import('estree').Node} to_ctx
- * @returns {import("C:/repos/svelte/svelte/node_modules/.pnpm/@types+estree@1.0.0/node_modules/@types/estree/index").import('estree').Node}
+ * @returns {import('estree').Node}
  */
 function update_reference(contexts, n, expression, to_ctx) {
 	/** @param {import('estree').Identifier} node */
@@ -231,15 +231,18 @@ function mark_referenced(node, scope, component) {
 
 /** @typedef {DestructuredVariable | ComputedProperty} Context */
 
-/** @typedef {Object} ComputedProperty
+/**
+ * @typedef {Object} ComputedProperty
  * @property {'ComputedProperty'} type
- * @property {Identifier} property_name
- * @property {Expression|PrivateIdentifier} key
+ * @property {import('estree').Identifier} property_name
+ * @property {import('estree').Expression|import('estree').PrivateIdentifier} key
  */
-/** @typedef {Object} DestructuredVariable
+
+/**
+ * @typedef {Object} DestructuredVariable
  * @property {'DestructuredVariable'} type
- * @property {Identifier} key
+ * @property {import('estree').Identifier} key
  * @property {string} [name]
- * @property {(node:Node)=>Node} modifier
- * @property {(node:Node,to_ctx:(name:string)=>Node)=>Node} default_modifier
+ * @property {(node:import('estree').Node)=>import('estree').Node} modifier
+ * @property {(node:import('estree').Node,to_ctx:(name:string)=>import('estree').Node)=>import('estree').Node} default_modifier
  */

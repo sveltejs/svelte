@@ -1,31 +1,44 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { Directive } from '../../interfaces';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
 
+/** @extends Node */
 export default class Action extends Node {
-	type: 'Action';
-	name: string;
-	expression: Expression;
-	uses_context: boolean;
-	template_scope: TemplateScope;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: Directive) {
-		super(component, parent, scope, info);
+    /** @type {'Action'} */
+    type;
 
-		const object = info.name.split('.')[0];
-		component.warn_if_undefined(object, info, scope);
+    /** @type {string} */
+    name;
 
-		this.name = info.name;
-		component.add_reference(this as any, object);
+    /** @type {import('./shared/Expression.js').default} */
+    expression;
 
-		this.expression = info.expression
-			? new Expression(component, this, scope, info.expression)
-			: null;
+    /** @type {boolean} */
+    uses_context;
 
-		this.template_scope = scope;
+    /** @type {import('./shared/TemplateScope.js').default} */
+    template_scope;
 
-		this.uses_context = this.expression && this.expression.uses_context;
-	}
+ /**
+  * @param {import('../Component.js').default} component  *
+     * @param {import('./shared/Node.js').default} parent  *
+     * @param {import('./shared/TemplateScope.js').default} scope  *
+     * @param {import('../../interfaces.js').Directive} info  undefined
+     */
+    constructor(component, parent, scope, info) {
+        super(component, parent, scope, info);
+        const object = info.name.split('.')[0];
+        component.warn_if_undefined(object, info, scope);
+        this.name = info.name;
+        component.add_reference(/** @type {any} */ (this), object);
+        this.expression = info.expression
+            ? new Expression(component, this, scope, info.expression)
+            : null;
+        this.template_scope = scope;
+        this.uses_context = this.expression && this.expression.uses_context;
+    }
 }
+
+
+
+
