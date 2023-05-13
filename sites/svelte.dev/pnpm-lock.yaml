@@ -67,11 +67,11 @@ devDependencies:
     specifier: ^2.10.0
     version: 2.10.0(prettier@2.8.8)(svelte@3.59.1)
   rollup:
-    specifier: ^3.21.6
-    version: 3.21.6
+    specifier: ^3.21.7
+    version: 3.21.7
   rollup-plugin-dts:
     specifier: ^5.3.0
-    version: 5.3.0(rollup@3.21.6)(typescript@5.0.4)
+    version: 5.3.0(rollup@3.21.7)(typescript@5.0.4)
   sass:
     specifier: ^1.62.1
     version: 1.62.1
@@ -110,7 +110,7 @@ devDependencies:
     version: 4.3.5(@types/node@20.1.3)(sass@1.62.1)
   vite-imagetools:
     specifier: ^5.0.3
-    version: 5.0.3(rollup@3.21.6)
+    version: 5.0.3(rollup@3.21.7)
 
 packages:
 
@@ -1087,7 +1087,7 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /@rollup/pluginutils@5.0.2(rollup@3.21.6):
+  /@rollup/pluginutils@5.0.2(rollup@3.21.7):
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -1099,7 +1099,7 @@ packages:
       '@types/estree': 1.0.1
       estree-walker: 2.0.2
       picomatch: 2.3.1
-      rollup: 3.21.6
+      rollup: 3.21.7
     dev: true
 
   /@shuding/opentype.js@1.4.0-beta.0:
@@ -2672,7 +2672,7 @@ packages:
       glob: 7.2.3
     dev: true
 
-  /rollup-plugin-dts@5.3.0(rollup@3.21.6)(typescript@5.0.4):
+  /rollup-plugin-dts@5.3.0(rollup@3.21.7)(typescript@5.0.4):
     resolution: {integrity: sha512-8FXp0ZkyZj1iU5klkIJYLjIq/YZSwBoERu33QBDxm/1yw5UU4txrEtcmMkrq+ZiKu3Q4qvPCNqc3ovX6rjqzbQ==}
     engines: {node: '>=v14'}
     peerDependencies:
@@ -2680,14 +2680,14 @@ packages:
       typescript: ^4.1 || ^5.0
     dependencies:
       magic-string: 0.30.0
-      rollup: 3.21.6
+      rollup: 3.21.7
       typescript: 5.0.4
     optionalDependencies:
       '@babel/code-frame': 7.21.4
     dev: true
 
-  /rollup@3.21.6:
-    resolution: {integrity: sha512-SXIICxvxQxR3D4dp/3LDHZIJPC8a4anKMHd4E3Jiz2/JnY+2bEjqrOokAauc5ShGVNFHlEFjBXAXlaxkJqIqSg==}
+  /rollup@3.21.7:
+    resolution: {integrity: sha512-KXPaEuR8FfUoK2uHwNjxTmJ18ApyvD6zJpYv9FOJSqLStmt6xOY84l1IjK2dSolQmoXknrhEFRaPRgOPdqCT5w==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
@@ -3177,11 +3177,11 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /vite-imagetools@5.0.3(rollup@3.21.6):
+  /vite-imagetools@5.0.3(rollup@3.21.7):
     resolution: {integrity: sha512-K4578Kq7d608i4U/tCPfHVn9iOIUd+VyjtxuFtp3wSXOJZbsAZNc7V3G53s8LHiDY+ROKeoWyfXtq1VwTv9UFQ==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@rollup/pluginutils': 5.0.2(rollup@3.21.6)
+      '@rollup/pluginutils': 5.0.2(rollup@3.21.7)
       imagetools-core: 4.0.2
     transitivePeerDependencies:
       - rollup
@@ -3215,7 +3215,7 @@ packages:
       '@types/node': 20.1.3
       esbuild: 0.17.19
       postcss: 8.4.23
-      rollup: 3.21.6
+      rollup: 3.21.7
       sass: 1.62.1
     optionalDependencies:
       fsevents: 2.3.2

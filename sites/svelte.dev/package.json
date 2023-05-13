@@ -40,7 +40,7 @@
 		"node-fetch": "^3.3.1",
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.0",
-		"rollup": "^3.21.6",
+		"rollup": "^3.21.7",
 		"rollup-plugin-dts": "^5.3.0",
 		"sass": "^1.62.1",
 		"satori": "^0.8.1",
