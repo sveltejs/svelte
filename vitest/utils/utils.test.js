@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import { describe, it, assert } from 'vitest';
 import { trim_start, trim_end } from '../../src/compiler/utils/trim';
 import { split_css_unit } from '../../src/runtime/internal/utils';
 
