@@ -338,6 +338,7 @@ declare global {
 export {};
 
 // @filename: main.ts
+// @errors: 7006
 // ---cut---
 import { walk } from 'svelte/compiler';
 
