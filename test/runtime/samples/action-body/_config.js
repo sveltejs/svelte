@@ -6,11 +6,14 @@ export default {
 		const leave = new window.MouseEvent('mouseleave');
 
 		await window.document.body.dispatchEvent(enter);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<div class="tooltip">Perform an Action</div>
 			</div>
-		`);
+		`
+		);
 
 		await window.document.body.dispatchEvent(leave);
 		assert.htmlEqual(target.innerHTML, '<div></div>');

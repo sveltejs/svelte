@@ -13,8 +13,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.animalPawsEntries = [['foo', 'bar']];
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>foo: bar</p>
-		`);
+		`
+		);
 	}
 };

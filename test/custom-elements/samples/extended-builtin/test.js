@@ -1,11 +1,10 @@
 import * as assert from 'assert';
-import CustomElement from './main.svelte';
+import { tick } from 'svelte';
+import './main.svelte';
 
-export default function (target) {
-	new CustomElement({
-		target
-	});
-
+export default async function (target) {
+	target.innerHTML = '<custom-element></custom-element>';
+	await tick();
 	assert.equal(target.innerHTML, '<custom-element></custom-element>');
 
 	const el = target.querySelector('custom-element');

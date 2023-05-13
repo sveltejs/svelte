@@ -24,7 +24,7 @@ export default class TitleWrapper extends Wrapper {
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
-		const is_dynamic = !!this.node.children.find(node => node.type !== 'Text');
+		const is_dynamic = !!this.node.children.find((node) => node.type !== 'Text');
 
 		if (is_dynamic) {
 			let value;
@@ -42,10 +42,10 @@ export default class TitleWrapper extends Wrapper {
 			} else {
 				// '{foo} {bar}' — treat as string concatenation
 				value = this.node.children
-					.map(chunk => {
+					.map((chunk) => {
 						if (chunk.type === 'Text') return string_literal(chunk.data);
 
-						(chunk as MustacheTag).expression.dependencies.forEach(d => {
+						(chunk as MustacheTag).expression.dependencies.forEach((d) => {
 							all_dependencies.add(d);
 						});
 
@@ -58,17 +58,13 @@ export default class TitleWrapper extends Wrapper {
 				}
 			}
 
-			const last = this.node.should_cache && block.get_unique_name(
-				'title_value'
-			);
+			const last = this.node.should_cache && block.get_unique_name('title_value');
 
 			if (this.node.should_cache) block.add_variable(last);
 
 			const init = this.node.should_cache ? x`${last} = ${value}` : value;
 
-			block.chunks.init.push(
-				b`@_document.title = ${init};`
-			);
+			block.chunks.init.push(b`@_document.title = ${init};`);
 
 			const updater = b`@_document.title = ${this.node.should_cache ? last : value};`;
 
@@ -91,9 +87,10 @@ export default class TitleWrapper extends Wrapper {
 					}`);
 			}
 		} else {
-			const value = this.node.children.length > 0
-				? string_literal((this.node.children[0] as Text).data)
-				: x`""`;
+			const value =
+				this.node.children.length > 0
+					? string_literal((this.node.children[0] as Text).data)
+					: x`""`;
 
 			block.chunks.hydrate.push(b`@_document.title = ${value};`);
 		}

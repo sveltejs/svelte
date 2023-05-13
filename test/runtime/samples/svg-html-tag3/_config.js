@@ -7,7 +7,6 @@ export default {
 			</svg>
 		`,
 	test({ assert, target, component }) {
-
 		let svg = target.querySelector('svg');
 		let circle = target.querySelector('circle');
 		assert.equal(svg.namespaceURI, 'http://www.w3.org/2000/svg');

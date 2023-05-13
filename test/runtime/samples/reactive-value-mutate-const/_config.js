@@ -9,9 +9,12 @@ export default {
 		const click = new window.MouseEvent('click');
 
 		await button.dispatchEvent(click);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>Mutate a</button>
 			<div>{"foo":42}</div>
-		`);
+		`
+		);
 	}
 };

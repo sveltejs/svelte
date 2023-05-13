@@ -10,26 +10,30 @@ export default {
 	`,
 
 	test({ assert, target }) {
-		
 		const template = target.querySelector('#t1');
-		assert.htmlEqual(template.innerHTML, `
+		assert.htmlEqual(
+			template.innerHTML,
+			`
 		<div>foo</div>
-   	    `);
+   	    `
+		);
 		const content = template.content.cloneNode(true);
 		const div = content.children[0];
-		assert.htmlEqual(div.outerHTML, `
+		assert.htmlEqual(
+			div.outerHTML,
+			`
 			<div>foo</div>
-		`);
-
+		`
+		);
 
 		const template2 = target.querySelector('#t2');
-		assert.equal(template2.childNodes.length, 0); 
+		assert.equal(template2.childNodes.length, 0);
 		assert.equal(template2.content.childNodes.length, 1);
 		assert.equal(template2.content.firstChild.textContent, '123');
 		assert.htmlEqual(template2.innerHTML, '123');
 
 		const template3 = target.querySelector('#t3');
-		assert.equal(template3.childNodes.length, 0); 
+		assert.equal(template3.childNodes.length, 0);
 		assert.equal(template3.content.childNodes.length, 3);
 		// test: (with hydration from ssr rendered html)
 		// out of order render.
@@ -38,6 +42,5 @@ export default {
 		assert.equal(template3.content.childNodes[0].textContent, '1');
 		assert.equal(template3.content.childNodes[1].outerHTML, '<b>B</b>');
 		assert.equal(template3.content.childNodes[2].textContent, '1');
-
 	}
 };

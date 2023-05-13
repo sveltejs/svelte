@@ -7,20 +7,20 @@ import { Fragment, FragmentFactory } from './types';
 interface PromiseInfo<T> {
 	ctx: null | any;
 	// unique object instance as a key to compare different promises
-	token: {},
-	hasCatch: boolean,
-	pending: FragmentFactory,
-	then: FragmentFactory,
-	catch: FragmentFactory,
+	token: {};
+	hasCatch: boolean;
+	pending: FragmentFactory;
+	then: FragmentFactory;
+	catch: FragmentFactory;
 	// ctx index for resolved value and rejected error
-	value: number,
-	error: number,
+	value: number;
+	error: number;
 	// resolved value or rejected error
-	resolved?: T,
+	resolved?: T;
 	// the current factory function for creating the fragment
-	current: FragmentFactory | null,
+	current: FragmentFactory | null;
 	// the current fragment
-	block: Fragment | null,
+	block: Fragment | null;
 	// tuple of the pending, then, catch fragment
 	blocks: [null | Fragment, null | Fragment, null | Fragment];
 	// DOM elements to mount and anchor on for the {#await} block
@@ -29,7 +29,7 @@ interface PromiseInfo<T> {
 }
 
 export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
-	const token = info.token = {};
+	const token = (info.token = {});
 
 	function update(type: FragmentFactory, index: 0 | 1 | 2, key?: number, value?) {
 		if (info.token !== token) return;
@@ -81,18 +81,21 @@ export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
 
 	if (is_promise(promise)) {
 		const current_component = get_current_component();
-		promise.then(value => {
-			set_current_component(current_component);
-			update(info.then, 1, info.value, value);
-			set_current_component(null);
-		}, error => {
-			set_current_component(current_component);
-			update(info.catch, 2, info.error, error);
-			set_current_component(null);
-			if (!info.hasCatch) {
-				throw error;
+		promise.then(
+			(value) => {
+				set_current_component(current_component);
+				update(info.then, 1, info.value, value);
+				set_current_component(null);
+			},
+			(error) => {
+				set_current_component(current_component);
+				update(info.catch, 2, info.error, error);
+				set_current_component(null);
+				if (!info.hasCatch) {
+					throw error;
+				}
 			}
-		});
+		);
 
 		// if we previously had a then/catch block, destroy it
 		if (info.current !== info.pending) {

@@ -635,7 +635,7 @@
 			"line": 72
 		}
 	},
-  {
+	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
 			"column": 28,

@@ -2,18 +2,17 @@
 import { getLocator } from 'locate-character';
 
 export function test({ assert, preprocessed, js, css }) {
-
 	assert.deepEqual(
 		preprocessed.map.names.sort(),
 		['baritone', '--bazitone', 'old_name_1', 'old_name_2'].sort()
 	);
 
 	function test_name(old_name, new_name, where) {
-
 		let loc = { character: -1 };
-		while (loc = where.locate(new_name, loc.character + 1)) {
+		while ((loc = where.locate(new_name, loc.character + 1))) {
 			const actualMapping = where.mapConsumer.originalPositionFor({
-				line: loc.line + 1, column: loc.column
+				line: loc.line + 1,
+				column: loc.column
 			});
 			if (actualMapping.line === null) {
 				// location is not mapped - ignore

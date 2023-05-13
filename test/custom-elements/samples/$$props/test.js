@@ -1,13 +1,18 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import './main.svelte';
 
-export default function (target) {
+export default async function (target) {
 	target.innerHTML = '<custom-element name="world" answer="42" test="svelte"></custom-element>';
+	await tick();
 	const el = target.querySelector('custom-element');
 
-	assert.htmlEqual(el.shadowRoot.innerHTML, `
+	assert.htmlEqual(
+		el.shadowRoot.innerHTML,
+		`
 		<p>name: world</p>
 		<p>$$props: {"name":"world","answer":"42","test":"svelte"}</p>
 		<p>$$restProps: {"answer":"42","test":"svelte"}</p>
-	`);
+	`
+	);
 }

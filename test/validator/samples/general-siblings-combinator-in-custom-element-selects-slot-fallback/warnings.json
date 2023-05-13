@@ -1,0 +1,14 @@
+[
+	{
+		"code": "css-unused-selector",
+		"message": "Unused CSS selector \"h1 ~ slot > p\"",
+		"start": {
+			"column": 1,
+			"line": 12
+		},
+		"end": {
+			"column": 14,
+			"line": 12
+		}
+	}
+]

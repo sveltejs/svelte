@@ -13,10 +13,13 @@ export default {
 
 		await input.dispatchEvent(inputEvent);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 		<input class="input" placeholder="Type here" type="text">
 		Dirty: true
 		Valid: true
-		`);
+		`
+		);
 	}
 };

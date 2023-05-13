@@ -24,19 +24,14 @@ export default {
 	`,
 
 	before_test() {
-		originalDivGetBoundingClientRect =
-			window.HTMLDivElement.prototype.getBoundingClientRect;
-		originalSpanGetBoundingClientRect =
-			window.HTMLSpanElement.prototype.getBoundingClientRect;
+		originalDivGetBoundingClientRect = window.HTMLDivElement.prototype.getBoundingClientRect;
+		originalSpanGetBoundingClientRect = window.HTMLSpanElement.prototype.getBoundingClientRect;
 		originalParagraphGetBoundingClientRect =
 			window.HTMLParagraphElement.prototype.getBoundingClientRect;
 
-		window.HTMLDivElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
-		window.HTMLParagraphElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
+		window.HTMLParagraphElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
 
 		function fakeGetBoundingClientRect() {
 			const index = [...this.parentNode.children].indexOf(this);
@@ -51,10 +46,8 @@ export default {
 		}
 	},
 	after_test() {
-		window.HTMLDivElement.prototype.getBoundingClientRect =
-			originalDivGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect =
-			originalSpanGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = originalDivGetBoundingClientRect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = originalSpanGetBoundingClientRect;
 		window.HTMLParagraphElement.prototype.getBoundingClientRect =
 			originalParagraphGetBoundingClientRect;
 	},

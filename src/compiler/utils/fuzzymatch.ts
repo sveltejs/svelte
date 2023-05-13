@@ -157,11 +157,7 @@ class FuzzySet {
 
 		let results = [];
 		// start with high gram size and if there are no results, go to lower gram sizes
-		for (
-			let gram_size = GRAM_SIZE_UPPER;
-			gram_size >= GRAM_SIZE_LOWER;
-			--gram_size
-		) {
+		for (let gram_size = GRAM_SIZE_UPPER; gram_size >= GRAM_SIZE_LOWER; --gram_size) {
 			results = this.__get(value, gram_size);
 			if (results) {
 				return results;
@@ -205,10 +201,7 @@ class FuzzySet {
 		// build a results list of [score, str]
 		for (const match_index in matches) {
 			match_score = matches[match_index];
-			results.push([
-				match_score / (vector_normal * items[match_index][0]),
-				items[match_index][1]
-			]);
+			results.push([match_score / (vector_normal * items[match_index][0]), items[match_index][1]]);
 		}
 
 		results.sort(sort_descending);
@@ -217,10 +210,7 @@ class FuzzySet {
 		const end_index = Math.min(50, results.length);
 		// truncate somewhat arbitrarily to 50
 		for (let i = 0; i < end_index; ++i) {
-			new_results.push([
-				_distance(results[i][1], normalized_value),
-				results[i][1]
-			]);
+			new_results.push([_distance(results[i][1], normalized_value), results[i][1]]);
 		}
 		results = new_results;
 		results.sort(sort_descending);

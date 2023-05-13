@@ -1,9 +1,8 @@
 import * as assert from 'assert';
 
-const get_line_column = obj => ({ line: obj.line, column: obj.column });
+const get_line_column = (obj) => ({ line: obj.line, column: obj.column });
 
 export function test({ input, css, js }) {
-
 	let out_obj, loc_output, actual, loc_input, expected;
 
 	out_obj = js;

@@ -39,8 +39,9 @@ type Booleanish = boolean | 'true' | 'false';
 // Event Handler Types
 // ----------------------------------------------------------------------
 
-type EventHandler<E extends Event = Event, T extends EventTarget = Element> =
-(event: E & { currentTarget: EventTarget & T}) => any;
+type EventHandler<E extends Event = Event, T extends EventTarget = Element> = (
+	event: E & { currentTarget: EventTarget & T }
+) => any;
 
 export type ClipboardEventHandler<T extends EventTarget> = EventHandler<ClipboardEvent, T>;
 export type CompositionEventHandler<T extends EventTarget> = EventHandler<CompositionEvent, T>;
@@ -84,9 +85,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
 	'on:input'?: FormEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
-	'on:submit'?: EventHandler<Event & { readonly submitter: HTMLElement | null; }, T> | undefined | null; // TODO make this SubmitEvent once we require TS>=4.4
+	'on:submit'?: EventHandler<SubmitEvent, T> | undefined | null;
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
-	'on:formdata'?: EventHandler<Event & { readonly formData: FormData; }, T> | undefined | null; // TODO make this FormDataEvent once we require TS>=4.4
+	'on:formdata'?: EventHandler<FormDataEvent, T> | undefined | null;
 
 	// Image Events
 	'on:load'?: EventHandler | undefined | null;
@@ -196,7 +197,7 @@ export interface DOMAttributes<T extends EventTarget> {
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
-	
+
 	// Document Events
 	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
 
@@ -350,7 +351,19 @@ export interface AriaAttributes {
 	 * Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.
 	 * @see aria-atomic.
 	 */
-	'aria-relevant'?: 'additions' | 'additions removals' | 'additions text' | 'all' | 'removals' | 'removals additions' | 'removals text' | 'text' | 'text additions' | 'text removals' | undefined | null;
+	'aria-relevant'?:
+		| 'additions'
+		| 'additions removals'
+		| 'additions text'
+		| 'all'
+		| 'removals'
+		| 'removals additions'
+		| 'removals text'
+		| 'text'
+		| 'text additions'
+		| 'text removals'
+		| undefined
+		| null;
 	/** Indicates that user input is required on the element before a form may be submitted. */
 	'aria-required'?: Booleanish | undefined | null;
 	/** Defines a human-readable, author-localized description for the role of an element. */
@@ -470,14 +483,23 @@ export type AriaRole =
 
 export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
 	// Standard HTML Attributes
-	accesskey?: string  | undefined | null;
+	accesskey?: string | undefined | null;
 	autofocus?: boolean | undefined | null;
 	class?: string | undefined | null;
 	contenteditable?: Booleanish | 'inherit' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
-	enterkeyhint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | undefined | null;
+	enterkeyhint?:
+		| 'enter'
+		| 'done'
+		| 'go'
+		| 'next'
+		| 'previous'
+		| 'search'
+		| 'send'
+		| undefined
+		| null;
 	hidden?: boolean | undefined | null;
 	id?: string | undefined | null;
 	lang?: string | undefined | null;
@@ -526,7 +548,17 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	 * Hints at the type of data that might be entered by the user while editing the element or its contents
 	 * @see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute
 	 */
-	inputmode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search' | undefined | null;
+	inputmode?:
+		| 'none'
+		| 'text'
+		| 'tel'
+		| 'url'
+		| 'email'
+		| 'numeric'
+		| 'decimal'
+		| 'search'
+		| undefined
+		| null;
 	/**
 	 * Specify that a standard HTML element should behave like a defined custom built-in element
 	 * @see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is
@@ -547,25 +579,32 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:innerText'?: string | undefined | null;
 
 	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
-	readonly 'bind:borderBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
-	readonly 'bind:devicePixelContentBoxSize'?: Array<{ blockSize: number; inlineSize: number }> | undefined | null; // TODO make this ResizeObserverSize once we require TS>=4.4
+	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-noscroll'?: true | '' | 'off' | undefined | null;
-	'data-sveltekit-preload-code'?: true | '' | 'eager' | 'viewport' | 'hover' | 'tap' | 'off' | undefined | null;
+	'data-sveltekit-preload-code'?:
+		| true
+		| ''
+		| 'eager'
+		| 'viewport'
+		| 'hover'
+		| 'tap'
+		| 'off'
+		| undefined
+		| null;
 	'data-sveltekit-preload-data'?: true | '' | 'hover' | 'tap' | 'off' | undefined | null;
 	'data-sveltekit-reload'?: true | '' | 'off' | undefined | null;
 	'data-sveltekit-replacestate'?: true | '' | 'off' | undefined | null;
+
+	// allow any data- attribute
+	[key: `data-${string}`]: any;
 }
 
-export type HTMLAttributeAnchorTarget =
-	| '_self'
-	| '_blank'
-	| '_parent'
-	| '_top'
-	| (string & {});
+export type HTMLAttributeAnchorTarget = '_self' | '_blank' | '_parent' | '_top' | (string & {});
 
 export interface HTMLAnchorAttributes extends HTMLAttributes<HTMLAnchorElement> {
 	download?: any;
@@ -841,7 +880,14 @@ export interface HTMLMenuAttributes extends HTMLAttributes<HTMLMenuElement> {
 export interface HTMLMediaAttributes<T extends HTMLMediaElement> extends HTMLAttributes<T> {
 	autoplay?: boolean | undefined | null;
 	controls?: boolean | undefined | null;
-	controlslist?: 'nodownload' | 'nofullscreen' | 'noplaybackrate' | 'noremoteplayback' | (string & {}) | undefined | null;
+	controlslist?:
+		| 'nodownload'
+		| 'nofullscreen'
+		| 'noplaybackrate'
+		| 'noremoteplayback'
+		| (string & {})
+		| undefined
+		| null;
 	crossorigin?: string | undefined | null;
 	currenttime?: number | undefined | null;
 	defaultmuted?: boolean | undefined | null;
@@ -1152,9 +1198,22 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'accent-height'?: number | string | undefined | null;
 	accumulate?: 'none' | 'sum' | undefined | null;
 	additive?: 'replace' | 'sum' | undefined | null;
-	'alignment-baseline'?: 'auto' | 'baseline' | 'before-edge' | 'text-before-edge' | 'middle' |
-	  'central' | 'after-edge' | 'text-after-edge' | 'ideographic' | 'alphabetic' | 'hanging' |
-	  'mathematical' | 'inherit' | undefined | null;
+	'alignment-baseline'?:
+		| 'auto'
+		| 'baseline'
+		| 'before-edge'
+		| 'text-before-edge'
+		| 'middle'
+		| 'central'
+		| 'after-edge'
+		| 'text-after-edge'
+		| 'ideographic'
+		| 'alphabetic'
+		| 'hanging'
+		| 'mathematical'
+		| 'inherit'
+		| undefined
+		| null;
 	allowReorder?: 'no' | 'yes' | undefined | null;
 	alphabetic?: number | string | undefined | null;
 	amplitude?: number | string | undefined | null;
@@ -1600,7 +1659,29 @@ export interface SvelteHTMLElements {
 	'svelte:document': SvelteDocumentAttributes;
 	'svelte:body': HTMLAttributes<HTMLElement>;
 	'svelte:fragment': { slot?: string };
-	'svelte:options': { [name: string]: any };
+	'svelte:options': {
+		customElement?:
+			| string
+			| undefined
+			| {
+					tag: string;
+					shadow?: 'open' | 'none' | undefined;
+					props?:
+						| Record<
+								string,
+								{
+									attribute?: string;
+									reflect?: boolean;
+									type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object';
+								}
+						  >
+						| undefined;
+			  };
+		immutable?: boolean | undefined;
+		accessors?: boolean | undefined;
+		namespace?: string | undefined;
+		[name: string]: any;
+	};
 	'svelte:head': { [name: string]: any };
 
 	[name: string]: { [name: string]: any };

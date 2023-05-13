@@ -7,6 +7,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.prop = 'b';
-		assert.htmlEqual( target.innerHTML, 'b' );
+		assert.htmlEqual(target.innerHTML, 'b');
 	}
 };

@@ -5,8 +5,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.name = 'World';
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<b>Hello</b> World
-		` );
+		`
+		);
 	}
 };

@@ -4,6 +4,7 @@
 	import { navigating } from '$app/stores';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
+	import { theme } from '@sveltejs/site-kit/components';
 	import { mapbox_setup, svelteUrl } from '../../../config';
 	import TableOfContents from './TableOfContents.svelte';
 
@@ -22,9 +23,10 @@
 	});
 
 	$: mobile = width < 768; // note: same as per media query below
+	/** @type {'columns' | 'rows'} */
 	$: replOrientation = mobile || width > 1080 ? 'columns' : 'rows';
 
-	$: repl && repl.set({ components: data.example.files.map(clone) });
+	$: repl && repl.set({ files: data.example.files.map(clone) });
 </script>
 
 <svelte:head>
@@ -51,6 +53,7 @@
 				fixed={mobile}
 				relaxed
 				injectedJS={mapbox_setup}
+				previewTheme={$theme.current}
 			/>
 		</div>
 	</div>

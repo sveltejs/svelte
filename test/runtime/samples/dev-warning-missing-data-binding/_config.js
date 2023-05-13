@@ -3,7 +3,5 @@ export default {
 		dev: true
 	},
 
-	warnings: [
-		"<Main> was created without expected prop 'value'"
-	]
+	warnings: ["<Main> was created without expected prop 'value'"]
 };

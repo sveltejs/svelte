@@ -10,18 +10,18 @@ function get_prop_value(attribute) {
 	if (attribute.chunks.length === 0) return x`''`;
 
 	return attribute.chunks
-		.map(chunk => {
+		.map((chunk) => {
 			if (chunk.type === 'Text') return string_literal(chunk.data);
 			return chunk.node;
 		})
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 }
 
-export default function(node: InlineComponent, renderer: Renderer, options: RenderOptions) {
+export default function (node: InlineComponent, renderer: Renderer, options: RenderOptions) {
 	const binding_props = [];
 	const binding_fns = [];
 
-	node.bindings.forEach(binding => {
+	node.bindings.forEach((binding) => {
 		renderer.has_bindings = true;
 
 		// TODO this probably won't work for contextual bindings
@@ -31,25 +31,23 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		binding_fns.push(p`${binding.name}: $$value => { ${snippet} = $$value; $$settled = false }`);
 	});
 
-	const uses_spread = node.attributes.find(attr => attr.is_spread);
+	const uses_spread = node.attributes.find((attr) => attr.is_spread);
 
 	let props;
 
 	if (uses_spread) {
-		props = x`@_Object.assign({}, ${
-			node.attributes
-				.map(attribute => {
-					if (attribute.is_spread) {
-						return attribute.expression.node;
-					} else {
-						return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
-					}
-				})
-				.concat(binding_props.map(p => x`{ ${p} }`))
-		})`;
+		props = x`@_Object.assign({}, ${node.attributes
+			.map((attribute) => {
+				if (attribute.is_spread) {
+					return attribute.expression.node;
+				} else {
+					return x`{ ${attribute.name}: ${get_prop_value(attribute)} }`;
+				}
+			})
+			.concat(binding_props.map((p) => x`{ ${p} }`))})`;
 	} else {
 		props = x`{
-			${node.attributes.map(attribute => p`${attribute.name}: ${get_prop_value(attribute)}`)},
+			${node.attributes.map((attribute) => p`${attribute.name}: ${get_prop_value(attribute)}`)},
 			${binding_props}
 		}`;
 	}
@@ -58,13 +56,12 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		${binding_fns}
 	}`;
 
-	const expression = (
+	const expression =
 		node.name === 'svelte:self'
 			? renderer.name
 			: node.name === 'svelte:component'
-				? x`(${node.expression.node}) || @missing_component`
-				: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any)
-	);
+			? x`(${node.expression.node}) || @missing_component`
+			: node.name.split('.').reduce(((lhs, rhs) => x`${lhs}.${rhs}`) as any);
 
 	const slot_fns = [];
 
@@ -73,14 +70,15 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 	if (children.length) {
 		const slot_scopes = new Map();
 
-		renderer.render(children, Object.assign({}, options, {
-			slot_scopes
-		}));
+		renderer.render(
+			children,
+			Object.assign({}, options, {
+				slot_scopes
+			})
+		);
 
 		slot_scopes.forEach(({ input, output, statements }, name) => {
-			slot_fns.push(
-				p`${name}: (${input}) => { ${statements}; return ${output}; }`
-			);
+			slot_fns.push(p`${name}: (${input}) => { ${statements}; return ${output}; }`);
 		});
 	}
 
@@ -103,7 +101,9 @@ export default function(node: InlineComponent, renderer: Renderer, options: Rend
 		renderer.add_string('">');
 	}
 
-	renderer.add_expression(x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`);
+	renderer.add_expression(
+		x`@validate_component(${expression}, "${node.name}").$$render($$result, ${props}, ${bindings}, ${slots})`
+	);
 
 	if (node.css_custom_properties.length > 0) {
 		if (node.namespace === namespaces.svg) {

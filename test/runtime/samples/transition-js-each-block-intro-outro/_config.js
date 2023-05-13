@@ -1,7 +1,7 @@
 export default {
 	props: {
 		visible: false,
-		things: [ 'a', 'b', 'c' ]
+		things: ['a', 'b', 'c']
 	},
 
 	test({ assert, component, target, raf }) {

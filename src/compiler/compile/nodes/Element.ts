@@ -11,10 +11,20 @@ import StyleDirective from './StyleDirective';
 import Text from './Text';
 import { namespaces } from '../../utils/namespaces';
 import map_children from './shared/map_children';
-import { is_name_contenteditable, get_contenteditable_attr } from '../utils/contenteditable';
-import { regex_dimensions, regex_starts_with_newline, regex_non_whitespace_character, regex_box_size } from '../../utils/patterns';
+import {
+	is_name_contenteditable,
+	get_contenteditable_attr,
+	has_contenteditable_attr
+} from '../utils/contenteditable';
+import {
+	regex_dimensions,
+	regex_starts_with_newline,
+	regex_non_whitespace_character,
+	regex_box_size
+} from '../../utils/patterns';
 import fuzzymatch from '../../utils/fuzzymatch';
 import list from '../../utils/list';
+import hash from '../utils/hash';
 import Let from './Let';
 import TemplateScope from './shared/TemplateScope';
 import { INode } from './interfaces';
@@ -24,10 +34,31 @@ import { string_literal } from '../utils/stringify';
 import { Literal } from 'estree';
 import compiler_warnings from '../compiler_warnings';
 import compiler_errors from '../compiler_errors';
-import { ARIARoleDefinitionKey, roles, aria, ARIAPropertyDefinition, ARIAProperty } from 'aria-query';
-import { is_interactive_element, is_non_interactive_element, is_non_interactive_roles, is_presentation_role, is_interactive_roles, is_hidden_from_screen_reader, is_semantic_role_element, is_abstract_role, is_static_element, has_disabled_attribute } from '../utils/a11y';
+import {
+	ARIARoleDefinitionKey,
+	roles,
+	aria,
+	ARIAPropertyDefinition,
+	ARIAProperty
+} from 'aria-query';
+import {
+	is_interactive_element,
+	is_non_interactive_element,
+	is_non_interactive_roles,
+	is_presentation_role,
+	is_interactive_roles,
+	is_hidden_from_screen_reader,
+	is_semantic_role_element,
+	is_abstract_role,
+	is_static_element,
+	has_disabled_attribute,
+	is_valid_autocomplete
+} from '../utils/a11y';
 
-const aria_attributes = 'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(' ');
+const aria_attributes =
+	'activedescendant atomic autocomplete busy checked colcount colindex colspan controls current describedby description details disabled dropeffect errormessage expanded flowto grabbed haspopup hidden invalid keyshortcuts label labelledby level live modal multiline multiselectable orientation owns placeholder posinset pressed readonly relevant required roledescription rowcount rowindex rowspan selected setsize sort valuemax valuemin valuenow valuetext'.split(
+		' '
+	);
 const aria_attribute_set = new Set(aria_attributes);
 
 const aria_roles = roles.keys();
@@ -46,10 +77,7 @@ const a11y_required_attributes = {
 	object: ['title', 'aria-label', 'aria-labelledby']
 };
 
-const a11y_distracting_elements = new Set([
-	'blink',
-	'marquee'
-]);
+const a11y_distracting_elements = new Set(['blink', 'marquee']);
 
 const a11y_required_content = new Set([
 	// anchor-has-content
@@ -100,6 +128,15 @@ const a11y_interactive_handlers = new Set([
 	'mouseout',
 	'mouseover',
 	'mouseup'
+]);
+
+const a11y_recommended_interactive_handlers = new Set([
+	'click',
+	'mousedown',
+	'mouseup',
+	'keypress',
+	'keydown',
+	'keyup'
 ]);
 
 const a11y_nested_implicit_semantics = new Map([
@@ -154,50 +191,34 @@ const a11y_implicit_semantics = new Map([
 ]);
 
 const menuitem_type_to_implicit_role = new Map([
-  ['command', 'menuitem'],
-  ['checkbox', 'menuitemcheckbox'],
-  ['radio', 'menuitemradio']
+	['command', 'menuitem'],
+	['checkbox', 'menuitemcheckbox'],
+	['radio', 'menuitemradio']
 ]);
 
 const input_type_to_implicit_role = new Map([
-  ['button', 'button'],
-  ['image', 'button'],
-  ['reset', 'button'],
-  ['submit', 'button'],
-  ['checkbox', 'checkbox'],
-  ['radio', 'radio'],
-  ['range', 'slider'],
-  ['number', 'spinbutton'],
-  ['email', 'textbox'],
-  ['search', 'searchbox'],
-  ['tel', 'textbox'],
-  ['text', 'textbox'],
-  ['url', 'textbox']
+	['button', 'button'],
+	['image', 'button'],
+	['reset', 'button'],
+	['submit', 'button'],
+	['checkbox', 'checkbox'],
+	['radio', 'radio'],
+	['range', 'slider'],
+	['number', 'spinbutton'],
+	['email', 'textbox'],
+	['search', 'searchbox'],
+	['tel', 'textbox'],
+	['text', 'textbox'],
+	['url', 'textbox']
 ]);
 
-/** 
+/**
  * Exceptions to the rule which follows common A11y conventions
  * TODO make this configurable by the user
  */
 const a11y_non_interactive_element_to_interactive_role_exceptions = {
-	ul: [
-		'listbox',
-		'menu',
-		'menubar',
-		'radiogroup',
-		'tablist',
-		'tree',
-		'treegrid'
-	],
-	ol: [
-		'listbox',
-		'menu',
-		'menubar',
-		'radiogroup',
-		'tablist',
-		'tree',
-		'treegrid'
-	],
+	ul: ['listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree', 'treegrid'],
+	ol: ['listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'tree', 'treegrid'],
 	li: ['menuitem', 'option', 'row', 'tab', 'treeitem'],
 	table: ['grid'],
 	td: ['gridcell'],
@@ -207,34 +228,37 @@ const a11y_non_interactive_element_to_interactive_role_exceptions = {
 const combobox_if_list = new Set(['email', 'search', 'tel', 'text', 'url']);
 
 function input_implicit_role(attribute_map: Map<string, Attribute>) {
-  const type_attribute = attribute_map.get('type');
-  if (!type_attribute || !type_attribute.is_static) return;
-  const type = type_attribute.get_static_value() as string;
+	const type_attribute = attribute_map.get('type');
+	if (!type_attribute || !type_attribute.is_static) return;
+	const type = type_attribute.get_static_value() as string;
 
-  const list_attribute_exists = attribute_map.has('list');
+	const list_attribute_exists = attribute_map.has('list');
 
-  if (list_attribute_exists && combobox_if_list.has(type)) {
-	return 'combobox';
-  }
+	if (list_attribute_exists && combobox_if_list.has(type)) {
+		return 'combobox';
+	}
 
-  return input_type_to_implicit_role.get(type);
+	return input_type_to_implicit_role.get(type);
 }
 
 function menuitem_implicit_role(attribute_map: Map<string, Attribute>) {
-  const type_attribute = attribute_map.get('type');
-  if (!type_attribute || !type_attribute.is_static) return;
-  const type = type_attribute.get_static_value() as string;
-  return menuitem_type_to_implicit_role.get(type);
+	const type_attribute = attribute_map.get('type');
+	if (!type_attribute || !type_attribute.is_static) return;
+	const type = type_attribute.get_static_value() as string;
+	return menuitem_type_to_implicit_role.get(type);
 }
 
-function get_implicit_role(name: string, attribute_map: Map<string, Attribute>) : (string | undefined) {
-  if (name === 'menuitem') {
-	return menuitem_implicit_role(attribute_map);
-  } else if (name === 'input') {
-	return input_implicit_role(attribute_map);
-  } else {
-	return a11y_implicit_semantics.get(name);
-  }
+function get_implicit_role(
+	name: string,
+	attribute_map: Map<string, Attribute>
+): string | undefined {
+	if (name === 'menuitem') {
+		return menuitem_implicit_role(attribute_map);
+	} else if (name === 'input') {
+		return input_implicit_role(attribute_map);
+	} else {
+		return a11y_implicit_semantics.get(name);
+	}
 }
 
 const invisible_elements = new Set(['meta', 'html', 'script', 'style']);
@@ -251,13 +275,7 @@ const valid_modifiers = new Set([
 	'trusted'
 ]);
 
-const passive_events = new Set([
-	'wheel',
-	'touchstart',
-	'touchmove',
-	'touchend',
-	'touchcancel'
-]);
+const passive_events = new Set(['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel']);
 
 const react_attributes = new Map([
 	['className', 'class'],
@@ -287,9 +305,7 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	const parent_element = parent.find_nearest(/^Element/);
 
 	if (!parent_element) {
-		return explicit_namespace || (is_svg(element.name)
-			? namespaces.svg
-			: null);
+		return explicit_namespace || (is_svg(element.name) ? namespaces.svg : null);
 	}
 
 	if (parent_element.namespace !== namespaces.foreign) {
@@ -300,7 +316,10 @@ function get_namespace(parent: Element, element: Element, explicit_namespace: st
 	return parent_element.namespace;
 }
 
-function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: string | boolean): boolean {
+function is_valid_aria_attribute_value(
+	schema: ARIAPropertyDefinition,
+	value: string | boolean
+): boolean {
 	switch (schema.type) {
 		case 'boolean':
 			return typeof value === 'boolean';
@@ -313,14 +332,21 @@ function is_valid_aria_attribute_value(schema: ARIAPropertyDefinition, value: st
 		case 'number':
 			return typeof value !== 'boolean' && isNaN(Number(value)) === false;
 		case 'token': // single token
-			return (schema.values || [])
-				.indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1;
+			return (
+				(schema.values || []).indexOf(typeof value === 'string' ? value.toLowerCase() : value) > -1
+			);
 		case 'idlist': // if list of ids, split each
-			return typeof value === 'string'
-				&& value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string');
+			return (
+				typeof value === 'string' &&
+				value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string')
+			);
 		case 'tokenlist': // if list of tokens, split each
-			return typeof value === 'string'
-				&& value.split(regex_any_repeated_whitespaces).every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1);
+			return (
+				typeof value === 'string' &&
+				value
+					.split(regex_any_repeated_whitespaces)
+					.every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1)
+			);
 		default:
 			return false;
 	}
@@ -388,7 +414,7 @@ export default class Element extends Node {
 
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
-					const value_attribute = info.attributes.find(node => node.name === 'value');
+					const value_attribute = info.attributes.find((node) => node.name === 'value');
 					if (value_attribute) {
 						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
 						return;
@@ -410,7 +436,7 @@ export default class Element extends Node {
 				// Special case — treat these the same way:
 				//   <option>{foo}</option>
 				//   <option value={foo}>{foo}</option>
-				const value_attribute = info.attributes.find(attribute => attribute.name === 'value');
+				const value_attribute = info.attributes.find((attribute) => attribute.name === 'value');
 
 				if (!value_attribute) {
 					info.attributes.push({
@@ -422,7 +448,7 @@ export default class Element extends Node {
 				}
 			}
 		}
-		const has_let = info.attributes.some(node => node.type === 'Let');
+		const has_let = info.attributes.some((node) => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
 		}
@@ -431,7 +457,7 @@ export default class Element extends Node {
 		const order = ['Binding']; // everything else is -1
 		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
 
-		info.attributes.forEach(node => {
+		info.attributes.forEach((node) => {
 			switch (node.type) {
 				case 'Action':
 					this.actions.push(new Action(component, this, scope, node));
@@ -466,14 +492,13 @@ export default class Element extends Node {
 					this.lets.push(l);
 					const dependencies = new Set([l.name.name]);
 
-					l.names.forEach(name => {
+					l.names.forEach((name) => {
 						scope.add(name, dependencies, this);
 					});
 					break;
 				}
 
-				case 'Transition':
-				{
+				case 'Transition': {
 					const transition = new Transition(component, this, scope, node);
 					if (node.intro) this.intro = transition;
 					if (node.outro) this.outro = transition;
@@ -497,10 +522,36 @@ export default class Element extends Node {
 		this.optimise();
 
 		component.apply_stylesheet(this);
+
+		if (this.parent) {
+			if (
+				this.actions.length > 0 ||
+				this.animation ||
+				this.bindings.length > 0 ||
+				this.classes.length > 0 ||
+				this.intro ||
+				this.outro ||
+				this.handlers.length > 0 ||
+				this.styles.length > 0 ||
+				this.name === 'option' ||
+				this.is_dynamic_element ||
+				this.tag_expr.dynamic_dependencies().length ||
+				this.is_dynamic_element ||
+				component.compile_options.dev
+			) {
+				this.parent.cannot_use_innerhtml(); // need to use add_location
+				this.parent.not_static_content();
+			}
+		}
 	}
 
 	validate() {
-		if (this.component.var_lookup.has(this.name) && this.component.var_lookup.get(this.name).imported && !is_svg(this.name) && !is_html(this.name)) {
+		if (
+			this.component.var_lookup.has(this.name) &&
+			this.component.var_lookup.get(this.name).imported &&
+			!is_svg(this.name) &&
+			!is_html(this.name)
+		) {
 			this.component.warn(this, compiler_warnings.component_name_lowercase(this.name));
 		}
 
@@ -514,13 +565,12 @@ export default class Element extends Node {
 			this.validate_bindings();
 			this.validate_content();
 		}
-
 	}
 
 	validate_attributes() {
 		const { component, parent } = this;
 
-		this.attributes.forEach(attribute => {
+		this.attributes.forEach((attribute) => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
@@ -556,7 +606,13 @@ export default class Element extends Node {
 				}
 
 				if (react_attributes.has(attribute.name)) {
-					component.warn(attribute, compiler_warnings.invalid_html_attribute(attribute.name, react_attributes.get(attribute.name)));
+					component.warn(
+						attribute,
+						compiler_warnings.invalid_html_attribute(
+							attribute.name,
+							react_attributes.get(attribute.name)
+						)
+					);
 				}
 			}
 		});
@@ -568,14 +624,10 @@ export default class Element extends Node {
 		const attribute_map = new Map<string, Attribute>();
 		const handlers_map = new Map();
 
-		attributes.forEach(attribute => (
-			attribute_map.set(attribute.name, attribute)
-		));
-		handlers.forEach(handler => (
-			handlers_map.set(handler.name, handler)
-		));
+		attributes.forEach((attribute) => attribute_map.set(attribute.name, attribute));
+		handlers.forEach((handler) => handlers_map.set(handler.name, handler));
 
-		attributes.forEach(attribute => {
+		attributes.forEach((attribute) => {
 			if (attribute.is_spread) return;
 
 			const name = attribute.name.toLowerCase();
@@ -605,12 +657,20 @@ export default class Element extends Node {
 				if (value !== null && value !== undefined && aria.has(name as ARIAProperty)) {
 					const schema = aria.get(name as ARIAProperty);
 					if (!is_valid_aria_attribute_value(schema, value)) {
-						component.warn(attribute, compiler_warnings.a11y_incorrect_attribute_type(schema, name));
+						component.warn(
+							attribute,
+							compiler_warnings.a11y_incorrect_attribute_type(schema, name)
+						);
 					}
 				}
 
 				// aria-activedescendant-has-tabindex
-				if (name === 'aria-activedescendant' && !this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !attribute_map.has('tabindex')) {
+				if (
+					name === 'aria-activedescendant' &&
+					!this.is_dynamic_element &&
+					!is_interactive_element(this.name, attribute_map) &&
+					!attribute_map.has('tabindex')
+				) {
 					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
 				}
 			}
@@ -625,66 +685,109 @@ export default class Element extends Node {
 				const value = attribute.get_static_value();
 
 				if (typeof value === 'string') {
-					value.split(regex_any_repeated_whitespaces).forEach((current_role: ARIARoleDefinitionKey) => {
-						if (current_role && is_abstract_role(current_role)) {
-							component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
-						} else if (current_role && !aria_role_set.has(current_role)) {
-							const match = fuzzymatch(current_role, aria_roles);
-							component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
-						}
+					value
+						.split(regex_any_repeated_whitespaces)
+						.forEach((current_role: ARIARoleDefinitionKey) => {
+							if (current_role && is_abstract_role(current_role)) {
+								component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+							} else if (current_role && !aria_role_set.has(current_role)) {
+								const match = fuzzymatch(current_role, aria_roles);
+								component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
+							}
 
-						// no-redundant-roles
-						if (current_role === get_implicit_role(this.name, attribute_map)) {
-							component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
-						}
-
-						// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-						const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-						if (!is_parent_section_or_article) {
-							const has_nested_redundant_role = current_role === a11y_nested_implicit_semantics.get(this.name);
-							if (has_nested_redundant_role) {
+							// no-redundant-roles
+							if (current_role === get_implicit_role(this.name, attribute_map)) {
 								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
 							}
-						}
 
-						// role-has-required-aria-props
-						if (!this.is_dynamic_element && !is_semantic_role_element(current_role, this.name, attribute_map)) {
-							const role = roles.get(current_role);
-							if (role) {
-								const required_role_props = Object.keys(role.requiredProps);
-								const has_missing_props = required_role_props.some(prop => !attributes.find(a => a.name === prop));
-
-								if (has_missing_props) {
-									component.warn(attribute, compiler_warnings.a11y_role_has_required_aria_props(current_role, required_role_props));
+							// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+							const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+							if (!is_parent_section_or_article) {
+								const has_nested_redundant_role =
+									current_role === a11y_nested_implicit_semantics.get(this.name);
+								if (has_nested_redundant_role) {
+									component.warn(
+										attribute,
+										compiler_warnings.a11y_no_redundant_roles(current_role)
+									);
 								}
 							}
-						}
 
-						// interactive-supports-focus
-						if (
-							!has_disabled_attribute(attribute_map) &&
-							!is_hidden_from_screen_reader(this.name, attribute_map) &&
-							!is_presentation_role(current_role) &&
-							is_interactive_roles(current_role) &&
-							is_static_element(this.name, attribute_map) &&
-							!attribute_map.get('tabindex')
-						) {
-							const has_interactive_handlers = handlers.some((handler) => a11y_interactive_handlers.has(handler.name));
-							if (has_interactive_handlers) {
-								component.warn(this, compiler_warnings.a11y_interactive_supports_focus(current_role));
+							// role-has-required-aria-props
+							if (
+								!this.is_dynamic_element &&
+								!is_semantic_role_element(current_role, this.name, attribute_map)
+							) {
+								const role = roles.get(current_role);
+								if (role) {
+									const required_role_props = Object.keys(role.requiredProps);
+									const has_missing_props = required_role_props.some(
+										(prop) => !attributes.find((a) => a.name === prop)
+									);
+
+									if (has_missing_props) {
+										component.warn(
+											attribute,
+											compiler_warnings.a11y_role_has_required_aria_props(
+												current_role,
+												required_role_props
+											)
+										);
+									}
+								}
 							}
-						}
 
-						// no-interactive-element-to-noninteractive-role
-						if (is_interactive_element(this.name, attribute_map) && (is_non_interactive_roles(current_role) || is_presentation_role(current_role))) {
-							component.warn(this, compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(current_role, this.name));
-						}
+							// interactive-supports-focus
+							if (
+								!has_disabled_attribute(attribute_map) &&
+								!is_hidden_from_screen_reader(this.name, attribute_map) &&
+								!is_presentation_role(current_role) &&
+								is_interactive_roles(current_role) &&
+								is_static_element(this.name, attribute_map) &&
+								!attribute_map.get('tabindex')
+							) {
+								const has_interactive_handlers = handlers.some((handler) =>
+									a11y_interactive_handlers.has(handler.name)
+								);
+								if (has_interactive_handlers) {
+									component.warn(
+										this,
+										compiler_warnings.a11y_interactive_supports_focus(current_role)
+									);
+								}
+							}
 
-						// no-noninteractive-element-to-interactive-role
-						if (is_non_interactive_element(this.name, attribute_map) && is_interactive_roles(current_role) && !a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(current_role)) {
-							component.warn(this, compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(current_role, this.name));
-						}
-					});
+							// no-interactive-element-to-noninteractive-role
+							if (
+								is_interactive_element(this.name, attribute_map) &&
+								(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
+							) {
+								component.warn(
+									this,
+									compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(
+										current_role,
+										this.name
+									)
+								);
+							}
+
+							// no-noninteractive-element-to-interactive-role
+							if (
+								is_non_interactive_element(this.name, attribute_map) &&
+								is_interactive_roles(current_role) &&
+								!a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(
+									current_role
+								)
+							) {
+								component.warn(
+									this,
+									compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(
+										current_role,
+										this.name
+									)
+								);
+							}
+						});
 				}
 			}
 
@@ -716,31 +819,37 @@ export default class Element extends Node {
 		// click-events-have-key-events
 		if (handlers_map.has('click')) {
 			const role = attribute_map.get('role');
-			const is_non_presentation_role = role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefinitionKey);
+			const is_non_presentation_role =
+				role?.is_static && !is_presentation_role(role.get_static_value() as ARIARoleDefinitionKey);
 
 			if (
-				!this.is_dynamic_element && 
+				!this.is_dynamic_element &&
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
 				!is_interactive_element(this.name, attribute_map) &&
-				!this.attributes.find(attr => attr.is_spread)
+				!this.attributes.find((attr) => attr.is_spread)
 			) {
 				const has_key_event =
-					handlers_map.has('keydown') ||
-					handlers_map.has('keyup') ||
-					handlers_map.has('keypress');
+					handlers_map.has('keydown') || handlers_map.has('keyup') || handlers_map.has('keypress');
 
 				if (!has_key_event) {
-					component.warn(
-						this,
-						compiler_warnings.a11y_click_events_have_key_events
-					);
+					component.warn(this, compiler_warnings.a11y_click_events_have_key_events);
 				}
 			}
 		}
 
+		const role = attribute_map.get('role');
+		const role_static_value = role?.get_static_value() as ARIARoleDefinitionKey;
+		const role_value = (
+			role ? role_static_value : get_implicit_role(this.name, attribute_map)
+		) as ARIARoleDefinitionKey;
+
 		// no-noninteractive-tabindex
-		if (!this.is_dynamic_element && !is_interactive_element(this.name, attribute_map) && !is_interactive_roles(attribute_map.get('role')?.get_static_value() as ARIARoleDefinitionKey)) {
+		if (
+			!this.is_dynamic_element &&
+			!is_interactive_element(this.name, attribute_map) &&
+			!is_interactive_roles(role_static_value)
+		) {
 			const tab_index = attribute_map.get('tabindex');
 			if (tab_index && (!tab_index.is_static || Number(tab_index.get_static_value()) >= 0)) {
 				component.warn(this, compiler_warnings.a11y_no_noninteractive_tabindex);
@@ -748,20 +857,70 @@ export default class Element extends Node {
 		}
 
 		// role-supports-aria-props
-		const role = attribute_map.get('role');
-		const role_value = (role ? role.get_static_value() : get_implicit_role(this.name, attribute_map)) as ARIARoleDefinitionKey;
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
-			const invalid_aria_props = new Set(aria.keys().filter(attribute => !(attribute in props)));
+			const invalid_aria_props = new Set(aria.keys().filter((attribute) => !(attribute in props)));
 			const is_implicit = role_value && role === undefined;
 
 			attributes
-				.filter(prop => prop.type !== 'Spread')
-				.forEach(prop => {
+				.filter((prop) => prop.type !== 'Spread')
+				.forEach((prop) => {
 					if (invalid_aria_props.has(prop.name as ARIAProperty)) {
-						component.warn(prop, compiler_warnings.a11y_role_supports_aria_props(prop.name, role_value, is_implicit, this.name));
+						component.warn(
+							prop,
+							compiler_warnings.a11y_role_supports_aria_props(
+								prop.name,
+								role_value,
+								is_implicit,
+								this.name
+							)
+						);
 					}
 				});
+		}
+
+		// no-noninteractive-element-interactions
+		if (
+			!has_contenteditable_attr(this) &&
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			((!is_interactive_element(this.name, attribute_map) &&
+				is_non_interactive_roles(role_static_value)) ||
+				(is_non_interactive_element(this.name, attribute_map) && !role))
+		) {
+			const has_interactive_handlers = handlers.some((handler) =>
+				a11y_recommended_interactive_handlers.has(handler.name)
+			);
+			if (has_interactive_handlers) {
+				component.warn(
+					this,
+					compiler_warnings.a11y_no_noninteractive_element_interactions(this.name)
+				);
+			}
+		}
+
+		const has_dynamic_role = attribute_map.get('role') && !attribute_map.get('role').is_static;
+
+		// no-static-element-interactions
+		if (
+			!has_dynamic_role &&
+			!is_hidden_from_screen_reader(this.name, attribute_map) &&
+			!is_presentation_role(role_static_value) &&
+			!is_interactive_element(this.name, attribute_map) &&
+			!is_interactive_roles(role_static_value) &&
+			!is_non_interactive_element(this.name, attribute_map) &&
+			!is_non_interactive_roles(role_static_value) &&
+			!is_abstract_role(role_static_value)
+		) {
+			const interactive_handlers = handlers
+				.map((handler) => handler.name)
+				.filter((handlerName) => a11y_interactive_handlers.has(handlerName));
+			if (interactive_handlers.length > 0) {
+				component.warn(
+					this,
+					compiler_warnings.a11y_no_static_element_interactions(this.name, interactive_handlers)
+				);
+			}
 		}
 	}
 
@@ -771,13 +930,9 @@ export default class Element extends Node {
 		const attribute_map = new Map();
 		const handlers_map = new Map();
 
-		attributes.forEach(attribute => (
-			attribute_map.set(attribute.name, attribute)
-		));
+		attributes.forEach((attribute) => attribute_map.set(attribute.name, attribute));
 
-		handlers.forEach(handler => (
-			handlers_map.set(handler.name, handler)
-		));
+		handlers.forEach((handler) => handlers_map.set(handler.name, handler));
 
 		if (this.name === 'a') {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
@@ -789,19 +944,28 @@ export default class Element extends Node {
 			// links with target="_blank" should have noopener or noreferrer: https://developer.chrome.com/docs/lighthouse/best-practices/external-anchors-use-rel-noopener/
 			// modern browsers add noopener by default, so we only need to check legacy browsers
 			// legacy browsers don't support noopener so we only check for noreferrer there
-			if (component.compile_options.legacy && target_attribute && target_attribute.get_static_value() === '_blank' && href_attribute) {
-				const href_static_value = href_attribute.get_static_value() ? href_attribute.get_static_value().toLowerCase() : null;
+			if (
+				component.compile_options.legacy &&
+				target_attribute &&
+				target_attribute.get_static_value() === '_blank' &&
+				href_attribute
+			) {
+				const href_static_value = href_attribute.get_static_value()
+					? href_attribute.get_static_value().toLowerCase()
+					: null;
 
 				if (href_static_value === null || href_static_value.match(/^(https?:)?\/\//i)) {
 					const rel = attribute_map.get('rel');
 					if (rel == null || rel.is_static) {
-						const rel_values = rel ? rel.get_static_value().split(regex_any_repeated_whitespaces) : [];
+						const rel_values = rel
+							? rel.get_static_value().split(regex_any_repeated_whitespaces)
+							: [];
 						if (!rel || !rel_values.includes('noreferrer')) {
-								component.warn(this, {
-									code: 'security-anchor-rel-noreferrer',
-									message:
-										'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
-								});
+							component.warn(this, {
+								code: 'security-anchor-rel-noreferrer',
+								message:
+									'Security: Anchor with "target=_blank" should have rel attribute containing the value "noreferrer"'
+							});
 						}
 					}
 				}
@@ -818,7 +982,10 @@ export default class Element extends Node {
 				const href_value = href_attribute.get_static_value();
 
 				if (href_value === '' || href_value === '#' || /^\W*javascript:/i.test(href_value)) {
-					component.warn(href_attribute, compiler_warnings.a11y_invalid_attribute(href_attribute.name, href_value));
+					component.warn(
+						href_attribute,
+						compiler_warnings.a11y_invalid_attribute(href_attribute.name, href_value)
+					);
 				}
 			} else {
 				const id_attribute_valid = id_attribute && id_attribute.get_static_value() !== '';
@@ -831,7 +998,7 @@ export default class Element extends Node {
 		} else {
 			const required_attributes = a11y_required_attributes[this.name];
 			if (required_attributes) {
-				const has_attribute = required_attributes.some(name => attribute_map.has(name));
+				const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 
 				if (!has_attribute) {
 					should_have_attribute(this, required_attributes);
@@ -843,10 +1010,25 @@ export default class Element extends Node {
 			const type = attribute_map.get('type');
 			if (type && type.get_static_value() === 'image') {
 				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-				const has_attribute = required_attributes.some(name => attribute_map.has(name));
+				const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 
 				if (!has_attribute) {
 					should_have_attribute(this, required_attributes, 'input type="image"');
+				}
+			}
+
+			// autocomplete-valid
+			const autocomplete = attribute_map.get('autocomplete');
+
+			if (type && autocomplete) {
+				const type_value = type.get_static_value();
+				const autocomplete_value = autocomplete.get_static_value();
+
+				if (!is_valid_autocomplete(autocomplete_value)) {
+					component.warn(
+						autocomplete,
+						compiler_warnings.a11y_autocomplete_valid(type_value, autocomplete_value)
+					);
 				}
 			}
 		}
@@ -868,7 +1050,12 @@ export default class Element extends Node {
 
 		if (this.name === 'label') {
 			const has_input_child = (children: INode[]) => {
-				if (children.some(child => (child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')))) {
+				if (
+					children.some(
+						(child) =>
+							child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')
+					)
+				) {
 					return true;
 				}
 
@@ -900,7 +1087,9 @@ export default class Element extends Node {
 			let has_caption;
 			const track = this.children.find((i: Element) => i.name === 'track');
 			if (track) {
-				has_caption = track.attributes.find(a => a.name === 'kind' && a.get_static_value() === 'captions');
+				has_caption = track.attributes.find(
+					(a) => a.name === 'kind' && a.get_static_value() === 'captions'
+				);
 			}
 
 			if (!has_caption) {
@@ -934,21 +1123,24 @@ export default class Element extends Node {
 		}
 
 		if (this.name === 'figure') {
-			const children = this.children.filter(node => {
+			const children = this.children.filter((node) => {
 				if (node.type === 'Comment') return false;
 				if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
 				return true;
 			});
 
-			const index = children.findIndex(child => (child as Element).name === 'figcaption');
+			const index = children.findIndex((child) => (child as Element).name === 'figcaption');
 
-			if (index !== -1 && (index !== 0 && index !== children.length - 1)) {
+			if (index !== -1 && index !== 0 && index !== children.length - 1) {
 				component.warn(children[index], compiler_warnings.a11y_structure_first_or_last);
 			}
 		}
 
 		if (handlers_map.has('mouseover') && !handlers_map.has('focus')) {
-			component.warn(this, compiler_warnings.a11y_mouse_events_have_key_events('mouseover', 'focus'));
+			component.warn(
+				this,
+				compiler_warnings.a11y_mouse_events_have_key_events('mouseover', 'focus')
+			);
 		}
 
 		if (handlers_map.has('mouseout') && !handlers_map.has('blur')) {
@@ -957,7 +1149,7 @@ export default class Element extends Node {
 	}
 
 	validate_bindings_foreign() {
-		this.bindings.forEach(binding => {
+		this.bindings.forEach((binding) => {
 			if (binding.name !== 'this') {
 				return this.component.error(binding, compiler_errors.invalid_binding_foreign(binding.name));
 			}
@@ -968,9 +1160,7 @@ export default class Element extends Node {
 		const { component } = this;
 
 		const check_type_attribute = () => {
-			const attribute = this.attributes.find(
-				(attribute: Attribute) => attribute.name === 'type'
-			);
+			const attribute = this.attributes.find((attribute: Attribute) => attribute.name === 'type');
 
 			if (!attribute) return null;
 
@@ -987,16 +1177,15 @@ export default class Element extends Node {
 			return value;
 		};
 
-		this.bindings.forEach(binding => {
+		this.bindings.forEach((binding) => {
 			const { name } = binding;
 
 			if (name === 'value') {
-				if (
-					this.name !== 'input' &&
-					this.name !== 'textarea' &&
-					this.name !== 'select'
-				) {
-					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'value'));
+				if (this.name !== 'input' && this.name !== 'textarea' && this.name !== 'select') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'value')
+					);
 				}
 
 				if (this.name === 'select') {
@@ -1012,38 +1201,61 @@ export default class Element extends Node {
 				}
 			} else if (name === 'checked' || name === 'indeterminate') {
 				if (this.name !== 'input') {
-					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, name));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, name)
+					);
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'checkbox') {
-					return component.error(binding, compiler_errors.invalid_binding_no_checkbox(name, type === 'radio'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_no_checkbox(name, type === 'radio')
+					);
 				}
 			} else if (name === 'group') {
 				if (this.name !== 'input') {
-					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'group'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'group')
+					);
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'checkbox' && type !== 'radio') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('<input type="checkbox"> or <input type="radio">', 'group'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with(
+							'<input type="checkbox"> or <input type="radio">',
+							'group'
+						)
+					);
 				}
 			} else if (name === 'files') {
 				if (this.name !== 'input') {
-					return component.error(binding, compiler_errors.invalid_binding_elements(this.name, 'files'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'files')
+					);
 				}
 
 				const type = check_type_attribute();
 
 				if (type !== 'file') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('<input type="file">', 'files'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<input type="file">', 'files')
+					);
 				}
-
 			} else if (name === 'open') {
 				if (this.name !== 'details') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('<details>', name));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<details>', name)
+					);
 				}
 			} else if (
 				name === 'currentTime' ||
@@ -1060,41 +1272,59 @@ export default class Element extends Node {
 				name === 'readyState'
 			) {
 				if (this.name !== 'audio' && this.name !== 'video') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('audio> or <video>', name));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('audio> or <video>', name)
+					);
 				}
-			} else if (
-				name === 'videoHeight' ||
-				name === 'videoWidth'
-			) {
+			} else if (name === 'videoHeight' || name === 'videoWidth') {
 				if (this.name !== 'video') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('<video>', name));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<video>', name)
+					);
 				}
 			} else if (regex_dimensions.test(name)) {
 				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
-					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `<svg>. Use '${name.replace('offset', 'client')}' instead`));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(
+							binding.name,
+							`<svg>. Use '${name.replace('offset', 'client')}' instead`
+						)
+					);
 				} else if (is_svg(this.name)) {
-					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, 'SVG elements'));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(binding.name, 'SVG elements')
+					);
 				} else if (is_void(this.name)) {
-					return component.error(binding, compiler_errors.invalid_binding_on(binding.name, `void elements like <${this.name}>. Use a wrapper element instead`));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(
+							binding.name,
+							`void elements like <${this.name}>. Use a wrapper element instead`
+						)
+					);
 				}
-			} else if (
-				name === 'naturalWidth' ||
-				name === 'naturalHeight'
-			) {
+			} else if (name === 'naturalWidth' || name === 'naturalHeight') {
 				if (this.name !== 'img') {
-					return component.error(binding, compiler_errors.invalid_binding_element_with('<img>', name));
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<img>', name)
+					);
 				}
 			} else if (is_name_contenteditable(name)) {
 				const contenteditable = get_contenteditable_attr(this);
 				if (!contenteditable) {
 					return component.error(binding, compiler_errors.missing_contenteditable_attribute);
 				} else if (contenteditable && !contenteditable.is_static) {
-					return component.error(contenteditable, compiler_errors.dynamic_contenteditable_attribute);
+					return component.error(
+						contenteditable,
+						compiler_errors.dynamic_contenteditable_attribute
+					);
 				}
-			} else if (
-				name !== 'this' &&
-				!regex_box_size.test(name)
-			) {
+			} else if (name !== 'this' && !regex_box_size.test(name)) {
 				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
 		});
@@ -1103,10 +1333,8 @@ export default class Element extends Node {
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
 		if (this.contains_a11y_label) return;
-		if (
-			this.bindings
-				.some((binding) => ['textContent', 'innerHTML'].includes(binding.name))
-		) return;
+		if (this.bindings.some((binding) => ['textContent', 'innerHTML'].includes(binding.name)))
+			return;
 
 		if (this.children.length === 0) {
 			this.component.warn(this, compiler_warnings.a11y_missing_content(this.name));
@@ -1116,18 +1344,27 @@ export default class Element extends Node {
 	validate_event_handlers() {
 		const { component } = this;
 
-		this.handlers.forEach(handler => {
+		this.handlers.forEach((handler) => {
 			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
-				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault'));
+				return component.error(
+					handler,
+					compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault')
+				);
 			}
 
 			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
-				return component.error(handler, compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive'));
+				return component.error(
+					handler,
+					compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive')
+				);
 			}
 
-			handler.modifiers.forEach(modifier => {
+			handler.modifiers.forEach((modifier) => {
 				if (!valid_modifiers.has(modifier)) {
-					return component.error(handler, compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers))));
+					return component.error(
+						handler,
+						compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers)))
+					);
 				}
 
 				if (modifier === 'passive') {
@@ -1147,7 +1384,12 @@ export default class Element extends Node {
 				}
 			});
 
-			if (passive_events.has(handler.name) && handler.can_make_passive && !handler.modifiers.has('preventDefault') && !handler.modifiers.has('nonpassive')) {
+			if (
+				passive_events.has(handler.name) &&
+				handler.can_make_passive &&
+				!handler.modifiers.has('preventDefault') &&
+				!handler.modifiers.has('nonpassive')
+			) {
 				// touch/wheel events should be passive by default
 				handler.modifiers.add('passive');
 			}
@@ -1159,14 +1401,14 @@ export default class Element extends Node {
 	}
 
 	add_css_class() {
-		if (this.attributes.some(attr => attr.is_spread)) {
+		if (this.attributes.some((attr) => attr.is_spread)) {
 			this.needs_manual_style_scoping = true;
 			return;
 		}
 
 		const { id } = this.component.stylesheet;
 
-		const class_attribute = this.attributes.find(a => a.name === 'class');
+		const class_attribute = this.attributes.find((a) => a.name === 'class');
 
 		if (class_attribute && !class_attribute.is_true) {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
@@ -1192,12 +1434,14 @@ export default class Element extends Node {
 	}
 
 	get slot_template_name() {
-		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
+		return this.attributes
+			.find((attribute) => attribute.name === 'slot')
+			.get_static_value() as string;
 	}
 
 	optimise() {
-		attributes_to_compact_whitespace.forEach(attribute_name => {
-			const attribute = this.attributes.find(a => a.name === attribute_name);
+		attributes_to_compact_whitespace.forEach((attribute_name) => {
+			const attribute = this.attributes.find((a) => a.name === attribute_name);
 			if (attribute && !attribute.is_true) {
 				attribute.chunks.forEach((chunk, index) => {
 					if (chunk.type === 'Text') {
@@ -1213,19 +1457,38 @@ export default class Element extends Node {
 			}
 		});
 	}
+
+	get can_use_textcontent() {
+		return (
+			this.is_static_content &&
+			this.children.every((node) => node.type === 'Text' || node.type === 'MustacheTag')
+		);
+	}
+
+	get can_optimise_to_html_string() {
+		const can_use_textcontent = this.can_use_textcontent;
+		const is_template_with_text_content = this.name === 'template' && can_use_textcontent;
+		return (
+			!is_template_with_text_content &&
+			!this.namespace &&
+			(this.can_use_innerhtml || can_use_textcontent) &&
+			this.children.length > 0
+		);
+	}
+
+	hash() {
+		return `svelte-${hash(this.component.source.slice(this.start, this.end))}`;
+	}
 }
 
 const regex_starts_with_vowel = /^[aeiou]/;
 
-function should_have_attribute(
-	node,
-	attributes: string[],
-	name = node.name
-) {
+function should_have_attribute(node, attributes: string[], name = node.name) {
 	const article = regex_starts_with_vowel.test(attributes[0]) ? 'an' : 'a';
-	const sequence = attributes.length > 1 ?
-		attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}` :
-		attributes[0];
+	const sequence =
+		attributes.length > 1
+			? attributes.slice(0, -1).join(', ') + ` or ${attributes[attributes.length - 1]}`
+			: attributes[0];
 
 	node.component.warn(node, compiler_warnings.a11y_missing_attribute(name, article, sequence));
 }

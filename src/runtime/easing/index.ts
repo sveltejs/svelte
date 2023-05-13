@@ -3,7 +3,7 @@ Adapted from https://github.com/mattdesl
 Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICENSE.md
 */
 
-export { identity as linear } from 'svelte/internal';
+export { identity as linear } from '../internal';
 
 export function backInOut(t: number) {
 	const s = 1.70158 * 1.525;
@@ -35,16 +35,14 @@ export function bounceOut(t: number) {
 	return t < a
 		? 7.5625 * t2
 		: t < b
-			? 9.075 * t2 - 9.9 * t + 3.4
-			: t < c
-				? ca * t2 - cb * t + cc
-				: 10.8 * t * t - 20.52 * t + 10.72;
+		? 9.075 * t2 - 9.9 * t + 3.4
+		: t < c
+		? ca * t2 - cb * t + cc
+		: 10.8 * t * t - 20.52 * t + 10.72;
 }
 
 export function bounceInOut(t: number) {
-	return t < 0.5
-		? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0))
-		: 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
+	return t < 0.5 ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0)) : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
 }
 
 export function bounceIn(t: number) {
@@ -79,9 +77,7 @@ export function cubicOut(t: number) {
 
 export function elasticInOut(t: number) {
 	return t < 0.5
-		? 0.5 *
-				Math.sin(((+13.0 * Math.PI) / 2) * 2.0 * t) *
-				Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
+		? 0.5 * Math.sin(((+13.0 * Math.PI) / 2) * 2.0 * t) * Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
 		: 0.5 *
 				Math.sin(((-13.0 * Math.PI) / 2) * (2.0 * t - 1.0 + 1.0)) *
 				Math.pow(2.0, -10.0 * (2.0 * t - 1.0)) +
@@ -93,17 +89,15 @@ export function elasticIn(t: number) {
 }
 
 export function elasticOut(t: number) {
-	return (
-		Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2) * Math.pow(2.0, -10.0 * t) + 1.0
-	);
+	return Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2) * Math.pow(2.0, -10.0 * t) + 1.0;
 }
 
 export function expoInOut(t: number) {
 	return t === 0.0 || t === 1.0
 		? t
 		: t < 0.5
-			? +0.5 * Math.pow(2.0, 20.0 * t - 10.0)
-			: -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
+		? +0.5 * Math.pow(2.0, 20.0 * t - 10.0)
+		: -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
 }
 
 export function expoIn(t: number) {
@@ -130,9 +124,7 @@ export function quadOut(t: number) {
 }
 
 export function quartInOut(t: number) {
-	return t < 0.5
-		? +8.0 * Math.pow(t, 4.0)
-		: -8.0 * Math.pow(t - 1.0, 4.0) + 1.0;
+	return t < 0.5 ? +8.0 * Math.pow(t, 4.0) : -8.0 * Math.pow(t - 1.0, 4.0) + 1.0;
 }
 
 export function quartIn(t: number) {

@@ -13,13 +13,16 @@ export default {
 
 		await button.dispatchEvent(new window.MouseEvent('click'));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<p>count in default slot: 1</p>
 				<p slot="foo">count in foo slot: 1</p>
 				<p slot="bar">count in bar slot: 1</p>
 				<button>+1</button>
 			</div>
-		`);
+		`
+		);
 	}
 };

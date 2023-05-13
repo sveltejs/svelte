@@ -3,7 +3,16 @@ import { CompileOptions, Var } from '../../interfaces';
 import Component from '../Component';
 import FragmentWrapper from './wrappers/Fragment';
 import { x } from 'code-red';
-import { Node, Identifier, MemberExpression, Literal, Expression, BinaryExpression, UnaryExpression, ArrayExpression } from 'estree';
+import {
+	Node,
+	Identifier,
+	MemberExpression,
+	Literal,
+	Expression,
+	BinaryExpression,
+	UnaryExpression,
+	ArrayExpression
+} from 'estree';
 import flatten_reference from '../utils/flatten_reference';
 import { reserved_keywords } from '../utils/reserved_keywords';
 import { renderer_invalidate } from './invalidate';
@@ -57,12 +66,14 @@ export default class Renderer {
 
 		this.file_var = options.dev && this.component.get_unique_name('file');
 
-		component.vars.filter(v => !v.hoistable || (v.export_name && !v.module)).forEach(v => this.add_to_context(v.name));
+		component.vars
+			.filter((v) => !v.hoistable || (v.export_name && !v.module))
+			.forEach((v) => this.add_to_context(v.name));
 
 		// ensure store values are included in context
-		component.vars.filter(v => v.subscribable).forEach(v => this.add_to_context(`$${v.name}`));
+		component.vars.filter((v) => v.subscribable).forEach((v) => this.add_to_context(`$${v.name}`));
 
-		reserved_keywords.forEach(keyword => {
+		reserved_keywords.forEach((keyword) => {
 			if (component.var_lookup.has(keyword)) {
 				this.add_to_context(keyword);
 			}
@@ -97,7 +108,7 @@ export default class Renderer {
 		);
 
 		// TODO messy
-		this.blocks.forEach(block => {
+		this.blocks.forEach((block) => {
 			if (block instanceof Block) {
 				block.assign_variable_names();
 			}
@@ -109,7 +120,7 @@ export default class Renderer {
 
 		this.context_overflow = this.context.length > 31;
 
-		this.context.forEach(member => {
+		this.context.forEach((member) => {
 			const { variable } = member;
 			if (variable) {
 				member.priority += 2;
@@ -117,7 +128,8 @@ export default class Renderer {
 
 				// these determine whether variable is included in initial context
 				// array, so must have the highest priority
-				if (variable.is_reactive_dependency && (variable.mutated || variable.reassigned)) member.priority += 16;
+				if (variable.is_reactive_dependency && (variable.mutated || variable.reassigned))
+					member.priority += 16;
 				if (variable.export_name) member.priority += 32;
 				if (variable.referenced) member.priority += 64;
 			} else if (member.is_non_contextual) {
@@ -131,14 +143,22 @@ export default class Renderer {
 			}
 		});
 
-		this.context.sort((a, b) => (b.priority - a.priority) || ((a.index.value as number) - (b.index.value as number)));
-		this.context.forEach((member, i) => member.index.value = i);
+		this.context.sort(
+			(a, b) => b.priority - a.priority || (a.index.value as number) - (b.index.value as number)
+		);
+		this.context.forEach((member, i) => (member.index.value = i));
 
 		let i = this.context.length;
 		while (i--) {
 			const member = this.context[i];
 			if (member.variable) {
-				if (member.variable.referenced || member.variable.export_name || (member.variable.is_reactive_dependency && (member.variable.mutated || member.variable.reassigned))) break;
+				if (
+					member.variable.referenced ||
+					member.variable.export_name ||
+					(member.variable.is_reactive_dependency &&
+						(member.variable.mutated || member.variable.reassigned))
+				)
+					break;
 			} else if (member.is_non_contextual) {
 				break;
 			}
@@ -180,9 +200,9 @@ export default class Renderer {
 	dirty(names: string[], is_reactive_declaration = false): Expression {
 		const renderer = this;
 
-		const dirty = (is_reactive_declaration
-			? x`$$self.$$.dirty`
-			: x`#dirty`) as Identifier | MemberExpression;
+		const dirty = (is_reactive_declaration ? x`$$self.$$.dirty` : x`#dirty`) as
+			| Identifier
+			| MemberExpression;
 
 		const get_bitmask = () => {
 			const bitmask: BitMasks = [];
@@ -197,7 +217,7 @@ export default class Renderer {
 
 				const value = member.index.value as number;
 				const i = (value / 31) | 0;
-				const n = 1 << (value % 31);
+				const n = 1 << value % 31;
 
 				if (!bitmask[i]) bitmask[i] = { n: 0, names: [] };
 

@@ -33,7 +33,7 @@ count.set(1); // logs '1'
 count.update((n) => n + 1); // logs '2'
 ```
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 /// file: store.js
@@ -62,7 +62,8 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
-/// file: store.js
+// @errors: 7006 2769
+// ---cut---
 import { readable } from 'svelte/store';
 
 const time = readable(new Date(), (set) => {
@@ -70,6 +71,14 @@ const time = readable(new Date(), (set) => {
 
 	const interval = setInterval(() => {
 		set(new Date());
+	}, 1000);
+
+	return () => clearInterval(interval);
+});
+
+const ticktock = readable('tick', (set, update) => {
+	const interval = setInterval(() => {
+		update((sound) => (sound === 'tick' ? 'tock' : 'tick'));
 	}, 1000);
 
 	return () => clearInterval(interval);
@@ -101,9 +110,9 @@ import { derived } from 'svelte/store';
 const doubled = derived(a, ($a) => $a * 2);
 ```
 
-The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
+The callback can set a value asynchronously by accepting a second argument, `set`, and an optional third argument, `update`, calling either or both of them when appropriate.
 
-In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
+In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` or `update` is first called. If no initial value is specified, the store's initial value will be `undefined`.
 
 ```js
 // @filename: ambient.d.ts
@@ -116,16 +125,20 @@ declare global {
 export {};
 
 // @filename: index.ts
+// @errors: 2769 7006
 // ---cut---
 import { derived } from 'svelte/store';
 
-const delayed = derived(
-	a,
-	($a, set) => {
-		setTimeout(() => set($a), 1000);
-	},
-	2000
-);
+const delayed = derived(a, ($a, set) => {
+	setTimeout(() => set($a), 1000);
+}, 2000);
+
+const delayedIncrement = derived(a, ($a, set, update) => {
+	set($a);
+	setTimeout(() => update(x => x + 1), 1000);
+	// every time $a produces a value, this produces two
+	// values, $a immediately and then $a + 1 a second later
+});
 ```
 
 If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.

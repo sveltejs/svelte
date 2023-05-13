@@ -15,13 +15,14 @@ const GLOBAL_TS_PATH = './src/compiler/utils/globals.ts';
 //       before this script was introduced but could not be retrieved by this process.
 const SPECIALS = ['global', 'globalThis', 'InternalError', 'process', 'undefined'];
 
-const get_url = (name) => `https://raw.githubusercontent.com/microsoft/TypeScript/main/lib/lib.${name}.d.ts`;
+const get_url = (name) =>
+	`https://raw.githubusercontent.com/microsoft/TypeScript/main/lib/lib.${name}.d.ts`;
 const extract_name = (split) => split.match(/^[a-zA-Z0-9_$]+/)[0];
 
 const extract_functions_and_references = (name, data) => {
 	const functions = [];
 	const references = [];
-	data.split('\n').forEach(line => {
+	data.split('\n').forEach((line) => {
 		const trimmed = line.trim();
 		const split = trimmed.replace(/[\s+]/, ' ').split(' ');
 		if (split[0] === 'declare' && split[1] !== 'type') {
@@ -35,17 +36,20 @@ const extract_functions_and_references = (name, data) => {
 	return { functions, references };
 };
 
-const do_get = (url) => new Promise((resolve, reject) => {
-	http.get(url, (res) => {
-		let body = '';
-		res.setEncoding('utf8');
-		res.on('data', (chunk) => body += chunk);
-		res.on('end', () => resolve(body));
-	}).on('error', (e) => {
-		console.error(e.message);
-		reject(e);
+const do_get = (url) =>
+	new Promise((resolve, reject) => {
+		http
+			.get(url, (res) => {
+				let body = '';
+				res.setEncoding('utf8');
+				res.on('data', (chunk) => (body += chunk));
+				res.on('end', () => resolve(body));
+			})
+			.on('error', (e) => {
+				console.error(e.message);
+				reject(e);
+			});
 	});
-});
 
 const fetched_names = new Set();
 const get_functions = async (name) => {
@@ -56,7 +60,7 @@ const get_functions = async (name) => {
 	const { functions, references } = extract_functions_and_references(name, body);
 	res.push(...functions);
 	const chile_functions = await Promise.all(references.map(get_functions));
-	chile_functions.forEach(i => res.push(...i));
+	chile_functions.forEach((i) => res.push(...i));
 	return res;
 };
 
@@ -76,10 +80,11 @@ ${sorted.map((i) => `\t'${i}'`).join(',\n')}
 
 const get_exists_globals = () => {
 	const regexp = /^\s*["'](.+)["'],?\s*$/;
-	return fs.readFileSync(GLOBAL_TS_PATH, 'utf8')
+	return fs
+		.readFileSync(GLOBAL_TS_PATH, 'utf8')
 		.split('\n')
-		.filter(line => line.match(regexp))
-		.map(line => line.match(regexp)[1]);
+		.filter((line) => line.match(regexp))
+		.map((line) => line.match(regexp)[1]);
 };
 
 (async () => {

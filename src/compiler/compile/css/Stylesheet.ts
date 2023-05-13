@@ -17,13 +17,10 @@ function remove_css_prefix(name: string): string {
 	return name.replace(regex_css_browser_prefix, '');
 }
 
-const is_keyframes_node = (node: CssNode) =>
-	remove_css_prefix(node.name) === 'keyframes';
+const is_keyframes_node = (node: CssNode) => remove_css_prefix(node.name) === 'keyframes';
 
 const at_rule_has_declaration = ({ block }: CssNode): true =>
-	block &&
-	block.children &&
-	block.children.find((node: CssNode) => node.type === 'Declaration');
+	block && block.children && block.children.find((node: CssNode) => node.type === 'Declaration');
 
 function minify_declarations(
 	code: MagicString,
@@ -34,7 +31,7 @@ function minify_declarations(
 
 	declarations.forEach((declaration, i) => {
 		const separator = i > 0 ? ';' : '';
-		if ((declaration.node.start - c) > separator.length) {
+		if (declaration.node.start - c > separator.length) {
 			code.update(c, declaration.node.start, separator);
 		}
 		declaration.minify(code);
@@ -58,13 +55,14 @@ class Rule {
 	}
 
 	apply(node: Element) {
-		this.selectors.forEach(selector => selector.apply(node)); // TODO move the logic in here?
+		this.selectors.forEach((selector) => selector.apply(node)); // TODO move the logic in here?
 	}
 
 	is_used(dev: boolean) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node))
+			return true;
 		if (this.declarations.length === 0) return dev;
-		return this.selectors.some(s => s.used);
+		return this.selectors.some((s) => s.used);
 	}
 
 	minify(code: MagicString, _dev: boolean) {
@@ -74,7 +72,7 @@ class Rule {
 		this.selectors.forEach((selector) => {
 			if (selector.used) {
 				const separator = started ? ',' : '';
-				if ((selector.node.start - c) > separator.length) {
+				if (selector.node.start - c > separator.length) {
 					code.update(c, selector.node.start, separator);
 				}
 
@@ -93,29 +91,39 @@ class Rule {
 		code.remove(c, this.node.block.end - 1);
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
-		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node)) return true;
+	transform(
+		code: MagicString,
+		id: string,
+		keyframes: Map<string, string>,
+		max_amount_class_specificity_increased: number
+	) {
+		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node))
+			return true;
 
 		const attr = `.${id}`;
 
-		this.selectors.forEach(selector => selector.transform(code, attr, max_amount_class_specificity_increased));
-		this.declarations.forEach(declaration => declaration.transform(code, keyframes));
+		this.selectors.forEach((selector) =>
+			selector.transform(code, attr, max_amount_class_specificity_increased)
+		);
+		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
 	}
 
 	validate(component: Component) {
-		this.selectors.forEach(selector => {
+		this.selectors.forEach((selector) => {
 			selector.validate(component);
 		});
 	}
 
 	warn_on_unused_selector(handler: (selector: Selector) => void) {
-		this.selectors.forEach(selector => {
+		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
 		});
 	}
 
 	get_max_amount_class_specificity_increased() {
-		return Math.max(...this.selectors.map(selector => selector.get_amount_class_specificity_increased()));
+		return Math.max(
+			...this.selectors.map((selector) => selector.get_amount_class_specificity_increased())
+		);
 	}
 }
 
@@ -144,9 +152,7 @@ class Declaration {
 		if (!this.node.property) return; // @apply, and possibly other weird cases?
 
 		const c = this.node.start + this.node.property.length;
-		const first = this.node.value.children
-			? this.node.value.children[0]
-			: this.node.value;
+		const first = this.node.value.children ? this.node.value.children[0] : this.node.value;
 
 		// Don't minify whitespace in custom properties, since some browsers (Chromium < 99)
 		// treat --foo: ; and --foo:; differently
@@ -173,13 +179,18 @@ class Atrule {
 	}
 
 	apply(node: Element) {
-		if (this.node.name === 'container' || this.node.name === 'media' || this.node.name === 'supports' || this.node.name === 'layer') {
-			this.children.forEach(child => {
+		if (
+			this.node.name === 'container' ||
+			this.node.name === 'media' ||
+			this.node.name === 'supports' ||
+			this.node.name === 'layer'
+		) {
+			this.children.forEach((child) => {
 				child.apply(node);
 			});
 		} else if (is_keyframes_node(this.node)) {
 			this.children.forEach((rule: Rule) => {
-				rule.selectors.forEach(selector => {
+				rule.selectors.forEach((selector) => {
 					selector.used = true;
 				});
 			});
@@ -231,7 +242,7 @@ class Atrule {
 				if (this.children.length) c++;
 			}
 
-			this.children.forEach(child => {
+			this.children.forEach((child) => {
 				if (child.is_used(dev)) {
 					code.remove(c, child.node.start);
 					child.minify(code, dev);
@@ -243,14 +254,19 @@ class Atrule {
 		}
 	}
 
-	transform(code: MagicString, id: string, keyframes: Map<string, string>, max_amount_class_specificity_increased: number) {
+	transform(
+		code: MagicString,
+		id: string,
+		keyframes: Map<string, string>,
+		max_amount_class_specificity_increased: number
+	) {
 		if (is_keyframes_node(this.node)) {
 			this.node.prelude.children.forEach(({ type, name, start, end }: CssNode) => {
 				if (type === 'Identifier') {
 					if (name.startsWith('-global-')) {
 						code.remove(start, start + 8);
 						this.children.forEach((rule: Rule) => {
-							rule.selectors.forEach(selector => {
+							rule.selectors.forEach((selector) => {
 								selector.used = true;
 							});
 						});
@@ -261,13 +277,13 @@ class Atrule {
 			});
 		}
 
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			child.transform(code, id, keyframes, max_amount_class_specificity_increased);
 		});
 	}
 
 	validate(component: Component) {
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			child.validate(component);
 		});
 	}
@@ -275,13 +291,15 @@ class Atrule {
 	warn_on_unused_selector(handler: (selector: Selector) => void) {
 		if (this.node.name !== 'media') return;
 
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			child.warn_on_unused_selector(handler);
 		});
 	}
 
 	get_max_amount_class_specificity_increased() {
-		return Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
+		return Math.max(
+			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
+		);
 	}
 }
 
@@ -357,8 +375,8 @@ export default class Stylesheet {
 							});
 						} else if (at_rule_has_declaration(node)) {
 							const at_rule_declarations = node.block.children
-								.filter(node => node.type === 'Declaration')
-								.map(node => new Declaration(node));
+								.filter((node) => node.type === 'Declaration')
+								.map((node) => new Declaration(node));
 							push_array(atrule.declarations, at_rule_declarations);
 						}
 
@@ -407,7 +425,7 @@ export default class Stylesheet {
 		});
 	}
 
-	render(file: string, should_transform_selectors: boolean) {
+	render(file: string) {
 		if (!this.has_styles) {
 			return { code: null, map: null };
 		}
@@ -421,15 +439,15 @@ export default class Stylesheet {
 			}
 		});
 
-		if (should_transform_selectors) {
-			const max = Math.max(...this.children.map(rule => rule.get_max_amount_class_specificity_increased()));
-			this.children.forEach((child: (Atrule | Rule)) => {
-				child.transform(code, this.id, this.keyframes, max);
-			});
-		}
+		const max = Math.max(
+			...this.children.map((rule) => rule.get_max_amount_class_specificity_increased())
+		);
+		this.children.forEach((child: Atrule | Rule) => {
+			child.transform(code, this.id, this.keyframes, max);
+		});
 
 		let c = 0;
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			if (child.is_used(this.dev)) {
 				code.remove(c, child.node.start);
 				child.minify(code, this.dev);
@@ -450,17 +468,24 @@ export default class Stylesheet {
 	}
 
 	validate(component: Component) {
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			child.validate(component);
 		});
 	}
 
 	warn_on_unused_selectors(component: Component) {
-		const ignores = !this.ast.css ? [] : extract_ignores_above_position(this.ast.css.start, this.ast.html.children);
+		const ignores = !this.ast.css
+			? []
+			: extract_ignores_above_position(this.ast.css.start, this.ast.html.children);
 		component.push_ignores(ignores);
-		this.children.forEach(child => {
+		this.children.forEach((child) => {
 			child.warn_on_unused_selector((selector: Selector) => {
-				component.warn(selector.node, compiler_warnings.css_unused_selector(this.source.slice(selector.node.start, selector.node.end)));
+				component.warn(
+					selector.node,
+					compiler_warnings.css_unused_selector(
+						this.source.slice(selector.node.start, selector.node.end)
+					)
+				);
 			});
 		});
 		component.pop_ignores();

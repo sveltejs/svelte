@@ -6,10 +6,13 @@ export default {
 	`,
 	async test({ component, target, assert }) {
 		component.props = 'xxx';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>static xxx</div>
 			<div>static xxx</div>
 			<div>static xxx</div>
-		`);
+		`
+		);
 	}
 };

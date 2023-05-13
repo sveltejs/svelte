@@ -58,7 +58,9 @@ export default {
 		await input.dispatchEvent(change);
 
 		assert.ok(component.todos.third.done);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="todo done">
 				<input type="checkbox">
 				<input type="text">
@@ -73,6 +75,7 @@ export default {
 				<input type="checkbox">
 				<input type="text">
 			</div>
-		`);
+		`
+		);
 	}
 };

@@ -12,17 +12,23 @@ export default {
 		component.foo = undefined;
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>parent red</p>
 			<p>red red</p>
-		`);
+		`
+		);
 
 		component.foo = undefined;
 		component.x = true;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>parent green</p>
 			<p>green green</p>
-		`);
+		`
+		);
 	}
 };

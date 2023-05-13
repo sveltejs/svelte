@@ -8,7 +8,7 @@ export default {
 	`,
 
 	test({ assert, target }) {
-		const use = target.querySelector( 'use' );
-		assert.equal( use.getAttributeNS( 'http://www.w3.org/1999/xlink', 'href' ), '#bar' );
+		const use = target.querySelector('use');
+		assert.equal(use.getAttributeNS('http://www.w3.org/1999/xlink', 'href'), '#bar');
 	}
 };

@@ -23,8 +23,6 @@ export default {
 		selects[1].options[0].selected = true;
 		selects[1].dispatchEvent(change);
 
-		assert.deepEqual(component.items, [
-			{ value: 'hullo' }, { value: 'hullo' }
-		]);
+		assert.deepEqual(component.items, [{ value: 'hullo' }, { value: 'hullo' }]);
 	}
 };

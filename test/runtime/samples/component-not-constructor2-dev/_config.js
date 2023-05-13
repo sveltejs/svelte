@@ -13,7 +13,10 @@ export default {
 			component.componentName = 'banana';
 			throw new Error('Expected an error');
 		} catch (err) {
-			assert.equal(err.message, 'this={...} of <svelte:component> should specify a Svelte component.');
+			assert.equal(
+				err.message,
+				'this={...} of <svelte:component> should specify a Svelte component.'
+			);
 		}
 	}
 };

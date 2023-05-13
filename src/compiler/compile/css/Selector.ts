@@ -18,7 +18,7 @@ enum BlockAppliesToNode {
 }
 enum NodeExist {
 	Probably = 1,
-	Definitely = 2,
+	Definitely = 2
 }
 
 const whitelist_attribute_selector = new Map([
@@ -57,7 +57,7 @@ export default class Selector {
 	}
 
 	apply(node: Element) {
-		const to_encapsulate: Array<{ node: Element, block: Block }> = [];
+		const to_encapsulate: Array<{ node: Element; block: Block }> = [];
 
 		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
 
@@ -85,7 +85,9 @@ export default class Selector {
 	}
 
 	transform(code: MagicString, attr: string, max_amount_class_specificity_increased: number) {
-		const amount_class_specificity_to_increase = max_amount_class_specificity_increased - this.blocks.filter(block => block.should_encapsulate).length;
+		const amount_class_specificity_to_increase =
+			max_amount_class_specificity_increased -
+			this.blocks.filter((block) => block.should_encapsulate).length;
 
 		function remove_global_pseudo_class(selector: CssNode) {
 			const first = selector.children[0];
@@ -125,7 +127,13 @@ export default class Selector {
 			if (block.global) {
 				remove_global_pseudo_class(block.selectors[0]);
 			}
-			if (block.should_encapsulate) encapsulate_block(block, index === this.blocks.length - 1 ? attr.repeat(amount_class_specificity_to_increase + 1) : attr);
+			if (block.should_encapsulate)
+				encapsulate_block(
+					block,
+					index === this.blocks.length - 1
+						? attr.repeat(amount_class_specificity_to_increase + 1)
+						: attr
+				);
 		});
 	}
 
@@ -172,10 +180,20 @@ export default class Selector {
 		for (let i = 0; i < this.blocks.length; i++) {
 			const block = this.blocks[i];
 			if (block.combinator && block.selectors.length === 0) {
-				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
+				component.error(
+					this.node,
+					compiler_errors.css_invalid_selector(
+						component.source.slice(this.node.start, this.node.end)
+					)
+				);
 			}
 			if (!block.combinator && block.selectors.length === 0) {
-				component.error(this.node, compiler_errors.css_invalid_selector(component.source.slice(this.node.start, this.node.end)));
+				component.error(
+					this.node,
+					compiler_errors.css_invalid_selector(
+						component.source.slice(this.node.start, this.node.end)
+					)
+				);
 			}
 		}
 	}
@@ -184,7 +202,8 @@ export default class Selector {
 		for (const block of this.blocks) {
 			for (let index = 0; index < block.selectors.length; index++) {
 				const selector = block.selectors[index];
-				if (selector.type === 'PseudoClassSelector' &&
+				if (
+					selector.type === 'PseudoClassSelector' &&
 					selector.name === 'global' &&
 					index !== 0 &&
 					selector.children &&
@@ -201,21 +220,24 @@ export default class Selector {
 		let count = 0;
 		for (const block of this.blocks) {
 			if (block.should_encapsulate) {
-				count ++;
+				count++;
 			}
 		}
 		return count;
 	}
 }
 
-function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ node: Element, block: Block }>): boolean {
+function apply_selector(
+	blocks: Block[],
+	node: Element,
+	to_encapsulate: Array<{ node: Element; block: Block }>
+): boolean {
 	const block = blocks.pop();
 	if (!block) return false;
 
 	if (!node) {
 		return (
-			(block.global && blocks.every(block => block.global)) ||
-			(block.host && blocks.length === 0)
+			(block.global && blocks.every((block) => block.global)) || (block.host && blocks.length === 0)
 		);
 	}
 
@@ -224,7 +246,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 			return false;
 
 		case BlockAppliesToNode.UnknownSelectorType:
-		// bail. TODO figure out what these could be
+			// bail. TODO figure out what these could be
 			to_encapsulate.push({ node, block });
 			return true;
 	}
@@ -242,8 +264,10 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 				}
 
 				let parent = node;
-				while (parent = get_element_parent(parent)) {
-					if (block_might_apply_to_node(ancestor_block, parent) !== BlockAppliesToNode.NotPossible) {
+				while ((parent = get_element_parent(parent))) {
+					if (
+						block_might_apply_to_node(ancestor_block, parent) !== BlockAppliesToNode.NotPossible
+					) {
 						to_encapsulate.push({ node: parent, block: ancestor_block });
 					}
 				}
@@ -254,14 +278,14 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 				}
 			}
 
-			if (blocks.every(block => block.global)) {
+			if (blocks.every((block) => block.global)) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
 
 			return false;
 		} else if (block.combinator.name === '>') {
-			const has_global_parent = blocks.every(block => block.global);
+			const has_global_parent = blocks.every((block) => block.global);
 			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
 				to_encapsulate.push({ node, block });
 				return true;
@@ -275,7 +299,7 @@ function apply_selector(blocks: Block[], node: Element, to_encapsulate: Array<{ 
 			// NOTE: if we have :global(), we couldn't figure out what is selected within `:global` due to the
 			// css-tree limitation that does not parse the inner selector of :global
 			// so unless we are sure there will be no sibling to match, we will consider it as matched
-			const has_global = blocks.some(block => block.global);
+			const has_global = blocks.some((block) => block.global);
 			if (has_global) {
 				if (siblings.size === 0 && get_element_parent(node) !== null) {
 					return false;
@@ -309,13 +333,19 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 
 	while (i--) {
 		const selector = block.selectors[i];
-		const name = typeof selector.name === 'string' && selector.name.replace(regex_backslash_and_following_character, '$1');
+		const name =
+			typeof selector.name === 'string' &&
+			selector.name.replace(regex_backslash_and_following_character, '$1');
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return BlockAppliesToNode.NotPossible;
 		}
 
-		if (block.selectors.length === 1 && selector.type === 'PseudoClassSelector' && name === 'global') {
+		if (
+			block.selectors.length === 1 &&
+			selector.type === 'PseudoClassSelector' &&
+			name === 'global'
+		) {
 			return BlockAppliesToNode.NotPossible;
 		}
 
@@ -324,17 +354,38 @@ function block_might_apply_to_node(block: Block, node: Element): BlockAppliesToN
 		}
 
 		if (selector.type === 'ClassSelector') {
-			if (!attribute_matches(node, 'class', name, '~=', false) && !node.classes.some(c => c.name === name)) return BlockAppliesToNode.NotPossible;
+			if (
+				!attribute_matches(node, 'class', name, '~=', false) &&
+				!node.classes.some((c) => c.name === name)
+			)
+				return BlockAppliesToNode.NotPossible;
 		} else if (selector.type === 'IdSelector') {
 			if (!attribute_matches(node, 'id', name, '=', false)) return BlockAppliesToNode.NotPossible;
 		} else if (selector.type === 'AttributeSelector') {
 			if (
-				!(whitelist_attribute_selector.has(node.name.toLowerCase()) && whitelist_attribute_selector.get(node.name.toLowerCase()).has(selector.name.name.toLowerCase())) &&
-				!attribute_matches(node, selector.name.name, selector.value && unquote(selector.value), selector.matcher, selector.flags)) {
+				!(
+					whitelist_attribute_selector.has(node.name.toLowerCase()) &&
+					whitelist_attribute_selector
+						.get(node.name.toLowerCase())
+						.has(selector.name.name.toLowerCase())
+				) &&
+				!attribute_matches(
+					node,
+					selector.name.name,
+					selector.value && unquote(selector.value),
+					selector.matcher,
+					selector.flags
+				)
+			) {
 				return BlockAppliesToNode.NotPossible;
 			}
 		} else if (selector.type === 'TypeSelector') {
-			if (node.name.toLowerCase() !== name.toLowerCase() && name !== '*' && !node.is_dynamic_element) return BlockAppliesToNode.NotPossible;
+			if (
+				node.name.toLowerCase() !== name.toLowerCase() &&
+				name !== '*' &&
+				!node.is_dynamic_element
+			)
+				return BlockAppliesToNode.NotPossible;
 		} else {
 			return BlockAppliesToNode.UnknownSelectorType;
 		}
@@ -349,18 +400,31 @@ function test_attribute(operator, expected_value, case_insensitive, value) {
 		value = value.toLowerCase();
 	}
 	switch (operator) {
-		case '=': return value === expected_value;
-		case '~=': return value.split(/\s/).includes(expected_value);
-		case '|=': return `${value}-`.startsWith(`${expected_value}-`);
-		case '^=': return value.startsWith(expected_value);
-		case '$=': return value.endsWith(expected_value);
-		case '*=': return value.includes(expected_value);
-		default: throw new Error("this shouldn't happen");
+		case '=':
+			return value === expected_value;
+		case '~=':
+			return value.split(/\s/).includes(expected_value);
+		case '|=':
+			return `${value}-`.startsWith(`${expected_value}-`);
+		case '^=':
+			return value.startsWith(expected_value);
+		case '$=':
+			return value.endsWith(expected_value);
+		case '*=':
+			return value.includes(expected_value);
+		default:
+			throw new Error("this shouldn't happen");
 	}
 }
 
-function attribute_matches(node: CssNode, name: string, expected_value: string, operator: string, case_insensitive: boolean) {
-	const spread = node.attributes.find(attr => attr.type === 'Spread');
+function attribute_matches(
+	node: CssNode,
+	name: string,
+	expected_value: string,
+	operator: string,
+	case_insensitive: boolean
+) {
+	const spread = node.attributes.find((attr) => attr.type === 'Spread');
 	if (spread) return true;
 
 	if (node.bindings.some((binding: CssNode) => binding.name === name)) return true;
@@ -373,7 +437,8 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 	if (attr.chunks.length === 1) {
 		const value = attr.chunks[0];
 		if (!value) return false;
-		if (value.type === 'Text') return test_attribute(operator, expected_value, case_insensitive, value.data);
+		if (value.type === 'Text')
+			return test_attribute(operator, expected_value, case_insensitive, value.data);
 	}
 
 	const possible_values = new Set();
@@ -403,7 +468,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 
 			if (remaining.length > 0) {
 				if (start_with_space.length > 0) {
-					prev_values.forEach(prev_value => possible_values.add(prev_value));
+					prev_values.forEach((prev_value) => possible_values.add(prev_value));
 				}
 
 				const combined = [];
@@ -423,7 +488,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 				});
 				continue;
 			} else {
-				prev_values.forEach(prev_value => possible_values.add(prev_value));
+				prev_values.forEach((prev_value) => possible_values.add(prev_value));
 				prev_values = [];
 			}
 		}
@@ -444,7 +509,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 			return true;
 		}
 	}
-	prev_values.forEach(prev_value => possible_values.add(prev_value));
+	prev_values.forEach((prev_value) => possible_values.add(prev_value));
 
 	if (possible_values.has(UNKNOWN)) return true;
 
@@ -458,7 +523,7 @@ function attribute_matches(node: CssNode, name: string, expected_value: string, 
 function unquote(value: CssNode) {
 	if (value.type === 'Identifier') return value.name;
 	const str = value.value;
-	if (str[0] === str[str.length - 1] && str[0] === "'" || str[0] === '"') {
+	if ((str[0] === str[str.length - 1] && str[0] === "'") || str[0] === '"') {
 		return str.slice(1, str.length - 1);
 	}
 	return str;
@@ -470,12 +535,55 @@ function get_element_parent(node: Element): Element | null {
 	return parent as Element | null;
 }
 
-function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map<Element, NodeExist> {
+/**
+ * Finds the given node's previous sibling in the DOM
+ *
+ * The Svelte <slot> is just a placeholder and is not actually real. Any children nodes
+ * in <slot> are 'flattened' and considered as the same level as the <slot>'s siblings
+ *
+ * e.g.
+ * <h1>Heading 1</h1>
+ * <slot>
+ *   <h2>Heading 2</h2>
+ * </slot>
+ *
+ * is considered to look like:
+ * <h1>Heading 1</h1>
+ * <h2>Heading 2</h2>
+ */
+function find_previous_sibling(node: INode): INode {
+	let current_node: INode = node;
+	do {
+		if (current_node.type === 'Slot') {
+			const slot_children = current_node.children;
+			if (slot_children.length > 0) {
+				current_node = slot_children.slice(-1)[0]; // go to its last child first
+				continue;
+			}
+		}
+
+		while (!current_node.prev && current_node.parent && current_node.parent.type === 'Slot') {
+			current_node = current_node.parent;
+		}
+		current_node = current_node.prev;
+	} while (current_node && current_node.type === 'Slot');
+
+	return current_node;
+}
+
+function get_possible_element_siblings(
+	node: INode,
+	adjacent_only: boolean
+): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 	let prev: INode = node;
-	while (prev = prev.prev) {
+	while ((prev = find_previous_sibling(prev))) {
 		if (prev.type === 'Element') {
-			if (!prev.attributes.find(attr => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot')) {
+			if (
+				!prev.attributes.find(
+					(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === 'slot'
+				)
+			) {
 				result.set(prev, NodeExist.Definitely);
 			}
 
@@ -495,7 +603,13 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 	if (!prev || !adjacent_only) {
 		let parent: INode = node;
 		let skip_each_for_last_child = node.type === 'ElseBlock';
-		while ((parent = parent.parent) && (parent.type === 'EachBlock' || parent.type === 'IfBlock' || parent.type === 'ElseBlock' || parent.type === 'AwaitBlock')) {
+		while (
+			(parent = parent.parent) &&
+			(parent.type === 'EachBlock' ||
+				parent.type === 'IfBlock' ||
+				parent.type === 'ElseBlock' ||
+				parent.type === 'AwaitBlock')
+		) {
 			const possible_siblings = get_possible_element_siblings(parent, adjacent_only);
 			add_to_map(possible_siblings, result);
 
@@ -520,12 +634,17 @@ function get_possible_element_siblings(node: INode, adjacent_only: boolean): Map
 	return result;
 }
 
-function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjacent_only: boolean): Map<Element, NodeExist> {
+function get_possible_last_child(
+	block: EachBlock | IfBlock | AwaitBlock,
+	adjacent_only: boolean
+): Map<Element, NodeExist> {
 	const result: Map<Element, NodeExist> = new Map();
 
 	if (block.type === 'EachBlock') {
 		const each_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
-		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+		const else_result: Map<Element, NodeExist> = block.else
+			? loop_child(block.else.children, adjacent_only)
+			: new Map();
 
 		const not_exhaustive = !has_definite_elements(else_result);
 
@@ -537,7 +656,9 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 		add_to_map(else_result, result);
 	} else if (block.type === 'IfBlock') {
 		const if_result: Map<Element, NodeExist> = loop_child(block.children, adjacent_only);
-		const else_result: Map<Element, NodeExist> = block.else ? loop_child(block.else.children, adjacent_only) : new Map();
+		const else_result: Map<Element, NodeExist> = block.else
+			? loop_child(block.else.children, adjacent_only)
+			: new Map();
 
 		const not_exhaustive = !has_definite_elements(if_result) || !has_definite_elements(else_result);
 
@@ -549,11 +670,20 @@ function get_possible_last_child(block: EachBlock | IfBlock | AwaitBlock, adjace
 		add_to_map(if_result, result);
 		add_to_map(else_result, result);
 	} else if (block.type === 'AwaitBlock') {
-		const pending_result: Map<Element, NodeExist> = block.pending ? loop_child(block.pending.children, adjacent_only) : new Map();
-		const then_result: Map<Element, NodeExist> = block.then ? loop_child(block.then.children, adjacent_only) : new Map();
-		const catch_result: Map<Element, NodeExist> = block.catch ? loop_child(block.catch.children, adjacent_only) : new Map();
+		const pending_result: Map<Element, NodeExist> = block.pending
+			? loop_child(block.pending.children, adjacent_only)
+			: new Map();
+		const then_result: Map<Element, NodeExist> = block.then
+			? loop_child(block.then.children, adjacent_only)
+			: new Map();
+		const catch_result: Map<Element, NodeExist> = block.catch
+			? loop_child(block.catch.children, adjacent_only)
+			: new Map();
 
-		const not_exhaustive = !has_definite_elements(pending_result) || !has_definite_elements(then_result) || !has_definite_elements(catch_result);
+		const not_exhaustive =
+			!has_definite_elements(pending_result) ||
+			!has_definite_elements(then_result) ||
+			!has_definite_elements(catch_result);
 
 		if (not_exhaustive) {
 			mark_as_probably(pending_result);
@@ -605,7 +735,11 @@ function loop_child(children: INode[], adjacent_only: boolean) {
 			if (adjacent_only) {
 				break;
 			}
-		} else if (child.type === 'EachBlock' || child.type === 'IfBlock' || child.type === 'AwaitBlock') {
+		} else if (
+			child.type === 'EachBlock' ||
+			child.type === 'IfBlock' ||
+			child.type === 'AwaitBlock'
+		) {
 			const child_result = get_possible_last_child(child, adjacent_only);
 			add_to_map(child_result, result);
 			if (adjacent_only && has_definite_elements(child_result)) {
@@ -642,7 +776,7 @@ class Block {
 			this.start = selector.start;
 			this.host = selector.type === 'PseudoClassSelector' && selector.name === 'host';
 		}
-		this.root = this.root || selector.type === 'PseudoClassSelector' && selector.name === 'root';
+		this.root = this.root || (selector.type === 'PseudoClassSelector' && selector.name === 'root');
 
 		this.selectors.push(selector);
 		this.end = selector.end;
@@ -653,7 +787,10 @@ class Block {
 			this.selectors.length >= 1 &&
 			this.selectors[0].type === 'PseudoClassSelector' &&
 			this.selectors[0].name === 'global' &&
-			this.selectors.every((selector) => selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector')
+			this.selectors.every(
+				(selector) =>
+					selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector'
+			)
 		);
 	}
 }

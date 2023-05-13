@@ -1,7 +1,7 @@
 [
 	{
 		"code": "reactive-component",
-    "message": "<Let/> will not be reactive if Let changes. Use <svelte:component this={Let}/> if you want this reactivity.",
+		"message": "<Let/> will not be reactive if Let changes. Use <svelte:component this={Let}/> if you want this reactivity.",
 		"end": {
 			"column": 7,
 			"line": 15
@@ -12,7 +12,7 @@
 		}
 	},
 	{
-    "message": "<ExportLet/> will not be reactive if ExportLet changes. Use <svelte:component this={ExportLet}/> if you want this reactivity.",
+		"message": "<ExportLet/> will not be reactive if ExportLet changes. Use <svelte:component this={ExportLet}/> if you want this reactivity.",
 		"code": "reactive-component",
 		"end": {
 			"column": 13,
@@ -24,7 +24,7 @@
 		}
 	},
 	{
-    "message": "<Reactive/> will not be reactive if Reactive changes. Use <svelte:component this={Reactive}/> if you want this reactivity.",
+		"message": "<Reactive/> will not be reactive if Reactive changes. Use <svelte:component this={Reactive}/> if you want this reactivity.",
 		"code": "reactive-component",
 		"end": {
 			"column": 12,

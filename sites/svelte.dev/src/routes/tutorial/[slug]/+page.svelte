@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
+	import { theme } from '@sveltejs/site-kit/components';
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
 	import TableOfContents from './TableOfContents.svelte';
 
@@ -59,7 +60,7 @@
 	$: if (repl) {
 		completed = false;
 		repl.set({
-			components: data.tutorial.initial.map(clone)
+			files: data.tutorial.initial.map(clone)
 		});
 	}
 
@@ -67,13 +68,13 @@
 
 	function reset() {
 		repl.update({
-			components: data.tutorial.initial.map(clone)
+			files: data.tutorial.initial.map(clone)
 		});
 	}
 
 	function complete() {
 		repl.update({
-			components: data.tutorial.complete.map(clone)
+			files: data.tutorial.complete.map(clone)
 		});
 	}
 
@@ -142,6 +143,7 @@
 					on:change={handle_change}
 					injectedJS={mapbox_setup}
 					relaxed
+					previewTheme={$theme.current}
 				/>
 			{/if}
 		</div>

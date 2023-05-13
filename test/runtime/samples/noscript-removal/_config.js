@@ -27,7 +27,7 @@ export default {
 };
 
 function removeNoScript(target) {
-	target.querySelectorAll('noscript').forEach(elem => {
+	target.querySelectorAll('noscript').forEach((elem) => {
 		elem.parentNode.removeChild(elem);
 	});
 }

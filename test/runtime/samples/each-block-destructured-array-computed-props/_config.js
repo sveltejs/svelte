@@ -17,8 +17,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.array = [[23, 24, 25, 26, 27, 28, 29]];
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>First: 23, Half: 26, Last: 29, Length: 7</p>
-		`);
+		`
+		);
 	}
 };

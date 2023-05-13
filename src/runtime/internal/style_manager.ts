@@ -20,13 +20,25 @@ function hash(str: string) {
 	return hash >>> 0;
 }
 
-function create_style_information(doc: Document | ShadowRoot, node: Element & ElementCSSInlineStyle) {
+function create_style_information(
+	doc: Document | ShadowRoot,
+	node: Element & ElementCSSInlineStyle
+) {
 	const info = { stylesheet: append_empty_stylesheet(node), rules: {} };
 	managed_styles.set(doc, info);
 	return info;
 }
 
-export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b: number, duration: number, delay: number, ease: (t: number) => number, fn: (t: number, u: number) => string, uid: number = 0) {
+export function create_rule(
+	node: Element & ElementCSSInlineStyle,
+	a: number,
+	b: number,
+	duration: number,
+	delay: number,
+	ease: (t: number) => number,
+	fn: (t: number, u: number) => string,
+	uid: number = 0
+) {
 	const step = 16.666 / duration;
 	let keyframes = '{\n';
 
@@ -47,7 +59,9 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 	}
 
 	const animation = node.style.animation || '';
-	node.style.animation = `${animation ? `${animation}, ` : ''}${name} ${duration}ms linear ${delay}ms 1 both`;
+	node.style.animation = `${
+		animation ? `${animation}, ` : ''
+	}${name} ${duration}ms linear ${delay}ms 1 both`;
 
 	active += 1;
 	return name;
@@ -55,9 +69,10 @@ export function create_rule(node: Element & ElementCSSInlineStyle, a: number, b:
 
 export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string) {
 	const previous = (node.style.animation || '').split(', ');
-	const next = previous.filter(name
-		? anim => anim.indexOf(name) < 0 // remove specific animation
-		: anim => anim.indexOf('__svelte') === -1 // remove all Svelte animations
+	const next = previous.filter(
+		name
+			? (anim) => anim.indexOf(name) < 0 // remove specific animation
+			: (anim) => anim.indexOf('__svelte') === -1 // remove all Svelte animations
 	);
 	const deleted = previous.length - next.length;
 	if (deleted) {
@@ -70,7 +85,7 @@ export function delete_rule(node: Element & ElementCSSInlineStyle, name?: string
 export function clear_rules() {
 	raf(() => {
 		if (active) return;
-		managed_styles.forEach(info => {
+		managed_styles.forEach((info) => {
 			const { ownerNode } = info.stylesheet;
 			// there is no ownerNode if it runs on jsdom.
 			if (ownerNode) detach(ownerNode);

@@ -13,10 +13,10 @@ export function end_hydrating() {
 }
 
 type NodeEx = Node & {
-	claim_order?: number,
-	hydrate_init?: true,
-	actual_end_child?: NodeEx,
-	childNodes: NodeListOf<NodeEx>,
+	claim_order?: number;
+	hydrate_init?: true;
+	actual_end_child?: NodeEx;
+	childNodes: NodeListOf<NodeEx>;
 };
 
 function upper_bound(low: number, high: number, key: (index: number) => number, value: number) {
@@ -54,21 +54,21 @@ function init_hydrate(target: NodeEx) {
 	}
 
 	/*
-	* Reorder claimed children optimally.
-	* We can reorder claimed children optimally by finding the longest subsequence of
-	* nodes that are already claimed in order and only moving the rest. The longest
-	* subsequence of nodes that are claimed in order can be found by
-	* computing the longest increasing subsequence of .claim_order values.
-	*
-	* This algorithm is optimal in generating the least amount of reorder operations
-	* possible.
-	*
-	* Proof:
-	* We know that, given a set of reordering operations, the nodes that do not move
-	* always form an increasing subsequence, since they do not move among each other
-	* meaning that they must be already ordered among each other. Thus, the maximal
-	* set of nodes that do not move form a longest increasing subsequence.
-	*/
+	 * Reorder claimed children optimally.
+	 * We can reorder claimed children optimally by finding the longest subsequence of
+	 * nodes that are already claimed in order and only moving the rest. The longest
+	 * subsequence of nodes that are claimed in order can be found by
+	 * computing the longest increasing subsequence of .claim_order values.
+	 *
+	 * This algorithm is optimal in generating the least amount of reorder operations
+	 * possible.
+	 *
+	 * Proof:
+	 * We know that, given a set of reordering operations, the nodes that do not move
+	 * always form an increasing subsequence, since they do not move among each other
+	 * meaning that they must be already ordered among each other. Thus, the maximal
+	 * set of nodes that do not move form a longest increasing subsequence.
+	 */
 
 	// Compute longest increasing subsequence
 	// m: subsequence length j => index k of smallest value that ends an increasing subsequence of length j
@@ -84,7 +84,10 @@ function init_hydrate(target: NodeEx) {
 
 		// upper_bound returns first greater value, so we subtract one
 		// with fast path for when we are on the current longest subsequence
-		const seqLen = ((longest > 0 && children[m[longest]].claim_order <= current) ? longest + 1 : upper_bound(1, longest, idx => children[m[idx]].claim_order, current)) - 1;
+		const seqLen =
+			(longest > 0 && children[m[longest]].claim_order <= current
+				? longest + 1
+				: upper_bound(1, longest, (idx) => children[m[idx]].claim_order, current)) - 1;
 
 		p[i] = m[seqLen] + 1;
 
@@ -130,11 +133,7 @@ export function append(target: Node, node: Node) {
 	target.appendChild(node);
 }
 
-export function append_styles(
-	target: Node,
-	style_sheet_id: string,
-	styles: string
-) {
+export function append_styles(target: Node, style_sheet_id: string, styles: string) {
 	const append_styles_to = get_root_for_style(target);
 
 	if (!append_styles_to.getElementById(style_sheet_id)) {
@@ -157,6 +156,12 @@ export function get_root_for_style(node: Node): ShadowRoot | Document {
 
 export function append_empty_stylesheet(node: Node) {
 	const style_element = element('style') as HTMLStyleElement;
+	// For transitions to work without 'style-src: unsafe-inline' Content Security Policy,
+	// these empty tags need to be allowed with a hash as a workaround until we move to the Web Animations API.
+	// Using the hash for the empty string (for an empty tag) works in all browsers except Safari.
+	// So as a workaround for the workaround, when we append empty style tags we set their content to /* empty */.
+	// The hash 'sha256-9OlNO0DNEeaVzHL4RZwCLsBHA8WBQ8toBp/4F5XV2nc=' will then work even in Safari.
+	style_element.textContent = '/* empty */';
 	append_stylesheet(get_root_for_style(node), style_element);
 	return style_element.sheet as CSSStyleSheet;
 }
@@ -170,12 +175,15 @@ export function append_hydration(target: NodeEx, node: NodeEx) {
 	if (is_hydrating) {
 		init_hydrate(target);
 
-		if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentNode !== target))) {
+		if (
+			target.actual_end_child === undefined ||
+			(target.actual_end_child !== null && target.actual_end_child.parentNode !== target)
+		) {
 			target.actual_end_child = target.firstChild;
 		}
 
 		// Skip nodes of undefined ordering
-		while ((target.actual_end_child !== null) && (target.actual_end_child.claim_order === undefined)) {
+		while (target.actual_end_child !== null && target.actual_end_child.claim_order === undefined) {
 			target.actual_end_child = target.actual_end_child.nextSibling;
 		}
 
@@ -228,9 +236,9 @@ export function object_without_properties<T, K extends keyof T>(obj: T, exclude:
 	const target = {} as Pick<T, Exclude<keyof T, K>>;
 	for (const k in obj) {
 		if (
-			has_prop(obj, k)
+			has_prop(obj, k) &&
 			// @ts-ignore
-			&& exclude.indexOf(k) === -1
+			exclude.indexOf(k) === -1
 		) {
 			// @ts-ignore
 			target[k] = obj[k];
@@ -259,7 +267,12 @@ export function comment(content: string) {
 	return document.createComment(content);
 }
 
-export function listen(node: EventTarget, event: string, handler: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | EventListenerOptions) {
+export function listen(
+	node: EventTarget,
+	event: string,
+	handler: EventListenerOrEventListenerObject,
+	options?: boolean | AddEventListenerOptions | EventListenerOptions
+) {
 	node.addEventListener(event, handler, options);
 	return () => node.removeEventListener(event, handler, options);
 }
@@ -316,7 +329,10 @@ export function attr(node: Element, attribute: string, value?: string) {
  */
 const always_set_through_set_attribute = ['width', 'height'];
 
-export function set_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+export function set_attributes(
+	node: Element & ElementCSSInlineStyle,
+	attributes: { [x: string]: string }
+) {
 	// @ts-ignore
 	const descriptors = Object.getOwnPropertyDescriptors(node.__proto__);
 	for (const key in attributes) {
@@ -326,7 +342,11 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 			node.style.cssText = attributes[key];
 		} else if (key === '__value') {
 			(node as any).value = node[key] = attributes[key];
-		} else if (descriptors[key] && descriptors[key].set && always_set_through_set_attribute.indexOf(key) === -1) {
+		} else if (
+			descriptors[key] &&
+			descriptors[key].set &&
+			always_set_through_set_attribute.indexOf(key) === -1
+		) {
 			node[key] = attributes[key];
 		} else {
 			attr(node, key, attributes[key]);
@@ -334,7 +354,10 @@ export function set_attributes(node: Element & ElementCSSInlineStyle, attributes
 	}
 }
 
-export function set_svg_attributes(node: Element & ElementCSSInlineStyle, attributes: { [x: string]: string }) {
+export function set_svg_attributes(
+	node: Element & ElementCSSInlineStyle,
+	attributes: { [x: string]: string }
+) {
 	for (const key in attributes) {
 		attr(node, key, attributes[key]);
 	}
@@ -355,11 +378,15 @@ export function set_custom_element_data(node, prop, value) {
 }
 
 export function set_dynamic_element_data(tag: string) {
-	return (/-/.test(tag)) ? set_custom_element_data_map : set_attributes;
+	return /-/.test(tag) ? set_custom_element_data_map : set_attributes;
 }
 
 export function xlink_attr(node, attribute, value) {
 	node.setAttributeNS('http://www.w3.org/1999/xlink', attribute, value);
+}
+
+export function get_svelte_dataset(node: HTMLElement) {
+	return node.dataset.svelteH;
 }
 
 export function get_binding_group_value(group, __value, checked) {
@@ -378,11 +405,11 @@ export function init_binding_group(group: HTMLInputElement[]) {
 	return {
 		/* push */ p(...inputs: HTMLInputElement[]) {
 			_inputs = inputs;
-			_inputs.forEach(input => group.push(input));
+			_inputs.forEach((input) => group.push(input));
 		},
 
 		/* remove */ r() {
-			_inputs.forEach(input => group.splice(group.indexOf(input), 1));
+			_inputs.forEach((input) => group.splice(group.indexOf(input), 1));
 		}
 	};
 }
@@ -397,10 +424,10 @@ export function init_binding_group_dynamic(group, indexes: number[]) {
 		return group;
 	}
 	function push() {
-		_inputs.forEach(input => _group.push(input));
+		_inputs.forEach((input) => _group.push(input));
 	}
 	function remove() {
-		_inputs.forEach(input => _group.splice(_group.indexOf(input), 1));
+		_inputs.forEach((input) => _group.splice(_group.indexOf(input), 1));
 	}
 	return {
 		/* update */ u(new_indexes: number[]) {
@@ -444,7 +471,7 @@ type ChildNodeArray = ChildNodeEx[] & {
 		 * The total number of elements claimed
 		 */
 		total_claimed: number;
-	}
+	};
 };
 
 export function children(element: Element) {
@@ -457,7 +484,13 @@ function init_claim_info(nodes: ChildNodeArray) {
 	}
 }
 
-function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (node: ChildNodeEx) => node is R, processNode: (node: ChildNodeEx) => ChildNodeEx | undefined, createNode: () => R, dontUpdateLastIndex: boolean = false) {
+function claim_node<R extends ChildNodeEx>(
+	nodes: ChildNodeArray,
+	predicate: (node: ChildNodeEx) => node is R,
+	processNode: (node: ChildNodeEx) => ChildNodeEx | undefined,
+	createNode: () => R,
+	dontUpdateLastIndex: boolean = false
+) {
 	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
 	init_claim_info(nodes);
 
@@ -480,7 +513,6 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 				return node;
 			}
 		}
-
 
 		// Otherwise, we try to find one before
 		// We iterate in reverse so that we don't go too far back
@@ -514,7 +546,12 @@ function claim_node<R extends ChildNodeEx>(nodes: ChildNodeArray, predicate: (no
 	return resultNode;
 }
 
-function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }, create_element: (name: string) => Element | SVGElement) {
+function claim_element_base(
+	nodes: ChildNodeArray,
+	name: string,
+	attributes: { [key: string]: boolean },
+	create_element: (name: string) => Element | SVGElement
+) {
 	return claim_node<Element | SVGElement>(
 		nodes,
 		(node: ChildNode): node is Element | SVGElement => node.nodeName === name,
@@ -526,18 +563,26 @@ function claim_element_base(nodes: ChildNodeArray, name: string, attributes: { [
 					remove.push(attribute.name);
 				}
 			}
-			remove.forEach(v => node.removeAttribute(v));
+			remove.forEach((v) => node.removeAttribute(v));
 			return undefined;
 		},
 		() => create_element(name)
 	);
 }
 
-export function claim_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+export function claim_element(
+	nodes: ChildNodeArray,
+	name: string,
+	attributes: { [key: string]: boolean }
+) {
 	return claim_element_base(nodes, name, attributes, element);
 }
 
-export function claim_svg_element(nodes: ChildNodeArray, name: string, attributes: { [key: string]: boolean }) {
+export function claim_svg_element(
+	nodes: ChildNodeArray,
+	name: string,
+	attributes: { [key: string]: boolean }
+) {
 	return claim_element_base(nodes, name, attributes, svg_element);
 }
 
@@ -556,7 +601,7 @@ export function claim_text(nodes: ChildNodeArray, data) {
 			}
 		},
 		() => text(data),
-		true	// Text nodes should not update last index since it is likely not worth it to eliminate an increasing subsequence of actual elements
+		true // Text nodes should not update last index since it is likely not worth it to eliminate an increasing subsequence of actual elements
 	);
 }
 
@@ -564,12 +609,12 @@ export function claim_space(nodes) {
 	return claim_text(nodes, ' ');
 }
 
-export function claim_comment(nodes:ChildNodeArray, data) {
+export function claim_comment(nodes: ChildNodeArray, data) {
 	return claim_node<Comment>(
 		nodes,
 		(node: ChildNode): node is Comment => node.nodeType === 8,
 		(node: Comment) => {
-			node.data =  '' + data;
+			node.data = '' + data;
 			return undefined;
 		},
 		() => comment(data),
@@ -586,7 +631,6 @@ function find_comment(nodes, text, start) {
 	}
 	return nodes.length;
 }
-
 
 export function claim_html_tag(nodes, is_svg: boolean) {
 	// find html opening tag
@@ -611,13 +655,13 @@ export function claim_html_tag(nodes, is_svg: boolean) {
 export function set_data(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.data === data) return;
-	text.data = (data as string);
+	text.data = data as string;
 }
 
 export function set_data_contenteditable(text: Text, data: unknown) {
 	data = '' + data;
 	if (text.wholeText === data) return;
-	text.data = (data as string);
+	text.data = data as string;
 }
 
 export function set_data_maybe_contenteditable(text: Text, data: unknown, attr_value: string) {
@@ -676,7 +720,7 @@ export function select_value(select) {
 }
 
 export function select_multiple_value(select) {
-	return [].map.call(select.querySelectorAll(':checked'), option => option.__value);
+	return [].map.call(select.querySelectorAll(':checked'), (option) => option.__value);
 }
 
 // unfortunately this can't be a constant as that wouldn't be tree-shakeable
@@ -707,9 +751,10 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	}
 
 	const iframe = element('iframe');
-	iframe.setAttribute('style',
+	iframe.setAttribute(
+		'style',
 		'display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; ' +
-		'overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: -1;'
+			'overflow: hidden; border: 0; opacity: 0; pointer-events: none; z-index: -1;'
 	);
 	iframe.setAttribute('aria-hidden', 'true');
 	iframe.tabIndex = -1;
@@ -747,16 +792,26 @@ export function add_iframe_resize_listener(node: HTMLElement, fn: () => void) {
 	};
 }
 
-export const resize_observer_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'content-box' });
-export const resize_observer_border_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'border-box' });
-export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserverSingleton({ box: 'device-pixel-content-box' });
+export const resize_observer_content_box = /* @__PURE__ */ new ResizeObserverSingleton({
+	box: 'content-box'
+});
+export const resize_observer_border_box = /* @__PURE__ */ new ResizeObserverSingleton({
+	box: 'border-box'
+});
+export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new ResizeObserverSingleton(
+	{ box: 'device-pixel-content-box' }
+);
 export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {
 	element.classList[toggle ? 'add' : 'remove'](name);
 }
 
-export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
+export function custom_event<T = any>(
+	type: string,
+	detail?: T,
+	{ bubbles = false, cancelable = false } = {}
+): CustomEvent<T> {
 	const e: CustomEvent<T> = document.createEvent('CustomEvent');
 	e.initCustomEvent(type, bubbles, cancelable, detail);
 	return e;
@@ -807,15 +862,13 @@ export class HtmlTag {
 		this.h(html);
 	}
 
-	m(
-		html: string,
-		target: HTMLElement | SVGElement,
-		anchor: HTMLElement | SVGElement = null
-	) {
+	m(html: string, target: HTMLElement | SVGElement, anchor: HTMLElement | SVGElement = null) {
 		if (!this.e) {
 			if (this.is_svg) this.e = svg_element(target.nodeName as keyof SVGElementTagNameMap);
-			/** #7364  target for <template> may be provided as #document-fragment(11) */
-			else this.e = element((target.nodeType === 11 ? 'TEMPLATE' :  target.nodeName) as keyof HTMLElementTagNameMap);
+			/** #7364  target for <template> may be provided as #document-fragment(11) */ else
+				this.e = element(
+					(target.nodeType === 11 ? 'TEMPLATE' : target.nodeName) as keyof HTMLElementTagNameMap
+				);
 			this.t = target.tagName !== 'TEMPLATE' ? target : (target as HTMLTemplateElement).content;
 			this.c(html);
 		}
@@ -825,7 +878,11 @@ export class HtmlTag {
 
 	h(html: string) {
 		this.e.innerHTML = html;
-		this.n = Array.from(this.e.nodeName === 'TEMPLATE' ? (this.e as HTMLTemplateElement).content.childNodes : this.e.childNodes);
+		this.n = Array.from(
+			this.e.nodeName === 'TEMPLATE'
+				? (this.e as HTMLTemplateElement).content.childNodes
+				: this.e.childNodes
+		);
 	}
 
 	i(anchor) {

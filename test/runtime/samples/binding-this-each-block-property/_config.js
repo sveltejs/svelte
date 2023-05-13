@@ -3,9 +3,12 @@ export default {
 
 	async test({ assert, component, target }) {
 		component.visible = true;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
-		`);
+		`
+		);
 
 		assert.equal(component.items[0].ref, target.querySelector('div'));
 	}

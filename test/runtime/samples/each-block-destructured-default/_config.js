@@ -19,8 +19,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.animalEntries = [{ animal: 'cow', class: 'mammal', species: '‎B. taurus' }];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p class="mammal">cow - ‎B. taurus - 50kg (110 lb) - 30cm - 0.05555555555555555</p>
-		`);
+		`
+		);
 	}
 };

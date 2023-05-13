@@ -1,10 +1,6 @@
 export default {
 	props: {
-		things: [
-			{ name: 'a' },
-			{ name: 'b' },
-			{ name: 'c' }
-		]
+		things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
 	},
 
 	intro: true,
@@ -20,18 +16,16 @@ export default {
 		assert.equal(divs[1].foo, 0.5);
 		assert.equal(divs[2].foo, 0.5);
 
-		component.things = [
-			{ name: 'a' },
-			{ name: 'woo!' },
-			{ name: 'b' },
-			{ name: 'c' }
-		];
-		assert.htmlEqual(target.innerHTML, `
+		component.things = [{ name: 'a' }, { name: 'woo!' }, { name: 'b' }, { name: 'c' }];
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
 			<div>woo!</div>
 			<div>b</div>
 			<div>c</div>
-		`);
+		`
+		);
 		divs = target.querySelectorAll('div');
 		assert.equal(divs[0].foo, 0.5);
 		assert.equal(divs[1].foo, 0);

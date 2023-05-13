@@ -8,7 +8,7 @@ export function test({ input, preprocessed }) {
 		input: input.locate,
 		preprocessed
 	});
-	
+
 	// Part from external file, should be without offset
 	assert_mapped({
 		filename: 'external.css',

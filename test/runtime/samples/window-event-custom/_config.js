@@ -8,8 +8,11 @@ export default {
 
 		await window.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>escaped: true</p>
-		`);
+		`
+		);
 	}
 };

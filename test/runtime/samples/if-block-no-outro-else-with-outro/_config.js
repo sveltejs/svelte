@@ -13,10 +13,13 @@ export default {
 
 	test({ assert, component, target }) {
 		component.x = 'y';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>A wild component appears</div>
 			<p>y</p>
 			<input type=text>
-		`);
+		`
+		);
 	}
 };

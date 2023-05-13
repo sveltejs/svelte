@@ -1,5 +1,4 @@
-
-import {magic_string_bundle} from '../../helpers';
+import { magic_string_bundle } from '../../helpers';
 
 export const component_filepath = 'src/some/deep/path/input.svelte';
 export const component_file_basename = 'input.svelte';
@@ -12,15 +11,18 @@ export default {
 		{
 			style: ({ content, filename }) => {
 				const style_to_add = `/* Filename from preprocess: ${filename} */` + input_css;
-				return  magic_string_bundle([
-					{ code: content, filename: component_file_basename },
-					{ code: style_to_add, filename: css_file_basename }
-				],component_filepath);
+				return magic_string_bundle(
+					[
+						{ code: content, filename: component_file_basename },
+						{ code: style_to_add, filename: css_file_basename }
+					],
+					component_filepath
+				);
 			}
 		}
 	],
 	js_map_sources: [component_file_basename],
-	css_map_sources: [css_file_basename,component_file_basename],
+	css_map_sources: [css_file_basename, component_file_basename],
 	options: {
 		filename: component_filepath
 	},

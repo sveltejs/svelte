@@ -6,12 +6,15 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		component.people = [ 'Alice', 'Charles', 'Bob' ];
+		component.people = ['Alice', 'Charles', 'Bob'];
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>Hello Alice</p>
 			<p>Hello Charles</p>
 			<p>Hello Bob</p>
-		`);
+		`
+		);
 	}
 };

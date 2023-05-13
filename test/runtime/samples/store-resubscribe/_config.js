@@ -11,26 +11,35 @@ export default {
 
 		await buttons[0].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>1</h1>
 			<button>+1</button>
 			<button>reset</button>
-		`);
+		`
+		);
 
 		await buttons[1].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>0</h1>
 			<button>+1</button>
 			<button>reset</button>
-		`);
+		`
+		);
 
 		await buttons[0].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>1</h1>
 			<button>+1</button>
 			<button>reset</button>
-		`);
+		`
+		);
 	}
 };

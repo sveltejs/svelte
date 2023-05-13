@@ -7,7 +7,8 @@ const todos = [
 ];
 
 export default {
-	error: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)',
+	error:
+		'Stores must be declared at the top level of the component (this may change in a future version of Svelte)',
 
 	props: {
 		todos
@@ -37,7 +38,9 @@ export default {
 		inputs[1].checked = true;
 		await inputs[1].dispatchEvent(change);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type=checkbox>
 				[todo] write docs
@@ -52,11 +55,14 @@ export default {
 				<input type=checkbox>
 				[todo] go outside
 			</label>
-		`);
+		`
+		);
 
-		await todos[0].update(todo => ({ done: !todo.done, text: todo.text }));
+		await todos[0].update((todo) => ({ done: !todo.done, text: todo.text }));
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label>
 				<input type=checkbox>
 				[done] write docs
@@ -71,6 +77,7 @@ export default {
 				<input type=checkbox>
 				[todo] go outside
 			</label>
-		`);
+		`
+		);
 	}
 };

@@ -19,8 +19,8 @@ export default {
 
 	test({ assert, component, target, raf }) {
 		let divs = target.querySelectorAll('div');
-		divs.forEach(div => {
-			div.getBoundingClientRect = function() {
+		divs.forEach((div) => {
+			div.getBoundingClientRect = function () {
 				const index = [...this.parentNode.children].indexOf(this);
 				const top = index * 30;
 
@@ -49,9 +49,6 @@ export default {
 		assert.ok(~divs[4].style.animation.indexOf('__svelte'));
 
 		raf.tick(100);
-		assert.deepEqual([
-			divs[0].style.animation,
-			divs[4].style.animation
-		], ['', '']);
+		assert.deepEqual([divs[0].style.animation, divs[4].style.animation], ['', '']);
 	}
 };

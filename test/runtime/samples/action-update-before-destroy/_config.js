@@ -8,7 +8,7 @@ export default {
 		const event = new window.MouseEvent('click');
 		const messages = [];
 		const log = console.log;
-		console.log = msg => messages.push(msg);
+		console.log = (msg) => messages.push(msg);
 		await button.dispatchEvent(event);
 		console.log = log;
 		assert.deepEqual(messages, ['afterUpdate', 'onDestroy']);

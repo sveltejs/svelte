@@ -37,47 +37,48 @@ import Window from './Window';
 
 // note: to write less types each of types in union below should have type defined as literal
 // https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html#discriminating-unions
-export type INode = Action
-| Animation
-| Attribute
-| AwaitBlock
-| Binding
-| Body
-| CatchBlock
-| Class
-| Comment
-| ConstTag
-| DebugTag
-| Document
-| EachBlock
-| Element
-| ElseBlock
-| EventHandler
-| Fragment
-| Head
-| IfBlock
-| InlineComponent
-| KeyBlock
-| Let
-| MustacheTag
-| Options
-| PendingBlock
-| RawMustacheTag
-| Slot
-| SlotTemplate
-| StyleDirective
-| Tag
-| Text
-| ThenBlock
-| Title
-| Transition
-| Window;
+export type INode =
+	| Action
+	| Animation
+	| Attribute
+	| AwaitBlock
+	| Binding
+	| Body
+	| CatchBlock
+	| Class
+	| Comment
+	| ConstTag
+	| DebugTag
+	| Document
+	| EachBlock
+	| Element
+	| ElseBlock
+	| EventHandler
+	| Fragment
+	| Head
+	| IfBlock
+	| InlineComponent
+	| KeyBlock
+	| Let
+	| MustacheTag
+	| Options
+	| PendingBlock
+	| RawMustacheTag
+	| Slot
+	| SlotTemplate
+	| StyleDirective
+	| Tag
+	| Text
+	| ThenBlock
+	| Title
+	| Transition
+	| Window;
 
 export type INodeAllowConstTag =
-| IfBlock
-| ElseBlock
-| EachBlock
-| CatchBlock
-| ThenBlock
-| InlineComponent
-| SlotTemplate;
+	| IfBlock
+	| ElseBlock
+	| EachBlock
+	| CatchBlock
+	| ThenBlock
+	| InlineComponent
+	| SlotTemplate;

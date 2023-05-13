@@ -22,7 +22,9 @@ export default {
 	}),
 	invalid_binding_no_checkbox: (binding: string, is_radio: boolean) => ({
 		code: 'invalid-binding',
-		message: `'${binding}' binding can only be used with <input type="checkbox">` + (is_radio ? ' — for <input type="radio">, use \'group\' binding' : '')
+		message:
+			`'${binding}' binding can only be used with <input type="checkbox">` +
+			(is_radio ? ' — for <input type="radio">, use \'group\' binding' : '')
 	}),
 	invalid_binding: (binding: string) => ({
 		code: 'invalid-binding',
@@ -30,7 +32,9 @@ export default {
 	}),
 	invalid_binding_window: (parts: string[]) => ({
 		code: 'invalid-binding',
-		message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${parts[parts.length - 1]}' rather than '${parts.join('.')}'`
+		message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${
+			parts[parts.length - 1]
+		}' rather than '${parts.join('.')}'`
 	}),
 	invalid_binding_let: {
 		code: 'invalid-binding',
@@ -54,23 +58,24 @@ export default {
 	}),
 	invalid_type: {
 		code: 'invalid-type',
-		message: '\'type\' attribute cannot be dynamic if input uses two-way binding'
+		message: "'type' attribute cannot be dynamic if input uses two-way binding"
 	},
 	missing_type: {
 		code: 'missing-type',
-		message: '\'type\' attribute must be specified'
+		message: "'type' attribute must be specified"
 	},
 	dynamic_multiple_attribute: {
 		code: 'dynamic-multiple-attribute',
-		message: '\'multiple\' attribute cannot be dynamic if select uses two-way binding'
+		message: "'multiple' attribute cannot be dynamic if select uses two-way binding"
 	},
 	missing_contenteditable_attribute: {
 		code: 'missing-contenteditable-attribute',
-		message: '\'contenteditable\' attribute is required for textContent, innerHTML and innerText two-way bindings'
+		message:
+			"'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings"
 	},
 	dynamic_contenteditable_attribute: {
 		code: 'dynamic-contenteditable-attribute',
-		message: '\'contenteditable\' attribute cannot be dynamic if element uses two-way binding'
+		message: "'contenteditable' attribute cannot be dynamic if element uses two-way binding"
 	},
 	invalid_event_modifier_combination: (modifier1: string, modifier2: string) => ({
 		code: 'invalid-event-modifier',
@@ -90,7 +95,8 @@ export default {
 	},
 	textarea_duplicate_value: {
 		code: 'textarea-duplicate-value',
-		message: 'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
+		message:
+			'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
 	},
 	illegal_attribute: (name: string) => ({
 		code: 'illegal-attribute',
@@ -106,7 +112,8 @@ export default {
 	}),
 	invalid_slotted_content: {
 		code: 'invalid-slotted-content',
-		message: 'Element with a slot=\'...\' attribute must be a child of a component or a descendant of a custom element'
+		message:
+			"Element with a slot='...' attribute must be a child of a component or a descendant of a custom element"
 	},
 	invalid_attribute_head: {
 		code: 'invalid-attribute',
@@ -158,13 +165,14 @@ export default {
 	},
 	duplicate_transition: (directive: string, parent_directive: string) => {
 		function describe(_directive: string) {
-			return _directive === 'transition'
-				? "a 'transition'"
-				: `an '${_directive}'`;
+			return _directive === 'transition' ? "a 'transition'" : `an '${_directive}'`;
 		}
-		const message = directive === parent_directive
-			? `An element can only have one '${directive}' directive`
-			: `An element cannot have both ${describe(parent_directive)} directive and ${describe(directive)} directive`;
+		const message =
+			directive === parent_directive
+				? `An element can only have one '${directive}' directive`
+				: `An element cannot have both ${describe(parent_directive)} directive and ${describe(
+						directive
+				  )} directive`;
 		return {
 			code: 'duplicate-transition',
 			message
@@ -172,7 +180,8 @@ export default {
 	},
 	contextual_store: {
 		code: 'contextual-store',
-		message: 'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
+		message:
+			'Stores must be declared at the top level of the component (this may change in a future version of Svelte)'
 	},
 	default_export: {
 		code: 'default-export',
@@ -202,13 +211,30 @@ export default {
 		code: 'invalid-tag-property',
 		message: "tag name must be two or more words joined by the '-' character"
 	},
+	invalid_customElement_attribute: {
+		code: 'invalid-customElement-attribute',
+		message:
+			"'customElement' must be a string literal defining a valid custom element name or an object of the form " +
+			"{ tag: string; shadow?: 'open' | 'none'; props?: { [key: string]: { attribute?: string; reflect?: boolean; type: .. } } }"
+	},
 	invalid_tag_attribute: {
 		code: 'invalid-tag-attribute',
 		message: "'tag' must be a string literal"
 	},
+	invalid_shadow_attribute: {
+		code: 'invalid-shadow-attribute',
+		message: "'shadow' must be either 'open' or 'none'"
+	},
+	invalid_props_attribute: {
+		code: 'invalid-props-attribute',
+		message:
+			"'props' must be a statically analyzable object literal of the form " +
+			"'{ [key: string]: { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }'"
+	},
 	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
 		code: 'invalid-namespace-property',
-		message: `Invalid namespace '${namespace}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
+		message:
+			`Invalid namespace '${namespace}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
 	invalid_namespace_attribute: {
 		code: 'invalid-namespace-attribute',
@@ -218,13 +244,14 @@ export default {
 		code: `invalid-${name}-value`,
 		message: `${name} attribute must be true or false`
 	}),
-	invalid_options_attribute_unknown: {
+	invalid_options_attribute_unknown: (name: string) => ({
 		code: 'invalid-options-attribute',
-		message: '<svelte:options> unknown attribute'
-	},
+		message: `<svelte:options> unknown attribute '${name}'`
+	}),
 	invalid_options_attribute: {
 		code: 'invalid-options-attribute',
-		message: "<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
+		message:
+			"<svelte:options> can only have static 'tag', 'namespace', 'accessors', 'immutable' and 'preserveWhitespace' attributes"
 	},
 	css_invalid_global: {
 		code: 'css-invalid-global',
@@ -236,7 +263,8 @@ export default {
 	},
 	css_invalid_global_selector_position: {
 		code: 'css-invalid-global-selector-position',
-		message: ':global(...) not at the start of a selector sequence should not contain type or universal selectors'
+		message:
+			':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
 	css_invalid_selector: (selector: string) => ({
 		code: 'css-invalid-selector',
@@ -248,15 +276,18 @@ export default {
 	},
 	invalid_animation_immediate: {
 		code: 'invalid-animation',
-		message: 'An element that uses the animate directive must be the immediate child of a keyed each block'
+		message:
+			'An element that uses the animate directive must be the immediate child of a keyed each block'
 	},
 	invalid_animation_key: {
 		code: 'invalid-animation',
-		message: 'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
+		message:
+			'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
 	},
 	invalid_animation_sole: {
 		code: 'invalid-animation',
-		message: 'An element that uses the animate directive must be the sole child of a keyed each block'
+		message:
+			'An element that uses the animate directive must be the sole child of a keyed each block'
 	},
 	invalid_animation_dynamic_element: {
 		code: 'invalid-animation',
@@ -264,11 +295,13 @@ export default {
 	},
 	invalid_directive_value: {
 		code: 'invalid-directive-value',
-		message: 'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
+		message:
+			'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	},
 	invalid_const_placement: {
 		code: 'invalid-const-placement',
-		message: '{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
+		message:
+			'{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
 	},
 	invalid_const_declaration: (name: string) => ({
 		code: 'invalid-const-declaration',
@@ -285,6 +318,10 @@ export default {
 	invalid_component_style_directive: {
 		code: 'invalid-component-style-directive',
 		message: 'Style directives cannot be used on components'
+	},
+	invalid_var_declaration: {
+		code: 'invalid_var_declaration',
+		message: '"var" scope should not extend outside the reactive block'
 	},
 	invalid_style_directive_modifier: (valid: string) => ({
 		code: 'invalid-style-directive-modifier',

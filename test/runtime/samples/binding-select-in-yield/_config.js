@@ -8,7 +8,9 @@ export default {
 	async test({ assert, component, target, window }) {
 		await component.modal.toggle();
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>b</span>
 
 			<select>
@@ -16,7 +18,8 @@ export default {
 				<option value='b'>b</option>
 				<option value='c'>c</option>
 			</select>
-		`);
+		`
+		);
 
 		let select = target.querySelector('select');
 		const change = new window.MouseEvent('change');
@@ -25,13 +28,14 @@ export default {
 		await select.dispatchEvent(change);
 		assert.equal(component.letter, 'c');
 
-		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
-			false,
-			false,
-			true
-		]);
+		assert.deepEqual(
+			Array.from(select.options).map((o) => o.selected),
+			[false, false, true]
+		);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>c</span>
 
 			<select>
@@ -39,20 +43,22 @@ export default {
 				<option value='b'>b</option>
 				<option value='c'>c</option>
 			</select>
-		`);
+		`
+		);
 
 		await component.modal.toggle();
 		await component.modal.toggle();
 
 		select = target.querySelector('select');
 
-		assert.deepEqual(Array.from(select.options).map(o => o.selected), [
-			false,
-			false,
-			true
-		]);
+		assert.deepEqual(
+			Array.from(select.options).map((o) => o.selected),
+			[false, false, true]
+		);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>c</span>
 
 			<select>
@@ -60,6 +66,7 @@ export default {
 				<option value='b'>b</option>
 				<option value='c'>c</option>
 			</select>
-		`);
+		`
+		);
 	}
 };

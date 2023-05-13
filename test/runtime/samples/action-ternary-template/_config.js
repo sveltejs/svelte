@@ -13,8 +13,11 @@ export default {
 		const click = new window.MouseEvent('click');
 
 		await header.dispatchEvent(click);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Hello World!</h1>
-		`);
+		`
+		);
 	}
 };

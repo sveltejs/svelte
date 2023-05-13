@@ -13,7 +13,9 @@ export default {
 
 	test({ assert, component, target, raf }) {
 		component.visible = true;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="row">
 				<div class="cell">1, a</div>
 				<div class="cell">1, b</div>
@@ -29,7 +31,8 @@ export default {
 				<div class="cell">3, b</div>
 				<div class="cell">3, c</div>
 			</div>
-		`);
+		`
+		);
 
 		component.visible = false;
 		raf.tick(0);

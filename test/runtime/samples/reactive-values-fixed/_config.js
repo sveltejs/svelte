@@ -4,8 +4,11 @@ export default {
 	`,
 
 	test({ assert, target }) {
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>4</p>
-		`);
+		`
+		);
 	}
 };

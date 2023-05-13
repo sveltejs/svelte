@@ -9,7 +9,7 @@ export default function mark_each_block_bindings(
 ) {
 	// we need to ensure that the each block creates a context including
 	// the list and the index, if they're not otherwise referenced
-	binding.expression.references.forEach(name => {
+	binding.expression.references.forEach((name) => {
 		const each_block = parent.node.scope.get_owner(name);
 		if (each_block) {
 			(each_block as EachBlock).has_binding = true;

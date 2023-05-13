@@ -17,9 +17,12 @@ export default {
 		await input.dispatchEvent(event);
 
 		assert.deepEqual(component.deep, { name: 'blah' });
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>blah</p>
-		`);
+		`
+		);
 	}
 };

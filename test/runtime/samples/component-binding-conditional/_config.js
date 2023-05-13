@@ -9,9 +9,12 @@ export default {
 	test({ assert, component, target }) {
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>y: bar</p>
 			<p>y: bar</p>
-		`);
+		`
+		);
 	}
 };

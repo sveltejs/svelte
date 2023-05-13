@@ -5,10 +5,7 @@ export default {
 	skip: true,
 
 	test({ assert }) {
-		assert.deepEqual(result, [
-			'onMount foo',
-			'onMount bar'
-		]);
+		assert.deepEqual(result, ['onMount foo', 'onMount bar']);
 
 		result.pop();
 		result.pop();

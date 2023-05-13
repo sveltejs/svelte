@@ -32,7 +32,9 @@ export default {
 		await spans[0].dispatchEvent(click);
 
 		assert.equal(component.currentIdentifier, 1);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p><span class='selected'>1</span></p>
 			<p><span class=''>2</span></p>
 			<p><span class=''>3</span></p>
@@ -56,12 +58,15 @@ export default {
 			<p><span class=''>3</span></p>
 			<p><span class=''>2</span></p>
 			<p><span class='selected'>1</span></p>
-		`);
+		`
+		);
 
 		await spans[0].dispatchEvent(click);
 
 		assert.equal(component.currentIdentifier, null);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p><span class=''>1</span></p>
 			<p><span class=''>2</span></p>
 			<p><span class=''>3</span></p>
@@ -85,6 +90,7 @@ export default {
 			<p><span class=''>3</span></p>
 			<p><span class=''>2</span></p>
 			<p><span class=''>1</span></p>
-		`);
+		`
+		);
 	}
 };

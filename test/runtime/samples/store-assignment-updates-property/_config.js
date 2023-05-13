@@ -12,20 +12,26 @@ export default {
 
 		await btn1.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>a: {"foo":4,"bar":2}</p>
 			<p>b: {"foo":4,"baz":0}</p>
 			<button></button>
 			<button></button>
-		`);
+		`
+		);
 
 		await btn2.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>a: {"foo":5,"bar":2}</p>
 			<p>b: {"foo":5,"qux":0}</p>
 			<button></button>
 			<button></button>
-		`);
+		`
+		);
 	}
 };

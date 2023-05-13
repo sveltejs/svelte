@@ -7,9 +7,12 @@ export default {
 	test({ assert, component, target }) {
 		component.list = [3, 4];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>3</span>
 			<span>4</span>
-		`);
+		`
+		);
 	}
 };

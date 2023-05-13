@@ -15,12 +15,18 @@ export default {
 		component.links = ['d', 'e', 'f'];
 
 		const links = [...target.querySelectorAll('a')];
-		assert.deepEqual(links.map(l => l.href), ['x#d', 'x#e', 'x#f']);
+		assert.deepEqual(
+			links.map((l) => l.href),
+			['x#d', 'x#e', 'x#f']
+		);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<a href="x#d">x#d</a>
 			<a href="x#e">x#e</a>
 			<a href="x#f">x#f</a>
-		`);
+		`
+		);
 	}
 };

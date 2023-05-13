@@ -1,12 +1,46 @@
 # Svelte changelog
 
-## Unreleased
+## Unreleased (4.0)
 
-* Handle `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
-* Add support for resize observer bindings (`<div bind:contentRect|contentBoxSize|borderBoxSize|devicePixelContentBoxSize>`) ([#8022](https://github.com/sveltejs/svelte/pull/8022))
-* Update interpolated style directive properly when using spread ([#8438](https://github.com/sveltejs/svelte/issues/8438))
-* Remove style directive property when value is `undefined` ([#8462](https://github.com/sveltejs/svelte/issues/8462))
-* Ensure version is typed as `string` instead of the literal `__VERSION__` ([#8498](https://github.com/sveltejs/svelte/issues/8498))
+* **breaking** Minimum supported Node version is now Node 16 ([#8566](https://github.com/sveltejs/svelte/pull/8566))
+* **breaking** Minimum supported webpack version is now webpack 5 ([#8515](https://github.com/sveltejs/svelte/pull/8515))
+* **breaking** Bundlers must specify the `browser` condition when building a frontend bundle for the browser ([#8516](https://github.com/sveltejs/svelte/pull/8516))
+* **breaking** Minimum supported vite-plugin-svelte version is now 2.1.1. SvelteKit users can upgrade to 1.15.9 or newer to ensure a compatible version ([#8516](https://github.com/sveltejs/svelte/pull/8516))
+* **breaking** Minimum supported TypeScript version is now TypeScript 5 (it will likely work with lower versions, but we make no guarantees about that) ([#8488](https://github.com/sveltejs/svelte/pull/8488))
+* **breaking** Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* **breaking** Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* **breaking** Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
+* **breaking** Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
+* **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
+* **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
+* **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
+* Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
+* Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
+* Add `a11y-no-static-element-interactions`rule ([#8251](https://github.com/sveltejs/svelte/pull/8251))
+* Improve duplicate key error for keyed `each` blocks ([#8411](https://github.com/sveltejs/svelte/pull/8411))
+* Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
+* Allow `$store` to be used with changing values including nullish values ([#7555](https://github.com/sveltejs/svelte/issues/7555))
+* Initialize stylesheet with `/* empty */` to enable setting CSP directive that also works in Safari ([#7800](https://github.com/sveltejs/svelte/pull/7800))
+* Treat slots as if they don't exist when using CSS adjacent and general sibling combinators ([#8284](https://github.com/sveltejs/svelte/issues/8284))
+* Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
+* Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
+
+## 3.59.1
+
+* Handle dynamic values in `a11y-autocomplete-valid` ([#8567](https://github.com/sveltejs/svelte/pull/8567))
+
+## 3.59.0
+
+* Add `ResizeObserver` bindings `contentRect`/`contentBoxSize`/`borderBoxSize`/`devicePixelContentBoxSize` ([#8022](https://github.com/sveltejs/svelte/pull/8022))
+* Add `devicePixelRatio` binding for `<svelte:window>` ([#8285](https://github.com/sveltejs/svelte/issues/8285))
+* Add `fullscreenElement` and `visibilityState` bindings for `<svelte:document>` ([#8507](https://github.com/sveltejs/svelte/pull/8507))
+* Add `a11y-autocomplete-valid` warning ([#8520](https://github.com/sveltejs/svelte/pull/8520))
+* Fix handling of `width`/`height` attributes when spreading ([#6752](https://github.com/sveltejs/svelte/issues/6752))
+* Fix updating of interpolated `style:` directive when using spread ([#8438](https://github.com/sveltejs/svelte/issues/8438))
+* Remove `style:` directive property when value is `undefined` ([#8462](https://github.com/sveltejs/svelte/issues/8462))
+* Fix type of `VERSION` compiler export ([#8498](https://github.com/sveltejs/svelte/issues/8498))
+* Relax `a11y-no-redundant-roles` warning ([#8536](https://github.com/sveltejs/svelte/pull/8536))
+* Handle nested array rest destructuring ([#8552](https://github.com/sveltejs/svelte/issues/8552), [#8554](https://github.com/sveltejs/svelte/issues/8554))
 
 ## 3.58.0
 

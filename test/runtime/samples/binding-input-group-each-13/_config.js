@@ -4,9 +4,9 @@ export default {
 		const radio = target.querySelector('input[type=radio]');
 
 		assert.equal(radio.checked, false);
-		
+
 		const event = new window.Event('input');
-		
+
 		input1.value = 'world';
 		await input1.dispatchEvent(event);
 		assert.equal(radio.checked, true);
@@ -14,15 +14,15 @@ export default {
 		input2.value = 'foo';
 		await input2.dispatchEvent(event);
 		assert.equal(radio.checked, false);
-		
+
 		input1.value = 'foo';
 		await input1.dispatchEvent(event);
 		assert.equal(radio.checked, true);
-		
+
 		input1.value = 'bar';
 		await input1.dispatchEvent(event);
 		assert.equal(radio.checked, false);
-		
+
 		input2.value = 'bar';
 		await input2.dispatchEvent(event);
 		assert.equal(radio.checked, true);

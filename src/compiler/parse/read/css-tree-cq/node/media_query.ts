@@ -1,21 +1,11 @@
 // @ts-nocheck
-import {
-	WhiteSpace,
-	Comment,
-	Ident,
-	LeftParenthesis
-} from 'css-tree/tokenizer';
+import { WhiteSpace, Comment, Ident, LeftParenthesis } from 'css-tree/tokenizer';
 
 import { lookahead_is_range } from './lookahead_is_range';
 
 export const name = 'MediaQuery';
 export const structure = {
-	children: [[
-		'Identifier',
-		'QueryFeature',
-		'QueryFeatureRange',
-		'WhiteSpace'
-	]]
+	children: [['Identifier', 'QueryFeature', 'QueryFeatureRange', 'WhiteSpace']]
 };
 
 export function parse() {
@@ -24,29 +14,28 @@ export function parse() {
 
 	this.skipSC();
 
-	scan:
-		while (!this.eof) {
-			switch (this.tokenType) {
-				case Comment:
-				case WhiteSpace:
-					this.next();
-					continue;
+	scan: while (!this.eof) {
+		switch (this.tokenType) {
+			case Comment:
+			case WhiteSpace:
+				this.next();
+				continue;
 
-				case Ident:
-					child = this.Identifier();
-					break;
+			case Ident:
+				child = this.Identifier();
+				break;
 
-				case LeftParenthesis:
-					// Lookahead to determine if range feature.
-					child = lookahead_is_range.call(this) ? this.QueryFeatureRange() : this.QueryFeature();
-					break;
+			case LeftParenthesis:
+				// Lookahead to determine if range feature.
+				child = lookahead_is_range.call(this) ? this.QueryFeatureRange() : this.QueryFeature();
+				break;
 
-				default:
-					break scan;
-			}
-
-			children.push(child);
+			default:
+				break scan;
 		}
+
+		children.push(child);
+	}
 
 	if (child === null) {
 		this.error('Identifier or parenthesis is expected');

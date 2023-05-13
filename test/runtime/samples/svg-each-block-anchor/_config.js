@@ -14,12 +14,15 @@ export default {
 	test({ assert, component, target }) {
 		component.foo = ['a', 'b'];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<svg>
 				<g class='foo'>a</g>
 				<g class='foo'>b</g>
 				<g class='bar'>c</g>
 			</svg>
-		`);
+		`
+		);
 	}
 };

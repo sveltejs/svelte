@@ -25,10 +25,7 @@ export default {
 		);
 
 		component.tag = null;
-		assert.htmlEqual(
-			target.innerHTML,
-			'<my-custom-element id="b">Hello foo!</my-custom-element>'
-		);
+		assert.htmlEqual(target.innerHTML, '<my-custom-element id="b">Hello foo!</my-custom-element>');
 
 		component.tag = 'div';
 		assert.htmlEqual(

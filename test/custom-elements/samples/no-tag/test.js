@@ -1,9 +1,11 @@
 import * as assert from 'assert';
+import { tick } from 'svelte';
 import CustomElement from './main.svelte';
 
-export default function (target) {
-	customElements.define('no-tag', CustomElement);
+export default async function (target) {
+	customElements.define('no-tag', CustomElement.element);
 	target.innerHTML = '<no-tag name="world"></no-tag>';
+	await tick();
 
 	const el = target.querySelector('no-tag');
 	const h1 = el.shadowRoot.querySelector('h1');

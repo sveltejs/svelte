@@ -24,9 +24,6 @@ export default class KeyBlockWrapper extends Wrapper {
 	) {
 		super(renderer, block, parent, node);
 
-		this.cannot_use_innerhtml();
-		this.not_static_content();
-
 		this.dependencies = node.expression.dynamic_dependencies();
 
 		if (this.dependencies.length) {
@@ -63,23 +60,21 @@ export default class KeyBlockWrapper extends Wrapper {
 	}
 
 	render_dynamic_key(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
-		this.fragment.render(
-			this.block,
-			null,
-			(x`#nodes` as unknown) as Identifier
-		);
+		this.fragment.render(this.block, null, x`#nodes` as unknown as Identifier);
 
-		const has_transitions = !!(
-			this.block.has_intro_method || this.block.has_outro_method
-		);
+		const has_transitions = !!(this.block.has_intro_method || this.block.has_outro_method);
 		const dynamic = this.block.has_update_method;
 
 		const previous_key = block.get_unique_name('previous_key');
 		const snippet = this.node.expression.manipulate(block);
 		block.add_variable(previous_key, snippet);
 
-		const not_equal = this.renderer.component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-		const condition = x`${this.renderer.dirty(this.dependencies)} && ${not_equal}(${previous_key}, ${previous_key} = ${snippet})`;
+		const not_equal = this.renderer.component.component_options.immutable
+			? x`@not_equal`
+			: x`@safe_not_equal`;
+		const condition = x`${this.renderer.dirty(
+			this.dependencies
+		)} && ${not_equal}(${previous_key}, ${previous_key} = ${snippet})`;
 
 		block.chunks.init.push(b`
 			let ${this.var} = ${this.block.name}(#ctx);
@@ -89,9 +84,7 @@ export default class KeyBlockWrapper extends Wrapper {
 			block.chunks.claim.push(b`${this.var}.l(${parent_nodes});`);
 		}
 		block.chunks.mount.push(
-			b`${this.var}.m(${parent_node || '#target'}, ${
-				parent_node ? 'null' : '#anchor'
-			});`
+			b`${this.var}.m(${parent_node || '#target'}, ${parent_node ? 'null' : '#anchor'});`
 		);
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const body = b`

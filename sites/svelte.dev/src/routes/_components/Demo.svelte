@@ -31,14 +31,18 @@
 	let selected = examples[0];
 </script>
 
-<Section --background="radial-gradient(circle at 40% 30%, rgb(110, 113, 118), rgb(81, 93, 106))">
+<Section --background="var(--sk-back-2)">
 	<h3>Why Svelte?</h3>
 
 	<div class="container">
 		<div class="controls">
 			<div class="tabs">
 				{#each examples as example, i}
-					<button on:click={() => (selected = example)} class:selected={selected === example}>
+					<button
+						class="tab"
+						class:selected={selected === example}
+						on:click={() => (selected = example)}
+					>
 						<span class="small-show">{i + 1}</span>
 						<span class="small-hide">{example.title}</span>
 					</button>
@@ -58,12 +62,11 @@
 
 <style>
 	h3 {
-		color: white;
+		font-size: var(--sk-text-xl);
 	}
 
 	.description {
-		color: white;
-		height: 12rem; /* prevent layout popping when tab changes */
+		color: var(--sk-text-2);
 	}
 
 	.container {
@@ -78,17 +81,21 @@
 		width: 100%;
 		height: 5rem;
 		grid-template-columns: 4fr 1fr;
-		color: white;
+		color: var(--sk-text-1);
 		align-items: center;
 		font-size: var(--sk-text-s);
+	}
+
+	a {
+		color: unset;
 	}
 
 	.tabs {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		height: 100%;
-		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
-		background-color: rgba(255, 255, 255, 0.1);
+		background-color: var(--sk-back-1);
+		border-radius: var(--sk-border-radius);
 	}
 
 	button,
@@ -98,16 +105,42 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
+		border-right: 0.5px solid var(--sk-text-4);
+		border-right: 0.5px solid color-mix(in hsl, var(--sk-text-4), transparent 40%);
+		background-color: var(--sk-back-4);
+		transition: 0.15s ease;
+		transition-property: transform, background-color, color;
 	}
 
 	button:hover {
-		background-color: rgba(255, 255, 255, 0.2);
+		background-color: var(--sk-back-3);
+		background-color: color-mix(in srgb, var(--sk-back-4) 70%, var(--sk-back-1) 30%);
+	}
+
+	button:has(+ .selected) {
+		border-right: initial;
+	}
+
+	button:first-child {
+		border-radius: var(--sk-border-radius) 0 0 0;
+	}
+	button:last-child {
+		border-radius: 0 var(--sk-border-radius) 0 0;
+		border-right: initial;
 	}
 
 	button.selected {
 		background-color: var(--sk-back-1);
 		color: var(--sk-text-2);
+		border-radius: var(--sk-border-radius) var(--sk-border-radius) 0 0;
+		border-right: initial;
+		transform: translateY(-5px);
+	}
+
+	a {
+		border-right: initial;
+		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
+		background-color: initial;
 	}
 
 	.small-show {
@@ -120,11 +153,6 @@
 
 	.large-show {
 		display: none;
-	}
-
-	a,
-	.description :global(a) {
-		color: white;
 	}
 
 	.description :global(a) {

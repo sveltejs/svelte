@@ -1,5 +1,4 @@
 export function test({ assert, preprocessed, js }) {
-
 	assert.equal(preprocessed.error, undefined);
 
 	// sourcemap stores location only for 'answer = 42;'
@@ -9,13 +8,9 @@ export function test({ assert, preprocessed, js }) {
 		[js, 'bar.js', 'console.log(answer);', 0],
 		[js, 'foo2.js', 'answer2 = 84;', 4],
 		[js, 'bar2.js', 'console.log(answer2);', 0]
-	]
-	.forEach(([where, sourcefile, content, column]) => {
-
+	].forEach(([where, sourcefile, content, column]) => {
 		assert.deepEqual(
-			where.mapConsumer.originalPositionFor(
-				where.locate_1(content)
-			),
+			where.mapConsumer.originalPositionFor(where.locate_1(content)),
 			{
 				source: sourcefile,
 				name: null,
@@ -24,6 +19,5 @@ export function test({ assert, preprocessed, js }) {
 			},
 			`failed to locate "${content}" from "${sourcefile}"`
 		);
-
 	});
 }

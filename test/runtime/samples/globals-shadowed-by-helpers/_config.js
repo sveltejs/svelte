@@ -7,6 +7,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.x = 3;
-		assert.htmlEqual( target.innerHTML, 'potato' );
+		assert.htmlEqual(target.innerHTML, 'potato');
 	}
 };

@@ -4,9 +4,6 @@ export default {
 	},
 
 	test({ assert, target }) {
-		assert.equal(
-			target.textContent,
-			'a b c '
-		);
+		assert.equal(target.textContent, 'a b c ');
 	}
 };

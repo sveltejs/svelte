@@ -8,16 +8,10 @@ import { regex_non_whitespace_character } from '../../utils/patterns';
 // Whitespace inside one of these elements will not result in
 // a whitespace node being created in any circumstances. (This
 // list is almost certainly very incomplete)
-const elements_without_text = new Set([
-	'audio',
-	'datalist',
-	'dl',
-	'optgroup',
-	'select',
-	'video'
-]);
+const elements_without_text = new Set(['audio', 'datalist', 'dl', 'optgroup', 'select', 'video']);
 
 const regex_ends_with_svg = /svg$/;
+const regex_non_whitespace_characters = /[\S\u00A0]/;
 
 export default class Text extends Node {
 	type: 'Text';
@@ -37,7 +31,8 @@ export default class Text extends Node {
 		if (!parent_element) return false;
 
 		if (parent_element.type === 'Head') return true;
-		if (parent_element.type === 'InlineComponent') return parent_element.children.length === 1 && this === parent_element.children[0];
+		if (parent_element.type === 'InlineComponent')
+			return parent_element.children.length === 1 && this === parent_element.children[0];
 
 		// svg namespace exclusions
 		if (regex_ends_with_svg.test(parent_element.namespace)) {
@@ -62,5 +57,12 @@ export default class Text extends Node {
 		}
 
 		return false;
+	}
+
+	use_space(): boolean {
+		if (this.component.compile_options.preserveWhitespace) return false;
+		if (regex_non_whitespace_characters.test(this.data)) return false;
+
+		return !this.within_pre();
 	}
 }

@@ -11,13 +11,16 @@ export default {
 	async test({ assert, component, target }) {
 		await component.swap(0, 1);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<ul>
 				<li>Compté</li>
 				<li>Gruyere</li>
 				<li>Beaufort</li>
 				<li>Abondance</li>
 			</ul>
-		`);
+		`
+		);
 	}
 };

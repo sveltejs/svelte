@@ -26,7 +26,7 @@ const _boolean_attributes = [
 	'selected'
 ] as const;
 
-export type BooleanAttributes = typeof _boolean_attributes[number];
+export type BooleanAttributes = (typeof _boolean_attributes)[number];
 
 /**
  * List of HTML boolean attributes (e.g. `<input disabled>`).

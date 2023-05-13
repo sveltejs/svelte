@@ -7,10 +7,8 @@ export default {
 		};
 	},
 
-	test(assert, target, snapshot, component) {
+	test(assert, target, _, component) {
 		const h1 = target.querySelector('h1');
-
-		assert.equal(h1, snapshot.h1);
 		assert.equal(component.h1, h1);
 	}
 };

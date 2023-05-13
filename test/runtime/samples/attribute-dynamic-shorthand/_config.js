@@ -3,6 +3,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.id = 'bar';
-		assert.equal( target.innerHTML, '<div id="bar"></div>' );
+		assert.equal(target.innerHTML, '<div id="bar"></div>');
 	}
 };

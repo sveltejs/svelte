@@ -17,16 +17,22 @@ export default {
 		el.textContent = 'everybody';
 		await el.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<editor contenteditable="true">everybody</editor>
 			<p>hello everybody</p>
-		`);
+		`
+		);
 
 		component.name = 'goodbye';
 		assert.equal(el.textContent, 'goodbye');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<editor contenteditable="true">goodbye</editor>
 			<p>hello goodbye</p>
-		`);
+		`
+		);
 	}
 };

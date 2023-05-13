@@ -6,7 +6,7 @@
 
 <Section>
 	<p class="intro">
-		Svelte is free and open source software, made possible by the work of hundreds of supporters.
+		Svelte is free and open source software, made possible <br /> by the work of hundreds of supporters.
 	</p>
 
 	<div class="layout">
@@ -49,6 +49,7 @@
 <style>
 	h3 {
 		color: var(--sk-text-2);
+		font-size: var(--sk-text-l);
 	}
 
 	.intro {

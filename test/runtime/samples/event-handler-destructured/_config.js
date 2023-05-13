@@ -8,8 +8,11 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		await button.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>clicked: true</button>
-		`);
+		`
+		);
 	}
 };

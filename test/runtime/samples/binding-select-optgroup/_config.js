@@ -1,5 +1,4 @@
 export default {
-
 	ssrHtml: `
 		<h1>Hello undefined!</h1>
 
@@ -35,7 +34,9 @@ export default {
 		await select.dispatchEvent(change);
 
 		assert.equal(component.name, 'World');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Hello World!</h1>
 
 			<select>
@@ -44,6 +45,7 @@ export default {
 					<option value="World">World</option>
 				</optgroup>
 			</select>
-		`);
+		`
+		);
 	}
 };

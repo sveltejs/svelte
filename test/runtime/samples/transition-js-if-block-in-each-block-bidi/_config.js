@@ -25,21 +25,27 @@ export default {
 		assert.equal(divs[4].foo, 1);
 
 		raf.tick(200);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>1</div>
 			<div>2</div>
 			<div>3</div>
 			<div>4</div>
-		`);
+		`
+		);
 
 		component.threshold = 3;
 		assert.equal(divs[3].foo, 1);
 
 		raf.tick(300);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>1</div>
 			<div>2</div>
 			<div>3</div>
-		`);
+		`
+		);
 	}
 };

@@ -1,10 +1,6 @@
 export default {
 	props: {
-		things: [
-			{ name: 'a' },
-			{ name: 'b' },
-			{ name: 'c' }
-		]
+		things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
 	},
 
 	intro: true,
@@ -24,10 +20,7 @@ export default {
 		assert.equal(divs[1].foo, 1);
 		assert.equal(divs[2].foo, 1);
 
-		component.things = [
-			{ name: 'a' },
-			{ name: 'c' }
-		];
+		component.things = [{ name: 'a' }, { name: 'c' }];
 
 		const divs2 = target.querySelectorAll('div');
 		assert.strictEqual(divs[0], divs2[0]);
@@ -39,11 +32,7 @@ export default {
 		assert.equal(divs[1].foo, 0.5);
 		assert.equal(divs[2].foo, 1);
 
-		component.things = [
-			{ name: 'a' },
-			{ name: 'b' },
-			{ name: 'c' }
-		];
+		component.things = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
 
 		raf.tick(175);
 		assert.equal(divs[0].foo, 1);

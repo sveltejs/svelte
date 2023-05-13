@@ -1,11 +1,12 @@
 export let stopped = false;
 
-export const stop = () => stopped = true;
+export const stop = () => (stopped = true);
 
-export const sleep = ms => new Promise(f => {
-	if (stopped) return;
-	setTimeout(() => {
+export const sleep = (ms) =>
+	new Promise((f) => {
 		if (stopped) return;
-		f();
-	}, ms);
-});
+		setTimeout(() => {
+			if (stopped) return;
+			f();
+		}, ms);
+	});

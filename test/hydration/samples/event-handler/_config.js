@@ -11,16 +11,17 @@ export default {
 		};
 	},
 
-	async test(assert, target, snapshot, component, window) {
+	async test(assert, target, _, component, window) {
 		const button = target.querySelector('button');
-		assert.equal(button, snapshot.button);
-
 		await button.dispatchEvent(new window.MouseEvent('click'));
 
 		assert.ok(component.clicked);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>click me</button>
 			<p>clicked!</p>
-		`);
+		`
+		);
 	}
 };

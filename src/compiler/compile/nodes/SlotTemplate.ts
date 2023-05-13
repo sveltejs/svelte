@@ -17,12 +17,7 @@ export default class SlotTemplate extends Node {
 	slot_attribute: Attribute;
 	slot_template_name: string = 'default';
 
-	constructor(
-		component: Component,
-		parent: INode,
-		scope: TemplateScope,
-		info: any
-	) {
+	constructor(component: Component, parent: INode, scope: TemplateScope, info: any) {
 		super(component, parent, scope, info);
 
 		this.validate_slot_template_placement();
@@ -62,7 +57,7 @@ export default class SlotTemplate extends Node {
 		});
 
 		this.scope = scope;
-		([this.const_tags, this.children] = get_const_tags(info.children, component, this, this));
+		[this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
 	}
 
 	validate_slot_template_placement() {
