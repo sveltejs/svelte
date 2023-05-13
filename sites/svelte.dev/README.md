@@ -64,14 +64,14 @@ Tests can be run using `npm run test`.
 
 ## Docs & other content
 
-All the docs, examples, tutorials, FAQ live in the [site/content](../../site/content) directory, outside the site sub-project. If you modify these, and your app server is running, you will need to reload the page to see the changes.
+All the docs, examples, tutorials, FAQ live in the [documentation/content](../../documentation/content) directory, outside the site sub-project. If you modify these, and your app server is running, you will need to reload the page to see the changes.
 
 Following are the file structures of the different kind of documentations
 
 ### Docs structure
 
 ```txt
-- site/content/docs
+- documentation/content/docs
   - 01-getting-started                  <- Category
     - meta.json                           <- Metadata
     - 01-introduction.md                  <- Page
@@ -85,7 +85,7 @@ Following are the file structures of the different kind of documentations
 If you are creating a new page, it must be within a category. That is, you can't have a .md file in the `docs` directory's root level. You may have a category without any pages in it, but you can't have a page without a category. You can add the new page in an existing category, or create your own, for example:
 
 ```txt
-- site/content/docs
+- documentation/content/docs
   <!-- Rest of the docs -->
 + - 07-my-new-category                  <- Category
 +   - 01-my-new-page.md                  <- Page
@@ -132,7 +132,7 @@ Docs are processed in the [`src/lib/server/docs`](./src/lib/server/docs) folder.
 ### Tutorial structure
 
 ```txt
-- site/content/tutorial
+- documentation/content/tutorial
   - 01-introduction                   <- Category
     - meta.json                           <- Metadata
     - 01-basics                       <- Page's content folder
@@ -158,7 +158,7 @@ Tutorials are processed in the [`src/lib/server/tutorial`](./src/lib/server/tuto
 ### Examples structure
 
 ```txt
-- site/content/examples
+- documentation/content/examples
   - 00-introduction                   <- Category
     - meta.json                           <- Metadata
     - 00-hello-world                    <- Page's content folder
@@ -182,14 +182,14 @@ Examples are processed in the [`src/lib/server/examples`](./src/lib/server/examp
 ### Blog structure
 
 ```txt
-- site/content/blog
+- documentation/content/blog
   - 2019-01-01-my-first-post.md
   - 2019-01-02-my-second-post.md
 ```
 
-Compared to the rest of the content, blog posts are not in a folder. They are placed at the root of `site/content/blog` folder. The name of the file is the date of the post, followed by the slug of the post. The slug is the URL where the blog post is available. For example, the slug of `2019-01-01-my-first-post.md` is `my-first-post`.
+Compared to the rest of the content, blog posts are not in a folder. They are placed at the root of `documentation/content/blog` folder. The name of the file is the date of the post, followed by the slug of the post. The slug is the URL where the blog post is available. For example, the slug of `2019-01-01-my-first-post.md` is `my-first-post`.
 
-All the metadata about the blog post is mentioned in the frontematter of a post. For example, this is how the frontmatter of [2023-03-09-zero-config-type-safety.md](../../site/content/blog/2023-03-09-zero-config-type-safety.md) looks like:
+All the metadata about the blog post is mentioned in the frontematter of a post. For example, this is how the frontmatter of [2023-03-09-zero-config-type-safety.md](../../documentation/content/blog/2023-03-09-zero-config-type-safety.md) looks like:
 
 ```md
 ---

@@ -9,7 +9,7 @@ import {
 	transform
 } from '../markdown';
 
-const BASE = '../../site/content/docs/';
+const BASE = '../../documentation/content/docs/';
 
 /** @return {import('./types').DocsData} */
 export function get_docs_data(base = BASE) {

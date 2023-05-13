@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 
-const base = '../../site/content/';
+const base = '../../documentation/content/';
 
 const categories = [
 	{
