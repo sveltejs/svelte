@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { createRequire } from 'module';
 
 export function tryToLoadJson(file) {
 	try {
@@ -19,9 +18,13 @@ export function tryToReadFile(file) {
 	}
 }
 
-export function try_load_config(path,) {
+export function try_load_config(path) {
 	return import(path).then(
 		(mod) => mod.default,
 		() => ({})
 	);
+}
+
+export function should_update_expected() {
+	return process.env.SHOULD_UPDATE_EXPECTED === 'true';
 }
