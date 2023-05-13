@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { extract_frontmatter } from '../markdown';
 
-const base = '../../site/content/faq';
+const base = '../../documentation/content/faq';
 
 /**
  * @returns {import('./types').FAQData}

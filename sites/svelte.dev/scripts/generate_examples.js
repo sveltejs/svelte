@@ -2,7 +2,7 @@ import { get_examples_data } from '../src/lib/server/examples/get-examples.js';
 import fs from 'node:fs';
 
 const examples_data = get_examples_data(
-	new URL('../../../site/content/examples', import.meta.url).pathname
+	new URL('../../../documentation/content/examples', import.meta.url).pathname
 );
 
 try {

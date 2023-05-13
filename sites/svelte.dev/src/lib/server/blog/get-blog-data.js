@@ -3,7 +3,7 @@ import fs from 'fs';
 import { extract_frontmatter } from '../markdown';
 
 const BLOG_NAME_REGEX = /^(\d{4}-\d{2}-\d{2})-(.+)\.md$/;
-const BASE = '../../site/content/blog';
+const BASE = '../../documentation/content/blog';
 
 /** @returns {import('./types').BlogData} */
 export function get_blog_data(base = BASE) {
