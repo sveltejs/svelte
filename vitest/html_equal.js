@@ -96,7 +96,7 @@ function clean_children(node) {
  *      normalize_html?: {
  *         removeDataSvelte?: boolean,
  *        preserveComments?: boolean,
- *      } | false,
+ *      },
  *      without_normalize?: boolean,
  * }} options
  */
