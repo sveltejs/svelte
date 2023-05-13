@@ -1,38 +1,8 @@
 import entities from './entities';
 
 const windows_1252 = [
-	8364,
-	129,
-	8218,
-	402,
-	8222,
-	8230,
-	8224,
-	8225,
-	710,
-	8240,
-	352,
-	8249,
-	338,
-	141,
-	381,
-	143,
-	144,
-	8216,
-	8217,
-	8220,
-	8221,
-	8226,
-	8211,
-	8212,
-	732,
-	8482,
-	353,
-	8250,
-	339,
-	157,
-	382,
-	376
+	8364, 129, 8218, 402, 8222, 8230, 8224, 8225, 710, 8240, 352, 8249, 338, 141, 381, 143, 144, 8216,
+	8217, 8220, 8221, 8226, 8211, 8212, 732, 8482, 353, 8250, 339, 157, 382, 376
 ];
 
 function reg_exp_entity(entity_name: string, is_attribute_value: boolean) {
@@ -46,12 +16,11 @@ function reg_exp_entity(entity_name: string, is_attribute_value: boolean) {
 
 function get_entity_pattern(is_attribute_value: boolean) {
 	const reg_exp_num = '#(?:x[a-fA-F\\d]+|\\d+)(?:;)?';
-	const reg_exp_entities = Object.keys(entities).map(entity_name => reg_exp_entity(entity_name, is_attribute_value));
-
-	const entity_pattern = new RegExp(
-		`&(${reg_exp_num}|${reg_exp_entities.join('|')})`,
-		'g'
+	const reg_exp_entities = Object.keys(entities).map((entity_name) =>
+		reg_exp_entity(entity_name, is_attribute_value)
 	);
+
+	const entity_pattern = new RegExp(`&(${reg_exp_num}|${reg_exp_entities.join('|')})`, 'g');
 
 	return entity_pattern;
 }

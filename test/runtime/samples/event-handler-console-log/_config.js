@@ -14,7 +14,7 @@ export default {
 		const messages = [];
 
 		const log = console.log;
-		console.log = msg => messages.push(msg);
+		console.log = (msg) => messages.push(msg);
 		button.dispatchEvent(event);
 		console.log = log;
 

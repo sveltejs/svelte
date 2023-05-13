@@ -7,6 +7,6 @@ export default {
 	test({ assert, component, target }) {
 		component.a = 3;
 		component.b = 4;
-		assert.equal( target.innerHTML, '<p>3 + 4 = 7</p>' );
+		assert.equal(target.innerHTML, '<p>3 + 4 = 7</p>');
 	}
 };

@@ -1,4 +1,4 @@
-<svelte:options tag="custom-element"/>
+<svelte:options customElement="custom-element" />
 
 <script>
 	export let name;
@@ -7,4 +7,3 @@
 <p>name: {name}</p>
 <p>$$props: {JSON.stringify($$props)}</p>
 <p>$$restProps: {JSON.stringify($$restProps)}</p>
-

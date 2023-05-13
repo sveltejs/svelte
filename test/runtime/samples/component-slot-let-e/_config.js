@@ -11,10 +11,13 @@ export default {
 
 		await div.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<p>foo</p>
 			</div>
-		`);
+		`
+		);
 	}
 };

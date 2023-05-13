@@ -11,8 +11,11 @@ export default {
 		await target.querySelectorAll('button')[1].dispatchEvent(click);
 		await target.querySelectorAll('button')[1].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>remove</button>
-		`);
+		`
+		);
 	}
 };

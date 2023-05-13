@@ -15,6 +15,7 @@ export default class Node {
 	next?: INode;
 
 	can_use_innerhtml: boolean;
+	is_static_content: boolean;
 	var: string;
 	attributes: Attribute[];
 
@@ -33,6 +34,9 @@ export default class Node {
 				value: parent
 			}
 		});
+
+		this.can_use_innerhtml = true;
+		this.is_static_content = true;
 	}
 
 	cannot_use_innerhtml() {
@@ -42,15 +46,22 @@ export default class Node {
 		}
 	}
 
+	not_static_content() {
+		this.is_static_content = false;
+		if (this.parent) this.parent.not_static_content();
+	}
+
 	find_nearest(selector: RegExp) {
 		if (selector.test(this.type)) return this;
 		if (this.parent) return this.parent.find_nearest(selector);
 	}
 
 	get_static_attribute_value(name: string) {
-		const attribute = this.attributes && this.attributes.find(
-			(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
-		);
+		const attribute =
+			this.attributes &&
+			this.attributes.find(
+				(attr: Attribute) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
+			);
 
 		if (!attribute) return null;
 
@@ -65,8 +76,6 @@ export default class Node {
 	}
 
 	has_ancestor(type: string) {
-		return this.parent ?
-			this.parent.type === type || this.parent.has_ancestor(type) :
-			false;
+		return this.parent ? this.parent.type === type || this.parent.has_ancestor(type) : false;
 	}
 }

@@ -17,18 +17,24 @@ export default {
 
 		await buttons[0].dispatchEvent(event);
 		assert.equal(component.clicked, 'foo');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>foo</button>
 			<button>bar</button>
 			<p>clicked: foo</p>
-		`);
+		`
+		);
 
 		await buttons[1].dispatchEvent(event);
 		assert.equal(component.clicked, 'bar');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>foo</button>
 			<button>bar</button>
 			<p>clicked: bar</p>
-		`);
+		`
+		);
 	}
 };

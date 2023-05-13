@@ -1,13 +1,15 @@
 let fulfil;
 
-const thePromise = new Promise(f => {
+const thePromise = new Promise((f) => {
 	fulfil = f;
 });
 
-const items = [{
-	title: 'a title',
-	data: thePromise
-}];
+const items = [
+	{
+		title: 'a title',
+		data: thePromise
+	}
+];
 
 export default {
 	props: {
@@ -21,11 +23,13 @@ export default {
 	test({ assert, target }) {
 		fulfil(42);
 
-		return thePromise
-			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+		return thePromise.then(() => {
+			assert.htmlEqual(
+				target.innerHTML,
+				`
 					<p>a title: 42</p>
-				`);
-			});
+				`
+			);
+		});
 	}
 };

@@ -8,10 +8,10 @@ export default {
 	html: '<textarea></textarea>',
 
 	test({ assert, component, target }) {
-		const textarea = target.querySelector( 'textarea' );
-		assert.strictEqual( textarea.value, '\t<p>not actually an element. 42</p>\n' );
+		const textarea = target.querySelector('textarea');
+		assert.strictEqual(textarea.value, '\t<p>not actually an element. 42</p>\n');
 
 		component.foo = 43;
-		assert.strictEqual( textarea.value, '\t<p>not actually an element. 43</p>\n' );
+		assert.strictEqual(textarea.value, '\t<p>not actually an element. 43</p>\n');
 	}
 };

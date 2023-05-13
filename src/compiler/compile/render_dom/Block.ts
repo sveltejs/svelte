@@ -74,7 +74,7 @@ export default class Block {
 	get_unique_name: (name: string) => Identifier;
 
 	has_update_method = false;
-	autofocus?: { element_var: string, condition_expression?: any };
+	autofocus?: { element_var: string; condition_expression?: any };
 
 	constructor(options: BlockOptions) {
 		this.parent = options.parent;
@@ -156,7 +156,7 @@ export default class Block {
 	}
 
 	add_dependencies(dependencies: Set<string>) {
-		dependencies.forEach(dependency => {
+		dependencies.forEach((dependency) => {
 			this.dependencies.add(dependency);
 		});
 
@@ -206,9 +206,7 @@ export default class Block {
 
 	add_variable(id: Identifier, init?: Node) {
 		if (this.variables.has(id.name)) {
-			throw new Error(
-				`Variable '${id.name}' already initialised with a different value`
-			);
+			throw new Error(`Variable '${id.name}' already initialised with a different value`);
 		}
 
 		this.variables.set(id.name, { id, init });
@@ -244,7 +242,9 @@ export default class Block {
 
 		if (this.autofocus) {
 			if (this.autofocus.condition_expression) {
-				this.chunks.mount.push(b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`);
+				this.chunks.mount.push(
+					b`if (${this.autofocus.condition_expression}) ${this.autofocus.element_var}.focus();`
+				);
 			} else {
 				this.chunks.mount.push(b`${this.autofocus.element_var}.focus();`);
 			}
@@ -267,11 +267,9 @@ export default class Block {
 		if (this.chunks.create.length === 0 && this.chunks.hydrate.length === 0) {
 			properties.create = noop;
 		} else {
-			const hydrate = this.chunks.hydrate.length > 0 && (
-				this.renderer.options.hydratable
-					? b`this.h();`
-					: this.chunks.hydrate
-			);
+			const hydrate =
+				this.chunks.hydrate.length > 0 &&
+				(this.renderer.options.hydratable ? b`this.h();` : this.chunks.hydrate);
 
 			properties.create = x`function #create() {
 				${this.chunks.create}
@@ -404,15 +402,14 @@ export default class Block {
 			${this.chunks.declarations}
 
 			${Array.from(this.variables.values()).map(({ id, init }) => {
-				return init
-					? b`let ${id} = ${init}`
-					: b`let ${id}`;
+				return init ? b`let ${id} = ${init}` : b`let ${id}`;
 			})}
 
 			${this.chunks.init}
 
-			${dev
-				? b`
+			${
+				dev
+					? b`
 					const ${block} = ${return_value};
 					@dispatch_dev("SvelteRegisterBlock", {
 						block: ${block},
@@ -422,7 +419,7 @@ export default class Block {
 						ctx: #ctx
 					});
 					return ${block};`
-				: b`
+					: b`
 					return ${return_value};`
 			}
 		`;
@@ -431,17 +428,19 @@ export default class Block {
 	}
 
 	has_content(): boolean {
-		return !!this.first ||
+		return (
+			!!this.first ||
 			this.event_listeners.length > 0 ||
 			this.chunks.intro.length > 0 ||
-			this.chunks.outro.length > 0  ||
+			this.chunks.outro.length > 0 ||
 			this.chunks.create.length > 0 ||
 			this.chunks.hydrate.length > 0 ||
 			this.chunks.claim.length > 0 ||
 			this.chunks.mount.length > 0 ||
 			this.chunks.update.length > 0 ||
 			this.chunks.destroy.length > 0 ||
-			this.has_animation;
+			this.has_animation
+		);
 	}
 
 	render() {
@@ -483,9 +482,7 @@ export default class Block {
 					`
 				);
 
-				this.chunks.destroy.push(
-					b`${dispose}();`
-				);
+				this.chunks.destroy.push(b`${dispose}();`);
 			} else {
 				this.chunks.mount.push(b`
 					if (!#mounted) {
@@ -496,9 +493,7 @@ export default class Block {
 					}
 				`);
 
-				this.chunks.destroy.push(
-					b`@run_all(${dispose});`
-				);
+				this.chunks.destroy.push(b`@run_all(${dispose});`);
 			}
 		}
 	}

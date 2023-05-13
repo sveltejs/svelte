@@ -16,9 +16,12 @@ export default {
 
 		component.things = things.reverse();
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div data-a="3" data-b="4"></div>
 			<div data-a="1" data-b="2"></div>
-		`);
+		`
+		);
 	}
 };

@@ -7,9 +7,12 @@ export default {
 	async test({ assert, target, component }) {
 		component.x = 2;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>2</span>
 			<span>2</span>
-		`);
+		`
+		);
 	}
 };

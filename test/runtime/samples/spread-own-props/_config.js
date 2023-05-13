@@ -21,11 +21,14 @@ export default {
 			quux: 'heart'
 		});
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><p>foo: wut</p>
 			<p>baz: 43 (number)</p>
 			<p>qux: named</p>
 			<p>quux: heart</p></div>
-		`);
+		`
+		);
 	}
 };

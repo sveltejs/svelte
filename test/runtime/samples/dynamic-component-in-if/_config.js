@@ -6,8 +6,11 @@ export default {
 	test({ assert, component, target }) {
 		component.x = component.Bar;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>Bar</p>
-		`);
+		`
+		);
 	}
 };

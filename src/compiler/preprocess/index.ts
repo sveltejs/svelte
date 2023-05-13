@@ -1,6 +1,12 @@
-import { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping/dist/types/types';
+import type { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping';
 import { getLocator } from 'locate-character';
-import { MappedCode, SourceLocation, parse_attached_sourcemap, sourcemap_add_offset, combine_sourcemaps } from '../utils/mapped_code';
+import {
+	MappedCode,
+	SourceLocation,
+	parse_attached_sourcemap,
+	sourcemap_add_offset,
+	combine_sourcemaps
+} from '../utils/mapped_code';
 import { decode_map } from './decode_sourcemap';
 import { replace_in_code, slice_source } from './replace_in_code';
 import { MarkupPreprocessor, Source, Preprocessor, PreprocessorGroup, Processed } from './types';
@@ -57,7 +63,7 @@ class PreprocessResult implements Source {
 
 	to_processed(): Processed {
 		// Combine all the source maps for each preprocessor function into one
-		const map: RawSourceMap = combine_sourcemaps(this.file_basename, this.sourcemap_list);
+		const map = combine_sourcemaps(this.file_basename, this.sourcemap_list);
 
 		return {
 			// TODO return separated output, in future version where svelte.compile supports it:
@@ -76,7 +82,11 @@ class PreprocessResult implements Source {
 /**
  * Convert preprocessor output for the tag content into MappedCode
  */
-function processed_content_to_code(processed: Processed, location: SourceLocation, file_basename: string): MappedCode {
+function processed_content_to_code(
+	processed: Processed,
+	location: SourceLocation,
+	file_basename: string
+): MappedCode {
 	// Convert the preprocessed code and its sourcemap to a MappedCode
 	let decoded_map: DecodedSourceMap;
 	if (processed.map) {
@@ -118,7 +128,11 @@ function processed_tag_to_code(
 
 	parse_attached_sourcemap(processed, tag_name);
 
-	const content_code = processed_content_to_code(processed, get_location(tag_open.length), file_basename);
+	const content_code = processed_content_to_code(
+		processed,
+		get_location(tag_open.length),
+		file_basename
+	);
 
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
@@ -138,7 +152,6 @@ function parse_tag_attributes(str: string) {
 			return { ...attrs, [key]: unquoted ?? value ?? true };
 		}, {});
 }
-
 
 const regex_style_tags = /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi;
 const regex_script_tags = /<!--[^]*?-->|<script(\s[^]*?)?(?:>([^]*?)<\/script>|\/>)/gi;
@@ -162,7 +175,8 @@ async function process_tag(
 		content = '',
 		tag_offset: number
 	): Promise<MappedCode> {
-		const no_change = () => MappedCode.from_source(slice_source(tag_with_content, tag_offset, source));
+		const no_change = () =>
+			MappedCode.from_source(slice_source(tag_with_content, tag_offset, source));
 
 		if (!attributes && !content) return no_change();
 
@@ -177,7 +191,12 @@ async function process_tag(
 		if (processed.dependencies) dependencies.push(...processed.dependencies);
 		if (!processed.map && processed.code === content) return no_change();
 
-		return processed_tag_to_code(processed, tag_name, attributes, slice_source(content, tag_offset, source));
+		return processed_tag_to_code(
+			processed,
+			tag_name,
+			attributes,
+			slice_source(content, tag_offset, source)
+		);
 	}
 
 	const { string, map } = await replace_in_code(tag_regex, process_single_tag, source);
@@ -196,7 +215,7 @@ async function process_markup(process: MarkupPreprocessor, source: Source) {
 			string: processed.code,
 			map: processed.map
 				? // TODO: can we use decode_sourcemap?
-				typeof processed.map === 'string'
+				  typeof processed.map === 'string'
 					? JSON.parse(processed.map)
 					: processed.map
 				: undefined,
@@ -212,13 +231,18 @@ export default async function preprocess(
 	preprocessor: PreprocessorGroup | PreprocessorGroup[],
 	options?: { filename?: string }
 ): Promise<Processed> {
-	const filename: string | undefined = (options && options.filename) || (preprocessor as any).filename; // legacy
+	const filename: string | undefined =
+		(options && options.filename) || (preprocessor as any).filename; // legacy
 
-	const preprocessors = preprocessor ? (Array.isArray(preprocessor) ? preprocessor : [preprocessor]) : [];
+	const preprocessors = preprocessor
+		? Array.isArray(preprocessor)
+			? preprocessor
+			: [preprocessor]
+		: [];
 
-	const markup = preprocessors.map(p => p.markup).filter(Boolean);
-	const script = preprocessors.map(p => p.script).filter(Boolean);
-	const style = preprocessors.map(p => p.style).filter(Boolean);
+	const markup = preprocessors.map((p) => p.markup).filter(Boolean);
+	const script = preprocessors.map((p) => p.script).filter(Boolean);
+	const style = preprocessors.map((p) => p.style).filter(Boolean);
 
 	const result = new PreprocessResult(source, filename);
 

@@ -12,10 +12,13 @@ export default {
 
 	test({ assert, component, target }) {
 		component.selected = 'three';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div></div>
 			<div class=""></div>
 			<div class="selected"></div>
-		`);
+		`
+		);
 	}
 };

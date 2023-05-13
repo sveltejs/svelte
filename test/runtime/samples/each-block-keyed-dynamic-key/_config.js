@@ -23,9 +23,12 @@ export default {
 		component.id = 1;
 
 		assert.equal(count, 4);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>bar</div>
 			<div>bar</div>
-		`);
+		`
+		);
 	}
 };

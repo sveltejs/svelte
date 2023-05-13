@@ -14,9 +14,14 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		component.objectsArray = [{ quote: 'new-quote', 'wrong-quote': 'wq4', 16: 'ten+six', role: 'role' }];
-		assert.htmlEqual(target.innerHTML, `
+		component.objectsArray = [
+			{ quote: 'new-quote', 'wrong-quote': 'wq4', 16: 'ten+six', role: 'role' }
+		];
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p role="role">Quote: new-quote, Wrong Quote: wq4, 16: ten+six</p>
-		`);
+		`
+		);
 	}
 };

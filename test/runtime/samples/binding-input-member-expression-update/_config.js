@@ -10,9 +10,9 @@ export default {
 
 		assert.deepEqual(component.values.a, 'hij');
 		assert.deepEqual(component.logs.length, 1);
-		
+
 		component.paths = ['b'];
 		assert.deepEqual(component.logs.length, 2);
-		assert.equal(input.value, 'def');		
+		assert.equal(input.value, 'def');
 	}
 };

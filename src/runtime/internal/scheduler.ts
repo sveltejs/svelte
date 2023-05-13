@@ -50,7 +50,7 @@ export function add_flush_callback(fn) {
 //    callback called a second time; the seen_callbacks set, outside the flush()
 //    function, guarantees this behavior.
 const seen_callbacks = new Set();
-let flushidx = 0;  // Do *not* move this inside the flush() function
+let flushidx = 0; // Do *not* move this inside the flush() function
 export function flush() {
 	// Do not reenter flush while dirty components are updated, as this can
 	// result in an infinite loop. Instead, let the inner flush handle it.
@@ -129,7 +129,7 @@ function update($$) {
 export function flush_render_callbacks(fns: Function[]): void {
 	const filtered = [];
 	const targets = [];
-	render_callbacks.forEach((c) => fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c));
+	render_callbacks.forEach((c) => (fns.indexOf(c) === -1 ? filtered.push(c) : targets.push(c)));
 	targets.forEach((c) => c());
 	render_callbacks = filtered;
 }

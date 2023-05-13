@@ -23,23 +23,27 @@ export default {
 
 		const { people } = component;
 
-		assert.deepEqual(people, [
-			{ name: { first: 'Doctor', last: 'Oz' } }
-		]);
+		assert.deepEqual(people, [{ name: { first: 'Doctor', last: 'Oz' } }]);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<input>
 			<p>Doctor Oz</p>
-		`);
+		`
+		);
 
 		people[0].name.first = 'Frank';
 		component.people = people;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<input>
 			<p>Frank Oz</p>
-		`);
+		`
+		);
 	}
 };

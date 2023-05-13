@@ -7,6 +7,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.visible = true;
-		assert.htmlEqual(target.innerHTML, '<div><div>i am visible</div><div>before me</div></div>' );
+		assert.htmlEqual(target.innerHTML, '<div><div>i am visible</div><div>before me</div></div>');
 	}
 };

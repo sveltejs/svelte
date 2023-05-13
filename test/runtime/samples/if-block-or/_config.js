@@ -8,8 +8,8 @@ export default {
 
 	test({ assert, component, target }) {
 		component.a = false;
-		assert.htmlEqual( target.innerHTML, '' );
+		assert.htmlEqual(target.innerHTML, '');
 		component.b = true;
-		assert.htmlEqual( target.innerHTML, '<p>i am visible</p>' );
+		assert.htmlEqual(target.innerHTML, '<p>i am visible</p>');
 	}
 };

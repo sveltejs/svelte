@@ -1,6 +1,6 @@
 export default {
 	props: {
-		options: [ { id: 'a' }, { id: 'b' }, { id: 'c' } ],
+		options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
 		selected: 'b'
 	},
 

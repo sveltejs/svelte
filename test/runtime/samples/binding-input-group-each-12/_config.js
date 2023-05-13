@@ -82,7 +82,7 @@ export default {
 
 		inputs[5].checked = true;
 		await inputs[5].dispatchEvent(event);
-		
+
 		check(new Set([0, 2, 3, 5]));
 		assert.deepEqual(component.pipelineOperations[1].operation.args[0].value, ['b']);
 	}

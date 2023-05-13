@@ -14,14 +14,17 @@ class CompileError extends Error {
 	}
 }
 
-export default function error(message: string, props: {
-	name: string;
-	code: string;
-	source: string;
-	filename: string;
-	start: number;
-	end?: number;
-}): never {
+export default function error(
+	message: string,
+	props: {
+		name: string;
+		code: string;
+		source: string;
+		filename: string;
+		start: number;
+		end?: number;
+	}
+): never {
 	const error = new CompileError(message);
 	error.name = props.name;
 

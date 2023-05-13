@@ -6,15 +6,13 @@ export default {
 		const messages = [];
 
 		const log = console.log;
-		console.log = msg => {
+		console.log = (msg) => {
 			messages.push(msg);
 		};
 
 		try {
 			button.dispatchEvent(new window.MouseEvent('click'));
-			assert.deepEqual(messages, [
-				'clicked'
-			]);
+			assert.deepEqual(messages, ['clicked']);
 		} catch (err) {
 			console.log = log;
 			throw err;

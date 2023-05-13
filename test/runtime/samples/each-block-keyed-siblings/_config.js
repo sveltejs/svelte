@@ -12,9 +12,12 @@ export default {
 	test({ assert, component, target }) {
 		component.ones = [{ text: '11' }];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>11</div>
 			<div>2</div>
-		`);
+		`
+		);
 	}
 };

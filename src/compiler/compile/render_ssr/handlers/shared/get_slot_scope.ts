@@ -6,7 +6,7 @@ export function get_slot_scope(lets: Let[]): ObjectPattern {
 
 	return {
 		type: 'ObjectPattern',
-		properties: lets.map(l => {
+		properties: lets.map((l) => {
 			return {
 				type: 'Property',
 				kind: 'init',

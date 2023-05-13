@@ -23,7 +23,7 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 			if (nodes.length === 0) {
 				const should_trim = next
 					? next.type === 'Text' &&
-					regex_starts_with_whitespace.test(next.data) &&
+					  regex_starts_with_whitespace.test(next.data) &&
 					  trimmable_at(child, next)
 					: !child.has_ancestor('EachBlock');
 
@@ -39,11 +39,12 @@ export default function remove_whitespace_children(children: INode[], next?: INo
 				continue;
 			}
 
+			child.data = data;
 			nodes.unshift(child);
-			link(last_child, last_child = child);
+			link(last_child, (last_child = child));
 		} else {
 			nodes.unshift(child);
-			link(last_child, last_child = child);
+			link(last_child, (last_child = child));
 		}
 	}
 
@@ -68,7 +69,7 @@ function trimmable_at(child: INode, next_sibling: INode): boolean {
 	// The child and its sibling share a common nearest each block (not at an each block boundary)
 	// The next sibling's previous node is an each block
 	return (
-		next_sibling.find_nearest(/EachBlock/) ===
-			child.find_nearest(/EachBlock/) || next_sibling.prev.type === 'EachBlock'
+		next_sibling.find_nearest(/EachBlock/) === child.find_nearest(/EachBlock/) ||
+		next_sibling.prev.type === 'EachBlock'
 	);
 }

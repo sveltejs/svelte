@@ -12,7 +12,7 @@ export default {
 			message: 'Unused CSS selector ".not-match > * ~ *"',
 			pos: 50,
 			start: { character: 50, column: 1, line: 5 },
-      end: { character: 68, column: 19, line: 5 }
+			end: { character: 68, column: 19, line: 5 }
 		}
 	]
 };

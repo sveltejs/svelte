@@ -16,9 +16,12 @@ export default {
 	test({ assert, component, target }) {
 		component.x = false;
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>y: foo</p>
 			<p>y: foo</p>
-		` );
+		`
+		);
 	}
 };

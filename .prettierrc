@@ -1,8 +1,23 @@
 {
-	"singleQuote": true,
-	"printWidth": 100,
 	"useTabs": true,
-	"tabWidth": 2,
+	"singleQuote": true,
 	"trailingComma": "none",
-	"plugins": ["prettier-plugin-svelte"]
+	"printWidth": 100,
+	"plugins": ["prettier-plugin-svelte"],
+	"overrides": [
+		{
+			"files": ["*.svelte"],
+			"options": {
+				"bracketSameLine": false
+			}
+		},
+		{
+			"files": ["README.md", "packages/*/README.md"],
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
+			}
+		}
+	],
+	"pluginSearchDirs": ["."]
 }

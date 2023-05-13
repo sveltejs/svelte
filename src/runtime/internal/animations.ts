@@ -4,18 +4,31 @@ import { loop } from './loop';
 import { create_rule, delete_rule } from './style_manager';
 import { AnimationConfig } from '../animate';
 
-
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect
 type PositionRect = DOMRect | ClientRect;
 
-type AnimationFn = (node: Element, { from, to }: { from: PositionRect; to: PositionRect }, params: any) => AnimationConfig;
+type AnimationFn = (
+	node: Element,
+	{ from, to }: { from: PositionRect; to: PositionRect },
+	params: any
+) => AnimationConfig;
 
-export function create_animation(node: Element & ElementCSSInlineStyle, from: PositionRect, fn: AnimationFn, params) {
+export function create_animation(
+	node: Element & ElementCSSInlineStyle,
+	from: PositionRect,
+	fn: AnimationFn,
+	params
+) {
 	if (!from) return noop;
 
 	const to = node.getBoundingClientRect();
-	if (from.left === to.left && from.right === to.right && from.top === to.top && from.bottom === to.bottom) return noop;
-
+	if (
+		from.left === to.left &&
+		from.right === to.right &&
+		from.top === to.top &&
+		from.bottom === to.bottom
+	)
+		return noop;
 
 	const {
 		delay = 0,
@@ -48,7 +61,7 @@ export function create_animation(node: Element & ElementCSSInlineStyle, from: Po
 		running = false;
 	}
 
-	loop(now => {
+	loop((now) => {
 		if (!started && now >= start_time) {
 			started = true;
 		}

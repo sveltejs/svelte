@@ -8,8 +8,11 @@ export default {
 	test({ assert, component, target }) {
 		component.user = { active: false };
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class></div>
-		`);
+		`
+		);
 	}
 };

@@ -9,16 +9,10 @@ export default {
 		const outer = target.querySelector('.outer');
 		const inner = target.querySelector('.inner');
 
-		const animations = [
-			outer.style.animation,
-			inner.style.animation
-		];
+		const animations = [outer.style.animation, inner.style.animation];
 
 		raf.tick(150);
 
-		assert.deepEqual([
-			outer.style.animation,
-			inner.style.animation
-		], animations);
+		assert.deepEqual([outer.style.animation, inner.style.animation], animations);
 	}
 };

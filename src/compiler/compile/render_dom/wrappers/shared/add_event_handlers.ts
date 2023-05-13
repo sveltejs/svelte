@@ -7,7 +7,7 @@ export default function add_event_handlers(
 	target: string | Expression,
 	handlers: EventHandler[]
 ) {
-	handlers.forEach(handler => add_event_handler(block, target, handler));
+	handlers.forEach((handler) => add_event_handler(block, target, handler));
 }
 
 export function add_event_handler(

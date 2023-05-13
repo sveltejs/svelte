@@ -10,9 +10,12 @@ export default {
 
 		await button.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>internal: 1</p>
 			<button>click me</button>
-		`);
+		`
+		);
 	}
 };

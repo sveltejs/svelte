@@ -6,14 +6,20 @@ export default {
 	test({ assert, component, target }) {
 		component.count = 5;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>count: 5</p>
-		`);
+		`
+		);
 
 		component.count = 50;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>count: 9</p>
-		`);
+		`
+		);
 	}
 };

@@ -8,6 +8,6 @@ export default {
 	test({ assert, component, target }) {
 		component.foo = 99;
 
-		assert.equal( target.innerHTML, '<div><p>foo: 99</p></div>' );
+		assert.equal(target.innerHTML, '<div><p>foo: 99</p></div>');
 	}
 };

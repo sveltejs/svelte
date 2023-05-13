@@ -5,10 +5,13 @@ export default {
 		const visibility = new window.Event('visibilitychange');
 
 		await window.document.dispatchEvent(visibility);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<div class="tooltip">Perform an Action</div>
 			</div>
-		`);
+		`
+		);
 	}
 };

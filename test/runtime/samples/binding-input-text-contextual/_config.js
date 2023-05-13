@@ -38,7 +38,9 @@ export default {
 		await inputs[1].dispatchEvent(event);
 
 		assert.equal(items[1], 'four');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input><p>one</p>
 			</div>
@@ -48,13 +50,16 @@ export default {
 			<div>
 				<input><p>three</p>
 			</div>
-		`);
+		`
+		);
 
 		items[2] = 'five';
 
 		component.items = items;
 		assert.equal(inputs[2].value, 'five');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<input><p>one</p>
 			</div>
@@ -64,6 +69,7 @@ export default {
 			<div>
 				<input><p>five</p>
 			</div>
-		`);
+		`
+		);
 	}
 };

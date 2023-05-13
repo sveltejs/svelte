@@ -1,0 +1,26 @@
+[
+	{
+		"code": "a11y-no-static-element-interactions",
+		"end": {
+			"column": 29,
+			"line": 17
+		},
+		"message": "A11y: <div> with keydown handler must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 17
+		}
+	},
+	{
+		"code": "a11y-no-static-element-interactions",
+		"end": {
+			"column": 76,
+			"line": 19
+		},
+		"message": "A11y: <a> with mousedown, mouseup handlers must have an ARIA role",
+		"start": {
+			"column": 0,
+			"line": 19
+		}
+	}
+]

@@ -5,7 +5,12 @@ import BindingWrapper from '../Element/Binding';
 import { Identifier } from 'estree';
 import { compare_node } from '../../../utils/compare_node';
 
-export default function bind_this(component: Component, block: Block, binding: BindingWrapper, variable: Identifier) {
+export default function bind_this(
+	component: Component,
+	block: Block,
+	binding: BindingWrapper,
+	variable: Identifier
+) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
 
 	block.renderer.add_to_context(fn.name);
@@ -17,13 +22,13 @@ export default function bind_this(component: Component, block: Block, binding: B
 	const body = b`
 		${mutation}
 		${Array.from(dependencies)
-			.filter(dep => dep[0] !== '$')
-			.filter(dep => !contextual_dependencies.has(dep))
-			.map(dep => b`${block.renderer.invalidate(dep)};`)}
+			.filter((dep) => dep[0] !== '$')
+			.filter((dep) => !contextual_dependencies.has(dep))
+			.map((dep) => b`${block.renderer.invalidate(dep)};`)}
 	`;
 
 	if (contextual_dependencies.size) {
-		const params: Identifier[] = Array.from(contextual_dependencies).map(name => ({
+		const params: Identifier[] = Array.from(contextual_dependencies).map((name) => ({
 			type: 'Identifier',
 			name
 		}));
@@ -66,7 +71,9 @@ export default function bind_this(component: Component, block: Block, binding: B
 		`);
 
 		const condition = Array.from(args)
-			.map(name => x`${name} !== ${block.renderer.reference(alias_map.get(name.name) || name.name)}`)
+			.map(
+				(name) => x`${name} !== ${block.renderer.reference(alias_map.get(name.name) || name.name)}`
+			)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
 
 		// we push unassign and unshift assign so that references are
@@ -75,10 +82,9 @@ export default function bind_this(component: Component, block: Block, binding: B
 		block.chunks.update.push(b`
 			if (${condition}) {
 				${unassign}();
-				${args.map(a => b`${a} = ${block.renderer.reference(alias_map.get(a.name) || a.name)}`)};
+				${args.map((a) => b`${a} = ${block.renderer.reference(alias_map.get(a.name) || a.name)}`)};
 				${assign}();
-			}`
-		);
+			}`);
 
 		block.chunks.destroy.push(b`${unassign}();`);
 		return b`${assign}();`;

@@ -1,8 +1,10 @@
+<svelte:options customElement="custom-element" />
+
 <script>
-	let data = '';
+	let data = "";
 
 	if ($$slots.b) {
-		data = 'foo';
+		data = "foo";
 	}
 
 	export function getData() {
@@ -12,19 +14,17 @@
 	function toString(data) {
 		const result = {};
 		const sortedKeys = Object.keys(data).sort();
-		sortedKeys.forEach(key => result[key] = data[key]);
+		sortedKeys.forEach((key) => (result[key] = data[key]));
 		return JSON.stringify(result);
 	}
 </script>
 
-<svelte:options tag="custom-element"/>
-
-<slot></slot>
-<slot name="a"></slot>
+<slot />
+<slot name="a" />
 <p>$$slots: {toString($$slots)}</p>
 {#if $$slots.b}
 	<div>
-		<slot name="b"></slot>
+		<slot name="b" />
 	</div>
 {:else}
 	<p>Slot b is not available</p>

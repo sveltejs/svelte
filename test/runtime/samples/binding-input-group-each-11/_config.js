@@ -82,7 +82,7 @@ export default {
 
 		inputs[2].checked = true;
 		await inputs[2].dispatchEvent(event);
-		
+
 		check(new Set([0, 2, 5, 6]));
 	}
 };

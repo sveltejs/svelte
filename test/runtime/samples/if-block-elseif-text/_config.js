@@ -9,13 +9,19 @@ export default {
 
 	test({ assert, component, target }) {
 		component.x = 4;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			before-elseif-after
-		`);
+		`
+		);
 
 		component.x = 6;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			before-else-after
-		`);
+		`
+		);
 	}
 };

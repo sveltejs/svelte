@@ -1,10 +1,11 @@
 import * as assert from 'assert';
-import CustomElement from './main.svelte';
+import { tick } from 'svelte';
+import './main.svelte';
 
-export default function (target) {
-	new CustomElement({
-		target
-	});
+export default async function (target) {
+	target.innerHTML = '<custom-element></custom-element>';
+	await tick();
+	await tick();
 
 	assert.equal(target.innerHTML, '<custom-element></custom-element>');
 
@@ -20,6 +21,7 @@ export default function (target) {
 
 	el.items = ['d', 'e', 'f', 'g', 'h'];
 	el.flagged = true;
+	await tick();
 
 	assert.equal(p1.textContent, '5 items');
 	assert.equal(p2.textContent, 'd, e, f, g, h');

@@ -13,8 +13,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.animalEntries = [{ animal: 'cow', class: 'mammal' }];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p class="mammal">cow</p>
-		`);
+		`
+		);
 	}
 };

@@ -9,9 +9,12 @@ export default {
 		assert.htmlEqual(target.innerHTML, '');
 
 		component.visible = true;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>nothing</p>
 			<p>after</p>
-		`);
+		`
+		);
 	}
 };

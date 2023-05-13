@@ -12,11 +12,14 @@ export default {
 
 		await button.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>click me</button>
 			<p>2</p>
 			<p>4</p>
 			<p>6</p>
-		`);
+		`
+		);
 	}
 };

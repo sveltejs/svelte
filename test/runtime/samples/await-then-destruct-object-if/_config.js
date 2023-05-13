@@ -16,7 +16,7 @@ export default {
 			`
 		);
 
-		await new Promise(resolve => setTimeout(resolve, 1));
+		await new Promise((resolve) => setTimeout(resolve, 1));
 
 		assert.htmlEqual(
 			target.innerHTML,

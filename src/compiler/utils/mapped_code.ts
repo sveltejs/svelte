@@ -1,4 +1,4 @@
-import { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping/dist/types/types';
+import type { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping';
 import remapping from '@ampproject/remapping';
 import { SourceMap } from 'magic-string';
 import { Source, Processed } from '../preprocess/types';
@@ -15,7 +15,9 @@ function last_line_length(s: string) {
 
 // mutate map in-place
 export function sourcemap_add_offset(
-	map: DecodedSourceMap, offset: SourceLocation, source_index: number
+	map: DecodedSourceMap,
+	offset: SourceLocation,
+	source_index: number
 ) {
 	if (map.mappings.length == 0) return;
 	for (let line = 0; line < map.mappings.length; line++) {
@@ -23,7 +25,8 @@ export function sourcemap_add_offset(
 		for (let segment = 0; segment < segment_list.length; segment++) {
 			const seg = segment_list[segment];
 			// shift only segments that belong to component source file
-			if (seg[1] === source_index) { // also ensures that seg.length >= 4
+			if (seg[1] === source_index) {
+				// also ensures that seg.length >= 4
 				// shift column if it points at the first line
 				if (seg[2] === 0) {
 					seg[3] += offset.column;
@@ -105,8 +108,14 @@ export class MappedCode {
 		if (m2.mappings.length == 0) return this;
 
 		// combine sources and names
-		const [sources, new_source_idx, sources_changed, sources_idx_changed] = merge_tables(m1.sources, m2.sources);
-		const [names, new_name_idx, names_changed, names_idx_changed] = merge_tables(m1.names, m2.names);
+		const [sources, new_source_idx, sources_changed, sources_idx_changed] = merge_tables(
+			m1.sources,
+			m2.sources
+		);
+		const [names, new_name_idx, names_changed, names_idx_changed] = merge_tables(
+			m1.names,
+			m2.names
+		);
 
 		if (sources_changed) m1.sources = sources;
 		if (names_changed) m1.names = names;
@@ -216,33 +225,32 @@ export class MappedCode {
 export function combine_sourcemaps(
 	filename: string,
 	sourcemap_list: Array<DecodedSourceMap | RawSourceMap>
-): RawSourceMap {
+) {
 	if (sourcemap_list.length == 0) return null;
 
 	let map_idx = 1;
-	const map: RawSourceMap =
-		sourcemap_list.slice(0, -1)
-			.find(m => m.sources.length !== 1) === undefined
-
-			? remapping( // use array interface
-				// only the oldest sourcemap can have multiple sources
-				sourcemap_list,
-				() => null,
-				true // skip optional field `sourcesContent`
-			)
-
-			: remapping( // use loader interface
-				sourcemap_list[0], // last map
-				function loader(sourcefile) {
-					if (sourcefile === filename && sourcemap_list[map_idx]) {
-						return sourcemap_list[map_idx++]; // idx 1, 2, ...
-						// bundle file = branch node
-					} else {
-						return null; // source file = leaf node
-					}
-				} as SourceMapLoader,
-				true
-			);
+	const map =
+		sourcemap_list.slice(0, -1).find((m) => m.sources.length !== 1) === undefined
+			? remapping(
+					// use array interface
+					// only the oldest sourcemap can have multiple sources
+					sourcemap_list,
+					() => null,
+					true // skip optional field `sourcesContent`
+			  )
+			: remapping(
+					// use loader interface
+					sourcemap_list[0], // last map
+					function loader(sourcefile) {
+						if (sourcefile === filename && sourcemap_list[map_idx]) {
+							return sourcemap_list[map_idx++]; // idx 1, 2, ...
+							// bundle file = branch node
+						} else {
+							return null; // source file = leaf node
+						}
+					} as SourceMapLoader,
+					true
+			  );
 
 	if (!map.file) delete map.file; // skip optional field `file`
 
@@ -255,21 +263,25 @@ export function combine_sourcemaps(
 }
 
 // browser vs node.js
-const b64enc = typeof btoa == 'function' ? btoa : b => Buffer.from(b).toString('base64');
-const b64dec = typeof atob == 'function' ? atob : a => Buffer.from(a, 'base64').toString();
+const b64enc = typeof btoa == 'function' ? btoa : (b) => Buffer.from(b).toString('base64');
+const b64dec = typeof atob == 'function' ? atob : (a) => Buffer.from(a, 'base64').toString();
 
-export function apply_preprocessor_sourcemap(filename: string, svelte_map: SourceMap, preprocessor_map_input: string | DecodedSourceMap | RawSourceMap): SourceMap {
+export function apply_preprocessor_sourcemap(
+	filename: string,
+	svelte_map: SourceMap,
+	preprocessor_map_input: string | DecodedSourceMap | RawSourceMap
+): SourceMap {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
 
-	const preprocessor_map = typeof preprocessor_map_input === 'string' ? JSON.parse(preprocessor_map_input) : preprocessor_map_input;
+	const preprocessor_map =
+		typeof preprocessor_map_input === 'string'
+			? JSON.parse(preprocessor_map_input)
+			: preprocessor_map_input;
 
-	const result_map = combine_sourcemaps(
-		filename,
-		[
-			svelte_map as RawSourceMap,
-			preprocessor_map
-		]
-	) as RawSourceMap;
+	const result_map = combine_sourcemaps(filename, [
+		svelte_map as RawSourceMap,
+		preprocessor_map
+	]) as RawSourceMap;
 
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
 	// we just tack on the extra properties.
@@ -296,23 +308,27 @@ const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?bas
 // parse attached sourcemap in processed.code
 export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
-	const regex = (tag_name == 'script')
-		? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
-		: new RegExp('/\\*' + r_in + '\\s*\\*/$');
+	const regex =
+		tag_name == 'script'
+			? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
+			: new RegExp('/\\*' + r_in + '\\s*\\*/$');
 	function log_warning(message) {
 		// code_start: help to find preprocessor
-		const code_start = processed.code.length < 100 ? processed.code : (processed.code.slice(0, 100) + ' [...]');
+		const code_start =
+			processed.code.length < 100 ? processed.code : processed.code.slice(0, 100) + ' [...]';
 		console.warn(`warning: ${message}. processed.code = ${JSON.stringify(code_start)}`);
 	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {
-		const map_url = (tag_name == 'script') ? (match1 || match2) : match1;
+		const map_url = tag_name == 'script' ? match1 || match2 : match1;
 		const map_data = (map_url.match(regex_data_uri) || [])[1];
 		if (map_data) {
 			// sourceMappingURL is data URL
 			if (processed.map) {
-				log_warning('Not implemented. ' +
-					'Found sourcemap in both processed.code and processed.map. ' +
-					'Please update your preprocessor to return only one sourcemap.');
+				log_warning(
+					'Not implemented. ' +
+						'Found sourcemap in both processed.code and processed.map. ' +
+						'Please update your preprocessor to return only one sourcemap.'
+				);
 				// ignore attached sourcemap
 				return '';
 			}
@@ -321,8 +337,12 @@ export function parse_attached_sourcemap(processed: Processed, tag_name: 'script
 		}
 		// sourceMappingURL is path or URL
 		if (!processed.map) {
-			log_warning(`Found sourcemap path ${JSON.stringify(map_url)} in processed.code, but no sourcemap data. ` +
-				'Please update your preprocessor to return sourcemap data directly.');
+			log_warning(
+				`Found sourcemap path ${JSON.stringify(
+					map_url
+				)} in processed.code, but no sourcemap data. ` +
+					'Please update your preprocessor to return sourcemap data directly.'
+			);
 		}
 		// ignore sourcemap path
 		return ''; // remove from processed.code

@@ -60,7 +60,9 @@ export default {
 		component._36 = 'h';
 		component._37 = 'i';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>a</p>
 			<p>1</p>
 			<p>2</p>
@@ -105,7 +107,8 @@ export default {
 			<p>f:h</p>
 			<p>g:i</p>
 			<p>38</p>
-		`);
+		`
+		);
 
 		assert.deepEqual(component.reads, {
 			_0: 1,

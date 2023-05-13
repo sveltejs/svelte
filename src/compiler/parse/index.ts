@@ -7,7 +7,7 @@ import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../in
 import error from '../utils/error';
 import parser_errors from './errors';
 
-type ParserState = (parser: Parser) => (ParserState | void);
+type ParserState = (parser: Parser) => ParserState | void;
 
 interface LastAutoClosedTag {
 	tag: string;
@@ -63,10 +63,13 @@ export class Parser {
 			const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
 			const slug = current.type === 'Element' ? 'element' : 'block';
 
-			this.error({
-				code: `unclosed-${slug}`,
-				message: `${type} was left open`
-			}, current.start);
+			this.error(
+				{
+					code: `unclosed-${slug}`,
+					message: `${type} was left open`
+				},
+				current.start
+			);
 		}
 
 		if (state !== fragment) {
@@ -95,10 +98,13 @@ export class Parser {
 	}
 
 	acorn_error(err: any) {
-		this.error({
-			code: 'parse-error',
-			message: err.message.replace(regex_position_indicator, '')
-		}, err.pos);
+		this.error(
+			{
+				code: 'parse-error',
+				message: err.message.replace(regex_position_indicator, '')
+			},
+			err.pos
+		);
 	}
 
 	error({ code, message }: { code: string; message: string }, index = this.index) {
@@ -111,17 +117,18 @@ export class Parser {
 		});
 	}
 
-	eat(str: string, required?: boolean, error?: { code: string, message: string }) {
+	eat(str: string, required?: boolean, error?: { code: string; message: string }) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
 
 		if (required) {
-			this.error(error ||
-				(this.index === this.template.length
-					? parser_errors.unexpected_eof_token(str)
-					: parser_errors.unexpected_token(str))
+			this.error(
+				error ||
+					(this.index === this.template.length
+						? parser_errors.unexpected_eof_token(str)
+						: parser_errors.unexpected_token(str))
 			);
 		}
 
@@ -144,10 +151,7 @@ export class Parser {
 	}
 
 	allow_whitespace() {
-		while (
-			this.index < this.template.length &&
-			regex_whitespace.test(this.template[this.index])
-		) {
+		while (this.index < this.template.length && regex_whitespace.test(this.template[this.index])) {
 			this.index++;
 		}
 	}
@@ -179,13 +183,16 @@ export class Parser {
 			i += code <= 0xffff ? 1 : 2;
 		}
 
-		const identifier = this.template.slice(this.index, this.index = i);
+		const identifier = this.template.slice(this.index, (this.index = i));
 
 		if (!allow_reserved && reserved.has(identifier)) {
-			this.error({
-				code: 'unexpected-reserved-word',
-				message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
-			}, start);
+			this.error(
+				{
+					code: 'unexpected-reserved-word',
+					message: `'${identifier}' is a reserved word in JavaScript and cannot be used here`
+				},
+				start
+			);
 		}
 
 		return identifier;
@@ -193,10 +200,12 @@ export class Parser {
 
 	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) {
 		if (this.index >= this.template.length) {
-			this.error(error_message || {
-				code: 'unexpected-eof',
-				message: 'Unexpected end of input'
-			});
+			this.error(
+				error_message || {
+					code: 'unexpected-eof',
+					message: 'Unexpected end of input'
+				}
+			);
 		}
 
 		const start = this.index;
@@ -223,10 +232,7 @@ export class Parser {
 	}
 }
 
-export default function parse(
-	template: string,
-	options: ParserOptions = {}
-): Ast {
+export default function parse(template: string, options: ParserOptions = {}): Ast {
 	const parser = new Parser(template, options);
 
 	// TODO we may want to allow multiple <style> tags —
@@ -235,8 +241,8 @@ export default function parse(
 		parser.error(parser_errors.duplicate_style, parser.css[1].start);
 	}
 
-	const instance_scripts = parser.js.filter(script => script.context === 'default');
-	const module_scripts = parser.js.filter(script => script.context === 'module');
+	const instance_scripts = parser.js.filter((script) => script.context === 'default');
+	const module_scripts = parser.js.filter((script) => script.context === 'module');
 
 	if (instance_scripts.length > 1) {
 		parser.error(parser_errors.invalid_script_instance, instance_scripts[1].start);

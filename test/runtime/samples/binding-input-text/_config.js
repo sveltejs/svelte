@@ -22,16 +22,22 @@ export default {
 		input.value = 'everybody';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello everybody</p>
-		`);
+		`
+		);
 
 		component.name = 'goodbye';
 		assert.equal(input.value, 'goodbye');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello goodbye</p>
-		`);
+		`
+		);
 	}
 };

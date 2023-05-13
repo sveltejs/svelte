@@ -6,21 +6,28 @@ export default {
 	`,
 	async test({ component, target, assert }) {
 		component.boxes = [];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>10 * 2 = 20</div>
-		`);
-		
+		`
+		);
+
 		component.constant = 35;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>35 * 2 = 70</div>
-		`);
+		`
+		);
 
-		component.boxes = [
-			{width: 3, height: 4}
-		];
+		component.boxes = [{ width: 3, height: 4 }];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>12 420 245, 105+4=109</div>
-		`);
+		`
+		);
 	}
 };

@@ -1,5 +1,5 @@
 let fulfil;
-let thePromise = new Promise(f => {
+let thePromise = new Promise((f) => {
 	fulfil = f;
 });
 
@@ -17,9 +17,12 @@ export default {
 
 		return thePromise
 			.then(async () => {
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<button>click me</button>
-				`);
+				`
+				);
 
 				const { button } = component;
 

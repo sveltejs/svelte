@@ -17,8 +17,11 @@ export default {
 		assert.equal(span.foo, 1);
 
 		raf.tick(100);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>hello</span>
-		`);
+		`
+		);
 	}
 };

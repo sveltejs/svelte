@@ -28,6 +28,9 @@ export default class InlineComponent extends Node {
 	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
 		super(component, parent, scope, info);
 
+		this.cannot_use_innerhtml();
+		this.not_static_content();
+
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);
@@ -37,11 +40,12 @@ export default class InlineComponent extends Node {
 		this.name = info.name;
 		this.namespace = get_namespace(parent, component.namespace);
 
-		this.expression = this.name === 'svelte:component'
-			? new Expression(component, this, scope, info.expression)
-			: null;
+		this.expression =
+			this.name === 'svelte:component'
+				? new Expression(component, this, scope, info.expression)
+				: null;
 
-		info.attributes.forEach(node => {
+		info.attributes.forEach((node) => {
 			/* eslint-disable no-fallthrough */
 			switch (node.type) {
 				case 'Action':
@@ -52,7 +56,7 @@ export default class InlineComponent extends Node {
 						this.css_custom_properties.push(new Attribute(component, this, scope, node));
 						break;
 					}
-					// fallthrough
+				// fallthrough
 				case 'Spread':
 					this.attributes.push(new Attribute(component, this, scope, node));
 					break;
@@ -87,10 +91,10 @@ export default class InlineComponent extends Node {
 		if (this.lets.length > 0) {
 			this.scope = scope.child();
 
-			this.lets.forEach(l => {
+			this.lets.forEach((l) => {
 				const dependencies = new Set([l.name.name]);
 
-				l.names.forEach(name => {
+				l.names.forEach((name) => {
 					this.scope.add(name, dependencies, this);
 				});
 			});
@@ -98,8 +102,8 @@ export default class InlineComponent extends Node {
 			this.scope = scope;
 		}
 
-		this.handlers.forEach(handler => {
-			handler.modifiers.forEach(modifier => {
+		this.handlers.forEach((handler) => {
+			handler.modifiers.forEach((modifier) => {
 				if (modifier !== 'once') {
 					return component.error(handler, compiler_errors.invalid_event_modifier_component);
 				}
@@ -112,7 +116,10 @@ export default class InlineComponent extends Node {
 			if (child.type === 'SlotTemplate') {
 				children.push(child);
 				info.children.splice(i, 1);
-			} else if ((child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') && child.attributes.find(attribute => attribute.name === 'slot')) {
+			} else if (
+				(child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') &&
+				child.attributes.find((attribute) => attribute.name === 'slot')
+			) {
 				const slot_template = {
 					start: child.start,
 					end: child.end,
@@ -148,7 +155,7 @@ export default class InlineComponent extends Node {
 			}
 		}
 
-		if (info.children.some(node => not_whitespace_text(node))) {
+		if (info.children.some((node) => not_whitespace_text(node))) {
 			children.push({
 				start: info.start,
 				end: info.end,
@@ -163,7 +170,9 @@ export default class InlineComponent extends Node {
 	}
 
 	get slot_template_name() {
-		return this.attributes.find(attribute => attribute.name === 'slot').get_static_value() as string;
+		return this.attributes
+			.find((attribute) => attribute.name === 'slot')
+			.get_static_value() as string;
 	}
 }
 

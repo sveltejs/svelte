@@ -25,7 +25,9 @@ export default {
 		component.rectColor1 = 'yellow';
 		component.circleColor2 = 'cyan';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<svg xmlns="http://www.w3.org/2000/svg">
 				<g style="--rect-color:yellow; --circle-color:red;">
 					<g id="svg-1">
@@ -40,7 +42,8 @@ export default {
 					</g>
 				</g>
 			</svg>
-		`);
+		`
+		);
 
 		const circleColor1 = target.querySelector('#svg-1 circle');
 		const rectColor1 = target.querySelector('#svg-1 rect');

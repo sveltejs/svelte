@@ -14,10 +14,13 @@ export default {
 	test({ assert, component, target }) {
 		component.things = [0, 0, 0];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>0</p>
 			<p>1</p>
 			<p>2</p>
-		`);
+		`
+		);
 	}
 };

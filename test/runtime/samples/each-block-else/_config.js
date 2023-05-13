@@ -14,24 +14,33 @@ export default {
 
 	test({ assert, component, target }) {
 		component.animals = [];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			before
 			<p>no animals, but rather something else</p>
 			after
-		`);
+		`
+		);
 
 		component.foo = 'something other';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			before
 			<p>no animals, but rather something other</p>
 			after
-		`);
+		`
+		);
 
 		component.animals = ['wombat'];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			before
 			<p>wombat</p>
 			after
-		`);
+		`
+		);
 	}
 };

@@ -29,14 +29,12 @@ function calculate_replacements(
 
 	source.replace(re, (...match) => {
 		replacements.push(
-			get_replacement(...match).then(
-				replacement => {
-					const matched_string = match[0];
-					const offset = match[match.length - 2];
+			get_replacement(...match).then((replacement) => {
+				const matched_string = match[0];
+				const offset = match[match.length - 2];
 
-					return ({ offset, length: matched_string.length, replacement });
-				}
-			)
+				return { offset, length: matched_string.length, replacement };
+			})
 		);
 		return '';
 	});
@@ -44,10 +42,7 @@ function calculate_replacements(
 	return Promise.all(replacements);
 }
 
-function perform_replacements(
-	replacements: Replacement[],
-	source: Source
-): MappedCode {
+function perform_replacements(replacements: Replacement[], source: Source): MappedCode {
 	const out = new MappedCode();
 	let last_end = 0;
 
@@ -59,7 +54,9 @@ function perform_replacements(
 		last_end = offset + length;
 	}
 
-	const unchanged_suffix = MappedCode.from_source(slice_source(source.source.slice(last_end), last_end, source));
+	const unchanged_suffix = MappedCode.from_source(
+		slice_source(source.source.slice(last_end), last_end, source)
+	);
 
 	return out.concat(unchanged_suffix);
 }

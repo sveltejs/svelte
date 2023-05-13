@@ -12,7 +12,7 @@ export default {
 		let count = 0;
 		let number = null;
 
-		component.$on('foo', event => {
+		component.$on('foo', (event) => {
 			count++;
 			number = event.detail.foo;
 		});

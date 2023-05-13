@@ -1,7 +1,7 @@
 const VALUES = Array.from('abcdefghijklmnopqrstuvwxyz');
 
 function toObjects(array) {
-	return array.split('').map(x => ({ id: x }));
+	return array.split('').map((x) => ({ id: x }));
 }
 
 function permute() {
@@ -9,9 +9,7 @@ function permute() {
 	const number = Math.floor(Math.random() * VALUES.length);
 	const permuted = [];
 	for (let i = 0; i < number; i++) {
-		permuted.push(
-			...values.splice(Math.floor(Math.random() * (number - i)), 1)
-		);
+		permuted.push(...values.splice(Math.floor(Math.random() * (number - i)), 1));
 	}
 
 	return permuted.join('');
@@ -27,7 +25,10 @@ export default {
 	test({ assert, component, target }) {
 		function test(sequence) {
 			const previous = target.textContent;
-			const expected = sequence.split('').map(x => `(${x})`).join('');
+			const expected = sequence
+				.split('')
+				.map((x) => `(${x})`)
+				.join('');
 			component.values = toObjects(sequence);
 			assert.htmlEqual(
 				target.innerHTML,

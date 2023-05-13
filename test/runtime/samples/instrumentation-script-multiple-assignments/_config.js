@@ -19,10 +19,13 @@ export default {
 		assert.equal(component.foo, 4);
 		assert.equal(component.bar, 2);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>click me</button>
 			<p>foo: 4</p>
 			<p>bar: 2</p>
-		`);
+		`
+		);
 	}
 };

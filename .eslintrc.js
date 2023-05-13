@@ -1,6 +1,6 @@
 module.exports = {
 	root: true,
-	extends: '@sveltejs',
+	extends: ['@sveltejs', 'prettier'],
 	settings: {
 		'import/core-modules': [
 			'svelte',
@@ -10,5 +10,8 @@ module.exports = {
 			'estree'
 		],
 		'svelte3/compiler': require('./compiler')
+	},
+	rules: {
+		'@typescript-eslint/no-non-null-assertion': 'off'
 	}
 };

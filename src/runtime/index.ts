@@ -13,5 +13,10 @@ export {
 	createEventDispatcher,
 	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
-	// additional exports added through generate-type-definitions.js
-} from 'svelte/internal';
+} from './internal';
+export type {
+	ComponentType,
+	ComponentConstructorOptions,
+	ComponentProps,
+	ComponentEvents
+} from './internal';

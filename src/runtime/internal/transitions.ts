@@ -45,8 +45,8 @@ let outros: Outro;
 
 export function group_outros() {
 	outros = {
-		r: 0,     // remaining outros
-		c: [],    // callbacks
+		r: 0, // remaining outros
+		c: [], // callbacks
 		p: outros // parent group
 	};
 }
@@ -89,7 +89,11 @@ const null_transition: TransitionConfig = { duration: 0 };
 type TransitionOptions = { direction: 'in' | 'out' | 'both' };
 type TransitionFn = (node: Element, params: any, options: TransitionOptions) => TransitionConfig;
 
-export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
+export function create_in_transition(
+	node: Element & ElementCSSInlineStyle,
+	fn: TransitionFn,
+	params: any
+) {
 	const options: TransitionOptions = { direction: 'in' };
 	let config = fn(node, params, options);
 	let running = false;
@@ -121,7 +125,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 
 		add_render_callback(() => dispatch(node, true, 'start'));
 
-		task = loop(now => {
+		task = loop((now) => {
 			if (running) {
 				if (now >= end_time) {
 					tick(1, 0);
@@ -129,7 +133,7 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 					dispatch(node, true, 'end');
 
 					cleanup();
-					return running = false;
+					return (running = false);
 				}
 
 				if (now >= start_time) {
@@ -172,7 +176,11 @@ export function create_in_transition(node: Element & ElementCSSInlineStyle, fn: 
 	};
 }
 
-export function create_out_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any) {
+export function create_out_transition(
+	node: Element & ElementCSSInlineStyle,
+	fn: TransitionFn,
+	params: any
+) {
 	const options: TransitionOptions = { direction: 'out' };
 	let config = fn(node, params, options);
 	let running = true;
@@ -198,7 +206,7 @@ export function create_out_transition(node: Element & ElementCSSInlineStyle, fn:
 
 		add_render_callback(() => dispatch(node, false, 'start'));
 
-		loop(now => {
+		loop((now) => {
 			if (running) {
 				if (now >= end_time) {
 					tick(0, 1);
@@ -266,7 +274,12 @@ interface Program {
 	group?: Outro;
 }
 
-export function create_bidirectional_transition(node: Element & ElementCSSInlineStyle, fn: TransitionFn, params: any, intro: boolean) {
+export function create_bidirectional_transition(
+	node: Element & ElementCSSInlineStyle,
+	fn: TransitionFn,
+	params: any,
+	intro: boolean
+) {
 	const options: TransitionOptions = { direction: 'both' };
 	let config = fn(node, params, options);
 
@@ -330,7 +343,7 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 			running_program = init(program, duration);
 			add_render_callback(() => dispatch(node, b, 'start'));
 
-			loop(now => {
+			loop((now) => {
 				if (pending_program && now > pending_program.start) {
 					running_program = init(pending_program, duration);
 					pending_program = null;
@@ -339,13 +352,21 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 
 					if (css) {
 						clear_animation();
-						animation_name = create_rule(node, t, running_program.b, running_program.duration, 0, easing, config.css);
+						animation_name = create_rule(
+							node,
+							t,
+							running_program.b,
+							running_program.duration,
+							0,
+							easing,
+							config.css
+						);
 					}
 				}
 
 				if (running_program) {
 					if (now >= running_program.end) {
-						tick(t = running_program.b, 1 - t);
+						tick((t = running_program.b), 1 - t);
 						dispatch(node, running_program.b, 'end');
 
 						if (!pending_program) {
@@ -376,8 +397,10 @@ export function create_bidirectional_transition(node: Element & ElementCSSInline
 		run(b: INTRO | OUTRO) {
 			if (is_function(config)) {
 				wait().then(() => {
+					const opts: TransitionOptions = { direction: b ? 'in' : 'out' };
+
 					// @ts-ignore
-					config = config(options);
+					config = config(opts);
 					go(b);
 				});
 			} else {

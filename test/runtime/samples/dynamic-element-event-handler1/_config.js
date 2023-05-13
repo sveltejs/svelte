@@ -1,6 +1,6 @@
 let clicked = false;
 function handler() {
-  clicked = true;
+	clicked = true;
 }
 
 export default {

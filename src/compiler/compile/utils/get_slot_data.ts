@@ -7,8 +7,8 @@ export default function get_slot_data(values: Map<string, Attribute>, block: Blo
 	return {
 		type: 'ObjectExpression',
 		properties: Array.from(values.values())
-			.filter(attribute => attribute.name !== 'name')
-			.map(attribute => {
+			.filter((attribute) => attribute.name !== 'name')
+			.map((attribute) => {
 				if (attribute.is_spread) {
 					const argument = get_spread_value(block, attribute);
 					return {
@@ -28,7 +28,13 @@ function get_value(block: Block, attribute: Attribute) {
 	if (attribute.chunks.length === 0) return x`""`;
 
 	let value = attribute.chunks
-		.map(chunk => chunk.type === 'Text' ? string_literal(chunk.data) : (block ? chunk.manipulate(block) : chunk.node))
+		.map((chunk) =>
+			chunk.type === 'Text'
+				? string_literal(chunk.data)
+				: block
+				? chunk.manipulate(block)
+				: chunk.node
+		)
 		.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 
 	if (attribute.chunks.length > 1 && attribute.chunks[0].type !== 'Text') {

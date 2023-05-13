@@ -13,15 +13,21 @@ export default {
 		await target.querySelector('button').dispatchEvent(click);
 
 		assert.equal(component.show, false);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>Show</button>
-		`);
+		`
+		);
 
 		await target.querySelector('button').dispatchEvent(click);
 
 		assert.equal(component.show, true);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>Hide</button>
-		`);
+		`
+		);
 	}
 };

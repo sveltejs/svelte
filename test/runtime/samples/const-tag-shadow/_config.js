@@ -13,7 +13,7 @@ export default {
 		component.numbers = [
 			{
 				a: 4,
-				b: 5, 
+				b: 5,
 				children: [
 					{ a: 6, b: 7 },
 					{ a: 8, b: 9 }
@@ -21,7 +21,7 @@ export default {
 			},
 			{
 				a: 10,
-				b: 11, 
+				b: 11,
 				children: [
 					{ a: 12, b: 13 },
 					{ a: 14, b: 15 }
@@ -29,7 +29,9 @@ export default {
 			}
 		];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<b>9</b>
 			<u>13</u>
 			<u>17</u>
@@ -38,6 +40,7 @@ export default {
 			<u>25</u>
 			<u>29</u>
 			<i>21</i>
-		`);
+		`
+		);
 	}
 };

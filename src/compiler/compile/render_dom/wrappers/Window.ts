@@ -40,7 +40,7 @@ export default class WindowWrapper extends Wrapper {
 
 	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
 		super(renderer, block, parent, node);
-		this.handlers = this.node.handlers.map(handler => new EventHandler(handler, this));
+		this.handlers = this.node.handlers.map((handler) => new EventHandler(handler, this));
 	}
 
 	render(block: Block, _parent_node: Identifier, _parent_nodes: Identifier) {
@@ -53,7 +53,7 @@ export default class WindowWrapper extends Wrapper {
 		add_actions(block, '@_window', this.node.actions);
 		add_event_handlers(block, '@_window', this.handlers);
 
-		this.node.bindings.forEach(binding => {
+		this.node.bindings.forEach((binding) => {
 			// TODO: what if it's a MemberExpression?
 			const binding_name = (binding.expression.node as Identifier).name;
 
@@ -81,7 +81,7 @@ export default class WindowWrapper extends Wrapper {
 		const clear_scrolling = block.get_unique_name('clear_scrolling');
 		const scrolling_timeout = block.get_unique_name('scrolling_timeout');
 
-		Object.keys(events).forEach(event => {
+		Object.keys(events).forEach((event) => {
 			const id = block.get_unique_name(`onwindow${event}`);
 			const props = events[event];
 
@@ -94,9 +94,10 @@ export default class WindowWrapper extends Wrapper {
 				block.add_variable(clear_scrolling, x`() => { ${scrolling} = false }`);
 				block.add_variable(scrolling_timeout);
 
-				const condition = bindings.scrollX && bindings.scrollY
-					? x`"${bindings.scrollX}" in this._state || "${bindings.scrollY}" in this._state`
-					: x`"${bindings.scrollX || bindings.scrollY}" in this._state`;
+				const condition =
+					bindings.scrollX && bindings.scrollY
+						? x`"${bindings.scrollX}" in this._state || "${bindings.scrollY}" in this._state`
+						: x`"${bindings.scrollX || bindings.scrollY}" in this._state`;
 
 				const scrollX = bindings.scrollX && x`this._state.${bindings.scrollX}`;
 				const scrollY = bindings.scrollY && x`this._state.${bindings.scrollY}`;
@@ -118,10 +119,8 @@ export default class WindowWrapper extends Wrapper {
 					})
 				`);
 			} else {
-				props.forEach(prop => {
-					renderer.meta_bindings.push(
-						b`this._state.${prop.name} = @_window.${prop.value};`
-					);
+				props.forEach((prop) => {
+					renderer.meta_bindings.push(b`this._state.${prop.name} = @_window.${prop.value};`);
 				});
 
 				block.event_listeners.push(x`
@@ -131,7 +130,7 @@ export default class WindowWrapper extends Wrapper {
 
 			component.partly_hoisted.push(b`
 				function ${id}() {
-					${props.map(prop => renderer.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
+					${props.map((prop) => renderer.invalidate(prop.name, x`${prop.name} = @_window.${prop.value}`))}
 				}
 			`);
 
@@ -146,8 +145,12 @@ export default class WindowWrapper extends Wrapper {
 		if (bindings.scrollX || bindings.scrollY) {
 			const condition = renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean));
 
-			const scrollX = bindings.scrollX ? renderer.reference(bindings.scrollX) : x`@_window.pageXOffset`;
-			const scrollY = bindings.scrollY ? renderer.reference(bindings.scrollY) : x`@_window.pageYOffset`;
+			const scrollX = bindings.scrollX
+				? renderer.reference(bindings.scrollX)
+				: x`@_window.pageXOffset`;
+			const scrollY = bindings.scrollY
+				? renderer.reference(bindings.scrollY)
+				: x`@_window.pageYOffset`;
 
 			block.chunks.update.push(b`
 				if (${condition} && !${scrolling}) {

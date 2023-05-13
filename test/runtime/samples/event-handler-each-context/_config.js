@@ -1,8 +1,6 @@
 export default {
 	props: {
-		items: [
-			'whatever'
-		],
+		items: ['whatever'],
 		foo: 'wrong',
 		bar: 'right'
 	},

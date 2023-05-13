@@ -18,7 +18,7 @@ function is_equal(a, b) {
 		const b_keys = Object.keys(b).sort();
 		if (a_keys.join(',') !== b_keys.join(',')) return false;
 
-		return a_keys.every(key => is_equal(a[key], b[key]));
+		return a_keys.every((key) => is_equal(a[key], b[key]));
 	}
 
 	return a === b;
@@ -33,11 +33,7 @@ export function ok(condition, message) {
 }
 
 export function htmlEqual(actual, expected, message) {
-	return deepEqual(
-		normalizeHtml(window, actual),
-		normalizeHtml(window, expected),
-		message
-	);
+	return deepEqual(normalizeHtml(window, actual), normalizeHtml(window, expected), message);
 }
 
 function normalizeHtml(window, html) {
