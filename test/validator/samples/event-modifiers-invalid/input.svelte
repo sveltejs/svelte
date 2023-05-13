@@ -1,1 +1,0 @@
-<button on:click|stop|bad={doThat}></button>

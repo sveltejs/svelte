@@ -1,1 +1,0 @@
-<div ref:foo></div>

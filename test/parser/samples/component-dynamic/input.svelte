@@ -1,1 +1,0 @@
-<svelte:component this="{foo ? Foo : Bar}"></svelte:component>

@@ -1,2 +1,0 @@
-<marquee/>
-<blink/>

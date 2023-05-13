@@ -1,6 +1,0 @@
-{
-	"code": "invalid-elseif-placement",
-	"message": "Expected to close <p> tag before seeing {:else if ...} block",
-	"start": { "line": 3, "column": 9, "character": 25 },
-	"pos": 25
-}

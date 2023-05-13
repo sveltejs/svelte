@@ -1,1 +1,0 @@
-<slot name='{foo}'></slot>

@@ -1,3 +1,0 @@
-<textarea>
-	{@html fruit}
-</textarea>

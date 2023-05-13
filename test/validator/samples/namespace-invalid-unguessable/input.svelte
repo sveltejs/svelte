@@ -1,1 +1,0 @@
-<svelte:options namespace="lol"/>

@@ -1,8 +1,0 @@
-[
-	{
-		"code": "invalid_var_declaration",
-		"message": "\"var\" scope should not extend outside the reactive block",
-		"start": { "line": 4, "column": 2 },
-		"end": { "line": 4, "column": 50 }
-	}
-]

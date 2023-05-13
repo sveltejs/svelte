@@ -1,1 +1,0 @@
-<slot name='default'></slot>
