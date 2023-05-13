@@ -1,6 +1,7 @@
-import * as assert from 'assert';
 import * as fs from 'fs';
-import { svelte, tryToLoadJson } from '../helpers';
+import { assert, describe, it } from 'vitest';
+import * as svelte from '../../../compiler';
+import { tryToLoadJson } from '../../helpers';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -22,8 +23,9 @@ describe('parse', () => {
 
 			const input = fs
 				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
-				.replace(/\s+$/, '')
+				.trimEnd()
 				.replace(/\r/g, '');
+
 			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
 			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
 
@@ -48,12 +50,8 @@ describe('parse', () => {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
 				const { code, message, pos, start } = err;
-				try {
-					assert.deepEqual({ code, message, pos, start }, expectedError);
-				} catch (err2) {
-					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
-					throw e;
-				}
+
+				assert.deepEqual({ code, message, pos, start }, expectedError);
 			}
 		});
 	});
