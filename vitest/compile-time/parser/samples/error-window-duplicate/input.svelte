@@ -1,0 +1,2 @@
+<svelte:window/>
+<svelte:window/>

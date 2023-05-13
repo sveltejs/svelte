@@ -1,0 +1,10 @@
+{
+	"code": "invalid-then-placement",
+	"message": "Cannot have an {:then} block outside an {#await ...} block",
+	"start": {
+		"line": 1,
+		"column": 6,
+		"character": 6
+	},
+	"pos": 6
+}

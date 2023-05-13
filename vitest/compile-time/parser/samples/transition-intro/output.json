@@ -1,0 +1,104 @@
+{
+	"html": {
+		"start": 0,
+		"end": 45,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 45,
+				"type": "Element",
+				"name": "div",
+				"attributes": [
+					{
+						"start": 5,
+						"end": 30,
+						"type": "Transition",
+						"name": "style",
+						"modifiers": [],
+						"expression": {
+							"type": "ObjectExpression",
+							"start": 16,
+							"end": 28,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 16
+								},
+								"end": {
+									"line": 1,
+									"column": 28
+								}
+							},
+							"properties": [
+								{
+									"type": "Property",
+									"start": 17,
+									"end": 27,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 17
+										},
+										"end": {
+											"line": 1,
+											"column": 27
+										}
+									},
+									"method": false,
+									"shorthand": false,
+									"computed": false,
+									"key": {
+										"type": "Identifier",
+										"start": 17,
+										"end": 24,
+										"loc": {
+											"start": {
+												"line": 1,
+												"column": 17
+											},
+											"end": {
+												"line": 1,
+												"column": 24
+											}
+										},
+										"name": "opacity"
+									},
+									"value": {
+										"type": "Literal",
+										"start": 26,
+										"end": 27,
+										"loc": {
+											"start": {
+												"line": 1,
+												"column": 26
+											},
+											"end": {
+												"line": 1,
+												"column": 27
+											}
+										},
+										"value": 0,
+										"raw": "0"
+									},
+									"kind": "init"
+								}
+							]
+						},
+						"intro": true,
+						"outro": false
+					}
+				],
+				"children": [
+					{
+						"start": 31,
+						"end": 39,
+						"type": "Text",
+						"raw": "fades in",
+						"data": "fades in"
+					}
+				]
+			}
+		]
+	}
+}

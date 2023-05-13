@@ -1,0 +1,49 @@
+{
+	"html": {
+		"start": 0,
+		"end": 38,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 38,
+				"type": "Element",
+				"name": "button",
+				"attributes": [
+					{
+						"start": 8,
+						"end": 23,
+						"type": "EventHandler",
+						"name": "click",
+						"modifiers": [],
+						"expression": {
+							"type": "Identifier",
+							"start": 19,
+							"end": 22,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 19
+								},
+								"end": {
+									"line": 1,
+									"column": 22
+								}
+							},
+							"name": "foo"
+						}
+					}
+				],
+				"children": [
+					{
+						"start": 24,
+						"end": 29,
+						"type": "Text",
+						"raw": "Click",
+						"data": "Click"
+					}
+				]
+			}
+		]
+	}
+}

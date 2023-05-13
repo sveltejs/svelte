@@ -1,0 +1,1 @@
+<div class='foo' class='bar'></div>
