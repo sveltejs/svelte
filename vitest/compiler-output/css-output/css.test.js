@@ -107,32 +107,20 @@ describe('css', () => {
 
 			// verify that the right elements have scoping selectors
 			if (expected.html !== null) {
-				// dom
-				try {
-					const target = window.document.createElement('main');
+				const target = window.document.createElement('main');
 
-					new ClientComponent({ target, props: config.props });
-					const html = target.innerHTML;
+				new ClientComponent({ target, props: config.props });
+				const html = target.innerHTML;
 
-					fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
+				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
 
-					const actual_html = replace_css_hash(html);
-					assert_html_equal(actual_html, expected.html);
+				const actual_html = replace_css_hash(html);
+				assert_html_equal(actual_html, expected.html);
 
-					window.document.head.innerHTML = ''; // remove added styles
-				} catch (err) {
-					console.log(dom.js.code);
-					throw err;
-				}
+				window.document.head.innerHTML = ''; // remove added styles
 
-				// ssr
-				try {
-					const actual_ssr = replace_css_hash(ServerComponent.render(config.props).html);
-					assert_html_equal(actual_ssr, expected.html);
-				} catch (err) {
-					console.log(ssr.js.code);
-					throw err;
-				}
+				const actual_ssr = replace_css_hash(ServerComponent.render(config.props).html);
+				assert_html_equal(actual_ssr, expected.html);
 			}
 		});
 	});
