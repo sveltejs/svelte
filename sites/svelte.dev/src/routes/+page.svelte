@@ -6,7 +6,10 @@
 	import Supporters from './_components/Supporters/index.svelte';
 	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
+
+	// @ts-ignore
 	import CollectiveLight from './svelte-collective-light.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
+	// @ts-ignore
 	import CollectiveDark from './svelte-collective-dark.png?w=640;1280;2560;3800&format=avif;webp;png&as=picture';
 </script>
 

@@ -1,10 +1,14 @@
 <script>
 	import { page } from '$app/stores';
+	import { withMediaQuery } from '$lib/utils/stores/mql';
 
 	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
 	export let contents = [];
+
+	const should_set_tabindex = withMediaQuery('(min-width: 832px)');
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <nav aria-label="Docs">
 	<ul class="sidebar">
 		{#each contents as section}

@@ -5,6 +5,7 @@
 src/compiler/compile/internal_exports.ts
 !/test
 !site
+!sites
 /test/**/*.svelte
 /test/**/_expected*
 /test/**/_actual*

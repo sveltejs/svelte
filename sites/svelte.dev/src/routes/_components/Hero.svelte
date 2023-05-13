@@ -1,7 +1,9 @@
 <script>
 	import Image from './Image.svelte';
-	import Machine from './svelte-machine.png?w=640;1280;2560;3840&q=95&format=avif;webp;png&as=picture';
 	import SvelteLogotype from './svelte-logotype.svg';
+
+	// @ts-ignore
+	import Machine from './svelte-machine.png?w=640;1280;2560;3840&q=95&format=avif;webp;png&as=picture';
 </script>
 
 <div class="hero">
