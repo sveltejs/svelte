@@ -106,13 +106,22 @@ export function assert_html_equal(actual, expected, options = {}) {
 		expected = expected.replace(/\r\n/g, '\n');
 
 		if (options.normalize_html.removeDataSvelte) {
-			actual = actual.replace(/(data-svelte-h="[^"]+")/g, '');
-			expected = expected.replace(/(data-svelte-h="[^"]+")/g, '');
+			actual = actual.replace(/(\sdata-svelte-h="[^"]+")/g, '');
+			expected = expected.replace(/(\sdata-svelte-h="[^"]+")/g, '');
 		}
 	} else {
 		actual = normalize_html(actual, options.normalize_html);
 		expected = normalize_html(expected, options.normalize_html);
 	}
 
-	assert.equal(actual, expected, options.message);
+	try {
+		assert.equal(actual, expected, options.message);
+	} catch (err) {
+		// Remove this function from the stack trace so that the error is shown in the test file
+
+		if (Error.captureStackTrace) {
+			Error.captureStackTrace(err, assert_html_equal);
+		}
+		throw err;
+	}
 }
