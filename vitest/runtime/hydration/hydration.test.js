@@ -46,10 +46,11 @@ describe('hydration', async () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			// TODO: Get rid of this
+			// Do not introduce an await point here, it will break the test
 			compileOptions = config.compileOptions || {};
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
-
 			const SvelteComponent = require(`${cwd}/main.svelte`).default;
+			// Do not introduce an await point here, it will break the test
 
 			const target = window.document.body;
 			const head = window.document.head;
