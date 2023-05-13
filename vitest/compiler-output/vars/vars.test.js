@@ -35,6 +35,7 @@ describe('vars', () => {
 						assert.deepEqual(error.start, expectedError.start);
 						assert.deepEqual(error.end, expectedError.end);
 						assert.equal(error.pos, expectedError.pos);
+						return;
 					} else {
 						throw error;
 					}
