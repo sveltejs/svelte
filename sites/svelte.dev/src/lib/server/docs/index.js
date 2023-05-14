@@ -2,12 +2,16 @@ import { modules } from '$lib/generated/type-info';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import MagicString from 'magic-string';
+import { format } from 'prettier';
 import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
 import ts from 'typescript';
 import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, slugify, transform } from '../markdown';
 import { replace_placeholders } from './render.js';
 
 const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
+
+// FOR DEBUGGING
+const USE_SNIPPETS_CACHE = false;
 
 const snippet_cache = new URL('../../../../node_modules/.snippets', import.meta.url).pathname;
 if (!fs.existsSync(snippet_cache)) {
@@ -58,11 +62,13 @@ export async function get_parsed_docs(docs_data, slug) {
 				hash.update(source + language + current);
 				const digest = hash.digest().toString('base64').replace(/\//g, '-');
 
-				try {
-					if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
-						return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
-					}
-				} catch {}
+				if (USE_SNIPPETS_CACHE) {
+					try {
+						if (fs.existsSync(`${snippet_cache}/${digest}.html`)) {
+							return fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
+						}
+					} catch {}
+				}
 
 				/** @type {Record<string, string>} */
 				const options = {};
@@ -257,7 +263,10 @@ export async function get_parsed_docs(docs_data, slug) {
 					)
 					.replace(/\/\*…\*\//g, '…');
 
-				fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
+				if (USE_SNIPPETS_CACHE) {
+					fs.writeFileSync(`${snippet_cache}/${digest}.html`, html);
+				}
+
 				return html;
 			},
 			codespan: (text) => {
@@ -350,7 +359,9 @@ export function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
-			if (!METADATA_REGEX.test(code)) {
+			// console.log(code);
+			if (!code.includes('<!--- file:')) {
+				if (code.includes('Object.assign')) console.log(code);
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}
@@ -407,6 +418,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 			for (const comment of node.jsDoc) {
 				let modified = false;
 
+				let count = 0;
 				for (const tag of comment.tags ?? []) {
 					if (ts.isJSDocTypeTag(tag)) {
 						const [name, generics] = get_type_info(tag);
@@ -420,16 +432,19 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							const is_async = node.modifiers?.some(
 								(modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword
 							);
+
+							const type = generics !== undefined ? `${name}<${generics}>` : name;
+
 							code.overwrite(
 								node.getStart(),
 								node.name.getEnd(),
-								`${is_export ? 'export ' : ''}const ${node.name.getText()} = (${
+								`${is_export ? 'export ' : ''}const ${node.name.getText()}: ${type} = (${
 									is_async ? 'async ' : ''
 								}`
 							);
+
 							code.appendLeft(node.body.getStart(), '=> ');
-							const type = generics !== undefined ? `${name}${generics}` : name;
-							code.appendLeft(node.body.getEnd(), `) satisfies ${type};`);
+							code.appendLeft(node.body.getEnd(), ')');
 
 							modified = true;
 						} else if (
@@ -454,11 +469,34 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 						// 		'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
 						// 	);
 						// }
-						const [name] = get_type_info(tag);
-						code.appendLeft(node.parameters[0].getEnd(), `: ${name}`);
+
+						const sanitised_param = tag
+							.getFullText()
+							.replace(/\s+/g, '')
+							.replace(/(^\*|\*$)/g, '');
+
+						const [, param_type, param_name] = /@param{(.+)}(.+)/.exec(sanitised_param);
+
+						// console.log(sanitised_param);
+
+						let param_count = 0;
+						for (const param of node.parameters) {
+							console.log(param_count, count, tag.getText());
+							if (count !== param_count) {
+								param_count++;
+								continue;
+							}
+
+							code.appendLeft(param.getEnd(), `:${param_type}`);
+							// console.log(code.toString());
+
+							param_count++;
+						}
 
 						modified = true;
 					}
+
+					count++;
 				}
 
 				if (modified) {
@@ -493,7 +531,18 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 		code.appendLeft(insertion_point, offset + import_statements + '\n');
 	}
 
-	const transformed = code.toString();
+	let transformed = format(code.toString(), {
+		printWidth: 80,
+		parser: 'typescript',
+		useTabs: true
+	});
+
+	// Indent transformed's each line by 2
+	transformed = transformed
+		.split('\n')
+		.map((line) => indent.repeat(1) + line)
+		.join('\n');
+
 	return transformed === js_code ? undefined : transformed.replace(/\n\s*\n\s*\n/g, '\n\n');
 
 	/** @param {ts.JSDocTypeTag | ts.JSDocParameterTag} tag */
@@ -501,7 +550,14 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 		const type_text = tag.typeExpression.getText();
 		let name = type_text.slice(1, -1); // remove { }
 
-		const import_match = /import\('(.+?)'\)\.(\w+)(<{?[\n\* \w:;,]+}?>)?/.exec(type_text);
+		const single_line_name = format(name, {
+			printWidth: 1000,
+			parser: 'typescript',
+			semi: false
+		}).replace('\n', '');
+
+		const import_match = /import\("(.+?)"\)\.(\w+)(?:<(.+)>)?$/s.exec(single_line_name);
+
 		if (import_match) {
 			const [, from, _name, generics] = import_match;
 			name = _name;
