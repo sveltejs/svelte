@@ -4,7 +4,8 @@
 !/src
 src/compiler/compile/internal_exports.ts
 !/test
-!site
+!documentation
+!sites
 /test/**/*.svelte
 /test/**/_expected*
 /test/**/_actual*

@@ -1,7 +1,7 @@
 // @ts-check
 import fs from 'node:fs';
 
-const BASE = '../../site/content/examples/';
+const BASE = '../../documentation/content/examples/';
 
 /**
  * @returns {import('./types').ExamplesData}
