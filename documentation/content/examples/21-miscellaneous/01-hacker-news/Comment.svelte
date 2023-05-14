@@ -9,7 +9,7 @@
 
 	<div class="replies">
 		{#each comment.comments as child}
-			<svelte:self comment={child}/>
+			<svelte:self comment={child} />
 		{/each}
 	</div>
 </article>

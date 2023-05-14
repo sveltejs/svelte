@@ -10,8 +10,10 @@
 
 <ul>
 	<!-- open each block -->
-		<li><a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
+	<li>
+		<a target="_blank" href="https://www.youtube.com/watch?v={cat.id}" rel="noreferrer">
 			{cat.name}
-		</a></li>
+		</a>
+	</li>
 	<!-- close each block -->
 </ul>

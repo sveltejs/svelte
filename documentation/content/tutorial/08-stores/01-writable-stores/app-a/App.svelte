@@ -6,13 +6,13 @@
 
 	let countValue;
 
-	count.subscribe(value => {
+	count.subscribe((value) => {
 		countValue = value;
 	});
 </script>
 
 <h1>The count is {countValue}</h1>
 
-<Incrementer/>
-<Decrementer/>
-<Resetter/>
+<Incrementer />
+<Decrementer />
+<Resetter />

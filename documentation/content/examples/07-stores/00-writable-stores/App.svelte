@@ -6,13 +6,13 @@
 
 	let countValue;
 
-	const unsubscribe = count.subscribe(value => {
+	const unsubscribe = count.subscribe((value) => {
 		countValue = value;
 	});
 </script>
 
 <h1>The count is {countValue}</h1>
 
-<Incrementer/>
-<Decrementer/>
-<Resetter/>
+<Incrementer />
+<Decrementer />
+<Resetter />

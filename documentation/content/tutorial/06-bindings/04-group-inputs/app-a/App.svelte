@@ -11,34 +11,34 @@
 <h2>Size</h2>
 
 <label>
-	<input type=radio group={scoops} name="scoops" value={1}>
+	<input type="radio" group={scoops} name="scoops" value={1} />
 	One scoop
 </label>
 
 <label>
-	<input type=radio group={scoops} name="scoops" value={2}>
+	<input type="radio" group={scoops} name="scoops" value={2} />
 	Two scoops
 </label>
 
 <label>
-	<input type=radio group={scoops} name="scoops" value={3}>
+	<input type="radio" group={scoops} name="scoops" value={3} />
 	Three scoops
 </label>
 
 <h2>Flavours</h2>
 
 <label>
-	<input type=checkbox group={flavours} name="flavours" value="Cookies and cream">
+	<input type="checkbox" group={flavours} name="flavours" value="Cookies and cream" />
 	Cookies and cream
 </label>
 
 <label>
-	<input type=checkbox group={flavours} name="flavours" value="Mint choc chip">
+	<input type="checkbox" group={flavours} name="flavours" value="Mint choc chip" />
 	Mint choc chip
 </label>
 
 <label>
-	<input type=checkbox group={flavours} name="flavours" value="Raspberry ripple">
+	<input type="checkbox" group={flavours} name="flavours" value="Raspberry ripple" />
 	Raspberry ripple
 </label>
 
@@ -48,7 +48,8 @@
 	<p>Can't order more flavours than scoops!</p>
 {:else}
 	<p>
-		You ordered {scoops} {scoops === 1 ? 'scoop' : 'scoops'}
+		You ordered {scoops}
+		{scoops === 1 ? 'scoop' : 'scoops'}
 		of {join(flavours)}
 	</p>
 {/if}

@@ -14,7 +14,8 @@
 <!-- the text will flash red whenever
 		the `todo` object changes -->
 <div bind:this={div} on:click>
-	{todo.done ? '👍': ''} {todo.text}
+	{todo.done ? '👍' : ''}
+	{todo.text}
 </div>
 
 <style>

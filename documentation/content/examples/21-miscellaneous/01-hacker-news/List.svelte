@@ -1,6 +1,6 @@
 <script>
-	import { beforeUpdate } from "svelte";
-	import Summary from "./Summary.svelte";
+	import { beforeUpdate } from 'svelte';
+	import Summary from './Summary.svelte';
 
 	const PAGE_SIZE = 20;
 
@@ -10,8 +10,8 @@
 	let offset;
 
 	$: fetch(`https://node-hnapi.herokuapp.com/news?page=${page}`)
-		.then(r => r.json())
-		.then(data => {
+		.then((r) => r.json())
+		.then((data) => {
 			items = data;
 			offset = PAGE_SIZE * (page - 1);
 			window.scrollTo(0, 0);
@@ -20,7 +20,7 @@
 
 {#if items}
 	{#each items as item, i}
-		<Summary {item} {i} {offset}/>
+		<Summary {item} {i} {offset} />
 	{/each}
 
 	<a href="#/top/{page + 1}">page {page + 1}</a>
@@ -40,7 +40,11 @@
 	}
 
 	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 </style>

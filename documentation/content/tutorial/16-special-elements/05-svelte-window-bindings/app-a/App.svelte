@@ -4,22 +4,20 @@
 	let y;
 </script>
 
-<svelte:window/>
+<svelte:window />
 
 <a class="parallax-container" href="https://www.firewatchgame.com">
 	{#each layers as layer}
 		<img
-			style="transform: translate(0,{-y * layer / (layers.length - 1)}px)"
+			style="transform: translate(0,{(-y * layer) / (layers.length - 1)}px)"
 			src="https://www.firewatchgame.com/images/parallax/parallax{layer}.png"
 			alt="parallax layer {layer}"
-		>
+		/>
 	{/each}
 </a>
 
 <div class="text">
-	<span style="opacity: {1 - Math.max(0, y / 40)}">
-		scroll down
-	</span>
+	<span style="opacity: {1 - Math.max(0, y / 40)}"> scroll down </span>
 
 	<div class="foreground">
 		You have scrolled {y} pixels
@@ -32,7 +30,7 @@
 		width: 2400px;
 		height: 712px;
 		left: 50%;
-		transform: translate(-50%,0);
+		transform: translate(-50%, 0);
 	}
 
 	.parallax-container img {
@@ -48,14 +46,14 @@
 		position: absolute;
 		width: 100%;
 		height: 100%;
-		background: rgb(45,10,13);
+		background: rgb(45, 10, 13);
 	}
 
 	.text {
 		position: relative;
 		width: 100%;
 		height: 300vh;
-		color: rgb(220,113,43);
+		color: rgb(220, 113, 43);
 		text-align: center;
 		padding: 4em 0.5em 0.5em 0.5em;
 		box-sizing: border-box;
@@ -75,7 +73,7 @@
 		left: 0;
 		width: 100%;
 		height: calc(100% - 712px);
-		background-color: rgb(32,0,1);
+		background-color: rgb(32, 0, 1);
 		color: white;
 		padding: 50vh 0 0 0;
 	}

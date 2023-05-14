@@ -3,7 +3,7 @@
 </script>
 
 <label>
-	<input type=checkbox checked={yes}>
+	<input type="checkbox" checked={yes} />
 	Yes! Send me regular email spam
 </label>
 
@@ -13,6 +13,4 @@
 	<p>You must opt-in to continue. If you're not paying, you're the product.</p>
 {/if}
 
-<button disabled={!yes}>
-	Subscribe
-</button>
+<button disabled={!yes}> Subscribe </button>

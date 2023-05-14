@@ -8,7 +8,7 @@
 		return `${c} ${c === 1 ? 'comment' : 'comments'}`;
 	}
 
-	$: url = item.type === "ask" ? `https://news.ycombinator.com/${item.url}` : item.url;
+	$: url = item.type === 'ask' ? `https://news.ycombinator.com/${item.url}` : item.url;
 </script>
 
 <article>

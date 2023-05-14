@@ -19,7 +19,7 @@
 				{#if file.files}
 					<!-- show folder -->
 				{:else}
-					<File {...file}/>
+					<File {...file} />
 				{/if}
 			</li>
 		{/each}

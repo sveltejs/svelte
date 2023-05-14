@@ -101,7 +101,7 @@ The name of the file is what determines the URL of the page. For example, the UR
 
 ```json
 {
-	"title": "Getting Started"
+  "title": "Getting Started"
 }
 ```
 

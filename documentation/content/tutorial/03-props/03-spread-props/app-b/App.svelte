@@ -9,4 +9,4 @@
 	};
 </script>
 
-<Info {...pkg}/>
+<Info {...pkg} />

@@ -13,10 +13,10 @@
 	let i = 0;
 
 	$: filteredPeople = prefix
-		? people.filter(person => {
-			const name = `${person.last}, ${person.first}`;
-			return name.toLowerCase().startsWith(prefix.toLowerCase());
-		})
+		? people.filter((person) => {
+				const name = `${person.last}, ${person.first}`;
+				return name.toLowerCase().startsWith(prefix.toLowerCase());
+		  })
 		: people;
 
 	$: selected = filteredPeople[i];
@@ -50,7 +50,7 @@
 	}
 </script>
 
-<input placeholder="filter prefix" bind:value={prefix}>
+<input placeholder="filter prefix" bind:value={prefix} />
 
 <select bind:value={i} size={5}>
 	{#each filteredPeople as person, i}
@@ -58,13 +58,13 @@
 	{/each}
 </select>
 
-<label><input bind:value={first} placeholder="first"></label>
-<label><input bind:value={last} placeholder="last"></label>
+<label><input bind:value={first} placeholder="first" /></label>
+<label><input bind:value={last} placeholder="last" /></label>
 
-<div class='buttons'>
-	<button on:click={create} disabled="{!first || !last}">create</button>
-	<button on:click={update} disabled="{!first || !last || !selected}">update</button>
-	<button on:click={remove} disabled="{!selected}">delete</button>
+<div class="buttons">
+	<button on:click={create} disabled={!first || !last}>create</button>
+	<button on:click={update} disabled={!first || !last || !selected}>update</button>
+	<button on:click={remove} disabled={!selected}>delete</button>
 </div>
 
 <style>

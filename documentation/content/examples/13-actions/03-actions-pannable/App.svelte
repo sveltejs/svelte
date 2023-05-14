@@ -2,17 +2,20 @@
 	import { spring } from 'svelte/motion';
 	import { pannable } from './pannable.js';
 
-	const coords = spring({ x: 0, y: 0 }, {
-		stiffness: 0.2,
-		damping: 0.4
-	});
+	const coords = spring(
+		{ x: 0, y: 0 },
+		{
+			stiffness: 0.2,
+			damping: 0.4
+		}
+	);
 
 	function handlePanStart() {
 		coords.stiffness = coords.damping = 1;
 	}
 
 	function handlePanMove(event) {
-		coords.update($coords => ({
+		coords.update(($coords) => ({
 			x: $coords.x + event.detail.dx,
 			y: $coords.y + event.detail.dy
 		}));
@@ -25,7 +28,8 @@
 	}
 </script>
 
-<div class="box"
+<div
+	class="box"
 	use:pannable
 	on:panstart={handlePanStart}
 	on:panmove={handlePanMove}
@@ -33,7 +37,7 @@
 	style="transform:
 		translate({$coords.x}px,{$coords.y}px)
 		rotate({$coords.x * 0.2}deg)"
-></div>
+/>
 
 <style>
 	.box {

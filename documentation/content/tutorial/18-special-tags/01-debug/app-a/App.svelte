@@ -5,8 +5,8 @@
 	};
 </script>
 
-<input bind:value={user.firstname}>
-<input bind:value={user.lastname}>
+<input bind:value={user.firstname} />
+<input bind:value={user.lastname} />
 
 {(console.log(user), '')}
 

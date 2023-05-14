@@ -11,7 +11,7 @@
 			return {
 				duration: 600,
 				easing: quintOut,
-				css: t => `
+				css: (t) => `
 					transform: ${transform} scale(${t});
 					opacity: ${t}
 				`
@@ -25,7 +25,7 @@
 		{ id: 3, done: true, description: 'buy some milk' },
 		{ id: 4, done: false, description: 'mow the lawn' },
 		{ id: 5, done: false, description: 'feed the turtle' },
-		{ id: 6, done: false, description: 'fix some bugs' },
+		{ id: 6, done: false, description: 'fix some bugs' }
 	];
 
 	let uid = todos.length + 1;
@@ -42,43 +42,35 @@
 	}
 
 	function remove(todo) {
-		todos = todos.filter(t => t !== todo);
+		todos = todos.filter((t) => t !== todo);
 	}
 </script>
 
-<div class='board'>
+<div class="board">
 	<input
 		class="new-todo"
 		placeholder="what needs to be done?"
-		on:keydown="{event => event.key === 'Enter' && add(event.target)}"
-	>
+		on:keydown={(event) => event.key === 'Enter' && add(event.target)}
+	/>
 
-	<div class='left'>
+	<div class="left">
 		<h2>todo</h2>
-		{#each todos.filter(t => !t.done) as todo (todo.id)}
-			<label
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-				animate:flip
-			>
-				<input type=checkbox bind:checked={todo.done}>
+		{#each todos.filter((t) => !t.done) as todo (todo.id)}
+			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
+				<input type="checkbox" bind:checked={todo.done} />
 				{todo.description}
-				<button on:click="{() => remove(todo)}">x</button>
+				<button on:click={() => remove(todo)}>x</button>
 			</label>
 		{/each}
 	</div>
 
-	<div class='right'>
+	<div class="right">
 		<h2>done</h2>
-		{#each todos.filter(t => t.done) as todo (todo.id)}
-			<label
-				in:receive="{{key: todo.id}}"
-				out:send="{{key: todo.id}}"
-				animate:flip
-			>
-				<input type=checkbox bind:checked={todo.done}>
+		{#each todos.filter((t) => t.done) as todo (todo.id)}
+			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
+				<input type="checkbox" bind:checked={todo.done} />
 				{todo.description}
-				<button on:click="{() => remove(todo)}">x</button>
+				<button on:click={() => remove(todo)}>x</button>
 			</label>
 		{/each}
 	</div>
@@ -96,7 +88,8 @@
 		margin: 0 auto;
 	}
 
-	.left, .right {
+	.left,
+	.right {
 		float: left;
 		width: 50%;
 		padding: 0 1em 0 0;
@@ -122,10 +115,12 @@
 		user-select: none;
 	}
 
-	input { margin: 0 }
+	input {
+		margin: 0;
+	}
 
 	.right label {
-		background-color: rgb(180,240,100);
+		background-color: rgb(180, 240, 100);
 	}
 
 	button {
@@ -136,7 +131,7 @@
 		line-height: 1;
 		background-color: transparent;
 		border: none;
-		color: rgb(170,30,30);
+		color: rgb(170, 30, 30);
 		opacity: 0;
 		transition: opacity 0.2s;
 	}

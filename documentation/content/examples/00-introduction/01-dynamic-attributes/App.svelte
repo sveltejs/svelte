@@ -4,4 +4,4 @@
 </script>
 
 <!-- {src} is short for src={src} -->
-<img {src} alt="{name} dancing">
+<img {src} alt="{name} dancing" />

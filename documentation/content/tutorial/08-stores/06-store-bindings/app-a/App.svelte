@@ -3,4 +3,4 @@
 </script>
 
 <h1>{$greeting}</h1>
-<input value={$name}>
+<input value={$name} />

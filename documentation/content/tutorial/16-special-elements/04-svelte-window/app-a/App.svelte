@@ -8,7 +8,7 @@
 	}
 </script>
 
-<svelte:window/>
+<svelte:window />
 
 <div style="text-align: center">
 	{#if key}

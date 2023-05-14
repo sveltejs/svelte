@@ -2,4 +2,4 @@
 	import Inner from './Inner.svelte';
 </script>
 
-<Inner on:message/>
+<Inner on:message />

@@ -6,10 +6,10 @@
 <div class="chart">
 	<h2>Anscombe's quartet</h2>
 
-	<Scatterplot points={data.a}/>
-	<Scatterplot points={data.b}/>
-	<Scatterplot points={data.c}/>
-	<Scatterplot points={data.d}/>
+	<Scatterplot points={data.a} />
+	<Scatterplot points={data.b} />
+	<Scatterplot points={data.c} />
+	<Scatterplot points={data.d} />
 </div>
 
 <style>

@@ -6,4 +6,4 @@
 	}
 </script>
 
-<CustomButton on:click={handleClick}/>
+<CustomButton on:click={handleClick} />

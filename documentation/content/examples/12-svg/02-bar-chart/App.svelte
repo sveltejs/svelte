@@ -41,7 +41,7 @@
 		<g class="axis y-axis">
 			{#each yTicks as tick}
 				<g class="tick tick-{tick}" transform="translate(0, {yScale(tick)})">
-					<line x2="100%"></line>
+					<line x2="100%" />
 					<text y="-4">{tick} {tick === 20 ? ' per 1,000 population' : ''}</text>
 				</g>
 			{/each}
@@ -51,19 +51,19 @@
 		<g class="axis x-axis">
 			{#each points as point, i}
 				<g class="tick" transform="translate({xScale(i)},{height})">
-					<text x="{barWidth/2}" y="-4">{width > 380 ? point.year : formatMobile(point.year)}</text>
+					<text x={barWidth / 2} y="-4">{width > 380 ? point.year : formatMobile(point.year)}</text>
 				</g>
 			{/each}
 		</g>
 
-		<g class='bars'>
+		<g class="bars">
 			{#each points as point, i}
 				<rect
-					x="{xScale(i) + 2}"
-					y="{yScale(point.birthrate)}"
-					width="{barWidth - 4}"
-					height="{yScale(0) - yScale(point.birthrate)}"
-				></rect>
+					x={xScale(i) + 2}
+					y={yScale(point.birthrate)}
+					width={barWidth - 4}
+					height={yScale(0) - yScale(point.birthrate)}
+				/>
 			{/each}
 		</g>
 	</svg>
@@ -88,7 +88,7 @@
 
 	.tick {
 		font-family: Helvetica, Arial;
-		font-size: .725em;
+		font-size: 0.725em;
 		font-weight: 200;
 	}
 

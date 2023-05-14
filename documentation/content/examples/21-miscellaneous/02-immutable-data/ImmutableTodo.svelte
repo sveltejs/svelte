@@ -1,4 +1,4 @@
-<svelte:options immutable/>
+<svelte:options immutable />
 
 <script>
 	import { afterUpdate } from 'svelte';
@@ -16,7 +16,8 @@
 <!-- the text will flash red whenever
 		the `todo` object changes -->
 <div bind:this={div} on:click>
-	{todo.done ? '👍': ''} {todo.text}
+	{todo.done ? '👍' : ''}
+	{todo.text}
 </div>
 
 <style>

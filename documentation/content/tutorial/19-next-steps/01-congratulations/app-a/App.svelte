@@ -3,7 +3,8 @@
 
 	let characters = ['🥳', '🎉', '✨'];
 
-	let confetti = new Array(100).fill()
+	let confetti = new Array(100)
+		.fill()
 		.map((_, i) => {
 			return {
 				character: characters[i % characters.length],
@@ -20,7 +21,7 @@
 		function loop() {
 			frame = requestAnimationFrame(loop);
 
-			confetti = confetti.map(emoji => {
+			confetti = confetti.map((emoji) => {
 				emoji.y += 0.7 * emoji.r;
 				if (emoji.y > 120) emoji.y = -20;
 				return emoji;

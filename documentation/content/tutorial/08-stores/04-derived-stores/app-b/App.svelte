@@ -13,5 +13,6 @@
 
 <p>
 	This page has been open for
-	{$elapsed} {$elapsed === 1 ? 'second' : 'seconds'}
+	{$elapsed}
+	{$elapsed === 1 ? 'second' : 'seconds'}
 </p>

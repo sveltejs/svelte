@@ -1,11 +1,7 @@
 <script>
 	// setup code goes here
 
-	function sayHello() {
-
-	}
+	function sayHello() {}
 </script>
 
-<button on:click={sayHello}>
-	Click to say hello
-</button>
+<button on:click={sayHello}> Click to say hello </button>

@@ -12,8 +12,8 @@
 
 	const ASSETS = `https://sveltejs.github.io/assets/crossfade`;
 
-	const load = image => {
-		const timeout = setTimeout(() => loading = image, 100);
+	const load = (image) => {
+		const timeout = setTimeout(() => (loading = image), 100);
 
 		const img = new Image();
 
@@ -37,10 +37,10 @@
 					{#if selected !== image}
 						<button
 							style="background-color: {image.color};"
-							on:click="{() => load(image)}"
-							in:receive={{key:image.id}}
-							out:send={{key:image.id}}
-						>{loading === image ? '...' : image.id}</button>
+							on:click={() => load(image)}
+							in:receive={{ key: image.id }}
+							out:send={{ key: image.id }}>{loading === image ? '...' : image.id}</button
+						>
 					{/if}
 				</div>
 			{/each}
@@ -48,15 +48,14 @@
 
 		{#if selected}
 			{#await selected then d}
-				<div class="photo" in:receive={{key:d.id}} out:send={{key:d.id}}>
-					<img
-						alt={d.alt}
-						src="{ASSETS}/{d.id}.jpg"
-						on:click="{() => selected = null}"
-					>
+				<div class="photo" in:receive={{ key: d.id }} out:send={{ key: d.id }}>
+					<img alt={d.alt} src="{ASSETS}/{d.id}.jpg" on:click={() => (selected = null)} />
 
-					<p class='credit'>
-						<a target="_blank" rel="noreferrer" href="https://www.flickr.com/photos/{d.path}">via Flickr</a> &ndash;
+					<p class="credit">
+						<a target="_blank" rel="noreferrer" href="https://www.flickr.com/photos/{d.path}"
+							>via Flickr</a
+						>
+						&ndash;
 						<a target="_blank" rel="noreferrer" href={d.license.url}>{d.license.name}</a>
 					</p>
 				</div>
@@ -114,7 +113,8 @@
 		will-change: transform;
 	}
 
-	.photo, img {
+	.photo,
+	img {
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -144,10 +144,11 @@
 		color: white;
 		font-weight: bold;
 		opacity: 0.6;
-		background: rgba(0,0,0,0.4);
+		background: rgba(0, 0, 0, 0.4);
 	}
 
-	.credit a, .credit a:visited {
+	.credit a,
+	.credit a:visited {
 		color: white;
 	}
 </style>

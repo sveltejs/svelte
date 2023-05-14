@@ -1,6 +1,4 @@
-<button on:click>
-	Click me
-</button>
+<button on:click> Click me </button>
 
 <style>
 	button {

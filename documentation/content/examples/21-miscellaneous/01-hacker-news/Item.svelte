@@ -1,5 +1,5 @@
 <script>
-	import Comment from "./Comment.svelte";
+	import Comment from './Comment.svelte';
 
 	export let item;
 	export let returnTo;
@@ -10,19 +10,19 @@
 <a href={returnTo}>&laquo; back</a>
 
 <article>
-	<a href="{url}">
+	<a href={url}>
 		<h1>{item.title}</h1>
 		{#if item.domain}
 			<small>{item.domain}</small>
 		{/if}
 	</a>
 
-	<p class="meta">submitted by {item.user} {item.time_ago}
+	<p class="meta">submitted by {item.user} {item.time_ago}</p>
 </article>
 
 <div class="comments">
 	{#each item.comments as comment}
-		<Comment {comment}/>
+		<Comment {comment} />
 	{/each}
 </div>
 

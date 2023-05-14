@@ -1,9 +1,7 @@
 <script>
 	function handleClick() {
-		alert('clicked')
+		alert('clicked');
 	}
 </script>
 
-<button on:click={handleClick}>
-	Click me
-</button>
+<button on:click={handleClick}> Click me </button>

@@ -2,11 +2,7 @@
 	let scoops = 1;
 	let flavours = ['Mint choc chip'];
 
-	let menu = [
-		'Cookies and cream',
-		'Mint choc chip',
-		'Raspberry ripple'
-	];
+	let menu = ['Cookies and cream', 'Mint choc chip', 'Raspberry ripple'];
 
 	function join(flavours) {
 		if (flavours.length === 1) return flavours[0];
@@ -17,17 +13,17 @@
 <h2>Size</h2>
 
 <label>
-	<input type=radio bind:group={scoops} value={1}>
+	<input type="radio" bind:group={scoops} value={1} />
 	One scoop
 </label>
 
 <label>
-	<input type=radio bind:group={scoops} value={2}>
+	<input type="radio" bind:group={scoops} value={2} />
 	Two scoops
 </label>
 
 <label>
-	<input type=radio bind:group={scoops} value={3}>
+	<input type="radio" bind:group={scoops} value={3} />
 	Three scoops
 </label>
 
@@ -47,7 +43,8 @@
 	<p>Can't order more flavours than scoops!</p>
 {:else}
 	<p>
-		You ordered {scoops} {scoops === 1 ? 'scoop' : 'scoops'}
+		You ordered {scoops}
+		{scoops === 1 ? 'scoop' : 'scoops'}
 		of {join(flavours)}
 	</p>
 {/if}

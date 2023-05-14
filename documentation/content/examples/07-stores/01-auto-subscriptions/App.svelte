@@ -7,6 +7,6 @@
 
 <h1>The count is {$count}</h1>
 
-<Incrementer/>
-<Decrementer/>
-<Resetter/>
+<Incrementer />
+<Decrementer />
+<Resetter />

@@ -13,13 +13,10 @@
 		frame = requestAnimationFrame(update);
 
 		const time = window.performance.now();
-		elapsed += Math.min(
-			time - last_time,
-			duration - elapsed
-		);
+		elapsed += Math.min(time - last_time, duration - elapsed);
 
 		last_time = time;
-	}());
+	})();
 
 	onDestroy(() => {
 		cancelAnimationFrame(frame);
@@ -28,14 +25,14 @@
 
 <label>
 	elapsed time:
-	<progress value="{elapsed / duration}"></progress>
+	<progress value={elapsed / duration} />
 </label>
 
 <div>{(elapsed / 1000).toFixed(1)}s</div>
 
 <label>
 	duration:
-	<input type="range" bind:value={duration} min="1" max="20000">
+	<input type="range" bind:value={duration} min="1" max="20000" />
 </label>
 
-<button on:click="{() => elapsed = 0}">reset</button>
+<button on:click={() => (elapsed = 0)}>reset</button>

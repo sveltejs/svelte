@@ -5,9 +5,7 @@
 		{
 			type: 'folder',
 			name: 'Important work stuff',
-			files: [
-				{ type: 'file', name: 'quarterly-results.xlsx' }
-			]
+			files: [{ type: 'file', name: 'quarterly-results.xlsx' }]
 		},
 		{
 			type: 'folder',
@@ -38,4 +36,4 @@
 	];
 </script>
 
-<Folder name="Home" files={root} expanded/>
+<Folder name="Home" files={root} expanded />

@@ -8,7 +8,7 @@
 	];
 
 	function toggle(toggled) {
-		todos = todos.map(todo => {
+		todos = todos.map((todo) => {
 			if (todo === toggled) {
 				// return a new object
 				return {
@@ -26,5 +26,5 @@
 
 <h2>Todos</h2>
 {#each todos as todo}
-	<Todo {todo} on:click={() => toggle(todo)}/>
+	<Todo {todo} on:click={() => toggle(todo)} />
 {/each}

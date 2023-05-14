@@ -58,11 +58,11 @@ When constructing a custom element, you can tailor several aspects by defining `
 ```svelte
 <svelte:options
 	customElement={{
-		tag: "custom-element",
-		shadow: "none",
+		tag: 'custom-element',
+		shadow: 'none',
 		props: {
-			name: { reflect: true, type: "Number", attribute: "element-index" },
-		},
+			name: { reflect: true, type: 'Number', attribute: 'element-index' }
+		}
 	}}
 />
 
@@ -75,11 +75,11 @@ When constructing a custom element, you can tailor several aspects by defining `
 
 Custom elements can be a useful way to package components for consumption in a non-Svelte app, as they will work with vanilla HTML and JavaScript as well as [most frameworks](https://custom-elements-everywhere.com/). There are, however, some important differences to be aware of:
 
-- Styles are *encapsulated*, rather than merely *scoped* (unless you set `shadow: "none"`). This means that any non-component styles (such as you might have in a `global.css` file) will not apply to the custom element, including styles with the `:global(...)` modifier
+- Styles are _encapsulated_, rather than merely _scoped_ (unless you set `shadow: "none"`). This means that any non-component styles (such as you might have in a `global.css` file) will not apply to the custom element, including styles with the `:global(...)` modifier
 - Instead of being extracted out as a separate .css file, styles are inlined into the component as a JavaScript string
 - Custom elements are not generally suitable for server-side rendering, as the shadow DOM is invisible until JavaScript loads
 - In Svelte, slotted content renders _lazily_. In the DOM, it renders _eagerly_. In other words, it will always be created even if the component's `<slot>` element is inside an `{#if ...}` block. Similarly, including a `<slot>` in an `{#each ...}` block will not cause the slotted content to be rendered multiple times
-- The `let:` directive has no effect, because custom elements do not have a way to pass data to the parent component that fills the slot 
+- The `let:` directive has no effect, because custom elements do not have a way to pass data to the parent component that fills the slot
 - Polyfills are required to support older browsers
 
 When a custom element written with Svelte is created or updated, the shadow dom will reflect the value in the next tick, not immediately. This way updates can be batched, and DOM moves which temporarily (but synchronously) detach the element from the DOM don't lead to unmounting the inner component.

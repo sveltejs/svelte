@@ -17,9 +17,9 @@
 		{#each files as file}
 			<li>
 				{#if file.files}
-					<svelte:self {...file}/>
+					<svelte:self {...file} />
 				{:else}
-					<File {...file}/>
+					<File {...file} />
 				{/if}
 			</li>
 		{/each}

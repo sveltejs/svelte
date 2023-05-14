@@ -11,7 +11,7 @@
 	</div>
 	<div class="discussion">
 		<h3>Comments</h3>
-		<slot name="comments"></slot>
+		<slot name="comments" />
 	</div>
 </article>
 
@@ -30,7 +30,7 @@
 		content: '';
 		background-color: #ff3e00;
 		border-radius: 10px;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 		height: 20px;
 		position: absolute;
 		right: -10px;

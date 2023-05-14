@@ -3,7 +3,7 @@
 </script>
 
 <label>
-	<input type=checkbox bind:checked={big}>
+	<input type="checkbox" bind:checked={big} />
 	big
 </label>
 

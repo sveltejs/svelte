@@ -15,9 +15,7 @@
 
 	const eliza = new Eliza();
 
-	let comments = [
-		{ author: 'eliza', text: eliza.getInitial() }
-	];
+	let comments = [{ author: 'eliza', text: eliza.getInitial() }];
 
 	function handleKeydown(event) {
 		if (event.key === 'Enter') {
@@ -41,15 +39,31 @@
 				});
 
 				setTimeout(() => {
-					comments = comments.filter(comment => !comment.placeholder).concat({
-						author: 'eliza',
-						text: reply
-					});
+					comments = comments
+						.filter((comment) => !comment.placeholder)
+						.concat({
+							author: 'eliza',
+							text: reply
+						});
 				}, 500 + Math.random() * 500);
 			}, 200 + Math.random() * 200);
 		}
 	}
 </script>
+
+<div class="chat">
+	<h1>Eliza</h1>
+
+	<div class="scrollable" bind:this={div}>
+		{#each comments as comment}
+			<article class={comment.author}>
+				<span>{comment.text}</span>
+			</article>
+		{/each}
+	</div>
+
+	<input on:keydown={handleKeydown} />
+</div>
 
 <style>
 	.chat {
@@ -85,23 +99,9 @@
 	}
 
 	.user span {
-		background-color: #0074D9;
+		background-color: #0074d9;
 		color: white;
 		border-radius: 1em 1em 0 1em;
 		word-break: break-all;
 	}
 </style>
-
-<div class="chat">
-	<h1>Eliza</h1>
-
-	<div class="scrollable" bind:this={div}>
-		{#each comments as comment}
-			<article class={comment.author}>
-				<span>{comment.text}</span>
-			</article>
-		{/each}
-	</div>
-
-	<input on:keydown={handleKeydown}>
-</div>

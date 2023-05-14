@@ -19,10 +19,10 @@
 
 	$: minX = points[0].x;
 	$: maxX = points[points.length - 1].x;
-	$: path = `M${points.map(p => `${xScale(p.x)},${yScale(p.y)}`).join('L')}`;
+	$: path = `M${points.map((p) => `${xScale(p.x)},${yScale(p.y)}`).join('L')}`;
 	$: area = `${path}L${xScale(maxX)},${yScale(0)}L${xScale(minX)},${yScale(0)}Z`;
 
-	function formatMobile (tick) {
+	function formatMobile(tick) {
 		return "'" + tick.toString().slice(-2);
 	}
 </script>
@@ -35,7 +35,7 @@
 		<g class="axis y-axis" transform="translate(0, {padding.top})">
 			{#each yTicks as tick}
 				<g class="tick tick-{tick}" transform="translate(0, {yScale(tick) - padding.bottom})">
-					<line x2="100%"></line>
+					<line x2="100%" />
 					<text y="-4">{tick} {tick === 8 ? ' million sq km' : ''}</text>
 				</g>
 			{/each}
@@ -44,23 +44,29 @@
 		<!-- x axis -->
 		<g class="axis x-axis">
 			{#each xTicks as tick}
-				<g class="tick tick-{ tick }" transform="translate({xScale(tick)},{height})">
-					<line y1="-{height}" y2="-{padding.bottom}" x1="0" x2="0"></line>
+				<g class="tick tick-{tick}" transform="translate({xScale(tick)},{height})">
+					<line y1="-{height}" y2="-{padding.bottom}" x1="0" x2="0" />
 					<text y="-2">{width > 380 ? tick : formatMobile(tick)}</text>
 				</g>
 			{/each}
 		</g>
 
 		<!-- data -->
-		<path class="path-area" d={area}></path>
-		<path class="path-line" d={path}></path>
+		<path class="path-area" d={area} />
+		<path class="path-line" d={path} />
 	</svg>
 </div>
 
-<p>Average September extent. Source: <a href='https://climate.nasa.gov/vital-signs/arctic-sea-ice/'>NSIDC/NASA</a></p>
+<p>
+	Average September extent. Source: <a href="https://climate.nasa.gov/vital-signs/arctic-sea-ice/"
+		>NSIDC/NASA</a
+	>
+</p>
 
 <style>
-	.chart, h2, p {
+	.chart,
+	h2,
+	p {
 		width: 100%;
 		max-width: 500px;
 		margin-left: auto;
@@ -75,7 +81,7 @@
 	}
 
 	.tick {
-		font-size: .725em;
+		font-size: 0.725em;
 		font-weight: 200;
 	}
 
@@ -99,13 +105,13 @@
 
 	.path-line {
 		fill: none;
-		stroke: rgb(0,100,100);
+		stroke: rgb(0, 100, 100);
 		stroke-linejoin: round;
 		stroke-linecap: round;
 		stroke-width: 2;
 	}
 
 	.path-area {
-		fill: rgba(0,100,100,0.2);
+		fill: rgba(0, 100, 100, 0.2);
 	}
 </style>

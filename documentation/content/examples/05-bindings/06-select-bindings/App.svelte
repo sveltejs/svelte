@@ -17,7 +17,7 @@
 <h2>Insecurity questions</h2>
 
 <form on:submit|preventDefault={handleSubmit}>
-	<select bind:value={selected} on:change="{() => answer = ''}">
+	<select bind:value={selected} on:change={() => (answer = '')}>
 		{#each questions as question}
 			<option value={question}>
 				{question.text}
@@ -25,15 +25,17 @@
 		{/each}
 	</select>
 
-	<input bind:value={answer}>
+	<input bind:value={answer} />
 
-	<button disabled={!answer} type=submit>
-		Submit
-	</button>
+	<button disabled={!answer} type="submit"> Submit </button>
 </form>
 
 <p>selected question {selected ? selected.id : '[waiting...]'}</p>
 
 <style>
-	input { display: block; width: 500px; max-width: 100%; }
+	input {
+		display: block;
+		width: 500px;
+		max-width: 100%;
+	}
 </style>

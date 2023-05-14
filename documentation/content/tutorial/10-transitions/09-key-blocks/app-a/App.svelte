@@ -14,6 +14,7 @@
 <button
 	on:click={() => {
 		number += 1;
-	}}>
+	}}
+>
 	Increment
 </button>

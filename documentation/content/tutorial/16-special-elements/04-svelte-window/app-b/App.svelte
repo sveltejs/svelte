@@ -8,7 +8,7 @@
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown}/>
+<svelte:window on:keydown={handleKeydown} />
 
 <div style="text-align: center">
 	{#if key}

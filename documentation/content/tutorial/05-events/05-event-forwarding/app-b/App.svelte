@@ -6,4 +6,4 @@
 	}
 </script>
 
-<Outer on:message={handleMessage}/>
+<Outer on:message={handleMessage} />

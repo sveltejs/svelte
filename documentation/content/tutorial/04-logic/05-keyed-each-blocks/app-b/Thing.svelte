@@ -2,12 +2,12 @@
 	import { onDestroy } from 'svelte';
 
 	const emojis = {
-        apple: "🍎",
-        banana: "🍌",
-        carrot: "🥕",
-        doughnut: "🍩",
-        egg: "🥚"
-	}
+		apple: '🍎',
+		banana: '🍌',
+		carrot: '🥕',
+		doughnut: '🍩',
+		egg: '🥚'
+	};
 
 	// the name is updated whenever the prop value changes...
 	export let name;
@@ -17,12 +17,12 @@
 
 	// observe in the console which entry is removed
 	onDestroy(() => {
-		console.log('thing destroyed: ' + name)
+		console.log('thing destroyed: ' + name);
 	});
 </script>
 
 <p>
-	<span>The emoji for { name } is { emoji }</span>
+	<span>The emoji for {name} is {emoji}</span>
 </p>
 
 <style>
@@ -34,6 +34,6 @@
 		padding: 0.2em 1em 0.3em;
 		text-align: center;
 		border-radius: 0.2em;
-		background-color: #FFDFD3;
+		background-color: #ffdfd3;
 	}
 </style>

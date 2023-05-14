@@ -5,8 +5,8 @@
 	let text = 'edit me';
 </script>
 
-<input type=range bind:value={size}>
-<input bind:value={text}>
+<input type="range" bind:value={size} />
+<input bind:value={text} />
 
 <p>size: {w}px x {h}px</p>
 
@@ -15,6 +15,10 @@
 </div>
 
 <style>
-	input { display: block; }
-	div { display: inline-block; }
+	input {
+		display: block;
+	}
+	div {
+		display: inline-block;
+	}
 </style>

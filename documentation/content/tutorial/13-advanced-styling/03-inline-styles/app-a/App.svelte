@@ -9,7 +9,7 @@
 
 <style>
 	p {
-		font-family: "Comic Sans MS", cursive;
+		font-family: 'Comic Sans MS', cursive;
 		background: rgba(255, 62, 0, var(--opacity));
 	}
 </style>

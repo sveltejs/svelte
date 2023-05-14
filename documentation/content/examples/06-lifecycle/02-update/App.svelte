@@ -6,7 +6,7 @@
 	let autoscroll;
 
 	beforeUpdate(() => {
-		autoscroll = div && (div.offsetHeight + div.scrollTop) > (div.scrollHeight - 20);
+		autoscroll = div && div.offsetHeight + div.scrollTop > div.scrollHeight - 20;
 	});
 
 	afterUpdate(() => {
@@ -15,9 +15,7 @@
 
 	const eliza = new Eliza();
 
-	let comments = [
-		{ author: 'eliza', text: eliza.getInitial() }
-	];
+	let comments = [{ author: 'eliza', text: eliza.getInitial() }];
 
 	function handleKeydown(event) {
 		if (event.key === 'Enter') {
@@ -41,10 +39,12 @@
 				});
 
 				setTimeout(() => {
-					comments = comments.filter(comment => !comment.placeholder).concat({
-						author: 'eliza',
-						text: reply
-					});
+					comments = comments
+						.filter((comment) => !comment.placeholder)
+						.concat({
+							author: 'eliza',
+							text: reply
+						});
 				}, 500 + Math.random() * 500);
 			}, 200 + Math.random() * 200);
 		}
@@ -62,7 +62,7 @@
 		{/each}
 	</div>
 
-	<input on:keydown={handleKeydown}>
+	<input on:keydown={handleKeydown} />
 </div>
 
 <style>
@@ -99,7 +99,7 @@
 	}
 
 	.user span {
-		background-color: #0074D9;
+		background-color: #0074d9;
 		color: white;
 		border-radius: 1em 1em 0 1em;
 	}

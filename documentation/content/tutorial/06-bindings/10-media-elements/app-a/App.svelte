@@ -14,7 +14,7 @@
 		// Make the controls visible, but fade out after
 		// 2.5 seconds of inactivity
 		clearTimeout(showControlsTimeout);
-		showControlsTimeout = setTimeout(() => showControls = false, 2500);
+		showControlsTimeout = setTimeout(() => (showControls = false), 2500);
 		showControls = true;
 
 		if (!duration) return; // video not loaded yet
@@ -22,7 +22,7 @@
 
 		const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
 		const { left, right } = this.getBoundingClientRect();
-		time = duration * (clientX - left) / (right - left);
+		time = (duration * (clientX - left)) / (right - left);
 	}
 
 	// we can't rely on the built-in click event, because it fires
@@ -59,12 +59,13 @@
 		on:mousemove={handleMove}
 		on:touchmove|preventDefault={handleMove}
 		on:mousedown={handleMousedown}
-		on:mouseup={handleMouseup}>
-		<track kind="captions">
+		on:mouseup={handleMouseup}
+	>
+		<track kind="captions" />
 	</video>
 
 	<div class="controls" style="opacity: {duration && showControls ? 1 : 0}">
-		<progress value="{(time / duration) || 0}"/>
+		<progress value={time / duration || 0} />
 
 		<div class="info">
 			<span class="time">{format(time)}</span>
@@ -104,7 +105,9 @@
 		width: 3em;
 	}
 
-	.time:last-child { text-align: right }
+	.time:last-child {
+		text-align: right;
+	}
 
 	progress {
 		display: block;
@@ -115,11 +118,11 @@
 	}
 
 	progress::-webkit-progress-bar {
-		background-color: rgba(0,0,0,0.2);
+		background-color: rgba(0, 0, 0, 0.2);
 	}
 
 	progress::-webkit-progress-value {
-		background-color: rgba(255,255,255,0.6);
+		background-color: rgba(255, 255, 255, 0.6);
 	}
 
 	video {

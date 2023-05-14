@@ -2,9 +2,7 @@
 	import AudioPlayer from './AudioPlayer.svelte';
 </script>
 
-<button>
-	stop all audio
-</button>
+<button> stop all audio </button>
 
 <!-- https://musopen.org/music/9862-the-blue-danube-op-314/ -->
 <AudioPlayer

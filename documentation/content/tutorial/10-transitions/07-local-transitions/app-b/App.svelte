@@ -7,13 +7,12 @@
 </script>
 
 <label>
-	<input type="checkbox" bind:checked={showItems}>
+	<input type="checkbox" bind:checked={showItems} />
 	show list
 </label>
 
 <label>
-	<input type="range" bind:value={i} max=10>
-
+	<input type="range" bind:value={i} max="10" />
 </label>
 
 {#if showItems}

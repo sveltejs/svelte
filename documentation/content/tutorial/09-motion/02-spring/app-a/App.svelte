@@ -8,21 +8,21 @@
 <div style="position: absolute; right: 1em;">
 	<label>
 		<h3>stiffness ({coords.stiffness})</h3>
-		<input bind:value={coords.stiffness} type="range" min="0" max="1" step="0.01">
+		<input bind:value={coords.stiffness} type="range" min="0" max="1" step="0.01" />
 	</label>
 
 	<label>
 		<h3>damping ({coords.damping})</h3>
-		<input bind:value={coords.damping} type="range" min="0" max="1" step="0.01">
+		<input bind:value={coords.damping} type="range" min="0" max="1" step="0.01" />
 	</label>
 </div>
 
 <svg
-	on:mousemove="{e => coords.set({ x: e.clientX, y: e.clientY })}"
-	on:mousedown="{() => size.set(30)}"
-	on:mouseup="{() => size.set(10)}"
+	on:mousemove={(e) => coords.set({ x: e.clientX, y: e.clientY })}
+	on:mousedown={() => size.set(30)}
+	on:mouseup={() => size.set(10)}
 >
-	<circle cx={$coords.x} cy={$coords.y} r={$size}/>
+	<circle cx={$coords.x} cy={$coords.y} r={$size} />
 </svg>
 
 <style>

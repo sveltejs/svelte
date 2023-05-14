@@ -3,7 +3,7 @@
 </script>
 
 <p>These styles...</p>
-<Nested/>
+<Nested />
 
 <style>
 	p {

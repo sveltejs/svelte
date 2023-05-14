@@ -13,25 +13,14 @@
 </script>
 
 <label for="avatar">Upload a picture:</label>
-<input
-	accept="image/png, image/jpeg"
-	bind:files
-	id="avatar"
-	name="avatar"
-	type="file"
-/>
+<input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
 
 <label for="many">Upload multiple files of any type:</label>
-<input
-	bind:files
-	id="many"
-	multiple
-	type="file"
-/>
+<input bind:files id="many" multiple type="file" />
 
 {#if files}
 	<h2>Selected files:</h2>
 	{#each Array.from(files) as file}
-		<p>{file.name} ({file.size} bytes) </p>
+		<p>{file.name} ({file.size} bytes)</p>
 	{/each}
 {/if}

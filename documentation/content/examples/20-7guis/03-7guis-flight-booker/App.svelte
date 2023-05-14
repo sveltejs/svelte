@@ -42,16 +42,15 @@
 	<option value={true}>return flight</option>
 </select>
 
-<input type=date bind:value={start}>
-<input type=date bind:value={end} disabled={!isReturn}>
+<input type="date" bind:value={start} />
+<input type="date" bind:value={end} disabled={!isReturn} />
 
-<button
-	on:click={bookFlight}
-	disabled="{isReturn && (startDate >= endDate)}"
->book</button>
+<button on:click={bookFlight} disabled={isReturn && startDate >= endDate}>book</button>
 
 <style>
-	select, input, button {
+	select,
+	input,
+	button {
 		display: block;
 		margin: 0.5em 0;
 		font-size: inherit;

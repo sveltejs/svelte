@@ -10,35 +10,24 @@
 	}
 
 	function clear() {
-		todos = todos.filter(t => !t.done);
+		todos = todos.filter((t) => !t.done);
 	}
 
-	$: remaining = todos.filter(t => !t.done).length;
+	$: remaining = todos.filter((t) => !t.done).length;
 </script>
 
 <h1>Todos</h1>
 
 {#each todos as todo}
 	<div>
-		<input
-			type=checkbox
-			bind:checked={todo.done}
-		>
+		<input type="checkbox" bind:checked={todo.done} />
 
-		<input
-			placeholder="What needs to be done?"
-			bind:value={todo.text}
-			disabled={todo.done}
-		>
+		<input placeholder="What needs to be done?" bind:value={todo.text} disabled={todo.done} />
 	</div>
 {/each}
 
 <p>{remaining} remaining</p>
 
-<button on:click={add}>
-	Add new
-</button>
+<button on:click={add}> Add new </button>
 
-<button on:click={clear}>
-	Clear completed
-</button>
+<button on:click={clear}> Clear completed </button>

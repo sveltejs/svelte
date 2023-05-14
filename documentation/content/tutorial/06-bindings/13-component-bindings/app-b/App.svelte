@@ -11,4 +11,4 @@
 
 <h1 style="color: {pin ? '#333' : '#ccc'}">{view}</h1>
 
-<Keypad bind:value={pin} on:submit={handleSubmit}/>
+<Keypad bind:value={pin} on:submit={handleSubmit} />

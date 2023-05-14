@@ -4,26 +4,18 @@
 	let root = [
 		{
 			name: 'Important work stuff',
-			files: [
-				{ name: 'quarterly-results.xlsx' }
-			]
+			files: [{ name: 'quarterly-results.xlsx' }]
 		},
 		{
 			name: 'Animal GIFs',
 			files: [
 				{
 					name: 'Dogs',
-					files: [
-						{ name: 'treadmill.gif' },
-						{ name: 'rope-jumping.gif' }
-					]
+					files: [{ name: 'treadmill.gif' }, { name: 'rope-jumping.gif' }]
 				},
 				{
 					name: 'Goats',
-					files: [
-						{ name: 'parkour.gif' },
-						{ name: 'rampage.gif' }
-					]
+					files: [{ name: 'parkour.gif' }, { name: 'rampage.gif' }]
 				},
 				{ name: 'cat-roomba.gif' },
 				{ name: 'duck-shuffle.gif' },
@@ -34,4 +26,4 @@
 	];
 </script>
 
-<Folder name="Home" files={root} expanded/>
+<Folder name="Home" files={root} expanded />

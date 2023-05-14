@@ -3,7 +3,7 @@
 	import { mapbox, key } from './mapbox.js';
 
 	setContext(key, {
-		getMap: () => map,
+		getMap: () => map
 	});
 
 	export let lat;
@@ -18,7 +18,7 @@
 			container,
 			style: 'mapbox://styles/mapbox/streets-v9',
 			center: [lon, lat],
-			zoom,
+			zoom
 		});
 	}
 
@@ -28,11 +28,7 @@
 </script>
 
 <svelte:head>
-	<link
-		rel="stylesheet"
-		href="https://unpkg.com/mapbox-gl/dist/mapbox-gl.css"
-		on:load={load}
-	/>
+	<link rel="stylesheet" href="https://unpkg.com/mapbox-gl/dist/mapbox-gl.css" on:load={load} />
 </svelte:head>
 
 <div bind:this={container}>

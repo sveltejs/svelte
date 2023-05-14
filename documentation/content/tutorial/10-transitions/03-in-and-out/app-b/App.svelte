@@ -4,12 +4,10 @@
 </script>
 
 <label>
-	<input type="checkbox" bind:checked={visible}>
+	<input type="checkbox" bind:checked={visible} />
 	visible
 </label>
 
 {#if visible}
-	<p in:fly="{{ y: 200, duration: 2000 }}" out:fade>
-		Flies in, fades out
-	</p>
+	<p in:fly={{ y: 200, duration: 2000 }} out:fade>Flies in, fades out</p>
 {/if}

@@ -1,7 +1,7 @@
 <script>
 	let selection = '';
 
-	const handleSelectionChange = (e) => selection = document.getSelection();
+	const handleSelectionChange = (e) => (selection = document.getSelection());
 </script>
 
 <svelte:document />

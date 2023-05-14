@@ -3,11 +3,11 @@
 </script>
 
 <label>
-	<input type=checkbox bind:checked={big}>
+	<input type="checkbox" bind:checked={big} />
 	big
 </label>
 
-<div class:big={big}>
+<div class:big>
 	some {big ? 'big' : 'small'} text
 </div>
 

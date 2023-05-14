@@ -9,4 +9,4 @@
 	};
 </script>
 
-<Info name={pkg.name} version={pkg.version} speed={pkg.speed} website={pkg.website}/>
+<Info name={pkg.name} version={pkg.version} speed={pkg.speed} website={pkg.website} />

@@ -5,8 +5,8 @@
 
 	const dispatch = createEventDispatcher();
 
-	const select = num => () => value += num;
-	const clear  = () => value = '';
+	const select = (num) => () => (value += num);
+	const clear = () => (value = '');
 	const submit = () => dispatch('submit');
 </script>
 
@@ -31,10 +31,10 @@
 		display: grid;
 		grid-template-columns: repeat(3, 5em);
 		grid-template-rows: repeat(4, 3em);
-		grid-gap: 0.5em
+		grid-gap: 0.5em;
 	}
 
 	button {
-		margin: 0
+		margin: 0;
 	}
 </style>

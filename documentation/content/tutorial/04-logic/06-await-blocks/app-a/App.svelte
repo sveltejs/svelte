@@ -17,9 +17,7 @@
 	}
 </script>
 
-<button on:click={handleClick}>
-	generate random number
-</button>
+<button on:click={handleClick}> generate random number </button>
 
 <!-- replace this element -->
 <p>{promise}</p>

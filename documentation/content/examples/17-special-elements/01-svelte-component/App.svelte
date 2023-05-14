@@ -4,9 +4,9 @@
 	import BlueThing from './BlueThing.svelte';
 
 	const options = [
-		{ color: 'red',   component: RedThing   },
+		{ color: 'red', component: RedThing },
 		{ color: 'green', component: GreenThing },
-		{ color: 'blue',  component: BlueThing  },
+		{ color: 'blue', component: BlueThing }
 	];
 
 	let selected = options[0];
@@ -18,4 +18,4 @@
 	{/each}
 </select>
 
-<svelte:component this={selected.component}/>
+<svelte:component this={selected.component} />

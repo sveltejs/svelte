@@ -2,7 +2,7 @@
 	const elements = new Set();
 
 	export function stopAll() {
-		elements.forEach(element => {
+		elements.forEach((element) => {
 			element.pause();
 		});
 	}
@@ -25,7 +25,7 @@
 	});
 
 	function stopOthers() {
-		elements.forEach(element => {
+		elements.forEach((element) => {
 			if (element !== audio) element.pause();
 		});
 	}
@@ -35,24 +35,21 @@
 	<h2>{title}</h2>
 	<p><strong>{composer}</strong> / performed by {performer}</p>
 
-	<audio
-		bind:this={audio}
-		bind:paused
-		on:play={stopOthers}
-		controls
-		{src}
-	></audio>
+	<audio bind:this={audio} bind:paused on:play={stopOthers} controls {src} />
 </article>
 
 <style>
 	article {
-		margin: 0 0 1em 0; max-width: 800px;
+		margin: 0 0 1em 0;
+		max-width: 800px;
 	}
-	h2, p {
+	h2,
+	p {
 		margin: 0 0 0.3em 0;
 	}
 	audio {
-		width: 100%; margin: 0.5em 0 1em 0;
+		width: 100%;
+		margin: 0.5em 0 1em 0;
 	}
 	.playing {
 		color: #ff3e00;

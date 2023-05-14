@@ -3,12 +3,10 @@
 </script>
 
 <label>
-	<input type="checkbox" bind:checked={visible}>
+	<input type="checkbox" bind:checked={visible} />
 	visible
 </label>
 
 {#if visible}
-	<p>
-		Fades in and out
-	</p>
+	<p>Fades in and out</p>
 {/if}

@@ -1,21 +1,18 @@
 <script>
 	let hereKitty = false;
 
-	const handleMouseenter = () => hereKitty = true;
-	const handleMouseleave = () => hereKitty = false;
+	const handleMouseenter = () => (hereKitty = true);
+	const handleMouseleave = () => (hereKitty = false);
 </script>
 
-<svelte:body
-	on:mouseenter={handleMouseenter}
-	on:mouseleave={handleMouseleave}
-/>
+<svelte:body on:mouseenter={handleMouseenter} on:mouseleave={handleMouseleave} />
 
 <!-- creative commons BY-NC http://www.pngall.com/kitten-png/download/7247 -->
 <img
 	class:curious={hereKitty}
 	alt="Kitten wants to know what's going on"
 	src="/tutorial/kitten.png"
->
+/>
 
 <style>
 	img {
