@@ -359,9 +359,7 @@ export function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
-			// console.log(code);
 			if (!code.includes('<!--- file:')) {
-				if (code.includes('Object.assign')) console.log(code);
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}
@@ -475,20 +473,16 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							.replace(/\s+/g, '')
 							.replace(/(^\*|\*$)/g, '');
 
-						const [, param_type, param_name] = /@param{(.+)}(.+)/.exec(sanitised_param);
-
-						// console.log(sanitised_param);
+						const [, param_type] = /@param{(.+)}(.+)/.exec(sanitised_param);
 
 						let param_count = 0;
 						for (const param of node.parameters) {
-							console.log(param_count, count, tag.getText());
 							if (count !== param_count) {
 								param_count++;
 								continue;
 							}
 
 							code.appendLeft(param.getEnd(), `:${param_type}`);
-							// console.log(code.toString());
 
 							param_count++;
 						}
