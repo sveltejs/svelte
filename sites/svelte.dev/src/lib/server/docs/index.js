@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { modules } from '$lib/generated/type-info';
 import { createHash } from 'crypto';
 import fs from 'fs';
@@ -8,10 +9,8 @@ import ts from 'typescript';
 import { SHIKI_LANGUAGE_MAP, escape, normalizeSlugify, slugify, transform } from '../markdown';
 import { replace_placeholders } from './render.js';
 
-const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
-
 // FOR DEBUGGING
-const USE_SNIPPETS_CACHE = false;
+const USE_SNIPPETS_CACHE = !dev;
 
 const snippet_cache = new URL('../../../../node_modules/.snippets', import.meta.url).pathname;
 if (!fs.existsSync(snippet_cache)) {
