@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { extract_frontmatter } from '../markdown/index.js';
 
-const BASE = '../../site/content/tutorial/';
+const BASE = '../../documentation/content/tutorial/';
 
 /**
  * @returns {import('./types').TutorialData}
