@@ -62,7 +62,6 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
-// @errors: 7006 2769
 // ---cut---
 import { readable } from 'svelte/store';
 
@@ -125,7 +124,7 @@ declare global {
 export {};
 
 // @filename: index.ts
-// @errors: 2769 7006
+// @errors: 18046
 // ---cut---
 import { derived } from 'svelte/store';
 
