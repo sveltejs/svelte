@@ -36,7 +36,6 @@ describe('custom-elements', function () {
 		const warnings = [];
 
 		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
-
 			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
 			const expected_warnings = config.warnings || [];
 
