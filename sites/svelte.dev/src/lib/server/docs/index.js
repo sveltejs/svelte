@@ -528,7 +528,8 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 	let transformed = format(code.toString(), {
 		printWidth: 80,
 		parser: 'typescript',
-		useTabs: true
+		useTabs: true,
+		singleQuote: true
 	});
 
 	// Indent transformed's each line by 2
@@ -547,10 +548,11 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 		const single_line_name = format(name, {
 			printWidth: 1000,
 			parser: 'typescript',
-			semi: false
+			semi: false,
+			singleQuote: true
 		}).replace('\n', '');
 
-		const import_match = /import\("(.+?)"\)\.(\w+)(?:<(.+)>)?$/s.exec(single_line_name);
+		const import_match = /import\('(.+?)'\)\.(\w+)(?:<(.+)>)?$/s.exec(single_line_name);
 
 		if (import_match) {
 			const [, from, _name, generics] = import_match;
