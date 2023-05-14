@@ -1,12 +1,12 @@
 <script>
 	import { page } from '$app/stores';
-	import { withMediaQuery } from '$lib/utils/stores/mql';
+	import { SkipLink } from '@sveltejs/site-kit/components';
 
 	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
 	export let contents = [];
-
-	const should_set_tabindex = withMediaQuery('(min-width: 832px)');
 </script>
+
+<SkipLink href="#docs-content">Skip to documentation</SkipLink>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <nav aria-label="Docs">
