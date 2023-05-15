@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 
 export default {
 	before_test() {
-		clock = vi.useFakeTimers();
+		vi.useFakeTimers();
 
 		Object.defineProperties(window, {
 			pageYOffset: {
