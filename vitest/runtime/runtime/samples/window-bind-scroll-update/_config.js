@@ -17,7 +17,7 @@ export default {
 	},
 
 	after_test() {
-		vi.removeFakeTimers();
+		vi.useRealTimers();
 	},
 
 	async test({ assert, component, window }) {
