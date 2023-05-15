@@ -131,7 +131,7 @@ describe('runtime', async () => {
 					window.SvelteComponent = SvelteComponent;
 					window.document.body.innerHTML = '<main></main>';
 
-					const target = window.document.createElement('main');
+					const target = window.document.querySelector('main');
 					let snapshot = undefined;
 
 					if (hydrate && from_ssr_html) {
