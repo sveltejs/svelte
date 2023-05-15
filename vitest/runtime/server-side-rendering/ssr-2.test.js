@@ -32,7 +32,7 @@ function run_runtime_samples(suite) {
 		if (config.skip_if_ssr) return;
 		const it_fn = config.skip ? it.skip : solo ? it.only : it;
 
-		it_fn(dir, () => {
+		it_fn(dir, async () => {
 			const compileOptions = {
 				sveltePath,
 				...config.compileOptions,
@@ -122,6 +122,9 @@ function run_runtime_samples(suite) {
 					throw err;
 				}
 			}
+
+			// wait for vitest to report progress
+			await setTimeout(10);
 		});
 	}
 }

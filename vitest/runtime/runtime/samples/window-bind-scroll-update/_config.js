@@ -1,12 +1,9 @@
-import { env, useFakeTimers } from '../../../helpers';
-
-let clock;
+import { vi } from 'vitest';
 
 export default {
 	before_test() {
-		clock = useFakeTimers();
+		clock = vi.useFakeTimers();
 
-		const window = env();
 		Object.defineProperties(window, {
 			pageYOffset: {
 				value: 0,
@@ -20,18 +17,17 @@ export default {
 	},
 
 	after_test() {
-		clock.removeFakeTimers();
-		clock = null;
+		vi.removeFakeTimers();
 	},
 
 	async test({ assert, component, window }) {
 		assert.equal(window.pageYOffset, 0);
 
 		// clear the previous 'scrolling' state
-		clock.flush();
+		vi.runAllTimers();
 		component.scrollY = 100;
 
-		clock.flush();
+		vi.runAllTimers();
 		assert.equal(window.pageYOffset, 100);
 	}
 };
