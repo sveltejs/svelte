@@ -142,7 +142,6 @@ describe('runtime', async () => {
 
 					if (hydrate && from_ssr_html) {
 						// ssr into target
-						compileOptions.generate = 'ssr';
 						if (config.before_test) config.before_test();
 						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
 						const { html } = SsrSvelteComponent.render(config.props);
@@ -152,7 +151,6 @@ describe('runtime', async () => {
 							snapshot = config.snapshot(target);
 						}
 
-						delete compileOptions.generate;
 						if (config.after_test) config.after_test();
 					} else {
 						target.innerHTML = '';
