@@ -1,7 +1,8 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 
 // Yes it's an SSR test, but we need the env to compare html
 // TODO: Isolate the html comparison
+// TODO: happy-dom might be faster but currently replaces quotes which fails assertions
 
 import * as fs from 'fs';
 import { createRequire } from 'module';
@@ -62,6 +63,7 @@ describe('ssr', async () => {
 					fs.writeFileSync(`${dir}/_expected.html`, html);
 					console.log(`Updated ${dir}/_expected.html.`);
 				} else {
+					error.message += '\n' + `${dir}/main.svelte`;
 					throw error;
 				}
 			}
@@ -76,6 +78,7 @@ describe('ssr', async () => {
 					fs.writeFileSync(`${dir}/_expected.css`, css.code);
 					console.log(`Updated ${dir}/_expected.css.`);
 				} else {
+					error.message += '\n' + `${dir}/main.svelte`;
 					throw error;
 				}
 			}
@@ -91,6 +94,7 @@ describe('ssr', async () => {
 					if (should_update_expected()) {
 						fs.writeFileSync(`${dir}/_expected-head.html`, head);
 						console.log(`Updated ${dir}/_expected-head.html.`);
+						error.message += '\n' + `${dir}/main.svelte`;
 					} else {
 						throw error;
 					}
