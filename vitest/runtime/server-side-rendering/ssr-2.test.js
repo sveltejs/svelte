@@ -13,8 +13,6 @@ import { setTimeout } from 'timers/promises';
 run_runtime_samples('runtime');
 run_runtime_samples('runtime-browser');
 
-const sveltePath = process.cwd().split('\\').join('/');
-
 function run_runtime_samples(suite) {
 	const samples = path.resolve(__dirname, '..', suite, 'samples');
 
@@ -40,17 +38,6 @@ function run_runtime_samples(suite) {
 			};
 
 			const load = create_loader(compileOptions);
-
-			const _require = createRequire(import.meta.url);
-			const require = (id) => {
-				if (id.startsWith('svelte')) {
-					return _require(`${sveltePath}/${id}`);
-				} else {
-					return _require(id);
-				}
-			};
-
-			require('../../../register')(compileOptions);
 
 			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
 				if (file[0] === '_') return;
