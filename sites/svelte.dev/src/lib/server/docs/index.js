@@ -525,7 +525,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 	}
 
 	let transformed = format(code.toString(), {
-		printWidth: 80,
+		printWidth: 100,
 		parser: 'typescript',
 		useTabs: true,
 		singleQuote: true

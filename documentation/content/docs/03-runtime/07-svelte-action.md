@@ -57,14 +57,13 @@ Sometimes actions emit custom events and apply custom attributes to the element 
 ```svelte
 <!--- file: App.svelte --->
 <script>
-	/** 
-   * @type {import('svelte/action').Action<
-          HTMLDivElement, 
-          { prop: any }, 
-          { 'on:emit': () => CustomEvent<any> }
-        >}  */
-	function foo(node, { prop: any }, { foo }) {
+	/**
+	 * @type {import('svelte/action').Action<HTMLDivElement, { prop: any }, { 'on:emit': (e: CustomEvent<string>) => void }>}  */
+	function foo(node, { prop }) {
 		// the node has been mounted in the DOM
+
+		//...LOGIC
+		node.dispatchEvent(new CustomEvent('emit', { detail: 'hello' }));
 
 		return {
 			destroy() {
@@ -74,7 +73,7 @@ Sometimes actions emit custom events and apply custom attributes to the element 
 	}
 </script>
 
-<div use:foo {prop} on:emit={handleEmit} />
+<div use:foo={{ prop: 'someValue' }} on:emit={handleEmit} />
 ```
 
 ## Types
