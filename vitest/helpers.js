@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-export function tryToLoadJson(file) {
+export function try_load_json(file) {
 	try {
 		return JSON.parse(fs.readFileSync(file, 'utf-8'));
 	} catch (err) {
@@ -9,7 +9,14 @@ export function tryToLoadJson(file) {
 	}
 }
 
-export function tryToReadFile(file) {
+export function try_load_module(promise) {
+	return promise.then(
+		(m) => m.default,
+		() => ({})
+	);
+}
+
+export function try_read_file(file) {
 	try {
 		return fs.readFileSync(file, 'utf-8');
 	} catch (err) {

@@ -1,28 +1,25 @@
 import { chromium } from '@playwright/test';
-import virtual from '@rollup/plugin-virtual';
-import { deepStrictEqual } from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
-import { loadConfig, loadSvelte } from '../helpers';
+import { try_load_config, try_load_module } from '../../helpers';
+import * as svelte from '../../../compiler';
+import { beforeAll, describe, afterAll, assert, it } from 'vitest';
 
-const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
+const internal = path.resolve('internal/index.mjs');
+const index = path.resolve('index.mjs');
+
+const browser_assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
 describe('custom-elements', function () {
-	this.timeout(20000);
-
-	let svelte;
 	/** @type {import('@playwright/test').Browser} */
 	let browser;
-
-	before(async function () {
-		svelte = loadSvelte();
-		console.log('[custom-elements] Loaded Svelte');
+	beforeAll(async () => {
 		browser = await chromium.launch();
 		console.log('[custom-elements] Launched browser');
-	});
+	}, 20000);
 
-	after(async () => {
+	afterAll(async () => {
 		if (browser) await browser.close();
 	});
 
@@ -31,12 +28,13 @@ describe('custom-elements', function () {
 
 		const solo = /\.solo$/.test(dir);
 		const skip = /\.skip$/.test(dir);
-		const internal = path.resolve('internal/index.mjs');
-		const index = path.resolve('index.mjs');
-		const warnings = [];
 
-		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
-			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		const warnings = [];
+		const it_fn = solo ? it.only : skip ? it.skip : it;
+
+		it_fn(dir, async () => {
+			const config = await try_load_module(import(`./samples/${dir}/_config.js`));
+
 			const expected_warnings = config.warnings || [];
 
 			const bundle = await rollup({
@@ -52,6 +50,14 @@ describe('custom-elements', function () {
 							if (importee === 'svelte') {
 								return index;
 							}
+
+							if (importee === 'assert') {
+								return 'assert';
+							}
+						},
+
+						load(id) {
+							if (id === 'assert') return browser_assert;
 						},
 
 						transform(code, id) {
@@ -66,11 +72,7 @@ describe('custom-elements', function () {
 								return compiled.js;
 							}
 						}
-					},
-
-					virtual({
-						assert
-					})
+					}
 				]
 			});
 
@@ -78,7 +80,7 @@ describe('custom-elements', function () {
 
 			function assertWarnings() {
 				if (expected_warnings) {
-					deepStrictEqual(
+					assert.deepStrictEqual(
 						warnings.map((w) => ({
 							code: w.code,
 							message: w.message,
@@ -100,8 +102,10 @@ describe('custom-elements', function () {
 			const test_result = await page.evaluate(`test(document.querySelector('main'))`);
 
 			if (test_result) console.log(test_result);
+
 			assertWarnings();
-			page.close();
+
+			await page.close();
 		});
 	});
 });

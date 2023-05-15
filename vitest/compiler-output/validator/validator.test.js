@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { describe, it, assert } from 'vitest';
 import * as svelte from '../../../compiler.mjs';
-import { tryToLoadJson, try_load_config } from '../../helpers.js';
+import { try_load_json, try_load_config } from '../../helpers.js';
 
 describe('validate', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -21,9 +21,9 @@ describe('validate', () => {
 				.replace(/\s+$/, '')
 				.replace(/\r/g, '');
 
-			const expected_warnings = tryToLoadJson(`${__dirname}/samples/${dir}/warnings.json`) || [];
-			const expected_errors = tryToLoadJson(`${__dirname}/samples/${dir}/errors.json`);
-			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`);
+			const expected_warnings = try_load_json(`${__dirname}/samples/${dir}/warnings.json`) || [];
+			const expected_errors = try_load_json(`${__dirname}/samples/${dir}/errors.json`);
+			const options = try_load_json(`${__dirname}/samples/${dir}/options.json`);
 
 			let error;
 
@@ -33,7 +33,7 @@ describe('validate', () => {
 					legacy: config.legacy,
 					generate: false,
 					customElement: config.customElement,
-					...options,
+					...options
 				});
 
 				assert.deepEqual(

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { assert, describe, test } from 'vitest';
 import { compile } from '../../../compiler.mjs';
-import { tryToLoadJson } from '../../helpers.js';
+import { tryToLoadJson, try_load_json } from '../../helpers.js';
 
 describe('vars', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -19,7 +19,7 @@ describe('vars', () => {
 					.replace(/\s+$/, '')
 					.replace(/\r/g, '');
 
-				const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
+				const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 				/**
 				 * @type {{ options: any, test: (assert: typeof assert, vars: any[]) => void }}}

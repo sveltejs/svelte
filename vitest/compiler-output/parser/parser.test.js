@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { assert, describe, it } from 'vitest';
 import * as svelte from '../../../compiler';
-import { tryToLoadJson } from '../../helpers';
+import { tryToLoadJson, try_load_json } from '../../helpers';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -19,15 +19,15 @@ describe('parse', () => {
 		const it_fn = skip ? it.skip : solo ? it.only : it;
 
 		it_fn(dir, () => {
-			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
+			const options = try_load_json(`${__dirname}/samples/${dir}/options.json`) || {};
 
 			const input = fs
 				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
 				.trimEnd()
 				.replace(/\r/g, '');
 
-			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
-			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
+			const expectedOutput = try_load_json(`${__dirname}/samples/${dir}/output.json`);
+			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
 				const { ast } = svelte.compile(
