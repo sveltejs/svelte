@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { describe, it, assert } from 'vitest';
 import { try_load_config, should_update_expected } from '../../helpers';
-import * as svelte from "../../../compiler"
+import * as svelte from '../../../compiler';
 
 describe('js-output', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {

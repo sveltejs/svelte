@@ -3,7 +3,6 @@ export default {
 		varsReport: 'full'
 	},
 
-
 	/**
 
 	 * @param {import("vitest").assert} assert

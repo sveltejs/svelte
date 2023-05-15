@@ -1,5 +1,4 @@
 export default {
-
 	/**
 	 * @param {import("vitest").assert} assert
 	 */
