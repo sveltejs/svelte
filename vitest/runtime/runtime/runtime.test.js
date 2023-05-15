@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { rollup } from 'rollup';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
@@ -15,11 +15,6 @@ import {
 	create_loader,
 	setupHtmlEqual
 } from '../../helpers.js';
-import { assert_html_equal } from '../../html_equal.js';
-
-let compileOptions = null;
-
-const sveltePath = process.cwd().split('\\').join('/');
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
@@ -38,7 +33,7 @@ describe('runtime', async () => {
 
 	const failed = new Set();
 
-	async function runTest(dir) {
+	async function run_test(dir) {
 		if (dir[0] === '.') return;
 
 		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
@@ -64,15 +59,14 @@ describe('runtime', async () => {
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			compileOptions = config.compileOptions || {};
-			compileOptions.format = 'cjs';
-			compileOptions.sveltePath = sveltePath;
-			compileOptions.hydratable = hydrate;
-			compileOptions.immutable = config.immutable;
-			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
+			const compileOptions = Object.assign(config.compileOptions || {}, {
+				format: 'cjs',
+				hydratable: hydrate,
+				immutable: config.immutable,
+				accessors: 'accessors' in config ? config.accessors : true
+			});
 
 			const load = create_loader(compileOptions, cwd);
-			const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
 
 			let mod;
 			let SvelteComponent;
@@ -137,10 +131,12 @@ describe('runtime', async () => {
 					window.SvelteComponent = SvelteComponent;
 					window.document.body.innerHTML = '<main></main>';
 
-					const target = window.document.querySelector('main');
+					const target = window.document.createElement('main');
 					let snapshot = undefined;
 
 					if (hydrate && from_ssr_html) {
+						const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
+
 						// ssr into target
 						if (config.before_test) config.before_test();
 						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
@@ -232,16 +228,12 @@ describe('runtime', async () => {
 				})
 				.catch((err) => {
 					failed.add(dir);
-					show_output(cwd, compileOptions); // eslint-disable-line no-console
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
+
 					throw err;
 				})
 				.then(() => {
-					if (config.show) {
-						show_output(cwd, compileOptions);
-					}
-
 					flush();
 
 					if (config.after_test) config.after_test();
@@ -250,7 +242,7 @@ describe('runtime', async () => {
 	}
 
 	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
-		await runTest(dir, false);
+		await run_test(dir, false);
 		// await runTest(dir, true, false);
 		// await runTest(dir, true, true);
 	}
