@@ -192,17 +192,14 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						assert_html_equal(target.innerHTML, config.html, {
-							without_normalize: config.withoutNormalizeHtml,
-							normalize_html: {
-								removeDataSvelte: true
-							}
+						assert.htmlEqual(target.innerHTML, config.html, {
+							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}
 
-					if (config.test) {
-						return Promise.resolve(
-							config.test({
+					try {
+						if (config.test) {
+							await config.test({
 								assert,
 								component,
 								mod,
@@ -211,21 +208,11 @@ describe('runtime', async () => {
 								window,
 								raf,
 								compileOptions
-							})
-						).finally(() => {
-							component.$destroy();
-
-							if (unhandled_rejection) {
-								throw unhandled_rejection;
-							}
-						});
-					} else {
+							});
+						}
+					} finally {
 						component.$destroy();
-						assert_html_equal(target.innerHTML, '', {
-							normalize_html: {
-								removeDataSvelte: true
-							}
-						});
+						assert.htmlEqual(target.innerHTML, '');
 
 						if (unhandled_rejection) {
 							throw unhandled_rejection;
