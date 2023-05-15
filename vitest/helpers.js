@@ -44,3 +44,9 @@ export function pretty_print_browser_assertion(message) {
 		assert.equal(match[1], match[2]);
 	}
 }
+
+export function mkdirp(path) {
+	if (!fs.existsSync(path)) {
+		fs.mkdirSync(path, { recursive: true });
+	}
+}
