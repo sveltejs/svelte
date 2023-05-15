@@ -40,7 +40,14 @@ function run_runtime_samples(suite) {
 				format: 'cjs'
 			};
 
-			const require = createRequire(import.meta.url);
+			const _require = createRequire(import.meta.url);
+			const require = (id) => {
+				if (id.startsWith('svelte')) {
+					return _require(`${sveltePath}/${id}`);
+				} else {
+					return _require(id);
+				}
+			};
 
 			require('../../../register')(compileOptions);
 

@@ -1,4 +1,4 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 const todos = [
 	writable({ done: false, text: 'write docs' }),

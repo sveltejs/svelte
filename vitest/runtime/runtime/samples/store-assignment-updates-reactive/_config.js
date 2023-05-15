@@ -1,4 +1,4 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 const c = writable(0);
 

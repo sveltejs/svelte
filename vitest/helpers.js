@@ -26,11 +26,9 @@ export function try_read_file(file) {
 	}
 }
 
-export function try_load_config(path) {
-	return import(path).then(
-		(mod) => mod.default,
-		() => ({})
-	);
+export async function try_load_config(path) {
+	if (!fs.existsSync(path)) return {};
+	return await import(path);
 }
 
 export function should_update_expected() {

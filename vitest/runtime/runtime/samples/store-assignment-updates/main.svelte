@@ -2,7 +2,7 @@
 	import { derived } from 'svelte/store';
 
 	export let count;
-
+debugger;
 	const doubled = derived(count, $count => $count * 2);
 </script>
 
