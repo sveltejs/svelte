@@ -28,7 +28,23 @@ export function try_read_file(file) {
 
 export async function try_load_config(path) {
 	if (!fs.existsSync(path)) return {};
-	return await import(path);
+	// a whole
+
+	// bunch
+	const _ = 1;
+	// of lines
+
+	// cause
+	const result = await import(path);
+	// source
+
+	// maps
+
+	// are
+
+	// stupid
+
+	return result.default;
 }
 
 export function should_update_expected() {
