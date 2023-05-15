@@ -13,5 +13,6 @@ export default defineConfig({
     ],
     test: {
         dir: "vitest",
+        reporters: ["dot"]
     }
 })
