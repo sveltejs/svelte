@@ -67,7 +67,7 @@ export function mkdirp(path) {
 	}
 }
 
-export function create_loader(compileOptions) {
+export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
 
 	async function load(file) {
@@ -103,5 +103,5 @@ export function create_loader(compileOptions) {
 		}
 	}
 
-	return load;
+	return (file) => load(path.resolve(cwd, file));
 }

@@ -37,7 +37,7 @@ function run_runtime_samples(suite) {
 				format: 'cjs'
 			};
 
-			const load = create_loader(compileOptions);
+			const load = create_loader(compileOptions, cwd);
 
 			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
 				if (file[0] === '_') return;
@@ -88,11 +88,12 @@ function run_runtime_samples(suite) {
 				}
 
 				if (config.test_ssr) {
-					config.test_ssr({
+					await config.test_ssr({
 						assert: {
 							...assert,
 							htmlEqual: assert_html_equal
-						}
+						},
+						load
 					});
 				}
 
