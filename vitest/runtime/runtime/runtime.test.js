@@ -3,7 +3,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { rollup } from 'rollup';
-import virtual from '@rollup/plugin-virtual';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
 import { compile } from '../../../compiler.mjs';
@@ -16,6 +15,7 @@ import {
 	create_loader,
 	setupHtmlEqual
 } from '../../helpers.js';
+import { assert_html_equal } from '../../html_equal.js';
 
 let compileOptions = null;
 
@@ -47,14 +47,12 @@ describe('runtime', async () => {
 		if (hydrate && config.skip_if_hydrate) return;
 		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
-
-		const testName = `${dir} ${
+		const test_name = `${dir} ${
 			hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''
 		}`;
-		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
+		const it_fn = config.skip ? it.skip : solo ? it.only : it;
+
+		it_fn(test_name, async () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -192,8 +190,11 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						assert.htmlEqualWithOptions(target.innerHTML, config.html, {
-							withoutNormalizeHtml: config.withoutNormalizeHtml
+						assert_html_equal(target.innerHTML, config.html, {
+							without_normalize: config.withoutNormalizeHtml,
+							normalize_html: {
+								removeDataSvelte: true
+							}
 						});
 					}
 
@@ -209,7 +210,7 @@ describe('runtime', async () => {
 								raf,
 								compileOptions
 							})
-						).then(() => {
+						).finally(() => {
 							component.$destroy();
 
 							if (unhandled_rejection) {
@@ -218,7 +219,11 @@ describe('runtime', async () => {
 						});
 					} else {
 						component.$destroy();
-						assert.htmlEqual(target.innerHTML, '');
+						assert_html_equal(target.innerHTML, '', {
+							normalize_html: {
+								removeDataSvelte: true
+							}
+						});
 
 						if (unhandled_rejection) {
 							throw unhandled_rejection;
@@ -239,9 +244,6 @@ describe('runtime', async () => {
 				.catch((err) => {
 					failed.add(dir);
 					show_output(cwd, compileOptions); // eslint-disable-line no-console
-					throw err;
-				})
-				.catch((err) => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
 					throw err;
@@ -274,16 +276,18 @@ describe('runtime', async () => {
 		const bundle = await rollup({
 			input: 'main.js',
 			plugins: [
-				virtual({
-					'main.js': js.code
-				}),
 				{
 					name: 'svelte-packages',
 					resolveId: (importee) => {
 						if (importee.startsWith('svelte/')) {
 							return importee.replace('svelte', process.cwd()) + '/index.mjs';
 						}
-					}
+
+						if (importee === 'main.js') {
+							return importee;
+						}
+					},
+					load: (id) => (id === 'main.js' ? js.code : null)
 				}
 			]
 		});
@@ -312,6 +316,6 @@ describe('runtime', async () => {
 				target: { childNodes: [] },
 				hydrate: true
 			});
-		}, /options.hydrate only works if the component was compiled with the `hydratable: true` option/);
+		}, /options\.hydrate only works if the component was compiled with the `hydratable: true` option/);
 	});
 });
