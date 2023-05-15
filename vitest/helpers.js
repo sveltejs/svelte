@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { assert } from 'vitest';
 import { compile } from '../compiler.js';
+import { fileURLToPath } from 'url';
 
 export function try_load_json(file) {
 	try {
@@ -67,6 +68,8 @@ export function mkdirp(path) {
 	}
 }
 
+const svelte_path = fileURLToPath(new URL('..', import.meta.url));
+
 export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
 
@@ -83,8 +86,20 @@ export function create_loader(compileOptions, cwd) {
 
 			for (const match of compiled.js.code.matchAll(/require\("(.+?)"\)/g)) {
 				const source = match[1];
+				let resolved = source;
 
-				const resolved = source.startsWith('.') ? path.resolve(path.dirname(file), source) : source;
+				if (source.startsWith('.')) {
+					resolved = path.resolve(path.dirname(file), source);
+				}
+
+				if (source === 'svelte') {
+					resolved = `${svelte_path}/index.mjs`;
+				}
+
+				if (source.startsWith('svelte/')) {
+					resolved = `${svelte_path}/${source.slice(7)}/index.mjs`;
+				}
+
 				imports.set(source, await load(resolved));
 			}
 
