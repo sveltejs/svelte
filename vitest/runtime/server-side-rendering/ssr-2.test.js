@@ -3,7 +3,7 @@
 import * as path from 'path';
 import { describe, it, assert } from 'vitest';
 import * as fs from 'fs';
-import { try_load_config, mkdirp } from '../../helpers';
+import { try_load_config, mkdirp, create_loader } from '../../helpers';
 import { assert_html_equal } from '../../html_equal';
 import { createRequire } from 'module';
 import glob from 'tiny-glob/sync';
@@ -34,11 +34,12 @@ function run_runtime_samples(suite) {
 
 		it_fn(dir, async () => {
 			const compileOptions = {
-				sveltePath,
 				...config.compileOptions,
 				generate: 'ssr',
 				format: 'cjs'
 			};
+
+			const load = create_loader(compileOptions);
 
 			const _require = createRequire(import.meta.url);
 			const require = (id) => {
@@ -78,7 +79,7 @@ function run_runtime_samples(suite) {
 			try {
 				if (config.before_test) config.before_test();
 
-				const Component = require(`${cwd}/main.svelte`).default;
+				const Component = (await load(`${cwd}/main.svelte`)).default;
 				const { html } = Component.render(config.props, {
 					store: config.store !== true && config.store
 				});

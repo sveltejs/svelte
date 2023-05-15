@@ -1,3 +1,3 @@
-import { writable } from '../../../../store';
+import { writable } from '../../../../../store';
 
 export default writable(42);

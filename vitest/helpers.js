@@ -1,5 +1,7 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { assert } from 'vitest';
+import { compile } from '../compiler.js';
 
 export function try_load_json(file) {
 	try {
@@ -63,4 +65,43 @@ export function mkdirp(path) {
 	if (!fs.existsSync(path)) {
 		fs.mkdirSync(path, { recursive: true });
 	}
+}
+
+export function create_loader(compileOptions) {
+	const cache = new Map();
+
+	async function load(file) {
+		if (cache.has(file)) return cache.get(file);
+
+		if (file.endsWith('.svelte')) {
+			const compiled = compile(fs.readFileSync(file, 'utf-8'), {
+				...compileOptions,
+				filename: file
+			});
+
+			const imports = new Map();
+
+			for (const match of compiled.js.code.matchAll(/require\("(.+?)"\)/g)) {
+				const source = match[1];
+
+				const resolved = source.startsWith('.') ? path.resolve(path.dirname(file), source) : source;
+				imports.set(source, await load(resolved));
+			}
+
+			function require(id) {
+				return imports.get(id);
+			}
+
+			const fn = new Function('require', 'exports', 'module', compiled.js.code);
+			const module = { exports: {} };
+			fn(require, module.exports, module);
+
+			cache.set(file, module.exports);
+			return module.exports;
+		} else {
+			return import(file);
+		}
+	}
+
+	return load;
 }
