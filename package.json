@@ -114,6 +114,7 @@
   "devDependencies": {
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@playwright/test": "^1.33.0",
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
@@ -148,7 +149,6 @@
     "periscopic": "^3.1.0",
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.0",
-    "puppeteer": "^19.8.5",
     "rollup": "^3.20.2",
     "source-map": "^0.7.4",
     "source-map-support": "^0.5.21",
