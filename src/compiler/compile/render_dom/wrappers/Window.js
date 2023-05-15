@@ -26,11 +26,8 @@ const readonly = new Set([
 	'online'
 ]);
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Window.js').default> */
 export default class WindowWrapper extends Wrapper {
-	/** @type {import('../../nodes/Window.js').default} */
-	node;
-
 	/** @type {import('./Element/EventHandler.js').default[]} */
 	handlers;
 
@@ -38,7 +35,7 @@ export default class WindowWrapper extends Wrapper {
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block
 	 * @param {import('./shared/Wrapper.js').default} parent
-	 * @param {import('../../../interfaces.js').TemplateNode} node
+	 * @param {import('../../nodes/Window.js').default} node
 	 */
 	constructor(renderer, block, parent, node) {
 		super(renderer, block, parent, node);

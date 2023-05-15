@@ -2,11 +2,8 @@ import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 import compiler_errors from '../compiler_errors.js';
 
-/** @extends Node */
+/** @extends Node<'Transition'> */
 export default class Transition extends Node {
-	/** @type {'Transition'} */
-	type;
-
 	/** @type {string} */
 	name;
 

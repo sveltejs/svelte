@@ -156,11 +156,8 @@ const CHILD_DYNAMIC_ELEMENT_BLOCK = 'child_dynamic_element';
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z0-9_$]/g;
 const regex_minus_signs = /-/g;
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../../nodes/Element.js').default> */
 export default class ElementWrapper extends Wrapper {
-	/** @type {import('../../../nodes/Element.js').default} */
-	node;
-
 	/** @type {import('../Fragment.js').default} */
 	fragment;
 

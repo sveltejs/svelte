@@ -1,11 +1,8 @@
 import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 
-/** @extends Node */
+/** @extends Node<'Class'> */
 export default class Class extends Node {
-	/** @type {'Class'} */
-	type;
-
 	/** @type {string} */
 	name;
 

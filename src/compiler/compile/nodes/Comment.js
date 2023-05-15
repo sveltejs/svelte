@@ -1,10 +1,7 @@
 import Node from './shared/Node.js';
 
-/** @extends Node */
+/** @extends Node<'Comment'> */
 export default class Comment extends Node {
-	/** @type {'Comment'} */
-	type;
-
 	/** @type {string} */
 	data;
 

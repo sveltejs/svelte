@@ -3,7 +3,10 @@ import compiler_warnings from '../../compiler_warnings.js';
 
 const regex_non_whitespace_characters = /[^ \r\n\f\v\t]/;
 
-/** @extends Node */
+/**
+ * @template {string} Type
+ * @extends Node<Type>
+ */
 export default class AbstractBlock extends Node {
 	/** @type {import('../../render_dom/Block.js').default} */
 	block;

@@ -49,12 +49,6 @@ const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
 /** @extends BaseAttributeWrapper */
 export default class AttributeWrapper extends BaseAttributeWrapper {
-	/** @type {import('../../../nodes/Attribute.js').default} */
-	node;
-
-	/** @type {import('./index.js').default} */
-	parent;
-
 	/** @type {any} */
 	metadata;
 

@@ -12,7 +12,7 @@ function is_else_if(node) {
 	return node && node.children.length === 1 && node.children[0].type === 'IfBlock';
 }
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/IfBlock.js').default | import('../../nodes/ElseBlock.js').default> */
 class IfBlockBranch extends Wrapper {
 	/** @type {import('../Block.js').default} */
 	block;
@@ -32,8 +32,6 @@ class IfBlockBranch extends Wrapper {
 	/** @type {boolean} */
 	is_dynamic;
 
-	/** @type {import('../../nodes/IfBlock.js').default | import('../../nodes/ElseBlock.js').default} */
-	node;
 	/** */
 	var = null;
 
@@ -98,12 +96,9 @@ class IfBlockBranch extends Wrapper {
 	}
 }
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/IfBlock.js').default> */
 export default class IfBlockWrapper extends Wrapper {
 	/** @typedef {'detaching' | null} DetachingOrNull */
-
-	/** @type {import('../../nodes/IfBlock.js').default} */
-	node;
 
 	/** @type {IfBlockBranch[]} */
 	branches;
@@ -117,7 +112,7 @@ export default class IfBlockWrapper extends Wrapper {
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block
 	 * @param {import('./shared/Wrapper.js').default} parent
-	 * @param {import('../../nodes/EachBlock.js').default} node
+	 * @param {import('../../nodes/IfBlock.js').default} node
 	 * @param {boolean} strip_whitespace
 	 * @param {import('./shared/Wrapper.js').default} next_sibling
 	 */

@@ -4,11 +4,8 @@ import EventHandler from './Element/EventHandler.js';
 import add_event_handlers from './shared/add_event_handlers.js';
 import add_actions from './shared/add_actions.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Body.js').default> */
 export default class BodyWrapper extends Wrapper {
-	/** @type {import('../../nodes/Body.js').default} */
-	node;
-
 	/** @type {import('./Element/EventHandler.js').default[]} */
 	handlers;
 
@@ -16,7 +13,7 @@ export default class BodyWrapper extends Wrapper {
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block
 	 * @param {import('./shared/Wrapper.js').default} parent
-	 * @param {import('../../../interfaces.js').TemplateNode} node
+	 * @param {import('../../nodes/Body.js').default} node
 	 */
 	constructor(renderer, block, parent, node) {
 		super(renderer, block, parent, node);

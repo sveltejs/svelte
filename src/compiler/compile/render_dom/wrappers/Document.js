@@ -10,11 +10,8 @@ const associated_events = {
 };
 const readonly = new Set(['fullscreenElement', 'visibilityState']);
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Document.js').default> */
 export default class DocumentWrapper extends Wrapper {
-	/** @type {import('../../nodes/Document.js').default} */
-	node;
-
 	/** @type {import('./Element/EventHandler.js').default[]} */
 	handlers;
 
@@ -22,7 +19,7 @@ export default class DocumentWrapper extends Wrapper {
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block
 	 * @param {import('./shared/Wrapper.js').default} parent
-	 * @param {import('../../../interfaces.js').TemplateNode} node
+	 * @param {import('../../nodes/Document.js').default} node
 	 */
 	constructor(renderer, block, parent, node) {
 		super(renderer, block, parent, node);

@@ -4,11 +4,8 @@ import hash from '../utils/hash.js';
 import compiler_errors from '../compiler_errors.js';
 import { regex_non_whitespace_character } from '../../utils/patterns.js';
 
-/** @extends Node */
+/** @extends Node<'Head'> */
 export default class Head extends Node {
-	/** @type {'Head'} */
-	type;
-
 	/** @type {any[]} */
 	children; // TODO
 

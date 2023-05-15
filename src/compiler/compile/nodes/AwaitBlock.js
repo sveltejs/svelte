@@ -5,11 +5,8 @@ import CatchBlock from './CatchBlock.js';
 import Expression from './shared/Expression.js';
 import { unpack_destructuring } from './shared/Context.js';
 
-/** @extends Node */
+/** @extends Node<'AwaitBlock'> */
 export default class AwaitBlock extends Node {
-	/** @type {'AwaitBlock'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 

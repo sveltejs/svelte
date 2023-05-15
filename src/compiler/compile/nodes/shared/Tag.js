@@ -1,11 +1,11 @@
 import Node from './Node.js';
 import Expression from './Expression.js';
 
-/** @extends Node */
+/**
+ * @template {'MustacheTag' | 'RawMustacheTag'} [Type='MustacheTag' | 'RawMustacheTag']
+ * @extends Node<Type>
+ */
 export default class Tag extends Node {
-	/** @type {'MustacheTag' | 'RawMustacheTag'} */
-	type;
-
 	/** @type {import('./Expression.js').default} */
 	expression;
 

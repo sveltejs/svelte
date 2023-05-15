@@ -17,11 +17,8 @@ const allowed_parents = new Set([
 	'ElseBlock'
 ]);
 
-/** @extends Node */
+/** @extends Node<'ConstTag'> */
 export default class ConstTag extends Node {
-	/** @type {'ConstTag'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 

@@ -21,11 +21,8 @@ const read_only_media_attributes = new Set([
 	'readyState'
 ]);
 
-/** @extends Node */
+/** @extends Node<'Binding'> */
 export default class Binding extends Node {
-	/** @type {'Binding'} */
-	type;
-
 	/** @type {string} */
 	name;
 

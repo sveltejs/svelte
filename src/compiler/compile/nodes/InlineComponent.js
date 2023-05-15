@@ -8,19 +8,13 @@ import Let from './Let.js';
 import compiler_errors from '../compiler_errors.js';
 import { regex_only_whitespaces } from '../../utils/patterns.js';
 
-/** @extends Node */
+/** @extends Node<'InlineComponent'> */
 export default class InlineComponent extends Node {
-	/** @type {'InlineComponent'} */
-	type;
-
 	/** @type {string} */
 	name;
 
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
-
-	/** @type {import('./Attribute.js').default[]} */
-	attributes = [];
 
 	/** @type {import('./Binding.js').default[]} */
 	bindings = [];

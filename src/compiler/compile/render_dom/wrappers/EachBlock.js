@@ -6,11 +6,8 @@ import get_object from '../../utils/get_object.js';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags.js';
 import Expression from '../../nodes/shared/Expression.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/ElseBlock.js').default> */
 export class ElseBlockWrapper extends Wrapper {
-	/** @type {import('../../nodes/ElseBlock.js').default} */
-	node;
-
 	/** @type {import('../Block.js').default} */
 	block;
 
@@ -19,7 +16,7 @@ export class ElseBlockWrapper extends Wrapper {
 
 	/** @type {boolean} */
 	is_dynamic;
-	/** */
+
 	var = null;
 
 	/**
@@ -50,13 +47,10 @@ export class ElseBlockWrapper extends Wrapper {
 	}
 }
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/EachBlock.js').default> */
 export default class EachBlockWrapper extends Wrapper {
 	/** @type {import('../Block.js').default} */
 	block;
-
-	/** @type {import('../../nodes/EachBlock.js').default} */
-	node;
 
 	/** @type {import('./Fragment.js').default} */
 	fragment;

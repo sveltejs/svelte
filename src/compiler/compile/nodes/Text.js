@@ -8,11 +8,8 @@ const elements_without_text = new Set(['audio', 'datalist', 'dl', 'optgroup', 's
 const regex_ends_with_svg = /svg$/;
 const regex_non_whitespace_characters = /[\S\u00A0]/;
 
-/** @extends Node */
+/** @extends Node<'Text'> */
 export default class Text extends Node {
-	/** @type {'Text'} */
-	type;
-
 	/** @type {string} */
 	data;
 

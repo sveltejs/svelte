@@ -6,13 +6,7 @@ import compiler_errors from '../compiler_errors.js';
 export default class Slot extends Element {
 	/** @type {'Slot'} */
 	// @ts-ignore Slot elements have the 'Slot' type, but TypeScript doesn't allow us to have 'Slot' when it extends Element
-	type;
-
-	/** @type {string} */
-	name;
-
-	/** @type {import('./interfaces.js').INode[]} */
-	children;
+	type = 'Slot';
 
 	/** @type {string} */
 	slot_name;

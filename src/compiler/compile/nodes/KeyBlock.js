@@ -2,11 +2,8 @@ import Expression from './shared/Expression.js';
 import map_children from './shared/map_children.js';
 import AbstractBlock from './shared/AbstractBlock.js';
 
-/** @extends AbstractBlock */
+/** @extends AbstractBlock<'KeyBlock'> */
 export default class KeyBlock extends AbstractBlock {
-	/** @type {'KeyBlock'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 

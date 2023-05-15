@@ -6,11 +6,8 @@ import Node from './shared/Node.js';
 
 const valid_modifiers = new Set(['important']);
 
-/** @extends Node */
+/** @extends Node<'StyleDirective'> */
 export default class StyleDirective extends Node {
-	/** @type {'StyleDirective'} */
-	type;
-
 	/** @type {string} */
 	name;
 

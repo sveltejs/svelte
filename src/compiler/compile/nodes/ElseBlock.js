@@ -1,11 +1,8 @@
 import AbstractBlock from './shared/AbstractBlock.js';
 import get_const_tags from './shared/get_const_tags.js';
 
-/** @extends AbstractBlock */
+/** @extends AbstractBlock<'ElseBlock'> */
 export default class ElseBlock extends AbstractBlock {
-	/** @type {'ElseBlock'} */
-	type;
-
 	/** @type {import('./shared/TemplateScope.js').default} */
 	scope;
 

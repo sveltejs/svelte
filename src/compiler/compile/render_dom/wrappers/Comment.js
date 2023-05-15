@@ -1,14 +1,8 @@
 import Wrapper from './shared/Wrapper.js';
 import { x } from 'code-red';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Comment.js').default> */
 export default class CommentWrapper extends Wrapper {
-	/** @type {import('../../nodes/Comment.js').default} */
-	node;
-
-	/** @type {import('estree').Identifier} */
-	var;
-
 	/**
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block

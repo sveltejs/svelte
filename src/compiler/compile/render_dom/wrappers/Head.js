@@ -2,13 +2,10 @@ import Wrapper from './shared/Wrapper.js';
 import FragmentWrapper from './Fragment.js';
 import { x, b } from 'code-red';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Head.js').default> */
 export default class HeadWrapper extends Wrapper {
 	/** @type {import('./Fragment.js').default} */
 	fragment;
-
-	/** @type {import('../../nodes/Head.js').default} */
-	node;
 
 	/**
 	 * @param {import('../Renderer.js').default} renderer

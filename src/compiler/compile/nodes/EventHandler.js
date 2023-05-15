@@ -4,11 +4,8 @@ import { sanitize } from '../../utils/names.js';
 
 const regex_contains_term_function_expression = /FunctionExpression/;
 
-/** @extends Node */
+/** @extends Node<'EventHandler'> */
 export default class EventHandler extends Node {
-	/** @type {'EventHandler'} */
-	type;
-
 	/** @type {string} */
 	name;
 

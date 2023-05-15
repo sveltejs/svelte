@@ -1,16 +1,16 @@
 import { b, x } from 'code-red';
 import Wrapper from './Wrapper.js';
 
-/** @extends Wrapper */
+/**
+ * @template {import('../../../nodes/MustacheTag.js').default | import('../../../nodes/RawMustacheTag.js').default} NodeType
+ * @extends Wrapper<NodeType>
+ */
 export default class Tag extends Wrapper {
-	/** @type {import('../../../nodes/MustacheTag.js').default | import('../../../nodes/RawMustacheTag.js').default} */
-	node;
-
 	/**
 	 * @param {import('../../Renderer.js').default} renderer
 	 * @param {import('../../Block.js').default} block
 	 * @param {import('./Wrapper.js').default} parent
-	 * @param {import('../../../nodes/MustacheTag.js').default | import('../../../nodes/RawMustacheTag.js').default} node
+	 * @param {NodeType} node
 	 */
 	constructor(renderer, block, parent, node) {
 		super(renderer, block, parent, node);

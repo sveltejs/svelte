@@ -4,11 +4,8 @@ import compiler_errors from '../compiler_errors.js';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
-/** @extends Node */
+/** @extends Node<'Let'> */
 export default class Let extends Node {
-	/** @type {'Let'} */
-	type;
-
 	/** @type {import('estree').Identifier} */
 	name;
 

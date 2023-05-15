@@ -7,15 +7,12 @@ import CatchBlock from '../../nodes/CatchBlock.js';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags.js';
 import Expression from '../../nodes/shared/Expression.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default> */
 class AwaitBlockBranch extends Wrapper {
 	/** @typedef {'pending' | 'then' | 'catch'} Status */
 
 	/** @type {AwaitBlockWrapper} */
 	parent;
-
-	/** @type {import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default} */
-	node;
 
 	/** @type {import('../Block.js').default} */
 	block;
@@ -25,7 +22,7 @@ class AwaitBlockBranch extends Wrapper {
 
 	/** @type {boolean} */
 	is_dynamic;
-	/** */
+
 	var = null;
 
 	/** @type {Status} */
@@ -153,11 +150,8 @@ class AwaitBlockBranch extends Wrapper {
 	}
 }
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/AwaitBlock.js').default> */
 export default class AwaitBlockWrapper extends Wrapper {
-	/** @type {import('../../nodes/AwaitBlock.js').default} */
-	node;
-
 	/** @type {AwaitBlockBranch} */
 	pending;
 

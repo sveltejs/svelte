@@ -5,11 +5,8 @@ import { unpack_destructuring } from './shared/Context.js';
 import compiler_errors from '../compiler_errors.js';
 import get_const_tags from './shared/get_const_tags.js';
 
-/** @extends AbstractBlock */
+/** @extends AbstractBlock<'EachBlock'> */
 export default class EachBlock extends AbstractBlock {
-	/** @type {'EachBlock'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 

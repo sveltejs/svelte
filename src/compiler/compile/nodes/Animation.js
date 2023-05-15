@@ -2,11 +2,8 @@ import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 import compiler_errors from '../compiler_errors.js';
 
-/** @extends Node */
+/** @extends Node<'Animation'> */
 export default class Animation extends Node {
-	/** @type {'Animation'} */
-	type;
-
 	/** @type {string} */
 	name;
 

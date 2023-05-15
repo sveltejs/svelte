@@ -2,11 +2,8 @@ import Node from './shared/Node.js';
 import map_children from './shared/map_children.js';
 import compiler_errors from '../compiler_errors.js';
 
-/** @extends Node */
+/** @extends Node<'Title'> */
 export default class Title extends Node {
-	/** @type {'Title'} */
-	type;
-
 	/** @type {import('./shared/map_children.js').Children} */
 	children;
 

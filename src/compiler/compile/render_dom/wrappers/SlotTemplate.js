@@ -7,11 +7,8 @@ import { sanitize } from '../../../utils/names.js';
 import { extract_names } from 'periscopic';
 import { add_const_tags, add_const_tags_context } from './shared/add_const_tags.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/SlotTemplate.js').default> */
 export default class SlotTemplateWrapper extends Wrapper {
-	/** @type {import('../../nodes/SlotTemplate.js').default} */
-	node;
-
 	/** @type {import('./Fragment.js').default} */
 	fragment;
 

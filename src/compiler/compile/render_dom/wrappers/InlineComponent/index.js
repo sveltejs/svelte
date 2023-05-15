@@ -17,7 +17,7 @@ import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ign
 
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../../nodes/InlineComponent.js').default> */
 export default class InlineComponentWrapper extends Wrapper {
 	/**
 	 * @typedef {{
@@ -28,14 +28,8 @@ export default class InlineComponentWrapper extends Wrapper {
 	 * }} SlotDefinition
 	 */
 
-	/** @type {import('estree').Identifier} */
-	var;
-
 	/** @type {Map<string, SlotDefinition>} */
 	slots = new Map();
-
-	/** @type {import('../../../nodes/InlineComponent.js').default} */
-	node;
 
 	/** @type {import('../Fragment.js').default} */
 	fragment;
@@ -74,7 +68,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.add_dependencies(attr.dependencies);
 		});
 		this.var = {
-			type: 'Identifier',
+			type: /** @type {const} */ ('Identifier'),
 			name: (this.node.name === 'svelte:self'
 				? renderer.component.name.name
 				: this.node.name === 'svelte:component'

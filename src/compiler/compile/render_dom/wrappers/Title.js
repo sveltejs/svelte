@@ -3,11 +3,8 @@ import Wrapper from './shared/Wrapper.js';
 import { string_literal } from '../../utils/stringify.js';
 import add_to_set from '../../utils/add_to_set.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Title.js').default> */
 export default class TitleWrapper extends Wrapper {
-	/** @type {import('../../nodes/Title.js').default} */
-	node;
-
 	/**
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block

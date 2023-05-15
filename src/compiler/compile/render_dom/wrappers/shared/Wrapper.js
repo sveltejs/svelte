@@ -1,5 +1,8 @@
 import { x } from 'code-red';
 
+/**
+ * @template {import('../../../../interfaces.js').TemplateNode} [NodeType=import('../../../../interfaces.js').TemplateNode]
+ */
 export default class Wrapper {
 	/** @type {import('../../Renderer.js').default} */
 	renderer;
@@ -7,7 +10,7 @@ export default class Wrapper {
 	/** @type {Wrapper} */
 	parent;
 
-	/** @type {import('../../../../interfaces.js').TemplateNode} */
+	/** @type {NodeType} */
 	node;
 
 	/** @type {Wrapper | null} */
@@ -23,7 +26,7 @@ export default class Wrapper {
 	 * @param {import('../../Renderer.js').default} renderer
 	 * @param {import('../../Block.js').default} block
 	 * @param {Wrapper} parent
-	 * @param {import('../../../../interfaces.js').TemplateNode} node
+	 * @param {NodeType} node
 	 */
 	constructor(renderer, block, parent, node) {
 		this.node = node;

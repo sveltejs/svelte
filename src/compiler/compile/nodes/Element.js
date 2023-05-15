@@ -336,19 +336,13 @@ const regex_any_repeated_whitespaces = /[\s]+/g;
 const regex_heading_tags = /^h[1-6]$/;
 const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
 
-/** @extends Node */
+/** @extends Node<'Element'> */
 export default class Element extends Node {
-	/** @type {'Element'} */
-	type;
-
 	/** @type {string} */
 	name;
 
 	/** @type {import('./shared/TemplateScope.js').default} */
 	scope;
-
-	/** @type {import('./Attribute.js').default[]} */
-	attributes = [];
 
 	/** @type {import('./Action.js').default[]} */
 	actions = [];

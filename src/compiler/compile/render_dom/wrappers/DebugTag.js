@@ -2,11 +2,8 @@ import Wrapper from './shared/Wrapper.js';
 import add_to_set from '../../utils/add_to_set.js';
 import { b, p } from 'code-red';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/DebugTag.js').default> */
 export default class DebugTagWrapper extends Wrapper {
-	/** @type {import('../../nodes/DebugTag.js').default} */
-	node;
-
 	/**
 	 * @param {import('../Renderer.js').default} renderer
 	 * @param {import('../Block.js').default} block

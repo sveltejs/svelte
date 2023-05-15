@@ -9,11 +9,8 @@ import compiler_errors from '../compiler_errors.js';
 
 const valid_bindings = ['fullscreenElement', 'visibilityState'];
 
-/** @extends Node */
+/** @extends Node<'Document'> */
 export default class Document extends Node {
-	/** @type {'Document'} */
-	type;
-
 	/** @type {import('./EventHandler.js').default[]} */
 	handlers = [];
 

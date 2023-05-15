@@ -18,11 +18,8 @@ const valid_bindings = [
 	'online'
 ];
 
-/** @extends Node */
+/** @extends Node<'Window'> */
 export default class Window extends Node {
-	/** @type {'Window'} */
-	type;
-
 	/** @type {import('./EventHandler.js').default[]} */
 	handlers = [];
 

@@ -4,25 +4,10 @@ import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 import { x } from 'code-red';
 
-/** @extends Node */
+/** @extends Node<'Attribute' | 'Spread', import('./Element.js').default> */
 export default class Attribute extends Node {
-	/** @type {'Attribute' | 'Spread'} */
-	type;
-
-	/** @type {number} */
-	start;
-
-	/** @type {number} */
-	end;
-
 	/** @type {import('./shared/TemplateScope.js').default} */
 	scope;
-
-	/** @type {import('../Component.js').default} */
-	component;
-
-	/** @type {import('./Element.js').default} */
-	parent;
 
 	/** @type {string} */
 	name;

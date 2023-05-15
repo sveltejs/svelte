@@ -1,10 +1,7 @@
 import Tag from './shared/Tag.js';
 
-/** @extends Tag */
+/** @extends Tag<'RawMustacheTag'> */
 export default class RawMustacheTag extends Tag {
-	/** @type {'RawMustacheTag'} */
-	type;
-
 	/**
 	 * @param {any} component
 	 * @param {any} parent

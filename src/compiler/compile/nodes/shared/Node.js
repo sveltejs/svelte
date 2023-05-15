@@ -1,3 +1,7 @@
+/**
+ * @template {string} Type
+ * @template {import('../interfaces.js').INode} [Parent=import('../interfaces.js').INode]
+ */
 export default class Node {
 	/**
 	 * @readonly
@@ -19,13 +23,13 @@ export default class Node {
 
 	/**
 	 * @readonly
-	 * @type {import('../interfaces.js').INode}
+	 * @type {Parent}
 	 */
 	parent;
 
 	/**
 	 * @readonly
-	 * @type {string}
+	 * @type {Type}
 	 */
 	type;
 
@@ -45,18 +49,18 @@ export default class Node {
 	var;
 
 	/** @type {import('../Attribute.js').default[]} */
-	attributes;
+	attributes = [];
 
 	/**
-	 * @param {import('../../Component.js').default} component  *
-	 * @param {Node} parent  *
-	 * @param {any} _scope  *
-	 * @param {import('../../../interfaces.js').TemplateNode} info  undefined
+	 * @param {import('../../Component.js').default} component
+	 * @param {Node} parent
+	 * @param {any} _scope
+	 * @param {import('../../../interfaces.js').TemplateNode} info
 	 */
 	constructor(component, parent, _scope, info) {
 		this.start = info.start;
 		this.end = info.end;
-		this.type = info.type;
+		this.type = /** @type {Type} */ (info.type);
 		// this makes properties non-enumerable, which makes logging
 		// bearable. might have a performance cost. TODO remove in prod?
 		Object.defineProperties(this, {
@@ -89,12 +93,10 @@ export default class Node {
 
 	/** @param {string} name */
 	get_static_attribute_value(name) {
-		const attribute =
-			this.attributes &&
-			this.attributes.find(
-				/** @param {import('../Attribute.js').default} attr */
-				(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
-			);
+		const attribute = this.attributes.find(
+			/** @param {import('../Attribute.js').default} attr */
+			(attr) => attr.type === 'Attribute' && attr.name.toLowerCase() === name
+		);
 		if (!attribute) return null;
 		if (attribute.is_true) return true;
 		if (attribute.chunks.length === 0) return '';

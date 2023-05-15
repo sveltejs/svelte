@@ -1,11 +1,8 @@
 import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 
-/** @extends Node */
+/** @extends Node<'DebugTag'> */
 export default class DebugTag extends Node {
-	/** @type {'DebugTag'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default[]} */
 	expressions;
 

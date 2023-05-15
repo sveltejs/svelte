@@ -4,11 +4,8 @@ import Attribute from './Attribute.js';
 import compiler_errors from '../compiler_errors.js';
 import get_const_tags from './shared/get_const_tags.js';
 
-/** @extends Node */
+/** @extends Node<'SlotTemplate'> */
 export default class SlotTemplate extends Node {
-	/** @type {'SlotTemplate'} */
-	type;
-
 	/** @type {import('./shared/TemplateScope.js').default} */
 	scope;
 

@@ -8,11 +8,8 @@ import { is_reserved_keyword } from '../../utils/reserved_keywords.js';
 import is_dynamic from './shared/is_dynamic.js';
 import create_debugging_comment from './shared/create_debugging_comment.js';
 
-/** @extends Wrapper */
+/** @extends Wrapper<import('../../nodes/Slot.js').default> */
 export default class SlotWrapper extends Wrapper {
-	/** @type {import('../../nodes/Slot.js').default} */
-	node;
-
 	/** @type {import('./Fragment.js').default} */
 	fragment;
 

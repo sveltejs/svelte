@@ -1,11 +1,8 @@
 import map_children from './shared/map_children.js';
 import AbstractBlock from './shared/AbstractBlock.js';
 
-/** @extends AbstractBlock */
+/** @extends AbstractBlock<'PendingBlock'> */
 export default class PendingBlock extends AbstractBlock {
-	/** @type {'PendingBlock'} */
-	type;
-
 	/**
 	 * @param {import('../Component.js').default} component
 	 * @param {import('./shared/Node.js').default} parent

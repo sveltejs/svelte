@@ -3,11 +3,8 @@ import Expression from './shared/Expression.js';
 import AbstractBlock from './shared/AbstractBlock.js';
 import get_const_tags from './shared/get_const_tags.js';
 
-/** @extends AbstractBlock */
+/** @extends AbstractBlock<'IfBlock'> */
 export default class IfBlock extends AbstractBlock {
-	/** @type {'IfBlock'} */
-	type;
-
 	/** @type {import('./shared/Expression.js').default} */
 	expression;
 

@@ -2,11 +2,8 @@ import Node from './shared/Node.js';
 import EventHandler from './EventHandler.js';
 import Action from './Action.js';
 
-/** @extends Node */
+/** @extends Node<'Body'> */
 export default class Body extends Node {
-	/** @type {'Body'} */
-	type;
-
 	/** @type {import('./EventHandler.js').default[]} */
 	handlers = [];
 
