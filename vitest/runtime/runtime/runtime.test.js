@@ -1,26 +1,23 @@
+// @vitest-environment jsdom
+
 import * as path from 'path';
 import * as fs from 'fs';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
 import glob from 'tiny-glob/sync.js';
-import { clear_loops, flush, set_now, set_raf } from '../../internal';
+import { beforeAll, afterAll, describe, it, assert } from 'vitest';
+import { compile } from '../../../compiler.mjs';
+import { clear_loops, flush, set_now, set_raf } from '../../../internal/index.mjs';
 
 import {
-	assert,
-	showOutput,
-	loadConfig,
-	loadSvelte,
-	cleanRequireCache,
-	env,
-	setupHtmlEqual,
-	mkdirp
-} from '../helpers';
-
-let svelte$;
-let svelte;
+	show_output,
+	try_load_config,
+	mkdirp,
+	create_loader,
+	setupHtmlEqual
+} from '../../helpers.js';
 
 let compileOptions = null;
-let compile = null;
 
 const sveltePath = process.cwd().split('\\').join('/');
 
@@ -29,37 +26,22 @@ function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
-describe('runtime', () => {
-	before(() => {
+describe('runtime', async () => {
+	beforeAll(() => {
 		process.on('unhandledRejection', unhandledRejection_handler);
-		svelte = loadSvelte(false);
-		svelte$ = loadSvelte(true);
-
-		require.extensions['.svelte'] = function (module, filename) {
-			const options = Object.assign(
-				{
-					filename
-				},
-				compileOptions
-			);
-
-			const {
-				js: { code }
-			} = compile(fs.readFileSync(filename, 'utf-8').replace(/\r/g, ''), options);
-
-			return module._compile(code, filename);
-		};
-
 		return setupHtmlEqual({ removeDataSvelte: true });
 	});
-	after(() => process.removeListener('unhandledRejection', unhandledRejection_handler));
+
+	afterAll(() => {
+		process.removeListener('unhandledRejection', unhandledRejection_handler);
+	});
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate, from_ssr_html) {
+	async function runTest(dir, hydrate, from_ssr_html) {
 		if (dir[0] === '.') return;
 
-		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
 		if (hydrate && config.skip_if_hydrate) return;
@@ -72,15 +54,13 @@ describe('runtime', () => {
 		const testName = `${dir} ${
 			hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''
 		}`;
-		(config.skip ? it.skip : solo ? it.only : it)(testName, (done) => {
+		(config.skip ? it.skip : solo ? it.only : it)(testName, () => {
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
 			}
 
 			unhandled_rejection = null;
-
-			compile = (config.preserveIdentifiers ? svelte : svelte$).compile;
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
@@ -91,14 +71,13 @@ describe('runtime', () => {
 			compileOptions.immutable = config.immutable;
 			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
 
-			cleanRequireCache();
+			const load = create_loader(compileOptions, cwd);
+			const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
 
 			let mod;
 			let SvelteComponent;
 
 			let unintendedError = null;
-
-			const window = env();
 
 			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
@@ -124,8 +103,8 @@ describe('runtime', () => {
 				}
 			});
 
-			Promise.resolve()
-				.then(() => {
+			return Promise.resolve()
+				.then(async () => {
 					// hack to support transition tests
 					clear_loops();
 
@@ -147,15 +126,16 @@ describe('runtime', () => {
 					});
 
 					try {
-						mod = require(`./samples/${dir}/main.svelte`);
+						mod = await load(`./main.svelte`);
 						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+						show_output(cwd, compileOptions); // eslint-disable-line no-console
 						throw err;
 					}
 
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
+					window.document.body.innerHTML = '<main></main>';
 
 					const target = window.document.querySelector('main');
 					let snapshot = undefined;
@@ -163,9 +143,8 @@ describe('runtime', () => {
 					if (hydrate && from_ssr_html) {
 						// ssr into target
 						compileOptions.generate = 'ssr';
-						cleanRequireCache();
 						if (config.before_test) config.before_test();
-						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 
@@ -261,36 +240,34 @@ describe('runtime', () => {
 				})
 				.catch((err) => {
 					failed.add(dir);
-					showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+					show_output(cwd, compileOptions); // eslint-disable-line no-console
 					throw err;
 				})
 				.catch((err) => {
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-					done(err);
 					throw err;
 				})
 				.then(() => {
 					if (config.show) {
-						showOutput(cwd, compileOptions, compile);
+						show_output(cwd, compileOptions);
 					}
 
 					flush();
 
 					if (config.after_test) config.after_test();
-					done();
 				});
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
-		runTest(dir, false);
-		runTest(dir, true, false);
-		runTest(dir, true, true);
-	});
+	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
+		await runTest(dir, false);
+		await runTest(dir, true, false);
+		await runTest(dir, true, true);
+	}
 
 	async function create_component(src = '<div></div>') {
-		const { js } = svelte$.compile(src, {
+		const { js } = compile(src, {
 			format: 'esm',
 			name: 'SvelteComponent',
 			dev: true
