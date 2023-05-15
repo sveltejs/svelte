@@ -162,6 +162,9 @@ describe('runtime (browser)', async (it) => {
 								if (fs.existsSync(out)) {
 									fs.unlinkSync(out);
 								}
+								if (!fs.existsSync(out_dir)) {
+									fs.mkdirSync(out_dir, { recursive: true });
+								}
 
 								fs.writeFileSync(out, compiled.js.code, 'utf8');
 
