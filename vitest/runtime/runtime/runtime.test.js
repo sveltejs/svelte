@@ -4,35 +4,58 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
 import glob from 'tiny-glob/sync.js';
-import { assert, describe, it } from 'vitest';
-import * as svelte from '../../../compiler';
-import { mkdirp, try_load_config } from '../../helpers';
-import { clear_loops, flush, set_now, set_raf } from '../../internal';
+import { beforeAll, afterAll, describe, it, assert } from 'vitest';
+import { compile } from '../../../compiler.mjs';
+import { clear_loops, flush, set_now, set_raf } from '../../../internal/index.mjs';
 
-describe('runtime', () => {
+import {
+	show_output,
+	try_load_config,
+	mkdirp,
+	create_loader,
+	setupHtmlEqual
+} from '../../helpers.js';
+
+let unhandled_rejection = false;
+function unhandledRejection_handler(err) {
+	unhandled_rejection = err;
+}
+
+describe('runtime', async () => {
+	beforeAll(() => {
+		process.on('unhandledRejection', unhandledRejection_handler);
+		return setupHtmlEqual({ removeDataSvelte: true });
+	});
+
+	afterAll(() => {
+		process.removeListener('unhandledRejection', unhandledRejection_handler);
+	});
+
 	const failed = new Set();
 
-	async function run_test(dir, hydrate, from_ssr_html) {
+	async function run_test(dir) {
 		if (dir[0] === '.') return;
 
 		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
-		if (hydrate && config.skip_if_hydrate) return;
-		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
-
-		const test_name = `${dir} ${
-			hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''
-		}`;
 		const it_fn = config.skip ? it.skip : solo ? it.only : it;
 
-		it_fn(test_name, async () => {
+		it_fn.each`
+			hydrate  | from_ssr_html
+			${false} | ${false}
+			${true}  | ${false}
+			${true}  | ${true}
+		`(`${dir} hydrate: $hydrate, from_ssr: $from_ssr_html`, async ({ hydrate, from_ssr_html }) => {
+			if (hydrate && config.skip_if_hydrate) return;
+			if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
+
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
 			}
 
-			compile = svelte.compile;
+			unhandled_rejection = null;
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
@@ -42,6 +65,8 @@ describe('runtime', () => {
 				immutable: config.immutable,
 				accessors: 'accessors' in config ? config.accessors : true
 			});
+
+			const load = create_loader(compileOptions, cwd);
 
 			let mod;
 			let SvelteComponent;
@@ -72,21 +97,8 @@ describe('runtime', () => {
 				}
 			});
 
-			function create_deferred() {
-				let _resolve, _reject;
-
-				const promise = new Promise((resolve, reject) => {
-					_resolve = resolve;
-					_reject = reject;
-				});
-
-				return { promise, resolve: _resolve, reject: _reject };
-			}
-
-			const deferred = create_deferred();
-
-			Promise.resolve()
-				.then(() => {
+			return Promise.resolve()
+				.then(async () => {
 					// hack to support transition tests
 					clear_loops();
 
@@ -108,24 +120,26 @@ describe('runtime', () => {
 					});
 
 					try {
-						mod = require(`./samples/${dir}/main.svelte`);
+						mod = await load(`./main.svelte`);
 						SvelteComponent = mod.default;
 					} catch (err) {
-						showOutput(cwd, compileOptions, compile); // eslint-disable-line no-console
+						show_output(cwd, compileOptions); // eslint-disable-line no-console
 						throw err;
 					}
 
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
+					window.document.body.innerHTML = '<main></main>';
 
-					const target = window.document.createElement('main');
+					const target = window.document.querySelector('main');
 					let snapshot = undefined;
 
 					if (hydrate && from_ssr_html) {
+						const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
+
 						// ssr into target
-						compileOptions.generate = 'ssr';
 						if (config.before_test) config.before_test();
-						const SsrSvelteComponent = require(`./samples/${dir}/main.svelte`).default;
+						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 
@@ -133,7 +147,6 @@ describe('runtime', () => {
 							snapshot = config.snapshot(target);
 						}
 
-						delete compileOptions.generate;
 						if (config.after_test) config.after_test();
 					} else {
 						target.innerHTML = '';
@@ -180,9 +193,9 @@ describe('runtime', () => {
 						});
 					}
 
-					if (config.test) {
-						return Promise.resolve(
-							config.test({
+					try {
+						if (config.test) {
+							await config.test({
 								assert,
 								component,
 								mod,
@@ -191,15 +204,9 @@ describe('runtime', () => {
 								window,
 								raf,
 								compileOptions
-							})
-						).then(() => {
-							component.$destroy();
-
-							if (unhandled_rejection) {
-								throw unhandled_rejection;
-							}
-						});
-					} else {
+							});
+						}
+					} finally {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, '');
 
@@ -223,28 +230,23 @@ describe('runtime', () => {
 					failed.add(dir);
 					// print a clickable link to open the directory
 					err.stack += `\n\ncmd-click: ${path.relative(process.cwd(), cwd)}/main.svelte`;
-					deferred.reject(err);
+
 					throw err;
 				})
 				.then(() => {
 					flush();
 
 					if (config.after_test) config.after_test();
-					deferred.resolve();
 				});
-
-			return deferred.promise;
 		});
 	}
 
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
-		run_test(dir, false);
-		run_test(dir, true, false);
-		run_test(dir, true, true);
-	});
+	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
+		await run_test(dir);
+	}
 
 	async function create_component(src = '<div></div>') {
-		const { js } = svelte$.compile(src, {
+		const { js } = compile(src, {
 			format: 'esm',
 			name: 'SvelteComponent',
 			dev: true

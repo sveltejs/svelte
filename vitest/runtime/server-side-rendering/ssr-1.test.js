@@ -5,18 +5,16 @@
 // TODO: happy-dom might be faster but currently replaces quotes which fails assertions
 
 import * as fs from 'fs';
-import { createRequire } from 'module';
 import * as path from 'path';
 import { assert, describe, it } from 'vitest';
 import {
+	create_loader,
 	should_update_expected,
 	try_load_config,
 	try_load_json,
 	try_read_file
 } from '../../helpers';
 import { assert_html_equal } from '../../html_equal';
-
-const sveltePath = process.cwd().split('\\').join('/');
 
 describe('ssr', async () => {
 	async function run_test(dir) {
@@ -27,20 +25,18 @@ describe('ssr', async () => {
 		const solo = config.solo || /\.solo/.test(dir);
 		const it_fn = solo ? it.only : it;
 
-		it_fn(dir, () => {
+		it_fn(dir, async () => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
 
-			const require = createRequire(import.meta.url);
 			const compileOptions = {
-				sveltePath,
 				...config.compileOptions,
 				generate: 'ssr',
 				format: 'cjs'
 			};
 
-			require('../../../register.js')(compileOptions);
+			const load = create_loader(compileOptions, dir);
 
-			const Component = require(`${dir}/main.svelte`).default;
+			const Component = (await load(`${dir}/main.svelte`)).default;
 
 			const expectedHtml = try_read_file(`${dir}/_expected.html`);
 			const expectedCss = try_read_file(`${dir}/_expected.css`) || '';

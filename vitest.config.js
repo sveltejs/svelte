@@ -13,6 +13,7 @@ export default defineConfig({
     ],
     test: {
         dir: "vitest",
-        reporters: ["dot"]
+        reporters: ["dot"],
+        exclude: ["vitest/**/samples"]
     }
 })

@@ -3,17 +3,14 @@
 import * as path from 'path';
 import { describe, it, assert } from 'vitest';
 import * as fs from 'fs';
-import { try_load_config, mkdirp } from '../../helpers';
+import { try_load_config, mkdirp, create_loader } from '../../helpers';
 import { assert_html_equal } from '../../html_equal';
-import { createRequire } from 'module';
 import glob from 'tiny-glob/sync';
 import { setTimeout } from 'timers/promises';
 
 // duplicate client-side tests, as far as possible
 run_runtime_samples('runtime');
 run_runtime_samples('runtime-browser');
-
-const sveltePath = process.cwd().split('\\').join('/');
 
 function run_runtime_samples(suite) {
 	const samples = path.resolve(__dirname, '..', suite, 'samples');
@@ -34,22 +31,12 @@ function run_runtime_samples(suite) {
 
 		it_fn(dir, async () => {
 			const compileOptions = {
-				sveltePath,
 				...config.compileOptions,
 				generate: 'ssr',
 				format: 'cjs'
 			};
 
-			const _require = createRequire(import.meta.url);
-			const require = (id) => {
-				if (id.startsWith('svelte')) {
-					return _require(`${sveltePath}/${id}`);
-				} else {
-					return _require(id);
-				}
-			};
-
-			require('../../../register')(compileOptions);
+			const load = create_loader(compileOptions, cwd);
 
 			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
 				if (file[0] === '_') return;
@@ -78,7 +65,7 @@ function run_runtime_samples(suite) {
 			try {
 				if (config.before_test) config.before_test();
 
-				const Component = require(`${cwd}/main.svelte`).default;
+				const Component = (await load(`${cwd}/main.svelte`)).default;
 				const { html } = Component.render(config.props, {
 					store: config.store !== true && config.store
 				});
@@ -100,11 +87,12 @@ function run_runtime_samples(suite) {
 				}
 
 				if (config.test_ssr) {
-					config.test_ssr({
+					await config.test_ssr({
 						assert: {
 							...assert,
 							htmlEqual: assert_html_equal
-						}
+						},
+						load
 					});
 				}
 
