@@ -1,79 +1,38 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as http from 'http';
-import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
-import puppeteer from 'puppeteer';
+import * as fs from 'fs';
+import * as path from 'path';
+import { rollup } from 'rollup';
 
-import {
-	loadConfig,
-	loadSvelte,
-	mkdirp,
-	prettyPrintPuppeteerAssertionError,
-	retryAsync,
-	executeBrowserTest
-} from '../helpers';
-import { deepEqual } from 'assert';
-
-const page = `
-<body>
-	<main></main>
-	<script src='/bundle.js'></script>
-</body>
-`;
-
-let svelte;
-let server;
-let code;
-let browser;
+import { chromium } from '@playwright/test';
+import { deepStrictEqual } from 'assert';
+import { loadConfig, loadSvelte, mkdirp, prettyPrintBrowserAssertionError } from '../helpers';
 
 const internal = path.resolve('internal/index.mjs');
 const index = path.resolve('index.mjs');
 
-function create_server() {
-	return new Promise((fulfil, reject) => {
-		const server = http.createServer((req, res) => {
-			if (req.url === '/') {
-				res.end(page);
-			}
-
-			if (req.url === '/bundle.js') {
-				res.end(code);
-			}
-		});
-
-		server.on('error', reject);
-
-		server.listen('6789', () => {
-			fulfil(server);
-		});
-	});
-}
-
-async function launchPuppeteer() {
-	return await retryAsync(() => puppeteer.launch());
-}
-
 const assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
-describe('runtime (puppeteer)', () => {
+describe('runtime (browser)', function () {
+	this.timeout(20000);
+
+	let svelte;
+	let browser;
+
 	before(async () => {
 		svelte = loadSvelte(false);
-		console.log('[runtime-puppeteer] Loaded Svelte');
-		server = await create_server();
-		console.log('[runtime-puppeteer] Started server');
-		browser = await launchPuppeteer();
-		console.log('[runtime-puppeteer] Launched puppeteer browser');
+		console.log('[runtime-browser] Loaded Svelte');
+
+		browser = await chromium.launch();
+		console.log('[runtime-browser] Launched browser');
 	});
 
 	after(async () => {
-		if (server) server.close();
 		if (browser) await browser.close();
 	});
 
 	const failed = new Set();
 
-	function runTest(dir, hydrate, is_first_run) {
+	function runTest(dir, hydrate) {
 		if (dir[0] === '.') return;
 
 		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
@@ -100,7 +59,7 @@ describe('runtime (puppeteer)', () => {
 					input: 'main',
 					plugins: [
 						{
-							name: 'testing-runtime-puppeteer',
+							name: 'testing-runtime-browser',
 							resolveId(importee) {
 								if (importee === 'svelte/internal' || importee === './internal') {
 									return internal;
@@ -221,12 +180,11 @@ describe('runtime (puppeteer)', () => {
 					]
 				});
 
-				const result = await bundle.generate({ format: 'iife', name: 'test' });
-				code = result.output[0].code;
+				const generated_bundle = await bundle.generate({ format: 'iife', name: 'test' });
 
 				function assertWarnings() {
 					if (config.warnings) {
-						deepEqual(
+						deepStrictEqual(
 							warnings.map((w) => ({
 								code: w.code,
 								message: w.message,
@@ -243,20 +201,30 @@ describe('runtime (puppeteer)', () => {
 					}
 				}
 
-				browser = await executeBrowserTest(browser, launchPuppeteer, assertWarnings, (err) => {
-					failed.add(dir);
-					prettyPrintPuppeteerAssertionError(err.message);
+				try {
+					const page = await browser.newPage();
+					page.on('console', (type) => {
+						console[type.type()](type.text());
+					});
+					await page.setContent('<main></main>');
+					await page.evaluate(generated_bundle.output[0].code);
+					const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+
+					if (test_result) console.log(test_result);
 					assertWarnings();
-				});
+					await page.close();
+				} catch (err) {
+					failed.add(dir);
+					prettyPrintBrowserAssertionError(err.message);
+					assertWarnings();
+					throw err;
+				}
 			}
-		).timeout(is_first_run ? 20000 : 10000);
+		);
 	}
 
-	// Increase the timeout on the first run in preparation for restarting Chromium due to SIGSEGV.
-	let first_run = true;
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
-		runTest(dir, false, first_run);
-		runTest(dir, true, first_run);
-		first_run = false;
+		runTest(dir, false);
+		runTest(dir, true);
 	});
 });

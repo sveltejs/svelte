@@ -101,8 +101,7 @@ function cleanChildren(node) {
 		node.setAttribute(attr.name, attr.value);
 	});
 
-	// recurse
-	[...node.childNodes].forEach((child) => {
+	for (let child of [...node.childNodes]) {
 		if (child.nodeType === 3) {
 			// text
 			if (
@@ -130,7 +129,7 @@ function cleanChildren(node) {
 		}
 
 		previous = child;
-	});
+	}
 
 	// collapse whitespace
 	if (node.firstChild && node.firstChild.nodeType === 3) {
@@ -324,74 +323,10 @@ export function mkdirp(dir) {
 	}
 }
 
-export function prettyPrintPuppeteerAssertionError(message) {
+export function prettyPrintBrowserAssertionError(message) {
 	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
 
 	if (match) {
 		assert.equal(match[1], match[2]);
 	}
-}
-
-/**
- *
- * @param {() => Promise<import ('puppeteer').Browser>} fn
- * @param {number} maxAttempts
- * @param {number} interval
- * @returns {Promise<import ('puppeteer').Browser>}
- */
-export async function retryAsync(fn, maxAttempts = 3, interval = 1000) {
-	let attempts = 0;
-	while (attempts <= maxAttempts) {
-		try {
-			return await fn();
-		} catch (err) {
-			if (++attempts >= maxAttempts) throw err;
-			await new Promise((resolve) => setTimeout(resolve, interval));
-		}
-	}
-}
-
-/**
- * NOTE: Chromium may exit with SIGSEGV, so retry in that case
- * @param {import ('puppeteer').Browser} browser
- * @param {() => Promise<import ('puppeteer').Browser>} launchPuppeteer
- * @param {() => void} additionalAssertion
- * @param {(err: Error) => void} onError
- * @returns {Promise<import ('puppeteer').Browser>}
- */
-export async function executeBrowserTest(browser, launchPuppeteer, additionalAssertion, onError) {
-	let count = 0;
-	do {
-		count++;
-		try {
-			const page = await browser.newPage();
-
-			page.on('console', (type) => {
-				console[type.type()](type.text());
-			});
-
-			page.on('error', (error) => {
-				console.log('>>> an error happened');
-				console.error(error);
-			});
-			await page.goto('http://localhost:6789');
-			const result = await page.evaluate(() => {
-				// @ts-ignore -- It runs in browser context.
-				return test(document.querySelector('main'));
-			});
-			if (result) console.log(result);
-			additionalAssertion();
-			await page.close();
-			break;
-		} catch (err) {
-			if (count === 5 || browser.isConnected()) {
-				onError(err);
-				throw err;
-			}
-			console.debug(err.stack || err);
-			console.log('RESTARTING Chromium...');
-			browser = await launchPuppeteer();
-		}
-	} while (count <= 5);
-	return browser;
 }

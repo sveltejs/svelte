@@ -5,6 +5,11 @@ on:
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
+
+env:
+  # We only install Chromium manually 
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
 jobs:
   Tests:
     runs-on: ${{ matrix.os }}
@@ -30,7 +35,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node node_modules/puppeteer/install.js
+      - run: pnpm playwright install chromium
       - run: pnpm test:integration
         env:
           CI: true
