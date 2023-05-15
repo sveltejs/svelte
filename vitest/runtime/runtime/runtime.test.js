@@ -188,7 +188,7 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						assert.htmlEqual(target.innerHTML, config.html, {
+						assert.htmlEqualWithOptions(target.innerHTML, config.html, {
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}
