@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
-import { pretty_print_browser_assertion, try_load_module } from '../../helpers';
+import { pretty_print_browser_assertion, try_load_config } from '../../helpers';
 import * as svelte from '../../../compiler';
 import { beforeAll, describe, afterAll, assert } from 'vitest';
 
@@ -32,7 +32,8 @@ describe(
 		async function runTest(dir, hydrate) {
 			if (dir[0] === '.') return;
 
-			const config = await try_load_module(import(`./samples/${dir}/_config.js`));
+			// TODO: Vitest currently doesn't register a watcher because the import is hidden
+			const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 			const solo = config.solo || /\.solo/.test(dir);
 			const skip = config.skip || /\.skip/.test(dir);
 
