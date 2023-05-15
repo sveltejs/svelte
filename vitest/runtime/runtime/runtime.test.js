@@ -38,21 +38,23 @@ describe('runtime', async () => {
 
 	const failed = new Set();
 
-	async function runTest(dir, hydrate, from_ssr_html) {
+	async function runTest(dir) {
 		if (dir[0] === '.') return;
 
 		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 		const solo = config.solo || /\.solo/.test(dir);
 
-		if (hydrate && config.skip_if_hydrate) return;
-		if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
-
-		const test_name = `${dir} ${
-			hydrate ? `(with hydration${from_ssr_html ? ' from ssr rendered html' : ''})` : ''
-		}`;
 		const it_fn = config.skip ? it.skip : solo ? it.only : it;
 
-		it_fn(test_name, async () => {
+		it_fn.each`
+			hydrate  | from_ssr_html
+			${false} | ${false}
+			${true}  | ${false}
+			${true}  | ${true}
+		`(`${dir} hydrate: $hydrate, from_ssr: $from_ssr_html`, async ({ hydrate, from_ssr_html }) => {
+			if (hydrate && config.skip_if_hydrate) return;
+			if (hydrate && from_ssr_html && config.skip_if_hydrate_from_ssr) return;
+
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
 				throw new Error('skipping test, already failed');
@@ -262,8 +264,8 @@ describe('runtime', async () => {
 
 	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
 		await runTest(dir, false);
-		await runTest(dir, true, false);
-		await runTest(dir, true, true);
+		// await runTest(dir, true, false);
+		// await runTest(dir, true, true);
 	}
 
 	async function create_component(src = '<div></div>') {
