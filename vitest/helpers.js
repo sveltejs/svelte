@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { assert } from 'vitest';
 
 export function try_load_json(file) {
 	try {
@@ -34,4 +35,12 @@ export function try_load_config(path) {
 
 export function should_update_expected() {
 	return process.env.SHOULD_UPDATE_EXPECTED === 'true';
+}
+
+export function pretty_print_browser_assertion(message) {
+	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
+
+	if (match) {
+		assert.equal(match[1], match[2]);
+	}
 }

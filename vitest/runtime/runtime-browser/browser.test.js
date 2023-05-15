@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
-import { try_load_module } from '../../helpers';
+import { pretty_print_browser_assertion, try_load_module } from '../../helpers';
 import * as svelte from '../../../compiler';
 import { beforeAll, describe, afterAll, assert } from 'vitest';
 
@@ -178,7 +178,7 @@ describe('runtime (browser)', async (it) => {
 
 			function assertWarnings() {
 				if (config.warnings) {
-					deepStrictEqual(
+					assert.deepStrictEqual(
 						warnings.map((w) => ({
 							code: w.code,
 							message: w.message,
@@ -209,7 +209,7 @@ describe('runtime (browser)', async (it) => {
 				await page.close();
 			} catch (err) {
 				failed.add(dir);
-				prettyPrintBrowserAssertionError(err.message);
+				pretty_print_browser_assertion(err.message);
 				assertWarnings();
 				throw err;
 			}
