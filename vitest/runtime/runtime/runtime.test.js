@@ -242,9 +242,7 @@ describe('runtime', async () => {
 	}
 
 	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
-		await run_test(dir, false);
-		// await runTest(dir, true, false);
-		// await runTest(dir, true, true);
+		await run_test(dir);
 	}
 
 	async function create_component(src = '<div></div>') {
