@@ -101,8 +101,7 @@ function cleanChildren(node) {
 		node.setAttribute(attr.name, attr.value);
 	});
 
-	// recurse
-	for (let child of node.childNodes) {
+	for (let child of [...node.childNodes]) {
 		if (child.nodeType === 3) {
 			// text
 			if (
