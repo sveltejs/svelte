@@ -30,6 +30,7 @@ export default {
 			assert.equal(ps[0].className, 'then');
 			assert.equal(ps[1].foo, 0.2);
 			assert.equal(ps[0].foo, 0.3);
+			raf.tick(100);
 		});
 	}
 };
