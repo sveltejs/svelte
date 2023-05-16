@@ -52,7 +52,7 @@ describe('runtime', async () => {
 
 			if (failed.has(dir)) {
 				// this makes debugging easier, by only printing compiled output once
-				throw new Error('skipping test, already failed');
+				assert.fail(`skipping ${dir}, already failed`);
 			}
 
 			unhandled_rejection = null;
@@ -206,7 +206,8 @@ describe('runtime', async () => {
 								snapshot,
 								window,
 								raf,
-								compileOptions
+								compileOptions,
+								load
 							});
 						}
 					} finally {

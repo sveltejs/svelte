@@ -1,11 +1,15 @@
-const values = [{ name: 'Alpha' }, { name: 'Beta' }, { name: 'Gamma' }];
-
-const selected_array = [[values[1]], [], [values[2]]];
+let values = [];
+let selected_array = [];
 
 export default {
+	before_test() {
+		values = [{ name: 'Alpha' }, { name: 'Beta' }, { name: 'Gamma' }];
+		selected_array = [[values[1]], [], [values[2]]];
+	},
+
 	get props() {
-	return { values, selected_array };
-},
+		return { values, selected_array };
+	},
 
 	html: `
 		<div>

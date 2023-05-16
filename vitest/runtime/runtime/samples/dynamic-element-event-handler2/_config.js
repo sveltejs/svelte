@@ -5,9 +5,13 @@ function handler() {
 
 export default {
 	get props() {
-	return { tag: 'div', handler };
-},
+		return { tag: 'div', handler };
+	},
 	html: '<div>Foo</div>',
+
+	before_test() {
+		clicked = false;
+	},
 
 	test({ assert, component, target }) {
 		assert.equal(clicked, false);

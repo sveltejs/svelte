@@ -3,16 +3,17 @@ let value = 'foo';
 
 export default {
 	get props() {
-	return {
-		value() {
-			count++;
-			return value;
-		}
-	};
-},
+		return {
+			value() {
+				count++;
+				return value;
+			}
+		};
+	},
 
 	before_test() {
 		count = 0;
+		value = 'foo';
 	},
 
 	html: `

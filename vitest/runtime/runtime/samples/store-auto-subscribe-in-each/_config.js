@@ -4,10 +4,10 @@ export default {
 	skip: true,
 
 	get props() {
-	return {
-		things: [writable('a'), writable('b'), writable('c')]
-	};
-},
+		return {
+			things: [writable('a'), writable('b'), writable('c')]
+		};
+	},
 
 	html: `
 		<button>a</button>
