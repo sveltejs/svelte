@@ -46,8 +46,6 @@ export default {
 		`
 		);
 
-		create_deferred().reject(new Error('random error'));
-
 		local.reject(new Error('something broke'));
 
 		try {
