@@ -129,6 +129,8 @@ describe('runtime', async () => {
 
 					// Put things we need on window for testing
 					window.SvelteComponent = SvelteComponent;
+					window.document.title = '';
+					window.document.head.innerHTML = '';
 					window.document.body.innerHTML = '<main></main>';
 
 					const target = window.document.querySelector('main');
