@@ -1,13 +1,14 @@
 let fulfil;
 
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let thePromise;
 
 export default {
 	get props() {
-	return { thePromise };
-},
+		thePromise = new Promise((f) => {
+			fulfil = f;
+		});
+		return { thePromise };
+	},
 
 	html: `
 		<br />
@@ -23,31 +24,25 @@ export default {
 
 		let reject;
 
-		thePromise = new Promise((f, r) => {
+		component.thePromise = thePromise = new Promise((f, r) => {
 			reject = r;
 		});
 
-		component.thePromise = thePromise;
+		assert.htmlEqual(target.innerHTML, `<br /><p>the promise is pending</p>`);
 
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<br />
-			<p>the promise is pending</p>
-		`
-		);
+		const rejection = thePromise
+			.catch(() => {})
+			.then(() => {
+				assert.htmlEqual(
+					target.innerHTML,
+					`<p>oh no! Something broke!</p>
+					<br />
+					<p>oh no! Something broke!</p>`
+				);
+			});
 
 		reject(new Error());
 
-		await thePromise.catch(() => {});
-
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<p>oh no! Something broke!</p>
-			<br />
-			<p>oh no! Something broke!</p>
-		`
-		);
+		await rejection;
 	}
 };

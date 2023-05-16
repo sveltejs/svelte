@@ -1,13 +1,14 @@
 let fulfil;
 
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let thePromise;
 
 export default {
 	get props() {
-	return { thePromise };
-},
+		thePromise = new Promise((f) => {
+			fulfil = f;
+		});
+		return { thePromise };
+	},
 
 	html: '',
 
@@ -33,12 +34,7 @@ export default {
 				return thePromise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(
-					target.innerHTML,
-					`
-					<p>oh no! something broke</p>
-				`
-				);
+				assert.htmlEqual(target.innerHTML, `<p>oh no! something broke</p>`);
 			});
 	}
 };

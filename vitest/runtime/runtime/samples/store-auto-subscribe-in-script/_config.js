@@ -1,11 +1,12 @@
 import { writable } from 'svelte/store';
 
-const count = writable(0);
+let count = writable(0);
 
 export default {
 	get props() {
-	return { count };
-},
+		count = writable(0);
+		return { count };
+	},
 
 	html: `
 		<button>+1</button>

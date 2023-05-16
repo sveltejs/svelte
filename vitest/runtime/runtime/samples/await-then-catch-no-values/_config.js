@@ -1,13 +1,14 @@
 let fulfil;
 
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let thePromise;
 
 export default {
 	get props() {
-	return { thePromise };
-},
+		thePromise = new Promise((f) => {
+			fulfil = f;
+		});
+		return { thePromise };
+	},
 
 	html: 'waiting',
 

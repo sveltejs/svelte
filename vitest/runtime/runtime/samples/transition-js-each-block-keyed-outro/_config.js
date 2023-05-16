@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
-	};
-},
+		return {
+			things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+		};
+	},
 
 	test({ assert, component, target, raf }) {
 		const divs = target.querySelectorAll('div');

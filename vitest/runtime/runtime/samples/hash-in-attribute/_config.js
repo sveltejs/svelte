@@ -15,6 +15,7 @@ export default {
 		component.links = ['d', 'e', 'f'];
 
 		const links = [...target.querySelectorAll('a')];
+
 		assert.deepEqual(
 			links.map((l) => l.href),
 			['x#d', 'x#e', 'x#f']

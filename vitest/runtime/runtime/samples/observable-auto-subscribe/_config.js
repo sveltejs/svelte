@@ -1,8 +1,7 @@
-const subscribers = [];
-
 let value = 'initial';
 
-const observable = {
+let subscribers = [];
+let create_observable = () => ({
 	subscribe: (fn) => {
 		subscribers.push(fn);
 
@@ -15,12 +14,14 @@ const observable = {
 			}
 		};
 	}
-};
+});
 
 export default {
 	get props() {
-	return { observable, visible: false };
-},
+		value = 'initial';
+		subscribers = [];
+		return { observable: create_observable(), visible: false };
+	},
 
 	html: '',
 
@@ -30,22 +31,11 @@ export default {
 		component.visible = true;
 
 		assert.equal(subscribers.length, 1);
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<p>value: initial</p>
-		`
-		);
+		assert.htmlEqual(target.innerHTML, `<p>value: initial</p>`);
 
-		value = 42;
-		await subscribers.forEach((fn) => fn(value));
+		subscribers.forEach((fn) => fn(42));
 
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<p>value: 42</p>
-		`
-		);
+		assert.htmlEqual(target.innerHTML, `<p>value: 42</p>`);
 
 		component.visible = false;
 

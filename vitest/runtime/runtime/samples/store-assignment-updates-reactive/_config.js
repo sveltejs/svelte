@@ -1,11 +1,9 @@
 import { writable } from 'svelte/store';
 
-const c = writable(0);
-
 export default {
 	get props() {
-	return { c };
-},
+		return { c: writable(0) };
+	},
 
 	html: `
 		<p>a: 0</p>

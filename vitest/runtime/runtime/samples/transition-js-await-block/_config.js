@@ -1,13 +1,14 @@
 let fulfil;
 
-const promise = new Promise((f) => {
-	fulfil = f;
-});
+let promise;
 
 export default {
 	get props() {
-	return { promise };
-},
+		promise = new Promise((f) => {
+			fulfil = f;
+		});
+		return { promise };
+	},
 
 	intro: true,
 
