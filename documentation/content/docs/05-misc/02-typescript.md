@@ -6,7 +6,7 @@ You can use TypeScript to type your Svelte components. The Svelte VSCode extensi
 
 > TypeScript usage is part of [svelte-preprocess](https://github.com/sveltejs/svelte-preprocess), having it in your `svelte.config.js` is required. If you're using SvelteKit, then you can also use [`vitePreprocess`](https://kit.svelte.dev/docs/integrations#preprocessors-vitepreprocess).
 
-## `<script>`
+## `<script lang="ts">`
 
 To add types to your JavaScript inside the `<script>` tag, you can use the `script` tag's `lang` attribute:
 
