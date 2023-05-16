@@ -2,9 +2,7 @@
 title: TypeScript
 ---
 
-This page contains miscellaneous information about using Svelte with TypeScript that could not be fit into other pages.
-
-You can type your svelte components with TypeScript. The Svelte VSCode extension will check your code for errors and provide hints for how to fix them.
+You can use TypeScript to type your Svelte components. The Svelte VSCode extension and the [`svelte-check` CLI](https://www.npmjs.com/package/svelte-check) will check your code for errors and provide hints about how to fix them.
 
 > TypeScript usage is part of [svelte-preprocess](https://github.com/sveltejs/svelte-preprocess), having it in your `svelte.config.js` is required. If you're using SvelteKit, then you can also use [`vitePreprocess`](https://kit.svelte.dev/docs/integrations#preprocessors-vitepreprocess).
 
