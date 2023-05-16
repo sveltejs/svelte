@@ -36,7 +36,7 @@
 		</span>
 
 		<select
-			aria-label="{selected.section.title} / {selected.chapter.title}"
+			aria-label="Tutorial Chapter"
 			value={slug}
 			on:change={navigate}
 			on:focus={() => (select_focused = true)}
