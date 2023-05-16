@@ -2,8 +2,8 @@ export default {
 	preserveIdentifiers: true,
 
 	get props() {
-	return { links: ['a', 'b', 'c'] };
-},
+		return { links: ['a', 'b', 'c'] };
+	},
 
 	html: `
 		<a href="x#a">x#a</a>
@@ -17,7 +17,8 @@ export default {
 		const links = [...target.querySelectorAll('a')];
 
 		assert.deepEqual(
-			links.map((l) => l.href),
+			// Vitest/JSDom does prepend the base URL, so we need to strip it
+			links.map((l) => l.href.slice(l.href.lastIndexOf('/') + 1)),
 			['x#d', 'x#e', 'x#f']
 		);
 
