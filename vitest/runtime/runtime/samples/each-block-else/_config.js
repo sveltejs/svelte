@@ -1,8 +1,10 @@
 export default {
-	props: {
+	get props() {
+	return {
 		animals: ['alpaca', 'baboon', 'capybara'],
 		foo: 'something else'
-	},
+	};
+},
 
 	html: `
 		before

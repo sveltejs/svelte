@@ -1,11 +1,13 @@
 let fulfil;
 
 export default {
-	props: {
-		promise: new Promise((f) => {
-			fulfil = f;
-		})
-	},
+	get props() {
+	return {
+		promise: new Promise(f => {
+				fulfil = f;
+			})
+	};
+},
 	intro: true,
 
 	async test({ assert, target, component, raf }) {

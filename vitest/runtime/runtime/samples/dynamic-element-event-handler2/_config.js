@@ -4,10 +4,9 @@ function handler() {
 }
 
 export default {
-	props: {
-		tag: 'div',
-		handler
-	},
+	get props() {
+	return { tag: 'div', handler };
+},
 	html: '<div>Foo</div>',
 
 	test({ assert, component, target }) {

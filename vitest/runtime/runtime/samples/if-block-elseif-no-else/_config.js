@@ -1,7 +1,7 @@
 export default {
-	props: {
-		x: 11
-	},
+	get props() {
+	return { x: 11 };
+},
 
 	html: `
 		<p>x is greater than 10</p>

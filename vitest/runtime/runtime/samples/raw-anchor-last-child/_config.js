@@ -1,7 +1,7 @@
 export default {
-	props: {
-		raw: '<span>foo</span>'
-	},
+	get props() {
+	return { raw: '<span>foo</span>' };
+},
 
 	test({ assert, component, target }) {
 		const span = target.querySelector('span');

@@ -1,9 +1,7 @@
 export default {
-	props: {
-		user: {
-			name: 'alice'
-		}
-	},
+	get props() {
+	return { user: { name: 'alice' } };
+},
 
 	html: `
 		<input>

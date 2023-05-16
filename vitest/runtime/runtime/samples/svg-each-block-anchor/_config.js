@@ -1,8 +1,7 @@
 export default {
-	props: {
-		foo: ['a'],
-		bar: ['c']
-	},
+	get props() {
+	return { foo: ['a'], bar: ['c'] };
+},
 
 	html: `
 		<svg>

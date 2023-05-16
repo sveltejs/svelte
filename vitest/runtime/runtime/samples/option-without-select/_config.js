@@ -1,7 +1,7 @@
 export default {
-	props: {
-		foo: 'hello'
-	},
+	get props() {
+	return { foo: 'hello' };
+},
 
 	html: "<option value='hello'>hello</option>",
 

@@ -1,7 +1,7 @@
 export default {
-	props: {
-		threshold: 5
-	},
+	get props() {
+	return { threshold: 5 };
+},
 
 	html: `
 		<div>1</div>

@@ -5,9 +5,9 @@ export default {
 		<div>outside Foo Foo Foo</div>
 		<div>inside Foo Foo Foo</div>
 	`,
-	props: {
-		props: 'Foo'
-	},
+	get props() {
+	return { props: 'Foo' };
+},
 
 	async test({ assert, component, target, raf }) {
 		await component.hide();

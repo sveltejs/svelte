@@ -1,7 +1,7 @@
 export default {
-	props: {
-		x: 1
-	},
+	get props() {
+	return { x: 1 };
+},
 
 	test({ component }) {
 		component.$destroy();

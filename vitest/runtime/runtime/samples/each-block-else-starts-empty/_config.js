@@ -1,8 +1,7 @@
 export default {
-	props: {
-		animals: [],
-		foo: 'something else'
-	},
+	get props() {
+	return { animals: [], foo: 'something else' };
+},
 
 	html: `
 		before

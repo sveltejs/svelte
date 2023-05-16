@@ -1,5 +1,6 @@
 export default {
-	props: {
+	get props() {
+	return {
 		things: [
 			{ id: 1, name: 'a' },
 			{ id: 2, name: 'b' },
@@ -8,7 +9,8 @@ export default {
 			{ id: 5, name: 'e' }
 		],
 		tag: 'div'
-	},
+	};
+},
 
 	html: `
 		<div>a</div>

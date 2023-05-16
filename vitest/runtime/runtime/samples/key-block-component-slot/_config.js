@@ -2,9 +2,9 @@ const logs = [];
 
 export default {
 	html: '<button>Reset!</button>',
-	props: {
-		logs
-	},
+	get props() {
+	return { logs };
+},
 	async test({ assert, target }) {
 		assert.deepEqual(logs, ['mount']);
 

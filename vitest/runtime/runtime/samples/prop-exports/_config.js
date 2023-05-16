@@ -1,7 +1,8 @@
 import { writable } from 'svelte/store';
 
 export default {
-	props: {
+	get props() {
+	return {
 		s1: writable(42),
 		s2: writable(43),
 		p1: 2,
@@ -11,7 +12,8 @@ export default {
 		a6: writable(29),
 		for: 'loop',
 		continue: '...'
-	},
+	};
+},
 
 	html: `
 		$s1=42

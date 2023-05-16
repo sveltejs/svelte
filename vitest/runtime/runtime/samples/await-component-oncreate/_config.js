@@ -1,9 +1,9 @@
 const promise = Promise.resolve(42);
 
 export default {
-	props: {
-		promise
-	},
+	get props() {
+	return { promise };
+},
 
 	test({ assert, target }) {
 		return promise.then(() => {

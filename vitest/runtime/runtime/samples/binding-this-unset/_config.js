@@ -1,7 +1,7 @@
 export default {
-	props: {
-		x: true
-	},
+	get props() {
+	return { x: true };
+},
 
 	html: '<canvas data-x="true"></canvas>',
 

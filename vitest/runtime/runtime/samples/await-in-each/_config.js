@@ -12,9 +12,9 @@ const items = [
 ];
 
 export default {
-	props: {
-		items
-	},
+	get props() {
+	return { items };
+},
 
 	html: `
 		<p>a title: loading...</p>

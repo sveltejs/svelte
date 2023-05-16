@@ -1,7 +1,7 @@
 export default {
-	props: {
-		selected: ['two', 'three']
-	},
+	get props() {
+	return { selected: ['two', 'three'] };
+},
 
 	html: `
 		<select multiple>

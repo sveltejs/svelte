@@ -2,11 +2,9 @@ const foo = '<script type="application/json">{ "foo": "true" }</script>';
 const bar = '<script type="application/json">{ "bar": "true" }</script>';
 
 export default {
-	props: {
-		condition: 1,
-		foo,
-		bar
-	},
+	get props() {
+	return { condition: 1, foo, bar };
+},
 
 	test({ assert, component, window }) {
 		assert.equal(window.document.head.innerHTML.includes(foo), true);

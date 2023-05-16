@@ -1,7 +1,7 @@
 export default {
-	props: {
-		name: 'everybody'
-	},
+	get props() {
+	return { name: 'everybody' };
+},
 
 	html: '<h1>Hello everybody!</h1>'
 };

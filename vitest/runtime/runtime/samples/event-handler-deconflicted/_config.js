@@ -1,9 +1,9 @@
 export default {
 	preserveIdentifiers: true,
 
-	props: {
-		click_handler: 'x'
-	},
+	get props() {
+	return { click_handler: 'x' };
+},
 
 	html: `
 		<button>x</button>

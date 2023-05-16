@@ -3,9 +3,9 @@ import { writable } from 'svelte/store';
 const c = writable(0);
 
 export default {
-	props: {
-		c
-	},
+	get props() {
+	return { c };
+},
 
 	html: `
 		<p>a: 0</p>

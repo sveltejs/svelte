@@ -18,10 +18,9 @@ const observable = {
 };
 
 export default {
-	props: {
-		observable,
-		visible: false
-	},
+	get props() {
+	return { observable, visible: false };
+},
 
 	html: '',
 

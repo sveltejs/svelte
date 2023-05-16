@@ -2,9 +2,9 @@ export default {
 	compileOptions: {
 		dev: true
 	},
-	props: {
-		componentName: 'Sub'
-	},
+	get props() {
+	return { componentName: 'Sub' };
+},
 	html: '<div>Sub</div>',
 	test({ assert, component, target }) {
 		component.componentName = 'Proxy';

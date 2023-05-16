@@ -3,9 +3,11 @@ import { writable } from 'svelte/store';
 export default {
 	skip: true,
 
-	props: {
+	get props() {
+	return {
 		things: [writable('a'), writable('b'), writable('c')]
-	},
+	};
+},
 
 	html: `
 		<button>a</button>

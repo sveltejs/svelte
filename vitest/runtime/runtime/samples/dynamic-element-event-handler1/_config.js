@@ -4,9 +4,9 @@ function handler() {
 }
 
 export default {
-	props: {
-		handler
-	},
+	get props() {
+	return { handler };
+},
 	html: '<button>Foo</button>',
 
 	test({ assert, target }) {

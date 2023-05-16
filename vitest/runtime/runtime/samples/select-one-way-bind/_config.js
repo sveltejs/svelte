@@ -1,9 +1,9 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		foo: 'a'
-	},
+	get props() {
+	return { foo: 'a' };
+},
 
 	test({ assert, component, target }) {
 		const options = target.querySelectorAll('option');

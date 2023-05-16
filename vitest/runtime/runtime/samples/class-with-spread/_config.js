@@ -1,10 +1,10 @@
 export default {
-	props: {
+	get props() {
+	return {
 		myClass: 'one two',
-		attributes: {
-			role: 'button'
-		}
-	},
+		attributes: { role: 'button' }
+	};
+},
 
 	html: '<div class="one two" role="button"></div>',
 

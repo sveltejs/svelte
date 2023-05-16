@@ -3,9 +3,9 @@ const items = [{ id: 'a' }, { id: 'b' }];
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		items
-	},
+	get props() {
+	return { items };
+},
 
 	test({ assert, component }) {
 		const items = component.items;

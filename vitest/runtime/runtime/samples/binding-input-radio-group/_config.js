@@ -1,10 +1,9 @@
 const values = [{ name: 'Alpha' }, { name: 'Beta' }, { name: 'Gamma' }];
 
 export default {
-	props: {
-		values,
-		selected: values[1]
-	},
+	get props() {
+	return { values, selected: values[1] };
+},
 
 	html: `
 		<label>

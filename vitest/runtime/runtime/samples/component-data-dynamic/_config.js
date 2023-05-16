@@ -1,10 +1,12 @@
 export default {
-	props: {
+	get props() {
+	return {
 		bar: 'lol',
 		x: 2,
 		compound: 'piece of',
 		go: { deeper: 'core' }
-	},
+	};
+},
 
 	html: `
 		<div><p>foo: lol</p>

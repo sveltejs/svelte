@@ -1,7 +1,7 @@
 export default {
-	props: {
-		visible: true
-	},
+	get props() {
+	return { visible: true };
+},
 
 	test({ assert, component, target, raf }) {
 		component.visible = false;

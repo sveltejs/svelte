@@ -1,10 +1,7 @@
 export default {
-	props: {
-		a: 3,
-		b: 4,
-		c: 5,
-		d: 6
-	},
+	get props() {
+	return { a: 3, b: 4, c: 5, d: 6 };
+},
 	html: `
 		<div>Length: 3</div>
 		<div>Values: 4,5,1</div>

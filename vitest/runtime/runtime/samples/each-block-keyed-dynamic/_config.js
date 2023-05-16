@@ -1,10 +1,9 @@
 export default {
-	props: {
-		todos: [
-			{ id: 123, description: 'buy milk' },
-			{ id: 234, description: 'drink milk' }
-		]
-	},
+	get props() {
+	return {
+		todos: [{ id: 123, description: 'buy milk' }, { id: 234, description: 'drink milk' }]
+	};
+},
 
 	html: `
 		<p>buy milk</p>

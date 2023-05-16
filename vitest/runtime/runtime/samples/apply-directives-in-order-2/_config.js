@@ -1,8 +1,8 @@
 const value = [];
 export default {
-	props: {
-		value
-	},
+	get props() {
+	return { value };
+},
 
 	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');

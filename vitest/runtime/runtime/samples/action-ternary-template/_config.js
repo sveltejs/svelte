@@ -1,8 +1,7 @@
 export default {
-	props: {
-		target: 'World!',
-		display: true
-	},
+	get props() {
+	return { target: 'World!', display: true };
+},
 
 	html: `
 		<h1></h1>

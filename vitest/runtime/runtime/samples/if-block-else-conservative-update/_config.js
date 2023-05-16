@@ -3,7 +3,8 @@ let count_a = 0;
 let count_b = 0;
 
 export default {
-	props: {
+	get props() {
+	return {
 		foo: 'potato',
 		fn: () => {
 			count_a += 1;
@@ -13,7 +14,8 @@ export default {
 			count_b += 1;
 			return true;
 		}
-	},
+	};
+},
 
 	html: '<p>potato</p>',
 

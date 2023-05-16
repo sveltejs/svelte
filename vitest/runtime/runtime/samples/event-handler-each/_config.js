@@ -1,8 +1,10 @@
 export default {
-	props: {
+	get props() {
+	return {
 		items: ['foo', 'bar', 'baz'],
 		selected: 'foo'
-	},
+	};
+},
 
 	html: `
 		<button>foo</button>

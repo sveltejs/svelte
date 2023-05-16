@@ -1,9 +1,9 @@
 import { writable } from 'svelte/store';
 
 export default {
-	props: {
-		count: writable(0)
-	},
+	get props() {
+	return { count: writable(0) };
+},
 
 	html: `
 		<button>count 0</button>

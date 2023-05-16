@@ -1,10 +1,7 @@
 export default {
-	props: {
-		item: {
-			name: 'One',
-			key: 'a'
-		}
-	},
+	get props() {
+	return { item: { name: 'One', key: 'a' } };
+},
 
 	html: `
 		<select>

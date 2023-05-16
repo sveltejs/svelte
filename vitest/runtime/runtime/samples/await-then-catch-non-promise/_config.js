@@ -1,7 +1,7 @@
 export default {
-	props: {
-		thePromise: 'not actually a promise'
-	},
+	get props() {
+	return { thePromise: 'not actually a promise' };
+},
 
 	html: `
 		<p>the value is not actually a promise</p>

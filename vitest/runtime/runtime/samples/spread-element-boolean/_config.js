@@ -1,9 +1,7 @@
 export default {
-	props: {
-		props: {
-			disabled: true
-		}
-	},
+	get props() {
+	return { props: { disabled: true } };
+},
 
 	html: `
 		<button disabled>click me</button>

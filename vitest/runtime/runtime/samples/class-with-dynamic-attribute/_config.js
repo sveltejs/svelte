@@ -1,7 +1,7 @@
 export default {
-	props: {
-		myClass: 'one two'
-	},
+	get props() {
+	return { myClass: 'one two' };
+},
 
 	html: '<div class="one two three"></div>',
 

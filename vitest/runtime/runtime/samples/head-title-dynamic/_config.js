@@ -1,7 +1,7 @@
 export default {
-	props: {
-		adjective: 'custom'
-	},
+	get props() {
+	return { adjective: 'custom' };
+},
 
 	test({ assert, component, window }) {
 		assert.equal(window.document.title, 'a custom title');

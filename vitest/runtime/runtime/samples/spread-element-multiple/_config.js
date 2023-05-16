@@ -1,14 +1,11 @@
 export default {
-	props: {
-		a: {
-			'data-one': 1,
-			'data-two': 2
-		},
-		c: {
-			'data-b': 'overridden'
-		},
+	get props() {
+	return {
+		a: { 'data-one': 1, 'data-two': 2 },
+		c: { 'data-b': 'overridden' },
 		d: 'deeeeee'
-	},
+	};
+},
 
 	html: `
 		<div data-one="1" data-two="2" data-b="overridden" data-d="deeeeee" >test</div>

@@ -5,9 +5,9 @@ let promise = new Promise((f) => {
 });
 
 export default {
-	props: {
-		promise
-	},
+	get props() {
+	return { promise };
+},
 
 	html: `
 		<p>loading...</p>

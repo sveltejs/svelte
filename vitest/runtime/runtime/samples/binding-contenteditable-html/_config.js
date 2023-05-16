@@ -1,7 +1,7 @@
 export default {
-	props: {
-		name: '<b>world</b>'
-	},
+	get props() {
+	return { name: '<b>world</b>' };
+},
 
 	html: `
 		<editor contenteditable="true"><b>world</b></editor>

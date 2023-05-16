@@ -1,11 +1,25 @@
 export default {
-	props: {
+	get props() {
+	return {
 		objectsArray: [
-			{ 'foo-bar': 'FooBar', 0: 'zero', prop: 'prop' },
-			{ 'foo-bar': 'foobar', 0: 'null', prop: 'a prop' },
-			{ 'foo-bar': 'FOO BAR', 0: 'nada', prop: 'the prop' }
+			{
+				'foo-bar': 'FooBar',
+				0: 'zero',
+				prop: 'prop'
+			},
+			{
+				'foo-bar': 'foobar',
+				0: 'null',
+				prop: 'a prop'
+			},
+			{
+				'foo-bar': 'FOO BAR',
+				0: 'nada',
+				prop: 'the prop'
+			}
 		]
-	},
+	};
+},
 
 	html: `
 		<p>FooBar: prop zero</p>

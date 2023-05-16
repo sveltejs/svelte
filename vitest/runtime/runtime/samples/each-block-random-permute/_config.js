@@ -17,9 +17,9 @@ function permute() {
 let step = permute();
 
 export default {
-	props: {
-		values: step.data
-	},
+	get props() {
+	return { values: step.data };
+},
 
 	html: step.expected,
 

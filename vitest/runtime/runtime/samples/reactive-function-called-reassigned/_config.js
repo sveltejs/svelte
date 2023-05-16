@@ -6,9 +6,9 @@ function callback(_value) {
 }
 
 export default {
-	props: {
-		callback
-	},
+	get props() {
+	return { callback };
+},
 	before_test() {
 		called = 0;
 	},

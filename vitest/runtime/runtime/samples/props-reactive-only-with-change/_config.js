@@ -1,11 +1,13 @@
 let callbacks = [];
 
 export default {
-	props: {
-		callback: (value) => callbacks.push(value),
+	get props() {
+	return {
+		callback: value => callbacks.push(value),
 		val1: '1',
 		val2: '2'
-	},
+	};
+},
 
 	before_test() {
 		callbacks = [];

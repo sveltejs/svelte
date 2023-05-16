@@ -1,7 +1,7 @@
 export default {
-	props: {
-		name: 'world'
-	},
+	get props() {
+	return { name: 'world' };
+},
 
 	test({ assert, component, target, raf }) {
 		global.count = 0;

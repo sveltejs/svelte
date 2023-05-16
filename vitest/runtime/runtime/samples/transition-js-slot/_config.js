@@ -1,7 +1,7 @@
 export default {
-	props: {
-		visible: false
-	},
+	get props() {
+	return { visible: false };
+},
 
 	html: `
 		<div></div>

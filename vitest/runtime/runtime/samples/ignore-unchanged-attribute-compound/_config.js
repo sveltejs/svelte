@@ -1,10 +1,9 @@
 import counter from './counter.js';
 
 export default {
-	props: {
-		x: 1,
-		y: 2
-	},
+	get props() {
+	return { x: 1, y: 2 };
+},
 
 	html: `
 		<p>1</p>

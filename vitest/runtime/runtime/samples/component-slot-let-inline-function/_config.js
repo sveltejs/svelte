@@ -5,11 +5,9 @@ function log(value) {
 
 export default {
 	html: '<button>click me</button>',
-	props: {
-		a: 'a',
-		b: 'b',
-		log
-	},
+	get props() {
+	return { a: 'a', b: 'b', log };
+},
 	before_test() {
 		logs = [];
 	},

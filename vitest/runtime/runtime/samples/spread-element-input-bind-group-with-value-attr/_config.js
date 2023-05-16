@@ -1,9 +1,7 @@
 export default {
-	props: {
-		props: {
-			'data-foo': 'bar'
-		}
-	},
+	get props() {
+	return { props: { 'data-foo': 'bar' } };
+},
 
 	html: '<input data-foo="bar" type="radio" value="abc">',
 

@@ -1,8 +1,10 @@
 export default {
-	props: {
+	get props() {
+	return {
 		ones: [{ text: '1' }],
 		twos: [{ text: '2' }]
-	},
+	};
+},
 
 	html: `
 		<div>1</div>

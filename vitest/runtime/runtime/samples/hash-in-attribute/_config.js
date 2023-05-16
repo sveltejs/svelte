@@ -1,9 +1,9 @@
 export default {
 	preserveIdentifiers: true,
 
-	props: {
-		links: ['a', 'b', 'c']
-	},
+	get props() {
+	return { links: ['a', 'b', 'c'] };
+},
 
 	html: `
 		<a href="x#a">x#a</a>

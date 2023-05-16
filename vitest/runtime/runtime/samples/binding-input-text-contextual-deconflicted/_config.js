@@ -1,8 +1,7 @@
 export default {
-	props: {
-		foo: 'a',
-		items: ['x']
-	},
+	get props() {
+	return { foo: 'a', items: ['x'] };
+},
 
 	html: `
 		<div><input><p>a</p></div>

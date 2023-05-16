@@ -1,8 +1,7 @@
 export default {
-	props: {
-		a: true,
-		b: false
-	},
+	get props() {
+	return { a: true, b: false };
+},
 
 	html: '<p>i am visible</p>',
 

@@ -1,34 +1,24 @@
 export default {
-	props: {
+	get props() {
+	return {
 		file: {
 			name: '/',
 			type: 'folder',
 			children: [
-				{
-					name: 'foo.jpg',
-					type: 'image'
-				},
-				{
-					name: 'bar.jpg',
-					type: 'image'
-				},
+				{ name: 'foo.jpg', type: 'image' },
+				{ name: 'bar.jpg', type: 'image' },
 				{
 					name: 'baz',
 					type: 'folder',
 					children: [
-						{
-							name: '.DS_Store',
-							type: 'junk'
-						},
-						{
-							name: 'README.md',
-							type: 'markdown'
-						}
+						{ name: '.DS_Store', type: 'junk' },
+						{ name: 'README.md', type: 'markdown' }
 					]
 				}
 			]
 		}
-	},
+	};
+},
 
 	html: `
 		<article class='file folder'>

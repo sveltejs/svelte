@@ -1,7 +1,7 @@
 export default {
-	props: {
-		z: 'z'
-	},
+	get props() {
+	return { z: 'z' };
+},
 
 	test({ assert, component, target, raf }) {
 		assert.equal(target.querySelector('div'), component.no);

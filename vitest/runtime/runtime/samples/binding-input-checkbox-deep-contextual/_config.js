@@ -1,11 +1,13 @@
 export default {
-	props: {
+	get props() {
+	return {
 		items: [
 			{ description: 'one', completed: true },
 			{ description: 'two', completed: false },
 			{ description: 'three', completed: false }
 		]
-	},
+	};
+},
 
 	html: `
 		<div>

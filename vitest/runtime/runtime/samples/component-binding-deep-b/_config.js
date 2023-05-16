@@ -14,10 +14,9 @@ const selectedComponent = components[0];
 export default {
 	skip: true, // doesn't reflect real-world bug, maybe a JSDOM quirk
 
-	props: {
-		components,
-		selectedComponent
-	},
+	get props() {
+	return { components, selectedComponent };
+},
 
 	html: `
 		<select>

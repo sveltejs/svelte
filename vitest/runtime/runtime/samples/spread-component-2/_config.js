@@ -1,5 +1,6 @@
 export default {
-	props: {
+	get props() {
+	return {
 		list: [
 			{
 				foo: 'lol',
@@ -14,7 +15,8 @@ export default {
 				quux: 'quuxx'
 			}
 		]
-	},
+	};
+},
 
 	html: `
 		<div>
