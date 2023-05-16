@@ -11,20 +11,20 @@
 </script>
 
 <div class="container">
+	<div class="toc-container" style="order: 1">
+		<Contents contents={data.sections} />
+
+		<div class="ts-toggle">
+			<TSToggle />
+		</div>
+	</div>
+
 	<div class="page content">
 		{#if title}
 			<h1>{title}</h1>
 		{/if}
 
 		<slot />
-	</div>
-
-	<div class="toc-container">
-		<Contents contents={data.sections} />
-	</div>
-
-	<div class="ts-toggle">
-		<TSToggle />
 	</div>
 </div>
 
@@ -33,11 +33,16 @@
 		--sidebar-menu-width: 28rem;
 		--sidebar-width: var(--sidebar-menu-width);
 		--ts-toggle-height: 4.2rem;
+
+		display: flex;
+		flex-direction: column;
 	}
 
 	.page {
 		--on-this-page-display: none;
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side);
+
+		min-width: 0 !important;
 	}
 
 	.page :global(hr) {
@@ -121,6 +126,7 @@
 	@media (min-width: 1200px) {
 		.container {
 			--sidebar-width: max(28rem, 23vw);
+			flex-direction: row;
 		}
 
 		.page {
