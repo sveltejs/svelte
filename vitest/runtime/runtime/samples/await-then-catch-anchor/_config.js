@@ -1,13 +1,14 @@
-let fulfil;
+import { create_deferred } from '../../../../helpers';
 
-let thePromise;
+let deferred;
 
 export default {
+	before_test() {
+		deferred = create_deferred();
+	},
+
 	get props() {
-		thePromise = new Promise((f) => {
-			fulfil = f;
-		});
-		return { thePromise };
+		return { thePromise: deferred.promise };
 	},
 
 	html: `
@@ -15,9 +16,9 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		fulfil(42);
+		deferred.resolve(42);
 
-		return thePromise
+		return deferred.promise
 			.then(() => {
 				assert.htmlEqual(
 					target.innerHTML,
@@ -26,32 +27,18 @@ export default {
 				`
 				);
 
-				let reject;
+				deferred = create_deferred();
 
-				thePromise = new Promise((f, r) => {
-					reject = r;
-				});
+				component.thePromise = deferred.promise;
 
-				component.thePromise = thePromise;
+				assert.htmlEqual(target.innerHTML, `<div><p>loading...</p></div>`);
 
-				assert.htmlEqual(
-					target.innerHTML,
-					`
-					<div><p>loading...</p></div>
-				`
-				);
+				deferred.reject(new Error('something broke'));
 
-				reject(new Error('something broke'));
-
-				return thePromise.catch(() => {});
+				return deferred.promise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(
-					target.innerHTML,
-					`
-					<div><p>oh no! something broke</p></div>
-				`
-				);
+				assert.htmlEqual(target.innerHTML, `<div><p>oh no! something broke</p></div>`);
 			});
 	}
 };

@@ -1,13 +1,14 @@
-let fulfil;
+import { create_deferred } from '../../../../helpers';
 
-let thePromise;
+let deferred;
 
 export default {
+	before_test() {
+		deferred = create_deferred();
+	},
+
 	get props() {
-		thePromise = new Promise((f) => {
-			fulfil = f;
-		});
-		return { thePromise };
+		return { thePromise: deferred.promise };
 	},
 
 	html: `
@@ -17,9 +18,9 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		fulfil();
+		deferred.resolve();
 
-		await thePromise;
+		await deferred.promise;
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -32,11 +33,9 @@ export default {
 		`
 		);
 
-		let reject;
+		const local = (deferred = create_deferred());
 
-		component.thePromise = thePromise = new Promise((f, r) => {
-			reject = r;
-		});
+		component.thePromise = local.promise;
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -47,12 +46,12 @@ export default {
 		`
 		);
 
-		thePromise.catch(() => {});
+		create_deferred().reject(new Error('random error'));
 
-		reject(new Error('something broke'));
+		local.reject(new Error('something broke'));
 
 		try {
-			await thePromise;
+			await local.promise;
 		} catch {}
 
 		assert.htmlEqual(

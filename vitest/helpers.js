@@ -289,3 +289,19 @@ export function setupHtmlEqual(options = {}) {
 		);
 	};
 }
+
+export function create_deferred() {
+	/** @type {(value: any) => void} */
+	let resolve;
+	/** @type {(reason: any) => void} */
+	let reject;
+
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
+
+	promise.catch(() => {});
+
+	return { promise, resolve, reject };
+}

@@ -1,19 +1,19 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from 'vitest/config';
 
 export default defineConfig({
-    plugins: [
-        {
-            name: "resolve-svelte",
-            resolveId(id) {
-                if (id.startsWith("svelte")) {
-                    return id.replace(/^svelte(.*)\/?$/, `${__dirname}$1/index.mjs`)
-                }
-            }
-        }
-    ],
-    test: {
-        dir: "vitest",
-        reporters: ["dot"],
-        exclude: ["vitest/**/samples"]
-    }
-})
+	plugins: [
+		{
+			name: 'resolve-svelte',
+			resolveId(id) {
+				if (id.startsWith('svelte')) {
+					return id.replace(/^svelte(.*)\/?$/, `${__dirname}$1/index.mjs`);
+				}
+			}
+		}
+	],
+	test: {
+		dir: 'vitest',
+		reporters: ['dot'],
+		exclude: [...configDefaults.exclude, 'vitest/**/samples']
+	}
+});

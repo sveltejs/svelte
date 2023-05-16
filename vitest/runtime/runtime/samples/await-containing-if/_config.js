@@ -1,22 +1,24 @@
-let fulfil;
+import { create_deferred } from '../../../../helpers';
 
-const thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let deferred;
 
 export default {
+	before_test() {
+		deferred = create_deferred();
+	},
+
 	get props() {
-	return { thePromise, show: true };
-},
+		return { thePromise: deferred.promise, show: true };
+	},
 
 	html: `
 		<div><p>loading...</p></div>
 	`,
 
 	test({ assert, component, target }) {
-		fulfil(42);
+		deferred.resolve(42);
 
-		return thePromise.then(() => {
+		return deferred.promise.then(() => {
 			assert.htmlEqual(
 				target.innerHTML,
 				`
