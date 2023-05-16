@@ -6,7 +6,7 @@ export default defineConfig({
             name: "resolve-svelte",
             resolveId(id) {
                 if (id.startsWith("svelte")) {
-                    return id.replace(/^svelte/, __dirname)
+                    return id.replace(/^svelte(.*)\/?$/, `${__dirname}$1/index.mjs`)
                 }
             }
         }
