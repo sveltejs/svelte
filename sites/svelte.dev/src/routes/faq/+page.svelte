@@ -1,6 +1,4 @@
 <script>
-	import '@sveltejs/site-kit/styles/code.css';
-
 	export let data;
 </script>
 
@@ -15,7 +13,7 @@
 <div class="faqs stretch">
 	<h1>Frequently Asked Questions</h1>
 	{#each data.faqs as faq}
-		<article class="faq">
+		<article class="faq text">
 			<h2>
 				<span id={faq.slug} class="offset-anchor" />
 				{faq.title}

@@ -2,7 +2,6 @@
 	import { page } from '$app/stores';
 	import '@sveltejs/site-kit/styles/code.css';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 </script>
 
@@ -97,12 +96,12 @@
 		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
 	}
 
-	.post :global(code) {
+	/* .post :global(code) {
 		padding: 0.3rem 0.8rem 0.3rem;
 		margin: 0 0.2rem;
 		top: -0.1rem;
 		background: var(--sk-back-4);
-	}
+	} */
 
 	.post :global(pre) :global(code) {
 		padding: 0;

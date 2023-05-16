@@ -1,4 +1,4 @@
-// A puppeteer test because JSDOM doesn't support contenteditable
+// A browser test because JSDOM doesn't support contenteditable
 export default {
 	html: '<div contenteditable="true"></div>',
 	ssrHtml: '<div contenteditable=""></div>',

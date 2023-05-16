@@ -7,6 +7,8 @@
 	export let slug;
 	export let selected;
 
+	let select_focused = false;
+
 	function navigate(e) {
 		goto(`/tutorial/${e.target.value}`);
 	}
@@ -22,7 +24,7 @@
 		<Icon name="arrow-left" />
 	</a>
 
-	<div>
+	<div style:box-shadow={select_focused ? 'var(--sk-focus-outline)' : null}>
 		<span>
 			<strong>
 				<span style="position: relative; top: -0.1em; margin: 0 0.5em 0 0"
@@ -33,7 +35,13 @@
 			{selected.chapter.title}
 		</span>
 
-		<select value={slug} on:change={navigate}>
+		<select
+			aria-label="Tutorial Chapter"
+			value={slug}
+			on:change={navigate}
+			on:focus={() => (select_focused = true)}
+			on:blur={() => (select_focused = false)}
+		>
 			{#each sections as section, i}
 				<optgroup label="{i + 1}. {section.title}">
 					{#each section.tutorials as chapter, i}

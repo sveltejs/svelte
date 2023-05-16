@@ -21,7 +21,7 @@
 	<meta name="Description" content="{data.page.title} • Svelte documentation" />
 </svelte:head>
 
-<div class="text">
+<div class="text" id="docs-content">
 	{@html data.page.content}
 </div>
 

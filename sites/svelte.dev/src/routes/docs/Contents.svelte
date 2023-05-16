@@ -1,10 +1,14 @@
 <script>
 	import { page } from '$app/stores';
+	import { SkipLink } from '@sveltejs/site-kit/components';
 
 	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
 	export let contents = [];
 </script>
 
+<SkipLink href="#docs-content">Skip to documentation</SkipLink>
+
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <nav aria-label="Docs">
 	<ul class="sidebar">
 		{#each contents as section}

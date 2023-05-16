@@ -43,8 +43,23 @@ function normalizeHtml(window, html) {
 			.replace(/<!--.*?-->/g, '')
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
+
+		normalizeStyles(node);
+
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
 		throw new Error(`Failed to normalize HTML:\n${html}`);
+	}
+}
+
+function normalizeStyles(node) {
+	if (node.nodeType === 1) {
+		if (node.hasAttribute('style')) {
+			node.style = node.style.cssText;
+		}
+
+		for (const child of node.childNodes) {
+			normalizeStyles(child);
+		}
 	}
 }
