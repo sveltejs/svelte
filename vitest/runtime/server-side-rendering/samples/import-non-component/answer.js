@@ -1,2 +1,1 @@
-// TODO: ESM
-(module.exports = exports).default = 42;
+export default 42;
