@@ -15,6 +15,7 @@ import {
 	create_loader,
 	setupHtmlEqual
 } from '../../helpers.js';
+import { setTimeout } from 'timers/promises';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
@@ -97,7 +98,7 @@ describe('runtime', async () => {
 				}
 			});
 
-			return Promise.resolve()
+			await Promise.resolve()
 				.then(async () => {
 					// hack to support transition tests
 					clear_loops();
@@ -180,14 +181,14 @@ describe('runtime', async () => {
 
 					if (config.error) {
 						unintendedError = true;
-						throw new Error('Expected a runtime error');
+						assert.fail('Expected a runtime error');
 					}
 
 					if (config.warnings) {
 						assert.deepEqual(warnings, config.warnings);
 					} else if (warnings.length) {
 						unintendedError = true;
-						throw new Error('Received unexpected warnings');
+						assert.fail('Received unexpected warnings');
 					}
 
 					if (config.html) {
@@ -237,11 +238,17 @@ describe('runtime', async () => {
 
 					throw err;
 				})
-				.then(() => {
+				.finally(() => {
 					flush();
 
 					if (config.after_test) config.after_test();
 				});
+
+			if (!process.env.CI) {
+				// free up the event loop for the progress indicator
+				// otherwise it'll be janky
+				await setTimeout();
+			}
 		});
 	}
 
