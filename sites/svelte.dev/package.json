@@ -17,10 +17,10 @@
 		"test": "uvu -r ts-node/register src/lib/server/markdown"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.21.0",
+		"@supabase/supabase-js": "^2.22.0",
 		"@sveltejs/repl": "^0.5.0-next.3",
 		"cookie": "^0.5.0",
-		"devalue": "^4.3.0",
+		"devalue": "^4.3.1",
 		"do-not-zip": "^1.0.0",
 		"flexsearch": "^0.7.31",
 		"flru": "^1.0.2"
@@ -29,9 +29,9 @@
 		"@resvg/resvg-js": "^2.4.1",
 		"@sveltejs/adapter-vercel": "^2.4.3",
 		"@sveltejs/kit": "^1.16.3",
-		"@sveltejs/site-kit": "^5.1.0",
+		"@sveltejs/site-kit": "^5.2.1",
 		"@types/marked": "^4.3.0",
-		"@types/node": "^20.1.3",
+		"@types/node": "^20.1.7",
 		"degit": "^2.8.4",
 		"dotenv": "^16.0.3",
 		"jimp": "^0.22.8",
@@ -40,7 +40,7 @@
 		"node-fetch": "^3.3.1",
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.0",
-		"rollup": "^3.21.7",
+		"rollup": "^3.22.0",
 		"rollup-plugin-dts": "^5.3.0",
 		"sass": "^1.62.1",
 		"satori": "^0.8.1",
@@ -53,7 +53,7 @@
 		"tiny-glob": "^0.2.9",
 		"ts-morph": "^18.0.0",
 		"typescript": "^5.0.4",
-		"vite": "^4.3.5",
-		"vite-imagetools": "^5.0.3"
+		"vite": "^4.3.7",
+		"vite-imagetools": "^5.0.4"
 	}
 }
