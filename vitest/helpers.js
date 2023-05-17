@@ -301,7 +301,5 @@ export function create_deferred() {
 		reject = r;
 	});
 
-	promise.catch(() => {});
-
 	return { promise, resolve, reject };
 }

@@ -22,9 +22,11 @@ function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
+let listeners = process.rawListeners('unhandledRejection');
+
 describe('runtime', async () => {
 	beforeAll(() => {
-		process.on('unhandledRejection', unhandledRejection_handler);
+		process.prependListener('unhandledRejection', unhandledRejection_handler);
 		return setupHtmlEqual({ removeDataSvelte: true });
 	});
 
@@ -97,6 +99,12 @@ describe('runtime', async () => {
 					// do nothing
 				}
 			});
+
+			if (config.expect_unhandled_rejections) {
+				listeners.forEach((listener) => {
+					process.removeListener('unhandledRejection', listener);
+				});
+			}
 
 			await Promise.resolve()
 				.then(async () => {
@@ -215,6 +223,8 @@ describe('runtime', async () => {
 						component.$destroy();
 						assert.htmlEqual(target.innerHTML, '');
 
+						// TODO: This seems useless, unhandledRejection is only triggered on the next task
+						// by which time the test has already finished and the next test resets it to null above
 						if (unhandled_rejection) {
 							throw unhandled_rejection;
 						}
@@ -238,17 +248,22 @@ describe('runtime', async () => {
 
 					throw err;
 				})
-				.finally(() => {
+				.finally(async () => {
 					flush();
 
 					if (config.after_test) config.after_test();
-				});
 
-			if (!process.env.CI) {
-				// free up the event loop for the progress indicator
-				// otherwise it'll be janky
-				await setTimeout();
-			}
+					// Free up the microtask queue, so that
+					// 1. Vitest's test runner which uses setInterval can log progress
+					// 2. Any expected unhandled rejections are ran before we reattach the listeners
+					await setTimeout();
+
+					if (config.expect_unhandled_rejections) {
+						listeners.forEach((listener) => {
+							process.on('unhandledRejection', listener);
+						});
+					}
+				});
 		});
 	}
 

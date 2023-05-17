@@ -15,6 +15,7 @@ export default {
 		<p>loading...</p>
 	`,
 
+	expect_unhandled_rejections: true,
 	test({ assert, component, target }) {
 		deferred.resolve(42);
 

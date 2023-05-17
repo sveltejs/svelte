@@ -17,6 +17,7 @@ export default {
 		<p>the promise is pending</p>
 	`,
 
+	expect_unhandled_rejections: true,
 	async test({ assert, component, target }) {
 		deferred.resolve();
 
