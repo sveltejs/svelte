@@ -1,5 +1,5 @@
-import * as assert from 'assert';
-import { readable, writable, derived, get, readonly } from '../../store';
+import { describe, it, assert } from 'vitest';
+import { readable, writable, derived, get, readonly } from 'svelte/store';
 
 describe('store', () => {
 	describe('writable', () => {
@@ -139,7 +139,9 @@ describe('store', () => {
 
 		it('passes an optional update function', () => {
 			let running;
+			/** @type {(value: any) => void} */
 			let tick;
+			/** @type {(value: any) => void} */
 			let add;
 
 			const store = readable(undefined, (set, update) => {

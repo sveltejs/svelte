@@ -1,9 +1,15 @@
 export default {
-	props: {
-		todos: [
-			{ description: 'implement keyed each blocks' },
-			{ description: 'implement client-side hydration' }
-		]
+	get props() {
+		return {
+			todos: [
+				{
+					description: 'implement keyed each blocks'
+				},
+				{
+					description: 'implement client-side hydration'
+				}
+			]
+		};
 	},
 
 	html: `

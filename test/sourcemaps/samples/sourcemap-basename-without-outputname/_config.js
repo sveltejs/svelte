@@ -1,4 +1,4 @@
-import { magic_string_bundle } from '../../helpers';
+import { magic_string_bundle } from '../../helpers.js';
 
 export const component_filepath = 'src/some/deep/path/input.svelte';
 export const component_file_basename = 'input.svelte';

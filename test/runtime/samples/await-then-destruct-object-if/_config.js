@@ -1,6 +1,8 @@
 export default {
-	props: {
-		thePromise: Promise.resolve({ result: 1 })
+	get props() {
+		return {
+			thePromise: Promise.resolve({ result: 1 })
+		};
 	},
 
 	html: '',

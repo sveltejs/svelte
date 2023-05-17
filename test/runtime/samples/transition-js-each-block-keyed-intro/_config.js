@@ -1,6 +1,8 @@
 export default {
-	props: {
-		things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+	get props() {
+		return {
+			things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+		};
 	},
 
 	intro: true,

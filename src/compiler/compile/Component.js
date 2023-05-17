@@ -6,7 +6,6 @@ import { namespaces, valid_namespaces } from '../utils/namespaces.js';
 import create_module from './create_module.js';
 import { create_scopes, extract_names, extract_identifiers } from './utils/scope.js';
 import Stylesheet from './css/Stylesheet.js';
-import { test } from '../config.js';
 import Fragment from './nodes/Fragment.js';
 import internal_exports from './internal_exports.js';
 import error from '../utils/error.js';
@@ -444,7 +443,6 @@ export default class Component {
 	 * @returns {import('estree').Identifier}
 	 */
 	get_unique_name(name, scope) {
-		if (test) name = `${name}$`;
 		let alias = name;
 		for (
 			let i = 1;
@@ -453,8 +451,10 @@ export default class Component {
 			this.used_names.has(alias) ||
 			this.globally_used_names.has(alias) ||
 			(scope && scope.has(alias));
-			alias = `${name}_${i++}`
-		);
+
+		) {
+			alias = `${name}_${i++}`;
+		}
 		this.used_names.add(alias);
 		return { type: 'Identifier', name: alias };
 	}
@@ -479,7 +479,6 @@ export default class Component {
 		 * @returns {import('estree').Identifier}
 		 */
 		return (name) => {
-			if (test) name = `${name}$`;
 			let alias = name;
 			for (
 				let i = 1;

@@ -1,11 +1,13 @@
-let fulfil;
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+import { create_deferred } from '../../../helpers.js';
+
+let deferred;
 
 export default {
-	props: {
-		thePromise
+	before_test() {
+		deferred = create_deferred();
+	},
+	get props() {
+		return { thePromise: deferred.promise };
 	},
 
 	html: `
@@ -13,16 +15,11 @@ export default {
 	`,
 
 	test({ assert, component, target, window }) {
-		fulfil(42);
+		deferred.resolve(42);
 
-		return thePromise
+		return deferred.promise
 			.then(async () => {
-				assert.htmlEqual(
-					target.innerHTML,
-					`
-					<button>click me</button>
-				`
-				);
+				assert.htmlEqual(target.innerHTML, `<button>click me</button>`);
 
 				const { button } = component;
 
@@ -31,7 +28,7 @@ export default {
 
 				assert.equal(component.clicked, 42);
 
-				thePromise = Promise.resolve(43);
+				const thePromise = Promise.resolve(43);
 				component.thePromise = thePromise;
 
 				return thePromise;

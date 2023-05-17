@@ -1,7 +1,9 @@
 export default {
-	props: {
-		ones: [{ text: '1' }],
-		twos: [{ text: '2' }]
+	get props() {
+		return {
+			ones: [{ text: '1' }],
+			twos: [{ text: '2' }]
+		};
 	},
 
 	html: `

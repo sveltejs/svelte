@@ -6,6 +6,10 @@
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"svelte": [".."],
+			"svelte/*": ["../*"]
+		}
 	}
 }

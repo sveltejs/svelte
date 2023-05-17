@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		raw: '<p>does not change</p>'
+	get props() {
+		return { raw: '<p>does not change</p>' };
 	},
 
 	html: '<div><p>does not change</p></div>',

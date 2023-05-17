@@ -12,8 +12,8 @@ const items = [
 ];
 
 export default {
-	props: {
-		items
+	get props() {
+		return { items };
 	},
 
 	html: `

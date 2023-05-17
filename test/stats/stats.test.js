@@ -1,6 +1,7 @@
 import * as fs from 'fs';
-import * as assert from 'assert';
-import { svelte, loadConfig, tryToLoadJson } from '../helpers';
+import { describe, it, assert } from 'vitest';
+import * as svelte from '../../compiler';
+import { try_load_config, try_load_json } from '../helpers';
 
 describe('stats', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -9,17 +10,14 @@ describe('stats', () => {
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
 		const skip = /\.skip/.test(dir);
+		const it_fn = solo ? it.only : skip ? it.skip : it;
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
-
-		(solo ? it.only : skip ? it.skip : it)(dir, () => {
-			const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		it_fn(dir, async () => {
+			const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 			const filename = `${__dirname}/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
-			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
+			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			let result;
 			let error;

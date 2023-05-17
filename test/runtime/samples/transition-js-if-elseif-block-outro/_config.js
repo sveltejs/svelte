@@ -1,7 +1,6 @@
 export default {
-	props: {
-		x: false,
-		y: true
+	get props() {
+		return { x: false, y: true };
 	},
 
 	test({ assert, component, target, raf }) {

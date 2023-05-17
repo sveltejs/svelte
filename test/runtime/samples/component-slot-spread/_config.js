@@ -1,8 +1,6 @@
 export default {
-	props: {
-		obj: { a: 1, b: 42 },
-		c: 5,
-		d: 10
+	get props() {
+		return { obj: { a: 1, b: 42 }, c: 5, d: 10 };
 	},
 	html: `
 		<p>1</p>

@@ -1,6 +1,6 @@
 export default {
-	props: {
-		size: 1
+	get props() {
+		return { size: 1 };
 	},
 	html: '<h1>This is h1 tag</h1>',
 

@@ -1,7 +1,6 @@
 export default {
-	props: {
-		a: 1,
-		b: 2
+	get props() {
+		return { a: 1, b: 2 };
 	},
 	html: '<p>1 + 2 = 3</p>',
 	test({ assert, component, target }) {

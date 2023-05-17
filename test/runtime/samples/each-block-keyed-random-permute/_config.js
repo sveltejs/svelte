@@ -16,8 +16,8 @@ function permute() {
 }
 
 export default {
-	props: {
-		values: toObjects('abc')
+	get props() {
+		return { values: toObjects('abc') };
 	},
 
 	html: '(a)(b)(c)',

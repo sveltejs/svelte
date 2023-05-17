@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true, // TODO delete this line, once binding works
 
-	props: {
-		x: 'initial'
+	get props() {
+		return { x: 'initial' };
 	},
 
 	html: `

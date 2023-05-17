@@ -1,6 +1,6 @@
 export default {
-	props: {
-		name: '<b>world</b>'
+	get props() {
+		return { name: '<b>world</b>' };
 	},
 
 	html: `

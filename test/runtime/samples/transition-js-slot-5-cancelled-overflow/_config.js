@@ -8,8 +8,8 @@ export default {
 		<div>inside Foo Foo Foo</div>
 		0
 	`,
-	props: {
-		props: 'Foo'
+	get props() {
+		return { props: 'Foo' };
 	},
 
 	async test({ assert, component, target, raf }) {

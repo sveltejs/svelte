@@ -1,6 +1,8 @@
 export default {
-	props: {
-		things: [{ num: 1 }, { num: 2 }, { num: 3 }]
+	get props() {
+		return {
+			things: [{ num: 1 }, { num: 2 }, { num: 3 }]
+		};
 	},
 
 	html: `

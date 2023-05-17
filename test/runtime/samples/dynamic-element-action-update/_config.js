@@ -4,10 +4,12 @@ export default {
 	html: `
 		<h1>tag is h1.</h1>
 	`,
-	props: {
-		pushLogs(log) {
-			logs.push(log);
-		}
+	get props() {
+		return {
+			pushLogs(log) {
+				logs.push(log);
+			}
+		};
 	},
 	after_test() {
 		logs = [];

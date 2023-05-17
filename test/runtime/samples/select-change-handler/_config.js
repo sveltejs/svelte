@@ -1,7 +1,9 @@
 export default {
-	props: {
-		options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-		selected: 'b'
+	get props() {
+		return {
+			options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+			selected: 'b'
+		};
 	},
 
 	test({ assert, component, target, window }) {
