@@ -110,10 +110,14 @@ export function create_loader(compileOptions, cwd) {
 		if (cache.has(file)) return cache.get(file);
 
 		if (file.endsWith('.svelte')) {
-			const compiled = compile(fs.readFileSync(file, 'utf-8'), {
-				...compileOptions,
-				filename: file
-			});
+			const compiled = compile(
+				// Windows/Linux newline conversion
+				fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n'),
+				{
+					...compileOptions,
+					filename: file
+				}
+			);
 
 			const imports = new Map();
 
