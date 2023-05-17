@@ -1,7 +1,8 @@
 <script>
 	import { page } from '$app/stores';
-	import OnThisPage from './OnThisPage.svelte';
 	import * as hovers from '$lib/utils/hovers';
+	import { Icon } from '@sveltejs/site-kit/components';
+	import OnThisPage from './OnThisPage.svelte';
 
 	export let data;
 
@@ -22,6 +23,13 @@
 </svelte:head>
 
 <div class="text" id="docs-content">
+	<a
+		class="edit"
+		href="https://github.com/sveltejs/svelte/edit/master/documentation/{data.page.file}"
+	>
+		<Icon size={50} name="edit" /> Edit this page on GitHub
+	</a>
+
 	{@html data.page.content}
 </div>
 
@@ -44,6 +52,22 @@
 <OnThisPage details={data.page} />
 
 <style>
+	.edit {
+		position: relative;
+		font-size: 1.4rem;
+		line-height: 1;
+		z-index: 2;
+	}
+
+	.edit :global(.icon) {
+		position: relative;
+		top: -0.1rem;
+		left: 0.3rem;
+		width: 1.4rem;
+		height: 1.4rem;
+		margin-right: 0.5rem;
+	}
+
 	.controls {
 		max-width: calc(var(--sk-line-max-width) + 1rem);
 		border-top: 1px solid var(--sk-back-4);
