@@ -33,7 +33,7 @@ describe('hydration', async () => {
 		};
 	});
 
-	async function runTest(dir) {
+	async function run_test(dir) {
 		if (dir[0] === '.') return;
 
 		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
@@ -126,5 +126,5 @@ describe('hydration', async () => {
 		});
 	}
 
-	await Promise.all(fs.readdirSync(`${__dirname}/samples`).map((dir) => runTest(dir)));
+	await Promise.all(fs.readdirSync(`${__dirname}/samples`).map((dir) => run_test(dir)));
 });
