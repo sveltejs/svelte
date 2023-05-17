@@ -22,9 +22,9 @@ describe('vars', () => {
 				const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 				/**
-				 * @type {{ options: any, test: (assert: typeof assert, vars: any[]) => void }}}
+				 * @type {{ options: any, test: (assert: typeof import('vitest').assert, vars: any[]) => void }}}
 				 */
-				const { options, test } = (await import(`./samples/${dir}/_config.mjs`)).default;
+				const { options, test } = (await import(`./samples/${dir}/_config.js`)).default;
 
 				try {
 					const { vars } = compile(input, { ...options, generate });
