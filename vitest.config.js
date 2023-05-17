@@ -14,6 +14,6 @@ export default defineConfig({
 	test: {
 		dir: 'vitest',
 		reporters: ['dot'],
-		exclude: [...configDefaults.exclude, 'vitest/**/samples']
+		exclude: [...configDefaults.exclude, '**/samples/**']
 	}
 });
