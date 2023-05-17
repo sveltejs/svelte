@@ -1,33 +1,16 @@
 // @vitest-environment happy-dom
 
 import * as fs from 'fs';
-import { describe, it, assert } from 'vitest';
-import { try_load_config, should_update_expected } from '../../helpers';
-import { createRequire } from 'module';
-import * as svelte from '../../../compiler.mjs';
-import { assert_html_equal } from '../../html_equal';
+import { assert, describe, it } from 'vitest';
+import * as svelte from '../../compiler.mjs';
+import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
+import { assert_html_equal } from '../html_equal.js';
 
 function normalize_warning(warning) {
 	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
 	delete warning.filename;
 	delete warning.toString;
 	return warning;
-}
-
-const require = createRequire(import.meta.url);
-
-function create(code) {
-	const fn = new Function('module', 'exports', 'require', code);
-
-	const module = { exports: {} };
-	fn(module, module.exports, (id) => {
-		if (id === 'svelte') return require('../../../');
-		if (id.startsWith('svelte/')) return require(id.replace('svelte', '../../..'));
-
-		return require(id);
-	});
-
-	return module.exports.default;
 }
 
 describe('css', () => {
@@ -86,20 +69,27 @@ describe('css', () => {
 				}
 			}
 
+			const cwd = `${__dirname}/samples/${dir}`;
+
 			let ClientComponent;
 			let ServerComponent;
 
 			// we do this here, rather than in the expected.html !== null
 			// block, to verify that valid code was generated
+			const load = create_loader({ ...(config.compileOptions || {}), format: 'cjs' }, cwd);
 			try {
-				ClientComponent = create(dom.js.code);
+				ClientComponent = (await load('input.svelte')).default;
 			} catch (err) {
 				console.log(dom.js.code);
 				throw err;
 			}
 
+			const load_ssr = create_loader(
+				{ ...(config.compileOptions || {}), generate: 'ssr', format: 'cjs' },
+				cwd
+			);
 			try {
-				ServerComponent = create(ssr.js.code);
+				ServerComponent = (await load_ssr('input.svelte')).default;
 			} catch (err) {
 				console.log(dom.js.code);
 				throw err;

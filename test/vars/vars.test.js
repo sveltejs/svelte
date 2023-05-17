@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { assert, describe, test } from 'vitest';
-import { compile } from '../../../compiler.mjs';
-import { tryToLoadJson, try_load_json } from '../../helpers.js';
+import { compile } from '../../compiler.mjs';
+import { try_load_json } from '../helpers.js';
 
 describe('vars', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {

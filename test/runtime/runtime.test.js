@@ -2,19 +2,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { rollup } from 'rollup';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
-import { compile } from '../../../compiler.mjs';
-import { clear_loops, flush, set_now, set_raf } from '../../../internal/index.mjs';
-
-import {
-	show_output,
-	try_load_config,
-	mkdirp,
-	create_loader,
-	setupHtmlEqual
-} from '../../helpers.js';
+import { compile } from '../../compiler.mjs';
+import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
+import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
 import { setTimeout } from 'timers/promises';
 
 let unhandled_rejection = false;

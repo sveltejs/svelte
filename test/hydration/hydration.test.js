@@ -3,12 +3,11 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import * as svelte from '../../../compiler';
+import * as svelte from '../../compiler.mjs';
 import { describe, assert, it, beforeAll } from 'vitest';
-import { should_update_expected, try_load_config } from '../../helpers';
+import { should_update_expected, try_load_config } from '../helpers.js';
 import { createRequire } from 'module';
-
-import { assert_html_equal } from '../../html_equal';
+import { assert_html_equal } from '../html_equal.js';
 
 const sveltePath = process.cwd();
 

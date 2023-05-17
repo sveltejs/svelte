@@ -1,5 +1,5 @@
 import { describe, it, assert } from 'vitest';
-import { readable, writable, derived, get, readonly } from '../../../store';
+import { readable, writable, derived, get, readonly } from 'svelte/store';
 
 describe('store', () => {
 	describe('writable', () => {

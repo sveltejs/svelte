@@ -2,8 +2,8 @@ import { chromium } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
-import { try_load_config } from '../../helpers';
-import * as svelte from '../../../compiler';
+import { try_load_config } from '../helpers.js';
+import * as svelte from '../../compiler.mjs';
 import { beforeAll, describe, afterAll, assert, it } from 'vitest';
 
 const internal = path.resolve('internal/index.mjs');

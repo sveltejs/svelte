@@ -1,4 +1,4 @@
-import { create_deferred } from '../../../../helpers';
+import { create_deferred } from '../../../helpers.js';
 
 let deferred;
 

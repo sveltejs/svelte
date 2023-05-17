@@ -13,8 +13,8 @@ import {
 	try_load_config,
 	try_load_json,
 	try_read_file
-} from '../../helpers';
-import { assert_html_equal } from '../../html_equal';
+} from '../helpers.js';
+import { assert_html_equal } from '../html_equal.js';
 
 describe('ssr', async () => {
 	async function run_test(dir) {

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as svelte from '../../../compiler.js';
-import { try_load_config } from '../../helpers';
+import * as svelte from '../../compiler.js';
+import { try_load_config } from '../helpers';
 import { describe, assert } from 'vitest';
 // keep source-map at version 0.7.x
 // https://github.com/mozilla/source-map/issues/400

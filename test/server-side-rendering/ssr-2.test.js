@@ -3,8 +3,8 @@
 import * as path from 'path';
 import { describe, it, assert } from 'vitest';
 import * as fs from 'fs';
-import { try_load_config, mkdirp, create_loader } from '../../helpers';
-import { assert_html_equal } from '../../html_equal';
+import { try_load_config, mkdirp, create_loader } from '../helpers.js';
+import { assert_html_equal } from '../html_equal';
 import glob from 'tiny-glob/sync';
 import { setTimeout } from 'timers/promises';
 

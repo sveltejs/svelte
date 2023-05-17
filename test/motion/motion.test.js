@@ -1,6 +1,6 @@
 import { describe, it, assert } from 'vitest';
-import { get } from '../../../store';
-import { spring, tweened } from '../../../motion';
+import { get } from 'svelte/store';
+import { spring, tweened } from 'svelte/motion';
 
 describe('motion', () => {
 	describe('spring', () => {
