@@ -1,7 +1,7 @@
 <script>
 	import { page } from '$app/stores';
-	import Contents from './Contents.svelte';
 	import { TSToggle } from '@sveltejs/site-kit/components';
+	import Contents from './Contents.svelte';
 
 	export let data;
 
