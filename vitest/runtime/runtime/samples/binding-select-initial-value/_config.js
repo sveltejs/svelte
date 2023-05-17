@@ -12,8 +12,8 @@ export default {
 	`,
 
 	get props() {
-	return { selected: 'b' };
-},
+		return { selected: 'b' };
+	},
 
 	test({ assert, target }) {
 		const select = target.querySelector('select');

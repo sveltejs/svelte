@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { foo: 'a', items: ['x'] };
-},
+		return { foo: 'a', items: ['x'] };
+	},
 
 	html: `
 		<div><input><p>a</p></div>

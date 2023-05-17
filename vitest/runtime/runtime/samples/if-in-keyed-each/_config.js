@@ -1,9 +1,12 @@
 export default {
 	get props() {
-	return {
-		items: [{ id: 1, name: 'one' }, { id: 2, name: 'two' }]
-	};
-},
+		return {
+			items: [
+				{ id: 1, name: 'one' },
+				{ id: 2, name: 'two' }
+			]
+		};
+	},
 
 	html: `
 		<ul>

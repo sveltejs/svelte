@@ -1,10 +1,10 @@
 export default {
 	get props() {
-	return {
-		dummy: false,
-		fruits: ['Apple', 'Banana', 'Tomato']
-	};
-},
+		return {
+			dummy: false,
+			fruits: ['Apple', 'Banana', 'Tomato']
+		};
+	},
 
 	html: '<div><div>Apple</div><div>Banana</div><div>Tomato</div></div>',
 

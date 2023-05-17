@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { flag: true };
-},
+		return { flag: true };
+	},
 
 	html: `
 		<span>Before</span>

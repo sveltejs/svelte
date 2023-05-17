@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { count: 42 };
-},
+		return { count: 42 };
+	},
 
 	html: `
 		<input type=number>

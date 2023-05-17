@@ -4,6 +4,6 @@ export default {
 	`,
 
 	get props() {
-	return { components: ['foo', 'bar', 'baz'] };
-}
+		return { components: ['foo', 'bar', 'baz'] };
+	}
 };

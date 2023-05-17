@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { showModal: true };
-},
+		return { showModal: true };
+	},
 
 	html: `
 		<div class='modal-background'></div>

@@ -1,12 +1,12 @@
 export default {
 	get props() {
-	return {
-		foo: 'lol',
-		baz: 40 + 2,
-		qux: `this is a ${'piece of'} string`,
-		quux: 'core'
-	};
-},
+		return {
+			foo: 'lol',
+			baz: 40 + 2,
+			qux: `this is a ${'piece of'} string`,
+			quux: 'core'
+		};
+	},
 
 	html: `
 		<div><p>foo: lol</p>

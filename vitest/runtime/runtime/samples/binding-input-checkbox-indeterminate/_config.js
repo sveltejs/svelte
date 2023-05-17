@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { indeterminate: true };
-},
+		return { indeterminate: true };
+	},
 
 	html: `
 		<input type="checkbox">

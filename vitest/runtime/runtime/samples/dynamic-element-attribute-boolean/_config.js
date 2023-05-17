@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { disabled: false };
-},
+		return { disabled: false };
+	},
 	html: '<button>Click me</button>',
 
 	test({ assert, component, target }) {

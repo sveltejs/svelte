@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { value: 1 };
-},
+		return { value: 1 };
+	},
 
 	test({ assert, component, target, window }) {
 		const buttons = target.querySelectorAll('button');

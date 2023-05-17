@@ -5,8 +5,8 @@ function log(value) {
 
 export default {
 	get props() {
-	return { prop: 'a', log };
-},
+		return { prop: 'a', log };
+	},
 	html: '<button></button>',
 	before_test() {
 		logs = [];

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { component: { name: 'world' } };
-},
+		return { component: { name: 'world' } };
+	},
 
 	html: `
 		<h1>Hello world!</h1>

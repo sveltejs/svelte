@@ -2,8 +2,8 @@ const items = [{ id: 'a' }, { id: 'b' }];
 
 export default {
 	get props() {
-	return { foo: null, items };
-},
+		return { foo: null, items };
+	},
 
 	test({ assert, component, target }) {
 		const select = target.querySelector('select');

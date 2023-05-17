@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { value: 'some text' };
-},
+		return { value: 'some text' };
+	},
 
 	html: `
 		<textarea></textarea>

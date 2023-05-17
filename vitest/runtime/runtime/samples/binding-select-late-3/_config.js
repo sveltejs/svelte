@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { items: [], selected: 'two' };
-},
+		return { items: [], selected: 'two' };
+	},
 
 	html: `
 		<select></select>

@@ -12,8 +12,8 @@ export default {
 	`,
 
 	get props() {
-	return { selected: 'one' };
-},
+		return { selected: 'one' };
+	},
 
 	async test({ assert, component, target, window }) {
 		const select = target.querySelector('select');

@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true, // TODO delete this line, once binding works
 
 	get props() {
-	return { x: 'initial' };
-},
+		return { x: 'initial' };
+	},
 
 	html: `
 		<p>x: initial</p>

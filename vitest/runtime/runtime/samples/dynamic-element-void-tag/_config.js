@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { propTag: 'hr' };
-},
+		return { propTag: 'hr' };
+	},
 	html: '<h1></h1><col><img><hr><input><br>',
 
 	test({ assert, component, target }) {

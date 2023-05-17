@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { visible: false, things: ['a', 'b', 'c'] };
-},
+		return { visible: false, things: ['a', 'b', 'c'] };
+	},
 
 	test({ assert, component, target, raf }) {
 		component.visible = true;

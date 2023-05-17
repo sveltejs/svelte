@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { foo: false };
-},
+		return { foo: false };
+	},
 
 	test({ assert, component, target }) {
 		const inputs = target.querySelectorAll('input');

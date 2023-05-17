@@ -11,8 +11,8 @@ export default {
 		'Stores must be declared at the top level of the component (this may change in a future version of Svelte)',
 
 	get props() {
-	return { todos };
-},
+		return { todos };
+	},
 
 	html: `
 		<label>

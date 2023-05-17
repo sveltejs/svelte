@@ -5,12 +5,12 @@ export default {
 		<h1>tag is h1.</h1>
 	`,
 	get props() {
-	return {
-		pushLogs(log) {
-			logs.push(log);
-		}
-	};
-},
+		return {
+			pushLogs(log) {
+				logs.push(log);
+			}
+		};
+	},
 	after_test() {
 		logs = [];
 	},

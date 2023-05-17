@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { depth: 5 };
-},
+		return { depth: 5 };
+	},
 
 	html: `
 		<span>5</span>

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { x: 1 };
-},
+		return { x: 1 };
+	},
 
 	html: `
 		<p>1 1 1</p>

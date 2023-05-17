@@ -2,8 +2,8 @@ const result = {};
 
 export default {
 	get props() {
-	return { result };
-},
+		return { result };
+	},
 	async test({ assert }) {
 		assert.notEqual(result.parentElement, null);
 	}

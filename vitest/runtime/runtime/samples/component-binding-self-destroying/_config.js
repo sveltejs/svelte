@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { show: true };
-},
+		return { show: true };
+	},
 
 	html: `
 		<button>Hide</button>

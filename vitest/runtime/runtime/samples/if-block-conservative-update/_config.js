@@ -2,14 +2,14 @@ let count = 0;
 
 export default {
 	get props() {
-	return {
-		foo: 'potato',
-		fn: () => {
-			count += 1;
-			return true;
-		}
-	};
-},
+		return {
+			foo: 'potato',
+			fn: () => {
+				count += 1;
+				return true;
+			}
+		};
+	},
 
 	html: '<p>potato</p>',
 

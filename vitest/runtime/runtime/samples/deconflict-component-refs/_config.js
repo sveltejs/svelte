@@ -16,12 +16,12 @@ export default {
 	`,
 
 	get props() {
-	return {
-		components: [
-			{ name: 'foo', edit: true },
-			{ name: 'bar', edit: false },
-			{ name: 'baz', edit: false }
-		]
-	};
-}
+		return {
+			components: [
+				{ name: 'foo', edit: true },
+				{ name: 'bar', edit: false },
+				{ name: 'baz', edit: false }
+			]
+		};
+	}
 };

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { inert: true };
-},
+		return { inert: true };
+	},
 	test({ assert, target, component }) {
 		const div = target.querySelector('div');
 		assert.ok(div.inert);

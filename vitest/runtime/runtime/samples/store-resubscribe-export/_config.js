@@ -13,8 +13,8 @@ const fakeStore = (val) => ({
 
 export default {
 	get props() {
-	return { foo: fakeStore(1) };
-},
+		return { foo: fakeStore(1) };
+	},
 	html: `
 		<h1>1</h1>
 	`,

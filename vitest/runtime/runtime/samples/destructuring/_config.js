@@ -2,8 +2,8 @@ export default {
 	html: '<button>click me</button>',
 
 	get props() {
-	return { foo: 42 };
-},
+		return { foo: 42 };
+	},
 
 	test({ assert, component, target, window }) {
 		const event = new window.MouseEvent('click');

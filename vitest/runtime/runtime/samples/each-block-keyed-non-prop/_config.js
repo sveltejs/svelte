@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { words: ['foo', 'bar', 'baz'] };
-},
+		return { words: ['foo', 'bar', 'baz'] };
+	},
 
 	html: `
 		<p>foo</p>

@@ -1,9 +1,12 @@
 export default {
 	get props() {
-	return {
-		cats: [{ name: 'cat 0', checked: false }, { name: 'cat 1', checked: false }]
-	};
-},
+		return {
+			cats: [
+				{ name: 'cat 0', checked: false },
+				{ name: 'cat 1', checked: false }
+			]
+		};
+	},
 
 	html: `
 		<input type="checkbox">

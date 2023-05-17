@@ -5,10 +5,13 @@ export default {
 	`,
 
 	get props() {
-	return {
-		things: [{ 'data-a': 1, 'data-b': 2 }, { 'data-c': 3, 'data-d': 4 }]
-	};
-},
+		return {
+			things: [
+				{ 'data-a': 1, 'data-b': 2 },
+				{ 'data-c': 3, 'data-d': 4 }
+			]
+		};
+	},
 
 	test({ assert, component, target }) {
 		const { things } = component;

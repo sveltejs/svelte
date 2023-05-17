@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { one: 'one', two: 'two', three: 'three' };
-},
+		return { one: 'one', two: 'two', three: 'three' };
+	},
 
 	html: `
 		<ul>

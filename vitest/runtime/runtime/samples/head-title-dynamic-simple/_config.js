@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { foo: 'A Title' };
-},
+		return { foo: 'A Title' };
+	},
 
 	test({ assert, component, window }) {
 		assert.equal(window.document.title, 'A Title');

@@ -1,10 +1,10 @@
 export default {
 	get props() {
-	return {
-		state: 'deconflicted',
-		states: ['Alabama', 'Alaska', 'Arizona', 'Arkansas', '...and some others']
-	};
-},
+		return {
+			state: 'deconflicted',
+			states: ['Alabama', 'Alaska', 'Arizona', 'Arkansas', '...and some others']
+		};
+	},
 
 	html: `
 		<p>Current state: deconflicted</p>

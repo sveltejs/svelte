@@ -15,8 +15,8 @@ export default {
 	skip: true, // doesn't reflect real-world bug, maybe a JSDOM quirk
 
 	get props() {
-	return { components, selectedComponent };
-},
+		return { components, selectedComponent };
+	},
 
 	html: `
 		<select>

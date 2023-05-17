@@ -1,11 +1,11 @@
 export default {
 	get props() {
-	return {
-		items: ['whatever'],
-		foo: 'wrong',
-		bar: 'right'
-	};
-},
+		return {
+			items: ['whatever'],
+			foo: 'wrong',
+			bar: 'right'
+		};
+	},
 
 	test({ assert, component, target, window }) {
 		const button = target.querySelector('button');

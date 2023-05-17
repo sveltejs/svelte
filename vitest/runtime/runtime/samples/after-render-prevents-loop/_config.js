@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { value: 'hello!' };
-},
+		return { value: 'hello!' };
+	},
 
 	html: `
 		<p>hello!</p>

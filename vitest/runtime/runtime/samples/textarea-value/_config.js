@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true, // SSR behaviour is awkwardly different
 
 	get props() {
-	return { foo: 42 };
-},
+		return { foo: 42 };
+	},
 
 	html: '<textarea></textarea>',
 

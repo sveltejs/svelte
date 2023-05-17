@@ -1,10 +1,10 @@
 export default {
 	get props() {
-	return {
-		prop: 'bar',
-		objects: [{ foo: 'a', bar: 'b', baz: 'c' }]
-	};
-},
+		return {
+			prop: 'bar',
+			objects: [{ foo: 'a', bar: 'b', baz: 'c' }]
+		};
+	},
 
 	html: `
 		<input>

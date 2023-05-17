@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
-	};
-},
+		return {
+			a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
+		};
+	},
 
 	html: `
 		<span>foo</span><span>bar</span><span>baz</span>

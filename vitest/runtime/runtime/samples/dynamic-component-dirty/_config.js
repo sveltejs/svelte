@@ -1,8 +1,8 @@
 const calls = [];
 export default {
 	get props() {
-	return { calls };
-},
+		return { calls };
+	},
 
 	before_test() {
 		calls.length = 0;

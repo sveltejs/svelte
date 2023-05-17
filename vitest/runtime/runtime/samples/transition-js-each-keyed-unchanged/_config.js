@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { numbers: [1, 2, 3, 4, 5] };
-},
+		return { numbers: [1, 2, 3, 4, 5] };
+	},
 
 	test({ assert, component, target }) {
 		const divs1 = target.querySelectorAll('div');

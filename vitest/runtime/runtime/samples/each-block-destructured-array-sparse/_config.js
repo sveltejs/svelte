@@ -1,9 +1,12 @@
 export default {
 	get props() {
-	return {
-		animalPawsEntries: [['raccoon', 'hands'], ['eagle', 'wings']]
-	};
-},
+		return {
+			animalPawsEntries: [
+				['raccoon', 'hands'],
+				['eagle', 'wings']
+			]
+		};
+	},
 
 	html: `
 		<p>hands</p>

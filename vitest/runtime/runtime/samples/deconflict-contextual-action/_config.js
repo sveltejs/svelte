@@ -5,8 +5,8 @@ export default {
 		result = [];
 	},
 	get props() {
-	return { collect: str => result.push(str) };
-},
+		return { collect: (str) => result.push(str) };
+	},
 	test({ assert }) {
 		assert.deepEqual(result, ['each_action', 'import_action']);
 	}

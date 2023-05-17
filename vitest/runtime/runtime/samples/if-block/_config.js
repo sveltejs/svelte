@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { visible: true };
-},
+		return { visible: true };
+	},
 
 	html: '<p>i am visible</p>',
 

@@ -3,7 +3,7 @@ export default {
 		dev: true
 	},
 	get props() {
-	return { foo: 'foo' };
-},
+		return { foo: 'foo' };
+	},
 	html: '<div>foo @ foo # foo</div>'
 };

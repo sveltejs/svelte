@@ -1,9 +1,12 @@
 export default {
 	get props() {
-	return {
-		animalEntries: [{ animal: 'raccoon', class: 'mammal' }, { animal: 'eagle', class: 'bird' }]
-	};
-},
+		return {
+			animalEntries: [
+				{ animal: 'raccoon', class: 'mammal' },
+				{ animal: 'eagle', class: 'bird' }
+			]
+		};
+	},
 
 	html: `
 		<p class="mammal">raccoon</p>

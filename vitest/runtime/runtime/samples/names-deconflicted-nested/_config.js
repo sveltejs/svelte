@@ -1,7 +1,13 @@
 export default {
 	get props() {
-	return { array: [[0, 0, 0], [0, 0, 0], [0, 0, 0]] };
-},
+		return {
+			array: [
+				[0, 0, 0],
+				[0, 0, 0],
+				[0, 0, 0]
+			]
+		};
+	},
 
 	html: `
 		<div>

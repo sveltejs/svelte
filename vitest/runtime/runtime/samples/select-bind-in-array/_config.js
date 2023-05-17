@@ -4,8 +4,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { items };
-},
+		return { items };
+	},
 
 	test({ assert, component }) {
 		const items = component.items;

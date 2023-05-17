@@ -1,13 +1,13 @@
 export default {
 	get props() {
-	return {
-		items: [
-			{ done: false, text: 'one' },
-			{ done: true, text: 'two' },
-			{ done: false, text: 'three' }
-		]
-	};
-},
+		return {
+			items: [
+				{ done: false, text: 'one' },
+				{ done: true, text: 'two' },
+				{ done: false, text: 'three' }
+			]
+		};
+	},
 
 	html: `
 		<div>

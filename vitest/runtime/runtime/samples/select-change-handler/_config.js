@@ -1,10 +1,10 @@
 export default {
 	get props() {
-	return {
-		options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-		selected: 'b'
-	};
-},
+		return {
+			options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+			selected: 'b'
+		};
+	},
 
 	test({ assert, component, target, window }) {
 		const select = target.querySelector('select');

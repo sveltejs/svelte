@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { things: [] };
-},
+		return { things: [] };
+	},
 	test({ assert, component, target, raf }) {
 		const div = target.querySelector('div');
 		component.things = ['a', 'b', 'c'];

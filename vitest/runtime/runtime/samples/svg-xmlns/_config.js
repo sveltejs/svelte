@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { x: 0, y: 0, width: 100, height: 100 };
-},
+		return { x: 0, y: 0, width: 100, height: 100 };
+	},
 
 	html: '<svg xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100" height="100"></rect></svg>',
 

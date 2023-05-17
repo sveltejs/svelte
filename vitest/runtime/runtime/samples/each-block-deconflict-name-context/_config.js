@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { foo: { bar: ['x', 'y', 'z'] } };
-},
+		return { foo: { bar: ['x', 'y', 'z'] } };
+	},
 
 	html: `
 		<input>

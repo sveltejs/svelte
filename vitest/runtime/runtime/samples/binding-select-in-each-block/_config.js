@@ -12,10 +12,10 @@ export default {
 	`,
 
 	get props() {
-	return {
-		items: [{ value: 'hullo' }, { value: 'world' }]
-	};
-},
+		return {
+			items: [{ value: 'hullo' }, { value: 'world' }]
+		};
+	},
 
 	test({ assert, component, target, window }) {
 		const selects = [...target.querySelectorAll('select')];

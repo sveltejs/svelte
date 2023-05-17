@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { coords: [0, 0], numbers: { answer: 42 } };
-},
+		return { coords: [0, 0], numbers: { answer: 42 } };
+	},
 
 	html: `
 		<p>0,0</p>

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { visible: true };
-},
+		return { visible: true };
+	},
 
 	html: '<div><p>i am a widget</p></div>',
 

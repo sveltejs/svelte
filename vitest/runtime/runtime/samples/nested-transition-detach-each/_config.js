@@ -1,11 +1,11 @@
 export default {
 	get props() {
-	return {
-		visible: false,
-		rows: [1, 2, 3],
-		cols: ['a', 'b', 'c']
-	};
-},
+		return {
+			visible: false,
+			rows: [1, 2, 3],
+			cols: ['a', 'b', 'c']
+		};
+	},
 
 	html: '',
 

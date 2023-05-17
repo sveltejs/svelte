@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		raw: '<span><em>raw html!!!\\o/</span></em>'
-	};
-},
+		return {
+			raw: '<span><em>raw html!!!\\o/</span></em>'
+		};
+	},
 
 	html: 'before<span><em>raw html!!!\\o/</span></em>after',
 

@@ -1,13 +1,13 @@
 export default {
 	get props() {
-	return {
-		items: [
-			{ foo: true, bar: false },
-			{ foo: false, bar: true },
-			{ foo: true, bar: true }
-		]
-	};
-},
+		return {
+			items: [
+				{ foo: true, bar: false },
+				{ foo: false, bar: true },
+				{ foo: true, bar: true }
+			]
+		};
+	},
 
 	html: `
 		<div class="foo ">1</div>

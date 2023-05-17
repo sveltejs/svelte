@@ -6,8 +6,8 @@ export default {
 		<div>inside Foo Foo Foo</div>
 	`,
 	get props() {
-	return { props: 'Foo' };
-},
+		return { props: 'Foo' };
+	},
 
 	async test({ assert, component, target, raf }) {
 		await component.hide();

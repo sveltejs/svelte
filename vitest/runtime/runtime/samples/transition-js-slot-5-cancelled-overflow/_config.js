@@ -9,8 +9,8 @@ export default {
 		0
 	`,
 	get props() {
-	return { props: 'Foo' };
-},
+		return { props: 'Foo' };
+	},
 
 	async test({ assert, component, target, raf }) {
 		await component.hide();

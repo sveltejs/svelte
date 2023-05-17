@@ -1,11 +1,9 @@
 export default {
 	get props() {
-	return {
-		thePromise: new Promise(_ => {
-				
-			})
-	};
-},
+		return {
+			thePromise: new Promise((_) => {})
+		};
+	},
 
 	html: `
 		loading...

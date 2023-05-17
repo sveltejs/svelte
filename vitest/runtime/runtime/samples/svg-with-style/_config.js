@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { x: 'bar' };
-},
+		return { x: 'bar' };
+	},
 
 	html: `
 		<svg>

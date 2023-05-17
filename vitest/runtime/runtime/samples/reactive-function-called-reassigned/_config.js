@@ -7,8 +7,8 @@ function callback(_value) {
 
 export default {
 	get props() {
-	return { callback };
-},
+		return { callback };
+	},
 	before_test() {
 		called = 0;
 	},

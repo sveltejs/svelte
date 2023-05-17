@@ -6,8 +6,8 @@ const obj = {
 
 export default {
 	get props() {
-	return { obj };
-},
+		return { obj };
+	},
 
 	test({ assert }) {
 		assert.deepEqual(obj, { x: 1, y: 2, z: 3 });

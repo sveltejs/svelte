@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { duration: 200 };
-},
+		return { duration: 200 };
+	},
 
 	test({ assert, component, target, raf }) {
 		component.visible = true;

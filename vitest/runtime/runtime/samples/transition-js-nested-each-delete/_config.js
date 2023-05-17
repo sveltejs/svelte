@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { visible: true, things: ['a', 'b', 'c'] };
-},
+		return { visible: true, things: ['a', 'b', 'c'] };
+	},
 
 	test({ assert, component, target, raf }) {
 		assert.htmlEqual(

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { open: false, border: true };
-},
+		return { open: false, border: true };
+	},
 	html: '<p>foo</p>',
 
 	test({ assert, component, target, raf }) {

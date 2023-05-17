@@ -1,6 +1,6 @@
 export default {
 	get props() {
-	return { tag: 'br' };
-},
+		return { tag: 'br' };
+	},
 	html: '<br>'
 };

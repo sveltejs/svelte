@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { user: { active: true } };
-},
+		return { user: { active: true } };
+	},
 
 	html: '<div class="active"></div>',
 

@@ -4,8 +4,8 @@ export default {
 	},
 
 	get props() {
-	return { a: 42 };
-},
+		return { a: 42 };
+	},
 
 	test({ assert, component }) {
 		try {

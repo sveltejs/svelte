@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { tag: 'div' };
-},
+		return { tag: 'div' };
+	},
 	html: '<div>Foo</div>',
 
 	test({ assert, component, target }) {

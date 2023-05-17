@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		animals: ['alpaca', 'baboon', 'capybara']
-	};
-},
+		return {
+			animals: ['alpaca', 'baboon', 'capybara']
+		};
+	},
 
 	html: '(alpaca)(baboon)(capybara)',
 

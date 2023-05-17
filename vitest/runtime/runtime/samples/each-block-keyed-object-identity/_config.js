@@ -1,16 +1,16 @@
 export default {
 	get props() {
-	return {
-		todos: [
-			{
-				description: 'implement keyed each blocks'
-			},
-			{
-				description: 'implement client-side hydration'
-			}
-		]
-	};
-},
+		return {
+			todos: [
+				{
+					description: 'implement keyed each blocks'
+				},
+				{
+					description: 'implement client-side hydration'
+				}
+			]
+		};
+	},
 
 	html: `
 		<p>1: implement keyed each blocks</p>

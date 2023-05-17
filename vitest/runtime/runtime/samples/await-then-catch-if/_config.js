@@ -6,8 +6,8 @@ const thePromise = new Promise((f) => {
 
 export default {
 	get props() {
-	return { show: true, thePromise };
-},
+		return { show: true, thePromise };
+	},
 
 	html: `
 		<p>loading...</p>

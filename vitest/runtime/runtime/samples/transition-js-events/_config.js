@@ -1,10 +1,10 @@
 export default {
 	get props() {
-	return {
-		visible: false,
-		things: ['a', 'b', 'c', 'd']
-	};
-},
+		return {
+			visible: false,
+			things: ['a', 'b', 'c', 'd']
+		};
+	},
 
 	// intro: true,
 

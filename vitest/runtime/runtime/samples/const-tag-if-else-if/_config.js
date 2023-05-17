@@ -4,8 +4,8 @@ export default {
 		<div>20 x 40</div>
 	`,
 	get props() {
-	return { boxes: [{ width: 20, height: 40 }] };
-},
+		return { boxes: [{ width: 20, height: 40 }] };
+	},
 	async test({ component, target, assert }) {
 		component.boxes = [{ width: 40, height: 70 }];
 		assert.htmlEqual(

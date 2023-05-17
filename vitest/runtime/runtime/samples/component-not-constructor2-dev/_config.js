@@ -3,8 +3,8 @@ export default {
 		dev: true
 	},
 	get props() {
-	return { componentName: 'Sub' };
-},
+		return { componentName: 'Sub' };
+	},
 	html: '<div>Sub</div>',
 	test({ assert, component, target }) {
 		component.componentName = 'Proxy';

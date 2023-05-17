@@ -1,6 +1,6 @@
 export default {
 	get props() {
-	return { items: [] };
-},
+		return { items: [] };
+	},
 	html: 'No items.'
 };

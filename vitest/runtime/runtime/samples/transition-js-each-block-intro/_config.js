@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { things: ['a', 'b', 'c'] };
-},
+		return { things: ['a', 'b', 'c'] };
+	},
 
 	intro: true,
 

@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		things: [{ num: 1 }, { num: 2 }, { num: 3 }]
-	};
-},
+		return {
+			things: [{ num: 1 }, { num: 2 }, { num: 3 }]
+		};
+	},
 
 	html: `
 		<div>

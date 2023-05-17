@@ -2,8 +2,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { count: 3 };
-},
+		return { count: 3 };
+	},
 
 	html: `
 		<input type='number'>

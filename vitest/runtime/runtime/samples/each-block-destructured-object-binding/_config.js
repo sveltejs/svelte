@@ -1,9 +1,9 @@
 export default {
 	get props() {
-	return {
-		people: [{ name: { first: 'Doctor', last: 'Who' } }]
-	};
-},
+		return {
+			people: [{ name: { first: 'Doctor', last: 'Who' } }]
+		};
+	},
 
 	html: `
 		<input>

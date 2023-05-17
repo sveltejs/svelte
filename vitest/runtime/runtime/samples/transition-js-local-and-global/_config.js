@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { x: false, y: true };
-},
+		return { x: false, y: true };
+	},
 
 	test({ assert, component, target, raf }) {
 		// first, toggle x — first element should snap in

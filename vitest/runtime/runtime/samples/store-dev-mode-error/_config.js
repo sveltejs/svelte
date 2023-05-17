@@ -4,8 +4,8 @@ export default {
 	},
 
 	get props() {
-	return { count: 0 };
-},
+		return { count: 0 };
+	},
 
 	error: "'count' is not a store with a 'subscribe' method"
 };

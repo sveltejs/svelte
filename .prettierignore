@@ -10,9 +10,11 @@ src/compiler/compile/internal_exports.ts
 /test/**/_expected*
 /test/**/_actual*
 /test/**/expected*
+/test/**/_output
 /types
 !/vitest
 /vitest/**/*.svelte
 /vitest/**/_expected*
 /vitest/**/_actual*
 /vitest/**/expected*
+/vitest/**/_output

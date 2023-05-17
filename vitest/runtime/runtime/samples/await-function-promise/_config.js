@@ -6,8 +6,8 @@ promise.catch = realPromise.catch.bind(realPromise);
 
 export default {
 	get props() {
-	return { promise };
-},
+		return { promise };
+	},
 
 	test({ assert, target }) {
 		return promise.then(() => {

@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { name: 'world' };
-},
+		return { name: 'world' };
+	},
 
 	ssrHtml: `
 		<editor contenteditable="true">world</editor>

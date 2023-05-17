@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { foo: [1], a: 42 };
-},
+		return { foo: [1], a: 42 };
+	},
 
 	html: `
 		<button>click me</button>

@@ -5,8 +5,8 @@ function callback(refs) {
 export default {
 	html: '',
 	get props() {
-	return { callback };
-},
+		return { callback };
+	},
 	before_test() {
 		calls = [];
 	},

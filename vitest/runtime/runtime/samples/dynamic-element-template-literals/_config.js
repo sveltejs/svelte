@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { size: 1 };
-},
+		return { size: 1 };
+	},
 	html: '<h1>This is h1 tag</h1>',
 
 	test({ assert, component, target }) {

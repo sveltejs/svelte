@@ -4,8 +4,8 @@ export default {
 	skip_if_ssr: true,
 
 	get props() {
-	return { foo: 'b', items };
-},
+		return { foo: 'b', items };
+	},
 
 	test({ assert, component, target }) {
 		const options = target.querySelectorAll('option');

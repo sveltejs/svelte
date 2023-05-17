@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { value: '' };
-},
+		return { value: '' };
+	},
 
 	html: `
 		<input>

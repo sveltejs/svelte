@@ -3,8 +3,8 @@ const expected = [...message].map((c) => `<span>${c + ' '}</span>`).join('');
 
 export default {
 	get props() {
-	return { message };
-},
+		return { message };
+	},
 
 	async test({ assert, target }) {
 		const firstSpanList = target.children[0];

@@ -1,22 +1,22 @@
 export default {
 	get props() {
-	return {
-		list: [
-			{
-				foo: 'lol',
-				baz: 40 + 2,
-				qux: 5,
-				quux: 'core'
-			},
-			{
-				foo: 'lolzz',
-				baz: 50 + 2,
-				qux: 1,
-				quux: 'quuxx'
-			}
-		]
-	};
-},
+		return {
+			list: [
+				{
+					foo: 'lol',
+					baz: 40 + 2,
+					qux: 5,
+					quux: 'core'
+				},
+				{
+					foo: 'lolzz',
+					baz: 50 + 2,
+					qux: 1,
+					quux: 'quuxx'
+				}
+			]
+		};
+	},
 
 	html: `
 		<div>

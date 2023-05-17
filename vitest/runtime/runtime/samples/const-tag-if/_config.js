@@ -1,8 +1,8 @@
 export default {
 	html: '<div>10 x 34</div>',
 	get props() {
-	return { boxes: [{ width: 10, height: 34 }] };
-},
+		return { boxes: [{ width: 10, height: 34 }] };
+	},
 	async test({ component, target, assert }) {
 		component.boxes = [{ width: 20, height: 40 }];
 

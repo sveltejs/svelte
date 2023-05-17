@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { x: 0, y: 0, width: 100, height: 100 };
-},
+		return { x: 0, y: 0, width: 100, height: 100 };
+	},
 
 	html: `
 		<svg><rect x="0" y="0" width="100" height="100"></rect></svg>

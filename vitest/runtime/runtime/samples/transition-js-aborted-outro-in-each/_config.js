@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { things: ['one', 'two', 'three'] };
-},
+		return { things: ['one', 'two', 'three'] };
+	},
 
 	test({ assert, component, target, raf }) {
 		const { things } = component;

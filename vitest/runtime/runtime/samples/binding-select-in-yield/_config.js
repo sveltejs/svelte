@@ -2,8 +2,8 @@ export default {
 	html: '',
 
 	get props() {
-	return { letter: 'b' };
-},
+		return { letter: 'b' };
+	},
 
 	async test({ assert, component, target, window }) {
 		await component.modal.toggle();

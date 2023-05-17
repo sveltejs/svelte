@@ -4,8 +4,8 @@ export default {
 	},
 
 	get props() {
-	return { bar: 1 };
-},
+		return { bar: 1 };
+	},
 
 	html: '2',
 

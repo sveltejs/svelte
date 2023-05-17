@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { testName: 'testClassName' };
-},
+		return { testName: 'testClassName' };
+	},
 
 	html: '<div class="testClassName svelte-x1o6ra"></div>',
 

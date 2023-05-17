@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { raw: '<tr><td>1</td><td>2</td></tr>' };
-},
+		return { raw: '<tr><td>1</td><td>2</td></tr>' };
+	},
 
 	html: `
 		<table>

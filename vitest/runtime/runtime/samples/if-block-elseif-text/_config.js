@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { x: 11 };
-},
+		return { x: 11 };
+	},
 
 	html: `
 		before-if-after

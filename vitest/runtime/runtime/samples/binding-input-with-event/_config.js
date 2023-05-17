@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { a: 42 };
-},
+		return { a: 42 };
+	},
 
 	test({ assert, component, target, window }) {
 		const input = target.querySelector('input');

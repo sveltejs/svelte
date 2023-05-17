@@ -1,7 +1,7 @@
 export default {
 	get props() {
-	return { show: false, fields: [1, 2] };
-},
+		return { show: false, fields: [1, 2] };
+	},
 
 	html: '<div></div>',
 
