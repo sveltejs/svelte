@@ -114,5 +114,5 @@ describe(
 		});
 	},
 	// Browser tests are brittle and slow on CI
-	{ timeout: 20000, retry: 2 }
+	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
