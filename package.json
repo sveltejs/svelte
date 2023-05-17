@@ -84,7 +84,7 @@
     "format:fix": "prettier . --cache --plugin-search-dir=. --write",
     "format:check": "prettier . --cache --plugin-search-dir=. --check",
     "test": "npm run test:unit && npm run test:integration && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
-    "test:integration": "mocha --exit",
+    "test:integration": "vitest run",
     "test:unit": "mocha --config .mocharc.unit.js --exit",
     "quicktest": "mocha --exit",
     "build": "rollup -c && npm run tsd",
