@@ -25,4 +25,4 @@ We'll add an `onMount` handler that loads some data over the network:
 
 Lifecycle functions must be called while the component is initialising so that the callback is bound to the component instance — not (say) in a `setTimeout`.
 
-If the `onMount` callback returns a function, that function will be called when the component is destroyed.
+If the `onMount` callback returns a function synchronously, that function will be called when the component is destroyed. Note however that an `async` callback can't return a function, but only a `Promise` of a function, which will not be called automatically in `onDestroy`.
