@@ -267,9 +267,8 @@ describe('runtime', async () => {
 		});
 	}
 
-	for (const dir of fs.readdirSync(`${__dirname}/samples`)) {
-		await run_test(dir);
-	}
+	const samples = fs.readdirSync(`${__dirname}/samples`);
+	await Promise.all(samples.map((sample) => run_test(sample)));
 
 	async function create_component(src = '<div></div>') {
 		const { js } = compile(src, {
