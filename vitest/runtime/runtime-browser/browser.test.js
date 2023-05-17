@@ -70,18 +70,20 @@ describe(
 								if (importee === 'assert') {
 									return 'assert';
 								}
+
+								if (importee === '__MAIN_DOT_SVELTE__') {
+									return path.resolve(__dirname, 'samples', dir, 'main.svelte');
+								}
+
+								if (importee === '__CONFIG__') {
+									return path.resolve(__dirname, 'samples', dir, '_config.js');
+								}
 							},
 							load(id) {
 								if (id === 'assert') return browser_assert;
 
 								if (id === 'main') {
-									return main
-										.replace('__HYDRATE__', hydrate ? 'true' : 'false')
-										.replace(
-											'__MAIN_DOT_SVELTE__',
-											path.join(__dirname, 'samples', dir, 'main.svelte')
-										)
-										.replace('__CONFIG__', path.join(__dirname, 'samples', dir, '_config.js'));
+									return main.replace('__HYDRATE__', hydrate ? 'true' : 'false');
 								}
 								return null;
 							},
