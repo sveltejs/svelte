@@ -1,36 +1,34 @@
-let fulfil;
+import { create_deferred } from '../../../helpers.js';
 
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let deferred;
 
 export default {
-	props: {
-		thePromise
+	before_test() {
+		deferred = create_deferred();
+	},
+
+	get props() {
+		return { thePromise: deferred.promise };
 	},
 
 	html: 'waiting',
 
 	test({ assert, component, target }) {
-		fulfil(9000);
+		deferred.resolve(9000);
 
-		return thePromise
+		return deferred.promise
 			.then(() => {
 				assert.htmlEqual(target.innerHTML, 'resolved');
 
-				let reject;
+				deferred = create_deferred();
 
-				thePromise = new Promise((f, r) => {
-					reject = r;
-				});
-
-				component.thePromise = thePromise;
+				component.thePromise = deferred.promise;
 
 				assert.htmlEqual(target.innerHTML, 'waiting');
 
-				reject(new Error('something broke'));
+				deferred.reject(new Error('something broke'));
 
-				return thePromise.catch(() => {});
+				return deferred.promise.catch(() => {});
 			})
 			.then(() => {
 				assert.htmlEqual(target.innerHTML, 'rejected');

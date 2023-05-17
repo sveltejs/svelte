@@ -10,4 +10,5 @@ src/compiler/compile/internal_exports.ts
 /test/**/_expected*
 /test/**/_actual*
 /test/**/expected*
+/test/**/_output
 /types

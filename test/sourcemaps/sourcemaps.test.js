@@ -1,28 +1,30 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as assert from 'assert';
-import { loadConfig, svelte } from '../helpers';
+import * as svelte from '../../compiler.js';
+import { try_load_config } from '../helpers';
+import { describe, assert, it } from 'vitest';
 // keep source-map at version 0.7.x
 // https://github.com/mozilla/source-map/issues/400
 import { getLocator } from 'locate-character';
 import { SourceMapConsumer } from 'source-map';
 
-describe('sourcemaps', () => {
-	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
+describe('sourcemaps', async () => {
+	await Promise.all(fs.readdirSync(`${__dirname}/samples`).map((dir) => run(dir)));
+
+	async function run(dir) {
 		if (dir[0] === '.') return;
 
-		const config = loadConfig(`${__dirname}/samples/${dir}/_config.js`);
+		const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
 
 		// add .solo to a sample directory name to only run that test
 		const solo = config.solo || /\.solo/.test(dir);
 		const skip = config.skip || /\.skip/.test(dir);
 
-		if (solo && process.env.CI) {
-			throw new Error('Forgot to remove `solo: true` from test');
-		}
+		const it_fn = solo ? it.only : skip ? it.skip : it;
 
-		(solo ? it.only : skip ? it.skip : it)(dir, async () => {
-			const { test } = require(`./samples/${dir}/test.js`);
+		it_fn(dir, async () => {
+			const { test } = await import(`./samples/${dir}/test.js`);
+
 			const inputFile = path.resolve(`${__dirname}/samples/${dir}/input.svelte`);
 			const outputName = '_actual';
 			const outputBase = path.resolve(`${__dirname}/samples/${dir}/${outputName}`);
@@ -33,7 +35,6 @@ describe('sourcemaps', () => {
 				locate: getLocator(inputCode),
 				locate_1: getLocator(inputCode, { offsetLine: 1 })
 			};
-
 			const preprocessed = await svelte.preprocess(
 				input.code,
 				config.preprocess || {},
@@ -41,7 +42,6 @@ describe('sourcemaps', () => {
 					filename: 'input.svelte'
 				}
 			);
-
 			const { js, css } = svelte.compile(preprocessed.code, {
 				filename: 'input.svelte',
 				// filenames for sourcemaps
@@ -103,7 +103,8 @@ describe('sourcemaps', () => {
 			css.mapConsumer = css.map && (await new SourceMapConsumer(css.map));
 			css.locate = getLocator(css.code || '');
 			css.locate_1 = getLocator(css.code || '', { offsetLine: 1 });
+
 			await test({ assert, input, preprocessed, js, css });
 		});
-	});
+	}
 });

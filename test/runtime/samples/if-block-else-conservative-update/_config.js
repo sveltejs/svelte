@@ -3,21 +3,24 @@ let count_a = 0;
 let count_b = 0;
 
 export default {
-	props: {
-		foo: 'potato',
-		fn: () => {
-			count_a += 1;
-			return a;
-		},
-		other_fn: () => {
-			count_b += 1;
-			return true;
-		}
+	get props() {
+		return {
+			foo: 'potato',
+			fn: () => {
+				count_a += 1;
+				return a;
+			},
+			other_fn: () => {
+				count_b += 1;
+				return true;
+			}
+		};
 	},
 
 	html: '<p>potato</p>',
 
 	before_test() {
+		a = true;
 		count_a = 0;
 		count_b = 0;
 	},

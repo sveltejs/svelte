@@ -1,7 +1,6 @@
 export default {
-	props: {
-		testName1: 'test1',
-		testName2: 'test2'
+	get props() {
+		return { testName1: 'test1', testName2: 'test2' };
 	},
 
 	html: '<div class="test1test2"></div>',

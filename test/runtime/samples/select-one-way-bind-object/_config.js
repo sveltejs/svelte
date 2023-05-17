@@ -3,9 +3,8 @@ const items = [{}, {}];
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		foo: items[0],
-		items
+	get props() {
+		return { foo: items[0], items };
 	},
 
 	test({ assert, component, target }) {

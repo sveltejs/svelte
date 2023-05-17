@@ -1,4 +1,4 @@
-import { assert_mapped } from '../../helpers';
+import { assert_mapped } from '../../helpers.js';
 import { EXTERNAL } from './_config';
 
 export function test({ input, preprocessed }) {

@@ -1,6 +1,8 @@
 export default {
-	props: {
-		people: [{ name: { first: 'Doctor', last: 'Who' } }]
+	get props() {
+		return {
+			people: [{ name: { first: 'Doctor', last: 'Who' } }]
+		};
 	},
 
 	html: `

@@ -1,6 +1,6 @@
 export default {
-	props: {
-		raw: '<span>foo</span>'
+	get props() {
+		return { raw: '<span>foo</span>' };
 	},
 
 	test({ assert, component, target }) {

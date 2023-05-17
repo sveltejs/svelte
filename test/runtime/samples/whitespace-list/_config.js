@@ -1,9 +1,6 @@
 export default {
-	props: {
-		// so it doesn't use innerHTML
-		one: 'one',
-		two: 'two',
-		three: 'three'
+	get props() {
+		return { one: 'one', two: 'two', three: 'three' };
 	},
 
 	html: `

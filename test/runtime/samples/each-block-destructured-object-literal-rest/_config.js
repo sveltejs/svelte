@@ -1,10 +1,27 @@
 export default {
-	props: {
-		objectsArray: [
-			{ quote: 'q1', 'wrong-quote': 'wq1', 16: '16', class: 'class' },
-			{ quote: 'q2', 'wrong-quote': 'wq2', 16: 'sixteen', class: 'glass' },
-			{ quote: 'q3', 'wrong-quote': 'wq3', 16: 'seize', class: 'mass' }
-		]
+	get props() {
+		return {
+			objectsArray: [
+				{
+					quote: 'q1',
+					'wrong-quote': 'wq1',
+					16: '16',
+					class: 'class'
+				},
+				{
+					quote: 'q2',
+					'wrong-quote': 'wq2',
+					16: 'sixteen',
+					class: 'glass'
+				},
+				{
+					quote: 'q3',
+					'wrong-quote': 'wq3',
+					16: 'seize',
+					class: 'mass'
+				}
+			]
+		};
 	},
 
 	html: `

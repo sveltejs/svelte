@@ -1,7 +1,6 @@
 export default {
-	props: {
-		inputType: 'text',
-		inputValue: 42
+	get props() {
+		return { inputType: 'text', inputValue: 42 };
 	},
 
 	html: '<input type="text">',

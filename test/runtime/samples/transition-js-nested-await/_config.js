@@ -5,9 +5,8 @@ const promise = new Promise((f) => {
 });
 
 export default {
-	props: {
-		x: false,
-		promise
+	get props() {
+		return { x: false, promise };
 	},
 
 	test({ assert, component, target, raf }) {

@@ -1,9 +1,8 @@
 const items = [{ id: 'a' }, { id: 'b' }];
 
 export default {
-	props: {
-		foo: null,
-		items
+	get props() {
+		return { foo: null, items };
 	},
 
 	test({ assert, component, target }) {

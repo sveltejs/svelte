@@ -1,6 +1,6 @@
 export default {
-	props: {
-		user: { active: true }
+	get props() {
+		return { user: { active: true } };
 	},
 
 	html: '<div class="active"></div>',

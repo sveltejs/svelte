@@ -1,10 +1,12 @@
 export default {
-	props: {
-		items: [
-			{ done: false, text: 'one' },
-			{ done: true, text: 'two' },
-			{ done: false, text: 'three' }
-		]
+	get props() {
+		return {
+			items: [
+				{ done: false, text: 'one' },
+				{ done: true, text: 'two' },
+				{ done: false, text: 'three' }
+			]
+		};
 	},
 
 	html: `

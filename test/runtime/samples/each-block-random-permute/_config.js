@@ -17,11 +17,13 @@ function permute() {
 let step = permute();
 
 export default {
-	props: {
-		values: step.data
+	get props() {
+		return { values: step.data };
 	},
 
-	html: step.expected,
+	get html() {
+		return step.expected;
+	},
 
 	test({ assert, component, target }) {
 		for (let i = 0; i < 100; i++) {

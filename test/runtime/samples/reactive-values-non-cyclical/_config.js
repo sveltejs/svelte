@@ -1,6 +1,6 @@
 export default {
-	props: {
-		x: 42
+	get props() {
+		return { x: 42 };
 	},
 
 	html: `

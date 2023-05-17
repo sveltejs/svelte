@@ -1,11 +1,9 @@
 export default {
-	props: {
-		prop: 'bar',
-		obj: {
-			foo: 'a',
-			bar: 'b',
-			baz: 'c'
-		}
+	get props() {
+		return {
+			prop: 'bar',
+			obj: { foo: 'a', bar: 'b', baz: 'c' }
+		};
 	},
 
 	html: `

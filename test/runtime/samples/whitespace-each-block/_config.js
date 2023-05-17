@@ -1,6 +1,6 @@
 export default {
-	props: {
-		characters: ['a', 'b', 'c']
+	get props() {
+		return { characters: ['a', 'b', 'c'] };
 	},
 
 	test({ assert, target }) {

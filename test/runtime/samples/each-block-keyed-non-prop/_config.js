@@ -1,6 +1,6 @@
 export default {
-	props: {
-		words: ['foo', 'bar', 'baz']
+	get props() {
+		return { words: ['foo', 'bar', 'baz'] };
 	},
 
 	html: `
