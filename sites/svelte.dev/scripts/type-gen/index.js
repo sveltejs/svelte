@@ -4,7 +4,14 @@ import prettier from 'prettier';
 import ts from 'typescript';
 import { get_bundled_types } from './compile-types.js';
 
-/** @typedef {{ name: string; comment: string; markdown: string; snippet: string; children: Extracted[] }} Extracted */
+/** @typedef {{
+ * name: string;
+ * comment: string;
+ * markdown?: string;
+ * snippet: string;
+ * deprecated: string | null;
+ * children: Extracted[] }
+ * } Extracted */
 
 /** @type {Array<{ name: string; comment: string; exports: Extracted[]; types: Extracted[]; exempt?: boolean; }>} */
 const modules = [];
@@ -44,19 +51,28 @@ function get_types(code, statements) {
 
 				let start = statement.pos;
 				let comment = '';
+				/** @type {string | null} */
+				let deprecated_notice = null;
 
 				// @ts-ignore i think typescript is bad at typescript
 				if (statement.jsDoc) {
 					// @ts-ignore
-					comment = statement.jsDoc[0].comment;
+					const jsDoc = statement.jsDoc[0];
+
+					comment = jsDoc.comment;
+
+					if (jsDoc?.tags?.[0]?.tagName?.escapedText === 'deprecated') {
+						deprecated_notice = jsDoc.tags[0].comment;
+					}
+
 					// @ts-ignore
-					start = statement.jsDoc[0].end;
+					start = jsDoc.end;
 				}
 
 				const i = code.indexOf('export', start);
 				start = i + 6;
 
-				/** @type {string[]} */
+				/** @type {Extracted[]} */
 				const children = [];
 
 				let snippet_unformatted = code.slice(start, statement.end).trim();
@@ -64,6 +80,7 @@ function get_types(code, statements) {
 				if (ts.isInterfaceDeclaration(statement)) {
 					if (statement.members.length > 0) {
 						for (const member of statement.members) {
+							// @ts-ignore
 							children.push(munge_type_element(member));
 						}
 
@@ -100,7 +117,13 @@ function get_types(code, statements) {
 						? exports
 						: types;
 
-				collection.push({ name, comment, snippet, children });
+				collection.push({
+					name,
+					comment,
+					snippet,
+					children,
+					deprecated: deprecated_notice
+				});
 			}
 		}
 
@@ -160,6 +183,10 @@ function munge_type_element(member, depth = 1) {
 
 			case 'returns':
 				bullets.push(`- <span class="tag">returns</span> ${tag.comment}`);
+				break;
+
+			case 'deprecated':
+				bullets.push(`- <span class="tag deprecated">deprecated</span> ${tag.comment}`);
 				break;
 
 			default:
@@ -322,26 +349,23 @@ $: {
 		(t) => t.name === 'SvelteComponentTyped'
 	);
 
-	if (svelte_comp_typed_part?.[1]) {
-		// Take the comment from [1], and insert into [0]. Then delete [1]
-		svelte_comp_typed_part[0].comment = svelte_comp_typed_part?.[1].comment;
-		delete svelte_comp_typed_part[1];
-		svelte_comp_typed_part.length = 1;
+	delete svelte_comp_typed_part[0];
+	svelte_comp_typed_part[1].comment = '';
+	svelte_comp_typed_part.reverse();
+	svelte_comp_typed_part.length = 1;
 
-		module_with_SvelteComponentTyped.types = module_with_SvelteComponentTyped?.types.filter(
-			(t) => t.name !== 'SvelteComponentTyped'
-		);
+	module_with_SvelteComponentTyped.types = module_with_SvelteComponentTyped?.types.filter(
+		(t) => t.name !== 'SvelteComponentTyped'
+	);
 
-		module_with_SvelteComponentTyped.types.push(svelte_comp_typed_part[0]);
-		module_with_SvelteComponentTyped.types.sort((a, b) => (a.name < b.name ? -1 : 1));
-	}
+	module_with_SvelteComponentTyped.types.push(svelte_comp_typed_part[0]);
+	module_with_SvelteComponentTyped.types.sort((a, b) => (a.name < b.name ? -1 : 1));
 }
 
 // Remove $$_attributes from ActionReturn
-
 $: {
 	const module_with_ActionReturn = modules.find((m) =>
-		m.types.find((t) => t.name === 'ActionReturn')
+		m.types.find((t) => t?.name === 'ActionReturn')
 	);
 
 	const new_children =

@@ -1,4 +1,5 @@
 import { modules } from '$lib/generated/type-info.js';
+import { transform } from '../markdown/index';
 
 /** @param {string} content */
 export function replace_placeholders(content) {
@@ -51,9 +52,12 @@ export function replace_placeholders(content) {
 			return `${module.comment}\n\n${module.types
 				.map((t) => {
 					let children = t.children.map((val) => stringify(val, 'dts')).join('\n\n');
+					const deprecated = t.deprecated
+						? ` <blockquote class="tag deprecated">${transform(t.deprecated)}</blockquote>`
+						: '';
 
 					const markdown = `<div class="ts-block">${fence(t.snippet, 'dts')}` + children + `</div>`;
-					return `### [TYPE]: ${t.name}\n\n${t.comment}\n\n${markdown}\n\n`;
+					return `### [TYPE]: ${t.name}\n\n${deprecated}\n\n${t.comment}\n\n${markdown}\n\n`;
 				})
 				.join('')}`;
 		})

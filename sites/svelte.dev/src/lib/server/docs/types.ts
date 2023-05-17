@@ -26,6 +26,7 @@ export interface Type {
 	name: string;
 	comment: string;
 	snippet: string;
+	deprecated: string | null;
 	bullets: string[];
 	children: Type[];
 }
