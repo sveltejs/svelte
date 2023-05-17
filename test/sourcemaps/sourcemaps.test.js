@@ -2,13 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as svelte from '../../compiler.js';
 import { try_load_config } from '../helpers';
-import { describe, assert } from 'vitest';
+import { describe, assert, it } from 'vitest';
 // keep source-map at version 0.7.x
 // https://github.com/mozilla/source-map/issues/400
 import { getLocator } from 'locate-character';
 import { SourceMapConsumer } from 'source-map';
 
-describe('sourcemaps', async (it) => {
+describe('sourcemaps', async () => {
 	await Promise.all(fs.readdirSync(`${__dirname}/samples`).map((dir) => run(dir)));
 
 	async function run(dir) {

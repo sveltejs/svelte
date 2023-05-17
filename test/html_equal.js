@@ -30,7 +30,7 @@ export function normalize_html(html, options = {}) {
 	return container.innerHTML.replace(/<\/?noscript\/?>/g, '');
 }
 
-/** @param {Node} Element */
+/** @param {any} node */
 function clean_children(node) {
 	// sort attributes
 	const attributes = Array.from(node.attributes).sort((a, b) => (a.name < b.name ? -1 : 1));
@@ -92,7 +92,7 @@ function clean_children(node) {
  * @param {string} actual
  * @param {string} expected
  * @param {{
- *      message: string,
+ *      message?: string,
  *      normalize_html?: {
  *         removeDataSvelte?: boolean,
  *        preserveComments?: boolean,

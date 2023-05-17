@@ -44,8 +44,8 @@ describe(
 				const bundle = await rollup({
 					input: `${__dirname}/samples/${dir}/test.js`,
 					plugins: [
-						// @ts-ignore -- TODO: fix this
 						{
+							name: 'plugin-resolve-svelte',
 							resolveId(importee) {
 								if (importee === 'svelte/internal' || importee === './internal') {
 									return internal;
