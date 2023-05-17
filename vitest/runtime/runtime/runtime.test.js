@@ -270,51 +270,16 @@ describe('runtime', async () => {
 	const samples = fs.readdirSync(`${__dirname}/samples`);
 	await Promise.all(samples.map((sample) => run_test(sample)));
 
-	async function create_component(src = '<div></div>') {
-		const { js } = compile(src, {
-			format: 'esm',
-			name: 'SvelteComponent',
-			dev: true
-		});
-
-		const bundle = await rollup({
-			input: 'main.js',
-			plugins: [
-				{
-					name: 'svelte-packages',
-					resolveId: (importee) => {
-						if (importee.startsWith('svelte/')) {
-							return importee.replace('svelte', process.cwd()) + '/index.mjs';
-						}
-
-						if (importee === 'main.js') {
-							return importee;
-						}
-					},
-					load: (id) => (id === 'main.js' ? js.code : null)
-				}
-			]
-		});
-
-		const result = await bundle.generate({
-			format: 'iife',
-			name: 'App'
-		});
-
-		return eval(`(function () { ${result.output[0].code}; return App; }())`);
-	}
+	const load = create_loader({ generate: 'dom', dev: true, format: 'cjs' }, __dirname);
+	const { default: App } = await load('App.svelte');
 
 	it('fails if options.target is missing in dev mode', async () => {
-		const App = await create_component();
-
 		assert.throws(() => {
 			new App();
 		}, /'target' is a required option/);
 	});
 
 	it('fails if options.hydrate is true but the component is non-hydratable', async () => {
-		const App = await create_component();
-
 		assert.throws(() => {
 			new App({
 				target: { childNodes: [] },
