@@ -1,38 +1,14 @@
 // @vitest-environment jsdom
 // TODO: https://github.com/capricorn86/happy-dom/issues/916
 
-import * as path from 'path';
 import * as fs from 'fs';
-import * as svelte from '../../compiler.mjs';
-import { describe, assert, it, beforeAll } from 'vitest';
-import { should_update_expected, try_load_config } from '../helpers.js';
-import { createRequire } from 'module';
+import * as path from 'path';
+import { assert, describe, it } from 'vitest';
+import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
+
 import { assert_html_equal } from '../html_equal.js';
 
-const sveltePath = process.cwd();
-
-let compileOptions = null;
-
-const require = createRequire(import.meta.url);
 describe('hydration', async () => {
-	beforeAll(() => {
-		require.extensions['.svelte'] = function (module, filename) {
-			const options = Object.assign(
-				{
-					filename,
-					hydratable: true,
-					format: 'cjs',
-					sveltePath
-				},
-				compileOptions
-			);
-
-			const { js } = svelte.compile(fs.readFileSync(filename, 'utf-8'), options);
-
-			return module._compile(js.code, filename);
-		};
-	});
-
 	async function run_test(dir) {
 		if (dir[0] === '.') return;
 
@@ -44,12 +20,13 @@ describe('hydration', async () => {
 		it_fn(dir, async () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			// TODO: Get rid of this
-			// Do not introduce an await point here, it will break the test
-			compileOptions = config.compileOptions || {};
-			compileOptions.accessors = 'accessors' in config ? config.accessors : true;
-			const SvelteComponent = require(`${cwd}/main.svelte`).default;
-			// Do not introduce an await point here, it will break the test
+			let compileOptions = Object.assign({}, config.compileOptions, {
+				accessors: 'accessors' in config ? config.accessors : true,
+				format: 'cjs',
+				hydratable: true
+			});
+
+			const { default: SvelteComponent } = await create_loader(compileOptions, cwd)('main.svelte');
 
 			const target = window.document.body;
 			const head = window.document.head;
