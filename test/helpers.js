@@ -53,7 +53,7 @@ export function pretty_print_browser_assertion(message) {
 	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
 
 	if (match) {
-		assert.equal(match[0], match[1]);
+		assert.equal(match[1], match[2]);
 	}
 }
 
