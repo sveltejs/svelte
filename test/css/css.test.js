@@ -26,10 +26,11 @@ describe('css', () => {
 		const it_fn = solo ? it.only : skip ? it.skip : it;
 
 		it_fn(dir, async () => {
-			const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
+			const cwd = `${__dirname}/samples/${dir}`;
+			const config = await try_load_config(`${cwd}/_config.js`);
 
 			const input = fs
-				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
+				.readFileSync(`${cwd}/input.svelte`, 'utf-8')
 				.replace(/\s+$/, '')
 				.replace(/\r/g, '');
 
@@ -53,10 +54,10 @@ describe('css', () => {
 			assert.deepEqual(dom_warnings, ssr_warnings);
 			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
-			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.css`, dom.css.code);
+			fs.writeFileSync(`${cwd}/_actual.css`, dom.css.code);
 			const expected = {
-				html: read(`${__dirname}/samples/${dir}/expected.html`),
-				css: read(`${__dirname}/samples/${dir}/expected.css`)
+				html: read(`${cwd}/expected.html`),
+				css: read(`${cwd}/expected.css`)
 			};
 
 			const actual_css = replace_css_hash(dom.css.code);
@@ -64,14 +65,12 @@ describe('css', () => {
 				assert.equal(actual_css, expected.css);
 			} catch (error) {
 				if (should_update_expected()) {
-					fs.writeFileSync(`${__dirname}/samples/${dir}/expected.css`, actual_css);
+					fs.writeFileSync(`${cwd}/expected.css`, actual_css);
 					console.log(`Updated ${dir}/expected.css.`);
 				} else {
 					throw error;
 				}
 			}
-
-			const cwd = `${__dirname}/samples/${dir}`;
 
 			let ClientComponent;
 			let ServerComponent;
@@ -104,7 +103,7 @@ describe('css', () => {
 				new ClientComponent({ target, props: config.props });
 				const html = target.innerHTML;
 
-				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
+				fs.writeFileSync(`${cwd}/_actual.html`, html);
 
 				const actual_html = replace_css_hash(html);
 				htmlEqual(actual_html, expected.html);
