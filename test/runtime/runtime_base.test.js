@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 
 import { create_loader } from '../helpers';
-import { run_shard } from './runtime.shared.js';
 import { assert, it } from 'vitest';
-
-run_shard(2, 2);
 
 const load = create_loader({ generate: 'dom', dev: true, format: 'cjs' }, __dirname);
 const { default: App } = await load('App.svelte');
