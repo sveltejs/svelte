@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 
-import * as path from 'path';
+import * as path from 'node:path';
 import { describe, it, assert } from 'vitest';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { try_load_config, mkdirp, create_loader } from '../helpers.js';
 import { assert_html_equal } from '../html_equal';
 import glob from 'tiny-glob/sync';
-import { setTimeout } from 'timers/promises';
+import { setTimeout } from 'node:timers/promises';
 
 // duplicate client-side tests, as far as possible
 run_runtime_samples('runtime');
@@ -38,7 +38,7 @@ function run_runtime_samples(suite) {
 
 			const load = create_loader(compileOptions, cwd);
 
-			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
+			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
 
 				const dir = `${cwd}/_output/ssr`;

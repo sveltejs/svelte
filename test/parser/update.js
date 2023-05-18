@@ -1,7 +1,7 @@
 // this file will replace all the output.json files with their _actual.json
 // equivalents. Only use it when you're sure that you haven't
 // broken anything!
-const fs = require('fs');
+const fs = require('node:fs');
 const glob = require('tiny-glob/sync.js');
 
 glob('samples/*/_actual.json', { cwd: __dirname }).forEach((file) => {

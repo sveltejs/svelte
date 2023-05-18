@@ -19,11 +19,11 @@ export default {
 		deferred.resolve(42);
 
 		await deferred.promise;
-		assert.htmlEqual(target.innerHTML, `<p>the value is 42</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>the value is 42</p>');
 
 		deferred = create_deferred();
 		component.thePromise = deferred.promise;
-		assert.htmlEqual(target.innerHTML, `<p>loading...</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>loading...</p>');
 
 		deferred.reject(new Error('something broke'));
 
@@ -31,6 +31,6 @@ export default {
 			await deferred.promise;
 		} catch {}
 
-		assert.htmlEqual(target.innerHTML, `<p>oh no! something broke</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>oh no! something broke</p>');
 	}
 };

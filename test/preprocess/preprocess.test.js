@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as svelte from '../../compiler';
 import { try_load_config } from '../helpers';
 import { describe, it } from 'vitest';

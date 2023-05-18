@@ -4,8 +4,8 @@
 // TODO: Isolate the html comparison
 // TODO: happy-dom might be faster but currently replaces quotes which fails assertions
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { assert, describe, it } from 'vitest';
 import {
 	create_loader,

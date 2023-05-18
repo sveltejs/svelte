@@ -1,6 +1,6 @@
 import SvelteComponent from '__MAIN_DOT_SVELTE__';
 import config from '__CONFIG__';
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
 export default async function (target) {
 	let unhandled_rejection = false;
@@ -16,7 +16,7 @@ export default async function (target) {
 			{},
 			{
 				target,
-				hydrate: __HYDRATE__,
+				hydrate: __HYDRATE__, // eslint-disable-line
 				props: config.props,
 				intro: config.intro
 			},

@@ -1,20 +1,20 @@
 // @vitest-environment jsdom
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
 import { compile } from '../../compiler.mjs';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
 import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
-import { setTimeout } from 'timers/promises';
+import { setTimeout } from 'node:timers/promises';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
-let listeners = process.rawListeners('unhandledRejection');
+const listeners = process.rawListeners('unhandledRejection');
 
 describe('runtime', async () => {
 	beforeAll(() => {
@@ -121,7 +121,7 @@ describe('runtime', async () => {
 					});
 
 					try {
-						mod = await load(`./main.svelte`);
+						mod = await load('./main.svelte');
 						SvelteComponent = mod.default;
 					} catch (err) {
 						show_output(cwd, compileOptions); // eslint-disable-line no-console
@@ -143,7 +143,7 @@ describe('runtime', async () => {
 
 						// ssr into target
 						if (config.before_test) config.before_test();
-						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
+						const SsrSvelteComponent = (await load_ssr('./main.svelte')).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 
@@ -218,7 +218,7 @@ describe('runtime', async () => {
 						// TODO: This seems useless, unhandledRejection is only triggered on the next task
 						// by which time the test has already finished and the next test resets it to null above
 						if (unhandled_rejection) {
-							throw unhandled_rejection;
+							throw unhandled_rejection; // eslint-disable-line
 						}
 					}
 				})

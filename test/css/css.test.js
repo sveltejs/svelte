@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { assert, describe, it } from 'vitest';
 import * as svelte from '../../compiler.mjs';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';

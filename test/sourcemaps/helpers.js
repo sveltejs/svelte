@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import { getLocator } from 'locate-character';
 import MagicString, { Bundle } from 'magic-string';
 
