@@ -29,7 +29,7 @@ export async function try_load_config(path) {
 	// a whole
 
 	// bunch
-	const _ = 1;
+
 	// of lines
 
 	// cause

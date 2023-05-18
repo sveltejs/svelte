@@ -227,6 +227,7 @@ describe('runtime', async () => {
 						// TODO: This seems useless, unhandledRejection is only triggered on the next task
 						// by which time the test has already finished and the next test resets it to null above
 						if (unhandled_rejection) {
+							// eslint-disable-next-line no-unsafe-finally
 							throw unhandled_rejection;
 						}
 					}

@@ -19,7 +19,7 @@ describe('hydration', async () => {
 		it_fn(dir, async () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			let compileOptions = Object.assign({}, config.compileOptions, {
+			const compileOptions = Object.assign({}, config.compileOptions, {
 				accessors: 'accessors' in config ? config.accessors : true,
 				format: 'cjs',
 				hydratable: true

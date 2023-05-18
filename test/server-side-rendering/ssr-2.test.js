@@ -39,7 +39,7 @@ function run_runtime_samples(suite) {
 
 			const load = create_loader(compileOptions, cwd);
 
-			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
+			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
 
 				const dir = `${cwd}/_output/ssr`;
