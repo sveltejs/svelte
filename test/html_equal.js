@@ -101,7 +101,7 @@ export function setup_html_equal(options = {}) {
 	 * @param {string} expected
 	 * @param {string} [message]
 	 */
-	const htmlEqual = (actual, expected, message) => {
+	const assert_html_equal = (actual, expected, message) => {
 		try {
 			assert.deepEqual(
 				normalize_html(window, actual, options),
@@ -109,7 +109,7 @@ export function setup_html_equal(options = {}) {
 				message
 			);
 		} catch (e) {
-			if (Error.captureStackTrace) Error.captureStackTrace(e, htmlEqual);
+			if (Error.captureStackTrace) Error.captureStackTrace(e, assert_html_equal);
 			throw e;
 		}
 	};
@@ -121,7 +121,7 @@ export function setup_html_equal(options = {}) {
 	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
 	 * @param {string} [message]
 	 */
-	const htmlEqualWithOptions = (
+	const assert_html_equal_with_options = (
 		actual,
 		expected,
 		{ preserveComments, withoutNormalizeHtml },
@@ -144,10 +144,16 @@ export function setup_html_equal(options = {}) {
 				message
 			);
 		} catch (e) {
-			if (Error.captureStackTrace) Error.captureStackTrace(e, htmlEqualWithOptions);
+			if (Error.captureStackTrace) Error.captureStackTrace(e, assert_html_equal_with_options);
 			throw e;
 		}
 	};
 
-	return { htmlEqual, htmlEqualWithOptions };
+	return {
+		assert_html_equal,
+		assert_html_equal_with_options
+	};
 }
+
+// Common case without options
+export const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal();

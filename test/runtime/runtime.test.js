@@ -17,7 +17,7 @@ function unhandledRejection_handler(err) {
 
 const listeners = process.rawListeners('unhandledRejection');
 
-const { htmlEqual, htmlEqualWithOptions } = setup_html_equal({
+const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
 	removeDataSvelte: true
 });
 
@@ -197,7 +197,7 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						htmlEqualWithOptions(target.innerHTML, config.html, {
+						assert_html_equal_with_options(target.innerHTML, config.html, {
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}
@@ -207,8 +207,8 @@ describe('runtime', async () => {
 							await config.test({
 								assert: {
 									...assert,
-									htmlEqual,
-									htmlEqualWithOptions
+									htmlEqual: assert_html_equal,
+									htmlEqualWithOptions: assert_html_equal_with_options
 								},
 								component,
 								mod,
@@ -222,7 +222,7 @@ describe('runtime', async () => {
 						}
 					} finally {
 						component.$destroy();
-						htmlEqual(target.innerHTML, '');
+						assert_html_equal(target.innerHTML, '');
 
 						// TODO: This seems useless, unhandledRejection is only triggered on the next task
 						// by which time the test has already finished and the next test resets it to null above
@@ -257,7 +257,7 @@ describe('runtime', async () => {
 					// Free up the microtask queue, so that
 					// 1. Vitest's test runner which uses setInterval can log progress
 					// 2. Any expected unhandled rejections are ran before we reattach the listeners
-					await setTimeout();
+					await setTimeout(0);
 
 					if (config.expect_unhandled_rejections) {
 						listeners.forEach((listener) => {

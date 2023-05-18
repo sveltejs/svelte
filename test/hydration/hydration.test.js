@@ -5,10 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { assert, describe, it } from 'vitest';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
-
-import { setup_html_equal } from '../html_equal.js';
-
-const { htmlEqual } = setup_html_equal();
+import { assert_html_equal } from '../html_equal.js';
 
 describe('hydration', async () => {
 	async function run_test(dir) {
@@ -52,7 +49,7 @@ describe('hydration', async () => {
 			});
 
 			try {
-				htmlEqual(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
+				assert_html_equal(target.innerHTML, fs.readFileSync(`${cwd}/_after.html`, 'utf-8'));
 			} catch (error) {
 				if (should_update_expected()) {
 					fs.writeFileSync(`${cwd}/_after.html`, target.innerHTML);
@@ -65,7 +62,7 @@ describe('hydration', async () => {
 			if (before_head) {
 				try {
 					const after_head = fs.readFileSync(`${cwd}/_after_head.html`, 'utf-8');
-					htmlEqual(head.innerHTML, after_head);
+					assert_html_equal(head.innerHTML, after_head);
 				} catch (error) {
 					if (should_update_expected()) {
 						fs.writeFileSync(`${cwd}/_after_head.html`, head.innerHTML);
@@ -91,7 +88,7 @@ describe('hydration', async () => {
 				await config.test(
 					{
 						...assert,
-						htmlEqual
+						htmlEqual: assert_html_equal
 					},
 					target,
 					snapshot,

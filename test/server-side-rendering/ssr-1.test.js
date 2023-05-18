@@ -14,9 +14,7 @@ import {
 	try_load_json,
 	try_read_file
 } from '../helpers.js';
-import { setup_html_equal } from '../html_equal.js';
-
-const { htmlEqualWithOptions } = setup_html_equal();
+import { assert_html_equal_with_options } from '../html_equal.js';
 
 describe('ssr', async () => {
 	async function run_test(dir) {
@@ -52,7 +50,7 @@ describe('ssr', async () => {
 			if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 			try {
-				htmlEqualWithOptions(html, expectedHtml, {
+				assert_html_equal_with_options(html, expectedHtml, {
 					preserveComments: compileOptions.preserveComments,
 					withoutNormalizeHtml: config.withoutNormalizeHtml
 				});
@@ -85,9 +83,13 @@ describe('ssr', async () => {
 				fs.writeFileSync(`${dir}/_actual-head.html`, head);
 
 				try {
-					htmlEqualWithOptions(head, fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8'), {
-						preserveComments: compileOptions.hydratable
-					});
+					assert_html_equal_with_options(
+						head,
+						fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8'),
+						{
+							preserveComments: compileOptions.hydratable
+						}
+					);
 				} catch (error) {
 					if (should_update_expected()) {
 						fs.writeFileSync(`${dir}/_expected-head.html`, head);
