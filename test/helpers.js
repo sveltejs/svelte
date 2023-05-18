@@ -84,7 +84,7 @@ export function show_output(cwd, options = {}) {
 		try {
 			const { js } = compile(
 				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-				Object.assign(options, {
+				Object.assign({}, options, {
 					filename: file
 				})
 			);

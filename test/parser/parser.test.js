@@ -32,7 +32,7 @@ describe('parse', () => {
 			try {
 				const { ast } = svelte.compile(
 					input,
-					Object.assign(options, {
+					Object.assign({}, options, {
 						generate: false
 					})
 				);

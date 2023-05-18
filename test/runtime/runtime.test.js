@@ -58,7 +58,7 @@ describe('runtime', async () => {
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			const compileOptions = Object.assign(config.compileOptions || {}, {
+			const compileOptions = Object.assign({}, config.compileOptions || {}, {
 				format: 'cjs',
 				hydratable: hydrate,
 				immutable: config.immutable,
