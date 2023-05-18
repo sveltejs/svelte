@@ -45,7 +45,7 @@ function run_runtime_samples(suite) {
 				if (file[0] === '_') return;
 
 				const dir = `${cwd}/_output/ssr`;
-				const out = `${cwd}/${file.replace(/\.svelte$/, '.js')}`;
+				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 				if (fs.existsSync(out)) {
 					fs.unlinkSync(out);
