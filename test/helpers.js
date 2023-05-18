@@ -52,15 +52,9 @@ export function should_update_expected() {
 export function pretty_print_browser_assertion(message) {
 	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
 
-	let actual, expected;
-
-	try {
-		actual = JSON.parse(match[1]);
-		expected = JSON.parse(match[2]);
-	} catch {}
 
 	if (match) {
-		assert.equal(actual, expected);
+		assert.equal(match[0], match[1]);
 	}
 }
 
