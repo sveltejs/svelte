@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { assert, describe, it } from 'vitest';
 import * as svelte from '../../compiler.mjs';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
-import { assert_html_equal } from '../html_equal.js';
+import { setup_html_equal } from '../html_equal.js';
 
 function normalize_warning(warning) {
 	warning.frame = warning.frame.replace(/^\n/, '').replace(/^\t+/gm, '').replace(/\s+$/gm, '');
@@ -12,6 +12,8 @@ function normalize_warning(warning) {
 	delete warning.toString;
 	return warning;
 }
+
+const { htmlEqual } = setup_html_equal();
 
 describe('css', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -105,12 +107,12 @@ describe('css', () => {
 				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
 
 				const actual_html = replace_css_hash(html);
-				assert_html_equal(actual_html, expected.html);
+				htmlEqual(actual_html, expected.html);
 
 				window.document.head.innerHTML = ''; // remove added styles
 
 				const actual_ssr = replace_css_hash(ServerComponent.render(config.props).html);
-				assert_html_equal(actual_ssr, expected.html);
+				htmlEqual(actual_ssr, expected.html);
 			}
 		});
 	});

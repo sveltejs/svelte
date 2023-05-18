@@ -4,13 +4,16 @@ import * as path from 'path';
 import { describe, it, assert } from 'vitest';
 import * as fs from 'fs';
 import { try_load_config, mkdirp, create_loader } from '../helpers.js';
-import { assert_html_equal } from '../html_equal';
 import glob from 'tiny-glob/sync';
 import { setTimeout } from 'timers/promises';
+import { setup_html_equal } from '../html_equal.js';
+import { compile } from '../../compiler.mjs';
 
 // duplicate client-side tests, as far as possible
 run_runtime_samples('runtime');
 run_runtime_samples('runtime-browser');
+
+const { htmlEqual, htmlEqualWithOptions } = setup_html_equal();
 
 function run_runtime_samples(suite) {
 	const samples = path.resolve(__dirname, '..', suite, 'samples');
@@ -71,18 +74,14 @@ function run_runtime_samples(suite) {
 				});
 
 				if (config.ssrHtml) {
-					assert_html_equal(html, config.ssrHtml, {
-						normalize_html: {
-							preserveComments: compileOptions.preserveComments,
-							withoutNormalizeHtml: config.withoutNormalizeHtml
-						}
+					htmlEqualWithOptions(html, config.ssrHtml, {
+						preserveComments: compileOptions.preserveComments,
+						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				} else if (config.html) {
-					assert_html_equal(html, config.html, {
-						normalize_html: {
-							preserveComments: compileOptions.preserveComments,
-							withoutNormalizeHtml: config.withoutNormalizeHtml
-						}
+					htmlEqualWithOptions(html, config.html, {
+						preserveComments: compileOptions.preserveComments,
+						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				}
 
@@ -90,7 +89,8 @@ function run_runtime_samples(suite) {
 					await config.test_ssr({
 						assert: {
 							...assert,
-							htmlEqual: assert_html_equal
+							htmlEqual,
+							htmlEqualWithOptions
 						},
 						load
 					});

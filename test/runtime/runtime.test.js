@@ -6,20 +6,24 @@ import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
 import { compile } from '../../compiler.mjs';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
+import { show_output, try_load_config, mkdirp, create_loader } from '../helpers.js';
 import { setTimeout } from 'timers/promises';
+import { setup_html_equal } from '../html_equal.js';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
-let listeners = process.rawListeners('unhandledRejection');
+const listeners = process.rawListeners('unhandledRejection');
+
+const { htmlEqual, htmlEqualWithOptions } = setup_html_equal({
+	removeDataSvelte: true
+});
 
 describe('runtime', async () => {
 	beforeAll(() => {
 		process.prependListener('unhandledRejection', unhandledRejection_handler);
-		return setupHtmlEqual({ removeDataSvelte: true });
 	});
 
 	afterAll(() => {
@@ -129,6 +133,7 @@ describe('runtime', async () => {
 					}
 
 					// Put things we need on window for testing
+					// @ts-ignore
 					window.SvelteComponent = SvelteComponent;
 					window.location.href = '';
 					window.document.title = '';
@@ -192,7 +197,7 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						assert.htmlEqualWithOptions(target.innerHTML, config.html, {
+						htmlEqualWithOptions(target.innerHTML, config.html, {
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}
@@ -200,7 +205,11 @@ describe('runtime', async () => {
 					try {
 						if (config.test) {
 							await config.test({
-								assert,
+								assert: {
+									...assert,
+									htmlEqual,
+									htmlEqualWithOptions
+								},
 								component,
 								mod,
 								target,
@@ -213,7 +222,7 @@ describe('runtime', async () => {
 						}
 					} finally {
 						component.$destroy();
-						assert.htmlEqual(target.innerHTML, '');
+						htmlEqual(target.innerHTML, '');
 
 						// TODO: This seems useless, unhandledRejection is only triggered on the next task
 						// by which time the test has already finished and the next test resets it to null above
