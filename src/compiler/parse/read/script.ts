@@ -1,52 +1,56 @@
-import * as acorn from '../acorn';
-import { Parser } from '../index';
-import { Script } from '../../interfaces';
-import { Node, Program } from 'estree';
-import parser_errors from '../errors';
-import { regex_not_newline_characters } from '../../utils/patterns';
+import * as acorn from '../acorn.js';
+import parser_errors from '../errors.js';
+import { regex_not_newline_characters } from '../../utils/patterns.js';
 
 const regex_closing_script_tag = /<\/script\s*>/;
 const regex_starts_with_closing_script_tag = /^<\/script\s*>/;
 
-function get_context(parser: Parser, attributes: any[], start: number): string {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @param {any[]} attributes
+ * @param {number} start
+ * @returns {string}
+ */
+function get_context(parser, attributes, start) {
 	const context = attributes.find((attribute) => attribute.name === 'context');
 	if (!context) return 'default';
-
 	if (context.value.length !== 1 || context.value[0].type !== 'Text') {
 		parser.error(parser_errors.invalid_script_context_attribute, start);
 	}
-
 	const value = context.value[0].data;
-
 	if (value !== 'module') {
 		parser.error(parser_errors.invalid_script_context_value, context.start);
 	}
-
 	return value;
 }
 
-export default function read_script(parser: Parser, start: number, attributes: Node[]): Script {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @param {number} start
+ * @param {import('estree').Node[]} attributes
+ * @returns {import('../../interfaces.js').Script}
+ */
+export default function read_script(parser, start, attributes) {
 	const script_start = parser.index;
 	const data = parser.read_until(regex_closing_script_tag, parser_errors.unclosed_script);
 	if (parser.index >= parser.template.length) {
 		parser.error(parser_errors.unclosed_script);
 	}
-
 	const source =
 		parser.template.slice(0, script_start).replace(regex_not_newline_characters, ' ') + data;
 	parser.read(regex_starts_with_closing_script_tag);
 
-	let ast: Program;
-
+	/**
+	 * @type {import('estree').Program}
+	 */
+	let ast;
 	try {
-		ast = acorn.parse(source) as any as Program;
+		ast = acorn.parse(source);
 	} catch (err) {
 		parser.acorn_error(err);
 	}
-
 	// TODO is this necessary?
-	(ast as any).start = script_start;
-
+	/** @type {any} */ (ast).start = script_start;
 	return {
 		type: 'Script',
 		start,

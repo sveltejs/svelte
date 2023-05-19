@@ -1,24 +1,18 @@
 import { b, x } from 'code-red';
-import Component from '../../../Component';
-import Block from '../../Block';
-import BindingWrapper from '../Element/Binding';
-import { Identifier } from 'estree';
-import { compare_node } from '../../../utils/compare_node';
+import { compare_node } from '../../../utils/compare_node.js';
 
-export default function bind_this(
-	component: Component,
-	block: Block,
-	binding: BindingWrapper,
-	variable: Identifier
-) {
+/**
+ * @param {import('../../../Component.js').default} component
+ * @param {import('../../Block.js').default} block
+ * @param {import('../Element/Binding.js').default} binding
+ * @param {import('estree').Identifier} variable
+ */
+export default function bind_this(component, block, binding, variable) {
 	const fn = component.get_unique_name(`${variable.name}_binding`);
-
 	block.renderer.add_to_context(fn.name);
 	const callee = block.renderer.reference(fn.name);
-
 	const { contextual_dependencies, mutation } = binding.handler;
 	const dependencies = binding.get_update_dependencies();
-
 	const body = b`
 		${mutation}
 		${Array.from(dependencies)
@@ -26,9 +20,9 @@ export default function bind_this(
 			.filter((dep) => !contextual_dependencies.has(dep))
 			.map((dep) => b`${block.renderer.invalidate(dep)};`)}
 	`;
-
 	if (contextual_dependencies.size) {
-		const params: Identifier[] = Array.from(contextual_dependencies).map((name) => ({
+		/** @type {import('estree').Identifier[]} */
+		const params = Array.from(contextual_dependencies).map((name) => ({
 			type: 'Identifier',
 			name
 		}));
@@ -39,7 +33,6 @@ export default function bind_this(
 				});
 			}
 		`);
-
 		const alias_map = new Map();
 		const args = [];
 		for (let id of params) {
@@ -61,21 +54,17 @@ export default function bind_this(
 				block.add_variable(id, value);
 			}
 		}
-
 		const assign = block.get_unique_name(`assign_${variable.name}`);
 		const unassign = block.get_unique_name(`unassign_${variable.name}`);
-
 		block.chunks.init.push(b`
 			const ${assign} = () => ${callee}(${variable}, ${args});
 			const ${unassign} = () => ${callee}(null, ${args});
 		`);
-
 		const condition = Array.from(args)
 			.map(
 				(name) => x`${name} !== ${block.renderer.reference(alias_map.get(name.name) || name.name)}`
 			)
 			.reduce((lhs, rhs) => x`${lhs} || ${rhs}`);
-
 		// we push unassign and unshift assign so that references are
 		// nulled out before they're created, to avoid glitches
 		// with shifting indices
@@ -85,11 +74,9 @@ export default function bind_this(
 				${args.map((a) => b`${a} = ${block.renderer.reference(alias_map.get(a.name) || a.name)}`)};
 				${assign}();
 			}`);
-
 		block.chunks.destroy.push(b`${unassign}();`);
 		return b`${assign}();`;
 	}
-
 	component.partly_hoisted.push(b`
 		function ${fn}($$value) {
 			@binding_callbacks[$$value ? 'unshift' : 'push'](() => {
@@ -97,7 +84,6 @@ export default function bind_this(
 			});
 		}
 	`);
-
 	block.chunks.destroy.push(b`${callee}(null);`);
 	return b`${callee}(${variable});`;
 }

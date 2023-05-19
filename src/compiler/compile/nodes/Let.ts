@@ -1,44 +1,45 @@
-import Node from './shared/Node';
-import Component from '../Component';
+import Node from './shared/Node.js';
 import { walk } from 'estree-walker';
-import { BasePattern, Identifier } from 'estree';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import compiler_errors from '../compiler_errors';
+import compiler_errors from '../compiler_errors.js';
 
 const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
 
+/** @extends Node<'Let'> */
 export default class Let extends Node {
-	type: 'Let';
-	name: Identifier;
-	value: Identifier;
-	names: string[] = [];
+	/** @type {import('estree').Identifier} */
+	name;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/** @type {import('estree').Identifier} */
+	value;
+
+	/** @type {string[]} */
+	names = [];
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		this.name = { type: 'Identifier', name: info.name };
-
 		const { names } = this;
-
 		if (info.expression) {
 			this.value = info.expression;
-
 			walk(info.expression, {
-				enter(node: Identifier | BasePattern) {
+				/** @param {import('estree').Identifier | import('estree').BasePattern} node */
+				enter(node) {
 					if (!applicable.has(node.type)) {
-						return component.error(node as any, compiler_errors.invalid_let);
+						return component.error(/** @type {any} */ (node), compiler_errors.invalid_let);
 					}
-
 					if (node.type === 'Identifier') {
-						names.push((node as Identifier).name);
+						names.push(/** @type {import('estree').Identifier} */ (node).name);
 					}
-
 					// slightly unfortunate hack
 					if (node.type === 'ArrayExpression') {
 						node.type = 'ArrayPattern';
 					}
-
 					if (node.type === 'ObjectExpression') {
 						node.type = 'ObjectPattern';
 					}

@@ -1,8 +1,18 @@
-import { Node } from 'estree';
-import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
+import is_reference from 'is-reference';
 
-export default function is_used_as_reference(node: Node, parent: Node): boolean {
-	if (!is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
+/**
+ *
+ * @param {import('estree').Node} node
+ * @param {import('estree').Node} parent
+ * @returns {boolean}
+ */
+export default function is_used_as_reference(node, parent) {
+	if (
+		!is_reference(
+			/** @type {import('is-reference').NodeWithPropertyDefinition} */ (node),
+			/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
+		)
+	) {
 		return false;
 	}
 	if (!parent) {

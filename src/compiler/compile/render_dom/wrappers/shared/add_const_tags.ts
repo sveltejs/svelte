@@ -1,19 +1,22 @@
-import ConstTag from '../../../nodes/ConstTag';
-import Block from '../../Block';
-import { b, Node, x } from 'code-red';
-import Renderer from '../../Renderer';
-import Expression from '../../../nodes/shared/Expression';
+import { b, x } from 'code-red';
+import Expression from '../../../nodes/shared/Expression.js';
 
-export function add_const_tags(block: Block, const_tags: ConstTag[], ctx: string) {
+/**
+ * @param {import('../../Block.js').default} block
+ * @param {import('../../../nodes/ConstTag.js').default[]} const_tags
+ * @param {string} ctx
+ */
+export function add_const_tags(block, const_tags, ctx) {
 	const const_tags_props = [];
 	const_tags.forEach((const_tag, i) => {
 		const name = `#constants_${i}`;
 		const_tags_props.push(b`const ${name} = ${const_tag.expression.manipulate(block, ctx)}`);
-		const to_ctx = (name: string) =>
+
+		/** @param {string} name */
+		const to_ctx = (name) =>
 			block.renderer.context_lookup.has(name)
 				? x`${ctx}[${block.renderer.context_lookup.get(name).index}]`
-				: ({ type: 'Identifier', name } as Node);
-
+				: /** @type {import('code-red').Node} */ ({ type: 'Identifier', name });
 		const_tag.contexts.forEach((context) => {
 			if (context.type === 'DestructuredVariable') {
 				const_tags_props.push(
@@ -37,7 +40,11 @@ export function add_const_tags(block: Block, const_tags: ConstTag[], ctx: string
 	return const_tags_props;
 }
 
-export function add_const_tags_context(renderer: Renderer, const_tags: ConstTag[]) {
+/**
+ * @param {import('../../Renderer.js').default} renderer
+ * @param {import('../../../nodes/ConstTag.js').default[]} const_tags
+ */
+export function add_const_tags_context(renderer, const_tags) {
 	const_tags.forEach((const_tag) => {
 		const_tag.contexts.forEach((context) => {
 			if (context.type !== 'DestructuredVariable') return;

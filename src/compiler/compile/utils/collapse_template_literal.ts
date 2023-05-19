@@ -1,10 +1,10 @@
-import { TemplateLiteral } from 'estree';
-import { escape_template } from './stringify';
+import { escape_template } from './stringify.js';
 
 /**
  * Collapse string literals together
+ * @param {import('estree').TemplateLiteral} literal
  */
-export function collapse_template_literal(literal: TemplateLiteral) {
+export function collapse_template_literal(literal) {
 	if (!literal.quasis.length) return;
 
 	const collapsed_quasis = [];

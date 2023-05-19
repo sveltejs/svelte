@@ -1,16 +1,10 @@
-import Attribute from '../../../nodes/Attribute';
-import Block from '../../Block';
-import fix_attribute_casing from './fix_attribute_casing';
-import ElementWrapper from './index';
-import { string_literal } from '../../../utils/stringify';
+import fix_attribute_casing from './fix_attribute_casing.js';
+import { string_literal } from '../../../utils/stringify.js';
 import { b, x } from 'code-red';
-import Expression from '../../../nodes/shared/Expression';
-import Text from '../../../nodes/Text';
-import handle_select_value_binding from './handle_select_value_binding';
-import { Identifier, Node } from 'estree';
-import { namespaces } from '../../../../utils/namespaces';
-import { BooleanAttributes, boolean_attributes } from '../../../../../shared/boolean_attributes';
-import { regex_double_quotes } from '../../../../utils/patterns';
+import handle_select_value_binding from './handle_select_value_binding.js';
+import { namespaces } from '../../../../utils/namespaces.js';
+import { boolean_attributes } from '../../../../../shared/boolean_attributes.js';
+import { regex_double_quotes } from '../../../../utils/patterns.js';
 
 const non_textlike_input_types = new Set([
 	'button',
@@ -28,64 +22,82 @@ const non_textlike_input_types = new Set([
 ]);
 
 export class BaseAttributeWrapper {
-	node: Attribute;
-	parent: ElementWrapper;
+	/** @type {import('../../../nodes/Attribute.js').default} */
+	node;
 
-	constructor(parent: ElementWrapper, block: Block, node: Attribute) {
+	/** @type {import('./index.js').default} */
+	parent;
+
+	/**
+	 * @param {import('./index.js').default} parent
+	 * @param {import('../../Block.js').default} block
+	 * @param {import('../../../nodes/Attribute.js').default} node
+	 */
+	constructor(parent, block, node) {
 		this.node = node;
 		this.parent = parent;
-
 		if (node.dependencies.size > 0) {
 			block.add_dependencies(node.dependencies);
 		}
 	}
 
-	render(_block: Block) {}
+	/** @param {import('../../Block.js').default} _block */
+	render(_block) {}
 }
-
 const regex_minus_sign = /-/;
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
+/** @extends BaseAttributeWrapper */
 export default class AttributeWrapper extends BaseAttributeWrapper {
-	node: Attribute;
-	parent: ElementWrapper;
-	metadata: any;
-	name: string;
-	property_name: string;
-	is_indirectly_bound_value: boolean;
-	is_src: boolean;
-	is_select_value_attribute: boolean;
-	is_input_value: boolean;
-	should_cache: boolean;
-	last: Identifier;
+	/** @type {any} */
+	metadata;
 
-	constructor(parent: ElementWrapper, block: Block, node: Attribute) {
+	/** @type {string} */
+	name;
+
+	/** @type {string} */
+	property_name;
+
+	/** @type {boolean} */
+	is_indirectly_bound_value;
+
+	/** @type {boolean} */
+	is_src;
+
+	/** @type {boolean} */
+	is_select_value_attribute;
+
+	/** @type {boolean} */
+	is_input_value;
+
+	/** @type {boolean} */
+	should_cache;
+
+	/** @type {import('estree').Identifier} */
+	last;
+	constructor(parent, block, node) {
 		super(parent, block, node);
-
 		if (node.dependencies.size > 0) {
 			// special case — <option value={foo}> — see below
 			if (this.parent.node.name === 'option' && node.name === 'value') {
-				let select: ElementWrapper = this.parent;
+				let select = this.parent;
 				while (select && (select.node.type !== 'Element' || select.node.name !== 'select')) {
 					// @ts-ignore todo: doublecheck this, but looks to be correct
 					select = select.parent;
 				}
-
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach((prop) => {
-						this.node.dependencies.forEach((dependency: string) => {
+						this.node.dependencies.forEach((dependency) => {
 							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
 						});
 					});
 				}
 			}
-
 			if (node.name === 'value') {
 				handle_select_value_binding(this, node.dependencies);
 				this.parent.has_dynamic_value = true;
 			}
 		}
-
 		if (this.parent.node.namespace == namespaces.foreign) {
 			// leave attribute case alone for elements in the "foreign" namespace
 			this.name = this.node.name;
@@ -104,7 +116,6 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			this.is_select_value_attribute = this.name === 'value' && this.parent.node.name === 'select';
 			this.is_input_value = this.name === 'value' && this.parent.node.name === 'input';
 		}
-
 		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		this.is_src =
 			this.name === 'src' &&
@@ -112,10 +123,10 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		this.should_cache = should_cache(this);
 	}
 
-	render(block: Block) {
+	/** @param {import('../../Block.js').default} block */
+	render(block) {
 		const element = this.parent;
 		const { name, property_name, should_cache, is_indirectly_bound_value } = this;
-
 		// xlink is a special case... we could maybe extend this to generic
 		// namespaced attributes but I'm not sure that's applicable in
 		// HTML5?
@@ -124,31 +135,27 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			: name.slice(0, 6) === 'xlink:'
 			? '@xlink_attr'
 			: '@attr';
-
 		const is_legacy_input_type =
 			element.renderer.component.compile_options.legacy &&
 			name === 'type' &&
 			this.parent.node.name === 'input';
-
 		const dependencies = this.get_dependencies();
 		const value = this.get_value(block);
 
-		let updater: Node[];
+		/** @type {import('estree').Node[]} */
+		let updater;
 		const init = this.get_init(block, value);
-
 		if (is_legacy_input_type) {
 			block.chunks.hydrate.push(b`@set_input_type(${element.var}, ${init});`);
 			updater = b`@set_input_type(${element.var}, ${should_cache ? this.last : value});`;
 		} else if (this.is_select_value_attribute) {
 			// annoying special case
 			const is_multiple_select = element.node.get_static_attribute_value('multiple');
-
 			if (is_multiple_select) {
 				updater = b`@select_options(${element.var}, ${value});`;
 			} else {
 				updater = b`@select_option(${element.var}, ${value});`;
 			}
-
 			block.chunks.mount.push(b`
 				${updater}
 			`);
@@ -166,17 +173,14 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			block.chunks.hydrate.push(b`${method}(${element.var}, "${name}", ${init});`);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		}
-
 		if (is_indirectly_bound_value) {
 			const update_value = b`@set_input_value(${element.var}, ${element.var}.__value);`;
 			block.chunks.hydrate.push(update_value);
-
 			updater = b`
 				${updater}
 				${update_value};
 			`;
 		}
-
 		if (this.node.name === 'value' && dependencies.length > 0) {
 			if (this.parent.bindings.some((binding) => binding.node.name === 'group')) {
 				this.parent.dynamic_value_condition = block.get_unique_name('value_has_changed');
@@ -187,16 +191,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				`;
 			}
 		}
-
 		if (dependencies.length > 0) {
 			const condition = this.get_dom_update_conditions(block, block.renderer.dirty(dependencies));
-
 			block.chunks.update.push(b`
 				if (${condition}) {
 					${updater}
 				}`);
 		}
-
 		// special case – autofocus. has to be handled in a bit of a weird way
 		if (name === 'autofocus') {
 			block.autofocus = {
@@ -206,7 +207,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		}
 	}
 
-	get_init(block: Block, value) {
+	/**
+	 * @param {import('../../Block.js').default} block
+	 * @param {any} value
+	 */
+	get_init(block, value) {
 		this.last =
 			this.should_cache &&
 			block.get_unique_name(
@@ -215,25 +220,24 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 					'_'
 				)}_value`
 			);
-
 		if (this.should_cache) block.add_variable(this.last);
-
 		return this.should_cache ? x`${this.last} = ${value}` : value;
 	}
 
-	get_dom_update_conditions(block: Block, dependency_condition: Node) {
+	/**
+	 * @param {import('../../Block.js').default} block
+	 * @param {import('estree').Node} dependency_condition
+	 */
+	get_dom_update_conditions(block, dependency_condition) {
 		const { property_name, should_cache, last } = this;
 		const element = this.parent;
 		const value = this.get_value(block);
-
 		let condition = dependency_condition;
-
 		if (should_cache) {
 			condition = this.is_src
 				? x`${condition} && (!@src_url_equal(${element.var}.src, (${last} = ${value})))`
 				: x`${condition} && (${last} !== (${last} = ${value}))`;
 		}
-
 		if (this.is_input_value) {
 			const type = element.node.get_static_attribute_value('type');
 			if (type !== true && !non_textlike_input_types.has(type)) {
@@ -242,19 +246,15 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				}`;
 			}
 		}
-
 		if (block.has_outros) {
 			condition = x`!#current || ${condition}`;
 		}
-
 		return condition;
 	}
-
 	get_dependencies() {
 		const node_dependencies = this.node.get_dependencies();
 		const dependencies = new Set(node_dependencies);
-
-		node_dependencies.forEach((prop: string) => {
+		node_dependencies.forEach((prop) => {
 			const indirect_dependencies = this.parent.renderer.component.indirect_dependencies.get(prop);
 			if (indirect_dependencies) {
 				indirect_dependencies.forEach((indirect_dependency) => {
@@ -262,10 +262,8 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				});
 			}
 		});
-
 		return Array.from(dependencies);
 	}
-
 	get_metadata() {
 		if (this.parent.node.namespace) return null;
 		const metadata = attribute_lookup[this.name];
@@ -274,7 +272,8 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		return metadata;
 	}
 
-	get_value(block: Block) {
+	/** @param {import('../../Block.js').default} block */
+	get_value(block) {
 		if (this.node.is_true) {
 			if (this.metadata && boolean_attributes.has(this.metadata.property_name.toLowerCase())) {
 				return x`true`;
@@ -282,56 +281,54 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			return x`""`;
 		}
 		if (this.node.chunks.length === 0) return x`""`;
-
 		// TODO some of this code is repeated in Tag.ts — would be good to
 		// DRY it out if that's possible without introducing crazy indirection
 		if (this.node.chunks.length === 1) {
 			return this.node.chunks[0].type === 'Text'
-				? string_literal((this.node.chunks[0] as Text).data)
-				: (this.node.chunks[0] as Expression).manipulate(block);
+				? string_literal(
+						/** @type {import('../../../nodes/Text.js').default} */ (this.node.chunks[0]).data
+				  )
+				: /** @type {import('../../../nodes/shared/Expression.js').default} */ (
+						this.node.chunks[0]
+				  ).manipulate(block);
 		}
-
 		let value =
 			this.node.name === 'class'
 				? this.get_class_name_text(block)
 				: this.render_chunks(block).reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
-
 		// '{foo} {bar}' — treat as string concatenation
 		if (this.node.chunks[0].type !== 'Text') {
 			value = x`"" + ${value}`;
 		}
-
 		return value;
 	}
 
-	get_class_name_text(block: Block) {
-		const scoped_css = this.node.chunks.some((chunk: Text) => chunk.synthetic);
+	/** @param {import('../../Block.js').default} block */
+	get_class_name_text(block) {
+		const scoped_css = this.node.chunks.some(
+			(/** @type {import('../../../nodes/Text.js').default} */ chunk) => chunk.synthetic
+		);
 		const rendered = this.render_chunks(block);
-
 		if (scoped_css && rendered.length === 2) {
 			// we have a situation like class={possiblyUndefined}
 			rendered[0] = x`@null_to_empty(${rendered[0]})`;
 		}
-
 		return rendered.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 	}
 
-	render_chunks(block: Block) {
+	/** @param {import('../../Block.js').default} block */
+	render_chunks(block) {
 		return this.node.chunks.map((chunk) => {
 			if (chunk.type === 'Text') {
 				return string_literal(chunk.data);
 			}
-
 			return chunk.manipulate(block);
 		});
 	}
-
 	stringify() {
 		if (this.node.is_true) return '';
-
 		const value = this.node.chunks;
 		if (value.length === 0) return '=""';
-
 		return `="${value
 			.map((chunk) => {
 				return chunk.type === 'Text'
@@ -341,12 +338,13 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 			.join('')}"`;
 	}
 }
-
-// source: https://html.spec.whatwg.org/multipage/indices.html
-type AttributeMetadata = { property_name?: string; applies_to?: string[] };
-const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & {
-	[key in string]: AttributeMetadata;
-} = {
+/**
+ * @type {{
+ *  [key in import('../../../../../shared/boolean_attributes.js').BooleanAttributes]: { property_name?: string; applies_to?: string[] } } &
+ *  { [key in string]: { property_name?: string; applies_to?: string[] }; }
+ * }
+ */
+const attribute_lookup = {
 	allowfullscreen: { property_name: 'allowFullscreen', applies_to: ['iframe'] },
 	allowpaymentrequest: { property_name: 'allowPaymentRequest', applies_to: ['iframe'] },
 	async: { applies_to: ['script'] },
@@ -398,19 +396,19 @@ const attribute_lookup: { [key in BooleanAttributes]: AttributeMetadata } & {
 		]
 	}
 };
-
 Object.keys(attribute_lookup).forEach((name) => {
 	const metadata = attribute_lookup[name];
 	if (!metadata.property_name) metadata.property_name = name;
 });
 
-function should_cache(attribute: AttributeWrapper) {
+/** @param {AttributeWrapper} attribute */
+function should_cache(attribute) {
 	return attribute.is_src || attribute.node.should_cache();
 }
-
 const regex_contains_checked_or_group = /checked|group/;
 
-function is_indirectly_bound_value(attribute: AttributeWrapper) {
+/** @param {AttributeWrapper} attribute */
+function is_indirectly_bound_value(attribute) {
 	const element = attribute.parent;
 	return (
 		attribute.name === 'value' &&

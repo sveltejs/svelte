@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { WhiteSpace, Comment, Function, Ident, LeftParenthesis } from 'css-tree/tokenizer';
 
-import { lookahead_is_range } from './lookahead_is_range';
+import { lookahead_is_range } from './lookahead_is_range.js';
 
 const CONTAINER_QUERY_KEYWORDS = new Set(['none', 'and', 'not', 'or']);
 

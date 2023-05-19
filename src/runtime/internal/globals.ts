@@ -1,7 +1,8 @@
-declare const global: any;
-
-export const globals = (typeof window !== 'undefined'
-	? window
-	: typeof globalThis !== 'undefined'
-	? globalThis
-	: global) as unknown as typeof globalThis;
+/** @type {typeof globalThis} */
+export const globals =
+	typeof window !== 'undefined'
+		? window
+		: typeof globalThis !== 'undefined'
+		? globalThis
+		: // @ts-ignore Node typings have this
+		  global;

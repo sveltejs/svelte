@@ -1,13 +1,19 @@
-import { Literal } from 'estree';
-export function string_literal(data: string): Literal {
+/**
+ * @param {string} data
+ * @returns {import('estree').Literal}
+ */
+export function string_literal(data) {
 	return {
 		type: 'Literal',
 		value: data
 	};
 }
-
-export function escape(data: string, { only_escape_at_symbol = false } = {}) {
-	return data.replace(only_escape_at_symbol ? /@+/g : /(@+|#+)/g, (match: string) => {
+/**
+ * @param {string} data
+ * @param {{ only_escape_at_symbol?: boolean }} [options]
+ */
+export function escape(data, { only_escape_at_symbol = false } = {}) {
+	return data.replace(only_escape_at_symbol ? /@+/g : /(@+|#+)/g, (match) => {
 		return match + match[0];
 	});
 }

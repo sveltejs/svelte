@@ -2,7 +2,11 @@
 
 const regex_return_characters = /\r/g;
 
-export default function hash(str: string): string {
+/**
+ * @param {string} str
+ * @returns {string}
+ */
+export default function hash(str) {
 	str = str.replace(regex_return_characters, '');
 	let hash = 5381;
 	let i = str.length;

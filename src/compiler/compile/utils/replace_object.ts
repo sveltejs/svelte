@@ -1,6 +1,8 @@
-import { Node } from 'estree';
-
-export default function replace_object(node: Node, replacement: Node) {
+/**
+ * @param {import('estree').Node} node
+ * @param {import('estree').Node} replacement
+ */
+export default function replace_object(node, replacement) {
 	if (node.type === 'Identifier') return replacement;
 
 	const ancestor = node;
@@ -9,6 +11,6 @@ export default function replace_object(node: Node, replacement: Node) {
 		parent = node;
 		node = node.object;
 	}
-	parent.object = replacement;
+	parent.object = /** @type {any} */ (replacement);
 	return ancestor;
 }

@@ -1,27 +1,35 @@
-import { TemplateNode } from '../../interfaces';
-import list from '../../utils/list';
-import compiler_errors from '../compiler_errors';
-import Component from '../Component';
-import { nodes_to_template_literal } from '../utils/nodes_to_template_literal';
-import Expression from './shared/Expression';
-import Node from './shared/Node';
-import TemplateScope from './shared/TemplateScope';
+import list from '../../utils/list.js';
+import compiler_errors from '../compiler_errors.js';
+import { nodes_to_template_literal } from '../utils/nodes_to_template_literal.js';
+import Expression from './shared/Expression.js';
+import Node from './shared/Node.js';
 
 const valid_modifiers = new Set(['important']);
 
+/** @extends Node<'StyleDirective'> */
 export default class StyleDirective extends Node {
-	type: 'StyleDirective';
-	name: string;
-	modifiers: Set<string>;
-	expression: Expression;
-	should_cache: boolean;
+	/** @type {string} */
+	name;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/** @type {Set<string>} */
+	modifiers;
+
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
+
+	/** @type {boolean} */
+	should_cache;
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		this.name = info.name;
 		this.modifiers = new Set(info.modifiers);
-
 		for (const modifier of this.modifiers) {
 			if (!valid_modifiers.has(modifier)) {
 				component.error(
@@ -30,18 +38,17 @@ export default class StyleDirective extends Node {
 				);
 			}
 		}
-
 		// Convert the value array to an expression so it's easier to handle
 		// the StyleDirective going forward.
 		if (info.value === true || (info.value.length === 1 && info.value[0].type === 'MustacheTag')) {
 			const identifier =
 				info.value === true
-					? ({
+					? /** @type {any} */ ({
 							type: 'Identifier',
 							start: info.end - info.name.length,
 							end: info.end,
 							name: info.name
-					  } as any)
+					  })
 					: info.value[0].expression;
 			this.expression = new Expression(component, this, scope, identifier);
 			this.should_cache = false;
@@ -51,7 +58,6 @@ export default class StyleDirective extends Node {
 			this.should_cache = raw_expression.expressions.length > 0;
 		}
 	}
-
 	get important() {
 		return this.modifiers.has('important');
 	}

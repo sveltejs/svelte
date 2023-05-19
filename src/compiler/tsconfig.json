@@ -3,7 +3,9 @@
 	"include": ["."],
 
 	"compilerOptions": {
-		"lib": ["es2017", "webworker"]
+		"lib": ["es2017", "webworker"],
+		"allowJs": true,
+		"checkJs": true
 
 		// TODO: remove mocha types from the whole project
 		// "types": ["node", "estree"]

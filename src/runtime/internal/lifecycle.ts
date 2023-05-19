@@ -1,7 +1,8 @@
-import { custom_event } from './dom';
+import { custom_event } from './dom.js';
 
 export let current_component;
 
+/** @returns {void} */
 export function set_current_component(component) {
 	current_component = component;
 }
@@ -17,8 +18,10 @@ export function get_current_component() {
  * The first time the callback runs will be before the initial `onMount`
  *
  * https://svelte.dev/docs#run-time-svelte-beforeupdate
+ * @param {() => any} fn
+ * @returns {void}
  */
-export function beforeUpdate(fn: () => any) {
+export function beforeUpdate(fn) {
 	get_current_component().$$.before_update.push(fn);
 }
 
@@ -32,12 +35,13 @@ export function beforeUpdate(fn: () => any) {
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
  *
  * https://svelte.dev/docs#run-time-svelte-onmount
+ * @template T
+ * @param {() => T extends Promise<() => any>
+ * 		? "Returning a function asynchronously from onMount won't call that function on destroy"
+ * 		: T} fn
+ * @returns {void}
  */
-export function onMount<T>(
-	fn: () => T extends Promise<() => any>
-		? "Returning a function asynchronously from onMount won't call that function on destroy"
-		: T
-): void {
+export function onMount(fn) {
 	get_current_component().$$.on_mount.push(fn);
 }
 
@@ -45,8 +49,10 @@ export function onMount<T>(
  * Schedules a callback to run immediately after the component has been updated.
  *
  * The first time the callback runs will be after the initial `onMount`
+ * @param {() => any} fn
+ * @returns {void}
  */
-export function afterUpdate(fn: () => any) {
+export function afterUpdate(fn) {
 	get_current_component().$$.after_update.push(fn);
 }
 
@@ -57,28 +63,11 @@ export function afterUpdate(fn: () => any) {
  * only one that runs inside a server-side component.
  *
  * https://svelte.dev/docs#run-time-svelte-ondestroy
+ * @param {() => any} fn
+ * @returns {void}
  */
-export function onDestroy(fn: () => any) {
+export function onDestroy(fn) {
 	get_current_component().$$.on_destroy.push(fn);
-}
-
-export interface EventDispatcher<EventMap extends Record<string, any>> {
-	// Implementation notes:
-	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
-	// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
-	<Type extends keyof EventMap>(
-		...args: [EventMap[Type]] extends [never]
-			? [type: Type, parameter?: null | undefined, options?: DispatchOptions]
-			: null extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
-			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
-			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
-	): boolean;
-}
-
-export interface DispatchOptions {
-	cancelable?: boolean;
 }
 
 /**
@@ -101,27 +90,24 @@ export interface DispatchOptions {
  * ```
  *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
+ * @template {Record<string, any>} [EventMap=any]
+ * @returns {import('./public.js').EventDispatcher<EventMap>}
  */
-export function createEventDispatcher<
-	EventMap extends Record<string, any> = any
->(): EventDispatcher<EventMap> {
+export function createEventDispatcher() {
 	const component = get_current_component();
-
-	return ((type: string, detail?: any, { cancelable = false } = {}): boolean => {
+	return (type, detail, { cancelable = false } = {}) => {
 		const callbacks = component.$$.callbacks[type];
-
 		if (callbacks) {
 			// TODO are there situations where events could be dispatched
 			// in a server (non-DOM) environment?
-			const event = custom_event(type, detail, { cancelable });
+			const event = custom_event(/** @type {string} */ (type), detail, { cancelable });
 			callbacks.slice().forEach((fn) => {
 				fn.call(component, event);
 			});
 			return !event.defaultPrevented;
 		}
-
 		return true;
-	}) as EventDispatcher<EventMap>;
+	};
 }
 
 /**
@@ -132,8 +118,12 @@ export function createEventDispatcher<
  * Like lifecycle functions, this must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-setcontext
+ * @template T
+ * @param {any} key
+ * @param {T} context
+ * @returns {T}
  */
-export function setContext<T>(key, context: T): T {
+export function setContext(key, context) {
 	get_current_component().$$.context.set(key, context);
 	return context;
 }
@@ -143,8 +133,11 @@ export function setContext<T>(key, context: T): T {
  * Must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-getcontext
+ * @template T
+ * @param {any} key
+ * @returns {T}
  */
-export function getContext<T>(key): T {
+export function getContext(key) {
 	return get_current_component().$$.context.get(key);
 }
 
@@ -154,8 +147,10 @@ export function getContext<T>(key): T {
  * programmatically create a component and want to pass the existing context to it.
  *
  * https://svelte.dev/docs#run-time-svelte-getallcontexts
+ * @template {Map<any, any>} [T=Map<any, any>]
+ * @returns {T}
  */
-export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
+export function getAllContexts() {
 	return get_current_component().$$.context;
 }
 
@@ -164,17 +159,23 @@ export function getAllContexts<T extends Map<any, any> = Map<any, any>>(): T {
  * Must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-hascontext
+ * @param {any} key
+ * @returns {boolean}
  */
-export function hasContext(key): boolean {
+export function hasContext(key) {
 	return get_current_component().$$.context.has(key);
 }
 
 // TODO figure out if we still want to support
 // shorthand events, or if we want to implement
 // a real bubbling mechanism
+/**
+ * @param component
+ * @param event
+ * @returns {void}
+ */
 export function bubble(component, event) {
 	const callbacks = component.$$.callbacks[event.type];
-
 	if (callbacks) {
 		// @ts-ignore
 		callbacks.slice().forEach((fn) => fn.call(this, event));

@@ -1,16 +1,20 @@
 // @ts-ignore
 // import parse from 'css-tree/parser'; // When css-tree supports container queries uncomment.
-import { parse } from './css-tree-cq/css_tree_parse'; // Use extended css-tree for container query support.
+import { parse } from './css-tree-cq/css_tree_parse.js'; // Use extended css-tree for container query support.
 import { walk } from 'estree-walker';
-import { Parser } from '../index';
-import { Node } from 'estree';
-import { Style } from '../../interfaces';
-import parser_errors from '../errors';
+import parser_errors from '../errors.js';
 
 const regex_closing_style_tag = /<\/style\s*>/;
 const regex_starts_with_closing_style_tag = /^<\/style\s*>/;
 
-export default function read_style(parser: Parser, start: number, attributes: Node[]): Style {
+/**
+ *
+ * @param {import('../index.js').Parser} parser
+ * @param {number} start
+ * @param {import('estree').Node[]} attributes
+ * @returns {import('../../interfaces.js').Style}
+ */
+export default function read_style(parser, start, attributes) {
 	const content_start = parser.index;
 
 	const styles = parser.read_until(regex_closing_style_tag, parser_errors.unclosed_style);
@@ -49,7 +53,8 @@ export default function read_style(parser: Parser, start: number, attributes: No
 
 	// tidy up AST
 	walk(ast, {
-		enter: (node: any) => {
+		/** @param {any} node */
+		enter: (node) => {
 			// `any` because this isn't an ESTree node
 			// replace `ref:a` nodes
 			if (node.type === 'Selector') {
@@ -101,7 +106,11 @@ export default function read_style(parser: Parser, start: number, attributes: No
 	};
 }
 
-function is_ref_selector(a: any, b: any) {
+/**
+ * @param {any} a
+ * @param {any} b
+ */
+function is_ref_selector(a, b) {
 	// TODO add CSS node types
 	if (!b) return false;
 

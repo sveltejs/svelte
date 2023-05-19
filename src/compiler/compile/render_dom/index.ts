@@ -1,66 +1,48 @@
-import type { RawSourceMap, DecodedSourceMap } from '@ampproject/remapping';
 import { b, x, p } from 'code-red';
-import Component from '../Component';
-import Renderer from './Renderer';
-import { CompileOptions, CssResult } from '../../interfaces';
+import Renderer from './Renderer.js';
 import { walk } from 'estree-walker';
-import { extract_names, Scope } from 'periscopic';
-import { invalidate } from './invalidate';
-import Block from './Block';
-import {
-	ImportDeclaration,
-	ClassDeclaration,
-	Node,
-	Statement,
-	ObjectExpression,
-	Expression
-} from 'estree';
-import { apply_preprocessor_sourcemap } from '../../utils/mapped_code';
-import { flatten } from '../../utils/flatten';
-import check_enable_sourcemap from '../utils/check_enable_sourcemap';
-import { push_array } from '../../utils/push_array';
+import { extract_names } from 'periscopic';
+import { invalidate } from './invalidate.js';
+import { apply_preprocessor_sourcemap } from '../../utils/mapped_code.js';
+import { flatten } from '../../utils/flatten.js';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap.js';
+import { push_array } from '../../utils/push_array.js';
 
-export default function dom(
-	component: Component,
-	options: CompileOptions
-): { js: Node[]; css: CssResult } {
+/**
+ * @param {import('../Component.js').default} component
+ * @param {import('../../interfaces.js').CompileOptions} options
+ * @returns {{ js: import('estree').Node[]; css: import('../../interfaces.js').CssResult; }}
+ */
+export default function dom(component, options) {
 	const { name } = component;
-
 	const renderer = new Renderer(component, options);
 	const { block } = renderer;
-
 	block.has_outro_method = true;
-
+	/** @type {import('estree').Node[][]} */
 	const body = [];
-
 	if (renderer.file_var) {
 		const file = component.file ? x`"${component.file}"` : x`undefined`;
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
-
 	const css = component.stylesheet.render(options.filename);
-
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
-
 	if (css_sourcemap_enabled) {
 		css.map = apply_preprocessor_sourcemap(
 			options.filename,
 			css.map,
-			options.sourcemap as string | RawSourceMap | DecodedSourceMap
+			/** @type {string | import('@ampproject/remapping').RawSourceMap | import('@ampproject/remapping').DecodedSourceMap} */ (
+				options.sourcemap
+			)
 		);
 	} else {
 		css.map = null;
 	}
-
 	const styles =
 		css_sourcemap_enabled && component.stylesheet.has_styles && options.dev
 			? `${css.code}\n/*# sourceMappingURL=${css.map.toUrl()} */`
 			: css.code;
-
 	const add_css = component.get_unique_name('add_css');
-
 	const should_add_css = !!styles && (options.customElement || options.css === 'injected');
-
 	if (should_add_css) {
 		body.push(b`
 			function ${add_css}(target) {
@@ -68,41 +50,38 @@ export default function dom(
 			}
 		`);
 	}
-
 	// fix order
 	// TODO the deconflicted names of blocks are reversed... should set them here
 	const blocks = renderer.blocks.slice().reverse();
-
 	push_array(
 		body,
 		blocks.map((block) => {
 			// TODO this is a horrible mess — renderer.blocks
 			// contains a mixture of Blocks and Nodes
-			if ((block as Block).render) return (block as Block).render();
+			if (/** @type {import('./Block.js').default} */ (block).render)
+				return /** @type {import('./Block.js').default} */ (block).render();
 			return block;
 		})
 	);
-
 	if (options.dev && !options.hydratable) {
 		block.chunks.claim.push(
 			b`throw new @_Error("options.hydrate only works if the component was compiled with the \`hydratable: true\` option");`
 		);
 	}
-
 	const uses_slots = component.var_lookup.has('$$slots');
-	let compute_slots: Node[] | undefined;
+
+	/** @type {import('estree').Node[] | undefined} */
+	let compute_slots;
 	if (uses_slots) {
 		compute_slots = b`
 			const $$slots = @compute_slots(#slots);
 		`;
 	}
-
 	const uses_props = component.var_lookup.has('$$props');
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const $$props = uses_props || uses_rest ? '$$new_props' : '$$props';
 	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
 	const writable_props = props.filter((variable) => variable.writable);
-
 	const omit_props_names = component.get_unique_name('omit_props_names');
 	const compute_rest = x`@compute_rest_props($$props, ${omit_props_names.name})`;
 	const rest = uses_rest
@@ -111,7 +90,6 @@ export default function dom(
 		let $$restProps = ${compute_rest};
 	`
 		: null;
-
 	const set =
 		uses_props || uses_rest || writable_props.length > 0 || component.slots.size > 0
 			? x`
@@ -146,18 +124,22 @@ export default function dom(
 			}
 		`
 			: null;
-
 	const accessors = [];
-
 	const not_equal = component.component_options.immutable ? x`@not_equal` : x`@safe_not_equal`;
-	let missing_props_check: Node[] | Node;
-	let inject_state: Expression;
-	let capture_state: Expression;
-	let props_inject: Node[] | Node;
 
+	/** @type {import('estree').Node[] | import('estree').Node} */
+	let missing_props_check;
+
+	/** @type {import('estree').Expression} */
+	let inject_state;
+
+	/** @type {import('estree').Expression} */
+	let capture_state;
+
+	/** @type {import('estree').Node[] | import('estree').Node} */
+	let props_inject;
 	props.forEach((prop) => {
 		const variable = component.var_lookup.get(prop.name);
-
 		if (!variable.writable || component.component_options.accessors) {
 			accessors.push({
 				type: 'MethodDefinition',
@@ -181,7 +163,6 @@ export default function dom(
 				}`
 			});
 		}
-
 		if (component.component_options.accessors) {
 			if (variable.writable && !renderer.readonly.has(prop.name)) {
 				accessors.push({
@@ -214,7 +195,6 @@ export default function dom(
 			});
 		}
 	});
-
 	component.instance_exports_from.forEach((exports_from) => {
 		const import_declaration = {
 			...exports_from,
@@ -222,8 +202,7 @@ export default function dom(
 			specifiers: [],
 			source: exports_from.source
 		};
-		component.imports.push(import_declaration as ImportDeclaration);
-
+		component.imports.push(/** @type {import('estree').ImportDeclaration} */ (import_declaration));
 		exports_from.specifiers.forEach((specifier) => {
 			if (component.component_options.accessors) {
 				const name = component.get_unique_name(specifier.exported.name);
@@ -233,7 +212,6 @@ export default function dom(
 					imported: specifier.local,
 					local: name
 				});
-
 				accessors.push({
 					type: 'MethodDefinition',
 					kind: 'get',
@@ -254,11 +232,9 @@ export default function dom(
 			}
 		});
 	});
-
 	if (component.compile_options.dev) {
 		// checking that expected ones were passed
 		const expected = props.filter((prop) => prop.writable && !prop.initialised);
-
 		if (expected.length) {
 			missing_props_check = b`
 				$$self.$$.on_mount.push(function () {
@@ -271,19 +247,15 @@ export default function dom(
 				});
 			`;
 		}
-
 		const capturable_vars = component.vars.filter(
 			(v) => !v.internal && !v.global && !v.name.startsWith('$$')
 		);
-
 		if (capturable_vars.length > 0) {
 			capture_state = x`() => ({ ${capturable_vars.map((prop) => p`${prop.name}`)} })`;
 		}
-
 		const injectable_vars = capturable_vars.filter(
 			(v) => !v.module && v.writable && v.name[0] !== '$'
 		);
-
 		if (uses_props || injectable_vars.length > 0) {
 			inject_state = x`
 				${$$props} => {
@@ -300,7 +272,6 @@ export default function dom(
 					)}
 				}
 			`;
-
 			props_inject = b`
 				if ($$props && "$$inject" in $$props) {
 					$$self.$inject_state($$props.$$inject);
@@ -308,18 +279,17 @@ export default function dom(
 			`;
 		}
 	}
-
 	// instrument assignments
 	if (component.ast.instance) {
 		let scope = component.instance_scope;
 		const map = component.instance_scope_map;
-		let execution_context: Node | null = null;
 
+		/** @type {import('estree').Node | null} */
+		let execution_context = null;
 		walk(component.ast.instance.content, {
-			enter(node: Node) {
+			enter(node) {
 				if (map.has(node)) {
-					scope = map.get(node) as Scope;
-
+					scope = /** @type {import('periscopic').Scope} */ (map.get(node));
 					if (!execution_context && !scope.block) {
 						execution_context = node;
 					}
@@ -331,47 +301,37 @@ export default function dom(
 					execution_context = node;
 				}
 			},
-
-			leave(node: Node) {
+			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
-
 				if (execution_context === node) {
 					execution_context = null;
 				}
-
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-
 					// normally (`a = 1`, `b.c = 2`), there'll be a single name
 					// (a or b). In destructuring cases (`[d, e] = [e, d]`) there
 					// may be more, in which case we need to tack the extra ones
 					// onto the initial function call
-					const names = new Set(extract_names(assignee as Node));
-
+					const names = new Set(extract_names(/** @type {import('estree').Node} */ (assignee)));
 					this.replace(invalidate(renderer, scope, node, names, execution_context === null));
 				}
 			}
 		});
-
 		component.rewrite_props(({ name, reassigned, export_name }) => {
 			const value = `$${name}`;
 			const i = renderer.context_lookup.get(`$${name}`).index;
-
 			const insert =
 				reassigned || export_name
 					? b`${`$$subscribe_${name}`}()`
 					: b`@component_subscribe($$self, ${name}, #value => $$invalidate(${i}, ${value} = #value))`;
-
 			if (component.compile_options.dev) {
 				return b`@validate_store(${name}, '${name}'); ${insert}`;
 			}
-
 			return insert;
 		});
 	}
-
 	const args = [x`$$self`];
 	const has_invalidate =
 		props.length > 0 ||
@@ -394,26 +354,20 @@ export default function dom(
 			}
 		`);
 	}
-
 	body.push(b`
 		${component.extract_javascript(component.ast.module)}
 
 		${component.fully_hoisted}
 	`);
-
 	const filtered_props = props.filter((prop) => {
 		const variable = component.var_lookup.get(prop.name);
-
 		if (variable.hoistable) return false;
 		return prop.name[0] !== '$';
 	});
-
 	const reactive_stores = component.vars.filter(
 		(variable) => variable.name[0] === '$' && variable.name[1] !== '$'
 	);
-
 	const instance_javascript = component.extract_javascript(component.ast.instance);
-
 	const has_definition =
 		component.compile_options.dev ||
 		(instance_javascript && instance_javascript.length > 0) ||
@@ -424,11 +378,9 @@ export default function dom(
 		component.reactive_declarations.length > 0 ||
 		capture_state ||
 		inject_state;
-
 	const definition = has_definition
 		? component.alias('instance')
 		: { type: 'Literal', value: null };
-
 	const reactive_store_subscriptions = reactive_stores
 		.filter((store) => {
 			const variable = component.var_lookup.get(store.name.slice(1));
@@ -442,63 +394,57 @@ export default function dom(
 			}, ${name} = $$value));
 		`
 		);
-
 	const resubscribable_reactive_store_unsubscribers = reactive_stores
 		.filter((store) => {
 			const variable = component.var_lookup.get(store.name.slice(1));
 			return variable && (variable.reassigned || variable.export_name);
 		})
 		.map(({ name }) => b`$$self.$$.on_destroy.push(() => ${`$$unsubscribe_${name.slice(1)}`}());`);
-
 	if (has_definition) {
-		const reactive_declarations: Node | Node[] = [];
-		const fixed_reactive_declarations: Node[] = []; // not really 'reactive' but whatever
+		/** @type {import('estree').Node | import('estree').Node[]} */
+		const reactive_declarations = [];
 
+		/** @type {import('estree').Node[]} */
+		const fixed_reactive_declarations = []; // not really 'reactive' but whatever
 		component.reactive_declarations.forEach((d) => {
 			const dependencies = Array.from(d.dependencies);
 			const uses_rest_or_props = !!dependencies.find((n) => n === '$$props' || n === '$$restProps');
-
 			const writable = dependencies.filter((n) => {
 				const variable = component.var_lookup.get(n);
 				return variable && (variable.export_name || variable.mutated || variable.reassigned);
 			});
-
 			const condition =
 				!uses_rest_or_props && writable.length > 0 && renderer.dirty(writable, true);
-
 			let statement = d.node; // TODO remove label (use d.node.body) if it's not referenced
-
-			if (condition) statement = b`if (${condition}) { ${statement} }`[0] as Statement;
-
+			if (condition)
+				statement = /** @type {import('estree').Statement} */ (
+					b`if (${condition}) { ${statement} }`[0]
+				);
 			if (condition || uses_rest_or_props) {
 				reactive_declarations.push(statement);
 			} else {
 				fixed_reactive_declarations.push(statement);
 			}
 		});
-
 		const injected = Array.from(component.injected_reactive_declaration_vars).filter((name) => {
 			const variable = component.var_lookup.get(name);
 			return variable.injected && variable.name[0] !== '$';
 		});
-
 		const reactive_store_declarations = reactive_stores.map((variable) => {
 			const $name = variable.name;
 			const name = $name.slice(1);
-
 			const store = component.var_lookup.get(name);
 			if (store && (store.reassigned || store.export_name)) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
-
 				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
 			}
-
 			return b`let ${$name};`;
 		});
 
-		let unknown_props_check: Node[] | undefined;
+		/** @type {import('estree').Node[] | undefined} */
+		let unknown_props_check;
 		if (component.compile_options.dev && !(uses_props || uses_rest)) {
 			unknown_props_check = b`
 				const writable_props = [${writable_props.map((prop) => x`'${prop.export_name}'`)}];
@@ -509,18 +455,16 @@ export default function dom(
 				});
 			`;
 		}
-
 		const return_value = {
 			type: 'ArrayExpression',
 			elements: renderer.initial_context.map(
 				(member) =>
-					({
+					/** @type {import('estree').Expression} */ ({
 						type: 'Identifier',
 						name: member.name
-					} as Expression)
+					})
 			)
 		};
-
 		body.push(b`
 			function ${definition}(${args}) {
 				${injected.map((name) => b`let ${name};`)}
@@ -583,26 +527,24 @@ export default function dom(
 			}
 		`);
 	}
-
-	const prop_indexes = x`{
+	const prop_indexes = /** @type {import('estree').ObjectExpression} */ (
+		x`{
 		${props
 			.filter((v) => v.export_name && !v.module)
 			.map((v) => p`${v.export_name}: ${renderer.context_lookup.get(v.name).index}`)}
-	}` as ObjectExpression;
-
+	}`
+	);
 	let dirty;
 	if (renderer.context_overflow) {
 		dirty = x`[]`;
 		for (let i = 0; i < renderer.context.length; i += 31) {
-			dirty.elements.push(x`-1`);
+			/** @type {any} */ (dirty).elements.push(x`-1`);
 		}
 	}
-
 	const superclass = {
 		type: 'Identifier',
 		name: options.dev ? '@SvelteComponentDev' : '@SvelteComponent'
 	};
-
 	const optional_parameters = [];
 	if (should_add_css) {
 		optional_parameters.push(add_css);
@@ -612,25 +554,24 @@ export default function dom(
 	if (dirty) {
 		optional_parameters.push(dirty);
 	}
-
-	const declaration = b`
+	const declaration = /** @type {import('estree').ClassDeclaration} */ (
+		b`
 		class ${name} extends ${superclass} {
 			constructor(options) {
 				super(${options.dev && 'options'});
 				@init(this, options, ${definition}, ${
-		has_create_fragment ? 'create_fragment' : 'null'
-	}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
+			has_create_fragment ? 'create_fragment' : 'null'
+		}, ${not_equal}, ${prop_indexes}, ${optional_parameters});
 				${
 					options.dev &&
 					b`@dispatch_dev("SvelteRegisterComponent", { component: this, tagName: "${name.name}", options, id: create_fragment.name });`
 				}
 			}
 		}
-	`[0] as ClassDeclaration;
-
+	`[0]
+	);
 	push_array(declaration.body.body, accessors);
-	body.push(declaration);
-
+	body.push(/** @type {any} */ (declaration));
 	if (options.customElement) {
 		const props_str = writable_props.reduce((def, prop) => {
 			def[prop.export_name] =
@@ -647,7 +588,6 @@ export default function dom(
 			.join(',');
 		const use_shadow_dom =
 			component.component_options.customElement?.shadow !== 'none' ? 'true' : 'false';
-
 		if (component.component_options.customElement?.tag) {
 			body.push(
 				b`@_customElements.define("${
@@ -664,6 +604,5 @@ export default function dom(
 			);
 		}
 	}
-
 	return { js: flatten(body), css };
 }

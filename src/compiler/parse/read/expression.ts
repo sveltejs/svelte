@@ -1,10 +1,12 @@
-import { parse_expression_at } from '../acorn';
-import { Parser } from '../index';
-import { Node } from 'estree';
-import { regex_whitespace } from '../../utils/patterns';
-import parser_errors from '../errors';
+import { parse_expression_at } from '../acorn.js';
+import { regex_whitespace } from '../../utils/patterns.js';
+import parser_errors from '../errors.js';
 
-export default function read_expression(parser: Parser): Node {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {import('estree').Node | undefined}
+ */
+export default function read_expression(parser) {
 	try {
 		const node = parse_expression_at(parser.template, parser.index);
 
@@ -29,7 +31,7 @@ export default function read_expression(parser: Parser): Node {
 
 		parser.index = index;
 
-		return node as Node;
+		return node;
 	} catch (err) {
 		parser.acorn_error(err);
 	}

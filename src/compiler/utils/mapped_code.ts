@@ -1,24 +1,20 @@
-import type { DecodedSourceMap, RawSourceMap, SourceMapLoader } from '@ampproject/remapping';
 import remapping from '@ampproject/remapping';
-import { SourceMap } from 'magic-string';
-import { Source, Processed } from '../preprocess/types';
-import { push_array } from './push_array';
+import { push_array } from './push_array.js';
 
-export type SourceLocation = {
-	line: number;
-	column: number;
-};
-
-function last_line_length(s: string) {
+/**
+ * @param {string} s
+ */
+function last_line_length(s) {
 	return s.length - s.lastIndexOf('\n') - 1;
 }
-
 // mutate map in-place
-export function sourcemap_add_offset(
-	map: DecodedSourceMap,
-	offset: SourceLocation,
-	source_index: number
-) {
+
+/**
+ * @param {import('@ampproject/remapping').DecodedSourceMap} map
+ * @param {{ line: number; column: number; }} offset
+ * @param {number} source_index
+ */
+export function sourcemap_add_offset(map, offset, source_index) {
 	if (map.mappings.length == 0) return;
 	for (let line = 0; line < map.mappings.length; line++) {
 		const segment_list = map.mappings[line];
@@ -38,7 +34,13 @@ export function sourcemap_add_offset(
 	}
 }
 
-function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boolean, boolean] {
+/**
+ * @template T
+ * @param {T[]} this_table
+ * @param {T[]} other_table
+ * @returns {[T[], number[], boolean, boolean]}
+ */
+function merge_tables(this_table, other_table) {
 	const new_table = this_table.slice();
 	const idx_map = [];
 	other_table = other_table || [];
@@ -63,17 +65,22 @@ function merge_tables<T>(this_table: T[], other_table: T[]): [T[], number[], boo
 	}
 	return [new_table, idx_map, val_changed, idx_changed];
 }
-
 const regex_line_token = /([^\d\w\s]|\s+)/g;
-
+/** */
 export class MappedCode {
-	string: string;
-	map: DecodedSourceMap;
+	/**
+	 * @type {string}
+	 */
+	string = undefined;
 
-	constructor(string = '', map: DecodedSourceMap = null) {
+	/**
+	 * @type {import('@ampproject/remapping').DecodedSourceMap}
+	 */
+	map = undefined;
+	constructor(string = '', map = null) {
 		this.string = string;
 		if (map) {
-			this.map = map as DecodedSourceMap;
+			this.map = map;
 		} else {
 			this.map = {
 				version: 3,
@@ -83,12 +90,13 @@ export class MappedCode {
 			};
 		}
 	}
-
 	/**
 	 * concat in-place (mutable), return this (chainable)
 	 * will also mutate the `other` object
+	 * @param {MappedCode} other
+	 * @returns {MappedCode}
 	 */
-	concat(other: MappedCode): MappedCode {
+	concat(other) {
 		// noop: if one is empty, return the other
 		if (other.string == '') return this;
 		if (this.string == '') {
@@ -96,17 +104,12 @@ export class MappedCode {
 			this.map = other.map;
 			return this;
 		}
-
 		// compute last line length before mutating
 		const column_offset = last_line_length(this.string);
-
 		this.string += other.string;
-
 		const m1 = this.map;
 		const m2 = other.map;
-
 		if (m2.mappings.length == 0) return this;
-
 		// combine sources and names
 		const [sources, new_source_idx, sources_changed, sources_idx_changed] = merge_tables(
 			m1.sources,
@@ -116,10 +119,8 @@ export class MappedCode {
 			m1.names,
 			m2.names
 		);
-
 		if (sources_changed) m1.sources = sources;
 		if (names_changed) m1.names = names;
-
 		// unswitched loops are faster
 		if (sources_idx_changed && names_idx_changed) {
 			for (let line = 0; line < m2.mappings.length; line++) {
@@ -147,33 +148,32 @@ export class MappedCode {
 				}
 			}
 		}
-
 		// combine the mappings
-
 		// combine
 		// 1. last line of first map
 		// 2. first line of second map
 		// columns of 2 must be shifted
-
 		if (m2.mappings.length > 0 && column_offset > 0) {
 			const first_line = m2.mappings[0];
 			for (let i = 0; i < first_line.length; i++) {
 				first_line[i][0] += column_offset;
 			}
 		}
-
 		// combine last line + first line
 		push_array(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
-
 		// append other lines
 		push_array(m1.mappings, m2.mappings);
-
 		return this;
 	}
 
-	static from_processed(string: string, map?: DecodedSourceMap): MappedCode {
+	/**
+	 * @static
+	 * @param {string} string
+	 * @param {import('@ampproject/remapping').DecodedSourceMap} [map]
+	 * @returns {MappedCode}
+	 */
+	static from_processed(string, map) {
 		const line_count = string.split('\n').length;
-
 		if (map) {
 			// ensure that count of source map mappings lines
 			// is equal to count of generated code lines
@@ -184,22 +184,30 @@ export class MappedCode {
 			}
 			return new MappedCode(string, map);
 		}
-
 		if (string == '') return new MappedCode();
 		map = { version: 3, names: [], sources: [], mappings: [] };
-
 		// add empty SourceMapSegment[] for every line
 		for (let i = 0; i < line_count; i++) map.mappings.push([]);
 		return new MappedCode(string, map);
 	}
 
-	static from_source({ source, file_basename, get_location }: Source): MappedCode {
-		let offset: SourceLocation = get_location(0);
-
+	/**
+	 * @static
+	 * @param {import('../preprocess/private.js').Source} opts
+	 * @returns {MappedCode}
+	 */
+	static from_source({ source, file_basename, get_location }) {
+		/**
+		 * @type {{ line: number; column: number; }}
+		 */
+		let offset = get_location(0);
 		if (!offset) offset = { line: 0, column: 0 };
-		const map: DecodedSourceMap = { version: 3, names: [], sources: [file_basename], mappings: [] };
-		if (source == '') return new MappedCode(source, map);
 
+		/**
+		 * @type {import('@ampproject/remapping').DecodedSourceMap}
+		 */
+		const map = { version: 3, names: [], sources: [file_basename], mappings: [] };
+		if (source == '') return new MappedCode(source, map);
 		// we create a high resolution identity map here,
 		// we know that it will eventually be merged with svelte's map,
 		// at which stage the resolution will decrease.
@@ -222,12 +230,12 @@ export class MappedCode {
 	}
 }
 
-export function combine_sourcemaps(
-	filename: string,
-	sourcemap_list: Array<DecodedSourceMap | RawSourceMap>
-) {
+/**
+ * @param {string} filename
+ * @param {Array<import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap>} sourcemap_list
+ */
+export function combine_sourcemaps(filename, sourcemap_list) {
 	if (sourcemap_list.length == 0) return null;
-
 	let map_idx = 1;
 	const map =
 		sourcemap_list.slice(0, -1).find((m) => m.sources.length !== 1) === undefined
@@ -241,48 +249,40 @@ export function combine_sourcemaps(
 			: remapping(
 					// use loader interface
 					sourcemap_list[0], // last map
-					function loader(sourcefile) {
+					(sourcefile) => {
 						if (sourcefile === filename && sourcemap_list[map_idx]) {
 							return sourcemap_list[map_idx++]; // idx 1, 2, ...
 							// bundle file = branch node
 						} else {
 							return null; // source file = leaf node
 						}
-					} as SourceMapLoader,
+					},
 					true
 			  );
-
 	if (!map.file) delete map.file; // skip optional field `file`
-
 	// When source maps are combined and the leading map is empty, sources is not set.
 	// Add the filename to the empty array in this case.
 	// Further improvements to remapping may help address this as well https://github.com/ampproject/remapping/issues/116
 	if (!map.sources.length) map.sources = [filename];
-
 	return map;
 }
-
 // browser vs node.js
 const b64enc = typeof btoa == 'function' ? btoa : (b) => Buffer.from(b).toString('base64');
 const b64dec = typeof atob == 'function' ? atob : (a) => Buffer.from(a, 'base64').toString();
 
-export function apply_preprocessor_sourcemap(
-	filename: string,
-	svelte_map: SourceMap,
-	preprocessor_map_input: string | DecodedSourceMap | RawSourceMap
-): SourceMap {
+/**
+ * @param {string} filename
+ * @param {import('magic-string').SourceMap} svelte_map
+ * @param {string | import('@ampproject/remapping').DecodedSourceMap | import('@ampproject/remapping').RawSourceMap} preprocessor_map_input
+ * @returns {import('magic-string').SourceMap}
+ */
+export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_map_input) {
 	if (!svelte_map || !preprocessor_map_input) return svelte_map;
-
 	const preprocessor_map =
 		typeof preprocessor_map_input === 'string'
 			? JSON.parse(preprocessor_map_input)
 			: preprocessor_map_input;
-
-	const result_map = combine_sourcemaps(filename, [
-		svelte_map as RawSourceMap,
-		preprocessor_map
-	]) as RawSourceMap;
-
+	const result_map = combine_sourcemaps(filename, [svelte_map, preprocessor_map]);
 	// Svelte expects a SourceMap which includes toUrl and toString. Instead of wrapping our output in a class,
 	// we just tack on the extra properties.
 	Object.defineProperties(result_map, {
@@ -299,19 +299,26 @@ export function apply_preprocessor_sourcemap(
 			}
 		}
 	});
-
-	return result_map as SourceMap;
+	return /** @type {import('magic-string').SourceMap} */ (result_map);
 }
-
 const regex_data_uri = /data:(?:application|text)\/json;(?:charset[:=]\S+?;)?base64,(\S*)/;
-
 // parse attached sourcemap in processed.code
-export function parse_attached_sourcemap(processed: Processed, tag_name: 'script' | 'style'): void {
+
+/**
+ * @param {import('../preprocess/public.js').Processed} processed
+ * @param {'script' | 'style'} tag_name
+ * @returns {void}
+ */
+export function parse_attached_sourcemap(processed, tag_name) {
 	const r_in = '[#@]\\s*sourceMappingURL\\s*=\\s*(\\S*)';
 	const regex =
 		tag_name == 'script'
 			? new RegExp('(?://' + r_in + ')|(?:/\\*' + r_in + '\\s*\\*/)$')
 			: new RegExp('/\\*' + r_in + '\\s*\\*/$');
+
+	/**
+	 * @param {any} message
+	 */
 	function log_warning(message) {
 		// code_start: help to find preprocessor
 		const code_start =

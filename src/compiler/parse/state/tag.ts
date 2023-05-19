@@ -1,20 +1,16 @@
-import { Directive, DirectiveType, TemplateNode, Text } from '../../interfaces';
-import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore';
-import fuzzymatch from '../../utils/fuzzymatch';
-import { is_void } from '../../../shared/utils/names';
-import parser_errors from '../errors';
-import { Parser } from '../index';
-import read_expression from '../read/expression';
-import read_script from '../read/script';
-import read_style from '../read/style';
-import { closing_tag_omitted, decode_character_references } from '../utils/html';
+import { extract_svelte_ignore } from '../../utils/extract_svelte_ignore.js';
+import fuzzymatch from '../../utils/fuzzymatch.js';
+import { is_void } from '../../../shared/utils/names.js';
+import parser_errors from '../errors.js';
+import read_expression from '../read/expression.js';
+import read_script from '../read/script.js';
+import read_style from '../read/style.js';
+import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
-
 /** Invalid attribute characters if the attribute is not surrounded by quotes */
 const regex_starts_with_invalid_attr_value = /^(\/>|[\s"'=<>`])/;
-
 const meta_tags = new Map([
 	['svelte:head', 'Head'],
 	['svelte:options', 'Options'],
@@ -22,14 +18,12 @@ const meta_tags = new Map([
 	['svelte:document', 'Document'],
 	['svelte:body', 'Body']
 ]);
-
 const valid_meta_tags = Array.from(meta_tags.keys()).concat(
 	'svelte:self',
 	'svelte:component',
 	'svelte:fragment',
 	'svelte:element'
 );
-
 const specials = new Map([
 	[
 		'script',
@@ -46,12 +40,10 @@ const specials = new Map([
 		}
 	]
 ]);
-
 const SELF = /^svelte:self(?=[\s/>])/;
 const COMPONENT = /^svelte:component(?=[\s/>])/;
 const SLOT = /^svelte:fragment(?=[\s/>])/;
 const ELEMENT = /^svelte:element(?=[\s/>])/;
-
 function parent_is_head(stack) {
 	let i = stack.length;
 	while (i--) {
@@ -61,20 +53,19 @@ function parent_is_head(stack) {
 	}
 	return false;
 }
-
 const regex_closing_textarea_tag = /^<\/textarea(\s[^>]*)?>/i;
 const regex_closing_comment = /-->/;
 const regex_capital_letter = /[A-Z]/;
 
-export default function tag(parser: Parser) {
+/**
+ * @param {import('../index.js').Parser} parser
+ */
+export default function tag(parser) {
 	const start = parser.index++;
-
 	let parent = parser.current();
-
 	if (parser.eat('!--')) {
 		const data = parser.read_until(regex_closing_comment);
 		parser.eat('-->', true, parser_errors.unclosed_comment);
-
 		parser.current().children.push({
 			start,
 			end: parser.index,
@@ -82,14 +73,10 @@ export default function tag(parser: Parser) {
 			data,
 			ignores: extract_svelte_ignore(data)
 		});
-
 		return;
 	}
-
 	const is_closing_tag = parser.eat('/');
-
 	const name = read_tag_name(parser);
-
 	if (meta_tags.has(name)) {
 		const slug = meta_tags.get(name).toLowerCase();
 		if (is_closing_tag) {
@@ -106,15 +93,12 @@ export default function tag(parser: Parser) {
 			if (name in parser.meta_tags) {
 				parser.error(parser_errors.duplicate_element(slug, name), start);
 			}
-
 			if (parser.stack.length > 1) {
 				parser.error(parser_errors.invalid_element_placement(slug, name), start);
 			}
-
 			parser.meta_tags[name] = true;
 		}
 	}
-
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
@@ -127,24 +111,23 @@ export default function tag(parser: Parser) {
 		? 'Slot'
 		: 'Element';
 
-	const element: TemplateNode = {
+	/**
+	 * @type {import('../../interfaces.js').TemplateNode}
+	 */
+	const element = {
 		start,
-		end: null, // filled in later
+		end: null,
 		type,
 		name,
 		attributes: [],
 		children: []
 	};
-
 	parser.allow_whitespace();
-
 	if (is_closing_tag) {
 		if (is_void(name)) {
 			parser.error(parser_errors.invalid_void_content(name), start);
 		}
-
 		parser.eat('>', true);
-
 		// close any elements that don't have their own closing tags, e.g. <div><p></div>
 		while (parent.name !== name) {
 			if (parent.type !== 'Element') {
@@ -154,20 +137,15 @@ export default function tag(parser: Parser) {
 						: parser_errors.invalid_closing_tag_unopened(name);
 				parser.error(error, start);
 			}
-
 			parent.end = start;
 			parser.stack.pop();
-
 			parent = parser.current();
 		}
-
 		parent.end = parser.index;
 		parser.stack.pop();
-
 		if (parser.last_auto_closed_tag && parser.stack.length < parser.last_auto_closed_tag.depth) {
 			parser.last_auto_closed_tag = null;
 		}
-
 		return;
 	} else if (closing_tag_omitted(parent.name, name)) {
 		parent.end = start;
@@ -179,14 +157,15 @@ export default function tag(parser: Parser) {
 		};
 	}
 
-	const unique_names: Set<string> = new Set();
-
+	/**
+	 * @type {Set<string>}
+	 */
+	const unique_names = new Set();
 	let attribute;
 	while ((attribute = read_attribute(parser, unique_names))) {
 		element.attributes.push(attribute);
 		parser.allow_whitespace();
 	}
-
 	if (name === 'svelte:component') {
 		const index = element.attributes.findIndex(
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
@@ -194,7 +173,6 @@ export default function tag(parser: Parser) {
 		if (index === -1) {
 			parser.error(parser_errors.missing_component_definition, start);
 		}
-
 		const definition = element.attributes.splice(index, 1)[0];
 		if (
 			definition.value === true ||
@@ -203,10 +181,8 @@ export default function tag(parser: Parser) {
 		) {
 			parser.error(parser_errors.invalid_component_definition, definition.start);
 		}
-
 		element.expression = definition.value[0].expression;
 	}
-
 	if (name === 'svelte:element') {
 		const index = element.attributes.findIndex(
 			(attr) => attr.type === 'Attribute' && attr.name === 'this'
@@ -214,30 +190,23 @@ export default function tag(parser: Parser) {
 		if (index === -1) {
 			parser.error(parser_errors.missing_element_definition, start);
 		}
-
 		const definition = element.attributes.splice(index, 1)[0];
 		if (definition.value === true) {
 			parser.error(parser_errors.invalid_element_definition, definition.start);
 		}
 		element.tag = definition.value[0].data || definition.value[0].expression;
 	}
-
 	// special cases – top-level <script> and <style>
 	if (specials.has(name) && parser.stack.length === 1) {
 		const special = specials.get(name);
-
 		parser.eat('>', true);
 		const content = special.read(parser, start, element.attributes);
 		if (content) parser[special.property].push(content);
 		return;
 	}
-
 	parser.current().children.push(element);
-
 	const self_closing = parser.eat('/') || is_void(name);
-
 	parser.eat('>', true);
-
 	if (self_closing) {
 		// don't push self-closing elements onto the stack
 		element.end = parser.index;
@@ -262,18 +231,18 @@ export default function tag(parser: Parser) {
 		parser.stack.push(element);
 	}
 }
-
 const regex_whitespace_or_slash_or_closing_tag = /(\s|\/|>)/;
 
-function read_tag_name(parser: Parser) {
+/**
+ * @param {import('../index.js').Parser} parser
+ */
+function read_tag_name(parser) {
 	const start = parser.index;
-
 	if (parser.read(SELF)) {
 		// check we're inside a block, otherwise this
 		// will cause infinite recursion
 		let i = parser.stack.length;
 		let legal = false;
-
 		while (i--) {
 			const fragment = parser.stack[i];
 			if (
@@ -285,59 +254,51 @@ function read_tag_name(parser: Parser) {
 				break;
 			}
 		}
-
 		if (!legal) {
 			parser.error(parser_errors.invalid_self_placement, start);
 		}
-
 		return 'svelte:self';
 	}
-
 	if (parser.read(COMPONENT)) return 'svelte:component';
 	if (parser.read(ELEMENT)) return 'svelte:element';
-
 	if (parser.read(SLOT)) return 'svelte:fragment';
-
 	const name = parser.read_until(regex_whitespace_or_slash_or_closing_tag);
-
 	if (meta_tags.has(name)) return name;
-
 	if (name.startsWith('svelte:')) {
 		const match = fuzzymatch(name.slice(7), valid_meta_tags);
-
 		parser.error(parser_errors.invalid_tag_name_svelte_element(valid_meta_tags, match), start);
 	}
-
 	if (!valid_tag_name.test(name)) {
 		parser.error(parser_errors.invalid_tag_name, start);
 	}
-
 	return name;
 }
-
 // eslint-disable-next-line no-useless-escape
 const regex_token_ending_character = /[\s=\/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
 
-function read_attribute(parser: Parser, unique_names: Set<string>) {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @param {Set<string>} unique_names
+ */
+function read_attribute(parser, unique_names) {
 	const start = parser.index;
 
-	function check_unique(name: string) {
+	/**
+	 * @param {string} name
+	 */
+	function check_unique(name) {
 		if (unique_names.has(name)) {
 			parser.error(parser_errors.duplicate_attribute, start);
 		}
 		unique_names.add(name);
 	}
-
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
-
 		if (parser.eat('...')) {
 			const expression = read_expression(parser);
-
 			parser.allow_whitespace();
 			parser.eat('}', true);
-
 			return {
 				start,
 				end: parser.index,
@@ -346,17 +307,13 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			};
 		} else {
 			const value_start = parser.index;
-
 			const name = parser.read_identifier();
 			parser.allow_whitespace();
 			parser.eat('}', true);
-
 			if (name === null) {
 				parser.error(parser_errors.empty_attribute_shorthand, start);
 			}
-
 			check_unique(name);
-
 			return {
 				start,
 				end: parser.index,
@@ -378,18 +335,17 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			};
 		}
 	}
-
 	const name = parser.read_until(regex_token_ending_character);
 	if (!name) return null;
-
 	let end = parser.index;
-
 	parser.allow_whitespace();
-
 	const colon_index = name.indexOf(':');
 	const type = colon_index !== -1 && get_directive_type(name.slice(0, colon_index));
 
-	let value: any[] | true = true;
+	/**
+	 * @type {any[] | true}
+	 */
+	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
 		value = read_attribute_value(parser);
@@ -397,24 +353,19 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		parser.error(parser_errors.unexpected_token('='), parser.index);
 	}
-
 	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
-
 		if (directive_name === '') {
 			parser.error(parser_errors.empty_directive_name(type), start + colon_index + 1);
 		}
-
 		if (type === 'Binding' && directive_name !== 'this') {
 			check_unique(directive_name);
 		} else if (type !== 'EventHandler' && type !== 'Action') {
 			check_unique(name);
 		}
-
 		if (type === 'Ref') {
 			parser.error(parser_errors.invalid_ref_directive(directive_name), start);
 		}
-
 		if (type === 'StyleDirective') {
 			return {
 				start,
@@ -425,20 +376,18 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				value
 			};
 		}
-
 		const first_value = value[0];
 		let expression = null;
-
 		if (first_value) {
-			const attribute_contains_text = (value as any[]).length > 1 || first_value.type === 'Text';
+			const attribute_contains_text =
+				/** @type {any[]} */ (value).length > 1 || first_value.type === 'Text';
 			if (attribute_contains_text) {
 				parser.error(parser_errors.invalid_directive_value, first_value.start);
 			} else {
 				expression = first_value.expression;
 			}
 		}
-
-		const directive: Directive = {
+		const directive = {
 			start,
 			end,
 			type,
@@ -446,13 +395,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 			modifiers,
 			expression
 		};
-
 		if (type === 'Transition') {
 			const direction = name.slice(0, colon_index);
 			directive.intro = direction === 'in' || direction === 'transition';
 			directive.outro = direction === 'out' || direction === 'transition';
 		}
-
 		// Directive name is expression, e.g. <p class:isRed />
 		if (!directive.expression && (type === 'Binding' || type === 'Class')) {
 			directive.expression = {
@@ -460,14 +407,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 				end: directive.end,
 				type: 'Identifier',
 				name: directive.name
-			} as any;
+			};
 		}
-
 		return directive;
 	}
-
 	check_unique(name);
-
 	return {
 		start,
 		end,
@@ -477,7 +421,11 @@ function read_attribute(parser: Parser, unique_names: Set<string>) {
 	};
 }
 
-function get_directive_type(name: string): DirectiveType {
+/**
+ * @param {string} name
+ * @returns {import('../../interfaces.js').DirectiveType}
+ */
+function get_directive_type(name) {
 	if (name === 'use') return 'Action';
 	if (name === 'animate') return 'Animation';
 	if (name === 'bind') return 'Binding';
@@ -489,7 +437,10 @@ function get_directive_type(name: string): DirectiveType {
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 
-function read_attribute_value(parser: Parser) {
+/**
+ * @param {import('../index.js').Parser} parser
+ */
+function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [
@@ -502,7 +453,6 @@ function read_attribute_value(parser: Parser) {
 			}
 		];
 	}
-
 	let value;
 	try {
 		value = read_sequence(
@@ -526,17 +476,24 @@ function read_attribute_value(parser: Parser) {
 		}
 		throw error;
 	}
-
 	if (value.length === 0 && !quote_mark) {
 		parser.error(parser_errors.missing_attribute_value);
 	}
-
 	if (quote_mark) parser.index += 1;
 	return value;
 }
 
-function read_sequence(parser: Parser, done: () => boolean, location: string): TemplateNode[] {
-	let current_chunk: Text = {
+/**
+ * @param {import('../index.js').Parser} parser
+ * @param {() => boolean} done
+ * @param {string} location
+ * @returns {import('../../interfaces.js').TemplateNode[]}
+ */
+function read_sequence(parser, done, location) {
+	/**
+	 * @type {import('../../interfaces.js').Text}
+	 */
+	let current_chunk = {
 		start: parser.index,
 		end: null,
 		type: 'Text',
@@ -544,19 +501,23 @@ function read_sequence(parser: Parser, done: () => boolean, location: string): T
 		data: null
 	};
 
-	const chunks: TemplateNode[] = [];
+	/**
+	 * @type {import('../../interfaces.js').TemplateNode[]}
+	 */
+	const chunks = [];
 
-	function flush(end: number) {
+	/**
+	 * @param {number} end
+	 */
+	function flush(end) {
 		if (current_chunk.raw) {
 			current_chunk.data = decode_character_references(current_chunk.raw, true);
 			current_chunk.end = end;
 			chunks.push(current_chunk);
 		}
 	}
-
 	while (parser.index < parser.template.length) {
 		const index = parser.index;
-
 		if (done()) {
 			flush(parser.index);
 			return chunks;
@@ -572,21 +533,17 @@ function read_sequence(parser: Parser, done: () => boolean, location: string): T
 				const name = parser.read_until(/[^a-z]/);
 				parser.error(parser_errors.invalid_tag_placement(location, name), index);
 			}
-
 			flush(parser.index - 1);
-
 			parser.allow_whitespace();
 			const expression = read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
-
 			chunks.push({
 				start: index,
 				end: parser.index,
 				type: 'MustacheTag',
 				expression
 			});
-
 			current_chunk = {
 				start: parser.index,
 				end: null,
@@ -598,6 +555,5 @@ function read_sequence(parser: Parser, done: () => boolean, location: string): T
 			current_chunk.raw += parser.template[parser.index++];
 		}
 	}
-
 	parser.error(parser_errors.unexpected_eof);
 }

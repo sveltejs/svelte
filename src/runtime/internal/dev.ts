@@ -7,77 +7,129 @@ import {
 	detach,
 	listen,
 	attr
-} from './dom';
-import { SvelteComponent } from './Component';
-import { is_void } from '../../shared/utils/names';
-import { contenteditable_truthy_values } from './utils';
+} from './dom.js';
+import { SvelteComponent } from './Component.js';
+import { is_void } from '../../shared/utils/names.js';
+import { contenteditable_truthy_values } from './utils.js';
 
-export function dispatch_dev<T = any>(type: string, detail?: T) {
+/**
+ * @template T
+ * @param {string} type
+ * @param {T} detail
+ * @returns {void}
+ */
+export function dispatch_dev(type, detail) {
 	document.dispatchEvent(
 		custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true })
 	);
 }
 
-export function append_dev(target: Node, node: Node) {
+/**
+ * @param {Node} target
+ * @param {Node} node
+ * @returns {void}
+ */
+export function append_dev(target, node) {
 	dispatch_dev('SvelteDOMInsert', { target, node });
 	append(target, node);
 }
 
-export function append_hydration_dev(target: Node, node: Node) {
+/**
+ * @param {Node} target
+ * @param {Node} node
+ * @returns {void}
+ */
+export function append_hydration_dev(target, node) {
 	dispatch_dev('SvelteDOMInsert', { target, node });
 	append_hydration(target, node);
 }
 
-export function insert_dev(target: Node, node: Node, anchor?: Node) {
+/**
+ * @param {Node} target
+ * @param {Node} node
+ * @param {Node} anchor
+ * @returns {void}
+ */
+export function insert_dev(target, node, anchor) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert(target, node, anchor);
 }
 
-export function insert_hydration_dev(target: Node, node: Node, anchor?: Node) {
+/** @param {Node} target
+ * @param {Node} node
+ * @param {Node} anchor
+ * @returns {void}
+ */
+export function insert_hydration_dev(target, node, anchor) {
 	dispatch_dev('SvelteDOMInsert', { target, node, anchor });
 	insert_hydration(target, node, anchor);
 }
 
-export function detach_dev(node: Node) {
+/**
+ * @param {Node} node
+ * @returns {void}
+ */
+export function detach_dev(node) {
 	dispatch_dev('SvelteDOMRemove', { node });
 	detach(node);
 }
 
-export function detach_between_dev(before: Node, after: Node) {
+/**
+ * @param {Node} before
+ * @param {Node} after
+ * @returns {void}
+ */
+export function detach_between_dev(before, after) {
 	while (before.nextSibling && before.nextSibling !== after) {
 		detach_dev(before.nextSibling);
 	}
 }
 
-export function detach_before_dev(after: Node) {
+/**
+ * @param {Node} after
+ * @returns {void}
+ */
+export function detach_before_dev(after) {
 	while (after.previousSibling) {
 		detach_dev(after.previousSibling);
 	}
 }
 
-export function detach_after_dev(before: Node) {
+/**
+ * @param {Node} before
+ * @returns {void}
+ */
+export function detach_after_dev(before) {
 	while (before.nextSibling) {
 		detach_dev(before.nextSibling);
 	}
 }
 
+/**
+ * @param {Node} node
+ * @param {string} event
+ * @param {EventListenerOrEventListenerObject} handler
+ * @param {boolean | AddEventListenerOptions | EventListenerOptions} options
+ * @param {boolean} has_prevent_default
+ * @param {boolean} has_stop_propagation
+ * @param {boolean} has_stop_immediate_propagation
+ * @returns {() => void}
+ */
 export function listen_dev(
-	node: Node,
-	event: string,
-	handler: EventListenerOrEventListenerObject,
-	options?: boolean | AddEventListenerOptions | EventListenerOptions,
-	has_prevent_default?: boolean,
-	has_stop_propagation?: boolean,
-	has_stop_immediate_propagation?: boolean
+	node,
+	event,
+	handler,
+	options,
+	has_prevent_default,
+	has_stop_propagation,
+	has_stop_immediate_propagation
 ) {
 	const modifiers =
 		options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
 	if (has_prevent_default) modifiers.push('preventDefault');
 	if (has_stop_propagation) modifiers.push('stopPropagation');
 	if (has_stop_immediate_propagation) modifiers.push('stopImmediatePropagation');
-
 	dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
-
 	const dispose = listen(node, event, handler, options);
 	return () => {
 		dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
@@ -85,40 +137,71 @@ export function listen_dev(
 	};
 }
 
-export function attr_dev(node: Element, attribute: string, value?: string) {
+/**
+ * @param {Element} node
+ * @param {string} attribute
+ * @param {string} value
+ * @returns {void}
+ */
+export function attr_dev(node, attribute, value) {
 	attr(node, attribute, value);
-
 	if (value == null) dispatch_dev('SvelteDOMRemoveAttribute', { node, attribute });
 	else dispatch_dev('SvelteDOMSetAttribute', { node, attribute, value });
 }
 
-export function prop_dev(node: Element, property: string, value?: any) {
+/**
+ * @param {Element} node
+ * @param {string} property
+ * @param {any} value
+ * @returns {void}
+ */
+export function prop_dev(node, property, value) {
 	node[property] = value;
-
 	dispatch_dev('SvelteDOMSetProperty', { node, property, value });
 }
 
-export function dataset_dev(node: HTMLElement, property: string, value?: any) {
+/**
+ * @param {HTMLElement} node
+ * @param {string} property
+ * @param {any} value
+ * @returns {void}
+ */
+export function dataset_dev(node, property, value) {
 	node.dataset[property] = value;
-
 	dispatch_dev('SvelteDOMSetDataset', { node, property, value });
 }
 
-export function set_data_dev(text: Text, data: unknown) {
+/**
+ * @param {Text} text
+ * @param {unknown} data
+ * @returns {void}
+ */
+export function set_data_dev(text, data) {
 	data = '' + data;
 	if (text.data === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data as string;
+	text.data = /** @type {string} */ (data);
 }
 
-export function set_data_contenteditable_dev(text: Text, data: unknown) {
+/**
+ * @param {Text} text
+ * @param {unknown} data
+ * @returns {void}
+ */
+export function set_data_contenteditable_dev(text, data) {
 	data = '' + data;
 	if (text.wholeText === data) return;
 	dispatch_dev('SvelteDOMSetData', { node: text, data });
-	text.data = data as string;
+	text.data = /** @type {string} */ (data);
 }
 
-export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, attr_value: string) {
+/**
+ * @param {Text} text
+ * @param {unknown} data
+ * @param {string} attr_value
+ * @returns {void}
+ */
+export function set_data_maybe_contenteditable_dev(text, data, attr_value) {
 	if (~contenteditable_truthy_values.indexOf(attr_value)) {
 		set_data_contenteditable_dev(text, data);
 	} else {
@@ -126,6 +209,8 @@ export function set_data_maybe_contenteditable_dev(text: Text, data: unknown, at
 	}
 }
 
+/**
+ * @returns {void} */
 export function validate_each_argument(arg) {
 	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
 		let msg = '{#each} only iterates over array-like objects.';
@@ -136,6 +221,8 @@ export function validate_each_argument(arg) {
 	}
 }
 
+/**
+ * @returns {void} */
 export function validate_slots(name, slot, keys) {
 	for (const slot_key of Object.keys(slot)) {
 		if (!~keys.indexOf(slot_key)) {
@@ -144,14 +231,22 @@ export function validate_slots(name, slot, keys) {
 	}
 }
 
-export function validate_dynamic_element(tag: unknown) {
+/**
+ * @param {unknown} tag
+ * @returns {void}
+ */
+export function validate_dynamic_element(tag) {
 	const is_string = typeof tag === 'string';
 	if (tag && !is_string) {
 		throw new Error('<svelte:element> expects "this" attribute to be a string.');
 	}
 }
 
-export function validate_void_dynamic_element(tag: undefined | string) {
+/**
+ * @param {undefined | string} tag
+ * @returns {void}
+ */
+export function validate_void_dynamic_element(tag) {
 	if (tag && is_void(tag)) {
 		console.warn(`<svelte:element this="${tag}"> is self-closing and cannot have content.`);
 	}
@@ -173,32 +268,6 @@ export function construct_svelte_component_dev(component, props) {
 			throw err;
 		}
 	}
-}
-
-export interface SvelteComponentDev<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
-> {
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(
-		type: K,
-		callback: ((e: Events[K]) => void) | null | undefined
-	): () => void;
-	$destroy(): void;
-	[accessor: string]: any;
-}
-
-export interface ComponentConstructorOptions<
-	Props extends Record<string, any> = Record<string, any>
-> {
-	target: Element | Document | ShadowRoot;
-	anchor?: Element;
-	props?: Props;
-	context?: Map<any, any>;
-	hydrate?: boolean;
-	intro?: boolean;
-	$$inline?: boolean;
 }
 
 /**
@@ -224,42 +293,46 @@ export interface ComponentConstructorOptions<
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
+ * @template {Record<string, any>} [Props=any]
+ * @template {Record<string, any>} [Events=any]
+ * @template {Record<string, any>} [Slots=any]
+ * @extends SvelteComponent<Props, Events>
  */
-export class SvelteComponentDev<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> extends SvelteComponent {
+export class SvelteComponentDev extends SvelteComponent {
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 *
+	 * @type {Props}
 	 */
-	$$prop_def: Props;
+	$$prop_def;
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 *
+	 * @type {Events}
 	 */
-	$$events_def: Events;
+	$$events_def;
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 *
+	 * @type {Slots}
 	 */
-	$$slot_def: Slots;
+	$$slot_def;
 
-	constructor(options: ComponentConstructorOptions<Props>) {
+	/** @param {import('./public.js').ComponentConstructorOptions<Props>} options */
+	constructor(options) {
 		if (!options || (!options.target && !options.$$inline)) {
 			throw new Error("'target' is a required option");
 		}
-
 		super();
 	}
 
+	/** @returns {void} */
 	$destroy() {
 		super.$destroy();
 		this.$destroy = () => {
@@ -267,87 +340,22 @@ export class SvelteComponentDev<
 		};
 	}
 
+	/** @returns {void} */
 	$capture_state() {}
 
+	/** @returns {void} */
 	$inject_state() {}
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SvelteComponentTyped<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> extends SvelteComponentDev<Props, Events, Slots> {}
-
 /**
+ * @template {Record<string, any>} [Props=any]
+ * @template {Record<string, any>} [Events=any]
+ * @template {Record<string, any>} [Slots=any]
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
+ * @extends SvelteComponentDev<Props, Events, Slots>
  */
-export class SvelteComponentTyped<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> extends SvelteComponentDev<Props, Events, Slots> {}
+export class SvelteComponentTyped extends SvelteComponentDev {}
 
-/**
- * Convenience type to get the type of a Svelte component. Useful for example in combination with
- * dynamic components using `<svelte:component>`.
- *
- * Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentType, SvelteComponent } from 'svelte';
- * 	import Component1 from './Component1.svelte';
- * 	import Component2 from './Component2.svelte';
- *
- * 	const component: ComponentType = someLogic() ? Component1 : Component2;
- * 	const componentOfCertainSubType: ComponentType<SvelteComponent<{ needsThisProp: string }>> = someLogic() ? Component1 : Component2;
- * </script>
- *
- * <svelte:component this={component} />
- * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
- * ```
- */
-export type ComponentType<Component extends SvelteComponentDev = SvelteComponentDev> = (new (
-	options: ComponentConstructorOptions<
-		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
-	>
-) => Component) & {
-	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-	element?: typeof HTMLElement;
-};
-
-/**
- * Convenience type to get the props the given component expects. Example:
- * ```html
- * <script lang="ts">
- * 	import type { ComponentProps } from 'svelte';
- * 	import Component from './Component.svelte';
- *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
- * </script>
- * ```
- */
-export type ComponentProps<Component extends SvelteComponent> =
-	Component extends SvelteComponentDev<infer Props> ? Props : never;
-
-/**
- * Convenience type to get the events the given component expects. Example:
- * ```html
- * <script lang="ts">
- *    import type { ComponentEvents } from 'svelte';
- *    import Component from './Component.svelte';
- *
- *    function handleCloseEvent(event: ComponentEvents<Component>['close']) {
- *       console.log(event.detail);
- *    }
- * </script>
- *
- * <Component on:close={handleCloseEvent} />
- * ```
- */
-export type ComponentEvents<Component extends SvelteComponent> =
-	Component extends SvelteComponentDev<any, infer Events> ? Events : never;
-
+/** @returns {() => void} */
 export function loop_guard(timeout) {
 	const start = Date.now();
 	return () => {

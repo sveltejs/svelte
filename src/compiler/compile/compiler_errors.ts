@@ -1,36 +1,48 @@
 // All compiler errors should be listed and accessed from here
-
 /**
  * @internal
  */
 export default {
-	invalid_binding_elements: (element: string, binding: string) => ({
+	invalid_binding_elements: /**
+	 * @param {string} element
+	 * @param {string} binding
+	 */ (element, binding) => ({
 		code: 'invalid-binding',
 		message: `'${binding}' is not a valid binding on <${element}> elements`
 	}),
-	invalid_binding_element_with: (elements: string, binding: string) => ({
+	invalid_binding_element_with: /**
+	 * @param {string} elements
+	 * @param {string} binding
+	 */ (elements, binding) => ({
 		code: 'invalid-binding',
 		message: `'${binding}' binding can only be used with ${elements}`
 	}),
-	invalid_binding_on: (binding: string, element: string, post?: string) => ({
+	invalid_binding_on: /**
+	 * @param {string} binding
+	 * @param {string} element
+	 * @param {string} [post]
+	 */ (binding, element, post) => ({
 		code: 'invalid-binding',
 		message: `'${binding}' is not a valid binding on ${element}` + (post || '')
 	}),
-	invalid_binding_foreign: (binding: string) => ({
+	invalid_binding_foreign: /** @param {string} binding */ (binding) => ({
 		code: 'invalid-binding',
 		message: `'${binding}' is not a valid binding. Foreign elements only support bind:this`
 	}),
-	invalid_binding_no_checkbox: (binding: string, is_radio: boolean) => ({
+	invalid_binding_no_checkbox: /**
+	 * @param {string} binding
+	 * @param {boolean} is_radio
+	 */ (binding, is_radio) => ({
 		code: 'invalid-binding',
 		message:
 			`'${binding}' binding can only be used with <input type="checkbox">` +
 			(is_radio ? ' — for <input type="radio">, use \'group\' binding' : '')
 	}),
-	invalid_binding: (binding: string) => ({
+	invalid_binding: /** @param {string} binding */ (binding) => ({
 		code: 'invalid-binding',
 		message: `'${binding}' is not a valid binding`
 	}),
-	invalid_binding_window: (parts: string[]) => ({
+	invalid_binding_window: /** @param {string[]} parts */ (parts) => ({
 		code: 'invalid-binding',
 		message: `Bindings on <svelte:window> must be to top-level properties, e.g. '${
 			parts[parts.length - 1]
@@ -52,7 +64,7 @@ export default {
 		code: 'invalid-binding',
 		message: 'Cannot bind to a variable which is not writable'
 	},
-	binding_undeclared: (name: string) => ({
+	binding_undeclared: /** @param {string} name */ (name) => ({
 		code: 'binding-undeclared',
 		message: `${name} is not declared`
 	}),
@@ -77,15 +89,18 @@ export default {
 		code: 'dynamic-contenteditable-attribute',
 		message: "'contenteditable' attribute cannot be dynamic if element uses two-way binding"
 	},
-	invalid_event_modifier_combination: (modifier1: string, modifier2: string) => ({
+	invalid_event_modifier_combination: /**
+	 * @param {string} modifier1
+	 * @param {string} modifier2
+	 */ (modifier1, modifier2) => ({
 		code: 'invalid-event-modifier',
 		message: `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`
 	}),
-	invalid_event_modifier_legacy: (modifier: string) => ({
+	invalid_event_modifier_legacy: /** @param {string} modifier */ (modifier) => ({
 		code: 'invalid-event-modifier',
 		message: `The '${modifier}' modifier cannot be used in legacy mode`
 	}),
-	invalid_event_modifier: (valid: string) => ({
+	invalid_event_modifier: /** @param {string} valid */ (valid) => ({
 		code: 'invalid-event-modifier',
 		message: `Valid event modifiers are ${valid}`
 	}),
@@ -98,7 +113,7 @@ export default {
 		message:
 			'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
 	},
-	illegal_attribute: (name: string) => ({
+	illegal_attribute: /** @param {string} name */ (name) => ({
 		code: 'illegal-attribute',
 		message: `'${name}' is not a valid attribute name`
 	}),
@@ -106,7 +121,7 @@ export default {
 		code: 'invalid-slot-attribute',
 		message: 'slot attribute cannot have a dynamic value'
 	},
-	duplicate_slot_attribute: (name: string) => ({
+	duplicate_slot_attribute: /** @param {string} name */ (name) => ({
 		code: 'duplicate-slot-attribute',
 		message: `Duplicate '${name}' slot`
 	}),
@@ -163,8 +178,12 @@ export default {
 		code: 'illegal-structure',
 		message: '<title> can only contain text and {tags}'
 	},
-	duplicate_transition: (directive: string, parent_directive: string) => {
-		function describe(_directive: string) {
+	duplicate_transition: /**
+	 * @param {string} directive
+	 * @param {string} parent_directive
+	 */ (directive, parent_directive) => {
+		/** @param {string} _directive */
+		function describe(_directive) {
 			return _directive === 'transition' ? "a 'transition'" : `an '${_directive}'`;
 		}
 		const message =
@@ -195,7 +214,7 @@ export default {
 		code: 'illegal-subscription',
 		message: 'Cannot reference store value inside <script context="module">'
 	},
-	illegal_global: (name: string) => ({
+	illegal_global: /** @param {string} name */ (name) => ({
 		code: 'illegal-global',
 		message: `${name} is an illegal variable name`
 	}),
@@ -203,7 +222,7 @@ export default {
 		code: 'illegal-variable-declaration',
 		message: 'Cannot declare same variable name which is imported inside <script context="module">'
 	},
-	cyclical_reactive_declaration: (cycle: string[]) => ({
+	cyclical_reactive_declaration: /** @param {string[]} cycle */ (cycle) => ({
 		code: 'cyclical-reactive-declaration',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
 	}),
@@ -231,7 +250,10 @@ export default {
 			"'props' must be a statically analyzable object literal of the form " +
 			"'{ [key: string]: { attribute?: string; reflect?: boolean; type?: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object' }'"
 	},
-	invalid_namespace_property: (namespace: string, suggestion?: string) => ({
+	invalid_namespace_property: /**
+	 * @param {string} namespace
+	 * @param {string} [suggestion]
+	 */ (namespace, suggestion) => ({
 		code: 'invalid-namespace-property',
 		message:
 			`Invalid namespace '${namespace}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
@@ -240,11 +262,11 @@ export default {
 		code: 'invalid-namespace-attribute',
 		message: "The 'namespace' attribute must be a string literal representing a valid namespace"
 	},
-	invalid_attribute_value: (name: string) => ({
+	invalid_attribute_value: /** @param {string} name */ (name) => ({
 		code: `invalid-${name}-value`,
 		message: `${name} attribute must be true or false`
 	}),
-	invalid_options_attribute_unknown: (name: string) => ({
+	invalid_options_attribute_unknown: /** @param {string} name */ (name) => ({
 		code: 'invalid-options-attribute',
 		message: `<svelte:options> unknown attribute '${name}'`
 	}),
@@ -266,7 +288,7 @@ export default {
 		message:
 			':global(...) not at the start of a selector sequence should not contain type or universal selectors'
 	},
-	css_invalid_selector: (selector: string) => ({
+	css_invalid_selector: /** @param {string} selector */ (selector) => ({
 		code: 'css-invalid-selector',
 		message: `Invalid selector "${selector}"`
 	}),
@@ -303,15 +325,15 @@ export default {
 		message:
 			'{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
 	},
-	invalid_const_declaration: (name: string) => ({
+	invalid_const_declaration: /** @param {string} name */ (name) => ({
 		code: 'invalid-const-declaration',
 		message: `'${name}' has already been declared`
 	}),
-	invalid_const_update: (name: string) => ({
+	invalid_const_update: /** @param {string} name */ (name) => ({
 		code: 'invalid-const-update',
 		message: `'${name}' is declared using {@const ...} and is read-only`
 	}),
-	cyclical_const_tags: (cycle: string[]) => ({
+	cyclical_const_tags: /** @param {string[]} cycle */ (cycle) => ({
 		code: 'cyclical-const-tags',
 		message: `Cyclical dependency detected: ${cycle.join(' → ')}`
 	}),
@@ -323,7 +345,7 @@ export default {
 		code: 'invalid_var_declaration',
 		message: '"var" scope should not extend outside the reactive block'
 	},
-	invalid_style_directive_modifier: (valid: string) => ({
+	invalid_style_directive_modifier: /** @param {string} valid */ (valid) => ({
 		code: 'invalid-style-directive-modifier',
 		message: `Valid modifiers for style directives are: ${valid}`
 	})

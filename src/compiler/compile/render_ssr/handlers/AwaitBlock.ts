@@ -1,17 +1,20 @@
-import Renderer, { RenderOptions } from '../Renderer';
-import AwaitBlock from '../../nodes/AwaitBlock';
 import { x } from 'code-red';
-import { get_const_tags } from './shared/get_const_tags';
+import { get_const_tags } from './shared/get_const_tags.js';
 
-export default function (node: AwaitBlock, renderer: Renderer, options: RenderOptions) {
+/**
+ * @param {import('../../nodes/AwaitBlock.js').default} node
+ * @param {import('../Renderer.js').default} renderer
+ * @param {import('../private.js').RenderOptions} options
+ */
+export default function (node, renderer, options) {
 	renderer.push();
 	renderer.render(node.pending.children, options);
-	const pending = renderer.pop();
 
+	const pending = renderer.pop();
 	renderer.push();
 	renderer.render(node.then.children, options);
-	const then = renderer.pop();
 
+	const then = renderer.pop();
 	renderer.add_expression(x`
 		function(__value) {
 			if (@is_promise(__value)) {

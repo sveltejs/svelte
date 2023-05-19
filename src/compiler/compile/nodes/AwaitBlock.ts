@@ -1,40 +1,52 @@
-import Node from './shared/Node';
-import PendingBlock from './PendingBlock';
-import ThenBlock from './ThenBlock';
-import CatchBlock from './CatchBlock';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import { Context, unpack_destructuring } from './shared/Context';
-import { Node as ESTreeNode } from 'estree';
+import Node from './shared/Node.js';
+import PendingBlock from './PendingBlock.js';
+import ThenBlock from './ThenBlock.js';
+import CatchBlock from './CatchBlock.js';
+import Expression from './shared/Expression.js';
+import { unpack_destructuring } from './shared/Context.js';
 
+/** @extends Node<'AwaitBlock'> */
 export default class AwaitBlock extends Node {
-	type: 'AwaitBlock';
-	expression: Expression;
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
 
-	then_contexts: Context[];
-	catch_contexts: Context[];
+	/** @type {import('./shared/Context.js').Context[]} */
+	then_contexts;
 
-	then_node: ESTreeNode | null;
-	catch_node: ESTreeNode | null;
+	/** @type {import('./shared/Context.js').Context[]} */
+	catch_contexts;
 
-	pending: PendingBlock;
-	then: ThenBlock;
-	catch: CatchBlock;
+	/** @type {import('estree').Node | null} */
+	then_node;
 
-	context_rest_properties: Map<string, ESTreeNode> = new Map();
+	/** @type {import('estree').Node | null} */
+	catch_node;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/** @type {import('./PendingBlock.js').default} */
+	pending;
+
+	/** @type {import('./ThenBlock.js').default} */
+	then;
+
+	/** @type {import('./CatchBlock.js').default} */
+	catch;
+
+	/** @type {Map<string, import('estree').Node>} */
+	context_rest_properties = new Map();
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.cannot_use_innerhtml();
 		this.not_static_content();
-
 		this.expression = new Expression(component, this, scope, info.expression);
-
 		this.then_node = info.value;
 		this.catch_node = info.error;
-
 		if (this.then_node) {
 			this.then_contexts = [];
 			unpack_destructuring({
@@ -45,7 +57,6 @@ export default class AwaitBlock extends Node {
 				context_rest_properties: this.context_rest_properties
 			});
 		}
-
 		if (this.catch_node) {
 			this.catch_contexts = [];
 			unpack_destructuring({
@@ -56,7 +67,6 @@ export default class AwaitBlock extends Node {
 				context_rest_properties: this.context_rest_properties
 			});
 		}
-
 		this.pending = new PendingBlock(component, this, scope, info.pending);
 		this.then = new ThenBlock(component, this, scope, info.then);
 		this.catch = new CatchBlock(component, this, scope, info.catch);

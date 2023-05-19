@@ -1,115 +1,125 @@
-import Node from './shared/Node';
-import Attribute from './Attribute';
-import map_children from './shared/map_children';
-import Binding from './Binding';
-import EventHandler from './EventHandler';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import Let from './Let';
-import TemplateScope from './shared/TemplateScope';
-import { INode } from './interfaces';
-import { TemplateNode } from '../../interfaces';
-import compiler_errors from '../compiler_errors';
-import { regex_only_whitespaces } from '../../utils/patterns';
+import Node from './shared/Node.js';
+import Attribute from './Attribute.js';
+import map_children from './shared/map_children.js';
+import Binding from './Binding.js';
+import EventHandler from './EventHandler.js';
+import Expression from './shared/Expression.js';
+import Let from './Let.js';
+import compiler_errors from '../compiler_errors.js';
+import { regex_only_whitespaces } from '../../utils/patterns.js';
 
+/** @extends Node<'InlineComponent'> */
 export default class InlineComponent extends Node {
-	type: 'InlineComponent';
-	name: string;
-	expression: Expression;
-	attributes: Attribute[] = [];
-	bindings: Binding[] = [];
-	handlers: EventHandler[] = [];
-	lets: Let[] = [];
-	css_custom_properties: Attribute[] = [];
-	children: INode[];
-	scope: TemplateScope;
-	namespace: string;
+	/** @type {string} */
+	name;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
+
+	/** @type {import('./Binding.js').default[]} */
+	bindings = [];
+
+	/** @type {import('./EventHandler.js').default[]} */
+	handlers = [];
+
+	/** @type {import('./Let.js').default[]} */
+	lets = [];
+
+	/** @type {import('./Attribute.js').default[]} */
+	css_custom_properties = [];
+
+	/** @type {import('./interfaces.js').INode[]} */
+	children;
+
+	/** @type {import('./shared/TemplateScope.js').default} */
+	scope;
+
+	/** @type {string} */
+	namespace;
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		this.cannot_use_innerhtml();
 		this.not_static_content();
-
 		if (info.name !== 'svelte:component' && info.name !== 'svelte:self') {
 			const name = info.name.split('.')[0]; // accommodate namespaces
 			component.warn_if_undefined(name, info, scope);
-			component.add_reference(this as any, name);
+			component.add_reference(/** @type {any} */ (this), name);
 		}
-
 		this.name = info.name;
 		this.namespace = get_namespace(parent, component.namespace);
-
 		this.expression =
 			this.name === 'svelte:component'
 				? new Expression(component, this, scope, info.expression)
 				: null;
-
-		info.attributes.forEach((node) => {
-			/* eslint-disable no-fallthrough */
-			switch (node.type) {
-				case 'Action':
-					return component.error(node, compiler_errors.invalid_action);
-
-				case 'Attribute':
-					if (node.name.startsWith('--')) {
-						this.css_custom_properties.push(new Attribute(component, this, scope, node));
+		info.attributes.forEach(
+			/** @param {any} node */ (node) => {
+				/* eslint-disable no-fallthrough */
+				switch (node.type) {
+					case 'Action':
+						return component.error(node, compiler_errors.invalid_action);
+					case 'Attribute':
+						if (node.name.startsWith('--')) {
+							this.css_custom_properties.push(new Attribute(component, this, scope, node));
+							break;
+						}
+					// fallthrough
+					case 'Spread':
+						this.attributes.push(new Attribute(component, this, scope, node));
 						break;
-					}
-				// fallthrough
-				case 'Spread':
-					this.attributes.push(new Attribute(component, this, scope, node));
-					break;
-
-				case 'Binding':
-					this.bindings.push(new Binding(component, this, scope, node));
-					break;
-
-				case 'Class':
-					return component.error(node, compiler_errors.invalid_class);
-
-				case 'EventHandler':
-					this.handlers.push(new EventHandler(component, this, scope, node));
-					break;
-
-				case 'Let':
-					this.lets.push(new Let(component, this, scope, node));
-					break;
-
-				case 'Transition':
-					return component.error(node, compiler_errors.invalid_transition);
-
-				case 'StyleDirective':
-					return component.error(node, compiler_errors.invalid_component_style_directive);
-
-				default:
-					throw new Error(`Not implemented: ${node.type}`);
+					case 'Binding':
+						this.bindings.push(new Binding(component, this, scope, node));
+						break;
+					case 'Class':
+						return component.error(node, compiler_errors.invalid_class);
+					case 'EventHandler':
+						this.handlers.push(new EventHandler(component, this, scope, node));
+						break;
+					case 'Let':
+						this.lets.push(new Let(component, this, scope, node));
+						break;
+					case 'Transition':
+						return component.error(node, compiler_errors.invalid_transition);
+					case 'StyleDirective':
+						return component.error(node, compiler_errors.invalid_component_style_directive);
+					default:
+						throw new Error(`Not implemented: ${node.type}`);
+				}
+				/* eslint-enable no-fallthrough */
 			}
-			/* eslint-enable no-fallthrough */
-		});
-
+		);
 		if (this.lets.length > 0) {
 			this.scope = scope.child();
-
-			this.lets.forEach((l) => {
-				const dependencies = new Set([l.name.name]);
-
-				l.names.forEach((name) => {
-					this.scope.add(name, dependencies, this);
-				});
-			});
+			this.lets.forEach(
+				/** @param {any} l */ (l) => {
+					const dependencies = new Set([l.name.name]);
+					l.names.forEach(
+						/** @param {any} name */ (name) => {
+							this.scope.add(name, dependencies, this);
+						}
+					);
+				}
+			);
 		} else {
 			this.scope = scope;
 		}
-
-		this.handlers.forEach((handler) => {
-			handler.modifiers.forEach((modifier) => {
-				if (modifier !== 'once') {
-					return component.error(handler, compiler_errors.invalid_event_modifier_component);
-				}
-			});
-		});
-
+		this.handlers.forEach(
+			/** @param {any} handler */ (handler) => {
+				handler.modifiers.forEach(
+					/** @param {any} modifier */ (modifier) => {
+						if (modifier !== 'once') {
+							return component.error(handler, compiler_errors.invalid_event_modifier_component);
+						}
+					}
+				);
+			}
+		);
 		const children = [];
 		for (let i = info.children.length - 1; i >= 0; i--) {
 			const child = info.children[i];
@@ -118,7 +128,9 @@ export default class InlineComponent extends Node {
 				info.children.splice(i, 1);
 			} else if (
 				(child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') &&
-				child.attributes.find((attribute) => attribute.name === 'slot')
+				child.attributes.find(
+					/** @param {any} attribute */ (attribute) => attribute.name === 'slot'
+				)
 			) {
 				const slot_template = {
 					start: child.start,
@@ -128,7 +140,6 @@ export default class InlineComponent extends Node {
 					attributes: [],
 					children: [child]
 				};
-
 				// transfer attributes
 				for (let i = child.attributes.length - 1; i >= 0; i--) {
 					const attribute = child.attributes[i];
@@ -147,15 +158,13 @@ export default class InlineComponent extends Node {
 						child.children.splice(i, 1);
 					}
 				}
-
 				children.push(slot_template);
 				info.children.splice(i, 1);
 			} else if (child.type === 'Comment' && children.length > 0) {
 				children[children.length - 1].children.unshift(child);
 			}
 		}
-
-		if (info.children.some((node) => not_whitespace_text(node))) {
+		if (info.children.some(/** @param {any} node */ (node) => not_whitespace_text(node))) {
 			children.push({
 				start: info.start,
 				end: info.end,
@@ -165,27 +174,30 @@ export default class InlineComponent extends Node {
 				children: info.children
 			});
 		}
-
 		this.children = map_children(component, this, this.scope, children);
 	}
-
 	get slot_template_name() {
-		return this.attributes
-			.find((attribute) => attribute.name === 'slot')
-			.get_static_value() as string;
+		return /** @type {string} */ (
+			this.attributes
+				.find(/** @param {any} attribute */ (attribute) => attribute.name === 'slot')
+				.get_static_value()
+		);
 	}
 }
 
+/** @param {any} node */
 function not_whitespace_text(node) {
 	return !(node.type === 'Text' && regex_only_whitespaces.test(node.data));
 }
 
-function get_namespace(parent: Node, explicit_namespace: string) {
+/**
+ * @param {import('./shared/Node.js').default} parent
+ * @param {string} explicit_namespace
+ */
+function get_namespace(parent, explicit_namespace) {
 	const parent_element = parent.find_nearest(/^Element/);
-
 	if (!parent_element) {
 		return explicit_namespace;
 	}
-
 	return parent_element.namespace;
 }

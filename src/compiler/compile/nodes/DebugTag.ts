@@ -1,20 +1,23 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import { INode } from './interfaces';
-import { Node as EsTreeNode } from 'estree';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
 
+/** @extends Node<'DebugTag'> */
 export default class DebugTag extends Node {
-	type: 'DebugTag';
-	expressions: Expression[];
+	/** @type {import('./shared/Expression.js').default[]} */
+	expressions;
 
-	constructor(component: Component, parent: INode, scope: TemplateScope, info: TemplateNode) {
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./interfaces.js').INode} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
-		this.expressions = info.identifiers.map((node: EsTreeNode) => {
-			return new Expression(component, parent, scope, node);
-		});
+		this.expressions = info.identifiers.map(
+			/** @param {import('estree').Node} node */ (node) => {
+				return new Expression(component, parent, scope, node);
+			}
+		);
 	}
 }

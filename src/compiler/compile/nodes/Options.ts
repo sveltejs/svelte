@@ -1,5 +1,4 @@
-import Node from './shared/Node';
+import Node from './shared/Node.js';
 
-export default class Options extends Node {
-	type: 'Options';
-}
+/** @extends Node<'Options'> */
+export default class Options extends Node {}

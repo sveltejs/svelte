@@ -3,11 +3,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
 import { pretty_print_browser_assertion, try_load_config } from '../helpers.js';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from '../../src/compiler/index.js';
 import { beforeAll, describe, afterAll, assert } from 'vitest';
 
-const internal = path.resolve('internal/index.mjs');
-const index = path.resolve('index.mjs');
+const internal = path.resolve('src/runtime/internal/index.js');
+const index = path.resolve('src/runtime/index.js');
 
 const main = fs.readFileSync(`${__dirname}/driver.js`, 'utf-8');
 const browser_assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');

@@ -1,28 +1,24 @@
-import { raf } from './environment';
+import { raf } from './environment.js';
 
-export interface Task {
-	abort(): void;
-	promise: Promise<void>;
-}
+const tasks = new Set();
 
-type TaskCallback = (now: number) => boolean | void;
-type TaskEntry = { c: TaskCallback; f: () => void };
-
-const tasks = new Set<TaskEntry>();
-
-function run_tasks(now: number) {
+/**
+ * @param {number} now
+ * @returns {void}
+ */
+function run_tasks(now) {
 	tasks.forEach((task) => {
 		if (!task.c(now)) {
 			tasks.delete(task);
 			task.f();
 		}
 	});
-
 	if (tasks.size !== 0) raf(run_tasks);
 }
 
 /**
  * For testing purposes only!
+ * @returns {void}
  */
 export function clear_loops() {
 	tasks.clear();
@@ -31,12 +27,13 @@ export function clear_loops() {
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
+ * @param {import('./private.js').TaskCallback} callback
+ * @returns {import('./private.js').Task}
  */
-export function loop(callback: TaskCallback): Task {
-	let task: TaskEntry;
-
+export function loop(callback) {
+	/** @type {import('./private.js').TaskEntry} */
+	let task;
 	if (tasks.size === 0) raf(run_tasks);
-
 	return {
 		promise: new Promise((fulfill) => {
 			tasks.add((task = { c: callback, f: fulfill }));

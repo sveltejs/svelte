@@ -1,25 +1,37 @@
-import type { Readable } from '../store';
-
+/** @returns {void} */
 export function noop() {}
 
 export const identity = (x) => x;
 
-export function assign<T, S>(tar: T, src: S): T & S {
+/**
+ * @template T
+ * @template S
+ * @param {T} tar
+ * @param {S} src
+ * @returns {T & S}
+ */
+export function assign(tar, src) {
 	// @ts-ignore
 	for (const k in src) tar[k] = src[k];
-	return tar as T & S;
+	return /** @type {T & S} */ (tar);
 }
 
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
-export function is_promise<T = any>(value: any): value is PromiseLike<T> {
+/**
+ * @template T
+ * @param {T} value
+ * @returns {value is PromiseLike<T>}
+ */
+export function is_promise(value) {
 	return (
 		!!value &&
 		(typeof value === 'object' || typeof value === 'function') &&
-		typeof value.then === 'function'
+		typeof (/** @type {any} */ (value).then) === 'function'
 	);
 }
 
+/** @returns {void} */
 export function add_location(element, file, line, column, char) {
 	element.__svelte_meta = {
 		loc: { file, line, column, char }
@@ -34,20 +46,30 @@ export function blank_object() {
 	return Object.create(null);
 }
 
-export function run_all(fns: Function[]) {
+/**
+ * @param {Function[]} fns
+ * @returns {void}
+ */
+export function run_all(fns) {
 	fns.forEach(run);
 }
 
-export function is_function(thing: any): thing is Function {
+/**
+ * @param {any} thing
+ * @returns {thing is Function}
+ */
+export function is_function(thing) {
 	return typeof thing === 'function';
 }
 
+/** @returns {boolean} */
 export function safe_not_equal(a, b) {
 	return a != a ? b == b : a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
 let src_url_equal_anchor;
 
+/** @returns {boolean} */
 export function src_url_equal(element_src, url) {
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
@@ -56,14 +78,17 @@ export function src_url_equal(element_src, url) {
 	return element_src === src_url_equal_anchor.href;
 }
 
+/** @returns {boolean} */
 export function not_equal(a, b) {
 	return a != a ? b == b : a !== b;
 }
 
+/** @returns {boolean} */
 export function is_empty(obj) {
 	return Object.keys(obj).length === 0;
 }
 
+/** @returns {void} */
 export function validate_store(store, name) {
 	if (store != null && typeof store.subscribe !== 'function') {
 		throw new Error(`'${name}' is not a store with a 'subscribe' method`);
@@ -81,12 +106,18 @@ export function subscribe(store, ...callbacks) {
 	return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
 }
 
-export function get_store_value<T>(store: Readable<T>): T {
+/**
+ * @template T
+ * @param {import('../store/public.js').Readable<T>} store
+ * @returns {T}
+ */
+export function get_store_value(store) {
 	let value;
 	subscribe(store, (_) => (value = _))();
 	return value;
 }
 
+/** @returns {void} */
 export function component_subscribe(component, store, callback) {
 	component.$$.on_destroy.push(subscribe(store, callback));
 }
@@ -105,27 +136,23 @@ function get_slot_context(definition, ctx, $$scope, fn) {
 export function get_slot_changes(definition, $$scope, dirty, fn) {
 	if (definition[2] && fn) {
 		const lets = definition[2](fn(dirty));
-
 		if ($$scope.dirty === undefined) {
 			return lets;
 		}
-
 		if (typeof lets === 'object') {
 			const merged = [];
 			const len = Math.max($$scope.dirty.length, lets.length);
 			for (let i = 0; i < len; i += 1) {
 				merged[i] = $$scope.dirty[i] | lets[i];
 			}
-
 			return merged;
 		}
-
 		return $$scope.dirty | lets;
 	}
-
 	return $$scope.dirty;
 }
 
+/** @returns {void} */
 export function update_slot_base(
 	slot,
 	slot_definition,
@@ -140,6 +167,7 @@ export function update_slot_base(
 	}
 }
 
+/** @returns {void} */
 export function update_slot(
 	slot,
 	slot_definition,
@@ -153,6 +181,7 @@ export function update_slot(
 	update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn);
 }
 
+/** @returns {any[] | -1} */
 export function get_all_dirty_from_scope($$scope) {
 	if ($$scope.ctx.length > 32) {
 		const dirty = [];
@@ -165,12 +194,14 @@ export function get_all_dirty_from_scope($$scope) {
 	return -1;
 }
 
+/** @returns {{}} */
 export function exclude_internal_props(props) {
 	const result = {};
 	for (const k in props) if (k[0] !== '$') result[k] = props[k];
 	return result;
 }
 
+/** @returns {{}} */
 export function compute_rest_props(props, keys) {
 	const rest = {};
 	keys = new Set(keys);
@@ -178,6 +209,7 @@ export function compute_rest_props(props, keys) {
 	return rest;
 }
 
+/** @returns {{}} */
 export function compute_slots(slots) {
 	const result = {};
 	for (const key in slots) {
@@ -186,9 +218,10 @@ export function compute_slots(slots) {
 	return result;
 }
 
+/** @returns {(this: any, ...args: any[]) => void} */
 export function once(fn) {
 	let ran = false;
-	return function (this: any, ...args) {
+	return function (...args) {
 		if (ran) return;
 		ran = true;
 		fn.call(this, ...args);
@@ -210,9 +243,12 @@ export function action_destroyer(action_result) {
 	return action_result && is_function(action_result.destroy) ? action_result.destroy : noop;
 }
 
-export function split_css_unit(value: number | string): [number, string] {
+/** @param {number | string} value
+ * @returns {[number, string]}
+ */
+export function split_css_unit(value) {
 	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
-	return split ? [parseFloat(split[1]), split[2] || 'px'] : [value as number, 'px'];
+	return split ? [parseFloat(split[1]), split[2] || 'px'] : [/** @type {number} */ (value), 'px'];
 }
 
 export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];

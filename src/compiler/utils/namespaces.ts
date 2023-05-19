@@ -25,4 +25,4 @@ export const valid_namespaces = [
 	xmlns
 ];
 
-export const namespaces = { foreign, html, mathml, svg, xlink, xml, xmlns } as const;
+export const namespaces = /** @type {const} */ ({ foreign, html, mathml, svg, xlink, xml, xmlns });

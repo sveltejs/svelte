@@ -1,7 +1,3 @@
-// All compiler warnings should be listed and accessed from here
-
-import { ARIAPropertyDefinition } from 'aria-query';
-
 /**
  * @internal
  */
@@ -10,7 +6,10 @@ export default {
 		code: 'tag-option-deprecated',
 		message: "'tag' option is deprecated — use 'customElement' instead"
 	},
-	unused_export_let: (component: string, property: string) => ({
+	unused_export_let: /**
+	 * @param {string} component
+	 * @param {string} property
+	 */ (component, property) => ({
 		code: 'unused-export-let',
 		message: `${component} has unused export property '${property}'. If it is for external reference only, please consider using \`export const ${property}\``
 	}),
@@ -22,13 +21,16 @@ export default {
 		code: 'non-top-level-reactive-declaration',
 		message: '$: has no effect outside of the top-level'
 	},
-	module_script_variable_reactive_declaration: (names: string[]) => ({
+	module_script_variable_reactive_declaration: /** @param {string[]} names */ (names) => ({
 		code: 'module-script-reactive-declaration',
-		message: `${names.map((name) => `"${name}"`).join(', ')} ${
+		message: `${names.map(/** @param {any} name */ (name) => `"${name}"`).join(', ')} ${
 			names.length > 1 ? 'are' : 'is'
 		} declared in a module script and will not be reactive`
 	}),
-	missing_declaration: (name: string, has_script: boolean) => ({
+	missing_declaration: /**
+	 * @param {string} name
+	 * @param {boolean} has_script
+	 */ (name, has_script) => ({
 		code: 'missing-declaration',
 		message:
 			`'${name}' is not defined` +
@@ -41,7 +43,7 @@ export default {
 		message:
 			"The 'customElement' option is used when generating a custom element. Did you forget the 'customElement: true' compile option?"
 	},
-	css_unused_selector: (selector: string) => ({
+	css_unused_selector: /** @param {string} selector */ (selector) => ({
 		code: 'css-unused-selector',
 		message: `Unused CSS selector "${selector}"`
 	}),
@@ -49,11 +51,11 @@ export default {
 		code: 'empty-block',
 		message: 'Empty block'
 	},
-	reactive_component: (name: string) => ({
+	reactive_component: /** @param {string} name */ (name) => ({
 		code: 'reactive-component',
 		message: `<${name}/> will not be reactive if ${name} changes. Use <svelte:component this={${name}}/> if you want this reactivity.`
 	}),
-	component_name_lowercase: (name: string) => ({
+	component_name_lowercase: /** @param {string} name */ (name) => ({
 		code: 'component-name-lowercase',
 		message: `<${name}> will be treated as an HTML element unless it begins with a capital letter`
 	}),
@@ -61,15 +63,21 @@ export default {
 		code: 'avoid-is',
 		message: "The 'is' attribute is not supported cross-browser and should be avoided"
 	},
-	invalid_html_attribute: (name: string, suggestion: string) => ({
+	invalid_html_attribute: /**
+	 * @param {string} name
+	 * @param {string} suggestion
+	 */ (name, suggestion) => ({
 		code: 'invalid-html-attribute',
 		message: `'${name}' is not a valid HTML attribute. Did you mean '${suggestion}'?`
 	}),
-	a11y_aria_attributes: (name: string) => ({
+	a11y_aria_attributes: /** @param {string} name */ (name) => ({
 		code: 'a11y-aria-attributes',
 		message: `A11y: <${name}> should not have aria-* attributes`
 	}),
-	a11y_incorrect_attribute_type: (schema: ARIAPropertyDefinition, attribute: string) => {
+	a11y_incorrect_attribute_type: /**
+	 * @param {import('aria-query').ARIAPropertyDefinition} schema
+	 * @param {string} attribute
+	 */ (schema, attribute) => {
 		let message;
 		switch (schema.type) {
 			case 'boolean':
@@ -102,73 +110,84 @@ export default {
 			message: `A11y: ${message}`
 		};
 	},
-	a11y_unknown_aria_attribute: (attribute: string, suggestion?: string) => ({
+	a11y_unknown_aria_attribute: /**
+	 * @param {string} attribute
+	 * @param {string} [suggestion]
+	 */ (attribute, suggestion) => ({
 		code: 'a11y-unknown-aria-attribute',
 		message:
 			`A11y: Unknown aria attribute 'aria-${attribute}'` +
 			(suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
-	a11y_hidden: (name: string) => ({
+	a11y_hidden: /** @param {string} name */ (name) => ({
 		code: 'a11y-hidden',
 		message: `A11y: <${name}> element should not be hidden`
 	}),
-	a11y_misplaced_role: (name: string) => ({
+	a11y_misplaced_role: /** @param {string} name */ (name) => ({
 		code: 'a11y-misplaced-role',
 		message: `A11y: <${name}> should not have role attribute`
 	}),
-	a11y_unknown_role: (role: string | boolean, suggestion?: string) => ({
+	a11y_unknown_role: /**
+	 * @param {string | boolean} role
+	 * @param {string} [suggestion]
+	 */ (role, suggestion) => ({
 		code: 'a11y-unknown-role',
 		message: `A11y: Unknown role '${role}'` + (suggestion ? ` (did you mean '${suggestion}'?)` : '')
 	}),
-	a11y_no_abstract_role: (role: string | boolean) => ({
+	a11y_no_abstract_role: /** @param {string | boolean} role */ (role) => ({
 		code: 'a11y-no-abstract-role',
 		message: `A11y: Abstract role '${role}' is forbidden`
 	}),
-	a11y_no_redundant_roles: (role: string | boolean) => ({
+	a11y_no_redundant_roles: /** @param {string | boolean} role */ (role) => ({
 		code: 'a11y-no-redundant-roles',
 		message: `A11y: Redundant role '${role}'`
 	}),
-	a11y_no_static_element_interactions: (element: string, handlers: string[]) => ({
+	a11y_no_static_element_interactions: /**
+	 * @param {string} element
+	 * @param {string[]} handlers
+	 */ (element, handlers) => ({
 		code: 'a11y-no-static-element-interactions',
 		message: `A11y: <${element}> with ${handlers.join(', ')} ${
 			handlers.length === 1 ? 'handler' : 'handlers'
 		} must have an ARIA role`
 	}),
-	a11y_no_interactive_element_to_noninteractive_role: (
-		role: string | boolean,
-		element: string
-	) => ({
+	a11y_no_interactive_element_to_noninteractive_role: /**
+	 * @param {string | boolean} role
+	 * @param {string} element
+	 */ (role, element) => ({
 		code: 'a11y-no-interactive-element-to-noninteractive-role',
 		message: `A11y: <${element}> cannot have role '${role}'`
 	}),
-	a11y_no_noninteractive_element_interactions: (element: string) => ({
+	a11y_no_noninteractive_element_interactions: /** @param {string} element */ (element) => ({
 		code: 'a11y-no-noninteractive-element-interactions',
 		message: `A11y: Non-interactive element <${element}> should not be assigned mouse or keyboard event listeners.`
 	}),
-	a11y_no_noninteractive_element_to_interactive_role: (
-		role: string | boolean,
-		element: string
-	) => ({
+	a11y_no_noninteractive_element_to_interactive_role: /**
+	 * @param {string | boolean} role
+	 * @param {string} element
+	 */ (role, element) => ({
 		code: 'a11y-no-noninteractive-element-to-interactive-role',
 		message: `A11y: Non-interactive element <${element}> cannot have interactive role '${role}'`
 	}),
-	a11y_role_has_required_aria_props: (role: string, props: string[]) => ({
+	a11y_role_has_required_aria_props: /**
+	 * @param {string} role
+	 * @param {string[]} props
+	 */ (role, props) => ({
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props
-			.map((name) => `"${name}"`)
+			.map(/** @param {any} name */ (name) => `"${name}"`)
 			.join(', ')}`
 	}),
-	a11y_role_supports_aria_props: (
-		attribute: string,
-		role: string,
-		is_implicit: boolean,
-		name: string
-	) => {
+	a11y_role_supports_aria_props: /**
+	 * @param {string} attribute
+	 * @param {string} role
+	 * @param {boolean} is_implicit
+	 * @param {string} name
+	 */ (attribute, role, is_implicit, name) => {
 		let message = `The attribute '${attribute}' is not supported by the role '${role}'.`;
 		if (is_implicit) {
 			message += ` This role is implicit on the element <${name}>.`;
 		}
-
 		return {
 			code: 'a11y-role-supports-aria-props',
 			message: `A11y: ${message}`
@@ -190,15 +209,25 @@ export default {
 		code: 'a11y-positive-tabindex',
 		message: 'A11y: avoid tabindex values above zero'
 	},
-	a11y_invalid_attribute: (href_attribute: string, href_value: string) => ({
+	a11y_invalid_attribute: /**
+	 * @param {string} href_attribute
+	 * @param {string} href_value
+	 */ (href_attribute, href_value) => ({
 		code: 'a11y-invalid-attribute',
 		message: `A11y: '${href_value}' is not a valid ${href_attribute} attribute`
 	}),
-	a11y_missing_attribute: (name: string, article: string, sequence: string) => ({
+	a11y_missing_attribute: /**
+	 * @param {string} name
+	 * @param {string} article
+	 * @param {string} sequence
+	 */ (name, article, sequence) => ({
 		code: 'a11y-missing-attribute',
 		message: `A11y: <${name}> element should have ${article} ${sequence} attribute`
 	}),
-	a11y_autocomplete_valid: (type: null | true | string, value: null | true | string) => ({
+	a11y_autocomplete_valid: /**
+	 * @param {null | true | string} type
+	 * @param {null | true | string} value
+	 */ (type, value) => ({
 		code: 'a11y-autocomplete-valid',
 		message: `A11y: The value '${value}' is not supported by the attribute 'autocomplete' on element <input type="${
 			type || '...'
@@ -208,7 +237,7 @@ export default {
 		code: 'a11y-img-redundant-alt',
 		message: 'A11y: Screenreaders already announce <img> elements as an image.'
 	},
-	a11y_interactive_supports_focus: (role: string) => ({
+	a11y_interactive_supports_focus: /** @param {string} role */ (role) => ({
 		code: 'a11y-interactive-supports-focus',
 		message: `A11y: Elements with the '${role}' interactive role must have a tabindex value.`
 	}),
@@ -220,7 +249,7 @@ export default {
 		code: 'a11y-media-has-caption',
 		message: 'A11y: <video> elements must have a <track kind="captions">'
 	},
-	a11y_distracting_elements: (name: string) => ({
+	a11y_distracting_elements: /** @param {string} name */ (name) => ({
 		code: 'a11y-distracting-elements',
 		message: `A11y: Avoid <${name}> elements`
 	}),
@@ -232,7 +261,10 @@ export default {
 		code: 'a11y-structure',
 		message: 'A11y: <figcaption> must be first or last child of <figure>'
 	},
-	a11y_mouse_events_have_key_events: (event: string, accompanied_by: string) => ({
+	a11y_mouse_events_have_key_events: /**
+	 * @param {string} event
+	 * @param {string} accompanied_by
+	 */ (event, accompanied_by) => ({
 		code: 'a11y-mouse-events-have-key-events',
 		message: `A11y: on:${event} must be accompanied by on:${accompanied_by}`
 	}),
@@ -241,7 +273,7 @@ export default {
 		message:
 			'A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.'
 	},
-	a11y_missing_content: (name: string) => ({
+	a11y_missing_content: /** @param {string} name */ (name) => ({
 		code: 'a11y-missing-content',
 		message: `A11y: <${name}> element should have child content`
 	}),
@@ -261,7 +293,7 @@ export default {
 		code: 'redundant-event-modifier',
 		message: 'The passive modifier only works with wheel and touch events'
 	},
-	invalid_rest_eachblock_binding: (rest_element_name: string) => ({
+	invalid_rest_eachblock_binding: /** @param {string} rest_element_name */ (rest_element_name) => ({
 		code: 'invalid-rest-eachblock-binding',
 		message: `The rest operator (...) will create a new object and binding '${rest_element_name}' with the original object will not work`
 	}),

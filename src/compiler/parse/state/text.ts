@@ -1,7 +1,9 @@
-import { decode_character_references } from '../utils/html';
-import { Parser } from '../index';
+import { decode_character_references } from '../utils/html.js';
 
-export default function text(parser: Parser) {
+/**
+ * @param {import('../index.js').Parser} parser
+ */
+export default function text(parser) {
 	const start = parser.index;
 
 	let data = '';

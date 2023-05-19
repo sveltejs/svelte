@@ -1,28 +1,20 @@
 import { x } from 'code-red';
-import { Node, Identifier, Expression, PrivateIdentifier, Pattern } from 'estree';
 import { walk } from 'estree-walker';
-import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
-import { clone } from '../../../utils/clone';
-import Component from '../../Component';
-import flatten_reference from '../../utils/flatten_reference';
-import TemplateScope from './TemplateScope';
-
-export type Context = DestructuredVariable | ComputedProperty;
-
-interface ComputedProperty {
-	type: 'ComputedProperty';
-	property_name: Identifier;
-	key: Expression | PrivateIdentifier;
-}
-
-interface DestructuredVariable {
-	type: 'DestructuredVariable';
-	key: Identifier;
-	name?: string;
-	modifier: (node: Node) => Node;
-	default_modifier: (node: Node, to_ctx: (name: string) => Node) => Node;
-}
-
+import is_reference from 'is-reference';
+import { clone } from '../../../utils/clone.js';
+import flatten_reference from '../../utils/flatten_reference.js';
+/**
+ * @param {{
+ * 	contexts: Context[];
+ * 	node: import('estree').Pattern;
+ * 	modifier?: DestructuredVariable['modifier'];
+ * 	default_modifier?: DestructuredVariable['default_modifier'];
+ * 	scope: import('./TemplateScope.js').default;
+ * 	component: import('../../Component.js').default;
+ * 	context_rest_properties: Map<string, import('estree').Node>;
+ * 	in_rest_element?: boolean;
+ * }} params
+ */
 export function unpack_destructuring({
 	contexts,
 	node,
@@ -32,38 +24,28 @@ export function unpack_destructuring({
 	component,
 	context_rest_properties,
 	in_rest_element = false
-}: {
-	contexts: Context[];
-	node: Pattern;
-	modifier?: DestructuredVariable['modifier'];
-	default_modifier?: DestructuredVariable['default_modifier'];
-	scope: TemplateScope;
-	component: Component;
-	context_rest_properties: Map<string, Node>;
-	in_rest_element?: boolean;
 }) {
 	if (!node) return;
-
 	if (node.type === 'Identifier') {
 		contexts.push({
 			type: 'DestructuredVariable',
-			key: node as Identifier,
+			key: /** @type {import('estree').Identifier} */ (node),
 			modifier,
 			default_modifier
 		});
-
 		if (in_rest_element) {
 			context_rest_properties.set(node.name, node);
 		}
 	} else if (node.type === 'ArrayPattern') {
-		node.elements.forEach((element: Pattern | null, i: number) => {
+		node.elements.forEach((element, i) => {
 			if (!element) {
 				return;
 			} else if (element.type === 'RestElement') {
 				unpack_destructuring({
 					contexts,
 					node: element.argument,
-					modifier: (node) => x`${modifier(node)}.slice(${i})` as Node,
+					modifier: (node) =>
+						/** @type {import('estree').Node} */ (x`${modifier(node)}.slice(${i})`),
 					default_modifier,
 					scope,
 					component,
@@ -73,18 +55,19 @@ export function unpack_destructuring({
 			} else if (element.type === 'AssignmentPattern') {
 				const n = contexts.length;
 				mark_referenced(element.right, scope, component);
-
 				unpack_destructuring({
 					contexts,
 					node: element.left,
 					modifier: (node) => x`${modifier(node)}[${i}]`,
 					default_modifier: (node, to_ctx) =>
-						x`${node} !== undefined ? ${node} : ${update_reference(
-							contexts,
-							n,
-							element.right,
-							to_ctx
-						)}` as Node,
+						/** @type {import('estree').Node} */ (
+							x`${node} !== undefined ? ${node} : ${update_reference(
+								contexts,
+								n,
+								element.right,
+								to_ctx
+							)}`
+						),
 					scope,
 					component,
 					context_rest_properties,
@@ -94,7 +77,7 @@ export function unpack_destructuring({
 				unpack_destructuring({
 					contexts,
 					node: element,
-					modifier: (node) => x`${modifier(node)}[${i}]` as Node,
+					modifier: (node) => /** @type {import('estree').Node} */ (x`${modifier(node)}[${i}]`),
 					default_modifier,
 					scope,
 					component,
@@ -105,14 +88,15 @@ export function unpack_destructuring({
 		});
 	} else if (node.type === 'ObjectPattern') {
 		const used_properties = [];
-
 		node.properties.forEach((property) => {
 			if (property.type === 'RestElement') {
 				unpack_destructuring({
 					contexts,
 					node: property.argument,
 					modifier: (node) =>
-						x`@object_without_properties(${modifier(node)}, [${used_properties}])` as Node,
+						/** @type {import('estree').Node} */ (
+							x`@object_without_properties(${modifier(node)}, [${used_properties}])`
+						),
 					default_modifier,
 					scope,
 					component,
@@ -123,18 +107,16 @@ export function unpack_destructuring({
 				const key = property.key;
 				const value = property.value;
 
-				let new_modifier: (node: Node) => Node;
-
+				/** @type {(node: import('estree').Node) => import('estree').Node} */
+				let new_modifier;
 				if (property.computed) {
 					// e.g { [computedProperty]: ... }
 					const property_name = component.get_unique_name('computed_property');
-
 					contexts.push({
 						type: 'ComputedProperty',
 						property_name,
 						key
 					});
-
 					new_modifier = (node) => x`${modifier(node)}[${property_name}]`;
 					used_properties.push(x`${property_name}`);
 				} else if (key.type === 'Identifier') {
@@ -148,24 +130,23 @@ export function unpack_destructuring({
 					new_modifier = (node) => x`${modifier(node)}["${property_name}"]`;
 					used_properties.push(x`"${property_name}"`);
 				}
-
 				if (value.type === 'AssignmentPattern') {
 					// e.g. { property = default } or { property: newName = default }
 					const n = contexts.length;
-
 					mark_referenced(value.right, scope, component);
-
 					unpack_destructuring({
 						contexts,
 						node: value.left,
 						modifier: new_modifier,
 						default_modifier: (node, to_ctx) =>
-							x`${node} !== undefined ? ${node} : ${update_reference(
-								contexts,
-								n,
-								value.right,
-								to_ctx
-							)}` as Node,
+							/** @type {import('estree').Node} */ (
+								x`${node} !== undefined ? ${node} : ${update_reference(
+									contexts,
+									n,
+									value.right,
+									to_ctx
+								)}`
+							),
 						scope,
 						component,
 						context_rest_properties,
@@ -189,13 +170,16 @@ export function unpack_destructuring({
 	}
 }
 
-function update_reference(
-	contexts: Context[],
-	n: number,
-	expression: Expression,
-	to_ctx: (name: string) => Node
-): Node {
-	const find_from_context = (node: Identifier) => {
+/**
+ * @param {Context[]} contexts
+ * @param {number} n
+ * @param {import('estree').Expression} expression
+ * @param {(name: string) => import('estree').Node} to_ctx
+ * @returns {import('estree').Node}
+ */
+function update_reference(contexts, n, expression, to_ctx) {
+	/** @param {import('estree').Identifier} node */
+	const find_from_context = (node) => {
 		for (let i = n; i < contexts.length; i++) {
 			const cur_context = contexts[i];
 			if (cur_context.type !== 'DestructuredVariable') continue;
@@ -206,28 +190,35 @@ function update_reference(
 		}
 		return to_ctx(node.name);
 	};
-
 	if (expression.type === 'Identifier') {
 		return find_from_context(expression);
 	}
-
 	// NOTE: avoid unnecessary deep clone?
-	expression = clone(expression) as Expression;
+	expression = /** @type {import('estree').Expression} */ (clone(expression));
 	walk(expression, {
-		enter(node, parent: Node) {
-			if (is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)) {
-				this.replace(find_from_context(node as Identifier));
+		enter(node, parent) {
+			if (
+				is_reference(
+					/** @type {import('is-reference').NodeWithPropertyDefinition} */ (node),
+					/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
+				)
+			) {
+				this.replace(find_from_context(/** @type {import('estree').Identifier} */ (node)));
 				this.skip();
 			}
 		}
 	});
-
 	return expression;
 }
 
-function mark_referenced(node: Node, scope: TemplateScope, component: Component) {
+/**
+ * @param {import('estree').Node} node
+ * @param {import('./TemplateScope.js').default} scope
+ * @param {import('../../Component.js').default} component
+ */
+function mark_referenced(node, scope, component) {
 	walk(node, {
-		enter(node: any, parent: any) {
+		enter(node, parent) {
 			if (is_reference(node, parent)) {
 				const { name } = flatten_reference(node);
 				if (!scope.is_let(name) && !scope.names.has(name)) {
@@ -237,3 +228,21 @@ function mark_referenced(node: Node, scope: TemplateScope, component: Component)
 		}
 	});
 }
+
+/** @typedef {DestructuredVariable | ComputedProperty} Context */
+
+/**
+ * @typedef {Object} ComputedProperty
+ * @property {'ComputedProperty'} type
+ * @property {import('estree').Identifier} property_name
+ * @property {import('estree').Expression|import('estree').PrivateIdentifier} key
+ */
+
+/**
+ * @typedef {Object} DestructuredVariable
+ * @property {'DestructuredVariable'} type
+ * @property {import('estree').Identifier} key
+ * @property {string} [name]
+ * @property {(node:import('estree').Node)=>import('estree').Node} modifier
+ * @property {(node:import('estree').Node,to_ctx:(name:string)=>import('estree').Node)=>import('estree').Node} default_modifier
+ */

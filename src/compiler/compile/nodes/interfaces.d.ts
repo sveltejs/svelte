@@ -1,5 +1,4 @@
 import Tag from './shared/Tag';
-
 import Action from './Action';
 import Animation from './Animation';
 import Attribute from './Attribute';

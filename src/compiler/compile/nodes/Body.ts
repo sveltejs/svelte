@@ -1,26 +1,33 @@
-import Node from './shared/Node';
-import EventHandler from './EventHandler';
-import Action from './Action';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { Element } from '../../interfaces';
+import Node from './shared/Node.js';
+import EventHandler from './EventHandler.js';
+import Action from './Action.js';
 
+/** @extends Node<'Body'> */
 export default class Body extends Node {
-	type: 'Body';
-	handlers: EventHandler[] = [];
-	actions: Action[] = [];
+	/** @type {import('./EventHandler.js').default[]} */
+	handlers = [];
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: Element) {
+	/** @type {import('./Action.js').default[]} */
+	actions = [];
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').Element} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
-		info.attributes.forEach((node) => {
-			if (node.type === 'EventHandler') {
-				this.handlers.push(new EventHandler(component, this, scope, node));
-			} else if (node.type === 'Action') {
-				this.actions.push(new Action(component, this, scope, node));
-			} else {
-				// TODO there shouldn't be anything else here...
+		info.attributes.forEach(
+			/** @param {any} node */ (node) => {
+				if (node.type === 'EventHandler') {
+					this.handlers.push(new EventHandler(component, this, scope, node));
+				} else if (node.type === 'Action') {
+					this.actions.push(new Action(component, this, scope, node));
+				} else {
+					// TODO there shouldn't be anything else here...
+				}
 			}
-		});
+		);
 	}
 }

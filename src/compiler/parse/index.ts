@@ -1,68 +1,99 @@
 import { isIdentifierStart, isIdentifierChar } from 'acorn';
-import fragment from './state/fragment';
-import { regex_whitespace } from '../utils/patterns';
-import { reserved } from '../utils/names';
-import full_char_code_at from '../utils/full_char_code_at';
-import { TemplateNode, Ast, ParserOptions, Fragment, Style, Script } from '../interfaces';
-import error from '../utils/error';
-import parser_errors from './errors';
-
-type ParserState = (parser: Parser) => ParserState | void;
-
-interface LastAutoClosedTag {
-	tag: string;
-	reason: string;
-	depth: number;
-}
-
+import fragment from './state/fragment.js';
+import { regex_whitespace } from '../utils/patterns.js';
+import { reserved } from '../utils/names.js';
+import full_char_code_at from '../utils/full_char_code_at.js';
+import error from '../utils/error.js';
+import parser_errors from './errors.js';
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 export class Parser {
-	readonly template: string;
-	readonly filename?: string;
-	readonly customElement: boolean;
-	readonly css_mode: 'injected' | 'external' | 'none' | boolean;
+	/**
+	 * @readonly
+	 * @type {string}
+	 */
+	template = undefined;
+
+	/**
+	 * @readonly
+	 * @type {string}
+	 */
+	filename = undefined;
+
+	/**
+	 * @readonly
+	 * @type {boolean}
+	 */
+	customElement = undefined;
+
+	/**
+	 * @readonly
+	 * @type {'injected' | 'external' | 'none' | boolean}
+	 */
+	css_mode = undefined;
 
 	index = 0;
-	stack: TemplateNode[] = [];
 
-	html: Fragment;
-	css: Style[] = [];
-	js: Script[] = [];
+	/**
+	 * @type {import('../interfaces.js').TemplateNode[]}
+	 */
+	stack = [];
+
+	/**
+	 * @type {import('../interfaces.js').Fragment}
+	 */
+	html = undefined;
+
+	/**
+	 * @type {import('../interfaces.js').Style[]}
+	 */
+	css = [];
+
+	/**
+	 * @type {import('../interfaces.js').Script[]}
+	 */
+	js = [];
+
 	meta_tags = {};
-	last_auto_closed_tag?: LastAutoClosedTag;
 
-	constructor(template: string, options: ParserOptions) {
+	/**
+	 * @type {{tag: string; reason: string; depth: number;}}
+	 */
+	last_auto_closed_tag = undefined;
+
+	/**
+	 * @param {string} template
+	 * @param {import('../interfaces.js').ParserOptions} options
+	 */
+	constructor(template, options) {
 		if (typeof template !== 'string') {
 			throw new TypeError('Template must be a string');
 		}
-
 		this.template = template.trimRight();
 		this.filename = options.filename;
 		this.customElement = options.customElement;
 		this.css_mode = options.css;
-
 		this.html = {
 			start: null,
 			end: null,
 			type: 'Fragment',
 			children: []
 		};
-
 		this.stack.push(this.html);
 
-		let state: ParserState = fragment;
+		/**
+		 * @typedef {(parser: Parser) => ParserState | void} ParserState
+		 */
 
+		/** @type {ParserState} */
+		let state = fragment;
 		while (this.index < this.template.length) {
 			state = state(this) || fragment;
 		}
-
 		if (this.stack.length > 1) {
 			const current = this.current();
-
 			const type = current.type === 'Element' ? `<${current.name}>` : 'Block';
 			const slug = current.type === 'Element' ? 'element' : 'block';
-
 			this.error(
 				{
 					code: `unclosed-${slug}`,
@@ -71,33 +102,31 @@ export class Parser {
 				current.start
 			);
 		}
-
 		if (state !== fragment) {
 			this.error({
 				code: 'unexpected-eof',
 				message: 'Unexpected end of input'
 			});
 		}
-
 		if (this.html.children.length) {
 			let start = this.html.children[0].start;
 			while (regex_whitespace.test(template[start])) start += 1;
-
 			let end = this.html.children[this.html.children.length - 1].end;
 			while (regex_whitespace.test(template[end - 1])) end -= 1;
-
 			this.html.start = start;
 			this.html.end = end;
 		} else {
 			this.html.start = this.html.end = null;
 		}
 	}
-
 	current() {
 		return this.stack[this.stack.length - 1];
 	}
 
-	acorn_error(err: any) {
+	/**
+	 * @param {any} err
+	 */
+	acorn_error(err) {
 		this.error(
 			{
 				code: 'parse-error',
@@ -107,7 +136,10 @@ export class Parser {
 		);
 	}
 
-	error({ code, message }: { code: string; message: string }, index = this.index) {
+	/**
+	 * @param {{ code: string; message: string }} err
+	 */
+	error({ code, message }, index = this.index) {
 		error(message, {
 			name: 'ParseError',
 			code,
@@ -117,12 +149,16 @@ export class Parser {
 		});
 	}
 
-	eat(str: string, required?: boolean, error?: { code: string; message: string }) {
+	/**
+	 * @param {string} str
+	 * @param {boolean} [required]
+	 * @param {{ code: string; message: string }} [error]
+	 */
+	eat(str, required, error) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
 		}
-
 		if (required) {
 			this.error(
 				error ||
@@ -131,60 +167,50 @@ export class Parser {
 						: parser_errors.unexpected_token(str))
 			);
 		}
-
 		return false;
 	}
 
-	match(str: string) {
+	/**
+	 * @param {string} str
+	 */
+	match(str) {
 		return this.template.slice(this.index, this.index + str.length) === str;
 	}
-
 	/**
 	 * Match a regex at the current index
-	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
 	 */
-	match_regex(pattern: RegExp) {
+	match_regex(pattern) {
 		const match = pattern.exec(this.template.slice(this.index));
 		if (!match || match.index !== 0) return null;
-
 		return match[0];
 	}
-
 	allow_whitespace() {
 		while (this.index < this.template.length && regex_whitespace.test(this.template[this.index])) {
 			this.index++;
 		}
 	}
-
 	/**
 	 * Search for a regex starting at the current index and return the result if it matches
-	 * @param pattern Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
+	 * @param {RegExp} pattern  Should have a ^ anchor at the start so the regex doesn't search past the beginning, resulting in worse performance
 	 */
-	read(pattern: RegExp) {
+	read(pattern) {
 		const result = this.match_regex(pattern);
 		if (result) this.index += result.length;
 		return result;
 	}
-
 	read_identifier(allow_reserved = false) {
 		const start = this.index;
-
 		let i = this.index;
-
 		const code = full_char_code_at(this.template, i);
 		if (!isIdentifierStart(code, true)) return null;
-
 		i += code <= 0xffff ? 1 : 2;
-
 		while (i < this.template.length) {
 			const code = full_char_code_at(this.template, i);
-
 			if (!isIdentifierChar(code, true)) break;
 			i += code <= 0xffff ? 1 : 2;
 		}
-
 		const identifier = this.template.slice(this.index, (this.index = i));
-
 		if (!allow_reserved && reserved.has(identifier)) {
 			this.error(
 				{
@@ -194,11 +220,14 @@ export class Parser {
 				start
 			);
 		}
-
 		return identifier;
 	}
 
-	read_until(pattern: RegExp, error_message?: Parameters<Parser['error']>[0]) {
+	/**
+	 * @param {RegExp} pattern
+	 * @param {Parameters<Parser['error']>[0]} [error_message]
+	 */
+	read_until(pattern, error_message) {
 		if (this.index >= this.template.length) {
 			this.error(
 				error_message || {
@@ -207,19 +236,15 @@ export class Parser {
 				}
 			);
 		}
-
 		const start = this.index;
 		const match = pattern.exec(this.template.slice(start));
-
 		if (match) {
 			this.index = start + match.index;
 			return this.template.slice(start, this.index);
 		}
-
 		this.index = this.template.length;
 		return this.template.slice(start);
 	}
-
 	require_whitespace() {
 		if (!regex_whitespace.test(this.template[this.index])) {
 			this.error({
@@ -227,31 +252,30 @@ export class Parser {
 				message: 'Expected whitespace'
 			});
 		}
-
 		this.allow_whitespace();
 	}
 }
 
-export default function parse(template: string, options: ParserOptions = {}): Ast {
+/**
+ * @param {string} template
+ * @param {import('../interfaces.js').ParserOptions} options
+ * @returns {import('../interfaces.js').Ast}
+ */
+export default function parse(template, options = {}) {
 	const parser = new Parser(template, options);
-
 	// TODO we may want to allow multiple <style> tags —
 	// one scoped, one global. for now, only allow one
 	if (parser.css.length > 1) {
 		parser.error(parser_errors.duplicate_style, parser.css[1].start);
 	}
-
 	const instance_scripts = parser.js.filter((script) => script.context === 'default');
 	const module_scripts = parser.js.filter((script) => script.context === 'module');
-
 	if (instance_scripts.length > 1) {
 		parser.error(parser_errors.invalid_script_instance, instance_scripts[1].start);
 	}
-
 	if (module_scripts.length > 1) {
 		parser.error(parser_errors.invalid_script_module, module_scripts[1].start);
 	}
-
 	return {
 		html: parser.html,
 		css: parser.css[0],

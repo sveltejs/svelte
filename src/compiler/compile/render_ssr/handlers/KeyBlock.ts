@@ -1,6 +1,8 @@
-import KeyBlock from '../../nodes/KeyBlock';
-import Renderer, { RenderOptions } from '../Renderer';
-
-export default function (node: KeyBlock, renderer: Renderer, options: RenderOptions) {
+/**
+ * @param {import('../../nodes/KeyBlock.js').default} node
+ * @param {import('../Renderer.js').default} renderer
+ * @param {import('../private.js').RenderOptions} options
+ */
+export default function (node, renderer, options) {
 	renderer.render(node.children, options);
 }

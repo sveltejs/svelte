@@ -1,22 +1,35 @@
-import Renderer from '../../Renderer';
-import Block from '../../Block';
 import { x } from 'code-red';
-import { TemplateNode } from '../../../../interfaces';
-import { Identifier } from 'estree';
 
+/**
+ * @template {import('../../../../interfaces.js').TemplateNode} [NodeType=import('../../../../interfaces.js').TemplateNode]
+ */
 export default class Wrapper {
-	renderer: Renderer;
-	parent: Wrapper;
-	node: TemplateNode;
+	/** @type {import('../../Renderer.js').default} */
+	renderer;
 
-	prev: Wrapper | null;
-	next: Wrapper | null;
+	/** @type {Wrapper} */
+	parent;
 
-	var: Identifier;
+	/** @type {NodeType} */
+	node;
 
-	constructor(renderer: Renderer, block: Block, parent: Wrapper, node: TemplateNode) {
+	/** @type {Wrapper | null} */
+	prev;
+
+	/** @type {Wrapper | null} */
+	next;
+
+	/** @type {import('estree').Identifier} */
+	var;
+
+	/**
+	 * @param {import('../../Renderer.js').default} renderer
+	 * @param {import('../../Block.js').default} block
+	 * @param {Wrapper} parent
+	 * @param {NodeType} node
+	 */
+	constructor(renderer, block, parent, node) {
 		this.node = node;
-
 		// make these non-enumerable so that they can be logged sensibly
 		// (TODO in dev only?)
 		Object.defineProperties(this, {
@@ -27,11 +40,15 @@ export default class Wrapper {
 				value: parent
 			}
 		});
-
 		block.wrappers.push(this);
 	}
 
-	get_or_create_anchor(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+	/**
+	 * @param {import('../../Block.js').default} block
+	 * @param {import('estree').Identifier} parent_node
+	 * @param {import('estree').Identifier} parent_nodes
+	 */
+	get_or_create_anchor(block, parent_node, parent_nodes) {
 		// TODO use this in EachBlock and IfBlock — tricky because
 		// children need to be created first
 		const needs_anchor = this.next
@@ -40,37 +57,39 @@ export default class Wrapper {
 		const anchor = needs_anchor
 			? block.get_unique_name(`${this.var.name}_anchor`)
 			: (this.next && this.next.var) || { type: 'Identifier', name: 'null' };
-
 		if (needs_anchor) {
 			block.add_element(
 				anchor,
 				x`@empty()`,
 				parent_nodes && x`@empty()`,
-				parent_node as Identifier
+				/** @type {import('estree').Identifier} */ (parent_node)
 			);
 		}
-
 		return anchor;
 	}
 
-	get_update_mount_node(anchor: Identifier): Identifier {
-		return (
+	/**
+	 * @param {import('estree').Identifier} anchor
+	 * @returns {import('estree').Identifier}
+	 */
+	get_update_mount_node(anchor) {
+		return /** @type {import('estree').Identifier} */ (
 			this.parent && this.parent.is_dom_node() ? this.parent.var : x`${anchor}.parentNode`
-		) as Identifier;
+		);
 	}
-
 	is_dom_node() {
 		return (
 			this.node.type === 'Element' || this.node.type === 'Text' || this.node.type === 'MustacheTag'
 		);
 	}
 
-	render(
-		_block: Block,
-		_parent_node: Identifier,
-		_parent_nodes: Identifier,
-		_data: Record<string, any> = undefined
-	) {
+	/**
+	 * @param {import('../../Block.js').default} _block
+	 * @param {import('estree').Identifier} _parent_node
+	 * @param {import('estree').Identifier} _parent_nodes
+	 * @param {Record<string, any>} _data
+	 */
+	render(_block, _parent_node, _parent_nodes, _data = undefined) {
 		throw Error('Wrapper class is not renderable');
 	}
 }

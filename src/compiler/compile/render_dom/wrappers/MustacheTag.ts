@@ -1,43 +1,42 @@
-import Renderer from '../Renderer';
-import Block from '../Block';
-import Tag from './shared/Tag';
-import Wrapper from './shared/Wrapper';
-import MustacheTag from '../../nodes/MustacheTag';
-import RawMustacheTag from '../../nodes/RawMustacheTag';
+import Tag from './shared/Tag.js';
 import { x } from 'code-red';
-import { Identifier, Expression } from 'estree';
-import ElementWrapper from './Element';
-import AttributeWrapper from './Element/Attribute';
+import ElementWrapper from './Element/index.js';
 
+/** @extends Tag */
 export default class MustacheTagWrapper extends Tag {
-	var: Identifier = { type: 'Identifier', name: 't' };
+	/** @type {import('estree').Identifier} */
+	var = { type: 'Identifier', name: 't' };
 
-	constructor(
-		renderer: Renderer,
-		block: Block,
-		parent: Wrapper,
-		node: MustacheTag | RawMustacheTag
-	) {
+	/**
+	 * @param {import('../Renderer.js').default} renderer
+	 * @param {import('../Block.js').default} block
+	 * @param {import('./shared/Wrapper.js').default} parent
+	 * @param {import('../../nodes/MustacheTag.js').default | import('../../nodes/RawMustacheTag.js').default} node
+	 */
+	constructor(renderer, block, parent, node) {
 		super(renderer, block, parent, node);
 	}
 
-	render(
-		block: Block,
-		parent_node: Identifier,
-		parent_nodes: Identifier,
-		data: Record<string, unknown> | undefined
-	) {
+	/**
+	 * @param {import('../Block.js').default} block
+	 * @param {import('estree').Identifier} parent_node
+	 * @param {import('estree').Identifier} parent_nodes
+	 * @param {Record<string, unknown> | undefined} data
+	 */
+	render(block, parent_node, parent_nodes, data) {
 		const contenteditable_attributes =
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.name === 'contenteditable');
-
 		const spread_attributes =
 			this.parent instanceof ElementWrapper &&
 			this.parent.attributes.filter((a) => a.node.is_spread);
 
-		let contenteditable_attr_value: Expression | true | undefined = undefined;
+		/** @type {import('estree').Expression | true | undefined} */
+		let contenteditable_attr_value = undefined;
 		if (contenteditable_attributes.length > 0) {
-			const attribute = contenteditable_attributes[0] as AttributeWrapper;
+			const attribute = /** @type {import('./Element/Attribute.js').default} */ (
+				contenteditable_attributes[0]
+			);
 			if ([true, 'true', ''].includes(attribute.node.get_static_value())) {
 				contenteditable_attr_value = true;
 			} else {
@@ -46,7 +45,6 @@ export default class MustacheTagWrapper extends Tag {
 		} else if (spread_attributes.length > 0 && data.element_data_name) {
 			contenteditable_attr_value = x`${data.element_data_name}['contenteditable']`;
 		}
-
 		const { init } = this.rename_this_method(block, (value) => {
 			if (contenteditable_attr_value) {
 				if (contenteditable_attr_value === true) {
@@ -58,7 +56,6 @@ export default class MustacheTagWrapper extends Tag {
 				return x`@set_data(${this.var}, ${value})`;
 			}
 		});
-
 		block.add_element(
 			this.var,
 			x`@text(${init})`,

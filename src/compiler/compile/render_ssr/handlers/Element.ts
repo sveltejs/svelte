@@ -1,37 +1,32 @@
-import { is_void } from '../../../../shared/utils/names';
+import { is_void } from '../../../../shared/utils/names.js';
 import {
 	get_attribute_expression,
 	get_attribute_value,
 	get_class_attribute_value
-} from './shared/get_attribute_value';
-import { boolean_attributes } from '../../../../shared/boolean_attributes';
-import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable';
-import Renderer, { RenderOptions } from '../Renderer';
-import Binding from '../../nodes/Binding';
-import Element from '../../nodes/Element';
+} from './shared/get_attribute_value.js';
+import { boolean_attributes } from '../../../../shared/boolean_attributes.js';
+import { is_name_contenteditable, is_contenteditable } from '../../utils/contenteditable.js';
 import { p, x } from 'code-red';
-import Expression from '../../nodes/shared/Expression';
-import remove_whitespace_children from './utils/remove_whitespace_children';
-import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing';
-import { namespaces } from '../../../utils/namespaces';
-import { regex_starts_with_newline } from '../../../utils/patterns';
-import { Node, Expression as ESExpression } from 'estree';
+import remove_whitespace_children from './utils/remove_whitespace_children.js';
+import fix_attribute_casing from '../../render_dom/wrappers/Element/fix_attribute_casing.js';
+import { namespaces } from '../../../utils/namespaces.js';
+import { regex_starts_with_newline } from '../../../utils/patterns.js';
 
-export default function (node: Element, renderer: Renderer, options: RenderOptions) {
+/**
+ * @param {import('../../nodes/Element.js').default} node
+ * @param {import('../Renderer.js').default} renderer
+ * @param {import('../private.js').RenderOptions} options
+ */
+export default function (node, renderer, options) {
 	const children = remove_whitespace_children(node.children, node.next);
-
 	// awkward special case
 	let node_contents;
-
 	const contenteditable = is_contenteditable(node);
-
 	if (node.is_dynamic_element) {
 		renderer.push();
 	}
-
 	renderer.add_string('<');
 	add_tag_name();
-
 	const class_expression_list = node.classes.map((class_directive) => {
 		const { expression, name } = class_directive;
 		const snippet = expression ? expression.node : x`#ctx.${name}`; // TODO is this right?
@@ -43,7 +38,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 	const class_expression =
 		class_expression_list.length > 0 &&
 		class_expression_list.reduce((lhs, rhs) => x`${lhs} + ' ' + ${rhs}`);
-
 	const style_expression_list = node.styles.map((style_directive) => {
 		let {
 			name,
@@ -55,9 +49,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 		return p`"${name}": ${expression}`;
 	});
-
 	const style_expression = style_expression_list.length > 0 && x`{ ${style_expression_list} }`;
-
 	if (node.attributes.some((attr) => attr.is_spread)) {
 		// TODO dry this out
 		const args = [];
@@ -80,16 +72,23 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 					attribute.chunks[0].type !== 'Text'
 				) {
 					// a boolean attribute with one non-Text chunk
-					args.push(x`{ ${attr_name}: ${(attribute.chunks[0] as Expression).node} || null }`);
+					args.push(
+						x`{ ${attr_name}: ${
+							/** @type {import('../../nodes/shared/Expression.js').default} */ (
+								attribute.chunks[0]
+							).node
+						} || null }`
+					);
 				} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
-					const snippet = (attribute.chunks[0] as Expression).node;
+					const snippet = /** @type {import('../../nodes/shared/Expression.js').default} */ (
+						attribute.chunks[0]
+					).node;
 					args.push(x`{ ${attr_name}: @escape_attribute_value(${snippet}) }`);
 				} else {
 					args.push(x`{ ${attr_name}: ${get_attribute_value(attribute)} }`);
 				}
 			}
 		});
-
 		renderer.add_expression(
 			x`@spread([${args}], { classes: ${class_expression}, styles: ${style_expression} })`
 		);
@@ -114,7 +113,10 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 				// a boolean attribute with one non-Text chunk
 				renderer.add_string(' ');
 				renderer.add_expression(
-					x`${(attribute.chunks[0] as Expression).node} ? "${attr_name}" : ""`
+					x`${
+						/** @type {import('../../nodes/shared/Expression.js').default} */ (attribute.chunks[0])
+							.node
+					} ? "${attr_name}" : ""`
 				);
 			} else if (name === 'class' && class_expression) {
 				add_class_attribute = false;
@@ -129,7 +131,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 					x`@add_styles(@merge_ssr_styles(${get_attribute_value(attribute)}, ${style_expression}))`
 				);
 			} else if (attribute.chunks.length === 1 && attribute.chunks[0].type !== 'Text') {
-				const snippet = (attribute.chunks[0] as Expression).node;
+				const snippet = /** @type {import('../../nodes/shared/Expression.js').default} */ (
+					attribute.chunks[0]
+				).node;
 				renderer.add_expression(
 					x`@add_attribute("${attr_name}", ${snippet}, ${boolean_attributes.has(name) ? 1 : 0})`
 				);
@@ -148,14 +152,11 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			renderer.add_expression(x`@add_styles(${style_expression})`);
 		}
 	}
-
-	node.bindings.forEach((binding: Binding) => {
+	node.bindings.forEach((binding) => {
 		const { name, expression } = binding;
-
 		if (binding.is_readonly) {
 			return;
 		}
-
 		if (name === 'group') {
 			const value_attribute = node.attributes.find(({ name }) => name === 'value');
 			if (value_attribute) {
@@ -168,7 +169,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			}
 		} else if (contenteditable && is_name_contenteditable(name)) {
 			node_contents = expression.node;
-
 			// TODO where was this used?
 			// value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
 		} else if (binding.name === 'value' && node.name === 'textarea') {
@@ -183,22 +183,18 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			);
 		}
 	});
-
 	if (options.hydratable) {
 		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
 			renderer.add_string(` data-svelte-h="${node.hash()}"`);
 			options = { ...options, has_added_svelte_hash: true };
 		}
 	}
-
 	renderer.add_string('>');
-
 	if (node_contents !== undefined) {
 		if (contenteditable) {
 			renderer.push();
 			renderer.render(children, options);
 			const result = renderer.pop();
-
 			renderer.add_expression(
 				x`($$value => $$value === void 0 ? ${result} : $$value)(${node_contents})`
 			);
@@ -216,7 +212,6 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			}
 			renderer.add_expression(node_contents);
 		}
-
 		add_close_tag();
 	} else {
 		if (node.name === 'pre') {
@@ -236,9 +231,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 		add_close_tag();
 	}
-
 	if (node.is_dynamic_element) {
-		let content: Node = renderer.pop();
+		/** @type {import('estree').Node} */
+		let content = renderer.pop();
 		if (options.dev && node.children.length > 0)
 			content = x`(() => { @validate_void_dynamic_element(#tag); return ${content}; })()`;
 		renderer.add_expression(x`((#tag) => {
@@ -246,10 +241,9 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			return #tag ? ${content} : '';
 		})(${node.tag_expr.node})`);
 	}
-
 	function add_close_tag() {
 		if (node.tag_expr.node.type === 'Literal') {
-			if (!is_void(node.tag_expr.node.value as string)) {
+			if (!is_void(/** @type {string} */ (node.tag_expr.node.value))) {
 				renderer.add_string('</');
 				add_tag_name();
 				renderer.add_string('>');
@@ -258,12 +252,11 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 		}
 		renderer.add_expression(x`@is_void(#tag) ? '' : \`</\${#tag}>\``);
 	}
-
 	function add_tag_name() {
 		if (node.tag_expr.node.type === 'Literal') {
-			renderer.add_string(node.tag_expr.node.value as string);
+			renderer.add_string(/** @type {string} */ (node.tag_expr.node.value));
 		} else {
-			renderer.add_expression(node.tag_expr.node as ESExpression);
+			renderer.add_expression(/** @type {import('estree').Expression} */ (node.tag_expr.node));
 		}
 	}
 }

@@ -1,55 +1,60 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import AwaitBlock from '../../nodes/AwaitBlock';
-import create_debugging_comment from './shared/create_debugging_comment';
+import Wrapper from './shared/Wrapper.js';
+import create_debugging_comment from './shared/create_debugging_comment.js';
 import { b, x } from 'code-red';
-import FragmentWrapper from './Fragment';
-import PendingBlock from '../../nodes/PendingBlock';
-import ThenBlock from '../../nodes/ThenBlock';
-import CatchBlock from '../../nodes/CatchBlock';
-import { Context } from '../../nodes/shared/Context';
-import { Identifier, Literal, Node } from 'estree';
-import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
-import Expression from '../../nodes/shared/Expression';
+import FragmentWrapper from './Fragment.js';
+import ThenBlock from '../../nodes/ThenBlock.js';
+import CatchBlock from '../../nodes/CatchBlock.js';
+import { add_const_tags, add_const_tags_context } from './shared/add_const_tags.js';
+import Expression from '../../nodes/shared/Expression.js';
 
-type Status = 'pending' | 'then' | 'catch';
-
+/** @extends Wrapper<import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default> */
 class AwaitBlockBranch extends Wrapper {
-	parent: AwaitBlockWrapper;
-	node: PendingBlock | ThenBlock | CatchBlock;
-	block: Block;
-	fragment: FragmentWrapper;
-	is_dynamic: boolean;
+	/** @typedef {'pending' | 'then' | 'catch'} Status */
+
+	/** @type {import('../Block.js').default} */
+	block;
+
+	/** @type {import('./Fragment.js').default} */
+	fragment;
+
+	/** @type {boolean} */
+	is_dynamic;
 
 	var = null;
-	status: Status;
 
-	value: string;
-	value_index: Literal;
-	value_contexts: Context[];
-	is_destructured: boolean;
+	/** @type {Status} */
+	status;
 
-	constructor(
-		status: Status,
-		renderer: Renderer,
-		block: Block,
-		parent: AwaitBlockWrapper,
-		node: PendingBlock | ThenBlock | CatchBlock,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
-	) {
+	/** @type {string} */
+	value;
+
+	/** @type {import('estree').Literal} */
+	value_index;
+
+	/** @type {import('../../nodes/shared/Context.js').Context[]} */
+	value_contexts;
+
+	/** @type {boolean} */
+	is_destructured;
+
+	/**
+	 * @param {Status} status
+	 * @param {import('../Renderer.js').default} renderer
+	 * @param {import('../Block.js').default} block
+	 * @param {AwaitBlockWrapper} parent
+	 * @param {import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default} node
+	 * @param {boolean} strip_whitespace
+	 * @param {import('./shared/Wrapper.js').default} next_sibling
+	 */
+	constructor(status, renderer, block, parent, node, strip_whitespace, next_sibling) {
 		super(renderer, block, parent, node);
 		this.status = status;
-
 		this.block = block.child({
 			comment: create_debugging_comment(node, this.renderer.component),
 			name: this.renderer.component.get_unique_name(`create_${status}_block`),
 			type: status
 		});
-
 		this.add_context(parent.node[status + '_node'], parent.node[status + '_contexts']);
-
 		this.fragment = new FragmentWrapper(
 			renderer,
 			this.block,
@@ -58,13 +63,15 @@ class AwaitBlockBranch extends Wrapper {
 			strip_whitespace,
 			next_sibling
 		);
-
 		this.is_dynamic = this.block.dependencies.size > 0;
 	}
 
-	add_context(node: Node | null, contexts: Context[]) {
+	/**
+	 * @param {import('estree').Node | null} node
+	 * @param {import('../../nodes/shared/Context.js').Context[]} contexts
+	 */
+	add_context(node, contexts) {
 		if (!node) return;
-
 		if (node.type === 'Identifier') {
 			this.value = node.name;
 			this.renderer.add_to_context(this.value, true);
@@ -79,24 +86,30 @@ class AwaitBlockBranch extends Wrapper {
 			this.is_destructured = true;
 		}
 		this.value_index = this.renderer.context_lookup.get(this.value).index;
-
 		if (this.has_consts(this.node)) {
 			add_const_tags_context(this.renderer, this.node.const_tags);
 		}
 	}
 
-	has_consts(node: PendingBlock | ThenBlock | CatchBlock): node is ThenBlock | CatchBlock {
+	/**
+	 * @param {import('../../nodes/PendingBlock.js').default | import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default} node
+	 * @returns {node is import('../../nodes/ThenBlock.js').default | import('../../nodes/CatchBlock.js').default}
+	 */
+	has_consts(node) {
 		return node instanceof ThenBlock || node instanceof CatchBlock;
 	}
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+	/**
+	 * @param {import('../Block.js').default} block
+	 * @param {import('estree').Identifier} parent_node
+	 * @param {import('estree').Identifier} parent_nodes
+	 */
+	render(block, parent_node, parent_nodes) {
 		this.fragment.render(block, parent_node, parent_nodes);
-
 		if (this.is_destructured || (this.has_consts(this.node) && this.node.const_tags.length > 0)) {
 			this.render_get_context();
 		}
 	}
-
 	render_get_context() {
 		const props = this.is_destructured
 			? this.value_contexts.map((prop) => {
@@ -109,6 +122,7 @@ class AwaitBlockBranch extends Wrapper {
 						);
 						return b`const ${prop.property_name} = ${expression.manipulate(this.block, '#ctx')};`;
 					} else {
+						/** @param {any} name */
 						const to_ctx = (name) => this.renderer.reference(name);
 						return b`#ctx[${
 							this.block.renderer.context_lookup.get(prop.key.name).index
@@ -116,11 +130,9 @@ class AwaitBlockBranch extends Wrapper {
 					}
 			  })
 			: null;
-
 		const const_tags_props = this.has_consts(this.node)
 			? add_const_tags(this.block, this.node.const_tags, '#ctx')
 			: null;
-
 		const get_context = this.block.renderer.component.get_unique_name(`get_${this.status}_context`);
 		this.block.renderer.blocks.push(b`
 			function ${get_context}(#ctx) {
@@ -135,34 +147,36 @@ class AwaitBlockBranch extends Wrapper {
 	}
 }
 
+/** @extends Wrapper<import('../../nodes/AwaitBlock.js').default> */
 export default class AwaitBlockWrapper extends Wrapper {
-	node: AwaitBlock;
+	/** @type {AwaitBlockBranch} */
+	pending;
 
-	pending: AwaitBlockBranch;
-	then: AwaitBlockBranch;
-	catch: AwaitBlockBranch;
+	/** @type {AwaitBlockBranch} */
+	then;
 
-	var: Identifier = { type: 'Identifier', name: 'await_block' };
+	/** @type {AwaitBlockBranch} */
+	catch;
 
-	constructor(
-		renderer: Renderer,
-		block: Block,
-		parent: Wrapper,
-		node: AwaitBlock,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
-	) {
+	/** @type {import('estree').Identifier} */
+	var = { type: 'Identifier', name: 'await_block' };
+
+	/**
+	 * @param {import('../Renderer.js').default} renderer
+	 * @param {import('../Block.js').default} block
+	 * @param {import('./shared/Wrapper.js').default} parent
+	 * @param {import('../../nodes/AwaitBlock.js').default} node
+	 * @param {boolean} strip_whitespace
+	 * @param {import('./shared/Wrapper.js').default} next_sibling
+	 */
+	constructor(renderer, block, parent, node, strip_whitespace, next_sibling) {
 		super(renderer, block, parent, node);
-
 		block.add_dependencies(this.node.expression.dependencies);
-
 		let is_dynamic = false;
 		let has_intros = false;
 		let has_outros = false;
-
-		['pending', 'then', 'catch'].forEach((status: Status) => {
+		/** @type {const} */ (['pending', 'then', 'catch']).forEach((status) => {
 			const child = this.node[status];
-
 			const branch = new AwaitBlockBranch(
 				status,
 				renderer,
@@ -172,46 +186,42 @@ export default class AwaitBlockWrapper extends Wrapper {
 				strip_whitespace,
 				next_sibling
 			);
-
 			renderer.blocks.push(branch.block);
-
 			if (branch.is_dynamic) {
 				is_dynamic = true;
 				// TODO should blocks update their own parents?
 				block.add_dependencies(branch.block.dependencies);
 			}
-
 			if (branch.block.has_intros) has_intros = true;
 			if (branch.block.has_outros) has_outros = true;
-
 			this[status] = branch;
 		});
-
 		['pending', 'then', 'catch'].forEach((status) => {
 			this[status].block.has_update_method = is_dynamic;
 			this[status].block.has_intro_method = has_intros;
 			this[status].block.has_outro_method = has_outros;
 		});
-
 		if (has_outros) {
 			block.add_outro();
 		}
 	}
 
-	render(block: Block, parent_node: Identifier, parent_nodes: Identifier) {
+	/**
+	 * @param {import('../Block.js').default} block
+	 * @param {import('estree').Identifier} parent_node
+	 * @param {import('estree').Identifier} parent_nodes
+	 */
+	render(block, parent_node, parent_nodes) {
 		const anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 		const update_mount_node = this.get_update_mount_node(anchor);
-
 		const snippet = this.node.expression.manipulate(block);
-
 		const info = block.get_unique_name('info');
 		const promise = block.get_unique_name('promise');
-
 		block.add_variable(promise);
-
 		block.maintain_context = true;
 
-		const info_props: any = x`{
+		/** @type {any} */
+		const info_props = x`{
 			ctx: #ctx,
 			current: null,
 			token: null,
@@ -223,53 +233,40 @@ export default class AwaitBlockWrapper extends Wrapper {
 			error: ${this.catch.value_index},
 			blocks: ${this.pending.block.has_outro_method && x`[,,,]`}
 		}`;
-
 		block.chunks.init.push(b`
 			let ${info} = ${info_props};
 		`);
-
 		block.chunks.init.push(b`
 			@handle_promise(${promise} = ${snippet}, ${info});
 		`);
-
 		block.chunks.create.push(b`
 			${info}.block.c();
 		`);
-
 		if (parent_nodes && this.renderer.options.hydratable) {
 			block.chunks.claim.push(b`
 				${info}.block.l(${parent_nodes});
 			`);
 		}
-
 		const initial_mount_node = parent_node || '#target';
 		const anchor_node = parent_node ? 'null' : '#anchor';
-
 		const has_transitions =
 			this.pending.block.has_intro_method || this.pending.block.has_outro_method;
-
 		block.chunks.mount.push(b`
 			${info}.block.m(${initial_mount_node}, ${info}.anchor = ${anchor_node});
 			${info}.mount = () => ${update_mount_node};
 			${info}.anchor = ${anchor};
 		`);
-
 		if (has_transitions) {
 			block.chunks.intro.push(b`@transition_in(${info}.block);`);
 		}
-
 		const dependencies = this.node.expression.dynamic_dependencies();
-
 		const update_await_block_branch = b`@update_await_block_branch(${info}, #ctx, #dirty)`;
-
 		if (dependencies.length > 0) {
 			const condition = x`
 				${block.renderer.dirty(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
-
 			block.chunks.update.push(b`${info}.ctx = #ctx;`);
-
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (${condition}) {
@@ -290,7 +287,6 @@ export default class AwaitBlockWrapper extends Wrapper {
 				`);
 			}
 		}
-
 		if (this.pending.block.has_outro_method) {
 			block.chunks.outro.push(b`
 				for (let #i = 0; #i < 3; #i += 1) {
@@ -299,15 +295,13 @@ export default class AwaitBlockWrapper extends Wrapper {
 				}
 			`);
 		}
-
 		block.chunks.destroy.push(b`
 			${info}.block.d(${parent_node ? null : 'detaching'});
 			${info}.token = null;
 			${info} = null;
 		`);
-
 		[this.pending, this.then, this.catch].forEach((branch) => {
-			branch.render(branch.block, null, x`#nodes` as Identifier);
+			branch.render(branch.block, null, /** @type {import('estree').Identifier} */ (x`#nodes`));
 		});
 	}
 }

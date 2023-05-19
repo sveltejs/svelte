@@ -15,6 +15,9 @@
 		"noEmitOnError": true,
 		"noErrorTruncation": true,
 
+		"allowJs": true,
+		"checkJs": true,
+
 		// rollup takes care of these
 		"module": "esnext",
 		"moduleResolution": "node",

@@ -1,38 +1,48 @@
-import list from '../utils/list';
-import { ModuleFormat } from '../interfaces';
+import list from '../utils/list.js';
 import { b, x } from 'code-red';
-import { Identifier, ImportDeclaration, ExportNamedDeclaration } from 'estree';
-
 const wrappers = { esm, cjs };
 
-interface Export {
-	name: string;
-	as: string;
-}
-
+/**
+ * @param {any} program
+ * @param {import('../interfaces.js').ModuleFormat} format
+ * @param {import('estree').Identifier} name
+ * @param {string} banner
+ * @param {any} sveltePath
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
+ * @param {import('estree').ImportDeclaration[]} imports
+ * @param {Export[]} module_exports
+ * @param {import('estree').ExportNamedDeclaration[]} exports_from
+ */
 export default function create_module(
-	program: any,
-	format: ModuleFormat,
-	name: Identifier,
-	banner: string,
+	program,
+	format,
+	name,
+	banner,
 	sveltePath = 'svelte',
-	helpers: Array<{ name: string; alias: Identifier }>,
-	globals: Array<{ name: string; alias: Identifier }>,
-	imports: ImportDeclaration[],
-	module_exports: Export[],
-	exports_from: ExportNamedDeclaration[]
+	helpers,
+	globals,
+	imports,
+	module_exports,
+	exports_from
 ) {
 	const internal_path = `${sveltePath}/internal`;
-
-	helpers.sort((a, b) => (a.name < b.name ? -1 : 1));
-	globals.sort((a, b) => (a.name < b.name ? -1 : 1));
-
+	helpers.sort(
+		/**
+		 * @param {any} a
+		 * @param {any} b
+		 */ (a, b) => (a.name < b.name ? -1 : 1)
+	);
+	globals.sort(
+		/**
+		 * @param {any} a
+		 * @param {any} b
+		 */ (a, b) => (a.name < b.name ? -1 : 1)
+	);
 	const formatter = wrappers[format];
-
 	if (!formatter) {
 		throw new Error(`options.format is invalid (must be ${list(Object.keys(wrappers))})`);
 	}
-
 	return formatter(
 		program,
 		name,
@@ -47,16 +57,21 @@ export default function create_module(
 	);
 }
 
+/**
+ * @param {any} source
+ * @param {any} sveltePath
+ */
 function edit_source(source, sveltePath) {
 	return source === 'svelte' || source.startsWith('svelte/')
 		? source.replace('svelte', sveltePath)
 		: source;
 }
 
-function get_internal_globals(
-	globals: Array<{ name: string; alias: Identifier }>,
-	helpers: Array<{ name: string; alias: Identifier }>
-) {
+/**
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
+ */
+function get_internal_globals(globals, helpers) {
 	return (
 		globals.length > 0 && {
 			type: 'VariableDeclaration',
@@ -66,48 +81,64 @@ function get_internal_globals(
 					type: 'VariableDeclarator',
 					id: {
 						type: 'ObjectPattern',
-						properties: globals.map((g) => ({
-							type: 'Property',
-							method: false,
-							shorthand: false,
-							computed: false,
-							key: { type: 'Identifier', name: g.name },
-							value: g.alias,
-							kind: 'init'
-						}))
+						properties: globals.map(
+							/** @param {any} g */ (g) => ({
+								type: 'Property',
+								method: false,
+								shorthand: false,
+								computed: false,
+								key: { type: 'Identifier', name: g.name },
+								value: g.alias,
+								kind: 'init'
+							})
+						)
 					},
-					init: helpers.find(({ name }) => name === 'globals').alias
+					init: helpers.find(/** @param {any}params_0 */ ({ name }) => name === 'globals').alias
 				}
 			]
 		}
 	);
 }
 
+/**
+ * @param {any} program
+ * @param {import('estree').Identifier} name
+ * @param {string} banner
+ * @param {string} sveltePath
+ * @param {string} internal_path
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
+ * @param {import('estree').ImportDeclaration[]} imports
+ * @param {Export[]} module_exports
+ * @param {import('estree').ExportNamedDeclaration[]} exports_from
+ */
 function esm(
-	program: any,
-	name: Identifier,
-	banner: string,
-	sveltePath: string,
-	internal_path: string,
-	helpers: Array<{ name: string; alias: Identifier }>,
-	globals: Array<{ name: string; alias: Identifier }>,
-	imports: ImportDeclaration[],
-	module_exports: Export[],
-	exports_from: ExportNamedDeclaration[]
+	program,
+	name,
+	banner,
+	sveltePath,
+	internal_path,
+	helpers,
+	globals,
+	imports,
+	module_exports,
+	exports_from
 ) {
 	const import_declaration = {
 		type: 'ImportDeclaration',
-		specifiers: helpers.map((h) => ({
-			type: 'ImportSpecifier',
-			local: h.alias,
-			imported: { type: 'Identifier', name: h.name }
-		})),
+		specifiers: helpers.map(
+			/** @param {any} h */ (h) => ({
+				type: 'ImportSpecifier',
+				local: h.alias,
+				imported: { type: 'Identifier', name: h.name }
+			})
+		),
 		source: { type: 'Literal', value: internal_path }
 	};
-
 	const internal_globals = get_internal_globals(globals, helpers);
-
 	// edit user imports
+
+	/** @param {any} node */
 	function rewrite_import(node) {
 		const value = edit_source(node.source.value, sveltePath);
 		if (node.source.value !== value) {
@@ -117,16 +148,16 @@ function esm(
 	}
 	imports.forEach(rewrite_import);
 	exports_from.forEach(rewrite_import);
-
 	const exports = module_exports.length > 0 && {
 		type: 'ExportNamedDeclaration',
-		specifiers: module_exports.map((x) => ({
-			type: 'Specifier',
-			local: { type: 'Identifier', name: x.name },
-			exported: { type: 'Identifier', name: x.as }
-		}))
+		specifiers: module_exports.map(
+			/** @param {any} x */ (x) => ({
+				type: 'Specifier',
+				local: { type: 'Identifier', name: x.name },
+				exported: { type: 'Identifier', name: x.as }
+			})
+		)
 	};
-
 	program.body = b`
 		/* ${banner} */
 
@@ -142,17 +173,29 @@ function esm(
 	`;
 }
 
+/**
+ * @param {any} program
+ * @param {import('estree').Identifier} name
+ * @param {string} banner
+ * @param {string} sveltePath
+ * @param {string} internal_path
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
+ * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
+ * @param {import('estree').ImportDeclaration[]} imports
+ * @param {Export[]} module_exports
+ * @param {import('estree').ExportNamedDeclaration[]} exports_from
+ */
 function cjs(
-	program: any,
-	name: Identifier,
-	banner: string,
-	sveltePath: string,
-	internal_path: string,
-	helpers: Array<{ name: string; alias: Identifier }>,
-	globals: Array<{ name: string; alias: Identifier }>,
-	imports: ImportDeclaration[],
-	module_exports: Export[],
-	exports_from: ExportNamedDeclaration[]
+	program,
+	name,
+	banner,
+	sveltePath,
+	internal_path,
+	helpers,
+	globals,
+	imports,
+	module_exports,
+	exports_from
 ) {
 	const internal_requires = {
 		type: 'VariableDeclaration',
@@ -162,70 +205,76 @@ function cjs(
 				type: 'VariableDeclarator',
 				id: {
 					type: 'ObjectPattern',
-					properties: helpers.map((h) => ({
-						type: 'Property',
-						method: false,
-						shorthand: false,
-						computed: false,
-						key: { type: 'Identifier', name: h.name },
-						value: h.alias,
-						kind: 'init'
-					}))
+					properties: helpers.map(
+						/** @param {any} h */ (h) => ({
+							type: 'Property',
+							method: false,
+							shorthand: false,
+							computed: false,
+							key: { type: 'Identifier', name: h.name },
+							value: h.alias,
+							kind: 'init'
+						})
+					)
 				},
 				init: x`require("${internal_path}")`
 			}
 		]
 	};
-
 	const internal_globals = get_internal_globals(globals, helpers);
-
-	const user_requires = imports.map((node) => {
-		const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
-		if (node.specifiers.length === 0) {
-			return b`${init};`;
+	const user_requires = imports.map(
+		/** @param {any} node */ (node) => {
+			const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
+			if (node.specifiers.length === 0) {
+				return b`${init};`;
+			}
+			return {
+				type: 'VariableDeclaration',
+				kind: 'const',
+				declarations: [
+					{
+						type: 'VariableDeclarator',
+						id:
+							node.specifiers[0].type === 'ImportNamespaceSpecifier'
+								? { type: 'Identifier', name: node.specifiers[0].local.name }
+								: {
+										type: 'ObjectPattern',
+										properties: node.specifiers.map(
+											/** @param {any} s */ (s) => ({
+												type: 'Property',
+												method: false,
+												shorthand: false,
+												computed: false,
+												key:
+													s.type === 'ImportSpecifier'
+														? s.imported
+														: { type: 'Identifier', name: 'default' },
+												value: s.local,
+												kind: 'init'
+											})
+										)
+								  },
+						init
+					}
+				]
+			};
 		}
-		return {
-			type: 'VariableDeclaration',
-			kind: 'const',
-			declarations: [
-				{
-					type: 'VariableDeclarator',
-					id:
-						node.specifiers[0].type === 'ImportNamespaceSpecifier'
-							? { type: 'Identifier', name: node.specifiers[0].local.name }
-							: {
-									type: 'ObjectPattern',
-									properties: node.specifiers.map((s) => ({
-										type: 'Property',
-										method: false,
-										shorthand: false,
-										computed: false,
-										key:
-											s.type === 'ImportSpecifier'
-												? s.imported
-												: { type: 'Identifier', name: 'default' },
-										value: s.local,
-										kind: 'init'
-									}))
-							  },
-					init
-				}
-			]
-		};
-	});
-
+	);
 	const exports = module_exports.map(
+		/** @param {any} x */
 		(x) =>
 			b`exports.${{ type: 'Identifier', name: x.as }} = ${{ type: 'Identifier', name: x.name }};`
 	);
-
-	const user_exports_from = exports_from.map((node) => {
-		const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
-		return node.specifiers.map((specifier) => {
-			return b`exports.${specifier.exported} = ${init}.${specifier.local};`;
-		});
-	});
-
+	const user_exports_from = exports_from.map(
+		/** @param {any} node */ (node) => {
+			const init = x`require("${edit_source(node.source.value, sveltePath)}")`;
+			return node.specifiers.map(
+				/** @param {any} specifier */ (specifier) => {
+					return b`exports.${specifier.exported} = ${init}.${specifier.local};`;
+				}
+			);
+		}
+	);
 	program.body = b`
 		/* ${banner} */
 
@@ -241,3 +290,8 @@ function cjs(
 		${exports}
 	`;
 }
+
+/** @typedef {Object} Export
+ * @property {string} name
+ * @property {string} as
+ */

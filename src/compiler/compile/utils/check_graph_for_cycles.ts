@@ -1,5 +1,10 @@
-export default function check_graph_for_cycles(edges: Array<[any, any]>): any[] {
-	const graph: Map<any, any[]> = edges.reduce((g, edge) => {
+/**
+ * @param {Array<[any, any]>} edges
+ * @returns {any[]}
+ */
+export default function check_graph_for_cycles(edges) {
+	/** @type {Map<any, any[]>} */
+	const graph = edges.reduce((g, edge) => {
 		const [u, v] = edge;
 		if (!g.has(u)) g.set(u, []);
 		if (!g.has(v)) g.set(v, []);

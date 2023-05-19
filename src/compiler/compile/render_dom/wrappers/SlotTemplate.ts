@@ -1,57 +1,51 @@
-import Wrapper from './shared/Wrapper';
-import Renderer from '../Renderer';
-import Block from '../Block';
-import FragmentWrapper from './Fragment';
-import create_debugging_comment from './shared/create_debugging_comment';
-import { get_slot_definition } from './shared/get_slot_definition';
+import Wrapper from './shared/Wrapper.js';
+import FragmentWrapper from './Fragment.js';
+import create_debugging_comment from './shared/create_debugging_comment.js';
+import { get_slot_definition } from './shared/get_slot_definition.js';
 import { b, x } from 'code-red';
-import { sanitize } from '../../../utils/names';
-import { Identifier } from 'estree';
-import InlineComponentWrapper from './InlineComponent';
+import { sanitize } from '../../../utils/names.js';
 import { extract_names } from 'periscopic';
-import SlotTemplate from '../../nodes/SlotTemplate';
-import { add_const_tags, add_const_tags_context } from './shared/add_const_tags';
+import { add_const_tags, add_const_tags_context } from './shared/add_const_tags.js';
 
+/** @extends Wrapper<import('../../nodes/SlotTemplate.js').default> */
 export default class SlotTemplateWrapper extends Wrapper {
-	node: SlotTemplate;
-	fragment: FragmentWrapper;
-	block: Block;
-	parent: InlineComponentWrapper;
+	/** @type {import('./Fragment.js').default} */
+	fragment;
 
-	constructor(
-		renderer: Renderer,
-		block: Block,
-		parent: Wrapper,
-		node: SlotTemplate,
-		strip_whitespace: boolean,
-		next_sibling: Wrapper
-	) {
+	/** @type {import('../Block.js').default} */
+	block;
+
+	/**
+	 * @param {import('../Renderer.js').default} renderer
+	 * @param {import('../Block.js').default} block
+	 * @param {import('./shared/Wrapper.js').default} parent
+	 * @param {import('../../nodes/SlotTemplate.js').default} node
+	 * @param {boolean} strip_whitespace
+	 * @param {import('./shared/Wrapper.js').default} next_sibling
+	 */
+	constructor(renderer, block, parent, node, strip_whitespace, next_sibling) {
 		super(renderer, block, parent, node);
-
 		const { scope, lets, const_tags, slot_template_name } = this.node;
-
 		lets.forEach((l) => {
 			extract_names(l.value || l.name).forEach((name) => {
 				renderer.add_to_context(name, true);
 			});
 		});
-
 		add_const_tags_context(renderer, const_tags);
-
 		this.block = block.child({
 			comment: create_debugging_comment(this.node, this.renderer.component),
 			name: this.renderer.component.get_unique_name(`create_${sanitize(slot_template_name)}_slot`),
 			type: 'slot'
 		});
 		this.renderer.blocks.push(this.block);
-
 		const seen = new Set(lets.map((l) => l.name.name));
 		this.parent.node.lets.forEach((l) => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
-
-		this.parent.set_slot(slot_template_name, get_slot_definition(this.block, scope, lets));
-
+		/** @type {import('./InlineComponent/index.js').default} */ (this.parent).set_slot(
+			slot_template_name,
+			get_slot_definition(this.block, scope, lets)
+		);
 		this.fragment = new FragmentWrapper(
 			renderer,
 			this.block,
@@ -60,13 +54,10 @@ export default class SlotTemplateWrapper extends Wrapper {
 			strip_whitespace,
 			next_sibling
 		);
-
 		this.block.parent.add_dependencies(this.block.dependencies);
 	}
-
 	render() {
-		this.fragment.render(this.block, null, x`#nodes` as Identifier);
-
+		this.fragment.render(this.block, null, /** @type {import('estree').Identifier} */ (x`#nodes`));
 		if (this.node.const_tags.length > 0) {
 			this.render_get_context();
 		}

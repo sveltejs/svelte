@@ -1,16 +1,17 @@
-import map_children from './shared/map_children';
-import AbstractBlock from './shared/AbstractBlock';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import Node from './shared/Node';
+import map_children from './shared/map_children.js';
+import AbstractBlock from './shared/AbstractBlock.js';
 
+/** @extends AbstractBlock<'PendingBlock'> */
 export default class PendingBlock extends AbstractBlock {
-	type: 'PendingBlock';
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.children = map_children(component, parent, scope, info.children);
-
 		if (!info.skip) {
 			this.warn_if_empty_block();
 		}

@@ -1,14 +1,20 @@
-import { TemplateNode } from '../../interfaces';
-import Component from '../Component';
-import Node from './shared/Node';
-import TemplateScope from './shared/TemplateScope';
+import Node from './shared/Node.js';
 
+/** @extends Node<'Comment'> */
 export default class Comment extends Node {
-	type: 'Comment';
-	data: string;
-	ignores: string[];
+	/** @type {string} */
+	data;
 
-	constructor(component: Component, parent: Node, scope: TemplateScope, info: TemplateNode) {
+	/** @type {string[]} */
+	ignores;
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./shared/Node.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.data = info.data;
 		this.ignores = info.ignores;

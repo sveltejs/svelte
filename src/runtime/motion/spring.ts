@@ -1,15 +1,16 @@
-import { Readable, writable } from '../store';
-import { loop, now, Task } from '../internal';
-import { is_date } from './utils';
+import { writable } from '../store/index.js';
+import { loop, now } from '../internal/index.js';
+import { is_date } from './utils.js';
 
-interface TickContext<T> {
-	inv_mass: number;
-	dt: number;
-	opts: Spring<T>;
-	settled: boolean;
-}
-
-function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, target_value: T): T {
+/**
+ * @template T
+ * @param {import('./private.js').TickContext<T>} ctx
+ * @param {T} last_value
+ * @param {T} current_value
+ * @param {T} target_value
+ * @returns {T}
+ */
+function tick_spring(ctx, last_value, current_value, target_value) {
 	if (typeof current_value === 'number' || is_date(current_value)) {
 		// @ts-ignore
 		const delta = target_value - current_value;
@@ -19,7 +20,6 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 		const damper = ctx.opts.damping * velocity;
 		const acceleration = (spring - damper) * ctx.inv_mass;
 		const d = (velocity + acceleration) * ctx.dt;
-
 		if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
 			return target_value; // settled
 		} else {
@@ -45,45 +45,36 @@ function tick_spring<T>(ctx: TickContext<T>, last_value: T, current_value: T, ta
 	}
 }
 
-interface SpringOpts {
-	stiffness?: number;
-	damping?: number;
-	precision?: number;
-}
-
-interface SpringUpdateOpts {
-	hard?: any;
-	soft?: string | number | boolean;
-}
-
-type Updater<T> = (target_value: T, value: T) => T;
-
-export interface Spring<T> extends Readable<T> {
-	set: (new_value: T, opts?: SpringUpdateOpts) => Promise<void>;
-	update: (fn: Updater<T>, opts?: SpringUpdateOpts) => Promise<void>;
-	precision: number;
-	damping: number;
-	stiffness: number;
-}
-
-export function spring<T = any>(value?: T, opts: SpringOpts = {}): Spring<T> {
+/**
+ * @template T
+ * @param {T} [value]
+ * @param {import('./private.js').SpringOpts} [opts]
+ * @returns {import('./public.js').Spring<T>}
+ */
+export function spring(value, opts = {}) {
 	const store = writable(value);
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
-
-	let last_time: number;
-	let task: Task;
-	let current_token: object;
-	let last_value: T = value;
-	let target_value: T = value;
-
+	/** @type {number} */
+	let last_time;
+	/** @type {import('../internal/private.js').Task} */
+	let task;
+	/** @type {object} */
+	let current_token;
+	/** @type {T} */
+	let last_value = value;
+	/** @type {T} */
+	let target_value = value;
 	let inv_mass = 1;
 	let inv_mass_recovery_rate = 0;
 	let cancel_task = false;
-
-	function set(new_value: T, opts: SpringUpdateOpts = {}): Promise<void> {
+	/**
+	 * @param {T} new_value
+	 * @param {import('./private.js').SpringUpdateOpts} opts
+	 * @returns {Promise<void>}
+	 */
+	function set(new_value, opts = {}) {
 		target_value = new_value;
 		const token = (current_token = {});
-
 		if (value == null || opts.hard || (spring.stiffness >= 1 && spring.damping >= 1)) {
 			cancel_task = true; // cancel any running animation
 			last_time = now();
@@ -95,54 +86,46 @@ export function spring<T = any>(value?: T, opts: SpringOpts = {}): Spring<T> {
 			inv_mass_recovery_rate = 1 / (rate * 60);
 			inv_mass = 0; // infinite mass, unaffected by spring forces
 		}
-
 		if (!task) {
 			last_time = now();
 			cancel_task = false;
-
 			task = loop((now) => {
 				if (cancel_task) {
 					cancel_task = false;
 					task = null;
 					return false;
 				}
-
 				inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-
-				const ctx: TickContext<T> = {
+				const ctx = {
 					inv_mass,
 					opts: spring,
-					settled: true, // tick_spring may signal false
+					settled: true,
 					dt: ((now - last_time) * 60) / 1000
 				};
 				const next_value = tick_spring(ctx, last_value, value, target_value);
-
 				last_time = now;
 				last_value = value;
 				store.set((value = next_value));
-
 				if (ctx.settled) {
 					task = null;
 				}
 				return !ctx.settled;
 			});
 		}
-
 		return new Promise((fulfil) => {
 			task.promise.then(() => {
 				if (token === current_token) fulfil();
 			});
 		});
 	}
-
-	const spring: Spring<T> = {
+	/** @type {import('./public.js').Spring<T>} */
+	const spring = {
 		set,
-		update: (fn, opts: SpringUpdateOpts) => set(fn(target_value, value), opts),
+		update: (fn, opts) => set(fn(target_value, value), opts),
 		subscribe: store.subscribe,
 		stiffness,
 		damping,
 		precision
 	};
-
 	return spring;
 }

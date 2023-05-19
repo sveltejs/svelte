@@ -1,15 +1,3 @@
-import { Location } from 'locate-character';
-
-/**
- * @internal
- */
-export interface Source {
-	source: string;
-	get_location: (search: number) => Location;
-	file_basename: string;
-	filename?: string;
-}
-
 export interface Processed {
 	code: string;
 	map?: string | object; // we are opaque with the type here to avoid dependency on the remapping module for our public types.

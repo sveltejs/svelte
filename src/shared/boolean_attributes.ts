@@ -1,4 +1,4 @@
-const _boolean_attributes = [
+const _boolean_attributes = /** @type {const} */ ([
 	'allowfullscreen',
 	'allowpaymentrequest',
 	'async',
@@ -24,12 +24,14 @@ const _boolean_attributes = [
 	'required',
 	'reversed',
 	'selected'
-] as const;
-
-export type BooleanAttributes = (typeof _boolean_attributes)[number];
+]);
 
 /**
  * List of HTML boolean attributes (e.g. `<input disabled>`).
  * Source: https://html.spec.whatwg.org/multipage/indices.html
+ *
+ * @type {Set<string>}
  */
-export const boolean_attributes: Set<string> = new Set([..._boolean_attributes]);
+export const boolean_attributes = new Set([..._boolean_attributes]);
+
+/** @typedef {typeof _boolean_attributes[number]} BooleanAttributes */

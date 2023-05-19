@@ -1,29 +1,34 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import Element from './Element';
-import compiler_errors from '../compiler_errors';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
+import compiler_errors from '../compiler_errors.js';
 
+/** @extends Node<'Transition'> */
 export default class Transition extends Node {
-	type: 'Transition';
-	name: string;
-	directive: string;
-	expression: Expression;
-	is_local: boolean;
+	/** @type {string} */
+	name;
 
-	constructor(component: Component, parent: Element, scope: TemplateScope, info: TemplateNode) {
+	/** @type {string} */
+	directive;
+
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
+
+	/** @type {boolean} */
+	is_local;
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./Element.js').default} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').TemplateNode} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		component.warn_if_undefined(info.name, info, scope);
-
 		this.name = info.name;
-		component.add_reference(this as any, info.name.split('.')[0]);
-
+		component.add_reference(/** @type {any} */ (this), info.name.split('.')[0]);
 		this.directive = info.intro && info.outro ? 'transition' : info.intro ? 'in' : 'out';
 		this.is_local = info.modifiers.includes('local');
-
 		if ((info.intro && parent.intro) || (info.outro && parent.outro)) {
 			const parent_transition = parent.intro || parent.outro;
 			component.error(
@@ -32,7 +37,6 @@ export default class Transition extends Node {
 			);
 			return;
 		}
-
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression)
 			: null;

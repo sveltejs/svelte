@@ -1,27 +1,21 @@
 import { b } from 'code-red';
-import Component from '../Component';
-import { CompileOptions, CssResult } from '../../interfaces';
-import { string_literal } from '../utils/stringify';
-import Renderer from './Renderer';
-import { INode as TemplateNode } from '../nodes/interfaces'; // TODO
-import Text from '../nodes/Text';
-import { LabeledStatement, Statement, Node } from 'estree';
+import { string_literal } from '../utils/stringify.js';
+import Renderer from './Renderer.js';
 import { extract_names } from 'periscopic';
 import { walk } from 'estree-walker';
+import { invalidate } from '../render_dom/invalidate.js';
+import check_enable_sourcemap from '../utils/check_enable_sourcemap.js';
 
-import { invalidate } from '../render_dom/invalidate';
-import check_enable_sourcemap from '../utils/check_enable_sourcemap';
-
-export default function ssr(
-	component: Component,
-	options: CompileOptions
-): { js: Node[]; css: CssResult } {
+/**
+ * @param {import('../Component.js').default} component
+ * @param {import('../../interfaces.js').CompileOptions} options
+ * @returns {{ js: import('estree').Node[]; css: import('../../interfaces.js').CssResult; }}
+ */
+export default function ssr(component, options) {
 	const renderer = new Renderer({
 		name: component.name
 	});
-
 	const { name } = component;
-
 	// create $$render function
 	renderer.render(
 		trim(component.fragment.children),
@@ -32,15 +26,12 @@ export default function ssr(
 			options
 		)
 	);
-
 	// TODO put this inside the Renderer class
 	const literal = renderer.pop();
-
 	// TODO concatenate CSS maps
 	const css = options.customElement
 		? { code: null, map: null }
 		: component.stylesheet.render(options.filename);
-
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
 	const rest = uses_rest
@@ -48,10 +39,8 @@ export default function ssr(
 				.map((prop) => `"${prop.export_name}"`)
 				.join(',')}]);`
 		: null;
-
 	const uses_slots = component.var_lookup.has('$$slots');
 	const slots = uses_slots ? b`let $$slots = @compute_slots(#slots);` : null;
-
 	const reactive_stores = component.vars.filter(
 		(variable) => variable.name[0] === '$' && variable.name[1] !== '$'
 	);
@@ -70,41 +59,34 @@ export default function ssr(
 	const reactive_store_unsubscriptions = reactive_stores.map(
 		({ name }) => b`${`$$unsubscribe_${name.slice(1)}`}()`
 	);
-
 	const reactive_store_declarations = reactive_stores.map(({ name }) => {
 		const store_name = name.slice(1);
 		const store = component.var_lookup.get(store_name);
-
 		if (store && store.reassigned) {
 			const unsubscribe = `$$unsubscribe_${store_name}`;
 			const subscribe = `$$subscribe_${store_name}`;
-
 			return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), ${store_name})`;
 		}
 		return b`let ${name}, ${`$$unsubscribe_${store_name}`};`;
 	});
-
 	// instrument get/set store value
 	if (component.ast.instance) {
 		let scope = component.instance_scope;
 		const map = component.instance_scope_map;
-
 		walk(component.ast.instance.content, {
-			enter(node: Node) {
+			enter(node) {
 				if (map.has(node)) {
 					scope = map.get(node);
 				}
 			},
-			leave(node: Node) {
+			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
 				}
-
 				if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
-					const names = new Set(extract_names(assignee as Node));
-					const to_invalidate = new Set<string>();
-
+					const names = new Set(extract_names(/** @type {import('estree').Node} */ (assignee)));
+					const to_invalidate = new Set();
 					for (const name of names) {
 						const variable = component.var_lookup.get(name);
 						if (
@@ -117,31 +99,26 @@ export default function ssr(
 							to_invalidate.add(variable.name);
 						}
 					}
-
 					if (to_invalidate.size) {
-						this.replace(invalidate({ component } as any, scope, node, to_invalidate, true));
+						this.replace(
+							invalidate(/** @type {any} */ ({ component }), scope, node, to_invalidate, true)
+						);
 					}
 				}
 			}
 		});
 	}
-
 	component.rewrite_props(({ name, reassigned }) => {
 		const value = `$${name}`;
-
 		let insert = reassigned
 			? b`${`$$subscribe_${name}`}()`
 			: b`${`$$unsubscribe_${name}`} = @subscribe(${name}, #value => $${value} = #value)`;
-
 		if (component.compile_options.dev) {
 			insert = b`@validate_store(${name}, '${name}'); ${insert}`;
 		}
-
 		return insert;
 	});
-
 	const instance_javascript = component.extract_javascript(component.ast.instance);
-
 	// TODO only do this for props with a default value
 	const parent_bindings = instance_javascript
 		? component.vars
@@ -150,25 +127,19 @@ export default function ssr(
 					return b`if ($$props.${prop.export_name} === void 0 && $$bindings.${prop.export_name} && ${prop.name} !== void 0) $$bindings.${prop.export_name}(${prop.name});`;
 				})
 		: [];
-
 	const injected = Array.from(component.injected_reactive_declaration_vars).filter((name) => {
 		const variable = component.var_lookup.get(name);
 		return variable.injected;
 	});
-
 	const reactive_declarations = component.reactive_declarations.map((d) => {
-		const body: Statement = (d.node as LabeledStatement).body;
-
+		const body = /** @type {import('estree').LabeledStatement} */ (d.node).body;
 		let statement = b`${body}`;
-
 		if (!d.declaration) {
 			// TODO do not add label if it's not referenced
 			statement = b`$: { ${statement} }`;
 		}
-
 		return statement;
 	});
-
 	const main = renderer.has_bindings
 		? b`
 			let $$settled;
@@ -192,7 +163,6 @@ export default function ssr(
 			${reactive_store_unsubscriptions}
 
 			return ${literal};`;
-
 	const blocks = [
 		...injected.map((name) => b`let ${name};`),
 		rest,
@@ -204,9 +174,7 @@ export default function ssr(
 		css.code && b`$$result.css.add(#css);`,
 		main
 	].filter(Boolean);
-
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
-
 	const js = b`
 		${
 			css.code
@@ -226,28 +194,24 @@ export default function ssr(
 			${blocks}
 		});
 	`;
-
 	return { js, css };
 }
 
-function trim(nodes: TemplateNode[]) {
+/** @param {import('../nodes/interfaces.js').INode[]} nodes */
+function trim(nodes) {
 	let start = 0;
 	for (; start < nodes.length; start += 1) {
-		const node = nodes[start] as Text;
+		const node = /** @type {import('../nodes/Text.js').default} */ (nodes[start]);
 		if (node.type !== 'Text') break;
-
 		node.data = node.data.replace(/^\s+/, '');
 		if (node.data) break;
 	}
-
 	let end = nodes.length;
 	for (; end > start; end -= 1) {
-		const node = nodes[end - 1] as Text;
+		const node = /** @type {import('../nodes/Text.js').default} */ (nodes[end - 1]);
 		if (node.type !== 'Text') break;
-
 		node.data = node.data.trimRight();
 		if (node.data) break;
 	}
-
 	return nodes.slice(start, end);
 }

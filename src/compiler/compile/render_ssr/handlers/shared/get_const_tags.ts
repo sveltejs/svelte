@@ -1,6 +1,5 @@
-import ConstTag from '../../../nodes/ConstTag';
-
-export function get_const_tags(const_tags: ConstTag[]) {
+/** @param {import('../../../nodes/ConstTag.js').default[]} const_tags */
+export function get_const_tags(const_tags) {
 	if (const_tags.length === 0) return null;
 	return {
 		type: 'VariableDeclaration',

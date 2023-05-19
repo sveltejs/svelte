@@ -1,44 +1,41 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { TemplateNode } from '../../interfaces';
-import Element from './Element';
-import EachBlock from './EachBlock';
-import compiler_errors from '../compiler_errors';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
+import compiler_errors from '../compiler_errors.js';
 
+/** @extends Node<'Animation'> */
 export default class Animation extends Node {
-	type: 'Animation';
-	name: string;
-	expression: Expression;
+	/** @type {string} */
+	name;
 
-	constructor(component: Component, parent: Element, scope: TemplateScope, info: TemplateNode) {
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
+
+	/**
+	 * @param {import('../Component.js').default} component  *
+	 * @param {import('./Element.js').default} parent  *
+	 * @param {import('./shared/TemplateScope.js').default} scope  *
+	 * @param {import('../../interfaces.js').TemplateNode} info  undefined
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		component.warn_if_undefined(info.name, info, scope);
-
 		this.name = info.name;
-		component.add_reference(this as any, info.name.split('.')[0]);
-
+		component.add_reference(/** @type {any} */ (this), info.name.split('.')[0]);
 		if (parent.animation) {
 			component.error(this, compiler_errors.duplicate_animation);
 			return;
 		}
-
 		const block = parent.parent;
 		if (!block || block.type !== 'EachBlock') {
 			// TODO can we relax the 'immediate child' rule?
 			component.error(this, compiler_errors.invalid_animation_immediate);
 			return;
 		}
-
 		if (!block.key) {
 			component.error(this, compiler_errors.invalid_animation_key);
 			return;
 		}
-
-		(block as EachBlock).has_animation = true;
-
+		/** @type {import('./EachBlock.js').default} */ (block).has_animation = true;
 		this.expression = info.expression
 			? new Expression(component, this, scope, info.expression, true)
 			: null;

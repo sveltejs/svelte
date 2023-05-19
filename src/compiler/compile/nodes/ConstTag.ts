@@ -1,16 +1,11 @@
-import Node from './shared/Node';
-import Expression from './shared/Expression';
-import Component from '../Component';
-import TemplateScope from './shared/TemplateScope';
-import { Context, unpack_destructuring } from './shared/Context';
-import { ConstTag as ConstTagType } from '../../interfaces';
-import { INodeAllowConstTag } from './interfaces';
+import Node from './shared/Node.js';
+import Expression from './shared/Expression.js';
+import { unpack_destructuring } from './shared/Context.js';
 import { walk } from 'estree-walker';
 import { extract_identifiers } from 'periscopic';
-import is_reference, { NodeWithPropertyDefinition } from 'is-reference';
-import get_object from '../utils/get_object';
-import compiler_errors from '../compiler_errors';
-import { Node as ESTreeNode } from 'estree';
+import is_reference from 'is-reference';
+import get_object from '../utils/get_object.js';
+import compiler_errors from '../compiler_errors.js';
 
 const allowed_parents = new Set([
 	'EachBlock',
@@ -22,47 +17,65 @@ const allowed_parents = new Set([
 	'ElseBlock'
 ]);
 
+/** @extends Node<'ConstTag'> */
 export default class ConstTag extends Node {
-	type: 'ConstTag';
-	expression: Expression;
-	contexts: Context[] = [];
-	node: ConstTagType;
-	scope: TemplateScope;
-	context_rest_properties: Map<string, ESTreeNode> = new Map();
+	/** @type {import('./shared/Expression.js').default} */
+	expression;
 
-	assignees: Set<string> = new Set();
-	dependencies: Set<string> = new Set();
+	/** @type {import('./shared/Context.js').Context[]} */
+	contexts = [];
 
-	constructor(
-		component: Component,
-		parent: INodeAllowConstTag,
-		scope: TemplateScope,
-		info: ConstTagType
-	) {
+	/** @type {import('../../interfaces.js').ConstTag} */
+	node;
+
+	/** @type {import('./shared/TemplateScope.js').default} */
+	scope;
+
+	/** @type {Map<string, import('estree').Node>} */
+	context_rest_properties = new Map();
+
+	/** @type {Set<string>} */
+	assignees = new Set();
+
+	/** @type {Set<string>} */
+	dependencies = new Set();
+
+	/**
+	 * @param {import('../Component.js').default} component
+	 * @param {import('./interfaces.js').INodeAllowConstTag} parent
+	 * @param {import('./shared/TemplateScope.js').default} scope
+	 * @param {import('../../interfaces.js').ConstTag} info
+	 */
+	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-
 		if (!allowed_parents.has(parent.type)) {
 			component.error(info, compiler_errors.invalid_const_placement);
 		}
 		this.node = info;
 		this.scope = scope;
-
 		const { assignees, dependencies } = this;
-
-		extract_identifiers(info.expression.left).forEach(({ name }) => {
-			assignees.add(name);
-			const owner = this.scope.get_owner(name);
-			if (owner === parent) {
-				component.error(info, compiler_errors.invalid_const_declaration(name));
+		extract_identifiers(info.expression.left).forEach(
+			/** @param {any}params_0 */ ({ name }) => {
+				assignees.add(name);
+				const owner = this.scope.get_owner(name);
+				if (owner === parent) {
+					component.error(info, compiler_errors.invalid_const_declaration(name));
+				}
 			}
-		});
-
+		);
 		walk(info.expression.right, {
+			/**
+			 * @param {any} node
+			 * @param {any} parent
+			 */
 			enter(node, parent) {
 				if (
-					is_reference(node as NodeWithPropertyDefinition, parent as NodeWithPropertyDefinition)
+					is_reference(
+						/** @type {import('is-reference').NodeWithPropertyDefinition} */ (node),
+						/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
+					)
 				) {
-					const identifier = get_object(node as any);
+					const identifier = get_object(/** @type {any} */ (node));
 					const { name } = identifier;
 					dependencies.add(name);
 				}
@@ -79,16 +92,18 @@ export default class ConstTag extends Node {
 			context_rest_properties: this.context_rest_properties
 		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
-		this.contexts.forEach((context) => {
-			if (context.type !== 'DestructuredVariable') return;
-			const owner = this.scope.get_owner(context.key.name);
-			if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
-				this.component.error(
-					this.node,
-					compiler_errors.invalid_const_declaration(context.key.name)
-				);
+		this.contexts.forEach(
+			/** @param {any} context */ (context) => {
+				if (context.type !== 'DestructuredVariable') return;
+				const owner = this.scope.get_owner(context.key.name);
+				if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
+					this.component.error(
+						this.node,
+						compiler_errors.invalid_const_declaration(context.key.name)
+					);
+				}
+				this.scope.add(context.key.name, this.expression.dependencies, this);
 			}
-			this.scope.add(context.key.name, this.expression.dependencies, this);
-		});
+		);
 	}
 }

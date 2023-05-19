@@ -1,6 +1,7 @@
-import { Node, Identifier } from 'estree';
-
-export default function get_object(node: Node): Identifier {
+/**
+ * @param {import('estree').Node} node
+ */
+export default function get_object(node) {
 	while (node.type === 'MemberExpression') node = node.object;
-	return node as Identifier;
+	return /** @type {import('estree').Identifier} */ (node);
 }

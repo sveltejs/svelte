@@ -1,5 +1,4 @@
-import Tag from './shared/Tag';
+import Tag from './shared/Tag.js';
 
-export default class MustacheTag extends Tag {
-	type: 'MustacheTag';
-}
+/** @extends Tag<'MustacheTag'> */
+export default class MustacheTag extends Tag {}

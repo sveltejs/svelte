@@ -1,52 +1,33 @@
-import { is_promise } from './utils';
-import { check_outros, group_outros, transition_in, transition_out } from './transitions';
-import { flush } from './scheduler';
-import { get_current_component, set_current_component } from './lifecycle';
-import { Fragment, FragmentFactory } from './types';
+import { is_promise } from './utils.js';
+import { check_outros, group_outros, transition_in, transition_out } from './transitions.js';
+import { flush } from './scheduler.js';
+import { get_current_component, set_current_component } from './lifecycle.js';
 
-interface PromiseInfo<T> {
-	ctx: null | any;
-	// unique object instance as a key to compare different promises
-	token: {};
-	hasCatch: boolean;
-	pending: FragmentFactory;
-	then: FragmentFactory;
-	catch: FragmentFactory;
-	// ctx index for resolved value and rejected error
-	value: number;
-	error: number;
-	// resolved value or rejected error
-	resolved?: T;
-	// the current factory function for creating the fragment
-	current: FragmentFactory | null;
-	// the current fragment
-	block: Fragment | null;
-	// tuple of the pending, then, catch fragment
-	blocks: [null | Fragment, null | Fragment, null | Fragment];
-	// DOM elements to mount and anchor on for the {#await} block
-	mount: () => HTMLElement;
-	anchor: HTMLElement;
-}
-
-export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
+/**
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {import('./private.js').PromiseInfo<T>} info
+ * @returns {boolean}
+ */
+export function handle_promise(promise, info) {
 	const token = (info.token = {});
-
-	function update(type: FragmentFactory, index: 0 | 1 | 2, key?: number, value?) {
+	/**
+	 * @param {import('./private.js').FragmentFactory} type
+	 * @param {0 | 1 | 2} index
+	 * @param {number} [key]
+	 * @param {any} [value]
+	 * @returns {void}
+	 */
+	function update(type, index, key, value) {
 		if (info.token !== token) return;
-
 		info.resolved = value;
-
 		let child_ctx = info.ctx;
-
 		if (key !== undefined) {
 			child_ctx = child_ctx.slice();
 			child_ctx[key] = value;
 		}
-
 		const block = type && (info.current = type)(child_ctx);
-
 		let needs_flush = false;
-
 		if (info.block) {
 			if (info.blocks) {
 				info.blocks.forEach((block, i) => {
@@ -63,22 +44,17 @@ export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
 			} else {
 				info.block.d(1);
 			}
-
 			block.c();
 			transition_in(block, 1);
 			block.m(info.mount(), info.anchor);
-
 			needs_flush = true;
 		}
-
 		info.block = block;
 		if (info.blocks) info.blocks[index] = block;
-
 		if (needs_flush) {
 			flush();
 		}
 	}
-
 	if (is_promise(promise)) {
 		const current_component = get_current_component();
 		promise.then(
@@ -96,7 +72,6 @@ export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
 				}
 			}
 		);
-
 		// if we previously had a then/catch block, destroy it
 		if (info.current !== info.pending) {
 			update(info.pending, 0);
@@ -107,21 +82,19 @@ export function handle_promise<T>(promise: Promise<T>, info: PromiseInfo<T>) {
 			update(info.then, 1, info.value, promise);
 			return true;
 		}
-
-		info.resolved = promise;
+		info.resolved = /** @type {T} */ (promise);
 	}
 }
 
+/** @returns {void} */
 export function update_await_block_branch(info, ctx, dirty) {
 	const child_ctx = ctx.slice();
 	const { resolved } = info;
-
 	if (info.current === info.then) {
 		child_ctx[info.value] = resolved;
 	}
 	if (info.current === info.catch) {
 		child_ctx[info.error] = resolved;
 	}
-
 	info.block.p(child_ctx, dirty);
 }

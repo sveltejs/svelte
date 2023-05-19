@@ -1,18 +1,19 @@
-import Component from '../../../Component';
-import { INode } from '../../../nodes/interfaces';
-import { regex_whitespace_characters } from '../../../../utils/patterns';
+import { regex_whitespace_characters } from '../../../../utils/patterns.js';
 
-export default function create_debugging_comment(node: INode, component: Component) {
+/**
+ * @param {import('../../../nodes/interfaces.js').INode} node
+ * @param {import('../../../Component.js').default} component
+ */
+export default function create_debugging_comment(node, component) {
 	const { locate, source } = component;
-
 	let c = node.start;
 	if (node.type === 'ElseBlock') {
 		while (source[c - 1] !== '{') c -= 1;
 		while (source[c - 1] === '{') c -= 1;
 	}
 
-	let d: number;
-
+	/** @type {number} */
+	let d;
 	if (node.type === 'InlineComponent' || node.type === 'Element' || node.type === 'SlotTemplate') {
 		if (node.children.length) {
 			d = node.children[0].start;
@@ -30,9 +31,7 @@ export default function create_debugging_comment(node: INode, component: Compone
 		while (source[d] !== '}' && d <= source.length) d += 1;
 		while (source[d] === '}') d += 1;
 	}
-
 	const start = locate(c);
 	const loc = `(${start.line}:${start.column})`;
-
 	return `${loc} ${source.slice(c, d)}`.replace(regex_whitespace_characters, ' ');
 }

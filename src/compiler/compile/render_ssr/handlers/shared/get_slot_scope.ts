@@ -1,9 +1,9 @@
-import Let from '../../../nodes/Let';
-import { ObjectPattern } from 'estree';
-
-export function get_slot_scope(lets: Let[]): ObjectPattern {
+/**
+ * @param {import('../../../nodes/Let.js').default[]} lets
+ * @returns {import('estree').ObjectPattern}
+ */
+export function get_slot_scope(lets) {
 	if (lets.length === 0) return null;
-
 	return {
 		type: 'ObjectPattern',
 		properties: lets.map((l) => {

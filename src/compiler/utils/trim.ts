@@ -1,9 +1,15 @@
-import { regex_starts_with_whitespaces, regex_ends_with_whitespaces } from './patterns';
+import { regex_starts_with_whitespaces, regex_ends_with_whitespaces } from './patterns.js';
 
-export function trim_start(str: string) {
+/**
+ * @param {string} str
+ */
+export function trim_start(str) {
 	return str.replace(regex_starts_with_whitespaces, '');
 }
 
-export function trim_end(str: string) {
+/**
+ * @param {string} str
+ */
+export function trim_end(str) {
 	return str.replace(regex_ends_with_whitespaces, '');
 }

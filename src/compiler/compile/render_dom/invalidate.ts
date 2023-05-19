@@ -1,52 +1,52 @@
-import { nodes_match } from '../../utils/nodes_match';
-import { Scope } from 'periscopic';
+import { nodes_match } from '../../utils/nodes_match.js';
 import { x } from 'code-red';
-import { Node, Expression } from 'estree';
-import Renderer from './Renderer';
-import { Var } from '../../interfaces';
 
-export function invalidate(
-	renderer: Renderer,
-	scope: Scope,
-	node: Node,
-	names: Set<string>,
-	main_execution_context: boolean = false
-) {
+/**
+ * @param {import('./Renderer.js').default} renderer
+ * @param {import('periscopic').Scope} scope
+ * @param {import('estree').Node} node
+ * @param {Set<string>} names
+ * @param {boolean} main_execution_context
+ * @returns {any}
+ */
+export function invalidate(renderer, scope, node, names, main_execution_context = false) {
 	const { component } = renderer;
+	const [head, ...tail] = /** @type {import('../../interfaces.js').Var[]} */ (
+		Array.from(names)
+			.filter((name) => {
+				const owner = scope.find_owner(name);
+				return !owner || owner === component.instance_scope;
+			})
+			.map((name) => component.var_lookup.get(name))
+			.filter((variable) => {
+				return (
+					variable &&
+					!variable.hoistable &&
+					!variable.global &&
+					!variable.module &&
+					(variable.referenced ||
+						variable.subscribable ||
+						variable.is_reactive_dependency ||
+						variable.export_name ||
+						variable.name[0] === '$')
+				);
+			})
+	);
 
-	const [head, ...tail] = Array.from(names)
-		.filter((name) => {
-			const owner = scope.find_owner(name);
-			return !owner || owner === component.instance_scope;
-		})
-		.map((name) => component.var_lookup.get(name))
-		.filter((variable) => {
-			return (
-				variable &&
-				!variable.hoistable &&
-				!variable.global &&
-				!variable.module &&
-				(variable.referenced ||
-					variable.subscribable ||
-					variable.is_reactive_dependency ||
-					variable.export_name ||
-					variable.name[0] === '$')
-			);
-		}) as Var[];
-
-	function get_invalidated(variable: Var, node?: Expression) {
+	/**
+	 * @param {import('../../interfaces.js').Var} variable
+	 * @param {import('estree').Expression} [node]
+	 */
+	function get_invalidated(variable, node) {
 		if (main_execution_context && !variable.subscribable && variable.name[0] !== '$') {
 			return node;
 		}
 		return renderer_invalidate(renderer, variable.name, undefined, main_execution_context);
 	}
-
 	if (!head) {
 		return node;
 	}
-
 	component.has_reactive_assignments = true;
-
 	if (
 		node.type === 'AssignmentExpression' &&
 		node.operator === '=' &&
@@ -55,10 +55,8 @@ export function invalidate(
 	) {
 		return get_invalidated(head, node);
 	}
-
 	const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
 	const extra_args = tail.map((variable) => get_invalidated(variable)).filter(Boolean);
-
 	if (is_store_value) {
 		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
 	}
@@ -82,23 +80,22 @@ export function invalidate(
 		// skip `$$invalidate` if it is in the main execution context
 		invalidate = extra_args.length ? [node, ...extra_args] : node;
 	}
-
 	if (head.subscribable && head.reassigned) {
 		const subscribe = `$$subscribe_${head.name}`;
 		invalidate = x`${subscribe}(${invalidate})`;
 	}
-
 	return invalidate;
 }
 
-export function renderer_invalidate(
-	renderer: Renderer,
-	name: string,
-	value?: unknown,
-	main_execution_context: boolean = false
-) {
+/**
+ * @param {import('./Renderer.js').default} renderer
+ * @param {string} name
+ * @param {any} [value]
+ * @param {boolean} main_execution_context
+ * @returns {import('estree').Node}
+ */
+export function renderer_invalidate(renderer, name, value, main_execution_context = false) {
 	const variable = renderer.component.var_lookup.get(name);
-
 	if (variable && variable.subscribable && (variable.reassigned || variable.export_name)) {
 		if (main_execution_context) {
 			return x`${`$$subscribe_${name}`}(${value || name})`;
@@ -107,11 +104,9 @@ export function renderer_invalidate(
 			return x`${`$$subscribe_${name}`}($$invalidate(${member.index}, ${value || name}))`;
 		}
 	}
-
 	if (name[0] === '$' && name[1] !== '$') {
 		return x`${name.slice(1)}.set(${value || name})`;
 	}
-
 	if (
 		variable &&
 		(variable.module ||
@@ -122,7 +117,6 @@ export function renderer_invalidate(
 	) {
 		return value || name;
 	}
-
 	if (value) {
 		if (main_execution_context) {
 			return x`${value}`;
@@ -131,12 +125,9 @@ export function renderer_invalidate(
 			return x`$$invalidate(${member.index}, ${value})`;
 		}
 	}
-
 	if (main_execution_context) return;
-
 	// if this is a reactive declaration, invalidate dependencies recursively
 	const deps = new Set([name]);
-
 	deps.forEach((name) => {
 		const reactive_declarations = renderer.component.reactive_declarations.filter((x) =>
 			x.assignees.has(name)
@@ -147,11 +138,9 @@ export function renderer_invalidate(
 			});
 		});
 	});
-
 	// TODO ideally globals etc wouldn't be here in the first place
 	const filtered = Array.from(deps).filter((n) => renderer.context_lookup.has(n));
 	if (!filtered.length) return null;
-
 	return filtered
 		.map((n) => x`$$invalidate(${renderer.context_lookup.get(n).index}, ${n})`)
 		.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);

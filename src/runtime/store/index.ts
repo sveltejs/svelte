@@ -5,70 +5,18 @@ import {
 	safe_not_equal,
 	is_function,
 	get_store_value
-} from '../internal';
-
-/** Callback to inform of a value updates. */
-export type Subscriber<T> = (value: T) => void;
-
-/** Unsubscribes from value updates. */
-export type Unsubscriber = () => void;
-
-/** Callback to update a value. */
-export type Updater<T> = (value: T) => T;
-
-/** Cleanup logic callback. */
-type Invalidator<T> = (value?: T) => void;
-
-/**
- * Start and stop notification callbacks.
- * This function is called when the first subscriber subscribes.
- *
- * @param {(value: T) => void} set Function that sets the value of the store.
- * @param {(value: Updater<T>) => void} set Function that sets the value of the store after passing the current value to the update function.
- * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
- * subscriber unsubscribes.
- */
-export type StartStopNotifier<T> = (
-	set: (value: T) => void,
-	update: (fn: Updater<T>) => void
-) => void | (() => void);
-
-/** Readable interface for subscribing. */
-export interface Readable<T> {
-	/**
-	 * Subscribe on value changes.
-	 * @param run subscription callback
-	 * @param invalidate cleanup callback
-	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
-}
-
-/** Writable interface for both updating and subscribing. */
-export interface Writable<T> extends Readable<T> {
-	/**
-	 * Set value and inform subscribers.
-	 * @param value to set
-	 */
-	set(this: void, value: T): void;
-
-	/**
-	 * Update value using callback and inform subscribers.
-	 * @param updater callback
-	 */
-	update(this: void, updater: Updater<T>): void;
-}
-
-/** Pair of subscriber and invalidator. */
-type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+} from '../internal/index.js';
 
 const subscriber_queue = [];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
- * @param value initial value
- * @param {StartStopNotifier} [start]
+ * @template T
+ * @param {T} value initial value
+ * @param {import('./public.js').StartStopNotifier<T>} start
+ * @returns {import('./public.js').Readable<T>}
  */
-export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T> {
+export function readable(value, start) {
 	return {
 		subscribe: writable(value, start).subscribe
 	};
@@ -76,14 +24,20 @@ export function readable<T>(value?: T, start?: StartStopNotifier<T>): Readable<T
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
- * @param {*=}value initial value
- * @param {StartStopNotifier=} start
+ * @template T
+ * @param {T} value initial value
+ * @param {import('./public.js').StartStopNotifier<T>} start
+ * @returns {import('./public.js').Writable<T>}
  */
-export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writable<T> {
-	let stop: Unsubscriber;
-	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
-
-	function set(new_value: T): void {
+export function writable(value, start = noop) {
+	/** @type {import('./public.js').Unsubscriber} */
+	let stop;
+	/** @type {Set<import('./private.js').SubscribeInvalidateTuple<T>>} */
+	const subscribers = new Set();
+	/** @param {T} new_value
+	 * @returns {void}
+	 */
+	function set(new_value) {
 		if (safe_not_equal(value, new_value)) {
 			value = new_value;
 			if (stop) {
@@ -102,19 +56,26 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 			}
 		}
 	}
-
-	function update(fn: Updater<T>): void {
+	/**
+	 * @param {import('./public.js').Updater<T>} fn
+	 * @returns {void}
+	 */
+	function update(fn) {
 		set(fn(value));
 	}
-
-	function subscribe(run: Subscriber<T>, invalidate: Invalidator<T> = noop): Unsubscriber {
-		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
+	/**
+	 * @param {import('./public.js').Subscriber<T>} run
+	 * @param {import('./private.js').Invalidator<T>} invalidate
+	 * @returns {import('./public.js').Unsubscriber}
+	 */
+	function subscribe(run, invalidate = noop) {
+		/** @type {import('./private.js').SubscribeInvalidateTuple<T>} */
+		const subscriber = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
 			stop = start(set, update) || noop;
 		}
 		run(value);
-
 		return () => {
 			subscribers.delete(subscriber);
 			if (subscribers.size === 0 && stop) {
@@ -123,80 +84,56 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Writ
 			}
 		};
 	}
-
 	return { set, update, subscribe };
 }
 
-/** One or more `Readable`s. */
-type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
-
-/** One or more values from `Readable` stores. */
-type StoresValues<T> = T extends Readable<infer U>
-	? U
-	: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * @template {import('./private.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores - input stores
+ * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {T} [initial_value] - initial value
+ * @returns {import('./public.js').Readable<T>}
+ */
 
 /**
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- * @param initial_value - when used asynchronously
+ * @template {import('./private.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores - input stores
+ * @param {(values: import('./public.js').StoresValues<S>) => T} fn - function callback that aggregates the values
+ * @param {T} [initial_value] - initial value
+ * @returns {import('./public.js').Readable<T>}
  */
-export function derived<S extends Stores, T>(
-	stores: S,
-	fn: (
-		values: StoresValues<S>,
-		set: Subscriber<T>,
-		update: (fn: Updater<T>) => void
-	) => Unsubscriber | void,
-	initial_value?: T
-): Readable<T>;
 
 /**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- * @param initial_value - initial value
+ * @template {import('./private.js').Stores} S
+ * @template T
+ * @param {S} stores
+ * @param {Function} fn
+ * @param {T} [initial_value]
+ * @returns {import('./public.js').Readable<T>}
  */
-export function derived<S extends Stores, T>(
-	stores: S,
-	fn: (values: StoresValues<S>) => T,
-	initial_value?: T
-): Readable<T>;
-
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- */
-export function derived<S extends Stores, T>(
-	stores: S,
-	fn: (values: StoresValues<S>) => T
-): Readable<T>;
-
-export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Readable<T> {
+export function derived(stores, fn, initial_value) {
 	const single = !Array.isArray(stores);
-	const stores_array: Array<Readable<any>> = single
-		? [stores as Readable<any>]
-		: (stores as Array<Readable<any>>);
+	/** @type {Array<import('./public.js').Readable<any>>} */
+	const stores_array = single ? [stores] : stores;
 	if (!stores_array.every(Boolean)) {
 		throw new Error('derived() expects stores as input, got a falsy value');
 	}
-
 	const auto = fn.length < 2;
-
 	return readable(initial_value, (set, update) => {
 		let started = false;
 		const values = [];
-
 		let pending = 0;
 		let cleanup = noop;
-
 		const sync = () => {
 			if (pending) {
 				return;
@@ -204,12 +141,11 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 			cleanup();
 			const result = fn(single ? values[0] : values, set, update);
 			if (auto) {
-				set(result as T);
+				set(result);
 			} else {
-				cleanup = is_function(result) ? (result as Unsubscriber) : noop;
+				cleanup = is_function(result) ? result : noop;
 			}
 		};
-
 		const unsubscribers = stores_array.map((store, i) =>
 			subscribe(
 				store,
@@ -225,10 +161,8 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 				}
 			)
 		);
-
 		started = true;
 		sync();
-
 		return function stop() {
 			run_all(unsubscribers);
 			cleanup();
@@ -243,9 +177,11 @@ export function derived<T>(stores: Stores, fn: Function, initial_value?: T): Rea
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
- * @param store - store to make readonly
+ * @template T
+ * @param {import('./public.js').Readable<T>} store  - store to make readonly
+ * @returns {import('./public.js').Readable<T>}
  */
-export function readonly<T>(store: Readable<T>): Readable<T> {
+export function readonly(store) {
 	return {
 		subscribe: store.subscribe.bind(store)
 	};
@@ -253,6 +189,8 @@ export function readonly<T>(store: Readable<T>): Readable<T> {
 
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
- * @param store readable
+ * @template T
+ * @param {import('./public.js').Readable<T>} store readable
+ * @returns {T}
  */
 export { get_store_value as get };
