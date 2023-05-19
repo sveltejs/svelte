@@ -13,7 +13,8 @@ It's time to take a closer look.
 
 In many frameworks, you build an app by creating `render()` functions, like this simple [React](https://reactjs.org/) component:
 
-```js
+```ts
+// @noErrors
 function HelloMessage(props) {
 	return <div className="greeting">Hello {props.name}</div>;
 }
@@ -22,6 +23,7 @@ function HelloMessage(props) {
 You can do the same thing without JSX...
 
 ```js
+// @noErrors
 function HelloMessage(props) {
 	return React.createElement('div', { className: 'greeting' }, 'Hello ', props.name);
 }
@@ -43,6 +45,7 @@ Misunderstood claims about virtual DOM performance date back to the launch of Re
 But hang on a minute! The virtual DOM operations are _in addition to_ the eventual operations on the real DOM. The only way it could be faster is if we were comparing it to a less efficient framework (there were plenty to go around back in 2013!), or arguing against a straw man — that the alternative is to do something no-one actually does:
 
 ```js
+// @noErrors
 onEveryStateChange(() => {
 	document.body.innerHTML = renderMyApp();
 });
@@ -73,6 +76,7 @@ Most obviously, [diffing isn't free](https://twitter.com/pcwalton/status/1015694
 Of these three steps, only the third has value in this case, since — as is the case in the vast majority of updates — the basic structure of the app is unchanged. It would be much more efficient if we could skip straight to step 3:
 
 ```js
+// @noErrors
 if (changed.name) {
 	text.data = name;
 }
@@ -85,6 +89,7 @@ if (changed.name) {
 The diffing algorithms used by React and other virtual DOM frameworks are fast. Arguably, the greater overhead is in the components themselves. You wouldn't write code like this...
 
 ```js
+// @noErrors
 function StrawManComponent(props) {
 	const value = expensivelyCalculateValue(props.foo);
 
@@ -95,6 +100,7 @@ function StrawManComponent(props) {
 ...because you'd be carelessly recalculating `value` on every update, regardless of whether `props.foo` had changed. But it's extremely common to do unnecessary computation and allocation in ways that seem much more benign:
 
 ```js
+// @noErrors
 function MoreRealisticComponent(props) {
 	const [selected, setSelected] = useState(null);
 
