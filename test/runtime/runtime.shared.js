@@ -1,11 +1,11 @@
 import * as fs from 'fs';
+import { setImmediate } from 'timers/promises';
 import * as path from 'path';
-import glob from 'tiny-glob/sync.js';
-import { beforeAll, afterAll, describe, it, assert } from 'vitest';
 import { compile } from 'svelte/compiler';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
-import { setTimeout } from 'timers/promises';
+import glob from 'tiny-glob/sync.js';
+import { afterAll, assert, beforeAll, describe, it } from 'vitest';
+import { create_loader, mkdirp, setupHtmlEqual, try_load_config } from '../helpers.js';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
@@ -212,6 +212,8 @@ async function run_test(dir) {
 						});
 						fs.writeFileSync(out, js.code);
 					}
+
+					throw err;
 				}
 			})
 			.catch((err) => {
@@ -226,10 +228,10 @@ async function run_test(dir) {
 
 				if (config.after_test) config.after_test();
 
-				// Free up the microtask queue, so that
+				// Free up the microtask queue
 				// 1. Vitest's test runner which uses setInterval can log progress
 				// 2. Any expected unhandled rejections are ran before we reattach the listeners
-				await setTimeout();
+				await setImmediate();
 
 				if (config.expect_unhandled_rejections) {
 					listeners.forEach((listener) => {

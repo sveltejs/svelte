@@ -117,7 +117,7 @@ describe('css', () => {
 });
 
 function replace_css_hash(str) {
-	return str.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => ($1 ? m : 'svelte-xyz'));
+	return str.replace(/svelte-[a-z0-9]+/g, 'svelte-xyz');
 }
 
 function read(file) {
