@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { describe, it, assert } from 'vitest';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from 'svelte/compiler';
 import { try_load_json, try_load_config } from '../helpers.js';
 
 describe('validate', () => {

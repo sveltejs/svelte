@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as svelte from '../../compiler.js';
+import * as svelte from 'svelte/compiler';
 import { try_load_config } from '../helpers';
 import { describe, assert, it } from 'vitest';
 // keep source-map at version 0.7.x

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { rollup } from 'rollup';
 import { mkdirp, pretty_print_browser_assertion, try_load_config } from '../helpers.js';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from 'svelte/compiler';
 import { beforeAll, describe, afterAll, assert, it } from 'vitest';
 
 const internal = path.resolve('internal/index.mjs');
