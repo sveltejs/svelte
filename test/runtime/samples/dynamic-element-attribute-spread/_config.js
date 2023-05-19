@@ -1,10 +1,12 @@
 export default {
-	props: {
-		props: {
-			disabled: true,
-			type: 'button',
-			'data-named': 'foo'
-		}
+	get props() {
+		return {
+			props: {
+				disabled: true,
+				type: 'button',
+				'data-named': 'foo'
+			}
+		};
 	},
 	html: '<button disabled type="button" data-named="foo">Click me</button>',
 

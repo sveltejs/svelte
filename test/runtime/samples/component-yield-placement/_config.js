@@ -1,6 +1,6 @@
 export default {
-	props: {
-		showModal: true
+	get props() {
+		return { showModal: true };
 	},
 
 	html: `

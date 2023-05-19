@@ -11,8 +11,10 @@ export default {
 		</select>
 	`,
 
-	props: {
-		items: [{ value: 'hullo' }, { value: 'world' }]
+	get props() {
+		return {
+			items: [{ value: 'hullo' }, { value: 'world' }]
+		};
 	},
 
 	test({ assert, component, target, window }) {

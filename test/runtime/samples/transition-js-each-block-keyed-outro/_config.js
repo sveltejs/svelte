@@ -1,6 +1,8 @@
 export default {
-	props: {
-		things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+	get props() {
+		return {
+			things: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+		};
 	},
 
 	test({ assert, component, target, raf }) {
@@ -17,5 +19,6 @@ export default {
 		assert.equal(divs[0].foo, undefined);
 		assert.equal(divs[1].foo, 0.5);
 		assert.equal(divs[2].foo, undefined);
+		raf.tick(100);
 	}
 };

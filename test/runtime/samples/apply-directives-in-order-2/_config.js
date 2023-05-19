@@ -1,7 +1,8 @@
-const value = [];
+let value = [];
 export default {
-	props: {
-		value
+	get props() {
+		value = [];
+		return { value };
 	},
 
 	async test({ assert, target, window }) {

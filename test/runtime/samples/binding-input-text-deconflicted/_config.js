@@ -1,8 +1,6 @@
 export default {
-	props: {
-		component: {
-			name: 'world'
-		}
+	get props() {
+		return { component: { name: 'world' } };
 	},
 
 	html: `

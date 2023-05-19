@@ -11,8 +11,8 @@ export default {
 		<p>selected: one</p>
 	`,
 
-	props: {
-		selected: 'one'
+	get props() {
+		return { selected: 'one' };
 	},
 
 	async test({ assert, component, target, window }) {

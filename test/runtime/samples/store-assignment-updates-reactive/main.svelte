@@ -1,5 +1,5 @@
 <script>
-	import { writable } from '../../../../store';
+	import { writable } from 'svelte/store';
 
 	const a = writable();
 	const b = writable();

@@ -83,10 +83,7 @@
   "scripts": {
     "format:fix": "prettier . --cache --plugin-search-dir=. --write",
     "format:check": "prettier . --cache --plugin-search-dir=. --check",
-    "test": "npm run test:unit && npm run test:integration && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
-    "test:integration": "mocha --exit",
-    "test:unit": "mocha --config .mocharc.unit.js --exit",
-    "quicktest": "mocha --exit",
+    "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "build": "rollup -c && npm run tsd",
     "prepare": "npm run build",
     "dev": "rollup -cw",
@@ -140,12 +137,12 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-svelte3": "^4.0.0",
     "estree-walker": "^3.0.3",
+    "happy-dom": "^9.18.3",
     "is-reference": "^3.0.1",
     "jsdom": "^21.1.1",
     "kleur": "^4.1.5",
     "locate-character": "^2.0.5",
     "magic-string": "^0.30.0",
-    "mocha": "^10.2.0",
     "periscopic": "^3.1.0",
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.0",
@@ -155,7 +152,8 @@
     "tiny-glob": "^0.2.9",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vitest": "^0.31.0"
   },
   "packageManager": "pnpm@8.4.0"
 }

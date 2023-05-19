@@ -1,10 +1,12 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 export default {
 	skip: true,
 
-	props: {
-		things: [writable('a'), writable('b'), writable('c')]
+	get props() {
+		return {
+			things: [writable('a'), writable('b'), writable('c')]
+		};
 	},
 
 	html: `

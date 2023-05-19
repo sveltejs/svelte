@@ -4,11 +4,13 @@ export default {
 		<div data-c="3" data-d="4"></div>
 	`,
 
-	props: {
-		things: [
-			{ 'data-a': 1, 'data-b': 2 },
-			{ 'data-c': 3, 'data-d': 4 }
-		]
+	get props() {
+		return {
+			things: [
+				{ 'data-a': 1, 'data-b': 2 },
+				{ 'data-c': 3, 'data-d': 4 }
+			]
+		};
 	},
 
 	test({ assert, component, target }) {

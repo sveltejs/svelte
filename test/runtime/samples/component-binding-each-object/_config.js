@@ -1,6 +1,8 @@
 export default {
-	props: {
-		a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
+	get props() {
+		return {
+			a: [{ id: 'foo' }, { id: 'bar' }, { id: 'baz' }]
+		};
 	},
 
 	html: `

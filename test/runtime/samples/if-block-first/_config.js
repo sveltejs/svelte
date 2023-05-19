@@ -1,6 +1,6 @@
 export default {
-	props: {
-		visible: false
+	get props() {
+		return { visible: false };
 	},
 
 	html: '<div><div>before me</div></div>',

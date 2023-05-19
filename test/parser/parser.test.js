@@ -1,6 +1,7 @@
-import * as assert from 'assert';
 import * as fs from 'fs';
-import { svelte, tryToLoadJson } from '../helpers';
+import { assert, describe, it } from 'vitest';
+import * as svelte from '../../compiler';
+import { try_load_json } from '../helpers';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -8,22 +9,25 @@ describe('parse', () => {
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo$/.test(dir);
-
-		if (solo && process.env.CI) {
-			throw new Error(`Forgot to remove '.solo' from test parser/samples/${dir}`);
+		const skip = !fs.existsSync(`${__dirname}/samples/${dir}/input.svelte`);
+		if (skip) {
+			console.warn(
+				`skipping ${dir} because no input.svelte exists. This could be a leftover folder from a different branch.`
+			);
 		}
 
-		const skip = !fs.existsSync(`${__dirname}/samples/${dir}/input.svelte`);
+		const it_fn = skip ? it.skip : solo ? it.only : it;
 
-		(skip ? it.skip : solo ? it.only : it)(dir, () => {
-			const options = tryToLoadJson(`${__dirname}/samples/${dir}/options.json`) || {};
+		it_fn(dir, () => {
+			const options = try_load_json(`${__dirname}/samples/${dir}/options.json`) || {};
 
 			const input = fs
 				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
-				.replace(/\s+$/, '')
+				.trimEnd()
 				.replace(/\r/g, '');
-			const expectedOutput = tryToLoadJson(`${__dirname}/samples/${dir}/output.json`);
-			const expectedError = tryToLoadJson(`${__dirname}/samples/${dir}/error.json`);
+
+			const expectedOutput = try_load_json(`${__dirname}/samples/${dir}/output.json`);
+			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
 				const { ast } = svelte.compile(
@@ -46,12 +50,8 @@ describe('parse', () => {
 				if (err.name !== 'ParseError') throw err;
 				if (!expectedError) throw err;
 				const { code, message, pos, start } = err;
-				try {
-					assert.deepEqual({ code, message, pos, start }, expectedError);
-				} catch (err2) {
-					const e = err2.code === 'MODULE_NOT_FOUND' ? err : err2;
-					throw e;
-				}
+
+				assert.deepEqual({ code, message, pos, start }, expectedError);
 			}
 		});
 	});
