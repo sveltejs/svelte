@@ -5,7 +5,9 @@ import { try_load_json } from '../helpers.js';
 
 describe('vars', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
-		if (dir[0] === '.') return;
+		if (dir[0] === '.') {
+			return;
+		}
 
 		// add .solo to a sample directory name to only run that test
 		const solo = /\.solo/.test(dir);
