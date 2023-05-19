@@ -296,33 +296,33 @@ export function construct_svelte_component_dev(component, props) {
  * @template {Record<string, any>} [Props=any]
  * @template {Record<string, any>} [Events=any]
  * @template {Record<string, any>} [Slots=any]
- * @extends SvelteComponent
+ * @extends SvelteComponent<Props, Events>
  */
 export class SvelteComponentDev extends SvelteComponent {
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 *
+	 * @type {Props}
 	 */
-	/** @type {Props} */
-	$$prop_def = undefined;
+	$$prop_def;
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 * 
+	 * @type {Events}
 	 */
-	/** @type {Events} */
-	$$events_def = undefined;
+	$$events_def;
 	/**
-	 * @private
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
+	 *
+	 * @type {Slots}
 	 */
-	/** @type {Slots} */
-	$$slot_def = undefined;
+	$$slot_def;
 
 	/** @param {import('./public.js').ComponentConstructorOptions<Props>} options */
 	constructor(options) {

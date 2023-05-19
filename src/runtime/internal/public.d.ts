@@ -1,4 +1,5 @@
-import type { SvelteComponent } from './Component.js';
+import { SvelteComponent } from './Component.js';
+import { SvelteComponentDev } from './dev.js';
 
 export interface ComponentConstructorOptions<
 	Props extends Record<string, any> = Record<string, any>
@@ -90,24 +91,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
-
-export interface SvelteComponentDev<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any // eslint-disable-line @typescript-eslint/no-unused-vars
-> {
-	$set(props?: Partial<Props>): void;
-	$on<K extends Extract<keyof Events, string>>(
-		type: K,
-		callback: ((e: Events[K]) => void) | null | undefined
-	): () => void;
-	$destroy(): void;
-	[accessor: string]: any;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface SvelteComponentTyped<
-	Props extends Record<string, any> = any,
-	Events extends Record<string, any> = any,
-	Slots extends Record<string, any> = any
-> extends SvelteComponentDev<Props, Events, Slots> {}

@@ -21,13 +21,26 @@ function adjust(input) {
 	const import_map = new Map();
   
 	while ((import_match = import_regex.exec(input)) !== null) {
-		const imports = import_map.get(import_match[2]) || new Set();
-		imports.add(import_match[4]);
+		const imports = import_map.get(import_match[2]) || new Map();
+		let name = import_match[4];
+		if ([...imports.keys()].includes(name)) continue;
+
+		let i = 1;
+		if (name === 'default') {
+			name = import_match[2].split('/').pop().split('.').shift().replace(/[^a-z0-9]/gi, '_');
+		}
+		while ([...import_map].some(([path, names]) => path !== import_match[2] && names.has(name))) {
+			name = `${name}${i++}`;
+		}
+
+		imports.set(import_match[4], name);
 		import_map.set(import_match[2], imports);
 	}
   
 	// Replace inline imports with their type names
-	const transformed = input.replace(import_regex, "$4");
+	const transformed = input.replace(import_regex, (_match, _quote, path, _quote2, name) => {
+		return import_map.get(path).get(name);
+	});
   
 	// Remove/adjust @template, @param and @returns lines
 	// TODO rethink if we really need to do this for @param and @returns, doesn't show up in hover so unnecessary
@@ -88,11 +101,19 @@ function adjust(input) {
   
 	// Generate the import statement for the types used
 	const import_statements = Array.from(import_map.entries())
-		.map(([path, types]) => `import { ${[...types].join(', ')} } from '${path}';`)
+		.map(([path, names]) => {
+			const default_name = names.get('default');
+			names.delete('default');
+			const default_import = default_name ? (default_name + (names.size ? ', ' : ' ')) : '';
+			const named_imports = names.size ? `{ ${[...names.values()].join(', ')} } ` : '';
+			return `import ${default_import}${named_imports}from '${path}';`
+		})
 		.join("\n");
   
 	return [import_statements, ...renamed_generics].join("\n");
 }
+
+let did_replace = false;
 
 function walk(dir) {
 	const files = readdirSync(dir);
@@ -103,20 +124,29 @@ function walk(dir) {
 		if (file.endsWith('.d.ts')) {
 			modify(path, content => {
 				content = adjust(content);
-				
+
 				if (file === 'index.d.ts' && existsSync(`src/${_dir}/public.d.ts`)) {
 					copyFileSync(`src/${_dir}/public.d.ts`, `${dir}/public.d.ts`);
-					content + "\nexport * from './public.js'";
+					content = "export * from './public.js';\n" + content;
 				}
-	
+
+				if (file === 'Component.d.ts' && dir.includes('runtime')) {
+					if (!content.includes('$set(props: Partial<Props>): void;\n}')) {
+						throw new Error('Component.js was modified in a way that automatic patching of d.ts file no longer works. Please adjust it');
+					} else {
+						content = content.replace('$set(props: Partial<Props>): void;\n}', '$set(props: Partial<Props>): void;\n    [accessor:string]: any;\n}');
+						did_replace = true;
+					}
+				}
+
 				return content;
 			});
 		} else if (statSync(path).isDirectory()) {
-			if (existsSync(`src/${_dir}/private.d.ts`)) {
-				copyFileSync(`src/${_dir}/private.d.ts`, `${dir}/private.d.ts`);
+			if (existsSync(`src/${_dir}/${file}/private.d.ts`)) {
+				copyFileSync(`src/${_dir}/${file}/private.d.ts`, `${path}/private.d.ts`);
 			}
-			if (existsSync(`src/${_dir}/interfaces.d.ts`)) {
-				copyFileSync(`src/${_dir}/interfaces.d.ts`, `${dir}/interfaces.d.ts`);
+			if (existsSync(`src/${_dir}/${file}/interfaces.d.ts`)) {
+				copyFileSync(`src/${_dir}/${file}/interfaces.d.ts`, `${path}/interfaces.d.ts`);
 			}
 			walk(path);
 		}
@@ -124,6 +154,10 @@ function walk(dir) {
 }
 
 walk('types');
+
+if (!did_replace) {
+	throw new Error('Component.js file in runtime does no longer exist so that automatic patching of the d.ts file no longer works. Please adjust it');
+}
 
 copyFileSync(`src/runtime/ambient.d.ts`, `types/runtime/ambient.d.ts`);
 modify(`types/runtime/index.d.ts`, content => content + "\nimport './ambient.js'");

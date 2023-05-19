@@ -32,7 +32,7 @@ export function readable(value, start) {
 export function writable(value, start = noop) {
 	/** @type {import('./public.js').Unsubscriber} */
 	let stop;
-	/** @type {Set<import('./public.js').SubscribeInvalidateTuple<T>>} */
+	/** @type {Set<import('./private.js').SubscribeInvalidateTuple<T>>} */
 	const subscribers = new Set();
 	/** @param {T} new_value
 	 * @returns {void}
@@ -65,11 +65,11 @@ export function writable(value, start = noop) {
 	}
 	/**
 	 * @param {import('./public.js').Subscriber<T>} run
-	 * @param {import('./public.js').Invalidator<T>} invalidate
+	 * @param {import('./private.js').Invalidator<T>} invalidate
 	 * @returns {import('./public.js').Unsubscriber}
 	 */
 	function subscribe(run, invalidate = noop) {
-		/** @type {import('./public.js').SubscribeInvalidateTuple<T>} */
+		/** @type {import('./private.js').SubscribeInvalidateTuple<T>} */
 		const subscriber = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
@@ -91,7 +91,7 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
- * @template {import('./public.js').Stores} S
+ * @template {import('./private.js').Stores} S
  * @template T
  * @overload
  * @param {S} stores - input stores
@@ -104,7 +104,7 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
- * @template {import('./public.js').Stores} S
+ * @template {import('./private.js').Stores} S
  * @template T
  * @overload
  * @param {S} stores - input stores
@@ -114,7 +114,7 @@ export function writable(value, start = noop) {
  */
 
 /**
- * @template {import('./public.js').Stores} S
+ * @template {import('./private.js').Stores} S
  * @template T
  * @param {S} stores
  * @param {Function} fn

@@ -417,11 +417,27 @@ export function create_custom_element(
 
 /**
  * Base class for Svelte components. Used when dev=false.
+ *
+ * @template {Record<string, any>} [Props=any]
+ * @template {Record<string, any>} [Events=any]
+ * @implements Record<string, any>
  */
 export class SvelteComponent {
-	/** */
+	/**
+	 * ### PRIVATE API
+	 * 
+	 * Do not use, may change at any time
+	 *
+	 * @type {any}
+	 */
 	$$ = undefined;
-	/** */
+	/**
+	 * ### PRIVATE API
+	 * 
+	 * Do not use, may change at any time
+	 *
+	 * @type {any}
+	 */
 	$$set = undefined;
 
 	/** @returns {void} */
@@ -430,6 +446,12 @@ export class SvelteComponent {
 		this.$destroy = noop;
 	}
 
+	/**
+	 * @template {Extract<keyof Events, string>} K
+	 * @param {K} type 
+	 * @param {((e: Events[K]) => void) | null | undefined} callback 
+	 * @returns {() => void}
+	 */
 	$on(type, callback) {
 		if (!is_function(callback)) {
 			return noop;
@@ -442,11 +464,14 @@ export class SvelteComponent {
 		};
 	}
 
-	/** @returns {void} */
-	$set($$props) {
-		if (this.$$set && !is_empty($$props)) {
+	/** 
+	 * @param {Partial<Props>} props
+	 * @returns {void}
+	 */
+	$set(props) {
+		if (this.$$set && !is_empty(props)) {
 			this.$$.skip_bound = true;
-			this.$$set($$props);
+			this.$$set(props);
 			this.$$.skip_bound = false;
 		}
 	}
