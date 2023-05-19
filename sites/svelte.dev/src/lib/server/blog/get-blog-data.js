@@ -24,6 +24,7 @@ export function get_blog_data(base = BASE) {
 			draft: metadata.draft === 'true',
 			slug,
 			title: metadata.title,
+			file,
 			author: {
 				name: metadata.author,
 				url: metadata.authorURL

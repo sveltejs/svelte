@@ -1,10 +1,10 @@
-import { replace_placeholders } from '$lib/server/docs/render';
 import {
 	extract_frontmatter,
 	normalizeSlugify,
 	removeMarkdown,
 	transform
 } from '$lib/server/markdown';
+import { replace_placeholders } from '$lib/server/markdown/renderer';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
