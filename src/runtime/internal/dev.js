@@ -311,7 +311,7 @@ export class SvelteComponentDev extends SvelteComponent {
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
-	 * 
+	 *
 	 * @type {Events}
 	 */
 	$$events_def;

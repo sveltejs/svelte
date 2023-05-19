@@ -425,7 +425,7 @@ export function create_custom_element(
 export class SvelteComponent {
 	/**
 	 * ### PRIVATE API
-	 * 
+	 *
 	 * Do not use, may change at any time
 	 *
 	 * @type {any}
@@ -433,7 +433,7 @@ export class SvelteComponent {
 	$$ = undefined;
 	/**
 	 * ### PRIVATE API
-	 * 
+	 *
 	 * Do not use, may change at any time
 	 *
 	 * @type {any}
@@ -448,8 +448,8 @@ export class SvelteComponent {
 
 	/**
 	 * @template {Extract<keyof Events, string>} K
-	 * @param {K} type 
-	 * @param {((e: Events[K]) => void) | null | undefined} callback 
+	 * @param {K} type
+	 * @param {((e: Events[K]) => void) | null | undefined} callback
 	 * @returns {() => void}
 	 */
 	$on(type, callback) {
@@ -464,7 +464,7 @@ export class SvelteComponent {
 		};
 	}
 
-	/** 
+	/**
 	 * @param {Partial<Props>} props
 	 * @returns {void}
 	 */

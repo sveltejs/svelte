@@ -1,4 +1,4 @@
-import { Invalidator } from "./private.js";
+import { Invalidator } from './private.js';
 
 /** Callback to inform of a value updates. */
 export type Subscriber<T> = (value: T) => void;

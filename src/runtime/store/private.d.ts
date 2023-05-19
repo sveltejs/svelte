@@ -1,4 +1,4 @@
-import { Readable, Subscriber } from "./public.js";
+import { Readable, Subscriber } from './public.js';
 
 /** Cleanup logic callback. */
 export type Invalidator<T> = (value?: T) => void;
@@ -7,7 +7,10 @@ export type Invalidator<T> = (value?: T) => void;
 export type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
 /** One or more `Readable`s. */
-export type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+export type Stores =
+	| Readable<any>
+	| [Readable<any>, ...Array<Readable<any>>]
+	| Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
 export type StoresValues<T> = T extends Readable<infer U>
