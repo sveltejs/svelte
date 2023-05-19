@@ -1,17 +1,15 @@
 <script>
 	import { page } from '$app/stores';
-	import { DocsNav } from '@sveltejs/site-kit/components';
+	import { DocsContents, DocsMobileNav } from '@sveltejs/site-kit/components/docs';
 
 	export let data;
 
-	$: title = data.sections
-		.find(({ pages }) => pages.find(({ path }) => path === $page.url.pathname))
-		?.pages.find(({ path }) => path === $page.url.pathname).title;
+	$: title = $page.data.page?.title;
 </script>
 
 <div class="container">
 	<div class="toc-container" style="order: 1">
-		<DocsNav contents={data.sections} />
+		<DocsContents contents={data.sections} />
 	</div>
 
 	<div class="page content">
@@ -22,6 +20,8 @@
 		<slot />
 	</div>
 </div>
+
+<DocsMobileNav contents={$page.data.sections} pageContents={$page.data.page} />
 
 <style>
 	.container {
@@ -48,14 +48,6 @@
 		all: unset;
 	}
 
-	/* .content {
-		width: 100%;
-		margin: 0;
-		padding: var(--sk-page-padding-top) var(--sk-page-padding-side);
-		tab-size: 2;
-		-moz-tab-size: 2;
-	} */
-
 	@media (min-width: 832px) {
 		/* can't use vars in @media :( */
 		.content {
@@ -63,22 +55,14 @@
 		}
 	}
 
-	/* .content :global(h2[id])::after {
-		content: '';
-		position: absolute;
-		width: 100%;
-		left: 0;
-		top: 8rem;
-		height: 2px;
-		background: #ddd;
-	} */
-
 	.toc-container {
 		background: var(--sk-back-3);
+		display: none;
 	}
 
 	@media (min-width: 832px) {
 		.toc-container {
+			display: block;
 			width: var(--sidebar-width);
 			height: calc(100vh - var(--sk-nav-height));
 			position: fixed;
