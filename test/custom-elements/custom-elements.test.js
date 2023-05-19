@@ -55,13 +55,13 @@ describe(
 									return index;
 								}
 
-								if (importee === 'assert') {
-									return 'assert';
+								if (importee === 'assert.js') {
+									return '\0virtual:assert';
 								}
 							},
 
 							load(id) {
-								if (id === 'assert') return browser_assert;
+								if (id === '\0virtual:assert') return browser_assert;
 							},
 
 							transform(code, id) {

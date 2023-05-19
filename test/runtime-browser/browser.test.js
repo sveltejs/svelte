@@ -64,11 +64,11 @@ describe(
 								}
 
 								if (importee === 'main') {
-									return 'main';
+									return '\0virtual:main';
 								}
 
-								if (importee === 'assert') {
-									return 'assert';
+								if (importee === 'assert.js') {
+									return '\0virtual:assert';
 								}
 
 								if (importee === '__MAIN_DOT_SVELTE__') {
@@ -80,9 +80,9 @@ describe(
 								}
 							},
 							load(id) {
-								if (id === 'assert') return browser_assert;
+								if (id === '\0virtual:assert') return browser_assert;
 
-								if (id === 'main') {
+								if (id === '\0virtual:main') {
 									return main.replace('__HYDRATE__', hydrate ? 'true' : 'false');
 								}
 								return null;
