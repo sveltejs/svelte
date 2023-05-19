@@ -33,7 +33,7 @@ describe('js-output', () => {
 			let actual;
 
 			try {
-				const options = Object.assign(config.options || {});
+				const options = Object.assign({}, config.options || {});
 
 				actual = svelte
 					.compile(input, options)

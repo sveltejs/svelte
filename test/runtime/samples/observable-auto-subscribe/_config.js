@@ -3,7 +3,7 @@ import { tick } from 'svelte';
 let value = 'initial';
 
 let subscribers = [];
-let observable = {
+const observable = {
 	subscribe: (fn) => {
 		subscribers.push(fn);
 

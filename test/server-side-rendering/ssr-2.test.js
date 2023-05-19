@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
-import * as path from 'path';
-import { describe, it, assert } from 'vitest';
 import * as fs from 'fs';
-import { try_load_config, mkdirp, create_loader } from '../helpers.js';
-import { assert_html_equal } from '../html_equal.js';
-import glob from 'tiny-glob/sync';
+import * as path from 'path';
 import { setTimeout } from 'timers/promises';
+import glob from 'tiny-glob/sync';
+import { assert, describe, it } from 'vitest';
+import { compile } from '../../compiler.mjs';
+import { create_loader, mkdirp, try_load_config } from '../helpers.js';
+import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 
 // duplicate client-side tests, as far as possible
 run_runtime_samples('runtime');
@@ -38,11 +39,11 @@ function run_runtime_samples(suite) {
 
 			const load = create_loader(compileOptions, cwd);
 
-			glob('**/*.svelte', { cwd: cwd }).forEach((file) => {
+			glob('**/*.svelte', { cwd }).forEach((file) => {
 				if (file[0] === '_') return;
 
 				const dir = `${cwd}/_output/ssr`;
-				const out = `${cwd}/${file.replace(/\.svelte$/, '.js')}`;
+				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
 				if (fs.existsSync(out)) {
 					fs.unlinkSync(out);
@@ -71,18 +72,14 @@ function run_runtime_samples(suite) {
 				});
 
 				if (config.ssrHtml) {
-					assert_html_equal(html, config.ssrHtml, {
-						normalize_html: {
-							preserveComments: compileOptions.preserveComments,
-							withoutNormalizeHtml: config.withoutNormalizeHtml
-						}
+					assert_html_equal_with_options(html, config.ssrHtml, {
+						preserveComments: compileOptions.preserveComments,
+						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				} else if (config.html) {
-					assert_html_equal(html, config.html, {
-						normalize_html: {
-							preserveComments: compileOptions.preserveComments,
-							withoutNormalizeHtml: config.withoutNormalizeHtml
-						}
+					assert_html_equal_with_options(html, config.html, {
+						preserveComments: compileOptions.preserveComments,
+						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				}
 
@@ -90,7 +87,8 @@ function run_runtime_samples(suite) {
 					await config.test_ssr({
 						assert: {
 							...assert,
-							htmlEqual: assert_html_equal
+							htmlEqual: assert_html_equal,
+							htmlEqualWithOptions: assert_html_equal_with_options
 						},
 						load
 					});
@@ -112,7 +110,7 @@ function run_runtime_samples(suite) {
 			}
 
 			// wait for vitest to report progress
-			await setTimeout(10);
+			await setTimeout(0);
 		});
 	}
 }
