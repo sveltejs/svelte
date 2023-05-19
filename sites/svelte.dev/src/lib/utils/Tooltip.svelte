@@ -21,6 +21,7 @@
 <div
 	on:mouseenter
 	on:mouseleave
+	role="tooltip"
 	class="tooltip-container"
 	style="left: {x}px; top: {y}px; --offset: {Math.min(-10, window.innerWidth - (x + width + 10))}px"
 >
