@@ -1,5 +1,9 @@
 <script>
+	import * as hovers from '$lib/utils/hovers.js';
+
 	export let data;
+
+	hovers.setup();
 </script>
 
 <svelte:head>
@@ -12,18 +16,10 @@
 
 <div class="faqs stretch">
 	<h1>Frequently Asked Questions</h1>
-	{#each data.faqs as faq}
-		<article class="faq text">
-			<h2>
-				<span id={faq.slug} class="offset-anchor" />
-				{faq.title}
-				<!-- TODO -->
-				<!-- <Permalink href="/faq#{faq.slug}" /> -->
-				<a href="/faq#{faq.slug}">#</a>
-			</h2>
-			{@html faq.content}
-		</article>
-	{/each}
+
+	<article class="text">
+		{@html data.faqs}
+	</article>
 </div>
 
 <style>
@@ -36,7 +32,7 @@
 		margin: 0 auto;
 		tab-size: 2;
 	}
-
+	/* 
 	.faqs :global(pre) :global(code) {
 		padding: 0;
 		margin: 0;
@@ -72,7 +68,7 @@
 		left: -1.3em;
 		opacity: 0;
 		transition: opacity 0.2s;
-	}
+	} */
 
 	.faqs :global(h2 > .anchor),
 	.faqs :global(h3 > .anchor) {
@@ -101,7 +97,7 @@
 		border-bottom: 1px solid #ddd;
 	}
 
-	.faqs :global(h3) {
+	/* .faqs :global(h3) {
 		font-family: inherit;
 		font-weight: 600;
 		font-size: 2rem;
@@ -112,7 +108,7 @@
 		line-height: 1.3;
 		padding: 0;
 		top: 0;
-	}
+	} */
 
 	.faq:first-child {
 		margin: 0 0 2rem 0;
