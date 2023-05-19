@@ -1,7 +1,6 @@
 <script>
 	import { page } from '$app/stores';
-	import { TSToggle } from '@sveltejs/site-kit/components';
-	import Contents from './Contents.svelte';
+	import { DocsNav } from '@sveltejs/site-kit/components';
 
 	export let data;
 
@@ -12,11 +11,7 @@
 
 <div class="container">
 	<div class="toc-container" style="order: 1">
-		<Contents contents={data.sections} />
-
-		<div class="ts-toggle">
-			<TSToggle />
-		</div>
+		<DocsNav contents={data.sections} />
 	</div>
 
 	<div class="page content">
@@ -82,12 +77,6 @@
 		background: var(--sk-back-3);
 	}
 
-	.ts-toggle {
-		width: 100%;
-		border-top: 1px solid var(--sk-back-4);
-		background-color: var(--sk-back-3);
-	}
-
 	@media (min-width: 832px) {
 		.toc-container {
 			width: var(--sidebar-width);
@@ -111,15 +100,6 @@
 
 		.page {
 			padding-left: calc(var(--sidebar-width) + var(--sk-page-padding-side));
-		}
-
-		.ts-toggle {
-			position: fixed;
-			width: var(--sidebar-width);
-			bottom: 0;
-			z-index: 1;
-			margin-right: 0;
-			border-right: 1px solid var(--sk-back-5);
 		}
 	}
 
