@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { rollup } from 'rollup';
 import { try_load_config } from '../helpers.js';
 import * as svelte from '../../src/compiler/index.js';
@@ -103,7 +103,7 @@ describe(
 				});
 				await page.setContent('<main></main>');
 				await page.evaluate(generated_bundle.output[0].code);
-				const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+				const test_result = await page.evaluate("test(document.querySelector('main'))");
 
 				if (test_result) console.log(test_result);
 

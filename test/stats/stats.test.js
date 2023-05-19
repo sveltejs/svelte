@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { describe, it, assert } from 'vitest';
 import * as svelte from '../../src/compiler/index.js';
 import { try_load_config, try_load_json } from '../helpers.js';
