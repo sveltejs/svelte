@@ -99,12 +99,10 @@ describe('validate', () => {
 					frame: w.frame,
 					message: w.message,
 					start: {
-						character: w.start.character,
 						column: w.start.column,
 						line: w.start.line
 					},
 					end: {
-						character: w.end.character,
 						column: w.end.column,
 						line: w.end.line
 					},
@@ -117,12 +115,10 @@ describe('validate', () => {
 					frame: '1: \n2:   <img \n     ^\n3:  src="foo.jpg">\n4: ',
 					message: 'A11y: <img> element should have an alt attribute',
 					start: {
-						character: 3,
 						column: 2,
 						line: 2
 					},
 					end: {
-						character: 24,
 						column: 15,
 						line: 3
 					},

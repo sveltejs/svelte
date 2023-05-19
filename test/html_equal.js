@@ -1,39 +1,12 @@
 import { assert } from 'vitest';
 
-/** @type {HTMLDivElement} */
-let _container;
-
-/**
- * @param {string} html
- * @param {{
- *  removeDataSvelte?: boolean,
- *  preserveComments?: boolean,
- * }} options
- */
-export function normalize_html(html, options = {}) {
-	const container = (_container ??= document.createElement('div'));
-
-	if (!options.preserveComments) {
-		html = html.replace(/(<!--.*?-->)/g, '');
-	}
-
-	if (options.removeDataSvelte) {
-		html = html.replace(/(data-svelte-h="[^"]+")/g, '');
-	}
-
-	html = html.replace(/>[ \t\n\r\f]+</g, '><').trim();
-
-	container.innerHTML = html;
-
-	clean_children(container);
-
-	return container.innerHTML.replace(/<\/?noscript\/?>/g, '');
-}
-
-/** @param {any} node */
 function clean_children(node) {
+	let previous = null;
+
 	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => (a.name < b.name ? -1 : 1));
+	const attributes = Array.from(node.attributes).sort((a, b) => {
+		return a.name < b.name ? -1 : 1;
+	});
 
 	attributes.forEach((attr) => {
 		node.removeAttribute(attr.name);
@@ -43,9 +16,7 @@ function clean_children(node) {
 		node.setAttribute(attr.name, attr.value);
 	});
 
-	let previous = null;
-	// recurse
-	[...node.childNodes].forEach((child) => {
+	for (let child of [...node.childNodes]) {
 		if (child.nodeType === 3) {
 			// text
 			if (
@@ -73,7 +44,7 @@ function clean_children(node) {
 		}
 
 		previous = child;
-	});
+	}
 
 	// collapse whitespace
 	if (node.firstChild && node.firstChild.nodeType === 3) {
@@ -88,40 +59,99 @@ function clean_children(node) {
 }
 
 /**
- *
- * @param {string} actual
- * @param {string} expected
- * @param {{
- *      message?: string,
- *      normalize_html?: {
- *         removeDataSvelte?: boolean,
- *        preserveComments?: boolean,
- *      },
- *      without_normalize?: boolean,
- * }} options
+ * @param {Window} window
+ * @param {string} html
+ * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
  */
-export function assert_html_equal(actual, expected, options = {}) {
-	if (options.without_normalize) {
-		actual = actual.replace(/\r\n/g, '\n');
-		expected = expected.replace(/\r\n/g, '\n');
-
-		if (options.normalize_html.removeDataSvelte) {
-			actual = actual.replace(/(\sdata-svelte-h="[^"]+")/g, '');
-			expected = expected.replace(/(\sdata-svelte-h="[^"]+")/g, '');
-		}
-	} else {
-		actual = normalize_html(actual, options.normalize_html);
-		expected = normalize_html(expected, options.normalize_html);
-	}
-
+export function normalize_html(
+	window,
+	html,
+	{ removeDataSvelte = false, preserveComments = false }
+) {
 	try {
-		assert.equal(actual, expected, options.message);
+		const node = window.document.createElement('div');
+		node.innerHTML = html
+			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
+			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
+			.replace(/>[ \t\n\r\f]+</g, '><')
+			.trim();
+		clean_children(node);
+		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
-		// Remove this function from the stack trace so that the error is shown in the test file
-
-		if (Error.captureStackTrace) {
-			Error.captureStackTrace(err, assert_html_equal);
-		}
-		throw err;
+		throw new Error(`Failed to normalize HTML:\n${html}`);
 	}
 }
+
+/**
+ * @param {string} html
+ * @returns {string}
+ */
+export function normalize_new_line(html) {
+	return html.replace(/\r\n/g, '\n');
+}
+
+/**
+ * @param {{ removeDataSvelte?: boolean }} options
+ */
+export function setup_html_equal(options = {}) {
+	/**
+	 * @param {string} actual
+	 * @param {string} expected
+	 * @param {string} [message]
+	 */
+	const assert_html_equal = (actual, expected, message) => {
+		try {
+			assert.deepEqual(
+				normalize_html(window, actual, options),
+				normalize_html(window, expected, options),
+				message
+			);
+		} catch (e) {
+			if (Error.captureStackTrace) Error.captureStackTrace(e, assert_html_equal);
+			throw e;
+		}
+	};
+
+	/**
+	 *
+	 * @param {string} actual
+	 * @param {string} expected
+	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
+	 * @param {string} [message]
+	 */
+	const assert_html_equal_with_options = (
+		actual,
+		expected,
+		{ preserveComments, withoutNormalizeHtml },
+		message
+	) => {
+		try {
+			assert.deepEqual(
+				withoutNormalizeHtml
+					? normalize_new_line(actual).replace(
+							/(\sdata-svelte-h="[^"]+")/g,
+							options.removeDataSvelte ? '' : '$1'
+					  )
+					: normalize_html(window, actual, { ...options, preserveComments }),
+				withoutNormalizeHtml
+					? normalize_new_line(expected).replace(
+							/(\sdata-svelte-h="[^"]+")/g,
+							options.removeDataSvelte ? '' : '$1'
+					  )
+					: normalize_html(window, expected, { ...options, preserveComments }),
+				message
+			);
+		} catch (e) {
+			if (Error.captureStackTrace) Error.captureStackTrace(e, assert_html_equal_with_options);
+			throw e;
+		}
+	};
+
+	return {
+		assert_html_equal,
+		assert_html_equal_with_options
+	};
+}
+
+// Common case without options
+export const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal();

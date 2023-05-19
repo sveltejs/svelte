@@ -5,7 +5,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { assert, describe, it } from 'vitest';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
-
 import { assert_html_equal } from '../html_equal.js';
 
 describe('hydration', async () => {
@@ -20,7 +19,7 @@ describe('hydration', async () => {
 		it_fn(dir, async () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			let compileOptions = Object.assign({}, config.compileOptions, {
+			const compileOptions = Object.assign({}, config.compileOptions, {
 				accessors: 'accessors' in config ? config.accessors : true,
 				format: 'cjs',
 				hydratable: true

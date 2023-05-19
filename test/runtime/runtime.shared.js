@@ -1,22 +1,26 @@
 import * as fs from 'fs';
-import { setImmediate } from 'timers/promises';
 import * as path from 'path';
-import { compile } from 'svelte/compiler';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
+import { setImmediate } from 'timers/promises';
 import glob from 'tiny-glob/sync.js';
 import { afterAll, assert, beforeAll, describe, it } from 'vitest';
-import { create_loader, mkdirp, setupHtmlEqual, try_load_config } from '../helpers.js';
+import { compile } from '../../src/compiler/index.js';
+import { create_loader, mkdirp, try_load_config } from '../helpers.js';
+import { setup_html_equal } from '../html_equal.js';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
-let listeners = process.listeners('unhandledRejection');
+const listeners = process.rawListeners('unhandledRejection');
+
+const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
+	removeDataSvelte: true
+});
 
 beforeAll(() => {
 	process.prependListener('unhandledRejection', unhandledRejection_handler);
-	return setupHtmlEqual({ removeDataSvelte: true });
 });
 
 afterAll(() => {
@@ -160,7 +164,7 @@ async function run_test(dir) {
 				}
 
 				if (config.html) {
-					assert.htmlEqualWithOptions(target.innerHTML, config.html, {
+					assert_html_equal_with_options(target.innerHTML, config.html, {
 						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				}
@@ -168,7 +172,11 @@ async function run_test(dir) {
 				try {
 					if (config.test) {
 						await config.test({
-							assert,
+							assert: {
+								...assert,
+								htmlEqual: assert_html_equal,
+								htmlEqualWithOptions: assert_html_equal_with_options
+							},
 							component,
 							mod,
 							target,
@@ -181,7 +189,7 @@ async function run_test(dir) {
 					}
 				} finally {
 					component.$destroy();
-					assert.htmlEqual(target.innerHTML, '');
+					assert_html_equal(target.innerHTML, '');
 
 					// TODO: This seems useless, unhandledRejection is only triggered on the next task
 					// by which time the test has already finished and the next test resets it to null above

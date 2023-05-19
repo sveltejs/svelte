@@ -6,8 +6,8 @@ import { mkdirp, pretty_print_browser_assertion, try_load_config } from '../help
 import * as svelte from 'svelte/compiler';
 import { beforeAll, describe, afterAll, assert, it } from 'vitest';
 
-const internal = path.resolve('internal/index.mjs');
-const index = path.resolve('index.mjs');
+const internal = path.resolve('src/runtime/internal/index.js');
+const index = path.resolve('src/runtime/index.js');
 
 const main = fs.readFileSync(`${__dirname}/driver.js`, 'utf-8');
 const browser_assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
