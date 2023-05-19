@@ -59,11 +59,9 @@ function clean_children(node) {
 }
 
 /**
- *
  * @param {Window} window
  * @param {string} html
  * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
- * @returns
  */
 export function normalize_html(
 	window,
