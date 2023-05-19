@@ -1,5 +1,5 @@
 // @ts-check
-import { CONTENT_BASE_PATHS } from '$lib/constants.js';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import fs from 'node:fs';
 import { extract_frontmatter } from '../markdown/index.js';
 import { render_markdown } from '../markdown/renderer.js';

@@ -1,4 +1,4 @@
-import { CONTENT_BASE } from '$lib/constants.js';
+import { CONTENT_BASE } from '../../constants.js';
 import {
 	extract_frontmatter,
 	normalizeSlugify,

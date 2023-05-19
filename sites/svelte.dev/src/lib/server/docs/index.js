@@ -1,5 +1,5 @@
 import { base as app_base } from '$app/paths';
-import { CONTENT_BASE_PATHS } from '$lib/constants.js';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import fs from 'node:fs';
 import {
 	escape,

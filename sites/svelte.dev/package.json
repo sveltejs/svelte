@@ -27,11 +27,11 @@
 	},
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.4.1",
-		"@sveltejs/adapter-vercel": "^2.4.3",
-		"@sveltejs/kit": "^1.16.3",
+		"@sveltejs/adapter-vercel": "^3.0.0",
+		"@sveltejs/kit": "1.18.0",
 		"@sveltejs/site-kit": "^5.2.1",
-		"@types/marked": "^4.3.0",
-		"@types/node": "^20.1.7",
+		"@types/marked": "^5.0.0",
+		"@types/node": "^20.2.1",
 		"degit": "^2.8.4",
 		"dotenv": "^16.0.3",
 		"jimp": "^0.22.8",
@@ -53,7 +53,7 @@
 		"tiny-glob": "^0.2.9",
 		"ts-morph": "^18.0.0",
 		"typescript": "^5.0.4",
-		"vite": "^4.3.7",
+		"vite": "4.3.8",
 		"vite-imagetools": "^5.0.4"
 	}
 }

@@ -11,13 +11,10 @@ const width = 1200;
 
 export const prerender = true;
 
-/** @type {import('./$types').RequestHandler} */
-export const GET = async ({ params, url }) => {
-	const post = get_processed_blog_post(get_blog_data(), params.slug);
+export const GET = async ({ params }) => {
+	const post = await get_processed_blog_post(get_blog_data(), params.slug);
 
-	if (!post) {
-		throw error(404);
-	}
+	if (!post) throw error(404);
 
 	// @ts-ignore
 	const result = Card.render({ post });
