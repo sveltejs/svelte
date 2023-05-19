@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
-import { compile } from '../../compiler.mjs';
+import { compile } from '../../src/compiler/index.js';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
 import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
 import { setTimeout } from 'timers/promises';

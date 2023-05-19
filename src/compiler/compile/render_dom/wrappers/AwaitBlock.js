@@ -11,9 +11,6 @@ import Expression from '../../nodes/shared/Expression.js';
 class AwaitBlockBranch extends Wrapper {
 	/** @typedef {'pending' | 'then' | 'catch'} Status */
 
-	/** @type {AwaitBlockWrapper} */
-	parent;
-
 	/** @type {import('../Block.js').default} */
 	block;
 

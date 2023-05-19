@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import { assert, describe, it } from 'vitest';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from '../../src/compiler/index.js';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
 

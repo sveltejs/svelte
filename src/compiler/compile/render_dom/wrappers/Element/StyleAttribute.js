@@ -5,12 +5,6 @@ import add_to_set from '../../../utils/add_to_set.js';
 
 /** @extends AttributeWrapper */
 export default class StyleAttributeWrapper extends AttributeWrapper {
-	/** @type {import('../../../nodes/Attribute.js').default} */
-	node;
-
-	/** @type {import('./index.js').default} */
-	parent;
-
 	/** @param {import('../../Block.js').default} block */
 	render(block) {
 		const style_props = optimize_style(this.node.chunks);

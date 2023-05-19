@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { assert, describe, it } from 'vitest';
-import * as svelte from '../../compiler';
-import { try_load_json } from '../helpers';
+import * as svelte from '../../src/compiler/index.js';
+import { try_load_json } from '../helpers.js';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
