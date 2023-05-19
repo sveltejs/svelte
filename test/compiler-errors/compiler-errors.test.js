@@ -5,7 +5,7 @@ import { compile } from '../../compiler.mjs';
 
 const configs = import.meta.glob('./samples/*/_config.js', { import: 'default', eager: true });
 
-describe('runtime', () => {
+describe('compiler-errors', () => {
 	function run_test(dir) {
 		if (dir[0] === '.') return;
 
