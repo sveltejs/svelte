@@ -186,6 +186,13 @@ export async function render_markdown(file, body) {
 						injected.push(`declare module '$lib/types' { export interface User {} }`);
 					}
 
+					/**
+					 * And now for tuturials
+					 */
+					if (file.startsWith('tutorial')) {
+						injected.push('// @noErrors');
+					}
+
 					if (injected.length) {
 						const injected_str = injected.join('\n');
 						if (source.includes('// @filename:')) {
