@@ -42,7 +42,10 @@ export default class SlotTemplateWrapper extends Wrapper {
 		this.parent.node.lets.forEach((l) => {
 			if (!seen.has(l.name.name)) lets.push(l);
 		});
-		this.parent.set_slot(slot_template_name, get_slot_definition(this.block, scope, lets));
+		/** @type {import('./InlineComponent/index.js').default} */ (this.parent).set_slot(
+			slot_template_name,
+			get_slot_definition(this.block, scope, lets)
+		);
 		this.fragment = new FragmentWrapper(
 			renderer,
 			this.block,
