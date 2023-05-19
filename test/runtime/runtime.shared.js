@@ -65,30 +65,6 @@ async function run_test(dir) {
 
 		let unintendedError = null;
 
-		glob('**/*.svelte', { cwd }).forEach((file) => {
-			if (file[0] === '_') return;
-
-			const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
-			const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
-
-			if (fs.existsSync(out)) {
-				fs.unlinkSync(out);
-			}
-
-			mkdirp(dir);
-
-			try {
-				const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''), {
-					...compileOptions,
-					filename: file
-				});
-
-				fs.writeFileSync(out, js.code);
-			} catch (err) {
-				// do nothing
-			}
-		});
-
 		if (config.expect_unhandled_rejections) {
 			listeners.forEach((listener) => {
 				process.removeListener('unhandledRejection', listener);
@@ -117,13 +93,8 @@ async function run_test(dir) {
 					};
 				});
 
-				try {
-					mod = await load(`./main.svelte`);
-					SvelteComponent = mod.default;
-				} catch (err) {
-					show_output(cwd, compileOptions); // eslint-disable-line no-console
-					throw err;
-				}
+				mod = await load(`./main.svelte`);
+				SvelteComponent = mod.default;
 
 				// Put things we need on window for testing
 				window.SvelteComponent = SvelteComponent;
@@ -227,7 +198,20 @@ async function run_test(dir) {
 						assert.equal(err.message, config.error);
 					}
 				} else {
-					throw err;
+					for (const file of glob('**/*.svelte', { cwd })) {
+						if (file[0] === '_') continue;
+
+						const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
+						const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+
+						mkdirp(dir);
+
+						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''), {
+							...compileOptions,
+							filename: file
+						});
+						fs.writeFileSync(out, js.code);
+					}
 				}
 			})
 			.catch((err) => {
