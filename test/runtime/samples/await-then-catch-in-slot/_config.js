@@ -29,7 +29,7 @@ export default {
 
 		try {
 			await deferred.promise;
-		} catch {} // eslint-disable-line no-empty
+		} catch {}
 
 		assert.htmlEqual(target.innerHTML, `<p>oh no! something broke</p>`);
 	}
