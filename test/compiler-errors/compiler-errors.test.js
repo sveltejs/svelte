@@ -17,7 +17,7 @@ describe('compiler-errors', () => {
 
 		const it_fn = config.skip ? it.skip : solo ? it.only : it;
 
-		it_fn(dir, async () => {
+		it_fn(dir, () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
 			const compileOptions = Object.assign(config.compileOptions || {}, {
