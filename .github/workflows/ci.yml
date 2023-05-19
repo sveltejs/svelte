@@ -36,7 +36,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm playwright install chromium
-      - run: pnpm test:integration
+      - run: pnpm test
         env:
           CI: true
   Lint:
@@ -50,28 +50,3 @@ jobs:
           node-version: 16
           cache: pnpm
       - run: 'pnpm i && pnpm format:check && pnpm lint'
-  Unit:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        include:
-          - node-version: 16
-            os: ubuntu-latest
-          - node-version: 16
-            os: windows-latest
-          - node-version: 16
-            os: macOS-latest
-          - node-version: 18
-            os: ubuntu-latest
-          - node-version: 20
-            os: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.4
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm test:unit

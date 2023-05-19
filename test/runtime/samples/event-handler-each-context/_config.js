@@ -1,8 +1,10 @@
 export default {
-	props: {
-		items: ['whatever'],
-		foo: 'wrong',
-		bar: 'right'
+	get props() {
+		return {
+			items: ['whatever'],
+			foo: 'wrong',
+			bar: 'right'
+		};
 	},
 
 	test({ assert, component, target, window }) {

@@ -1,5 +1,5 @@
 import MagicString from 'magic-string';
-import { magic_string_preprocessor_result } from '../../helpers';
+import { magic_string_preprocessor_result } from '../../helpers.js';
 
 export default {
 	js_map_sources: ['input.svelte'],

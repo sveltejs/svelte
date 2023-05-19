@@ -1,6 +1,6 @@
 export default {
-	props: {
-		hidden: true
+	get props() {
+		return { hidden: true };
 	},
 	html: '<div hidden />',
 	test({ assert, component, target }) {

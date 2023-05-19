@@ -3,8 +3,8 @@ export default {
 	// so it can't be server-rendered
 	skip_if_ssr: true,
 
-	props: {
-		indeterminate: true
+	get props() {
+		return { indeterminate: true };
 	},
 
 	html: "<input type='checkbox'>",

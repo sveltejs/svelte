@@ -1,7 +1,6 @@
 export default {
-	props: {
-		visible: false,
-		threshold: 5
+	get props() {
+		return { visible: false, threshold: 5 };
 	},
 
 	html: `

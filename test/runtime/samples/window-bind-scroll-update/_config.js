@@ -1,37 +1,42 @@
-import { env, useFakeTimers } from '../../../helpers';
+import { vi } from 'vitest';
 
-let clock;
-
+let original_scrollTo;
 export default {
 	before_test() {
-		clock = useFakeTimers();
+		vi.useFakeTimers();
 
-		const window = env();
 		Object.defineProperties(window, {
 			pageYOffset: {
 				value: 0,
-				configurable: true
+				configurable: true,
+				writable: true
 			},
 			pageXOffset: {
 				value: 0,
-				configurable: true
+				configurable: true,
+				writable: true
 			}
 		});
+		original_scrollTo = window.scrollTo;
+		window.scrollTo = (x, y) => {
+			window.pageXOffset = x;
+			window.pageYOffset = y;
+		};
 	},
 
 	after_test() {
-		clock.removeFakeTimers();
-		clock = null;
+		vi.useRealTimers();
+		window.scrollTo = original_scrollTo;
 	},
 
 	async test({ assert, component, window }) {
 		assert.equal(window.pageYOffset, 0);
 
 		// clear the previous 'scrolling' state
-		clock.flush();
+		await vi.runAllTimersAsync();
 		component.scrollY = 100;
 
-		clock.flush();
+		await vi.runAllTimersAsync();
 		assert.equal(window.pageYOffset, 100);
 	}
 };

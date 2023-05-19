@@ -1,6 +1,6 @@
 export default {
-	props: {
-		currentUser: { name: 'world' }
+	get props() {
+		return { currentUser: { name: 'world' } };
 	},
 
 	html: `

@@ -1,12 +1,14 @@
-let fulfil;
+import { create_deferred } from '../../../helpers.js';
 
-let thePromise = new Promise((f) => {
-	fulfil = f;
-});
+let deferred;
 
 export default {
-	props: {
-		thePromise
+	before_test() {
+		deferred = create_deferred();
+	},
+
+	get props() {
+		return { thePromise: deferred.promise };
 	},
 
 	html: `
@@ -15,39 +17,30 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		fulfil(42);
+		deferred.resolve(42);
 
-		await thePromise;
+		await deferred.promise;
 
 		assert.htmlEqual(target.innerHTML, '<br />');
 
-		let reject;
+		deferred = create_deferred();
+		component.thePromise = deferred.promise;
 
-		thePromise = new Promise((f, r) => {
-			reject = r;
-		});
+		assert.htmlEqual(target.innerHTML, `<br /><p>the promise is pending</p>`);
 
-		component.thePromise = thePromise;
+		const rejection = deferred.promise
+			.catch(() => {})
+			.finally(() => {
+				assert.htmlEqual(
+					target.innerHTML,
+					`<p>oh no! Something broke!</p>
+					<br />
+					<p>oh no! Something broke!</p>`
+				);
+			});
 
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<br />
-			<p>the promise is pending</p>
-		`
-		);
+		deferred.reject(new Error());
 
-		reject(new Error());
-
-		await thePromise.catch(() => {});
-
-		assert.htmlEqual(
-			target.innerHTML,
-			`
-			<p>oh no! Something broke!</p>
-			<br />
-			<p>oh no! Something broke!</p>
-		`
-		);
+		await rejection;
 	}
 };

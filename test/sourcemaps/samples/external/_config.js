@@ -1,4 +1,4 @@
-import { magic_string_bundle } from '../../helpers';
+import { magic_string_bundle } from '../../helpers.js';
 
 export const COMMON = ':global(html) { height: 100%; }\n';
 

@@ -33,21 +33,20 @@ export default {
 		</div>
 	`,
 
-	props: {
-		todos: {
-			first: {
-				description: 'Buy some milk',
-				done: true
-			},
-			second: {
-				description: 'Do the laundry',
-				done: true
-			},
-			third: {
-				description: "Find life's true purpose",
-				done: false
+	get props() {
+		return {
+			todos: {
+				first: { description: 'Buy some milk', done: true },
+				second: {
+					description: 'Do the laundry',
+					done: true
+				},
+				third: {
+					description: "Find life's true purpose",
+					done: false
+				}
 			}
-		}
+		};
 	},
 
 	async test({ assert, component, target, window }) {

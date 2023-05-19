@@ -1,6 +1,6 @@
 export default {
-	props: {
-		name: 'world'
+	get props() {
+		return { name: 'world' };
 	},
 
 	ssrHtml: `

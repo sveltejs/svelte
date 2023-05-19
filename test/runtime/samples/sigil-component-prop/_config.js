@@ -2,6 +2,8 @@ export default {
 	compileOptions: {
 		dev: true
 	},
-	props: { foo: 'foo' },
+	get props() {
+		return { foo: 'foo' };
+	},
 	html: '<div>foo @ foo # foo</div>'
 };

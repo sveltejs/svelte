@@ -1,6 +1,9 @@
 <script>
-	import { linear } from './easing.js';
 	export let things;
+
+	export function linear(t) {
+		return t;
+	}
 
 	function flip(node, animation, params) {
 		const dx = animation.from.left - animation.to.left;

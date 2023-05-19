@@ -3,8 +3,8 @@ export default {
 		dev: true
 	},
 
-	props: {
-		bar: 1
+	get props() {
+		return { bar: 1 };
 	},
 
 	html: '2',

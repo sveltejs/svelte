@@ -1,6 +1,6 @@
 export default {
-	props: {
-		adjective: 'custom'
+	get props() {
+		return { adjective: 'custom' };
 	},
 
 	test({ assert, component, window }) {

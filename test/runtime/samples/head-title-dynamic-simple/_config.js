@@ -1,6 +1,6 @@
 export default {
-	props: {
-		foo: 'A Title'
+	get props() {
+		return { foo: 'A Title' };
 	},
 
 	test({ assert, component, window }) {

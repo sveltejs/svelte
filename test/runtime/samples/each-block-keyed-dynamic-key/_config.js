@@ -2,15 +2,18 @@ let count = 0;
 let value = 'foo';
 
 export default {
-	props: {
-		value() {
-			count++;
-			return value;
-		}
+	get props() {
+		return {
+			value() {
+				count++;
+				return value;
+			}
+		};
 	},
 
 	before_test() {
 		count = 0;
+		value = 'foo';
 	},
 
 	html: `

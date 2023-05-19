@@ -1,5 +1,5 @@
 import MagicString from 'magic-string';
-import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers';
+import { magic_string_preprocessor_result, magic_string_replace_all } from '../../helpers.js';
 
 export default {
 	compile_options: {

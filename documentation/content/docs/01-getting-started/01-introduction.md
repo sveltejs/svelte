@@ -27,12 +27,7 @@ SvelteKit will handle calling [the Svelte compiler](https://www.npmjs.com/packag
 
 ### Alternatives to SvelteKit
 
-If you don't need a full-fledged app framework and instead want to build a simple frontend-only site/app, you can also use Svelte (without Kit) with Vite by running `npm init vite` and selecting the `svelte` option. With this, `npm run build` will generate HTML, JS and CSS files inside the `dist` directory.
-
-Notable Mentions:
-
-- [Routify](https://www.routify.dev/)
-- [Elder.js](https://elderjs.com/)
+If you don't want to use SvelteKit for some reason, you can also use Svelte with Vite (but without SvelteKit) by running `npm init vite` and selecting the `svelte` option. With this, `npm run build` will generate HTML, JS and CSS files inside the `dist` directory. In most cases, you will probably need to [choose a routing library](/faq#is-there-a-router) as well.
 
 ## Differences from SvelteKit
 
