@@ -1,5 +1,4 @@
-import { get_parsed_docs } from '$lib/server/docs';
-import { get_docs_data } from '$lib/server/docs/get-docs';
+import { get_docs_data, get_parsed_docs } from '$lib/server/docs/index.js';
 import { error } from '@sveltejs/kit';
 
 export const prerender = true;

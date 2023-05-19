@@ -1,15 +1,16 @@
+import { CONTENT_BASE } from '$lib/constants.js';
 import {
 	extract_frontmatter,
 	normalizeSlugify,
 	removeMarkdown,
 	transform
-} from '$lib/server/markdown';
-import { replace_placeholders } from '$lib/server/markdown/renderer';
+} from '$lib/server/markdown/index.js';
+import { replace_placeholders } from '$lib/server/markdown/renderer.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 
-const base = '../../documentation/content/';
+const base = CONTENT_BASE;
 
 const categories = [
 	{

@@ -1,4 +1,4 @@
-import { get_examples_data } from '../src/lib/server/examples/get-examples.js';
+import { get_examples_data } from '../src/lib/server/examples/index.js';
 import fs from 'node:fs';
 
 const examples_data = get_examples_data(

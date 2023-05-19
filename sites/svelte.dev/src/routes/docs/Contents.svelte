@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { SkipLink } from '@sveltejs/site-kit/components';
 
-	/** @type {ReturnType<typeof import('$lib/server/docs/get-docs').get_docs_list>}*/
+	/** @type {ReturnType<typeof import('$lib/server/docs').get_docs_list>}*/
 	export let contents = [];
 </script>
 

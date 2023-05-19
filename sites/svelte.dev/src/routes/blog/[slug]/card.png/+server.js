@@ -1,5 +1,4 @@
-import { get_blog_data } from '$lib/server/blog/get-blog-data';
-import { get_processed_blog_post } from '$lib/server/blog/index.js';
+import { get_blog_data, get_processed_blog_post } from '$lib/server/blog/index.js';
 import { Resvg } from '@resvg/resvg-js';
 import { error } from '@sveltejs/kit';
 import satori from 'satori';

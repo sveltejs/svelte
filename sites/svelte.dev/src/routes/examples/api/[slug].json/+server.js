@@ -1,6 +1,5 @@
 import examples_data from '$lib/generated/examples-data.js';
-import { get_example } from '$lib/server/examples';
-import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
+import { get_example, get_examples_data, get_examples_list } from '$lib/server/examples/index.js';
 import { error, json } from '@sveltejs/kit';
 
 export const prerender = true;
