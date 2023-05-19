@@ -5,8 +5,11 @@ export default defineConfig({
 		{
 			name: 'resolve-svelte',
 			resolveId(id) {
-				if (id.startsWith('svelte')) {
-					return id.replace(/^svelte(.*)\/?$/, `${__dirname}$1/index.mjs`);
+				if (id === 'svelte') {
+					return `${__dirname}/src/runtime/index.js`;
+				}
+				if (id.startsWith('svelte/')) {
+					return id.replace(/^svelte(.*)\/?$/, `${__dirname}/src/runtime/$1/index.js`);
 				}
 			}
 		}

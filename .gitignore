@@ -3,7 +3,7 @@
 .vscode
 node_modules
 *.map
-/src/compiler/compile/internal_exports.ts
+/src/compiler/compile/internal_exports.js
 /compiler.d.ts
 /compiler.*js
 /index.*js

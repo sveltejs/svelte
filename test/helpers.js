@@ -101,7 +101,7 @@ export function show_output(cwd, options = {}) {
 	});
 }
 
-const svelte_path = fileURLToPath(new URL('..', import.meta.url));
+const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
 
 export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
@@ -130,11 +130,11 @@ export function create_loader(compileOptions, cwd) {
 				}
 
 				if (source === 'svelte') {
-					resolved = `${svelte_path}/index.mjs`;
+					resolved = `${svelte_path}src/runtime/index.js`;
 				}
 
 				if (source.startsWith('svelte/')) {
-					resolved = `${svelte_path}/${source.slice(7)}/index.mjs`;
+					resolved = `${svelte_path}src/runtime/${source.slice(7)}/index.js`;
 				}
 
 				imports.set(source, await load(resolved));
