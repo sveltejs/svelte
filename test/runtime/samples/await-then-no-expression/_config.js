@@ -51,7 +51,7 @@ export default {
 
 		try {
 			await local.promise;
-		} catch {} // eslint-disable-line no-empty
+		} catch {}
 
 		assert.htmlEqual(
 			target.innerHTML,
