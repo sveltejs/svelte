@@ -231,7 +231,7 @@ export function append_hydration(target, node) {
 /**
  * @param {Node} target
  * @param {Node} node
- * @param {Node} anchor
+ * @param {Node} [anchor]
  * @returns {void}
  */
 export function insert(target, node, anchor) {
@@ -241,7 +241,7 @@ export function insert(target, node, anchor) {
 /**
  * @param {NodeEx} target
  * @param {NodeEx} node
- * @param {NodeEx} anchor
+ * @param {NodeEx} [anchor]
  * @returns {void}
  */
 export function insert_hydration(target, node, anchor) {
@@ -411,7 +411,7 @@ export function trusted(fn) {
 /**
  * @param {Element} node
  * @param {string} attribute
- * @param {string} value
+ * @param {string} [value]
  * @returns {void}
  */
 export function attr(node, attribute, value) {

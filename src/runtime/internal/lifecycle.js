@@ -90,7 +90,7 @@ export function onDestroy(fn) {
  * ```
  *
  * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
- * @template {Record<string, any>} EventMap
+ * @template {Record<string, any>} [EventMap=any]
  * @returns {import('./public.js').EventDispatcher<EventMap>}
  */
 export function createEventDispatcher() {
@@ -119,7 +119,7 @@ export function createEventDispatcher() {
  *
  * https://svelte.dev/docs#run-time-svelte-setcontext
  * @template T
- * @param {string} key
+ * @param {any} key
  * @param {T} context
  * @returns {T}
  */
@@ -134,7 +134,7 @@ export function setContext(key, context) {
  *
  * https://svelte.dev/docs#run-time-svelte-getcontext
  * @template T
- * @param {string} key
+ * @param {any} key
  * @returns {T}
  */
 export function getContext(key) {
@@ -159,7 +159,7 @@ export function getAllContexts() {
  * Must be called during component initialisation.
  *
  * https://svelte.dev/docs#run-time-svelte-hascontext
- * @param {string} key
+ * @param {any} key
  * @returns {boolean}
  */
 export function hasContext(key) {

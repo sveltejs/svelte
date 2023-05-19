@@ -160,4 +160,3 @@ if (!did_replace) {
 }
 
 copyFileSync(`src/runtime/ambient.d.ts`, `types/runtime/ambient.d.ts`);
-modify(`types/runtime/index.d.ts`, content => content + "\nimport './ambient.js'");

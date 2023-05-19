@@ -47,8 +47,8 @@ function tick_spring(ctx, last_value, current_value, target_value) {
 
 /**
  * @template T
- * @param {T} value
- * @param {import('./private.js').SpringOpts} opts
+ * @param {T} [value]
+ * @param {import('./private.js').SpringOpts} [opts]
  * @returns {import('./public.js').Spring<T>}
  */
 export function spring(value, opts = {}) {

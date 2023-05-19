@@ -46,8 +46,8 @@ function get_interpolator(a, b) {
 
 /**
  * @template T
- * @param {T} value
- * @param {import('./private.js').TweenedOptions<T>} defaults
+ * @param {T} [value]
+ * @param {import('./private.js').TweenedOptions<T>} [defaults]
  * @returns {import('./public.js').Tweened<T>}
  */
 export function tweened(value, defaults = {}) {
