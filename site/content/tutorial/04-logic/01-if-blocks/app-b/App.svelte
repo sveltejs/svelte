@@ -6,14 +6,11 @@
 	}
 </script>
 
-{#if user.loggedIn}
-	<button on:click={toggle}>
+<button on:click={toggle}>
+	{#if user.loggedIn}
 		Log out
-	</button>
-{/if}
-
-{#if !user.loggedIn}
-	<button on:click={toggle}>
-		Log in
-	</button>
-{/if}
+	{/if}
+	{#if !user.loggedIn}
+		Log In
+	{/if}
+</button>
