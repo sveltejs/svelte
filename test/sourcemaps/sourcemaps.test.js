@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as svelte from '../../src/compiler/index.js';
 import { try_load_config } from '../helpers.js';
 import { describe, assert, it } from 'vitest';

@@ -1,6 +1,7 @@
 // Utilities for managing contenteditable nodes
-import Attribute from '../nodes/Attribute.js';
-import Element from '../nodes/Element.js';
+
+/** @typedef {import('../nodes/Attribute.js').default} Attribute */
+/** @typedef {import('../nodes/Element.js').default} Element */
 
 export const CONTENTEDITABLE_BINDINGS = ['textContent', 'innerHTML', 'innerText'];
 
