@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { setImmediate } from 'timers/promises';
 import glob from 'tiny-glob/sync';
 import { assert, describe, it } from 'vitest';

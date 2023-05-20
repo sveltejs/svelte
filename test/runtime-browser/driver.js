@@ -2,7 +2,8 @@
 import SvelteComponent from '__MAIN_DOT_SVELTE__';
 // @ts-expect-error
 import config from '__CONFIG__';
-import * as assert from 'assert';
+// @ts-expect-error
+import * as assert from 'assert.js';
 
 export default async function (target) {
 	let unhandled_rejection = false;

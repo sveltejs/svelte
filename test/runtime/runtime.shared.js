@@ -1,10 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { setImmediate } from 'node:timers/promises';
+import { compile } from 'svelte/compiler';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import { setImmediate } from 'timers/promises';
 import glob from 'tiny-glob/sync.js';
 import { afterAll, assert, beforeAll, describe, it } from 'vitest';
-import { compile } from 'svelte/compiler';
 import { create_loader, mkdirp, try_load_config } from '../helpers.js';
 import { setup_html_equal } from '../html_equal.js';
 

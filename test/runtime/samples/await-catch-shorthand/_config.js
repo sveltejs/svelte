@@ -31,7 +31,7 @@ export default {
 				return deferred.promise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `<p>oh no! something broke</p>`);
+				assert.htmlEqual(target.innerHTML, '<p>oh no! something broke</p>');
 			});
 	}
 };
