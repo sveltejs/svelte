@@ -195,7 +195,7 @@ async function run_test(dir) {
 				// TODO: This seems useless, unhandledRejection is only triggered on the next task
 				// by which time the test has already finished and the next test resets it to null above
 				if (unhandled_rejection) {
-					throw unhandled_rejection;
+					throw unhandled_rejection; // eslint-disable-line no-unsafe-finally
 				}
 			}
 		}
