@@ -9,7 +9,7 @@ import { create_loader, mkdirp, try_load_config } from '../helpers.js';
 import { setup_html_equal } from '../html_equal.js';
 
 let unhandled_rejection = false;
-function unhandledRejection_handler(err) {
+function unhandled_rejection_handler(err) {
 	unhandled_rejection = err;
 }
 
@@ -20,11 +20,11 @@ const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
 });
 
 beforeAll(() => {
-	process.prependListener('unhandledRejection', unhandledRejection_handler);
+	process.prependListener('unhandledRejection', unhandled_rejection_handler);
 });
 
 afterAll(() => {
-	process.removeListener('unhandledRejection', unhandledRejection_handler);
+	process.removeListener('unhandledRejection', unhandled_rejection_handler);
 });
 
 const failed = new Set();
@@ -76,130 +76,131 @@ async function run_test(dir) {
 			});
 		}
 
-		await Promise.resolve()
-			.then(async () => {
-				// hack to support transition tests
-				clear_loops();
+		async function test() {
+			// hack to support transition tests
+			clear_loops();
 
-				const raf = {
-					time: 0,
-					callback: null,
-					tick: (now) => {
-						raf.time = now;
-						if (raf.callback) raf.callback();
-					}
-				};
-				set_now(() => raf.time);
-				set_raf((cb) => {
-					raf.callback = () => {
-						raf.callback = null;
-						cb(raf.time);
-						flush();
-					};
-				});
-
-				mod = await load(`./main.svelte`);
-				SvelteComponent = mod.default;
-
-				// Put things we need on window for testing
-				// @ts-expect-error
-				window.SvelteComponent = SvelteComponent;
-				window.location.href = '';
-				window.document.title = '';
-				window.document.head.innerHTML = '';
-				window.document.body.innerHTML = '<main></main>';
-
-				const target = window.document.querySelector('main');
-				let snapshot = undefined;
-
-				if (hydrate && from_ssr_html) {
-					const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
-
-					// ssr into target
-					if (config.before_test) config.before_test();
-					const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
-					const { html } = SsrSvelteComponent.render(config.props);
-					target.innerHTML = html;
-
-					if (config.snapshot) {
-						snapshot = config.snapshot(target);
-					}
-
-					if (config.after_test) config.after_test();
-				} else {
-					target.innerHTML = '';
+			const raf = {
+				time: 0,
+				callback: null,
+				tick: (now) => {
+					raf.time = now;
+					if (raf.callback) raf.callback();
 				}
+			};
+			set_now(() => raf.time);
+			set_raf((cb) => {
+				raf.callback = () => {
+					raf.callback = null;
+					cb(raf.time);
+					flush();
+				};
+			});
 
+			mod = await load(`./main.svelte`);
+			SvelteComponent = mod.default;
+
+			// Put things we need on window for testing
+			// @ts-expect-error
+			window.SvelteComponent = SvelteComponent;
+			window.location.href = '';
+			window.document.title = '';
+			window.document.head.innerHTML = '';
+			window.document.body.innerHTML = '<main></main>';
+
+			const target = window.document.querySelector('main');
+			let snapshot = undefined;
+
+			if (hydrate && from_ssr_html) {
+				const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
+
+				// ssr into target
 				if (config.before_test) config.before_test();
+				const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
+				const { html } = SsrSvelteComponent.render(config.props);
+				target.innerHTML = html;
 
-				const warnings = [];
-				const warn = console.warn;
-				console.warn = (warning) => {
-					warnings.push(warning);
-				};
+				if (config.snapshot) {
+					snapshot = config.snapshot(target);
+				}
 
-				const options = Object.assign(
-					{},
-					{
+				if (config.after_test) config.after_test();
+			} else {
+				target.innerHTML = '';
+			}
+
+			if (config.before_test) config.before_test();
+
+			const warnings = [];
+			const warn = console.warn;
+			console.warn = (warning) => {
+				warnings.push(warning);
+			};
+
+			const options = Object.assign(
+				{},
+				{
+					target,
+					hydrate,
+					props: config.props,
+					intro: config.intro
+				},
+				config.options || {}
+			);
+
+			const component = new SvelteComponent(options);
+
+			console.warn = warn;
+
+			if (config.error) {
+				unintendedError = true;
+				assert.fail('Expected a runtime error');
+			}
+
+			if (config.warnings) {
+				assert.deepEqual(warnings, config.warnings);
+			} else if (warnings.length) {
+				unintendedError = true;
+				assert.fail('Received unexpected warnings');
+			}
+
+			if (config.html) {
+				assert_html_equal_with_options(target.innerHTML, config.html, {
+					withoutNormalizeHtml: config.withoutNormalizeHtml
+				});
+			}
+
+			try {
+				if (config.test) {
+					await config.test({
+						assert: {
+							...assert,
+							htmlEqual: assert_html_equal,
+							htmlEqualWithOptions: assert_html_equal_with_options
+						},
+						component,
+						mod,
 						target,
-						hydrate,
-						props: config.props,
-						intro: config.intro
-					},
-					config.options || {}
-				);
-
-				const component = new SvelteComponent(options);
-
-				console.warn = warn;
-
-				if (config.error) {
-					unintendedError = true;
-					assert.fail('Expected a runtime error');
-				}
-
-				if (config.warnings) {
-					assert.deepEqual(warnings, config.warnings);
-				} else if (warnings.length) {
-					unintendedError = true;
-					assert.fail('Received unexpected warnings');
-				}
-
-				if (config.html) {
-					assert_html_equal_with_options(target.innerHTML, config.html, {
-						withoutNormalizeHtml: config.withoutNormalizeHtml
+						snapshot,
+						window,
+						raf,
+						compileOptions,
+						load
 					});
 				}
+			} finally {
+				component.$destroy();
+				assert_html_equal(target.innerHTML, '');
 
-				try {
-					if (config.test) {
-						await config.test({
-							assert: {
-								...assert,
-								htmlEqual: assert_html_equal,
-								htmlEqualWithOptions: assert_html_equal_with_options
-							},
-							component,
-							mod,
-							target,
-							snapshot,
-							window,
-							raf,
-							compileOptions,
-							load
-						});
-					}
-				} finally {
-					component.$destroy();
-					assert_html_equal(target.innerHTML, '');
-
-					// TODO: This seems useless, unhandledRejection is only triggered on the next task
-					// by which time the test has already finished and the next test resets it to null above
-					if (unhandled_rejection) {
-						throw unhandled_rejection;
-					}
+				// TODO: This seems useless, unhandledRejection is only triggered on the next task
+				// by which time the test has already finished and the next test resets it to null above
+				if (unhandled_rejection) {
+					throw unhandled_rejection;
 				}
-			})
+			}
+		}
+
+		await test()
 			.catch((err) => {
 				if (config.error && !unintendedError) {
 					if (typeof config.error === 'function') {
