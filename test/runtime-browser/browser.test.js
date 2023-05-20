@@ -79,8 +79,8 @@ async function run_browser_test(dir, hydrate) {
 							return 'main';
 						}
 
-						if (importee === 'assert') {
-							return 'assert';
+						if (importee === 'assert.js') {
+							return '\0virtual:assert';
 						}
 
 						if (importee === '__MAIN_DOT_SVELTE__') {
@@ -92,7 +92,7 @@ async function run_browser_test(dir, hydrate) {
 						}
 					},
 					load(id) {
-						if (id === 'assert') {
+						if (id === '\0virtual:assert') {
 							return browser_assert;
 						}
 
@@ -212,13 +212,13 @@ async function run_custom_elements_test(dir) {
 							return index;
 						}
 
-						if (importee === 'assert') {
-							return 'assert';
+						if (importee === 'assert.js') {
+							return '\0virtual:assert';
 						}
 					},
 
 					load(id) {
-						if (id === 'assert') {
+						if (id === '\0virtual:assert') {
 							return browser_assert;
 						}
 					},
