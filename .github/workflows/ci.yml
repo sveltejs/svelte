@@ -35,6 +35,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - run: pnpm playwright install chromium
       - run: pnpm test
         env:
