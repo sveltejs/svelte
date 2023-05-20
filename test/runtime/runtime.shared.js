@@ -97,7 +97,7 @@ async function run_test(dir) {
 				};
 			});
 
-			mod = await load(`./main.svelte`);
+			mod = await load('./main.svelte');
 			SvelteComponent = mod.default;
 
 			// Put things we need on window for testing
@@ -116,7 +116,7 @@ async function run_test(dir) {
 
 				// ssr into target
 				if (config.before_test) config.before_test();
-				const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
+				const SsrSvelteComponent = (await load_ssr('./main.svelte')).default;
 				const { html } = SsrSvelteComponent.render(config.props);
 				target.innerHTML = html;
 

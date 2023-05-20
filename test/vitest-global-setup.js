@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from 'fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 
 function create_shard_files() {
 	let num_shards = +process.env.SVELTE_TEST_SUITE_SHARDS || 1;

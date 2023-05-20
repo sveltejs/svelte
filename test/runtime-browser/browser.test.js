@@ -156,7 +156,7 @@ async function run_browser_test(dir, hydrate) {
 			});
 			await page.setContent('<main></main>');
 			await page.evaluate(generated_bundle.output[0].code);
-			const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+			const test_result = await page.evaluate("test(document.querySelector('main'))");
 
 			if (test_result) console.log(test_result);
 			await page.close();
@@ -262,7 +262,7 @@ async function run_custom_elements_test(dir) {
 		});
 		await page.setContent('<main></main>');
 		await page.evaluate(generated_bundle.output[0].code);
-		const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+		const test_result = await page.evaluate("test(document.querySelector('main'))");
 
 		if (test_result) console.log(test_result);
 

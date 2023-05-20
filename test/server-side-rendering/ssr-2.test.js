@@ -2,7 +2,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { setImmediate } from 'timers/promises';
+import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync';
 import { assert, describe, it } from 'vitest';
 import { compile } from 'svelte/compiler';
