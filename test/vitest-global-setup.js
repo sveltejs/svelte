@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
 
 function create_shard_files() {
 	let num_shards = +process.env.SVELTE_TEST_SUITE_SHARDS || 1;
@@ -13,11 +13,11 @@ function create_shard_files() {
 			`${runtime_shards_dir}/runtime_${i}.test.js`,
 			`// @vitest-environment jsdom
 			import { run_shard } from '../runtime.shared.js';
-			run_shard(${i}, ${num_shards});`.replaceAll('\t', ''),
+			run_shard(${i}, ${num_shards});`.replaceAll('\t', '')
 		);
 	}
 }
 
 export default function () {
-    create_shard_files();    
+	create_shard_files();
 }

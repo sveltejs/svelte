@@ -71,6 +71,7 @@ async function run_test(dir) {
 
 		if (config.expect_unhandled_rejections) {
 			listeners.forEach((listener) => {
+				// @ts-expect-error
 				process.removeListener('unhandledRejection', listener);
 			});
 		}
@@ -101,6 +102,7 @@ async function run_test(dir) {
 				SvelteComponent = mod.default;
 
 				// Put things we need on window for testing
+				// @ts-expect-error
 				window.SvelteComponent = SvelteComponent;
 				window.location.href = '';
 				window.document.title = '';
@@ -243,6 +245,7 @@ async function run_test(dir) {
 
 				if (config.expect_unhandled_rejections) {
 					listeners.forEach((listener) => {
+						// @ts-expect-error
 						process.on('unhandledRejection', listener);
 					});
 				}
