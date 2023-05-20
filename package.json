@@ -86,7 +86,6 @@
     "format:check": "prettier . --cache --plugin-search-dir=. --check",
     "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "build": "rollup -c && npm run tsd",
-    "prepare": "npm run build",
     "dev": "rollup -cw",
     "posttest": "agadoo internal/index.mjs",
     "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
