@@ -120,7 +120,7 @@
     "@rollup/plugin-sucrase": "^5.0.1",
     "@rollup/plugin-typescript": "^11.1.0",
     "@rollup/plugin-virtual": "^3.0.1",
-    "@sveltejs/eslint-config": "github:sveltejs/eslint-config",
+    "@sveltejs/eslint-config": "^6.0.1",
     "@types/aria-query": "^5.0.1",
     "@types/estree": "^1.0.0",
     "@types/mocha": "^10.0.1",

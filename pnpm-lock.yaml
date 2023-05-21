@@ -32,8 +32,8 @@ devDependencies:
     specifier: ^3.0.1
     version: 3.0.1(rollup@3.20.2)
   '@sveltejs/eslint-config':
-    specifier: github:sveltejs/eslint-config
-    version: github.com/sveltejs/eslint-config/a651fa341603aa39ac2a56535ec3282257299207(@typescript-eslint/eslint-plugin@5.58.0)(@typescript-eslint/parser@5.58.0)(eslint-config-prettier@8.8.0)(eslint-plugin-import@2.27.5)(eslint-plugin-node@11.1.0)(eslint-plugin-svelte@2.28.0)(eslint-plugin-unicorn@47.0.0)(eslint@8.40.0)(typescript@5.0.4)
+    specifier: ^6.0.1
+    version: 6.0.1(@typescript-eslint/eslint-plugin@5.58.0)(@typescript-eslint/parser@5.58.0)(eslint-config-prettier@8.8.0)(eslint-plugin-import@2.27.5)(eslint-plugin-node@11.1.0)(eslint-plugin-svelte@2.28.0)(eslint-plugin-unicorn@47.0.0)(eslint@8.40.0)(typescript@5.0.4)
   '@types/aria-query':
     specifier: ^5.0.1
     version: 5.0.1
@@ -615,6 +615,30 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
       rollup: 3.20.2
+    dev: true
+
+  /@sveltejs/eslint-config@6.0.1(@typescript-eslint/eslint-plugin@5.58.0)(@typescript-eslint/parser@5.58.0)(eslint-config-prettier@8.8.0)(eslint-plugin-import@2.27.5)(eslint-plugin-node@11.1.0)(eslint-plugin-svelte@2.28.0)(eslint-plugin-unicorn@47.0.0)(eslint@8.40.0)(typescript@5.0.4):
+    resolution: {integrity: sha512-oBoekhwqTicLUgIKNbR84wTgPSfZRbLDkeFtLEiifuXkS2B34xVZ6mOaSwITh/eBYvAZc90RLO8L5sXKmTXulQ==}
+    peerDependencies:
+      '@typescript-eslint/eslint-plugin': '>= 5'
+      '@typescript-eslint/parser': '>= 5'
+      eslint: '>= 8'
+      eslint-config-prettier: '>= 8'
+      eslint-plugin-import: '>= 2'
+      eslint-plugin-node: '>= 11'
+      eslint-plugin-svelte: '>= 2'
+      eslint-plugin-unicorn: '>= 47'
+      typescript: '>= 5'
+    dependencies:
+      '@typescript-eslint/eslint-plugin': 5.58.0(@typescript-eslint/parser@5.58.0)(eslint@8.40.0)(typescript@5.0.4)
+      '@typescript-eslint/parser': 5.58.0(eslint@8.40.0)(typescript@5.0.4)
+      eslint: 8.40.0
+      eslint-config-prettier: 8.8.0(eslint@8.40.0)
+      eslint-plugin-import: 2.27.5(@typescript-eslint/parser@5.58.0)(eslint@8.40.0)
+      eslint-plugin-node: 11.1.0(eslint@8.40.0)
+      eslint-plugin-svelte: 2.28.0(eslint@8.40.0)(svelte@3.59.1)
+      eslint-plugin-unicorn: 47.0.0(eslint@8.40.0)
+      typescript: 5.0.4
     dev: true
 
   /@tootallnate/once@2.0.0:
@@ -3706,31 +3730,4 @@ packages:
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
-    dev: true
-
-  github.com/sveltejs/eslint-config/a651fa341603aa39ac2a56535ec3282257299207(@typescript-eslint/eslint-plugin@5.58.0)(@typescript-eslint/parser@5.58.0)(eslint-config-prettier@8.8.0)(eslint-plugin-import@2.27.5)(eslint-plugin-node@11.1.0)(eslint-plugin-svelte@2.28.0)(eslint-plugin-unicorn@47.0.0)(eslint@8.40.0)(typescript@5.0.4):
-    resolution: {tarball: https://codeload.github.com/sveltejs/eslint-config/tar.gz/a651fa341603aa39ac2a56535ec3282257299207}
-    id: github.com/sveltejs/eslint-config/a651fa341603aa39ac2a56535ec3282257299207
-    name: '@sveltejs/eslint-config'
-    version: 5.8.0
-    peerDependencies:
-      '@typescript-eslint/eslint-plugin': '>= 5'
-      '@typescript-eslint/parser': '>= 5'
-      eslint: '>= 8'
-      eslint-config-prettier: '>= 8'
-      eslint-plugin-import: '>= 2'
-      eslint-plugin-node: '>= 11'
-      eslint-plugin-svelte: '>= 2'
-      eslint-plugin-unicorn: '>= 47'
-      typescript: '>= 5'
-    dependencies:
-      '@typescript-eslint/eslint-plugin': 5.58.0(@typescript-eslint/parser@5.58.0)(eslint@8.40.0)(typescript@5.0.4)
-      '@typescript-eslint/parser': 5.58.0(eslint@8.40.0)(typescript@5.0.4)
-      eslint: 8.40.0
-      eslint-config-prettier: 8.8.0(eslint@8.40.0)
-      eslint-plugin-import: 2.27.5(@typescript-eslint/parser@5.58.0)(eslint@8.40.0)
-      eslint-plugin-node: 11.1.0(eslint@8.40.0)
-      eslint-plugin-svelte: 2.28.0(eslint@8.40.0)(svelte@3.59.1)
-      eslint-plugin-unicorn: 47.0.0(eslint@8.40.0)
-      typescript: 5.0.4
     dev: true
