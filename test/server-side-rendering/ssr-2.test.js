@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import glob from 'tiny-glob/sync';
 import { assert, describe, it } from 'vitest';
-import { compile } from '../../compiler.mjs';
+import { compile } from '../../src/compiler/index.js';
 import { create_loader, mkdirp, try_load_config } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 
