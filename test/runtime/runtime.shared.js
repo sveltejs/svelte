@@ -254,8 +254,8 @@ async function run_test(dir) {
 	});
 }
 
-// There are a lot of tests in this suite,
-// split them into groups so that they can run in parallel
+// There are a lot of tests in this suite, which take up a lot of time.
+// Split them into groups so that they can run in parallel and finish faster.
 export function run_shard(id, total_shards) {
 	assert.isAtMost(id, total_shards);
 
