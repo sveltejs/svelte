@@ -132,6 +132,7 @@
     "axobject-query": "^3.1.1",
     "code-red": "^1.0.0",
     "css-tree": "^2.3.1",
+    "esbuild": "^0.17.19",
     "eslint": "^8.40.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",

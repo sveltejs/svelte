@@ -1,15 +1,13 @@
 import { chromium } from '@playwright/test';
+import { build } from 'esbuild';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { rollup } from 'rollup';
-import { mkdirp, pretty_print_browser_assertion, try_load_config } from '../helpers.js';
 import * as svelte from 'svelte/compiler';
-import { beforeAll, describe, afterAll, assert, it } from 'vitest';
+import { afterAll, assert, beforeAll, describe, it } from 'vitest';
+import { pretty_print_browser_assertion, try_load_config } from '../helpers.js';
 
 const internal = path.resolve('src/runtime/internal/index.js');
 const index = path.resolve('src/runtime/index.js');
-const browser_assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
-const main = fs.readFileSync(`${__dirname}/driver.js`, 'utf-8');
 
 /** @type {import('@playwright/test').Browser} */
 let browser;
@@ -23,13 +21,12 @@ afterAll(async () => {
 	if (browser) await browser.close();
 });
 
-describe(
+describe.concurrent(
 	'runtime (browser)',
 	async () => {
 		await Promise.all(
 			fs.readdirSync(`${__dirname}/samples`).map(async (dir) => {
-				await run_browser_test(dir, false);
-				await run_browser_test(dir, true);
+				await run_browser_test(dir);
 			})
 		);
 	},
@@ -37,7 +34,7 @@ describe(
 	{ timeout: 20000, retry: process.env.CI ? 1 : 0 }
 );
 
-async function run_browser_test(dir, hydrate) {
+async function run_browser_test(dir) {
 	if (dir[0] === '.') return;
 
 	const cwd = `${__dirname}/samples/${dir}`;
@@ -47,12 +44,11 @@ async function run_browser_test(dir, hydrate) {
 	const solo = config.solo || /\.solo/.test(dir);
 	const skip = config.skip || /\.skip/.test(dir);
 
-	if (hydrate && config.skip_if_hydrate) return;
-
 	const it_fn = skip ? it.skip : solo ? it.only : it;
 
 	let failed = false;
-	it_fn(`${dir} ${hydrate ? '(with hydration)' : ''}`, async () => {
+	it_fn.each([false, true])(`${dir} hydrate: %s`, async (hydrate) => {
+		if (hydrate && config.skip_if_hydrate) return;
 		if (failed) {
 			// this makes debugging easier, by only printing compiled output once
 			assert.fail('skipping test, already failed');
@@ -60,73 +56,45 @@ async function run_browser_test(dir, hydrate) {
 
 		const warnings = [];
 
-		const bundle = await rollup({
-			input: 'main',
-
+		const build_result = await build({
+			entryPoints: [`${__dirname}/driver.js`],
+			write: false,
+			alias: {
+				__MAIN_DOT_SVELTE__: path.resolve(__dirname, 'samples', dir, 'main.svelte'),
+				__CONFIG__: path.resolve(__dirname, 'samples', dir, '_config.js'),
+				'assert.js': path.resolve(__dirname, 'assert.js'),
+				'svelte/internal': internal,
+				svelte: index
+			},
 			plugins: [
 				{
 					name: 'testing-runtime-browser',
-					resolveId(importee) {
-						if (importee === 'svelte/internal' || importee === './internal') {
-							return internal;
-						}
-
-						if (importee === 'svelte') {
-							return index;
-						}
-
-						if (importee === 'main') {
-							return 'main';
-						}
-
-						if (importee === 'assert.js') {
-							return '\0virtual:assert';
-						}
-
-						if (importee === '__MAIN_DOT_SVELTE__') {
-							return path.resolve(__dirname, 'samples', dir, 'main.svelte');
-						}
-
-						if (importee === '__CONFIG__') {
-							return path.resolve(__dirname, 'samples', dir, '_config.js');
-						}
-					},
-					load(id) {
-						if (id === '\0virtual:assert') {
-							return browser_assert;
-						}
-
-						if (id === 'main') {
-							return main.replace('__HYDRATE__', hydrate ? 'true' : 'false');
-						}
-					},
-
-					transform(code, id) {
-						if (id.endsWith('.svelte')) {
-							const compiled = svelte.compile(code.replace(/\r/g, ''), {
+					setup(build) {
+						build.onLoad({ filter: /\.svelte$/ }, ({ path }) => {
+							const compiled = svelte.compile(fs.readFileSync(path, 'utf-8').replace(/\r/g, ''), {
 								...config.compileOptions,
 								hydratable: hydrate,
 								immutable: config.immutable,
 								accessors: 'accessors' in config ? config.accessors : true
 							});
 
-							const out_dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
-							const out = `${out_dir}/${path.basename(id).replace(/\.svelte$/, '.js')}`;
+							compiled.warnings.forEach((warning) => warnings.push(warning));
 
-							mkdirp(out_dir);
-
-							fs.writeFileSync(out, compiled.js.code, 'utf8');
-
-							compiled.warnings.forEach((w) => warnings.push(w));
-
-							return compiled.js;
-						}
+							return {
+								contents: compiled.js.code,
+								loader: 'js'
+							};
+						});
 					}
 				}
-			]
+			],
+			define: {
+				__HYDRATE__: hydrate ? 'true' : 'false'
+			},
+			bundle: true,
+			format: 'iife',
+			globalName: 'test'
 		});
-
-		const generated_bundle = await bundle.generate({ format: 'iife', name: 'test' });
 
 		function assertWarnings() {
 			if (config.warnings) {
@@ -155,8 +123,8 @@ async function run_browser_test(dir, hydrate) {
 				console[type.type()](type.text());
 			});
 			await page.setContent('<main></main>');
-			await page.evaluate(generated_bundle.output[0].code);
-			const test_result = await page.evaluate("test(document.querySelector('main'))");
+			await page.evaluate(build_result.outputFiles[0].text);
+			const test_result = await page.evaluate("test.default(document.querySelector('main'))");
 
 			if (test_result) console.log(test_result);
 			await page.close();
@@ -168,7 +136,7 @@ async function run_browser_test(dir, hydrate) {
 	});
 }
 
-describe(
+describe.concurrent(
 	'custom-elements',
 	async () => {
 		await Promise.all(
@@ -197,49 +165,36 @@ async function run_custom_elements_test(dir) {
 
 		const expected_warnings = config.warnings || [];
 
-		const bundle = await rollup({
-			input: `${cwd}/test.js`,
-
+		const build_result = await build({
+			entryPoints: [`${cwd}/test.js`],
+			write: false,
+			alias: {
+				'assert.js': path.resolve(__dirname, 'assert.js'),
+				'svelte/internal': internal,
+				svelte: index
+			},
 			plugins: [
 				{
-					name: 'plugin-resolve-svelte',
-					resolveId(importee) {
-						if (importee === 'svelte/internal' || importee === './internal') {
-							return internal;
-						}
-
-						if (importee === 'svelte') {
-							return index;
-						}
-
-						if (importee === 'assert.js') {
-							return '\0virtual:assert';
-						}
-					},
-
-					load(id) {
-						if (id === '\0virtual:assert') {
-							return browser_assert;
-						}
-					},
-
-					transform(code, id) {
-						if (id.endsWith('.svelte')) {
-							const compiled = svelte.compile(code.replace(/\r/g, ''), {
+					name: 'testing-runtime-browser',
+					setup(build) {
+						build.onLoad({ filter: /\.svelte$/ }, ({ path }) => {
+							const compiled = svelte.compile(fs.readFileSync(path, 'utf-8').replace(/\r/g, ''), {
 								customElement: true,
 								dev: config.dev
 							});
-
 							compiled.warnings.forEach((w) => warnings.push(w));
-
-							return compiled.js;
-						}
+							return {
+								contents: compiled.js.code,
+								loader: 'js'
+							};
+						});
 					}
 				}
-			]
+			],
+			bundle: true,
+			format: 'iife',
+			globalName: 'test'
 		});
-
-		const generated_bundle = await bundle.generate({ format: 'iife', name: 'test' });
 
 		function assertWarnings() {
 			if (expected_warnings) {
@@ -255,18 +210,17 @@ async function run_custom_elements_test(dir) {
 				);
 			}
 		}
+		assertWarnings();
 
 		const page = await browser.newPage();
 		page.on('console', (type) => {
 			console[type.type()](type.text());
 		});
 		await page.setContent('<main></main>');
-		await page.evaluate(generated_bundle.output[0].code);
-		const test_result = await page.evaluate("test(document.querySelector('main'))");
+		await page.evaluate(build_result.outputFiles[0].text);
+		const test_result = await page.evaluate("test.default(document.querySelector('main'))");
 
 		if (test_result) console.log(test_result);
-
-		assertWarnings();
 
 		await page.close();
 	});
