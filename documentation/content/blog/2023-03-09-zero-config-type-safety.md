@@ -28,6 +28,7 @@ const database = {
 	}
 };
 // ---cut---
+// src/routes/blog/[slug]/+page.server.ts
 import type { ServerLoadEvent } from '@sveltejs/kit';
 
 export async function load(event: ServerLoadEvent) {
