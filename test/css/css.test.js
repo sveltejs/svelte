@@ -2,7 +2,7 @@
 
 import * as fs from 'node:fs';
 import { assert, describe, it } from 'vitest';
-import * as svelte from '../../src/compiler/index.js';
+import * as svelte from 'svelte/compiler';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
 
@@ -116,7 +116,7 @@ describe('css', () => {
 });
 
 function replace_css_hash(str) {
-	return str.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => ($1 ? m : 'svelte-xyz'));
+	return str.replace(/svelte-[a-z0-9]+/g, 'svelte-xyz');
 }
 
 function read(file) {
