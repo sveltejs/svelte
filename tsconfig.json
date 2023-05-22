@@ -9,6 +9,9 @@
 		"lib": ["es2017", "DOM", "DOM.Iterable"],
 		"target": "es2017",
 
+		// silences wrong TS error, we don't compile, we only typecheck
+		"outDir": "./irrelevant/unused",
+
 		"declaration": true,
 		"declarationDir": "types",
 
