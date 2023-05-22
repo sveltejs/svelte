@@ -20,7 +20,7 @@ describe('compiler-errors', () => {
 		it_fn(dir, () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			const compileOptions = Object.assign(config.compileOptions || {}, {
+			const compileOptions = Object.assign({}, config.compileOptions || {}, {
 				format: 'cjs',
 				immutable: config.immutable,
 				accessors: 'accessors' in config ? config.accessors : true,
