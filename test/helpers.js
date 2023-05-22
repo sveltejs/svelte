@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import glob from 'tiny-glob/sync';
 import colors from 'kleur';
 import { assert } from 'vitest';
-import { compile } from '../compiler.js';
+import { compile } from '../src/compiler/index.js';
 import { fileURLToPath } from 'node:url';
 
 export function try_load_json(file) {
