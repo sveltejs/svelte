@@ -26,52 +26,52 @@
     ".": {
       "types": "./types/runtime/index.d.ts",
       "browser": {
-        "import": "./index.mjs",
-        "require": "./index.js"
+        "import": "./index.cjs",
+        "require": "./index.cjs"
       },
-      "import": "./ssr.mjs",
-      "require": "./ssr.js"
+      "import": "./src/runtime/ssr.js",
+      "require": "./ssr.cjs"
     },
     "./compiler": {
       "types": "./types/compiler/index.d.ts",
-      "import": "./compiler.mjs",
-      "require": "./compiler.js"
+      "import": "./src/compiler/index.js",
+      "require": "./compiler.cjs"
     },
     "./action": {
       "types": "./types/runtime/action/index.d.ts"
     },
     "./animate": {
       "types": "./types/runtime/animate/index.d.ts",
-      "import": "./animate/index.mjs",
-      "require": "./animate/index.js"
+      "import": "./src/runtime/animate/index.js",
+      "require": "./animate/index.cjs"
     },
     "./easing": {
       "types": "./types/runtime/easing/index.d.ts",
-      "import": "./easing/index.mjs",
-      "require": "./easing/index.js"
+      "import": "./src/runtime/easing/index.js",
+      "require": "./easing/index.cjs"
     },
     "./internal": {
       "types": "./types/runtime/internal/index.d.ts",
-      "import": "./internal/index.mjs",
-      "require": "./internal/index.js"
+      "import": "./src/runtime/internal/index.js",
+      "require": "./internal/index.cjs"
     },
     "./motion": {
       "types": "./types/runtime/motion/index.d.ts",
-      "import": "./motion/index.mjs",
-      "require": "./motion/index.js"
+      "import": "./src/runtime/motion/index.js",
+      "require": "./motion/index.cjs"
     },
     "./register": {
       "require": "./register.js"
     },
     "./store": {
       "types": "./types/runtime/store/index.d.ts",
-      "import": "./store/index.mjs",
-      "require": "./store/index.js"
+      "import": "./src/runtime/store/index.js",
+      "require": "./store/index.cjs"
     },
     "./transition": {
       "types": "./types/runtime/transition/index.d.ts",
-      "import": "./transition/index.mjs",
-      "require": "./transition/index.js"
+      "import": "./src/runtime/transition/index.js",
+      "require": "./transition/index.cjs"
     },
     "./elements": {
       "types": "./elements/index.d.ts"

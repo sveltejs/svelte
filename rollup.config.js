@@ -24,8 +24,13 @@ const ts_plugin = is_publish
 	  });
 
 fs.writeFileSync(
-	`./compiler.d.ts`,
+	'./compiler.d.ts',
 	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index.js';`
+);
+
+fs.writeFileSync(
+	'./src/shared/version.js',
+	`/** @type {string} */\nexport const VERSION = '${pkg.version}';`
 );
 
 const runtime_entrypoints = Object.fromEntries(
@@ -39,50 +44,37 @@ const runtime_entrypoints = Object.fromEntries(
  * @type {import("rollup").RollupOptions[]}
  */
 export default [
+	// Runtime: Generates CJS builds and type definition entry points for svelte/* and generated internal_exports.js
 	{
 		input: {
 			...runtime_entrypoints,
 			index: 'src/runtime/index.js',
 			ssr: 'src/runtime/ssr.js'
 		},
-		output: ['es', 'cjs'].map(
-			/** @returns {import('rollup').OutputOptions} */
-			(format) => {
-				const ext = format === 'es' ? 'mjs' : 'js';
-				return {
-					entryFileNames: (entry) => {
-						if (entry.isEntry) {
-							if (entry.name === 'index') return `index.${ext}`;
-							else if (entry.name === 'ssr') return `ssr.${ext}`;
+		output: {
+			entryFileNames: (entry) => {
+				if (entry.isEntry) {
+					if (entry.name === 'index') return `index.cjs`;
+					else if (entry.name === 'ssr') return `ssr.cjs`;
 
-							return `${entry.name}/index.${ext}`;
-						}
-					},
-					chunkFileNames: `internal/[name]-[hash].${ext}`,
-					format,
-					minifyInternalExports: false,
-					dir: '.',
-				};
-			}
-		),
+					return `${entry.name}/index.cjs`;
+				}
+			},
+			chunkFileNames: `internal/[name]-[hash].cjs`,
+			format: 'cjs',
+			minifyInternalExports: false,
+			dir: '.'
+		},
 		plugins: [
-			replace({
-				preventAssignment: true,
-				values: {
-					__VERSION__: pkg.version,
-				},
-			}),
 			ts_plugin,
 			{
-				writeBundle(options, bundle) {
-					if (options.format !== 'es') return;
-
+				writeBundle(_options, bundle) {
 					for (const entry of Object.values(bundle)) {
 						const dir = entry.name;
 						if (!entry.isEntry || !runtime_entrypoints[dir]) continue;
 
 						if (dir === 'internal') {
-							const mod = bundle[`internal/index.mjs`];
+							const mod = bundle[`internal/index.cjs`];
 							if (mod) {
 								fs.writeFileSync(
 									'src/compiler/compile/internal_exports.js',
@@ -101,16 +93,15 @@ export default [
 			}
 		]
 	},
-	/* compiler.js */
+	// Compiler: Generated CJS/UMD build for the compiler
 	{
 		input: 'src/compiler/index.js',
 		plugins: [
 			replace({
 				preventAssignment: true,
 				values: {
-					__VERSION__: pkg.version,
 					'process.env.NODE_DEBUG': false // appears inside the util package
-				},
+				}
 			}),
 			{
 				resolveId(id) {
@@ -119,7 +110,7 @@ export default [
 					if (id === 'util') {
 						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
 					}
-				},
+				}
 			},
 			resolve(),
 			commonjs({
@@ -128,23 +119,14 @@ export default [
 			json(),
 			ts_plugin
 		],
-		output: [
-			{
-				file: 'compiler.js',
-				format: is_publish ? 'umd' : 'cjs',
-				name: 'svelte',
-				sourcemap: true,
-			},
-			{
-				file: 'compiler.mjs',
-				format: 'esm',
-				name: 'svelte',
-				sourcemap: true,
-			}
-		],
+		output: {
+			file: 'compiler.cjs',
+			format: is_publish ? 'umd' : 'cjs',
+			name: 'svelte',
+			sourcemap: false
+		},
 		external: is_publish
 			? []
-			: (id) =>
-					id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')
+			: (id) => id === 'acorn' || id === 'magic-string' || id.startsWith('css-tree')
 	}
 ];
