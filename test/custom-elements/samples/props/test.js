@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'assert.js';
 import { tick } from 'svelte';
 import './main.svelte';
 

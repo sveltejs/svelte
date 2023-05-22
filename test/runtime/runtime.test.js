@@ -1,25 +1,29 @@
 // @vitest-environment jsdom
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 import { beforeAll, afterAll, describe, it, assert } from 'vitest';
-import { compile } from '../../compiler.mjs';
+import { compile } from '../../src/compiler/index.js';
 import { clear_loops, flush, set_now, set_raf } from 'svelte/internal';
-import { show_output, try_load_config, mkdirp, create_loader, setupHtmlEqual } from '../helpers.js';
-import { setTimeout } from 'timers/promises';
+import { show_output, try_load_config, mkdirp, create_loader } from '../helpers.js';
+import { setTimeout } from 'node:timers/promises';
+import { setup_html_equal } from '../html_equal.js';
 
 let unhandled_rejection = false;
 function unhandledRejection_handler(err) {
 	unhandled_rejection = err;
 }
 
-let listeners = process.rawListeners('unhandledRejection');
+const listeners = process.rawListeners('unhandledRejection');
+
+const { assert_html_equal, assert_html_equal_with_options } = setup_html_equal({
+	removeDataSvelte: true
+});
 
 describe('runtime', async () => {
 	beforeAll(() => {
 		process.prependListener('unhandledRejection', unhandledRejection_handler);
-		return setupHtmlEqual({ removeDataSvelte: true });
 	});
 
 	afterAll(() => {
@@ -54,7 +58,7 @@ describe('runtime', async () => {
 
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			const compileOptions = Object.assign(config.compileOptions || {}, {
+			const compileOptions = Object.assign({}, config.compileOptions || {}, {
 				format: 'cjs',
 				hydratable: hydrate,
 				immutable: config.immutable,
@@ -121,7 +125,7 @@ describe('runtime', async () => {
 					});
 
 					try {
-						mod = await load(`./main.svelte`);
+						mod = await load('./main.svelte');
 						SvelteComponent = mod.default;
 					} catch (err) {
 						show_output(cwd, compileOptions); // eslint-disable-line no-console
@@ -129,6 +133,7 @@ describe('runtime', async () => {
 					}
 
 					// Put things we need on window for testing
+					// @ts-ignore
 					window.SvelteComponent = SvelteComponent;
 					window.location.href = '';
 					window.document.title = '';
@@ -143,7 +148,7 @@ describe('runtime', async () => {
 
 						// ssr into target
 						if (config.before_test) config.before_test();
-						const SsrSvelteComponent = (await load_ssr(`./main.svelte`)).default;
+						const SsrSvelteComponent = (await load_ssr('./main.svelte')).default;
 						const { html } = SsrSvelteComponent.render(config.props);
 						target.innerHTML = html;
 
@@ -192,7 +197,7 @@ describe('runtime', async () => {
 					}
 
 					if (config.html) {
-						assert.htmlEqualWithOptions(target.innerHTML, config.html, {
+						assert_html_equal_with_options(target.innerHTML, config.html, {
 							withoutNormalizeHtml: config.withoutNormalizeHtml
 						});
 					}
@@ -200,7 +205,11 @@ describe('runtime', async () => {
 					try {
 						if (config.test) {
 							await config.test({
-								assert,
+								assert: {
+									...assert,
+									htmlEqual: assert_html_equal,
+									htmlEqualWithOptions: assert_html_equal_with_options
+								},
 								component,
 								mod,
 								target,
@@ -213,11 +222,12 @@ describe('runtime', async () => {
 						}
 					} finally {
 						component.$destroy();
-						assert.htmlEqual(target.innerHTML, '');
+						assert_html_equal(target.innerHTML, '');
 
 						// TODO: This seems useless, unhandledRejection is only triggered on the next task
 						// by which time the test has already finished and the next test resets it to null above
 						if (unhandled_rejection) {
+							// eslint-disable-next-line no-unsafe-finally
 							throw unhandled_rejection;
 						}
 					}
@@ -248,7 +258,7 @@ describe('runtime', async () => {
 					// Free up the microtask queue, so that
 					// 1. Vitest's test runner which uses setInterval can log progress
 					// 2. Any expected unhandled rejections are ran before we reattach the listeners
-					await setTimeout();
+					await setTimeout(0);
 
 					if (config.expect_unhandled_rejections) {
 						listeners.forEach((listener) => {

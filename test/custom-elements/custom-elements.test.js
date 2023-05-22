@@ -3,11 +3,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { rollup } from 'rollup';
 import { try_load_config } from '../helpers.js';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from '../../src/compiler/index.js';
 import { beforeAll, describe, afterAll, assert, it } from 'vitest';
 
-const internal = path.resolve('internal/index.mjs');
-const index = path.resolve('index.mjs');
+const internal = path.resolve('src/runtime/internal/index.js');
+const index = path.resolve('src/runtime/index.js');
 
 const browser_assert = fs.readFileSync(`${__dirname}/assert.js`, 'utf-8');
 
@@ -55,13 +55,13 @@ describe(
 									return index;
 								}
 
-								if (importee === 'assert') {
-									return 'assert';
+								if (importee === 'assert.js') {
+									return '\0virtual:assert';
 								}
 							},
 
 							load(id) {
-								if (id === 'assert') return browser_assert;
+								if (id === '\0virtual:assert') return browser_assert;
 							},
 
 							transform(code, id) {
@@ -103,7 +103,7 @@ describe(
 				});
 				await page.setContent('<main></main>');
 				await page.evaluate(generated_bundle.output[0].code);
-				const test_result = await page.evaluate(`test(document.querySelector('main'))`);
+				const test_result = await page.evaluate("test(document.querySelector('main'))");
 
 				if (test_result) console.log(test_result);
 
