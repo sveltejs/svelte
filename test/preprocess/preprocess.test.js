@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
-import * as svelte from '../../src/compiler/index.js';
-import { try_load_config } from '../helpers.js';
+import * as svelte from 'svelte/compiler';
 import { describe, it } from 'vitest';
+import { try_load_config } from '../helpers.js';
 
 const samples = fs.readdirSync(`${__dirname}/samples`);
 

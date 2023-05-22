@@ -17,6 +17,7 @@ node_modules
 /animate
 /scratch/
 /test/*/samples/_
+/test/runtime/shards
 /yarn-error.log
 _actual*.*
 _output

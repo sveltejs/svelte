@@ -2,10 +2,10 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { setTimeout } from 'node:timers/promises';
+import { setImmediate } from 'node:timers/promises';
 import glob from 'tiny-glob/sync';
 import { assert, describe, it } from 'vitest';
-import { compile } from '../../src/compiler/index.js';
+import { compile } from 'svelte/compiler';
 import { create_loader, mkdirp, try_load_config } from '../helpers.js';
 import { assert_html_equal, assert_html_equal_with_options } from '../html_equal.js';
 
@@ -38,30 +38,6 @@ function run_runtime_samples(suite) {
 			};
 
 			const load = create_loader(compileOptions, cwd);
-
-			glob('**/*.svelte', { cwd }).forEach((file) => {
-				if (file[0] === '_') return;
-
-				const dir = `${cwd}/_output/ssr`;
-				const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
-
-				if (fs.existsSync(out)) {
-					fs.unlinkSync(out);
-				}
-
-				mkdirp(dir);
-
-				try {
-					const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8'), {
-						...compileOptions,
-						filename: file
-					});
-
-					fs.writeFileSync(out, js.code);
-				} catch (err) {
-					// do nothing
-				}
-			});
 
 			try {
 				if (config.before_test) config.before_test();
@@ -105,12 +81,32 @@ function run_runtime_samples(suite) {
 						assert.equal(err.message, config.error);
 					}
 				} else {
+					glob('**/*.svelte', { cwd }).forEach((file) => {
+						if (file[0] === '_') return;
+
+						const dir = `${cwd}/_output/ssr`;
+						const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
+
+						if (fs.existsSync(out)) {
+							fs.unlinkSync(out);
+						}
+
+						mkdirp(dir);
+
+						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8'), {
+							...compileOptions,
+							filename: file
+						});
+
+						fs.writeFileSync(out, js.code);
+					});
+
 					throw err;
 				}
 			}
 
 			// wait for vitest to report progress
-			await setTimeout(0);
+			await setImmediate();
 		});
 	}
 }

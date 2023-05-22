@@ -67,6 +67,9 @@ devDependencies:
   css-tree:
     specifier: ^2.3.1
     version: 2.3.1
+  esbuild:
+    specifier: ^0.17.19
+    version: 0.17.19
   eslint:
     specifier: ^8.40.0
     version: 8.40.0

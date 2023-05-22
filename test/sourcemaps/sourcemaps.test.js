@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as svelte from '../../src/compiler/index.js';
+import * as svelte from 'svelte/compiler';
+import { assert, describe, it } from 'vitest';
 import { try_load_config } from '../helpers.js';
-import { describe, assert, it } from 'vitest';
 // keep source-map at version 0.7.x
 // https://github.com/mozilla/source-map/issues/400
 import { getLocator } from 'locate-character';

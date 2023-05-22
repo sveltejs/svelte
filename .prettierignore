@@ -12,3 +12,4 @@ src/compiler/compile/internal_exports.js
 /test/**/expected*
 /test/**/_output
 /types
+!vitest.config.js
