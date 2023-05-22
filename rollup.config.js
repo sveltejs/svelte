@@ -31,6 +31,8 @@ fs.readdirSync('src/runtime', { withFileTypes: true })
 		)
 	);
 
+fs.writeFileSync('./index.d.ts', `export * from './types/runtime/index.js';`);
+
 fs.writeFileSync(
 	'./compiler.d.ts',
 	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index.js';`
