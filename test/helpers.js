@@ -103,6 +103,8 @@ export function show_output(cwd, options = {}) {
 
 const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
 
+const AsyncFunction = /** @type {typeof Function} */ (async function () {}.constructor);
+
 export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
 
@@ -110,46 +112,85 @@ export function create_loader(compileOptions, cwd) {
 		if (cache.has(file)) return cache.get(file);
 
 		if (file.endsWith('.svelte')) {
+			const options = {
+				...compileOptions,
+				filename: file,
+				format: 'esm'
+			};
+
 			const compiled = compile(
 				// Windows/Linux newline conversion
 				fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n'),
-				{
-					...compileOptions,
-					filename: file
-				}
+				options
 			);
 
-			const imports = new Map();
+			const __import = (id) => {
+				let resolved = id;
 
-			for (const match of compiled.js.code.matchAll(/require\("(.+?)"\)/g)) {
-				const source = match[1];
-				let resolved = source;
-
-				if (source.startsWith('.')) {
-					resolved = path.resolve(path.dirname(file), source);
+				if (id.startsWith('.')) {
+					resolved = path.resolve(path.dirname(file), id);
 				}
 
-				if (source === 'svelte') {
+				if (id === 'svelte') {
 					resolved = `${svelte_path}src/runtime/index.js`;
 				}
 
-				if (source.startsWith('svelte/')) {
-					resolved = `${svelte_path}src/runtime/${source.slice(7)}/index.js`;
+				if (id.startsWith('svelte/')) {
+					resolved = `${svelte_path}src/runtime/${id.slice(7)}/index.js`;
 				}
 
-				imports.set(source, await load(resolved));
+				return load(resolved);
+			};
+
+			const exports = [];
+
+			let transformed = compiled.js.code
+				.replace(
+					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const $1 = await __import("$2");'
+				)
+				.replace(
+					/^import (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const {default: $1} = await __import("$2");'
+				)
+				.replace(/^import {([^}]+)} from ['"](.+)['"];?/gm, (_, names, source) => {
+					return `const { ${names.replace(' as ', ' : ')} } = await __import("${source}");`;
+				})
+				.replace(/^export default /gm, '__exports.default = ')
+				.replace(
+					/^export (const|let|var|class|function|async\s+function) (\w+)/gm,
+					(_, type, name) => {
+						exports.push(name);
+						return `${type} ${name}`;
+					}
+				)
+				.replace(/^export \{([^}]+)\}(?: from ['"]([^'"]+)['"];?)?/gm, (_, names, source) => {
+					names
+						.split(',')
+						.filter(Boolean)
+						.forEach((name) => {
+							exports.push(name);
+						});
+
+					return source ? `const { ${names} } = await __import("${source}");` : '';
+				})
+				.replace(/^export function (\w+)/gm, '__exports.$1 = function $1');
+
+			exports.forEach((name) => {
+				transformed += `\n__exports.${name} = ${name};`;
+			});
+
+			const __exports = {};
+			try {
+				const fn = new AsyncFunction('__import', '__exports', transformed);
+				await fn(__import, __exports);
+			} catch (err) {
+				debugger;
+				throw err;
 			}
 
-			function require(id) {
-				return imports.get(id);
-			}
-
-			const fn = new Function('require', 'exports', 'module', compiled.js.code);
-			const module = { exports: {} };
-			fn(require, module.exports, module);
-
-			cache.set(file, module.exports);
-			return module.exports;
+			cache.set(file, __exports);
+			return __exports;
 		} else {
 			return import(file);
 		}
