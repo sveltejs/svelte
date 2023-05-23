@@ -153,9 +153,16 @@ export function create_loader(compileOptions, cwd) {
 					/^import (\w+) from ['"]([^'"]+)['"];?/gm,
 					'const {default: $1} = await __import("$2");'
 				)
-				.replace(/^import {([^}]+)} from ['"](.+)['"];?/gm, (_, names, source) => {
-					return `const { ${names.replace(' as ', ' : ')} } = await __import("${source}");`;
-				})
+				.replace(
+					/^import (\w+, )?{([^}]+)} from ['"](.+)['"];?/gm,
+					(_, default_, names, source) => {
+						const d = default_ ? `default: ${default_}` : '';
+						return `const { ${d} ${names.replaceAll(
+							' as ',
+							': '
+						)} } = await __import("${source}");`;
+					}
+				)
 				.replace(/^export default /gm, '__exports.default = ')
 				.replace(
 					/^export (const|let|var|class|function|async\s+function) (\w+)/gm,
@@ -165,16 +172,19 @@ export function create_loader(compileOptions, cwd) {
 					}
 				)
 				.replace(/^export \{([^}]+)\}(?: from ['"]([^'"]+)['"];?)?/gm, (_, names, source) => {
-					names
-						.split(',')
-						.filter(Boolean)
-						.forEach((name) => {
-							exports.push(name);
-						});
+					const entries = names.split(',').map((name) => {
+						const match = name.trim().match(/^(\w+)( as (\w+))?$/);
+						const i = match[1];
+						const o = match[3] || i;
 
-					return source ? `const { ${names} } = await __import("${source}");` : '';
-				})
-				.replace(/^export function (\w+)/gm, '__exports.$1 = function $1');
+						return [o, i];
+					});
+					return source
+						? `{ const __mod = await __import("${source}"); ${entries
+								.map(([o, i]) => `__exports.${o} = __mod.${i};`)
+								.join('\n')}}`
+						: `{ ${entries.map(([o, i]) => `__exports.${o} = ${i};`).join('\n')} }`;
+				});
 
 			exports.forEach((name) => {
 				transformed += `\n__exports.${name} = ${name};`;
@@ -185,7 +195,7 @@ export function create_loader(compileOptions, cwd) {
 				const fn = new AsyncFunction('__import', '__exports', transformed);
 				await fn(__import, __exports);
 			} catch (err) {
-				debugger;
+				console.error({ transformed }); // eslint-disable-line no-console
 				throw err;
 			}
 
