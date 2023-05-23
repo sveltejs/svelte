@@ -43,7 +43,7 @@ describe('preprocess', async () => {
 					fs.readFileSync(`${__dirname}/samples/${dir}/expected_map.json`, 'utf-8')
 				);
 				// You can use https://sokra.github.io/source-map-visualization/#custom to visualize the source map
-				expect(result.map).toEqual(expected_map);
+				expect(JSON.parse(JSON.stringify(result.map))).toEqual(expected_map);
 			}
 		});
 	}
