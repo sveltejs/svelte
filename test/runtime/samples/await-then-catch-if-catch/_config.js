@@ -1,7 +1,7 @@
-let fulfil;
+let reject;
 
-const thePromise = new Promise(f => {
-	fulfil = f;
+const thePromise = new Promise((f, r) => {
+	reject = r;
 });
 
 export default {
@@ -15,12 +15,12 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		fulfil(42);
+		reject(new Error('something broke'));
 
 		return thePromise
-			.then(() => {
+			.catch(() => {
 				assert.htmlEqual(target.innerHTML, `
-					<p>the value is 42</p>
+					<p>oh no! something broke</p>
 				`);
 
 				component.show = false;
@@ -32,7 +32,7 @@ export default {
 				component.show = true;
 
 				return assert.htmlEqual(target.innerHTML, `
-						<p>the value is 42</p>
+						<p>oh no! something broke</p>
 				`);
 			});
 	}
