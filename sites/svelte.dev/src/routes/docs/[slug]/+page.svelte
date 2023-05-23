@@ -38,7 +38,6 @@
 		<span class:faded={!prev}>previous</span>
 
 		{#if prev}
-			{@debug prev}
 			<a href={prev.path}>{prev.title}</a>
 		{/if}
 	</div>
