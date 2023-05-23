@@ -114,8 +114,7 @@ export function create_loader(compileOptions, cwd) {
 		if (file.endsWith('.svelte')) {
 			const options = {
 				...compileOptions,
-				filename: file,
-				format: 'esm'
+				filename: file
 			};
 
 			const compiled = compile(

@@ -34,7 +34,6 @@ function run_runtime_samples(suite) {
 			const compileOptions = {
 				...config.compileOptions,
 				generate: 'ssr',
-				format: 'cjs'
 			};
 
 			const load = create_loader(compileOptions, cwd);
