@@ -1,10 +1,15 @@
-const logs = [];
+let logs = [];
 
 export default {
 	html: '<button>Reset!</button>',
-	props: {
-		logs
+	get props() {
+		return { logs };
 	},
+
+	before_test() {
+		logs = [];
+	},
+
 	async test({ assert, target }) {
 		assert.deepEqual(logs, ['mount']);
 

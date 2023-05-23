@@ -1,8 +1,6 @@
 export default {
-	props: {
-		foo: true,
-		bar: true,
-		myClass: 'one two'
+	get props() {
+		return { foo: true, bar: true, myClass: 'one two' };
 	},
 
 	html: '<div class="one two foo bar"></div>',

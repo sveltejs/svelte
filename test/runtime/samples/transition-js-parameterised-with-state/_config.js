@@ -1,6 +1,6 @@
 export default {
-	props: {
-		duration: 200
+	get props() {
+		return { duration: 200 };
 	},
 
 	test({ assert, component, target, raf }) {

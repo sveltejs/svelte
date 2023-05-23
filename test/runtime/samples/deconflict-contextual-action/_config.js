@@ -4,8 +4,8 @@ export default {
 	before_test() {
 		result = [];
 	},
-	props: {
-		collect: (str) => result.push(str)
+	get props() {
+		return { collect: (str) => result.push(str) };
 	},
 	test({ assert }) {
 		assert.deepEqual(result, ['each_action', 'import_action']);

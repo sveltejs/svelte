@@ -1,4 +1,4 @@
-import * as path from 'path';
+import { reset_numbers } from './data';
 
 export default {
 	html: `
@@ -9,7 +9,7 @@ export default {
 		<button>Add a number</button>
 	`,
 	before_test() {
-		delete require.cache[path.resolve(__dirname, 'data.js')];
+		reset_numbers();
 	},
 	async test({ assert, target, window }) {
 		const btn = target.querySelector('button');

@@ -9,7 +9,7 @@ see: https://github.com/microsoft/TypeScript/tree/main/lib
 import http from 'https';
 import fs from 'fs';
 
-const GLOBAL_TS_PATH = './src/compiler/utils/globals.ts';
+const GLOBAL_TS_PATH = './src/compiler/utils/globals.js';
 
 // MEMO: add additional objects/functions which existed in `src/compiler/utils/names.ts`
 //       before this script was introduced but could not be retrieved by this process.

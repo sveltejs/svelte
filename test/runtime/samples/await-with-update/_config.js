@@ -1,7 +1,9 @@
 export default {
-	props: {
-		thePromise: new Promise((_) => {}),
-		count: 0
+	get props() {
+		return {
+			thePromise: new Promise((_) => {}),
+			count: 0
+		};
 	},
 
 	html: `

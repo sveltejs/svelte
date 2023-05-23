@@ -1,10 +1,8 @@
-import { writable } from '../../../../store';
-
-const c = writable(0);
+import { writable } from 'svelte/store';
 
 export default {
-	props: {
-		c
+	get props() {
+		return { c: writable(0) };
 	},
 
 	html: `

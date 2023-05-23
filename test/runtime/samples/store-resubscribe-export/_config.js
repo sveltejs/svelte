@@ -12,8 +12,8 @@ const fakeStore = (val) => ({
 });
 
 export default {
-	props: {
-		foo: fakeStore(1)
+	get props() {
+		return { foo: fakeStore(1) };
 	},
 	html: `
 		<h1>1</h1>

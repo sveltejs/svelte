@@ -5,9 +5,8 @@ const thePromise = new Promise((f) => {
 });
 
 export default {
-	props: {
-		show: true,
-		thePromise
+	get props() {
+		return { show: true, thePromise };
 	},
 
 	html: `

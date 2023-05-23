@@ -1,6 +1,6 @@
 export default {
-	props: {
-		foo: true
+	get props() {
+		return { foo: true };
 	},
 
 	html: '<div>A wild component appears</div>',

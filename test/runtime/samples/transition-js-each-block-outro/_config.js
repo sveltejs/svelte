@@ -1,6 +1,6 @@
 export default {
-	props: {
-		things: ['a', 'b', 'c']
+	get props() {
+		return { things: ['a', 'b', 'c'] };
 	},
 
 	test({ assert, component, target, raf }) {

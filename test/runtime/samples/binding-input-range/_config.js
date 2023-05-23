@@ -1,6 +1,6 @@
 export default {
-	props: {
-		count: 42
+	get props() {
+		return { count: 42 };
 	},
 
 	html: `

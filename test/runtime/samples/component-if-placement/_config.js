@@ -1,6 +1,6 @@
 export default {
-	props: {
-		flag: true
+	get props() {
+		return { flag: true };
 	},
 
 	html: `

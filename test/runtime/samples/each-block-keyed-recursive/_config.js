@@ -1,9 +1,11 @@
 export default {
-	props: {
-		tree: [
-			{ id: 1, sub: null },
-			{ id: 2, sub: [{ id: 11 }] }
-		]
+	get props() {
+		return {
+			tree: [
+				{ id: 1, sub: null },
+				{ id: 2, sub: [{ id: 11 }] }
+			]
+		};
 	},
 
 	html: `

@@ -1,6 +1,6 @@
 export default {
-	async test({ assert, target, window }) {
-		const Component = require('./Component.svelte').default;
+	async test({ assert, target, window, load }) {
+		const Component = (await load('Component.svelte')).default;
 
 		const called = [];
 		const component = new Component({
@@ -19,8 +19,8 @@ export default {
 
 		component.$destroy();
 	},
-	test_ssr({ assert }) {
-		const Component = require('./Component.svelte').default;
+	async test_ssr({ assert, load }) {
+		const Component = (await load('./Component.svelte')).default;
 
 		const called = [];
 		const { html } = Component.render(undefined, {

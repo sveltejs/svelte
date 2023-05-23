@@ -1,6 +1,6 @@
 export default {
-	props: {
-		x: true
+	get props() {
+		return { x: true };
 	},
 
 	test({ component }) {

@@ -1,16 +1,18 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 export default {
-	props: {
-		s1: writable(42),
-		s2: writable(43),
-		p1: 2,
-		p3: 3,
-		a1: writable(1),
-		a2: 4,
-		a6: writable(29),
-		for: 'loop',
-		continue: '...'
+	get props() {
+		return {
+			s1: writable(42),
+			s2: writable(43),
+			p1: 2,
+			p3: 3,
+			a1: writable(1),
+			a2: 4,
+			a6: writable(29),
+			for: 'loop',
+			continue: '...'
+		};
 	},
 
 	html: `

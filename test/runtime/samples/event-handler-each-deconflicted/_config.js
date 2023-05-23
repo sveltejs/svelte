@@ -1,8 +1,6 @@
 export default {
-	props: {
-		foo: [1],
-		bar: [2],
-		clicked: 'neither'
+	get props() {
+		return { foo: [1], bar: [2], clicked: 'neither' };
 	},
 
 	html: `

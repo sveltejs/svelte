@@ -1,6 +1,6 @@
 export default {
-	props: {
-		tag: 'div'
+	get props() {
+		return { tag: 'div' };
 	},
 	html: '<div style="color: red;">Foo</div>',
 

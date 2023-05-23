@@ -1,5 +1,7 @@
 export default {
-	props: { foo: 'bar' },
+	get props() {
+		return { foo: 'bar' };
+	},
 
 	html: `
 		<svg>

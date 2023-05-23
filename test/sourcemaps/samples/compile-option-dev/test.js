@@ -7,6 +7,7 @@ export async function test({ assert, css, js }) {
 	const match = js.code.match(
 		/\tappend_styles\(target, "svelte-.{6}", "(.*?)(?:\\n\/\*# sourceMappingURL=data:(.*?);charset=(.*?);base64,(.*?) \*\/)?"\);\n/
 	);
+
 	assert.notEqual(match, null);
 
 	const [mimeType, encoding, cssMapBase64] = match.slice(2);

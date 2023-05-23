@@ -15,11 +15,13 @@ export default {
 		</ul>
 	`,
 
-	props: {
-		components: [
-			{ name: 'foo', edit: true },
-			{ name: 'bar', edit: false },
-			{ name: 'baz', edit: false }
-		]
+	get props() {
+		return {
+			components: [
+				{ name: 'foo', edit: true },
+				{ name: 'bar', edit: false },
+				{ name: 'baz', edit: false }
+			]
+		};
 	}
 };

@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		indeterminate: true
+	get props() {
+		return { indeterminate: true };
 	},
 
 	html: `

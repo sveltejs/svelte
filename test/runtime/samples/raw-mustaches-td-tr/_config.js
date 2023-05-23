@@ -1,6 +1,6 @@
 export default {
-	props: {
-		raw: '<tr><td>1</td><td>2</td></tr>'
+	get props() {
+		return { raw: '<tr><td>1</td><td>2</td></tr>' };
 	},
 
 	html: `

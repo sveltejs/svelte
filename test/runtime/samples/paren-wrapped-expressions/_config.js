@@ -1,8 +1,6 @@
 export default {
-	props: {
-		a: 'foo',
-		b: true,
-		c: [1, 2, 3]
+	get props() {
+		return { a: 'foo', b: true, c: [1, 2, 3] };
 	},
 
 	html: `
