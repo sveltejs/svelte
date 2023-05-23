@@ -108,7 +108,8 @@ export default [
 			replace({
 				preventAssignment: true,
 				values: {
-					__VERSION__: pkg.version
+					__VERSION__: pkg.version,
+					'process.env.NODE_DEBUG': false // appears inside the util package
 				},
 			}),
 			{
@@ -144,7 +145,8 @@ export default [
 			replace({
 				preventAssignment: true,
 				values: {
-					__VERSION__: pkg.version
+					__VERSION__: pkg.version,
+					'process.env.NODE_DEBUG': false // appears inside the util package
 				},
 			}),
 			{
