@@ -18,7 +18,9 @@ describe('preprocess', async () => {
 		const it_fn = skip ? it.skip : solo ? it.only : it;
 
 		it_fn(dir, async ({ expect }) => {
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8');
+			const input = fs
+				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
+				.replace(/\r\n/g, '\n');
 
 			const result = await svelte.preprocess(
 				input,
