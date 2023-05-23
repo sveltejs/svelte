@@ -1,7 +1,20 @@
+import { create_deferred } from '../../../helpers';
+
+let deferred;
+
 export default {
+	before_test() {
+		deferred = create_deferred();
+	},
+
+	get props() {
+		return { deferred };
+	},
+
 	html: '<div>same text</div>',
+
 	async test({ assert, target }) {
-		await new Promise((f) => setTimeout(f, 10));
+		await deferred.promise;
 		assert.htmlEqual(
 			target.innerHTML,
 			`

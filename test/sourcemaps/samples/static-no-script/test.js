@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export function test({ assert, js }) {
 	assert.deepEqual(js.map.sources, ['input.svelte']);
