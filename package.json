@@ -151,7 +151,6 @@
     "rollup": "^3.20.2",
     "rollup-plugin-dts": "^5.3.0",
     "source-map": "^0.7.4",
-    "source-map-support": "^0.5.21",
     "tiny-glob": "^0.2.9",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
