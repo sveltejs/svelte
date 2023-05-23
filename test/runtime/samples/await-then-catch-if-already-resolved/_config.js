@@ -1,4 +1,4 @@
-const thePromise = Promise.resolve(42)
+const thePromise = Promise.resolve(42);
 
 export default {
 	props: {
