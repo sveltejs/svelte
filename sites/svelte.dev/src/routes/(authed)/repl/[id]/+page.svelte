@@ -6,7 +6,6 @@
 	import { onMount } from 'svelte';
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
-	import { onDestroy } from 'svelte/internal';
 
 	export let data;
 
