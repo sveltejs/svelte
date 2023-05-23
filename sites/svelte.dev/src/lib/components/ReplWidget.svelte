@@ -86,7 +86,7 @@
 {#if browser}
 	<Repl
 		bind:this={repl}
-		autocomplete={false}
+		autocomplete={embedded ? true : false}
 		{svelteUrl}
 		embedded
 		relaxed
