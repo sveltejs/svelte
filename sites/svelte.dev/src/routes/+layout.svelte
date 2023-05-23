@@ -28,7 +28,7 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="nav-right">
-				<NavItem href="/tutorial">Tutorial</NavItem>
+				<NavItem href="https://learn.svelte.dev/">Tutorial</NavItem>
 				<NavItem href="/docs/introduction">Docs</NavItem>
 				<NavItem href="/examples">Examples</NavItem>
 				<NavItem href="/repl">REPL</NavItem>
