@@ -42,7 +42,7 @@ fs.writeFileSync(
  * @type {import("rollup").RollupOptions[]}
  */
 export default [
-	// Generate UMD build of the compiler so that Eslint/Pretter (which need CJS) and REPL (which needs UMD because browser) can use it
+	// Generate UMD build of the compiler so that Eslint/Prettier (which need CJS) and REPL (which needs UMD because browser) can use it
 	{
 		input: 'src/compiler/index.js',
 		plugins: [
