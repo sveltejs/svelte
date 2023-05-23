@@ -34,15 +34,9 @@ describe('css', () => {
 
 			const expected_warnings = (config.warnings || []).map(normalize_warning);
 
-			const dom = svelte.compile(
-				input,
-				Object.assign({}, config.compileOptions || {}, { format: 'cjs' })
-			);
+			const dom = svelte.compile(input, Object.assign({}, config.compileOptions || {}));
 
-			const ssr = svelte.compile(
-				input,
-				Object.assign({}, config.compileOptions || {}, { format: 'cjs', generate: 'ssr' })
-			);
+			const ssr = svelte.compile(input, Object.assign({}, config.compileOptions || {}));
 
 			assert.equal(dom.css.code, ssr.css.code);
 
@@ -75,7 +69,7 @@ describe('css', () => {
 
 			// we do this here, rather than in the expected.html !== null
 			// block, to verify that valid code was generated
-			const load = create_loader({ ...(config.compileOptions || {}), format: 'cjs' }, cwd);
+			const load = create_loader({ ...(config.compileOptions || {}) }, cwd);
 			try {
 				ClientComponent = (await load('input.svelte')).default;
 			} catch (err) {
@@ -83,10 +77,7 @@ describe('css', () => {
 				throw err;
 			}
 
-			const load_ssr = create_loader(
-				{ ...(config.compileOptions || {}), generate: 'ssr', format: 'cjs' },
-				cwd
-			);
+			const load_ssr = create_loader({ ...(config.compileOptions || {}), generate: 'ssr' }, cwd);
 			try {
 				ServerComponent = (await load_ssr('input.svelte')).default;
 			} catch (err) {

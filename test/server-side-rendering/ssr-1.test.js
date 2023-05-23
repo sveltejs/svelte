@@ -30,8 +30,7 @@ describe('ssr', async () => {
 
 			const compileOptions = {
 				...config.compileOptions,
-				generate: 'ssr',
-				format: 'cjs'
+				generate: 'ssr'
 			};
 
 			const load = create_loader(compileOptions, dir);

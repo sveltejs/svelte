@@ -103,6 +103,8 @@ export function show_output(cwd, options = {}) {
 
 const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
 
+const AsyncFunction = /** @type {typeof Function} */ (async function () {}.constructor);
+
 export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
 
@@ -110,46 +112,100 @@ export function create_loader(compileOptions, cwd) {
 		if (cache.has(file)) return cache.get(file);
 
 		if (file.endsWith('.svelte')) {
+			const options = {
+				...compileOptions,
+				filename: file
+			};
+
 			const compiled = compile(
 				// Windows/Linux newline conversion
 				fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n'),
-				{
-					...compileOptions,
-					filename: file
-				}
+				options
 			);
 
-			const imports = new Map();
+			const __import = (id) => {
+				let resolved = id;
 
-			for (const match of compiled.js.code.matchAll(/require\("(.+?)"\)/g)) {
-				const source = match[1];
-				let resolved = source;
-
-				if (source.startsWith('.')) {
-					resolved = path.resolve(path.dirname(file), source);
+				if (id.startsWith('.')) {
+					resolved = path.resolve(path.dirname(file), id);
 				}
 
-				if (source === 'svelte') {
+				if (id === 'svelte') {
 					resolved = `${svelte_path}src/runtime/index.js`;
 				}
 
-				if (source.startsWith('svelte/')) {
-					resolved = `${svelte_path}src/runtime/${source.slice(7)}/index.js`;
+				if (id.startsWith('svelte/')) {
+					resolved = `${svelte_path}src/runtime/${id.slice(7)}/index.js`;
 				}
 
-				imports.set(source, await load(resolved));
+				return load(resolved);
+			};
+
+			const exports = [];
+
+			// We can't use Node's or Vitest's loaders cause we compile with different options.
+			// We need to rewrite the imports into function calls that we can intercept to transform
+			// any imported Svelte components as well. A few edge cases aren't handled but also
+			// currently unused in the tests, for example `export * from`and live bindings.
+			let transformed = compiled.js.code
+				.replace(
+					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const $1 = await __import("$2");'
+				)
+				.replace(
+					/^import (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const {default: $1} = await __import("$2");'
+				)
+				.replace(
+					/^import (\w+, )?{([^}]+)} from ['"](.+)['"];?/gm,
+					(_, default_, names, source) => {
+						const d = default_ ? `default: ${default_}` : '';
+						return `const { ${d} ${names.replaceAll(
+							' as ',
+							': '
+						)} } = await __import("${source}");`;
+					}
+				)
+				.replace(/^export default /gm, '__exports.default = ')
+				.replace(
+					/^export (const|let|var|class|function|async\s+function) (\w+)/gm,
+					(_, type, name) => {
+						exports.push(name);
+						return `${type} ${name}`;
+					}
+				)
+				.replace(/^export \{([^}]+)\}(?: from ['"]([^'"]+)['"];?)?/gm, (_, names, source) => {
+					const entries = names.split(',').map((name) => {
+						const match = name.trim().match(/^(\w+)( as (\w+))?$/);
+						const i = match[1];
+						const o = match[3] || i;
+
+						return [o, i];
+					});
+					return source
+						? `{ const __mod = await __import("${source}"); ${entries
+								.map(([o, i]) => `__exports.${o} = __mod.${i};`)
+								.join('\n')}}`
+						: `{ ${entries.map(([o, i]) => `__exports.${o} = ${i};`).join('\n')} }`;
+				});
+
+			exports.forEach((name) => {
+				transformed += `\n__exports.${name} = ${name};`;
+			});
+
+			const __exports = {
+				[Symbol.toStringTag]: 'Module'
+			};
+			try {
+				const fn = new AsyncFunction('__import', '__exports', transformed);
+				await fn(__import, __exports);
+			} catch (err) {
+				console.error({ transformed }); // eslint-disable-line no-console
+				throw err;
 			}
 
-			function require(id) {
-				return imports.get(id);
-			}
-
-			const fn = new Function('require', 'exports', 'module', compiled.js.code);
-			const module = { exports: {} };
-			fn(require, module.exports, module);
-
-			cache.set(file, module.exports);
-			return module.exports;
+			cache.set(file, __exports);
+			return __exports;
 		} else {
 			return import(file);
 		}
