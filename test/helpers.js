@@ -143,9 +143,10 @@ export function create_loader(compileOptions, cwd) {
 
 			const exports = [];
 
-			// We can't use Node's or Vitest's loaders cause we compile with different options
-			// we need to rewrite the imports into function calls that we can intercept to transform any imported
-			// svelte components as well
+			// We can't use Node's or Vitest's loaders cause we compile with different options.
+			// We need to rewrite the imports into function calls that we can intercept to transform
+			// any imported Svelte components as well. A few edge cases aren't handled but also
+			// currently unused in the tests, for example `export * from`and live bindings.
 			let transformed = compiled.js.code
 				.replace(
 					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
