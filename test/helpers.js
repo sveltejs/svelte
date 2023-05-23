@@ -1,10 +1,10 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import glob from 'tiny-glob/sync';
 import colors from 'kleur';
 import { assert } from 'vitest';
-import { compile } from '../compiler.js';
-import { fileURLToPath } from 'url';
+import { compile } from 'svelte/compiler';
+import { fileURLToPath } from 'node:url';
 
 export function try_load_json(file) {
 	try {
@@ -29,7 +29,7 @@ export async function try_load_config(path) {
 	// a whole
 
 	// bunch
-	const _ = 1;
+
 	// of lines
 
 	// cause
@@ -84,7 +84,7 @@ export function show_output(cwd, options = {}) {
 		try {
 			const { js } = compile(
 				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-				Object.assign(options, {
+				Object.assign({}, options, {
 					filename: file
 				})
 			);
@@ -101,7 +101,7 @@ export function show_output(cwd, options = {}) {
 	});
 }
 
-const svelte_path = fileURLToPath(new URL('..', import.meta.url));
+const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
 
 export function create_loader(compileOptions, cwd) {
 	const cache = new Map();
@@ -130,11 +130,11 @@ export function create_loader(compileOptions, cwd) {
 				}
 
 				if (source === 'svelte') {
-					resolved = `${svelte_path}/index.mjs`;
+					resolved = `${svelte_path}src/runtime/index.js`;
 				}
 
 				if (source.startsWith('svelte/')) {
-					resolved = `${svelte_path}/${source.slice(7)}/index.mjs`;
+					resolved = `${svelte_path}src/runtime/${source.slice(7)}/index.js`;
 				}
 
 				imports.set(source, await load(resolved));
@@ -156,142 +156,6 @@ export function create_loader(compileOptions, cwd) {
 	}
 
 	return (file) => load(path.resolve(cwd, file));
-}
-
-function cleanChildren(node) {
-	let previous = null;
-
-	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => {
-		return a.name < b.name ? -1 : 1;
-	});
-
-	attributes.forEach((attr) => {
-		node.removeAttribute(attr.name);
-	});
-
-	attributes.forEach((attr) => {
-		node.setAttribute(attr.name, attr.value);
-	});
-
-	for (let child of [...node.childNodes]) {
-		if (child.nodeType === 3) {
-			// text
-			if (
-				node.namespaceURI === 'http://www.w3.org/2000/svg' &&
-				node.tagName !== 'text' &&
-				node.tagName !== 'tspan'
-			) {
-				node.removeChild(child);
-			}
-
-			child.data = child.data.replace(/[ \t\n\r\f]+/g, '\n');
-
-			if (previous && previous.nodeType === 3) {
-				previous.data += child.data;
-				previous.data = previous.data.replace(/[ \t\n\r\f]+/g, '\n');
-
-				node.removeChild(child);
-				child = previous;
-			}
-		} else if (child.nodeType === 8) {
-			// comment
-			// do nothing
-		} else {
-			cleanChildren(child);
-		}
-
-		previous = child;
-	}
-
-	// collapse whitespace
-	if (node.firstChild && node.firstChild.nodeType === 3) {
-		node.firstChild.data = node.firstChild.data.replace(/^[ \t\n\r\f]+/, '');
-		if (!node.firstChild.data.length) node.removeChild(node.firstChild);
-	}
-
-	if (node.lastChild && node.lastChild.nodeType === 3) {
-		node.lastChild.data = node.lastChild.data.replace(/[ \t\n\r\f]+$/, '');
-		if (!node.lastChild.data.length) node.removeChild(node.lastChild);
-	}
-}
-
-/**
- *
- * @param {Window} window
- * @param {string} html
- * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
- * @returns
- */
-export function normalizeHtml(
-	window,
-	html,
-	{ removeDataSvelte = false, preserveComments = false }
-) {
-	try {
-		const node = window.document.createElement('div');
-		node.innerHTML = html
-			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
-			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
-			.replace(/>[ \t\n\r\f]+</g, '><')
-			.trim();
-		cleanChildren(node);
-		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
-	} catch (err) {
-		throw new Error(`Failed to normalize HTML:\n${html}`);
-	}
-}
-
-/**
- * @param {string} html
- * @returns {string}
- */
-export function normalizeNewline(html) {
-	return html.replace(/\r\n/g, '\n');
-}
-
-/**
- * @param {{ removeDataSvelte?: boolean }} options
- */
-export function setupHtmlEqual(options = {}) {
-	// eslint-disable-next-line no-import-assign
-	assert.htmlEqual = (actual, expected, message) => {
-		assert.deepEqual(
-			normalizeHtml(window, actual, options),
-			normalizeHtml(window, expected, options),
-			message
-		);
-	};
-
-	/**
-	 *
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
-	 * @param {string?} message
-	 */
-	assert.htmlEqualWithOptions = (
-		actual,
-		expected,
-		{ preserveComments, withoutNormalizeHtml },
-		message
-	) => {
-		assert.deepEqual(
-			withoutNormalizeHtml
-				? normalizeNewline(actual).replace(
-						/(\sdata-svelte-h="[^"]+")/g,
-						options.removeDataSvelte ? '' : '$1'
-				  )
-				: normalizeHtml(window, actual, { ...options, preserveComments }),
-			withoutNormalizeHtml
-				? normalizeNewline(expected).replace(
-						/(\sdata-svelte-h="[^"]+")/g,
-						options.removeDataSvelte ? '' : '$1'
-				  )
-				: normalizeHtml(window, expected, { ...options, preserveComments }),
-			message
-		);
-	};
 }
 
 export function create_deferred() {

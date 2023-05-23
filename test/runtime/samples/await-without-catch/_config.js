@@ -21,13 +21,13 @@ export default {
 
 		return deferred.promise
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `<p>loaded</p>`);
+				assert.htmlEqual(target.innerHTML, '<p>loaded</p>');
 
 				deferred = create_deferred();
 
 				component.promise = deferred.promise;
 
-				assert.htmlEqual(target.innerHTML, `<p>loading...</p>`);
+				assert.htmlEqual(target.innerHTML, '<p>loading...</p>');
 
 				deferred.reject(new Error('this error should be thrown'));
 
