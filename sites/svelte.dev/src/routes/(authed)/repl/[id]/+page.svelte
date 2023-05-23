@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
+	import { onDestroy } from 'svelte/internal';
 
 	export let data;
 
@@ -40,8 +41,8 @@
 		}
 	});
 
-	afterNavigate(() => {
-		repl.set({
+	afterNavigate(({ from, to }) => {
+		repl?.set({
 			files: data.gist.components
 		});
 	});

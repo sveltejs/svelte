@@ -1,6 +1,6 @@
 <script>
-	import { setContext } from 'svelte';
 	import { invalidate } from '$app/navigation';
+	import { setContext } from 'svelte';
 
 	setContext('app', {
 		login: () => {
