@@ -152,8 +152,8 @@ importers:
         specifier: ^0.5.0
         version: 0.5.0
       devalue:
-        specifier: ^4.3.1
-        version: 4.3.1
+        specifier: ^4.3.2
+        version: 4.3.2
       do-not-zip:
         specifier: ^1.0.0
         version: 1.0.0
@@ -180,8 +180,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       '@types/node':
-        specifier: ^20.2.1
-        version: 20.2.1
+        specifier: ^20.2.3
+        version: 20.2.3
       degit:
         specifier: ^2.8.4
         version: 2.8.4
@@ -207,11 +207,11 @@ importers:
         specifier: ^2.10.0
         version: 2.10.0(prettier@2.8.8)(svelte@)
       rollup:
-        specifier: ^3.22.0
-        version: 3.22.0
+        specifier: ^3.23.0
+        version: 3.23.0
       rollup-plugin-dts:
         specifier: ^5.3.0
-        version: 5.3.0(rollup@3.22.0)(typescript@5.0.4)
+        version: 5.3.0(rollup@3.23.0)(typescript@5.0.4)
       sass:
         specifier: ^1.62.1
         version: 1.62.1
@@ -247,10 +247,10 @@ importers:
         version: 5.0.4
       vite:
         specifier: ^4.3.8
-        version: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+        version: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
       vite-imagetools:
         specifier: ^5.0.4
-        version: 5.0.4(rollup@3.22.0)
+        version: 5.0.4(rollup@3.23.0)
 
 packages:
 
@@ -1235,7 +1235,7 @@ packages:
       rollup: 3.20.2
     dev: true
 
-  /@rollup/pluginutils@5.0.2(rollup@3.22.0):
+  /@rollup/pluginutils@5.0.2(rollup@3.23.0):
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -1247,7 +1247,7 @@ packages:
       '@types/estree': 1.0.1
       estree-walker: 2.0.2
       picomatch: 2.3.1
-      rollup: 3.22.0
+      rollup: 3.23.0
     dev: true
 
   /@shuding/opentype.js@1.4.0-beta.0:
@@ -1340,7 +1340,7 @@ packages:
       '@sveltejs/vite-plugin-svelte': 2.2.0(svelte@)(vite@4.3.8)
       '@types/cookie': 0.5.1
       cookie: 0.5.0
-      devalue: 4.3.1
+      devalue: 4.3.2
       esm-env: 1.0.0
       kleur: 4.1.5
       magic-string: 0.30.0
@@ -1351,7 +1351,7 @@ packages:
       svelte: 'link:'
       tiny-glob: 0.2.9
       undici: 5.22.1
-      vite: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+      vite: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -1381,7 +1381,7 @@ packages:
       magic-string: 0.30.0
       svelte: 'link:'
       svelte-hmr: 0.15.1(svelte@)
-      vite: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+      vite: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
       vitefu: 0.2.4(vite@4.3.8)
     transitivePeerDependencies:
       - supports-color
@@ -1455,8 +1455,8 @@ packages:
     resolution: {integrity: sha512-QpLcX9ZSsq3YYUUnD3nFDY8H7wctAhQj/TFKL8Ya8v5fMm3CFXxo8zStsLAl780ltoYoo1WvKUVGBQK+1ifr7g==}
     dev: true
 
-  /@types/node@20.2.1:
-    resolution: {integrity: sha512-DqJociPbZP1lbZ5SQPk4oag6W7AyaGMO6gSfRwq3PWl4PXTwJpRQJhDq4W0kzrg3w6tJ1SwlvGZ5uKFHY13LIg==}
+  /@types/node@20.2.3:
+    resolution: {integrity: sha512-pg9d0yC4rVNWQzX8U7xb4olIOFuuVL9za3bzMT2pu2SU0SNEi66i2qrvhE2qt0HvkhuCaWJu7pLNOt/Pj8BIrw==}
 
   /@types/phoenix@1.5.6:
     resolution: {integrity: sha512-e7jZ6I9uyRGsg7MNwQcarmBvRlbGb9DibbocE9crVnxqsy6C23RMxLWbJ2CQ3vgCW7taoL1L+F02EcjA6ld7XA==}
@@ -1477,7 +1477,7 @@ packages:
   /@types/websocket@1.0.5:
     resolution: {integrity: sha512-NbsqiNX9CnEfC1Z0Vf4mE1SgAJ07JnRYcNex7AJ9zAVzmiGHmjKFEk7O4TJIsgv2B1sLEb6owKFZrACwdYngsQ==}
     dependencies:
-      '@types/node': 20.2.1
+      '@types/node': 20.2.3
     dev: false
 
   /@typescript-eslint/eslint-plugin@5.58.0(@typescript-eslint/parser@5.58.0)(eslint@8.35.0)(typescript@5.0.4):
@@ -2375,8 +2375,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /devalue@4.3.1:
-    resolution: {integrity: sha512-Kc0TSP9IUU9eg55au5Q3YtqaYI2cgntVpunJV9Exbm9nvlBeTE5p2NqYHfpuXK6+VF2hF5PI+BPFPUti7e2N1g==}
+  /devalue@4.3.2:
+    resolution: {integrity: sha512-KqFl6pOgOW+Y6wJgu80rHpo2/3H07vr8ntR9rkkFIRETewbf5GaYYcakYfiKz89K+sLsuPkQIZaXDMjUObZwWg==}
 
   /dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -4523,7 +4523,7 @@ packages:
       glob: 7.2.3
     dev: true
 
-  /rollup-plugin-dts@5.3.0(rollup@3.22.0)(typescript@5.0.4):
+  /rollup-plugin-dts@5.3.0(rollup@3.23.0)(typescript@5.0.4):
     resolution: {integrity: sha512-8FXp0ZkyZj1iU5klkIJYLjIq/YZSwBoERu33QBDxm/1yw5UU4txrEtcmMkrq+ZiKu3Q4qvPCNqc3ovX6rjqzbQ==}
     engines: {node: '>=v14'}
     peerDependencies:
@@ -4531,7 +4531,7 @@ packages:
       typescript: ^4.1 || ^5.0
     dependencies:
       magic-string: 0.30.0
-      rollup: 3.22.0
+      rollup: 3.23.0
       typescript: 5.0.4
     optionalDependencies:
       '@babel/code-frame': 7.21.4
@@ -4545,8 +4545,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /rollup@3.22.0:
-    resolution: {integrity: sha512-imsigcWor5Y/dC0rz2q0bBt9PabcL3TORry2hAa6O6BuMvY71bqHyfReAz5qyAqiQATD1m70qdntqBfBQjVWpQ==}
+  /rollup@3.23.0:
+    resolution: {integrity: sha512-h31UlwEi7FHihLe1zbk+3Q7z1k/84rb9BSwmBSr/XjOCEaBJ2YyedQDuM0t/kfOS0IxM+vk1/zI9XxYj9V+NJQ==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
@@ -5357,11 +5357,11 @@ packages:
       which-typed-array: 1.1.9
     dev: true
 
-  /vite-imagetools@5.0.4(rollup@3.22.0):
+  /vite-imagetools@5.0.4(rollup@3.23.0):
     resolution: {integrity: sha512-EIRstqWlmoQipsucFCioqCYpfp+rG5v8gpKDFvFJBxEKEAEBPnxW+swmE5dfoRQkwMKkYwmBWeXYsnMaDohUtg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@rollup/pluginutils': 5.0.2(rollup@3.22.0)
+      '@rollup/pluginutils': 5.0.2(rollup@3.23.0)
       imagetools-core: 4.0.3
     transitivePeerDependencies:
       - rollup
@@ -5377,7 +5377,7 @@ packages:
       mlly: 1.2.1
       pathe: 1.1.0
       picocolors: 1.0.0
-      vite: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+      vite: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -5388,7 +5388,7 @@ packages:
       - terser
     dev: true
 
-  /vite@4.3.8(@types/node@20.2.1)(sass@1.62.1):
+  /vite@4.3.8(@types/node@20.2.3)(sass@1.62.1):
     resolution: {integrity: sha512-uYB8PwN7hbMrf4j1xzGDk/lqjsZvCDbt/JC5dyfxc19Pg8kRm14LinK/uq+HSLNswZEoKmweGdtpbnxRtrAXiQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -5413,10 +5413,10 @@ packages:
       terser:
         optional: true
     dependencies:
-      '@types/node': 20.2.1
+      '@types/node': 20.2.3
       esbuild: 0.17.19
       postcss: 8.4.23
-      rollup: 3.22.0
+      rollup: 3.23.0
       sass: 1.62.1
     optionalDependencies:
       fsevents: 2.3.2
@@ -5430,7 +5430,7 @@ packages:
       vite:
         optional: true
     dependencies:
-      vite: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+      vite: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
     dev: true
 
   /vitest@0.31.0(happy-dom@9.18.3)(jsdom@21.1.1):
@@ -5488,7 +5488,7 @@ packages:
       strip-literal: 1.0.1
       tinybench: 2.5.0
       tinypool: 0.5.0
-      vite: 4.3.8(@types/node@20.2.1)(sass@1.62.1)
+      vite: 4.3.8(@types/node@20.2.3)(sass@1.62.1)
       vite-node: 0.31.0(@types/node@14.14.31)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
