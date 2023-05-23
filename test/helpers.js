@@ -193,7 +193,7 @@ export function create_loader(compileOptions, cwd) {
 			});
 
 			const __exports = {
-				[Symbol.toStringTag]: 'Module',
+				[Symbol.toStringTag]: 'Module'
 			};
 			try {
 				const fn = new AsyncFunction('__import', '__exports', transformed);
