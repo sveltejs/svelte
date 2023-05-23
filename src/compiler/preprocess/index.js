@@ -157,22 +157,40 @@ function processed_tag_to_code(processed, tag_name, attributes, source) {
 	);
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
-const regex_quoted_value = /^['"](.*)['"]$/;
+
+const attribute_pattern = /([\w-$]+\b)(?:=(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
 
 /**
  * @param {string} str
  */
 function parse_tag_attributes(str) {
-	// note: won't work with attribute values containing spaces.
-	return str
-		.split(regex_whitespaces)
-		.filter(Boolean)
-		.reduce((attrs, attr) => {
-			const i = attr.indexOf('=');
-			const [key, value] = i > 0 ? [attr.slice(0, i), attr.slice(i + 1)] : [attr];
-			const [, unquoted] = (value && value.match(regex_quoted_value)) || [];
-			return { ...attrs, [key]: unquoted ?? value ?? true };
-		}, {});
+	/** @type {Record<string, string | boolean>} */
+	const attrs = {};
+
+	/** @type {RegExpMatchArray} */
+	let match;
+	while ((match = attribute_pattern.exec(str)) !== null) {
+		const name = match[1];
+		const value = match[2] || match[3] || match[4];
+		attrs[name] = !value || value;
+	}
+
+	return attrs;
+}
+
+/**
+ * @param {Record<string, string | boolean> | undefined} attributes
+ */
+function stringify_tag_attributes(attributes) {
+	if (!attributes) return;
+
+	let value = Object.entries(attributes)
+		.map(([key, value]) => (value === true ? key : `${key}="${value}"`))
+		.join(' ');
+	if (value) {
+		value = ' ' + value;
+	}
+	return value;
 }
 
 const regex_style_tags = /<!--[^]*?-->|<style(\s[^]*?)?(?:>([^]*?)<\/style>|\/>)/gi;
@@ -215,7 +233,7 @@ async function process_tag(tag_name, preprocessor, source) {
 		return processed_tag_to_code(
 			processed,
 			tag_name,
-			attributes,
+			stringify_tag_attributes(processed.attributes) ?? attributes,
 			slice_source(content, tag_offset, source)
 		);
 	}
@@ -264,20 +282,21 @@ export default async function preprocess(source, preprocessor, options) {
 			? preprocessor
 			: [preprocessor]
 		: [];
-	const markup = preprocessors.map((p) => p.markup).filter(Boolean);
-	const script = preprocessors.map((p) => p.script).filter(Boolean);
-	const style = preprocessors.map((p) => p.style).filter(Boolean);
 	const result = new PreprocessResult(source, filename);
+
 	// TODO keep track: what preprocessor generated what sourcemap?
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
-	for (const process of markup) {
-		result.update_source(await process_markup(process, result));
+	for (const preprocessor of preprocessors) {
+		if (preprocessor.markup) {
+			result.update_source(await process_markup(preprocessor.markup, result));
+		}
+		if (preprocessor.script) {
+			result.update_source(await process_tag('script', preprocessor.script, result));
+		}
+		if (preprocessor.style) {
+			result.update_source(await process_tag('style', preprocessor.style, result));
+		}
 	}
-	for (const process of script) {
-		result.update_source(await process_tag('script', process, result));
-	}
-	for (const preprocess of style) {
-		result.update_source(await process_tag('style', preprocess, result));
-	}
+
 	return result.to_processed();
 }

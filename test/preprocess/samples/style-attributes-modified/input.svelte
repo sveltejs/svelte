@@ -1,0 +1,1 @@
+<style lang='scss' data-foo="bar" bool></style>
