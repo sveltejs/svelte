@@ -129,7 +129,7 @@ export default [
 	},
 	// compiler.js - UMD version for REPL
 	{
-		input: 'src/compiler/index.ts',
+		input: 'src/compiler/index.js',
 		plugins: [
 			replace({
 				preventAssignment: true,
