@@ -125,6 +125,9 @@ importers:
       rollup-plugin-dts:
         specifier: ^5.3.0
         version: 5.3.0(rollup@3.20.2)(typescript@5.0.4)
+      source-map:
+        specifier: ^0.7.4
+        version: 0.7.4
       tiny-glob:
         specifier: ^0.2.9
         version: 0.2.9
@@ -5253,6 +5256,11 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /source-map@0.7.4:
+    resolution: {integrity: sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==}
+    engines: {node: '>= 8'}
+    dev: true
 
   /spdx-correct@3.2.0:
     resolution: {integrity: sha512-kN9dJbvnySHULIluDHy32WHRUu3Og7B9sbY7tsFLctQkIqnMh3hErYgdMjTYuqmcXX+lK5T1lnUt3G7zNswmZA==}
