@@ -37,6 +37,14 @@ describe('preprocess', async () => {
 			expect(result.code).toMatchFileSnapshot(`${__dirname}/samples/${dir}/output.svelte`);
 
 			expect(result.dependencies).toEqual(config.dependencies || []);
+
+			if (fs.existsSync(`${__dirname}/samples/${dir}/expected_map.json`)) {
+				const expected_map = JSON.parse(
+					fs.readFileSync(`${__dirname}/samples/${dir}/expected_map.json`, 'utf-8')
+				);
+				// You can use https://sokra.github.io/source-map-visualization/#custom to visualize the source map
+				expect(result.map).toEqual(expected_map);
+			}
 		});
 	}
 });

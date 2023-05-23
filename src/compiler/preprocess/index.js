@@ -7,7 +7,6 @@ import {
 } from '../utils/mapped_code.js';
 import { decode_map } from './decode_sourcemap.js';
 import { replace_in_code, slice_source } from './replace_in_code.js';
-import { regex_whitespaces } from '../utils/patterns.js';
 
 const regex_filepath_separator = /[/\\]/;
 
@@ -132,11 +131,18 @@ function processed_content_to_code(processed, location, file_basename) {
  * representing the tag content replaced with `processed`.
  * @param {import('./public.js').Processed} processed
  * @param {'style' | 'script'} tag_name
- * @param {string} attributes
+ * @param {string} original_attributes
+ * @param {string} generated_attributes
  * @param {import('./private.js').Source} source
  * @returns {MappedCode}
  */
-function processed_tag_to_code(processed, tag_name, attributes, source) {
+function processed_tag_to_code(
+	processed,
+	tag_name,
+	original_attributes,
+	generated_attributes,
+	source
+) {
 	const { file_basename, get_location } = source;
 
 	/**
@@ -145,16 +151,69 @@ function processed_tag_to_code(processed, tag_name, attributes, source) {
 	 */
 	const build_mapped_code = (code, offset) =>
 		MappedCode.from_source(slice_source(code, offset, source));
-	const tag_open = `<${tag_name}${attributes || ''}>`;
+
+	// To map the open/close tag and content starts positions correctly, we need to
+	// differentiate between the original attributes and the generated attributes:
+	// `source` contains the original attributes and its get_location maps accordingly.
+	const original_tag_open = `<${tag_name}${original_attributes}>`;
+	const tag_open = `<${tag_name}${generated_attributes}>`;
+	/** @type {MappedCode} */
+	let tag_open_code;
+
+	if (original_tag_open.length !== tag_open.length) {
+		// Generate a source map for the open tag
+		/** @type {import('@ampproject/remapping').DecodedSourceMap['mappings']} */
+		const mappings = [
+			[
+				// start of tag
+				[0, 0, 0, 0],
+				// end of tag start
+				[`<${tag_name}`.length, 0, 0, `<${tag_name}`.length]
+			]
+		];
+
+		const line = tag_open.split('\n').length - 1;
+		const column = tag_open.length - (line === 0 ? 0 : tag_open.lastIndexOf('\n')) - 1;
+
+		while (mappings.length <= line) {
+			// end of tag start again, if this is a multi line mapping
+			mappings.push([[0, 0, 0, `<${tag_name}`.length]]);
+		}
+
+		// end of tag
+		mappings[line].push([
+			column,
+			0,
+			original_tag_open.split('\n').length - 1,
+			original_tag_open.length - original_tag_open.lastIndexOf('\n') - 1
+		]);
+
+		/** @type {import('@ampproject/remapping').DecodedSourceMap} */
+		const map = {
+			version: 3,
+			names: [],
+			sources: [file_basename],
+			mappings
+		};
+		sourcemap_add_offset(map, get_location(0), 0);
+		tag_open_code = MappedCode.from_processed(tag_open, map);
+	} else {
+		tag_open_code = build_mapped_code(tag_open, 0);
+	}
+
 	const tag_close = `</${tag_name}>`;
-	const tag_open_code = build_mapped_code(tag_open, 0);
-	const tag_close_code = build_mapped_code(tag_close, tag_open.length + source.source.length);
+	const tag_close_code = build_mapped_code(
+		tag_close,
+		original_tag_open.length + source.source.length
+	);
+
 	parse_attached_sourcemap(processed, tag_name);
 	const content_code = processed_content_to_code(
 		processed,
-		get_location(tag_open.length),
+		get_location(original_tag_open.length),
 		file_basename
 	);
+
 	return tag_open_code.concat(content_code).concat(tag_close_code);
 }
 
@@ -233,6 +292,7 @@ async function process_tag(tag_name, preprocessor, source) {
 		return processed_tag_to_code(
 			processed,
 			tag_name,
+			attributes,
 			stringify_tag_attributes(processed.attributes) ?? attributes,
 			slice_source(content, tag_offset, source)
 		);

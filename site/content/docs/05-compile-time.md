@@ -253,7 +253,7 @@ const { code } = await preprocess(source, {
 
 		return {
 			code: s.toString(),
-			map: s.generateMap()
+			map: s.generateMap({ hires: true, file: filename })
 		}
 	},
 	style: async ({ content, attributes, filename }) => {

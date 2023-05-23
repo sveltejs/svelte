@@ -1,1 +1,1 @@
-<style type='text/scss' data-foo="bar" bool></style>
+<style type='text/scss' data-foo="bar" bool>BEFORE</style>
