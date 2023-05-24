@@ -214,7 +214,7 @@ async function run_test(dir) {
 						const dir = `${cwd}/_output/${hydrate ? 'hydratable' : 'normal'}`;
 						const out = `${dir}/${file.replace(/\.svelte$/, '.js')}`;
 
-						mkdirp(dir);
+						mkdirp(path.dirname(out)); // file could be in subdirectory, therefore don't use dir
 
 						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''), {
 							...compileOptions,

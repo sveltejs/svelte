@@ -1,6 +1,16 @@
 import { transition_in, transition_out } from './transitions.js';
 import { run_all } from './utils.js';
 
+// general each functions:
+
+export function ensure_array_like(array_like_or_iterator) {
+	return array_like_or_iterator?.length !== undefined
+		? array_like_or_iterator
+		: Array.from(array_like_or_iterator);
+}
+
+// keyed each functions:
+
 /** @returns {void} */
 export function destroy_block(block, lookup) {
 	block.d(1);

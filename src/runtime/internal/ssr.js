@@ -1,6 +1,7 @@
 import { set_current_component, current_component } from './lifecycle.js';
 import { run_all, blank_object } from './utils.js';
 import { boolean_attributes } from '../../shared/boolean_attributes.js';
+import { ensure_array_like } from './each.js';
 export { is_void } from '../../shared/utils/names.js';
 
 export const invalid_attribute_name_character =
@@ -107,6 +108,7 @@ export function escape_object(obj) {
 
 /** @returns {string} */
 export function each(items, fn) {
+	items = ensure_array_like(items);
 	let str = '';
 	for (let i = 0; i < items.length; i += 1) {
 		str += fn(items[i], i);

@@ -5,13 +5,13 @@ import {
 	detach_dev,
 	dispatch_dev,
 	empty,
+	ensure_array_like_dev,
 	init,
 	insert_dev,
 	noop,
 	safe_not_equal,
 	space,
 	text,
-	validate_each_argument,
 	validate_slots
 } from "svelte/internal";
 
@@ -65,8 +65,7 @@ function create_each_block(ctx) {
 
 function create_fragment(ctx) {
 	let each_1_anchor;
-	let each_value = things;
-	validate_each_argument(each_value);
+	let each_value = ensure_array_like_dev(things);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -95,8 +94,7 @@ function create_fragment(ctx) {
 		},
 		p: function update(ctx, [dirty]) {
 			if (dirty & /*things*/ 0) {
-				each_value = things;
-				validate_each_argument(each_value);
+				each_value = ensure_array_like_dev(things);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
