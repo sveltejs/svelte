@@ -56,9 +56,6 @@ importers:
       '@rollup/plugin-replace':
         specifier: ^5.0.2
         version: 5.0.2(rollup@3.20.2)
-      '@rollup/plugin-typescript':
-        specifier: ^11.1.0
-        version: 11.1.0(rollup@3.20.2)(typescript@5.0.4)
       '@sveltejs/eslint-config':
         specifier: ^6.0.1
         version: 6.0.1(@typescript-eslint/eslint-plugin@5.58.0)(@typescript-eslint/parser@5.58.0)(eslint-config-prettier@8.8.0)(eslint-plugin-import@2.27.5)(eslint-plugin-node@11.1.0)(eslint-plugin-svelte@2.28.0)(eslint-plugin-unicorn@47.0.0)(eslint@8.40.0)(typescript@5.0.4)
@@ -1350,25 +1347,6 @@ packages:
       '@rollup/pluginutils': 5.0.2(rollup@3.20.2)
       magic-string: 0.27.0
       rollup: 3.20.2
-    dev: true
-
-  /@rollup/plugin-typescript@11.1.0(rollup@3.20.2)(typescript@5.0.4):
-    resolution: {integrity: sha512-86flrfE+bSHB69znnTV6kVjkncs2LBMhcTCyxWgRxLyfXfQrxg4UwlAqENnjrrxnSNS/XKCDJCl8EkdFJVHOxw==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      rollup: ^2.14.0||^3.0.0
-      tslib: '*'
-      typescript: '>=3.7.0'
-    peerDependenciesMeta:
-      rollup:
-        optional: true
-      tslib:
-        optional: true
-    dependencies:
-      '@rollup/pluginutils': 5.0.2(rollup@3.20.2)
-      resolve: 1.22.2
-      rollup: 3.20.2
-      typescript: 5.0.4
     dev: true
 
   /@rollup/plugin-virtual@3.0.1(rollup@3.20.2):

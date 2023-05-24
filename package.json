@@ -121,7 +121,6 @@
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@rollup/plugin-replace": "^5.0.2",
-    "@rollup/plugin-typescript": "^11.1.0",
     "@sveltejs/eslint-config": "^6.0.1",
     "@types/aria-query": "^5.0.1",
     "@types/estree": "^1.0.0",
