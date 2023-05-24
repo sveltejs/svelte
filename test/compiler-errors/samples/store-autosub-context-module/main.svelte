@@ -1,5 +1,5 @@
 <script context="module">
-	import foo from './foo.js';
+	const foo = {};
 	const answer = $foo;
 </script>
 

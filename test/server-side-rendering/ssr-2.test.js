@@ -33,8 +33,7 @@ function run_runtime_samples(suite) {
 		it_fn(dir, async () => {
 			const compileOptions = {
 				...config.compileOptions,
-				generate: 'ssr',
-				format: 'cjs'
+				generate: 'ssr'
 			};
 
 			const load = create_loader(compileOptions, cwd);

@@ -1,5 +1,5 @@
 <script>
-  import Nested from "./Nested.svelte";
+  import Nested from './irrelevant';
 </script>
 
 <Nested>
