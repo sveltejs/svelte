@@ -14,6 +14,7 @@ const associated_events = {
 	innerHeight: 'resize',
 	outerWidth: 'resize',
 	outerHeight: 'resize',
+	devicePixelRatio: 'resize',
 
 	scrollX: 'scroll',
 	scrollY: 'scroll'
@@ -29,6 +30,7 @@ const readonly = new Set([
 	'innerHeight',
 	'outerWidth',
 	'outerHeight',
+	'devicePixelRatio',
 	'online'
 ]);
 
@@ -45,7 +47,7 @@ export default class WindowWrapper extends Wrapper {
 		const { renderer } = this;
 		const { component } = renderer;
 
-		const events = {};
+		const events: Record<string, Array<{ name: string; value: string }>> = {};
 		const bindings: Record<string, string> = {};
 
 		add_actions(block, '@_window', this.node.actions);

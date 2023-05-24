@@ -3,13 +3,10 @@
 	"message": "slot attribute cannot have a dynamic value",
 	"start": {
 		"line": 6,
-		"column": 9,
-		"character": 77
+		"column": 9
 	},
 	"end": {
 		"line": 6,
-		"column": 19,
-		"character": 87
-	},
-	"pos": 77
+		"column": 19
+	}
 }]

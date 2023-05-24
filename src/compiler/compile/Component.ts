@@ -1,7 +1,8 @@
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import Stats from '../Stats';
-import { globals, reserved, is_valid } from '../utils/names';
+import { reserved, is_valid } from '../utils/names';
+import globals from '../utils/globals';
 import { namespaces, valid_namespaces } from '../utils/namespaces';
 import create_module from './create_module';
 import {
@@ -24,7 +25,7 @@ import TemplateScope from './nodes/shared/TemplateScope';
 import fuzzymatch from '../utils/fuzzymatch';
 import get_object from './utils/get_object';
 import Slot from './nodes/Slot';
-import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression } from 'estree';
+import { Node, ImportDeclaration, ExportNamedDeclaration, Identifier, ExpressionStatement, AssignmentExpression, Literal, Property, RestElement, ExportDefaultDeclaration, ExportAllDeclaration, FunctionDeclaration, FunctionExpression, Pattern, Expression } from 'estree';
 import add_to_set from './utils/add_to_set';
 import check_graph_for_cycles from './utils/check_graph_for_cycles';
 import { print, b } from 'code-red';
@@ -45,6 +46,10 @@ interface ComponentOptions {
 	accessors?: boolean;
 	preserveWhitespace?: boolean;
 }
+
+const regex_leading_directory_separator = /^[/\\]/;
+const regex_starts_with_term_export = /^Export/;
+const regex_contains_term_function = /Function/;
 
 export default class Component {
 	stats: Stats;
@@ -135,7 +140,7 @@ export default class Component {
 			(typeof process !== 'undefined'
 				? compile_options.filename
 					.replace(process.cwd(), '')
-					.replace(/^[/\\]/, '')
+					.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
 		this.locate = getLocator(this.source, { offsetLine: 1 });
 
@@ -637,7 +642,7 @@ export default class Component {
 				body.splice(i, 1);
 			}
 
-			if (/^Export/.test(node.type)) {
+			if (regex_starts_with_term_export.test(node.type)) {
 				const replacement = this.extract_exports(node, true);
 				if (replacement) {
 					body[i] = replacement;
@@ -787,6 +792,53 @@ export default class Component {
 					scope = map.get(node);
 				}
 
+				let deep = false;
+				let names: string[] = [];
+
+				if (node.type === 'AssignmentExpression') {
+					if (node.left.type === 'ArrayPattern') {
+						walk(node.left, {
+							enter(node: Node, parent: Node) {
+								if (node.type === 'Identifier' &&
+									parent.type !== 'MemberExpression' &&
+									(parent.type !== 'AssignmentPattern' || parent.right !== node)) {
+										names.push(node.name);
+								}
+							}
+						});
+					} else {
+						deep = node.left.type === 'MemberExpression';
+						names = deep
+							? [get_object(node.left).name]
+							: extract_names(node.left);
+					}
+				} else if (node.type === 'UpdateExpression') {
+					deep = node.argument.type === 'MemberExpression';
+					const { name } = get_object(node.argument);
+					names.push(name);
+				}
+				if (names.length > 0) {
+					names.forEach(name => {
+						let current_scope = scope;
+						let declaration;
+
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
+							}
+							current_scope = current_scope.parent;
+						}
+
+						if (declaration && declaration.kind === 'const' && !deep) {
+							component.error(node as any, {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
+				}
+
 				if (node.type === 'ImportDeclaration') {
 					component.extract_imports(node);
 					// TODO: to use actual remove
@@ -794,7 +846,7 @@ export default class Component {
 					return this.skip();
 				}
 
-				if (/^Export/.test(node.type)) {
+				if (regex_starts_with_term_export.test(node.type)) {
 					const replacement = component.extract_exports(node);
 					if (replacement) {
 						this.replace(replacement);
@@ -898,7 +950,7 @@ export default class Component {
 		});
 	}
 
-	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string, scope: Scope) {
+	warn_on_undefined_store_value_references(node: Node, parent: Node, prop: string | number | symbol, scope: Scope) {
 		if (
 			node.type === 'LabeledStatement' &&
 			node.label.name === '$' &&
@@ -917,7 +969,7 @@ export default class Component {
 				}
 
 				if (name[1] !== '$' && scope.has(name.slice(1)) && scope.find_owner(name.slice(1)) !== this.instance_scope) {
-					if (!((/Function/.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
+					if (!((regex_contains_term_function.test(parent.type) && prop === 'params') || (parent.type === 'VariableDeclarator' && prop === 'id'))) {
 						return this.error(node as any, compiler_errors.contextual_store);
 					}
 				}
@@ -964,7 +1016,7 @@ export default class Component {
 
 		walk(this.ast.instance.content, {
 			enter(node: Node) {
-				if (/Function/.test(node.type)) {
+				if (regex_contains_term_function.test(node.type)) {
 					return this.skip();
 				}
 
@@ -982,7 +1034,7 @@ export default class Component {
 						const inserts = [];
 						const props = [];
 
-						function add_new_props(exported, local, default_value) {
+						function add_new_props(exported: Identifier, local: Pattern, default_value: Expression) {
 							props.push({
 								type: 'Property',
 								method: false,
@@ -1012,7 +1064,7 @@ export default class Component {
 						for (let index = 0; index < node.declarations.length; index++) {
 							const declarator = node.declarations[index];
 							if (declarator.id.type !== 'Identifier') {
-								function get_new_name(local) {
+								function get_new_name(local: Identifier): Identifier {
 									const variable = component.var_lookup.get(local.name);
 									if (variable.subscribable) {
 										inserts.push(get_insert(variable));
@@ -1026,7 +1078,7 @@ export default class Component {
 									return local;
 								}
 
-								function rename_identifiers(param: Node) {
+								function rename_identifiers(param: Pattern) {
 									switch (param.type) {
 										case 'ObjectPattern': {
 											const handle_prop = (prop: Property | RestElement) => {
@@ -1035,7 +1087,7 @@ export default class Component {
 												} else if (prop.value.type === 'Identifier') {
 													prop.value = get_new_name(prop.value);
 												} else {
-													rename_identifiers(prop.value);
+													rename_identifiers(prop.value as Pattern);
 												}
 											};
 
@@ -1043,7 +1095,7 @@ export default class Component {
 											break;
 										}
 										case 'ArrayPattern': {
-											const handle_element = (element: Node, index: number, array: Node[]) => {
+											const handle_element = (element: Pattern | null, index: number, array: Array<Pattern | null>) => {
 												if (element) {
 													if (element.type === 'Identifier') {
 														array[index] = get_new_name(element);
@@ -1058,7 +1110,11 @@ export default class Component {
 										}
 
 										case 'RestElement':
-											param.argument = get_new_name(param.argument);
+											if (param.argument.type === 'Identifier') {
+												param.argument = get_new_name(param.argument);
+											} else {
+												rename_identifiers(param.argument);
+											}
 											break;
 
 										case 'AssignmentPattern':
@@ -1088,7 +1144,7 @@ export default class Component {
 
 						this.replace(b`
 							${node.declarations.length ? node : null}
-							${ props.length > 0 && b`let { ${ props } } = $$props;`}
+							${ props.length > 0 && b`let { ${props} } = $$props;`}
 							${inserts}
 						` as any);
 						return this.skip();
@@ -1459,6 +1515,8 @@ export default class Component {
 	}
 }
 
+const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
+
 function process_component_options(component: Component, nodes) {
 	const component_options: ComponentOptions = {
 		immutable: component.compile_options.immutable || false,
@@ -1472,7 +1530,7 @@ function process_component_options(component: Component, nodes) {
 
 	const node = nodes.find(node => node.name === 'svelte:options');
 
-	function get_value(attribute, {code, message}) {
+	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
 		const chunk = value[0];
 
@@ -1504,7 +1562,7 @@ function process_component_options(component: Component, nodes) {
 							return component.error(attribute, compiler_errors.invalid_tag_attribute);
 						}
 
-						if (tag && !/^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/.test(tag)) {
+						if (tag && !regex_valid_tag_name.test(tag)) {
 							return component.error(attribute, compiler_errors.invalid_tag_property);
 						}
 

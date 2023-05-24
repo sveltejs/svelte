@@ -1,5 +1,5 @@
 <script>	
-	let primary = true;	
+	export let primary = true;
 	let elem;
 </script>
 

@@ -2,14 +2,11 @@
 	{
 		"code": "missing-declaration",
 		"end": {
-			"character": 217,
 			"column": 39,
 			"line": 11
 		},
 		"message": "'foo' is not defined",
-		"pos": 186,
 		"start": {
-			"character": 186,
 			"column": 8,
 			"line": 11
 		}
