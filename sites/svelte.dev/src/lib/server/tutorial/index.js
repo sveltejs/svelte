@@ -1,3 +1,4 @@
+import { modules } from '$lib/generated/type-info';
 import { render_markdown } from '../markdown/renderer';
 
 /**
@@ -13,6 +14,6 @@ export async function get_parsed_tutorial(tutorial_data, slug) {
 
 	return {
 		...tutorial,
-		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content)
+		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content, { modules })
 	};
 }
