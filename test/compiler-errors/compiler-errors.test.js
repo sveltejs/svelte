@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { assert, describe, expect, it } from 'vitest';
-import { compile } from '../../compiler.mjs';
+import { compile } from 'svelte/compiler';
 
 const configs = import.meta.glob('./samples/*/_config.js', { import: 'default', eager: true });
 
