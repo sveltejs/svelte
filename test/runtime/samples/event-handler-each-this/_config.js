@@ -1,6 +1,6 @@
 export default {
-	props: {
-		items: ['foo', 'bar', 'baz']
+	get props() {
+		return { items: ['foo', 'bar', 'baz'] };
 	},
 
 	html: `
@@ -15,7 +15,7 @@ export default {
 
 		const clicked = [];
 
-		component.$on('clicked', event => {
+		component.$on('clicked', (event) => {
 			clicked.push(event.detail.node);
 		});
 

@@ -8,11 +8,8 @@ const Component = create_ssr_component(($$result, $$props, $$bindings, slots) =>
 	if ($$props.foo === void 0 && $$bindings.foo && foo !== void 0) $$bindings.foo(foo);
 
 	return `${each(things, thing => {
-		return `<span>${escape(thing.name)}</span>
-	${debug(null, 7, 2, { foo })}`;
-	})}
-
-<p>foo: ${escape(foo)}</p>`;
+		return `<span>${escape(thing.name)}</span> ${debug(null, 7, 2, { foo })}`;
+	})} <p>foo: ${escape(foo)}</p>`;
 });
 
 export default Component;

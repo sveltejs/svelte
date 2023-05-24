@@ -15,14 +15,17 @@ export default {
 
 		await buttons[1].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>foo</button>
 			<button>bar</button>
 			<button>baz</button>
 
 			<p>fromDom: bar</p>
 			<p>fromState: bar</p>
-		`);
+		`
+		);
 
 		assert.equal(component.fromDom, 'bar');
 		assert.equal(component.fromState, 'bar');

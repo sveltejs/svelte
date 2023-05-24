@@ -1,6 +1,6 @@
 export default {
-	props: {
-		thePromise: 'not actually a promise'
+	get props() {
+		return { thePromise: 'not actually a promise' };
 	},
 
 	html: `
@@ -10,8 +10,11 @@ export default {
 	test({ assert, component, target }) {
 		component.thePromise = 'still not a promise';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>the value is still not a promise</p>
-		`);
+		`
+		);
 	}
 };

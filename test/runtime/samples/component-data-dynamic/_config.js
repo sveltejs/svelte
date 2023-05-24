@@ -1,9 +1,11 @@
 export default {
-	props: {
-		bar: 'lol',
-		x: 2,
-		compound: 'piece of',
-		go: { deeper: 'core' }
+	get props() {
+		return {
+			bar: 'lol',
+			x: 2,
+			compound: 'piece of',
+			go: { deeper: 'core' }
+		};
 	},
 
 	html: `
@@ -19,11 +21,14 @@ export default {
 		component.compound = 'rather boring';
 		component.go = { deeper: 'heart' };
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><p>foo: wut</p>
 			<p>baz: 43 (number)</p>
 			<p>qux: this is a rather boring string</p>
 			<p>quux: heart</p></div>
-		`);
+		`
+		);
 	}
 };

@@ -8,7 +8,10 @@ export default {
 
 		// animation duration of `out` should be 5ms.
 		component.visible = false;
-		assert.equal(div.style.animation, '__svelte_1670736059_0 10ms linear 0ms 1 both, __svelte_1998461463_0 5ms linear 0ms 1 both');
+		assert.equal(
+			div.style.animation,
+			'__svelte_1670736059_0 10ms linear 0ms 1 both, __svelte_1998461463_0 5ms linear 0ms 1 both'
+		);
 
 		// change param
 		raf.tick(1);

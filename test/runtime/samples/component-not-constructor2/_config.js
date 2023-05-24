@@ -1,6 +1,6 @@
 export default {
-	props: {
-		componentName: 'Sub'
+	get props() {
+		return { componentName: 'Sub' };
 	},
 	html: '<div>Sub</div>',
 	test({ assert, component, target }) {

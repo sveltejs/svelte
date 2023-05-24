@@ -1,9 +1,11 @@
 export default {
-	props: {
-		foo: 'lol',
-		baz: 40 + 2,
-		qux: `this is a ${'piece of'} string`,
-		quux: 'core'
+	get props() {
+		return {
+			foo: 'lol',
+			baz: 40 + 2,
+			qux: `this is a ${'piece of'} string`,
+			quux: 'core'
+		};
 	},
 
 	html: `
@@ -21,11 +23,14 @@ export default {
 			quux: 'heart'
 		});
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><p>foo: wut</p>
 			<p>baz: 43 (number)</p>
 			<p>qux: named</p>
 			<p>quux: heart</p></div>
-		`);
+		`
+		);
 	}
 };

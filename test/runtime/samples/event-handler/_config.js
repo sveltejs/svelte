@@ -8,14 +8,20 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		await button.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>toggle</button>
 			<p>hello!</p>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(event);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>toggle</button>
-		`);
+		`
+		);
 	}
 };

@@ -1,9 +1,7 @@
 import * as ts from 'typescript';
 
 export default {
-	js_map_sources: [
-		'input.svelte'
-	],
+	js_map_sources: ['input.svelte'],
 	preprocess: [
 		{
 			script: ({ content, filename }) => {

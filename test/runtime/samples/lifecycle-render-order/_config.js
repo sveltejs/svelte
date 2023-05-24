@@ -7,11 +7,6 @@ export default {
 		order.length = 0;
 	},
 	test({ assert }) {
-		assert.deepEqual(order, [
-			'beforeUpdate',
-			'render',
-			'onMount',
-			'afterUpdate'
-		]);
+		assert.deepEqual(order, ['beforeUpdate', 'render', 'onMount', 'afterUpdate']);
 	}
 };

@@ -1,4 +1,4 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 export default {
 	html: `
@@ -6,8 +6,11 @@ export default {
 	`,
 	async test({ assert, component, target }) {
 		component.store = writable('foo');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>foo</p>
-		`);
+		`
+		);
 	}
 };

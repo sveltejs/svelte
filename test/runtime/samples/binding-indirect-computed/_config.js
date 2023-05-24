@@ -21,7 +21,9 @@ export default {
 		await select.dispatchEvent(change);
 
 		assert.equal(component.selected.letter, 'B');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<select>
 				<option value='A'>A</option>
 				<option value='B'>B</option>
@@ -29,6 +31,7 @@ export default {
 			</select>
 
 			B
-		`);
+		`
+		);
 	}
 };

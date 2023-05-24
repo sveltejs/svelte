@@ -1,5 +1,7 @@
 export default {
-	props: {},
+	get props() {
+		return {};
+	},
 
 	html: `
 		<div><p>i: 1</p>
@@ -10,10 +12,13 @@ export default {
 	test({ assert, component, target }) {
 		component.foo = 'lol';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><p>i: 2</p>
 			<p>foo: lol</p>
 			<p>qux: named</p>
-		`);
+		`
+		);
 	}
 };

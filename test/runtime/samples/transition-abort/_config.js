@@ -18,7 +18,9 @@ export default {
 			array: ['a', 'b', 'c']
 		});
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>a</div>
 			<div>b</div>
 			<div>c</div>
@@ -26,6 +28,7 @@ export default {
 			<div>a</div>
 			<div>b</div>
 			<div>c</div>
-		`);
+		`
+		);
 	}
 };

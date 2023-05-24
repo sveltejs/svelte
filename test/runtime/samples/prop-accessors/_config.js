@@ -4,9 +4,13 @@ export default {
 		assert.equal(component.foo1, 42);
 		assert.equal(component.foo2(), 42);
 		assert.equal(component.bar, undefined);
-		component.foo1 = null;
-		component.foo2 = null;
-		assert.equal(component.foo1, 42);
-		assert.equal(component.foo2(), 42);
+
+		assert.throws(() => {
+			component.foo1 = null;
+		}, /Cannot set property foo1 of/);
+
+		assert.throws(() => {
+			component.foo2 = null;
+		}, /Cannot set property foo2 of/);
 	}
 };

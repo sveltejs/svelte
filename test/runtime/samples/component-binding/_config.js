@@ -13,17 +13,23 @@ export default {
 		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 1);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>+1</button>
 			<p>count: 1</p>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(click);
 
 		assert.equal(component.x, 2);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>+1</button>
 			<p>count: 2</p>
-		`);
+		`
+		);
 	}
 };

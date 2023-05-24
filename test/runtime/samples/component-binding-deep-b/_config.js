@@ -14,9 +14,8 @@ const selectedComponent = components[0];
 export default {
 	skip: true, // doesn't reflect real-world bug, maybe a JSDOM quirk
 
-	props: {
-		components,
-		selectedComponent
+	get props() {
+		return { components, selectedComponent };
 	},
 
 	html: `
@@ -38,7 +37,9 @@ export default {
 		await textarea.dispatchEvent(event);
 
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<select>
 				<option value='[object Object]'>One.svelte</option>
 				<option value='[object Object]'>Two.svelte</option>
@@ -47,7 +48,8 @@ export default {
 			<textarea></textarea>
 
 			<pre>ONE SOURCE CHANGED\nTWO SOURCE</pre>
-		`);
+		`
+		);
 
 		// const select = target.querySelector('select');
 		// console.log(`select.options[0].selected`, select.options[0].selected)
@@ -68,7 +70,9 @@ export default {
 		await textarea.dispatchEvent(event);
 
 		assert.equal(component.compiled, 'ONE SOURCE CHANGED\nTWO SOURCE CHANGED');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<select>
 				<option value='[object Object]'>One.svelte</option>
 				<option value='[object Object]'>Two.svelte</option>
@@ -77,6 +81,7 @@ export default {
 			<textarea></textarea>
 
 			<pre>ONE SOURCE CHANGED\nTWO SOURCE CHANGED</pre>
-		`);
+		`
+		);
 	}
 };

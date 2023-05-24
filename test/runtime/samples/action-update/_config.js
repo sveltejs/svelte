@@ -10,20 +10,29 @@ export default {
 		const ctrlPress = new window.KeyboardEvent('keydown', { ctrlKey: true });
 
 		await button.dispatchEvent(enter);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>action</button>
 			<div class="tooltip">Perform an Action</div>
-		`);
+		`
+		);
 
 		await window.dispatchEvent(ctrlPress);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>action</button>
 			<div class="tooltip">Perform an augmented Action</div>
-		`);
+		`
+		);
 
 		await button.dispatchEvent(leave);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>action</button>
-		`);
+		`
+		);
 	}
 };

@@ -1,6 +1,6 @@
 export default {
-	props: {
-		user: { active: true }
+	get props() {
+		return { user: { active: true } };
 	},
 
 	html: '<div class="active"></div>',
@@ -8,8 +8,11 @@ export default {
 	test({ assert, component, target }) {
 		component.user = { active: false };
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class></div>
-		`);
+		`
+		);
 	}
 };

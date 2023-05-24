@@ -1,12 +1,14 @@
 export default {
-	props: {
-		things: [
-			{ id: 1, name: 'a' },
-			{ id: 2, name: 'b' },
-			{ id: 3, name: 'c' },
-			{ id: 4, name: 'd' },
-			{ id: 5, name: 'e' }
-		]
+	get props() {
+		return {
+			things: [
+				{ id: 1, name: 'a' },
+				{ id: 2, name: 'b' },
+				{ id: 3, name: 'c' },
+				{ id: 4, name: 'd' },
+				{ id: 5, name: 'e' }
+			]
+		};
 	},
 
 	html: `
@@ -19,8 +21,8 @@ export default {
 
 	test({ assert, component, raf }) {
 		let divs = document.querySelectorAll('div');
-		divs.forEach(div => {
-			div.getBoundingClientRect = function() {
+		divs.forEach((div) => {
+			div.getBoundingClientRect = function () {
 				const index = [...this.parentNode.children].indexOf(this);
 				const top = index * 30;
 

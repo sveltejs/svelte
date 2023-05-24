@@ -17,20 +17,26 @@ export default {
 	test({ assert, component, target }) {
 		const nested = component.nested;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<h3>Called 1 times.</h3>
 				<p>baz true</p>
 			</div>
-		`);
+		`
+		);
 
 		// eslint-disable-next-line no-self-assign
 		nested.foo = nested.foo;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<h3>Called 1 times.</h3>
 				<p>baz true</p>
 			</div>
-		`);
+		`
+		);
 	}
 };

@@ -4,7 +4,6 @@
 import MagicString from 'magic-string';
 import { Bundle } from 'magic-string';
 
-
 function add(bundle, filename, source) {
 	bundle.addSource({
 		filename,
@@ -26,13 +25,7 @@ function result(bundle, filename) {
 }
 
 export default {
-	js_map_sources: [
-		'input.svelte',
-		'foo.js',
-		'bar.js',
-		'foo2.js',
-		'bar2.js'
-	],
+	js_map_sources: ['input.svelte', 'foo.js', 'bar.js', 'foo2.js', 'bar2.js'],
 	preprocess: [
 		{
 			script: ({ content, filename }) => {

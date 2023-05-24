@@ -32,7 +32,9 @@ export default {
 		inputs[2].checked = true;
 		await inputs[2].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="x"> x</label>
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
@@ -45,12 +47,15 @@ export default {
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
 			<p></p>
-		`);
+		`
+		);
 
 		inputs[4].checked = true;
 		await inputs[4].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="x"> x</label>
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
@@ -63,12 +68,15 @@ export default {
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
 			<p></p>
-		`);
+		`
+		);
 
 		inputs[5].checked = true;
 		await inputs[5].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="x"> x</label>
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
@@ -81,6 +89,7 @@ export default {
 			<label><input type="checkbox" value="y"> y</label>
 			<label><input type="checkbox" value="z"> z</label>
 			<p></p>
-		`);
+		`
+		);
 	}
 };

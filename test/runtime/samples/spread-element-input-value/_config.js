@@ -6,22 +6,22 @@ export default {
 		// therefore, jsdom could not validate minlength / maxlength
 
 		// we simulate user input with
-		// setting input.value + dispathEvent
+		// setting input.value + dispatchEvent
 
 		// and we determine if svelte does not set the `input.value` again by
 		// spying on the setter of `input.value`
 
 		const spy1 = spyOnValueSetter(input1, input1.value);
 		const spy2 = spyOnValueSetter(input2, input2.value);
-		
+
 		const event = new window.Event('input');
-		
+
 		input1.value = '12345';
 		spy1.reset();
 		await input1.dispatchEvent(event);
 
 		assert.ok(!spy1.isSetCalled());
-		
+
 		input2.value = '12345';
 		spy2.reset();
 		await input2.dispatchEvent(event);

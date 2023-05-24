@@ -58,7 +58,9 @@ export default {
 		inputs[2].checked = true;
 		await inputs[2].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -75,12 +77,15 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>3</p>
-		`);
+		`
+		);
 
 		inputs[9].checked = true;
 		await inputs[9].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -97,7 +102,8 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1, 3</p>
-		`);
+		`
+		);
 
 		inputs[4].checked = false;
 		await inputs[4].dispatchEvent(event);
@@ -110,7 +116,9 @@ export default {
 		inputs[11].checked = false;
 		await inputs[11].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -127,7 +135,8 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1</p>
-		`);
+		`
+		);
 
 		component.selected_array_1 = [[3], [1]];
 		component.selected_array_2 = [[], [2]];
@@ -148,7 +157,9 @@ export default {
 		assert.equal(inputs[10].checked, true);
 		assert.equal(inputs[11].checked, false);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -165,6 +176,7 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>2</p>
-		`);
+		`
+		);
 	}
 };

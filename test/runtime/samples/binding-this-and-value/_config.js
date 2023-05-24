@@ -16,9 +16,12 @@ export default {
 		input.value = 'changed';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>value: changed</p>
-		`);
+		`
+		);
 	}
 };

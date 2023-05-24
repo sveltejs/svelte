@@ -1,9 +1,6 @@
 export default {
-	props: {
-		props: {
-			foo: 'lol',
-			baz: 40 + 2
-		}
+	get props() {
+		return { props: { foo: 'lol', baz: 40 + 2 } };
 	},
 
 	html: `
@@ -46,6 +43,5 @@ export default {
 		// test number
 		component.props = 123;
 		assert.htmlEqual(target.innerHTML, html);
-
 	}
 };

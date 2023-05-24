@@ -73,7 +73,7 @@ let world1 = 'world';
 let world2 = 'world';
 
 function instance($$self, $$props, $$invalidate) {
-	const world3 = 'world';
+	let world3 = 'world';
 
 	function foo() {
 		$$invalidate(0, world3 = 'svelte');

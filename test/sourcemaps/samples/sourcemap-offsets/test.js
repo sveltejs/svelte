@@ -1,4 +1,4 @@
-import { assert_mapped } from '../../helpers';
+import { assert_mapped } from '../../helpers.js';
 import { EXTERNAL } from './_config';
 
 export function test({ input, preprocessed }) {
@@ -8,7 +8,7 @@ export function test({ input, preprocessed }) {
 		input: input.locate,
 		preprocessed
 	});
-	
+
 	// Part from external file, should be without offset
 	assert_mapped({
 		filename: 'external.css',

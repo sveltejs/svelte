@@ -4,9 +4,7 @@ export default {
 	<button>invalid</button>`,
 
 	async test({ assert, target, window }) {
-		const [buttonUndef, buttonNull, buttonInvalid] = target.querySelectorAll(
-			'button'
-		);
+		const [buttonUndef, buttonNull, buttonInvalid] = target.querySelectorAll('button');
 
 		const event = new window.MouseEvent('click');
 		let err = '';

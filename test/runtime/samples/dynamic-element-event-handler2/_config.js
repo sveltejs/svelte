@@ -1,14 +1,17 @@
 let clicked = false;
 function handler() {
-  clicked = true;
+	clicked = true;
 }
 
 export default {
-	props: {
-		tag: 'div',
-		handler
+	get props() {
+		return { tag: 'div', handler };
 	},
 	html: '<div>Foo</div>',
+
+	before_test() {
+		clicked = false;
+	},
 
 	test({ assert, component, target }) {
 		assert.equal(clicked, false);

@@ -8,7 +8,7 @@ export default {
 		const event = new window.MouseEvent('click');
 
 		let answer;
-		component.$on('foo', event => {
+		component.$on('foo', (event) => {
 			answer = event.detail.answer;
 		});
 

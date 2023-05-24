@@ -1,7 +1,6 @@
 export default {
-	props: {
-		x: 1,
-		y: false
+	get props() {
+		return { x: 1, y: false };
 	},
 
 	html: `
@@ -10,8 +9,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.x = 2;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>2</span>
-		`);
+		`
+		);
 	}
 };

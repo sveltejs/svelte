@@ -5,7 +5,7 @@ export default {
 
 		const selected = [];
 
-		component.$on('select', event => {
+		component.$on('select', (event) => {
 			selected.push(event.detail);
 		});
 
@@ -14,11 +14,6 @@ export default {
 		buttons[1].dispatchEvent(click);
 		buttons[0].dispatchEvent(click);
 
-		assert.deepEqual(selected, [
-			'bar',
-			'baz',
-			'bar',
-			'foo'
-		]);
+		assert.deepEqual(selected, ['bar', 'baz', 'bar', 'foo']);
 	}
 };

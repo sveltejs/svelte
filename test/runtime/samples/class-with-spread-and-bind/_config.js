@@ -1,6 +1,6 @@
 export default {
-	props: {
-		primary: true
+	get props() {
+		return { primary: true };
 	},
 
 	html: '<div class="test-class primary" role="button"></div>',

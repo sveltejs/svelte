@@ -1,8 +1,8 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 export default {
-	props: {
-		count: writable(0)
+	get props() {
+		return { count: writable(0) };
 	},
 
 	html: `
@@ -16,16 +16,22 @@ export default {
 
 		await button.dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>count 1</button>
 			<p>doubled: 2</p>
-		`);
+		`
+		);
 
 		await component.count.set(42);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>count 42</button>
 			<p>doubled: 84</p>
-		`);
+		`
+		);
 	}
 };

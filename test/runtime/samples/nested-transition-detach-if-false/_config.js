@@ -15,10 +15,13 @@ export default {
 
 	test({ assert, component, target }) {
 		component.folder.open = false;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<li>
 				<span>a</span>
 			</li>
-		`);
+		`
+		);
 	}
 };

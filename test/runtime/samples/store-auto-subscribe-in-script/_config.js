@@ -1,10 +1,11 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
-const count = writable(0);
+let count = writable(0);
 
 export default {
-	props: {
-		count
+	get props() {
+		count = writable(0);
+		return { count };
 	},
 
 	html: `

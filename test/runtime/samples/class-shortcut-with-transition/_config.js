@@ -1,7 +1,6 @@
 export default {
-	props: {
-		open: false,
-		border: true
+	get props() {
+		return { open: false, border: true };
 	},
 	html: '<p>foo</p>',
 

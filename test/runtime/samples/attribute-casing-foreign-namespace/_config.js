@@ -12,7 +12,7 @@ export default {
 	skip_if_hydrate_from_ssr: true,
 
 	test({ assert, target }) {
-		const attr = sel => target.querySelector(sel).attributes[0].name;
+		const attr = (sel) => target.querySelector(sel).attributes[0].name;
 		assert.equal(attr('page'), 'horizontalAlignment');
 		assert.equal(attr('button'), 'textWrap');
 	}

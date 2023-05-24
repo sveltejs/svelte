@@ -7,11 +7,14 @@ export default {
 	async test({ component, target, assert }) {
 		component.constant = 20;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>#FF0000</p>
 			<p>#00FF00</p>
 			<p>#0000FF</p>
-		`);
+		`
+		);
 
 		component.tags = [
 			{
@@ -36,12 +39,15 @@ export default {
 			}
 		];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>#FF0000</p>
 			<p>#00FF00</p>
 			<p>#0000FF</p>
 			<p>#000000</p>
 			<p>#FFFFFF</p>
-		`);
+		`
+		);
 	}
 };

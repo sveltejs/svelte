@@ -1,15 +1,14 @@
-[{
-	"code": "illegal-global",
-	"message": "$$billsyall is an illegal variable name",
-	"pos": 10,
-	"start": {
-		"line": 2,
-		"column": 1,
-		"character": 10
-	},
-	"end": {
-		"line": 2,
-		"column": 12,
-		"character": 21
+[
+	{
+		"code": "illegal-global",
+		"message": "$$billsyall is an illegal variable name",
+		"start": {
+			"line": 2,
+			"column": 1
+		},
+		"end": {
+			"line": 2,
+			"column": 12
+		}
 	}
-}]
+]

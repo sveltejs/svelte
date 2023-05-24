@@ -1,9 +1,11 @@
 export default {
-	props: {
-		animalEntries: [
-			{ animal: 'raccoon', class: 'mammal' },
-			{ animal: 'eagle', class: 'bird' }
-		]
+	get props() {
+		return {
+			animalEntries: [
+				{ animal: 'raccoon', class: 'mammal' },
+				{ animal: 'eagle', class: 'bird' }
+			]
+		};
 	},
 
 	html: `
@@ -13,8 +15,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.animalEntries = [{ animal: 'cow', class: 'mammal' }];
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p class="mammal">cow</p>
-		`);
+		`
+		);
 	}
 };

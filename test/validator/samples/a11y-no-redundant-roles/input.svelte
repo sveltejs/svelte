@@ -42,3 +42,7 @@
 <!-- Tested header/footer not nested in section/article -->
 <header role="banner"></header>
 <footer role="contentinfo"></footer>
+
+<!-- Allowed -->
+<!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
+<menu role="menu" />

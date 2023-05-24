@@ -1,5 +1,5 @@
 <script>
-	import { writable } from '../../../../store';
+	import { writable } from 'svelte/store';
 
 	let value = writable({ foo: 1, bar: 2 });
 	$value.foo = $value.foo + $value.bar; // 3

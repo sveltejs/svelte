@@ -12,9 +12,17 @@ export default {
 		});
 
 		elems = target.querySelectorAll('span');
-		assert.equal(Object.keys(component.spans).length, 3, 'three spans are registered (unkeyed object)');
+		assert.equal(
+			Object.keys(component.spans).length,
+			3,
+			'three spans are registered (unkeyed object)'
+		);
 		component.items.forEach((e, i) => {
-			assert.equal(component.spans[`-${e}${i}`], elems[i], `span -${e}${i} is correct (unkeyed object)`);
+			assert.equal(
+				component.spans[`-${e}${i}`],
+				elems[i],
+				`span -${e}${i} is correct (unkeyed object)`
+			);
 		});
 
 		elems = target.querySelectorAll('p');
@@ -33,8 +41,8 @@ export default {
 		assert.equal(component.divs.length, 3, 'the divs array is still 3 long');
 		assert.equal(component.divs[2], null, 'the last div is unregistered');
 		assert.equal(component.ps[2], null, 'the last p is unregistered');
-		assert.equal(component.spans['-bar1'], null, 'the bar span is unregisterd');
-		assert.equal(component.hrs.bar, null, 'the bar hr is unregisterd');
+		assert.equal(component.spans['-bar1'], null, 'the bar span is unregistered');
+		assert.equal(component.hrs.bar, null, 'the bar hr is unregistered');
 
 		elems = target.querySelectorAll('div');
 		component.divs.forEach((e, i) => {

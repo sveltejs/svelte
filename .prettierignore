@@ -1,0 +1,15 @@
+/*
+!/elements
+!/scripts
+# TODO: after launch new site, format site dir.
+/site
+!/src
+src/compiler/compile/internal_exports.js
+!/test
+/test/**/*.svelte
+/test/**/_expected*
+/test/**/_actual*
+/test/**/expected*
+/test/**/_output
+/types
+!vitest.config.js

@@ -1,7 +1,6 @@
 export default {
-	props: {
-		foo: 'a',
-		items: ['x']
+	get props() {
+		return { foo: 'a', items: ['x'] };
 	},
 
 	html: `
@@ -28,9 +27,12 @@ export default {
 		assert.equal(component.foo, 'b');
 		assert.equal(component.items[0], 'y');
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><input><p>b</p></div>
 			<div><input><p>y</p></div>
-		`);
+		`
+		);
 	}
 };

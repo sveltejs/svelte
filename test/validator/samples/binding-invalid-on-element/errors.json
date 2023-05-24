@@ -1,15 +1,14 @@
-[{
-	"code": "invalid-binding",
-	"message": "'value' is not a valid binding on <div> elements",
-	"pos": 37,
-	"start": {
-		"line": 5,
-		"column": 5,
-		"character": 37
-	},
-	"end": {
-		"line": 5,
-		"column": 15,
-		"character": 47
+[
+	{
+		"code": "invalid-binding",
+		"message": "'value' is not a valid binding on <div> elements",
+		"start": {
+			"line": 5,
+			"column": 5
+		},
+		"end": {
+			"line": 5,
+			"column": 15
+		}
 	}
-}]
+]

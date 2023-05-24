@@ -4,59 +4,47 @@
 		"message": "A11y: Elements with the ARIA role \"heading\" must have the following attributes defined: \"aria-level\"",
 		"start": {
 			"line": 1,
-			"column": 5,
-			"character": 5
+			"column": 5
 		},
 		"end": {
 			"line": 1,
-			"column": 19,
-			"character": 19
-		},
-		"pos": 5
+			"column": 19
+		}
 	},
 	{
 		"code": "a11y-role-has-required-aria-props",
 		"message": "A11y: Elements with the ARIA role \"checkbox\" must have the following attributes defined: \"aria-checked\"",
 		"start": {
 			"line": 2,
-			"column": 6,
-			"character": 33
+			"column": 6
 		},
 		"end": {
 			"line": 2,
-			"column": 21,
-			"character": 48
-		},
-		"pos": 33
+			"column": 21
+		}
 	},
 	{
 		"code": "a11y-role-has-required-aria-props",
 		"message": "A11y: Elements with the ARIA role \"meter\" must have the following attributes defined: \"aria-valuenow\"",
 		"start": {
 			"line": 3,
-			"column": 5,
-			"character": 62
+			"column": 5
 		},
 		"end": {
 			"line": 3,
-			"column": 17,
-			"character": 74
-		},
-		"pos": 62
+			"column": 17
+		}
 	},
 	{
 		"code": "a11y-role-has-required-aria-props",
 		"message": "A11y: Elements with the ARIA role \"scrollbar\" must have the following attributes defined: \"aria-controls\", \"aria-valuenow\"",
 		"start": {
-			"character": 87,
 			"column": 5,
 			"line": 4
 		},
 		"end": {
-			"character": 103,
 			"column": 21,
 			"line": 4
-		},
-		"pos": 87
+		}
 	}
 ]

@@ -1,15 +1,14 @@
-[{
-	"code": "invalid-ref-selector",
-	"message": "ref selectors are no longer supported",
-	"pos": 68,
-	"start": {
-		"line": 8,
-		"column": 1,
-		"character": 68
-	},
-	"end": {
-		"line": 8,
-		"column": 1,
-		"character": 68
+[
+	{
+		"code": "invalid-ref-selector",
+		"message": "ref selectors are no longer supported",
+		"start": {
+			"line": 8,
+			"column": 1
+		},
+		"end": {
+			"line": 8,
+			"column": 1
+		}
 	}
-}]
+]

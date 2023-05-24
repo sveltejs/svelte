@@ -8,11 +8,13 @@ export default {
 
 		assert.htmlEqual(target.innerHTML, '<p>wait for it...</p>');
 
-		return promise
-			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+		return promise.then(() => {
+			assert.htmlEqual(
+				target.innerHTML,
+				`
 					<p>the answer is 42!</p>
-				`);
-			});
+				`
+			);
+		});
 	}
 };
