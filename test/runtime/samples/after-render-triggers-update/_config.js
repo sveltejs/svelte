@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		value: 'hello!'
+	get props() {
+		return { value: 'hello!' };
 	},
 
 	html: `
@@ -12,9 +12,12 @@ export default {
 
 	test({ assert, component, target }) {
 		component.value = 'goodbye!';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>goodbye!</p>
 			<p>goodbye!</p>
-		`);
+		`
+		);
 	}
 };

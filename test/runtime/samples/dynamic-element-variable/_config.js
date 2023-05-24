@@ -1,7 +1,6 @@
 export default {
-	props: {
-		tag: 'div',
-		text: 'Foo'
+	get props() {
+		return { tag: 'div', text: 'Foo' };
 	},
 	html: '<div>Foo</div>',
 
@@ -10,9 +9,12 @@ export default {
 		component.tag = 'nav';
 		component.text = 'Bar';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<nav>Bar</nav>
-		`);
+		`
+		);
 
 		const h1 = target.firstChild;
 		assert.notEqual(div, h1);

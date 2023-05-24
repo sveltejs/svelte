@@ -1,6 +1,6 @@
 export default {
-	props: {
-		items: ['a', 'b', 'c']
+	get props() {
+		return { items: ['a', 'b', 'c'] };
 	},
 
 	html: `
@@ -16,7 +16,7 @@ export default {
 
 		const clicks = [];
 
-		component.$on('foo', event => {
+		component.$on('foo', (event) => {
 			clicks.push(event.detail);
 		});
 

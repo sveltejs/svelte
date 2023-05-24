@@ -1,6 +1,6 @@
 export default {
-	props: {
-		myClass: 'one two'
+	get props() {
+		return { myClass: 'one two' };
 	},
 
 	html: '<div class="one two three"></div>',
@@ -8,8 +8,11 @@ export default {
 	test({ assert, component, target }) {
 		component.myClass = 'one';
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="one three"></div>
-		`);
+		`
+		);
 	}
 };

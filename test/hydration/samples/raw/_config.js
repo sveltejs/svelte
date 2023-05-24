@@ -14,14 +14,5 @@ export default {
 			p1: ps[1],
 			text1: ps[1].firstChild
 		};
-	},
-
-	test(assert, target, snapshot) {
-		const ps = target.querySelectorAll('p');
-
-		assert.equal(ps[0], snapshot.p0);
-		assert.equal(ps[0].firstChild, snapshot.text0);
-		assert.equal(ps[1], snapshot.p1);
-		assert.equal(ps[1].firstChild, snapshot.text1);
 	}
 };

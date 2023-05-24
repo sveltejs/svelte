@@ -1,13 +1,12 @@
 let fulfil;
 
-const promise = new Promise(f => {
+const promise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
-	props: {
-		x: false,
-		promise
+	get props() {
+		return { x: false, promise };
 	},
 
 	test({ assert, component, target, raf }) {

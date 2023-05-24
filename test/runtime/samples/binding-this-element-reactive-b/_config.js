@@ -8,14 +8,20 @@ export default {
 
 	test({ assert, component, target }) {
 		component.visible = false;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>The text is missing</div>
-		`);
+		`
+		);
 
 		component.visible = true;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>The text is hello</div>
 			<h1>hello</h1>
-		`);
+		`
+		);
 	}
 };

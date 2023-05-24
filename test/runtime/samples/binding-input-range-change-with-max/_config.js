@@ -24,10 +24,13 @@ export default {
 		await button.dispatchEvent(new window.Event('click'));
 
 		assert.equal(input.value, '20');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button></button>
 			<input type=range min=0 max=20>
 			<p>20 of 20</p>
-		`);
+		`
+		);
 	}
 };

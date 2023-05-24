@@ -1,9 +1,10 @@
-const subscribers = [];
+import { tick } from 'svelte';
 
 let value = 'initial';
 
+let subscribers = [];
 const observable = {
-	subscribe: fn => {
+	subscribe: (fn) => {
 		subscribers.push(fn);
 
 		fn(value);
@@ -18,9 +19,13 @@ const observable = {
 };
 
 export default {
-	props: {
-		observable,
-		visible: false
+	before_test() {
+		value = 'initial';
+		subscribers = [];
+	},
+
+	get props() {
+		return { observable, visible: false };
 	},
 
 	html: '',
@@ -31,16 +36,13 @@ export default {
 		component.visible = true;
 
 		assert.equal(subscribers.length, 1);
-		assert.htmlEqual(target.innerHTML, `
-			<p>value: initial</p>
-		`);
-
+		assert.htmlEqual(target.innerHTML, '<p>value: initial</p>');
 		value = 42;
-		await subscribers.forEach(fn => fn(value));
-
-		assert.htmlEqual(target.innerHTML, `
-			<p>value: 42</p>
-		`);
+		subscribers.forEach((fn) => {
+			fn(value);
+		});
+		await tick();
+		assert.htmlEqual(target.innerHTML, '<p>value: 42</p>');
 
 		component.visible = false;
 

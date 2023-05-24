@@ -1,8 +1,8 @@
 export default {
 	html: '<button>click me</button>',
 
-	props: {
-		foo: 42
+	get props() {
+		return { foo: 42 };
 	},
 
 	test({ assert, component, target, window }) {
@@ -12,7 +12,7 @@ export default {
 		let count = 0;
 		let number = null;
 
-		component.$on('foo', event => {
+		component.$on('foo', (event) => {
 			count++;
 			number = event.detail.foo;
 		});

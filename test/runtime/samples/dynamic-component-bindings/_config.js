@@ -1,6 +1,6 @@
 export default {
-	props: {
-		x: true
+	get props() {
+		return { x: true };
 	},
 
 	html: `
@@ -17,10 +17,13 @@ export default {
 
 		component.x = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>bar</p>
 			<input type='checkbox'>
-		`);
+		`
+		);
 
 		input = target.querySelector('input');
 		input.checked = true;

@@ -1,16 +1,21 @@
 export default {
-	props: {
-		list: [{
-			foo: 'lol',
-			baz: 40 + 2,
-			qux: 5,
-			quux: 'core'
-		}, {
-			foo: 'lolzz',
-			baz: 50 + 2,
-			qux: 1,
-			quux: 'quuxx'
-		}]
+	get props() {
+		return {
+			list: [
+				{
+					foo: 'lol',
+					baz: 40 + 2,
+					qux: 5,
+					quux: 'core'
+				},
+				{
+					foo: 'lolzz',
+					baz: 50 + 2,
+					qux: 1,
+					quux: 'quuxx'
+				}
+			]
+		};
 	},
 
 	html: `
@@ -29,19 +34,24 @@ export default {
 	`,
 
 	test({ assert, component, target }) {
-		component.list = [{
-			foo: 'lol',
-			baz: 40 + 3,
-			qux: 8,
-			quux: 'heart'
-		}, {
-			foo: 'lolzz',
-			baz: 50 + 3,
-			qux: 8,
-			quux: 'heartxx'
-		}];
+		component.list = [
+			{
+				foo: 'lol',
+				baz: 40 + 3,
+				qux: 8,
+				quux: 'heart'
+			},
+			{
+				foo: 'lolzz',
+				baz: 50 + 3,
+				qux: 8,
+				quux: 'heartxx'
+			}
+		];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<p>foo: lol</p>
 				<p>baz: 43 (number)</p>
@@ -54,11 +64,14 @@ export default {
 				<p>quux: heartxx</p>
 				<p>selected: false</p>
 			</div>
-		`);
+		`
+		);
 
 		component.qux = 1;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<p>foo: lol</p>
 				<p>baz: 43 (number)</p>
@@ -71,6 +84,7 @@ export default {
 				<p>quux: heartxx</p>
 				<p>selected: true</p>
 			</div>
-		`);
+		`
+		);
 	}
 };

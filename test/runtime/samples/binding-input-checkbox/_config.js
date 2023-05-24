@@ -1,6 +1,6 @@
 export default {
-	props: {
-		foo: true
+	get props() {
+		return { foo: true };
 	},
 
 	html: `
@@ -22,16 +22,22 @@ export default {
 		input.checked = false;
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type="checkbox">
 			<p>false</p>
-		`);
+		`
+		);
 
 		component.foo = true;
 		assert.equal(input.checked, true);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input type="checkbox">
 			<p>true</p>
-		`);
+		`
+		);
 	}
 };

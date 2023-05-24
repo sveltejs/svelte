@@ -5,10 +5,8 @@ function log(value) {
 
 export default {
 	html: '<button>click me</button>',
-	props: {
-		a: 'a',
-		b: 'b',
-		log
+	get props() {
+		return { a: 'a', b: 'b', log };
 	},
 	before_test() {
 		logs = [];
@@ -19,7 +17,7 @@ export default {
 
 		assert.deepEqual(logs, ['a: a, b: b']);
 
-		component.a = '1'; 
+		component.a = '1';
 		component.b = '2';
 		await button.dispatchEvent(new window.MouseEvent('click'));
 		assert.deepEqual(logs, ['a: a, b: b', 'a: 1, b: 2']);

@@ -1,7 +1,9 @@
 export default {
-	props: {
-		ones: [{ text: '1' }],
-		twos: [{ text: '2' }]
+	get props() {
+		return {
+			ones: [{ text: '1' }],
+			twos: [{ text: '2' }]
+		};
 	},
 
 	html: `
@@ -12,9 +14,12 @@ export default {
 	test({ assert, component, target }) {
 		component.ones = [{ text: '11' }];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>11</div>
 			<div>2</div>
-		`);
+		`
+		);
 	}
 };

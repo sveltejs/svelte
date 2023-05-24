@@ -1,7 +1,6 @@
 export default {
-	props: {
-		visible: false,
-		threshold: 5
+	get props() {
+		return { visible: false, threshold: 5 };
 	},
 
 	html: `
@@ -18,11 +17,14 @@ export default {
 		component.threshold = 4;
 
 		raf.tick(200);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>1</div>
 			<div>2</div>
 			<div>3</div>
 			<div>4</div>
-		`);
+		`
+		);
 	}
 };

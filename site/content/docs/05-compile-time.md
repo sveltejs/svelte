@@ -39,7 +39,6 @@ The following options can be passed to the compiler. None are required:
 | --- | --- | --- |
 | `filename` | string | `null`
 | `name` | string | `"Component"`
-| `format` | `"esm"` or `"cjs"` | `"esm"`
 | `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
 | `errorMode` | `"throw"` or `"warn"` | `"throw"`
 | `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
@@ -62,7 +61,6 @@ The following options can be passed to the compiler. None are required:
 | --- | --- | --- |
 | `filename` | `null` | `string` used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
 | `name` | `"Component"` | `string` that sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.
-| `format` | `"esm"` | If `"esm"`, creates a JavaScript module (with `import` and `export`). If `"cjs"`, creates a CommonJS module (with `require` and `module.exports`), which is useful in some server-side rendering situations or for testing.
 | `generate` | `"dom"` | If `"dom"`, Svelte emits a JavaScript class for mounting to the DOM. If `"ssr"`, Svelte emits an object with a `render` method suitable for server-side rendering. If `false`, no JavaScript or CSS is returned; just metadata.
 | `errorMode` | `"throw"` | If `"throw"`, Svelte throws when a compilation error occurred. If `"warn"`, Svelte will treat errors as warnings and add them to the warning report.
 | `varsReport` | `"strict"` | If `"strict"`, Svelte returns a variables report with only variables that are not globals nor internals. If `"full"`, Svelte returns a variables report with all detected variables. If `false`, no variables report is returned.
@@ -186,7 +184,7 @@ const ast = svelte.parse(source, { filename: 'App.svelte' });
 
 ### `svelte.preprocess`
 
-A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [official and community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 
@@ -197,6 +195,7 @@ result: {
 } = await svelte.preprocess(
 	source: string,
 	preprocessors: Array<{
+		name: string,
 		markup?: (input: { content: string, filename: string }) => Promise<{
 			code: string,
 			dependencies?: Array<string>
@@ -220,48 +219,41 @@ result: {
 
 The `preprocess` function provides convenient hooks for arbitrarily transforming component source code. For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
 
-The first argument is the component source code. The second is an array of *preprocessors* (or a single preprocessor, if you only have one), where a preprocessor is an object with `markup`, `script` and `style` functions, each of which is optional.
-
-Each `markup`, `script` or `style` function must return an object (or a Promise that resolves to an object) with a `code` property, representing the transformed source code, and an optional array of `dependencies`.
+The first argument is the component source code. The second is an array of *preprocessors* (or a single preprocessor, if you only have one), where a preprocessor is an object with a `name` which is required, and `markup`, `script` and `style` functions, each of which is optional.
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
-
-```js
-const svelte = require('svelte/compiler');
-const MagicString = require('magic-string');
-
-const { code } = await svelte.preprocess(source, {
-	markup: ({ content, filename }) => {
-		const pos = content.indexOf('foo');
-		if(pos < 0) {
-			return { code: content }
-		}
-		const s = new MagicString(content, { filename })
-		s.overwrite(pos, pos + 3, 'bar', { storeName: true })
-		return {
-			code: s.toString(),
-			map: s.generateMap()
-		}
-	}
-}, {
-	filename: 'App.svelte'
-});
-```
-
----
-
 The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+Each `markup`, `script` or `style` function must return an object (or a Promise that resolves to an object) with a `code` property, representing the transformed source code. Optionally they can return an array of `dependencies` which represents files to watch for changes, and a `map` object which is a sourcemap mapping back the transformation to the original code. `script` and `style` preprocessors can optionally return a record of attributes which represent the updated attributes on the script/style tag.
+
+> Preprocessor functions should return a `map` object whenever possible or else debugging becomes harder as stack traces can't link to the original code correctly.
 
 ```js
-const svelte = require('svelte/compiler');
-const sass = require('node-sass');
-const { dirname } = require('path');
+import { preprocess } from 'svelte/compiler';
+import MagicString from 'magic-string';
+import sass from 'sass';
+import { dirname } from 'path';
 
-const { code, dependencies } = await svelte.preprocess(source, {
+const { code } = await preprocess(source, {
+	name: 'my-fancy-preprocessor',
+	markup: ({ content, filename }) => {
+		// Return code as is when no foo string present
+		const pos = content.indexOf('foo');
+		if(pos < 0) {
+			return;
+		}
+
+		// Replace foo with bar using MagicString which provides
+		// a source map along with the changed code
+		const s = new MagicString(content, { filename });
+		s.overwrite(pos, pos + 3, 'bar', { storeName: true });
+
+		return {
+			code: s.toString(),
+			map: s.generateMap({ hires: true, file: filename })
+		}
+	},
 	style: async ({ content, attributes, filename }) => {
 		// only process <style lang="sass">
 		if (attributes.lang !== 'sass') return;
@@ -277,9 +269,13 @@ const { code, dependencies } = await svelte.preprocess(source, {
 			else resolve(result);
 		}));
 
+		// remove lang attribute from style tag
+		delete attributes.lang;
+
 		return {
 			code: css.toString(),
-			dependencies: stats.includedFiles
+			dependencies: stats.includedFiles,
+			attributes
 		};
 	}
 }, {
@@ -289,29 +285,33 @@ const { code, dependencies } = await svelte.preprocess(source, {
 
 ---
 
-Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
+Multiple preprocessors can be used together. The output of the first becomes the input to the second. Within one preprocessor, `markup` runs first, then `script` and `style`.
+
+> In Svelte 3, all `markup` functions ran first, then all `script` and then all `style` preprocessors. This order was changed in Svelte 4.
 
 ```js
 const svelte = require('svelte/compiler');
 
 const { code } = await svelte.preprocess(source, [
 	{
+		name: 'first preprocessor',
 		markup: () => {
 			console.log('this runs first');
 		},
 		script: () => {
-			console.log('this runs third');
+			console.log('this runs second');
 		},
 		style: () => {
-			console.log('this runs fifth');
+			console.log('this runs third');
 		}
 	},
 	{
+		name: 'second preprocessor',
 		markup: () => {
-			console.log('this runs second');
+			console.log('this runs fourth');
 		},
 		script: () => {
-			console.log('this runs fourth');
+			console.log('this runs fifth');
 		},
 		style: () => {
 			console.log('this runs sixth');

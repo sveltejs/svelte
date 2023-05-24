@@ -1,4 +1,4 @@
-import { assert_mapped } from '../../helpers';
+import { assert_mapped } from '../../helpers.js';
 
 export function test({ input, preprocessed }) {
 	assert_mapped({

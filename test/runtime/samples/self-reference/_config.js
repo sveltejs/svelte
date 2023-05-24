@@ -1,6 +1,6 @@
 export default {
-	props: {
-		depth: 5
+	get props() {
+		return { depth: 5 };
 	},
 
 	html: `

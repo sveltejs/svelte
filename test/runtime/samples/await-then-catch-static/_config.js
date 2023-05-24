@@ -1,12 +1,12 @@
 let fulfil;
 
-let promise = new Promise(f => {
+let promise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
-	props: {
-		promise
+	get props() {
+		return { promise };
 	},
 
 	html: `
@@ -18,9 +18,12 @@ export default {
 
 		return promise
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<p>loaded</p>
-				`);
+				`
+				);
 
 				promise = new Promise((f, _) => {
 					fulfil = f;
@@ -28,18 +31,24 @@ export default {
 
 				component.promise = promise;
 
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<p>loading...</p>
-				`);
+				`
+				);
 
 				fulfil(43);
 
 				return promise.then(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `
+				assert.htmlEqual(
+					target.innerHTML,
+					`
 					<p>loaded</p>
-				`);
+				`
+				);
 			});
 	}
 };

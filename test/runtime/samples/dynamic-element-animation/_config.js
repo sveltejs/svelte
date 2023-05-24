@@ -1,13 +1,15 @@
 export default {
-	props: {
-		things: [
-			{ id: 1, name: 'a' },
-			{ id: 2, name: 'b' },
-			{ id: 3, name: 'c' },
-			{ id: 4, name: 'd' },
-			{ id: 5, name: 'e' }
-		],
-		tag: 'div'
+	get props() {
+		return {
+			things: [
+				{ id: 1, name: 'a' },
+				{ id: 2, name: 'b' },
+				{ id: 3, name: 'c' },
+				{ id: 4, name: 'd' },
+				{ id: 5, name: 'e' }
+			],
+			tag: 'div'
+		};
 	},
 
 	html: `
@@ -24,8 +26,8 @@ export default {
 
 		component.tag = 'div';
 		let divs = target.querySelectorAll('div');
-		divs.forEach(div => {
-			div.getBoundingClientRect = function() {
+		divs.forEach((div) => {
+			div.getBoundingClientRect = function () {
 				const index = [...this.parentNode.children].indexOf(this);
 				const top = index * 30;
 
@@ -54,9 +56,6 @@ export default {
 		assert.ok(~divs[4].style.animation.indexOf('__svelte'));
 
 		raf.tick(100);
-		assert.deepEqual([
-			divs[0].style.animation,
-			divs[4].style.animation
-		], ['', '']);
+		assert.deepEqual([divs[0].style.animation, divs[4].style.animation], ['', '']);
 	}
 };

@@ -3,6 +3,6 @@ export default {
 
 	test({ assert, component, target }) {
 		component.name = () => 'everybody';
-		assert.htmlEqual( target.innerHTML, '<h1>Hello everybody!</h1>' );
+		assert.htmlEqual(target.innerHTML, '<h1>Hello everybody!</h1>');
 	}
 };

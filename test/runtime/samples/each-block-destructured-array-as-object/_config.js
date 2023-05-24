@@ -1,10 +1,12 @@
 export default {
-	props: {
-		array: [
-      [1, 2, 3, 4, 5],
-      [6, 7, 8],
-      [9, 10, 11, 12]
-		]
+	get props() {
+		return {
+			array: [
+				[1, 2, 3, 4, 5],
+				[6, 7, 8],
+				[9, 10, 11, 12]
+			]
+		};
 	},
 
 	html: `
@@ -15,8 +17,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.array = [[12, 13]];
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>First: 12, Third: undefined, Length: 2</p>
-		`);
+		`
+		);
 	}
 };

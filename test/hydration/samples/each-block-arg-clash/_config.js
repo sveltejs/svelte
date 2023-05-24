@@ -1,11 +1,7 @@
 export default {
 	props: {
 		things: {
-			foo: [
-				'animal',
-				'vegetable',
-				'mineral'
-			]
+			foo: ['animal', 'vegetable', 'mineral']
 		}
 	},
 
@@ -15,17 +11,9 @@ export default {
 
 		return {
 			ul,
-			lis
+			lis0: lis[0],
+			lis1: lis[1],
+			lis2: lis[2]
 		};
-	},
-
-	test(assert, target, snapshot) {
-		const ul = target.querySelector('ul');
-		const lis = ul.querySelectorAll('li');
-
-		assert.equal(ul, snapshot.ul);
-		assert.equal(lis[0], snapshot.lis[0]);
-		assert.equal(lis[1], snapshot.lis[1]);
-		assert.equal(lis[2], snapshot.lis[2]);
 	}
 };

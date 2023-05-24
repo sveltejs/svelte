@@ -1,11 +1,13 @@
 export default {
-	props: {
-		array: [
-			[1, 2, 3, 4, 5],
-			[6, 7, 8],
-			[9, 10, 11, 12],
-			[13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-		]
+	get props() {
+		return {
+			array: [
+				[1, 2, 3, 4, 5],
+				[6, 7, 8],
+				[9, 10, 11, 12],
+				[13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+			]
+		};
 	},
 
 	html: `
@@ -17,8 +19,11 @@ export default {
 
 	test({ assert, component, target }) {
 		component.array = [[23, 24, 25, 26, 27, 28, 29]];
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>First: 23, Half: 26, Last: 29, Length: 7</p>
-		`);
+		`
+		);
 	}
 };

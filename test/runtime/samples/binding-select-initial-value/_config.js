@@ -11,8 +11,8 @@ export default {
 		<p>selected: b</p>
 	`,
 
-	props: {
-		selected: 'b'
+	get props() {
+		return { selected: 'b' };
 	},
 
 	test({ assert, target }) {

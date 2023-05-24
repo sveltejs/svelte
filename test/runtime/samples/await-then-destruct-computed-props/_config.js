@@ -15,7 +15,12 @@ export default {
 			`
 		);
 
-		await (component.object = Promise.resolve({ prop1: 'one', prop2: 'two', prop3: { prop7: 'seven' }, prop4: { prop10: 'ten' }}));
+		await (component.object = Promise.resolve({
+			prop1: 'one',
+			prop2: 'two',
+			prop3: { prop7: 'seven' },
+			prop4: { prop10: 'ten' }
+		}));
 		assert.htmlEqual(
 			target.innerHTML,
 			`

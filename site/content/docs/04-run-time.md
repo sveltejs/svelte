@@ -289,7 +289,7 @@ This makes it possible to wrap almost any other reactive state handling library 
 store = writable(value?: any)
 ```
 ```js
-store = writable(value?: any, start?: (set: (value: any) => void) => () => void)
+store = writable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -316,7 +316,7 @@ count.update(n => n + 1); // logs '2'
 
 ---
 
-If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store. It must return a `stop` function that is called when the subscriber count goes from one to zero.
+If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
 ```js
 import { writable } from 'svelte/store';
@@ -340,7 +340,7 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 #### `readable`
 
 ```js
-store = readable(value?: any, start?: (set: (value: any) => void) => () => void)
+store = readable(value?: any, start?: (set: (value: any) => void, update: (fn: any => any) => void) => () => void)
 ```
 
 ---
@@ -359,6 +359,16 @@ const time = readable(null, set => {
 
 	return () => clearInterval(interval);
 });
+
+const ticktock = readable(null, (set, update) => {
+	set('tick');
+
+	const interval = setInterval(() => {
+		update(sound => sound === 'tick' ? 'tock' : 'tick');
+	}, 1000);
+
+	return () => clearInterval(interval);
+});
 ```
 
 #### `derived`
@@ -367,13 +377,13 @@ const time = readable(null, set => {
 store = derived(a, callback: (a: any) => any)
 ```
 ```js
-store = derived(a, callback: (a: any, set: (value: any) => void) => void | () => void, initial_value: any)
+store = derived(a, callback: (a: any, set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
 ```
 ```js
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void) => void | () => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -390,9 +400,9 @@ const doubled = derived(a, $a => $a * 2);
 
 ---
 
-The callback can set a value asynchronously by accepting a second argument, `set`, and calling it when appropriate.
+The callback can set a value asynchronously by accepting a second argument, `set`, and an optional third argument, `update`, calling either or both of them when appropriate.
 
-In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` is first called.
+In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` or `update` is first called. If no initial value is specified, the store's initial value will be `undefined`.
 
 ```js
 import { derived } from 'svelte/store';
@@ -400,6 +410,13 @@ import { derived } from 'svelte/store';
 const delayed = derived(a, ($a, set) => {
 	setTimeout(() => set($a), 1000);
 }, 'one moment...');
+
+const delayedIncrement = derived(a, ($a, set, update) => {
+	set($a);
+	setTimeout(() => update(x => x + 1), 1000);
+	// every time $a produces a value, this produces two
+	// values, $a immediately and then $a + 1 a second later
+});
 ```
 
 ---
@@ -968,6 +985,8 @@ You can explore the various eases using the [ease visualiser](/examples/easing) 
 
 ### `svelte/register`
 
+> This API is removed in Svelte 4. `require` hooks are deprecated and current Node versions understand ESM. Use a bundler like Vite or our full-stack framework [SvelteKit](https://kit.svelte.dev) instead to create JavaScript modules from Svelte components.
+
 To render Svelte components in Node.js without bundling, use `require('svelte/register')`. After that, you can use `require` to include any `.svelte` file.
 
 ```js
@@ -1118,7 +1137,7 @@ app.count += 1;
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](/docs#template-syntax-svelte-options).
 
 ```sv
-<svelte:options tag="my-element" />
+<svelte:options customElement="my-element" />
 
 <script>
 	export let name = 'world';
@@ -1130,12 +1149,12 @@ Svelte components can also be compiled to custom elements (aka web components) u
 
 ---
 
-Alternatively, use `tag={null}` to indicate that the consumer of the custom element should name it.
+You can leave out the tag name for any of your inner components which you don't want to expose and use them like regular Svelte components. Consumers of the component can still name it afterwards if needed, using the static `element` property which contains the custom element constructor and which is available when the `customElement` compiler option is `true`.
 
 ```js
 import MyElement from './MyElement.svelte';
 
-customElements.define('my-element', MyElement);
+customElements.define('my-element', MyElement.element);
 ```
 
 ---
@@ -1166,15 +1185,42 @@ console.log(el.name);
 el.name = 'everybody';
 ```
 
+---
+
+When constructing a custom element, you can tailor several aspects by defining `customElement` as an object within `<svelte:options>`. This object comprises a mandatory `tag` property for the custom element's name, an optional `shadow` property that can be set to `"none"` to forgo shadow root creation, and a `props` option, which offers the following settings:
+
+- `attribute: string`: To update a custom element's prop, you have two alternatives: either set the property on the custom element's reference as illustrated above or use an HTML attribute. For the latter, the default attribute name is the lowercase property name. Modify this by assigning `attribute: "<desired name>"`.
+- `reflect: boolean`: By default, updated prop values do not reflect back to the DOM. To enable this behavior, set `reflect: true`.
+- `type: 'String' | 'Boolean' | 'Number' | 'Array' | 'Object'`: While converting an attribute value to a prop value and reflecting it back, the prop value is assumed to be a `String` by default. This may not always be accurate. For instance, for a number type, define it using `type: "Number"`
+
+```svelte
+<svelte:options
+	customElement={{
+		tag: "custom-element",
+		shadow: "none",
+		props: {
+			name: { reflect: true, type: "Number", attribute: "element-index" },
+		},
+	}}
+/>
+
+<script>
+	export let elementIndex;
+</script>
+
+...
+```
+
 Custom elements can be a useful way to package components for consumption in a non-Svelte app, as they will work with vanilla HTML and JavaScript as well as [most frameworks](https://custom-elements-everywhere.com/). There are, however, some important differences to be aware of:
 
-* Styles are *encapsulated*, rather than merely *scoped*. This means that any non-component styles (such as you might have in a `global.css` file) will not apply to the custom element, including styles with the `:global(...)` modifier
+* Styles are *encapsulated*, rather than merely *scoped* (unless you set `shadow: "none"`). This means that any non-component styles (such as you might have in a `global.css` file) will not apply to the custom element, including styles with the `:global(...)` modifier
 * Instead of being extracted out as a separate .css file, styles are inlined into the component as a JavaScript string
 * Custom elements are not generally suitable for server-side rendering, as the shadow DOM is invisible until JavaScript loads
 * In Svelte, slotted content renders *lazily*. In the DOM, it renders *eagerly*. In other words, it will always be created even if the component's `<slot>` element is inside an `{#if ...}` block. Similarly, including a `<slot>` in an `{#each ...}` block will not cause the slotted content to be rendered multiple times
-* The `let:` directive has no effect
+* The `let:` directive has no effect, because custom elements do not have a way to pass data to the parent component that fills the slot 
 * Polyfills are required to support older browsers
 
+When a custom element written with Svelte is created or updated, the shadow dom will reflect the value in the next tick, not immediately. This way updates can be batched, and DOM moves which temporarily (but synchronously) detach the element from the DOM don't lead to unmounting the inner component.
 
 
 ### Server-side component API

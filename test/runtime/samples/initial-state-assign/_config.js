@@ -1,5 +1,7 @@
 export default {
-	props: { bar: 'bar' },
+	get props() {
+		return { bar: 'bar' };
+	},
 	html: `
 		"foo"
 		"bar"

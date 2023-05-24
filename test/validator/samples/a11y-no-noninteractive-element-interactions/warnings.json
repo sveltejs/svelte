@@ -1,0 +1,62 @@
+[
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 47,
+			"line": 10
+		},
+		"message": "A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.",
+		"start": {
+			"column": 0,
+			"line": 10
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 58,
+			"line": 11
+		},
+		"message": "A11y: Non-interactive element <h1> should not be assigned mouse or keyboard event listeners.",
+		"start": {
+			"column": 0,
+			"line": 11
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 50,
+			"line": 12
+		},
+		"message": "A11y: Non-interactive element <h1> should not be assigned mouse or keyboard event listeners.",
+		"start": {
+			"column": 0,
+			"line": 12
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 28,
+			"line": 13
+		},
+		"message": "A11y: Non-interactive element <p> should not be assigned mouse or keyboard event listeners.",
+		"start": {
+			"column": 0,
+			"line": 13
+		}
+	},
+	{
+		"code": "a11y-no-noninteractive-element-interactions",
+		"end": {
+			"column": 46,
+			"line": 14
+		},
+		"message": "A11y: Non-interactive element <div> should not be assigned mouse or keyboard event listeners.",
+		"start": {
+			"column": 0,
+			"line": 14
+		}
+	}
+]

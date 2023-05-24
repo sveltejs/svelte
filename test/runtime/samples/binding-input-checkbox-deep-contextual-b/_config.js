@@ -24,7 +24,7 @@ export default {
 	`,
 
 	async test({ assert, component, target, window }) {
-		const inputs = [ ...target.querySelectorAll('input') ];
+		const inputs = [...target.querySelectorAll('input')];
 
 		const event = new window.Event('change');
 
@@ -33,18 +33,24 @@ export default {
 
 		await component.clear();
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><input type="checkbox"><p>one</p></div>
 			<div><input type="checkbox"><p>three</p></div>
-		`);
+		`
+		);
 
 		inputs[1].checked = true;
 		await inputs[1].dispatchEvent(event);
 
 		await component.clear();
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div><input type="checkbox"><p>one</p></div>
-		`);
+		`
+		);
 	}
 };

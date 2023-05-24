@@ -4,15 +4,17 @@ let originalParagraphGetBoundingClientRect;
 
 export default {
 	skip_if_ssr: true,
-	props: {
-		things: [
-			{ id: 1, name: 'a' },
-			{ id: 2, name: 'b' },
-			{ id: 3, name: 'c' },
-			{ id: 4, name: 'd' },
-			{ id: 5, name: 'e' }
-		],
-		tag: 'div'
+	get props() {
+		return {
+			things: [
+				{ id: 1, name: 'a' },
+				{ id: 2, name: 'b' },
+				{ id: 3, name: 'c' },
+				{ id: 4, name: 'd' },
+				{ id: 5, name: 'e' }
+			],
+			tag: 'div'
+		};
 	},
 
 	html: `
@@ -24,19 +26,14 @@ export default {
 	`,
 
 	before_test() {
-		originalDivGetBoundingClientRect =
-			window.HTMLDivElement.prototype.getBoundingClientRect;
-		originalSpanGetBoundingClientRect =
-			window.HTMLSpanElement.prototype.getBoundingClientRect;
+		originalDivGetBoundingClientRect = window.HTMLDivElement.prototype.getBoundingClientRect;
+		originalSpanGetBoundingClientRect = window.HTMLSpanElement.prototype.getBoundingClientRect;
 		originalParagraphGetBoundingClientRect =
 			window.HTMLParagraphElement.prototype.getBoundingClientRect;
 
-		window.HTMLDivElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
-		window.HTMLParagraphElement.prototype.getBoundingClientRect =
-			fakeGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
+		window.HTMLParagraphElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
 
 		function fakeGetBoundingClientRect() {
 			const index = [...this.parentNode.children].indexOf(this);
@@ -51,10 +48,8 @@ export default {
 		}
 	},
 	after_test() {
-		window.HTMLDivElement.prototype.getBoundingClientRect =
-			originalDivGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect =
-			originalSpanGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = originalDivGetBoundingClientRect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = originalSpanGetBoundingClientRect;
 		window.HTMLParagraphElement.prototype.getBoundingClientRect =
 			originalParagraphGetBoundingClientRect;
 	},

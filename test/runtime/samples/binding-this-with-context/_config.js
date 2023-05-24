@@ -12,9 +12,17 @@ export default {
 		});
 
 		elems = target.querySelectorAll('span');
-		assert.equal(Object.keys(component.spans).length, 3, 'three spans are registered (unkeyed object)');
+		assert.equal(
+			Object.keys(component.spans).length,
+			3,
+			'three spans are registered (unkeyed object)'
+		);
 		component.items.forEach((e, i) => {
-			assert.equal(component.spans[`-${e}${i}`], elems[i], `span -${e}${i} is correct (unkeyed object)`);
+			assert.equal(
+				component.spans[`-${e}${i}`],
+				elems[i],
+				`span -${e}${i} is correct (unkeyed object)`
+			);
 		});
 
 		elems = target.querySelectorAll('p');

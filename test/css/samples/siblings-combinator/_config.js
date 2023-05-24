@@ -16,8 +16,8 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			
-			frame:`
+
+			frame: `
 				 6:     color: green;
 				 7:   }
 				 8:   span + article {
@@ -31,7 +31,7 @@ export default {
 		},
 		{
 			code: 'css-unused-selector',
-			
+
 			frame: `
 				 9:     color: green;
 				10:   }

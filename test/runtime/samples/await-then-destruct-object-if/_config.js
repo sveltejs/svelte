@@ -1,6 +1,8 @@
 export default {
-	props: {
-		thePromise: Promise.resolve({ result: 1 })
+	get props() {
+		return {
+			thePromise: Promise.resolve({ result: 1 })
+		};
 	},
 
 	html: '',
@@ -16,7 +18,7 @@ export default {
 			`
 		);
 
-		await new Promise(resolve => setTimeout(resolve, 1));
+		await new Promise((resolve) => setTimeout(resolve, 1));
 
 		assert.htmlEqual(
 			target.innerHTML,

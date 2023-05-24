@@ -5,8 +5,11 @@ export default {
 	async test({ component, target, assert }) {
 		component.value = 3;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>3 ^ 4 = 81</div>
-		`);
+		`
+		);
 	}
 };

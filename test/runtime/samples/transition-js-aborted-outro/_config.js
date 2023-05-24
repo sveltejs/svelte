@@ -1,6 +1,6 @@
 export default {
-	props: {
-		visible: true
+	get props() {
+		return { visible: true };
 	},
 
 	test({ assert, component, target, raf }) {
@@ -17,8 +17,11 @@ export default {
 		assert.equal(span.foo, 1);
 
 		raf.tick(100);
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<span>hello</span>
-		`);
+		`
+		);
 	}
 };

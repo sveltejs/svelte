@@ -16,7 +16,9 @@ export default {
 
 		await buttons[1].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="tabs">
 				<div class="tab-list">
 					<button class="">small</button>
@@ -25,11 +27,14 @@ export default {
 
 				<h2>Large panel</h2>
 			</div>
-		`);
+		`
+		);
 
 		component.show_medium = true;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="tabs">
 				<div class="tab-list">
 					<button class="">small</button>
@@ -39,13 +44,16 @@ export default {
 
 				<h2>Large panel</h2>
 			</div>
-		`);
+		`
+		);
 
 		buttons = target.querySelectorAll('button');
 
 		await buttons[1].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="tabs">
 				<div class="tab-list">
 					<button class="">small</button>
@@ -55,11 +63,14 @@ export default {
 
 				<h2>Medium panel</h2>
 			</div>
-		`);
+		`
+		);
 
 		component.show_medium = false;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="tabs">
 				<div class="tab-list">
 					<button class="">small</button>
@@ -68,6 +79,7 @@ export default {
 
 				<h2>Large panel</h2>
 			</div>
-		`);
+		`
+		);
 	}
 };

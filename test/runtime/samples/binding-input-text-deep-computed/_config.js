@@ -1,9 +1,6 @@
 export default {
-	props: {
-		prop: 'name',
-		user: {
-			name: 'alice'
-		}
+	get props() {
+		return { prop: 'name', user: { name: 'alice' } };
 	},
 
 	html: `
@@ -26,19 +23,25 @@ export default {
 		input.value = 'bob';
 		await input.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello bob</p>
-		`);
+		`
+		);
 
 		const user = component.user;
 		user.name = 'carol';
 
 		component.user = user;
 		assert.equal(input.value, 'carol');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>hello carol</p>
-		`);
+		`
+		);
 	}
 };

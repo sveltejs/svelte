@@ -1,7 +1,9 @@
-[{
-	"message": "duplicate default <slot> element",
-	"start": {
-		"line": 2,
-		"column": 0
+[
+	{
+		"message": "duplicate default <slot> element",
+		"start": {
+			"line": 2,
+			"column": 0
+		}
 	}
-}]
+]

@@ -11,8 +11,10 @@ export default {
 		</select>
 	`,
 
-	props: {
-		items: [{ value: 'hullo' }, { value: 'world' }]
+	get props() {
+		return {
+			items: [{ value: 'hullo' }, { value: 'world' }]
+		};
 	},
 
 	test({ assert, component, target, window }) {
@@ -23,8 +25,6 @@ export default {
 		selects[1].options[0].selected = true;
 		selects[1].dispatchEvent(change);
 
-		assert.deepEqual(component.items, [
-			{ value: 'hullo' }, { value: 'hullo' }
-		]);
+		assert.deepEqual(component.items, [{ value: 'hullo' }, { value: 'hullo' }]);
 	}
 };

@@ -12,7 +12,7 @@ export default {
 	`,
 
 	test({ assert, target }) {
-		const attr = sel => target.querySelector(sel).attributes[0].name;
+		const attr = (sel) => target.querySelector(sel).attributes[0].name;
 
 		assert.equal(attr('div'), 'class');
 		assert.equal(attr('svg#one'), 'viewBox');

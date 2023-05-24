@@ -1,13 +1,9 @@
 export default {
-	props: {
-		state: 'deconflicted',
-		states: [
-			'Alabama',
-			'Alaska',
-			'Arizona',
-			'Arkansas',
-			'...and some others'
-		]
+	get props() {
+		return {
+			state: 'deconflicted',
+			states: ['Alabama', 'Alaska', 'Arizona', 'Arkansas', '...and some others']
+		};
 	},
 
 	html: `
@@ -34,7 +30,9 @@ export default {
 			'Montana'
 		];
 
-		assert.htmlEqual( target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>Current state: deconflicted</p>
 
 			<ul>
@@ -47,6 +45,7 @@ export default {
 				<li>Missouri</li>
 				<li>Montana</li>
 			</ul>
-		` );
+		`
+		);
 	}
 };

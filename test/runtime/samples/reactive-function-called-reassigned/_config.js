@@ -1,13 +1,13 @@
 let value;
 let called = 0;
 function callback(_value) {
-	called ++;
+	called++;
 	value = _value;
 }
 
 export default {
-	props: {
-		callback
+	get props() {
+		return { callback };
 	},
 	before_test() {
 		called = 0;

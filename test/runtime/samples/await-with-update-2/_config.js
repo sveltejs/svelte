@@ -1,7 +1,9 @@
 export default {
-	props: {
-		thePromise: new Promise((_) => {}),
-		count: 0
+	get props() {
+		return {
+			thePromise: new Promise((_) => {}),
+			count: 0
+		};
 	},
 
 	html: `
@@ -9,7 +11,10 @@ export default {
 	`,
 
 	async test({ assert, component, target }) {
-		await (component.thePromise = Promise.resolve({ value: 'success', Component: component.Component }));
+		await (component.thePromise = Promise.resolve({
+			value: 'success',
+			Component: component.Component
+		}));
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -34,7 +39,10 @@ export default {
 		);
 
 		try {
-			await (component.thePromise = Promise.reject({ value: 'failure', Component: component.Component }));
+			await (component.thePromise = Promise.reject({
+				value: 'failure',
+				Component: component.Component
+			}));
 		} catch (error) {
 			// ignore
 		}

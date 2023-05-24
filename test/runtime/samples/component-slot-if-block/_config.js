@@ -6,11 +6,14 @@ export default {
 
 	test({ assert, component, target }) {
 		component.foo = true;
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div>
 				<p>unconditional</p>
 				<p>conditional</p>
 			</div>
-		`);
+		`
+		);
 	}
 };

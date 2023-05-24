@@ -14,13 +14,16 @@ export default {
 		input3.checked = true;
 		await input3.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
 			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
 			<label><input type="checkbox" value="Coconut"> Coconut</label>
-		`);
+		`
+		);
 
 		assert.equal(input1.checked, false);
 		assert.equal(input2.checked, false);
@@ -31,13 +34,16 @@ export default {
 		input4.checked = true;
 		await input4.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
 			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
 			<label><input type="checkbox" value="Coconut"> Coconut</label>
-		`);
+		`
+		);
 
 		assert.equal(input1.checked, false);
 		assert.equal(input2.checked, false);
@@ -48,13 +54,16 @@ export default {
 		input3.checked = false;
 		await input3.dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="Lemon"> Lemon</label>
 			<label><input type="checkbox" value="Chocolate"> Chocolate</label>
 			<label><input type="checkbox" value="Vanilla"> Vanilla</label>
 			<label><input type="checkbox" value="Strawberry"> Strawberry</label>
 			<label><input type="checkbox" value="Coconut"> Coconut</label>
-		`);
+		`
+		);
 
 		assert.equal(input1.checked, false);
 		assert.equal(input2.checked, false);

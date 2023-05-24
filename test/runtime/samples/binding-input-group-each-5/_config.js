@@ -58,7 +58,9 @@ export default {
 		inputs[2].checked = true;
 		await inputs[2].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -75,12 +77,15 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1</p>
-		`);
+		`
+		);
 
 		inputs[8].checked = true;
 		await inputs[8].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -97,11 +102,14 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1</p>
-		`);
+		`
+		);
 
 		component.selected_index = [1, 1];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -118,7 +126,8 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1</p>
-		`);
+		`
+		);
 
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, true);
@@ -139,7 +148,9 @@ export default {
 		inputs[5].checked = false;
 		await inputs[5].dispatchEvent(event);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<label><input type="checkbox" value="1"> 1</label>
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
@@ -156,7 +167,8 @@ export default {
 			<label><input type="checkbox" value="2"> 2</label>
 			<label><input type="checkbox" value="3"> 3</label>
 			<p>1</p>
-		`);
+		`
+		);
 
 		assert.equal(inputs[0].checked, true);
 		assert.equal(inputs[1].checked, true);

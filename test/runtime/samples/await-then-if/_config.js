@@ -1,12 +1,12 @@
 let fulfil;
 
-const thePromise = new Promise(f => {
+const thePromise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
-	props: {
-		thePromise
+	get props() {
+		return { thePromise };
 	},
 
 	html: `
@@ -18,8 +18,11 @@ export default {
 
 		await thePromise;
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>promise array is empty</p>
-		`);
+		`
+		);
 	}
 };

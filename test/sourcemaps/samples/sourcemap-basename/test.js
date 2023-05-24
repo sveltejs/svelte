@@ -6,7 +6,7 @@ export function test({ assert, preprocessed }) {
 		undefined,
 		'Preprocessor should receive same value for filename as passed to preprocess function'
 	);
-	
+
 	assert.deepEqual(
 		preprocessed.map.sources.slice().sort(),
 		[external_relative_filename, component_file_basename].sort(),

@@ -1,8 +1,6 @@
 export default {
-	props: {
-		props: {
-			disabled: true
-		}
+	get props() {
+		return { props: { disabled: true } };
 	},
 
 	html: `
@@ -16,10 +14,7 @@ export default {
 
 		component.props = { disabled: false };
 
-		assert.htmlEqual(
-			target.innerHTML,
-			'<button>click me</button>'
-		);
+		assert.htmlEqual(target.innerHTML, '<button>click me</button>');
 		assert.ok(!button.disabled);
 	}
 };

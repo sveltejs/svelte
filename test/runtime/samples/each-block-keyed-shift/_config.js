@@ -1,6 +1,8 @@
 export default {
-	props: {
-		titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+	get props() {
+		return {
+			titles: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
+		};
 	},
 
 	html: `
@@ -12,16 +14,21 @@ export default {
 	test({ assert, component, target }) {
 		component.titles = [{ name: 'b' }, { name: 'c' }];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>b</p>
 			<p>c</p>
-		`);
+		`
+		);
 
 		component.titles = [{ name: 'c' }];
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<p>c</p>
-		`);
-
+		`
+		);
 	}
 };

@@ -1,9 +1,9 @@
 export default {
-	props: {
-		myClass: 'one two',
-		attributes: {
-			role: 'button'
-		}
+	get props() {
+		return {
+			myClass: 'one two',
+			attributes: { role: 'button' }
+		};
 	},
 
 	html: '<div class="one two three" role="button"></div>',
@@ -14,8 +14,11 @@ export default {
 			'aria-label': 'Test'
 		};
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div class="one three" aria-label="Test"></div>
-		`);
+		`
+		);
 	}
 };

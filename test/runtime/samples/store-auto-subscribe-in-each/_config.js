@@ -1,14 +1,12 @@
-import { writable } from '../../../../store';
+import { writable } from 'svelte/store';
 
 export default {
 	skip: true,
 
-	props: {
-		things: [
-			writable('a'),
-			writable('b'),
-			writable('c')
-		]
+	get props() {
+		return {
+			things: [writable('a'), writable('b'), writable('c')]
+		};
 	},
 
 	html: `
@@ -23,18 +21,24 @@ export default {
 
 		await buttons[1].dispatchEvent(click);
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>a</button>
 			<button>B</button>
 			<button>c</button>
-		`);
+		`
+		);
 
 		await component.things[1].set('d');
 
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<button>d</button>
 			<button>B</button>
 			<button>c</button>
-		`);
+		`
+		);
 	}
 };

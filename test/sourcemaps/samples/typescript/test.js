@@ -1,4 +1,4 @@
-import { assert_mapped, assert_not_located } from '../../helpers';
+import { assert_mapped, assert_not_located } from '../../helpers.js';
 
 export function test({ input, preprocessed }) {
 	// TS => JS code
@@ -15,7 +15,7 @@ export function test({ input, preprocessed }) {
 		input: input.locate,
 		preprocessed
 	});
-	
+
 	// TS types, removed
 	assert_not_located('ITimeoutDestroyer', preprocessed.locate_1);
 }

@@ -1,7 +1,9 @@
 export default {
-	props: {
-		things: ['one', 'two', 'three'],
-		selected: 'two'
+	get props() {
+		return {
+			things: ['one', 'two', 'three'],
+			selected: 'two'
+		};
 	},
 
 	html: `
@@ -12,10 +14,13 @@ export default {
 
 	test({ assert, component, target }) {
 		component.selected = 'three';
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<div></div>
 			<div class=""></div>
 			<div class="selected"></div>
-		`);
+		`
+		);
 	}
 };

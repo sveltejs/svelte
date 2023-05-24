@@ -10,20 +10,18 @@ export default {
 		};
 	},
 
-	async test(assert, target, snapshot, component, window) {
+	async test(assert, target, _, component, window) {
 		const input = target.querySelector('input');
-		const p = target.querySelector('p');
-
-		assert.equal(input, snapshot.input);
-		assert.equal(p, snapshot.p);
-
 		input.value = 'everybody';
 		await input.dispatchEvent(new window.Event('input'));
 
 		assert.equal(component.name, 'everybody');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<input>
 			<p>Hello everybody!</p>
-		`);
+		`
+		);
 	}
 };

@@ -1,8 +1,6 @@
 export default {
-	props: {
-		component: {
-			name: 'world'
-		}
+	get props() {
+		return { component: { name: 'world' } };
 	},
 
 	html: `
@@ -25,16 +23,22 @@ export default {
 		await input.dispatchEvent(event);
 
 		assert.equal(input.value, 'everybody');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Hello everybody!</h1>
 			<input>
-		`);
+		`
+		);
 
 		component.component = { name: 'goodbye' };
 		assert.equal(input.value, 'goodbye');
-		assert.htmlEqual(target.innerHTML, `
+		assert.htmlEqual(
+			target.innerHTML,
+			`
 			<h1>Hello goodbye!</h1>
 			<input>
-		`);
+		`
+		);
 	}
 };
