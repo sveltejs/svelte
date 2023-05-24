@@ -753,7 +753,7 @@ export const resize_observer_device_pixel_content_box = /* @__PURE__ */ new Resi
 export { ResizeObserverSingleton };
 
 export function toggle_class(element, name, toggle) {
-	element.classList[toggle ? 'add' : 'remove'](name);
+	element.classList.toggle(name, !!toggle);
 }
 
 export function custom_event<T = any>(type: string, detail?: T, { bubbles = false, cancelable = false } = {}): CustomEvent<T> {
