@@ -3,8 +3,8 @@
   "version": "4.0.0-next.0",
   "description": "Cybernetically enhanced web apps",
   "type": "module",
-  "module": "index.mjs",
-  "main": "index",
+  "module": "src/runtime/index.js",
+  "main": "src/runtime/index.js",
   "files": [
     "src",
     "types",
@@ -53,9 +53,6 @@
     "./motion": {
       "types": "./types/runtime/motion/index.d.ts",
       "import": "./src/runtime/motion/index.js"
-    },
-    "./register": {
-      "require": "./register.js"
     },
     "./store": {
       "types": "./types/runtime/store/index.d.ts",
