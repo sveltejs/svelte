@@ -77,9 +77,9 @@
     "build": "rollup -c && npm run tsd",
     "prepare": "npm run build",
     "dev": "rollup -cw",
-    "posttest": "agadoo internal/index.mjs",
-    "prepublishOnly": "node check_publish_env.js && npm run lint && npm run build && npm test",
-    "tsd": "node ./generate-types.mjs",
+    "posttest": "agadoo src/internal/index.js",
+    "prepublishOnly": "npm run lint && npm run build && npm test",
+    "tsd": "node ./generate-types.js",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
