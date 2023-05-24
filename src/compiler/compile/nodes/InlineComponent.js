@@ -81,7 +81,6 @@ export default class InlineComponent extends Node {
 						break;
 					case 'Let':
 						let_attributes.push(node);
-						this.lets.push(new Let(component, this, scope, node));
 						break;
 					case 'Transition':
 						return component.error(node, compiler_errors.invalid_transition);
