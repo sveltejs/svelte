@@ -5,6 +5,7 @@
 /site
 !/src
 src/compiler/compile/internal_exports.js
+src/shared/version.js
 !/test
 /test/**/*.svelte
 /test/**/_expected*
@@ -12,4 +13,5 @@ src/compiler/compile/internal_exports.js
 /test/**/expected*
 /test/**/_output
 /types
+!rollup.config.js
 !vitest.config.js
