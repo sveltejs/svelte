@@ -14,7 +14,7 @@ Install `typescript` and `svelte-preprocess`:
 npm install typescript svelte-preprocess --save-dev
 ```
 
-Then, create a `svelte.config.js` file at the root of your project(if it doesn't exist already) and add the following:
+Then create a `svelte.config.js` file at the root of your project (if it doesn't exist already) and add the following:
 
 ```ts
 import preprocess from 'svelte-preprocess';
