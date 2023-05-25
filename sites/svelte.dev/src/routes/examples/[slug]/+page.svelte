@@ -10,8 +10,6 @@
 
 	export let data;
 
-	$: console.log(data);
-
 	/** @type {number} */
 	let width;
 	let offset = 1;
