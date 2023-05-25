@@ -41,7 +41,7 @@ const config = {
 export default config;
 ```
 
-If you're using SvelteKit, `vitePreprocess` is imported from `@sveltejs/kit/vite`
+If you're using SvelteKit, `vitePreprocess` can be imported from `@sveltejs/kit/vite`
 
 ```ts
 /// file: svelte.config.js
