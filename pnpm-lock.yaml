@@ -154,7 +154,7 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(@sveltejs/kit@1.18.0)
       '@sveltejs/kit':
-        specifier: 1.18.0
+        specifier: ^1.18.0
         version: 1.18.0(svelte@)(vite@4.3.8)
       '@sveltejs/site-kit':
         specifier: ^5.2.1
