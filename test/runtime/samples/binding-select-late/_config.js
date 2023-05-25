@@ -1,7 +1,6 @@
 export default {
-	props: {
-		items: [],
-		selected: null
+	get props() {
+		return { items: [], selected: null };
 	},
 
 	html: `

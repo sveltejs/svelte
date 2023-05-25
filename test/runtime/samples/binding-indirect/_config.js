@@ -1,16 +1,16 @@
-const tasks = [
-	{ description: 'put your left leg in', done: false },
-	{ description: 'your left leg out', done: false },
-	{ description: 'in, out, in, out', done: false },
-	{ description: 'shake it all about', done: false }
-];
+let tasks = [];
 
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		tasks,
-		selected: tasks[0]
+	get props() {
+		tasks = [
+			{ description: 'put your left leg in', done: false },
+			{ description: 'your left leg out', done: false },
+			{ description: 'in, out, in, out', done: false },
+			{ description: 'shake it all about', done: false }
+		];
+		return { tasks, selected: tasks[0] };
 	},
 
 	html: `

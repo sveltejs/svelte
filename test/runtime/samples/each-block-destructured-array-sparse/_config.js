@@ -1,9 +1,11 @@
 export default {
-	props: {
-		animalPawsEntries: [
-			['raccoon', 'hands'],
-			['eagle', 'wings']
-		]
+	get props() {
+		return {
+			animalPawsEntries: [
+				['raccoon', 'hands'],
+				['eagle', 'wings']
+			]
+		};
 	},
 
 	html: `

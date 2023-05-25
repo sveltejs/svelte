@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		count: 3
+	get props() {
+		return { count: 3 };
 	},
 
 	html: `

@@ -1,6 +1,6 @@
 export default {
-	props: {
-		propTag: 'hr'
+	get props() {
+		return { propTag: 'hr' };
 	},
 	html: '<h1></h1><col><img><hr><input><br>',
 

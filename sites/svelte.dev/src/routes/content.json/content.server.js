@@ -1,15 +1,17 @@
-import { replace_placeholders } from '$lib/server/docs/render';
+import { modules } from '$lib/generated/type-info.js';
 import {
 	extract_frontmatter,
 	normalizeSlugify,
 	removeMarkdown,
 	transform
-} from '$lib/server/markdown';
+} from '$lib/server/markdown/index.js';
+import { replace_export_type_placeholders } from '$lib/server/markdown/renderer.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
+import { CONTENT_BASE } from '../../constants.js';
 
-const base = '../../documentation/content/';
+const base = CONTENT_BASE;
 
 const categories = [
 	{
@@ -42,7 +44,10 @@ export function content() {
 
 			const filepath = `${base}/${category.slug}/${file}`;
 			// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
-			const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
+			const markdown = replace_export_type_placeholders(
+				fs.readFileSync(filepath, 'utf-8'),
+				modules
+			);
 
 			const { body, metadata } = extract_frontmatter(markdown);
 

@@ -1,17 +1,29 @@
 export default {
-	props: {
-		firstString: 'cats',
-		secondString: 'dogs',
-		objectsArray: [
-			{ dogs: 'woof', cats: 'meow', stac: 'stack', DOGS: 'WOOF' },
-			{
-				dogs: 'A German sheppard',
-				cats: 'A tailless cat',
-				stac: 'A jenga tower',
-				DOGS: 'A GERMAN SHEPPARD'
-			},
-			{ dogs: 'dogs', cats: 'cats', stac: 'stac', DOGS: 'DOGS' }
-		]
+	get props() {
+		return {
+			firstString: 'cats',
+			secondString: 'dogs',
+			objectsArray: [
+				{
+					dogs: 'woof',
+					cats: 'meow',
+					stac: 'stack',
+					DOGS: 'WOOF'
+				},
+				{
+					dogs: 'A German sheppard',
+					cats: 'A tailless cat',
+					stac: 'A jenga tower',
+					DOGS: 'A GERMAN SHEPPARD'
+				},
+				{
+					dogs: 'dogs',
+					cats: 'cats',
+					stac: 'stac',
+					DOGS: 'DOGS'
+				}
+			]
+		};
 	},
 
 	html: `

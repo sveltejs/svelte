@@ -1,8 +1,8 @@
 export default {
 	skip_if_ssr: true,
 
-	props: {
-		value: 'hello!'
+	get props() {
+		return { value: 'hello!' };
 	},
 
 	html: `

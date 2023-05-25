@@ -1,10 +1,12 @@
 export default {
-	props: {
-		items: [
-			{ foo: true, bar: false },
-			{ foo: false, bar: true },
-			{ foo: true, bar: true }
-		]
+	get props() {
+		return {
+			items: [
+				{ foo: true, bar: false },
+				{ foo: false, bar: true },
+				{ foo: true, bar: true }
+			]
+		};
 	},
 
 	html: `

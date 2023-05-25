@@ -1,4 +1,4 @@
-import { magic_string_bundle } from '../../helpers';
+import { magic_string_bundle } from '../../helpers.js';
 
 export const EXTERNAL = 'span { --external-var: 1px; }';
 

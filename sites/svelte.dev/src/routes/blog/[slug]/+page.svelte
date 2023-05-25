@@ -1,8 +1,11 @@
 <script>
 	import { page } from '$app/stores';
+	import * as hovers from '$lib/utils/hovers.js';
 	import '@sveltejs/site-kit/styles/code.css';
 
 	export let data;
+
+	hovers.setup();
 </script>
 
 <svelte:head>
@@ -58,20 +61,6 @@
 		text-transform: uppercase;
 	}
 
-	.post h1 {
-		color: var(--sk-text-2);
-		max-width: 20em;
-		margin: 0 0 0.8rem 0;
-	}
-
-	.post :global(h2) {
-		margin: 2em 0 0.5em 0;
-		/* color: var(--second); */
-		color: var(--sk-text-2);
-		font-size: var(--sk-text-m);
-		font-weight: 300;
-	}
-
 	.post :global(figure) {
 		margin: 1.6rem 0 3.2rem 0;
 	}
@@ -87,27 +76,6 @@
 
 	.post :global(video) {
 		width: 100%;
-	}
-
-	.post :global(blockquote) {
-		max-width: none;
-		border-left: 4px solid #eee;
-		background: #f9f9f9;
-		border-radius: 0 var(--sk-border-radius) var(--sk-border-radius) 0;
-	}
-
-	/* .post :global(code) {
-		padding: 0.3rem 0.8rem 0.3rem;
-		margin: 0 0.2rem;
-		top: -0.1rem;
-		background: var(--sk-back-4);
-	} */
-
-	.post :global(pre) :global(code) {
-		padding: 0;
-		margin: 0;
-		top: 0;
-		background: transparent;
 	}
 
 	.post :global(aside) {
@@ -128,27 +96,6 @@
 		margin: 2em 0;
 		border-radius: var(--sk-border-radius);
 		border: 0.8rem solid var(--sk-theme-2);
-	}
-
-	.post :global(.anchor) {
-		top: calc((var(--sk-text-m) - 24px) / 2);
-	}
-
-	.post :global(a) {
-		padding: 0;
-		transition: none;
-	}
-
-	.post :global(a):not(:hover) {
-		border: none;
-	}
-
-	@media (max-width: 768px) {
-		.post :global(.anchor) {
-			transform: scale(0.6);
-			opacity: 1;
-			left: -1em;
-		}
 	}
 
 	@media (min-width: 910px) {

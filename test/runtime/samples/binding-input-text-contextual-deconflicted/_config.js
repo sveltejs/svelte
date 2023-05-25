@@ -1,7 +1,6 @@
 export default {
-	props: {
-		foo: 'a',
-		items: ['x']
+	get props() {
+		return { foo: 'a', items: ['x'] };
 	},
 
 	html: `

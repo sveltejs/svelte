@@ -1,12 +1,40 @@
 export default {
-	props: {
-		animalEntries: [
-			{ animal: 'raccoon', class: 'mammal', species: 'P. lotor', kilogram: 25, bmi: 0.04 },
-			{ animal: 'eagle', class: 'bird', kilogram: 5.4 },
-			{ animal: 'tiger', class: 'mammal', kilogram: 10, pound: 30 },
-			{ animal: 'lion', class: 'mammal', kilogram: 10, height: 50 },
-			{ animal: 'leopard', class: 'mammal', kilogram: 30, height: 50, bmi: 10 }
-		]
+	get props() {
+		return {
+			animalEntries: [
+				{
+					animal: 'raccoon',
+					class: 'mammal',
+					species: 'P. lotor',
+					kilogram: 25,
+					bmi: 0.04
+				},
+				{
+					animal: 'eagle',
+					class: 'bird',
+					kilogram: 5.4
+				},
+				{
+					animal: 'tiger',
+					class: 'mammal',
+					kilogram: 10,
+					pound: 30
+				},
+				{
+					animal: 'lion',
+					class: 'mammal',
+					kilogram: 10,
+					height: 50
+				},
+				{
+					animal: 'leopard',
+					class: 'mammal',
+					kilogram: 30,
+					height: 50,
+					bmi: 10
+				}
+			]
+		};
 	},
 
 	html: `

@@ -1,11 +1,11 @@
 <p>three</p>
 
 <style>
-	.four {
+	.style {
 		color: red;
 	}
 </style>
 
 <script>
-	console.log('five');
+	console.log('script');
 </script>

@@ -1,8 +1,6 @@
 export default {
-	props: {
-		foo: {
-			bar: ['x', 'y', 'z']
-		}
+	get props() {
+		return { foo: { bar: ['x', 'y', 'z'] } };
 	},
 
 	html: `

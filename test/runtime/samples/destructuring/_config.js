@@ -1,8 +1,8 @@
 export default {
 	html: '<button>click me</button>',
 
-	props: {
-		foo: 42
+	get props() {
+		return { foo: 42 };
 	},
 
 	test({ assert, component, target, window }) {

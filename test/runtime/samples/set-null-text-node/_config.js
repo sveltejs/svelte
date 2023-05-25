@@ -1,5 +1,7 @@
 export default {
-	props: { foo: null },
+	get props() {
+		return { foo: null };
+	},
 
 	html: 'foo is null',
 

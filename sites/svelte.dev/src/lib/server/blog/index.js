@@ -1,6 +1,9 @@
 // @ts-check
-import { createShikiHighlighter } from 'shiki-twoslash';
-import { SHIKI_LANGUAGE_MAP, escape, transform } from '../markdown';
+import { modules } from '$lib/generated/type-info';
+import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { extract_frontmatter } from '../markdown/index.js';
+import { render_markdown } from '../markdown/renderer.js';
 
 /**
  * @param {import('./types').BlogData} blog_data
@@ -11,86 +14,65 @@ export async function get_processed_blog_post(blog_data, slug) {
 
 	if (!post) return null;
 
-	const highlighter = await createShikiHighlighter({ theme: 'css-variables' });
-
 	return {
 		...post,
-		content: transform(post.content, {
-			/**
-			 * @param {string} html
-			 */
-			heading(html) {
-				const title = html
-					.replace(/<\/?code>/g, '')
-					.replace(/&quot;/g, '"')
-					.replace(/&lt;/g, '<')
-					.replace(/&gt;/g, '>');
-
-				return title;
-			},
-			code: (source, language) => {
-				let html = '';
-
-				source = source
-					.replace(/^([\-\+])?((?:    )+)/gm, (match, prefix = '', spaces) => {
-						if (prefix && language !== 'diff') return match;
-
-						// for no good reason at all, marked replaces tabs with spaces
-						let tabs = '';
-						for (let i = 0; i < spaces.length; i += 4) {
-							tabs += '  ';
-						}
-						return prefix + tabs;
-					})
-					.replace(/\*\\\//g, '*/');
-
-				if (language === 'diff') {
-					const lines = source.split('\n').map((content) => {
-						let type = null;
-						if (/^[\+\-]/.test(content)) {
-							type = content[0] === '+' ? 'inserted' : 'deleted';
-							content = content.slice(1);
-						}
-
-						return {
-							type,
-							content: escape(content)
-						};
-					});
-
-					html = `<pre class="language-diff"><code>${lines
-						.map((line) => {
-							if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
-							return line.content + '\n';
-						})
-						.join('')}</code></pre>`;
-				} else {
-					html = highlighter.codeToHtml(source, { lang: SHIKI_LANGUAGE_MAP[language] });
-
-					html = html
-						.replace(
-							/^(\s+)<span class="token comment">([\s\S]+?)<\/span>\n/gm,
-							(match, intro_whitespace, content) => {
-								// we use some CSS trickery to make comments break onto multiple lines while preserving indentation
-								const lines = (intro_whitespace + content).split('\n');
-								return lines
-									.map((line) => {
-										const match = /^(\s*)(.*)/.exec(line);
-										const indent = (match[1] ?? '').replace(/\t/g, '  ').length;
-
-										return `<span class="token comment wrapped" style="--indent: ${indent}ch">${
-											line ?? ''
-										}</span>`;
-									})
-									.join('');
-							}
-						)
-						.replace(/\/\*…\*\//g, '…');
-				}
-
-				return html;
-			},
-			codespan: (text) => '<code>' + text + '</code>'
-		})
+		content: await render_markdown(post.file, post.content, { modules })
 	};
 }
+
+const BLOG_NAME_REGEX = /^(\d{4}-\d{2}-\d{2})-(.+)\.md$/;
+
+/** @returns {import('./types').BlogData} */
+export function get_blog_data(base = CONTENT_BASE_PATHS.BLOG) {
+	/** @type {import('./types').BlogData} */
+	const blog_posts = [];
+
+	for (const file of fs.readdirSync(base).reverse()) {
+		if (!BLOG_NAME_REGEX.test(file)) continue;
+
+		const { date, date_formatted, slug } = get_date_and_slug(file);
+		const { metadata, body } = extract_frontmatter(fs.readFileSync(`${base}/${file}`, 'utf-8'));
+
+		blog_posts.push({
+			date,
+			date_formatted,
+			content: body,
+			description: metadata.description,
+			draft: metadata.draft === 'true',
+			slug,
+			title: metadata.title,
+			file,
+			author: {
+				name: metadata.author,
+				url: metadata.authorURL
+			}
+		});
+	}
+
+	return blog_posts;
+}
+
+/** @param {import('./types').BlogData} blog_data */
+export function get_blog_list(blog_data) {
+	return blog_data.map(({ slug, date, title, description, draft }) => ({
+		slug,
+		date,
+		title,
+		description,
+		draft
+	}));
+}
+
+/** @param {string} filename */
+function get_date_and_slug(filename) {
+	const match = BLOG_NAME_REGEX.exec(filename);
+	if (!match) throw new Error(`Invalid filename for blog: '${filename}'`);
+
+	const [, date, slug] = match;
+	const [y, m, d] = date.split('-');
+	const date_formatted = `${months[+m - 1]} ${+d} ${y}`;
+
+	return { date, date_formatted, slug };
+}
+
+const months = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');

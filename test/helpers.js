@@ -1,38 +1,12 @@
-import * as assert$1 from 'assert';
-import * as jsdom from 'jsdom';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import glob from 'tiny-glob/sync';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as colors from 'kleur';
+import colors from 'kleur';
+import { assert } from 'vitest';
+import { compile } from 'svelte/compiler';
+import { fileURLToPath } from 'node:url';
 
-/**
- * @type {typeof assert$1 & { htmlEqual: (actual: string, expected: string, message?: string) => void, htmlEqualWithOptions: (actual: string, expected: string, options: { preserveComments?: boolean, withoutNormalizeHtml?: boolean }, message?: string) => void }}
- */
-export const assert = /** @type {any} */ (assert$1);
-
-// for coverage purposes, we need to test source files,
-// but for sanity purposes, we need to test dist files
-export function loadSvelte(test = false) {
-	process.env.TEST = test ? 'true' : '';
-
-	const resolved = require.resolve('../compiler.js');
-
-	delete require.cache[resolved];
-	return require(resolved);
-}
-
-export const svelte = loadSvelte();
-
-export function exists(path) {
-	try {
-		fs.statSync(path);
-		return true;
-	} catch (err) {
-		return false;
-	}
-}
-
-export function tryToLoadJson(file) {
+export function try_load_json(file) {
 	try {
 		return JSON.parse(fs.readFileSync(file, 'utf-8'));
 	} catch (err) {
@@ -41,7 +15,7 @@ export function tryToLoadJson(file) {
 	}
 }
 
-export function tryToReadFile(file) {
+export function try_read_file(file) {
 	try {
 		return fs.readFileSync(file, 'utf-8');
 	} catch (err) {
@@ -50,196 +24,46 @@ export function tryToReadFile(file) {
 	}
 }
 
-export function cleanRequireCache() {
-	Object.keys(require.cache)
-		.filter((x) => x.endsWith('.svelte'))
-		.forEach((file) => delete require.cache[file]);
+export async function try_load_config(path) {
+	if (!fs.existsSync(path)) return {};
+	// a whole
+
+	// bunch
+
+	// of lines
+
+	// cause
+	const result = await import(path);
+	// source
+
+	// maps
+
+	// are
+
+	// stupid
+
+	return result.default;
 }
 
-const virtualConsole = new jsdom.VirtualConsole();
-virtualConsole.sendTo(console);
-
-const window = new jsdom.JSDOM('<main></main>', { virtualConsole }).window;
-global.document = window.document;
-global.navigator = window.navigator;
-global.getComputedStyle = window.getComputedStyle;
-global.requestAnimationFrame = null; // placeholder, filled in using set_raf
-global.window = window;
-
-// add missing ecmascript globals to window
-for (const key of Object.getOwnPropertyNames(global)) {
-	if (!(key in window)) window[key] = global[key];
+export function should_update_expected() {
+	return process.env.SHOULD_UPDATE_EXPECTED === 'true';
 }
 
-// implement mock scroll
-window.scrollTo = function (pageXOffset, pageYOffset) {
-	window.pageXOffset = pageXOffset;
-	window.pageYOffset = pageYOffset;
-};
+export function pretty_print_browser_assertion(message) {
+	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
 
-export function env() {
-	window.document.title = '';
-	window.document.head.innerHTML = '';
-	window.document.body.innerHTML = '<main></main>';
-
-	return window;
-}
-
-function cleanChildren(node) {
-	let previous = null;
-
-	// sort attributes
-	const attributes = Array.from(node.attributes).sort((a, b) => {
-		return a.name < b.name ? -1 : 1;
-	});
-
-	attributes.forEach((attr) => {
-		node.removeAttribute(attr.name);
-	});
-
-	attributes.forEach((attr) => {
-		node.setAttribute(attr.name, attr.value);
-	});
-
-	for (let child of [...node.childNodes]) {
-		if (child.nodeType === 3) {
-			// text
-			if (
-				node.namespaceURI === 'http://www.w3.org/2000/svg' &&
-				node.tagName !== 'text' &&
-				node.tagName !== 'tspan'
-			) {
-				node.removeChild(child);
-			}
-
-			child.data = child.data.replace(/[ \t\n\r\f]+/g, '\n');
-
-			if (previous && previous.nodeType === 3) {
-				previous.data += child.data;
-				previous.data = previous.data.replace(/[ \t\n\r\f]+/g, '\n');
-
-				node.removeChild(child);
-				child = previous;
-			}
-		} else if (child.nodeType === 8) {
-			// comment
-			// do nothing
-		} else {
-			cleanChildren(child);
-		}
-
-		previous = child;
-	}
-
-	// collapse whitespace
-	if (node.firstChild && node.firstChild.nodeType === 3) {
-		node.firstChild.data = node.firstChild.data.replace(/^[ \t\n\r\f]+/, '');
-		if (!node.firstChild.data.length) node.removeChild(node.firstChild);
-	}
-
-	if (node.lastChild && node.lastChild.nodeType === 3) {
-		node.lastChild.data = node.lastChild.data.replace(/[ \t\n\r\f]+$/, '');
-		if (!node.lastChild.data.length) node.removeChild(node.lastChild);
+	if (match) {
+		assert.equal(match[1], match[2]);
 	}
 }
 
-/**
- *
- * @param {Window} window
- * @param {string} html
- * @param {{ removeDataSvelte?: boolean, preserveComments?: boolean }} param2
- * @returns
- */
-export function normalizeHtml(
-	window,
-	html,
-	{ removeDataSvelte = false, preserveComments = false }
-) {
-	try {
-		const node = window.document.createElement('div');
-		node.innerHTML = html
-			.replace(/(<!--.*?-->)/g, preserveComments ? '$1' : '')
-			.replace(/(data-svelte-h="[^"]+")/g, removeDataSvelte ? '' : '$1')
-			.replace(/>[ \t\n\r\f]+</g, '><')
-			.trim();
-		cleanChildren(node);
-		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
-	} catch (err) {
-		throw new Error(`Failed to normalize HTML:\n${html}`);
+export function mkdirp(path) {
+	if (!fs.existsSync(path)) {
+		fs.mkdirSync(path, { recursive: true });
 	}
 }
 
-/**
- * @param {string} html
- * @returns {string}
- */
-export function normalizeNewline(html) {
-	return html.replace(/\r\n/g, '\n');
-}
-
-/**
- * @param {{ removeDataSvelte?: boolean }} options
- */
-export function setupHtmlEqual(options = {}) {
-	const window = env();
-
-	// eslint-disable-next-line no-import-assign
-	assert.htmlEqual = (actual, expected, message) => {
-		assert.deepEqual(
-			normalizeHtml(window, actual, options),
-			normalizeHtml(window, expected, options),
-			message
-		);
-	};
-
-	/**
-	 *
-	 * @param {string} actual
-	 * @param {string} expected
-	 * @param {{ preserveComments?: boolean, withoutNormalizeHtml?: boolean }} param2
-	 * @param {string?} message
-	 */
-	assert.htmlEqualWithOptions = (
-		actual,
-		expected,
-		{ preserveComments, withoutNormalizeHtml },
-		message
-	) => {
-		assert.deepEqual(
-			withoutNormalizeHtml
-				? normalizeNewline(actual).replace(
-						/(\sdata-svelte-h="[^"]+")/g,
-						options.removeDataSvelte ? '' : '$1'
-				  )
-				: normalizeHtml(window, actual, { ...options, preserveComments }),
-			withoutNormalizeHtml
-				? normalizeNewline(expected).replace(
-						/(\sdata-svelte-h="[^"]+")/g,
-						options.removeDataSvelte ? '' : '$1'
-				  )
-				: normalizeHtml(window, expected, { ...options, preserveComments }),
-			message
-		);
-	};
-}
-
-export function loadConfig(file) {
-	try {
-		const resolved = require.resolve(file);
-		delete require.cache[resolved];
-
-		const config = require(resolved);
-		return config.default || config;
-	} catch (err) {
-		if (err.code === 'MODULE_NOT_FOUND') {
-			return {};
-		}
-
-		throw err;
-	}
-}
-
-export function addLineNumbers(code) {
+export function add_line_numbers(code) {
 	return code
 		.split('\n')
 		.map((line, i) => {
@@ -253,21 +77,21 @@ export function addLineNumbers(code) {
 		.join('\n');
 }
 
-export function showOutput(cwd, options = {}, compile = svelte.compile) {
+export function show_output(cwd, options = {}) {
 	glob('**/*.svelte', { cwd }).forEach((file) => {
 		if (file[0] === '_') return;
 
 		try {
 			const { js } = compile(
 				fs.readFileSync(`${cwd}/${file}`, 'utf-8'),
-				Object.assign(options, {
+				Object.assign({}, options, {
 					filename: file
 				})
 			);
 
 			console.log(
 				// eslint-disable-line no-console
-				`\n>> ${colors.cyan().bold(file)}\n${addLineNumbers(js.code)}\n<< ${colors
+				`\n>> ${colors.cyan().bold(file)}\n${add_line_numbers(js.code)}\n<< ${colors
 					.cyan()
 					.bold(file)}`
 			);
@@ -277,56 +101,129 @@ export function showOutput(cwd, options = {}, compile = svelte.compile) {
 	});
 }
 
-export function shouldUpdateExpected() {
-	return process.argv.includes('--update');
-}
+const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
 
-export function spaces(i) {
-	let result = '';
-	while (i--) result += ' ';
-	return result;
-}
+const AsyncFunction = /** @type {typeof Function} */ (async function () {}.constructor);
 
-// fake timers
-const original_set_timeout = global.setTimeout;
+export function create_loader(compileOptions, cwd) {
+	const cache = new Map();
 
-export function useFakeTimers() {
-	const callbacks = [];
+	async function load(file) {
+		if (cache.has(file)) return cache.get(file);
 
-	// @ts-ignore
-	global.setTimeout = function (fn) {
-		callbacks.push(fn);
-	};
+		if (file.endsWith('.svelte')) {
+			const options = {
+				...compileOptions,
+				filename: file
+			};
 
-	return {
-		flush() {
-			callbacks.forEach((fn) => fn());
-			callbacks.splice(0, callbacks.length);
-		},
-		removeFakeTimers() {
-			callbacks.splice(0, callbacks.length);
-			global.setTimeout = original_set_timeout;
+			const compiled = compile(
+				// Windows/Linux newline conversion
+				fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n'),
+				options
+			);
+
+			const __import = (id) => {
+				let resolved = id;
+
+				if (id.startsWith('.')) {
+					resolved = path.resolve(path.dirname(file), id);
+				}
+
+				if (id === 'svelte') {
+					resolved = `${svelte_path}src/runtime/index.js`;
+				}
+
+				if (id.startsWith('svelte/')) {
+					resolved = `${svelte_path}src/runtime/${id.slice(7)}/index.js`;
+				}
+
+				return load(resolved);
+			};
+
+			const exports = [];
+
+			// We can't use Node's or Vitest's loaders cause we compile with different options.
+			// We need to rewrite the imports into function calls that we can intercept to transform
+			// any imported Svelte components as well. A few edge cases aren't handled but also
+			// currently unused in the tests, for example `export * from`and live bindings.
+			let transformed = compiled.js.code
+				.replace(
+					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const $1 = await __import("$2");'
+				)
+				.replace(
+					/^import (\w+) from ['"]([^'"]+)['"];?/gm,
+					'const {default: $1} = await __import("$2");'
+				)
+				.replace(
+					/^import (\w+, )?{([^}]+)} from ['"](.+)['"];?/gm,
+					(_, default_, names, source) => {
+						const d = default_ ? `default: ${default_}` : '';
+						return `const { ${d} ${names.replaceAll(
+							' as ',
+							': '
+						)} } = await __import("${source}");`;
+					}
+				)
+				.replace(/^export default /gm, '__exports.default = ')
+				.replace(
+					/^export (const|let|var|class|function|async\s+function) (\w+)/gm,
+					(_, type, name) => {
+						exports.push(name);
+						return `${type} ${name}`;
+					}
+				)
+				.replace(/^export \{([^}]+)\}(?: from ['"]([^'"]+)['"];?)?/gm, (_, names, source) => {
+					const entries = names.split(',').map((name) => {
+						const match = name.trim().match(/^(\w+)( as (\w+))?$/);
+						const i = match[1];
+						const o = match[3] || i;
+
+						return [o, i];
+					});
+					return source
+						? `{ const __mod = await __import("${source}"); ${entries
+								.map(([o, i]) => `__exports.${o} = __mod.${i};`)
+								.join('\n')}}`
+						: `{ ${entries.map(([o, i]) => `__exports.${o} = ${i};`).join('\n')} }`;
+				});
+
+			exports.forEach((name) => {
+				transformed += `\n__exports.${name} = ${name};`;
+			});
+
+			const __exports = {
+				[Symbol.toStringTag]: 'Module'
+			};
+			try {
+				const fn = new AsyncFunction('__import', '__exports', transformed);
+				await fn(__import, __exports);
+			} catch (err) {
+				console.error({ transformed }); // eslint-disable-line no-console
+				throw err;
+			}
+
+			cache.set(file, __exports);
+			return __exports;
+		} else {
+			return import(file);
 		}
-	};
+	}
+
+	return (file) => load(path.resolve(cwd, file));
 }
 
-export function mkdirp(dir) {
-	const parent = path.dirname(dir);
-	if (parent === dir) return;
+export function create_deferred() {
+	/** @type {(value: any) => void} */
+	let resolve;
+	/** @type {(reason: any) => void} */
+	let reject;
 
-	mkdirp(parent);
+	const promise = new Promise((f, r) => {
+		resolve = f;
+		reject = r;
+	});
 
-	try {
-		fs.mkdirSync(dir);
-	} catch (err) {
-		// do nothing
-	}
-}
-
-export function prettyPrintBrowserAssertionError(message) {
-	const match = /Error: Expected "(.+)" to equal "(.+)"/.exec(message);
-
-	if (match) {
-		assert.equal(match[1], match[2]);
-	}
+	return { promise, resolve, reject };
 }

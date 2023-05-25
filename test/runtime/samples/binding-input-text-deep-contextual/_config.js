@@ -1,6 +1,8 @@
 export default {
-	props: {
-		items: [{ description: 'one' }, { description: 'two' }, { description: 'three' }]
+	get props() {
+		return {
+			items: [{ description: 'one' }, { description: 'two' }, { description: 'three' }]
+		};
 	},
 
 	html: `

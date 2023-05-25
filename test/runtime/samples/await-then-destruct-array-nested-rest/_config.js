@@ -1,6 +1,8 @@
 export default {
-	props: {
-		thePromise: new Promise((_) => {})
+	get props() {
+		return {
+			thePromise: new Promise((_) => {})
+		};
 	},
 
 	html: `
