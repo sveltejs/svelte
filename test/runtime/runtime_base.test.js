@@ -3,7 +3,7 @@
 import { create_loader } from '../helpers';
 import { assert, it } from 'vitest';
 
-const load = create_loader({ generate: 'dom', dev: true, format: 'cjs' }, __dirname);
+const load = create_loader({ generate: 'dom', dev: true }, __dirname);
 const { default: App } = await load('App.svelte');
 
 it('fails if options.target is missing in dev mode', async () => {

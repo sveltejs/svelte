@@ -159,8 +159,6 @@ export interface Warning {
 	toString: () => string;
 }
 
-export type ModuleFormat = 'esm' | 'cjs';
-
 export type EnableSourcemap = boolean | { js: boolean; css: boolean };
 
 export type CssHashGetter = (args: {
@@ -171,7 +169,6 @@ export type CssHashGetter = (args: {
 }) => string;
 
 export interface CompileOptions {
-	format?: ModuleFormat;
 	name?: string;
 	filename?: string;
 	generate?: 'dom' | 'ssr' | false;

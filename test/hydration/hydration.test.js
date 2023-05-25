@@ -21,7 +21,6 @@ describe('hydration', async () => {
 
 			const compileOptions = Object.assign({}, config.compileOptions, {
 				accessors: 'accessors' in config ? config.accessors : true,
-				format: 'cjs',
 				hydratable: true
 			});
 
