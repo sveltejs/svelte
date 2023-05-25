@@ -28,7 +28,7 @@
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.4.1",
 		"@sveltejs/adapter-vercel": "^3.0.0",
-		"@sveltejs/kit": "1.18.0",
+		"@sveltejs/kit": "^1.18.0",
 		"@sveltejs/site-kit": "^5.2.1",
 		"@types/marked": "^5.0.0",
 		"@types/node": "^20.2.1",
