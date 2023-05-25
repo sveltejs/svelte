@@ -14,8 +14,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
 		"format": "pnpm run check:format -- --write",
-		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=.",
-		"test": "uvu -r ts-node/register src/lib/server/markdown"
+		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.22.0",
