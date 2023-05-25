@@ -28,7 +28,7 @@ The line `preprocess: preprocess()` is the important one.
 
 ### Using Vite or SvelteKit
 
-If you're using `vite-plugin-svelte`, which is part of SvelteKit and also used in the Vite Svelte template, you can use `vitePreprocess`. It is slightly faster and does not require installing additional dependencies such as `svelte-preprocess`.
+When setting up a new SvelteKit or Svelte-flavoured Vite project, `vitePreprocess` will be added automatically if you select that you'd like to use TypeScript. It is slightly faster than `svelte-preprocess` and does not require installing additional dependencies.
 
 ```ts
 /// file: svelte.config.js
