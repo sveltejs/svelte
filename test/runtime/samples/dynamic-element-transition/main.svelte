@@ -13,5 +13,5 @@
 </script>
 
 {#if visible}
-	<svelte:element this={tag} transition:foo></svelte:element>
+	<svelte:element this={tag} transition:foo|global></svelte:element>
 {/if}
