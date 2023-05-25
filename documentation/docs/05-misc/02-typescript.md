@@ -81,8 +81,6 @@ Props can be directly typed by using the `export let` syntax:
 </script>
 ```
 
-These are ultimately just variable declarations, so it just works.
-
 > See this [guide](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md#typing-props) for more information about the experimental `$$Props` interface.
 
 ## Slots
