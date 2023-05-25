@@ -57,7 +57,13 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 
 	const context = {
 		type: 'ObjectExpression',
-		properties: Array.from(names).map(name => p`${block.renderer.context_lookup.get(name).index}: ${name}`)
+		properties: Array.from(names).reduce((properties, name) => {
+			const context_member = block.renderer.context_lookup.get(name);
+			if (context_member) {
+				properties.push(p`${context_member.index}: ${name}`);
+			}
+			return properties;
+		}, [])
 	};
 
 	const { context_lookup } = block.renderer;
@@ -97,11 +103,15 @@ export function get_slot_definition(block: Block, scope: TemplateScope, lets: Le
 			}
 
 			return Array.from(names)
-				.map(name => {
-					const lookup_name = names_lookup.has(name) ? names_lookup.get(name) : name;
-					const i = context_lookup.get(name).index.value as number;
-					return x`${lookup_name} ? ${1 << i} : 0`;
-				})
+				.reduce((items, name) => {
+					const context_member = context_lookup.get(name);
+					if (context_member) {
+						const lookup_name = names_lookup.has(name) ? names_lookup.get(name) : name;
+						const i = context_member.index.value as number;
+						items.push(x`${lookup_name} ? ${1 << i} : 0`);
+					}
+					return items;
+				}, [])
 				.reduce((lhs, rhs) => x`${lhs} | ${rhs}`) as BinaryExpression;
 		}
 	};
