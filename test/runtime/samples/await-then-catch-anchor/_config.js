@@ -31,14 +31,14 @@ export default {
 
 				component.thePromise = deferred.promise;
 
-				assert.htmlEqual(target.innerHTML, `<div><p>loading...</p></div>`);
+				assert.htmlEqual(target.innerHTML, '<div><p>loading...</p></div>');
 
 				deferred.reject(new Error('something broke'));
 
 				return deferred.promise.catch(() => {});
 			})
 			.then(() => {
-				assert.htmlEqual(target.innerHTML, `<div><p>oh no! something broke</p></div>`);
+				assert.htmlEqual(target.innerHTML, '<div><p>oh no! something broke</p></div>');
 			});
 	}
 };

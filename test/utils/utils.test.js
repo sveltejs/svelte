@@ -1,14 +1,15 @@
 import { assert, describe, it } from 'vitest';
+import '../../src/compiler/compile/nodes/Slot.js'; // this needs to come first to force ESM to load things in a specific order to prevent circular dependency errors
 import {
 	CONTENTEDITABLE_BINDINGS,
 	get_contenteditable_attr,
 	has_contenteditable_attr,
 	is_contenteditable,
 	is_name_contenteditable
-} from '../../src/compiler/compile/utils/contenteditable';
-import get_name_from_filename from '../../src/compiler/compile/utils/get_name_from_filename';
-import { trim_end, trim_start } from '../../src/compiler/utils/trim';
-import { split_css_unit } from '../../src/runtime/internal/utils';
+} from '../../src/compiler/compile/utils/contenteditable.js';
+import get_name_from_filename from '../../src/compiler/compile/utils/get_name_from_filename.js';
+import { trim_end, trim_start } from '../../src/compiler/utils/trim.js';
+import { split_css_unit } from '../../src/runtime/internal/utils.js';
 
 describe('utils', () => {
 	describe('trim', () => {

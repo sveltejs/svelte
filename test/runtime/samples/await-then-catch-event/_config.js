@@ -19,7 +19,7 @@ export default {
 
 		return deferred.promise
 			.then(async () => {
-				assert.htmlEqual(target.innerHTML, `<button>click me</button>`);
+				assert.htmlEqual(target.innerHTML, '<button>click me</button>');
 
 				const { button } = component;
 

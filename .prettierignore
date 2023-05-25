@@ -2,7 +2,8 @@
 !/elements
 !/scripts
 !/src
-src/compiler/compile/internal_exports.ts
+src/compiler/compile/internal_exports.js
+src/shared/version.js
 !/test
 !documentation
 !sites
@@ -12,3 +13,5 @@ src/compiler/compile/internal_exports.ts
 /test/**/expected*
 /test/**/_output
 /types
+!rollup.config.js
+!vitest.config.js

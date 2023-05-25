@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { assert, describe, it } from 'vitest';
-import * as svelte from '../../compiler.mjs';
+import * as svelte from 'svelte/compiler';
 import { create_loader, should_update_expected, try_load_config } from '../helpers.js';
 import { assert_html_equal } from '../html_equal.js';
 
@@ -24,24 +24,19 @@ describe('css', () => {
 		const it_fn = solo ? it.only : skip ? it.skip : it;
 
 		it_fn(dir, async () => {
-			const config = await try_load_config(`${__dirname}/samples/${dir}/_config.js`);
+			const cwd = `${__dirname}/samples/${dir}`;
+			const config = await try_load_config(`${cwd}/_config.js`);
 
 			const input = fs
-				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
+				.readFileSync(`${cwd}/input.svelte`, 'utf-8')
 				.replace(/\s+$/, '')
 				.replace(/\r/g, '');
 
 			const expected_warnings = (config.warnings || []).map(normalize_warning);
 
-			const dom = svelte.compile(
-				input,
-				Object.assign(config.compileOptions || {}, { format: 'cjs' })
-			);
+			const dom = svelte.compile(input, Object.assign({}, config.compileOptions || {}));
 
-			const ssr = svelte.compile(
-				input,
-				Object.assign(config.compileOptions || {}, { format: 'cjs', generate: 'ssr' })
-			);
+			const ssr = svelte.compile(input, Object.assign({}, config.compileOptions || {}));
 
 			assert.equal(dom.css.code, ssr.css.code);
 
@@ -51,10 +46,10 @@ describe('css', () => {
 			assert.deepEqual(dom_warnings, ssr_warnings);
 			assert.deepEqual(dom_warnings.map(normalize_warning), expected_warnings);
 
-			fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.css`, dom.css.code);
+			fs.writeFileSync(`${cwd}/_actual.css`, dom.css.code);
 			const expected = {
-				html: read(`${__dirname}/samples/${dir}/expected.html`),
-				css: read(`${__dirname}/samples/${dir}/expected.css`)
+				html: read(`${cwd}/expected.html`),
+				css: read(`${cwd}/expected.css`)
 			};
 
 			const actual_css = replace_css_hash(dom.css.code);
@@ -62,21 +57,19 @@ describe('css', () => {
 				assert.equal(actual_css, expected.css);
 			} catch (error) {
 				if (should_update_expected()) {
-					fs.writeFileSync(`${__dirname}/samples/${dir}/expected.css`, actual_css);
+					fs.writeFileSync(`${cwd}/expected.css`, actual_css);
 					console.log(`Updated ${dir}/expected.css.`);
 				} else {
 					throw error;
 				}
 			}
 
-			const cwd = `${__dirname}/samples/${dir}`;
-
 			let ClientComponent;
 			let ServerComponent;
 
 			// we do this here, rather than in the expected.html !== null
 			// block, to verify that valid code was generated
-			const load = create_loader({ ...(config.compileOptions || {}), format: 'cjs' }, cwd);
+			const load = create_loader({ ...(config.compileOptions || {}) }, cwd);
 			try {
 				ClientComponent = (await load('input.svelte')).default;
 			} catch (err) {
@@ -84,10 +77,7 @@ describe('css', () => {
 				throw err;
 			}
 
-			const load_ssr = create_loader(
-				{ ...(config.compileOptions || {}), generate: 'ssr', format: 'cjs' },
-				cwd
-			);
+			const load_ssr = create_loader({ ...(config.compileOptions || {}), generate: 'ssr' }, cwd);
 			try {
 				ServerComponent = (await load_ssr('input.svelte')).default;
 			} catch (err) {
@@ -102,7 +92,7 @@ describe('css', () => {
 				new ClientComponent({ target, props: config.props });
 				const html = target.innerHTML;
 
-				fs.writeFileSync(`${__dirname}/samples/${dir}/_actual.html`, html);
+				fs.writeFileSync(`${cwd}/_actual.html`, html);
 
 				const actual_html = replace_css_hash(html);
 				assert_html_equal(actual_html, expected.html);
@@ -117,7 +107,7 @@ describe('css', () => {
 });
 
 function replace_css_hash(str) {
-	return str.replace(/svelte(-ref)?-[a-z0-9]+/g, (m, $1) => ($1 ? m : 'svelte-xyz'));
+	return str.replace(/svelte-[a-z0-9]+/g, 'svelte-xyz');
 }
 
 function read(file) {

@@ -3,7 +3,7 @@ import { tick } from 'svelte';
 let value = 'initial';
 
 let subscribers = [];
-let observable = {
+const observable = {
 	subscribe: (fn) => {
 		subscribers.push(fn);
 
@@ -36,13 +36,13 @@ export default {
 		component.visible = true;
 
 		assert.equal(subscribers.length, 1);
-		assert.htmlEqual(target.innerHTML, `<p>value: initial</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>value: initial</p>');
 		value = 42;
 		subscribers.forEach((fn) => {
 			fn(value);
 		});
 		await tick();
-		assert.htmlEqual(target.innerHTML, `<p>value: 42</p>`);
+		assert.htmlEqual(target.innerHTML, '<p>value: 42</p>');
 
 		component.visible = false;
 
