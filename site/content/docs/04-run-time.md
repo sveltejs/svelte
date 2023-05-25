@@ -18,7 +18,7 @@ onMount(callback: () => () => void)
 
 ---
 
-The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live *inside* the component; it can be called from an external module).
+The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialization (but doesn't need to live *inside* the component; it can be called from an external module).
 
 `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
 
@@ -126,7 +126,7 @@ promise: Promise = tick()
 
 ---
 
-Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
+Returns a promise that resolves once any pending state changes have been applied, or in the next micro task if there are none.
 
 ```sv
 <script>
@@ -150,7 +150,7 @@ setContext(key: any, context: any)
 
 Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
 
-Like lifecycle functions, this must be called during component initialisation.
+Like lifecycle functions, this must be called during component initialization.
 
 ```sv
 <script>
@@ -170,7 +170,7 @@ context: any = getContext(key: any)
 
 ---
 
-Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
+Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component intialization.
 
 ```sv
 <script>
@@ -188,7 +188,7 @@ hasContext: boolean = hasContext(key: any)
 
 ---
 
-Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
+Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialization.
 
 ```sv
 <script>
@@ -208,7 +208,7 @@ contexts: Map<any, any> = getAllContexts()
 
 ---
 
-Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
+Retrieves the whole context map that belongs to the closest parent component. Must be called during component intialization. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
 
 ```sv
 <script>
@@ -1015,7 +1015,7 @@ const app = new App({
 });
 ```
 
-The following initialisation options can be provided:
+The following intialization options can be provided:
 
 | option | default | description |
 | --- | --- | --- |
@@ -1056,7 +1056,7 @@ component.$set(props)
 
 Programmatically sets props on an instance. `component.$set({ x: 1 })` is equivalent to `x = 1` inside the component's `<script>` block.
 
-Calling this method schedules an update for the next microtask — the DOM is *not* updated synchronously.
+Calling this method schedules an update for the next micro task — the DOM is *not* updated synchronously.
 
 ```js
 component.$set({ answer: 42 });
