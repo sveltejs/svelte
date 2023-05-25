@@ -4,6 +4,7 @@
 	"description": "Docs and examples for Svelte",
 	"type": "module",
 	"scripts": {
+		"prepare": "pnpm generate",
 		"dev": "node scripts/update.js && vite dev",
 		"build": "node scripts/update.js && pnpm run generate && vite build",
 		"generate": "node scripts/type-gen/index.js && node scripts/generate_examples.js",
