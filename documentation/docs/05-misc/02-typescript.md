@@ -4,7 +4,56 @@ title: TypeScript
 
 You can use TypeScript to type your Svelte components. The Svelte VSCode extension and the [`svelte-check` CLI](https://www.npmjs.com/package/svelte-check) will check your code for errors and provide hints about how to fix them.
 
-> TypeScript usage is part of [svelte-preprocess](https://github.com/sveltejs/svelte-preprocess), having it in your `svelte.config.js` is required. If you're using SvelteKit, then you can also use [`vitePreprocess`](https://kit.svelte.dev/docs/integrations#preprocessors-vitepreprocess).
+## Setup
+
+Install `typescript` and `svelte-preprocess`:
+
+```sh
+npm install typescript svelte-preprocess --save-dev
+```
+
+Then, create a `svelte.config.js` file at the root of your project(if it doesn't exist already) and add the following:
+
+```ts
+import preprocess from 'svelte-preprocess';
+
+const config = {
+	preprocess: preprocess()
+};
+
+export default config;
+```
+
+The line `preprocess: preprocess()` is the important one.
+
+### Using Vite or SvelteKit
+
+If you're using the official Vite+Svelte template, you can use the relatively faster `vitePreprocess` for faster speeds without an additional dependency. Installing `svelte-preprocess` is not required.
+
+```ts
+/// file: svelte.config.js
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const config = {
+	preprocess: vitePreprocess()
+};
+
+export default config;
+```
+
+If you're using SvelteKit, `vitePreprocess` is imported from `@sveltejs/kit/vite`
+
+```ts
+/// file: svelte.config.js
+// @noErrors
+import { vitePreprocess } from '@sveltejs/kit/vite';
+
+const config = {
+	preprocess: vitePreprocess()
+};
+
+export default config;
+```
 
 ## `<script lang="ts">`
 
@@ -20,28 +69,7 @@ To add types to your JavaScript inside the `<script>` tag, you can use the `scri
 </script>
 ```
 
-## Reactive Declarations
-
-You cannot type your reactive declarations with TypeScript in the way you type a variable. For example, the following does not work:
-
-```svelte
-<script lang="ts">
-	let count = 0;
-
-	$: doubled: number = count * 2; // ❌ Does not work
-</script>
-```
-
-You cannot add a `: TYPE` after variable declaration's variable. Instead, you can use the `as` or `satisfies` keyword:
-
-```svelte
-<script lang="ts">
-	let count = 0;
-
-	$: doubled = (count * 2) as number;
-	$: doubled = (count * 2) satisfies number;
-</script>
-```
+This enables all TypeScript features inside your Svelte components.
 
 ## Props
 
@@ -55,55 +83,29 @@ Props can be directly typed by using the `export let` syntax:
 
 These are ultimately just variable declarations, so it just works.
 
-However, sometimes you have a scenario where you want to type a prop that is not directly declared in the component. For example, you may want to pass `$$restProps` to an `<input>` element. This allows you to pass any prop to the `<input>` element from it's parent component.
-
-```svelte
-<script lang="ts">
-	import Child from './Child.svelte';
-
-	export let value: string;
-</script>
-
-<input {value} {...$$restProps} />
-```
-
-To type `$$restProps`, we can use `$$Props` type or interface:
-
-```svelte
-<script lang="ts">
-	import type { HTMLInputAttributes } from 'svelte/elements';
-	import Child from './Child.svelte';
-
-	export let value: string;
-
-	interface $$Props extends HTMLInputAttributes {
-		value: string;
-	}
-</script>
-
-<input {value} {...$$restProps} />
-```
-
-If you define `$$Props`, all possible props need to be part of it. If you use `$$props` or `$$restProps` then that does not widen the type, still only those defined in $$Props are allowed.
+> See this [guide](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md#typing-props) for more information about the experimental `$$Props` interface.
 
 ## Slots
 
-Slots can be typed using `$$Slots`. This may or may not include the slot props. For example, the following component has two slots, one default and one named:
+Slots and slot props types are inferred from the type of slot props passed to them.
+
+For example:
 
 ```svelte
 <script lang="ts">
 	export let name: string;
-
-	interface $$Slots {
-		default: {};
-		named: { prop: string };
-	}
 </script>
 
 <slot {name} />
 
-<slot name="named" prop={value} />
+<!-- Later -->
+<Comp let:name>
+	<!--    ^ Inferred as string -->
+	{name}
+</Comp>
 ```
+
+> See this [guide](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md#typing-slots) for more information about the experimental `$$Slots` interface.
 
 ## Events
 
@@ -144,46 +146,51 @@ However, sometimes an event dispatcher may be coming from another file/package. 
 <button on:click={handleClick}>Mixin</button>
 ```
 
-In this case, svelte can't understand the custom event types. So, you can use `$$Events` to type the event:
+In this case, svelte can't understand the custom event types. So, you can use the experimental `$$Events` inerface.
+
+> See this [guide](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md#typing-events) for more information about the experimental `$$Events` interface.
+
+## Limitations
+
+### No TS in Template
+
+You cannot use TypeScript in your template. For example, the following does not work:
 
 ```svelte
 <script lang="ts">
-	import { mixinDispatch } from 'somewhere';
-
-	interface $$Events {
-		mixinEvent: CustomEvent<string>;
-	}
-
-	function handleClick() {
-		mixinDispatch.mixinEvent('foo');
-	}
+	let count = 10;
 </script>
 
-<button on:click={handleClick}>Mixin</button>
+<h1>Count as string: {count as string}!</h1> <!-- ❌ Does not work -->
 ```
 
-## Generics
+Or with `{@const}`
 
-You want to specify some generic connection between props/slots/events. For example you have a component which has an input prop `item`, and an event called `itemChanged`. You want to use this component for arbitrary kinds of item, but you want to make sure that the types for `item` and `itemChanged` are the same. Generics come in handy then. You can read more about them on the [official TypeScript page](https://www.typescriptlang.org/docs/handbook/generics.html).
+```svelte
+{@const countString: string = count} <!-- ❌ Does not work -->
+{@const countString = count as string} <!-- ❌ Does not work -->
+```
 
-You can use new reserved type called `$$Generic`.
+### Reactive Declarations
+
+You cannot type your reactive declarations with TypeScript in the way you type a variable. For example, the following does not work:
 
 ```svelte
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	let count = 0;
 
-	type T = $$Generic<boolean>; // extends boolean
-	type X = $$Generic; // any
+	$: doubled: number = count * 2; // ❌ Does not work
+</script>
+```
 
-	// you can use generics inside the other interfaces
-	interface $$Slots {
-		default: { aSlot: T };
-	}
+You cannot add a `: TYPE` after variable declaration's variable. Instead, you can use the `as` or `satisfies` keyword:
 
-	export let array1: T[];
-	export let item1: T;
-	export let array2: X[];
-	const dispatch = createEventDispatcher<{ arrayItemClick: X }>();
+```svelte
+<script lang="ts">
+	let count = 0;
+
+	$: doubled = (count * 2) as number;
+	$: doubled = (count * 2) satisfies number;
 </script>
 ```
 

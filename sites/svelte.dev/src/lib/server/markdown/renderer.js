@@ -143,12 +143,16 @@ export async function render_markdown(
 			return html;
 		},
 		codespan: (text) => {
-			return '<code>' + type_regex
-				? text.replace(type_regex, (_, prefix, name) => {
-						const link = `<a href="${type_links.get(name)}">${name}</a>`;
-						return `${prefix || ''}${link}`;
-				  })
-				: text + '</code>';
+			return (
+				'<code>' +
+				(type_regex
+					? text.replace(type_regex, (_, prefix, name) => {
+							const link = `<a href="${type_links.get(name)}">${name}</a>`;
+							return `${prefix || ''}${link}`;
+					  })
+					: text) +
+				'</code>'
+			);
 		}
 	});
 }
