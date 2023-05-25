@@ -5,7 +5,7 @@
 </script>
 
 {#if num < 5}
-	<div out:fade>
+	<div out:fade|global>
 		<p>wheeee</p>
 	</div>
 {/if}

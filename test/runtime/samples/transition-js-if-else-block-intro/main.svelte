@@ -4,7 +4,7 @@
 
 	export let x;
 
-	function foo(node, params) {
+	function foo(node) {
 		return {
 			duration: 400,
 			tick: t => {
@@ -17,5 +17,5 @@
 {#if x}
 	<div bind:this={yes} in:foo>yes</div>
 {:else}
-	<div bind:this={no} in:foo>no</div>
+	<div bind:this={no} in:foo|global>no</div>
 {/if}

@@ -13,6 +13,7 @@
 * **breaking** Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 * **breaking** Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 * **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
+* **breaking** Make transitions local by default to prevent confusion around page navigations ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 * **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
 * **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
 * **breaking** Change order in which preprocessors are applied ([#8618](https://github.com/sveltejs/svelte/pull/8618))
