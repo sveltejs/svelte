@@ -9,8 +9,9 @@ import { replace_export_type_placeholders } from '$lib/server/markdown/renderer.
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
+import { CONTENT_BASE } from '../../constants.js';
 
-const base = '../../documentation/content/';
+const base = CONTENT_BASE;
 
 const categories = [
 	{

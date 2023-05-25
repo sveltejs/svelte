@@ -18,7 +18,7 @@
 	<h1>Frequently Asked Questions</h1>
 
 	<article class="text">
-		{@html data.faqs}
+		{@html data.faq}
 	</article>
 </div>
 

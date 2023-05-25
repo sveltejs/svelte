@@ -9,8 +9,8 @@ If you do want to use a database, set it up on [Supabase](https://supabase.com) 
 Run the site sub-project:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 and navigate to [localhost:5173](http://localhost:5173).
@@ -18,7 +18,7 @@ and navigate to [localhost:5173](http://localhost:5173).
 The first time you run the site locally, it will update the list of Contributors, REPL dependencies and examples data that is used on the [examples page](https://svelte-dev-2.vercel.app/examples). After this it won't run again unless you force it by running:
 
 ```bash
-npm run update
+pnpm run update
 ```
 
 ## Running using the local copy of Svelte
@@ -30,7 +30,7 @@ To produce the proper browser-compatible UMD build of the compiler, you will nee
 ```bash
 git clone https://github.com/sveltejs/svelte.git
 cd svelte
-npm ci
+pnpm i --frozen-lockfile
 PUBLISH=1 npm run build
 ```
 
@@ -56,22 +56,22 @@ The GitHub app requires a specific callback URL, and so cannot be used with the 
 
 ## Building the site
 
-To build the website, run `npm run build`. The output can be found in `.vercel`.
+To build the website, run `pnpm build`. The output can be found in `.vercel`.
 
 ## Testing
 
-Tests can be run using `npm run test`.
+Tests can be run using `pnpm test`.
 
 ## Docs & other content
 
-All the docs, examples, tutorials, FAQ live in the [documentation/content](../../documentation/content) directory, outside the site sub-project. If you modify these, and your app server is running, you will need to reload the page to see the changes.
+All the docs, examples, tutorials, FAQ live in the [documentation](../../documentation) directory, outside the site sub-project. If you modify these, and your app server is running, you will need to reload the page to see the changes.
 
 Following are the file structures of the different kind of documentations
 
 ### Docs structure
 
 ```txt
-- documentation/content/docs
+- documentation/docs
   - 01-getting-started                  <- Category
     - meta.json                           <- Metadata
     - 01-introduction.md                  <- Page
@@ -85,7 +85,7 @@ Following are the file structures of the different kind of documentations
 If you are creating a new page, it must be within a category. That is, you can't have a .md file in the `docs` directory's root level. You may have a category without any pages in it, but you can't have a page without a category. You can add the new page in an existing category, or create your own, for example:
 
 ```txt
-- documentation/content/docs
+- documentation/docs
   <!-- Rest of the docs -->
 + - 07-my-new-category                  <- Category
 +   - 01-my-new-page.md                  <- Page
@@ -127,12 +127,12 @@ The headings in the document must start from h2(`##`). That is, you can't have a
 
 #### Processing
 
-Docs are processed in the [`src/lib/server/docs`](./src/lib/server/docs) folder. `get-docs-data.js` is responsible for reading the docs from filesystem and accumulating the metadata in forms of arrays and objects. `docs/index.js` has the code responsible for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/docs/+layout.server.js](./src/routes/docs/+layout.server.js) and used to generate docs list, and similarly in [src/routes/docs/%5Bslug%5D/+page.server.js](./src/routes/docs/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
+Docs are processed in the [`src/lib/server/docs/index.js`](./src/lib/server/docs/index.js) file. It is responsible for reading the docs from filesystem and accumulating the metadata in forms of arrays and objects and for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/docs/+layout.server.js](./src/routes/docs/+layout.server.js) and used to generate docs list, and similarly in [src/routes/docs/%5Bslug%5D/+page.server.js](./src/routes/docs/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
 
 ### Tutorial structure
 
 ```txt
-- documentation/content/tutorial
+- documentation/tutorial
   - 01-introduction                   <- Category
     - meta.json                           <- Metadata
     - 01-basics                       <- Page's content folder
@@ -153,12 +153,12 @@ The naming scheme of docs is followed here as well. The numbers in front of the 
 
 #### Processing
 
-Tutorials are processed in the [`src/lib/server/tutorial`](./src/lib/server/tutorial) folder. `get-tutorial-data.js` is responsible for reading the tutorials from filesystem and accumulating the metadata in forms of arrays and objects. `tutorial/index.js` has the code responsible for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/tutorial/+layout.server.js](./src/routes/tutorial/%2Blayout.server.js) and used to generate tutorial list, and similarly in [src/routes/tutorial/%5Bslug%5D/+page.server.js](./src/routes/tutorial/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
+Tutorials are processed in the [`src/lib/server/tutorial/index.js`](./src/lib/server/tutorial/index.js) file. It is responsible for reading the tutorials from filesystem and accumulating the metadata in forms of arrays and objects and has the code responsible for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/tutorial/+layout.server.js](./src/routes/tutorial/%2Blayout.server.js) and used to generate tutorial list, and similarly in [src/routes/tutorial/%5Bslug%5D/+page.server.js](./src/routes/tutorial/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
 
 ### Examples structure
 
 ```txt
-- documentation/content/examples
+- documentation/examples
   - 00-introduction                   <- Category
     - meta.json                           <- Metadata
     - 00-hello-world                    <- Page's content folder
@@ -177,19 +177,19 @@ Same naming scheme as docs and tutorial is followed.
 
 #### Processing
 
-Examples are processed in the [`src/lib/server/examples`](./src/lib/server/examples) folder. `get-examples-data.js` is responsible for reading the examples from filesystem and accumulating the metadata in forms of arrays and objects. `examples/index.js` has the code responsible for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/examples/%5Bslug%5D/+page.server.js](./src/routes/examples/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
+Examples are processed in the [`src/lib/server/examples/index.js`](./src/lib/server/examples/index.js) folder. It is responsible for reading the examples from filesystem and accumulating the metadata in forms of arrays and objects, and for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/examples/%5Bslug%5D/+page.server.js](./src/routes/examples/%5Bslug%5D/%2Bpage.server.js) and are rendered there.
 
 ### Blog structure
 
 ```txt
-- documentation/content/blog
+- documentation/blog
   - 2019-01-01-my-first-post.md
   - 2019-01-02-my-second-post.md
 ```
 
-Compared to the rest of the content, blog posts are not in a folder. They are placed at the root of `documentation/content/blog` folder. The name of the file is the date of the post, followed by the slug of the post. The slug is the URL where the blog post is available. For example, the slug of `2019-01-01-my-first-post.md` is `my-first-post`.
+Compared to the rest of the content, blog posts are not in a folder. They are placed at the root of `documentation/blog` folder. The name of the file is the date of the post, followed by the slug of the post. The slug is the URL where the blog post is available. For example, the slug of `2019-01-01-my-first-post.md` is `my-first-post`.
 
-All the metadata about the blog post is mentioned in the frontematter of a post. For example, this is how the frontmatter of [2023-03-09-zero-config-type-safety.md](../../documentation/content/blog/2023-03-09-zero-config-type-safety.md) looks like:
+All the metadata about the blog post is mentioned in the frontematter of a post. For example, this is how the frontmatter of [2023-03-09-zero-config-type-safety.md](../../documentation/blog/2023-03-09-zero-config-type-safety.md) looks like:
 
 ```md
 ---
@@ -202,7 +202,7 @@ authorURL: https://twitter.com/dummdidumm_
 
 #### Processing
 
-Blog posts are processed in the [`src/lib/server/blog`](./src/lib/server/blog) folder. `get-blog-data.js` is responsible for reading the blog posts from filesystem and accumulating the metadata in forms of arrays and objects. `blog/index.js` has the code responsible for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/blog/+page.svelte](./src/routes/blog/%2Bpage.server.js), where they show the list of blogs. The rendering function is imported in [src/routes/blog/%5Bslug%5D/+page.server.js](./src/routes/blog/%5Bslug%5D/%2Bpage.server.js) and renders the individual blog post there.
+Blog posts are processed in the [`src/lib/server/blog/index.js`](./src/lib/server/blog/index.js) file. It is responsible for reading the blog posts from filesystem and accumulating the metadata in forms of arrays and objects, and for _rendering_ the markdown files into HTML. These functions are then imported into [src/routes/blog/+page.svelte](./src/routes/blog/%2Bpage.server.js), where they show the list of blogs. The rendering function is imported in [src/routes/blog/%5Bslug%5D/+page.server.js](./src/routes/blog/%5Bslug%5D/%2Bpage.server.js) and renders the individual blog post there.
 
 ## Translating the API docs
 
