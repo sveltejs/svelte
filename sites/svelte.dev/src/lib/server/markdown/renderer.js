@@ -15,13 +15,64 @@ import {
 const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
 
 /**
+ * A super markdown renderer function. Renders svelte and kit docs specific specific markdown code to html.
+ *
+ * - Syntax Highlighting -> shikiJS with `css-variables` theme.
+ * - TS hover snippets -> shiki-twoslash. JS and TS code snippets(other than d.ts) are run through twoslash.
+ * - JS -> TS conversion -> JS snippets starting with `/// file: some_file.js` are converted to TS if possible. Same for Svelte snippets starting with `<!--- file: some_file.svelte --->`. Notice there's an additional dash(-) to the opening and closing comment tag.
+ * - Type links -> Type names are converted to links to the type's documentation page.
+ * - Snippet caching -> To avoid slowing down initial page render time, code snippets are cached in the nearest `node_modules/.snippets` folder. This is done by hashing the code snippet with SHA256 algo and storing the final rendered output in a file named the hash.
+ *
+ * ## Special syntax
+ *
+ * ### file
+ *
+ * Provided as a comment at top of a code snippet. If inside a JS code snippet, expects a triple slash comment as the first line(/// file:)
+ *
+ * ````md
+ *  ```js
+ *  /// file: some_file.js
+ *  const a = 1;
+ *  ```
+ * ````
+ *
+ * For svelte snippets, we use HTML comments, with an additional dash at the opening and end
+ *
+ * ````md
+ * ```svelte
+ * <!--- file: some_file.svelte --->
+ * <script>
+ * 	const a = 1;
+ * </script>
+ *
+ * Hello {a}
+ * ```
+ * ````
+ *
+ * ### link
+ *
+ * Provided at the top. Should be under `file:` if present.
+ *
+ * This doesn't allow the imported members from `svelte/*` or `@sveltejs/kit` to be linked, as in they are not wrapped with an <a href="#type-onmount"></a>.
+ *
+ * ````md
+ * ```js
+ * /// file: some_file.js
+ * /// link: false
+ * import { onMount } from 'svelte';
+ *
+ * onMount(() => {
+ * 	console.log('mounted');
+ * });
+ * ```
+ * ````
+ *
  * @param {string} filename
  * @param {string} body
- * @param {{
- * twoslashBanner?: (filename: string, content: string) => string,
- * modules?: import('$lib/generated/types').Modules,
- * cacheCodeSnippets?: boolean
- * }} options
+ * @param {object} options
+ * @param {(filename: string, content: string) => string} [options.twoslashBanner] - A function that returns a string to be prepended to the code snippet before running the code with twoslash. Helps in adding imports from svelte or sveltekit or whichever modules are being globally referenced in all or most code snippets.
+ * @param {import('$lib/generated/types').Modules} [options.modules] Module info generated from type-gen script. Used to create type links and type information blocks
+ * @param {boolean} [options.cacheCodeSnippets] Whether to cache code snippets or not. Defaults to true.
  */
 export async function render_markdown(
 	filename,
@@ -35,7 +86,7 @@ export async function render_markdown(
 
 	return parse({
 		file: filename,
-		body: generate_ts_from_js(replace_placeholders(body, modules)),
+		body: generate_ts_from_js(replace_export_type_placeholders(body, modules)),
 		code: (source, language, current) => {
 			const cached_snippet = SNIPPET_CACHE.get(source + language + current);
 			if (cached_snippet.code) return cached_snippet.code;
@@ -65,19 +116,21 @@ export async function render_markdown(
 				html = html.replace(/class=('|")/, `class=$1${version_class} `);
 			}
 
-			type_regex.lastIndex = 0;
+			if (type_regex) {
+				type_regex.lastIndex = 0;
 
-			html = html.replace(type_regex, (match, prefix, name, pos, str) => {
-				const char_after = str.slice(pos + match.length, pos + match.length + 1);
+				html = html.replace(type_regex, (match, prefix, name, pos, str) => {
+					const char_after = str.slice(pos + match.length, pos + match.length + 1);
 
-				if (options.link === 'false' || name === current || /(\$|\d|\w)/.test(char_after)) {
-					// we don't want e.g. RequestHandler to link to RequestHandler
-					return match;
-				}
+					if (options.link === 'false' || name === current || /(\$|\d|\w)/.test(char_after)) {
+						// we don't want e.g. RequestHandler to link to RequestHandler
+						return match;
+					}
 
-				const link = `<a href="${type_links.get(name)}">${name}</a>`;
-				return `${prefix || ''}${link}`;
-			});
+					const link = `<a href="${type_links.get(name)}">${name}</a>`;
+					return `${prefix || ''}${link}`;
+				});
+			}
 
 			html = indent_multiline_comments(html);
 
@@ -89,14 +142,12 @@ export async function render_markdown(
 			return html;
 		},
 		codespan: (text) => {
-			return (
-				'<code>' +
-				text.replace(type_regex, (_, prefix, name) => {
-					const link = `<a href="${type_links.get(name)}">${name}</a>`;
-					return `${prefix || ''}${link}`;
-				}) +
-				'</code>'
-			);
+			return '<code>' + type_regex
+				? text.replace(type_regex, (_, prefix, name) => {
+						const link = `<a href="${type_links.get(name)}">${name}</a>`;
+						return `${prefix || ''}${link}`;
+				  })
+				: text + '</code>';
 		}
 	});
 }
@@ -150,14 +201,19 @@ function parse({ body, code, codespan }) {
 	return content;
 }
 
-/** @param {string} markdown */
-export function generate_ts_from_js(markdown) {
+/**
+ * Pre-render step. Takes in all the code snippets, and replaces them with TS snippets if possible
+ * May replace the language labels (```js) to custom labels(```generated-ts, ```original-js, ```generated-svelte,```original-svelte)
+ *  @param {string} markdown
+ */
+function generate_ts_from_js(markdown) {
 	return markdown
 		.replaceAll(/```js\n([\s\S]+?)\n```/g, (match, code) => {
 			if (!code.includes('/// file:')) {
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
 			}
+
 			if (code.includes('/// file: svelte.config.js')) {
 				// svelte.config.js has no TS equivalent
 				return match;
@@ -348,10 +404,28 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 }
 
 /**
+ * Replace module/export information placeholders in the docs.
  * @param {string} content
  * @param {import('$lib/generated/types').Modules} modules
  */
-export function replace_placeholders(content, modules) {
+export function replace_export_type_placeholders(content, modules) {
+	const REGEXES = {
+		EXPANDED_TYPES: /> EXPANDED_TYPES: (.+?)#(.+)$/gm,
+		TYPES: /> TYPES: (.+?)(?:#(.+))?$/gm,
+		EXPORT_SNIPPET: /> EXPORT_SNIPPET: (.+?)#(.+)?$/gm,
+		MODULES: /> MODULES/,
+		EXPORTS: /> EXPORTS: (.+)/
+	};
+
+	if (!modules || modules.length === 0) {
+		return content
+			.replace(REGEXES.EXPANDED_TYPES, '')
+			.replace(REGEXES.TYPES, '')
+			.replace(REGEXES.EXPORT_SNIPPET, '')
+			.replace(REGEXES.MODULES, '')
+			.replace(REGEXES.EXPORTS, '');
+	}
+
 	return content
 		.replace(/> EXPANDED_TYPES: (.+?)#(.+)$/gm, (_, name, id) => {
 			const module = modules.find((module) => module.name === name);
@@ -500,6 +574,7 @@ function fence(code, lang = 'ts') {
 }
 
 /**
+ * Helper function for {@link replace_export_type_placeholders}. Renders specifiv members to their markdown/html representation.
  * @param {import('$lib/generated/types').Modules[number]['types'][number]} member
  * @param {keyof typeof import('../markdown').SHIKI_LANGUAGE_MAP} [lang]
  */
@@ -534,7 +609,7 @@ function stringify(member, lang = 'ts') {
 /**
  * @type {(filename: string, source: string) => string}
  */
-export const svelte_twoslash_banner = (filename, source) => {
+const svelte_twoslash_banner = (filename, source) => {
 	const injected = [];
 
 	if (/(svelte)/.test(source) || filename.includes('typescript')) {
@@ -592,13 +667,23 @@ function find_nearest_node_modules(start_path) {
 }
 
 /**
+ * Utility function to work code snippet caching.
+ *
+ * @example
+ *
+ * ```js
+ * const SNIPPETS_CACHE = create_snippet_cache(true);
+ *
+ * const { uid, code } = SNIPPETS_CACHE.get(source);
+ *
+ * // Later to save the code to the cache
+ * SNIPPETS_CACHE.save(uid, processed_code);
+ * ```
+ *
  * @param {boolean} should
  */
 async function create_snippet_cache(should) {
 	const snippet_cache = find_nearest_node_modules(import.meta.url) + '/.snippets';
-
-	/** @type {Map<string, string>} */
-	const cache = new Map();
 
 	try {
 		if (should) fs.mkdirSync(snippet_cache, { recursive: true });
@@ -614,17 +699,14 @@ async function create_snippet_cache(should) {
 		hash.update(source);
 		const digest = hash.digest().toString('base64').replace(/\//g, '-');
 
-		if (cache.has(digest)) return { uid: digest, code: cache.get(digest) };
-
-		/** @type {string | null} */
-		let content = null;
-
 		try {
-			content = fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8');
-			cache.set(digest, content);
+			return {
+				uid: digest,
+				code: fs.readFileSync(`${snippet_cache}/${digest}.html`, 'utf-8')
+			};
 		} catch {}
 
-		return { code: content, uid: digest };
+		return { uid: digest, code: null };
 	}
 
 	/**
@@ -641,9 +723,12 @@ async function create_snippet_cache(should) {
 }
 
 /**
- * @param {import('$lib/generated/types').Modules} modules
+ * @param {import('$lib/generated/types').Modules | undefined} modules
+ * @returns {{ type_regex: RegExp | null, type_links: Map<string, string> | null }}
  */
 function create_type_links(modules) {
+	if (!modules || modules.length === 0) return { type_regex: null, type_links: null };
+
 	const type_regex = new RegExp(
 		`(import\\(&apos;(?:svelte|@sveltejs\\/kit)&apos;\\)\\.)?\\b(${modules
 			.flatMap((module) => module.types)
@@ -671,13 +756,10 @@ function create_type_links(modules) {
  * @param {Record<'file' | 'link', string | null>} options
  */
 function collect_options(source, options) {
-	return source.replace(
-		/(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm,
-		(_, key, value) => {
-			options[key] = value;
-			return '';
-		}
-	);
+	return source.replace(METADATA_REGEX, (_, key, value) => {
+		options[key] = value;
+		return '';
+	});
 }
 
 /**
