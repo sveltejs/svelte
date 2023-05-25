@@ -74,6 +74,7 @@ export default class Attribute extends Node {
 
 		// TODO Svelte 5: Think about moving this into the parser and make it an error
 		if (
+			this.name &&
 			this.name.includes(':') &&
 			!this.name.startsWith('xmlns:') &&
 			!this.name.startsWith('xlink:') &&
