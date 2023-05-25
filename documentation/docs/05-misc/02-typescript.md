@@ -152,7 +152,7 @@ In this case, Svelte can't understand the custom event types, so you can use the
 
 ### No TS in markup
 
-You cannot use TypeScript in your template. For example, the following does not work:
+You cannot use TypeScript in your template's markup. For example, the following does not work:
 
 ```svelte
 <script lang="ts">
