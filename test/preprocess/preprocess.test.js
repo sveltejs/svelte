@@ -18,7 +18,9 @@ describe('preprocess', async () => {
 		const it_fn = skip ? it.skip : solo ? it.only : it;
 
 		it_fn(dir, async ({ expect }) => {
-			const input = fs.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8');
+			const input = fs
+				.readFileSync(`${__dirname}/samples/${dir}/input.svelte`, 'utf-8')
+				.replace(/\r\n/g, '\n');
 
 			const result = await svelte.preprocess(
 				input,
@@ -37,6 +39,14 @@ describe('preprocess', async () => {
 			expect(result.code).toMatchFileSnapshot(`${__dirname}/samples/${dir}/output.svelte`);
 
 			expect(result.dependencies).toEqual(config.dependencies || []);
+
+			if (fs.existsSync(`${__dirname}/samples/${dir}/expected_map.json`)) {
+				const expected_map = JSON.parse(
+					fs.readFileSync(`${__dirname}/samples/${dir}/expected_map.json`, 'utf-8')
+				);
+				// You can use https://sokra.github.io/source-map-visualization/#custom to visualize the source map
+				expect(JSON.parse(JSON.stringify(result.map))).toEqual(expected_map);
+			}
 		});
 	}
 });

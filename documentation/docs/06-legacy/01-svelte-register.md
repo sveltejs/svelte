@@ -2,6 +2,8 @@
 title: 'svelte/register'
 ---
 
+> This API is removed in Svelte 4. `require` hooks are deprecated and current Node versions understand ESM. Use a bundler like Vite or our full-stack framework [SvelteKit](https://kit.svelte.dev) instead to create JavaScript modules from Svelte components.
+
 To render Svelte components in Node.js without bundling, use `require('svelte/register')`. After that, you can use `require` to include any `.svelte` file.
 
 ```js

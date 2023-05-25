@@ -1,9 +1,9 @@
 import { identity as linear, is_function, noop, run_all } from './utils.js';
-import { now } from './environment';
-import { loop } from './loop';
-import { create_rule, delete_rule } from './style_manager';
-import { custom_event } from './dom';
-import { add_render_callback } from './scheduler';
+import { now } from './environment.js';
+import { loop } from './loop.js';
+import { create_rule, delete_rule } from './style_manager.js';
+import { custom_event } from './dom.js';
+import { add_render_callback } from './scheduler.js';
 
 /**
  * @type {Promise<void> | null}
