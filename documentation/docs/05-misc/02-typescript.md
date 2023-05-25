@@ -85,7 +85,7 @@ Props can be directly typed by using the `export let` syntax:
 
 ## Slots
 
-Slots and slot props types are inferred from the type of slot props passed to them.
+Slot and slot prop types are inferred from the types of the slot props passed to them.
 
 For example:
 
