@@ -242,7 +242,7 @@ declare global {
 export {};
 
 // @filename: main.ts
-// @errors: 2322 2345
+// @errors: 2322 2345 2339
 /// <reference types="@types/node" />
 // ---cut---
 import { preprocess } from 'svelte/compiler';
