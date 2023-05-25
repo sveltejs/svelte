@@ -19,9 +19,8 @@ export function assign(tar, src) {
 // Adapted from https://github.com/then/is-promise/blob/master/index.js
 // Distributed under MIT License https://github.com/then/is-promise/blob/master/LICENSE
 /**
- * @template T
- * @param {T} value
- * @returns {value is PromiseLike<T>}
+ * @param {any} value
+ * @returns {value is PromiseLike<any>}
  */
 export function is_promise(value) {
 	return (
