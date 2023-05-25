@@ -130,7 +130,7 @@ Events can be typed with `createEventDispatcher`:
 <button on:click={handleClick} on:keydown={handleType}>Click</button>
 ```
 
-However, sometimes an event dispatcher may be coming from another file/package. For example:
+However, sometimes an event dispatcher may be coming from another module. For example:
 
 ```svelte
 <script>
