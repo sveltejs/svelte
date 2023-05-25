@@ -35,7 +35,6 @@ The following options can be passed to the compiler. None are required:
 | --- | --- | --- |
 | `filename` | string | `null`
 | `name` | string | `"Component"`
-| `format` | `"esm"` or `"cjs"` | `"esm"`
 | `generate` | `"dom"` or `"ssr"` or `false` | `"dom"`
 | `errorMode` | `"throw"` or `"warn"` | `"throw"`
 | `varsReport` | `"strict"` or `"full"` or `false` | `"strict"`
@@ -58,7 +57,6 @@ The following options can be passed to the compiler. None are required:
 | -------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `filename`           | `null`                                      | `string` used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `name`               | `"Component"`                               | `string` that sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope). It will normally be inferred from `filename`.                                                                                                                                                                                                                                                                                                                                                                |
-| `format`             | `"esm"`                                     | If `"esm"`, creates a JavaScript module (with `import` and `export`). If `"cjs"`, creates a CommonJS module (with `require` and `module.exports`), which is useful in some server-side rendering situations or for testing.                                                                                                                                                                                                                                                                                                                                                   |
 | `generate`           | `"dom"`                                     | If `"dom"`, Svelte emits a JavaScript class for mounting to the DOM. If `"ssr"`, Svelte emits an object with a `render` method suitable for server-side rendering. If `false`, no JavaScript or CSS is returned; just metadata.                                                                                                                                                                                                                                                                                                                                               |
 | `errorMode`          | `"throw"`                                   | If `"throw"`, Svelte throws when a compilation error occurred. If `"warn"`, Svelte will treat errors as warnings and add them to the warning report.                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `varsReport`         | `"strict"`                                  | If `"strict"`, Svelte returns a variables report with only variables that are not globals nor internals. If `"full"`, Svelte returns a variables report with all detected variables. If `false`, no variables report is returned.                                                                                                                                                                                                                                                                                                                                             |
@@ -180,19 +178,21 @@ const ast = parse(source, { filename: 'App.svelte' });
 
 > EXPORT_SNIPPET: svelte/compiler#preprocess
 
-A number of [community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [official and community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 
 The `preprocess` function provides convenient hooks for arbitrarily transforming component source code. For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
 
-The first argument is the component source code. The second is an array of _preprocessors_ (or a single preprocessor, if you only have one), where a preprocessor is an object with `markup`, `script` and `style` functions, each of which is optional.
-
-Each `markup`, `script` or `style` function must return an object (or a Promise that resolves to an object) with a `code` property, representing the transformed source code, and an optional array of `dependencies`.
+The first argument is the component source code. The second is an array of _preprocessors_ (or a single preprocessor, if you only have one), where a preprocessor is an object with a `name` which is required, and `markup`, `script` and `style` functions, each of which is optional.
 
 The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
 
-> Preprocessor functions should additionally return a `map` object alongside `code` and `dependencies`, where `map` is a sourcemap representing the transformation.
+The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
+
+Each `markup`, `script` or `style` function must return an object (or a Promise that resolves to an object) with a `code` property, representing the transformed source code. Optionally they can return an array of `dependencies` which represents files to watch for changes, and a `map` object which is a sourcemap mapping back the transformation to the original code. `script` and `style` preprocessors can optionally return a record of attributes which represent the updated attributes on the script/style tag.
+
+> Preprocessor functions should return a `map` object whenever possible or else debugging becomes harder as stack traces can't link to the original code correctly.
 
 ```js
 // @filename: ambient.d.ts
@@ -245,24 +245,57 @@ export {};
 // @errors: 2322 2345
 /// <reference types="@types/node" />
 // ---cut---
-import { dirname } from 'node:path';
 import { preprocess } from 'svelte/compiler';
+import MagicString from 'magic-string';
 import sass from 'sass';
+import { dirname } from 'path';
 
-const { code, dependencies } = await preprocess(
+const { code } = await preprocess(
 	source,
 	{
-		style: async ({ content, attributes, filename }) => {
-			// only process <style lang="sass">
-			if (attributes.lang !== 'sass' && attributes.lang !== 'scss') return;
+		name: 'my-fancy-preprocessor',
+		markup: ({ content, filename }) => {
+			// Return code as is when no foo string present
+			const pos = content.indexOf('foo');
+			if (pos < 0) {
+				return;
+			}
 
-			const { css, loadedUrls } = await sass.compileStringAsync(content, {
-				loadPaths: [dirname(filename)]
-			});
+			// Replace foo with bar using MagicString which provides
+			// a source map along with the changed code
+			const s = new MagicString(content, { filename });
+			s.overwrite(pos, pos + 3, 'bar', { storeName: true });
 
 			return {
-				code: css,
-				dependencies: loadedUrls
+				code: s.toString(),
+				map: s.generateMap({ hires: true, file: filename })
+			};
+		},
+		style: async ({ content, attributes, filename }) => {
+			// only process <style lang="sass">
+			if (attributes.lang !== 'sass') return;
+
+			const { css, stats } = await new Promise((resolve, reject) =>
+				sass.render(
+					{
+						file: filename,
+						data: content,
+						includePaths: [dirname(filename)]
+					},
+					(err, result) => {
+						if (err) reject(err);
+						else resolve(result);
+					}
+				)
+			);
+
+			// remove lang attribute from style tag
+			delete attributes.lang;
+
+			return {
+				code: css.toString(),
+				dependencies: stats.includedFiles,
+				attributes
 			};
 		}
 	},
@@ -272,7 +305,9 @@ const { code, dependencies } = await preprocess(
 );
 ```
 
-Multiple preprocessors can be used together. The output of the first becomes the input to the second. `markup` functions run first, then `script` and `style`.
+Multiple preprocessors can be used together. The output of the first becomes the input to the second. Within one preprocessor, `markup` runs first, then `script` and `style`.
+
+> In Svelte 3, all `markup` functions ran first, then all `script` and then all `style` preprocessors. This order was changed in Svelte 4.
 
 ```js
 // @filename: ambient.d.ts
@@ -286,36 +321,34 @@ export {};
 // ---cut---
 import { preprocess } from 'svelte/compiler';
 
-const { code } = await preprocess(
-	source,
-	[
-		{
-			markup: () => {
-				console.log('this runs first');
-			},
-			script: () => {
-				console.log('this runs third');
-			},
-			style: () => {
-				console.log('this runs fifth');
-			}
-		},
-		{
-			markup: () => {
-				console.log('this runs second');
-			},
-			script: () => {
-				console.log('this runs fourth');
-			},
-			style: () => {
-				console.log('this runs sixth');
-			}
-		}
-	],
+const { code } = await preprocess(source, [
 	{
-		filename: 'App.svelte'
+		name: 'first preprocessor',
+		markup: () => {
+			console.log('this runs first');
+		},
+		script: () => {
+			console.log('this runs second');
+		},
+		style: () => {
+			console.log('this runs third');
+		}
+	},
+	{
+		name: 'second preprocessor',
+		markup: () => {
+			console.log('this runs fourth');
+		},
+		script: () => {
+			console.log('this runs fifth');
+		},
+		style: () => {
+			console.log('this runs sixth');
+		}
 	}
-);
+], {
+	filename: 'App.svelte'
+});
 ```
 
 ## `svelte.walk`
