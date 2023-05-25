@@ -12,7 +12,7 @@ import {
 	transform
 } from '../markdown/index.js';
 
-const METADATA_REGEX = /(?:<!---\s*([\w-]+):\s*(.*?)\s*--->|\/\/\/\s*([\w-]+):\s*(.*))\n/gm;
+const METADATA_REGEX = /(?:<!---\s*(file|link):\s*(.*?)\s*--->|\/\/\/\s*(file|link):\s*(.*))\n/gm;
 
 /**
  * A super markdown renderer function. Renders svelte and kit docs specific specific markdown code to html.
