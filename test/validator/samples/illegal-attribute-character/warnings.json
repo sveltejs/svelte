@@ -1,0 +1,26 @@
+[
+	{
+		"code": "illegal-attribute-character",
+		"end": {
+			"column": 15,
+			"line": 14
+		},
+		"message": "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives",
+		"start": {
+			"column": 8,
+			"line": 14
+		}
+	},
+	{
+		"code": "illegal-attribute-character",
+		"end": {
+			"column": 10,
+			"line": 15
+		},
+		"message": "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives",
+		"start": {
+			"column": 3,
+			"line": 15
+		}
+	}
+]
