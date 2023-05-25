@@ -144,7 +144,7 @@ However, sometimes an event dispatcher may be coming from another module. For ex
 <button on:click={handleClick}>Mixin</button>
 ```
 
-In this case, svelte can't understand the custom event types. So, you can use the experimental `$$Events` inerface.
+In this case, Svelte can't understand the custom event types, so you can use the experimental `$$Events` interface.
 
 > See this [guide](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md#typing-events) for more information about the experimental `$$Events` interface.
 
