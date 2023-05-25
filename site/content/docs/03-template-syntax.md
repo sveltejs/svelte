@@ -7,7 +7,7 @@ title: Template syntax
 
 ---
 
-A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
+A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalized tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a *component*.
 
 ```sv
 <script>
@@ -107,7 +107,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimise. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
+*`$$props`* references all props that are passed to a component, including ones that are not declared with `export`. It is not generally recommended, as it is difficult for Svelte to optimize. But it can be useful in rare cases – for example, when you don't know at compile time what props might be passed to a component.
 
 ```sv
 <Widget {...$$props}/>
@@ -115,7 +115,7 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ---
 
-*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimisation problems as *`$$props`*, and is likewise not recommended.
+*`$$restProps`* contains only the props which are *not* declared with `export`. It can be used to pass down other unknown attributes to an element in a component. It shares the same optimization problems as *`$$props`*, and is likewise not recommended.
 
 ```html
 <input {...$$restProps}>
@@ -1027,7 +1027,7 @@ The `transition:` directive indicates a *bidirectional* transition, which means 
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs#run-time-client-side-component-api).
+> By default intro transitions will not play on first render. You can modify this behavior by setting `intro: true` when you [create a component](/docs#run-time-client-side-component-api).
 
 ##### Transition parameters
 
@@ -1204,7 +1204,7 @@ out:fn|local={params}
 
 Similar to `transition:`, but only applies to elements entering (`in:`) or leaving (`out:`) the DOM.
 
-Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
+Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outrode while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
 
 ```sv
 {#if visible}
