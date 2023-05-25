@@ -455,7 +455,7 @@ An action can have a parameter. If the returned value has an `update` method, it
 <div use:foo={bar} />
 ```
 
-Read more in [svelte/action](/docs/svelte-action) page.
+Read more in the [`svelte/action`](/docs/svelte-action) page.
 
 ## transition:_fn_
 
