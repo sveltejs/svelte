@@ -216,7 +216,7 @@ export function ensure_array_like_dev(arg) {
 		!(arg && typeof arg === 'object' && 'length' in arg) &&
 		!(typeof Symbol === 'function' && arg && Symbol.iterator in arg)
 	) {
-		throw new Error('{#each} only iterates over array-like objects.');
+		throw new Error('{#each} only works with iterable values.');
 	}
 	return ensure_array_like(arg);
 }
