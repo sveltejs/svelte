@@ -2,7 +2,7 @@
 title: TypeScript
 ---
 
-You can use TypeScript to type your Svelte components. The Svelte VSCode extension and the [`svelte-check` CLI](https://www.npmjs.com/package/svelte-check) will check your code for errors and provide hints about how to fix them.
+You can use TypeScript to type your Svelte components. The [Svelte VSCode extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) and the [`svelte-check`](https://www.npmjs.com/package/svelte-check) CLI will check your code for errors and provide hints about how to fix them.
 
 ## Setup
 
