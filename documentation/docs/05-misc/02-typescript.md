@@ -6,6 +6,8 @@ You can use TypeScript to type your Svelte components. The Svelte VSCode extensi
 
 ## Setup
 
+### Without Vite
+
 Install `typescript` and `svelte-preprocess`:
 
 ```sh
