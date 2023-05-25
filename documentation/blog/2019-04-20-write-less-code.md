@@ -48,6 +48,7 @@ Reducing the amount of code you have to write is an explicit goal of Svelte. To 
 How would we build this in React? It would probably look something like this:
 
 ```js
+// @noErrors
 import React, { useState } from 'react';
 
 export default () => {
@@ -118,6 +119,7 @@ In Vue, your markup must be wrapped in a `<template>` element, which I'd argue i
 In React, we have to respond to input events ourselves:
 
 ```js
+// @noErrors
 function handleChangeA(event) {
 	setA(+event.target.value);
 }
@@ -142,6 +144,7 @@ function increment() {
 In React, we use the `useState` hook:
 
 ```js
+// @noErrors
 const [count, setCount] = useState(0);
 
 function increment() {

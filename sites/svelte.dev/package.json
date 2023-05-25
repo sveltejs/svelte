@@ -4,6 +4,7 @@
 	"description": "Docs and examples for Svelte",
 	"type": "module",
 	"scripts": {
+		"prepare": "pnpm generate",
 		"dev": "node scripts/update.js && vite dev",
 		"build": "node scripts/update.js && pnpm run generate && vite build",
 		"generate": "node scripts/type-gen/index.js && node scripts/generate_examples.js",
@@ -13,8 +14,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
 		"format": "pnpm run check:format -- --write",
-		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=.",
-		"test": "uvu -r ts-node/register src/lib/server/markdown"
+		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.22.0",
@@ -27,11 +27,11 @@
 	},
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.4.1",
-		"@sveltejs/adapter-vercel": "^2.4.3",
-		"@sveltejs/kit": "^1.16.3",
+		"@sveltejs/adapter-vercel": "^3.0.0",
+		"@sveltejs/kit": "^1.18.0",
 		"@sveltejs/site-kit": "^5.2.1",
-		"@types/marked": "^4.3.0",
-		"@types/node": "^20.1.7",
+		"@types/marked": "^5.0.0",
+		"@types/node": "^20.2.1",
 		"degit": "^2.8.4",
 		"dotenv": "^16.0.3",
 		"jimp": "^0.22.8",
@@ -43,7 +43,7 @@
 		"rollup": "^3.22.0",
 		"rollup-plugin-dts": "^5.3.0",
 		"sass": "^1.62.1",
-		"satori": "^0.8.1",
+		"satori": "^0.9.1",
 		"satori-html": "^0.3.2",
 		"shelljs": "^0.8.5",
 		"shiki": "^0.14.2",
@@ -53,7 +53,7 @@
 		"tiny-glob": "^0.2.9",
 		"ts-morph": "^18.0.0",
 		"typescript": "^5.0.4",
-		"vite": "^4.3.7",
+		"vite": "4.3.8",
 		"vite-imagetools": "^5.0.4"
 	}
 }

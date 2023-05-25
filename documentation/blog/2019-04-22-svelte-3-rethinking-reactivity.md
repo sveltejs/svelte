@@ -36,6 +36,7 @@ To make that possible we first needed to rethink the concept at the heart of mod
 In old Svelte, you would tell the computer that some state had changed by calling the `this.set` method:
 
 ```js
+// @errors: 7017
 const { count } = this.get();
 this.set({
 	count: count + 1
@@ -45,6 +46,7 @@ this.set({
 That would cause the component to _react_. Speaking of which, `this.set` is almost identical to the `this.setState` method used in classical (pre-hooks) React:
 
 ```js
+// @errors: 7017
 const { count } = this.state;
 this.setState({
 	count: count + 1
@@ -61,13 +63,20 @@ That all changed with the advent of [hooks](https://reactjs.org/docs/hooks-intro
 
 So we took a step back and asked ourselves what kind of API would work for us... and realised that the best API is no API at all. We can just _use the language_. Updating some `count` value — and all the things that depend on it — should be as simple as this:
 
-```js
+```ts
+let count: number = 10;
+// ---cut---
 count += 1;
 ```
 
 Since we're a compiler, we can do that by instrumenting assignments behind the scenes:
 
-```js
+```ts
+let count: number = 10;
+const $$invalidate = <T>(name: string, value: T) => {
+	return void 0;
+};
+// ---cut---
 count += 1;
 $$invalidate('count', count);
 ```

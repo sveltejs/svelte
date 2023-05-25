@@ -7,6 +7,9 @@ You need to install a preprocessor such as [svelte-preprocess](https://github.co
 To declare the type of a reactive variable in a Svelte template, you should use the following syntax:
 
 ```ts
+const count: number = 100;
+
+// ---cut---
 let x: number;
 $: x = count + 1;
 ```
@@ -14,6 +17,13 @@ $: x = count + 1;
 To import a type or interface make sure to use [TypeScript's `type` modifier](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export):
 
 ```ts
+// @filename: SomeFile.ts
+export interface SomeInterface {
+	foo: string;
+}
+
+// @filename: index.ts
+// ---cut---
 import type { SomeInterface } from './SomeFile';
 ```
 

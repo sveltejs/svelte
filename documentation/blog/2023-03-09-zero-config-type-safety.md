@@ -22,6 +22,12 @@ Before we dive in, let's recap how type safety works in SvelteKit.
 In SvelteKit, you get the data for a page in a `load` function. You _could_ type the event by using `ServerLoadEvent` from `@sveltejs/kit`:
 
 ```ts
+const database = {
+	getPost(slug: string | undefined): Promise<string> {
+		return Promise.resolve('hello world');
+	}
+};
+// ---cut---
 // src/routes/blog/[slug]/+page.server.ts
 import type { ServerLoadEvent } from '@sveltejs/kit';
 
@@ -71,6 +77,7 @@ After we have loaded our data, we want to display it in our `+page.svelte`. The 
 When running the dev server or the build, types are auto-generated. Thanks to the file-system based routing, SvelteKit is able to infer things like the correct parameters or parent data by traversing the route tree. The result is outputted into one `$types.d.ts` file for each route, which looks roughly like this:
 
 ```ts
+// @errors: 2344 2694 2307
 // $types.d.ts
 import type * as Kit from '@sveltejs/kit';
 
