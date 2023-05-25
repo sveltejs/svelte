@@ -7,8 +7,6 @@ node_modules
 /src/shared/version.js
 /compiler.d.ts
 /compiler.cjs
-/compiler.js
-/compiler.mjs
 /index.d.ts
 /action.d.ts
 /internal.d.ts
