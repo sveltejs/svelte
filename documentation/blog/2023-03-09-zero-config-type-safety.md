@@ -28,6 +28,7 @@ const database = {
 	}
 };
 // ---cut---
+// src/routes/blog/[slug]/+page.server.ts
 import type { ServerLoadEvent } from '@sveltejs/kit';
 
 export async function load(event: ServerLoadEvent) {
@@ -77,7 +78,6 @@ When running the dev server or the build, types are auto-generated. Thanks to th
 
 ```ts
 // @errors: 2344 2694 2307
-// ---cut---
 // $types.d.ts
 import type * as Kit from '@sveltejs/kit';
 

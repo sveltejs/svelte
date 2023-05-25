@@ -1,6 +1,9 @@
+// @ts-expect-error
 import SvelteComponent from '__MAIN_DOT_SVELTE__';
+// @ts-expect-error
 import config from '__CONFIG__';
-import * as assert from 'assert';
+// @ts-expect-error
+import * as assert from 'assert.js';
 
 export default async function (target) {
 	let unhandled_rejection = false;
@@ -16,6 +19,8 @@ export default async function (target) {
 			{},
 			{
 				target,
+				// @ts-expect-error
+				// eslint-disable-next-line no-undef
 				hydrate: __HYDRATE__,
 				props: config.props,
 				intro: config.intro
@@ -63,7 +68,7 @@ export default async function (target) {
 		if (config.after_test) config.after_test();
 	} catch (error) {
 		if (config.error) {
-			assert.equal(err.message, config.error);
+			assert.equal(error.message, config.error);
 		} else {
 			throw error;
 		}

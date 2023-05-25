@@ -1,6 +1,7 @@
 // @ts-check
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { modules } from '$lib/generated/type-info';
 import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { extract_frontmatter } from '../markdown/index.js';
 import { render_markdown } from '../markdown/renderer.js';
 
@@ -15,7 +16,7 @@ export async function get_processed_blog_post(blog_data, slug) {
 
 	return {
 		...post,
-		content: await render_markdown(post.file, post.content)
+		content: await render_markdown(post.file, post.content, { modules })
 	};
 }
 

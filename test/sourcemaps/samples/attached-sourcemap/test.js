@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
 const get_line_column = (obj) => ({ line: obj.line, column: obj.column });
 

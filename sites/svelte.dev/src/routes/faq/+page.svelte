@@ -32,37 +32,4 @@
 		margin: 0 auto;
 		tab-size: 2;
 	}
-
-	.faqs :global(h2 > .anchor),
-	.faqs :global(h3 > .anchor) {
-		top: 0.2em;
-	}
-
-	@media (min-width: 768px) {
-		.faqs :global(.anchor:focus),
-		.faqs :global(:where(h2, h3, h4, h5, h6)):hover :global(.anchor) {
-			opacity: 1;
-		}
-
-		.faqs :global(h5) :global(.anchor),
-		.faqs :global(h6) :global(.anchor) {
-			top: 0.25em;
-		}
-	}
-
-	:global(.faqs .faq ul) {
-		margin-left: 3.2rem;
-	}
-
-	.faqs :global(.anchor) {
-		top: calc((var(--sk-text-m) - 24px) / 2);
-	}
-
-	@media (max-width: 768px) {
-		.faqs :global(.anchor) {
-			transform: scale(0.6);
-			opacity: 1;
-			left: -1em;
-		}
-	}
 </style>

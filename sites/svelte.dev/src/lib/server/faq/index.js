@@ -1,6 +1,7 @@
 // @ts-check
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { modules } from '$lib/generated/type-info';
 import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { extract_frontmatter } from '../markdown/index.js';
 import { render_markdown } from '../markdown/renderer.js';
 
@@ -8,7 +9,7 @@ import { render_markdown } from '../markdown/renderer.js';
 export async function get_parsed_faq(faq_data) {
 	const str = faq_data.map(({ content, title }) => `## ${title}\n\n${content}`).join('\n\n');
 
-	return await render_markdown('faq', str);
+	return await render_markdown('faq', str, { modules });
 }
 
 /**

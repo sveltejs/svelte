@@ -1,6 +1,7 @@
 import { base as app_base } from '$app/paths';
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { modules } from '$lib/generated/type-info';
 import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import {
 	escape,
 	extract_frontmatter,
@@ -23,7 +24,7 @@ export async function get_parsed_docs(docs_data, slug) {
 
 	return {
 		...page,
-		content: await render_markdown(page.file, page.content)
+		content: await render_markdown(page.file, page.content, { modules })
 	};
 }
 

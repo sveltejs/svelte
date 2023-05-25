@@ -1,5 +1,6 @@
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { modules } from '$lib/generated/type-info';
 import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { extract_frontmatter } from '../markdown/index.js';
 import { render_markdown } from '../markdown/renderer.js';
 
@@ -16,7 +17,7 @@ export async function get_parsed_tutorial(tutorial_data, slug) {
 
 	return {
 		...tutorial,
-		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content)
+		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content, { modules })
 	};
 }
 
