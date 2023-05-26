@@ -1,4 +1,4 @@
-# Svelte changelog
+# @sveltejs/svelte
 
 ## 4.0.0-next.0
 
