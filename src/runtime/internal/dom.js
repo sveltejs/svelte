@@ -993,7 +993,7 @@ export { ResizeObserverSingleton };
 /**
  * @returns {void} */
 export function toggle_class(element, name, toggle) {
-	element.classList.toggle(name, !!toggle);
+	element.classList.toggle(name, toggle);
 }
 
 /**
