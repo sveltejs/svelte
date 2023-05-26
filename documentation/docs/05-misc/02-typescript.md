@@ -115,6 +115,31 @@ Events can be typed with `createEventDispatcher`:
 <button on:click={handleClick} on:keydown={handleType}>Click</button>
 ```
 
+## Enhancing built-in DOM types
+
+Svelte provides a best effort of all the HTML DOM types that exist. Sometimes you may want to use experimental attributes or custom events coming from an action. In these cases, TypeScript will throw a type error, saying that it does not know these types. If it's a non-experimental standard attribute/event, this may very well be a missing typing from our [HTML typings](https://github.com/sveltejs/svelte/blob/master/elements/index.d.ts). In that case, you are welcome to open an issue and/or a PR fixing it.
+
+In case this is a custom or experimental attribute/event, you can enhance the typings like this:
+
+```ts
+/// file: additional-svelte-typings.d.ts
+declare namespace svelteHTML {
+    // enhance elements
+    interface IntrinsicElements {
+        'my-custom-element': { someattribute: string; 'on:event': (e: CustomEvent<any>) => void };
+    }
+    // enhance attributes
+    interface HTMLAttributes<T> {
+        // If you want to use on:beforeinstallprompt
+        'on:beforeinstallprompt'?: (event: any) => any;
+        // If you want to use myCustomAttribute={..} (note: all lowercase)
+        mycustomattribute?: any; // You can replace any with something more specific if you like
+    }
+}
+```
+
+Then make sure that `d.ts` file is referenced in your `tsconfig.json`. If it reads something like `"include": ["src/**/*"]` and your `d.ts` file is inside `src`, it should work. You may need to reload for the changes to take effect.
+
 ## Experimental advanced typings
 
 A few features are missing from taking full advantage of TypeScript in more advanced use cases like typing that a component implements a certain interface, explicitly typing slots, or using generics. These things are possible using experimental advanced type capabilities. See [this RFC](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md) for more information on how to make use of them.
