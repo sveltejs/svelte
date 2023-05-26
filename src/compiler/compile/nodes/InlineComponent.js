@@ -59,7 +59,9 @@ export default class InlineComponent extends Node {
 				? new Expression(component, this, scope, info.expression)
 				: null;
 		info.attributes.forEach(
-			/** @param {import('../../interfaces.js').BaseDirective | import('../../interfaces.js').Attribute | import('../../interfaces.js').SpreadAttribute} node */ (node) => {
+			/** @param {import('../../interfaces.js').BaseDirective | import('../../interfaces.js').Attribute | import('../../interfaces.js').SpreadAttribute} node */ (
+				node
+			) => {
 				/* eslint-disable no-fallthrough */
 				switch (node.type) {
 					case 'Action':
@@ -89,7 +91,7 @@ export default class InlineComponent extends Node {
 					case 'StyleDirective':
 						return component.error(node, compiler_errors.invalid_component_style_directive);
 					case 'Animation':
-					  return component.error(node, compiler_errors.invalid_animation);
+						return component.error(node, compiler_errors.invalid_animation);
 					default:
 						throw new Error(`Not implemented: ${node.type}`);
 				}
