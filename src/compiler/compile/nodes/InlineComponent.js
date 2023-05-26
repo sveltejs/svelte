@@ -33,6 +33,8 @@ export default class InlineComponent extends Node {
 	/** @type {string} */
 	namespace;
 
+	/** @type {Node[]} */
+	let_attributes;
 	/**
 	 * @param {import('../Component.js').default} component
 	 * @param {import('./shared/Node.js').default} parent
@@ -55,7 +57,7 @@ export default class InlineComponent extends Node {
 				? new Expression(component, this, scope, info.expression)
 				: null;
 
-		const let_attributes = [];
+		const let_attributes = this.let_attributes = [];
 		info.attributes.forEach(
 			/** @param {any} node */ (node) => {
 				/* eslint-disable no-fallthrough */

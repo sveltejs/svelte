@@ -1644,8 +1644,9 @@ export default class Component {
 	 * @param {string} name
 	 * @param {any} node
 	 * @param {import('./nodes/shared/TemplateScope.js').default} template_scope
+	 * @param {import("./nodes/shared/Node.js").default} [owner]
 	 */
-	warn_if_undefined(name, node, template_scope) {
+	warn_if_undefined(name, node, template_scope, owner) {
 		if (name[0] === '$') {
 			if (name === '$' || (name[1] === '$' && !is_reserved_keyword(name))) {
 				return this.error(node, compiler_errors.illegal_global(name));
@@ -1657,6 +1658,14 @@ export default class Component {
 		if (this.var_lookup.has(name) && !this.var_lookup.get(name).global) return;
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name) && node.type !== 'InlineComponent') return;
+
+		if (owner?.find_nearest(/InlineComponent/)?.let_attributes.find((attr) => attr.name === name)) {
+			return this.warn(node, {
+				code: 'missing-declaration',
+				message: `let:${name} declared on parent component cannot be used inside named slot`
+			});
+		}
+
 		this.warn(node, compiler_warnings.missing_declaration(name, !!this.ast.instance));
 	}
 
