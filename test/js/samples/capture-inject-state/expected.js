@@ -107,9 +107,13 @@ function instance($$self, $$props, $$invalidate) {
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
 	let { $$slots: slots = {}, $$scope } = $$props;
 	validate_slots('Component', slots, []);
-	let { prop } = $$props;
-	validate_store(prop, 'prop');
-	$$subscribe_prop();
+
+	let { prop } = $$props,
+		$$subscriptions = (() => {
+			validate_store(prop, 'prop');
+			$$subscribe_prop();
+		})();
+
 	let { alias: realName } = $$props;
 	let local;
 	let shadowedByModule;

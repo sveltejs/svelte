@@ -41,8 +41,12 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let $foo;
-	const foo = writable(0);
-	component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
+
+	const foo = writable(0),
+		$$subscriptions = (() => {
+			component_subscribe($$self, foo, value => $$invalidate(0, $foo = value));
+		})();
+
 	return [$foo, foo];
 }
 
