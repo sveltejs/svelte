@@ -14,7 +14,7 @@ There are many ways to contribute to Svelte, and many of them do not involve wri
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#pull-requests).
-- Read through our [tutorials](https://svelte.dev/tutorial/basics). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this chapter" at the bottom left of the tutorial page.
+- Read through our [tutorials](https://learn.svelte.dev/). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
 - Take a look at the [features requested](https://github.com/sveltejs/svelte/labels/feature%20request) by others in the community and consider opening a pull request if you see something you want to work on.
 
 Contributions are very welcome. If you think you need help planning your contribution, please ping us on Discord at [svelte.dev/chat](https://svelte.dev/chat) and let us know you are looking for a bit of help.
@@ -74,9 +74,10 @@ Small pull requests are much easier to review and more likely to get merged.
 
 ### Installation
 
-1. Ensure you have [pnpm](https://pnpm.io/installation) installed.
-1. After cloning the repository, run `pnpm install` in the root of the repository.
-1. To compile in watch mode, run `pnpm dev`.
+1. Ensure you have [pnpm](https://pnpm.io/installation) installed
+1. After cloning the repository, run `pnpm install`. You can do this in the root directory or in the `svelte` project
+1. Move into the `svelte` directory with `cd packages/svelte`
+1. To compile in watch mode, run `pnpm dev`
 
 ### Creating a branch
 
