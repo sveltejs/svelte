@@ -28,7 +28,6 @@ import {
 	extract_svelte_ignore_from_comments
 } from '../utils/extract_svelte_ignore.js';
 import check_enable_sourcemap from './utils/check_enable_sourcemap.js';
-import Attribute from './nodes/Attribute.js';
 
 const regex_leading_directory_separator = /^[/\\]/;
 const regex_starts_with_term_export = /^Export/;
