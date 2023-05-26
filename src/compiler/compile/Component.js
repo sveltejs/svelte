@@ -1667,6 +1667,7 @@ export default class Component {
 					for (const attr of let_attributes) {
 						if (
 							// @ts-expect-error
+							// TODO extract_names only considers patterns but let attributes return expressions
 							(attr.expression && extract_names(attr.expression).includes(name)) ||
 							attr.name === name
 						)
