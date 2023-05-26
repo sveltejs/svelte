@@ -17,7 +17,7 @@ import fuzzymatch from '../utils/fuzzymatch.js';
 import get_object from './utils/get_object.js';
 import add_to_set from './utils/add_to_set.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { print, b } from 'code-red';
+import { print, b, x } from 'code-red';
 import { is_reserved_keyword } from './utils/reserved_keywords.js';
 import { apply_preprocessor_sourcemap } from '../utils/mapped_code.js';
 import { clone } from '../utils/clone.js';
@@ -1146,7 +1146,9 @@ export default class Component {
 				if (node.type === 'VariableDeclaration') {
 					// NOTE: `var` does not follow block scoping
 					if (node.kind === 'var' || scope === instance_scope) {
+						/** @type {import('estree').Node[][]} */
 						const inserts = [];
+						/** @type {import('estree').AssignmentProperty[]} */
 						const props = [];
 
 						/**
@@ -1177,8 +1179,7 @@ export default class Component {
 						// ```
 						// into
 						// ```
-						// let { x: x$, y: y$ = 123 } = OBJ;
-						// let { x = x$, y = y$, z = 456 } = $$props;
+						// let { x: x$, y: y$ = 123 } = OBJ, { x = x$, y = y$, z = 456 } = $$props;
 						// ```
 						for (let index = 0; index < node.declarations.length; index++) {
 							const declarator = node.declarations[index];
@@ -1273,15 +1274,28 @@ export default class Component {
 								}
 							}
 						}
-						this.replace(
-							/** @type {any} */ (
-								b`
-							${node.declarations.length ? node : null}
-							${props.length > 0 && b`let { ${props} } = $$props;`}
-							${inserts}
-						`
-							)
-						);
+
+						if (props.length > 0) {
+							node.declarations.push({
+								type: 'VariableDeclarator',
+								id: {
+									type: 'ObjectPattern',
+									properties: props
+								},
+								init: x`$$props`
+							});
+						}
+
+						if (inserts.length > 0) {
+							node.declarations.push({
+								type: 'VariableDeclarator',
+								id: component.get_unique_name('$$subscriptions'),
+								init: x`(() => { 
+									${inserts}
+								})()`
+							});
+						}
+
 						return this.skip();
 					}
 				}
