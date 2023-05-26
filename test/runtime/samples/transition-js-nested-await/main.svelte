@@ -14,6 +14,6 @@
 
 {#if x}
 	{#await promise then value}
-		<div transition:foo></div>
+		<div transition:foo|global></div>
 	{/await}
 {/if}
