@@ -30,6 +30,7 @@
 * Treat slots as if they don't exist when using CSS adjacent and general sibling combinators ([#8284](https://github.com/sveltejs/svelte/issues/8284))
 * Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
+* Allow `#each` to iterate over iterables like `Set`, `Map` etc ([#7425](https://github.com/sveltejs/svelte/issues/7425))
 * Warn about `:` in attributes and props to prevent ambiguity with Svelte directives ([#6823](https://github.com/sveltejs/svelte/issues/6823))
 
 ## 3.59.1

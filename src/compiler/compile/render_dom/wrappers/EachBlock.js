@@ -206,11 +206,8 @@ export default class EachBlockWrapper extends Wrapper {
 		const needs_anchor = this.next
 			? !this.next.is_dom_node()
 			: !parent_node || !this.parent.is_dom_node();
-		const snippet = this.node.expression.manipulate(block);
+		const snippet = x`@ensure_array_like(${this.node.expression.manipulate(block)})`;
 		block.chunks.init.push(b`let ${this.vars.each_block_value} = ${snippet};`);
-		if (this.renderer.options.dev) {
-			block.chunks.init.push(b`@validate_each_argument(${this.vars.each_block_value});`);
-		}
 
 		/** @type {import('estree').Identifier} */
 		const initial_anchor_node = {
@@ -480,7 +477,6 @@ export default class EachBlockWrapper extends Wrapper {
 			this.block.maintain_context = true;
 			this.updates.push(b`
 				${this.vars.each_block_value} = ${snippet};
-				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				${this.block.has_outros && b`@group_outros();`}
 				${
@@ -628,7 +624,6 @@ export default class EachBlockWrapper extends Wrapper {
 			const update = b`
 				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
 				${this.vars.each_block_value} = ${snippet};
-				${this.renderer.options.dev && b`@validate_each_argument(${this.vars.each_block_value});`}
 
 				let #i;
 				for (#i = ${start}; #i < ${data_length}; #i += 1) {

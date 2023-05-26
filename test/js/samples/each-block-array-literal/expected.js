@@ -6,6 +6,7 @@ import {
 	detach,
 	element,
 	empty,
+	ensure_array_like,
 	init,
 	insert,
 	noop,
@@ -46,7 +47,7 @@ function create_each_block(ctx) {
 
 function create_fragment(ctx) {
 	let each_1_anchor;
-	let each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
+	let each_value = ensure_array_like([/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]]);
 	let each_blocks = [];
 
 	for (let i = 0; i < 5; i += 1) {
@@ -72,7 +73,7 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*a, b, c, d, e*/ 31) {
-				each_value = [/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]];
+				each_value = ensure_array_like([/*a*/ ctx[0], /*b*/ ctx[1], /*c*/ ctx[2], /*d*/ ctx[3], /*e*/ ctx[4]]);
 				let i;
 
 				for (i = 0; i < 5; i += 1) {

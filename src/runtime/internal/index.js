@@ -3,7 +3,7 @@ export * from './await_block.js';
 export * from './dom.js';
 export * from './environment.js';
 export * from './globals.js';
-export * from './keyed_each.js';
+export * from './each.js';
 export * from './lifecycle.js';
 export * from './loop.js';
 export * from './scheduler.js';

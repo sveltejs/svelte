@@ -12,6 +12,7 @@ import { SvelteComponent } from './Component.js';
 import { is_void } from '../../shared/utils/names.js';
 import { VERSION } from '../../shared/version.js';
 import { contenteditable_truthy_values } from './utils.js';
+import { ensure_array_like } from './each.js';
 
 /**
  * @template T
@@ -208,16 +209,15 @@ export function set_data_maybe_contenteditable_dev(text, data, attr_value) {
 	}
 }
 
-/**
- * @returns {void} */
-export function validate_each_argument(arg) {
-	if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
-		let msg = '{#each} only iterates over array-like objects.';
-		if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
-			msg += ' You can use a spread to convert this iterable into an array.';
-		}
-		throw new Error(msg);
+export function ensure_array_like_dev(arg) {
+	if (
+		typeof arg !== 'string' &&
+		!(arg && typeof arg === 'object' && 'length' in arg) &&
+		!(typeof Symbol === 'function' && arg && Symbol.iterator in arg)
+	) {
+		throw new Error('{#each} only works with iterable values.');
 	}
+	return ensure_array_like(arg);
 }
 
 /**

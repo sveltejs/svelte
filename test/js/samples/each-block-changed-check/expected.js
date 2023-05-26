@@ -7,6 +7,7 @@ import {
 	destroy_each,
 	detach,
 	element,
+	ensure_array_like,
 	init,
 	insert,
 	noop,
@@ -83,7 +84,7 @@ function create_fragment(ctx) {
 	let t0;
 	let p;
 	let t1;
-	let each_value = /*comments*/ ctx[0];
+	let each_value = ensure_array_like(/*comments*/ ctx[0]);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -113,7 +114,7 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*comments, elapsed, time*/ 7) {
-				each_value = /*comments*/ ctx[0];
+				each_value = ensure_array_like(/*comments*/ ctx[0]);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {

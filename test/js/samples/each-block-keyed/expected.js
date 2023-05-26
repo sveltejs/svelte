@@ -6,6 +6,7 @@ import {
 	detach,
 	element,
 	empty,
+	ensure_array_like,
 	init,
 	insert,
 	noop,
@@ -53,7 +54,7 @@ function create_fragment(ctx) {
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let each_1_anchor;
-	let each_value = /*things*/ ctx[0];
+	let each_value = ensure_array_like(/*things*/ ctx[0]);
 	const get_key = ctx => /*thing*/ ctx[1].id;
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -81,7 +82,7 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*things*/ 1) {
-				each_value = /*things*/ ctx[0];
+				each_value = ensure_array_like(/*things*/ ctx[0]);
 				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, each_1_anchor.parentNode, destroy_block, create_each_block, each_1_anchor, get_each_context);
 			}
 		},
