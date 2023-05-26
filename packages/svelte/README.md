@@ -12,7 +12,7 @@ Learn more at the [Svelte website](https://svelte.dev), or stop by the [Discord 
 
 ## Getting started
 
-You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [examples](https://svelte.dev/examples) and [REPL](https://svelte.dev/repl).
+You can play around with Svelte in the [tutorial](https://learn.svelte.dev/), [examples](https://svelte.dev/examples), and [REPL](https://svelte.dev/repl).
 
 When you're ready to build a full-fledge application, we recommend using [SvelteKit](https://kit.svelte.dev):
 
@@ -35,4 +35,4 @@ Svelte is an MIT-licensed open source project with its ongoing development made 
 
 - [Becoming a backer on Open Collective](https://opencollective.com/svelte).
 
-Funds donated via Open Collective will be used for compensating expenses related to Svelte's development such as hosting costs. If sufficient donations are received, funds may also be used to support Svelte's development more directly.
+Funds donated via Open Collective will be used for compensating expenses related to Svelte's development.
