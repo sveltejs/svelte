@@ -128,8 +128,6 @@ An element or component can have multiple spread attributes, interspersed with r
 
 > Another example is `<img src="..." loading="lazy" />`. Svelte will set the img `src` before making the img element `loading="lazy"`, which is probably too late. Change this to `<img loading="lazy" src="...">` to make the image lazily loaded.
 
----
-
 ### Text expressions
 
 ```sv
