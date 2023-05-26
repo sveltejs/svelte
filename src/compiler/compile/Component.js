@@ -28,6 +28,7 @@ import {
 	extract_svelte_ignore_from_comments
 } from '../utils/extract_svelte_ignore.js';
 import check_enable_sourcemap from './utils/check_enable_sourcemap.js';
+import Attribute from './nodes/Attribute.js';
 
 const regex_leading_directory_separator = /^[/\\]/;
 const regex_starts_with_term_export = /^Export/;
@@ -1659,14 +1660,26 @@ export default class Component {
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name) && node.type !== 'InlineComponent') return;
 
-		if (
-			owner?.find_nearest(/InlineComponent/)?.let_attributes.find((attr) => {
-				// TODO: let:foo={{ bar }} doesn't work properly cause it's returned as an
-				// ObjectExpression instead of a Pattern
-				const names = attr.expression ? extract_names(attr.expression) : [attr.name];
-				return names.includes(name);
-			})
-		) {
+		function has_out_of_scope_let() {
+			for (let parent = owner.parent; parent; parent = parent.parent) {
+				if (parent.type === 'InlineComponent') {
+					const { let_attributes } = parent;
+
+					for (const attr of let_attributes) {
+						if (
+							// @ts-expect-error
+							(attr.expression && extract_names(attr.expression).includes(name)) ||
+							attr.name === name
+						)
+							return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		if (owner && has_out_of_scope_let()) {
 			return this.warn(node, {
 				code: 'missing-declaration',
 				message: `let:${name} declared on parent component cannot be used inside named slot`

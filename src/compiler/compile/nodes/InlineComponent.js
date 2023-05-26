@@ -33,7 +33,7 @@ export default class InlineComponent extends Node {
 	/** @type {string} */
 	namespace;
 
-	/** @type {Node[]} */
+	/** @type {Attribute[]} */
 	let_attributes;
 	/**
 	 * @param {import('../Component.js').default} component
