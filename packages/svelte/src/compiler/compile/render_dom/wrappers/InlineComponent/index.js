@@ -1,19 +1,18 @@
-import Wrapper from '../shared/Wrapper.js';
-import BindingWrapper from '../Element/Binding.js';
-import SlotTemplateWrapper from '../SlotTemplate.js';
-import { sanitize } from '../../../../utils/names.js';
-import add_to_set from '../../../utils/add_to_set.js';
-import { b, x, p } from 'code-red';
-import is_dynamic from '../shared/is_dynamic.js';
-import bind_this from '../shared/bind_this.js';
-import EventHandler from '../Element/EventHandler.js';
-import { extract_names } from 'periscopic';
-import mark_each_block_bindings from '../shared/mark_each_block_bindings.js';
-import { string_to_member_expression } from '../../../utils/string_to_member_expression.js';
-import { is_head } from '../shared/is_head.js';
-import compiler_warnings from '../../../compiler_warnings.js';
-import { namespaces } from '../../../../utils/namespaces.js';
+import { b, p, x } from 'code-red';
 import { extract_ignores_above_node } from '../../../../utils/extract_svelte_ignore.js';
+import { sanitize } from '../../../../utils/names.js';
+import { namespaces } from '../../../../utils/namespaces.js';
+import compiler_warnings from '../../../compiler_warnings.js';
+import add_to_set from '../../../utils/add_to_set.js';
+import { string_to_member_expression } from '../../../utils/string_to_member_expression.js';
+import BindingWrapper from '../Element/Binding.js';
+import EventHandler from '../Element/EventHandler.js';
+import SlotTemplateWrapper from '../SlotTemplate.js';
+import Wrapper from '../shared/Wrapper.js';
+import bind_this from '../shared/bind_this.js';
+import is_dynamic from '../shared/is_dynamic.js';
+import { is_head } from '../shared/is_head.js';
+import mark_each_block_bindings from '../shared/mark_each_block_bindings.js';
 
 const regex_invalid_variable_identifier_characters = /[^a-zA-Z_$]/g;
 
@@ -77,11 +76,6 @@ export default class InlineComponentWrapper extends Wrapper {
 			).toLowerCase()
 		};
 		if (this.node.children.length) {
-			this.node.lets.forEach((l) => {
-				extract_names(l.value || l.name).forEach((name) => {
-					renderer.add_to_context(name, true);
-				});
-			});
 			this.children = this.node.children.map(
 				(child) =>
 					new SlotTemplateWrapper(

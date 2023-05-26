@@ -25,11 +25,6 @@ export default function (node, renderer, options) {
 			: ${result}
 	`);
 	if (slot && nearest_inline_component) {
-		const lets = node.lets;
-		const seen = new Set(lets.map((l) => l.name.name));
-		nearest_inline_component.lets.forEach((l) => {
-			if (!seen.has(l.name.name)) lets.push(l);
-		});
 		options.slot_scopes.set(slot, {
 			input: get_slot_scope(node.lets),
 			output: renderer.pop()
