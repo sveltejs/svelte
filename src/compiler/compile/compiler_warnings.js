@@ -301,5 +301,10 @@ export default {
 		code: 'avoid-mouse-events-on-document',
 		message:
 			'Mouse enter/leave events on the document are not supported in all browsers and should be avoided'
+	},
+	illegal_attribute_character: {
+		code: 'illegal-attribute-character',
+		message:
+			"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives"
 	}
 };
