@@ -24,11 +24,52 @@ You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what
 
 Please see the [Contributing Guide](CONTRIBUTING.md) and [svelte package](packages/svelte) for contributing to Svelte.
 
-## svelte.dev
+### Development
+
+Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
+
+To install and work on Svelte locally:
+
+```bash
+git clone https://github.com/sveltejs/svelte.git
+cd svelte
+pnpm install
+```
+
+> Do not use Yarn to install the dependencies, as the specific package versions in `pnpm-lock.json` are used to build and test Svelte.
+
+To build the compiler and all the other modules included in the package:
+
+```bash
+pnpm build
+```
+
+To watch for changes and continually rebuild the package (this is useful if you're using [`pnpm link`](https://pnpm.io/cli/link) to test out changes in a project locally):
+
+```bash
+pnpm dev
+```
+
+The compiler is written in [TypeScript](https://www.typescriptlang.org/), but don't let that put you off — it's basically just JavaScript with type annotations. You'll pick it up in no time. If you're using an editor other than [Visual Studio Code](https://code.visualstudio.com/), you may need to install a plugin in order to get syntax highlighting and code hints, etc.
+
+
+### Running Tests
+
+```bash
+pnpm test
+```
+
+To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
+
+```bash
+pnpm test -- -g transition
+```
+
+### svelte.dev
 
 The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/sites) repository, with all the documentation in the [site/content](site/content) directory. The site is built with [SvelteKit](https://kit.svelte.dev).
 
-### Is svelte.dev down?
+## Is svelte.dev down?
 
 Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
