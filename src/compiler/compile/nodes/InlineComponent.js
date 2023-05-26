@@ -4,7 +4,6 @@ import map_children from './shared/map_children.js';
 import Binding from './Binding.js';
 import EventHandler from './EventHandler.js';
 import Expression from './shared/Expression.js';
-import Let from './Let.js';
 import compiler_errors from '../compiler_errors.js';
 import { regex_only_whitespaces } from '../../utils/patterns.js';
 
@@ -22,9 +21,6 @@ export default class InlineComponent extends Node {
 	/** @type {import('./EventHandler.js').default[]} */
 	handlers = [];
 
-	/** @type {import('./Let.js').default[]} */
-	lets = [];
-
 	/** @type {import('./Attribute.js').default[]} */
 	css_custom_properties = [];
 
@@ -37,6 +33,8 @@ export default class InlineComponent extends Node {
 	/** @type {string} */
 	namespace;
 
+	/** @type {Attribute[]} */
+	let_attributes;
 	/**
 	 * @param {import('../Component.js').default} component
 	 * @param {import('./shared/Node.js').default} parent
@@ -58,6 +56,8 @@ export default class InlineComponent extends Node {
 			this.name === 'svelte:component'
 				? new Expression(component, this, scope, info.expression)
 				: null;
+
+		const let_attributes = (this.let_attributes = []);
 		info.attributes.forEach(
 			/** @param {import('../../interfaces.js').BaseDirective | import('../../interfaces.js').Attribute | import('../../interfaces.js').SpreadAttribute} node */ (
 				node
@@ -84,7 +84,7 @@ export default class InlineComponent extends Node {
 						this.handlers.push(new EventHandler(component, this, scope, node));
 						break;
 					case 'Let':
-						this.lets.push(new Let(component, this, scope, node));
+						let_attributes.push(node);
 						break;
 					case 'Transition':
 						return component.error(node, compiler_errors.invalid_transition);
@@ -98,21 +98,9 @@ export default class InlineComponent extends Node {
 				/* eslint-enable no-fallthrough */
 			}
 		);
-		if (this.lets.length > 0) {
-			this.scope = scope.child();
-			this.lets.forEach(
-				/** @param {any} l */ (l) => {
-					const dependencies = new Set([l.name.name]);
-					l.names.forEach(
-						/** @param {any} name */ (name) => {
-							this.scope.add(name, dependencies, this);
-						}
-					);
-				}
-			);
-		} else {
-			this.scope = scope;
-		}
+
+		this.scope = scope;
+
 		this.handlers.forEach(
 			/** @param {any} handler */ (handler) => {
 				handler.modifiers.forEach(
@@ -178,6 +166,18 @@ export default class InlineComponent extends Node {
 				children: info.children
 			});
 		}
+
+		if (let_attributes.length) {
+			// copy let: attribute from <Component /> to <svelte:fragment slot="default" />
+			// as they are for `slot="default"` only
+			children.forEach((child) => {
+				const slot = child.attributes.find((attribute) => attribute.name === 'slot');
+				if (!slot || slot.value[0].data === 'default') {
+					child.attributes.push(...let_attributes);
+				}
+			});
+		}
+
 		this.children = map_children(component, this, this.scope, children);
 	}
 	get slot_template_name() {
