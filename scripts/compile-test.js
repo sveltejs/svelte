@@ -25,8 +25,8 @@ for (const file of glob('**/*.svelte', { cwd })) {
 		});
 
 		if (warnings.length) {
-            w = warnings;
-        }
+			w = warnings;
+		}
 
 		mkdirSync(dir, { recursive: true });
 		js.code && writeFileSync(`${dir}/${file.replace(/\.svelte$/, '.js')}`, js.code);

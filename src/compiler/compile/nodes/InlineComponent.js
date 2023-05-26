@@ -57,7 +57,7 @@ export default class InlineComponent extends Node {
 				? new Expression(component, this, scope, info.expression)
 				: null;
 
-		const let_attributes = this.let_attributes = [];
+		const let_attributes = (this.let_attributes = []);
 		info.attributes.forEach(
 			/** @param {any} node */ (node) => {
 				/* eslint-disable no-fallthrough */
