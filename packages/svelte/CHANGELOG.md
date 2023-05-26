@@ -16,6 +16,7 @@
 * **breaking** Make transitions local by default to prevent confusion around page navigations ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 * **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
 * **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
+* **breaking** Do not expose default slot bindings to named slots and vice versa ([#6049](https://github.com/sveltejs/svelte/pull/6049))
 * **breaking** Change order in which preprocessors are applied ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 * **breaking** The runtime now makes use of `classList.toggle(name, boolean)` which does not work in very old browsers ([#8629](https://github.com/sveltejs/svelte/pull/8629))
 * **breaking** apply `inert` to outroing elements ([#8627](https://github.com/sveltejs/svelte/pull/8627))
