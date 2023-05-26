@@ -84,7 +84,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sveltejs/svelte.git"
+    "url": "https://github.com/sveltejs/svelte.git",
+    "directory":"packages/svelte"
   },
   "keywords": [
     "UI",
