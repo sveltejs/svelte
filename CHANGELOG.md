@@ -17,6 +17,7 @@
 * **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
 * **breaking** Change order in which preprocessors are applied ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 * **breaking** The runtime now makes use of `classList.toggle(name, boolean)` which does not work in very old browsers ([#8629](https://github.com/sveltejs/svelte/pull/8629))
+* **breaking** apply `inert` to outroing elements ([#8627](https://github.com/sveltejs/svelte/pull/8627))
 * Add a way to modify attributes for script/style preprocessors ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 * Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
@@ -28,6 +29,7 @@
 * Treat slots as if they don't exist when using CSS adjacent and general sibling combinators ([#8284](https://github.com/sveltejs/svelte/issues/8284))
 * Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
+* Warn about `:` in attributes and props to prevent ambiguity with Svelte directives ([#6823](https://github.com/sveltejs/svelte/issues/6823))
 
 ## 3.59.1
 

@@ -3,6 +3,7 @@ import add_to_set from '../utils/add_to_set.js';
 import Node from './shared/Node.js';
 import Expression from './shared/Expression.js';
 import { x } from 'code-red';
+import compiler_warnings from '../compiler_warnings.js';
 
 /** @extends Node<'Attribute' | 'Spread', import('./Element.js').default> */
 export default class Attribute extends Node {
@@ -39,6 +40,7 @@ export default class Attribute extends Node {
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
 		this.scope = scope;
+
 		if (info.type === 'Spread') {
 			this.name = null;
 			this.is_spread = true;
@@ -64,9 +66,21 @@ export default class Attribute extends Node {
 						}
 				  );
 		}
+
 		if (this.dependencies.size > 0) {
 			parent.cannot_use_innerhtml();
 			parent.not_static_content();
+		}
+
+		// TODO Svelte 5: Think about moving this into the parser and make it an error
+		if (
+			this.name &&
+			this.name.includes(':') &&
+			!this.name.startsWith('xmlns:') &&
+			!this.name.startsWith('xlink:') &&
+			!this.name.startsWith('xml:')
+		) {
+			component.warn(this, compiler_warnings.illegal_attribute_character);
 		}
 	}
 	get_dependencies() {

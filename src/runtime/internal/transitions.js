@@ -186,14 +186,15 @@ export function create_in_transition(node, fn, params) {
  * @returns {{ end(reset: any): void; }}
  */
 export function create_out_transition(node, fn, params) {
-	/**
-	 * @type {TransitionOptions} */
+	/** @type {TransitionOptions} */
 	const options = { direction: 'out' };
 	let config = fn(node, params, options);
 	let running = true;
 	let animation_name;
 	const group = outros;
 	group.r += 1;
+	/** @type {boolean} */
+	let original_inert_value;
 
 	/**
 	 * @returns {void} */
@@ -205,10 +206,18 @@ export function create_out_transition(node, fn, params) {
 			tick = noop,
 			css
 		} = config || null_transition;
+
 		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
+
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
 		add_render_callback(() => dispatch(node, false, 'start'));
+
+		if ('inert' in node) {
+			original_inert_value = /** @type {HTMLElement} */ (node).inert;
+			node.inert = true;
+		}
+
 		loop((now) => {
 			if (running) {
 				if (now >= end_time) {
@@ -229,6 +238,7 @@ export function create_out_transition(node, fn, params) {
 			return running;
 		});
 	}
+
 	if (is_function(config)) {
 		wait().then(() => {
 			// @ts-ignore
@@ -238,8 +248,12 @@ export function create_out_transition(node, fn, params) {
 	} else {
 		go();
 	}
+
 	return {
 		end(reset) {
+			if (reset && 'inert' in node) {
+				node.inert = original_inert_value;
+			}
 			if (reset && config.tick) {
 				config.tick(1, 0);
 			}
@@ -273,6 +287,9 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 	 * @type {PendingProgram | null} */
 	let pending_program = null;
 	let animation_name = null;
+
+	/** @type {boolean} */
+	let original_inert_value;
 
 	/**
 	 * @returns {void} */
@@ -318,11 +335,25 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 			start: now() + delay,
 			b
 		};
+
 		if (!b) {
 			// @ts-ignore todo: improve typings
 			program.group = outros;
 			outros.r += 1;
 		}
+
+		if ('inert' in node) {
+			if (b) {
+				if (original_inert_value !== undefined) {
+					// aborted/reversed outro — restore previous inert value
+					node.inert = original_inert_value;
+				}
+			} else {
+				original_inert_value = /** @type {HTMLElement} */ (node).inert;
+				node.inert = true;
+			}
+		}
+
 		if (running_program || pending_program) {
 			pending_program = program;
 		} else {
