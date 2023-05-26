@@ -77,6 +77,7 @@ export default class Expression {
 		this.scope_map = map;
 		const expression = this;
 		let function_expression;
+
 		// discover dependencies, but don't change the code yet
 		walk(info, {
 			/**
@@ -125,7 +126,7 @@ export default class Expression {
 							dependencies.add(name);
 						}
 						component.add_reference(node, name);
-						component.warn_if_undefined(name, nodes[0], template_scope);
+						component.warn_if_undefined(name, nodes[0], template_scope, owner);
 					}
 					this.skip();
 				}
@@ -376,8 +377,9 @@ export default class Expression {
 								node = node.parent;
 							}
 							const func_expression = func_declaration[0];
-							if (node.type === 'InlineComponent' || node.type === 'SlotTemplate') {
-								// <Comp let:data />
+
+							if (node.type === 'SlotTemplate') {
+								// <svelte:fragment let:data />
 								this.replace(func_expression);
 							} else {
 								// {#each}, {#await}
@@ -458,6 +460,7 @@ export default class Expression {
 				}
 			}
 		});
+
 		if (declarations.length > 0) {
 			block.maintain_context = true;
 			declarations.forEach(

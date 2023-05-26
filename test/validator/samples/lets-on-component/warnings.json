@@ -1,0 +1,26 @@
+[
+	{
+		"code": "missing-declaration",
+		"message": "let:count declared on parent component cannot be used inside named slot",
+		"start": {
+			"column": 22,
+			"line": 10
+		},
+		"end": {
+			"column": 27,
+			"line": 10
+		}
+	},
+	{
+		"code": "missing-declaration",
+		"message": "let:count declared on parent component cannot be used inside named slot",
+		"start": {
+			"column": 22,
+			"line": 25
+		},
+		"end": {
+			"column": 27,
+			"line": 25
+		}
+	}
+]

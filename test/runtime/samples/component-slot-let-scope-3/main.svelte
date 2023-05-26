@@ -1,5 +1,6 @@
 <script>
 	import Nested from './Nested.svelte';
+	let count = 42;
 </script>
 
 <Nested let:count>

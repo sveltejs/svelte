@@ -1,0 +1,27 @@
+<script>
+	import Nested from './Nested.svelte';
+</script>
+
+<Nested let:count>
+	<p>
+		count in default slot: {count}
+	</p>
+	<p slot="bar">
+		count in bar slot: {count}
+	</p>
+</Nested>
+
+<Nested let:count>
+	<p>
+		count in default slot: {count}
+	</p>
+	<p>
+		count in bar slot: {count}
+	</p>
+</Nested>
+
+<Nested let:foo={count}>
+	<p slot="bar">
+		count in bar slot: {count}
+	</p>
+</Nested>
