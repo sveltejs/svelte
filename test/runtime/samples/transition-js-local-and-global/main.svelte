@@ -14,7 +14,7 @@
 
 {#if x}
 	{#if y}
-		<div transition:foo|local>snaps if x changes</div>
-		<div transition:foo>transitions if x changes</div>
+		<div transition:foo>snaps if x changes</div>
+		<div transition:foo|global>transitions if x changes</div>
 	{/if}
 {/if}

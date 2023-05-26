@@ -10,6 +10,7 @@ import {
 } from './dom.js';
 import { SvelteComponent } from './Component.js';
 import { is_void } from '../../shared/utils/names.js';
+import { VERSION } from '../../shared/version.js';
 import { contenteditable_truthy_values } from './utils.js';
 import { ensure_array_like } from './each.js';
 
@@ -20,9 +21,7 @@ import { ensure_array_like } from './each.js';
  * @returns {void}
  */
 export function dispatch_dev(type, detail) {
-	document.dispatchEvent(
-		custom_event(type, { version: '__VERSION__', ...detail }, { bubbles: true })
-	);
+	document.dispatchEvent(custom_event(type, { version: VERSION, ...detail }, { bubbles: true }));
 }
 
 /**

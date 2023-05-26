@@ -12,5 +12,5 @@
 </script>
 
 {#each things as thing (thing.name)}
-	<div transition:foo>{thing.name}</div>
+	<div transition:foo|global>{thing.name}</div>
 {/each}

@@ -7,14 +7,18 @@
 * **breaking** Bundlers must specify the `browser` condition when building a frontend bundle for the browser ([#8516](https://github.com/sveltejs/svelte/pull/8516))
 * **breaking** Minimum supported vite-plugin-svelte version is now 2.1.1. SvelteKit users can upgrade to 1.15.9 or newer to ensure a compatible version ([#8516](https://github.com/sveltejs/svelte/pull/8516))
 * **breaking** Minimum supported TypeScript version is now TypeScript 5 (it will likely work with lower versions, but we make no guarantees about that) ([#8488](https://github.com/sveltejs/svelte/pull/8488))
+* **breaking** Remove `svelte/register` hook, CJS runtime version and CJS compiler output ([#8613](https://github.com/sveltejs/svelte/pull/8613))
 * **breaking** Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
 * **breaking** Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
 * **breaking** Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 * **breaking** Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 * **breaking** Deprecate `SvelteComponentTyped`, use `SvelteComponent` instead ([#8512](https://github.com/sveltejs/svelte/pull/8512))
+* **breaking** Make transitions local by default to prevent confusion around page navigations ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 * **breaking** Error on falsy values instead of stores passed to `derived` ([#7947](https://github.com/sveltejs/svelte/pull/7947))
 * **breaking** Custom store implementers now need to pass an `update` function additionally to the `set` function ([#6750](https://github.com/sveltejs/svelte/pull/6750))
 * **breaking** Change order in which preprocessors are applied ([#8618](https://github.com/sveltejs/svelte/pull/8618))
+* **breaking** The runtime now makes use of `classList.toggle(name, boolean)` which does not work in very old browsers ([#8629](https://github.com/sveltejs/svelte/pull/8629))
+* **breaking** apply `inert` to outroing elements ([#8627](https://github.com/sveltejs/svelte/pull/8627))
 * Add a way to modify attributes for script/style preprocessors ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 * Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
 * Add `a11y no-noninteractive-element-interactions` rule ([#8391](https://github.com/sveltejs/svelte/pull/8391))
@@ -27,6 +31,7 @@
 * Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 * Allow `#each` to iterate over iterables like `Set`, `Map` etc ([#7425](https://github.com/sveltejs/svelte/issues/7425))
+* Warn about `:` in attributes and props to prevent ambiguity with Svelte directives ([#6823](https://github.com/sveltejs/svelte/issues/6823))
 
 ## 3.59.1
 

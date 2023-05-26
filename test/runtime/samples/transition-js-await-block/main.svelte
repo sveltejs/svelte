@@ -12,7 +12,7 @@
 </script>
 
 {#await promise}
-	<p class='pending' transition:foo>loading...</p>
+	<p class='pending' transition:foo|global>loading...</p>
 {:then value}
 	<p class='then' transition:foo>{value}</p>
 {:catch error}

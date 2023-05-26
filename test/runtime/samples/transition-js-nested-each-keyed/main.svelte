@@ -14,6 +14,6 @@
 
 {#if x}
 	{#each things as thing (thing)}
-		<div transition:foo></div>
+		<div transition:foo|global></div>
 	{/each}
 {/if}
