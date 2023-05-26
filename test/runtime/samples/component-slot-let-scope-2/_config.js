@@ -1,3 +1,3 @@
 export default {
-	html: `<span>undefined</span><span>2</span>`
+	html: '<span>undefined</span><span>2</span>'
 };

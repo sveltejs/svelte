@@ -1,3 +1,3 @@
 export default {
-	error: `thing is not defined`
+	error: 'thing is not defined'
 };

@@ -12,6 +12,7 @@ export default {
 			`
 			<span>2</span>
 			<span>2</span>
-		`);
+		`
+		);
 	}
 };
