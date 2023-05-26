@@ -73,16 +73,18 @@ function get_types(code, statements) {
 				start = i + 6;
 
 				/** @type {Extracted[]} */
-				const children = [];
+				let children = [];
 
 				let snippet_unformatted = code.slice(start, statement.end).trim();
 
-				if (ts.isInterfaceDeclaration(statement)) {
+				if (ts.isInterfaceDeclaration(statement) || ts.isClassDeclaration(statement)) {
 					if (statement.members.length > 0) {
 						for (const member of statement.members) {
 							// @ts-ignore
 							children.push(munge_type_element(member));
 						}
+
+						children = children.filter(Boolean);
 
 						// collapse `interface Foo {/* lots of stuff*/}` into `interface Foo {…}`
 						const first = statement.members.at(0);
@@ -141,6 +143,8 @@ function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
+	if (/do not use!/i.test(doc?.comment)) return;
+
 	/** @type {string[]} */
 	const children = [];
 
@@ -173,6 +177,14 @@ function munge_type_element(member, depth = 1) {
 		const type = tag.tagName.escapedText;
 
 		switch (tag.tagName.escapedText) {
+			case 'private':
+				bullets.push(`- <span class="tag">private</span> ${tag.comment}`);
+				break;
+
+			case 'readonly':
+				bullets.push(`- <span class="tag">readonly</span> ${tag.comment}`);
+				break;
+
 			case 'param':
 				bullets.push(`- \`${tag.name.getText()}\` ${tag.comment}`);
 				break;
@@ -316,48 +328,27 @@ $: {
 
 	if (!module_with_SvelteComponent) break $;
 
-	const svelte_comp_part = module_with_SvelteComponent?.types.filter(
+	const svelte_comp_part = module_with_SvelteComponent?.types.find(
 		(t) => t.name === 'SvelteComponent'
 	);
 
-	if (svelte_comp_part?.[1]) {
-		// Take the comment from [0], and insert into [1]. Then delete [0]
-		svelte_comp_part[1].comment = svelte_comp_part?.[0].comment;
-		delete svelte_comp_part[0];
-		svelte_comp_part.reverse();
-		svelte_comp_part.length = 1;
+	if (!svelte_comp_part) break $;
 
-		module_with_SvelteComponent.types = module_with_SvelteComponent?.types.filter(
-			(t) => t.name !== 'SvelteComponent'
-		);
+	const internal_module = bundled_types.get('svelte/internal');
+	if (!internal_module) break $;
 
-		module_with_SvelteComponent.types.push(svelte_comp_part[0]);
-		module_with_SvelteComponent.types.sort((a, b) => (a.name < b.name ? -1 : 1));
-	}
+	const internal_types = get_types(internal_module.code, internal_module.ts_source_file.statements);
+
+	const svelte_comp_dev_internal = internal_types.types.find(
+		(t) => t.name === 'SvelteComponentDev'
+	);
+
+	if (!svelte_comp_dev_internal) break $;
+
+	svelte_comp_part.children = svelte_comp_dev_internal.children;
+	svelte_comp_part.comment = svelte_comp_dev_internal.comment;
+	svelte_comp_part.snippet = svelte_comp_dev_internal.snippet;
 }
-
-// // Fix the duplicate/messed up types
-// // !NOTE: This relies on mutation of `modules`
-// $: {
-// 	const module_with_SvelteComponentTyped = modules.find((m) =>
-// 		m.types.filter((t) => t.name === 'SvelteComponentTyped')
-// 	);
-
-// 	if (!module_with_SvelteComponentTyped) break $;
-
-// 	const svelte_comp_typed_part = module_with_SvelteComponentTyped?.types.filter(
-// 		(t) => t.name === 'SvelteComponentTyped'
-// 	);
-
-// 	svelte_comp_typed_part[0].comment = '';
-
-// 	module_with_SvelteComponentTyped.types = module_with_SvelteComponentTyped?.types.filter(
-// 		(t) => t.name !== 'SvelteComponentTyped'
-// 	);
-
-// 	module_with_SvelteComponentTyped.types.push(svelte_comp_typed_part[0]);
-// 	module_with_SvelteComponentTyped.types.sort((a, b) => (a.name < b.name ? -1 : 1));
-// }
 
 // Remove $$_attributes from ActionReturn
 $: {
