@@ -8,7 +8,6 @@ import get_name_from_filename from './utils/get_name_from_filename.js';
 import { valid_namespaces } from '../utils/namespaces.js';
 
 const valid_options = [
-	'format',
 	'name',
 	'filename',
 	'sourcemap',
@@ -37,11 +36,24 @@ const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 const regex_starts_with_lowercase_character = /^[a-z]/;
 
+let warned_of_format = false;
+
 /**
  * @param {import('../interfaces.js').CompileOptions} options
  * @param {import('../interfaces.js').Warning[]} warnings
  */
 function validate_options(options, warnings) {
+	if (/** @type {any} */ (options).format) {
+		if (!warned_of_format) {
+			warned_of_format = true;
+			console.warn(
+				'The format option has been removed in Svelte 4, the compiler only outputs ESM now. Remove "format" from your compiler options. ' +
+					'If you did not set this yourself, bump the version of your bundler plugin (vite-plugin-svelte/rollup-plugin-svelte/svelte-loader)'
+			);
+		}
+		delete (/** @type {any} */ (options).format);
+	}
+
 	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
 	Object.keys(options).forEach(
 		/** @param {any} key */ (key) => {
