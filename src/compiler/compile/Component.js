@@ -1659,7 +1659,14 @@ export default class Component {
 		if (template_scope && template_scope.names.has(name)) return;
 		if (globals.has(name) && node.type !== 'InlineComponent') return;
 
-		if (owner?.find_nearest(/InlineComponent/)?.let_attributes.find((attr) => attr.name === name)) {
+		if (
+			owner?.find_nearest(/InlineComponent/)?.let_attributes.find((attr) => {
+				// TODO: let:foo={{ bar }} doesn't work properly cause it's returned as an
+				// ObjectExpression instead of a Pattern
+				const names = attr.expression ? extract_names(attr.expression) : [attr.name];
+				return names.includes(name);
+			})
+		) {
 			return this.warn(node, {
 				code: 'missing-declaration',
 				message: `let:${name} declared on parent component cannot be used inside named slot`

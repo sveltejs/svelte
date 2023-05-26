@@ -20,7 +20,7 @@
 	</p>
 </Nested>
 
-<Nested let:count>
+<Nested let:foo={count}>
 	<p slot="bar">
 		count in bar slot: {count}
 	</p>
