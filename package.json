@@ -18,7 +18,8 @@
   "license": "MIT",
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
-    "@svitejs/changesets-changelog-github-compact": "^1.1.0"
+    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
+    "playwright": "^1.34.3"
   },
   "packageManager": "pnpm@8.4.0"
 }
