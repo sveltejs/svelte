@@ -120,7 +120,7 @@
     "@rollup/plugin-replace": "^5.0.2",
     "@sveltejs/eslint-config": "^6.0.1",
     "@types/aria-query": "^5.0.1",
-    "@types/estree": "^1.0.0",
+    "@types/estree": "^1.0.1",
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "agadoo": "^3.0.0",
