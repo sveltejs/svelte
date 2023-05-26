@@ -1,6 +1,6 @@
 [
 	{
-		"code": "invalid-action",
+		"code": "invalid-animation",
 		"message": "Animations can only be applied to DOM elements, not components",
 		"start": {
 			"line": 7,
@@ -8,7 +8,7 @@
 		},
 		"end": {
 			"line": 7,
-			"column": 18
+			"column": 19
 		}
 	}
 ]
