@@ -138,6 +138,10 @@ export default {
 		code: 'invalid-action',
 		message: 'Actions can only be applied to DOM elements, not components'
 	},
+	invalid_animation: {
+		code: 'invalid-animation',
+		message: 'Animations can only be applied to DOM elements, not components'
+	},
 	invalid_class: {
 		code: 'invalid-class',
 		message: 'Classes can only be applied to DOM elements, not components'
