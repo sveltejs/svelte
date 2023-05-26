@@ -162,20 +162,12 @@ export default class InlineComponent extends Node {
 		}
 
 		if (let_attributes.length) {
-			let warned = false;
 			// copy let: attribute from <Component /> to <svelte:fragment slot="default" />
 			// as they are for `slot="default"` only
 			children.forEach((child) => {
 				const slot = child.attributes.find((attribute) => attribute.name === 'slot');
 				if (!slot || slot.value[0].data === 'default') {
 					child.attributes.push(...let_attributes);
-				} else if (!warned) {
-					component.warn(info, {
-						code: 'let-on-component',
-						message:
-							'let: bindings on Component are meant for default slot template only, it is better to define them on <svelte:fragment slot="default"> instead.'
-					});
-					warned = true;
 				}
 			});
 		}

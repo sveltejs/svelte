@@ -1,17 +1,5 @@
 [
 	{
-		"code": "let-on-component",
-		"message": "let: bindings on Component are meant for default slot template only, it is better to define them on <svelte:fragment slot=\"default\"> instead.",
-		"start": {
-			"column": 0,
-			"line": 5
-		},
-		"end": {
-			"column": 9,
-			"line": 12
-		}
-	},
-	{
 		"code": "missing-declaration",
 		"message": "'count' is not defined",
 		"start": {
@@ -21,18 +9,6 @@
 		"end": {
 			"column": 27,
 			"line": 10
-		}
-	},
-	{
-		"code": "let-on-component",
-		"message": "let: bindings on Component are meant for default slot template only, it is better to define them on <svelte:fragment slot=\"default\"> instead.",
-		"start": {
-			"column": 0,
-			"line": 23
-		},
-		"end": {
-			"column": 9,
-			"line": 27
 		}
 	},
 	{
