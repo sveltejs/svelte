@@ -7,6 +7,6 @@
 
 {#if x}
 	{#if y}
-		<div in:foo|local>...</div>
+		<div in:foo>...</div>
 	{/if}
 {/if}

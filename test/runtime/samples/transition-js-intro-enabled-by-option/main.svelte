@@ -9,4 +9,4 @@
 	}
 </script>
 
-<div transition:foo></div>
+<div transition:foo|global></div>

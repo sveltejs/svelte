@@ -422,10 +422,10 @@ export default class ElementWrapper extends Wrapper {
 			`);
 		}
 		if (this.child_dynamic_element_block.has_intros) {
-			block.chunks.intro.push(b`@transition_in(${this.var});`);
+			block.chunks.intro.push(b`@transition_in(${this.var}, #local);`);
 		}
 		if (this.child_dynamic_element_block.has_outros) {
-			block.chunks.outro.push(b`@transition_out(${this.var});`);
+			block.chunks.outro.push(b`@transition_out(${this.var}, #local);`);
 		}
 		block.chunks.destroy.push(b`if (${this.var}) ${this.var}.d(detaching)`);
 		if (this.node.animation) {

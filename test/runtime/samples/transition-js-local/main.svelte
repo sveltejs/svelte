@@ -14,6 +14,6 @@
 
 {#if x}
 	{#if y}
-		<div transition:foo|local></div>
+		<div transition:foo></div>
 	{/if}
 {/if}

@@ -993,7 +993,8 @@ export { ResizeObserverSingleton };
 /**
  * @returns {void} */
 export function toggle_class(element, name, toggle) {
-	element.classList[toggle ? 'add' : 'remove'](name);
+	// The `!!` is required because an `undefined` flag means flipping the current state.
+	element.classList.toggle(name, !!toggle);
 }
 
 /**

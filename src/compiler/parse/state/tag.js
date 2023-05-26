@@ -433,7 +433,6 @@ function get_directive_type(name) {
 	if (name === 'style') return 'StyleDirective';
 	if (name === 'on') return 'EventHandler';
 	if (name === 'let') return 'Let';
-	if (name === 'ref') return 'Ref';
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 

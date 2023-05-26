@@ -12,5 +12,5 @@
 </script>
 
 {#each things as thing}
-	<div in:foo>{thing}</div>
+	<div in:foo|global>{thing}</div>
 {/each}
