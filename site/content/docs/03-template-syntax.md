@@ -151,11 +151,13 @@ Text can also contain JavaScript expressions:
 
 ---
 
-To include regular curly braces in the HTML, they must either be included as string Javascript expressions or their [HTML Entity](https://developer.mozilla.org/docs/Glossary/Entity) strings used
+To include regular curly braces in the HTML, use their [HTML Entity](https://developer.mozilla.org/docs/Glossary/Entity) strings.
 
 ```html
-{'{'} in curly braces {'}'} or &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;
+&#123; in curly braces &#123; &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;
+&#123; it also works only escaping the start curly brace }
 ```
+
 
 ### Comments
 
