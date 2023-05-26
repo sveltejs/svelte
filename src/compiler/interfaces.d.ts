@@ -51,7 +51,7 @@ export type DirectiveType =
 	| 'Ref'
 	| 'Transition';
 
-interface BaseDirective extends BaseNode {
+export interface BaseDirective extends BaseNode {
 	type: DirectiveType;
 	name: string;
 }

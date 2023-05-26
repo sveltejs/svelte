@@ -32,6 +32,7 @@
 * Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 * Allow `#each` to iterate over iterables like `Set`, `Map` etc ([#7425](https://github.com/sveltejs/svelte/issues/7425))
 * Warn about `:` in attributes and props to prevent ambiguity with Svelte directives ([#6823](https://github.com/sveltejs/svelte/issues/6823))
+* Improve error message when trying to use `animate:` directives on inline components ([#8641](https://github.com/sveltejs/svelte/issues/8641))
 
 ## 3.59.1
 

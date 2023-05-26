@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-animation",
+		"message": "Animations can only be applied to DOM elements, not components",
+		"start": {
+			"line": 7,
+			"column": 8
+		},
+		"end": {
+			"line": 7,
+			"column": 19
+		}
+	}
+]
