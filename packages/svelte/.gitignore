@@ -14,8 +14,6 @@
 /scratch/
 /test/*/samples/_
 /test/runtime/shards
-/yarn-error.log
 _actual*.*
 _output
 /types
-.eslintcache
