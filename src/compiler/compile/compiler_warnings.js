@@ -304,6 +304,7 @@ export default {
 	},
 	illegal_attribute_character: {
 		code: 'illegal-attribute-character',
-		message: "Attributes should not contain ':' characters to prevent ambiguity with Svelte directives"
+		message:
+			"Attributes should not contain ':' characters to prevent ambiguity with Svelte directives"
 	}
 };
