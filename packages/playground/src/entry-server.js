@@ -1,6 +1,6 @@
-import App from './App.svelte'
+import App from './App.svelte';
 
 export function render() {
-  // @ts-ignore
-  return App.render()
+	// @ts-ignore
+	return App.render();
 }
