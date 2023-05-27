@@ -1,6 +1,6 @@
 export default {
 	props: {
-		condition: true 
+		condition: true
 	},
 
 	html: '<p>true</p><p>123</p><p>0</p>',
