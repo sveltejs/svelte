@@ -1,0 +1,139 @@
+{
+  "name": "svelte",
+  "version": "4.0.0-next.0",
+  "description": "Cybernetically enhanced web apps",
+  "type": "module",
+  "module": "src/runtime/index.js",
+  "main": "src/runtime/index.js",
+  "files": [
+    "src",
+    "types",
+    "compiler.*",
+    "register.js",
+    "index.d.ts",
+    "internal.d.ts",
+    "store.d.ts",
+    "animate.d.ts",
+    "transition.d.ts",
+    "easing.d.ts",
+    "motion.d.ts",
+    "action.d.ts",
+    "elements.d.ts",
+    "README.md"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./types/runtime/index.d.ts",
+      "browser": {
+        "import": "./src/runtime/index.js"
+      },
+      "import": "./src/runtime/ssr.js"
+    },
+    "./compiler": {
+      "types": "./types/compiler/index.d.ts",
+      "import": "./src/compiler/index.js",
+      "require": "./compiler.cjs"
+    },
+    "./action": {
+      "types": "./types/runtime/action/index.d.ts"
+    },
+    "./animate": {
+      "types": "./types/runtime/animate/index.d.ts",
+      "import": "./src/runtime/animate/index.js"
+    },
+    "./easing": {
+      "types": "./types/runtime/easing/index.d.ts",
+      "import": "./src/runtime/easing/index.js"
+    },
+    "./internal": {
+      "types": "./types/runtime/internal/index.d.ts",
+      "import": "./src/runtime/internal/index.js"
+    },
+    "./motion": {
+      "types": "./types/runtime/motion/index.d.ts",
+      "import": "./src/runtime/motion/index.js"
+    },
+    "./store": {
+      "types": "./types/runtime/store/index.d.ts",
+      "import": "./src/runtime/store/index.js"
+    },
+    "./transition": {
+      "types": "./types/runtime/transition/index.d.ts",
+      "import": "./src/runtime/transition/index.js"
+    },
+    "./elements": {
+      "types": "./elements.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "types": "types/runtime/index.d.ts",
+  "scripts": {
+    "format": "prettier . --cache --plugin-search-dir=. --write",
+    "check": "prettier . --cache --plugin-search-dir=. --check",
+    "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
+    "build": "rollup -c && npm run tsd",
+    "prepare": "npm run build",
+    "dev": "rollup -cw",
+    "posttest": "agadoo src/internal/index.js",
+    "prepublishOnly": "npm run lint && npm run build && npm test",
+    "tsd": "node ./generate-types.js",
+    "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sveltejs/svelte.git",
+    "directory":"packages/svelte"
+  },
+  "keywords": [
+    "UI",
+    "framework",
+    "templates",
+    "templating"
+  ],
+  "author": "Rich Harris",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sveltejs/svelte/issues"
+  },
+  "homepage": "https://svelte.dev",
+  "dependencies": {
+    "@ampproject/remapping": "^2.2.1",
+    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "acorn": "^8.8.2",
+    "aria-query": "^5.1.3",
+    "axobject-query": "^3.1.1",
+    "code-red": "^1.0.0",
+    "css-tree": "^2.3.1",
+    "estree-walker": "^3.0.3",
+    "is-reference": "^3.0.1",
+    "locate-character": "^2.0.5",
+    "magic-string": "^0.30.0",
+    "periscopic": "^3.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.34.3",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-replace": "^5.0.2",
+    "@sveltejs/eslint-config": "^6.0.1",
+    "@types/aria-query": "^5.0.1",
+    "@types/estree": "^1.0.1",
+    "@types/node": "^14.14.31",
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
+    "agadoo": "^3.0.0",
+    "esbuild": "^0.17.19",
+    "happy-dom": "^9.18.3",
+    "jsdom": "^21.1.1",
+    "kleur": "^4.1.5",
+    "rollup": "^3.20.2",
+    "source-map": "^0.7.4",
+    "tiny-glob": "^0.2.9",
+    "typescript": "^5.0.4",
+    "util": "^0.12.5",
+    "vitest": "^0.31.1"
+  }
+}

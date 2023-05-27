@@ -468,6 +468,14 @@ transition:fn={params}
 ```
 
 ```svelte
+transition:fn|global
+```
+
+```svelte
+transition:fn|global={params}
+```
+
+```svelte
 transition:fn|local
 ```
 
@@ -498,7 +506,21 @@ The `transition:` directive indicates a _bidirectional_ transition, which means 
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs/client-side-component-api).
+Transitions are local by default (in Svelte 3, they were global by default). Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
+
+```svelte
+{#if x}
+	{#if y}
+		<!-- Svelte 3: <p transition:fade|local> -->
+		<p transition:fade>fades in and out only when y changes</p>
+
+		<!-- Svelte 3: <p transition:fade> -->
+		<p transition:fade|global>fades in and out when x or y change</p>
+	{/if}
+{/if}
+```
+
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs#run-time-client-side-component-api) and marking the transition as `global`.
 
 ## Transition parameters
 
@@ -618,18 +640,6 @@ An element with transitions will dispatch the following events in addition to an
 {/if}
 ```
 
-Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
-
-```svelte
-{#if x}
-	{#if y}
-		<p transition:fade>fades in and out when x or y change</p>
-
-		<p transition:fade|local>fades in and out only when y changes</p>
-	{/if}
-{/if}
-```
-
 ## in:_fn_/out:_fn_
 
 ```svelte
@@ -638,6 +648,14 @@ in:fn
 
 ```svelte
 in:fn={params}
+```
+
+```svelte
+in:fn|global
+```
+
+```svelte
+in:fn|global={params}
 ```
 
 ```svelte
@@ -654,6 +672,14 @@ out:fn
 
 ```svelte
 out:fn={params}
+```
+
+```svelte
+out:fn|global
+```
+
+```svelte
+out:fn|global={params}
 ```
 
 ```svelte
