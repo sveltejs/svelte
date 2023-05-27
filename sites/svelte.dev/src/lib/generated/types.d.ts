@@ -10,6 +10,7 @@ type Child = {
 	name: string;
 	snippet: string;
 	comment: string;
+	deprecated?: string;
 	bullets?: string[];
 	children?: Child[];
 };

@@ -56,7 +56,7 @@ export function content() {
 			const rank = +metadata.rank || undefined;
 
 			blocks.push({
-				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
+				breadcrumbs: [...breadcrumbs, removeMarkdown(remove_TYPE(metadata.title) ?? '')],
 				href: category.href([slug]),
 				content: plaintext(intro),
 				rank
@@ -72,7 +72,11 @@ export function content() {
 				const intro = subsections.shift().trim();
 
 				blocks.push({
-					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h2)],
+					breadcrumbs: [
+						...breadcrumbs,
+						removeMarkdown(remove_TYPE(metadata.title)),
+						remove_TYPE(removeMarkdown(h2))
+					],
 					href: category.href([slug, normalizeSlugify(h2)]),
 					content: plaintext(intro),
 					rank
@@ -85,9 +89,9 @@ export function content() {
 					blocks.push({
 						breadcrumbs: [
 							...breadcrumbs,
-							removeMarkdown(metadata.title),
-							removeMarkdown(h2),
-							removeMarkdown(h3)
+							removeMarkdown(remove_TYPE(metadata.title)),
+							removeMarkdown(remove_TYPE(h2)),
+							removeMarkdown(remove_TYPE(h3))
 						],
 						href: category.href([slug, normalizeSlugify(h2), normalizeSlugify(h3)]),
 						content: plaintext(lines.join('\n').trim()),
@@ -99,6 +103,11 @@ export function content() {
 	}
 
 	return blocks;
+}
+
+/** @param {string} str */
+function remove_TYPE(str) {
+	return str?.replace(/^\[TYPE\]:\s+(.+)/, '$1') ?? '';
 }
 
 /** @param {string} markdown */

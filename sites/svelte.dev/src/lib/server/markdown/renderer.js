@@ -2,6 +2,7 @@ import MagicString from 'magic-string';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { format } from 'prettier';
 import { createShikiHighlighter, renderCodeToHTML, runTwoSlash } from 'shiki-twoslash';
 import ts from 'typescript';
 import {
@@ -142,12 +143,16 @@ export async function render_markdown(
 			return html;
 		},
 		codespan: (text) => {
-			return '<code>' + type_regex
-				? text.replace(type_regex, (_, prefix, name) => {
-						const link = `<a href="${type_links.get(name)}">${name}</a>`;
-						return `${prefix || ''}${link}`;
-				  })
-				: text + '</code>';
+			return (
+				'<code>' +
+				(type_regex
+					? text.replace(type_regex, (_, prefix, name) => {
+							const link = `<a href="${type_links.get(name)}">${name}</a>`;
+							return `${prefix || ''}${link}`;
+					  })
+					: text) +
+				'</code>'
+			);
 		}
 	});
 }
@@ -286,6 +291,7 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 			for (const comment of node.jsDoc) {
 				let modified = false;
 
+				let count = 0;
 				for (const tag of comment.tags ?? []) {
 					if (ts.isJSDocTypeTag(tag)) {
 						const [name, generics] = get_type_info(tag);
@@ -299,16 +305,19 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 							const is_async = node.modifiers?.some(
 								(modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword
 							);
+
+							const type = generics !== undefined ? `${name}<${generics}>` : name;
+
 							code.overwrite(
 								node.getStart(),
 								node.name.getEnd(),
-								`${is_export ? 'export ' : ''}const ${node.name.getText()} = (${
+								`${is_export ? 'export ' : ''}const ${node.name.getText()}: ${type} = (${
 									is_async ? 'async ' : ''
 								}`
 							);
+
 							code.appendLeft(node.body.getStart(), '=> ');
-							const type = generics !== undefined ? `${name}${generics}` : name;
-							code.appendLeft(node.body.getEnd(), `) satisfies ${type};`);
+							code.appendLeft(node.body.getEnd(), ')');
 
 							modified = true;
 						} else if (
@@ -333,11 +342,30 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 						// 		'Unhandled @type JsDoc->TS conversion; needs more params logic: ' + node.getText()
 						// 	);
 						// }
-						const [name] = get_type_info(tag);
-						code.appendLeft(node.parameters[0].getEnd(), `: ${name}`);
+
+						const sanitised_param = tag
+							.getFullText()
+							.replace(/\s+/g, '')
+							.replace(/(^\*|\*$)/g, '');
+
+						const [, param_type] = /@param{(.+)}(.+)/.exec(sanitised_param);
+
+						let param_count = 0;
+						for (const param of node.parameters) {
+							if (count !== param_count) {
+								param_count++;
+								continue;
+							}
+
+							code.appendLeft(param.getEnd(), `:${param_type}`);
+
+							param_count++;
+						}
 
 						modified = true;
 					}
+
+					count++;
 				}
 
 				if (modified) {
@@ -372,7 +400,19 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 		code.appendLeft(insertion_point, offset + import_statements + '\n');
 	}
 
-	const transformed = code.toString();
+	let transformed = format(code.toString(), {
+		printWidth: 100,
+		parser: 'typescript',
+		useTabs: true,
+		singleQuote: true
+	});
+
+	// Indent transformed's each line by 2
+	transformed = transformed
+		.split('\n')
+		.map((line) => indent.repeat(1) + line)
+		.join('\n');
+
 	return transformed === js_code ? undefined : transformed.replace(/\n\s*\n\s*\n/g, '\n\n');
 
 	/** @param {ts.JSDocTypeTag | ts.JSDocParameterTag} tag */
@@ -380,7 +420,15 @@ function convert_to_ts(js_code, indent = '', offset = '') {
 		const type_text = tag.typeExpression.getText();
 		let name = type_text.slice(1, -1); // remove { }
 
-		const import_match = /import\('(.+?)'\)\.(\w+)(<{?[\n\* \w:;,]+}?>)?/.exec(type_text);
+		const single_line_name = format(name, {
+			printWidth: 1000,
+			parser: 'typescript',
+			semi: false,
+			singleQuote: true
+		}).replace('\n', '');
+
+		const import_match = /import\('(.+?)'\)\.(\w+)(?:<(.+)>)?$/s.exec(single_line_name);
+
 		if (import_match) {
 			const [, from, _name, generics] = import_match;
 			name = _name;
@@ -476,8 +524,12 @@ export function replace_export_type_placeholders(content, modules) {
 				.map((t) => {
 					let children = t.children.map((val) => stringify(val, 'dts')).join('\n\n');
 
+					const deprecated = t.deprecated
+						? ` <blockquote class="tag deprecated">${transform(t.deprecated)}</blockquote>`
+						: '';
+
 					const markdown = `<div class="ts-block">${fence(t.snippet, 'dts')}` + children + `</div>`;
-					return `### [TYPE]: ${t.name}\n\n${t.comment}\n\n${markdown}\n\n`;
+					return `### [TYPE]: ${t.name}\n\n${deprecated}\n\n${t.comment ?? ''}\n\n${markdown}\n\n`;
 				})
 				.join('')}`;
 		})

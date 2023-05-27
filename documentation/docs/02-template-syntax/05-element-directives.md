@@ -455,6 +455,8 @@ An action can have a parameter. If the returned value has an `update` method, it
 <div use:foo={bar} />
 ```
 
+Read more in the [`svelte/action`](/docs/svelte-action) page.
+
 ## transition:_fn_
 
 ```svelte
@@ -526,6 +528,10 @@ The function is called repeatedly _before_ the transition begins, with different
 	/** @type {boolean} */
 	export let visible;
 
+	/**
+	 * @param {HTMLElement} node
+	 * @param {{ delay?: number, duration?: number, easing?: (t: number) => number }} params
+	 */
 	function whoosh(node, params) {
 		const existingTransform = getComputedStyle(node).transform.replace('none', '');
 
@@ -548,9 +554,14 @@ A custom transition function can also return a `tick` function, which is called 
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let visible = false;
 
+	/**
+	 * @param {HTMLElement} node
+	 * @param {{ speed?: number }} params
+	 */
 	function typewriter(node, { speed = 1 }) {
 		const valid = node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE;
 
@@ -740,9 +751,7 @@ The function is called repeatedly _before_ the animation begins, with different 
 
 	/**
 	 * @param {HTMLElement} node
-	 * @param {Object} states
-	 * @param {DOMRect} states.from
-	 * @param {DOMRect} states.to
+	 * @param {{ from: DOMRect; to: DOMRect }} states
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {
@@ -770,14 +779,13 @@ A custom animation function can also return a `tick` function, which is called _
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 
 	/**
 	 * @param {HTMLElement} node
-	 * @param {Object} states
-	 * @param {DOMRect} states.from
-	 * @param {DOMRect} states.to
+	 * @param {{ from: DOMRect; to: DOMRect }} states
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {
