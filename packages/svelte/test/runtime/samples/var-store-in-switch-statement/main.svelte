@@ -1,6 +1,6 @@
 <script>
-  import { writable } from "svelte/store";
-	
+	import { writable } from "svelte/store";
+
 	const val1 = 1;
 	const val2 = 10;
 
@@ -31,8 +31,8 @@
 		}
 	}
 
-  var x = $a;
-  var y = $b;
+	var x = $a;
+	var y = $b;
 </script>
 
 <p>{x}</p>

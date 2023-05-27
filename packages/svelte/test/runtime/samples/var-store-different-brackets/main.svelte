@@ -1,5 +1,5 @@
 <script>
-  import { writable } from "svelte/store";
+	import { writable } from "svelte/store";
 
 	{
 		{
@@ -10,13 +10,12 @@
 	}
 
 	{
-		if (true)
-			var c = writable(5);
+		if (true) var c = writable(5);
 	}
 
-  var x = $a;
-  var y = $b;
-  var z = $c;
+	var x = $a;
+	var y = $b;
+	var z = $c;
 </script>
 
 <p>{x}</p>

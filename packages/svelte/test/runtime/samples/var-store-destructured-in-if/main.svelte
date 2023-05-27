@@ -7,8 +7,7 @@
 		var [a] = thing;
 	}
 
-	if (true) 
-		var [,c,b] = thing;
+	if (true) var [, c, b] = thing;
 
 	var x = $a;
 	var y = $b;

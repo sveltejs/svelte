@@ -4,4 +4,3 @@
 			const value = Math.random();
 	}
 </script>
-

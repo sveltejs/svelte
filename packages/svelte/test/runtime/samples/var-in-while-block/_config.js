@@ -1,7 +1,7 @@
 export default {
-  props: {
-    a: 13 
-  },
+	props: {
+		a: 13 
+	},
 
-  html: '<p>169</p>'
+	html: '<p>169</p>'
 };
