@@ -49,4 +49,4 @@ jobs:
         with:
           node-version: 16
           cache: pnpm
-      - run: 'pnpm i && pnpm format:check && pnpm lint'
+      - run: 'pnpm i && pnpm check && pnpm lint'
