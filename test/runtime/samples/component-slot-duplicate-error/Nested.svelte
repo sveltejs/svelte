@@ -1,1 +1,0 @@
-<slot value="Hi" />

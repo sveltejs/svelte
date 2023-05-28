@@ -1,5 +1,4 @@
-import { get_example } from '$lib/server/examples';
-import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
+import { get_example, get_examples_data, get_examples_list } from '$lib/server/examples/index.js';
 
 export const prerender = true;
 

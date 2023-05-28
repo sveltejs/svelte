@@ -1,6 +1,5 @@
 import examples_data from '$lib/generated/examples-data.js';
-import { get_example } from '$lib/server/examples';
-import { get_examples_data, get_examples_list } from '$lib/server/examples/get-examples';
+import { get_example, get_examples_list } from '$lib/server/examples/index.js';
 import { error, json } from '@sveltejs/kit';
 
 export const prerender = true;
@@ -19,7 +18,8 @@ export const GET = ({ params }) => {
 };
 
 export async function entries() {
-	const examples_list = get_examples_list(get_examples_data());
+	const examples_list = get_examples_list(examples_data);
+
 	return examples_list
 		.map(({ examples }) => examples)
 		.flatMap((val) => val.map(({ slug }) => ({ slug })));

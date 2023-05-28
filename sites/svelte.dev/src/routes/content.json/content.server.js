@@ -1,15 +1,17 @@
-import { replace_placeholders } from '$lib/server/docs/render';
+import { modules } from '$lib/generated/type-info.js';
 import {
 	extract_frontmatter,
 	normalizeSlugify,
 	removeMarkdown,
 	transform
-} from '$lib/server/markdown';
+} from '$lib/server/markdown/index.js';
+import { replace_export_type_placeholders } from '$lib/server/markdown/renderer.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
+import { CONTENT_BASE } from '../../constants.js';
 
-const base = '../../documentation/content/';
+const base = CONTENT_BASE;
 
 const categories = [
 	{
@@ -42,7 +44,10 @@ export function content() {
 
 			const filepath = `${base}/${category.slug}/${file}`;
 			// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
-			const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
+			const markdown = replace_export_type_placeholders(
+				fs.readFileSync(filepath, 'utf-8'),
+				modules
+			);
 
 			const { body, metadata } = extract_frontmatter(markdown);
 
@@ -51,7 +56,7 @@ export function content() {
 			const rank = +metadata.rank || undefined;
 
 			blocks.push({
-				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
+				breadcrumbs: [...breadcrumbs, removeMarkdown(remove_TYPE(metadata.title) ?? '')],
 				href: category.href([slug]),
 				content: plaintext(intro),
 				rank
@@ -67,7 +72,11 @@ export function content() {
 				const intro = subsections.shift().trim();
 
 				blocks.push({
-					breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h2)],
+					breadcrumbs: [
+						...breadcrumbs,
+						removeMarkdown(remove_TYPE(metadata.title)),
+						remove_TYPE(removeMarkdown(h2))
+					],
 					href: category.href([slug, normalizeSlugify(h2)]),
 					content: plaintext(intro),
 					rank
@@ -80,9 +89,9 @@ export function content() {
 					blocks.push({
 						breadcrumbs: [
 							...breadcrumbs,
-							removeMarkdown(metadata.title),
-							removeMarkdown(h2),
-							removeMarkdown(h3)
+							removeMarkdown(remove_TYPE(metadata.title)),
+							removeMarkdown(remove_TYPE(h2)),
+							removeMarkdown(remove_TYPE(h3))
 						],
 						href: category.href([slug, normalizeSlugify(h2), normalizeSlugify(h3)]),
 						content: plaintext(lines.join('\n').trim()),
@@ -94,6 +103,11 @@ export function content() {
 	}
 
 	return blocks;
+}
+
+/** @param {string} str */
+function remove_TYPE(str) {
+	return str?.replace(/^\[TYPE\]:\s+(.+)/, '$1') ?? '';
 }
 
 /** @param {string} markdown */

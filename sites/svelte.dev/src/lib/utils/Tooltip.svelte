@@ -17,12 +17,14 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div
 	on:mouseenter
 	on:mouseleave
+	role="tooltip"
 	class="tooltip-container"
-	style="left: {x}px; top: {y}px; --offset: {Math.min(-10, window.innerWidth - (x + width + 10))}px"
+	style:left="{x}px"
+	style:top="{y}px"
+	style:--offset="{Math.min(-10, window.innerWidth - (x + width + 10))}px"
 >
 	<div bind:this={tooltip} class="tooltip">
 		<span>{@html html}</span>

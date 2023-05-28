@@ -1,0 +1,40 @@
+{
+	"include": ["src/**/*"],
+
+	"compilerOptions": {
+		"rootDir": "src",
+
+		// target node v8+ (https://node.green/)
+		// the only missing feature is Array.prototype.values
+		"lib": ["es2017", "DOM", "DOM.Iterable"],
+		"target": "es2017",
+
+		// silences wrong TS error, we don't compile, we only typecheck
+		"outDir": "./irrelevant/unused",
+
+		"declaration": true,
+		"declarationDir": "types",
+
+		"noEmitOnError": true,
+		"noErrorTruncation": true,
+
+		"allowJs": true,
+		"checkJs": true,
+
+		// rollup takes care of these
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+
+		// Hides exports flagged with @internal from the d.ts output
+		"stripInternal": true,
+
+		// TODO: error all the things
+		//"strict": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"typeRoots": ["./node_modules/@types"]
+	}
+}

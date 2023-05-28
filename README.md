@@ -1,6 +1,6 @@
 [![Cybernetically enhanced web apps: Svelte](https://sveltejs.github.io/assets/banner.png)](https://svelte.dev)
 
-[![npm version](https://img.shields.io/npm/v/svelte.svg)](https://www.npmjs.com/package/svelte) [![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
+[![license](https://img.shields.io/npm/l/svelte.svg)](LICENSE.md) [![Chat](https://img.shields.io/discord/457912077277855764?label=chat&logo=discord)](https://svelte.dev/chat)
 
 ## What is Svelte?
 
@@ -20,7 +20,11 @@ Funds donated via Open Collective will be used for compensating expenses related
 
 You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what we're currently working on.
 
-## Development
+## Contributing
+
+Please see the [Contributing Guide](CONTRIBUTING.md) and [svelte package](packages/svelte) for contributing to Svelte.
+
+### Development
 
 Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
 
@@ -32,7 +36,7 @@ cd svelte
 pnpm install
 ```
 
-> Do not use Yarn to install the dependencies, as the specific package versions in `package-lock.json` are used to build and test Svelte.
+> Do not use Yarn to install the dependencies, as the specific package versions in `pnpm-lock.json` are used to build and test Svelte.
 
 To build the compiler and all the other modules included in the package:
 
@@ -60,11 +64,11 @@ To filter tests, use `-g` (aka `--grep`). For example, to only run tests involvi
 pnpm test -- -g transition
 ```
 
-## svelte.dev
+### svelte.dev
 
 The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/sites) repository, with all the documentation in the [site/content](site/content) directory. The site is built with [SvelteKit](https://kit.svelte.dev).
 
-### Is svelte.dev down?
+## Is svelte.dev down?
 
 Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
