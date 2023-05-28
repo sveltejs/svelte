@@ -4,12 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "node server",
-		"format": "prettier . --cache --plugin-search-dir=. --write",
-		"build": "npm run build:client && npm run build:server",
-		"build:client": "vite build --ssrManifest --outDir dist/client",
-		"build:server": "vite build --ssr src/entry-server.js --outDir dist/server",
-		"preview": "cross-env NODE_ENV=production node server"
+		"dev": "cross-env NODE_OPTIONS=--experimental-vm-modules rollup -cw"
 	},
 	"dependencies": {
 		"compression": "^1.7.4",
@@ -18,6 +13,8 @@
 	},
 	"devDependencies": {
 		"cross-env": "^7.0.3",
+		"rollup": "^3.20.2",
+		"rollup-plugin-serve": "^2.0.2",
 		"svelte": "workspace:*",
 		"vite": "^4.3.9"
 	}
