@@ -15,7 +15,6 @@ while (true) {
 	try {
 		const version = await get_version();
 		if (prev !== version) {
-			prev = version;
 			window.location.reload();
 		}
 	} catch {}
