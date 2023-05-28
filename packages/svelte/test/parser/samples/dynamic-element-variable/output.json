@@ -12,6 +12,7 @@
 				"attributes": [],
 				"children": [],
 				"tag": {
+					"type": "Identifier",
 					"start": 22,
 					"end": 25,
 					"loc": {
@@ -24,41 +25,41 @@
 							"column": 25
 						}
 					},
-					"name": "tag",
-					"type": "Identifier"
+					"name": "tag"
 				}
 			},
 			{
-				"type": "Text",
 				"start": 44,
 				"end": 45,
-				"data": "\n",
-				"raw": "\n"
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
 			},
 			{
 				"start": 45,
 				"end": 101,
 				"type": "Element",
 				"name": "svelte:element",
-				"children": [],
 				"attributes": [
 					{
-						"type": "Attribute",
 						"start": 72,
 						"end": 83,
+						"type": "Attribute",
 						"name": "class",
 						"value": [
 							{
-								"type": "Text",
 								"start": 79,
 								"end": 82,
-								"data": "foo",
-								"raw": "foo"
+								"type": "Text",
+								"raw": "foo",
+								"data": "foo"
 							}
 						]
 					}
 				],
+				"children": [],
 				"tag": {
+					"type": "Identifier",
 					"start": 67,
 					"end": 70,
 					"loc": {
@@ -71,8 +72,7 @@
 							"column": 25
 						}
 					},
-					"name": "tag",
-					"type": "Identifier"
+					"name": "tag"
 				}
 			}
 		]

@@ -6,6 +6,7 @@ import read_expression from '../read/expression.js';
 import read_script from '../read/script.js';
 import read_style from '../read/style.js';
 import { closing_tag_omitted, decode_character_references } from '../utils/html.js';
+import read_context from '../read/context.js';
 
 // eslint-disable-next-line no-useless-escape
 const valid_tag_name = /^\!?[a-zA-Z]{1,}:?[a-zA-Z0-9\-]*/;
@@ -348,7 +349,7 @@ function read_attribute(parser, unique_names) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		value = read_attribute_value(parser);
+		value = read_attribute_value(parser, type === 'Let');
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		parser.error(parser_errors.unexpected_token('='), parser.index);
@@ -438,8 +439,9 @@ function get_directive_type(name) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} as_pattern
  */
-function read_attribute_value(parser) {
+function read_attribute_value(parser, as_pattern = false) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [
@@ -461,7 +463,8 @@ function read_attribute_value(parser) {
 				if (quote_mark) return parser.match(quote_mark);
 				return !!parser.match_regex(regex_starts_with_invalid_attr_value);
 			},
-			'in attribute value'
+			'in attribute value',
+			as_pattern
 		);
 	} catch (error) {
 		if (error.code === 'parse-error') {
@@ -486,9 +489,10 @@ function read_attribute_value(parser) {
  * @param {import('../index.js').Parser} parser
  * @param {() => boolean} done
  * @param {string} location
+ * @param {boolean} as_pattern
  * @returns {import('../../interfaces.js').TemplateNode[]}
  */
-function read_sequence(parser, done, location) {
+function read_sequence(parser, done, location, as_pattern = false) {
 	/**
 	 * @type {import('../../interfaces.js').Text}
 	 */
@@ -534,7 +538,7 @@ function read_sequence(parser, done, location) {
 			}
 			flush(parser.index - 1);
 			parser.allow_whitespace();
-			const expression = read_expression(parser);
+			const expression = as_pattern ? read_context(parser) : read_expression(parser);
 			parser.allow_whitespace();
 			parser.eat('}', true);
 			chunks.push({

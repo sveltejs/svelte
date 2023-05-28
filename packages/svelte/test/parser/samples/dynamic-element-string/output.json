@@ -14,11 +14,11 @@
 				"tag": "div"
 			},
 			{
-				"type": "Text",
 				"start": 44,
 				"end": 45,
-				"data": "\n",
-				"raw": "\n"
+				"type": "Text",
+				"raw": "\n",
+				"data": "\n"
 			},
 			{
 				"start": 45,
@@ -27,17 +27,17 @@
 				"name": "svelte:element",
 				"attributes": [
 					{
-						"type": "Attribute",
 						"start": 72,
 						"end": 83,
+						"type": "Attribute",
 						"name": "class",
 						"value": [
 							{
-								"type": "Text",
 								"start": 79,
 								"end": 82,
-								"data": "foo",
-								"raw": "foo"
+								"type": "Text",
+								"raw": "foo",
+								"data": "foo"
 							}
 						]
 					}

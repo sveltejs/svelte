@@ -1664,13 +1664,10 @@ export default class Component {
 					const { let_attributes } = parent;
 
 					for (const attr of let_attributes) {
-						if (
+						if (attr.expression) {
 							// @ts-expect-error
-							// TODO extract_names only considers patterns but let attributes return expressions
-							(attr.expression && extract_names(attr.expression).includes(name)) ||
-							attr.name === name
-						)
-							return true;
+							if (extract_names(attr.expression).includes(name)) return true;
+						} else if (attr.name === name) return true;
 					}
 				}
 			}

@@ -1,0 +1,133 @@
+{
+	"html": {
+		"start": 0,
+		"end": 43,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 43,
+				"type": "InlineComponent",
+				"name": "Component",
+				"attributes": [
+					{
+						"start": 11,
+						"end": 28,
+						"type": "Let",
+						"name": "x",
+						"modifiers": [],
+						"expression": {
+							"type": "ObjectPattern",
+							"start": 18,
+							"end": 27,
+							"loc": {
+								"start": {
+									"line": 1,
+									"column": 18
+								},
+								"end": {
+									"line": 1,
+									"column": 27
+								}
+							},
+							"properties": [
+								{
+									"type": "Property",
+									"start": 19,
+									"end": 26,
+									"loc": {
+										"start": {
+											"line": 1,
+											"column": 19
+										},
+										"end": {
+											"line": 1,
+											"column": 26
+										}
+									},
+									"method": false,
+									"shorthand": true,
+									"computed": false,
+									"key": {
+										"type": "Identifier",
+										"start": 19,
+										"end": 22,
+										"loc": {
+											"start": {
+												"line": 1,
+												"column": 19
+											},
+											"end": {
+												"line": 1,
+												"column": 22
+											}
+										},
+										"name": "foo"
+									},
+									"kind": "init",
+									"value": {
+										"type": "AssignmentPattern",
+										"start": 19,
+										"end": 26,
+										"loc": {
+											"start": {
+												"line": 1,
+												"column": 19
+											},
+											"end": {
+												"line": 1,
+												"column": 26
+											}
+										},
+										"left": {
+											"type": "Identifier",
+											"start": 19,
+											"end": 22,
+											"loc": {
+												"start": {
+													"line": 1,
+													"column": 19
+												},
+												"end": {
+													"line": 1,
+													"column": 22
+												}
+											},
+											"name": "foo"
+										},
+										"right": {
+											"type": "Literal",
+											"start": 25,
+											"end": 26,
+											"loc": {
+												"start": {
+													"line": 1,
+													"column": 25
+												},
+												"end": {
+													"line": 1,
+													"column": 26
+												}
+											},
+											"value": 1,
+											"raw": "1"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"children": [
+					{
+						"start": 29,
+						"end": 31,
+						"type": "Text",
+						"raw": "\n\n",
+						"data": "\n\n"
+					}
+				]
+			}
+		]
+	}
+}

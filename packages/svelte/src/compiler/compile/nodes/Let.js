@@ -2,7 +2,7 @@ import Node from './shared/Node.js';
 import { walk } from 'estree-walker';
 import compiler_errors from '../compiler_errors.js';
 
-const applicable = new Set(['Identifier', 'ObjectExpression', 'ArrayExpression', 'Property']);
+const applicable = new Set(['Identifier', 'ObjectPattern', 'ArrayPattern', 'Property']);
 
 /** @extends Node<'Let'> */
 export default class Let extends Node {
@@ -35,13 +35,6 @@ export default class Let extends Node {
 					}
 					if (node.type === 'Identifier') {
 						names.push(/** @type {import('estree').Identifier} */ (node).name);
-					}
-					// slightly unfortunate hack
-					if (node.type === 'ArrayExpression') {
-						node.type = 'ArrayPattern';
-					}
-					if (node.type === 'ObjectExpression') {
-						node.type = 'ObjectPattern';
 					}
 				}
 			});
