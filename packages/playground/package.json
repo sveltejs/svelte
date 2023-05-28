@@ -4,18 +4,11 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "cross-env NODE_OPTIONS=--experimental-vm-modules rollup -cw"
-	},
-	"dependencies": {
-		"compression": "^1.7.4",
-		"express": "^4.18.2",
-		"sirv": "^2.0.3"
+		"dev": "node --experimental-vm-modules --watch ./node_modules/rollup/dist/bin/rollup -cw"
 	},
 	"devDependencies": {
-		"cross-env": "^7.0.3",
 		"rollup": "^3.20.2",
 		"rollup-plugin-serve": "^2.0.2",
-		"svelte": "workspace:*",
-		"vite": "^4.3.9"
+		"svelte": "workspace:*"
 	}
 }
