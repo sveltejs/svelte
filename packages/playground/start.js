@@ -4,10 +4,10 @@ import { watch } from 'rollup';
 import serve from 'rollup-plugin-serve';
 import * as svelte from '../svelte/src/compiler/index.js';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = new URL('.', import.meta.url).pathname;
 
-const create_plugin = (ssr = false) => {
-	/** @type {import('rollup').Plugin}*/
+/** @returns {import('rollup').Plugin}*/
+function create_plugin(ssr = false) {
 	return {
 		name: 'custom-svelte-' + ssr,
 		resolveId(id) {
@@ -36,15 +36,15 @@ const create_plugin = (ssr = false) => {
 				hydratable: true,
 				css: 'injected'
 			});
+
 			return compiled.js;
 		}
 	};
-};
+}
 
 const client_plugin = create_plugin();
 const ssr_plugin = create_plugin(true);
 
-// let svelte;
 const watcher = watch([
 	{
 		input: 'src/entry-client.js',
