@@ -4,6 +4,7 @@ export interface BlogPost {
 	date: string;
 	date_formatted: string;
 	slug: string;
+	file: string;
 	author: {
 		name: string;
 		url?: string;

@@ -1,4 +1,4 @@
-import { get_blog_data, get_blog_list } from '$lib/server/blog/get-blog-data';
+import { get_blog_data, get_blog_list } from '$lib/server/blog/index.js';
 
 export const prerender = true;
 

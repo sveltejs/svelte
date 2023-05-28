@@ -42,7 +42,7 @@
 	<div class="viewport offset-{offset}">
 		<TableOfContents
 			sections={data.examples_list}
-			active_section={data.example.slug}
+			active_section={data.example?.slug}
 			isLoading={!!$navigating}
 		/>
 		<div class="repl-container" class:loading={$navigating}>
