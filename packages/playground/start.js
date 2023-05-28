@@ -21,7 +21,7 @@ const create_plugin = (ssr = false) => {
 			}
 		},
 		transform(code, id) {
-			code = code.replace('import.meta.env.SSR', ssr);
+			code = code.replaceAll('import.meta.env.SSR', ssr);
 
 			if (!id.endsWith('.svelte')) {
 				return {
