@@ -7,29 +7,38 @@ import serve from 'rollup-plugin-serve';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-const create_svelte_plugin = (ssr = false) => ({
-	name: 'svelte',
-	resolveId(id) {
-		if (id === 'svelte') {
-			return path.resolve(__dirname, '../svelte/src/runtime/index.js');
-		} else if (id.startsWith('svelte/')) {
-			return path.resolve(__dirname, `../svelte/src/runtime/${id.slice(7)}/index.js`);
-		}
-	},
-	transform(code, id) {
-		if (!id.endsWith('.svelte')) return null;
-		const compiled = compile(code, {
-			filename: id,
-			generate: ssr ? 'ssr' : 'dom',
-			hydratable: true,
-			css: 'injected'
-		});
-		return compiled.js;
-	}
-});
+const create_plugin = (ssr = false) =>
+	/** @type {import('rollup').Plugin}*/ ({
+		name: 'custom-svelte-' + ssr,
+		resolveId(id) {
+			if (id === 'svelte') {
+				return path.resolve(__dirname, '../svelte/src/runtime/index.js');
+			} else if (id.startsWith('svelte/')) {
+				return path.resolve(__dirname, `../svelte/src/runtime/${id.slice(7)}/index.js`);
+			}
+		},
+		transform(code, id) {
+			code = code.replace('import.meta.env.SSR', ssr);
 
-const client_plugin = create_svelte_plugin();
-const ssr_plugin = create_svelte_plugin(true);
+			if (!id.endsWith('.svelte')) {
+				return {
+					code,
+					map: null
+				};
+			}
+
+			const compiled = compile(code, {
+				filename: id,
+				generate: ssr ? 'ssr' : 'dom',
+				hydratable: true,
+				css: 'injected'
+			});
+			return compiled.js;
+		}
+	});
+
+const client_plugin = create_plugin();
+const ssr_plugin = create_plugin(true);
 
 /**
  * @type {import('rollup').RollupOptions}
