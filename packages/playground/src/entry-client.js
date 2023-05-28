@@ -8,8 +8,11 @@ new App({
 function get_version() {
 	return fetch('/version.json').then((r) => r.json());
 }
+
 let prev = await get_version();
 
+// Mom: We have live reloading at home
+// Live reloading at home:
 while (true) {
 	await new Promise((r) => setTimeout(r, 2500));
 	try {
