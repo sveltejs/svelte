@@ -379,11 +379,11 @@ describe('store', () => {
 			const count = writable(0);
 			const values = [];
 
-			const a = derived(count, $count => {
+			const a = derived(count, ($count) => {
 				return 'a' + $count;
 			});
 
-			const b = derived(count, $count => {
+			const b = derived(count, ($count) => {
 				return 'b' + $count;
 			});
 
@@ -400,7 +400,7 @@ describe('store', () => {
 				}
 			});
 
-			const unsubscribe = combined.subscribe(v => {
+			const unsubscribe = combined.subscribe((v) => {
 				values.push(v);
 			});
 
