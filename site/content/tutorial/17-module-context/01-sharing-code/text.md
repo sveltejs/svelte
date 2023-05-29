@@ -6,7 +6,7 @@ In all the examples we've seen so far, the `<script>` block contains code that r
 
 Very occasionally, you'll need to run some code outside of an individual component instance. For example, you can play all five of these audio players simultaneously; it would be better if playing one stopped all the others.
 
-We can do that by declaring a `<script context="module">` block. Code contained inside it will run once, when the module first evaluates, rather than when a component is instantiated. Place this at the top of `AudioPlayer.svelte`:
+We can do that by declaring a `<script context="module">` block. Code contained inside it will run once, when the module first evaluates, rather than when a component is instantiated. Add this at the top of `AudioPlayer.svelte`, noting that we have to add a new script block as we only want the `current` variable as the only one affected by the context:
 
 ```html
 <script context="module">
