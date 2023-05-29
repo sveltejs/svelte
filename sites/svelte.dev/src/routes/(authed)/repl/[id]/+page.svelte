@@ -40,7 +40,7 @@
 		}
 	});
 
-	afterNavigate(({ from, to }) => {
+	afterNavigate(() => {
 		repl?.set({
 			files: data.gist.components
 		});
