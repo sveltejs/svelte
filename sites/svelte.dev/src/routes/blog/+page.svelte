@@ -1,5 +1,9 @@
 <script>
+	import { setNavTitle } from '@sveltejs/site-kit/components';
+
 	export let data;
+
+	setNavTitle('Blog');
 </script>
 
 <svelte:head>

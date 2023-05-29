@@ -2,13 +2,15 @@
 	import { browser } from '$app/environment';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
-	import { theme } from '@sveltejs/site-kit/components';
+	import { setNavTitle, theme } from '@sveltejs/site-kit/components';
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
 	import TableOfContents from './TableOfContents.svelte';
 
 	import '@sveltejs/site-kit/styles/code.css';
 
 	export let data;
+
+	setNavTitle('Tutorial');
 
 	/** @type {import('@sveltejs/repl').default} */
 	let repl;

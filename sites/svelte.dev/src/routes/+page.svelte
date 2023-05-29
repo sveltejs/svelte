@@ -1,14 +1,15 @@
 <script>
-	import { Blurb, theme } from '@sveltejs/site-kit/components';
+	import { Blurb, setNavTitle, theme } from '@sveltejs/site-kit/components';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
 	import Supporters from './_components/Supporters/index.svelte';
 	import Try from './_components/Try.svelte';
 	import WhosUsingSvelte from './_components/WhosUsingSvelte/index.svelte';
-
-	import CollectiveLight from './svelte-collective-light.png?big-image';
 	import CollectiveDark from './svelte-collective-dark.png?big-image';
+	import CollectiveLight from './svelte-collective-light.png?big-image';
+
+	setNavTitle('');
 </script>
 
 <svelte:head>

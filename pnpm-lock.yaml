@@ -170,7 +170,7 @@ importers:
         version: 1.18.0(svelte@packages+svelte)(vite@4.3.8)
       '@sveltejs/site-kit':
         specifier: ^5.2.1
-        version: 5.2.1(@sveltejs/kit@1.18.0)(svelte@packages+svelte)
+        version: link:../../../site-kit/packages/site-kit
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.3.0
         version: 2.3.0(svelte@packages+svelte)(vite@4.3.8)
@@ -1803,18 +1803,6 @@ packages:
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
-
-  /@sveltejs/site-kit@5.2.1(@sveltejs/kit@1.18.0)(svelte@packages+svelte):
-    resolution: {integrity: sha512-KBl/PlC/I+Db7mm8WHOCtNOyi1nyxicAVuqZ1+NXN6CJTlDtedFouo0sltGaOQgndbXgGmLr8IfCPz/MWgBVKw==}
-    peerDependencies:
-      '@sveltejs/kit': ^1.0.0
-      svelte: ^3.54.0
-    dependencies:
-      '@sveltejs/kit': 1.18.0(svelte@packages+svelte)(vite@4.3.8)
-      esm-env: 1.0.0
-      svelte: link:packages/svelte
-      svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
-    dev: true
 
   /@sveltejs/vite-plugin-svelte-inspector@1.0.1(@sveltejs/vite-plugin-svelte@2.3.0)(svelte@packages+svelte)(vite@4.3.8):
     resolution: {integrity: sha512-8ZXgDbAL1b2o7WHxnPsbkxTzZiZhMwOsCI/GFti3zFlh8unqJtUsgwRQV/XSULFcqkbZXz5v6MqMLSUpl3VKaA==}
@@ -6089,6 +6077,7 @@ packages:
       svelte: ^3.48.0
     dependencies:
       svelte: link:packages/svelte
+    dev: false
 
   /svelte-preprocess@5.0.3(postcss@8.4.23)(sass@1.62.1)(svelte@packages+svelte)(typescript@5.0.4):
     resolution: {integrity: sha512-GrHF1rusdJVbOZOwgPWtpqmaexkydznKzy5qIC2FabgpFyKN57bjMUUUqPRfbBXK5igiEWn1uO/DXsa2vJ5VHA==}

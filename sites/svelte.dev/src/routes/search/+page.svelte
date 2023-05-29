@@ -1,8 +1,11 @@
 <script>
+	import { setNavTitle } from '@sveltejs/site-kit/components';
 	import { SearchResults } from '@sveltejs/site-kit/search';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
+
+	setNavTitle('Search');
 </script>
 
 <svelte:head>

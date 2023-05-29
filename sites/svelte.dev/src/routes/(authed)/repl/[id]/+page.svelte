@@ -2,12 +2,14 @@
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
 	import Repl from '@sveltejs/repl';
-	import { theme } from '@sveltejs/site-kit/components';
+	import { setNavTitle, theme } from '@sveltejs/site-kit/components';
 	import { onMount } from 'svelte';
 	import { mapbox_setup } from '../../../../config.js';
 	import AppControls from './AppControls.svelte';
 
 	export let data;
+
+	setNavTitle('REPL');
 
 	let version = data.version;
 

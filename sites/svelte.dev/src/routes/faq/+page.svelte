@@ -1,9 +1,12 @@
 <script>
 	import * as hovers from '$lib/utils/hovers.js';
+	import { setNavTitle } from '@sveltejs/site-kit/components';
 
 	export let data;
 
 	hovers.setup();
+
+	setNavTitle('FAQ');
 </script>
 
 <svelte:head>

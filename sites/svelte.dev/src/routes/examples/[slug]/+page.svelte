@@ -4,11 +4,13 @@
 	import { navigating } from '$app/stores';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
-	import { theme } from '@sveltejs/site-kit/components';
+	import { setNavTitle, theme } from '@sveltejs/site-kit/components';
 	import { mapbox_setup, svelteUrl } from '../../../config';
 	import TableOfContents from './TableOfContents.svelte';
 
 	export let data;
+
+	setNavTitle('Examples');
 
 	/** @type {number} */
 	let width;
