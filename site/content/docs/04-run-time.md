@@ -383,7 +383,7 @@ store = derived(a, callback: (a: any, set: (value: any) => void, update: (fn: an
 store = derived([a, ...b], callback: ([a: any, ...b: any[]]) => any)
 ```
 ```js
-store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update: (fn: any => any) => void) => void | () => void, initial_value: any)
+store = derived([a, ...b], callback: ([a: any, ...b: any[]], set: (value: any) => void, update: (fn: any => any) => void, changed: boolean[]) => void | () => void, initial_value: any)
 ```
 
 ---
@@ -439,7 +439,7 @@ const tick = derived(frequency, ($frequency, set) => {
 
 ---
 
-In both cases, an array of arguments can be passed as the first argument instead of a single store.
+In both cases, an array of arguments can be passed as the first argument instead of a single store. In this case, the callback can optionally take a fourth argument, `changed`, which will be an array of Booleans describing which store value(s) changed since the last time the callback was called. (In the single-store case, the `changed` array would be pointless since it would always be equal to `[true]`.)
 
 ```js
 import { derived } from 'svelte/store';
@@ -448,6 +448,19 @@ const summed = derived([a, b], ([$a, $b]) => $a + $b);
 
 const delayed = derived([a, b], ([$a, $b], set) => {
 	setTimeout(() => set($a + $b), 1000);
+});
+
+const loggingSum = derived([a, b], ([$a, $b], set, _, changed) => {
+	const [aChanged, bChanged] = changed;
+	if (aChanged) console.log('New value of a', $a);
+	if (bChanged) console.log('New value of b', $b);
+	set($a + $b);
+});
+
+const complexLogic = derived([a, b], ([$a, $b], set, update, changed) => {
+	const [aChanged, bChanged] = changed;
+	if (aChanged) set($a + $b);
+	if (bChanged) update(n => n * 2 - $b);
 });
 ```
 

@@ -95,7 +95,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void, changed: boolean[]) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */
@@ -133,13 +133,15 @@ export function derived(stores, fn, initial_value) {
 		let started = false;
 		const values = [];
 		let pending = 0;
+		const changed = [];
 		let cleanup = noop;
 		const sync = () => {
 			if (pending) {
 				return;
 			}
 			cleanup();
-			const result = fn(single ? values[0] : values, set, update);
+			const result = fn(single ? values[0] : values, set, update, changed);
+			changed.fill(false);
 			if (auto) {
 				set(result);
 			} else {
@@ -152,6 +154,7 @@ export function derived(stores, fn, initial_value) {
 				(value) => {
 					values[i] = value;
 					pending &= ~(1 << i);
+					changed[i] = true;
 					if (started) {
 						sync();
 					}
