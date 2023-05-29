@@ -12,7 +12,7 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @template T
- * @param {T} value initial value
+ * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Readable<T>}
  */
@@ -25,7 +25,7 @@ export function readable(value, start) {
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @template T
- * @param {T} value initial value
+ * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Writable<T>}
  */
