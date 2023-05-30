@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { process_example } from '$lib/utils/examples';
 	import Repl from '@sveltejs/repl';
-	import { theme } from '@sveltejs/site-kit/components';
+	import { theme } from '@sveltejs/site-kit/stores';
 	import { onMount } from 'svelte';
 
 	export let version = '3';

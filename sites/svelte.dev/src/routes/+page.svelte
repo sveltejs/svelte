@@ -1,5 +1,6 @@
 <script>
-	import { Blurb, setNavTitle, theme } from '@sveltejs/site-kit/components';
+	import { Blurb, setNavTitle } from '@sveltejs/site-kit/components';
+	import { theme } from '@sveltejs/site-kit/stores';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
