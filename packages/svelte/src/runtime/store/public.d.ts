@@ -14,7 +14,7 @@ export type Updater<T> = (value: T) => T;
  * This function is called when the first subscriber subscribes.
  *
  * @param {(value: T) => void} set Function that sets the value of the store.
- * @param {(value: Updater<T>) => void} set Function that sets the value of the store after passing the current value to the update function.
+ * @param {(value: Updater<T>) => void} update Function that sets the value of the store after passing the current value to the update function.
  * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
  * subscriber unsubscribes.
  */

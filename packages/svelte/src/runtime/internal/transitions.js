@@ -74,7 +74,8 @@ export function transition_in(block, local) {
 /**
  * @param {import('./private.js').Fragment} block
  * @param {0 | 1} local
- * @param {0 | 1} detach
+ * @param {0 | 1} [detach]
+ * @param {() => void} [callback]
  * @returns {void}
  */
 export function transition_out(block, local, detach, callback) {
