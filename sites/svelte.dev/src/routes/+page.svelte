@@ -1,6 +1,6 @@
 <script>
-	import { Blurb, setNavTitle } from '@sveltejs/site-kit/components';
-	import { theme } from '@sveltejs/site-kit/stores';
+	import { Blurb } from '@sveltejs/site-kit/components';
+	import { nav_title, theme } from '@sveltejs/site-kit/stores';
 	import Demo from './_components/Demo.svelte';
 	import Hero from './_components/Hero.svelte';
 	import Image from './_components/Image.svelte';
@@ -10,7 +10,7 @@
 	import CollectiveDark from './svelte-collective-dark.png?big-image';
 	import CollectiveLight from './svelte-collective-light.png?big-image';
 
-	setNavTitle('');
+	$nav_title = '';
 </script>
 
 <svelte:head>

@@ -1,9 +1,9 @@
 <script>
-	import { setNavTitle } from '@sveltejs/site-kit/components';
+	import { nav_title } from '@sveltejs/site-kit/stores';
 
 	export let data;
 
-	setNavTitle('Blog');
+	$nav_title = 'Blog';
 </script>
 
 <svelte:head>
