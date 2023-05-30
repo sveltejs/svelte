@@ -1,9 +1,5 @@
 <script>
-	import { nav_title } from '@sveltejs/site-kit/stores';
-
 	export let data;
-
-	$nav_title = 'Blog';
 </script>
 
 <svelte:head>

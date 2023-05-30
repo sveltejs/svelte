@@ -1,13 +1,10 @@
 <script>
 	import { page } from '$app/stores';
 	import { DocsContents, DocsMobileNav } from '@sveltejs/site-kit/components/docs';
-	import { nav_title } from '@sveltejs/site-kit/stores';
 
 	export let data;
 
 	$: title = $page.data.page?.title;
-
-	$nav_title = 'Docs';
 </script>
 
 <div class="container">

@@ -1,13 +1,10 @@
 <script>
 	import { page } from '$app/stores';
 	import * as hovers from '$lib/utils/hovers.js';
-	import { nav_title } from '@sveltejs/site-kit/stores';
 
 	export let data;
 
 	hovers.setup();
-
-	$nav_title = 'Blog';
 </script>
 
 <svelte:head>
