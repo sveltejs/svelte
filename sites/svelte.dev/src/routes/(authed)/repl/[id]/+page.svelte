@@ -41,7 +41,7 @@
 	});
 
 	afterNavigate(() => {
-		repl.set({
+		repl?.set({
 			files: data.gist.components
 		});
 	});

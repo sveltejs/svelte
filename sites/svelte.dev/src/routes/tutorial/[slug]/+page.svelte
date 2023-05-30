@@ -80,8 +80,9 @@
 
 	let completed = false;
 
+	/** @param {import('svelte').ComponentEvents<Repl>['change']} event */
 	function handle_change(event) {
-		completed = event.detail.components.every((file, i) => {
+		completed = event.detail.files.every((file, i) => {
 			const expected = data.tutorial.complete[i] && clone(data.tutorial.complete[i]);
 			return (
 				expected &&
