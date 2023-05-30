@@ -5,7 +5,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
-// runs the version generation
+// runs the version generation as a side-effect of importing
 import './scripts/generate-version.js'
 
 const require = createRequire(import.meta.url);
