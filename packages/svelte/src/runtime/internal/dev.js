@@ -17,7 +17,7 @@ import { ensure_array_like } from './each.js';
 /**
  * @template T
  * @param {string} type
- * @param {T} detail
+ * @param {T} [detail]
  * @returns {void}
  */
 export function dispatch_dev(type, detail) {
@@ -47,7 +47,7 @@ export function append_hydration_dev(target, node) {
 /**
  * @param {Node} target
  * @param {Node} node
- * @param {Node} anchor
+ * @param {Node} [anchor]
  * @returns {void}
  */
 export function insert_dev(target, node, anchor) {
@@ -57,7 +57,7 @@ export function insert_dev(target, node, anchor) {
 
 /** @param {Node} target
  * @param {Node} node
- * @param {Node} anchor
+ * @param {Node} [anchor]
  * @returns {void}
  */
 export function insert_hydration_dev(target, node, anchor) {
@@ -109,10 +109,10 @@ export function detach_after_dev(before) {
  * @param {Node} node
  * @param {string} event
  * @param {EventListenerOrEventListenerObject} handler
- * @param {boolean | AddEventListenerOptions | EventListenerOptions} options
- * @param {boolean} has_prevent_default
- * @param {boolean} has_stop_propagation
- * @param {boolean} has_stop_immediate_propagation
+ * @param {boolean | AddEventListenerOptions | EventListenerOptions} [options]
+ * @param {boolean} [has_prevent_default]
+ * @param {boolean} [has_stop_propagation]
+ * @param {boolean} [has_stop_immediate_propagation]
  * @returns {() => void}
  */
 export function listen_dev(
@@ -140,7 +140,7 @@ export function listen_dev(
 /**
  * @param {Element} node
  * @param {string} attribute
- * @param {string} value
+ * @param {string} [value]
  * @returns {void}
  */
 export function attr_dev(node, attribute, value) {
@@ -152,7 +152,7 @@ export function attr_dev(node, attribute, value) {
 /**
  * @param {Element} node
  * @param {string} property
- * @param {any} value
+ * @param {any} [value]
  * @returns {void}
  */
 export function prop_dev(node, property, value) {
@@ -163,7 +163,7 @@ export function prop_dev(node, property, value) {
 /**
  * @param {HTMLElement} node
  * @param {string} property
- * @param {any} value
+ * @param {any} [value]
  * @returns {void}
  */
 export function dataset_dev(node, property, value) {
