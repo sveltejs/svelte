@@ -1,5 +1,3 @@
-export const prerender = true;
-
 const list = new Map([
 	[/^docs/, 'Docs'],
 	[/^repl/, 'REPL'],
