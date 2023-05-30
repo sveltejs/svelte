@@ -42,6 +42,9 @@ const config = {
 		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']
 	},
 	ssr: { noExternal: ['@sveltejs/site-kit', '@sveltejs/repl'] },
+	resolve: {
+		dedupe: ['@jridgewell/sourcemap-codec']
+	},
 	server: {
 		fs: {
 			strict: false

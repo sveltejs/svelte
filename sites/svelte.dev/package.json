@@ -17,6 +17,7 @@
 		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
 	},
 	"dependencies": {
+		"@jridgewell/sourcemap-codec": "^1.4.15",
 		"@supabase/supabase-js": "^2.22.0",
 		"@sveltejs/repl": "^0.5.0-next.3",
 		"cookie": "^0.5.0",

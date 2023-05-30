@@ -137,6 +137,9 @@ importers:
 
   sites/svelte.dev:
     dependencies:
+      '@jridgewell/sourcemap-codec':
+        specifier: ^1.4.15
+        version: 1.4.15
       '@supabase/supabase-js':
         specifier: ^2.22.0
         version: 2.22.0
