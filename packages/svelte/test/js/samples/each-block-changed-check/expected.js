@@ -114,7 +114,10 @@ function create_fragment(ctx) {
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*comments, elapsed, time*/ 7) {
-				each_value = ensure_array_like(/*comments*/ ctx[0]);
+				if (dirty & /*comments*/ 1) {
+					each_value = ensure_array_like(/*comments*/ ctx[0]);
+				}
+
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
