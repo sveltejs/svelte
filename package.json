@@ -9,7 +9,8 @@
     "build": "pnpm -r build",
     "check": "pnpm -r check",
     "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "release":"changeset release"
   },
   "repository": {
     "type": "git",
