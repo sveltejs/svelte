@@ -11,4 +11,3 @@ The Svelte repo is currently in the process of heavy restructuring for Svelte 4.
 ### Tests, lints, formatting
 - [ ] Run the tests with `pnpm test`
 - [ ] Lint the project with `pnpm lint`
-- [ ] Format the project with either your Prettier plugin or `pnpm format`
