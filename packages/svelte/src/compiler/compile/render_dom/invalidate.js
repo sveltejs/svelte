@@ -91,7 +91,7 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
  * @param {import('./Renderer.js').default} renderer
  * @param {string} name
  * @param {any} [value]
- * @param {boolean} main_execution_context
+ * @param {boolean} [main_execution_context]
  * @returns {import('estree').Node}
  */
 export function renderer_invalidate(renderer, name, value, main_execution_context = false) {

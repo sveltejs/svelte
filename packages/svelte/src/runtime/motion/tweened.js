@@ -57,7 +57,7 @@ export function tweened(value, defaults = {}) {
 	let target_value = value;
 	/**
 	 * @param {T} new_value
-	 * @param {import('./private.js').TweenedOptions<T>} opts
+	 * @param {import('./private.js').TweenedOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
 		if (value == null) {
