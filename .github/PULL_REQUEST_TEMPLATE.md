@@ -8,6 +8,5 @@ The Svelte repo is currently in the process of heavy restructuring for Svelte 4.
 - [ ] This message body should clearly illustrate what problems it solves.
 - [ ] Ideally, include a test that fails without this PR but passes with it.
 
-### Tests, lints, formatting
-- [ ] Run the tests with `pnpm test`
-- [ ] Lint the project with `pnpm lint`
+### Tests and linting
+-  [ ] Run the tests with `pnpm test` and lint the project with `pnpm lint`
