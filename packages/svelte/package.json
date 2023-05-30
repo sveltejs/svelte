@@ -76,7 +76,7 @@
     "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "build": "rollup -c && pnpm tsd",
     "prepare": "pnpm build",
-    "generate:version": "pnpm build",
+    "generate:version": "node ./scripts/generate-version.js",
     "dev": "rollup -cw",
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm lint && pnpm build && pnpm test",
