@@ -1,6 +1,6 @@
 # HEADS UP: BIG RESTRUCTURING UNDERWAY
 
-The Svelte repo is currently in the process of heavy restructuring for Svelte 4. After that, work on Svelte 5 will likely change a lot on the compiler aswell. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but feature PRs will likely not be merged.
+The Svelte repo is currently in the process of heavy restructuring for Svelte 4. After that, work on Svelte 5 will likely change a lot in the compiler as well. For that reason, please don't open PRs that are large in scope, touch more than a couple of files, etc. In other words, bug fixes are fine, but feature PRs will likely not be merged.
 
 ### Before submitting the PR, please make sure you do the following
 
@@ -9,6 +9,6 @@ The Svelte repo is currently in the process of heavy restructuring for Svelte 4.
 - [ ] This message body should clearly illustrate what problems it solves.
 - [ ] Ideally, include a test that fails without this PR but passes with it.
 
-### Tests
+### Tests and linting
 
-- [ ] Run the tests with `npm test` and lint the project with `npm run lint`
+- [ ] Run the tests with `pnpm test` and lint the project with `pnpm lint`

@@ -84,5 +84,12 @@
 </script>
 
 {#if browser}
-	<Repl bind:this={repl} {svelteUrl} embedded relaxed previewTheme={$theme.current} />
+	<Repl
+		bind:this={repl}
+		autocomplete={embedded}
+		{svelteUrl}
+		embedded
+		relaxed
+		previewTheme={$theme.current}
+	/>
 {/if}

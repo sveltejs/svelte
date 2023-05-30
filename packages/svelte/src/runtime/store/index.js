@@ -12,8 +12,8 @@ const subscriber_queue = [];
 /**
  * Creates a `Readable` store that allows reading by subscription.
  * @template T
- * @param {T} value initial value
- * @param {import('./public.js').StartStopNotifier<T>} start
+ * @param {T} [value] initial value
+ * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Readable<T>}
  */
 export function readable(value, start) {
@@ -25,8 +25,8 @@ export function readable(value, start) {
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
  * @template T
- * @param {T} value initial value
- * @param {import('./public.js').StartStopNotifier<T>} start
+ * @param {T} [value] initial value
+ * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Writable<T>}
  */
 export function writable(value, start = noop) {
@@ -56,6 +56,7 @@ export function writable(value, start = noop) {
 			}
 		}
 	}
+
 	/**
 	 * @param {import('./public.js').Updater<T>} fn
 	 * @returns {void}
@@ -63,9 +64,10 @@ export function writable(value, start = noop) {
 	function update(fn) {
 		set(fn(value));
 	}
+
 	/**
 	 * @param {import('./public.js').Subscriber<T>} run
-	 * @param {import('./private.js').Invalidator<T>} invalidate
+	 * @param {import('./private.js').Invalidator<T>} [invalidate]
 	 * @returns {import('./public.js').Unsubscriber}
 	 */
 	function subscribe(run, invalidate = noop) {
@@ -95,7 +97,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {(values: import('./public.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */

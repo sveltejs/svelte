@@ -15,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.page.title} • Docs • Svelte</title>
+	<title>{data.page?.title} • Docs • Svelte</title>
 
 	<meta name="twitter:title" content="{data.page.title} • Docs • Svelte" />
 	<meta name="twitter:description" content="{data.page.title} • Svelte documentation" />
@@ -36,6 +36,7 @@
 <div class="controls">
 	<div>
 		<span class:faded={!prev}>previous</span>
+
 		{#if prev}
 			<a href={prev.path}>{prev.title}</a>
 		{/if}
