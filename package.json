@@ -10,8 +10,8 @@
     "check": "pnpm -r check",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
-    "version":"pnpm changeset version && pnpm -r generate:version && git add -a",
-    "release":"changeset release"
+    "version": "pnpm changeset version && pnpm -r generate:version && git add -a",
+    "release": "changeset release"
   },
   "repository": {
     "type": "git",
