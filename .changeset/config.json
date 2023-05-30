@@ -5,7 +5,7 @@
   "fixed": [],
   "linked": [],
   "access": "public",
-  "baseBranch": "master",
-  "updateInternalDependencies": "patch",
+  "baseBranch": "version-4",
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
   "ignore": []
 }
