@@ -4,6 +4,6 @@ export const prerender = true;
 
 export async function load() {
 	return {
-		examples: get_examples_list(get_examples_data())
+		examples: get_examples_list(get_examples_data()).filter((section) => section.title !== 'Embeds')
 	};
 }
