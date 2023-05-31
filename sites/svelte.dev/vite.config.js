@@ -1,10 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import * as fs from 'fs';
 
-process.env.VITE_API_BASE = process.env.DOCS_PREVIEW
-	? 'http://localhost:8787'
-	: 'https://api.svelte.dev';
-
 const plugins = [raw(['.ttf']), sveltekit()];
 
 // Only enable sharp if we're not in a webcontainer env
