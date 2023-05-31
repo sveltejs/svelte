@@ -302,7 +302,8 @@ As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element
 
 ```svelte
 <svelte:head>
-	<link rel="stylesheet" href="/tutorial/dark-theme.css" />
+	<title>Hello world!</title>
+	<meta name="description" content="This is where the description goes for SEO" />
 </svelte:head>
 ```
 

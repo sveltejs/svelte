@@ -28,7 +28,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 - `duration` (`number`, default 400) — milliseconds the transition lasts
 - `easing` (`function`, default `linear`) — an [easing function](/docs/svelte-easing)
 
-You can see the `fade` transition in action in the [transition tutorial](/tutorial/transition).
+You can see the `fade` transition in action in the [transition tutorial](https://learn.svelte.dev/tutorial/transition).
 
 ```svelte
 <script>
@@ -104,7 +104,7 @@ Animates the x and y positions and the opacity of an element. `in` transitions a
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
 x and y use `px` by default but support css units, for example `x: '100vw'` or `y: '50%'`.
-You can see the `fly` transition in action in the [transition tutorial](/tutorial/adding-parameters-to-transitions).
+You can see the `fly` transition in action in the [transition tutorial](https://learn.svelte.dev/tutorial/adding-parameters-to-transitions).
 
 ```svelte
 <script>
