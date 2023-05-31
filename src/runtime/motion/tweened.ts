@@ -11,6 +11,8 @@ function get_interpolator(a, b) {
 	if (type !== typeof b || Array.isArray(a) !== Array.isArray(b)) {
 		throw new Error('Cannot interpolate values of different type');
 	}
+	
+	if (type === 'boolean') return () => b;
 
 	if (Array.isArray(a)) {
 		const arr = b.map((bi, i) => {
