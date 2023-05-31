@@ -30,8 +30,6 @@
 			Svelte shifts as much work as possible out of the browser and into your build step. No more
 			manual optimisations — just faster, more efficient apps.
 		</p>
-
-		<!-- <a href="/blog/write-less-code" class="cta">learn more</a> -->
 	</div>
 
 	<div slot="two">
@@ -40,8 +38,6 @@
 			Write breathtakingly concise components using languages you already know — HTML, CSS and
 			JavaScript. Oh, and your application bundles will be tiny as well.
 		</p>
-
-		<!-- <a href="/blog/virtual-dom-is-pure-overhead" class="cta">learn more</a> -->
 	</div>
 
 	<div slot="three">
@@ -50,8 +46,6 @@
 			Built-in scoped styling, state management, motion primitives, form bindings and more — don't
 			waste time trawling npm for the bare essentials. It's all here.
 		</p>
-
-		<!-- <a href="/blog/svelte-3-rethinking-reactivity" class="cta">learn more</a> -->
 	</div>
 </Blurb>
 
