@@ -196,6 +196,25 @@ export default class EachBlockWrapper extends Wrapper {
 
 	/**
 	 * @param {import('../Block.js').default} block
+	 * @param {import('estree').Node} snippet
+	 * @return {import('estree').Node[] | null}
+	 */
+	check_iterable_dependencies(block, snippet) {
+		let update_each_block_value = b`${this.vars.each_block_value} = ${snippet};`;
+		if (this.node.expression.dependencies.size == 0) {
+			update_each_block_value = null;
+		} else if (this.dependencies.size > this.node.expression.dependencies.size) {
+			const snippet_dependencies = Array.from(this.node.expression.dependencies);
+			update_each_block_value = b`if (${block.renderer.dirty(snippet_dependencies)}) {
+					${update_each_block_value}
+         }`;
+		}
+
+		return update_each_block_value;
+	}
+
+	/**
+	 * @param {import('../Block.js').default} block
 	 * @param {import('estree').Identifier} parent_node
 	 * @param {import('estree').Identifier} parent_nodes
 	 */
@@ -475,19 +494,8 @@ export default class EachBlockWrapper extends Wrapper {
 			: '@destroy_block';
 		if (this.dependencies.size) {
 			this.block.maintain_context = true;
-
-			let update_each_block_value = b`${this.vars.each_block_value} = ${snippet};`;
-			if (this.node.expression.dependencies.size == 0) {
-				update_each_block_value = null;
-			} else if (this.dependencies.size > this.node.expression.dependencies.size) {
-				const snippet_dependencies = Array.from(this.node.expression.dependencies);
-				update_each_block_value = b`if (${block.renderer.dirty(snippet_dependencies)}) {
-						${update_each_block_value}
-          }`;
-			}
-
 			this.updates.push(b`
-        ${update_each_block_value}
+        ${this.check_iterable_dependencies(block, snippet)}
 
 				${this.block.has_outros && b`@group_outros();`}
 				${
@@ -631,21 +639,12 @@ export default class EachBlockWrapper extends Wrapper {
 				`;
 			}
 
-			let update_each_block_value = b`${this.vars.each_block_value} = ${snippet};`;
-			if (this.node.expression.dependencies.size == 0) {
-				update_each_block_value = null;
-			} else if (this.dependencies.size > this.node.expression.dependencies.size) {
-				const snippet_dependencies = Array.from(this.node.expression.dependencies);
-				update_each_block_value = b`if (${block.renderer.dirty(snippet_dependencies)}) {
-						${update_each_block_value}
-          }`;
-			}
-
 			// We declare `i` as block scoped here, as the `remove_old_blocks` code
 			// may rely on continuing where this iteration stopped.
 			const update = b`
 				${!this.block.has_update_method && b`const #old_length = ${this.vars.each_block_value}.length;`}
-				${update_each_block_value}
+				${this.check_iterable_dependencies(block, snippet)}
+
 				let #i;
 				for (#i = ${start}; #i < ${data_length}; #i += 1) {
 					const child_ctx = ${this.vars.get_each_context}(#ctx, ${this.vars.each_block_value}, #i);

@@ -5,8 +5,8 @@ export default {
 
 	async test({ assert, component, target }) {
 		const pArray = target.querySelectorAll('p');
-    for (let i = 0; i <= 9; i++) {
-		  assert.equal(component.bindings[i], pArray[i]);
-    }
+		for (let i = 0; i <= 9; i++) {
+			assert.equal(component.bindings[i], pArray[i]);
+		}
 	}
 };
