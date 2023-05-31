@@ -60,7 +60,7 @@
 				});
 		} else if (example) {
 			const files = process_example(
-				(await fetch(`/examples/api/${example}.json`).then((r) => r.json())).files
+				(await fetch(`/repl/${example}.json`).then((r) => r.json())).components
 			);
 
 			repl.set({
