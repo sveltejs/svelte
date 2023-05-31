@@ -19,12 +19,6 @@ const categories = [
 		label: null,
 		/** @param {string[]} parts */
 		href: (parts) => (parts.length > 1 ? `/docs/${parts[0]}#${parts.at(-1)}` : `/docs/${parts[0]}`)
-	},
-	{
-		slug: 'faq',
-		label: 'FAQ',
-		/** @param {string[]} parts */
-		href: (parts) => `/faq#${parts.join('-')}`
 	}
 ];
 
