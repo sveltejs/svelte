@@ -1,6 +1,5 @@
 *.map
 /src/compiler/compile/internal_exports.js
-/src/shared/version.js
 /compiler.d.ts
 /compiler.cjs
 /index.d.ts
