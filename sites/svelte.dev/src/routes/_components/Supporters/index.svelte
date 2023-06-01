@@ -1,5 +1,5 @@
 <script>
-	import Section from '../Section.svelte';
+	import { Section } from '@sveltejs/site-kit/components';
 	import contributors from './contributors.js';
 	import donors from './donors.js';
 </script>

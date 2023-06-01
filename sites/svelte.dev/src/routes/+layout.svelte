@@ -33,7 +33,6 @@
 				<NavItem href="/examples">Examples</NavItem>
 				<NavItem href="/repl">REPL</NavItem>
 				<NavItem href="/blog">Blog</NavItem>
-				<NavItem href="/faq">FAQ</NavItem>
 
 				<Separator />
 
