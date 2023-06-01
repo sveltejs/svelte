@@ -1,6 +1,6 @@
 <script>
 	import { page } from '$app/stores';
-	import { DocsContents, DocsMobileNav } from '@sveltejs/site-kit/components/docs';
+	import { DocsContents, DocsMobileNav } from '@sveltejs/site-kit/docs';
 
 	export let data;
 

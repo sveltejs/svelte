@@ -1,6 +1,6 @@
 <script>
 	import Example from './Example.svelte';
-	import Section from './Section.svelte';
+	import { Section } from '@sveltejs/site-kit/components';
 
 	const examples = [
 		{

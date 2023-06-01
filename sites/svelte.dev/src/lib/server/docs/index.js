@@ -109,6 +109,7 @@ function get_sections(markdown) {
 			title: removeMarkdown(
 				escape(transform(match[1], { paragraph: (txt) => txt }))
 					.replace(/<\/?code>/g, '')
+					.replace(/&#39;/g, "'")
 					.replace(/&quot;/g, '"')
 					.replace(/&lt;/g, '<')
 					.replace(/&gt;/g, '>')

@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import * as hovers from '$lib/utils/hovers';
 	import { Icon } from '@sveltejs/site-kit/components';
-	import { DocsOnThisPage } from '@sveltejs/site-kit/components/docs';
+	import { DocsOnThisPage } from '@sveltejs/site-kit/docs';
 
 	export let data;
 

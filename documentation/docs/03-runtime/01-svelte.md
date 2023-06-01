@@ -2,7 +2,7 @@
 title: svelte
 ---
 
-The `svelte` package exposes [lifecycle functions](/tutorial/onmount) and the [context API](/tutorial/context-api).
+The `svelte` package exposes [lifecycle functions](https://learn.svelte.dev/tutorial/onmount) and the [context API](https://learn.svelte.dev/tutorial/context-api).
 
 ## `onMount`
 
