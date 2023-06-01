@@ -74,18 +74,19 @@
     "format": "prettier . --cache --plugin-search-dir=. --write",
     "check": "prettier . --cache --plugin-search-dir=. --check",
     "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
-    "build": "rollup -c && npm run tsd",
-    "prepare": "npm run build",
+    "build": "rollup -c && pnpm tsd",
+    "prepare": "pnpm build",
+    "generate:version": "node ./scripts/generate-version.js",
     "dev": "rollup -cw",
     "posttest": "agadoo src/internal/index.js",
-    "prepublishOnly": "npm run lint && npm run build && npm test",
+    "prepublishOnly": "pnpm lint && pnpm build && pnpm test",
     "tsd": "node ./generate-types.js",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/sveltejs/svelte.git",
-    "directory":"packages/svelte"
+    "directory": "packages/svelte"
   },
   "keywords": [
     "UI",
