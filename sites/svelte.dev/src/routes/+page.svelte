@@ -74,7 +74,6 @@
 	<a href="/docs">Docs</a>
 	<a href="/examples">Examples</a>
 	<a href="/blog">Blog</a>
-	<a href="/faq">FAQ</a>
 	<a href="https://opencollective.com/svelte">Open Collective</a>
 </footer>
 
