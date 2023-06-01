@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "version-4",
   "bumpVersionsWithWorkspaceProtocolOnly": true,
-  "ignore": []
+  "ignore": ["!(@sveltejs/*|svelte)"]
 }
