@@ -101,7 +101,7 @@ Update expressions (`count += 1`) and property assignments (`obj.x = y`) have th
 </script>
 ```
 
-Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](/tutorial/updating-arrays-and-objects).
+Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](https://learn.svelte.dev/tutorial/updating-arrays-and-objects).
 
 ```svelte
 <script>

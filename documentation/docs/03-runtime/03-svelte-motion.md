@@ -129,7 +129,7 @@ coords.update(
 );
 ```
 
-[See a full example on the spring tutorial.](/tutorial/spring)
+[See a full example on the spring tutorial.](https://learn.svelte.dev/tutorial/springs)
 
 ```svelte
 <script>
