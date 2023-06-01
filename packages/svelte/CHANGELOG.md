@@ -13,7 +13,7 @@
 * breaking: Minimum supported TypeScript version is now TypeScript 5 (it will likely work with lower versions, but we make no guarantees about that) ([#8488](https://github.com/sveltejs/svelte/pull/8488))
 * breaking: Remove `svelte/register` hook, CJS runtime version and CJS compiler output ([#8613](https://github.com/sveltejs/svelte/pull/8613))
 * breaking: Stricter types for `createEventDispatcher` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
-* breaking: Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7224](https://github.com/sveltejs/svelte/pull/7224))
+* breaking: Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 * breaking: Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 * breaking: Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 * breaking: Deprecate `SvelteComponentTyped` in favor of `SvelteComponent` ([#8512](https://github.com/sveltejs/svelte/pull/8512))
