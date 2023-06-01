@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-SvelteKit will handle calling [the Svelte compiler](https://www.npmjs.com/package/svelte) to convert your `.svelte` files into `.js` files that create the DOM and `.css` files that style it. It also provides all the other pieces you need to build a web application such as a development server, routing, and deployment. [SvelteKit](https://kit.svelte.dev/) uses [Vite](https://vitejs.dev/) to build your code and handle server-side rendering (SSR).
+SvelteKit will handle calling [the Svelte compiler](https://www.npmjs.com/package/svelte) to convert your `.svelte` files into `.js` files that create the DOM and `.css` files that style it. It also provides all the other pieces you need to build a web application such as a development server, routing, deployment, and SSR support. [SvelteKit](https://kit.svelte.dev/) uses [Vite](https://vitejs.dev/) to build your code.
 
 ### Alternatives to SvelteKit
 
