@@ -32,7 +32,14 @@
 				<NavItem href="/tutorial" selected={$page.url.pathname.startsWith('/tutorial') || null}>
 					Tutorial
 				</NavItem>
-				<NavItem href="/docs/introduction">Docs</NavItem>
+
+				<NavItem
+					href="/docs/introduction"
+					selected={$page.url.pathname.startsWith('/docs') || null}
+				>
+					Docs
+				</NavItem>
+
 				<NavItem href="/examples">Examples</NavItem>
 				<NavItem href="/repl">REPL</NavItem>
 				<NavItem href="/blog">Blog</NavItem>
