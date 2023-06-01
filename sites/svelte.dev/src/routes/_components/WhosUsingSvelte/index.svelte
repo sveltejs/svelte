@@ -1,5 +1,5 @@
 <script>
-	import Section from '../Section.svelte';
+	import { Section } from '@sveltejs/site-kit/components';
 	import { companies } from './companies.js';
 	import { theme } from '@sveltejs/site-kit/components';
 
@@ -8,7 +8,7 @@
 
 <Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
-		<h3>Who's using svelte?</h3>
+		<h3>Who's using Svelte?</h3>
 		<div class="logos">
 			{#each sorted as { href, filename, alt, style, invert, width, height }}
 				<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
