@@ -4,7 +4,7 @@ title: Introduction
 
 Welcome to the Svelte reference documentation! This is intended as a resource for people who already have some familiarity with Svelte and want to learn more about using it.
 
-If that's not you (yet), you may prefer to visit the [interactive tutorial](https://learn.svelte.dev) or the [examples](/examples) before consulting this reference. You can try Svelte online using the [REPL](/repl) or (for a more fully-featured environment) [StackBlitz](https://sveltekit.new).
+If that's not you (yet), you may prefer to visit the [interactive tutorial](https://learn.svelte.dev) or the [examples](/examples) before consulting this reference. You can try Svelte online using the [REPL](/repl). Alternatively, if you'd like a more fully-featured environment, you can try Svelte on [StackBlitz](https://sveltekit.new).
 
 ## Start a new project
 
