@@ -5,7 +5,7 @@
 		numbers = [...numbers, numbers.length + 1];
 	}
 
-	$: sum = numbers.reduce((t, n) => t + n, 0);
+	$: sum = numbers.reduce((total, currentNumber) => total + currentNumber, 0);
 </script>
 
 <p>{numbers.join(' + ')} = {sum}</p>
