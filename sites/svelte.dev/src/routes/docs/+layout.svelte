@@ -1,6 +1,6 @@
 <script>
 	import { page } from '$app/stores';
-	import { DocsContents, DocsMobileNav } from '@sveltejs/site-kit/docs';
+	import { DocsContents } from '@sveltejs/site-kit/docs';
 
 	export let data;
 
@@ -20,8 +20,6 @@
 		<slot />
 	</div>
 </div>
-
-<DocsMobileNav contents={$page.data.sections} pageContents={$page.data.page} />
 
 <style>
 	.container {
