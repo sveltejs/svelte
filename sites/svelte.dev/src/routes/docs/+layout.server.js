@@ -4,6 +4,7 @@ export const prerender = true;
 
 export function load() {
 	return {
-		sections: get_docs_list(get_docs_data())
+		sections: get_docs_list(get_docs_data()),
+		nav_initially_visible: false
 	};
 }
