@@ -73,20 +73,8 @@
 		color-scheme: light dark;
 	}
 
-	@media (max-width: 830px) {
-		:global(aside) {
-			z-index: 9999 !important;
-		}
-	}
-
 	:global(html, body) {
 		height: 100%;
 		width: 100%;
-	}
-
-	@media (max-width: 830px) {
-		:global(aside) {
-			z-index: 9999 !important;
-		}
 	}
 </style>

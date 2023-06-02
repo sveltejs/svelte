@@ -9,7 +9,8 @@ export const load = async ({ data, parent }) => {
 			props: {
 				contents: contents.sections,
 				pageContents: data.page
-			}
+			},
+			height: '48px'
 		},
 		...data
 	};
