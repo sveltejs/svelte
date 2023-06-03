@@ -23,7 +23,7 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="home-small">
-				<!-- <strong>svelte</strong> -->
+				<!-- <strong>Learn</strong> -->
 			</svelte:fragment>
 
 			<svelte:fragment slot="nav-center">
