@@ -38,16 +38,11 @@
 		min-width: 0 !important;
 	}
 
-	.page :global(hr) {
-		display: none;
-	}
-
 	.page :global(:where(h2, h3) code) {
 		all: unset;
 	}
 
 	@media (min-width: 832px) {
-		/* can't use vars in @media :( */
 		.content {
 			padding-left: calc(var(--sidebar-width) + var(--sk-page-padding-side));
 		}
