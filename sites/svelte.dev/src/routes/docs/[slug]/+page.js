@@ -4,13 +4,14 @@ export const load = async ({ data, parent }) => {
 	const contents = await parent();
 
 	return {
-		secondary_nav: {
+		mobile_nav_start: {
+			label: 'Contents',
+			icon: 'contents',
 			component: DocsMobileNav,
 			props: {
 				contents: contents.sections,
 				pageContents: data.page
-			},
-			height: '48px'
+			}
 		},
 		...data
 	};

@@ -18,8 +18,12 @@
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
 	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
 		<Nav slot="top-nav">
-			<svelte:fragment slot="home">
+			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
+			</svelte:fragment>
+
+			<svelte:fragment slot="home-small">
+				<!-- <strong>svelte</strong> -->
 			</svelte:fragment>
 
 			<svelte:fragment slot="nav-center">
