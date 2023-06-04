@@ -5,16 +5,17 @@
 
 <div class="try-container">
 	<Section --background="var(--background-2)">
-		<div class="copy">
-			<h2>Starting is Simple</h2>
-			<p>Get started with just the few lines below.</p>
-			<div>
-				<a class="btn main-cta" href="/docs">Learn More ↗</a>
-				<a class="btn secondary-cta" target="_blank" rel="noreferrer" href="https://sveltekit.new">Create with StackBlitz</a>
+		<div class="grid" style="--columns: 2">
+			<div class="copy">
+				<h2>Starting is simple</h2>
+				<p>Get started with just a few lines</p>
+				<div>
+					<a class="btn secondary-cta" target="_blank" href="https://learn.svelte.dev">Or try the online tutorial</a>
+				</div>
 			</div>
-		</div>
-		<div class="try">
-			<TryTerminal />
+			<div class="try">
+				<TryTerminal />
+			</div>
 		</div>
 	</Section>
 </div>
@@ -38,9 +39,25 @@
 		}
 	}
 
+	.grid {
+		display: grid;
+		gap: 1em;
+		margin: 0 0 4rem 0;
+	}
+
+	.grid:last-child {
+		margin-bottom: 0;
+	}
+
+	@media (min-width: 900px) {
+		.grid {
+			grid-template-columns: repeat(var(--columns), 1fr);
+			gap: 7rem;
+		}
+	}
+
 	.try {
 		width: 100%;
-		max-width: 600px;
 		margin: 0 auto;
 		font-size: var(--sk-text-m);
 		color: var(--sk-text-1);
@@ -52,6 +69,7 @@
 	}
 
 	h2 {
+		margin-top: 2rem;
 		font-size: var(--sk-text-xl);
 	}
 
