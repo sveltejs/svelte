@@ -44,9 +44,17 @@
 					Docs
 				</NavItem>
 
-				<NavItem href="/examples">Examples</NavItem>
-				<NavItem href="/repl">REPL</NavItem>
-				<NavItem href="/blog">Blog</NavItem>
+				<NavItem href="/examples" selected={$page.url.pathname.startsWith('/examples') || null}>
+					Examples
+				</NavItem>
+
+				<NavItem href="/repl" selected={$page.url.pathname.startsWith('/repl') || null}>
+					REPL
+				</NavItem>
+
+				<NavItem href="/blog" selected={$page.url.pathname.startsWith('/blog') || null}>
+					Blog
+				</NavItem>
 
 				<Separator />
 
