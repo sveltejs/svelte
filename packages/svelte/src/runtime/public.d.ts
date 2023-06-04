@@ -2,6 +2,7 @@ import './ambient.js';
 
 export type {
 	ComponentConstructorOptions,
+	ComponentEvents,
 	ComponentProps,
-	ComponentEvents
+	ComponentType,
 } from './internal/public.js';
