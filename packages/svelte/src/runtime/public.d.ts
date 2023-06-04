@@ -4,5 +4,5 @@ export type {
 	ComponentConstructorOptions,
 	ComponentEvents,
 	ComponentProps,
-	ComponentType,
+	ComponentType
 } from './internal/public.js';
