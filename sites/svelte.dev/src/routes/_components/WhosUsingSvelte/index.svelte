@@ -45,7 +45,13 @@
 	}
 
 	p {
-		max-width: 700px;
+		max-width: 28em; /* text balancing */
+	}
+
+	@media (min-width: 1200px) {
+		p {
+			max-width: 600px;
+		}
 	}
 
 	.logos {

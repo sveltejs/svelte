@@ -6,7 +6,7 @@
 
 <Section>
 	<p class="intro">
-		Svelte is free and open source software, made possible <br /> by the work of hundreds of supporters.
+		Svelte is free and open source software, made possible by the work of hundreds of supporters.
 	</p>
 
 	<div class="layout">
@@ -53,7 +53,7 @@
 	}
 
 	.intro {
-		max-width: 25em; /* text balancing */
+		max-width: 28em; /* text balancing */
 		margin: 0 0 3.2rem 0;
 	}
 
@@ -148,7 +148,7 @@
 
 	@media (min-width: 1200px) {
 		.intro {
-			max-width: none;
+			max-width: 600px;
 		}
 	}
 </style>
