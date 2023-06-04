@@ -61,7 +61,7 @@
 		text-decoration: none;
 		line-height: 1;
 		vertical-align: middle;
-		border-radius: 6px;
+		border-radius: var(--sk-border-radius);
 	}
 
 	.main-cta {
