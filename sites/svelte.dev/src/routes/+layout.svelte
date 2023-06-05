@@ -33,18 +33,27 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="nav-right">
-				<NavItem href="/tutorial" selected={$page.url.pathname.startsWith('/tutorial') || null}>
+				<NavItem
+					href="/tutorial"
+					selected={$page.url.pathname.startsWith('/tutorial') || null}
+					relatedMenuName="tutorial"
+				>
 					Tutorial
 				</NavItem>
 
 				<NavItem
 					href="/docs/introduction"
 					selected={$page.url.pathname.startsWith('/docs') || null}
+					relatedMenuName="docs"
 				>
 					Docs
 				</NavItem>
 
-				<NavItem href="/examples" selected={$page.url.pathname.startsWith('/examples') || null}>
+				<NavItem
+					href="/examples"
+					selected={$page.url.pathname.startsWith('/examples') || null}
+					relatedMenuName="examples"
+				>
 					Examples
 				</NavItem>
 
@@ -52,7 +61,11 @@
 					REPL
 				</NavItem>
 
-				<NavItem href="/blog" selected={$page.url.pathname.startsWith('/blog') || null}>
+				<NavItem
+					href="/blog"
+					selected={$page.url.pathname.startsWith('/blog') || null}
+					relatedMenuName="blog"
+				>
 					Blog
 				</NavItem>
 
