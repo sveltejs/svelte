@@ -1,17 +1,17 @@
 import { get_docs_data, get_docs_list } from '$lib/server/docs/index.js';
 
-const list = new Map([
-	[/^docs/, 'Docs'],
-	[/^repl/, 'REPL'],
-	[/^blog/, 'Blog'],
-	[/^faq/, 'FAQ'],
-	[/^tutorial/, 'Tutorial'],
-	[/^search/, 'Search'],
-	[/^examples/, 'Examples']
-]);
-
 /** @param {URL} url */
 function get_nav_title(url) {
+	const list = new Map([
+		[/^docs/, 'Docs'],
+		[/^repl/, 'REPL'],
+		[/^blog/, 'Blog'],
+		[/^faq/, 'FAQ'],
+		[/^tutorial/, 'Tutorial'],
+		[/^search/, 'Search'],
+		[/^examples/, 'Examples']
+	]);
+
 	for (const [regex, title] of list) {
 		if (regex.test(url.pathname.replace(/^\/(.+)/, '$1'))) {
 			return title;
