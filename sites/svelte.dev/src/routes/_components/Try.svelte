@@ -82,15 +82,8 @@
 		border-radius: var(--sk-border-radius);
 	}
 
-	.main-cta {
-		color: white;
-		background: var(--sk-theme-1);
-		border: 2px var(--sk-theme-1) solid;
-		font-weight: 600;
-	}
-
 	.secondary-cta {
-		border: 2px #cdc8cf solid;
+		border: 2px var(--sk-text-4) solid;
 	}
 
 	a {
