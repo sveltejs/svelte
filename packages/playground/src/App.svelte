@@ -1,3 +1,3 @@
-<Component let:x={{foo = 1}}>
-
-</Component>
+<div>
+    Hello world!
+</div>

@@ -9,7 +9,7 @@ const __dirname = new URL('.', import.meta.url).pathname;
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {
 	return {
-		name: 'custom-svelte-' + ssr,
+		name: 'custom-svelte-ssr-' + ssr,
 		resolveId(id) {
 			if (id === 'svelte') {
 				return path.resolve(
