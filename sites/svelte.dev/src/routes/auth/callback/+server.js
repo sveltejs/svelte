@@ -36,7 +36,7 @@ export async function GET({ url }) {
 			github_avatar_url: profile.avatar_url
 		};
 
-		const { sessionid, expires } = await session.create(user, access_token);
+		const { sessionid, expires } = await session.create(user);
 
 		return new Response(
 			`

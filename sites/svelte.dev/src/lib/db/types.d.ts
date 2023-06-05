@@ -2,9 +2,16 @@ export type UserID = number;
 
 export interface User {
 	id: UserID;
-	name: string;
-	username: string;
-	avatar: string;
+	github_name: string;
+	github_login: string;
+	github_avatar_url: string;
+}
+
+export interface GitHubUser {
+	github_id: string;
+	github_name: string;
+	github_login: string;
+	github_avatar_url: string;
 }
 
 export interface Gist {

@@ -1,10 +1,14 @@
 import { client } from './client.js';
 
+/** @typedef {import('./types').User} User */
 /** @typedef {import('./types').UserID} UserID */
 /** @typedef {import('./types').Gist} Gist */
 
 const PAGE_SIZE = 90;
 
+/**
+ * @param {User} user
+ */
 export async function list(user, { offset, search }) {
 	const { data, error } = await client.rpc('gist_list', {
 		list_search: search || '',
@@ -47,7 +51,7 @@ export async function create(user, gist) {
 
 /**
  * @param {string} id
- * @returns {Promise<Gist>}
+ * @returns {Promise<Partial<Gist>>}
  */
 export async function read(id) {
 	const { data, error } = await client

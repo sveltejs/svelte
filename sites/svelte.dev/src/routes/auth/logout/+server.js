@@ -1,7 +1,7 @@
 import * as cookie from 'cookie';
 import * as session from '$lib/db/session';
 
-export async function GET({ request }) {
+export async function GET({ request, url }) {
 	const cookies = cookie.parse(request.headers.get('cookie') || '');
 	await session.destroy(cookies.sid);
 
@@ -11,7 +11,7 @@ export async function GET({ request }) {
 				maxAge: -1,
 				path: '/',
 				httpOnly: true,
-				secure: request.url.protocol === 'https'
+				secure: url.protocol === 'https'
 			})
 		}
 	});
