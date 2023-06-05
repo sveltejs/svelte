@@ -329,7 +329,7 @@ async function process_markup(process, source) {
 /**
  * @param {string} source
  * @param {import('./public.js').PreprocessorGroup | import('./public.js').PreprocessorGroup[]} preprocessor
- * @param {{ filename?: string }} options
+ * @param {{ filename?: string }} [options]
  * @returns {Promise<import('./public.js').Processed>}
  */
 export default async function preprocess(source, preprocessor, options) {

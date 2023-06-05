@@ -221,6 +221,10 @@ if (typeof HTMLElement === 'function') {
 									node.setAttribute('name', name);
 								}
 							},
+							/**
+							 * @param {HTMLElement} target
+							 * @param {HTMLElement} [anchor]
+							 */
 							m: function mount(target, anchor) {
 								insert(target, node, anchor);
 							},

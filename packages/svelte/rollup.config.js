@@ -5,14 +5,10 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
-const require = createRequire(import.meta.url);
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+// runs the version generation as a side-effect of importing
+import './scripts/generate-version.js';
 
-// Create auto-generated .js files
-fs.writeFileSync(
-	'./src/shared/version.js',
-	`/** @type {string} */\nexport const VERSION = '${pkg.version}';`
-);
+const require = createRequire(import.meta.url);
 
 const internal = await import('./src/runtime/internal/index.js');
 fs.writeFileSync(

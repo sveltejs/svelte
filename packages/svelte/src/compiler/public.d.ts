@@ -1,2 +1,2 @@
-export type { CompileOptions, EnableSourcemap, CssHashGetter } from './interfaces';
-export type * from './preprocess/public.js';
+export { CompileOptions, EnableSourcemap, CssHashGetter } from './interfaces';
+export * from './preprocess/public.js';
