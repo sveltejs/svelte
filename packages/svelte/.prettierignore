@@ -12,6 +12,7 @@ src/shared/version.js
 /test/**/_actual*
 /test/**/expected*
 /test/**/_output
+/test/**/shards/*.test.js
 /types
 !rollup.config.js
 !vitest.config.js
