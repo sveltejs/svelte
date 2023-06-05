@@ -1,9 +1,9 @@
 export async function GET(req) {
 	const query = req.url.searchParams;
-	let min = query.get('min') || '0';
-	let max = query.get('max') || '100';
-	min = +min;
-	max = +max;
+	const minString = query.get('min') || '0';
+	const maxString = query.get('max') || '100';
+	const min = +minString;
+	const max = +maxString;
 
 	// simulate a long delay
 	await new Promise((res) => setTimeout(res, 1000));

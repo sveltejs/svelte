@@ -2,14 +2,14 @@
 	import { getContext } from 'svelte';
 	import { Icon } from '@sveltejs/site-kit/components';
 	import { ago } from '$lib/time';
-	import { goto, invalidate } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
 
 	const { login, logout } = getContext('app');
 
-	const format = (str) => ago(new Date(str));
+	const format = /** @param {string} str */ (str) => ago(new Date(str));
 
 	let destroying = false;
 
@@ -35,7 +35,7 @@
 
 		if (res.ok) {
 			selected = [];
-			await invalidate();
+			await invalidateAll();
 
 			// this is a temporary fix because invalidation only works once
 			// TODO raise an issue
@@ -84,8 +84,8 @@
 			{:else}
 				<form
 					on:submit|preventDefault={(e) => {
-						const search = new FormData(e.target).get('search');
-						goto(search ? `/apps?search=${encodeURIComponent(search)}` : '/apps');
+						const search = new FormData(/** @type {HTMLFormElement} */ (e.target)).get('search');
+						goto(search ? `/apps?search=${encodeURIComponent(search.toString())}` : '/apps');
 					}}
 				>
 					<input
