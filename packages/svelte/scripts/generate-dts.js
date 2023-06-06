@@ -10,6 +10,5 @@ await createBundle({
 		'svelte/motion': 'src/runtime/motion/public.d.ts',
 		'svelte/store': 'src/runtime/store/public.d.ts',
 		'svelte/transition': 'src/runtime/transition/public.d.ts'
-	},
-	debug: 'types/debug'
+	}
 });
