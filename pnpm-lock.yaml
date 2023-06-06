@@ -108,6 +108,9 @@ importers:
       agadoo:
         specifier: ^3.0.0
         version: 3.0.0
+      dts-buddy:
+        specifier: ^0.0.10
+        version: link:../../../../dts-buddy
       esbuild:
         specifier: ^0.17.19
         version: 0.17.19

@@ -74,3 +74,5 @@ export interface Action<
 // Implementation notes:
 // - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
 // - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
+
+export * from './index.js';
