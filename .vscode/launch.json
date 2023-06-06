@@ -10,6 +10,7 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"runtimeArgs": ["--watch"],
 			"name": "Playground: Server",
 			"outputCapture": "std",
 			"program": "start.js",
