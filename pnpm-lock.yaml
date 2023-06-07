@@ -109,8 +109,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       esbuild:
         specifier: ^0.17.19
         version: 0.17.19
@@ -1659,8 +1659,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.1.0:
-    resolution: {integrity: sha512-y/eoo2+eeJyqyAr3BCDg8Dvjkcuv0UbLgkoXsYLxN7MC97LFw4HMDQo/MAmYVuJoA/EdrVRUJLQoooO2k+Ysrg==}
+  /dts-buddy@0.1.1:
+    resolution: {integrity: sha512-7BX6FPdZ51ditrIJbYzi2MELzt12WwZTlsGtngVZYMyYdr+7j85BFCPrze0ahSezBdWip1H/GNLq7BtKzIohrA==}
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.3
