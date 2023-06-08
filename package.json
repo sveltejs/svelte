@@ -9,7 +9,9 @@
     "build": "pnpm -r build",
     "check": "pnpm -r check",
     "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
+    "release": "changeset release"
   },
   "repository": {
     "type": "git",
@@ -27,5 +29,5 @@
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.0"
   },
-  "packageManager": "pnpm@8.4.0"
+  "packageManager": "pnpm@8.6.0"
 }

@@ -11,8 +11,8 @@
 		"update": "node scripts/update.js --force=true",
 		"preview": "vite preview",
 		"start": "node build",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+		"check": "node scripts/update.js && svelte-kit sync && svelte-check",
+		"check:watch": "svelte-kit sync && svelte-check --watch",
 		"format": "pnpm run check:format -- --write",
 		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
 	},
