@@ -13,3 +13,5 @@ export interface Tweened<T> extends Readable<T> {
 	set(value: T, opts?: TweenedOptions<T>): Promise<void>;
 	update(updater: Updater<T>, opts?: TweenedOptions<T>): Promise<void>;
 }
+
+export * from './index.js';
