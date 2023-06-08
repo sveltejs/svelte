@@ -7,8 +7,7 @@
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="copy">
-				<h2>Starting is simple</h2>
-				<p>Get started with just a few lines</p>
+				<h2>See for yourself in a new project</h2>
 				<div>
 					<a class="btn secondary-cta" target="_blank" href="https://learn.svelte.dev">Or try the online tutorial</a>
 				</div>
@@ -69,8 +68,11 @@
 	}
 
 	h2 {
-		margin-top: 2rem;
+		display: inline-block;
+		width: 25rem;
+		margin: 2rem 0;
 		font-size: var(--sk-text-xl);
+		text-align: justify;
 	}
 
 	.btn {
