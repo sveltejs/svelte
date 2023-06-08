@@ -9,7 +9,7 @@
 			<div class="copy">
 				<h2>See for yourself in a new project</h2>
 				<div>
-					<a class="btn secondary-cta" target="_blank" href="https://learn.svelte.dev">Or try the online tutorial</a>
+					<a class="cta" target="_blank" href="https://learn.svelte.dev">Or try the online tutorial</a>
 				</div>
 			</div>
 			<div class="try">
@@ -75,17 +75,14 @@
 		text-align: justify;
 	}
 
-	.btn {
+	.cta {
 		display: inline-block;
-		padding: 1rem 2rem;
+    background: var(--sk-theme-1);
+    padding: 0.5em 1em;
+    font-size: var(--sk-text-s);
+    border-radius: var(--sk-border-radius);
+    color: #fff;
 		text-decoration: none;
-		line-height: 1;
-		vertical-align: middle;
-		border-radius: var(--sk-border-radius);
-	}
-
-	.secondary-cta {
-		border: 2px var(--sk-text-4) solid;
 	}
 
 	a {
