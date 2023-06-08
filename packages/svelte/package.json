@@ -24,42 +24,42 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./types/runtime/index.d.ts",
+      "types": "./types/index.d.ts",
       "browser": {
         "import": "./src/runtime/index.js"
       },
       "import": "./src/runtime/ssr.js"
     },
     "./compiler": {
-      "types": "./types/compiler/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/compiler/index.js",
       "require": "./compiler.cjs"
     },
     "./action": {
-      "types": "./types/runtime/action/index.d.ts"
+      "types": "./types/index.d.ts"
     },
     "./animate": {
-      "types": "./types/runtime/animate/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/animate/index.js"
     },
     "./easing": {
-      "types": "./types/runtime/easing/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/easing/index.js"
     },
     "./internal": {
-      "types": "./types/runtime/internal/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/internal/index.js"
     },
     "./motion": {
-      "types": "./types/runtime/motion/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/motion/index.js"
     },
     "./store": {
-      "types": "./types/runtime/store/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/store/index.js"
     },
     "./transition": {
-      "types": "./types/runtime/transition/index.d.ts",
+      "types": "./types/index.d.ts",
       "import": "./src/runtime/transition/index.js"
     },
     "./elements": {
@@ -69,18 +69,18 @@
   "engines": {
     "node": ">=16"
   },
-  "types": "types/runtime/index.d.ts",
+  "types": "types/index.d.ts",
   "scripts": {
     "format": "prettier . --cache --plugin-search-dir=. --write",
     "check": "prettier . --cache --plugin-search-dir=. --check",
     "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
-    "build": "rollup -c && pnpm tsd",
+    "build": "rollup -c && pnpm types",
     "prepare": "pnpm build",
     "generate:version": "node ./scripts/generate-version.js",
     "dev": "rollup -cw",
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm lint && pnpm build && pnpm test",
-    "tsd": "node ./generate-types.js",
+    "types": "node ./scripts/generate-dts.js",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
@@ -126,6 +126,7 @@
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "agadoo": "^3.0.0",
+    "dts-buddy": "^0.1.2",
     "esbuild": "^0.17.19",
     "happy-dom": "^9.18.3",
     "jsdom": "^21.1.1",

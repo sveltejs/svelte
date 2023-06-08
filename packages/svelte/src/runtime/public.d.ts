@@ -5,3 +5,5 @@ export type {
 	ComponentProps,
 	ComponentEvents
 } from './internal/public.js';
+
+export * from './index.js';
