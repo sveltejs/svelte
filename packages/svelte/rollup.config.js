@@ -17,11 +17,6 @@ fs.writeFileSync(
 		`export default new Set(${JSON.stringify(Object.keys(internal))});`
 );
 
-fs.writeFileSync(
-	'./compiler.d.ts',
-	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index.js';`
-);
-
 /**
  * @type {import("rollup").RollupOptions[]}
  */
