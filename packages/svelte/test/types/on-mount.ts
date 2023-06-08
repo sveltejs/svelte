@@ -51,8 +51,15 @@ onMount(async () => {
 	};
 });
 
-// @ts-expect-error async and return any
+// async and return any
 onMount(async () => {
 	const a: any = null as any;
+	return a;
+});
+
+// async and return function casted to any
+// can't really catch this without also catching above
+onMount(async () => {
+	const a: any = (() => {}) as any;
 	return a;
 });
