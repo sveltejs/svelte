@@ -1,10 +1,14 @@
 name: CI
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
+
+env:
+  # We only install Chromium manually 
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:
   Tests:
@@ -24,9 +28,14 @@ jobs:
           - node-version: 20
             os: ubuntu-latest
     steps:
-      - uses: ./.github/workflows/setup.yml
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
       - run: pnpm test
         env:
           CI: true
