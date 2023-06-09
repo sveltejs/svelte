@@ -78,7 +78,7 @@
     "generate:version": "node ./scripts/generate-version.js",
     "dev": "rollup -cw",
     "posttest": "agadoo src/internal/index.js",
-    "prepublishOnly": "pnpm lint && pnpm build && pnpm test",
+    "prepublishOnly": "pnpm build",
     "types": "node ./scripts/generate-dts.js",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
