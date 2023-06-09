@@ -5,10 +5,6 @@ on:
     branches:
       - version-4
 
-env:
-  # We only install Chromium manually 
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-
 permissions: {}
 jobs:
   release:
@@ -33,8 +29,6 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      # prepublishOnly will need this for tests
-      - run: pnpm playwright install chromium 
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
