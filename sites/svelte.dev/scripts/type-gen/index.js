@@ -1,16 +1,17 @@
-import fs from 'fs';
-import path from 'path';
-import ts from 'typescript';
+// @ts-check
+import fs from 'node:fs';
+import path from 'node:path';
 import prettier from 'prettier';
-import { fileURLToPath } from 'url';
+import ts from 'typescript';
 
-/** @typedef {{ name: string; comment: string; markdown: string; }} Extracted */
-
-function mkdirp(dir) {
-	try {
-		fs.mkdirSync(dir, { recursive: true });
-	} catch {}
-}
+/** @typedef {{
+ * name: string;
+ * comment: string;
+ * markdown?: string;
+ * snippet: string;
+ * deprecated: string | null;
+ * children: Extracted[] }
+ * } Extracted */
 
 /** @type {Array<{ name: string; comment: string; exports: Extracted[]; types: Extracted[]; exempt?: boolean; }>} */
 const modules = [];
@@ -50,28 +51,40 @@ function get_types(code, statements) {
 
 				let start = statement.pos;
 				let comment = '';
+				/** @type {string | null} */
+				let deprecated_notice = null;
 
 				// @ts-ignore i think typescript is bad at typescript
 				if (statement.jsDoc) {
 					// @ts-ignore
-					comment = statement.jsDoc[0].comment;
+					const jsDoc = statement.jsDoc[0];
+
+					comment = jsDoc.comment;
+
+					if (jsDoc?.tags?.[0]?.tagName?.escapedText === 'deprecated') {
+						deprecated_notice = jsDoc.tags[0].comment;
+					}
+
 					// @ts-ignore
-					start = statement.jsDoc[0].end;
+					start = jsDoc.end;
 				}
 
 				const i = code.indexOf('export', start);
 				start = i + 6;
 
-				/** @type {string[]} */
-				const children = [];
+				/** @type {Extracted[]} */
+				let children = [];
 
 				let snippet_unformatted = code.slice(start, statement.end).trim();
 
-				if (ts.isInterfaceDeclaration(statement)) {
+				if (ts.isInterfaceDeclaration(statement) || ts.isClassDeclaration(statement)) {
 					if (statement.members.length > 0) {
 						for (const member of statement.members) {
+							// @ts-ignore
 							children.push(munge_type_element(member));
 						}
+
+						children = children.filter(Boolean);
 
 						// collapse `interface Foo {/* lots of stuff*/}` into `interface Foo {…}`
 						const first = statement.members.at(0);
@@ -93,7 +106,7 @@ function get_types(code, statements) {
 				const snippet = prettier
 					.format(snippet_unformatted, {
 						parser: 'typescript',
-						printWidth: 80,
+						printWidth: 60,
 						useTabs: true,
 						singleQuote: true,
 						trailingComma: 'none'
@@ -106,7 +119,13 @@ function get_types(code, statements) {
 						? exports
 						: types;
 
-				collection.push({ name, comment, snippet, children });
+				collection.push({
+					name,
+					comment,
+					snippet,
+					children,
+					deprecated: deprecated_notice
+				});
 			}
 		}
 
@@ -124,7 +143,9 @@ function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
-	/** @type {string} */
+	if (/do not use!/i.test(doc?.comment)) return;
+
+	/** @type {string[]} */
 	const children = [];
 
 	const name = member.name?.escapedText;
@@ -156,6 +177,14 @@ function munge_type_element(member, depth = 1) {
 		const type = tag.tagName.escapedText;
 
 		switch (tag.tagName.escapedText) {
+			case 'private':
+				bullets.push(`- <span class="tag">private</span> ${tag.comment}`);
+				break;
+
+			case 'readonly':
+				bullets.push(`- <span class="tag">readonly</span> ${tag.comment}`);
+				break;
+
 			case 'param':
 				bullets.push(`- \`${tag.name.getText()}\` ${tag.comment}`);
 				break;
@@ -166,6 +195,10 @@ function munge_type_element(member, depth = 1) {
 
 			case 'returns':
 				bullets.push(`- <span class="tag">returns</span> ${tag.comment}`);
+				break;
+
+			case 'deprecated':
+				bullets.push(`- <span class="tag deprecated">deprecated</span> ${tag.comment}`);
 				break;
 
 			default:
@@ -240,16 +273,64 @@ function read_d_ts_file(file) {
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
-mkdirp('docs');
+// // Fix the duplicate/messed up types
+// // !NOTE: This relies on mutation of `modules`
+// $: {
+// 	const module_with_SvelteComponent = modules.find((m) =>
+// 		m.types.filter((t) => t.name === 'SvelteComponent')
+// 	);
+
+// 	if (!module_with_SvelteComponent) break $;
+
+// 	const svelte_comp_part = module_with_SvelteComponent?.types.find(
+// 		(t) => t.name === 'SvelteComponent'
+// 	);
+
+// 	if (!svelte_comp_part) break $;
+
+// 	const internal_module = bundled_types.get('svelte/internal');
+// 	if (!internal_module) break $;
+
+// 	const internal_types = get_types(internal_module.code, internal_module.ts_source_file.statements);
+
+// 	const svelte_comp_dev_internal = internal_types.types.find(
+// 		(t) => t.name === 'SvelteComponentDev'
+// 	);
+
+// 	if (!svelte_comp_dev_internal) break $;
+
+// 	svelte_comp_part.children = svelte_comp_dev_internal.children;
+// 	svelte_comp_part.comment = svelte_comp_dev_internal.comment;
+// 	svelte_comp_part.snippet = svelte_comp_dev_internal.snippet;
+// }
+
+// Remove $$_attributes from ActionReturn
+$: {
+	const module_with_ActionReturn = modules.find((m) =>
+		m.types.find((t) => t?.name === 'ActionReturn')
+	);
+
+	const new_children =
+		module_with_ActionReturn?.types[1].children.filter((c) => c.name !== '$$_attributes') || [];
+
+	if (!module_with_ActionReturn) break $;
+
+	module_with_ActionReturn.types[1].children = new_children;
+}
+
+try {
+	fs.mkdirSync(new URL('../../src/lib/generated', import.meta.url), { recursive: true });
+} catch {}
+
 fs.writeFileSync(
-	'src/lib/generated/type-info.js',
+	new URL('../../src/lib/generated/type-info.js', import.meta.url),
 	`
-/* This file is generated by running \`node scripts/type-gen.js\`
-   in the packages/kit directory — do not edit it */
-export const modules = ${JSON.stringify(
-		modules.filter((m) => !m.name.startsWith('_')),
+/* This file is generated by running \`pnpm generate\`
+   in the sites/svelte.dev directory — do not edit it */
+export const modules = /** @type {import('../generated/types').Modules} */ (${JSON.stringify(
+		modules,
 		null,
 		'  '
-	)};
+	)});
 `.trim()
 );
