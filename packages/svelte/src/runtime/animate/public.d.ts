@@ -12,3 +12,5 @@ export interface FlipParams {
 	duration?: number | ((len: number) => number);
 	easing?: (t: number) => number;
 }
+
+export * from './index.js';

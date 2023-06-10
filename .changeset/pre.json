@@ -2,7 +2,12 @@
   "mode": "pre",
   "tag": "next",
   "initialVersions": {
-    "svelte": "4.0.0-next.1"
+    "svelte": "4.0.0-next.1",
+    "playground": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "beige-boxes-rhyme",
+    "gentle-pumas-chew",
+    "green-sheep-learn"
+  ]
 }

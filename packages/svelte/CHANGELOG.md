@@ -1,5 +1,15 @@
 # svelte
 
+## 4.0.0-next.1
+
+### Patch Changes
+
+- fix: export ComponentType from `svelte` entrypoint ([#8694](https://github.com/sveltejs/svelte/pull/8694))
+
+- fix: derived store types ([#8700](https://github.com/sveltejs/svelte/pull/8700))
+
+- Generate type declarations with dts-buddy ([#8702](https://github.com/sveltejs/svelte/pull/8702))
+
 ## 4.0.0-next.0
 
 ### Major Changes

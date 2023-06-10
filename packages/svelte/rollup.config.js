@@ -17,23 +17,6 @@ fs.writeFileSync(
 		`export default new Set(${JSON.stringify(Object.keys(internal))});`
 );
 
-// Generate d.ts files for runtime entrypoints so that TS can find it also without `"moduleResolution": "bundler"`
-fs.readdirSync('src/runtime', { withFileTypes: true })
-	.filter((dirent) => dirent.isDirectory())
-	.forEach((dirent) =>
-		fs.writeFileSync(
-			`${dirent.name}.d.ts`,
-			`export * from './types/runtime/${dirent.name}/index.js';`
-		)
-	);
-
-fs.writeFileSync('./index.d.ts', `export * from './types/runtime/index.js';`);
-
-fs.writeFileSync(
-	'./compiler.d.ts',
-	`export { compile, parse, preprocess, walk, VERSION } from './types/compiler/index.js';`
-);
-
 /**
  * @type {import("rollup").RollupOptions[]}
  */
