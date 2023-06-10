@@ -39,7 +39,7 @@ async function get_nav_context_list() {
 				title,
 				path: '/blog/' + slug,
 				// Put a NEW badge on blog posts that are less than 7 days old
-				badge: (+new Date() - +new Date(date)) / (1000 * 60 * 60 * 24) < 7 ? 'NEW' : undefined
+				badge: (+new Date() - +new Date(date)) / (1000 * 60 * 60 * 24) < 14 ? 'NEW' : undefined
 			}))
 		}
 	];
