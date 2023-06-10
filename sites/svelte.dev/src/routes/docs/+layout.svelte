@@ -6,7 +6,7 @@
 	export let data;
 
 	$: title = data.sections
-		.find(({ pages }) => pages.find(({ path }) => path === $page.url.pathname))
+		.find(({ pages }) => pages?.find(({ path }) => path === $page.url.pathname))
 		?.pages.find(({ path }) => path === $page.url.pathname).title;
 </script>
 
