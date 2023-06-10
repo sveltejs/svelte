@@ -75,7 +75,7 @@
 
 				<NavItem href="/chat" external title="Discord Chat">
 					<span slot="small">Discord</span>
-					<Icon name="message-square" />
+					<Icon name="discord" />
 				</NavItem>
 
 				<NavItem href="https://github.com/sveltejs/svelte" external title="GitHub Repo">
