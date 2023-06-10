@@ -66,8 +66,8 @@ importers:
         specifier: ^3.1.1
         version: 3.1.1
       code-red:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       css-tree:
         specifier: ^2.3.1
         version: 2.3.1
@@ -1398,8 +1398,8 @@ packages:
     engines: {node: '>=0.8'}
     dev: true
 
-  /code-red@1.0.0:
-    resolution: {integrity: sha512-x5fNWOBu7Ii38br3iVPuwQcDQM0f2h8ipvqw4qTLlOzYlrFQRz954qR0hPZ8asV5KG/igXNY8CRG6xtDUoKOJQ==}
+  /code-red@1.0.1:
+    resolution: {integrity: sha512-HtXFhMv4j8Iib8wcPG7pGKvN812ImnzsOOOXANTHokLDXEaW62E1RVfr1d6S494EVVmQjv+08hQD5HXzUyGEyQ==}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@types/estree': 1.0.1
