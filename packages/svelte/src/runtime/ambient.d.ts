@@ -1,3 +1,3 @@
 declare module '*.svelte' {
-	export { SvelteComponent as default } from 'svelte/internal';
+	export { SvelteComponent as default } from 'svelte';
 }
