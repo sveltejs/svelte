@@ -2,74 +2,155 @@
 	import Image from './Image.svelte';
 	import SvelteLogotype from './svelte-logotype.svg';
 
-	import Machine from './svelte-machine.png?big-image';
+	// @ts-ignore
+	import Machine from './svelte-machine.png?w=4400&format=avif;webp;png&as=picture';
 </script>
 
 <div class="hero">
-	<strong>Cybernetically enhanced web apps</strong>
-
 	<Image
 		src={Machine}
 		alt="The Svelte compiler packaging up your component code"
 		--max-height="60vh"
 	/>
 
-	<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
+	<div class="hero-content">
+		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
+		<strong>Cybernetically enhanced web apps</strong>
+		<a href="/docs/introduction" class="cta"> Read the Docs </a>
+	</div>
 </div>
 
 <style>
 	.hero {
 		position: relative;
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
+
+		height: 45vh;
 	}
 
-	.logotype {
-		display: none;
+	.hero :global(picture img) {
+		width: 250%;
+		transform: translate(-34%, 30%);
+	}
+
+	.hero-content {
+		position: absolute;
+		left: 50%;
+		top: clamp(10%, 5rem, 15%);
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+
+		transform: translateX(-50%);
+
+		width: 20em;
+		max-width: 100%;
 	}
 
 	strong {
-		position: absolute;
 		font-size: min(4vw, var(--sk-text-s));
-		max-width: 10em;
+		text-align: center;
 		text-transform: uppercase;
 		font-weight: 700;
 		color: var(--sk-text-2);
 		letter-spacing: 0.05em;
-		left: max(var(--sk-page-padding-side), 10%);
-		top: 25%;
+	}
+
+	.cta {
+		display: inline-block;
+		background: var(--sk-theme-1);
+
+		padding: 0.5em 1em;
+		margin-top: 0.5em;
+
+		font-size: var(--sk-text-s);
+
+		border-radius: 30px;
+		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
+
+		color: #fff;
+		color: color-mix(in hwb, hsl(var(--sk-theme-1-hsl)) 10%, var(--sk-back-1) 95%);
+
+		transition: 0.5s var(--quint-out);
+		transition-property: transform, box-shadow;
+	}
+
+	.cta:hover {
+		text-decoration: none;
+
+		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
+
+		transform: scale3d(1.01, 1.01, 1);
 	}
 
 	@media (min-width: 580px) {
-		strong {
-			max-width: 12em;
-			top: 30%;
+		.hero-content {
+			top: 25%;
+			left: 26%;
+
+			font-size: 0.9em;
+		}
+
+		.logotype {
+			width: min(30vw, 30em);
+		}
+
+		.hero {
+			height: 40vh;
+		}
+
+		.hero :global(picture img) {
+			width: 200%;
+			transform: translate(-20%, -4%);
+		}
+	}
+
+	@media (max-width: 580px) and (min-width: 360px) {
+		.hero {
+			margin-bottom: 10rem;
 		}
 	}
 
 	@media (min-width: 800px) {
+		.hero {
+			height: 38vh;
+			margin-top: 0;
+		}
+
+		.hero-content {
+			top: 25%;
+			left: 30%;
+		}
+
 		.logotype {
-			position: absolute;
-			display: block;
-			width: min(30vw, 36rem);
-			bottom: 54%;
-			left: 15%;
+			width: min(20vw, 20em);
 		}
 
-		strong {
-			max-width: 16em;
-			top: 49%;
+		.hero :global(picture img) {
+			width: 140%;
+			transform: translate(-10%, -10%);
 		}
 
-		.logotype,
-		strong {
-			left: calc(var(--sk-page-padding-side) + 8rem);
+		.cta {
+			font-size: var(--sk-text-m);
 		}
 	}
 
 	@media (min-width: 1200px) {
-		strong,
-		.logotype {
-			left: calc(50% - 56rem + var(--sk-page-padding-side));
+		.hero {
+			height: 46vh;
+		}
+
+		.hero-content {
+			top: 25%;
+			left: 25%;
+		}
+
+		.hero :global(picture img) {
+			width: 120%;
+			transform: translate(-5%, 0%);
 		}
 	}
 
