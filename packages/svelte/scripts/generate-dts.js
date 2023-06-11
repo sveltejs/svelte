@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
 fs.mkdirSync('types/faux', { recursive: true });
@@ -11,6 +12,7 @@ fs.writeFileSync('types/faux/index.d.ts', `import '../index.d.ts';`);
 fs.writeFileSync('types/faux/compiler.d.ts', `import '../index.d.ts';`);
 
 // TODO: some way to mark these as deprecated
+fs.mkdirSync('types/faux/types/compiler', { recursive: true });
 fs.writeFileSync('types/faux/types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
 fs.writeFileSync('types/faux/types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
 
