@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
 fs.readdirSync('src/runtime', { withFileTypes: true })
-	.filter((dirent) => dirent.isDirectory() && !dirent.name.includes('internal'))
+	.filter((dirent) => dirent.isDirectory())
 	.forEach((dirent) => fs.writeFileSync(`${dirent.name}.d.ts`, `import 'types/index.d.ts';`));
 
 fs.writeFileSync('index.d.ts', `import 'types/index.d.ts';`);
@@ -23,6 +23,7 @@ await createBundle({
 		'svelte/action': 'src/runtime/action/public.d.ts',
 		'svelte/animate': 'src/runtime/animate/public.d.ts',
 		'svelte/easing': 'src/runtime/easing/index.js',
+		'svelte/internal': 'src/runtime/internal/public.d.ts',
 		'svelte/motion': 'src/runtime/motion/public.d.ts',
 		'svelte/store': 'src/runtime/store/public.d.ts',
 		'svelte/transition': 'src/runtime/transition/public.d.ts'

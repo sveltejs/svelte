@@ -92,4 +92,4 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 	): boolean;
 }
 
-export * from './index.js';
+export { SvelteComponent, SvelteComponentDev };
