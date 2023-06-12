@@ -1,7 +1,7 @@
 <script>
+	import { Icon } from '@sveltejs/site-kit/components';
 	import Image from './Image.svelte';
 	import SvelteLogotype from './svelte-logotype.svg';
-
 	// @ts-ignore
 	import Machine from './svelte-machine.png?w=4400&format=avif;webp;png&as=picture';
 </script>
@@ -15,8 +15,13 @@
 
 	<div class="hero-content">
 		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
-		<strong>Cybernetically enhanced web apps</strong>
-		<a href="/docs/introduction" class="cta"> Read the Docs </a>
+		<strong>Cybernetically enhanced <br /> web apps</strong>
+		<div class="buttons">
+			<a href="https://learn.svelte.dev" rel="external" class="cta">
+				Tutorial <Icon name="external-link" />
+			</a>
+			<a href="/docs/introduction" class="cta basic">Read the Docs</a>
+		</div>
 	</div>
 </div>
 
@@ -30,7 +35,7 @@
 
 	.hero :global(picture img) {
 		width: 250%;
-		transform: translate(-34%, 30%);
+		transform: translate(-34%, 20%);
 	}
 
 	.hero-content {
@@ -45,7 +50,6 @@
 
 		transform: translateX(-50%);
 
-		width: 20em;
 		max-width: 100%;
 	}
 
@@ -58,23 +62,31 @@
 		letter-spacing: 0.05em;
 	}
 
+	.buttons {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
 	.cta {
 		display: inline-block;
 		background: var(--sk-theme-1);
 
-		padding: 0.5em 1em;
+		padding: 0.35em 0.8em;
 		margin-top: 0.5em;
 
 		font-size: var(--sk-text-s);
+		font-weight: 600;
+		letter-spacing: 0.5px;
 
-		border-radius: 30px;
+		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
 
 		color: #fff;
 		color: color-mix(in hwb, hsl(var(--sk-theme-1-hsl)) 10%, var(--sk-back-1) 95%);
 
 		transition: 0.5s var(--quint-out);
-		transition-property: transform, box-shadow;
+		transition-property: transform, box-shadow, color;
 	}
 
 	.cta:hover {
@@ -83,6 +95,16 @@
 		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
 
 		transform: scale3d(1.01, 1.01, 1);
+	}
+
+	.cta.basic {
+		background-color: var(--sk-back-5);
+
+		color: var(--sk-text-1);
+	}
+
+	.logotype {
+		width: min(45vw, 40em);
 	}
 
 	@media (min-width: 580px) {
@@ -109,7 +131,7 @@
 
 	@media (max-width: 580px) and (min-width: 360px) {
 		.hero {
-			margin-bottom: 10rem;
+			margin-bottom: 6rem;
 		}
 	}
 
@@ -134,7 +156,7 @@
 		}
 
 		.cta {
-			font-size: var(--sk-text-m);
+			font-size: var(--sk-text-s);
 		}
 	}
 
