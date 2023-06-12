@@ -21,6 +21,13 @@
 	.hero {
 		position: relative;
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
+
+		height: 40vh;
+	}
+
+	.hero :global(picture img) {
+		width: 240%;
+		transform: translateX(-26%);
 	}
 
 	.logotype {
@@ -44,6 +51,15 @@
 			max-width: 12em;
 			top: 30%;
 		}
+
+		.hero {
+			height: 42vh;
+		}
+
+		.hero :global(picture img) {
+			width: 220%;
+			transform: translateX(-26%);
+		}
 	}
 
 	@media (min-width: 800px) {
@@ -64,12 +80,30 @@
 		strong {
 			left: calc(var(--sk-page-padding-side) + 8rem);
 		}
+
+		.hero {
+			height: 44vh;
+		}
+
+		.hero :global(picture img) {
+			width: 160%;
+			transform: translateX(-14%);
+		}
 	}
 
 	@media (min-width: 1200px) {
 		strong,
 		.logotype {
 			left: calc(50% - 56rem + var(--sk-page-padding-side));
+		}
+
+		.hero {
+			height: 45vh;
+		}
+
+		.hero :global(picture img) {
+			width: 120%;
+			transform: translateX(-10%);
 		}
 	}
 
