@@ -36,8 +36,6 @@ Svelte uses the `export` keyword to mark a variable declaration as a _property_ 
 </script>
 ```
 
----
-
 You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that if the values of props are subsequently updated, then any prop whose value is not specified will be set to `undefined` (rather than its initial value).
 
 In development mode (see the [compiler options](/docs/svelte-compiler#svelte-compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
@@ -129,8 +127,6 @@ Svelte's `<script>` blocks are run only when the component is created, so assign
 ```
 
 ### 3. `$:` marks a statement as reactive
-
----
 
 Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run after other script code and before the component markup is rendered, whenever the values that they depend on have changed.
 
