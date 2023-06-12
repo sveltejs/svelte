@@ -7,3 +7,13 @@
 _actual*.*
 _output
 /types
+
+action.d.ts
+animate.d.ts
+compiler.d.ts
+easing.d.ts
+index.d.ts
+internal.d.ts
+motion.d.ts
+store.d.ts
+transition.d.ts

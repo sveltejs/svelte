@@ -70,13 +70,6 @@
     "node": ">=16"
   },
   "types": "types/index.d.ts",
-  "typesVersions": {
-    "*": {
-      "*": [
-        "types/faux/*"
-      ]
-    }
-  },
   "scripts": {
     "format": "prettier . --cache --plugin-search-dir=. --write",
     "check": "prettier . --cache --plugin-search-dir=. --check",

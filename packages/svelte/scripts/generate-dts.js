@@ -1,20 +1,17 @@
 import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
-fs.mkdirSync('types/faux', { recursive: true });
 fs.readdirSync('src/runtime', { withFileTypes: true })
-	.filter((dirent) => dirent.isDirectory())
-	.forEach((dirent) =>
-		fs.writeFileSync(`types/faux/${dirent.name}.d.ts`, `import '../index.d.ts';`)
-	);
+	.filter((dirent) => dirent.isDirectory() && !dirent.name.includes('internal'))
+	.forEach((dirent) => fs.writeFileSync(`${dirent.name}.d.ts`, `import 'types/index.d.ts';`));
 
-fs.writeFileSync('types/faux/index.d.ts', `import '../index.d.ts';`);
-fs.writeFileSync('types/faux/compiler.d.ts', `import '../index.d.ts';`);
+fs.writeFileSync('index.d.ts', `import 'types/index.d.ts';`);
+fs.writeFileSync('compiler.d.ts', `import 'types/index.d.ts';`);
 
 // TODO: some way to mark these as deprecated
-fs.mkdirSync('types/faux/types/compiler', { recursive: true });
-fs.writeFileSync('types/faux/types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
-fs.writeFileSync('types/faux/types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
+fs.mkdirSync('types/compiler', { recursive: true });
+fs.writeFileSync('types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
+fs.writeFileSync('types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
 
 await createBundle({
 	output: 'types/index.d.ts',
