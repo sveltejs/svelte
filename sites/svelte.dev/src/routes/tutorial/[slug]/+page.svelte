@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import ScreenToggle from '$lib/components/ScreenToggle.svelte';
 	import Repl from '@sveltejs/repl';
-	import { theme } from '@sveltejs/site-kit/components';
+	import { theme } from '@sveltejs/site-kit/stores';
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
 	import TableOfContents from './TableOfContents.svelte';
 

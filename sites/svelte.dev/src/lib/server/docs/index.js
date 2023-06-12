@@ -1,5 +1,5 @@
 import { base as app_base } from '$app/paths';
-import { modules } from '$lib/generated/type-info';
+import { modules } from '$lib/generated/type-info.js';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import {

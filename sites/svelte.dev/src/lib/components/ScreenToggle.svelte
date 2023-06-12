@@ -14,7 +14,7 @@
 <style>
 	.toggle {
 		position: fixed;
-		bottom: 0;
+		bottom: var(--sk-nav-height);
 		width: 100%;
 		height: 4.6rem;
 		display: flex;

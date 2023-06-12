@@ -191,8 +191,8 @@ importers:
         specifier: ^1.20.0
         version: 1.20.0(svelte@packages+svelte)(vite@4.3.9)
       '@sveltejs/site-kit':
-        specifier: ^5.2.1
-        version: 5.2.1(@sveltejs/kit@1.20.0)(svelte@packages+svelte)
+        specifier: 6.0.0-next.0
+        version: 6.0.0-next.0(@sveltejs/kit@1.20.0)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.1
         version: 2.4.1(svelte@packages+svelte)(vite@4.3.9)
@@ -1852,6 +1852,19 @@ packages:
       esm-env: 1.0.0
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
+    dev: false
+
+  /@sveltejs/site-kit@6.0.0-next.0(@sveltejs/kit@1.20.0)(svelte@packages+svelte):
+    resolution: {integrity: sha512-7zHXRUf4CZPxQs710Qdx2exNyAI/6lLVoTp9AEx90+PSitrLg/lmPss2HmCY0xcZPPoxKE/3ViCFW2BklJjcZA==}
+    peerDependencies:
+      '@sveltejs/kit': ^1.0.0
+      svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
+    dependencies:
+      '@sveltejs/kit': 1.20.0(svelte@packages+svelte)(vite@4.3.9)
+      esm-env: 1.0.0
+      svelte: link:packages/svelte
+      svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
+    dev: true
 
   /@sveltejs/vite-plugin-svelte-inspector@1.0.2(@sveltejs/vite-plugin-svelte@2.4.1)(svelte@packages+svelte)(vite@4.3.9):
     resolution: {integrity: sha512-Cy1dUMcYCnDVV/hPLXa43YZJ2jGKVW5rA0xuNL9dlmYhT0yoS1g7+FOFSRlgk0BXKk/Oc7grs+8BVA5Iz2fr8A==}
