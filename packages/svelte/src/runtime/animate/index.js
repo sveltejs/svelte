@@ -2,12 +2,14 @@ import { cubicOut } from '../easing/index.js';
 import { is_function } from '../internal/index.js';
 
 /**
+ * The flip function calculates the start and end position of an element and animates between them, translating the x and y values.
+ * `flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).
+ *
+ * https://svelte.dev/docs/svelte-animate#flip
  * @param {Element} node
  * @param {{ from: DOMRect; to: DOMRect }} fromTo
  * @param {import('./public.js').FlipParams} params
  * @returns {import('./public.js').AnimationConfig}
- *
- * https://svelte.dev/docs/svelte-animate#flip
  */
 export function flip(node, { from, to }, params = {}) {
 	const style = getComputedStyle(node);

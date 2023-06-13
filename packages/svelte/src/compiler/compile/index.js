@@ -114,10 +114,11 @@ function validate_options(options, warnings) {
 }
 
 /**
- * @param {string} source
- * @param {import('../interfaces.js').CompileOptions} options
+ * `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
+ * @param {string} source
+ * @param {import('../interfaces.js').CompileOptions} options
  */
 export default function compile(source, options = {}) {
 	options = Object.assign(

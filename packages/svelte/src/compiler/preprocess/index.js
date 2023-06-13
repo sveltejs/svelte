@@ -327,12 +327,14 @@ async function process_markup(process, source) {
 }
 
 /**
+ * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
+ * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
  * @param {string} source
  * @param {import('./public.js').PreprocessorGroup | import('./public.js').PreprocessorGroup[]} preprocessor
  * @param {{ filename?: string }} [options]
  * @returns {Promise<import('./public.js').Processed>}
- *
- * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
  */
 export default async function preprocess(source, preprocessor, options) {
 	/**

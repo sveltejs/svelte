@@ -5,10 +5,9 @@ Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICE
 export { identity as linear } from '../internal/index.js';
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function backInOut(t) {
 	const s = 1.70158 * 1.525;
@@ -17,10 +16,9 @@ export function backInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function backIn(t) {
 	const s = 1.70158;
@@ -28,10 +26,9 @@ export function backIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function backOut(t) {
 	const s = 1.70158;
@@ -39,10 +36,9 @@ export function backOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function bounceOut(t) {
 	const a = 4.0 / 11.0;
@@ -62,30 +58,27 @@ export function bounceOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function bounceInOut(t) {
 	return t < 0.5 ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0)) : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function bounceIn(t) {
 	return 1.0 - bounceOut(1.0 - t);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function circInOut(t) {
 	if ((t *= 2) < 1) return -0.5 * (Math.sqrt(1 - t * t) - 1);
@@ -93,50 +86,45 @@ export function circInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function circIn(t) {
 	return 1.0 - Math.sqrt(1.0 - t * t);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function circOut(t) {
 	return Math.sqrt(1 - --t * t);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function cubicInOut(t) {
 	return t < 0.5 ? 4.0 * t * t * t : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function cubicIn(t) {
 	return t * t * t;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function cubicOut(t) {
 	const f = t - 1.0;
@@ -144,10 +132,9 @@ export function cubicOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function elasticInOut(t) {
 	return t < 0.5
@@ -159,30 +146,27 @@ export function elasticInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function elasticIn(t) {
 	return Math.sin((13.0 * t * Math.PI) / 2) * Math.pow(2.0, 10.0 * (t - 1.0));
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function elasticOut(t) {
 	return Math.sin((-13.0 * (t + 1.0) * Math.PI) / 2) * Math.pow(2.0, -10.0 * t) + 1.0;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function expoInOut(t) {
 	return t === 0.0 || t === 1.0
@@ -193,30 +177,27 @@ export function expoInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function expoIn(t) {
 	return t === 0.0 ? t : Math.pow(2.0, 10.0 * (t - 1.0));
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function expoOut(t) {
 	return t === 1.0 ? t : 1.0 - Math.pow(2.0, -10.0 * t);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quadInOut(t) {
 	t /= 0.5;
@@ -226,60 +207,54 @@ export function quadInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quadIn(t) {
 	return t * t;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quadOut(t) {
 	return -t * (t - 2.0);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quartInOut(t) {
 	return t < 0.5 ? +8.0 * Math.pow(t, 4.0) : -8.0 * Math.pow(t - 1.0, 4.0) + 1.0;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quartIn(t) {
 	return Math.pow(t, 4.0);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quartOut(t) {
 	return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quintInOut(t) {
 	if ((t *= 2) < 1) return 0.5 * t * t * t * t * t;
@@ -287,40 +262,36 @@ export function quintInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quintIn(t) {
 	return t * t * t * t * t;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function quintOut(t) {
 	return --t * t * t * t * t + 1;
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function sineInOut(t) {
 	return -0.5 * (Math.cos(Math.PI * t) - 1);
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function sineIn(t) {
 	const v = Math.cos(t * Math.PI * 0.5);
@@ -329,10 +300,9 @@ export function sineIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
- *
- * https://svelte.dev/docs/svelte-easing
  */
 export function sineOut(t) {
 	return Math.sin((t * Math.PI) / 2);

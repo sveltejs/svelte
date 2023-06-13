@@ -49,6 +49,8 @@ export function onMount(fn) {
  * Schedules a callback to run immediately after the component has been updated.
  *
  * The first time the callback runs will be after the initial `onMount`
+ *
+ * https://svelte.dev/docs/svelte#afterupdate
  * @param {() => any} fn
  * @returns {void}
  */
