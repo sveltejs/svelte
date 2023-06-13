@@ -310,6 +310,7 @@ Multiple preprocessors can be used together. The output of the first becomes the
 > In Svelte 3, all `markup` functions ran first, then all `script` and then all `style` preprocessors. This order was changed in Svelte 4.
 
 ```js
+// @errors: 2322
 // @filename: ambient.d.ts
 declare global {
 	var source: string;
