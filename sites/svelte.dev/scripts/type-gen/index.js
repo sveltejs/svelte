@@ -139,11 +139,11 @@ function get_types(code, statements) {
 /**
  * @param {ts.TypeElement} member
  */
-function munge_type_element(member, depth = 1) {
+function munge_type_element(member, depth = 2) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
-	if (/do not use!/i.test(doc?.comment)) return;
+	if (/private api/i.test(doc?.comment)) return;
 
 	/** @type {string[]} */
 	const children = [];
@@ -151,7 +151,7 @@ function munge_type_element(member, depth = 1) {
 	const name = member.name?.escapedText;
 	let snippet = member.getText();
 
-	for (let i = -1; i < depth; i += 1) {
+	for (let i = 0; i < depth; i += 1) {
 		snippet = snippet.replace(/^\t/gm, '');
 	}
 

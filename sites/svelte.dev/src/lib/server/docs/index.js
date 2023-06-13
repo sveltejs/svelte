@@ -24,7 +24,7 @@ export async function get_parsed_docs(docs_data, slug) {
 
 	return {
 		...page,
-		content: await render_markdown(page.file, page.content, { modules })
+		content: await render_markdown(page.file, page.content, { modules, cacheCodeSnippets: false })
 	};
 }
 
