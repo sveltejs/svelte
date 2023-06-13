@@ -398,3 +398,7 @@ The current version, as set in package.json.
 import { VERSION } from 'svelte/compiler';
 console.log(`running svelte version ${VERSION}`);
 ```
+
+## Types
+
+> TYPES: svelte/compiler
