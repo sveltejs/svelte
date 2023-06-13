@@ -50,6 +50,8 @@ function tick_spring(ctx, last_value, current_value, target_value) {
  * @param {T} [value]
  * @param {import('./private.js').SpringOpts} [opts]
  * @returns {import('./public.js').Spring<T>}
+ *
+ * https://svelte.dev/docs/svelte-motion#spring
  */
 export function spring(value, opts = {}) {
 	const store = writable(value);

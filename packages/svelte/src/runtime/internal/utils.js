@@ -110,6 +110,8 @@ export function subscribe(store, ...callbacks) {
  * @template T
  * @param {import('../store/public.js').Readable<T>} store
  * @returns {T}
+ *
+ * https://svelte.dev/docs/svelte-store#get
  */
 export function get_store_value(store) {
 	let value;

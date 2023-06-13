@@ -331,6 +331,8 @@ async function process_markup(process, source) {
  * @param {import('./public.js').PreprocessorGroup | import('./public.js').PreprocessorGroup[]} preprocessor
  * @param {{ filename?: string }} [options]
  * @returns {Promise<import('./public.js').Processed>}
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
  */
 export default async function preprocess(source, preprocessor, options) {
 	/**

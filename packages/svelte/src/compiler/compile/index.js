@@ -116,6 +116,8 @@ function validate_options(options, warnings) {
 /**
  * @param {string} source
  * @param {import('../interfaces.js').CompileOptions} options
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-compile
  */
 export default function compile(source, options = {}) {
 	options = Object.assign(

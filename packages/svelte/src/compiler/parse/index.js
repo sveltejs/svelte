@@ -260,6 +260,8 @@ export class Parser {
  * @param {string} template
  * @param {import('../interfaces.js').ParserOptions} options
  * @returns {import('../interfaces.js').Ast}
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-parse
  */
 export default function parse(template, options = {}) {
 	const parser = new Parser(template, options);

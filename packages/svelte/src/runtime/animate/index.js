@@ -6,6 +6,8 @@ import { is_function } from '../internal/index.js';
  * @param {{ from: DOMRect; to: DOMRect }} fromTo
  * @param {import('./public.js').FlipParams} params
  * @returns {import('./public.js').AnimationConfig}
+ *
+ * https://svelte.dev/docs/svelte-animate#flip
  */
 export function flip(node, { from, to }, params = {}) {
 	const style = getComputedStyle(node);

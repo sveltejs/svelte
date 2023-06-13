@@ -15,6 +15,8 @@ const subscriber_queue = [];
  * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Readable<T>}
+ *
+ * https://svelte.dev/docs/svelte-store#readable
  */
 export function readable(value, start) {
 	return {
@@ -28,6 +30,8 @@ export function readable(value, start) {
  * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Writable<T>}
+ *
+ * https://svelte.dev/docs/svelte-store#writable
  */
 export function writable(value, start = noop) {
 	/** @type {import('./public.js').Unsubscriber} */
@@ -122,6 +126,8 @@ export function writable(value, start = noop) {
  * @param {Function} fn
  * @param {T} [initial_value]
  * @returns {import('./public.js').Readable<T>}
+ *
+ * https://svelte.dev/docs/svelte-store#derived
  */
 export function derived(stores, fn, initial_value) {
 	const single = !Array.isArray(stores);
@@ -182,6 +188,8 @@ export function derived(stores, fn, initial_value) {
  * @template T
  * @param {import('./public.js').Readable<T>} store  - store to make readonly
  * @returns {import('./public.js').Readable<T>}
+ *
+ * https://svelte.dev/docs/svelte-store#readonly
  */
 export function readonly(store) {
 	return {

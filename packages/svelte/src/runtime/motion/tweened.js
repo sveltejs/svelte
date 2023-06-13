@@ -49,6 +49,8 @@ function get_interpolator(a, b) {
  * @param {T} [value]
  * @param {import('./private.js').TweenedOptions<T>} [defaults]
  * @returns {import('./public.js').Tweened<T>}
+ *
+ * https://svelte.dev/docs/svelte-motion#tweened
  */
 export function tweened(value, defaults = {}) {
 	const store = writable(value);

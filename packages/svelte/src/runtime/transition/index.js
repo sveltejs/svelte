@@ -5,6 +5,8 @@ import { assign, split_css_unit, is_function } from '../internal/index.js';
  * @param {Element} node
  * @param {import('./public').BlurParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#blur
  */
 export function blur(
 	node,
@@ -27,6 +29,8 @@ export function blur(
  * @param {Element} node
  * @param {import('./public').FadeParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#fade
  */
 export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
 	const o = +getComputedStyle(node).opacity;
@@ -42,6 +46,8 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
  * @param {Element} node
  * @param {import('./public').FlyParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#fly
  */
 export function fly(
 	node,
@@ -67,6 +73,8 @@ export function fly(
  * @param {Element} node
  * @param {import('./public').SlideParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#slide
  */
 export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
@@ -108,6 +116,8 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
  * @param {Element} node
  * @param {import('./public').ScaleParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#scale
  */
 export function scale(
 	node,
@@ -133,6 +143,8 @@ export function scale(
  * @param {SVGElement & { getTotalLength(): number }} node
  * @param {import('./public').DrawParams} [params]
  * @returns {import('./public').TransitionConfig}
+ *
+ * https://svelte.dev/docs/svelte-transition#draw
  */
 export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } = {}) {
 	let len = node.getTotalLength();
@@ -165,6 +177,8 @@ export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } =
  * 	fallback?: (node: Element, params: import('./public').CrossfadeParams, intro: boolean) => import('./public').TransitionConfig;
  * }} params
  * @returns {[(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig, (node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig]}
+ *
+ * https://svelte.dev/docs/svelte-transition#crossfade
  */
 export function crossfade({ fallback, ...defaults }) {
 	/** @type {Map<any, Element>} */
