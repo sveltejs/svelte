@@ -873,7 +873,8 @@ function syntax_highlight({ source, filename, language, highlighter, twoslashBan
 				defaultCompilerOptions: {
 					allowJs: true,
 					checkJs: true,
-					target: ts.ScriptTarget.ES2022
+					target: ts.ScriptTarget.ES2022,
+					types: ['svelte', '@sveltejs/kit']
 				}
 			});
 
