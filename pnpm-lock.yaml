@@ -121,8 +121,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.4
+        version: 0.1.4
       esbuild:
         specifier: ^0.17.19
         version: 0.17.19
@@ -1671,8 +1671,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.1.2:
-    resolution: {integrity: sha512-CLDbDXtcrNjuWLYljJuCL4l//mvDZzjtFkmr4yGyCAk58szuzmjzoWKG+7NBFWeeajOiISu/IG96QNMb0CPtdw==}
+  /dts-buddy@0.1.4:
+    resolution: {integrity: sha512-kwWFPmpCFgQRW9U1zdg8ZAIx/KcyhPgvrP9k/apMGNl/LzmL1+PEWevJ6cBBwTW6zckfw9sHHziFK47IoBGX7g==}
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.3
@@ -1683,6 +1683,7 @@ packages:
       magic-string: 0.30.0
       sade: 1.8.1
       tiny-glob: 0.2.9
+      ts-api-utils: 0.0.46(typescript@5.0.4)
       typescript: 5.0.4
     dev: true
 
@@ -3993,6 +3994,15 @@ packages:
   /trim-newlines@3.0.1:
     resolution: {integrity: sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==}
     engines: {node: '>=8'}
+    dev: true
+
+  /ts-api-utils@0.0.46(typescript@5.0.4):
+    resolution: {integrity: sha512-YKJeSx39n0mMk+hrpyHKyTgxA3s7Pz/j1cXYR+t8HcwwZupzOR5xDGKnOEw3gmLaUeFUQt3FJD39AH9Ajn/mdA==}
+    engines: {node: '>=16.13.0'}
+    peerDependencies:
+      typescript: '>=4.2.0'
+    dependencies:
+      typescript: 5.0.4
     dev: true
 
   /tsconfig-paths@3.14.2:
