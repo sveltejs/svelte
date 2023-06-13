@@ -124,7 +124,7 @@ declare global {
 export {};
 
 // @filename: index.ts
-// @errors: 18046
+// @errors: 18046 2769 7006
 // ---cut---
 import { derived } from 'svelte/store';
 
