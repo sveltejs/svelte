@@ -151,7 +151,7 @@ function munge_type_element(member, depth = 1) {
 	const name = member.name?.escapedText;
 	let snippet = member.getText();
 
-	for (let i = 0; i < depth; i += 1) {
+	for (let i = -1; i < depth; i += 1) {
 		snippet = snippet.replace(/^\t/gm, '');
 	}
 
