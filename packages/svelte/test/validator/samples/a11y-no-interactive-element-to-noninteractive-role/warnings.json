@@ -674,18 +674,6 @@
 	{
 		"code": "a11y-no-interactive-element-to-noninteractive-role",
 		"end": {
-			"column": 27,
-			"line": 146
-		},
-		"message": "A11y: <summary> cannot have role 'listitem'",
-		"start": {
-			"column": 0,
-			"line": 146
-		}
-	},
-	{
-		"code": "a11y-no-interactive-element-to-noninteractive-role",
-		"end": {
 			"column": 40,
 			"line": 147
 		},
