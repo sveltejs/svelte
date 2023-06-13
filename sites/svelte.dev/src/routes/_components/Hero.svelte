@@ -133,6 +133,15 @@
 		.hero {
 			margin-bottom: 6rem;
 		}
+
+		.hero {
+			height: 42vh;
+		}
+
+		.hero :global(picture img) {
+			width: 220%;
+			transform: translateX(-26%);
+		}
 	}
 
 	@media (min-width: 800px) {
@@ -158,6 +167,15 @@
 		.cta {
 			font-size: var(--sk-text-s);
 		}
+
+		.hero {
+			height: 44vh;
+		}
+
+		.hero :global(picture img) {
+			width: 160%;
+			transform: translateX(-14%);
+		}
 	}
 
 	@media (min-width: 1200px) {
@@ -173,6 +191,15 @@
 		.hero :global(picture img) {
 			width: 120%;
 			transform: translate(-5%, 0%);
+		}
+
+		.hero {
+			height: 45vh;
+		}
+
+		.hero :global(picture img) {
+			width: 120%;
+			transform: translateX(-10%);
 		}
 	}
 
