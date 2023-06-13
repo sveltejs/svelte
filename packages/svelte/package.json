@@ -118,7 +118,6 @@
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-replace": "^5.0.2",
     "@sveltejs/eslint-config": "^6.0.1",
     "@types/aria-query": "^5.0.1",
     "@types/estree": "^1.0.1",
@@ -134,7 +133,6 @@
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.0.4",
-    "util": "^0.12.5",
     "vitest": "^0.31.1"
   }
 }
