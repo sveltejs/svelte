@@ -14,6 +14,7 @@ declare global {
 }
 
 // @filename: index.ts
+// @errors: 2554
 // ---cut---
 const component = new Component(options);
 ```
@@ -30,6 +31,7 @@ declare module './App.svelte' {
 }
 
 // @filename: index.ts
+// @errors: 2554
 // ---cut---
 import App from './App.svelte';
 
@@ -72,7 +74,7 @@ declare module './App.svelte' {
 }
 
 // @filename: index.ts
-// @errors: 2322
+// @errors: 2322 2554
 // ---cut---
 import App from './App.svelte';
 
@@ -199,6 +201,7 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 component.prop;
 ```
@@ -216,6 +219,7 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 component.prop = value;
 ```
@@ -237,6 +241,7 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 console.log(component.count);
 component.count += 1;
