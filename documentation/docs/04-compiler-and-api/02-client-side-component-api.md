@@ -5,6 +5,7 @@ title: 'Client-side component API'
 ## Creating a component
 
 ```ts
+// @errors: 2554
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
@@ -21,6 +22,7 @@ const component = new Component(options);
 A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
 ```ts
+// @errors: 2554
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
@@ -72,7 +74,7 @@ declare module './App.svelte' {
 }
 
 // @filename: index.ts
-// @errors: 2322
+// @errors: 2322 2554
 // ---cut---
 import App from './App.svelte';
 
