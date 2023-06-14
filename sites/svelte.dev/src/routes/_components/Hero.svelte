@@ -32,14 +32,14 @@
 		position: relative;
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
 
-		height: 45vh;
+		height: 47vh;
 
 		margin-bottom: 3rem;
 	}
 
 	.hero :global(picture img) {
 		width: 250%;
-		transform: translate(-34%, 20%);
+		transform: translate(-34%, 25%);
 	}
 
 	.hero-content {
@@ -113,6 +113,34 @@
 		width: min(45vw, 40em);
 	}
 
+	@media (max-width: 580px) and (min-width: 361px) {
+		.hero {
+			margin-bottom: max(0rem, 10vw);
+		}
+
+		.hero {
+			height: 42vh;
+		}
+
+		.hero :global(picture img) {
+			width: 220%;
+			transform: translate(-30%, 30%);
+		}
+	}
+
+	@media (max-width: 580px) and (max-height: 700px) {
+		.hero {
+			margin-bottom: max(0rem, 15vw);
+
+			height: 50vh;
+		}
+
+		.hero :global(picture img) {
+			width: 220%;
+			transform: translate(-30%, 30%);
+		}
+	}
+
 	@media (min-width: 580px) {
 		.hero-content {
 			top: 25%;
@@ -132,34 +160,6 @@
 		.hero :global(picture img) {
 			width: 200%;
 			transform: translate(-20%, -4%);
-		}
-	}
-
-	@media (max-width: 580px) and (min-width: 361px) {
-		.hero {
-			margin-bottom: max(0rem, 10vw);
-		}
-
-		.hero {
-			height: 36vh;
-		}
-
-		.hero :global(picture img) {
-			width: 220%;
-			transform: translate(-30%, 20%);
-		}
-	}
-
-	@media (max-width: 580px) and (max-height: 900px) {
-		.hero {
-			margin-bottom: max(0rem, 15vw);
-
-			height: 50vh;
-		}
-
-		.hero :global(picture img) {
-			width: 220%;
-			transform: translate(-30%, 30%);
 		}
 	}
 
@@ -194,6 +194,17 @@
 		.hero :global(picture img) {
 			width: 160%;
 			transform: translateX(-14%);
+		}
+	}
+
+	@media (min-width: 800px) and (min-height: 1100px) {
+		.hero {
+			height: 28vh;
+		}
+
+		.hero :global(picture img) {
+			width: 160%;
+			transform: translate(-10%, -14%);
 		}
 	}
 
