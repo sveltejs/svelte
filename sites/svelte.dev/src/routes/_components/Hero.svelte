@@ -15,12 +15,14 @@
 
 	<div class="hero-content">
 		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
-		<strong>Cybernetically enhanced <br /> web apps</strong>
+		<strong
+			><span style="white-space: nowrap;">Cybernetically enhanced</span> <br /> web apps</strong
+		>
 		<div class="buttons">
 			<a href="https://learn.svelte.dev" rel="external" class="cta">
-				Tutorial <Icon name="external-link" />
+				tutorial <Icon name="external-link" />
 			</a>
-			<a href="/docs/introduction" class="cta basic">Read the Docs</a>
+			<a href="/docs/introduction" class="cta basic">read the docs</a>
 		</div>
 	</div>
 </div>
@@ -31,6 +33,8 @@
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
 
 		height: 45vh;
+
+		margin-bottom: 3rem;
 	}
 
 	.hero :global(picture img) {
@@ -54,10 +58,11 @@
 	}
 
 	strong {
-		font-size: min(4vw, var(--sk-text-s));
+		font-size: var(--sk-text-l);
 		text-align: center;
-		text-transform: uppercase;
-		font-weight: 700;
+		font-family: var(--sk-font);
+		text-transform: lowercase;
+		font-weight: 400;
 		color: var(--sk-text-2);
 		letter-spacing: 0.05em;
 	}
@@ -78,6 +83,7 @@
 		font-size: var(--sk-text-s);
 		font-weight: 600;
 		letter-spacing: 0.5px;
+		white-space: nowrap;
 
 		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
@@ -129,18 +135,31 @@
 		}
 	}
 
-	@media (max-width: 580px) and (min-width: 360px) {
+	@media (max-width: 580px) and (min-width: 361px) {
 		.hero {
-			margin-bottom: 6rem;
+			margin-bottom: max(0rem, 10vw);
 		}
 
 		.hero {
-			height: 42vh;
+			height: 36vh;
 		}
 
 		.hero :global(picture img) {
 			width: 220%;
-			transform: translateX(-26%);
+			transform: translate(-30%, 20%);
+		}
+	}
+
+	@media (max-width: 580px) and (max-height: 900px) {
+		.hero {
+			margin-bottom: max(0rem, 15vw);
+
+			height: 50vh;
+		}
+
+		.hero :global(picture img) {
+			width: 220%;
+			transform: translate(-30%, 30%);
 		}
 	}
 
