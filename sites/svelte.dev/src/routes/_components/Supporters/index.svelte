@@ -11,7 +11,7 @@
 
 	<div class="layout">
 		<div class="contributors blurb">
-			<h3>Contributors</h3>
+			<h3>contributors</h3>
 			<p>
 				<a href="https://github.com/sveltejs/svelte/graphs/contributors">Join us on GitHub</a>
 			</p>
@@ -30,7 +30,7 @@
 		</div>
 
 		<div class="donors blurb">
-			<h3>Donors</h3>
+			<h3>donors</h3>
 			<p><a href="https://opencollective.com/svelte">Support us on OpenCollective</a></p>
 		</div>
 

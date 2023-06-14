@@ -7,7 +7,7 @@
 </script>
 
 <Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
-	<h3>Loved by developers</h3>
+	<h3>loved by developers</h3>
 
 	<p>
 		We're proud that Svelte was recently voted the <a

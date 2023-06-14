@@ -7,7 +7,7 @@
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="copy">
-				<h2>See for yourself</h2>
+				<h2>see for yourself</h2>
 				<div>
 					Try locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>,<br />
 					or in <a target="_blank" href="https://learn.svelte.dev">the online tutorial</a>.
