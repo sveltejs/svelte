@@ -139,7 +139,7 @@ function get_types(code, statements) {
 /**
  * @param {ts.TypeElement} member
  */
-function munge_type_element(member, depth = 2) {
+function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
@@ -151,7 +151,7 @@ function munge_type_element(member, depth = 2) {
 	const name = member.name?.escapedText;
 	let snippet = member.getText();
 
-	for (let i = 0; i < depth; i += 1) {
+	for (let i = -1; i < depth; i += 1) {
 		snippet = snippet.replace(/^\t/gm, '');
 	}
 
