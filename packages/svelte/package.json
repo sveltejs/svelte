@@ -124,7 +124,7 @@
     "@types/estree": "^1.0.1",
     "@types/node": "^14.14.31",
     "agadoo": "^3.0.0",
-    "dts-buddy": "^0.1.2",
+    "dts-buddy": "^0.1.4",
     "esbuild": "^0.17.19",
     "happy-dom": "^9.18.3",
     "jsdom": "^21.1.1",
