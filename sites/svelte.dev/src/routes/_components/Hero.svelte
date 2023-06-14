@@ -64,7 +64,6 @@
 		text-transform: lowercase;
 		font-weight: 400;
 		color: var(--sk-text-2);
-		letter-spacing: 0.05em;
 	}
 
 	.buttons {
