@@ -1,7 +1,7 @@
 <script>
 	import { Section } from '@sveltejs/site-kit/components';
+	import { theme } from '@sveltejs/site-kit/stores';
 	import { companies } from './companies.js';
-	import { theme } from '@sveltejs/site-kit/components';
 
 	const sorted = companies.sort((a, b) => (a.alt < b.alt ? -1 : 1));
 </script>

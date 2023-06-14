@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import * as hovers from '$lib/utils/hovers';
 	import { Icon } from '@sveltejs/site-kit/components';
-	import OnThisPage from './OnThisPage.svelte';
+	import { DocsOnThisPage } from '@sveltejs/site-kit/docs';
 
 	export let data;
 
@@ -50,7 +50,7 @@
 	</div>
 </div>
 
-<OnThisPage details={data.page} />
+<DocsOnThisPage details={data.page} />
 
 <style>
 	.edit {

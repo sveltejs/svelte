@@ -1,5 +1,5 @@
 // @ts-check
-import { modules } from '$lib/generated/type-info';
+import { modules } from '$lib/generated/type-info.js';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { extract_frontmatter } from '../markdown/index.js';

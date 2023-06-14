@@ -1,8 +1,8 @@
 // @ts-check
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import prettier from 'prettier';
 import ts from 'typescript';
-import { get_bundled_types } from './compile-types.js';
 
 /** @typedef {{
  * name: string;
@@ -106,7 +106,7 @@ function get_types(code, statements) {
 				const snippet = prettier
 					.format(snippet_unformatted, {
 						parser: 'typescript',
-						printWidth: 80,
+						printWidth: 60,
 						useTabs: true,
 						singleQuote: true,
 						trailingComma: 'none'
@@ -143,7 +143,7 @@ function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
-	if (/do not use!/i.test(doc?.comment)) return;
+	if (/private api/i.test(doc?.comment)) return;
 
 	/** @type {string[]} */
 	const children = [];
@@ -151,7 +151,7 @@ function munge_type_element(member, depth = 1) {
 	const name = member.name?.escapedText;
 	let snippet = member.getText();
 
-	for (let i = 0; i < depth; i += 1) {
+	for (let i = -1; i < depth; i += 1) {
 		snippet = snippet.replace(/^\t/gm, '');
 	}
 
@@ -219,136 +219,59 @@ function munge_type_element(member, depth = 1) {
 	};
 }
 
-const bundled_types = await get_bundled_types();
+/**
+ * Type declarations include fully qualified URLs so that they become links when
+ * you hover over names in an editor with TypeScript enabled. We need to remove
+ * the origin so that they become root-relative, so that they work in preview
+ * deployments and when developing locally
+ * @param {string} str
+ */
+function strip_origin(str) {
+	return str.replace(/https:\/\/svelte\.dev/g, '');
+}
 
-{
-	const module = bundled_types.get('svelte');
+/**
+ * @param {string} file
+ */
+function read_d_ts_file(file) {
+	const resolved = path.resolve('../../packages/svelte', file);
 
-	if (!module) throw new Error('Could not find svelte');
+	// We can't use JSDoc comments inside JSDoc, so we would get ts(7031) errors if
+	// we didn't ignore this error specifically for `/// file:` code examples
+	const str = fs.readFileSync(resolved, 'utf-8');
 
-	modules.push({
-		name: 'svelte',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
+	return str.replace(/(\s*\*\s*)```js([\s\S]+?)```/g, (match, prefix, code) => {
+		return `${prefix}\`\`\`js${prefix}// @errors: 7031${code}\`\`\``;
 	});
 }
 
 {
-	const module = bundled_types.get('svelte/compiler');
+	const code = read_d_ts_file('types/index.d.ts');
+	const node = ts.createSourceFile('index.d.ts', code, ts.ScriptTarget.Latest, true);
 
-	if (!module) throw new Error('Could not find svelte/compiler');
+	for (const statement of node.statements) {
+		if (ts.isModuleDeclaration(statement)) {
+			// @ts-ignore
+			const name = statement.name.text || statement.name.escapedText;
 
-	modules.push({
-		name: 'svelte/compiler',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
+			if (name === '*.svelte' || name === 'svelte/types/compiler/preprocess') {
+				continue;
+			}
 
-{
-	const module = bundled_types.get('svelte/action');
+			// @ts-ignore
+			const comment = strip_origin(statement.jsDoc?.[0].comment ?? '');
 
-	if (!module) throw new Error('Could not find svelte/action');
-
-	modules.push({
-		name: 'svelte/action',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/animate');
-
-	if (!module) throw new Error('Could not find svelte/animate');
-
-	modules.push({
-		name: 'svelte/animate',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/easing');
-
-	if (!module) throw new Error('Could not find svelte/easing');
-
-	modules.push({
-		name: 'svelte/easing',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/motion');
-
-	if (!module) throw new Error('Could not find svelte/motion');
-
-	modules.push({
-		name: 'svelte/motion',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/store');
-
-	if (!module) throw new Error('Could not find svelte/store');
-
-	modules.push({
-		name: 'svelte/store',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
-}
-
-{
-	const module = bundled_types.get('svelte/transition');
-
-	if (!module) throw new Error('Could not find svelte/transition');
-
-	modules.push({
-		name: 'svelte/transition',
-		comment: '',
-		...get_types(module.code, module.ts_source_file.statements)
-	});
+			modules.push({
+				name,
+				comment,
+				// @ts-ignore
+				...get_types(code, statement.body?.statements)
+			});
+		}
+	}
 }
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
-
-// Fix the duplicate/messed up types
-// !NOTE: This relies on mutation of `modules`
-$: {
-	const module_with_SvelteComponent = modules.find((m) =>
-		m.types.filter((t) => t.name === 'SvelteComponent')
-	);
-
-	if (!module_with_SvelteComponent) break $;
-
-	const svelte_comp_part = module_with_SvelteComponent?.types.find(
-		(t) => t.name === 'SvelteComponent'
-	);
-
-	if (!svelte_comp_part) break $;
-
-	const internal_module = bundled_types.get('svelte/internal');
-	if (!internal_module) break $;
-
-	const internal_types = get_types(internal_module.code, internal_module.ts_source_file.statements);
-
-	const svelte_comp_dev_internal = internal_types.types.find(
-		(t) => t.name === 'SvelteComponentDev'
-	);
-
-	if (!svelte_comp_dev_internal) break $;
-
-	svelte_comp_part.children = svelte_comp_dev_internal.children;
-	svelte_comp_part.comment = svelte_comp_dev_internal.comment;
-	svelte_comp_part.snippet = svelte_comp_dev_internal.snippet;
-}
 
 // Remove $$_attributes from ActionReturn
 $: {

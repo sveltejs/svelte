@@ -58,7 +58,8 @@ Sometimes actions emit custom events and apply custom attributes to the element 
 <!--- file: App.svelte --->
 <script>
 	/**
-	 * @type {import('svelte/action').Action<HTMLDivElement, { prop: any }, { 'on:emit': (e: CustomEvent<string>) => void }>}  */
+	 * @type {import('svelte/action').Action<HTMLDivElement, { prop: any }, { 'on:emit': (e: CustomEvent<string>) => void }>}
+	 */
 	function foo(node, { prop }) {
 		// the node has been mounted in the DOM
 

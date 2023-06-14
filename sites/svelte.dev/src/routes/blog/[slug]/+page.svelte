@@ -1,7 +1,6 @@
 <script>
 	import { page } from '$app/stores';
 	import * as hovers from '$lib/utils/hovers.js';
-	import '@sveltejs/site-kit/styles/code.css';
 
 	export let data;
 

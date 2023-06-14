@@ -189,10 +189,4 @@ export function readonly(store) {
 	};
 }
 
-/**
- * Get the current value from a store by subscribing and immediately unsubscribing.
- * @template T
- * @param {import('./public.js').Readable<T>} store readable
- * @returns {T}
- */
 export { get_store_value as get };
