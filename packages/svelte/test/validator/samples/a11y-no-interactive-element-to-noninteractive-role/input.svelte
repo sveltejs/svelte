@@ -143,6 +143,6 @@
 <menuitem role="listitem" />
 <option class="foo" role="listitem" />
 <select class="foo" role="listitem" />
-<summary role="listitem" />
+<summary role="listitem" /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <textarea class="foo" role="listitem" />
 <tr role="listitem" />

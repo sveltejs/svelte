@@ -103,8 +103,8 @@
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "acorn": "^8.8.2",
-    "aria-query": "^5.1.3",
-    "axobject-query": "^3.1.1",
+    "aria-query": "^5.2.1",
+    "axobject-query": "^3.2.1",
     "code-red": "^1.0.0",
     "css-tree": "^2.3.1",
     "estree-walker": "^3.0.3",
@@ -118,7 +118,6 @@
     "@rollup/plugin-commonjs": "^24.1.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.2",
-    "@rollup/plugin-replace": "^5.0.2",
     "@sveltejs/eslint-config": "^6.0.4",
     "@types/aria-query": "^5.0.1",
     "@types/estree": "^1.0.1",
@@ -133,7 +132,6 @@
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.0.4",
-    "util": "^0.12.5",
     "vitest": "^0.31.1"
   }
 }
