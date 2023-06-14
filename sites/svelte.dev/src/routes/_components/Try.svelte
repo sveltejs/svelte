@@ -7,9 +7,10 @@
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="copy">
-				<h2>See for yourself in a new project</h2>
+				<h2>See for yourself</h2>
 				<div>
-					<a class="cta" target="_blank" href="https://learn.svelte.dev">Or try the online tutorial</a>
+					Try locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>,<br />
+					or in <a target="_blank" href="https://learn.svelte.dev">the online tutorial</a>.
 				</div>
 			</div>
 			<div class="try">
@@ -70,19 +71,9 @@
 	h2 {
 		display: inline-block;
 		width: 25rem;
-		margin: 2rem 0;
+		margin: 4rem 0 1rem;
 		font-size: var(--sk-text-xl);
 		text-align: justify;
-	}
-
-	.cta {
-		display: inline-block;
-    background: var(--sk-theme-1);
-    padding: 0.5em 1em;
-    font-size: var(--sk-text-s);
-    border-radius: var(--sk-border-radius);
-    color: #fff;
-		text-decoration: none;
 	}
 
 	a {
