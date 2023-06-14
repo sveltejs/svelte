@@ -1,6 +1,12 @@
 <script>
 	let scoops = 1;
 	let flavours = ['Mint choc chip'];
+	
+	let radios = new Map();
+	radios.set('One', 1);
+	radios.set('Two', 2);
+	radios.set('Three', 3);
+	
 
 	let menu = [
 		'Cookies and cream',
@@ -16,20 +22,12 @@
 
 <h2>Size</h2>
 
+{#each radios as [number, value]}
 <label>
-	<input type=radio bind:group={scoops} value={1}>
-	One scoop
+	<input type=radio bind:group={scoops} value={value}>
+	{number} scoop
 </label>
-
-<label>
-	<input type=radio bind:group={scoops} value={2}>
-	Two scoops
-</label>
-
-<label>
-	<input type=radio bind:group={scoops} value={3}>
-	Three scoops
-</label>
+{/each}
 
 <h2>Flavours</h2>
 
