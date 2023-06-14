@@ -125,7 +125,7 @@
     "@types/node": "^14.14.31",
     "@typescript-eslint/eslint-plugin": "^5.58.0",
     "agadoo": "^3.0.0",
-    "dts-buddy": "^0.1.2",
+    "dts-buddy": "^0.1.6",
     "esbuild": "^0.17.19",
     "happy-dom": "^9.18.3",
     "jsdom": "^21.1.1",

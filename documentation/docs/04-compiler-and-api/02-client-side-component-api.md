@@ -5,7 +5,8 @@ title: 'Client-side component API'
 ## Creating a component
 
 ```ts
-// @filename: ambiend.d.ts
+// @errors: 2554
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -14,6 +15,7 @@ declare global {
 }
 
 // @filename: index.ts
+// @errors: 2554
 // ---cut---
 const component = new Component(options);
 ```
@@ -21,7 +23,8 @@ const component = new Component(options);
 A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
 
 ```ts
-// @filename: ambiend.d.ts
+// @errors: 2554
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare module './App.svelte' {
@@ -30,6 +33,7 @@ declare module './App.svelte' {
 }
 
 // @filename: index.ts
+// @errors: 2554
 // ---cut---
 import App from './App.svelte';
 
@@ -63,7 +67,7 @@ Whereas children of `target` are normally left alone, `hydrate: true` will cause
 The existing DOM doesn't need to match the component — Svelte will 'repair' the DOM as it goes.
 
 ```ts
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare module './App.svelte' {
@@ -72,7 +76,7 @@ declare module './App.svelte' {
 }
 
 // @filename: index.ts
-// @errors: 2322
+// @errors: 2322 2554
 // ---cut---
 import App from './App.svelte';
 
@@ -85,7 +89,7 @@ const app = new App({
 ## `$set`
 
 ```ts
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -106,7 +110,7 @@ Programmatically sets props on an instance. `component.$set({ x: 1 })` is equiva
 Calling this method schedules an update for the next microtask — the DOM is _not_ updated synchronously.
 
 ```ts
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -124,7 +128,7 @@ component.$set({ answer: 42 });
 ## `$on`
 
 ```ts
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -146,7 +150,7 @@ Causes the `callback` function to be called whenever the component dispatches an
 A function is returned that will remove the event listener when called.
 
 ```ts
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -168,7 +172,7 @@ off();
 ## `$destroy`
 
 ```js
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -188,7 +192,7 @@ Removes a component from the DOM and triggers any `onDestroy` handlers.
 ## Component props
 
 ```js
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -199,12 +203,13 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 component.prop;
 ```
 
 ```js
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -216,6 +221,7 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 component.prop = value;
 ```
@@ -225,7 +231,7 @@ If a component is compiled with `accessors: true`, each instance will have gette
 By default, `accessors` is `false`, unless you're compiling as a custom element.
 
 ```js
-// @filename: ambiend.d.ts
+// @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
 declare global {
@@ -237,6 +243,7 @@ declare global {
 export {}
 
 // @filename: index.ts
+// @errors: 2339
 // ---cut---
 console.log(component.count);
 component.count += 1;

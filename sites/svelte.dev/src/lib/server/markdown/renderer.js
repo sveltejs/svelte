@@ -234,6 +234,8 @@ function generate_ts_from_js(markdown) {
 			return match.replace('js', 'original-js') + '\n```generated-ts\n' + ts + '\n```';
 		})
 		.replaceAll(/```svelte\n([\s\S]+?)\n```/g, (match, code) => {
+			METADATA_REGEX.lastIndex = 0;
+
 			if (!METADATA_REGEX.test(code)) {
 				// No named file -> assume that the code is not meant to be shown in two versions
 				return match;
@@ -873,7 +875,8 @@ function syntax_highlight({ source, filename, language, highlighter, twoslashBan
 				defaultCompilerOptions: {
 					allowJs: true,
 					checkJs: true,
-					target: ts.ScriptTarget.ES2022
+					target: ts.ScriptTarget.ES2022,
+					types: ['svelte', '@sveltejs/kit']
 				}
 			});
 

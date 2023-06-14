@@ -4,14 +4,13 @@
 	"description": "Docs and examples for Svelte",
 	"type": "module",
 	"scripts": {
-		"prepare": "pnpm generate",
-		"dev": "node scripts/update.js && vite dev",
+		"dev": "node scripts/update.js && pnpm run generate && vite dev",
 		"build": "node scripts/update.js && pnpm run generate && vite build",
 		"generate": "node scripts/type-gen/index.js && node scripts/generate_examples.js",
 		"update": "node scripts/update.js --force=true",
 		"preview": "vite preview",
 		"start": "node build",
-		"check": "node scripts/update.js && svelte-kit sync && svelte-check",
+		"check": "node scripts/update.js && pnpm generate && svelte-kit sync && svelte-check",
 		"check:watch": "svelte-kit sync && svelte-check --watch",
 		"format": "pnpm run check:format -- --write",
 		"check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
@@ -43,8 +42,6 @@
 		"node-fetch": "^3.3.1",
 		"prettier": "^2.8.8",
 		"prettier-plugin-svelte": "^2.10.1",
-		"rollup": "^3.23.0",
-		"rollup-plugin-dts": "^5.3.0",
 		"sass": "^1.62.1",
 		"satori": "^0.9.1",
 		"satori-html": "^0.3.2",
@@ -55,7 +52,6 @@
 		"svelte-check": "^3.4.3",
 		"svelte-preprocess": "^5.0.4",
 		"tiny-glob": "^0.2.9",
-		"ts-morph": "^18.0.0",
 		"typescript": "^5.0.4",
 		"vite": "^4.3.9",
 		"vite-imagetools": "^5.0.4"

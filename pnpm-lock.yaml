@@ -121,8 +121,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.1.2
-        version: 0.1.2
+        specifier: ^0.1.6
+        version: 0.1.6
       esbuild:
         specifier: ^0.17.19
         version: 0.17.19
@@ -229,12 +229,6 @@ importers:
       prettier-plugin-svelte:
         specifier: ^2.10.1
         version: 2.10.1(prettier@2.8.8)(svelte@packages+svelte)
-      rollup:
-        specifier: ^3.23.0
-        version: 3.23.0
-      rollup-plugin-dts:
-        specifier: ^5.3.0
-        version: 5.3.0(rollup@3.23.0)(typescript@5.0.4)
       sass:
         specifier: ^1.62.1
         version: 1.62.1
@@ -265,9 +259,6 @@ importers:
       tiny-glob:
         specifier: ^0.2.9
         version: 0.2.9
-      ts-morph:
-        specifier: ^18.0.0
-        version: 18.0.0
       typescript:
         specifier: ^5.0.4
         version: 5.0.4
@@ -276,7 +267,7 @@ importers:
         version: 4.3.9(@types/node@20.2.5)(sass@1.62.1)
       vite-imagetools:
         specifier: ^5.0.4
-        version: 5.0.4(rollup@3.23.0)
+        version: 5.0.4
 
 packages:
 
@@ -1919,15 +1910,6 @@ packages:
     engines: {node: '>= 10'}
     dev: true
 
-  /@ts-morph/common@0.19.0:
-    resolution: {integrity: sha512-Unz/WHmd4pGax91rdIKWi51wnVUW11QttMEPpBiBgIewnc9UQIX7UDLxr5vRlqeByXCwhkF6VabSsI0raWcyAQ==}
-    dependencies:
-      fast-glob: 3.2.12
-      minimatch: 7.4.6
-      mkdirp: 2.1.6
-      path-browserify: 1.0.1
-    dev: true
-
   /@types/aria-query@5.0.1:
     resolution: {integrity: sha512-XTIieEY+gvJ39ChLcB4If5zHtPxt3Syj5rgZR+e1ctpmK8NjPf0zFqsz4JpLJT0xla9GFDKjy8Cpu331nrmE1Q==}
     dev: true
@@ -2714,10 +2696,6 @@ packages:
     engines: {node: '>=0.8'}
     dev: true
 
-  /code-block-writer@12.0.0:
-    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
-    dev: true
-
   /code-red@1.0.0:
     resolution: {integrity: sha512-x5fNWOBu7Ii38br3iVPuwQcDQM0f2h8ipvqw4qTLlOzYlrFQRz954qR0hPZ8asV5KG/igXNY8CRG6xtDUoKOJQ==}
     dependencies:
@@ -3128,8 +3106,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.1.2:
-    resolution: {integrity: sha512-CLDbDXtcrNjuWLYljJuCL4l//mvDZzjtFkmr4yGyCAk58szuzmjzoWKG+7NBFWeeajOiISu/IG96QNMb0CPtdw==}
+  /dts-buddy@0.1.6:
+    resolution: {integrity: sha512-CjZGxch9dL1XjvsOsgW2IMXHoREcl+q/AXNe05QCYvq6nnC8SVZT5w6ll5Kafe4lQJif8eLag4j9xPZ44h5Vhw==}
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.3
@@ -3140,6 +3118,7 @@ packages:
       magic-string: 0.30.0
       sade: 1.8.1
       tiny-glob: 0.2.9
+      ts-api-utils: 0.0.46(typescript@5.0.4)
       typescript: 5.0.4
     dev: true
 
@@ -4958,13 +4937,6 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
-  /minimatch@7.4.6:
-    resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
-    engines: {node: '>=10'}
-    dependencies:
-      brace-expansion: 2.0.1
-    dev: true
-
   /minimist-options@4.1.0:
     resolution: {integrity: sha512-Q4r8ghd80yhO/0j1O3B2BjweX3fiHg9cdOwjJd2J76Q135c+NDxGCqdYKQ1SKBuFfgWbAUzBfvYjPUEeNgqN1A==}
     engines: {node: '>= 6'}
@@ -5359,10 +5331,6 @@ packages:
     resolution: {integrity: sha512-Czj1WaSVpaoj0wbhMzLmWD69anp2WH7FXMB9n1Sy8/ZFF9jolSQVMu1Ij5WIyGmcBmhk7EOndpO4mIpihVqAXw==}
     dependencies:
       entities: 4.5.0
-    dev: true
-
-  /path-browserify@1.0.1:
-    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
     dev: true
 
   /path-exists@4.0.0:
@@ -5826,20 +5794,6 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
-    dev: true
-
-  /rollup-plugin-dts@5.3.0(rollup@3.23.0)(typescript@5.0.4):
-    resolution: {integrity: sha512-8FXp0ZkyZj1iU5klkIJYLjIq/YZSwBoERu33QBDxm/1yw5UU4txrEtcmMkrq+ZiKu3Q4qvPCNqc3ovX6rjqzbQ==}
-    engines: {node: '>=v14'}
-    peerDependencies:
-      rollup: ^3.0.0
-      typescript: ^4.1 || ^5.0
-    dependencies:
-      magic-string: 0.30.0
-      rollup: 3.23.0
-      typescript: 5.0.4
-    optionalDependencies:
-      '@babel/code-frame': 7.21.4
     dev: true
 
   /rollup-plugin-serve@2.0.2:
@@ -6565,11 +6519,13 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /ts-morph@18.0.0:
-    resolution: {integrity: sha512-Kg5u0mk19PIIe4islUI/HWRvm9bC1lHejK4S0oh1zaZ77TMZAEmQC0sHQYiu2RgCQFZKXz1fMVi/7nOOeirznA==}
+  /ts-api-utils@0.0.46(typescript@5.0.4):
+    resolution: {integrity: sha512-YKJeSx39n0mMk+hrpyHKyTgxA3s7Pz/j1cXYR+t8HcwwZupzOR5xDGKnOEw3gmLaUeFUQt3FJD39AH9Ajn/mdA==}
+    engines: {node: '>=16.13.0'}
+    peerDependencies:
+      typescript: '>=4.2.0'
     dependencies:
-      '@ts-morph/common': 0.19.0
-      code-block-writer: 12.0.0
+      typescript: 5.0.4
     dev: true
 
   /tsconfig-paths@3.14.2:
@@ -6770,7 +6726,7 @@ packages:
       spdx-expression-parse: 3.0.1
     dev: true
 
-  /vite-imagetools@5.0.4(rollup@3.23.0):
+  /vite-imagetools@5.0.4:
     resolution: {integrity: sha512-EIRstqWlmoQipsucFCioqCYpfp+rG5v8gpKDFvFJBxEKEAEBPnxW+swmE5dfoRQkwMKkYwmBWeXYsnMaDohUtg==}
     engines: {node: '>=12.0.0'}
     dependencies:
