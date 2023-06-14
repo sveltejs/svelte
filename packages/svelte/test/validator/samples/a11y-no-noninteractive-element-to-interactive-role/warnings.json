@@ -38,18 +38,6 @@
 	{
 		"code": "a11y-no-noninteractive-element-to-interactive-role",
 		"end": {
-			"column": 57,
-			"line": 5
-		},
-		"message": "A11y: Non-interactive element <body> cannot have interactive role 'combobox'",
-		"start": {
-			"column": 0,
-			"line": 5
-		}
-	},
-	{
-		"code": "a11y-no-noninteractive-element-to-interactive-role",
-		"end": {
 			"column": 18,
 			"line": 6
 		},
@@ -201,18 +189,6 @@
 		"start": {
 			"column": 0,
 			"line": 20
-		}
-	},
-	{
-		"code": "a11y-no-noninteractive-element-to-interactive-role",
-		"end": {
-			"column": 20,
-			"line": 21
-		},
-		"message": "A11y: Non-interactive element <frame> cannot have interactive role 'row'",
-		"start": {
-			"column": 0,
-			"line": 21
 		}
 	},
 	{
@@ -561,18 +537,6 @@
 		"start": {
 			"column": 0,
 			"line": 48
-		}
-	},
-	{
-		"code": "a11y-no-noninteractive-element-to-interactive-role",
-		"end": {
-			"column": 20,
-			"line": 49
-		},
-		"message": "A11y: Non-interactive element <td> cannot have interactive role 'button'",
-		"start": {
-			"column": 0,
-			"line": 49
 		}
 	},
 	{

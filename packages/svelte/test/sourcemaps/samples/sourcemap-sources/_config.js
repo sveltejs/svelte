@@ -1,8 +1,4 @@
-/* eslint-disable import/no-duplicates */
-/* the code that transforms these to commonjs, can't handle "MagicString, { Bundle } from.." */
-
-import MagicString from 'magic-string';
-import { Bundle } from 'magic-string';
+import MagicString, { Bundle } from 'magic-string';
 
 function add(bundle, filename, source) {
 	bundle.addSource({
