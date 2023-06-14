@@ -11,19 +11,13 @@
 
 	<p>
 		We're proud that Svelte was recently voted the <a
-			href="https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks"
-			>most loved web framework</a
+			href="https://survey.stackoverflow.co/2023/#section-admired-and-desired-web-frameworks-and-technologies"
+			>most admired JS web framework</a
 		>
-		with the
-		<a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/"
-			>most satisfied developers</a
-		>
-		while also drawing the
-		<a
-			href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
-			>most interest in learning it</a
-		>
-		in a trio of industry surveys. We think you'll love it too.
+		in one industry survey while drawing the most interest in learning it in <a
+		href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
+		>two</a> <a href="https://2022.stateofjs.com/en-US/libraries/front-end-frameworks/"
+		>others</a>. We think you'll love it too.
 	</p>
 
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
