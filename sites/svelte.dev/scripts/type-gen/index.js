@@ -273,37 +273,6 @@ function read_d_ts_file(file) {
 
 modules.sort((a, b) => (a.name < b.name ? -1 : 1));
 
-// // Fix the duplicate/messed up types
-// // !NOTE: This relies on mutation of `modules`
-// $: {
-// 	const module_with_SvelteComponent = modules.find((m) =>
-// 		m.types.filter((t) => t.name === 'SvelteComponent')
-// 	);
-
-// 	if (!module_with_SvelteComponent) break $;
-
-// 	const svelte_comp_part = module_with_SvelteComponent?.types.find(
-// 		(t) => t.name === 'SvelteComponent'
-// 	);
-
-// 	if (!svelte_comp_part) break $;
-
-// 	const internal_module = bundled_types.get('svelte/internal');
-// 	if (!internal_module) break $;
-
-// 	const internal_types = get_types(internal_module.code, internal_module.ts_source_file.statements);
-
-// 	const svelte_comp_dev_internal = internal_types.types.find(
-// 		(t) => t.name === 'SvelteComponentDev'
-// 	);
-
-// 	if (!svelte_comp_dev_internal) break $;
-
-// 	svelte_comp_part.children = svelte_comp_dev_internal.children;
-// 	svelte_comp_part.comment = svelte_comp_dev_internal.comment;
-// 	svelte_comp_part.snippet = svelte_comp_dev_internal.snippet;
-// }
-
 // Remove $$_attributes from ActionReturn
 $: {
 	const module_with_ActionReturn = modules.find((m) =>
