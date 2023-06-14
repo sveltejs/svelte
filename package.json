@@ -11,7 +11,7 @@
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
-    "release": "changeset release"
+    "changeset:publish": "changeset publish"
   },
   "repository": {
     "type": "git",

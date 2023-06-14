@@ -97,7 +97,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */
@@ -110,7 +110,7 @@ export function writable(value, start = noop) {
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>) => T} fn - function callback that aggregates the values
+ * @param {(values: import('./private.js').StoresValues<S>) => T} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */

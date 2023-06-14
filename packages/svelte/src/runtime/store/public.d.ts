@@ -47,3 +47,5 @@ export interface Writable<T> extends Readable<T> {
 	 */
 	update(this: void, updater: Updater<T>): void;
 }
+
+export * from './index.js';
