@@ -2,7 +2,7 @@
 <article role="button" />
 <aside role="checkbox" aria-checked={false} />
 <blockquote role="columnheader" />
-<body role="combobox" aria-controls={[]} aria-expanded />
+<body role="combobox" aria-controls={[]} aria-expanded /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <br role="grid" />
 <caption role="gridcell" />
 <dd role="link" />
@@ -18,7 +18,7 @@
 <figure role="option" aria-selected />
 <footer role="radio" aria-checked />
 <form role="radiogroup" />
-<frame role="row" />
+<frame role="row" /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <h1 role="rowheader">Button</h1>
 <h2 role="scrollbar" aria-controls={[]} aria-valuenow={0} >Button</h2>
 <h3 role="searchbox">Button</h3>
@@ -46,7 +46,7 @@
 <section role="radio" aria-label="radio" aria-checked />
 <table role="menu" />
 <tbody role="searchbox" />
-<td role="button" />
+<td role="button" />  // TODO: https://github.com/sveltejs/svelte/issues/8728
 <tfoot role="listbox" />
 <thead role="slider" aria-valuenow={0} />
 <time role="doc-backlink" />
