@@ -125,8 +125,8 @@
 			grid-template-columns: 1fr 1fr;
 			grid-column-gap: 4rem;
 			width: var(--width);
-			left: calc(0.5 * (100% - var(--width)));
-			top: 6vw;
+			left: calc(0.5 * (100% - min(100vw, 120rem)) + var(--sk-page-padding-side));
+			top: 6rem;
 			font-size: 0.9em;
 		}
 
@@ -141,8 +141,8 @@
 		}
 
 		.hero {
-			height: 34vw;
-			padding: 15vw 0 0 0;
+			height: calc(15rem + 19vw);
+			padding: 15rem 0 0 0;
 		}
 	}
 
