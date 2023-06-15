@@ -2,26 +2,41 @@ import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
 for (const name of ['action', 'animate', 'easing', 'internal', 'motion', 'store', 'transition']) {
-	fs.writeFileSync(`${name}.d.ts`, `import './types/index.d.ts';
+	fs.writeFileSync(
+		`${name}.d.ts`,
+		`import './types/index.d.ts';
 export * from "svelte/${name}";	
-`);
+`
+	);
 }
 
-fs.writeFileSync('index.d.ts', `import './types/index.d.ts';
+fs.writeFileSync(
+	'index.d.ts',
+	`import './types/index.d.ts';
 export * from "svelte";
-`);
-fs.writeFileSync('compiler.d.ts', `import './types/index.d.ts';
+`
+);
+fs.writeFileSync(
+	'compiler.d.ts',
+	`import './types/index.d.ts';
 export * from "svelte/compiler";
-`);
+`
+);
 
 // TODO: some way to mark these as deprecated
 fs.mkdirSync('./types/compiler', { recursive: true });
-fs.writeFileSync('./types/compiler/preprocess.d.ts', `import '../index.d.ts';
+fs.writeFileSync(
+	'./types/compiler/preprocess.d.ts',
+	`import '../index.d.ts';
 export * from "svelte/types/compiler/preprocess";
-`);
-fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.d.ts';
+`
+);
+fs.writeFileSync(
+	'./types/compiler/interfaces.d.ts',
+	`import '../index.d.ts';
 export * from "svelte/types/compiler/interfaces";
-`);
+`
+);
 
 await createBundle({
 	output: 'types/index.d.ts',
