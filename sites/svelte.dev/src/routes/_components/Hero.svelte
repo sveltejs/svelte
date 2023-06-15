@@ -146,7 +146,7 @@
 		}
 	}
 
-	@media (min-width: 1600px) {
+	@media (min-width: 1400px) {
 		.hero-content {
 			grid-template-columns: 1fr;
 			width: calc(0.5 * var(--width));
