@@ -4,6 +4,8 @@ title: Migrating from v3 to v4
 
 This migration guide provides an overview of how to migrate from Svelte version 3 to 4. See the linked PRs for more detailed migration instructions. Use the migration script to migrate some of these automatically: `npx svelte-migrate svelte-4`
 
+If you're a library author, consider whether to only support Svelte 4 or if it's possible to support Svelte 3, too, after migrating - since most breaking changes don't affect many people, this may be easily possible. Also remember to update your `peerDependencies`.
+
 ## Minimum version requirements
 
 - Upgrade to Node 16 or higher. Earlier versions are no longer supported. ([#8566](https://github.com/sveltejs/svelte/issues/8566))
