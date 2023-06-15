@@ -106,6 +106,7 @@ export function subscribe(store, ...callbacks) {
 }
 
 /**
+ * Get the current value from a store by subscribing and immediately unsubscribing.
  * @template T
  * @param {import('../store/public.js').Readable<T>} store
  * @returns {T}

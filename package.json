@@ -21,8 +21,8 @@
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
     "eslint": "^8.40.0",
-    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-svelte": "^2.28.0",
     "eslint-plugin-unicorn": "^47.0.0",
     "playwright": "^1.34.3",

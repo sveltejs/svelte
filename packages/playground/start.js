@@ -4,7 +4,10 @@ import { watch } from 'rollup';
 import serve from 'rollup-plugin-serve';
 import * as svelte from '../svelte/src/compiler/index.js';
 
-const __dirname = new URL('.', import.meta.url).pathname;
+let __dirname = new URL('.', import.meta.url).pathname;
+if (process.platform === 'win32') {
+	__dirname = __dirname.slice(1); // else path.resolve fucks up
+}
 
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {
