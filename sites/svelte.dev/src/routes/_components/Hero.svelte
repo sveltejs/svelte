@@ -1,60 +1,70 @@
 <script>
 	import { Icon } from '@sveltejs/site-kit/components';
-	import Image from './Image.svelte';
 	import SvelteLogotype from './svelte-logotype.svg';
 	// @ts-ignore
-	import Machine from './svelte-machine.png?w=4400&format=avif;webp;png&as=picture';
+	import MachineDesktop from './svelte-machine.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
+	// @ts-ignore
+	import MachineMobile from './svelte-machine-mobile.png?w=960&format=avif;webp;png;&as=picture';
+
+	const srcset = (sources) => sources.map(({ src, w }) => `${src} ${w}w`).join(', ');
 </script>
 
 <div class="hero">
-	<Image
-		src={Machine}
-		alt="The Svelte compiler packaging up your component code"
-		--max-height="60vh"
-	/>
-
 	<div class="hero-content">
 		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} />
-		<strong
-			><span style="white-space: nowrap;">Cybernetically enhanced</span> <br /> web apps</strong
-		>
+		<strong>
+			<span style="white-space: nowrap;">Cybernetically enhanced</span> <br /> web apps
+		</strong>
 		<div class="buttons">
 			<a href="https://learn.svelte.dev" rel="external" class="cta">
-				tutorial <Icon name="external-link" />
+				tutorial <Icon name="arrow-right" />
 			</a>
-			<a href="/docs/introduction" class="cta basic">read the docs</a>
+			<a href="/docs/introduction" class="cta basic">docs</a>
 		</div>
 	</div>
+
+	<picture class="machine">
+		<source
+			srcset={srcset(MachineDesktop.sources.avif)}
+			type="image/avif"
+			media="(min-width: 800px)"
+		/>
+		<source
+			srcset={srcset(MachineDesktop.sources.webp)}
+			type="image/webp"
+			media="(min-width: 800px)"
+		/>
+		<source
+			srcset={srcset(MachineDesktop.sources.png)}
+			type="image/png"
+			media="(min-width: 800px)"
+		/>
+		<source srcset={srcset(MachineMobile.sources.avif)} type="image/avif" />
+		<source srcset={srcset(MachineMobile.sources.webp)} type="image/webp" />
+		<source srcset={srcset(MachineMobile.sources.png)} type="image/png" />
+		<img alt="The Svelte compiler packaging up your component code" src={MachineMobile.img.src} />
+	</picture>
 </div>
 
 <style>
 	.hero {
 		position: relative;
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
-
-		height: 47vh;
-
+		padding: 6rem 0 calc(0rem + 40vw) 0;
 		margin-bottom: 3rem;
 	}
 
-	.hero :global(picture img) {
-		width: 250%;
-		transform: translate(-34%, 25%);
+	.machine img {
+		position: absolute;
+		pointer-events: none;
 	}
 
 	.hero-content {
-		position: absolute;
-		left: 50%;
-		top: clamp(10%, 5rem, 15%);
-
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-
-		transform: translateX(-50%);
-
-		max-width: 100%;
+		margin-bottom: 4rem;
 	}
 
 	strong {
@@ -64,6 +74,7 @@
 		text-transform: lowercase;
 		font-weight: 400;
 		color: var(--sk-text-2);
+		line-height: 1.2;
 	}
 
 	.buttons {
@@ -73,32 +84,26 @@
 	}
 
 	.cta {
-		display: inline-block;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		background: var(--sk-theme-1);
-
 		padding: 0.35em 0.8em;
 		margin-top: 0.5em;
-
 		font-size: var(--sk-text-s);
-		font-weight: 600;
 		letter-spacing: 0.5px;
 		white-space: nowrap;
-
 		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
-
 		color: #fff;
 		color: color-mix(in hwb, hsl(var(--sk-theme-1-hsl)) 10%, var(--sk-back-1) 95%);
-
 		transition: 0.5s var(--quint-out);
 		transition-property: transform, box-shadow, color;
 	}
 
 	.cta:hover {
 		text-decoration: none;
-
 		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
-
 		transform: scale3d(1.01, 1.01, 1);
 	}
 
@@ -112,123 +117,32 @@
 		width: min(45vw, 40em);
 	}
 
-	@media (max-width: 580px) and (min-width: 361px) {
-		.hero {
-			margin-bottom: max(0rem, 10vw);
-		}
-
-		.hero {
-			height: 42vh;
-		}
-
-		.hero :global(picture img) {
-			width: 220%;
-			transform: translate(-30%, 30%);
-		}
-	}
-
-	@media (max-width: 580px) and (max-height: 700px) {
-		.hero {
-			margin-bottom: max(0rem, 15vw);
-
-			height: 50vh;
-		}
-
-		.hero :global(picture img) {
-			width: 220%;
-			transform: translate(-30%, 30%);
-		}
-	}
-
-	@media (min-width: 580px) {
+	@media (min-width: 800px) {
 		.hero-content {
-			top: 25%;
-			left: 26%;
-
+			--width: clamp(60rem, 50vw, 80rem);
+			position: absolute;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-column-gap: 4rem;
+			width: var(--width);
+			left: calc(0.5 * (100% - var(--width)));
+			top: 6vw;
 			font-size: 0.9em;
 		}
 
 		.logotype {
-			width: min(30vw, 30em);
+			width: 100%;
+			justify-self: end;
+		}
+
+		strong {
+			text-align: left;
+			font-size: calc(0.04 * var(--width));
 		}
 
 		.hero {
-			height: 40vh;
-		}
-
-		.hero :global(picture img) {
-			width: 200%;
-			transform: translate(-20%, -4%);
-		}
-	}
-
-	@media (min-width: 800px) {
-		.hero {
-			height: 38vh;
-			margin-top: 0;
-		}
-
-		.hero-content {
-			top: 25%;
-			left: 30%;
-		}
-
-		.logotype {
-			width: min(20vw, 20em);
-		}
-
-		.hero :global(picture img) {
-			width: 140%;
-			transform: translate(-10%, -10%);
-		}
-
-		.cta {
-			font-size: var(--sk-text-s);
-		}
-
-		.hero {
-			height: 44vh;
-		}
-
-		.hero :global(picture img) {
-			width: 160%;
-			transform: translateX(-14%);
-		}
-	}
-
-	@media (min-width: 800px) and (min-height: 1100px) {
-		.hero {
-			height: 28vh;
-		}
-
-		.hero :global(picture img) {
-			width: 160%;
-			transform: translate(-10%, -14%);
-		}
-	}
-
-	@media (min-width: 1200px) {
-		.hero {
-			height: 46vh;
-		}
-
-		.hero-content {
-			top: 25%;
-			left: 25%;
-		}
-
-		.hero :global(picture img) {
-			width: 120%;
-			transform: translate(-5%, 0%);
-		}
-
-		.hero {
-			height: 45vh;
-		}
-
-		.hero :global(picture img) {
-			width: 120%;
-			transform: translateX(-10%);
+			height: 34vw;
+			padding: 15vw 0 0 0;
 		}
 	}
 
