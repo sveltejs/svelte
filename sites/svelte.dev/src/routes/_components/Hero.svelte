@@ -2,7 +2,7 @@
 	import { Icon } from '@sveltejs/site-kit/components';
 	import SvelteLogotype from './svelte-logotype.svg';
 	// @ts-ignore
-	import MachineDesktop from './svelte-machine.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
+	import MachineDesktop from './svelte-machine-desktop.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
 	// @ts-ignore
 	import MachineMobile from './svelte-machine-mobile.png?w=960&format=avif;webp;png;&as=picture';
 
@@ -141,8 +141,8 @@
 		}
 
 		.hero {
-			height: calc(17rem + 19vw);
-			padding: 17rem 0 0 0;
+			height: calc(14rem + 20vw);
+			padding: 14rem 0 0 0;
 		}
 	}
 
