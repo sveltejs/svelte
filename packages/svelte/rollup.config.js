@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import replace from '@rollup/plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -25,19 +24,8 @@ export default [
 	{
 		input: 'src/compiler/index.js',
 		plugins: [
-			replace({
-				preventAssignment: true,
-				values: {
-					'process.env.NODE_DEBUG': false // appears inside the util package
-				}
-			}),
 			{
 				resolveId(id) {
-					// util is a built-in module in Node.js, but we want a self-contained compiler bundle
-					// that also works in the browser, so we load its polyfill instead
-					if (id === 'util') {
-						return require.resolve('./node_modules/util'); // just 'utils' would resolve this to the built-in module
-					}
 					// Must import from the `css-tree` browser bundled distribution due to `createRequire` usage if importing from css-tree directly
 					if (id === 'css-tree') {
 						return require.resolve('./node_modules/css-tree/dist/csstree.esm.js');
