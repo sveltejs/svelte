@@ -109,7 +109,7 @@
     "css-tree": "^2.3.1",
     "estree-walker": "^3.0.3",
     "is-reference": "^3.0.1",
-    "locate-character": "^2.0.5",
+    "locate-character": "^3.0.0",
     "magic-string": "^0.30.0",
     "periscopic": "^3.1.0"
   },
