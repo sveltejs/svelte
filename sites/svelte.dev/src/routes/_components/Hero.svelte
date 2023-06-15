@@ -141,8 +141,8 @@
 		}
 
 		.hero {
-			height: calc(15rem + 19vw);
-			padding: 15rem 0 0 0;
+			height: calc(17rem + 19vw);
+			padding: 17rem 0 0 0;
 		}
 	}
 
