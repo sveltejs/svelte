@@ -89,9 +89,8 @@
 		gap: 0.5rem;
 		background: var(--sk-theme-1);
 		padding: 0.35em 0.8em;
-		margin-top: 0.5em;
 		font-size: var(--sk-text-s);
-		letter-spacing: 0.5px;
+		letter-spacing: 0.05em;
 		white-space: nowrap;
 		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
