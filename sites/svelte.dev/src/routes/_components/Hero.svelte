@@ -121,7 +121,7 @@
 			--width: clamp(60rem, 50vw, 80rem);
 			position: absolute;
 			display: grid;
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr;
 			grid-column-gap: 4rem;
 			grid-row-gap: 2rem;
 			width: var(--width);
@@ -131,22 +131,27 @@
 		}
 
 		.logotype {
-			width: 100%;
-			justify-self: end;
+			width: 50%;
+			order: 2;
 		}
 
 		strong {
 			text-align: left;
 			font-size: calc(0.04 * var(--width));
+			order: 3;
 		}
 
 		.hero {
 			height: calc(14rem + 20vw);
 			padding: 14rem 0 0 0;
 		}
+
+		.buttons {
+			margin-bottom: 0.5em;
+		}
 	}
 
-	@media (min-width: 1400px) {
+	@media (min-width: 1000px) {
 		.hero-content {
 			grid-template-columns: 1fr;
 			width: calc(0.5 * var(--width));
@@ -156,6 +161,15 @@
 		.hero {
 			height: calc(10rem + 20vw);
 			padding: 10rem 0 0 0;
+		}
+
+		.logotype {
+			width: 100%;
+			order: 1;
+		}
+
+		strong {
+			order: 1;
 		}
 	}
 
