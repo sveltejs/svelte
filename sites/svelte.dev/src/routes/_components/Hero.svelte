@@ -124,6 +124,7 @@
 			display: grid;
 			grid-template-columns: 1fr 1fr;
 			grid-column-gap: 4rem;
+			grid-row-gap: 2rem;
 			width: var(--width);
 			left: calc(0.5 * (100% - min(100vw, 120rem)) + var(--sk-page-padding-side));
 			top: 6rem;
