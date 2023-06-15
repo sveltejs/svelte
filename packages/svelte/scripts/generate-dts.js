@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
-for (const name of ['action', 'animate', 'easing', 'internal', 'motion', 'store', 'transition']) {
+for (const name of ['action', 'animate', 'easing', 'motion', 'store', 'transition']) {
 	fs.writeFileSync(`${name}.d.ts`, `import './types/index.d.ts';`);
 }
 
@@ -23,7 +23,6 @@ await createBundle({
 		'svelte/action': 'src/runtime/action/public.d.ts',
 		'svelte/animate': 'src/runtime/animate/public.d.ts',
 		'svelte/easing': 'src/runtime/easing/index.js',
-		'svelte/internal': 'src/runtime/internal/public.d.ts',
 		'svelte/motion': 'src/runtime/motion/public.d.ts',
 		'svelte/store': 'src/runtime/store/public.d.ts',
 		'svelte/transition': 'src/runtime/transition/public.d.ts'
