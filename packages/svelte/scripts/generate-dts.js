@@ -1,17 +1,17 @@
 import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
-fs.readdirSync('src/runtime', { withFileTypes: true })
-	.filter((dirent) => dirent.isDirectory())
-	.forEach((dirent) => fs.writeFileSync(`${dirent.name}.d.ts`, `import 'types/index.d.ts';`));
+for (const name of ['action', 'animate', 'easing', 'internal', 'motion', 'store', 'transition']) {
+	fs.writeFileSync(`${name}.d.ts`, `import './types/index.d.ts';`);
+}
 
-fs.writeFileSync('index.d.ts', `import 'types/index.d.ts';`);
-fs.writeFileSync('compiler.d.ts', `import 'types/index.d.ts';`);
+fs.writeFileSync('index.d.ts', `import './types/index.d.ts';`);
+fs.writeFileSync('compiler.d.ts', `import './types/index.d.ts';`);
 
 // TODO: some way to mark these as deprecated
-fs.mkdirSync('types/compiler', { recursive: true });
-fs.writeFileSync('types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
-fs.writeFileSync('types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
+fs.mkdirSync('./types/compiler', { recursive: true });
+fs.writeFileSync('./types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
+fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
 
 await createBundle({
 	output: 'types/index.d.ts',
