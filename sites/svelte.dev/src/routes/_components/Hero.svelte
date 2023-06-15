@@ -50,7 +50,7 @@
 	.hero {
 		position: relative;
 		background: radial-gradient(circle at 40% 30%, rgb(235, 243, 249), rgb(214, 222, 228));
-		padding: 6rem 0 calc(0rem + 40vw) 0;
+		padding: 6rem 0 34vw 0;
 		margin-bottom: 3rem;
 	}
 
