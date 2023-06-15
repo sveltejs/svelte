@@ -147,6 +147,19 @@
 		}
 	}
 
+	@media (min-width: 1600px) {
+		.hero-content {
+			grid-template-columns: 1fr;
+			width: calc(0.5 * var(--width));
+			top: 6vw;
+		}
+
+		.hero {
+			height: calc(10rem + 20vw);
+			padding: 10rem 0 0 0;
+		}
+	}
+
 	:global(body.dark) .hero {
 		background: radial-gradient(
 				64.14% 72.25% at 47.58% 31.75%,
