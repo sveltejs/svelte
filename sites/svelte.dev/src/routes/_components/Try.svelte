@@ -6,15 +6,18 @@
 <div class="try-container">
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
-			<div class="try">
-				<TryTerminal />
-			</div>
 			<div class="copy">
 				<h2>see for yourself</h2>
 				<div>
-					Try it locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>, or<br />
-					with <a target="_blank" href="https://learn.svelte.dev">the interactive tutorial</a>.
+					Try it locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new"
+						>on StackBlitz</a
+					>, or with
+					<a target="_blank" href="https://learn.svelte.dev">the interactive tutorial</a>.
 				</div>
+			</div>
+
+			<div class="try">
+				<TryTerminal />
 			</div>
 		</div>
 	</Section>
@@ -41,19 +44,12 @@
 
 	.grid {
 		display: grid;
-		gap: 1em;
+		gap: 2em;
 		margin: 0 0 4rem 0;
 	}
 
 	.grid:last-child {
 		margin-bottom: 0;
-	}
-
-	@media (min-width: 900px) {
-		.grid {
-			grid-template-columns: repeat(var(--columns), 1fr);
-			gap: 7rem;
-		}
 	}
 
 	.try {
@@ -64,20 +60,38 @@
 	}
 
 	.copy {
-		text-align: center;
-		margin: 0 0 8rem;
+		text-align: left;
 	}
 
 	h2 {
 		display: inline-block;
 		width: 25rem;
-		margin: 4rem 0 1rem;
+		margin: 0 0 1rem;
 		font-size: var(--sk-text-xl);
-		text-align: justify;
 	}
 
 	a {
 		color: inherit;
 		text-decoration: underline;
+	}
+
+	@media (min-width: 900px) {
+		.grid {
+			grid-template-columns: repeat(var(--columns), 1fr);
+			gap: 7rem;
+		}
+
+		.copy {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			order: 2;
+		}
+
+		.copy div {
+			max-width: 15em;
+			text-align: center;
+		}
 	}
 </style>
