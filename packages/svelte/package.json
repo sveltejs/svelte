@@ -109,7 +109,7 @@
     "css-tree": "^2.3.1",
     "estree-walker": "^3.0.3",
     "is-reference": "^3.0.1",
-    "locate-character": "^2.0.5",
+    "locate-character": "^3.0.0",
     "magic-string": "^0.30.0",
     "periscopic": "^3.1.0"
   },
@@ -123,7 +123,7 @@
     "@types/estree": "^1.0.1",
     "@types/node": "^14.14.31",
     "agadoo": "^3.0.0",
-    "dts-buddy": "^0.1.4",
+    "dts-buddy": "^0.1.7",
     "esbuild": "^0.17.19",
     "happy-dom": "^9.18.3",
     "jsdom": "^21.1.1",
