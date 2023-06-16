@@ -287,7 +287,7 @@ if (typeof HTMLElement === 'function') {
 				this.$$props_definition,
 				'toProp'
 			);
-			this.$$component.$set({ [attr]: this.$$data[attr] });
+			this.$$component?.$set({ [attr]: this.$$data[attr] });
 		}
 
 		disconnectedCallback() {
