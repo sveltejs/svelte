@@ -31,7 +31,7 @@ There are now stricter types for `createEventDispatcher`, `Action`, `ActionRetur
 
 ## Custom Elements with Svelte
 
-The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option. The migration script will adjust your code automatically. The update timing of properties has changed slightly, too. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
+The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
 
 ## SvelteComponentTyped is deprecated
 
