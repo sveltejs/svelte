@@ -274,7 +274,7 @@ export function construct_svelte_component_dev(component, props) {
  *
  * Can be used to create strongly typed Svelte components.
  *
- * ### Example:
+ * #### Example:
  *
  * You have component library on npm called `component-library`, from which
  * you export a component called `MyComponent`. For Svelte+TypeScript users,

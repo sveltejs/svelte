@@ -184,7 +184,7 @@ export default function (node, renderer, options) {
 		}
 	});
 	if (options.hydratable) {
-		if (node.can_optimise_to_html_string && !options.has_added_svelte_hash) {
+		if (node.can_optimise_hydration && !options.has_added_svelte_hash) {
 			renderer.add_string(` data-svelte-h="${node.hash()}"`);
 			options = { ...options, has_added_svelte_hash: true };
 		}
