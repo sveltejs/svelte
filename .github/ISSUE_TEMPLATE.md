@@ -1,7 +1,7 @@
-------
+---
 Before filing an issue we'd appreciate it if you could take a moment to ensure
 there isn't already an open issue or pull-request.
------
+---
 
 If there's an existing issue, please add a :+1: reaction to the description of
 the issue. One way we prioritize issues is by the number of :+1: reactions on
@@ -23,7 +23,6 @@ as you can including the following.
 - Svelte version (Please check you can reproduce the issue with the latest release!)
 - Whether your project uses Webpack or Rollup
 
-- *Repeatable steps to reproduce the issue*
+- _Repeatable steps to reproduce the issue_
 
-Thanks for being part of Svelte!
--------
+## Thanks for being part of Svelte!

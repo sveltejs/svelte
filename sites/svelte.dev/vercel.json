@@ -1,0 +1,7 @@
+{
+	"$schema": "http://openapi.vercel.sh/vercel.json",
+	"github": {
+		"silent": true
+	},
+	"buildCommand": "cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm build"
+}

@@ -1,12 +1,15 @@
 /*
 !/elements
 !/scripts
-# TODO: after launch new site, format site dir.
-/site
 !/src
 src/compiler/compile/internal_exports.js
 src/shared/version.js
 !/test
+!documentation
+!sites
+sites/svelte.dev/src/lib/generated/*.js
+sites/svelte.dev/.svelte-kit
+sites/svelte.dev/.vercel
 /test/**/*.svelte
 /test/**/_expected*
 /test/**/_actual*
