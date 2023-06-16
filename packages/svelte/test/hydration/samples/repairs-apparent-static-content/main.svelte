@@ -1,0 +1,1 @@
+<h1>Hello {globalThis.whatever}!</h1>
