@@ -24,6 +24,9 @@ function get_nav_title(url) {
 	return '';
 }
 
+/**
+ * @returns {Promise<import('@sveltejs/site-kit').NavigationLink[]>}
+ */
 async function get_nav_context_list() {
 	const docs_list = get_docs_list(get_docs_data());
 	const processed_docs_list = docs_list.map(({ title, pages }) => ({
@@ -58,17 +61,42 @@ async function get_nav_context_list() {
 		}))
 		.filter(({ title }) => title !== 'Embeds');
 
-	return {
-		docs: processed_docs_list,
-		blog: processed_blog_list,
-		tutorial: processed_tutorial_list,
-		examples: processed_examples_list
-	};
+	return [
+		{
+			title: 'Tutorial',
+			prefix: 'tutorial',
+			pathname: '/tutorial',
+			sections: processed_tutorial_list
+		},
+		{
+			title: 'Docs',
+			prefix: 'docs',
+			pathname: '/docs/introduction',
+			sections: processed_docs_list
+		},
+		{
+			title: 'Examples',
+			prefix: 'examples',
+			pathname: '/examples',
+			sections: processed_examples_list
+		},
+		{
+			title: 'REPL',
+			prefix: 'repl',
+			pathname: '/repl'
+		},
+		{
+			title: 'Blog',
+			prefix: 'blog',
+			pathname: '/blog',
+			sections: processed_blog_list
+		}
+	];
 }
 
 export const load = async ({ url }) => {
 	return {
 		nav_title: get_nav_title(url),
-		nav_context_list: get_nav_context_list()
+		nav_links: get_nav_context_list()
 	};
 };
