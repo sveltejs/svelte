@@ -1,17 +1,18 @@
 import * as fs from 'fs';
 import { createBundle } from 'dts-buddy';
 
+// It may look weird, but the imports MUST be ending with index.js to be properly resolved in all TS modes
 for (const name of ['action', 'animate', 'easing', 'motion', 'store', 'transition']) {
-	fs.writeFileSync(`${name}.d.ts`, `import './types/index.d.ts';`);
+	fs.writeFileSync(`${name}.d.ts`, `import './types/index.js';`);
 }
 
-fs.writeFileSync('index.d.ts', `import './types/index.d.ts';`);
-fs.writeFileSync('compiler.d.ts', `import './types/index.d.ts';`);
+fs.writeFileSync('index.d.ts', `import './types/index.js';`);
+fs.writeFileSync('compiler.d.ts', `import './types/index.js';`);
 
 // TODO: some way to mark these as deprecated
 fs.mkdirSync('./types/compiler', { recursive: true });
-fs.writeFileSync('./types/compiler/preprocess.d.ts', `import '../index.d.ts';`);
-fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.d.ts';`);
+fs.writeFileSync('./types/compiler/preprocess.d.ts', `import '../index.js';`);
+fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.js';`);
 
 await createBundle({
 	output: 'types/index.d.ts',
