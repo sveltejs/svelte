@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -78,8 +78,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       locate-character:
-        specifier: ^2.0.5
-        version: 2.0.5
+        specifier: ^3.0.0
+        version: 3.0.0
       magic-string:
         specifier: ^0.30.0
         version: 0.30.0
@@ -115,8 +115,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.1.6
-        version: 0.1.6
+        specifier: ^0.1.7
+        version: 0.1.7
       esbuild:
         specifier: ^0.17.19
         version: 0.17.19
@@ -2964,15 +2964,15 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.1.6:
-    resolution: {integrity: sha512-CjZGxch9dL1XjvsOsgW2IMXHoREcl+q/AXNe05QCYvq6nnC8SVZT5w6ll5Kafe4lQJif8eLag4j9xPZ44h5Vhw==}
+  /dts-buddy@0.1.7:
+    resolution: {integrity: sha512-zqKumjFt/RXVTPV3DT/L7NBDuc763NeAZEIJATicoSvxDnOnCFzV0WUc4JV8KZB3cwMCAktmEtL6ERXz+jJMrA==}
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.3
       '@jridgewell/sourcemap-codec': 1.4.15
       globrex: 0.1.2
       kleur: 4.1.5
-      locate-character: 2.0.5
+      locate-character: 3.0.0
       magic-string: 0.30.0
       sade: 1.8.1
       tiny-glob: 0.2.9
@@ -4304,8 +4304,8 @@ packages:
     engines: {node: '>=14'}
     dev: true
 
-  /locate-character@2.0.5:
-    resolution: {integrity: sha512-n2GmejDXtOPBAZdIiEFy5dJ5N38xBCXLNOtw2WpB9kGh6pnrEuKlwYI+Tkpofc4wDtVXHtoAOJaMRlYG/oYaxg==}
+  /locate-character@3.0.0:
+    resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
 
   /locate-path@5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
