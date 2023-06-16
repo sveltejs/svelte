@@ -6,12 +6,12 @@
 
 <Section --background="var(--sk-back-2">
 	<p class="intro">
-		Svelte is free and open source software, made possible <br /> by the work of hundreds of supporters.
+		Svelte is free and open source software, made possible by the work of hundreds of supporters.
 	</p>
 
 	<div class="layout">
 		<div class="contributors blurb">
-			<h3>Contributors</h3>
+			<h3>contributors</h3>
 			<p>
 				<a href="https://github.com/sveltejs/svelte/graphs/contributors">Join us on GitHub</a>
 			</p>
@@ -30,7 +30,7 @@
 		</div>
 
 		<div class="donors blurb">
-			<h3>Donors</h3>
+			<h3>donors</h3>
 			<p><a href="https://opencollective.com/svelte">Support us on OpenCollective</a></p>
 		</div>
 
@@ -53,7 +53,7 @@
 	}
 
 	.intro {
-		max-width: 25em; /* text balancing */
+		max-width: 28em; /* text balancing */
 		margin: 0 0 3.2rem 0;
 	}
 
@@ -148,7 +148,7 @@
 
 	@media (min-width: 1200px) {
 		.intro {
-			max-width: none;
+			max-width: 600px;
 		}
 	}
 </style>

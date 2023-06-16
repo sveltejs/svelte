@@ -8,42 +8,13 @@
 		<div class="grid" style="--columns: 2">
 			<div class="try">
 				<TryTerminal />
-
-				<p class="create-an-app">
-					...or
-					<a target="_blank" rel="noreferrer" href="https://sveltekit.new"> create an app </a>
-					on StackBlitz.
-				</p>
 			</div>
-
-			<div class="description">
-				<p>
-					Svelte is a radical new approach to building user interfaces. Whereas traditional
-					frameworks like React and Vue do the bulk of their work in the <em>browser</em>, Svelte
-					shifts that work into a
-					<em>compile step</em> that happens when you build your app. No more virtual DOM!
-				</p>
-
-				<p>
-					We're proud that Svelte was recently voted the <a
-						href="https://insights.stackoverflow.com/survey/2021#section-most-loved-dreaded-and-wanted-web-frameworks"
-						>most loved web framework</a
-					>
-					with the
-					<a href="https://2020.stateofjs.com/en-US/technologies/front-end-frameworks/"
-						>most satisfied developers</a
-					>
-					drawing the
-					<a
-						href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
-						>most interest in learning it</a
-					>
-					in a trio of industry surveys. We think you'll love it too.
-					<a href="/blog/svelte-3-rethinking-reactivity" class="cta"
-						>Read the introductory blog post</a
-					>
-					to learn more.
-				</p>
+			<div class="copy">
+				<h2>see for yourself</h2>
+				<div>
+					Try it locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>, or<br />
+					with <a target="_blank" href="https://learn.svelte.dev">the interactive tutorial</a>.
+				</div>
 			</div>
 		</div>
 	</Section>
@@ -85,28 +56,24 @@
 		}
 	}
 
-	.create-an-app {
-		font-size: 0.75em;
-	}
-
-	.grid *::selection {
-		background: hsl(15, 100%, 65%);
-		color: white;
-	}
-
-	.description {
-		color: var(--sk-text-1);
-	}
-
-	.description p:first-child {
-		margin-top: 0;
-	}
-
 	.try {
 		width: 100%;
 		margin: 0 auto;
 		font-size: var(--sk-text-m);
 		color: var(--sk-text-1);
+	}
+
+	.copy {
+		text-align: center;
+		margin: 0 0 8rem;
+	}
+
+	h2 {
+		display: inline-block;
+		width: 25rem;
+		margin: 4rem 0 1rem;
+		font-size: var(--sk-text-xl);
+		text-align: justify;
 	}
 
 	a {
