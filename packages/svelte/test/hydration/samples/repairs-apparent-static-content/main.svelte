@@ -1,1 +1,1 @@
-<h1>Hello {globalThis.whatever}!</h1>
+<h1>Hello {'client'}!</h1>
