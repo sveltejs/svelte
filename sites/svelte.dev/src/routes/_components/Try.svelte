@@ -6,15 +6,15 @@
 <div class="try-container">
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
+			<div class="try">
+				<TryTerminal />
+			</div>
 			<div class="copy">
 				<h2>see for yourself</h2>
 				<div>
 					Try it locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>, or<br />
 					with <a target="_blank" href="https://learn.svelte.dev">the interactive tutorial</a>.
 				</div>
-			</div>
-			<div class="try">
-				<TryTerminal />
 			</div>
 		</div>
 	</Section>
