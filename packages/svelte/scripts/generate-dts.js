@@ -29,3 +29,10 @@ await createBundle({
 		'svelte/transition': 'src/runtime/transition/public.d.ts'
 	}
 });
+
+// There's no way to tell in JS that a class can have arbitrary properties, so we need to add that manually
+const types = fs.readFileSync('types/index.d.ts', 'utf-8');
+fs.writeFileSync(
+	'types/index.d.ts',
+	types.replace(/export class SvelteComponent<[^{]*{/, '$&\n\t\t[prop: string]: any;')
+);
