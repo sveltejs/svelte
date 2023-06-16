@@ -71,7 +71,7 @@ async function get_nav_context_list() {
 		{
 			title: 'Docs',
 			prefix: 'docs',
-			pathname: '/docs',
+			pathname: '/docs/introduction',
 			sections: processed_docs_list
 		},
 		{
