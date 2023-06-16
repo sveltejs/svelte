@@ -5,15 +5,17 @@
 
 <div class="try-container">
 	<Section --background="var(--background-2)">
-		<div class="grid" style="--columns: 2">
-			<div class="try">
-				<TryTerminal />
-			</div>
+		<div class="grid">
 			<div class="copy">
 				<h2>see for yourself</h2>
 				<div>
 					Try it locally, <a target="_blank" rel="noreferrer" href="https://sveltekit.new">on StackBlitz</a>, or<br />
 					with <a target="_blank" href="https://learn.svelte.dev">the interactive tutorial</a>.
+				</div>
+			</div>
+			<div class="try">
+				<div class="terminal">
+					<TryTerminal />
 				</div>
 			</div>
 		</div>
@@ -49,13 +51,6 @@
 		margin-bottom: 0;
 	}
 
-	@media (min-width: 900px) {
-		.grid {
-			grid-template-columns: repeat(var(--columns), 1fr);
-			gap: 7rem;
-		}
-	}
-
 	.try {
 		width: 100%;
 		margin: 0 auto;
@@ -63,9 +58,26 @@
 		color: var(--sk-text-1);
 	}
 
+	.terminal {
+		max-width: 525px;
+	}
+
+	@media (min-width: 750px) {
+		.grid {
+			columns: 3;
+			grid-template-columns: repeat(var(--columns), 1fr);
+			gap: 7rem;
+		}
+		.try {
+			grid-column: 2 / span 2;
+		}
+		.terminal {
+			margin: 0 auto;
+		}
+	}
+
 	.copy {
-		text-align: center;
-		margin: 0 0 8rem;
+		margin: 0 0 2rem;
 	}
 
 	h2 {
