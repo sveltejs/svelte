@@ -28,30 +28,24 @@
 				<strong>svelte</strong>
 			</svelte:fragment>
 
-			<svelte:fragment slot="nav-center">
+			<svelte:fragment slot="search">
 				{#if $page.url.pathname !== '/search'}
-					<li><Search /></li>
+					<Search />
 				{/if}
 			</svelte:fragment>
 
-			<svelte:fragment slot="nav-right">
-				<Separator />
+			<svelte:fragment slot="external-links">
+				<a href="https://kit.svelte.dev">SvelteKit</a>
 
-				<li><a href="https://kit.svelte.dev">SvelteKit</a></li>
+				<a href="/chat" title="Discord Chat">
+					<span class="small">Discord</span>
+					<span class="large"><Icon name="discord" /></span>
+				</a>
 
-				<li>
-					<a href="/chat" title="Discord Chat">
-						<span class="small">Discord</span>
-						<span class="large"><Icon name="discord" /></span>
-					</a>
-				</li>
-
-				<li>
-					<a href="https://github.com/sveltejs/svelte" title="GitHub Repo">
-						<span class="small">GitHub</span>
-						<span class="large"><Icon name="github" /></span>
-					</a>
-				</li>
+				<a href="https://github.com/sveltejs/svelte" title="GitHub Repo">
+					<span class="small">GitHub</span>
+					<span class="large"><Icon name="github" /></span>
+				</a>
 			</svelte:fragment>
 		</Nav>
 
