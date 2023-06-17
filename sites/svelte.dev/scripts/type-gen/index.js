@@ -31,7 +31,10 @@ function get_types(code, statements) {
 		for (const statement of statements) {
 			const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
 
-			const export_modifier = modifiers?.find((modifier) => modifier.kind === 93);
+			const export_modifier = modifiers?.find(
+				(modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword
+			);
+
 			if (!export_modifier) continue;
 
 			if (
