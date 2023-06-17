@@ -34,5 +34,6 @@ await createBundle({
 const types = fs.readFileSync('types/index.d.ts', 'utf-8');
 fs.writeFileSync(
 	'types/index.d.ts',
-	types.replace(/export class SvelteComponent<[^{]*{/, '$&\n\t\t[prop: string]: any;')
+	// same line to not affect source map
+	types.replace(/export class SvelteComponent<[^{]*{/, '$& [prop: string]: any;')
 );
