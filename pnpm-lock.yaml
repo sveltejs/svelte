@@ -3153,8 +3153,8 @@ packages:
       magic-string: 0.30.0
       sade: 1.8.1
       tiny-glob: 0.2.9
-      ts-api-utils: 0.0.46(typescript@5.0.4)
-      typescript: 5.0.4
+      ts-api-utils: 0.0.46(typescript@5.1.3)
+      typescript: 5.1.3
     dev: true
 
   /emoji-regex@10.2.1:
@@ -6320,13 +6320,13 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /ts-api-utils@0.0.46(typescript@5.0.4):
+  /ts-api-utils@0.0.46(typescript@5.1.3):
     resolution: {integrity: sha512-YKJeSx39n0mMk+hrpyHKyTgxA3s7Pz/j1cXYR+t8HcwwZupzOR5xDGKnOEw3gmLaUeFUQt3FJD39AH9Ajn/mdA==}
     engines: {node: '>=16.13.0'}
     peerDependencies:
       typescript: '>=4.2.0'
     dependencies:
-      typescript: 5.0.4
+      typescript: 5.1.3
     dev: true
 
   /tslib@1.14.1:
