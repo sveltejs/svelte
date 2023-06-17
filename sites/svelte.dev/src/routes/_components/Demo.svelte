@@ -36,7 +36,7 @@
 </svelte:head>
 
 <Section --background="var(--sk-back-2)">
-	<h3>Why Svelte?</h3>
+	<h3>build with ease</h3>
 
 	<div class="container">
 		<div class="controls">
