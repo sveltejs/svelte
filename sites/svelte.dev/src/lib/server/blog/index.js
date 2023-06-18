@@ -1,9 +1,9 @@
 // @ts-check
 import { modules } from '$lib/generated/type-info.js';
+import { extractFrontmatter, renderContentMarkdown } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
-import { extract_frontmatter } from '../markdown/index.js';
-import { render_markdown } from '../markdown/renderer.js';
+import { svelte_twoslash_banner } from '../twoslash-banner.js';
 
 /**
  * @param {import('./types').BlogData} blog_data
@@ -16,7 +16,10 @@ export async function get_processed_blog_post(blog_data, slug) {
 
 	return {
 		...post,
-		content: await render_markdown(post.file, post.content, { modules })
+		content: await renderContentMarkdown(post.file, post.content, {
+			modules,
+			twoslashBanner: svelte_twoslash_banner
+		})
 	};
 }
 
@@ -31,7 +34,7 @@ export function get_blog_data(base = CONTENT_BASE_PATHS.BLOG) {
 		if (!BLOG_NAME_REGEX.test(file)) continue;
 
 		const { date, date_formatted, slug } = get_date_and_slug(file);
-		const { metadata, body } = extract_frontmatter(fs.readFileSync(`${base}/${file}`, 'utf-8'));
+		const { metadata, body } = extractFrontmatter(fs.readFileSync(`${base}/${file}`, 'utf-8'));
 
 		blog_posts.push({
 			date,

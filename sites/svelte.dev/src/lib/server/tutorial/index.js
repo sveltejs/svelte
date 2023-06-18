@@ -1,8 +1,8 @@
 import { modules } from '$lib/generated/type-info';
+import { extractFrontmatter, renderContentMarkdown } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
-import { extract_frontmatter } from '../markdown/index.js';
-import { render_markdown } from '../markdown/renderer.js';
+import { svelte_twoslash_banner } from '../twoslash-banner.js';
 
 /**
  * @param {import('./types').TutorialData} tutorial_data
@@ -17,7 +17,10 @@ export async function get_parsed_tutorial(tutorial_data, slug) {
 
 	return {
 		...tutorial,
-		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content, { modules })
+		content: await renderContentMarkdown(`tutorial/${tutorial.dir}`, tutorial.content, {
+			modules,
+			twoslashBanner: svelte_twoslash_banner
+		})
 	};
 }
 
@@ -49,7 +52,7 @@ export function get_tutorial_data(base = CONTENT_BASE_PATHS.TUTORIAL) {
 
 			// Read the file, get frontmatter
 			const contents = fs.readFileSync(`${tutorial_base_dir}/text.md`, 'utf-8');
-			const { metadata, body } = extract_frontmatter(contents);
+			const { metadata, body } = extractFrontmatter(contents);
 
 			// Get the contents of the apps.
 			const completion_states_data = { initial: [], complete: [] };
