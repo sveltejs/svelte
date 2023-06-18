@@ -44,9 +44,10 @@ Let's see what that looks like in practice.
 		<source type='video/mp4' src='https://svelte-technology-assets.surge.sh/just-write-css.mp4'>
 	</video>
 
-    <figcaption>
-    	Is this what they mean by 'use the platform'?
-    </figcaption>
+<!-- prettier-ignore -->
+<figcaption>
+	Is this what they mean by 'use the platform'?
+</figcaption>
 
 </figure>
 
