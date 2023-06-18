@@ -1632,11 +1632,9 @@ export default class Component {
 		unsorted_reactive_declarations.forEach(add_declaration);
 	}
 	check_if_tags_content_dynamic() {
-		this.tags.forEach(
-			/** @param {any} tag */ (tag) => {
-				tag.check_if_content_dynamic();
-			}
-		);
+		this.tags.forEach((tag) => {
+			tag.check_if_content_dynamic();
+		});
 	}
 
 	/**

@@ -12,15 +12,15 @@
  * ```ts
  * interface Attributes {
  * 	newprop?: string;
- *	'on:event': (e: CustomEvent<boolean>) => void;
+ * 	'on:event': (e: CustomEvent<boolean>) => void;
  * }
  *
  * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {
- *   // ...
- *   return {
- *     update: (updatedParameter) => {...},
- *     destroy: () => {...}
- *   };
+ * 	// ...
+ * 	return {
+ * 		update: (updatedParameter) => {...},
+ * 		destroy: () => {...}
+ * 	};
  * }
  * ```
  *
