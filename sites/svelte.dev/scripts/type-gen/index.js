@@ -212,7 +212,7 @@ function munge_type_element(member, depth = 1) {
 	return {
 		name,
 		snippet,
-		comment: (doc?.comment ?? '')
+		comment: (doc?.comment + '' ?? '')
 			.replace(/\/\/\/ type: (.+)/g, '/** @type {$1} */')
 			.replace(/^(  )+/gm, (match, spaces) => {
 				return '\t'.repeat(match.length / 2);
