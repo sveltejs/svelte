@@ -29,9 +29,7 @@ const result = compile(source, {
 });
 ```
 
-The following options can be passed to the compiler. None are required:
-
-> TYPES: svelte/compiler#CompileOptions
+> Refer to [CompileOptions](#type-compileoptions) for all the available options.
 
 The returned `result` object contains the code for your component, along with useful bits of metadata.
 
