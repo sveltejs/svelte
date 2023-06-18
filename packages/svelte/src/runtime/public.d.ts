@@ -1,10 +1,23 @@
 import './ambient.js';
 
 // Types written in this particular order to work around a dts-buddy bug where it doesn't handle the
-// SvelteComponentDev as SvelteComponent alias correctly. If that's fixed, we can remove the
-// export type .. from './internal/dev.js' line and do just export * from './index.js' below.
+// SvelteComponentDev as SvelteComponent alias correctly.
+// If that's fixed, we  can do export * from './index.js' instead.
 
-export type { SvelteComponentDev as SvelteComponent } from './internal/dev.js';
+export {
+	SvelteComponent,
+	SvelteComponentTyped,
+	onMount,
+	onDestroy,
+	beforeUpdate,
+	afterUpdate,
+	setContext,
+	getContext,
+	getAllContexts,
+	hasContext,
+	tick,
+	createEventDispatcher
+} from './index.js';
 
 export type {
 	ComponentConstructorOptions,
@@ -12,17 +25,3 @@ export type {
 	ComponentProps,
 	ComponentType
 } from './internal/public.js';
-
-export {
-	afterUpdate,
-	beforeUpdate,
-	createEventDispatcher,
-	getAllContexts,
-	getContext,
-	hasContext,
-	onDestroy,
-	onMount,
-	setContext,
-	tick,
-	SvelteComponentTyped
-} from './index.js';
