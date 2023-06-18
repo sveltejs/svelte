@@ -214,7 +214,7 @@ export interface CompileOptions {
 	 * An initial sourcemap that will be merged into the final output sourcemap.
 	 * This is usually the preprocessor sourcemap.
 	 *
-	 * @default undefined
+	 * @default null
 	 */
 	sourcemap?: object | string;
 
