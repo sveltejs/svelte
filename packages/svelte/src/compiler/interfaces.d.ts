@@ -171,7 +171,7 @@ export type CssHashGetter = (args: {
 export interface CompileOptions {
 	/**
 	 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
-	 * It will normally be inferred from {@link filename}
+	 * It will normally be inferred from `filename`
 	 *
 	 * @default 'Component'
 	 */
