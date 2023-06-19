@@ -18,6 +18,10 @@ if (!process.versions.webcontainer) {
 	);
 }
 
+/** 
+ * @param {string[]} ext
+ * @returns {import("vite").Plugin} 
+ */
 function raw(ext) {
 	return {
 		name: 'vite-plugin-raw',
