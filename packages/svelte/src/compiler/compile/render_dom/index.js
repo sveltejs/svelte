@@ -605,7 +605,7 @@ export default function dom(component, options) {
 		}
 	}
 
-	if (options.disableVersionTagging !== false) {
+	if (options.disableVersionTagging !== true) {
 		/** @type {import('estree').ImportDeclaration} */
 		const version_tag_import = {
 			type: 'ImportDeclaration',

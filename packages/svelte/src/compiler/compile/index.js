@@ -30,7 +30,8 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash'
+	'cssHash',
+	'disableVersionTagging'
 ];
 const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
