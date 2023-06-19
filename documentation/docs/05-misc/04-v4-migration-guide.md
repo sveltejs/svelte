@@ -29,6 +29,7 @@ There are now stricter types for `createEventDispatcher`, `Action`, `ActionRetur
 - `createEventDispatcher` now supports specifying that a payload is optional, required, or non-existent, and the call sites are checked accordingly ([#7224](https://github.com/sveltejs/svelte/issues/7224))
 
 ```ts
+// @errors: 2554 2345
 import { createEventDispatcher } from 'svelte';
 
 // Svelte version 3:
