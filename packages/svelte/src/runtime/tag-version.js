@@ -1,4 +1,4 @@
-import { VERSION } from '../shared/version';
+import { VERSION } from '../shared/version.js';
 
 if (typeof window !== 'undefined')
 	// @ts-ignore
