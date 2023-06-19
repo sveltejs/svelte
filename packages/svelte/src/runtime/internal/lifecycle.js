@@ -26,12 +26,6 @@ export function beforeUpdate(fn) {
 }
 
 /**
- * Anything except a function
- * @template T
- * @typedef {T extends Function ? never : T} NotFunction
- */
-
-/**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
  * It must be called during the component's initialisation (but doesn't need to live *inside* the component;
  * it can be called from an external module).
@@ -42,7 +36,7 @@ export function beforeUpdate(fn) {
  *
  * https://svelte.dev/docs#run-time-svelte-onmount
  * @template T
- * @param {() => NotFunction<T> | Promise<NotFunction<T>> | (() => any)} fn
+ * @param {() => import('./private.js').NotFunction<T> | Promise<import('./private.js').NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
