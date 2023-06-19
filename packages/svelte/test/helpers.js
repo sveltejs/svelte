@@ -200,7 +200,7 @@ export function create_loader(compileOptions, cwd) {
 				const fn = new AsyncFunction('__import', '__exports', transformed);
 				await fn(__import, __exports);
 			} catch (err) {
-				console.error({ transformed }); // eslint-disable-line no-console
+				console.error(compileOptions, transformed); // eslint-disable-line no-console
 				throw err;
 			}
 
