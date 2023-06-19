@@ -36,9 +36,7 @@ export function beforeUpdate(fn) {
  *
  * https://svelte.dev/docs#run-time-svelte-onmount
  * @template T
- * @param {() => T extends Promise<() => any>
- * 		? "Returning a function asynchronously from onMount won't call that function on destroy"
- * 		: T} fn
+ * @param {() => import('./private.js').NotFunction<T> | Promise<import('./private.js').NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
 export function onMount(fn) {
