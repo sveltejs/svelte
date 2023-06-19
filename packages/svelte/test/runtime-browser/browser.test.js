@@ -64,6 +64,7 @@ async function run_browser_test(dir) {
 				__CONFIG__: path.resolve(__dirname, 'samples', dir, '_config.js'),
 				'assert.js': path.resolve(__dirname, 'assert.js'),
 				'svelte/internal': internal,
+				'svelte/tag-version': path.resolve('src/runtime/tag-version.js'),
 				svelte: index
 			},
 			plugins: [
@@ -171,6 +172,7 @@ async function run_custom_elements_test(dir) {
 			alias: {
 				'assert.js': path.resolve(__dirname, 'assert.js'),
 				'svelte/internal': internal,
+				'svelte/tag-version': path.resolve('src/runtime/tag-version.js'),
 				svelte: index
 			},
 			plugins: [

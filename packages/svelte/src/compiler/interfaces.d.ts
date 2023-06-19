@@ -195,6 +195,7 @@ export interface CompileOptions {
 
 	preserveComments?: boolean;
 	preserveWhitespace?: boolean;
+	disableVersionTagging?: boolean;
 }
 
 export interface ParserOptions {

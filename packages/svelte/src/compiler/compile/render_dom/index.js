@@ -604,5 +604,19 @@ export default function dom(component, options) {
 			);
 		}
 	}
+
+	if (options.disableVersionTagging !== false) {
+		/** @type {import('estree').ImportDeclaration} */
+		const version_tag_import = {
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: {
+				type: 'Literal',
+				value: `${options.sveltePath ?? 'svelte'}/tag-version`
+			}
+		};
+		component.imports.unshift(version_tag_import);
+	}
+
 	return { js: flatten(body), css };
 }
