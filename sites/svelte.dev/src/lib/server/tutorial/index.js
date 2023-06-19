@@ -1,8 +1,7 @@
-import { modules } from '$lib/generated/type-info';
-import { extractFrontmatter, renderContentMarkdown } from '@sveltejs/site-kit/markdown';
+import { extractFrontmatter } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
-import { svelte_twoslash_banner } from '../twoslash-banner.js';
+import { render_content } from '../renderer.js';
 
 /**
  * @param {import('./types').TutorialData} tutorial_data
@@ -17,10 +16,7 @@ export async function get_parsed_tutorial(tutorial_data, slug) {
 
 	return {
 		...tutorial,
-		content: await renderContentMarkdown(`tutorial/${tutorial.dir}`, tutorial.content, {
-			modules,
-			twoslashBanner: svelte_twoslash_banner
-		})
+		content: await render_content(`tutorial/${tutorial.dir}`, tutorial.content)
 	};
 }
 

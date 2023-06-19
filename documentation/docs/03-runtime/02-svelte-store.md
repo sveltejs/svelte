@@ -62,6 +62,7 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
 ```js
+<!--- file: App.svelte --->
 // ---cut---
 import { readable } from 'svelte/store';
 

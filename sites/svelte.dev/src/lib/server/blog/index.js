@@ -1,9 +1,8 @@
 // @ts-check
-import { modules } from '$lib/generated/type-info.js';
-import { extractFrontmatter, renderContentMarkdown } from '@sveltejs/site-kit/markdown';
+import { extractFrontmatter } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
-import { svelte_twoslash_banner } from '../twoslash-banner.js';
+import { render_content } from '../renderer.js';
 
 /**
  * @param {import('./types').BlogData} blog_data
@@ -16,10 +15,7 @@ export async function get_processed_blog_post(blog_data, slug) {
 
 	return {
 		...post,
-		content: await renderContentMarkdown(post.file, post.content, {
-			modules,
-			twoslashBanner: svelte_twoslash_banner
-		})
+		content: await render_content(post.file, post.content)
 	};
 }
 
