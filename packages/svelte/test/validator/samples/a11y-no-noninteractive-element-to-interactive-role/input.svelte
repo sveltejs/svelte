@@ -2,7 +2,6 @@
 <article role="button" />
 <aside role="checkbox" aria-checked={false} />
 <blockquote role="columnheader" />
-<body role="combobox" aria-controls={[]} aria-expanded /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <br role="grid" />
 <caption role="gridcell" />
 <dd role="link" />
@@ -13,14 +12,13 @@
 <dt role="menuitemcheckbox" aria-checked />
 <fieldset role="menuitemradio" aria-checked />
 <figure>
-  <figcaption role="menuitemradio" aria-checked />
+	<figcaption role="menuitemradio" aria-checked />
 </figure>
 <figure role="option" aria-selected />
 <footer role="radio" aria-checked />
 <form role="radiogroup" />
-<frame role="row" /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <h1 role="rowheader">Button</h1>
-<h2 role="scrollbar" aria-controls={[]} aria-valuenow={0} >Button</h2>
+<h2 role="scrollbar" aria-controls={[]} aria-valuenow={0}>Button</h2>
 <h3 role="searchbox">Button</h3>
 <h4 role="slider" aria-valuenow={0}>Button</h4>
 <h5 role="spinbutton">Button</h5>
@@ -46,7 +44,6 @@
 <section role="radio" aria-label="radio" aria-checked />
 <table role="menu" />
 <tbody role="searchbox" />
-<td role="button" />  // TODO: https://github.com/sveltejs/svelte/issues/8728
 <tfoot role="listbox" />
 <thead role="slider" aria-valuenow={0} />
 <time role="doc-backlink" />
@@ -73,7 +70,7 @@
 <li role="row" />
 <li role="treeitem" aria-selected={false} />
 
-<!-- VALID: div elements assigned an interactive role. -->
+<!-- VALID: elements assigned an interactive role. -->
 <div role="button" />
 <div role="checkbox" aria-checked={true} />
 <div role="columnheader" />
@@ -101,9 +98,12 @@
 <div role="tab" />
 <div role="textbox" />
 <div role="treeitem" aria-selected={true} />
+<body role="combobox" aria-controls={[]} aria-expanded />
+<td role="button" />
 
 <!-- VALID: HTML elements attributed with a non-interactive role -->
 <div role="alert" />
 <div role="document" />
 <div role="separator" />
 <div role="timer" />
+<frame role="row" />
