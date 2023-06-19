@@ -1,4 +1,5 @@
 import { VERSION } from '../shared/version';
 
-// @ts-ignore
-if (typeof window !== undefined) (window.__svelte || (window.__svelte = {})).version = VERSION;
+if (typeof window !== undefined)
+	// @ts-ignore
+	(window.__svelte_versions || (window.__svelte_versions = [])).push(VERSION);
