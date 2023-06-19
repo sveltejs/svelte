@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-default typo-default">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta name="theme-color" content="#ff3e00" />
+
+		<link rel="manifest" href="/manifest.json" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+
+		<meta name="twitter:site" content="@sveltejs" />
+		<meta name="twitter:creator" content="@sveltejs" />
+
+		<!-- add inline style and blocking script to prevent content flash/jump -->
+		<style>
+			.ts-version {
+				display: none;
+			}
+			.prefers-ts .js-version {
+				display: none;
+			}
+			.prefers-ts .ts-version {
+				display: block;
+			}
+			.no-js .ts-toggle {
+				display: none;
+			}
+		</style>
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-prefetch>
+		<div>%sveltekit.body%</div>
+	</body>
+</html>

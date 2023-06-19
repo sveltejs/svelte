@@ -7,7 +7,7 @@
   "scripts": {
     "test": "pnpm test -r --filter=./packages/*",
     "build": "pnpm -r build",
-    "check": "pnpm -r check",
+    "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",

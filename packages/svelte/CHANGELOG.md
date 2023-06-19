@@ -1,5 +1,17 @@
 # svelte
 
+## 4.0.0-next.2
+
+### Patch Changes
+
+- fix: never use html optimization for mustache tags in hydration mode ([#8744](https://github.com/sveltejs/svelte/pull/8744))
+
+- fix: ensure types are loaded with all TS settings ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
+- warn on boolean compilerOptions.css ([#8710](https://github.com/sveltejs/svelte/pull/8710))
+
+- fix: export correct SvelteComponent type ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
 ## 4.0.0-next.1
 
 ### Patch Changes
@@ -2655,7 +2667,7 @@ Set `style.cssText` rather than `style` ([#44](https://github.com/sveltejs/svelt
 
 ## 0.1.0
 
-- Breaking change – Svelte compiler now generates constructor functions rather than factories ([#2](https://github.com/sveltejs/svelte/issues/2))
+- Breaking change – Svelte compiler now generates constructor functions rather than factories ([#2](https://github.com/sveltejs/svelte/issues/2))
 - SVG support
 
 ## 0.0.2
