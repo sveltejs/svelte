@@ -103,7 +103,7 @@
     "acorn": "^8.8.2",
     "aria-query": "^5.2.1",
     "axobject-query": "^3.2.1",
-    "code-red": "^1.0.0",
+    "code-red": "^1.0.3",
     "css-tree": "^2.3.1",
     "estree-walker": "^3.0.3",
     "is-reference": "^3.0.1",
