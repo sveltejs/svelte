@@ -1464,6 +1464,15 @@ export default class Element extends Node {
 			this.children.length > 0
 		);
 	}
+	get can_optimise_hydration() {
+		// In contrast to normal html string optimization, we also bail in case of mustache tags even
+		// if they seem to contain static content. This is because we cannot know whether that static
+		// value is different between client and server builds, e.g. {browser ? 'hi' : 'bye'} which
+		// becomes {'hi'} and {'bye'} respectively.
+		const is_static_text_content =
+			this.is_static_content && this.children.every((node) => node.type === 'Text');
+		return this.can_optimise_to_html_string && (this.can_use_innerhtml || is_static_text_content);
+	}
 	hash() {
 		return `svelte-${hash(this.component.source.slice(this.start, this.end))}`;
 	}

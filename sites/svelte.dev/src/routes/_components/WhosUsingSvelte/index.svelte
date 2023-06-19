@@ -7,8 +7,20 @@
 </script>
 
 <Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
+	<h3>loved by developers</h3>
+
+	<p>
+		We're proud that Svelte was recently voted the <a
+			href="https://survey.stackoverflow.co/2023/#section-admired-and-desired-web-frameworks-and-technologies"
+			>most admired JS web framework</a
+		>
+		in one industry survey while drawing the most interest in learning it in <a
+		href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
+		>two</a> <a href="https://2022.stateofjs.com/en-US/libraries/front-end-frameworks/"
+		>others</a>. We think you'll love it too.
+	</p>
+
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>
-		<h3>Who's using Svelte?</h3>
 		<div class="logos">
 			{#each sorted as { href, filename, alt, style, invert, width, height }}
 				<a target="_blank" rel="noreferrer" {href} class:invert style={style || ''}>
@@ -25,6 +37,17 @@
 	h3 {
 		font-size: var(--sk-text-xl);
 	}
+
+	p {
+		max-width: 28em; /* text balancing */
+	}
+
+	@media (min-width: 1200px) {
+		p {
+			max-width: 600px;
+		}
+	}
+
 	.logos {
 		display: flex;
 		margin: 6rem 0 0 0;
@@ -38,7 +61,7 @@
 		width: calc(100% / calc(2 * var(--row-size) - 1));
 	}
 
-	a {
+	.logos a {
 		width: calc(100% / calc(2 * var(--row-size) - 1));
 		height: auto;
 		display: flex;
@@ -50,12 +73,12 @@
 		grid-column: span 2;
 	}
 
-	a:last-of-type {
+	.logos a:last-of-type {
 		/* hide last item at this screen size, it ruins wrapping */
 		display: none;
 	}
 
-	a.invert {
+	.logos a.invert {
 		--invert: 1;
 	}
 
@@ -73,7 +96,7 @@
 			--row-size: 4;
 		}
 
-		a:last-of-type {
+		.logos a:last-of-type {
 			/* show 14 items instead of 13 — wraps better */
 			display: flex;
 		}

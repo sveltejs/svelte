@@ -295,7 +295,7 @@ export function construct_svelte_component_dev(component, props) {
  * @template {Record<string, any>} [Props=any]
  * @template {Record<string, any>} [Events=any]
  * @template {Record<string, any>} [Slots=any]
- * @extends SvelteComponent<Props, Events>
+ * @extends {SvelteComponent<Props, Events>}
  */
 export class SvelteComponentDev extends SvelteComponent {
 	/**
@@ -350,7 +350,7 @@ export class SvelteComponentDev extends SvelteComponent {
  * @template {Record<string, any>} [Events=any]
  * @template {Record<string, any>} [Slots=any]
  * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
- * @extends SvelteComponentDev<Props, Events, Slots>
+ * @extends {SvelteComponentDev<Props, Events, Slots>}
  */
 export class SvelteComponentTyped extends SvelteComponentDev {}
 

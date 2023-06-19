@@ -5,7 +5,11 @@ title: 'Custom elements API'
 Svelte components can also be compiled to custom elements (aka web components) using the `customElement: true` compiler option. You should specify a tag name for the component using the `<svelte:options>` [element](/docs/special-elements#svelte-options).
 
 ```svelte
+<svelte:options customElement="my-element" />
+
+<!-- in Svelte 3, do this instead:
 <svelte:options tag="my-element" />
+-->
 
 <script>
 	export let name = 'world';
@@ -21,7 +25,9 @@ You can leave out the tag name for any of your inner components which you don't 
 // @noErrors
 import MyElement from './MyElement.svelte';
 
-customElements.define('my-element', MyElement);
+customElements.define('my-element', MyElement.element);
+// In Svelte 3, do this instead:
+// customElements.define('my-element', MyElement);
 ```
 
 Once a custom element has been defined, it can be used as a regular DOM element:
@@ -49,7 +55,9 @@ console.log(el.name);
 el.name = 'everybody';
 ```
 
-When constructing a custom element, you can tailor several aspects by defining `customElement` as an object within `<svelte:options>`. This object comprises a mandatory `tag` property for the custom element's name, an optional `shadow` property that can be set to `"none"` to forgo shadow root creation (note that styles are then no longer encapsulated, and you can't use slots), and a `props` option, which offers the following settings:
+## Component options
+
+When constructing a custom element, you can tailor several aspects by defining `customElement` as an object within `<svelte:options>` since Svelte 4. This object comprises a mandatory `tag` property for the custom element's name, an optional `shadow` property that can be set to `"none"` to forgo shadow root creation (note that styles are then no longer encapsulated, and you can't use slots), and a `props` option, which offers the following settings:
 
 - `attribute: string`: To update a custom element's prop, you have two alternatives: either set the property on the custom element's reference as illustrated above or use an HTML attribute. For the latter, the default attribute name is the lowercase property name. Modify this by assigning `attribute: "<desired name>"`.
 - `reflect: boolean`: By default, updated prop values do not reflect back to the DOM. To enable this behavior, set `reflect: true`.
@@ -72,6 +80,8 @@ When constructing a custom element, you can tailor several aspects by defining `
 
 ...
 ```
+
+## Caveats and limitations
 
 Custom elements can be a useful way to package components for consumption in a non-Svelte app, as they will work with vanilla HTML and JavaScript as well as [most frameworks](https://custom-elements-everywhere.com/). There are, however, some important differences to be aware of:
 

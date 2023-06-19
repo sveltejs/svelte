@@ -424,7 +424,6 @@ export function create_custom_element(
  *
  * @template {Record<string, any>} [Props=any]
  * @template {Record<string, any>} [Events=any]
- * @implements Record<string, any>
  */
 export class SvelteComponent {
 	/**

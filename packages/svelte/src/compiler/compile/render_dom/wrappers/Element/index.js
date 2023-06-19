@@ -458,13 +458,13 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(node);
 		const render_statement = this.get_render_statement(block);
 		block.chunks.create.push(b`${node} = ${render_statement};`);
-		const { can_use_textcontent, can_optimise_to_html_string } = this.node;
+		const { can_use_textcontent, can_optimise_to_html_string, can_optimise_hydration } = this.node;
 		if (hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_to_html_string)};
+					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_hydration)};
 				`);
-				if (!can_optimise_to_html_string && !this.void && this.node.children.length > 0) {
+				if (!can_optimise_hydration && !this.void && this.node.children.length > 0) {
 					block.chunks.claim.push(b`
 						var ${nodes} = ${children};
 					`);
@@ -500,7 +500,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 		// insert static children with textContent or innerHTML
 		// skip textcontent for <template>.  append nodes to TemplateElement.content instead
-		if (can_optimise_to_html_string) {
+		if (can_optimise_to_html_string && (!hydratable || can_optimise_hydration)) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				/** @type {import('estree').Node} */
 				let text = string_literal(
@@ -579,7 +579,7 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_styles(block);
 		this.add_manual_style_scoping(block);
-		if (nodes && hydratable && !this.void && !can_optimise_to_html_string) {
+		if (nodes && hydratable && !this.void && !can_optimise_hydration) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
