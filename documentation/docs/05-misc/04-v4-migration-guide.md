@@ -20,23 +20,102 @@ Bundlers must now specify the browser condition when building a frontend bundle 
 
 ## Removal of CJS related output
 
-Svelte no longer supports the CommonJS (CJS) format for compiler output and has also removed the `svelte/register` hook and the CJS runtime version. If you needed those, consider using a bundler like Vite or the full-stack framework SvelteKit instead. ([#8613](https://github.com/sveltejs/svelte/issues/8613))
+Svelte no longer supports the CommonJS (CJS) format for compiler output and has also removed the `svelte/register` hook and the CJS runtime version. If you need to stay on the CJS output format, consider using a bundler to convert Svelte's ESM output to CJS in a post-build step. ([#8613](https://github.com/sveltejs/svelte/issues/8613))
 
 ## Stricter types for Svelte functions
 
 There are now stricter types for `createEventDispatcher`, `Action`, `ActionReturn`, and `onMount`:
 
 - `createEventDispatcher` now supports specifying that a payload is optional, required, or non-existent, and the call sites are checked accordingly ([#7224](https://github.com/sveltejs/svelte/issues/7224))
+
+```js
+import { createEventDispatcher } from 'svelte';
+
+// Svelte version 3:
+const dispatch = createEventDispatcher<{
+  optional: number | null;
+  required: string;
+  noArgument: never;
+}>();
+
+dispatch('optional');
+dispatch('required'); // I can still omit the detail argument
+dispatch('noArgument', 'surprise'); // I can still add a detail argument
+
+// Svelte version 4 using TypeScript strict mode:
+dispatch('optional');
+dispatch('required'); // error, missing argument
+dispatch('noArgument', 'surprise'); // error, cannot pass an argument
+```
+
 - `Action` and `ActionReturn` have a default parameter type of `never` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
+
+```diff
+-const action: Action = (node, params) => { .. } // this is now an error, as params is expected to not exist
++const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
+```
+
 - `onMount` now shows a type error if you return a function asynchronously from it, because this is likely a bug in your code where you expect the callback to be called on destroy, which it will only do for synchronously returned functions ([#8136](https://github.com/sveltejs/svelte/issues/8136))
+
+```diff
+// Example where this change reveals an actual bug
+onMount(
+- // someCleanup() not called because function handed to onMount is async
+- async () => {
+-   const something = await foo();
++ // someCleanup() is called because function handed to onMount is sync
++ () => {
++  foo().then(something =>  ..
+   // ..
+   return () => someCleanup();
+}
+);
+```
 
 ## Custom Elements with Svelte
 
-The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
+The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option:
+
+```diff
+-<svelte:options tag="my-component" />
++<svelte:options customElement="my-component" />
+```
+
+This change was made to allow [more configurability](custom-elements-api#component-options) for advanced use cases. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
 
 ## SvelteComponentTyped is deprecated
 
-`SvelteComponentTyped` is deprecated, as `SvelteComponent` now has all its typing capabilities. Replace all instances of `SvelteComponentTyped` with `SvelteComponent`. If you have used `SvelteComponent` as the component instance type previously, you may see a somewhat opaque type error now, which is solved by changing `: typeof SvelteComponent` to `: typeof SvelteComponent<any>` (more info in the linked PR). The migration script will do both automatically for you. ([#8512](https://github.com/sveltejs/svelte/issues/8512))
+`SvelteComponentTyped` is deprecated, as `SvelteComponent` now has all its typing capabilities. Replace all instances of `SvelteComponentTyped` with `SvelteComponent`.
+
+```diff
+- import { SvelteComponentTyped } from 'svelte';
++ import { SvelteComponent } from 'svelte';
+
+- export class Foo extends SvelteComponentTyped<{ aProp: string }> {}
++ export class Foo extends SvelteComponent<{ aProp: string }> {}
+```
+
+If you have used `SvelteComponent` as the component instance type previously, you may see a somewhat opaque type error now, which is solved by changing `: typeof SvelteComponent` to `: typeof SvelteComponent<any>`.
+
+```diff
+<script>
+  import ComponentA from './ComponentA.svelte';
+  import ComponentB from './ComponentB.svelte';
+  import { SvelteComponent } from 'svelte';
+
+-  let component: typeof SvelteComponent;
++  let component: typeof SvelteComponent<any>;
+
+  function choseRandomly() {
+    component = Math.random() > 0.5 ? ComponentA : ComponentB;
+  }
+</script>
+
+<button on:click={choseRandomly}>random</button>
+<svelte:element this={component} />
+```
+
+The migration script will do both automatically for you. ([#8512](https://github.com/sveltejs/svelte/issues/8512))
 
 ## Transitions are local by default
 
@@ -44,7 +123,24 @@ Transitions are now local by default to prevent confusion around page navigation
 
 ## Default slot bindings
 
-Default slot bindings are no longer exposed to named slots and vice versa. ([#6049](https://github.com/sveltejs/svelte/issues/6049))
+Default slot bindings are no longer exposed to named slots and vice versa:
+
+```svelte
+<script>
+	import Nested from './Nested.svelte';
+</script>
+
+<Nested let:count>
+	<p>
+		count in default slot - is available: {count}
+	</p>
+	<p slot="bar">
+		count in bar slot - is not available: {count}
+	</p>
+</Nested>
+```
+
+This makes slot bindings more consistent as the behavior is undefined when for example the default slot is from a list and the named slot is not. ([#6049](https://github.com/sveltejs/svelte/issues/6049))
 
 ## Preprocessors
 
@@ -56,3 +152,4 @@ The order in which preprocessors are applied has changed. Now, preprocessors are
 - the runtime now uses `classList.toggle(name, boolean)` which may not work in very old browsers. Consider using a [polyfill](https://github.com/eligrey/classList.js) if you need to support these browsers. ([#8629](https://github.com/sveltejs/svelte/issues/8629))
 - people implementing their own stores from scratch using the `StartStopNotifier` interface (which is passed to the create function of `writable` etc) from `svelte/store` now need to pass an update function in addition to the set function. This has no effect on people using stores or creating stores using the existing Svelte stores. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
 - `derived` will now throw an error on falsy values instead of stores passed to it. ([#7947](https://github.com/sveltejs/svelte/issues/7947))
+- type definitions for `svelte/internal` were removed to further discourage usage of those internal methods which are not public API. Most of these will likely change for Svelte 5
