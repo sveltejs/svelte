@@ -122,10 +122,6 @@ export function writable(value, start = noop) {
  */
 
 /**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * https://svelte.dev/docs/svelte-store#derived
  * @template {import('./private.js').Stores} S
  * @template T
  * @param {S} stores
