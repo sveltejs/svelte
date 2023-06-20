@@ -67,6 +67,10 @@
 - Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 - Improve error message when trying to use `animate:` directives on inline components ([#8641](https://github.com/sveltejs/svelte/issues/8641))
 
+## 3.59.2
+
+* Fix escaping `<textarea bind:value={...}>` values in SSR
+
 ## 3.59.1
 
 - Handle dynamic values in `a11y-autocomplete-valid` ([#8567](https://github.com/sveltejs/svelte/pull/8567))
