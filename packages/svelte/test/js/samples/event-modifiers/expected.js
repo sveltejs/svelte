@@ -78,7 +78,10 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div1);
+			if (detaching) {
+				detach(div1);
+			}
+
 			mounted = false;
 			run_all(dispose);
 		}

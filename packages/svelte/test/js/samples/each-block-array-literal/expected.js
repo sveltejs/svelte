@@ -40,7 +40,9 @@ function create_each_block(ctx) {
 			if (dirty & /*a, b, c, d, e*/ 31 && t_value !== (t_value = /*num*/ ctx[5] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
-			if (detaching) detach(span);
+			if (detaching) {
+				detach(span);
+			}
 		}
 	};
 }
@@ -96,8 +98,11 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
+			if (detaching) {
+				detach(each_1_anchor);
+			}
+
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach(each_1_anchor);
 		}
 	};
 }

@@ -40,7 +40,10 @@ function create_if_block(ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) {
+				detach(div);
+			}
+
 			if (detaching && div_outro) div_outro.end();
 		}
 	};
@@ -93,8 +96,11 @@ function create_fragment(ctx) {
 			current = false;
 		},
 		d(detaching) {
+			if (detaching) {
+				detach(if_block_anchor);
+			}
+
 			if (if_block) if_block.d(detaching);
-			if (detaching) detach(if_block_anchor);
 		}
 	};
 }
