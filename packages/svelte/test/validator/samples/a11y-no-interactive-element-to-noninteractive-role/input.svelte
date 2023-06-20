@@ -21,37 +21,37 @@
 <button role="button">button</button>
 
 <!-- input -->
-<input role="article"/>
-<input role="banner"/>
-<input role="complementary"/>
-<input role="img"/>
-<input role="listitem"/>
-<input role="main"/>
-<input role="region"/>
-<input role="tooltip"/>
-<input role="button"/>
+<input role="article" />
+<input role="banner" />
+<input role="complementary" />
+<input role="img" />
+<input role="listitem" />
+<input role="main" />
+<input role="region" />
+<input role="tooltip" />
+<input role="button" />
 
 <!-- select -->
-<select role="article"/>
-<select role="banner"/>
-<select role="complementary"/>
-<select role="img"/>
-<select role="listitem"/>
-<select role="main"/>
-<select role="region"/>
-<select role="tooltip"/>
-<select role="button"/>
+<select role="article" />
+<select role="banner" />
+<select role="complementary" />
+<select role="img" />
+<select role="listitem" />
+<select role="main" />
+<select role="region" />
+<select role="tooltip" />
+<select role="button" />
 
 <!-- textarea -->
-<textarea role="article"/>
-<textarea role="banner"/>
-<textarea role="complementary"/>
-<textarea role="img"/>
-<textarea role="listitem"/>
-<textarea role="main"/>
-<textarea role="region"/>
-<textarea role="tooltip"/>
-<textarea role="button"/>
+<textarea role="article" />
+<textarea role="banner" />
+<textarea role="complementary" />
+<textarea role="img" />
+<textarea role="listitem" />
+<textarea role="main" />
+<textarea role="region" />
+<textarea role="tooltip" />
+<textarea role="button" />
 
 <!-- HTML elements attributed with an abstract role -->
 <div role="command" />
@@ -99,6 +99,7 @@
 <div role="tab" />
 <div role="textbox" />
 <div role="treeitem" aria-selected={true} />
+<summary role="listitem" />
 
 <!-- HTML elements attributed with a non-interactive role -->
 <div role="alert" />
@@ -143,6 +144,5 @@
 <menuitem role="listitem" />
 <option class="foo" role="listitem" />
 <select class="foo" role="listitem" />
-<summary role="listitem" /> // TODO: https://github.com/sveltejs/svelte/issues/8728
 <textarea class="foo" role="listitem" />
 <tr role="listitem" />

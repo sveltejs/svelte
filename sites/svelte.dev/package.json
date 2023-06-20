@@ -1,5 +1,6 @@
 {
 	"name": "svelte.dev",
+	"private": true,
 	"version": "1.0.0",
 	"description": "Docs and examples for Svelte",
 	"type": "module",

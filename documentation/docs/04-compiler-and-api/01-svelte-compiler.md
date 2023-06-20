@@ -6,7 +6,7 @@ Typically, you won't interact with the Svelte compiler directly, but will instea
 
 Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
 
-## `svelte.compile`
+## compile
 
 > EXPORT_SNIPPET: svelte/compiler#compile
 
@@ -105,7 +105,7 @@ compiled: {
 
 -->
 
-## `svelte.parse`
+## parse
 
 > EXPORT_SNIPPET: svelte/compiler#parse
 
@@ -126,7 +126,7 @@ import { parse } from 'svelte/compiler';
 const ast = parse(source, { filename: 'App.svelte' });
 ```
 
-## `svelte.preprocess`
+## preprocess
 
 > EXPORT_SNIPPET: svelte/compiler#preprocess
 
@@ -304,7 +304,7 @@ const { code } = await preprocess(source, [
 });
 ```
 
-## `svelte.walk`
+## walk
 
 > EXPORT_SNIPPET: svelte/compiler#walk
 
@@ -341,7 +341,7 @@ walk(ast, {
 });
 ```
 
-## `svelte.VERSION`
+## VERSION
 
 > EXPORT_SNIPPET: svelte/compiler#VERSION
 

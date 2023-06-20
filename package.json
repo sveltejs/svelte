@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "pnpm test -r --filter=./packages/*",
-    "build": "pnpm -r build",
+    "build": "pnpm -r --filter=./packages/* build",
+    "build:sites": "pnpm -r --filter=./sites/* build",
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",

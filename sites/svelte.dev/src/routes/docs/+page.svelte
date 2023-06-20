@@ -168,7 +168,7 @@
 		[/run-time-(svelte)(?:-(.+))?/i, '$1#$2'],
 
 		// Compile time
-		[/compile-time-?(.*)/i, 'svelte-compiler#$1'],
+		[/compile-time-svelte-?(.*)/i, 'svelte-compiler#$1'],
 
 		// Accessibility warnings
 		[/(accessibility-warnings)-?(.+)/i, '$1#$2']

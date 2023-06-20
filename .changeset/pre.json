@@ -3,11 +3,16 @@
   "tag": "next",
   "initialVersions": {
     "svelte": "4.0.0-next.1",
-    "playground": "0.0.0"
+    "playground": "0.0.0",
+    "svelte.dev": "1.0.0"
   },
   "changesets": [
     "beige-boxes-rhyme",
+    "fair-geese-repeat",
     "gentle-pumas-chew",
-    "green-sheep-learn"
+    "green-sheep-learn",
+    "mighty-suns-occur",
+    "stale-cougars-wink",
+    "tame-peaches-destroy"
   ]
 }
