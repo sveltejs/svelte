@@ -47,63 +47,7 @@ import { compile } from 'svelte/compiler';
 const { js, css, ast, warnings, vars, stats } = compile(source);
 ```
 
-- `js` and `css` are objects with the following properties:
-  - `code` is a JavaScript string
-  - `map` is a sourcemap with additional `toString()` and `toUrl()` convenience methods
-- `ast` is an abstract syntax tree representing the structure of your component.
-- `warnings` is an array of warning objects that were generated during compilation. Each warning has several properties:
-  - `code` is a string identifying the category of warning
-  - `message` describes the issue in human-readable terms
-  - `start` and `end`, if the warning relates to a specific location, are objects with `line`, `column` and `character` properties
-  - `frame`, if applicable, is a string highlighting the offending code with line numbers
-- `vars` is an array of the component's declarations, used by [eslint-plugin-svelte3](https://github.com/sveltejs/eslint-plugin-svelte3) for example. Each variable has several properties:
-  - `name` is self-explanatory
-  - `export_name` is the name the value is exported as, if it is exported (will match `name` unless you do `export...as`)
-  - `injected` is `true` if the declaration is injected by Svelte, rather than in the code you wrote
-  - `module` is `true` if the value is declared in a `context="module"` script
-  - `mutated` is `true` if the value's properties are assigned to inside the component
-  - `reassigned` is `true` if the value is reassigned inside the component
-  - `referenced` is `true` if the value is used in the template
-  - `referenced_from_script` is `true` if the value is used in the `<script>` outside the declaration
-  - `writable` is `true` if the value was declared with `let` or `var` (but not `const`, `class` or `function`)
-- `stats` is an object used by the Svelte developer team for diagnosing the compiler. Avoid relying on it to stay the same!
-
-<!--
-
-```js
-compiled: {
-	// `map` is a v3 sourcemap with toString()/toUrl() methods
-	js: { code: string, map: {...} },
-	css: { code: string, map: {...} },
-	ast: {...}, // ESTree-like syntax tree for the component, including HTML, CSS and JS
-	warnings: Array<{
-		code: string,
-		message: string,
-		filename: string,
-		pos: number,
-		start: { line: number, column: number },
-		end: { line: number, column: number },
-		frame: string,
-		toString: () => string
-	}>,
-	vars: Array<{
-		name: string,
-		export_name: string,
-		injected: boolean,
-		module: boolean,
-		mutated: boolean,
-		reassigned: boolean,
-		referenced: boolean,
-		referenced_from_script: boolean,
-		writable: boolean
-	}>,
-	stats: {
-		timings: { [label]: number }
-	}
-} = svelte.compile(source: string, options?: {...})
-```
-
--->
+Refer to [CompileResult](#type-compileresult) for a full description of the compile result.
 
 ## parse
 

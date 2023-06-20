@@ -390,3 +390,34 @@ export interface CssResult {
 	code: string;
 	map: SourceMap;
 }
+
+/** The returned shape of `compile` from `svelte/compiler` */
+export interface CompileResult {
+	/** The resulting JavaScript code from compling the component */
+	js: {
+		/** Code as a string */
+		code: string;
+		/** A source map */
+		map: any;
+	};
+	/** The resulting CSS code from compling the component */
+	css: CssResult;
+	/** The abstract syntax tree representing the structure of the component */
+	ast: Ast;
+	/**
+	 * An array of warning objects that were generated during compilation. Each warning has several properties:
+	 * - code is a string identifying the category of warning
+	 * - message describes the issue in human-readable terms
+	 * - start and end, if the warning relates to a specific location, are objects with line, column and character properties
+	 * - frame, if applicable, is a string highlighting the offending code with line numbers
+	 * */
+	warnings: Warning[];
+	/** An array of the component's declarations used by tooling in the ecosystem (like our ESLint plugin) to infer more information */
+	vars: Var[];
+	/** An object used by the Svelte developer team for diagnosing the compiler. Avoid relying on it to stay the same! */
+	stats: {
+		timings: {
+			total: number;
+		};
+	};
+}
