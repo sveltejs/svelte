@@ -29,7 +29,7 @@ const result = compile(source, {
 });
 ```
 
-> Refer to [CompileOptions](#type-compileoptions) for all the available options.
+Refer to [CompileOptions](#type-compileoptions) for all the available options.
 
 The returned `result` object contains the code for your component, along with useful bits of metadata.
 
