@@ -74,11 +74,14 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(p0);
-			if (detaching) detach(t3);
-			if (detaching) detach(p1);
-			if (detaching) detach(t5);
-			if (detaching) detach(button2);
+			if (detaching) {
+				detach(p0);
+				detach(t3);
+				detach(p1);
+				detach(t5);
+				detach(button2);
+			}
+
 			mounted = false;
 			run_all(dispose);
 		}

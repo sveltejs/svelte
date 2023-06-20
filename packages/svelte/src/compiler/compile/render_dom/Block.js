@@ -381,9 +381,9 @@ export default class Block {
 		if (this.chunks.destroy.length === 0) {
 			properties.destroy = noop;
 		} else {
-			const a = [];
+			const dispose_elements = [];
 			// Coalesce if blocks with the same condition
-			const b = flatten(this.chunks.destroy).filter(
+			const others = flatten(this.chunks.destroy).filter(
 				/** @param {import('estree').Node} node */
 				(node) => {
 					if (
@@ -391,7 +391,7 @@ export default class Block {
 						node.test.type === 'Identifier' &&
 						node.test.name === 'detaching'
 					) {
-						a.push(node.consequent);
+						dispose_elements.push(node.consequent);
 						return false;
 					} else {
 						return true;
@@ -400,8 +400,8 @@ export default class Block {
 			);
 
 			properties.destroy = x`function #destroy(detaching) {
-				if (detaching) { ${a} }
-				${b}
+				${dispose_elements.length ? b`if (detaching) { ${dispose_elements} }` : null}
+				${others}
 			}`;
 		}
 		if (!this.renderer.component.compile_options.dev) {

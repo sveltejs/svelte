@@ -106,23 +106,25 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div0);
-			if (detaching) detach(t0);
-			if (detaching) detach(div1);
-			if (detaching) detach(t1);
-			if (detaching) detach(div2);
-			if (detaching) detach(t2);
-			if (detaching) detach(div3);
-			if (detaching) detach(t3);
-			if (detaching) detach(div4);
-			if (detaching) detach(t4);
-			if (detaching) detach(div5);
-			if (detaching) detach(t5);
-			if (detaching) detach(div6);
-			if (detaching) detach(t6);
-			if (detaching) detach(div7);
-			if (detaching) detach(t7);
-			if (detaching) detach(div8);
+			if (detaching) {
+				detach(div0);
+				detach(t0);
+				detach(div1);
+				detach(t1);
+				detach(div2);
+				detach(t2);
+				detach(div3);
+				detach(t3);
+				detach(div4);
+				detach(t4);
+				detach(div5);
+				detach(t5);
+				detach(div6);
+				detach(t6);
+				detach(div7);
+				detach(t7);
+				detach(div8);
+			}
 		}
 	};
 }
