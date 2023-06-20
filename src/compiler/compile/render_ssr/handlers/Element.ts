@@ -149,7 +149,7 @@ export default function (node: Element, renderer: Renderer, options: RenderOptio
 			// value = name === 'textContent' ? x`@escape($$value)` : x`$$value`;
 		} else if (binding.name === 'value' && node.name === 'textarea') {
 			const snippet = expression.node;
-			node_contents = x`${snippet} || ""`;
+			node_contents = x`@escape(${snippet} || "")`;
 		} else if (binding.name === 'value' && node.name === 'select') {
 			// NOTE: do not add "value" attribute on <select />
 		} else {
