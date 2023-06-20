@@ -16,16 +16,18 @@ import { render_markdown } from '../markdown/renderer.js';
  * @param {string} slug
  */
 export async function get_parsed_docs(docs_data, slug) {
-	const page = docs_data
-		.find(({ pages }) => pages.find((page) => slug === page.slug))
-		?.pages.find((page) => slug === page.slug);
+	for (const { pages } of docs_data) {
+		for (const page of pages) {
+			if (page.slug === slug) {
+				return {
+					...page,
+					content: await render_markdown(page.file, page.content, { modules })
+				};
+			}
+		}
+	}
 
-	if (!page) return null;
-
-	return {
-		...page,
-		content: await render_markdown(page.file, page.content, { modules })
-	};
+	return null;
 }
 
 /** @return {import('./types').DocsData} */
@@ -53,16 +55,15 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 			pages: []
 		};
 
-		for (const page_md of fs
-			.readdirSync(`${base}/${category_dir}`)
-			.filter((filename) => filename !== 'meta.json')) {
-			const match = /\d{2}-(.+)/.exec(page_md);
+		for (const filename of fs.readdirSync(`${base}/${category_dir}`)) {
+			if (filename === 'meta.json') continue;
+			const match = /\d{2}-(.+)/.exec(filename);
 			if (!match) continue;
 
 			const page_slug = match[1].replace('.md', '');
 
 			const page_data = extract_frontmatter(
-				fs.readFileSync(`${base}/${category_dir}/${page_md}`, 'utf-8')
+				fs.readFileSync(`${base}/${category_dir}/${filename}`, 'utf-8')
 			);
 
 			if (page_data.metadata.draft === 'true') continue;
@@ -76,7 +77,7 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 				content: page_content,
 				sections: get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
-				file: `${category_dir}/${page_md}`
+				file: `${category_dir}/${filename}`
 			});
 		}
 
