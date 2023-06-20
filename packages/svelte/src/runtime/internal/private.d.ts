@@ -123,3 +123,8 @@ export interface Task {
 	abort(): void;
 	promise: Promise<void>;
 }
+
+/**
+ * Anything except a function
+ */
+type NotFunction<T> = T extends Function ? never : T;

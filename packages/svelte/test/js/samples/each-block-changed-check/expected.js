@@ -75,7 +75,9 @@ function create_each_block(ctx) {
 			if (dirty & /*comments*/ 1 && raw_value !== (raw_value = /*comment*/ ctx[4].html + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) {
+				detach(div);
+			}
 		}
 	};
 }
@@ -141,9 +143,12 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
+			if (detaching) {
+				detach(t0);
+				detach(p);
+			}
+
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach(t0);
-			if (detaching) detach(p);
 		}
 	};
 }
