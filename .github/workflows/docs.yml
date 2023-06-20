@@ -3,7 +3,7 @@ name: Docs
 on:
   push:
     branches:
-      - master
+      - version-3
     paths:
       - site/content/**
 
