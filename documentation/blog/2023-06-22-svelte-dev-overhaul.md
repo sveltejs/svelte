@@ -18,12 +18,12 @@ We heard you! The docs are all split up into multiple pages now. And all pages a
 All modules exposed by svelte are also listed in the sidebar, under the `Runtime` section.
 
 - [svelte](/docs/svelte)
-- [svelte/store](/docs/svelte/store)
-- [svelte/motion](/docs/svelte/motion)
-- [svelte/transition](/docs/svelte/transition)
-- [svelte/animate](/docs/svelte/animate)
-- [svelte/easing](/docs/svelte/easing)
-- [svelte/action](/docs/svelte/action)
+- [svelte/store](/docs/svelte-store)
+- [svelte/motion](/docs/svelte-motion)
+- [svelte/transition](/docs/svelte-transition)
+- [svelte/animate](/docs/svelte-animate)
+- [svelte/easing](/docs/svelte-easing)
+- [svelte/action](/docs/svelte-action)
 
 And worry not, all the links from the older website will be redirected to the correct page.
 
