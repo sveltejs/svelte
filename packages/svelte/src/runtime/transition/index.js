@@ -29,12 +29,6 @@ export function blur(
 /**
  * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
  *
- * `fade` accepts the following parameters:
- *
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number`, default 400) — milliseconds the transition lasts
- * - `easing` (`function`, default `linear`) — an [easing function](/docs#run-time-svelte-easing)
- *
  * https://svelte.dev/docs/svelte-transition#fade
  * @param {Element} node
  * @param {import('./public').FadeParams} [params]
