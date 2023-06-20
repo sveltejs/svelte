@@ -22,7 +22,7 @@ function create_plugin(ssr = false) {
 			} else if (id.startsWith('svelte/')) {
 				return path.resolve(
 					__dirname,
-					id === 'svelte/tag-version'
+					id === 'svelte/internal/tag-version'
 						? '../svelte/src/runtime/internal/tag-version.js'
 						: `../svelte/src/runtime/${id.slice(7)}/index.js`
 				);
