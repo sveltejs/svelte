@@ -8,6 +8,8 @@ import { pretty_print_browser_assertion, try_load_config } from '../helpers.js';
 
 const internal = path.resolve('src/runtime/internal/index.js');
 const index = path.resolve('src/runtime/index.js');
+const assert_file = path.resolve(__dirname, 'assert.js');
+const tag_version = path.resolve(__dirname, '../../src/runtime/internal/tag-version.js');
 
 /** @type {import('@playwright/test').Browser} */
 let browser;
@@ -62,9 +64,9 @@ async function run_browser_test(dir) {
 			alias: {
 				__MAIN_DOT_SVELTE__: path.resolve(__dirname, 'samples', dir, 'main.svelte'),
 				__CONFIG__: path.resolve(__dirname, 'samples', dir, '_config.js'),
-				'assert.js': path.resolve(__dirname, 'assert.js'),
+				'assert.js': assert_file,
+				'svelte/internal/tag-version': tag_version,
 				'svelte/internal': internal,
-				'svelte/tag-version': path.resolve('src/runtime/tag-version.js'),
 				svelte: index
 			},
 			plugins: [
@@ -170,9 +172,9 @@ async function run_custom_elements_test(dir) {
 			entryPoints: [`${cwd}/test.js`],
 			write: false,
 			alias: {
-				'assert.js': path.resolve(__dirname, 'assert.js'),
+				'assert.js': assert_file,
+				'svelte/internal/tag-version': tag_version,
 				'svelte/internal': internal,
-				'svelte/tag-version': path.resolve('src/runtime/tag-version.js'),
 				svelte: index
 			},
 			plugins: [

@@ -606,16 +606,14 @@ export default function dom(component, options) {
 	}
 
 	if (options.disableVersionTagging !== true) {
-		/** @type {import('estree').ImportDeclaration} */
-		const version_tag_import = {
+		component.imports.unshift({
 			type: 'ImportDeclaration',
 			specifiers: [],
 			source: {
 				type: 'Literal',
-				value: `${options.sveltePath ?? 'svelte'}/tag-version`
+				value: `${options.sveltePath ?? 'svelte'}/internal/tag-version`
 			}
-		};
-		component.imports.unshift(version_tag_import);
+		});
 	}
 
 	return { js: flatten(body), css };

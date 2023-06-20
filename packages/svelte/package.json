@@ -56,8 +56,8 @@
       "types": "./types/index.d.ts",
       "import": "./src/runtime/store/index.js"
     },
-    "./tag-version": {
-      "import": "./src/runtime/tag-version.js"
+    "./internal/tag-version": {
+      "import": "./src/runtime/internal/tag-version.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",

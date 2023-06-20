@@ -134,8 +134,8 @@ export function create_loader(compileOptions, cwd) {
 					resolved = `${svelte_path}src/runtime/index.js`;
 				}
 
-				if (id === 'svelte/tag-version') {
-					return `${svelte_path}src/runtime/tag-version.js`;
+				if (id === 'svelte/internal/tag-version') {
+					return `${svelte_path}src/runtime/internal/tag-version.js`;
 				}
 
 				if (id.startsWith('svelte/')) {
