@@ -3,12 +3,6 @@ import { assign, split_css_unit, is_function } from '../internal/index.js';
 
 /**
  * Animates a `blur` filter alongside an element's opacity.
- *`blur` accepts the following parameters:
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number`, default 400) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
- * - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
- * - `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
  *
  * https://svelte.dev/docs/svelte-transition#blur
  * @param {Element} node
@@ -59,15 +53,6 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
 /**
  * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
  *
- * `fly` accepts the following parameters:
- *
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number`, default 400) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
- * - `x` (`number | string`, default 0) - the x offset to animate out to and in from
- * - `y` (`number | string`, default 0) - the y offset to animate out to and in from
- * - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
- *
  * https://svelte.dev/docs/svelte-transition#fly
  * @param {Element} node
  * @param {import('./public').FlyParams} [params]
@@ -95,11 +80,6 @@ export function fly(
 
 /**
  * Slides an element in and out.
- * `slide` accepts the following parameters:
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number`, default 400) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
- * - `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
  *
  * https://svelte.dev/docs/svelte-transition#slide
  * @param {Element} node
@@ -145,14 +125,6 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
 /**
  * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
  *
- * `scale` accepts the following parameters:
- *
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number`, default 400) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
- * - `start` (`number`, default 0) - the scale value to animate out to and in from
- * - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
- *
  * https://svelte.dev/docs/svelte-transition#scale
  * @param {Element} node
  * @param {import('./public').ScaleParams} [params]
@@ -180,12 +152,6 @@ export function scale(
 
 /**
  * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
- * `draw` accepts the following parameters:
- *
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `speed` (`number`, default undefined) - the speed of the animation, see below.
- * - `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicInOut`) — an [easing function](/docs#run-time-svelte-easing)
  *
  * https://svelte.dev/docs/svelte-transition#draw
  * @param {SVGElement & { getTotalLength(): number }} node
@@ -220,18 +186,12 @@ export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } =
 
 /**
  * The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
- * `crossfade` accepts the following parameters:
  *
- * - `delay` (`number`, default 0) — milliseconds before starting
- * - `duration` (`number` | `function`, default 800) — milliseconds the transition lasts
- * - `easing` (`function`, default `cubicOut`) — an [easing function](/docs#run-time-svelte-easing)
- * - `fallback` (`function`) — A fallback [transition](/docs#template-syntax-element-directives-transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
+ * https://svelte.dev/docs/svelte-transition#crossfade
  * @param {import('./public').CrossfadeParams & {
  * 	fallback?: (node: Element, params: import('./public').CrossfadeParams, intro: boolean) => import('./public').TransitionConfig;
  * }} params
  * @returns {[(node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig, (node: any, params: import('./public').CrossfadeParams & { key: any; }) => () => import('./public').TransitionConfig]}
- *
- * https://svelte.dev/docs/svelte-transition#crossfade
  */
 export function crossfade({ fallback, ...defaults }) {
 	/** @type {Map<any, Element>} */
