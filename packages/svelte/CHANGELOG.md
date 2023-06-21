@@ -1,5 +1,17 @@
 # svelte
 
+## 4.0.0-next.2
+
+### Patch Changes
+
+- fix: never use html optimization for mustache tags in hydration mode ([#8744](https://github.com/sveltejs/svelte/pull/8744))
+
+- fix: ensure types are loaded with all TS settings ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
+- warn on boolean compilerOptions.css ([#8710](https://github.com/sveltejs/svelte/pull/8710))
+
+- fix: export correct SvelteComponent type ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
 ## 4.0.0-next.1
 
 ### Patch Changes
@@ -54,6 +66,10 @@
 - Fix transitions so that they don't require a `style-src 'unsafe-inline'` Content Security Policy (CSP) ([#6662](https://github.com/sveltejs/svelte/issues/6662)).
 - Explicitly disallow `var` declarations extending the reactive statement scope ([#6800](https://github.com/sveltejs/svelte/pull/6800))
 - Improve error message when trying to use `animate:` directives on inline components ([#8641](https://github.com/sveltejs/svelte/issues/8641))
+
+## 3.59.2
+
+* Fix escaping `<textarea bind:value={...}>` values in SSR
 
 ## 3.59.1
 

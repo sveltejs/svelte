@@ -91,5 +91,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
-
-export * from './index.js';

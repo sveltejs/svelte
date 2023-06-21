@@ -24,7 +24,9 @@ function create_if_block_4(ctx) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(p);
+			if (detaching) {
+				detach(p);
+			}
 		}
 	};
 }
@@ -42,7 +44,9 @@ function create_if_block_3(ctx) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(p);
+			if (detaching) {
+				detach(p);
+			}
 		}
 	};
 }
@@ -60,7 +64,9 @@ function create_if_block_2(ctx) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(p);
+			if (detaching) {
+				detach(p);
+			}
 		}
 	};
 }
@@ -78,7 +84,9 @@ function create_if_block_1(ctx) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(p);
+			if (detaching) {
+				detach(p);
+			}
 		}
 	};
 }
@@ -96,7 +104,9 @@ function create_if_block(ctx) {
 			insert(target, p, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(p);
+			if (detaching) {
+				detach(p);
+			}
 		}
 	};
 }
@@ -224,14 +234,17 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) {
+				detach(div);
+				detach(t7);
+				detach(if_block4_anchor);
+			}
+
 			if (if_block0) if_block0.d();
 			if (if_block1) if_block1.d();
 			if (if_block2) if_block2.d();
 			if (if_block3) if_block3.d();
-			if (detaching) detach(t7);
 			if (if_block4) if_block4.d(detaching);
-			if (detaching) detach(if_block4_anchor);
 		}
 	};
 }

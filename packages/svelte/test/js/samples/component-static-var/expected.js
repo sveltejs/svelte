@@ -74,11 +74,14 @@ function create_fragment(ctx) {
 			current = false;
 		},
 		d(detaching) {
+			if (detaching) {
+				detach(t0);
+				detach(t1);
+				detach(input);
+			}
+
 			destroy_component(foo, detaching);
-			if (detaching) detach(t0);
 			destroy_component(bar, detaching);
-			if (detaching) detach(t1);
-			if (detaching) detach(input);
 			mounted = false;
 			dispose();
 		}

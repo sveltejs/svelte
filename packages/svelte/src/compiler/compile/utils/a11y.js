@@ -14,7 +14,8 @@ const non_interactive_roles = new Set(
 				// aria-activedescendant, thus in practice we treat it as a widget.
 				// focusable tabpanel elements are recommended if any panels in a set contain content where the first element in the panel is not focusable.
 				// 'generic' is meant to have no semantic meaning.
-				!['toolbar', 'tabpanel', 'generic'].includes(name) &&
+				// 'cell' is treated as CellRole by the AXObject which is interactive, so we treat 'cell' it as interactive as well.
+				!['toolbar', 'tabpanel', 'generic', 'cell'].includes(name) &&
 				!role.superClass.some((classes) => classes.includes('widget'))
 			);
 		})

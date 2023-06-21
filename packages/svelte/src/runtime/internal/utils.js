@@ -107,6 +107,8 @@ export function subscribe(store, ...callbacks) {
 
 /**
  * Get the current value from a store by subscribing and immediately unsubscribing.
+ *
+ * https://svelte.dev/docs/svelte-store#get
  * @template T
  * @param {import('../store/public.js').Readable<T>} store
  * @returns {T}

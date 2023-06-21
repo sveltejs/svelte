@@ -314,7 +314,10 @@ export default class Component {
 		return alias;
 	}
 
-	/** @param {{ js: import('estree').Node[]; css: import('../interfaces.js').CssResult }} [result] */
+	/**
+	 * @param {{ js: import('estree').Node[]; css: import('../interfaces.js').CssResult }} [result]
+	 * @returns {import('../interfaces.js').CompileResult}
+	 */
 	generate(result) {
 		let js = null;
 		let css = null;

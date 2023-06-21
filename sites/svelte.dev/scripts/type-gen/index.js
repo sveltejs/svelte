@@ -257,7 +257,12 @@ function read_d_ts_file(file) {
 			// @ts-ignore
 			const name = statement.name.text || statement.name.escapedText;
 
-			if (name === '*.svelte' || name === 'svelte/types/compiler/preprocess') {
+			const ignore_list = [
+				'*.svelte',
+				'svelte/types/compiler/preprocess', // legacy entrypoints, omit from docs
+				'svelte/types/compiler/interfaces' // legacy entrypoints, omit from docs
+			];
+			if (ignore_list.includes(name)) {
 				continue;
 			}
 

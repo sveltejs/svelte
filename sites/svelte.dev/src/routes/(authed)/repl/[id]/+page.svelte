@@ -32,7 +32,7 @@
 
 	onMount(() => {
 		if (data.version !== 'local') {
-			fetch(`https://unpkg.com/svelte@${data.version || '3'}/package.json`)
+			fetch(`https://unpkg.com/svelte@${data.version || '4.0.0-next.2'}/package.json`)
 				.then((r) => r.json())
 				.then((pkg) => {
 					version = pkg.version;
@@ -101,7 +101,8 @@
 <style>
 	.repl-outer {
 		position: relative;
-		height: calc(100vh - var(--sk-nav-height));
+		height: calc(100% - var(--sk-nav-height));
+		height: calc(100dvh - var(--sk-nav-height));
 		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
 		overflow: hidden;

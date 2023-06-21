@@ -36,7 +36,7 @@ To make that possible we first needed to rethink the concept at the heart of mod
 In old Svelte, you would tell the computer that some state had changed by calling the `this.set` method:
 
 ```js
-// @errors: 7017
+// @noErrors
 const { count } = this.get();
 this.set({
 	count: count + 1
@@ -46,7 +46,7 @@ this.set({
 That would cause the component to _react_. Speaking of which, `this.set` is almost identical to the `this.setState` method used in classical (pre-hooks) React:
 
 ```js
-// @errors: 7017
+// @noErrors
 const { count } = this.state;
 this.setState({
 	count: count + 1

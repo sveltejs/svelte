@@ -1,4 +1,5 @@
 import { base as app_base } from '$app/paths';
+import { modules } from '$lib/generated/type-info.js';
 import {
 	escape,
 	extractFrontmatter,
@@ -10,23 +11,24 @@ import {
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer';
-import { modules } from '$lib/generated/type-info.js';
 
 /**
  * @param {import('./types').DocsData} docs_data
  * @param {string} slug
  */
 export async function get_parsed_docs(docs_data, slug) {
-	const page = docs_data
-		.find(({ pages }) => pages.find((page) => slug === page.slug))
-		?.pages.find((page) => slug === page.slug);
+	for (const { pages } of docs_data) {
+		for (const page of pages) {
+			if (page.slug === slug) {
+				return {
+					...page,
+					content: await render_content(page.file, page.content)
+				};
+			}
+		}
+	}
 
-	if (!page) return null;
-
-	return {
-		...page,
-		content: await render_content(page.file, page.content)
-	};
+	return null;
 }
 
 /** @return {import('./types').DocsData} */
@@ -54,16 +56,15 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 			pages: []
 		};
 
-		for (const page_md of fs
-			.readdirSync(`${base}/${category_dir}`)
-			.filter((filename) => filename !== 'meta.json')) {
-			const match = /\d{2}-(.+)/.exec(page_md);
+		for (const filename of fs.readdirSync(`${base}/${category_dir}`)) {
+			if (filename === 'meta.json') continue;
+			const match = /\d{2}-(.+)/.exec(filename);
 			if (!match) continue;
 
 			const page_slug = match[1].replace('.md', '');
 
 			const page_data = extractFrontmatter(
-				fs.readFileSync(`${base}/${category_dir}/${page_md}`, 'utf-8')
+				fs.readFileSync(`${base}/${category_dir}/${filename}`, 'utf-8')
 			);
 
 			if (page_data.metadata.draft === 'true') continue;
@@ -77,7 +78,7 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 				content: page_content,
 				sections: get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
-				file: `${category_dir}/${page_md}`
+				file: `${category_dir}/${filename}`
 			});
 		}
 
