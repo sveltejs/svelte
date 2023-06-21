@@ -60,7 +60,9 @@ function create_each_block(key_1, ctx) {
 			stop_animation = create_animation(div, rect, foo, {});
 		},
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) {
+				detach(div);
+			}
 		}
 	};
 }
@@ -106,11 +108,13 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
+			if (detaching) {
+				detach(each_1_anchor);
+			}
+
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].d(detaching);
 			}
-
-			if (detaching) detach(each_1_anchor);
 		}
 	};
 }

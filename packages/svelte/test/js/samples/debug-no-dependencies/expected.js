@@ -47,8 +47,10 @@ function create_each_block(ctx) {
 		},
 		p: noop,
 		d: function destroy(detaching) {
-			if (detaching) detach_dev(t0);
-			if (detaching) detach_dev(t1);
+			if (detaching) {
+				detach_dev(t0);
+				detach_dev(t1);
+			}
 		}
 	};
 
@@ -119,8 +121,11 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d: function destroy(detaching) {
+			if (detaching) {
+				detach_dev(each_1_anchor);
+			}
+
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach_dev(each_1_anchor);
 		}
 	};
 

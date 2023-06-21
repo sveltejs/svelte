@@ -1,0 +1,93 @@
+name: ecosystem-ci trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    if: github.repository == 'sveltejs/svelte' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const user = context.payload.sender.login
+            console.log(`Validate user: ${user}`)
+
+            let hasTriagePermission = false
+            try {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: user,
+              });
+              hasTriagePermission = data.user.permissions.triage
+            } catch (e) {
+              console.warn(e)
+            }
+
+            if (hasTriagePermission) {
+              console.log('Allowed')
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: '+1',
+              })
+            } else {
+              console.log('Not allowed')
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: '-1',
+              })
+              throw new Error('not allowed')
+            }
+      - uses: actions/github-script@v6
+        id: get-pr-data
+        with:
+          script: |
+            console.log(`Get PR info: ${context.repo.owner}/${context.repo.repo}#${context.issue.number}`)
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            })
+            return {
+              num: context.issue.number,
+              branchName: pr.head.ref,
+              repo: pr.head.repo.full_name
+            }
+      - id: generate-token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92  #keep pinned for security reasons, currently 1.8.0
+        with:
+          app_id: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_ID }}
+          private_key: ${{ secrets.ECOSYSTEM_CI_GITHUB_APP_PRIVATE_KEY }}
+          repository: "${{ github.repository_owner }}/svelte-ecosystem-ci"
+      - uses: actions/github-script@v6
+        id: trigger
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          result-encoding: string
+          script: |
+            const comment = process.env.COMMENT.trim()
+            const prData = ${{ steps.get-pr-data.outputs.result }}
+
+            const suite = comment.split('\n')[0].replace(/^\/ecosystem-ci run/, '').trim()
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'svelte-ecosystem-ci',
+              workflow_id: 'ecosystem-ci-from-pr.yml',
+              ref: 'main',
+              inputs: {
+                prNumber: '' + prData.num,
+                branchName: prData.branchName,
+                repo: prData.repo,
+                suite: suite === '' ? '-' : suite
+              }
+            })
