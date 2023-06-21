@@ -113,6 +113,10 @@ function validate_options(options, warnings) {
 			throw new Error(`Invalid namespace '${namespace}'`);
 		}
 	}
+
+	if (options.discloseVersion == undefined) {
+		options.discloseVersion = true;
+	}
 }
 
 /**
