@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { Icon, Shell } from '@sveltejs/site-kit/components';
-	import { Nav } from '@sveltejs/site-kit/nav';
+	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
 	import '@sveltejs/site-kit/styles/index.css';
 
@@ -35,7 +35,11 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="external-links">
+				<a href="https://learn.svelte.dev/">Tutorial</a>
+
 				<a href="https://kit.svelte.dev">SvelteKit</a>
+
+				<Separator />
 
 				<a href="/chat" title="Discord Chat">
 					<span class="small">Discord</span>
