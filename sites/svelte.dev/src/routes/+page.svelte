@@ -97,15 +97,26 @@
 		padding: 0 var(--sk-page-padding-side);
 		margin: 0 auto;
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(2, 1fr);
 		grid-template-rows: 1fr;
 	}
 
 	footer .logo {
+		display: none;
 		background: url('@sveltejs/site-kit/branding/svelte-logo.svg');
 		background-repeat: no-repeat;
 		background-size: 8rem;
 		filter: grayscale(100%) opacity(84%);
+	}
+
+	@media (min-width: 400px) {
+		footer {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		footer .logo {
+			display: block;
+		}
 	}
 
 	footer h4 {
