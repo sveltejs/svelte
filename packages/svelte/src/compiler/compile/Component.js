@@ -1,3 +1,4 @@
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { walk } from 'estree-walker';
 import { getLocator } from 'locate-character';
 import { reserved, is_valid } from '../utils/names.js';
@@ -142,8 +143,17 @@ export default class Component {
 	/** @type {string} */
 	file;
 
-	/** @type {(c: number) => { line: number; column: number }} */
+	/**
+	 * Use this for source mappings. Use `meta_locate` for the meta data on the dom elements.
+	 * @type {(c: number) => { line: number; column: number }}
+	 */
 	locate;
+
+	/**
+	 * Use this for the meta data on the dom elements. Use `locate` for source mappings.
+	 * @type {(c: number) => { line: number; column: number }}
+	 */
+	meta_locate;
 
 	/** @type {import('./nodes/Element.js').default[]} */
 	elements = [];
@@ -199,7 +209,21 @@ export default class Component {
 						.replace(process.cwd(), '')
 						.replace(regex_leading_directory_separator, '')
 				: compile_options.filename);
+
+		// line numbers in stack trace frames are 1-based. source maps are 0-based
 		this.locate = getLocator(this.source, { offsetLine: 1 });
+		// @ts-expect-error - fix the type of CompileOptions.sourcemap
+		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
+		this.meta_locate = (c) => {
+			/** @type {{ line: number, column: number }} */
+			let location = this.locate(c);
+			if (tracer) {
+				// originalPositionFor returns 1-based lines like locator
+				location = originalPositionFor(tracer, location);
+			}
+			return location;
+		};
+
 		// styles
 		this.stylesheet = new Stylesheet({
 			source,

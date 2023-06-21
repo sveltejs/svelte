@@ -65,6 +65,9 @@ export default class Renderer {
 	/** @type {(c: number) => { line: number; column: number }} */
 	locate;
 
+	/** @type {(c: number) => { line: number; column: number }} */
+	meta_locate;
+
 	/**
 	 * @param {import('../Component.js').default} component
 	 * @param {import('../../interfaces.js').CompileOptions} options
@@ -73,6 +76,7 @@ export default class Renderer {
 		this.component = component;
 		this.options = options;
 		this.locate = component.locate; // TODO messy
+		this.meta_locate = component.meta_locate; // TODO messy
 		this.file_var = options.dev && this.component.get_unique_name('file');
 		component.vars
 			.filter((v) => !v.hoistable || (v.export_name && !v.module))
