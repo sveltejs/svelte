@@ -31,7 +31,7 @@ const valid_options = [
 	'preserveComments',
 	'preserveWhitespace',
 	'cssHash',
-	'disableVersionTagging'
+	'discloseVersion'
 ];
 const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;

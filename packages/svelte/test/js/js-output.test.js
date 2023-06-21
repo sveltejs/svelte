@@ -35,7 +35,7 @@ describe('js-output', () => {
 			try {
 				const options = Object.assign(
 					{
-						disableVersionTagging: true
+						discloseVersion: false
 					},
 					config.options || {}
 				);

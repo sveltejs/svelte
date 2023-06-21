@@ -605,7 +605,7 @@ export default function dom(component, options) {
 		}
 	}
 
-	if (options.disableVersionTagging !== true) {
+	if (options.discloseVersion === true) {
 		component.imports.unshift({
 			type: 'ImportDeclaration',
 			specifiers: [],
