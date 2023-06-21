@@ -11,8 +11,12 @@ export const render_content = (filename, body) =>
 		cacheCodeSnippets: true,
 		modules,
 
-		resolveTypeLinks: (module_name, type_name) =>
-			`/docs/${slugify(module_name)}#type-${slugify(type_name)}`,
+		resolveTypeLinks: (module_name, type_name) => {
+			return {
+				page: `/docs/${slugify(module_name)}`,
+				slug: `type-${slugify(type_name)}`
+			};
+		},
 
 		twoslashBanner: (filename, source) => {
 			const injected = [];

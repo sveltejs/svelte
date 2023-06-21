@@ -146,7 +146,7 @@ function munge_type_element(member, depth = 1) {
 	// @ts-ignore
 	const doc = member.jsDoc?.[0];
 
-	if (/private api/i.test(doc?.comment)) return;
+	if (/(private api|do not use)/i.test(doc?.comment)) return;
 
 	/** @type {string[]} */
 	const children = [];
