@@ -61,20 +61,22 @@
 	<footer>
 		<div class="logo">
 		</div>
-		<div>
+		<div class="links">
 			<h4>resources</h4>
 			<a href="/docs">documentation</a>
 			<a href="/tutorial">tutorial</a>
 			<a href="/examples">examples</a>
 			<a href="/blog">blog</a>
 		</div>
-		<div>
+		<div class="links">
 			<h4>connect</h4>
 			<a href="https://github.com/sveltejs/svelte">github</a>
 			<a href="https://opencollective.com/svelte">open collective</a>
 			<a href="/chat">discord</a>
 			<a href="https://twitter.com/sveltejs">twitter</a>
 		</div>
+		<div class="copyright">© 2023 Svelte</div>
+		<div class="open-source">Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released under the MIT license</div>
 	</footer>
 </section>
 
@@ -99,6 +101,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		grid-template-rows: 1fr;
+		grid-row-gap: 6rem;
 	}
 
 	footer .logo {
@@ -109,7 +112,24 @@
 		filter: grayscale(100%) opacity(84%);
 	}
 
-	@media (min-width: 400px) {
+	footer h4 {
+		font-size: var(--sk-text-m);
+		padding-bottom: 1rem;
+	}
+
+	.links a {
+		color: var(--sk-text-2);
+		font-size: var(--sk-text-s);
+		display: block;
+		line-height: 1.8;
+	}
+
+	.open-source {
+		display: none;
+		grid-column: span 2;
+	}
+
+	@media (min-width: 500px) {
 		footer {
 			grid-template-columns: repeat(3, 1fr);
 		}
@@ -117,17 +137,9 @@
 		footer .logo {
 			display: block;
 		}
-	}
 
-	footer h4 {
-		font-size: var(--sk-text-m);
-		padding-bottom: 1rem;
-	}
-
-	footer a {
-		color: var(--sk-text-2);
-		font-size: var(--sk-text-s);
-		display: block;
-		line-height: 1.8;
+		.open-source {
+			display: block;
+		}
 	}
 </style>
