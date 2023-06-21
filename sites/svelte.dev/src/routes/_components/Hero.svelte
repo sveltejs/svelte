@@ -17,7 +17,7 @@
 		</strong>
 		<div class="buttons">
 			<a href="https://learn.svelte.dev" rel="external" class="cta">
-				tutorial <Icon name="arrow-right" />
+				tutorial<Icon name="external-link" size="1em" />
 			</a>
 			<a href="/docs/introduction" class="cta basic">read the docs</a>
 		</div>
@@ -86,11 +86,12 @@
 	.cta {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.1rem;
 		background: var(--sk-theme-1);
 		padding: 0.35em 0.8em;
 		font-size: var(--sk-text-s);
 		letter-spacing: 0.05em;
+		font-weight: 600;
 		white-space: nowrap;
 		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);

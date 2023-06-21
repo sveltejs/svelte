@@ -921,7 +921,7 @@ function syntax_highlight({ source, filename, language, highlighter, twoslashBan
 			};
 		});
 
-		html = `<pre class="language-diff"><code>${lines
+		html = `<pre class="language-diff" style="background-color: var(--shiki-color-background)"><code>${lines
 			.map((line) => {
 				if (line.type) return `<span class="${line.type}">${line.content}\n</span>`;
 				return line.content + '\n';
