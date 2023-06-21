@@ -30,6 +30,8 @@
 		<Icon size={50} name="edit" /> Edit this page on GitHub
 	</a>
 
+	<DocsOnThisPage details={data.page} />
+
 	{@html data.page.content}
 </div>
 
@@ -49,8 +51,6 @@
 		{/if}
 	</div>
 </div>
-
-<DocsOnThisPage details={data.page} />
 
 <style>
 	.edit {
