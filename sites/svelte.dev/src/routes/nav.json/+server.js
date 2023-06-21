@@ -42,6 +42,11 @@ async function get_nav_list() {
 
 	return [
 		{
+			title: 'Tutorial',
+			prefix: 'tutorial',
+			pathname: 'https://learn.svelte.dev/tutorial/welcome-to-svelte'
+		},
+		{
 			title: 'Docs',
 			prefix: 'docs',
 			pathname: '/docs/introduction',
