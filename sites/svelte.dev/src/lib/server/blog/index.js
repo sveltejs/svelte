@@ -9,14 +9,16 @@ import { render_content } from '../renderer.js';
  * @param {string} slug
  */
 export async function get_processed_blog_post(blog_data, slug) {
-	const post = blog_data.find((post) => post.slug === slug);
+	for (const post of blog_data) {
+		if (post.slug === slug) {
+			return {
+				...post,
+				content: await render_content(post.file, post.content)
+			};
+		}
+	}
 
-	if (!post) return null;
-
-	return {
-		...post,
-		content: await render_content(post.file, post.content)
-	};
+	return null;
 }
 
 const BLOG_NAME_REGEX = /^(\d{4}-\d{2}-\d{2})-(.+)\.md$/;

@@ -8,16 +8,18 @@ import { render_content } from '../renderer.js';
  * @param {string} slug
  */
 export async function get_parsed_tutorial(tutorial_data, slug) {
-	const tutorial = tutorial_data
-		.find(({ tutorials }) => tutorials.find((t) => t.slug === slug))
-		?.tutorials?.find((t) => t.slug === slug);
+	for (const { tutorials } of tutorial_data) {
+		for (const tutorial of tutorials) {
+			if (tutorial.slug === slug) {
+				return {
+					...tutorial,
+					content: await render_content(`tutorial/${tutorial.dir}`, tutorial.content)
+				};
+			}
+		}
+	}
 
-	if (!tutorial) return null;
-
-	return {
-		...tutorial,
-		content: await render_content(`tutorial/${tutorial.dir}`, tutorial.content)
-	};
+	return null;
 }
 
 /**

@@ -6,11 +6,15 @@ import fs from 'node:fs';
  * @param {string} slug
  */
 export function get_example(examples_data, slug) {
-	const example = examples_data
-		.find((section) => section.examples.find((example) => example.slug === slug))
-		?.examples.find((example) => example.slug === slug);
+	for (const section of examples_data) {
+		for (const example of section.examples) {
+			if (example.slug === slug) {
+				return example;
+			}
+		}
+	}
 
-	return example;
+	return null;
 }
 
 /**
