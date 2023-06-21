@@ -154,8 +154,8 @@ importers:
         specifier: ^2.25.0
         version: 2.25.0
       '@sveltejs/repl':
-        specifier: 0.5.0-next.4
-        version: 0.5.0-next.4(@codemirror/lang-html@6.4.4)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.6)(@sveltejs/kit@1.20.4)(svelte@packages+svelte)
+        specifier: 0.5.0-next.5
+        version: 0.5.0-next.5(@codemirror/lang-html@6.4.4)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.6)(@sveltejs/kit@1.20.4)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1771,8 +1771,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0-next.4(@codemirror/lang-html@6.4.4)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.6)(@sveltejs/kit@1.20.4)(svelte@packages+svelte):
-    resolution: {integrity: sha512-nIcczoi9StdjdUNViwJ0FAqU2tE96MWl2mbqGK9B3SV8ggw8XN93XQX0MCFcrA51IQF5pNwezu2JSldel9LccA==}
+  /@sveltejs/repl@0.5.0-next.5(@codemirror/lang-html@6.4.4)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.6)(@sveltejs/kit@1.20.4)(svelte@packages+svelte):
+    resolution: {integrity: sha512-jhHFflZuMHmvY/Qk/YJ6pT5ZEIuzS/3vfKM2QK0JGUaJeLrvIM75xHVv3UWSJhciILzYhkSvKCCLr8/TUQ4Rvg==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
@@ -1793,7 +1793,7 @@ packages:
       '@rich_harris/svelte-split-pane': 1.1.1(svelte@packages+svelte)
       '@rollup/browser': 3.25.1
       '@sveltejs/site-kit': 5.2.1(@sveltejs/kit@1.20.4)(svelte@packages+svelte)
-      acorn: 8.8.2
+      acorn: 8.9.0
       codemirror: 6.0.1(@lezer/common@1.0.3)
       esm-env: 1.0.0
       estree-walker: 3.0.3
@@ -2378,7 +2378,6 @@ packages:
     resolution: {integrity: sha512-jaVNAFBHNLXspO543WnNNPZFRtavh3skAkITqD0/2aeMkKZTN+254PyhwxFYrk3vQ1xfY+2wbesJMs/JC8/PwQ==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-    dev: true
 
   /agadoo@3.0.0:
     resolution: {integrity: sha512-gq+fjT3Ilrhb88Jf+vYMjdO/+3znYfa7vJ4IMLPFsBPUxglnr40Ed3yCLrW6IABdJAedB94b2BkqR6I04lh3dg==}
