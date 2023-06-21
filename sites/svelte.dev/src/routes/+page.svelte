@@ -57,39 +57,66 @@
 
 <Supporters />
 
-{#if $theme.current === 'light'}
-	<Image lazy src={CollectiveLight} alt="The Svelte logo in a ball pit" />
-{:else}
-	<Image lazy src={CollectiveDark} alt="The Svelte logo in a ball pit" />
-{/if}
-
-<footer>
-	<a href="/tutorial">Tutorial</a>
-	<a href="/docs">Docs</a>
-	<a href="/examples">Examples</a>
-	<a href="/blog">Blog</a>
-	<a href="https://opencollective.com/svelte">Open Collective</a>
-</footer>
+<section>
+	<footer>
+		<div class="logo">
+		</div>
+		<div>
+			<h4>resources</h4>
+			<a href="/docs">documentation</a>
+			<a href="/tutorial">tutorial</a>
+			<a href="/examples">examples</a>
+			<a href="/blog">blog</a>
+		</div>
+		<div>
+			<h4>connect</h4>
+			<a href="https://github.com/sveltejs/svelte">github</a>
+			<a href="https://opencollective.com/svelte">open collective</a>
+			<a href="/chat">discord</a>
+			<a href="https://twitter.com/sveltejs">twitter</a>
+		</div>
+	</footer>
+</section>
 
 <style>
 	h2 {
 		line-height: 1.05;
 	}
 
+	p {
+		font-size: var(--sk-text-m);
+	}
+
+	section {
+		background: var(--sk-back-4);
+		padding: 10rem 0;
+	}
+
 	footer {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		padding: 4rem;
+		max-width: 120rem;
+		padding: 0 var(--sk-page-padding-side);
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		grid-template-rows: 1fr;
+	}
+
+	footer .logo {
+		background: url('@sveltejs/site-kit/branding/svelte-logo.svg');
+		background-repeat: no-repeat;
+		background-size: 8rem;
+		filter: grayscale(100%) opacity(84%);
+	}
+
+	footer h4 {
+		font-size: var(--sk-text-m);
+		padding-bottom: 1rem;
 	}
 
 	footer a {
 		color: var(--sk-text-2);
-		padding: 0.5rem 1rem;
+		font-size: var(--sk-text-s);
 		display: block;
-	}
-
-	p {
-		font-size: var(--sk-text-m);
+		line-height: 1.8;
 	}
 </style>
