@@ -75,7 +75,7 @@
 			<a href="/chat">discord</a>
 			<a href="https://twitter.com/sveltejs">twitter</a>
 		</div>
-		<div class="copyright">© 2023 Svelte</div>
+		<div class="copyright">© 2023 <a href="https://github.com/sveltejs/svelte/graphs/contributors">Svelte contributors</a></div>
 		<div class="open-source">Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released under the MIT license</div>
 	</footer>
 </section>
