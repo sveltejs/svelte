@@ -115,6 +115,9 @@ function validate_options(options, warnings) {
 }
 
 /**
+ * `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source
  * @param {import('../interfaces.js').CompileOptions} options
  */

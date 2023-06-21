@@ -17,7 +17,7 @@ export function get_current_component() {
  *
  * The first time the callback runs will be before the initial `onMount`
  *
- * https://svelte.dev/docs#run-time-svelte-beforeupdate
+ * https://svelte.dev/docs/svelte#beforeupdate
  * @param {() => any} fn
  * @returns {void}
  */
@@ -34,7 +34,7 @@ export function beforeUpdate(fn) {
  *
  * `onMount` does not run inside a [server-side component](/docs#run-time-server-side-component-api).
  *
- * https://svelte.dev/docs#run-time-svelte-onmount
+ * https://svelte.dev/docs/svelte#onmount
  * @template T
  * @param {() => import('./private.js').NotFunction<T> | Promise<import('./private.js').NotFunction<T>> | (() => any)} fn
  * @returns {void}
@@ -47,6 +47,8 @@ export function onMount(fn) {
  * Schedules a callback to run immediately after the component has been updated.
  *
  * The first time the callback runs will be after the initial `onMount`
+ *
+ * https://svelte.dev/docs/svelte#afterupdate
  * @param {() => any} fn
  * @returns {void}
  */
@@ -60,7 +62,7 @@ export function afterUpdate(fn) {
  * Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the
  * only one that runs inside a server-side component.
  *
- * https://svelte.dev/docs#run-time-svelte-ondestroy
+ * https://svelte.dev/docs/svelte#ondestroy
  * @param {() => any} fn
  * @returns {void}
  */
@@ -87,7 +89,7 @@ export function onDestroy(fn) {
  * }>();
  * ```
  *
- * https://svelte.dev/docs#run-time-svelte-createeventdispatcher
+ * https://svelte.dev/docs/svelte#createeventdispatcher
  * @template {Record<string, any>} [EventMap=any]
  * @returns {import('./public.js').EventDispatcher<EventMap>}
  */
@@ -115,7 +117,7 @@ export function createEventDispatcher() {
  *
  * Like lifecycle functions, this must be called during component initialisation.
  *
- * https://svelte.dev/docs#run-time-svelte-setcontext
+ * https://svelte.dev/docs/svelte#setcontext
  * @template T
  * @param {any} key
  * @param {T} context
@@ -130,7 +132,7 @@ export function setContext(key, context) {
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
  * Must be called during component initialisation.
  *
- * https://svelte.dev/docs#run-time-svelte-getcontext
+ * https://svelte.dev/docs/svelte#getcontext
  * @template T
  * @param {any} key
  * @returns {T}
@@ -144,7 +146,7 @@ export function getContext(key) {
  * Must be called during component initialisation. Useful, for example, if you
  * programmatically create a component and want to pass the existing context to it.
  *
- * https://svelte.dev/docs#run-time-svelte-getallcontexts
+ * https://svelte.dev/docs/svelte#getallcontexts
  * @template {Map<any, any>} [T=Map<any, any>]
  * @returns {T}
  */
@@ -156,7 +158,7 @@ export function getAllContexts() {
  * Checks whether a given `key` has been set in the context of a parent component.
  * Must be called during component initialisation.
  *
- * https://svelte.dev/docs#run-time-svelte-hascontext
+ * https://svelte.dev/docs/svelte#hascontext
  * @param {any} key
  * @returns {boolean}
  */
