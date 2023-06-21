@@ -67,21 +67,27 @@
 	$: mobile = width < 768;
 
 	function reset() {
-		repl.update({
+		repl.set({
 			files: data.tutorial.initial.map(clone)
 		});
+
+		//! BUG: Fix handleChange on REPL side, setting repl.set doesn't trigger it, and repl.update doesn't even work
+		completed = false;
 	}
 
 	function complete() {
-		repl.update({
+		repl.set({
 			files: data.tutorial.complete.map(clone)
 		});
+
+		completed = true;
 	}
 
 	let completed = false;
 
 	/** @param {import('svelte').ComponentEvents<Repl>['change']} event */
 	function handle_change(event) {
+		console.log(1);
 		completed = event.detail.files.every((file, i) => {
 			const expected = data.tutorial.complete[i] && clone(data.tutorial.complete[i]);
 			return (
