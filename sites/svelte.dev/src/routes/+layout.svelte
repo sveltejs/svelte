@@ -35,6 +35,8 @@
 			</svelte:fragment>
 
 			<svelte:fragment slot="external-links">
+				<a href="https://learn.svelte.dev/tutorial/welcome-to-svelte">Tutorial</a>
+
 				<a href="https://kit.svelte.dev">SvelteKit</a>
 
 				<a href="/chat" title="Discord Chat">
