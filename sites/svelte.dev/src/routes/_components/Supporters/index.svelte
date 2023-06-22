@@ -6,7 +6,7 @@
 
 <Section --background="var(--sk-back-2">
 	<p class="intro">
-		Svelte is free and open source software, made possible by the work of hundreds of supporters.
+		Svelte is made possible by the work of hundreds of supporters.
 	</p>
 
 	<div class="layout">

@@ -1,7 +1,6 @@
 import { get_blog_data, get_blog_list } from '$lib/server/blog/index.js';
 import { get_docs_data, get_docs_list } from '$lib/server/docs/index.js';
 import { get_examples_data, get_examples_list } from '$lib/server/examples/index.js';
-import { get_tutorial_data, get_tutorial_list } from '$lib/server/tutorial/index.js';
 import { json } from '@sveltejs/kit';
 
 export const prerender = true;
@@ -33,12 +32,6 @@ async function get_nav_list() {
 		}
 	];
 
-	const tutorial_list = get_tutorial_list(get_tutorial_data());
-	const processed_tutorial_list = tutorial_list.map(({ title, tutorials }) => ({
-		title,
-		sections: tutorials.map(({ title, slug }) => ({ title, path: '/tutorial/' + slug }))
-	}));
-
 	const examples_list = get_examples_list(get_examples_data());
 	const processed_examples_list = examples_list
 		.map(({ title, examples }) => ({
@@ -48,12 +41,6 @@ async function get_nav_list() {
 		.filter(({ title }) => title !== 'Embeds');
 
 	return [
-		{
-			title: 'Tutorial',
-			prefix: 'tutorial',
-			pathname: '/tutorial',
-			sections: processed_tutorial_list
-		},
 		{
 			title: 'Docs',
 			prefix: 'docs',
