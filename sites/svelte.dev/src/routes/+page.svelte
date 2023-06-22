@@ -59,8 +59,7 @@
 
 <section>
 	<footer>
-		<div class="logo">
-		</div>
+		<div class="logo" />
 		<div class="links">
 			<h4>resources</h4>
 			<a href="/docs">documentation</a>
@@ -75,8 +74,14 @@
 			<a href="/chat">discord</a>
 			<a href="https://twitter.com/sveltejs">twitter</a>
 		</div>
-		<div class="copyright">© 2023 <a href="https://github.com/sveltejs/svelte/graphs/contributors">Svelte contributors</a></div>
-		<div class="open-source">Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released under the MIT license</div>
+		<div class="copyright">
+			© 2023 <a href="https://github.com/sveltejs/svelte/graphs/contributors">Svelte contributors</a
+			>
+		</div>
+		<div class="open-source">
+			Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released
+			under the MIT license
+		</div>
 	</footer>
 </section>
 
@@ -129,6 +134,10 @@
 		grid-column: span 2;
 	}
 
+	.copyright {
+		grid-column: span 2;
+	}
+
 	@media (min-width: 500px) {
 		footer {
 			grid-template-columns: repeat(3, 1fr);
@@ -136,6 +145,10 @@
 
 		footer .logo {
 			display: block;
+		}
+
+		.copyright {
+			grid-column: span 1;
 		}
 
 		.open-source {

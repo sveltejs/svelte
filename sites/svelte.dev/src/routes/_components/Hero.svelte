@@ -84,7 +84,7 @@
 	}
 
 	.cta {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
 		gap: 0.1rem;
 		background: var(--sk-theme-1);
@@ -98,13 +98,12 @@
 		color: #fff;
 		color: color-mix(in hwb, hsl(var(--sk-theme-1-hsl)) 10%, var(--sk-back-1) 95%);
 		transition: 0.5s var(--quint-out);
-		transition-property: transform, box-shadow, color;
+		transition-property: box-shadow, color;
 	}
 
 	.cta:hover {
 		text-decoration: none;
 		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
-		transform: scale3d(1.01, 1.01, 1);
 	}
 
 	.cta.basic {
