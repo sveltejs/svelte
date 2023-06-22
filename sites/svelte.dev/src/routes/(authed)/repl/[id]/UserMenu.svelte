@@ -72,7 +72,7 @@
 		min-width: 10em;
 		top: 3rem;
 		right: -1.6rem;
-		background-color: var(--sk-theme-2);
+		background-color: var(--sk-back-2);
 		padding: 0.8rem 1.6rem;
 		z-index: 99;
 		text-align: left;
@@ -91,7 +91,7 @@
 		text-decoration: none;
 		text-align: left;
 		border: none;
-		color: inherit;
+		color: var(--sk-text-2);
 	}
 
 	.menu button:hover,

@@ -1,6 +1,5 @@
 import { init, inited, search } from '@sveltejs/site-kit/search';
 
-/** @type {import('./$types').PageServerLoad} */
 export async function load({ url, fetch }) {
 	if (!inited) {
 		const res = await fetch('/content.json');
