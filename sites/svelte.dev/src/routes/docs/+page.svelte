@@ -211,6 +211,6 @@
 
 	onMount(() => {
 		console.log(get_old_new_ids_map());
-		// goto(getURlToRedirectTo(), { replaceState: true });
+		goto(getURlToRedirectTo(), { replaceState: true });
 	});
 </script>
