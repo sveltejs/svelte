@@ -99,29 +99,57 @@ export function get_docs_list(docs_data) {
 	}));
 }
 
+const titled = (str) =>
+	removeMarkdown(
+		escape(markedTransform(str, { paragraph: (txt) => txt }))
+			.replace(/<\/?code>/g, '')
+			.replace(/&#39;/g, "'")
+			.replace(/&quot;/g, '"')
+			.replace(/&lt;/g, '<')
+			.replace(/&gt;/g, '>')
+			.replace(/<(\/)?(em|b|strong|code)>/g, '')
+	);
+
 /** @param {string} markdown */
 function get_sections(markdown) {
-	const headingRegex = /^##\s+(.*)$/gm;
-	/** @type {import('./types').Section[]} */
-	const secondLevelHeadings = [];
-	let match;
+	const lines = markdown.split('\n');
+	const root = /** @type {import('./types').Section} */ ({
+		title: 'Root',
+		slug: 'root',
+		sections: [],
+		breadcrumbs: [''],
+		text: ''
+	});
+	let currentNodes = [root];
 
-	const placeholders_rendered = replaceExportTypePlaceholders(markdown, modules);
+	lines.forEach((line) => {
+		const match = line.match(/^(#{2,4})\s(.*)/);
+		if (match) {
+			const level = match[1].length - 2;
+			const text = titled(match[2]);
+			const slug = normalizeSlugify(text);
 
-	while ((match = headingRegex.exec(placeholders_rendered)) !== null) {
-		secondLevelHeadings.push({
-			title: removeMarkdown(
-				escape(markedTransform(match[1], { paragraph: (txt) => txt }))
-					.replace(/<\/?code>/g, '')
-					.replace(/&#39;/g, "'")
-					.replace(/&quot;/g, '"')
-					.replace(/&lt;/g, '<')
-					.replace(/&gt;/g, '>')
-					.replace(/<(\/)?(em|b|strong|code)>/g, '')
-			),
-			slug: normalizeSlugify(match[1])
-		});
-	}
+			// Prepare new node
+			/** @type {import('./types').Section} */
+			const newNode = {
+				title: text,
+				slug,
+				sections: [],
+				breadcrumbs: [...currentNodes[level].breadcrumbs, text],
+				text: ''
+			};
 
-	return secondLevelHeadings;
+			// Add the new node to the tree
+			currentNodes[level].sections.push(newNode);
+
+			// Prepare for potential children of the new node
+			currentNodes = currentNodes.slice(0, level + 1);
+			currentNodes.push(newNode);
+		} else if (line.trim() !== '') {
+			// Add non-heading line to the text of the current section
+			currentNodes[currentNodes.length - 1].text += line + '\n';
+		}
+	});
+
+	return root.sections;
 }
