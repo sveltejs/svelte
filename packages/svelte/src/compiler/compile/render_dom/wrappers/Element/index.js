@@ -585,9 +585,11 @@ export default class ElementWrapper extends Wrapper {
 			);
 		}
 		if (renderer.options.dev) {
-			const loc = renderer.locate(this.node.start);
+			const loc = renderer.meta_locate(this.node.start);
 			block.chunks.hydrate.push(
 				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${
+					// TODO this.node.start isn't correct if there's a source map. But since we don't know how the
+					// original source file looked, there's not much we can do.
 					this.node.start
 				});`
 			);

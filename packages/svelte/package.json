@@ -103,6 +103,7 @@
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@jridgewell/trace-mapping": "^0.3.18",
     "acorn": "^8.8.2",
     "aria-query": "^5.2.1",
     "axobject-query": "^3.2.1",
