@@ -1,5 +1,33 @@
 # svelte
 
+## 4.0.0
+
+### Patch Changes
+
+- fix: export ComponentType from `svelte` entrypoint ([#8578](https://github.com/sveltejs/svelte/pull/8578))
+
+- feat: smaller minified output for destructor chunks ([#8763](https://github.com/sveltejs/svelte/pull/8763))
+
+- fix: never use html optimization for mustache tags in hydration mode ([#8744](https://github.com/sveltejs/svelte/pull/8744))
+
+- fix: derived store types ([#8578](https://github.com/sveltejs/svelte/pull/8578))
+
+- Generate type declarations with dts-buddy ([#8578](https://github.com/sveltejs/svelte/pull/8578))
+
+- fix: ensure types are loaded with all TS settings ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
+- breaking: use `CustomEvent` constructor instead of deprecated `createEvent` method ([#8775](https://github.com/sveltejs/svelte/pull/8775))
+
+- fix: account for preprocessor source maps when calculating meta info ([#8778](https://github.com/sveltejs/svelte/pull/8778))
+
+- chore: deindent cjs output for compiler ([#8785](https://github.com/sveltejs/svelte/pull/8785))
+
+- warn on boolean compilerOptions.css ([#8710](https://github.com/sveltejs/svelte/pull/8710))
+
+- fix: export correct SvelteComponent type ([#8721](https://github.com/sveltejs/svelte/pull/8721))
+
+- feat: add version info to `window`. You can opt out by setting `discloseVersion` to `false` in the compiler options ([#8761](https://github.com/sveltejs/svelte/pull/8761))
+
 ## 4.0.0-next.3
 
 ### Patch Changes
