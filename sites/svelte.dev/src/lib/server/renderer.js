@@ -14,7 +14,7 @@ export const render_content = (filename, body) =>
 		resolveTypeLinks: (module_name, type_name) => {
 			return {
 				page: `/docs/${slugify(module_name)}`,
-				slug: `type-${slugify(type_name)}`
+				slug: `types-${slugify(type_name)}`
 			};
 		},
 

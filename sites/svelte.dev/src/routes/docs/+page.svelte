@@ -145,12 +145,12 @@
 
 		// component-format-
 		[/component-format-(script|style|script-context-module)$/i, 'svelte-components#$1'],
-		[/component-format-(?:script)(?:-?(.*))$/i, 'svelte-components#$1'],
+		[/component-format-(script)(?:-?(.*))$/i, 'svelte-components#$1-$2'],
 
 		// template-syntax
 		[/template-syntax-((?:element|component)-directives)-?(.*)/i, '$1#$2'],
 		[/template-syntax-slot$/i, 'special-elements#slot'],
-		[/template-syntax-(?:slot)-?(.*)/i, 'special-elements#$1'],
+		[/template-syntax-(slot)-?(.*)/i, 'special-elements#$1-$2'],
 		[/template-syntax-(if|each|await|key)$/i, 'logic-blocks#$1'],
 		[/template-syntax-(const|debug|html)$/i, 'special-tags#$1'],
 		[/template-syntax-(tags|attributes-and-props|text-expressions|comments)$/i, 'basic-markup#$1'],
@@ -211,6 +211,6 @@
 
 	onMount(() => {
 		console.log(get_old_new_ids_map());
-		goto(getURlToRedirectTo(), { replaceState: true });
+		// goto(getURlToRedirectTo(), { replaceState: true });
 	});
 </script>
