@@ -25,43 +25,43 @@
     ".": {
       "types": "./types/index.d.ts",
       "browser": {
-        "import": "./src/runtime/index.js"
+        "default": "./src/runtime/index.js"
       },
-      "import": "./src/runtime/ssr.js"
+      "default": "./src/runtime/ssr.js"
     },
     "./compiler": {
       "types": "./types/index.d.ts",
-      "import": "./src/compiler/index.js",
-      "require": "./compiler.cjs"
+      "require": "./compiler.cjs",
+      "default": "./src/compiler/index.js"
     },
     "./action": {
       "types": "./types/index.d.ts"
     },
     "./animate": {
       "types": "./types/index.d.ts",
-      "import": "./src/runtime/animate/index.js"
+      "default": "./src/runtime/animate/index.js"
     },
     "./easing": {
       "types": "./types/index.d.ts",
-      "import": "./src/runtime/easing/index.js"
+      "default": "./src/runtime/easing/index.js"
     },
     "./internal": {
-      "import": "./src/runtime/internal/index.js"
+      "default": "./src/runtime/internal/index.js"
     },
     "./motion": {
       "types": "./types/index.d.ts",
-      "import": "./src/runtime/motion/index.js"
+      "default": "./src/runtime/motion/index.js"
     },
     "./store": {
       "types": "./types/index.d.ts",
-      "import": "./src/runtime/store/index.js"
+      "default": "./src/runtime/store/index.js"
     },
     "./internal/disclose-version": {
       "import": "./src/runtime/internal/disclose-version/index.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",
-      "import": "./src/runtime/transition/index.js"
+      "default": "./src/runtime/transition/index.js"
     },
     "./elements": {
       "types": "./elements.d.ts"
