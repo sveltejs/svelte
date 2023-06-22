@@ -11,6 +11,6 @@ export async function load({ fetch, params, url }) {
 
 	return {
 		gist,
-		version: url.searchParams.get('version') || '4.0.0-next.2'
+		version: url.searchParams.get('version') || '4'
 	};
 }
