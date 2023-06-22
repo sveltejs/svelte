@@ -214,11 +214,15 @@ export default class Component {
 
 		// line numbers in stack trace frames are 1-based. source maps are 0-based
 		this.locate = getLocator(this.source, { offsetLine: 1 });
-		// @ts-expect-error - fix the type of CompileOptions.sourcemap
-		const tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : undefined;
+		/** @type {TraceMap | null | undefined} initialise lazy because only used in dev mode */
+		let tracer;
 		this.meta_locate = (c) => {
 			/** @type {{ line: number, column: number }} */
 			let location = this.locate(c);
+			if (tracer === undefined) {
+				// @ts-expect-error - fix the type of CompileOptions.sourcemap
+				tracer = compile_options.sourcemap ? new TraceMap(compile_options.sourcemap) : null;
+			}
 			if (tracer) {
 				// originalPositionFor returns 1-based lines like locator
 				location = originalPositionFor(tracer, location);
