@@ -18,9 +18,7 @@ Now, in SvelteKit 1.8, we have a new solution: you can return a nested promise f
 For example, consider the following `load` function:
 
 ```ts
-/// file: +page.server.ts
-import type { PageServerLoad } from './$types';
-
+// @errors: 2304
 export const load: PageServerLoad = () => {
 	return {
 		post: fetchPost(),
@@ -34,7 +32,6 @@ export const load: PageServerLoad = () => {
 SvelteKit will automatically await the `fetchPost` call before it starts rendering the page, since it’s at the top level. However, it won’t wait for the nested `fetchComments` call to complete – the page will render and `data.streamed.comments` will be a promise that will resolve as the request completes. We can show a loading state in the corresponding `+page.svelte` using Svelte’s [await block](https://svelte.dev/docs#template-syntax-await):
 
 ```svelte
-<!-- file: +page.svelte --->
 <script lang="ts">
 	import type { PageData } from './$types';
 	export let data: PageData;
@@ -136,7 +133,6 @@ Now, you can export a `snapshot` object from a `+page.svelte` or `+layout.svelte
 For example, here is how you would capture and restore the value of a textarea:
 
 ```svelte
-<!-- file: +page.svelte -->
 <script lang="ts">
 	import type { Snapshot } from './$types';
 
@@ -166,6 +162,7 @@ SvelteKit uses platform-specific [adapters](https://kit.svelte.dev/docs/adapters
 Now, you can export a `config` object in your `+server.js`, `+page(.server).js` and `+layout(.server).js` files to control how those routes are deployed. Doing so in a `+layout.js` will apply the configuration to all child pages. The type of `config` is unique to each adapter, since it depends on the environment you’re deploying to.
 
 ```ts
+// @errors: 2307
 import type { Config } from 'some-adapter';
 
 export const config: Config = {
