@@ -11,7 +11,7 @@ export async function POST({ request }) {
 	const result = await gist.create(user, body);
 
 	// normalize id
-	result.id = +(result.id + '').replace(/-/g, '');
+	result.id = result.id.replace(/-/g, '');
 
 	return json(result, {
 		status: 201
