@@ -5,6 +5,7 @@ Distributed under MIT License https://github.com/mattdesl/eases/blob/master/LICE
 export { identity as linear } from '../internal/index.js';
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -15,6 +16,7 @@ export function backInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -24,6 +26,7 @@ export function backIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -33,6 +36,7 @@ export function backOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -54,6 +58,7 @@ export function bounceOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -62,6 +67,7 @@ export function bounceInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -70,6 +76,7 @@ export function bounceIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -79,6 +86,7 @@ export function circInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -87,6 +95,7 @@ export function circIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -95,6 +104,7 @@ export function circOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -103,6 +113,7 @@ export function cubicInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -111,6 +122,7 @@ export function cubicIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -120,6 +132,7 @@ export function cubicOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -133,6 +146,7 @@ export function elasticInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -141,6 +155,7 @@ export function elasticIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -149,6 +164,7 @@ export function elasticOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -161,6 +177,7 @@ export function expoInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -169,6 +186,7 @@ export function expoIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -177,6 +195,7 @@ export function expoOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -188,6 +207,7 @@ export function quadInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -196,6 +216,7 @@ export function quadIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -204,6 +225,7 @@ export function quadOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -212,6 +234,7 @@ export function quartInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -220,6 +243,7 @@ export function quartIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -228,6 +252,7 @@ export function quartOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -237,6 +262,7 @@ export function quintInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -245,6 +271,7 @@ export function quintIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -253,6 +280,7 @@ export function quintOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -261,6 +289,7 @@ export function sineInOut(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */
@@ -271,6 +300,7 @@ export function sineIn(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
  * @param {number} t
  * @returns {number}
  */

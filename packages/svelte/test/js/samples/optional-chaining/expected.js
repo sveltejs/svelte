@@ -142,17 +142,20 @@ function create_fragment(ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(t0);
-			if (detaching) detach(t1);
-			if (detaching) detach(t2);
-			if (detaching) detach(t3);
-			if (detaching) detach(t4);
-			if (detaching) detach(t5);
-			if (detaching) detach(t6);
-			if (detaching) detach(t7);
-			if (detaching) detach(t8);
-			if (detaching) detach(div);
-			if (detaching) detach(t9);
+			if (detaching) {
+				detach(t0);
+				detach(t1);
+				detach(t2);
+				detach(t3);
+				detach(t4);
+				detach(t5);
+				detach(t6);
+				detach(t7);
+				detach(t8);
+				detach(div);
+				detach(t9);
+			}
+
 			destroy_component(component, detaching);
 		}
 	};

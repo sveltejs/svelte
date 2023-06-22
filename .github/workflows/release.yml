@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - version-4
+      - master
 
 permissions: {}
 jobs:

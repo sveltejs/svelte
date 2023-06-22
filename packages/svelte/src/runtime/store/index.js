@@ -11,6 +11,8 @@ const subscriber_queue = [];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
+ *
+ * https://svelte.dev/docs/svelte-store#readable
  * @template T
  * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
@@ -24,6 +26,8 @@ export function readable(value, start) {
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
+ *
+ * https://svelte.dev/docs/svelte-store#writable
  * @template T
  * @param {T} [value] initial value
  * @param {import('./public.js').StartStopNotifier<T>} [start]
@@ -93,6 +97,7 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
+ * https://svelte.dev/docs/svelte-store#derived
  * @template {import('./private.js').Stores} S
  * @template T
  * @overload
@@ -106,6 +111,7 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
+ * https://svelte.dev/docs/svelte-store#derived
  * @template {import('./private.js').Stores} S
  * @template T
  * @overload
@@ -179,6 +185,7 @@ export function derived(stores, fn, initial_value) {
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
+ * https://svelte.dev/docs/svelte-store#readonly
  * @template T
  * @param {import('./public.js').Readable<T>} store  - store to make readonly
  * @returns {import('./public.js').Readable<T>}
