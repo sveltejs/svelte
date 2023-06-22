@@ -144,13 +144,15 @@ export default class Component {
 	file;
 
 	/**
-	 * Use this for source mappings. Use `meta_locate` for the meta data on the dom elements.
+	 * Use this for stack traces. It is 1-based and acts on pre-processed sources.
+	 * Use `meta_locate` for metadata on DOM elements.
 	 * @type {(c: number) => { line: number; column: number }}
 	 */
 	locate;
 
 	/**
-	 * Use this for the meta data on the dom elements. Use `locate` for source mappings.
+	 * Use this for metadata on DOM elements. It is 1-based and acts on sources that have not been pre-processed.
+	 * Use `locate` for source mappings.
 	 * @type {(c: number) => { line: number; column: number }}
 	 */
 	meta_locate;
