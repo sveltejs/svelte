@@ -196,7 +196,7 @@
 		return new_ids;
 	}
 
-	function getURlToRedirectTo() {
+	function get_url_to_redirect_to() {
 		const hash = $page.url.hash.replace(/^#/i, '');
 
 		if (!hash) return '/docs/introduction';
@@ -211,6 +211,6 @@
 
 	onMount(() => {
 		console.log(get_old_new_ids_map());
-		goto(getURlToRedirectTo(), { replaceState: true });
+		goto(get_url_to_redirect_to(), { replaceState: true });
 	});
 </script>

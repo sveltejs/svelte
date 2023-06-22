@@ -29,7 +29,7 @@ const result = compile(source, {
 });
 ```
 
-Refer to [CompileOptions](#type-compileoptions) for all the available options.
+Refer to [CompileOptions](#types-compileoptions) for all the available options.
 
 The returned `result` object contains the code for your component, along with useful bits of metadata.
 
@@ -47,7 +47,7 @@ import { compile } from 'svelte/compiler';
 const { js, css, ast, warnings, vars, stats } = compile(source);
 ```
 
-Refer to [CompileResult](#type-compileresult) for a full description of the compile result.
+Refer to [CompileResult](#types-compileresult) for a full description of the compile result.
 
 ## parse
 
