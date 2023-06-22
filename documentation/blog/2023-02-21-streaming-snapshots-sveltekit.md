@@ -65,7 +65,7 @@ In order for data from a server `load` function to get to the browser, we have t
 When we server-render a page, we tell devalue to serialize promises as function calls that create a _deferred_. This is a simplified version of the code SvelteKit adds to the page:
 
 ```js
-// @errors: 2339 700
+// @errors: 2339 7006
 const deferreds = new Map();
 
 window.defer = (id) => {
