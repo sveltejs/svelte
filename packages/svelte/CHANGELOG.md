@@ -1,5 +1,19 @@
 # svelte
 
+## 4.0.0-next.3
+
+### Patch Changes
+
+- feat: smaller minified output for destructor chunks ([#8763](https://github.com/sveltejs/svelte/pull/8763))
+
+- breaking: use `CustomEvent` constructor instead of deprecated `createEvent` method ([#8775](https://github.com/sveltejs/svelte/pull/8775))
+
+- fix: account for preprocessor source maps when calculating meta info ([#8778](https://github.com/sveltejs/svelte/pull/8778))
+
+- chore: deindent cjs output for compiler ([#8785](https://github.com/sveltejs/svelte/pull/8785))
+
+- feat: add version info to `window`. You can opt out by setting `discloseVersion` to `false` in the compiler options ([#8761](https://github.com/sveltejs/svelte/pull/8761))
+
 ## 4.0.0-next.2
 
 ### Patch Changes
@@ -69,7 +83,7 @@
 
 ## 3.59.2
 
-* Fix escaping `<textarea bind:value={...}>` values in SSR
+- Fix escaping `<textarea bind:value={...}>` values in SSR
 
 ## 3.59.1
 
