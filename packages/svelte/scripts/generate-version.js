@@ -13,5 +13,6 @@ fs.writeFileSync(
  * @type {string}
  */
 export const VERSION = '${pkg.version}';
+export const PUBLIC_VERSION = '${pkg.version.split('.')[0]}';
 `
 );

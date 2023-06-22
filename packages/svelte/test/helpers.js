@@ -147,6 +147,7 @@ export function create_loader(compileOptions, cwd) {
 			// any imported Svelte components as well. A few edge cases aren't handled but also
 			// currently unused in the tests, for example `export * from`and live bindings.
 			let transformed = compiled.js.code
+				.replace(/^import ['"]([^'"]+)['"]/gm, 'await __import("$1")')
 				.replace(
 					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
 					'const $1 = await __import("$2");'
