@@ -6,8 +6,6 @@
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
 	import TableOfContents from './TableOfContents.svelte';
 
-	import '@sveltejs/site-kit/styles/code.css';
-
 	export let data;
 
 	/** @type {import('@sveltejs/repl').default} */
