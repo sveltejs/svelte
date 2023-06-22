@@ -223,6 +223,8 @@ Events can be cancelable by passing a third parameter to the dispatch function. 
 </script>
 ```
 
+You can type the event dispatcher to define which events it can receive. This will make your code more type safe both within the component (wrong calls are flagged) and when using the component (types of the events are now narrowed). See [here](typescript#script-lang-ts-events) how to do it.
+
 ## Types
 
 > TYPES: svelte
