@@ -1,24 +1,25 @@
-import { modules } from '$lib/generated/type-info';
+import { extractFrontmatter } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
-import { extract_frontmatter } from '../markdown/index.js';
-import { render_markdown } from '../markdown/renderer.js';
+import { render_content } from '../renderer.js';
 
 /**
  * @param {import('./types').TutorialData} tutorial_data
  * @param {string} slug
  */
 export async function get_parsed_tutorial(tutorial_data, slug) {
-	const tutorial = tutorial_data
-		.find(({ tutorials }) => tutorials.find((t) => t.slug === slug))
-		?.tutorials?.find((t) => t.slug === slug);
+	for (const { tutorials } of tutorial_data) {
+		for (const tutorial of tutorials) {
+			if (tutorial.slug === slug) {
+				return {
+					...tutorial,
+					content: await render_content(`tutorial/${tutorial.dir}`, tutorial.content)
+				};
+			}
+		}
+	}
 
-	if (!tutorial) return null;
-
-	return {
-		...tutorial,
-		content: await render_markdown(`tutorial/${tutorial.dir}`, tutorial.content, { modules })
-	};
+	return null;
 }
 
 /**
@@ -49,7 +50,7 @@ export function get_tutorial_data(base = CONTENT_BASE_PATHS.TUTORIAL) {
 
 			// Read the file, get frontmatter
 			const contents = fs.readFileSync(`${tutorial_base_dir}/text.md`, 'utf-8');
-			const { metadata, body } = extract_frontmatter(contents);
+			const { metadata, body } = extractFrontmatter(contents);
 
 			// Get the contents of the apps.
 			const completion_states_data = { initial: [], complete: [] };

@@ -182,8 +182,8 @@ importers:
         specifier: ^1.20.4
         version: 1.20.4(svelte@packages+svelte)(vite@4.3.9)
       '@sveltejs/site-kit':
-        specifier: 6.0.0-next.8
-        version: 6.0.0-next.8(@sveltejs/kit@1.20.4)(svelte@packages+svelte)
+        specifier: 6.0.0-next.11
+        version: 6.0.0-next.11(@sveltejs/kit@1.20.4)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.1
         version: 2.4.1(svelte@packages+svelte)(vite@4.3.9)
@@ -1822,16 +1822,16 @@ packages:
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.8(@sveltejs/kit@1.20.4)(svelte@packages+svelte):
-    resolution: {integrity: sha512-3sCRKQnjhxJRR1FYpBBsGRqiV1cqSYFGAi/lJb4rt1U2+cvpRxJgJUHzrQqbfB4JfWpD63FcLKYU1+P+maaX/w==}
+  /@sveltejs/site-kit@6.0.0-next.11(@sveltejs/kit@1.20.4)(svelte@packages+svelte):
+    resolution: {integrity: sha512-v7K02vXgjotwvCbFEKHUcNK8/DOOVJ6KAGd9R7g1D93uVkAlcdn06D7ki8x17CskP5sl9FQIGV/RUuxDA459FA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
-      svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
+      svelte: ^3.54.0 || ^4.0.0-next.1 || ^4.0.0
     dependencies:
       '@sveltejs/kit': 1.20.4(svelte@packages+svelte)(vite@4.3.9)
       esm-env: 1.0.0
       svelte: link:packages/svelte
-      svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
+      svelte-local-storage-store: 0.5.0(svelte@packages+svelte)
     dev: true
 
   /@sveltejs/vite-plugin-svelte-inspector@1.0.2(@sveltejs/vite-plugin-svelte@2.4.1)(svelte@packages+svelte)(vite@4.3.9):
@@ -6157,6 +6157,16 @@ packages:
       svelte: ^3.48.0
     dependencies:
       svelte: link:packages/svelte
+    dev: false
+
+  /svelte-local-storage-store@0.5.0(svelte@packages+svelte):
+    resolution: {integrity: sha512-SEDrpapeia6fUqta+r1NvSLlJYPkZ4pBcl15EYIOSPNzy6vhpoXu8cnzUDmZxsWl7fZGAHxrVH9UyZCbyO4W+g==}
+    engines: {node: '>=0.14'}
+    peerDependencies:
+      svelte: ^3.48.0 || ^4.0.0
+    dependencies:
+      svelte: link:packages/svelte
+    dev: true
 
   /svelte-preprocess@5.0.4(postcss@8.4.23)(sass@1.63.4)(svelte@packages+svelte)(typescript@5.1.3):
     resolution: {integrity: sha512-ABia2QegosxOGsVlsSBJvoWeXy1wUKSfF7SWJdTjLAbx/Y3SrVevvvbFNQqrSJw89+lNSsM58SipmZJ5SRi5iw==}

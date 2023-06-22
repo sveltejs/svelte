@@ -1,11 +1,11 @@
 import { modules } from '$lib/generated/type-info.js';
 import {
-	extract_frontmatter,
+	extractFrontmatter,
+	markedTransform,
 	normalizeSlugify,
 	removeMarkdown,
-	transform
-} from '$lib/server/markdown/index.js';
-import { replace_export_type_placeholders } from '$lib/server/markdown/renderer.js';
+	replaceExportTypePlaceholders
+} from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
@@ -33,9 +33,9 @@ export function content() {
 
 		const filepath = `${base}/docs/${file}`;
 		// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
-		const markdown = replace_export_type_placeholders(fs.readFileSync(filepath, 'utf-8'), modules);
+		const markdown = replaceExportTypePlaceholders(fs.readFileSync(filepath, 'utf-8'), modules);
 
-		const { body, metadata } = extract_frontmatter(markdown);
+		const { body, metadata } = extractFrontmatter(markdown);
 
 		const sections = body.trim().split(/^## /m);
 		const intro = sections.shift().trim();
@@ -103,7 +103,7 @@ function plaintext(markdown) {
 	/** @param {string} text */
 	const inline = (text) => text;
 
-	return transform(markdown, {
+	return markedTransform(markdown, {
 		code: (source) => source.split('// ---cut---\n').pop(),
 		blockquote: block,
 		html: () => '\n',

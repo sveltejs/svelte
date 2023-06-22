@@ -1,15 +1,16 @@
 import { base as app_base } from '$app/paths';
 import { modules } from '$lib/generated/type-info.js';
-import fs from 'node:fs';
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import {
 	escape,
-	extract_frontmatter,
+	extractFrontmatter,
+	markedTransform,
 	normalizeSlugify,
 	removeMarkdown,
-	transform
-} from '../markdown/index.js';
-import { render_markdown } from '../markdown/renderer.js';
+	replaceExportTypePlaceholders
+} from '@sveltejs/site-kit/markdown';
+import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { render_content } from '../renderer';
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -21,7 +22,7 @@ export async function get_parsed_docs(docs_data, slug) {
 			if (page.slug === slug) {
 				return {
 					...page,
-					content: await render_markdown(page.file, page.content, { modules })
+					content: await render_content(page.file, page.content)
 				};
 			}
 		}
@@ -62,7 +63,7 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 
 			const page_slug = match[1].replace('.md', '');
 
-			const page_data = extract_frontmatter(
+			const page_data = extractFrontmatter(
 				fs.readFileSync(`${base}/${category_dir}/${filename}`, 'utf-8')
 			);
 
@@ -105,10 +106,12 @@ function get_sections(markdown) {
 	const secondLevelHeadings = [];
 	let match;
 
-	while ((match = headingRegex.exec(markdown)) !== null) {
+	const placeholders_rendered = replaceExportTypePlaceholders(markdown, modules);
+
+	while ((match = headingRegex.exec(placeholders_rendered)) !== null) {
 		secondLevelHeadings.push({
 			title: removeMarkdown(
-				escape(transform(match[1], { paragraph: (txt) => txt }))
+				escape(markedTransform(match[1], { paragraph: (txt) => txt }))
 					.replace(/<\/?code>/g, '')
 					.replace(/&#39;/g, "'")
 					.replace(/&quot;/g, '"')
