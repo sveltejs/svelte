@@ -43,7 +43,7 @@ export default [
 			format: 'umd',
 			name: 'svelte',
 			sourcemap: false,
-			indent: false,
+			indent: false
 		},
 		external: []
 	}
