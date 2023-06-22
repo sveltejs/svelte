@@ -101,7 +101,7 @@ export function get_docs_list(docs_data) {
 
 /** @param {string} markdown */
 function get_sections(markdown) {
-	const headingRegex = /^###?\s+(.*)$/gm;
+	const headingRegex = /^##\s+(.*)$/gm;
 	/** @type {import('./types').Section[]} */
 	const secondLevelHeadings = [];
 	let match;
@@ -110,17 +110,15 @@ function get_sections(markdown) {
 
 	while ((match = headingRegex.exec(placeholders_rendered)) !== null) {
 		secondLevelHeadings.push({
-			title: match[1].startsWith('[TYPE]:')
-				? match[1].replace('[TYPE]: ', '')
-				: removeMarkdown(
-						escape(markedTransform(match[1], { paragraph: (txt) => txt }))
-							.replace(/<\/?code>/g, '')
-							.replace(/&#39;/g, "'")
-							.replace(/&quot;/g, '"')
-							.replace(/&lt;/g, '<')
-							.replace(/&gt;/g, '>')
-							.replace(/<(\/)?(em|b|strong|code)>/g, '')
-				  ),
+			title: removeMarkdown(
+				escape(markedTransform(match[1], { paragraph: (txt) => txt }))
+					.replace(/<\/?code>/g, '')
+					.replace(/&#39;/g, "'")
+					.replace(/&quot;/g, '"')
+					.replace(/&lt;/g, '<')
+					.replace(/&gt;/g, '>')
+					.replace(/<(\/)?(em|b|strong|code)>/g, '')
+			),
 			slug: normalizeSlugify(match[1])
 		});
 	}
