@@ -120,6 +120,42 @@ function validate_options(options, warnings) {
 }
 
 /**
+ * `compileAST` takes your component AST, and turns it into a JavaScript module that exports a class.
+ *
+ * @param {object} ast
+ * @param {import('../interfaces.js').CompileOptions} options
+ */
+export function compileAST(ast, options = {}) {
+	options = Object.assign(
+		{ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' },
+		options
+	);
+	const stats = new Stats();
+	const warnings = [];
+	validate_options(options, warnings);
+	stats.start('parse');
+	stats.stop('parse');
+	stats.start('create component');
+	const component = new Component(
+		ast,
+		null,
+		options.name || get_name_from_filename(options.filename) || 'Component',
+		options,
+		stats,
+		warnings
+	);
+	stats.stop('create component');
+	const result =
+		options.generate === false
+			? null
+			: options.generate === 'ssr'
+			? render_ssr(component, options)
+			: render_dom(component, options);
+	return component.generate(result);
+}
+
+
+/**
  * `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
  *
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
