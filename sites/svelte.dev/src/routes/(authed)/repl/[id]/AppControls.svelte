@@ -11,6 +11,8 @@
 	const { login } = getContext('app');
 
 	export let user;
+
+	/** @type {import('@sveltejs/repl').default} */
 	export let repl;
 	export let gist;
 	export let name;
@@ -38,7 +40,7 @@
 	async function fork(intentWasSave) {
 		saving = true;
 
-		const { components } = repl.toJSON();
+		const { files } = repl.toJSON();
 
 		try {
 			const r = await fetch(`/repl/create.json`, {
@@ -49,9 +51,9 @@
 				},
 				body: JSON.stringify({
 					name,
-					files: components.map((component) => ({
-						name: `${component.name}.${component.type}`,
-						source: component.source
+					files: files.map((file) => ({
+						name: `${file.name}.${file.type}`,
+						source: file.source
 					}))
 				})
 			});
@@ -104,7 +106,7 @@
 		try {
 			// Send all files back to API
 			// ~> Any missing files are considered deleted!
-			const { components } = repl.toJSON();
+			const { files } = repl.toJSON();
 
 			const r = await fetch(`/repl/save/${gist.id}.json`, {
 				method: 'PUT',
@@ -114,9 +116,9 @@
 				},
 				body: JSON.stringify({
 					name,
-					files: components.map((component) => ({
-						name: `${component.name}.${component.type}`,
-						source: component.source
+					files: files.map((file) => ({
+						name: `${file.name}.${file.type}`,
+						source: file.source
 					}))
 				})
 			});
@@ -145,7 +147,7 @@
 	async function download() {
 		downloading = true;
 
-		const { components, imports } = repl.toJSON();
+		const { files: components, imports } = repl.toJSON();
 
 		const files = await (await fetch('/svelte-app.json')).json();
 
