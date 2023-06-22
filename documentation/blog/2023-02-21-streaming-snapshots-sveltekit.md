@@ -18,6 +18,9 @@ Now, in SvelteKit 1.8, we have a new solution: you can return a nested promise f
 For example, consider the following `load` function:
 
 ```ts
+/// file: +page.server.ts
+import type { PageServerLoad } from './$types';
+
 export const load: PageServerLoad = () => {
 	return {
 		post: fetchPost(),
@@ -31,6 +34,7 @@ export const load: PageServerLoad = () => {
 SvelteKit will automatically await the `fetchPost` call before it starts rendering the page, since it’s at the top level. However, it won’t wait for the nested `fetchComments` call to complete – the page will render and `data.streamed.comments` will be a promise that will resolve as the request completes. We can show a loading state in the corresponding `+page.svelte` using Svelte’s [await block](https://svelte.dev/docs#template-syntax-await):
 
 ```svelte
+<!-- file: +page.svelte --->
 <script lang="ts">
 	import type { PageData } from './$types';
 	export let data: PageData;
@@ -132,6 +136,7 @@ Now, you can export a `snapshot` object from a `+page.svelte` or `+layout.svelte
 For example, here is how you would capture and restore the value of a textarea:
 
 ```svelte
+<!-- file: +page.svelte -->
 <script lang="ts">
 	import type { Snapshot } from './$types';
 
