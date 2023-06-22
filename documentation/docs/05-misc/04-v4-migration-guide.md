@@ -33,13 +33,13 @@ There are now stricter types for `createEventDispatcher`, `Action`, `ActionRetur
 // @errors: 2554 2345
 import { createEventDispatcher } from 'svelte';
 
-// Svelte version 3:
 const dispatch = createEventDispatcher<{
 	optional: number | null;
 	required: string;
 	noArgument: never;
 }>();
 
+// Svelte version 3:
 dispatch('optional');
 dispatch('required'); // I can still omit the detail argument
 dispatch('noArgument', 'surprise'); // I can still add a detail argument
