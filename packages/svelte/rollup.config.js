@@ -42,7 +42,8 @@ export default [
 			file: 'compiler.cjs',
 			format: 'umd',
 			name: 'svelte',
-			sourcemap: false
+			sourcemap: false,
+			indent: false
 		},
 		external: []
 	}
