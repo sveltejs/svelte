@@ -94,7 +94,6 @@ export async function GET({ params }) {
 	});
 }
 
-/** @type {import('./$types.js').EntryGenerator}  */
 export async function entries() {
 	return get_examples_list(examples_data)
 		.map(({ examples }) => examples)

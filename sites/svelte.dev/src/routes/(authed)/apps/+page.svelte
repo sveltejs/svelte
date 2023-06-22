@@ -4,7 +4,6 @@
 	import { ago } from '$lib/time';
 	import { goto, invalidateAll } from '$app/navigation';
 
-	/** @type {import('./$types').PageData} */
 	export let data;
 
 	const { login, logout } = getContext('app');

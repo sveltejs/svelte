@@ -1,6 +1,5 @@
 import * as gist from '$lib/db/gist';
 
-/** @type {import('./$types').PageServerLoad} */
 export async function load({ url, parent }) {
 	let gists = [];
 	let next = null;
