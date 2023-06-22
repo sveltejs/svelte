@@ -611,7 +611,7 @@ export default function dom(component, options) {
 			specifiers: [],
 			source: {
 				type: 'Literal',
-				value: `${options.sveltePath ?? 'svelte'}/internal/tag-version`
+				value: `${options.sveltePath ?? 'svelte'}/internal/disclose-version`
 			}
 		});
 	}

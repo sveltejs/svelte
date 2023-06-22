@@ -20,12 +20,7 @@ function create_plugin(ssr = false) {
 					ssr ? '../svelte/src/runtime/ssr.js' : '../svelte/src/runtime/index.js'
 				);
 			} else if (id.startsWith('svelte/')) {
-				return path.resolve(
-					__dirname,
-					id === 'svelte/internal/tag-version'
-						? '../svelte/src/runtime/internal/tag-version.js'
-						: `../svelte/src/runtime/${id.slice(7)}/index.js`
-				);
+				return path.resolve(__dirname, `../svelte/src/runtime/${id.slice(7)}/index.js`);
 			}
 		},
 		transform(code, id) {

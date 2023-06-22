@@ -13,10 +13,6 @@ export default defineConfig({
 					return `${__dirname}/src/runtime/index.js`;
 				}
 
-				if (id === 'svelte/internal/tag-version') {
-					return `${__dirname}/src/runtime/internal/tag-version.js`;
-				}
-
 				if (id.startsWith('svelte/')) {
 					return id.replace(/^svelte(.*)\/?$/, `${__dirname}/src/runtime/$1/index.js`);
 				}
