@@ -27,7 +27,7 @@ export default {
 			file: path.relative(process.cwd(), path.resolve(__dirname, 'main.svelte')),
 			line: 5, // line 4 in main.svelte, but that's the preprocessed code, the original code is above in the fake preprocessor
 			column: 1, // line 0 in main.svelte, but that's the preprocessed code, the original code is above in the fake preprocessor
-			char: 38 // TODO this is wrong but we can't backtrace it due to limitations, see meta_locate function comment for more info
+			char: 38 // TODO this is wrong but we can't backtrace it due to limitations, see add_location function usage comment for more info
 		});
 	}
 };
