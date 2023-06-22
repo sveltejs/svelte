@@ -79,7 +79,7 @@ export function content() {
 						removeMarkdown(remove_TYPE(h2)),
 						removeMarkdown(remove_TYPE(h3))
 					],
-					href: get_href([slug, normalizeSlugify(h2), normalizeSlugify(h3)]),
+					href: get_href([slug, normalizeSlugify(h2) + '-' + normalizeSlugify(h3)]),
 					content: plaintext(lines.join('\n').trim()),
 					rank
 				});
