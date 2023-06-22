@@ -1,10 +1,4 @@
-const now =
-	typeof process !== 'undefined' && process.hrtime
-		? () => {
-				const t = process.hrtime();
-				return t[0] * 1e3 + t[1] / 1e6;
-		  }
-		: () => self.performance.now();
+const now = () => performance.now();
 
 /** @param {any} timings */
 function collapse_timings(timings) {
