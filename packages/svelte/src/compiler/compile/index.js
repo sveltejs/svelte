@@ -152,7 +152,6 @@ export function compileAST(ast, options = {}) {
 	return component.generate(result);
 }
 
-
 /**
  * `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
  *
