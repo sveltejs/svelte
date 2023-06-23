@@ -182,8 +182,8 @@ You cannot add a `: TYPE` because it's invalid syntax in this position. Instead,
 <script lang="ts">
 	let count = 0;
 
-	let option2: number;
-	$: option2 = count * 2;
+	let doubled: number;
+	$: doubled = count * 2;
 </script>
 ```
 
