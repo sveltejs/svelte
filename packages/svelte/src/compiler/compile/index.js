@@ -122,7 +122,7 @@ function validate_options(options, warnings) {
 /**
  * `compileAST` takes your component AST, and turns it into a JavaScript module that exports a class.
  *
- * @param {object} ast
+ * @param {import('../interfaces.js').Ast} ast
  * @param {import('../interfaces.js').CompileOptions} options
  */
 export function compileAST(ast, options = {}) {
