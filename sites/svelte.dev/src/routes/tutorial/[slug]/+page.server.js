@@ -8,6 +8,7 @@ import { error, redirect } from '@sveltejs/kit';
 export const prerender = true;
 
 export async function load({ params }) {
+	console.log('coming in', params.slug, params);
 	if (params.slug === 'local-transitions') throw redirect(307, '/tutorial/global-transitions');
 
 	const tutorial_data = get_tutorial_data();
