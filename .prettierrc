@@ -17,6 +17,12 @@
 				"useTabs": false,
 				"tabWidth": 2
 			}
+		},
+		{
+			"files": ["documentation/**/*.md"],
+			"options": {
+				"embeddedLanguageFormatting": "off"
+			}
 		}
 	],
 	"pluginSearchDirs": ["."]
