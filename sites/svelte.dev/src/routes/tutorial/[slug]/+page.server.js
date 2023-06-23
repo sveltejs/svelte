@@ -8,7 +8,6 @@ import { error, redirect } from '@sveltejs/kit';
 export const prerender = true;
 
 export async function load({ params }) {
-	console.log('coming in', params.slug, params);
 	if (params.slug === 'local-transitions') throw redirect(307, '/tutorial/global-transitions');
 
 	const tutorial_data = get_tutorial_data();
@@ -27,7 +26,12 @@ export async function load({ params }) {
 
 export async function entries() {
 	const tutorials_list = get_tutorial_list(get_tutorial_data());
-	return tutorials_list
+	const slugs = tutorials_list
 		.map(({ tutorials }) => tutorials)
 		.flatMap((val) => val.map(({ slug }) => ({ slug })));
+
+	// to force redirect
+	slugs.push({ slug: 'local-transitions' });
+
+	return slugs;
 }
