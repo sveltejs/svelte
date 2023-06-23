@@ -150,7 +150,7 @@ The order in which preprocessors are applied has changed. Now, preprocessors are
 
 ## Other breaking changes
 
-- the `inert` attribute is now applied to outroing elements to make them invisible to assistive technology and prevent interaction. ([#8628](https://github.com/sveltejs/svelte/pull/8628))
+- the `inert` attribute is now applied to outgoing elements to make them invisible to assistive technology and prevent interaction. ([#8628](https://github.com/sveltejs/svelte/pull/8628))
 - the runtime now uses `classList.toggle(name, boolean)` which may not work in very old browsers. Consider using a [polyfill](https://github.com/eligrey/classList.js) if you need to support these browsers. ([#8629](https://github.com/sveltejs/svelte/issues/8629))
 - the runtime now uses the `CustomElement` constructor which may not work in very old browsers. Consider using a [polyfill](https://github.com/theftprevention/event-constructor-polyfill/tree/master) if you need to support these browsers. ([#8775](https://github.com/sveltejs/svelte/pull/8775))
 - people implementing their own stores from scratch using the `StartStopNotifier` interface (which is passed to the create function of `writable` etc) from `svelte/store` now need to pass an update function in addition to the set function. This has no effect on people using stores or creating stores using the existing Svelte stores. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
