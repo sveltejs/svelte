@@ -133,8 +133,6 @@ export function compileAST(ast, options = {}) {
 	const stats = new Stats();
 	const warnings = [];
 	validate_options(options, warnings);
-	stats.start('parse');
-	stats.stop('parse');
 	stats.start('create component');
 	const component = new Component(
 		ast,
