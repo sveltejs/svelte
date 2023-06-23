@@ -105,12 +105,13 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 <input type="checkbox" bind:checked={yes} />
 ```
 
-If the name matches the value, you can use shorthand.
+If the name matches the value, you can use a shorthand.
 
 ```svelte
-<!-- These are equivalent -->
 <input bind:value />
-<input bind:value />
+<!-- equivalent to
+<input bind:value={value} />
+-->
 ```
 
 Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
@@ -339,8 +340,8 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 
 ```svelte
 <!-- These are equivalent -->
-<div class={active ? 'active' : ''}>...</div>
-<div class:active>...</div>
+<div class={isActive ? 'active' : ''}>...</div>
+<div class:active={isActive}>...</div>
 
 <!-- Shorthand, for when name and value match -->
 <div class:active>...</div>
