@@ -64,7 +64,7 @@ When the attribute name and value match (`name={name}`), they can be replaced wi
 ```svelte
 <!-- These are equivalent -->
 <button {disabled}>...</button>
-<button {disabled}>...</button>
+<button disabled={disabled}>...</button>
 ```
 
 By convention, values passed to components are referred to as _properties_ or _props_ rather than _attributes_, which are a feature of the DOM.
