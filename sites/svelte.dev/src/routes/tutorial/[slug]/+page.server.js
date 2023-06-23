@@ -3,11 +3,13 @@ import {
 	get_tutorial_data,
 	get_tutorial_list
 } from '$lib/server/tutorial/index.js';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 
 export const prerender = true;
 
 export async function load({ params }) {
+	if (params.slug === 'local-transitions') throw redirect(307, '/tutorial/global-transitions');
+
 	const tutorial_data = get_tutorial_data();
 	const tutorials_list = get_tutorial_list(tutorial_data);
 
