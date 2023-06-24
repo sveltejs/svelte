@@ -28,6 +28,7 @@
 	on:mousemove={(e) => coords.set({ x: e.clientX, y: e.clientY })}
 	on:mousedown={() => size.set(30)}
 	on:mouseup={() => size.set(10)}
+	role='button' tabindex='0'
 >
 	<circle cx={$coords.x} cy={$coords.y} r={$size} />
 </svg>

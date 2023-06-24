@@ -6,13 +6,13 @@
 	$: if (dialog && showModal) dialog.showModal();
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 <dialog
 	bind:this={dialog}
 	on:close={() => (showModal = false)}
 	on:click|self={() => dialog.close()}
 >
-	<div on:click|stopPropagation>
+	<div on:click|stopPropagation role='button' tabindex='0'>
 		<slot name="header" />
 		<hr />
 		<slot />

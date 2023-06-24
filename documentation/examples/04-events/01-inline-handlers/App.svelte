@@ -2,7 +2,7 @@
 	let m = { x: 0, y: 0 };
 </script>
 
-<div on:mousemove={(e) => (m = { x: e.clientX, y: e.clientY })}>
+<div on:mousemove={(e) => (m = { x: e.clientX, y: e.clientY })} role='button' tabindex='0'>
 	The mouse position is {m.x} x {m.y}
 </div>
 

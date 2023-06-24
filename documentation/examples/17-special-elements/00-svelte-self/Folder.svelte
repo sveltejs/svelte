@@ -11,7 +11,8 @@
 	}
 </script>
 
-<span class:expanded on:click={toggle}>{name}</span>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<span class:expanded on:click={toggle} role='button' tabindex='0'>{name}</span>
 
 {#if expanded}
 	<ul transition:slide={{ duration: 300 }}>

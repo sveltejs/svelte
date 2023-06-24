@@ -15,7 +15,8 @@
 
 <!-- the text will flash red whenever
 		the `todo` object changes -->
-<div bind:this={div} on:click>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div bind:this={div} on:click role="button" tabindex='0'>
 	{todo.done ? '👍' : ''}
 	{todo.text}
 </div>
