@@ -105,7 +105,7 @@
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@jridgewell/trace-mapping": "^0.3.18",
     "acorn": "^8.9.0",
-    "aria-query": "^5.2.1",
+    "aria-query": "^5.3.0",
     "axobject-query": "^3.2.1",
     "code-red": "^1.0.3",
     "css-tree": "^2.3.1",
