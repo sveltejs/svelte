@@ -46,5 +46,6 @@
 
 	p {
 		pointer-events: none;
+		color: black;
 	}
 </style>
