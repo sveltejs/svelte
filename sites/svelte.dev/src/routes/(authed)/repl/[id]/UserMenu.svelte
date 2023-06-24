@@ -1,6 +1,8 @@
 <script>
 	import { getContext } from 'svelte';
-
+	import { Icon } from '@sveltejs/site-kit/components';
+	import { click_outside } from '@sveltejs/site-kit/actions';
+	import { focus_outside } from '@sveltejs/site-kit/actions';
 	const { logout } = getContext('app');
 
 	export let user;
@@ -11,9 +13,21 @@
 	$: name = user.github_name || user.github_login;
 </script>
 
-<div class="user" on:mouseenter={() => (showMenu = true)} on:mouseleave={() => (showMenu = false)}>
-	<span>{name}</span>
-	<img alt="{name} avatar" src={user.github_avatar_url} />
+<div
+	class="user"
+	use:focus_outside={() => (showMenu = false)}
+	use:click_outside={() => (showMenu = false)}
+>
+	<button
+		on:click={() => (showMenu = !showMenu)}
+		aria-expanded={showMenu}
+		class="trigger"
+		aria-label={name}
+	>
+		<span class="name">{name}</span>
+		<img alt="" src={user.github_avatar_url} />
+		<Icon name={showMenu ? 'chevron-up' : 'chevron-down'} />
+	</button>
 
 	{#if showMenu}
 		<div class="menu">
@@ -27,43 +41,44 @@
 	.user {
 		position: relative;
 		display: inline-block;
-		padding: 0em 1.2rem 0 1.6rem;
-		height: 0.8em;
-		line-height: 1;
+		padding: 0em 0 0 0.3rem;
 		z-index: 99;
 	}
 
-	.user::after {
-		/* embiggen hit zone, so log out menu doesn't disappear */
-		position: absolute;
-		content: '';
-		width: 100%;
-		height: 3.2rem;
-		left: 0;
-		top: 0;
+	.trigger {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		outline-offset: 2px;
+		transform: translateY(0.1rem);
+		--opacity: 0.7;
 	}
 
-	span {
-		/* position: relative; padding: 0 2em 0 0; */
+	.trigger:hover,
+	.trigger:focus,
+	.trigger[aria-expanded='true'] {
+		--opacity: 1;
+	}
+
+	.name {
 		line-height: 1;
 		display: none;
 		font-family: var(--sk-font);
 		font-size: 1.6rem;
-		opacity: 0.7;
 	}
 
-	.user:hover span {
-		opacity: 1;
+	.name,
+	.trigger :global(.icon) {
+		display: none;
+		opacity: var(--opacity);
 	}
 
 	img {
-		position: absolute;
-		top: -0.05em;
-		right: 0;
 		width: 2.1rem;
 		height: 2.1rem;
 		border: 1px solid rgba(255, 255, 255, 0.3);
 		border-radius: 0.2rem;
+		transform: translateY(-0.1rem);
 	}
 
 	.menu {
@@ -95,14 +110,16 @@
 	}
 
 	.menu button:hover,
-	.menu a:hover {
+	.menu button:focus,
+	.menu a:hover,
+	.menu a:focus {
 		opacity: 1;
 		color: inherit;
 	}
 
 	@media (min-width: 600px) {
 		.user {
-			padding: 0em 3.2rem 0 1.6rem;
+			padding: 0em 0 0 1.6rem;
 		}
 
 		img {
@@ -110,7 +127,8 @@
 			height: 2.4rem;
 		}
 
-		span {
+		.name,
+		.trigger :global(.icon) {
 			display: inline-block;
 		}
 	}
