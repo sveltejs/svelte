@@ -102,12 +102,12 @@ Events can be typed with `createEventDispatcher`:
 	}>();
 
 	function handleClick() {
-		dispatch('even');
+		dispatch('event');
 		dispatch('click', 'hello');
 	}
 
 	function handleType() {
-		dispatch('even');
+		dispatch('event');
 		dispatch('type', Math.random() > 0.5 ? 'world' : null);
 	}
 </script>
