@@ -29,7 +29,9 @@ function create_dynamic_element_3(ctx) {
 		},
 		p: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element);
+			if (detaching) {
+				detach(svelte_element);
+			}
 		}
 	};
 }
@@ -49,7 +51,9 @@ function create_dynamic_element_2(ctx) {
 		},
 		p: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element);
+			if (detaching) {
+				detach(svelte_element);
+			}
 		}
 	};
 }
@@ -82,7 +86,9 @@ function create_dynamic_element_1(ctx) {
 			toggle_class(svelte_element, "foo", /*dynamic_value*/ ctx[0]);
 		},
 		d(detaching) {
-			if (detaching) detach(svelte_element);
+			if (detaching) {
+				detach(svelte_element);
+			}
 		}
 	};
 }
@@ -115,7 +121,9 @@ function create_dynamic_element(ctx) {
 			toggle_class(svelte_element, "foo", /*dynamic_value*/ ctx[0]);
 		},
 		d(detaching) {
-			if (detaching) detach(svelte_element);
+			if (detaching) {
+				detach(svelte_element);
+			}
 		}
 	};
 }
@@ -207,13 +215,16 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
+			if (detaching) {
+				detach(t0);
+				detach(t1);
+				detach(t2);
+				detach(svelte_element3_anchor);
+			}
+
 			if (svelte_element0) svelte_element0.d(detaching);
-			if (detaching) detach(t0);
 			if (svelte_element1) svelte_element1.d(detaching);
-			if (detaching) detach(t1);
 			if (svelte_element2) svelte_element2.d(detaching);
-			if (detaching) detach(t2);
-			if (detaching) detach(svelte_element3_anchor);
 			if (svelte_element3) svelte_element3.d(detaching);
 		}
 	};

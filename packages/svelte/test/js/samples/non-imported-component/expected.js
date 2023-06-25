@@ -49,8 +49,11 @@ function create_fragment(ctx) {
 			current = false;
 		},
 		d(detaching) {
+			if (detaching) {
+				detach(t);
+			}
+
 			destroy_component(imported, detaching);
-			if (detaching) detach(t);
 			destroy_component(nonimported, detaching);
 		}
 	};

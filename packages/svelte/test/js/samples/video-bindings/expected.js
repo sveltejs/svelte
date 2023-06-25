@@ -70,7 +70,10 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(video);
+			if (detaching) {
+				detach(video);
+			}
+
 			video_resize_listener();
 			mounted = false;
 			run_all(dispose);

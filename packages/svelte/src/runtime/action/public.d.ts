@@ -12,19 +12,19 @@
  * ```ts
  * interface Attributes {
  * 	newprop?: string;
- *	'on:event': (e: CustomEvent<boolean>) => void;
+ * 	'on:event': (e: CustomEvent<boolean>) => void;
  * }
  *
  * export function myAction(node: HTMLElement, parameter: Parameter): ActionReturn<Parameter, Attributes> {
- *   // ...
- *   return {
- *     update: (updatedParameter) => {...},
- *     destroy: () => {...}
- *   };
+ * 	// ...
+ * 	return {
+ * 		update: (updatedParameter) => {...},
+ * 		destroy: () => {...}
+ * 	};
  * }
  * ```
  *
- * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
+ * Docs: https://svelte.dev/docs/svelte-action
  */
 export interface ActionReturn<
 	Parameter = never,
@@ -55,7 +55,7 @@ export interface ActionReturn<
  * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
  * See interface `ActionReturn` for more details.
  *
- * Docs: https://svelte.dev/docs#template-syntax-element-directives-use-action
+ * Docs: https://svelte.dev/docs/svelte-action
  */
 export interface Action<
 	Element = HTMLElement,

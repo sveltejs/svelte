@@ -1,0 +1,14 @@
+{
+	"name": "playground",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch start.js"
+	},
+	"devDependencies": {
+		"rollup": "^3.20.2",
+		"rollup-plugin-serve": "^2.0.2",
+		"svelte": "workspace:*"
+	}
+}

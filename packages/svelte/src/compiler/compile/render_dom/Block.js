@@ -1,6 +1,7 @@
 import { b, x } from 'code-red';
 import { is_head } from './wrappers/shared/is_head.js';
 import { regex_double_quotes } from '../../utils/patterns.js';
+import { flatten } from '../../utils/flatten.js';
 
 export default class Block {
 	/**
@@ -380,8 +381,27 @@ export default class Block {
 		if (this.chunks.destroy.length === 0) {
 			properties.destroy = noop;
 		} else {
+			const dispose_elements = [];
+			// Coalesce if blocks with the same condition
+			const others = flatten(this.chunks.destroy).filter(
+				/** @param {import('estree').Node} node */
+				(node) => {
+					if (
+						node.type === 'IfStatement' &&
+						node.test.type === 'Identifier' &&
+						node.test.name === 'detaching'
+					) {
+						dispose_elements.push(node.consequent);
+						return false;
+					} else {
+						return true;
+					}
+				}
+			);
+
 			properties.destroy = x`function #destroy(detaching) {
-				${this.chunks.destroy}
+				${dispose_elements.length ? b`if (detaching) { ${dispose_elements} }` : null}
+				${others}
 			}`;
 		}
 		if (!this.renderer.component.compile_options.dev) {

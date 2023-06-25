@@ -1001,14 +1001,11 @@ export function toggle_class(element, name, toggle) {
  * @template T
  * @param {string} type
  * @param {T} [detail]
+ * @param {{ bubbles?: boolean, cancelable?: boolean }} [options]
  * @returns {CustomEvent<T>}
  */
 export function custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
-	/**
-	 * @type {CustomEvent<T>} */
-	const e = document.createEvent('CustomEvent');
-	e.initCustomEvent(type, bubbles, cancelable, detail);
-	return e;
+	return new CustomEvent(type, { detail, bubbles, cancelable });
 }
 
 /**

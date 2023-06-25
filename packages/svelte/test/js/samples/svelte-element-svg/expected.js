@@ -28,7 +28,9 @@ function create_dynamic_element(ctx) {
 		},
 		p: noop,
 		d(detaching) {
-			if (detaching) detach(svelte_element1);
+			if (detaching) {
+				detach(svelte_element1);
+			}
 		}
 	};
 }

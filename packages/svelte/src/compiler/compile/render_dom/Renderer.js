@@ -62,8 +62,19 @@ export default class Renderer {
 	/** @type {import('estree').Identifier} */
 	file_var;
 
-	/** @type {(c: number) => { line: number; column: number }} */
+	/**
+	 * Use this for stack traces. It is 1-based and acts on pre-processed sources.
+	 * Use `meta_locate` for metadata on DOM elements.
+	 * @type {(c: number) => { line: number; column: number }}
+	 */
 	locate;
+
+	/**
+	 * Use this for metadata on DOM elements. It is 1-based and acts on sources that have not been pre-processed.
+	 * Use `locate` for source mappings.
+	 * @type {(c: number) => { line: number; column: number }}
+	 */
+	meta_locate;
 
 	/**
 	 * @param {import('../Component.js').default} component
@@ -73,6 +84,7 @@ export default class Renderer {
 		this.component = component;
 		this.options = options;
 		this.locate = component.locate; // TODO messy
+		this.meta_locate = component.meta_locate; // TODO messy
 		this.file_var = options.dev && this.component.get_unique_name('file');
 		component.vars
 			.filter((v) => !v.hoistable || (v.export_name && !v.module))

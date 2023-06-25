@@ -221,6 +221,10 @@ if (typeof HTMLElement === 'function') {
 									node.setAttribute('name', name);
 								}
 							},
+							/**
+							 * @param {HTMLElement} target
+							 * @param {HTMLElement} [anchor]
+							 */
 							m: function mount(target, anchor) {
 								insert(target, node, anchor);
 							},
@@ -283,7 +287,7 @@ if (typeof HTMLElement === 'function') {
 				this.$$props_definition,
 				'toProp'
 			);
-			this.$$component.$set({ [attr]: this.$$data[attr] });
+			this.$$component?.$set({ [attr]: this.$$data[attr] });
 		}
 
 		disconnectedCallback() {
@@ -420,7 +424,6 @@ export function create_custom_element(
  *
  * @template {Record<string, any>} [Props=any]
  * @template {Record<string, any>} [Events=any]
- * @implements Record<string, any>
  */
 export class SvelteComponent {
 	/**
