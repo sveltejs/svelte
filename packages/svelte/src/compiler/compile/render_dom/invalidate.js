@@ -88,7 +88,7 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 				invalidate = x`${subscribe}(${invalidate})`;
 			} else {
 				extra_args.unshift(node);
-				invalidate = x`${subscribe}(${extra_args})`
+				invalidate = x`${subscribe}(${extra_args})`;
 			}
 		}
 
