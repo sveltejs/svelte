@@ -55,9 +55,11 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 	) {
 		return get_invalidated(names_vars[0], node);
 	}
+
+	const invalidated_names_vars = names_vars.map((variable) => get_invalidated(variable));
 	for (let i = 0; i < names_vars.length; i += 1) {
 		const head = names_vars[i];
-		const extra_args = names_vars.slice(i + 1).map((variable) => get_invalidated(variable)).filter(Boolean);
+		const extra_args = invalidated_names_vars.slice(i + 1).filter(Boolean);
 		const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
 		if (is_store_value) {
 			return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
