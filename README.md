@@ -50,7 +50,7 @@ To watch for changes and continually rebuild the package (this is useful if you'
 pnpm dev
 ```
 
-The compiler is written in JavaScript with JSDoc.
+The compiler is written in JavaScript and uses [JSDoc](https://jsdoc.app/index.html) comments for type-checking.
 
 ### Running Tests
 
