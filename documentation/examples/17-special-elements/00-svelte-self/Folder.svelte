@@ -11,7 +11,6 @@
 	}
 </script>
 
-
 <button class:expanded on:click={toggle}>{name}</button>
 
 {#if expanded}
