@@ -6,23 +6,25 @@
 
 	export let todo;
 
-	let div;
+	let btn;
 
 	afterUpdate(() => {
-		flash(div);
+		flash(btn);
 	});
 </script>
 
 <!-- the text will flash red whenever
 		the `todo` object changes -->
-<div bind:this={div} on:click>
+<button bind:this={btn} on:click>
 	{todo.done ? '👍' : ''}
 	{todo.text}
-</div>
+</button>
 
 <style>
-	div {
+	button {
 		cursor: pointer;
-		line-height: 1.5;
+		border:none;
+		background:none;
+		font-size:14px;
 	}
 </style>
