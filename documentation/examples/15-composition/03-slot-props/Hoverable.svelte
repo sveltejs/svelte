@@ -10,6 +10,6 @@
 	}
 </script>
 
-<div on:mouseenter={enter} on:mouseleave={leave} role="button" tabindex='0'>
+<div on:mouseenter={enter} on:mouseleave={leave}>
 	<slot {hovering} />
 </div>

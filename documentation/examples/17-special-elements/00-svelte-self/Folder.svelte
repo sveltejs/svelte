@@ -11,8 +11,8 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<span class:expanded on:click={toggle} role='button' tabindex='0'>{name}</span>
+
+<button class:expanded on:click={toggle}>{name}</button>
 
 {#if expanded}
 	<ul transition:slide={{ duration: 300 }}>
@@ -29,12 +29,14 @@
 {/if}
 
 <style>
-	span {
+	button {
 		padding: 0 0 0 1.5em;
 		background: url(/tutorial/icons/folder.svg) 0 0.1em no-repeat;
 		background-size: 1em 1em;
 		font-weight: bold;
 		cursor: pointer;
+		border:none;
+		font-size:14px;
 	}
 
 	.expanded {

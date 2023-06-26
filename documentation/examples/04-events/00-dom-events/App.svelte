@@ -7,7 +7,7 @@
 	}
 </script>
 
-<div on:mousemove={handleMousemove} role='button' tabindex='0'>
+<div on:mousemove={handleMousemove}>
 	The mouse position is {m.x} x {m.y}
 </div>
 

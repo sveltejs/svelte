@@ -28,9 +28,8 @@
 		{:else}
 			<ul>
 				{#each [...eases] as [name]}
-				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-					<li class:selected={name === current_ease} on:click={() => (current_ease = name)}>
-						{name}
+					<li class:selected={name === current_ease}>
+						<button on:click={() => (current_ease = name)}> {name}</button>
 					</li>
 				{/each}
 			</ul>
@@ -47,9 +46,8 @@
 		{:else}
 			<ul>
 				{#each types as [name, type]}
-				<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-					<li class:selected={type === current_type} on:click={() => (current_type = type)}>
-						{name}
+					<li class:selected={type === current_type}>
+						<button on:click={() => (current_type = type)}> {name}</button>
 					</li>
 				{/each}
 			</ul>

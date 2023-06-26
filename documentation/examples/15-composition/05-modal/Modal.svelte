@@ -12,7 +12,7 @@
 	on:close={() => (showModal = false)}
 	on:click|self={() => dialog.close()}
 >
-	<div on:click|stopPropagation role='button' tabindex='0'>
+	<div on:click|stopPropagation>
 		<slot name="header" />
 		<hr />
 		<slot />

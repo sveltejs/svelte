@@ -70,7 +70,7 @@ radius of the selected circle.
 	<button on:click={() => travel(+1)} disabled={i === undoStack.length - 1}>redo</button>
 </div>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<svg on:click={handleClick} role='button' tabindex='0'>
+<svg on:click={handleClick}>
 	{#each circles as circle}
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<circle
@@ -83,7 +83,6 @@ radius of the selected circle.
 				if (adjusting) selected = circle;
 			}}
 			fill={circle === selected ? '#ccc' : 'white'}
-			role='button' tabindex='0'
 		/>
 	{/each}
 </svg>
