@@ -7,7 +7,7 @@ import { x } from 'code-red';
  * @param {import('estree').Node} node
  * @param {Set<string>} names
  * @param {boolean} main_execution_context
- * @returns {any}
+ * @returns {import('estree').Node}
  */
 export function invalidate(renderer, scope, node, names, main_execution_context = false) {
 	const { component } = renderer;
@@ -83,6 +83,8 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 	if (head.subscribable && head.reassigned) {
 		const subscribe = `$$subscribe_${head.name}`;
 		invalidate = x`${subscribe}(${invalidate})`;
+	} else if (Array.isArray(invalidate)) {
+		invalidate = invalidate.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
 	}
 	return invalidate;
 }
