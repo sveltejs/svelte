@@ -1,5 +1,5 @@
 <script>
-	import  { readable } from 'svelte/store'
+	import { readable } from 'svelte/store'
 
 	let store, nonStore;
 

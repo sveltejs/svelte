@@ -11,7 +11,7 @@ import { x } from 'code-red';
  */
 export function invalidate(renderer, scope, node, names, main_execution_context = false) {
 	const { component } = renderer;
-	const [head, ...tail] = /** @type {import('../../interfaces.js').Var[]} */ (
+	const names_vars = /** @type {import('../../interfaces.js').Var[]} */ (
 		Array.from(names)
 			.filter((name) => {
 				const owner = scope.find_owner(name);
@@ -43,7 +43,7 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 		}
 		return renderer_invalidate(renderer, variable.name, undefined, main_execution_context);
 	}
-	if (!head) {
+	if (names_vars.length === 0) {
 		return node;
 	}
 	component.has_reactive_assignments = true;
@@ -51,42 +51,51 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 		node.type === 'AssignmentExpression' &&
 		node.operator === '=' &&
 		nodes_match(node.left, node.right) &&
-		tail.length === 0
+		names_vars.length === 1
 	) {
-		return get_invalidated(head, node);
+		return get_invalidated(names_vars[0], node);
 	}
-	const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
-	const extra_args = tail.map((variable) => get_invalidated(variable)).filter(Boolean);
-	if (is_store_value) {
-		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
+	for (let i = 0; i < names_vars.length; i += 1) {
+		const head = names_vars[i];
+		const extra_args = names_vars.slice(i + 1).map((variable) => get_invalidated(variable)).filter(Boolean);
+		const is_store_value = head.name[0] === '$' && head.name[1] !== '$';
+		if (is_store_value) {
+			return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
+		}
+
+		let invalidate = null;
+		if (!main_execution_context) {
+			const pass_value =
+				extra_args.length > 0 ||
+				(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
+				(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier'));
+			if (pass_value) {
+				extra_args.unshift({
+					type: 'Identifier',
+					name: head.name
+				});
+			}
+			invalidate = x`$$invalidate(${
+				renderer.context_lookup.get(head.name).index
+			}, ${node}, ${extra_args})`;
+		}
+
+		if (head.subscribable && head.reassigned) {
+			const subscribe = `$$subscribe_${head.name}`;
+			if (invalidate) {
+				invalidate = x`${subscribe}(${invalidate})`;
+			} else {
+				extra_args.unshift(node);
+				invalidate = x`${subscribe}(${extra_args})`
+			}
+		}
+
+		if (invalidate) {
+			return invalidate;
+		}
 	}
 
-	let invalidate;
-	if (!main_execution_context) {
-		const pass_value =
-			extra_args.length > 0 ||
-			(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
-			(node.type === 'UpdateExpression' && (!node.prefix || node.argument.type !== 'Identifier'));
-		if (pass_value) {
-			extra_args.unshift({
-				type: 'Identifier',
-				name: head.name
-			});
-		}
-		invalidate = x`$$invalidate(${
-			renderer.context_lookup.get(head.name).index
-		}, ${node}, ${extra_args})`;
-	} else {
-		// skip `$$invalidate` if it is in the main execution context
-		invalidate = extra_args.length ? [node, ...extra_args] : node;
-	}
-	if (head.subscribable && head.reassigned) {
-		const subscribe = `$$subscribe_${head.name}`;
-		invalidate = x`${subscribe}(${invalidate})`;
-	} else if (Array.isArray(invalidate)) {
-		invalidate = invalidate.reduce((lhs, rhs) => x`${lhs}, ${rhs}`);
-	}
-	return invalidate;
+	return node;
 }
 
 /**
