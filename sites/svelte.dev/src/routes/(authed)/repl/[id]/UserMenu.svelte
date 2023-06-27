@@ -1,8 +1,7 @@
 <script>
 	import { getContext } from 'svelte';
 	import { Icon } from '@sveltejs/site-kit/components';
-	import { click_outside } from '@sveltejs/site-kit/actions';
-	import { focus_outside } from '@sveltejs/site-kit/actions';
+	import { click_outside, focus_outside } from '@sveltejs/site-kit/actions';
 	const { logout } = getContext('app');
 
 	export let user;
