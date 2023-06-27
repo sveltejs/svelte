@@ -43,7 +43,7 @@
 
 - breaking: The runtime now makes use of `classList.toggle(name, boolean)` which does not work in very old browsers ([#8629](https://github.com/sveltejs/svelte/pull/8629))
 
-- breaking: apply `inert` to outroing elements ([#8627](https://github.com/sveltejs/svelte/pull/8627))
+- breaking: apply `inert` to outroing elements ([#8628](https://github.com/sveltejs/svelte/pull/8628))
 
 - breaking: use `CustomEvent` constructor instead of deprecated `createEvent` method ([#8775](https://github.com/sveltejs/svelte/pull/8775))
 

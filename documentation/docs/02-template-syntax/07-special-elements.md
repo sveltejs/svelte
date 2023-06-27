@@ -39,8 +39,6 @@ The content is exposed in the child component using the `<slot>` element, which 
 
 Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
 
-Note: If you want to render regular `<slot>` element, You can use `<svelte:element this="slot" />`.
-
 ### `<slot name="`_name_`">`
 
 Named slots allow consumers to target specific areas. They can also have fallback content.

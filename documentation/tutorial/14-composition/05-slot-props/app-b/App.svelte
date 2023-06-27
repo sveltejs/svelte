@@ -37,6 +37,7 @@
 		padding: 1em;
 		margin: 0 0 1em 0;
 		background-color: #eee;
+    color: black;
 	}
 
 	.active {

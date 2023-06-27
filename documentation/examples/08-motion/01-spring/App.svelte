@@ -24,6 +24,7 @@
 	</label>
 </div>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <svg
 	on:mousemove={(e) => coords.set({ x: e.clientX, y: e.clientY })}
 	on:mousedown={() => size.set(30)}
