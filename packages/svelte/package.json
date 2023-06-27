@@ -7,6 +7,7 @@
   "main": "src/runtime/index.js",
   "files": [
     "src",
+    "!src/**/tsconfig.json",
     "types",
     "compiler.*",
     "register.js",
