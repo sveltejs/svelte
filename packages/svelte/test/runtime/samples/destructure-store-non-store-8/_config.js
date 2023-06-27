@@ -1,0 +1,43 @@
+export default {
+	html: `
+		<p>1</p>
+		<p>2</p>
+		<p>3</p>
+		<p>4</p>
+		<p>5</p>
+		<p>6</p>
+
+		<h1>Bag'ol stores</h1>
+		<p>6</p>
+		<p>undefined</p>
+		<p>undefined</p>
+
+		<button>Click me!</button>
+	`,
+
+	async test({ assert, target, window }) {
+		const button = target.querySelector('button');
+		const clickEvent = new window.Event('click');
+
+		await button.dispatchEvent(clickEvent);
+
+		assert.htmlEqual(
+			target.innerHTML,
+			`
+			<p>7</p>
+			<p>8</p>
+			<p>9</p>
+			<p>10</p>
+			<p>11</p>
+			<p>12</p>
+
+			<h1>Bag'ol stores</h1>
+			<p>12</p>
+			<p>14</p>
+			<p>15</p>
+
+			<button>Click me!</button>
+		`
+		);
+	}
+};
