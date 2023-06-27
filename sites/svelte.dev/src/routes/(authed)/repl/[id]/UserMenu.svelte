@@ -55,7 +55,7 @@
 	}
 
 	.trigger:hover,
-	.trigger:focus,
+	.trigger:focus-visible,
 	.trigger[aria-expanded='true'] {
 		--opacity: 1;
 	}
@@ -110,9 +110,9 @@
 	}
 
 	.menu button:hover,
-	.menu button:focus,
+	.menu button:focus-visible,
 	.menu a:hover,
-	.menu a:focus {
+	.menu a:focus-visible {
 		opacity: 1;
 		color: inherit;
 	}

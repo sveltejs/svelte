@@ -272,7 +272,7 @@ export default app;`
 	}
 
 	.icon:hover,
-	.icon:focus {
+	.icon:focus-visible {
 		opacity: 1;
 	}
 	.icon:disabled {
