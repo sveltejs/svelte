@@ -19,12 +19,12 @@
 <h5 role="heading">heading</h5>
 <h6 role="heading">heading</h6>
 <hr role="separator" />
-<li role="listitem" />
+<!-- <li role="listitem" /> allowed since CSS list-style none removes semantic meaning and role brings it back -->
 <link role="link" />
-<main role="main"></main>
+<main role="main" />
 <menu role="list" />
 <nav role="navigation" />
-<ol role="list" />
+<!-- <ol role="list" /> allowed, see comment above -->
 <optgroup role="group" />
 <option role="option" />
 <output role="status" />
@@ -37,11 +37,11 @@
 <tfoot role="rowgroup" />
 <thead role="rowgroup" />
 <tr role="row" />
-<ul role="list" />
+<!--<ul role="list" /> allowed, see comment above -->
 
 <!-- Tested header/footer not nested in section/article -->
-<header role="banner"></header>
-<footer role="contentinfo"></footer>
+<header role="banner" />
+<footer role="contentinfo" />
 
 <!-- Allowed -->
 <!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
