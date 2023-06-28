@@ -39,6 +39,8 @@ If you're looking for adapter-specific changes, check out the CHANGELOGs in each
 
 _Featuring Svelte Contributors and Ambassadors_
 - [Dev Vlog: June 2023](https://www.youtube.com/watch?v=AOXq89h8saI) - Svelte 4.0 with Rich Harris
+- [PodRocket: Svelte 4](https://podrocket.logrocket.com/svelte-4) with Geoff
+- [This Dot Media: Svelte 4 Launch Party](https://www.youtube.com/watch?v=-9gy_leMmcQ) with Simon, Ben, Geoff, and Puru
 - [Exposing Svelte: Between Two Nerds](https://www.youtube.com/watch?v=kAfotLrebhY) is a comedic conversation between Rich Harris and Dax Raad
 - [Community Tutorial: Self-hosting SvelteKit with a VPS, Docker, CapRover and GitHub Actions](https://www.youtube.com/watch?v=KbIFRVvdgA8) with Stanislav Khromov
 - [SvelteKit and Storybook](https://www.youtube.com/watch?v=1wH7rR7hZlg) with Jeppe Reinhold
