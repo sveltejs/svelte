@@ -5,17 +5,17 @@ author: Puru Vijay
 authorURL: https://puruvj.dev
 ---
 
-It is June 2023, 4 years after svelte v3 was released. The then-practical-now-notorious single-pager website that folks are familiar with also came out then, and has stayed the same until now. Svelte's API surface has been increasing steadily and the single pager got bigger and bigger, to the point where it was becoming difficult to find things. The community has been asking for a revamp for a while now, and it's here now!
+When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks are familiar with. That documentation structure has stayed the same as Svelte's API surface has been increasing steadily. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community has been asking for a revamp, and now it's here!
 
-Meet the new svelte.dev, a complete overhaul of the old website.
+Meet the new svelte.dev — a complete overhaul of the old website.
 
 ## Multi-page docs
 
-The huge single-pager was a huge nuisance, in terms of finding stuff(Hullo there Ctrl+F), as well as just having low performance due to the sheer size of the page.
+The table of contents had grown to be quite large and you had to scroll across half a dozen screens to see the whole thing.
 
-We heard you! The docs are all split up into multiple pages now. And all pages are split into their sections in the sidebar. Wanna know how to use the `class:` directive, or wanna look up the syntax for `{#await}`? All these are just one click away under the `Template Syntax` heading in the sidebar.
+We heard you! The docs are all split up into multiple pages now and all pages list their sections in the righthand sidebar.
 
-All modules exposed by svelte are also listed in the sidebar, under the `Runtime` section.
+All modules exposed by Svelte are also listed in the sidebar under the `Runtime` section:
 
 - [svelte](/docs/svelte)
 - [svelte/store](/docs/svelte-store)
@@ -29,15 +29,15 @@ And worry not, all the links from the older website will be redirected to the co
 
 ## Search
 
-One thing that the previous single pager website was good at was finding things without any JS. It's just a single html page, just hit <kbr>Ctrl+F</kbr> and search what you're looking for! But now that the site uses different pages, that is not an option anymore
+The lack of search functionality could make finding stuff a nuisance as <kbr>Ctrl+F</kbr> only returns results in order of occurrence and not order of importance. While <kbr>Ctrl+F</kbr> did have its benefits such as working without JS, now that the site has multiple pages, it's not an option anymore.
 
-And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit Ctrl+K(or CMD+F for Mac users) and start searching!
+And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbr>Ctrl+K</kbr> (or <kbr>CMD+F</kbr> for Mac users) and start searching!
 
 ## Lights, TypeScript, Action!
 
-The new website comes with a JavaScript/TypeScript toggle, so you can view the docs in your preferred language. For every module, it's exported types are listed at the bottom of the page for easy reference. The types are automatically generated from Svelte's source code, so they're always up to date.
+The new website comes with a JavaScript / TypeScript toggle, so you can view the docs in your preferred flavour. Every module's exported types are listed at the bottom of the page for easy reference. The types are automatically generated from Svelte's source code, so they're always up to date.
 
-All the JavaScript and TypeScript code snippet have type hints available right there. Just hover over the variable to see it's type. This allows the docs to be type checked at build time, which makes sure we're never out of date.
+All the JavaScript and TypeScript code snippets have type hints available right there. Just hover over the variable to see its type. This allows the docs to be type checked at build time, which ensures they're never out of date.
 
 We also (finally!) added documentation for [Actions](/docs/svelte-action). Svelte Actions are a way to interact with the DOM, and are a great way to add interactivity to your app. The docs for Actions are also available in TypeScript.
 
@@ -61,36 +61,35 @@ We also (finally!) added documentation for [Actions](/docs/svelte-action). Svelt
 
 ## Dark mode
 
-After many years of users asking for dark mode on the website so they can read the docs for their night-time coding sessions, we finally added it! The website now has a dark mode toggle, which is also synced with your OS's dark mode settings. It can be toggled from the top navbar(bottom navbar on mobile).
+After many years of users asking for dark mode on the website so they can read the docs for their night-time coding sessions, we finally added it! The website now has a dark mode toggle, which is also synced with your OS's dark mode settings. It can be toggled from the top navbar (bottom navbar on mobile).
 
 ## Updated REPL
 
-The REPL has been rewritten from scratch to be fully typesafe, and comes with features like Dark mode, and Codemirror 6 (Which comes with many accesssibility improvements, multi-select mode, performance improvments, tree-shakability and many more features).
+The REPL has been rewritten from scratch to be fully typesafe and comes with features like dark mode. It was reimplemented to upgrade to CodeMirror 6 (which comes with many accessibility improvements, multi-select mode, performance improvements, tree-shakability, and many more features).
 
 ## Redesigned homepage
 
 Is it a website redesign if the homepage doesn't get the same amount of love? 🙃
 
-Homepage has also been redesigned to resemble [kit.svelte.dev](https://kit.svelte.dev) a bit more, and features the beautiful Svelte Machine by Vedam.
+The homepage has also been updated to align with [kit.svelte.dev](https://kit.svelte.dev) and features the beautiful Svelte Machine by [@vedam](https://github.com/vedam).
 
 ## Bottom navigation!
 
-We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar, and the response was overwhelmingly positive. So we went ahead and added it to the website! This makes it easier to navigate the website on mobile with just one hand, and also makes it easier to reach the dark mode toggle. It also shows the contents of whatever section of the site you are. For example, if you are on one of the docs page, the navbar will open by default to the docs contents. This allows for much quicker navigation between pages.
+We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar. The response was overwhelmingly positive, so we went ahead and added it to the website! This makes it easier to navigate the website on mobile with just one hand, and also makes it easier to reach the dark mode toggle. Additionally, it shows the contents of whatever section of the site you are on. For example, if you are on one of the docs pages, the navbar will open by default to the docs contents. This allows for much quicker navigation between pages.
 
 If you're on mobile, you can already see it at the bottom. If you're on desktop, you can see it by resizing your browser window to a smaller size.
 
 ## Unification of Svelte websites
 
-svelte.dev, kit.svelte.dev and learn.svelte.dev all use the same design system, and are now more consistent with each other. This makes it easier to navigate between the websites, and also makes it easier to maintain them. We have an internal package called `@sveltejs/site-kit`. It went through rigorous changes over last 4 months, and we have been moving all the common stuff between the sites to this package.
+Now svelte.dev, kit.svelte.dev, and learn.svelte.dev all use the same design system and are more consistent with each other. This makes it easier to navigate between the websites and also makes it easier to maintain them. We have a package shared across the sites called `@sveltejs/site-kit`, which went through rigorous changes over last 4 months as we have been moving all of the common stuff to this package.
 
-This is the reason why learn.svelte.dev and kit.svelte.dev got the dark mode toggle before this site. We added it to site-kit for this site, and simply updated the package on those websites, getting the dark mode toggle automatically.
+For example, we implemented the dark mode toggle in `@sveltejs/site-kit`. We then simply updated the package on [learn.svelte.dev](https://learn.svelte.dev) and [kit.svelte.dev](https://kit.svelte.dev) and those sites got the dark mode toggle automatically. This is the reason why those sites got the dark mode toggle before the [svelte.dev](https://svelte.dev) relaunch.
 
 ## What's next
 
 We have many more things planned to do post-launch. Some of them are:
 
-- Redesign blog page
+- Redesigned blog page
 - Webcontainer based REPL
-- Deprecate old svelte tutorial to rely on learn.svelte.dev
 - Merge REPL and Examples page
-- Fix all the bugs
+- Address any feedback
