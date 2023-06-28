@@ -157,8 +157,8 @@ importers:
         specifier: ^2.26.0
         version: 2.26.0
       '@sveltejs/repl':
-        specifier: 0.5.0-next.5
-        version: 0.5.0-next.5(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.20.5)(svelte@packages+svelte)
+        specifier: 0.5.0-next.6
+        version: 0.5.0-next.6(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.20.5)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1318,8 +1318,8 @@ packages:
       - supports-color
     dev: true
 
-  /@neocodemirror/svelte@0.0.10(@codemirror/autocomplete@6.8.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/lint@6.3.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0):
-    resolution: {integrity: sha512-uTH33iwPw1wJKo8pMc+EPidLG7IIh3EF8DpHBKg22BCAfkqJQ9WDeroaGYpb1dJG+6mhQIGmiBgdzs/cIoZwFg==}
+  /@neocodemirror/svelte@0.0.14(@codemirror/autocomplete@6.8.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/lint@6.3.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0):
+    resolution: {integrity: sha512-1kHm3IyBJJyRfItxodSbbLxBknYGKLahaiF6Vb/BcVfdwwFLLj4dvWKY78ep1YQIhDhklgBQztjRMuLn9tTTWg==}
     peerDependencies:
       '@codemirror/autocomplete': ^6.7.1
       '@codemirror/commands': ^6.2.4
@@ -1537,8 +1537,8 @@ packages:
       svelte: link:packages/svelte
     dev: false
 
-  /@rollup/browser@3.25.1:
-    resolution: {integrity: sha512-lc8r2jfZ0kipyGPbFHcJUzSVTJ8b6X4bblACJGTfxxH3YKbzP7ZL+wmdyXSdkAbNGUN4R0qHya6vP+Gxe7/2SQ==}
+  /@rollup/browser@3.25.3:
+    resolution: {integrity: sha512-Mh4krGXavOHxWTZ5h35/ZKLMY4fYUuFww92fJMaxfbWKnM0dCTGrPTz9pVgrVnVRfU49nrqbVGVyhxNzccgx5g==}
     dev: false
 
   /@rollup/plugin-commonjs@24.1.0(rollup@3.25.1):
@@ -1749,8 +1749,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0-next.5(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.20.5)(svelte@packages+svelte):
-    resolution: {integrity: sha512-jhHFflZuMHmvY/Qk/YJ6pT5ZEIuzS/3vfKM2QK0JGUaJeLrvIM75xHVv3UWSJhciILzYhkSvKCCLr8/TUQ4Rvg==}
+  /@sveltejs/repl@0.5.0-next.6(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.20.5)(svelte@packages+svelte):
+    resolution: {integrity: sha512-Q7aiY7FvPXTNW8T5U1BYkGPQUCGd28wbLsPwuFYgSY/MRcoUO9IciWWm3ghL+RnZBLMJ+NrY1YDAPJunooz7Bw==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
@@ -1766,11 +1766,11 @@ packages:
       '@codemirror/view': 6.14.0
       '@jridgewell/sourcemap-codec': 1.4.15
       '@lezer/highlight': 1.1.6
-      '@neocodemirror/svelte': 0.0.10(@codemirror/autocomplete@6.8.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/lint@6.3.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0)
+      '@neocodemirror/svelte': 0.0.14(@codemirror/autocomplete@6.8.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/lint@6.3.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0)
       '@replit/codemirror-lang-svelte': 6.0.0(@codemirror/autocomplete@6.8.1)(@codemirror/lang-css@6.2.0)(@codemirror/lang-html@6.4.5)(@codemirror/lang-javascript@6.1.9)(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0)(@lezer/common@1.0.3)(@lezer/highlight@1.1.6)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)
       '@rich_harris/svelte-split-pane': 1.1.1(svelte@packages+svelte)
-      '@rollup/browser': 3.25.1
-      '@sveltejs/site-kit': 5.2.1(@sveltejs/kit@1.20.5)(svelte@packages+svelte)
+      '@rollup/browser': 3.25.3
+      '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.20.5)(svelte@packages+svelte)
       acorn: 8.9.0
       codemirror: 6.0.1(@lezer/common@1.0.3)
       esm-env: 1.0.0
@@ -1788,8 +1788,8 @@ packages:
       - '@sveltejs/kit'
     dev: false
 
-  /@sveltejs/site-kit@5.2.1(@sveltejs/kit@1.20.5)(svelte@packages+svelte):
-    resolution: {integrity: sha512-KBl/PlC/I+Db7mm8WHOCtNOyi1nyxicAVuqZ1+NXN6CJTlDtedFouo0sltGaOQgndbXgGmLr8IfCPz/MWgBVKw==}
+  /@sveltejs/site-kit@5.2.2(@sveltejs/kit@1.20.5)(svelte@packages+svelte):
+    resolution: {integrity: sha512-XLLxVUV/dYytCsUeODAkjtzlaIBSn1kdcH5U36OuN7gMsPEHDy5L/dsWjf1/vDln3JStH5lqZPEN8Fovm33KhA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
       svelte: ^3.54.0
