@@ -1339,18 +1339,17 @@ export default class Component {
 		for (let i = 0; i < body.length; i += 1) {
 			const node = body[i];
 			if (node.type === 'VariableDeclaration') {
-				const all_hoistable = node.declarations.every(
-					/** @param {any} d */ (d) => {
-						if (!d.init) return false;
-						if (d.init.type !== 'Literal') return false;
-						// everything except const values can be changed by e.g. svelte devtools
-						// which means we can't hoist it
-						if (node.kind !== 'const' && this.compile_options.dev) return false;
-						const { name } = /** @type {import('estree').Identifier} */ (d.id);
+				const all_hoistable = node.declarations.every((d) => {
+					if (!d.init) return false;
+					if (d.init.type !== 'Literal') return false;
+					// everything except const values can be changed by e.g. svelte devtools
+					// which means we can't hoist it
+					if (node.kind !== 'const' && this.compile_options.dev) return false;
+					for (const name of extract_names(d.id)) {
 						const v = this.var_lookup.get(name);
 						if (v.reassigned) return false;
 						if (v.export_name) return false;
-						if (this.var_lookup.get(name).reassigned) return false;
+
 						if (
 							this.vars.find(
 								/** @param {any} variable */ (variable) => variable.name === name && variable.module
@@ -1358,18 +1357,16 @@ export default class Component {
 						) {
 							return false;
 						}
-						return true;
 					}
-				);
+					return true;
+				});
 				if (all_hoistable) {
-					node.declarations.forEach(
-						/** @param {any} d */ (d) => {
-							const variable = this.var_lookup.get(
-								/** @type {import('estree').Identifier} */ (d.id).name
-							);
+					node.declarations.forEach((d) => {
+						for (const name of extract_names(d.id)) {
+							const variable = this.var_lookup.get(name);
 							variable.hoistable = true;
 						}
-					);
+					});
 					hoistable_nodes.add(node);
 					body.splice(i--, 1);
 					this.fully_hoisted.push(node);
