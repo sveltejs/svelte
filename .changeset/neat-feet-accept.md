@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: apply transition_in/out to svelte:element with local transition
+fix: apply transition to `<svelte:element>` with local transition
