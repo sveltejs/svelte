@@ -80,14 +80,12 @@ export interface DispatchOptions {
 export interface EventDispatcher<EventMap extends Record<string, any>> {
 	// Implementation notes:
 	// - undefined extends X instead of X extends undefined makes this work better with both strict and nonstrict mode
-	// - [X] extends [never] is needed, X extends never would reduce the whole resulting type to never and not to one of the condition outcomes
+	// - | null | undefined is added for convenience, as they are equivalent for the custom event constructor (both result in a null detail)
 	<Type extends keyof EventMap>(
-		...args: [EventMap[Type]] extends [never]
-			? [type: Type, parameter?: null | undefined, options?: DispatchOptions]
-			: null extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
+		...args: null extends EventMap[Type]
+			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type], options?: DispatchOptions]
+			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }

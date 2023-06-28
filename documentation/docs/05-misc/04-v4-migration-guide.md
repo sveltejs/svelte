@@ -36,7 +36,7 @@ import { createEventDispatcher } from 'svelte';
 const dispatch = createEventDispatcher<{
 	optional: number | null;
 	required: string;
-	noArgument: never;
+	noArgument: null;
 }>();
 
 // Svelte version 3:
@@ -50,10 +50,10 @@ dispatch('required'); // error, missing argument
 dispatch('noArgument', 'surprise'); // error, cannot pass an argument
 ```
 
-- `Action` and `ActionReturn` have a default parameter type of `never` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
+- `Action` and `ActionReturn` have a default parameter type of `undefined` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
 ```diff
--const action: Action = (node, params) => { .. } // this is now an error, as params is expected to not exist
+-const action: Action = (node, params) => { .. } // this is now an error if you use params in any way
 +const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
 ```
 
