@@ -1,7 +1,7 @@
 import { createEventDispatcher } from '$runtime/internal/lifecycle';
 
 const dispatch = createEventDispatcher<{
-	loaded: never;
+	loaded: null;
 	change: string;
 	valid: boolean;
 	optional: number | null;

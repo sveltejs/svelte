@@ -1,4 +1,4 @@
-import type { Action, ActionReturn } from '$runtime/action';
+import type { Action, ActionReturn } from '$runtime/action/public';
 
 // ---------------- Action
 

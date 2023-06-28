@@ -36,7 +36,7 @@ import { createEventDispatcher } from 'svelte';
 const dispatch = createEventDispatcher<{
 	optional: number | null;
 	required: string;
-	noArgument: never;
+	noArgument: null;
 }>();
 
 // Svelte version 3:
