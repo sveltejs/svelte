@@ -233,6 +233,14 @@ export default class ElementWrapper extends Wrapper {
 				strip_whitespace,
 				next_sibling
 			);
+
+			// in the case of `parent_block -> child_dynamic_element_block -> child_dynamic_element`
+			// `child_dynamic_element_block.add_intro/outro` is called inside `new ElementWrapper()`
+			// but when `is_local === true` it does not bubble to parent_block
+			// we manually add transitions back to the parent_block (#8233)
+			if (node.intro) block.add_intro(node.intro.is_local);
+			if (node.outro) block.add_outro(node.outro.is_local);
+
 			// the original svelte:element is never used for rendering, because
 			// it gets assigned a child_dynamic_element which is used in all rendering logic.
 			// so doing all of this on the original svelte:element will just cause double
@@ -266,10 +274,10 @@ export default class ElementWrapper extends Wrapper {
 		this.event_handlers = this.node.handlers.map(
 			(event_handler) => new EventHandler(event_handler, this)
 		);
-		if (node.intro || node.outro) {
-			if (node.intro) block.add_intro(node.intro.is_local);
-			if (node.outro) block.add_outro(node.outro.is_local);
-		}
+
+		if (node.intro) block.add_intro(node.intro.is_local);
+		if (node.outro) block.add_outro(node.outro.is_local);
+
 		if (node.animation) {
 			block.add_animation();
 		}
