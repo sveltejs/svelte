@@ -6,8 +6,6 @@
 	import { mapbox_setup, svelteUrl } from '../../../config.js';
 	import TableOfContents from './TableOfContents.svelte';
 
-	import '@sveltejs/site-kit/styles/code.css';
-
 	export let data;
 
 	/** @type {import('@sveltejs/repl').default} */
@@ -49,7 +47,7 @@
 	$: if (scrollable) data.tutorial, scrollable.scrollTo(0, 0);
 
 	$: selected = lookup.get(data.slug);
-	$: improve_link = `https://github.com/sveltejs/svelte/tree/master/documentation/content/tutorial/${data.tutorial.dir}`;
+	$: improve_link = `https://github.com/sveltejs/svelte/tree/master/documentation/tutorial/${data.tutorial.dir}`;
 
 	const clone = (file) => ({
 		name: file.name.replace(/.\w+$/, ''),

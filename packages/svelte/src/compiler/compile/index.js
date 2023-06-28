@@ -30,7 +30,8 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash'
+	'cssHash',
+	'discloseVersion'
 ];
 const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
@@ -111,6 +112,10 @@ function validate_options(options, warnings) {
 		} else {
 			throw new Error(`Invalid namespace '${namespace}'`);
 		}
+	}
+
+	if (options.discloseVersion == undefined) {
+		options.discloseVersion = true;
 	}
 }
 

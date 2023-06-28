@@ -694,7 +694,11 @@ export default class Element extends Node {
 									);
 								}
 								// no-redundant-roles
-								if (current_role === get_implicit_role(this.name, attribute_map)) {
+								if (
+									current_role === get_implicit_role(this.name, attribute_map) &&
+									// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
+									!['ul', 'ol', 'li'].includes(this.name)
+								) {
 									component.warn(
 										attribute,
 										compiler_warnings.a11y_no_redundant_roles(current_role)

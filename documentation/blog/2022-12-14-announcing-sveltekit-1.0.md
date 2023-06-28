@@ -2,6 +2,7 @@
 title: Announcing SvelteKit 1.0
 description: Web development, streamlined
 author: The Svelte team
+authorURL: https://svelte.dev/
 ---
 
 After two years in development, [SvelteKit](https://kit.svelte.dev) has finally reached 1.0. As of today, it’s the recommended way to build Svelte apps of all shapes and sizes.

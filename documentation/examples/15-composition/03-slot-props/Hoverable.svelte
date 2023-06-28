@@ -10,6 +10,7 @@
 	}
 </script>
 
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mouseenter={enter} on:mouseleave={leave}>
 	<slot {hovering} />
 </div>

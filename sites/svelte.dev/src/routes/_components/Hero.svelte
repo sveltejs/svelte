@@ -17,7 +17,7 @@
 		</strong>
 		<div class="buttons">
 			<a href="https://learn.svelte.dev" rel="external" class="cta">
-				tutorial <Icon name="arrow-right" />
+				tutorial<Icon name="external-link" size="1em" />
 			</a>
 			<a href="/docs/introduction" class="cta basic">read the docs</a>
 		</div>
@@ -84,26 +84,26 @@
 	}
 
 	.cta {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.1rem;
 		background: var(--sk-theme-1);
 		padding: 0.35em 0.8em;
 		font-size: var(--sk-text-s);
 		letter-spacing: 0.05em;
+		font-weight: 600;
 		white-space: nowrap;
 		border-radius: var(--sk-border-radius);
 		box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.08);
 		color: #fff;
 		color: color-mix(in hwb, hsl(var(--sk-theme-1-hsl)) 10%, var(--sk-back-1) 95%);
 		transition: 0.5s var(--quint-out);
-		transition-property: transform, box-shadow, color;
+		transition-property: box-shadow, color;
 	}
 
 	.cta:hover {
 		text-decoration: none;
 		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
-		transform: scale3d(1.01, 1.01, 1);
 	}
 
 	.cta.basic {

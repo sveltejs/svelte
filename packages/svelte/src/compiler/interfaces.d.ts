@@ -344,6 +344,12 @@ export interface CompileOptions {
 	 * @default false
 	 */
 	preserveWhitespace?: boolean;
+	/**
+	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 *
+	 * @default true
+	 */
+	discloseVersion?: boolean;
 }
 
 export interface ParserOptions {

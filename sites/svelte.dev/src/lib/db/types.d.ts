@@ -15,7 +15,7 @@ export interface GitHubUser {
 }
 
 export interface Gist {
-	id: number;
+	id: string;
 	name: string;
 	owner: UserID;
 	files: Array<{ name: string; type: string; source: string }>;
