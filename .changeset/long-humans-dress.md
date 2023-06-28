@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: ensure createEventDispatcher works with types from generics
+fix: ensure `createEventDispatcher` and `ActionReturn` work with types from generic function parameters
