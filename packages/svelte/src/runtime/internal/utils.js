@@ -68,13 +68,37 @@ export function safe_not_equal(a, b) {
 
 let src_url_equal_anchor;
 
-/** @returns {boolean} */
+/**
+ * @param {string} element_src
+ * @param {string} url
+ * @returns {boolean}
+ */
 export function src_url_equal(element_src, url) {
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
 	}
 	src_url_equal_anchor.href = url;
 	return element_src === src_url_equal_anchor.href;
+}
+
+/**
+ * @param {HTMLSourceElement | HTMLImageElement} element_srcset
+ * @param {string} srcset
+ * @returns {boolean}
+ */
+export function srcset_url_equal(element_srcset, srcset) {
+	/** @param {string} _srcset */
+	function split(_srcset) {
+		return _srcset.split(',').map((src) => src.trim().split(' ')[0]);
+	}
+
+	const element_urls = split(element_srcset.srcset);
+	const urls = split(srcset);
+
+	return (
+		urls.length === element_urls.length &&
+		urls.every((url, i) => src_url_equal(element_urls[i], url))
+	);
 }
 
 /** @returns {boolean} */
