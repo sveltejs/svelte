@@ -15,9 +15,9 @@ If you're already on Node.js 16, it's possible you won't see any breaking change
 For a full list of all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
 ## What's new in SvelteKit
-No breaking changes or any big new features in SvelteKit this month. But there's lots of awesome bug fixes in the [CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md)!
+This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! There were no breaking changes or new features as work focused on stability.
 
-If you're looking for adapter-specific changes, check out the CHANGELOGs in each of the `adapter` directories in [packages](https://github.com/sveltejs/kit/tree/master/packages).
+If you're looking for adapter-specific changes, check out the CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
 ---
 
