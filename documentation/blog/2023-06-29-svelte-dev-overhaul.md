@@ -7,7 +7,7 @@ authorURL: https://puruvj.dev
 
 When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks have been familiar with. That documentation structure had stayed the same as Svelte's API surface increased steadily and more details were added. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community had been asking for a revamp, and now it's here!
 
-Meet the new svelte.dev — a complete overhaul of the old website.
+Meet the new [svelte.dev](https://svelte.dev) — a complete overhaul of the old website.
 
 ## Multi-page docs
 
@@ -29,7 +29,7 @@ We've also taken extra care to ensure that all the links from the old website wi
 
 ## Search
 
-The lack of search functionality could make finding stuff a nuisance as <kbd>Ctrl+F</kbd> only returns results in order of occurrence and not order of importance. While <kbd>Ctrl+F</kbd> did have its benefits such as working without JS, now that the site has multiple pages, it's not an option anymore.
+The lack of search functionality could make finding stuff a nuisance as <kbd>Ctrl+F</kbd> only returns results in order of occurrence and not order of importance. While <kbd>Ctrl+F</kbd> did have its benefits such as not requiring JS, now that the site has multiple pages, it's not an option anymore.
 
 And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbd>Ctrl+K</kbd> (or <kbd>CMD+F</kbd> for Mac users) and start searching — it even works without JavaScript!
 
@@ -81,7 +81,7 @@ If you're on mobile, you can already see it at the bottom. If you're on desktop,
 
 ## Unification of Svelte websites
 
-Now svelte.dev, kit.svelte.dev, and learn.svelte.dev all use the same design system and are more consistent with each other. This makes it easier to navigate between the websites and also makes it easier to maintain them. We have a package shared across the sites called `@sveltejs/site-kit`, which went through rigorous changes over last 4 months as we have been moving all common code into this package.
+Now [svelte.dev](https://svelte.dev), [kit.svelte.dev](https://kit.svelte.dev), and [learn.svelte.dev](https://learn.svelte.dev) all use the same design system and are more consistent with each other. This makes it easier to navigate between the websites and also makes it easier to maintain them. We have a package shared across the sites called `@sveltejs/site-kit`, which went through rigorous changes over last 4 months as we have been moving all common code into this package.
 
 For example, we implemented the dark mode toggle in `@sveltejs/site-kit`. We then simply updated the package on [learn.svelte.dev](https://learn.svelte.dev) and [kit.svelte.dev](https://kit.svelte.dev) and those sites got the dark mode toggle automatically (this is also the reason why those sites got the dark mode toggle before the [svelte.dev](https://svelte.dev) relaunch).
 
@@ -91,6 +91,6 @@ We have many more things planned to do post-launch. Some of them are:
 
 - Redesigned blog page
 - Improved search
-- Playground: Merge REPL and Examples page
-- Unify infrastructure of svelte REPL and learn.svelte.dev (a webcontainer-based REPL with rollup as fallback)
+- Playground: a unified REPL and Examples page
+- Unify the infrastructure of the Svelte REPL and [learn.svelte.dev](https://learn.svelte.dev) by creating a webcontainer-based REPL with rollup as a fallback
 - Address any feedback
