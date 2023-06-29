@@ -22,6 +22,7 @@ export default defineConfig({
 	test: {
 		dir: 'test',
 		reporters: ['dot'],
+		include: ['**/*.test.js'],
 		exclude: [...configDefaults.exclude, '**/samples/**'],
 		globalSetup: './test/vitest-global-setup.js'
 	}
