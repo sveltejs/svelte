@@ -1,13 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { watch } from 'rollup';
 import serve from 'rollup-plugin-serve';
 import * as svelte from '../svelte/src/compiler/index.js';
 
-let __dirname = new URL('.', import.meta.url).pathname;
-if (process.platform === 'win32') {
-	__dirname = __dirname.slice(1); // else path.resolve fucks up
-}
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {

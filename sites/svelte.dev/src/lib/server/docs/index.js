@@ -1,15 +1,16 @@
 import { base as app_base } from '$app/paths';
 import { modules } from '$lib/generated/type-info.js';
-import fs from 'node:fs';
-import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import {
 	escape,
-	extract_frontmatter,
+	extractFrontmatter,
+	markedTransform,
 	normalizeSlugify,
 	removeMarkdown,
-	transform
-} from '../markdown/index.js';
-import { render_markdown } from '../markdown/renderer.js';
+	replaceExportTypePlaceholders
+} from '@sveltejs/site-kit/markdown';
+import fs from 'node:fs';
+import { CONTENT_BASE_PATHS } from '../../../constants.js';
+import { render_content } from '../renderer';
 
 /**
  * @param {import('./types').DocsData} docs_data
@@ -21,7 +22,7 @@ export async function get_parsed_docs(docs_data, slug) {
 			if (page.slug === slug) {
 				return {
 					...page,
-					content: await render_markdown(page.file, page.content, { modules })
+					content: await render_content(page.file, page.content)
 				};
 			}
 		}
@@ -62,7 +63,7 @@ export function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 
 			const page_slug = match[1].replace('.md', '');
 
-			const page_data = extract_frontmatter(
+			const page_data = extractFrontmatter(
 				fs.readFileSync(`${base}/${category_dir}/${filename}`, 'utf-8')
 			);
 
@@ -98,27 +99,57 @@ export function get_docs_list(docs_data) {
 	}));
 }
 
+const titled = (str) =>
+	removeMarkdown(
+		escape(markedTransform(str, { paragraph: (txt) => txt }))
+			.replace(/<\/?code>/g, '')
+			.replace(/&#39;/g, "'")
+			.replace(/&quot;/g, '"')
+			.replace(/&lt;/g, '<')
+			.replace(/&gt;/g, '>')
+			.replace(/<(\/)?(em|b|strong|code)>/g, '')
+	);
+
 /** @param {string} markdown */
 function get_sections(markdown) {
-	const headingRegex = /^##\s+(.*)$/gm;
-	/** @type {import('./types').Section[]} */
-	const secondLevelHeadings = [];
-	let match;
+	const lines = markdown.split('\n');
+	const root = /** @type {import('./types').Section} */ ({
+		title: 'Root',
+		slug: 'root',
+		sections: [],
+		breadcrumbs: [''],
+		text: ''
+	});
+	let currentNodes = [root];
 
-	while ((match = headingRegex.exec(markdown)) !== null) {
-		secondLevelHeadings.push({
-			title: removeMarkdown(
-				escape(transform(match[1], { paragraph: (txt) => txt }))
-					.replace(/<\/?code>/g, '')
-					.replace(/&#39;/g, "'")
-					.replace(/&quot;/g, '"')
-					.replace(/&lt;/g, '<')
-					.replace(/&gt;/g, '>')
-					.replace(/<(\/)?(em|b|strong|code)>/g, '')
-			),
-			slug: normalizeSlugify(match[1])
-		});
-	}
+	lines.forEach((line) => {
+		const match = line.match(/^(#{2,4})\s(.*)/);
+		if (match) {
+			const level = match[1].length - 2;
+			const text = titled(match[2]);
+			const slug = normalizeSlugify(text);
 
-	return secondLevelHeadings;
+			// Prepare new node
+			/** @type {import('./types').Section} */
+			const newNode = {
+				title: text,
+				slug,
+				sections: [],
+				breadcrumbs: [...currentNodes[level].breadcrumbs, text],
+				text: ''
+			};
+
+			// Add the new node to the tree
+			currentNodes[level].sections.push(newNode);
+
+			// Prepare for potential children of the new node
+			currentNodes = currentNodes.slice(0, level + 1);
+			currentNodes.push(newNode);
+		} else if (line.trim() !== '') {
+			// Add non-heading line to the text of the current section
+			currentNodes[currentNodes.length - 1].text += line + '\n';
+		}
+	});
+
+	return root.sections;
 }

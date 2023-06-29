@@ -29,9 +29,10 @@ An action can have a parameter. If the returned value has an `update` method, it
 ```svelte
 <!--- file: App.svelte --->
 <script>
+	/** @type {string} */
 	export let bar;
 
-	/** @type {import('svelte/action').Action}  */
+	/** @type {import('svelte/action').Action<HTMLElement, string>}  */
 	function foo(node, bar) {
 		// the node has been mounted in the DOM
 

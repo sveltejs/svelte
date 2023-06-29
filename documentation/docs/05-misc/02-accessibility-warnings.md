@@ -4,14 +4,23 @@ title: 'Accessibility warnings'
 
 Accessibility (shortened to a11y) isn't always easy to get right, but Svelte will help by warning you at compile time if you write inaccessible markup. However, keep in mind that many accessibility issues can only be identified at runtime using other automated tools and by manually testing your application.
 
+Some warnings may be incorrect in your concrete use case. You can disable such false positives by placing a `<!-- svelte-ignore a11y-<code> -->` comment above the line that causes the warning. Example:
+
+```svelte
+<!-- svelte-ignore a11y-autofocus -->
+<input autofocus />
+```
+
 Here is a list of accessibility checks Svelte will do for you.
 
 ## `a11y-accesskey`
 
 Enforce no `accesskey` on element. Access keys are HTML attributes that allow web developers to assign keyboard shortcuts to elements. Inconsistencies between keyboard shortcuts and keyboard commands used by screen reader and keyboard-only users create accessibility complications. To avoid complications, access keys should not be used.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: Avoid using accesskey --><div accessKey="z" />
+<!-- A11y: Avoid using accesskey -->
+<div accessKey="z" />
 ```
 
 ## `a11y-aria-activedescendant-has-tabindex`
@@ -69,8 +78,10 @@ The following elements are visually distracting: `<marquee>` and `<blink>`.
 
 Certain DOM elements are useful for screen reader navigation and should not be hidden.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: <h2> element should not be hidden --><h2 aria-hidden="true">invisible header</h2>
+<!-- A11y: <h2> element should not be hidden -->
+<h2 aria-hidden="true">invisible header</h2>
 ```
 
 ## `a11y-img-redundant-alt`
@@ -170,8 +181,10 @@ Certain reserved DOM elements do not support ARIA roles, states and properties. 
 
 The scope attribute should only be used on `<th>` elements.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: The scope attribute should only be used with <th> elements --><div scope="row" />
+<!-- A11y: The scope attribute should only be used with <th> elements -->
+<div scope="row" />
 ```
 
 ## `a11y-missing-attribute`
@@ -267,16 +280,30 @@ A non-interactive element does not support event handlers (mouse and key handler
 
 Tab key navigation should be limited to elements on the page that can be interacted with.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: noninteractive element cannot have nonnegative tabIndex value --><div tabindex="0" />
+<!-- A11y: noninteractive element cannot have nonnegative tabIndex value -->
+<div tabindex="0" />
+```
+
+## a11y-no-static-element-interactions
+
+Elements like `<div>` with interactive handlers like `click` must have an ARIA role.
+
+<!-- prettier-ignore -->
+```svelte
+<!-- A11y: <div> with click handler must have an ARIA role -->
+<div on:click={() => ''} />
 ```
 
 ## `a11y-positive-tabindex`
 
 Avoid positive `tabindex` property values. This will move elements out of the expected tab order, creating a confusing experience for keyboard users.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: avoid tabindex values above zero --><div tabindex="1" />
+<!-- A11y: avoid tabindex values above zero -->
+<div tabindex="1" />
 ```
 
 ## `a11y-role-has-required-aria-props`
@@ -324,6 +351,8 @@ Enforce that only known ARIA attributes are used. This is based on the [WAI-ARIA
 
 Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
 
+<!-- prettier-ignore -->
 ```svelte
-<!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) --><div role="toooltip" />
+<!-- A11y: Unknown role 'toooltip' (did you mean 'tooltip'?) -->
+<div role="toooltip" />
 ```

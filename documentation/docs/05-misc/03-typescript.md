@@ -96,18 +96,18 @@ Events can be typed with `createEventDispatcher`:
 	import { createEventDispatcher } from 'svelte';
 
 	const dispatch = createEventDispatcher<{
-		event: never; // does not accept a payload
+		event: null; // does not accept a payload
 		type: string; // has a required string payload
 		click: string | null; // has an optional string payload
 	}>();
 
 	function handleClick() {
-		dispatch('even');
+		dispatch('event');
 		dispatch('click', 'hello');
 	}
 
 	function handleType() {
-		dispatch('even');
+		dispatch('event');
 		dispatch('type', Math.random() > 0.5 ? 'world' : null);
 	}
 </script>
@@ -176,16 +176,14 @@ You cannot type your reactive declarations with TypeScript in the way you type a
 </script>
 ```
 
-You cannot add a `: TYPE` because it's invalid syntax in this position. Instead, you can use the `as` or move the definition to a `let` statement just above:
+You cannot add a `: TYPE` because it's invalid syntax in this position. Instead, you can move the definition to a `let` statement just above:
 
 ```svelte
 <script lang="ts">
 	let count = 0;
 
-	$: option1 = (count * 2) as number;
-
-	let option2: number;
-	$: option2 = count * 2;
+	let doubled: number;
+	$: doubled = count * 2;
 </script>
 ```
 

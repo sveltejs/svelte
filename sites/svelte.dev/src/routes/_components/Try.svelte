@@ -70,11 +70,6 @@
 		font-size: var(--sk-text-xl);
 	}
 
-	a {
-		color: inherit;
-		text-decoration: underline;
-	}
-
 	@media (min-width: 900px) {
 		.grid {
 			grid-template-columns: repeat(var(--columns), 1fr);

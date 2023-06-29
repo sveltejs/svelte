@@ -1,8 +1,9 @@
+import { fileURLToPath } from 'node:url';
 import { get_examples_data } from '../src/lib/server/examples/index.js';
 import fs from 'node:fs';
 
 const examples_data = get_examples_data(
-	new URL('../../../documentation/examples', import.meta.url).pathname
+	fileURLToPath(new URL('../../../documentation/examples', import.meta.url))
 );
 
 try {

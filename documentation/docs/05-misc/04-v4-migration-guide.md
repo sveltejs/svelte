@@ -2,7 +2,7 @@
 title: Svelte 4 migration guide
 ---
 
-This migration guide provides an overview of how to migrate from Svelte version 3 to 4. See the linked PRs for more details about each change. Use the migration script to migrate some of these automatically: `npx svelte-migrate svelte-4`
+This migration guide provides an overview of how to migrate from Svelte version 3 to 4. See the linked PRs for more details about each change. Use the migration script to migrate some of these automatically: `npx svelte-migrate@latest svelte-4`
 
 If you're a library author, consider whether to only support Svelte 4 or if it's possible to support Svelte 3 too. Since most of the breaking changes don't affect many people, this may be easily possible. Also remember to update the version range in your `peerDependencies`.
 
@@ -11,7 +11,8 @@ If you're a library author, consider whether to only support Svelte 4 or if it's
 - Upgrade to Node 16 or higher. Earlier versions are no longer supported. ([#8566](https://github.com/sveltejs/svelte/issues/8566))
 - If you are using SvelteKit, upgrade to 1.20.4 or newer ([sveltejs/kit#10172](https://github.com/sveltejs/kit/pull/10172))
 - If you are using Vite without SvelteKit, upgrade to `vite-plugin-svelte` 2.4.1 or newer ([#8516](https://github.com/sveltejs/svelte/issues/8516))
-- If you are using webpack, upgrade to webpack 5 or higher. Earlier versions are no longer supported. ([#8515](https://github.com/sveltejs/svelte/issues/8515))
+- If you are using webpack, upgrade to webpack 5 or higher and `svelte-loader` 3.1.8 or higher. Earlier versions are no longer supported. ([#8515](https://github.com/sveltejs/svelte/issues/8515), [198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
+- If you are using Rollup, upgrade to `rollup-plugin-svelte` 7.1.5 or higher ([198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
 - If you are using TypeScript, upgrade to TypeScript 5 or higher. Lower versions might still work, but no guarantees are made about that. ([#8488](https://github.com/sveltejs/svelte/issues/8488))
 
 ## Browser conditions for bundlers
@@ -32,13 +33,13 @@ There are now stricter types for `createEventDispatcher`, `Action`, `ActionRetur
 // @errors: 2554 2345
 import { createEventDispatcher } from 'svelte';
 
-// Svelte version 3:
 const dispatch = createEventDispatcher<{
 	optional: number | null;
 	required: string;
-	noArgument: never;
+	noArgument: null;
 }>();
 
+// Svelte version 3:
 dispatch('optional');
 dispatch('required'); // I can still omit the detail argument
 dispatch('noArgument', 'surprise'); // I can still add a detail argument
@@ -49,10 +50,10 @@ dispatch('required'); // error, missing argument
 dispatch('noArgument', 'surprise'); // error, cannot pass an argument
 ```
 
-- `Action` and `ActionReturn` have a default parameter type of `never` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
+- `Action` and `ActionReturn` have a default parameter type of `undefined` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
 ```diff
--const action: Action = (node, params) => { .. } // this is now an error, as params is expected to not exist
+-const action: Action = (node, params) => { .. } // this is now an error if you use params in any way
 +const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
 ```
 
@@ -155,4 +156,5 @@ The order in which preprocessors are applied has changed. Now, preprocessors are
 - people implementing their own stores from scratch using the `StartStopNotifier` interface (which is passed to the create function of `writable` etc) from `svelte/store` now need to pass an update function in addition to the set function. This has no effect on people using stores or creating stores using the existing Svelte stores. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
 - `derived` will now throw an error on falsy values instead of stores passed to it. ([#7947](https://github.com/sveltejs/svelte/issues/7947))
 - type definitions for `svelte/internal` were removed to further discourage usage of those internal methods which are not public API. Most of these will likely change for Svelte 5
-- Removal of DOM nodes is now batched which slightly changes its order, which might affect the order of events fired if you're using a MutationObserver on these elements ([#8763](https://github.com/sveltejs/svelte/pull/8763))
+- Removal of DOM nodes is now batched which slightly changes its order, which might affect the order of events fired if you're using a `MutationObserver` on these elements ([#8763](https://github.com/sveltejs/svelte/pull/8763))
+- if you enhanced the global typings through the `svelte.JSX` namespace before, you need to migrate this to use the `svelteHTML` namespace. Similarly if you used the `svelte.JSX` namespace to use type definitions from it, you need to migrate those to use the types from `svelte/elements` instead. You can find more information about what to do [here](https://github.com/sveltejs/language-tools/blob/master/docs/preprocessors/typescript.md#im-getting-deprecation-warnings-for-sveltejsx--i-want-to-migrate-to-the-new-typings)

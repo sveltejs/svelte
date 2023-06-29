@@ -254,18 +254,6 @@
 	{
 		"code": "a11y-no-redundant-roles",
 		"end": {
-			"column": 19,
-			"line": 22
-		},
-		"message": "A11y: Redundant role 'listitem'",
-		"start": {
-			"column": 4,
-			"line": 22
-		}
-	},
-	{
-		"code": "a11y-no-redundant-roles",
-		"end": {
 			"column": 17,
 			"line": 23
 		},
@@ -309,18 +297,6 @@
 		"start": {
 			"column": 5,
 			"line": 26
-		}
-	},
-	{
-		"code": "a11y-no-redundant-roles",
-		"end": {
-			"column": 15,
-			"line": 27
-		},
-		"message": "A11y: Redundant role 'list'",
-		"start": {
-			"column": 4,
-			"line": 27
 		}
 	},
 	{
@@ -465,18 +441,6 @@
 		"start": {
 			"column": 4,
 			"line": 39
-		}
-	},
-	{
-		"code": "a11y-no-redundant-roles",
-		"end": {
-			"column": 15,
-			"line": 40
-		},
-		"message": "A11y: Redundant role 'list'",
-		"start": {
-			"column": 4,
-			"line": 40
 		}
 	},
 	{

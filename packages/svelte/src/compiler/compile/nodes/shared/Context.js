@@ -36,6 +36,7 @@ export function unpack_destructuring({
 		if (in_rest_element) {
 			context_rest_properties.set(node.name, node);
 		}
+		component.used_names.add(node.name);
 	} else if (node.type === 'ArrayPattern') {
 		node.elements.forEach((element, i) => {
 			if (!element) {

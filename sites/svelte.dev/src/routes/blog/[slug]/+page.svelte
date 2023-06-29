@@ -1,10 +1,10 @@
 <script>
 	import { page } from '$app/stores';
-	import * as hovers from '$lib/utils/hovers.js';
+	import { setupDocsHovers } from '@sveltejs/site-kit/docs';
 
 	export let data;
 
-	hovers.setup();
+	setupDocsHovers();
 </script>
 
 <svelte:head>
