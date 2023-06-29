@@ -1,11 +1,11 @@
 ---
 title: 'svelte.dev: A complete overhaul'
-description: 'svelte.dev revamped, comes with accessibility fixes, new features and bottom navbar'
+description: 'The new site comes with accessibility fixes, new features and bottom navbar'
 author: Puru Vijay
 authorURL: https://puruvj.dev
 ---
 
-When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks are familiar with. That documentation structure has stayed the same as Svelte's API surface has been increasing steadily. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community has been asking for a revamp, and now it's here!
+When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks are familiar with. That documentation structure has stayed the same as Svelte's API surface has been increasing steadily and more details were added. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community has been asking for a revamp, and now it's here!
 
 Meet the new svelte.dev — a complete overhaul of the old website.
 
@@ -27,7 +27,7 @@ All modules exposed by Svelte are also listed in the sidebar under the `Runtime`
 
 > [svelte/compiler](/docs/svelte-compiler) is under **Compiler and API** section
 
-And worry not, all the links from the older website will be redirected to the correct page.
+We've also taken extra care to ensure that all the links from the old website will be redirected to the correct new page.
 
 ## Search
 
@@ -67,7 +67,7 @@ After many years of users asking for dark mode on the website so they can read t
 
 ## Updated REPL
 
-The REPL has been rewritten from scratch to be fully typesafe and comes with features like dark mode. It was reimplemented to upgrade to CodeMirror 6 (which comes with many accessibility improvements, multi-select mode, performance improvements, tree-shaking, and many more features).
+The REPL has been rewritten from scratch to be fully typesafe and comes with features like dark mode. It was reimplemented to upgrade to CodeMirror 6 which comes with many accessibility improvements, multi-select mode, performance improvements, tree-shaking, and many more features.
 
 ## Redesigned homepage
 
@@ -77,15 +77,15 @@ The homepage has also been updated to align with [kit.svelte.dev](https://kit.sv
 
 ## Bottom navigation!
 
-We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar. The response was overwhelmingly positive, so we went ahead and added it to the website! This makes it easier to navigate the website on mobile with just one hand, and also makes it easier to reach the dark mode toggle. Additionally, it shows the contents of whatever section of the site you are on. For example, if you are on one of the docs pages, the navbar will open by default to the docs contents. This allows for much quicker navigation between pages.
+We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar. The response was overwhelmingly positive, so we went ahead and added it! This makes it easier to navigate the website on mobile with just one hand. We also made sure that you'll get to where you want with as few interactions as possible: If you're in the docs section of the site, you'll likely want to browser other documentation pages - which is why the navbar will show these by default when opening it, with the option to go one level up to the general site navigation.
 
 If you're on mobile, you can already see it at the bottom. If you're on desktop, you can see it by resizing your browser window to a smaller size.
 
 ## Unification of Svelte websites
 
-Now svelte.dev, kit.svelte.dev, and learn.svelte.dev all use the same design system and are more consistent with each other. This makes it easier to navigate between the websites and also makes it easier to maintain them. We have a package shared across the sites called `@sveltejs/site-kit`, which went through rigorous changes over last 4 months as we have been moving all of the common stuff to this package.
+Now svelte.dev, kit.svelte.dev, and learn.svelte.dev all use the same design system and are more consistent with each other. This makes it easier to navigate between the websites and also makes it easier to maintain them. We have a package shared across the sites called `@sveltejs/site-kit`, which went through rigorous changes over last 4 months as we have been moving all common code into this package.
 
-For example, we implemented the dark mode toggle in `@sveltejs/site-kit`. We then simply updated the package on [learn.svelte.dev](https://learn.svelte.dev) and [kit.svelte.dev](https://kit.svelte.dev) and those sites got the dark mode toggle automatically. This is the reason why those sites got the dark mode toggle before the [svelte.dev](https://svelte.dev) relaunch.
+For example, we implemented the dark mode toggle in `@sveltejs/site-kit`. We then simply updated the package on [learn.svelte.dev](https://learn.svelte.dev) and [kit.svelte.dev](https://kit.svelte.dev) and those sites got the dark mode toggle automatically (this is also the reason why those sites got the dark mode toggle before the [svelte.dev](https://svelte.dev) relaunch).
 
 ## What's next
 
@@ -94,5 +94,5 @@ We have many more things planned to do post-launch. Some of them are:
 - Redesigned blog page
 - Improved search
 - Playground: Merge REPL and Examples page
-- Unify infrastructure of svelte REPL and learn.svelte.dev(A webcontainer-based REPL with rollup as fallback)
+- Unify infrastructure of svelte REPL and learn.svelte.dev (a webcontainer-based REPL with rollup as fallback)
 - Address any feedback
