@@ -2,6 +2,7 @@ import { dev } from '$app/environment';
 import { client } from '$lib/db/client.js';
 import * as gist from '$lib/db/gist.js';
 import examples_data from '$lib/generated/examples-data.js';
+import { get_example, get_examples_list } from '$lib/server/examples/index.js';
 import { error, json } from '@sveltejs/kit';
 
 export const prerender = 'auto';
@@ -34,7 +35,6 @@ function munge(files) {
 }
 
 export async function GET({ params }) {
-	const { get_examples_list, get_example } = await import('$lib/server/examples/index.js');
 	// Currently, these pages(that are in examples/) are prerendered. To avoid making any FS requests,
 	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
 	// is accessed, this function won't be run at all, as it will be served from the filesystem
