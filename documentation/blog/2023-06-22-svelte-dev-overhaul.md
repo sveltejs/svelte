@@ -25,6 +25,8 @@ All modules exposed by Svelte are also listed in the sidebar under the `Runtime`
 - [svelte/easing](/docs/svelte-easing)
 - [svelte/action](/docs/svelte-action)
 
+> [svelte/compiler](/docs/svelte-compiler) is under **Compiler and API** section
+
 And worry not, all the links from the older website will be redirected to the correct page.
 
 ## Search
@@ -65,7 +67,7 @@ After many years of users asking for dark mode on the website so they can read t
 
 ## Updated REPL
 
-The REPL has been rewritten from scratch to be fully typesafe and comes with features like dark mode. It was reimplemented to upgrade to CodeMirror 6 (which comes with many accessibility improvements, multi-select mode, performance improvements, tree-shakability, and many more features).
+The REPL has been rewritten from scratch to be fully typesafe and comes with features like dark mode. It was reimplemented to upgrade to CodeMirror 6 (which comes with many accessibility improvements, multi-select mode, performance improvements, tree-shaking, and many more features).
 
 ## Redesigned homepage
 
@@ -90,6 +92,7 @@ For example, we implemented the dark mode toggle in `@sveltejs/site-kit`. We the
 We have many more things planned to do post-launch. Some of them are:
 
 - Redesigned blog page
-- Webcontainer based REPL
-- Merge REPL and Examples page
+- Improved search
+- Playground: Merge REPL and Examples page
+- Unify infrastructure of svelte REPL and learn.svelte.dev(A webcontainer-based REPL with rollup as fallback)
 - Address any feedback
