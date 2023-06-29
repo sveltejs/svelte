@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Align disclose-version exports specification
+fix: align `disclose-version` exports specification
