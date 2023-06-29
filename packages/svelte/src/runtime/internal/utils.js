@@ -74,9 +74,11 @@ let src_url_equal_anchor;
  * @returns {boolean}
  */
 export function src_url_equal(element_src, url) {
+	if (element_src === url) return true;
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
 	}
+	// This is actually faster than doing URL(..).href
 	src_url_equal_anchor.href = url;
 	return element_src === src_url_equal_anchor.href;
 }
@@ -89,7 +91,7 @@ export function src_url_equal(element_src, url) {
 export function srcset_url_equal(element_srcset, srcset) {
 	/** @param {string} _srcset */
 	function split(_srcset) {
-		return _srcset.split(',').map((src) => src.trim().split(' ')[0]);
+		return _srcset.split(',').map((src) => src.trim().split(' ').filter(Boolean));
 	}
 
 	const element_urls = split(element_srcset.srcset);
@@ -97,7 +99,14 @@ export function srcset_url_equal(element_srcset, srcset) {
 
 	return (
 		urls.length === element_urls.length &&
-		urls.every((url, i) => src_url_equal(element_urls[i], url))
+		urls.every(
+			([url, width], i) =>
+				width === element_urls[i][1] &&
+				// We need to test both ways because Vite/imagetools (but not other tools) will create an absolute URL
+				// for the client, and the relative URLs inside srcset are not automatically resolved to absolute URLs
+				// by browsers (in contrast to img.src). This means both SSR and DOM code could contain relative or absolute URLs.
+				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
+		)
 	);
 }
 
