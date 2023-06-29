@@ -96,7 +96,7 @@ Events can be typed with `createEventDispatcher`:
 	import { createEventDispatcher } from 'svelte';
 
 	const dispatch = createEventDispatcher<{
-		event: never; // does not accept a payload
+		event: null; // does not accept a payload
 		type: string; // has a required string payload
 		click: string | null; // has an optional string payload
 	}>();
