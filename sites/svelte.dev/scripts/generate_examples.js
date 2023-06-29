@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { get_examples_data } from '../src/lib/server/examples/index.js';
 import fs from 'node:fs';
 
-const examples_data = get_examples_data(
+const examples_data = await get_examples_data(
 	fileURLToPath(new URL('../../../documentation/examples', import.meta.url))
 );
 
