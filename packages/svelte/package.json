@@ -58,7 +58,7 @@
       "default": "./src/runtime/store/index.js"
     },
     "./internal/disclose-version": {
-      "import": "./src/runtime/internal/disclose-version/index.js"
+      "default": "./src/runtime/internal/disclose-version/index.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",
