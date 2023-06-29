@@ -14,12 +14,12 @@
 
 	function changeStores() {
 		$bagOlStores = ({
+			thirdStore,
+			$secondStore,
+			$firstStore,
 			firstNonStore,
 			secondNonStore,
 			thirdNonStore,
-			$firstStore,
-			$secondStore,
-			thirdStore
 		} = {
 			firstNonStore: 7,
 			secondNonStore: 8,

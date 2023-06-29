@@ -104,7 +104,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	let $prop,
 		$$unsubscribe_prop = noop,
-		$$subscribe_prop = () => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), prop);
+		$$subscribe_prop = node => ($$unsubscribe_prop(), $$unsubscribe_prop = subscribe(prop, $$value => $$invalidate(2, $prop = $$value)), node);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_prop());
 	let { $$slots: slots = {}, $$scope } = $$props;

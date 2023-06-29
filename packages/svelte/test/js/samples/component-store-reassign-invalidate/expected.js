@@ -65,7 +65,7 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $foo,
 		$$unsubscribe_foo = noop,
-		$$subscribe_foo = () => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate(1, $foo = $$value)), foo);
+		$$subscribe_foo = node => ($$unsubscribe_foo(), $$unsubscribe_foo = subscribe(foo, $$value => $$invalidate(1, $foo = $$value)), node);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_foo());
 	let foo = writable(0);

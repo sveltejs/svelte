@@ -10,12 +10,12 @@
 		secondStore: writable(6)
 	};
 
-	({ firstNonStore, secondNonStore, thirdNonStore, fourthNonStore, $firstStore, $secondStore } = {
+	({ firstNonStore, secondNonStore, thirdNonStore, fourthNonStore, firstStore, $secondStore } = {
 		firstNonStore: 7,
 		secondNonStore: 8,
 		thirdNonStore: 9,
 		fourthNonStore: 11,
-		$firstStore: 10,
+		firstStore: writable(10),
 		$secondStore: 12
 	});
 </script>

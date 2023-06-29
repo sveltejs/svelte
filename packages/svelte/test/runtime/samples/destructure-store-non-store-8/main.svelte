@@ -11,14 +11,14 @@
 			firstNonStore,
 			secondNonStore,
 			thirdNonStore,
-			$firstStore,
+			firstStore,
 			$secondStore,
 			thirdStore
 		] = [
 			7,
 			8,
 			9,
-			10,
+			writable(10),
 			11,
 			writable(12),
 			writable(14),

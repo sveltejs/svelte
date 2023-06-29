@@ -438,7 +438,7 @@ export default function dom(component, options) {
 				const unsubscribe = `$$unsubscribe_${name}`;
 				const subscribe = `$$subscribe_${name}`;
 				const i = renderer.context_lookup.get($name).index;
-				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), ${name})`;
+				return b`let ${$name}, ${unsubscribe} = @noop, ${subscribe} = (#node) => (${unsubscribe}(), ${unsubscribe} = @subscribe(${name}, $$value => $$invalidate(${i}, ${$name} = $$value)), #node)`;
 			}
 			return b`let ${$name};`;
 		});

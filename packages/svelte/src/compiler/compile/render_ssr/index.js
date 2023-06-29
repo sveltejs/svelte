@@ -65,7 +65,7 @@ export default function ssr(component, options) {
 		if (store && store.reassigned) {
 			const unsubscribe = `$$unsubscribe_${store_name}`;
 			const subscribe = `$$subscribe_${store_name}`;
-			return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = () => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), ${store_name})`;
+			return b`let ${name}, ${unsubscribe} = @noop, ${subscribe} = (#node) => (${unsubscribe}(), ${unsubscribe} = @subscribe(${store_name}, $$value => ${name} = $$value), #node)`;
 		}
 		return b`let ${name}, ${`$$unsubscribe_${store_name}`};`;
 	});

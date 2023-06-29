@@ -138,7 +138,7 @@ function instance($$self, $$props, $$invalidate) {
 
 	let $reactiveDeclaration,
 		$$unsubscribe_reactiveDeclaration = noop,
-		$$subscribe_reactiveDeclaration = () => ($$unsubscribe_reactiveDeclaration(), $$unsubscribe_reactiveDeclaration = subscribe(reactiveDeclaration, $$value => $$invalidate(3, $reactiveDeclaration = $$value)), reactiveDeclaration);
+		$$subscribe_reactiveDeclaration = node => ($$unsubscribe_reactiveDeclaration(), $$unsubscribe_reactiveDeclaration = subscribe(reactiveDeclaration, $$value => $$invalidate(3, $reactiveDeclaration = $$value)), node);
 
 	component_subscribe($$self, reactiveStoreVal, $$value => $$invalidate(2, $reactiveStoreVal = $$value));
 	$$self.$$.on_destroy.push(() => $$unsubscribe_reactiveDeclaration());
