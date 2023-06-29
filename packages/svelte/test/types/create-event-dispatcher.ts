@@ -41,3 +41,24 @@ dispatch('optional', undefined, { cancelable: true });
 dispatch('optional', 'string');
 // @ts-expect-error: wrong type of option
 dispatch('optional', undefined, { cancelabled: true });
+
+function generic_fn<T extends boolean>(t: T) {
+	const dispatch = createEventDispatcher<{
+		required: T;
+		optional: T | null;
+	}>();
+
+	dispatch('required', t);
+	dispatch('optional', t);
+	dispatch('optional', null);
+	dispatch('optional', undefined);
+	// @ts-expect-error: wrong type of optional detail
+	dispatch('optional', 'string');
+	// @ts-expect-error: wrong type of required detail
+	dispatch('required', 'string');
+	// @ts-expect-error: wrong type of optional detail
+	dispatch('optional', true);
+	// @ts-expect-error: wrong type of required detail
+	dispatch('required', true);
+}
+generic_fn;
