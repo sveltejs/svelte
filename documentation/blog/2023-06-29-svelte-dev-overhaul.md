@@ -39,7 +39,7 @@ And for that, the new website comes with a search bar, which searches through th
 
 The new website comes with a JavaScript / TypeScript toggle, so you can view the docs in your preferred flavour. Every module's exported types are listed at the bottom of the page for easy reference. The types are automatically generated from Svelte's source code, so they're always up to date.
 
-All the JavaScript and TypeScript code snippets have type hints available right there. Just hover over the variable to see its type. This allows the docs to be type checked at build time, which ensures they're never out of date.
+All the JavaScript and TypeScript code snippets have type hints available. Just hover over the variable to see its type. This allows the docs to be type checked at build time, which ensures they're never out of date.
 
 We also (finally!) added documentation for [Actions](/docs/svelte-action). Svelte Actions are a way to interact with the DOM, and are a great way to add interactivity to your app. The docs for Actions are also available in TypeScript.
 
