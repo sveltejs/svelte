@@ -15,7 +15,7 @@ If you're already on Node.js 16, it's possible you won't see any breaking change
 For a full list of all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
 ## What's new in SvelteKit
-This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! No breaking changes to report, but a few features to mention:
+This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! There are also a few new features to mention:
 - The new `event.isSubRequest` boolean allows you to indicate whether this is a call to one of the app's own APIs during SSR (or prerendering) (**1.21.0**, [Docs](https://kit.svelte.dev/docs/types#public-types-requestevent), [#10170](https://github.com/sveltejs/kit/pull/10170))
 - A new config option, `config.kit.env.privatePrefix` will set a private prefix on environment variables. This defaults to `''` (**1.21.0**, [Docs](https://kit.svelte.dev/docs/configuration), [#9996](https://github.com/sveltejs/kit/pull/9996))
 - `VERSION` is now exported and accessible via `@sveltejs/kit`. This can be used for feature detection or anything else that requires knowledge of the current version of SvelteKit (**1.21.0**, [Docs](https://kit.svelte.dev/docs/modules#sveltejs-kit-version), [#9969](https://github.com/sveltejs/kit/pull/9969))
