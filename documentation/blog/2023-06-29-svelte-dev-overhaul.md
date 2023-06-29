@@ -75,7 +75,7 @@ The homepage has also been updated to align with [kit.svelte.dev](https://kit.sv
 
 ## Bottom navigation!
 
-We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar. The response was overwhelmingly positive, so we went ahead and added it! This makes it easier to navigate the website on mobile with just one hand. We also made sure that you'll get to where you want with as few interactions as possible: If you're in the docs section of the site, you'll likely want to browser other documentation pages - which is why the navbar will show these by default when opening it, with the option to go one level up to the general site navigation.
+We sent out a [tweet](https://twitter.com/Rich_Harris/status/1664712880791404546) about experimenting with bottom navigation bar on mobile rather than the conventional top navbar. The response was overwhelmingly positive, so we went ahead and added it! This makes it easier to navigate the website on mobile with just one hand. We also made sure that you'll get to where you want with as few interactions as possible. If you're in the docs section of the site, you'll likely want to browse other documentation pages, which is why the navbar will show these by default when opening it with the option to go one level up to the general site navigation.
 
 If you're on mobile, you can already see it at the bottom. If you're on desktop, you can see it by resizing your browser window to a smaller size.
 
