@@ -5,15 +5,13 @@ author: Puru Vijay
 authorURL: https://puruvj.dev
 ---
 
-When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks are familiar with. That documentation structure has stayed the same as Svelte's API surface has been increasing steadily and more details were added. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community has been asking for a revamp, and now it's here!
+When the initial version of Svelte v3 was released four years ago, it included the single-page documentation that folks have been familiar with. That documentation structure had stayed the same as Svelte's API surface increased steadily and more details were added. As a result, the single page got larger and larger to the point where it was becoming difficult to find things. The community had been asking for a revamp, and now it's here!
 
 Meet the new svelte.dev — a complete overhaul of the old website.
 
 ## Multi-page docs
 
-The table of contents had grown to be quite large and you had to scroll across half a dozen screens to see the whole thing.
-
-We heard you! The docs are all split up into multiple pages now and all pages list their sections in the righthand sidebar.
+The table of contents had grown to be quite large and you had to scroll across half a dozen screens to see the whole thing. We heard you! The docs are all split up into multiple pages now and all pages list their sections in the righthand sidebar.
 
 All modules exposed by Svelte are also listed in the sidebar under the `Runtime` section:
 
