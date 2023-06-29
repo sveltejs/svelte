@@ -35,6 +35,8 @@ The lack of search functionality could make finding stuff a nuisance as <kbr>Ctr
 
 And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbr>Ctrl+K</kbr> (or <kbr>CMD+F</kbr> for Mac users) and start searching!
 
+And in case you're wondering, the search bar is fully accessible and works without JavaScript, at [svelte.dev/search](../search) page
+
 ## Lights, TypeScript, Action!
 
 The new website comes with a JavaScript / TypeScript toggle, so you can view the docs in your preferred flavour. Every module's exported types are listed at the bottom of the page for easy reference. The types are automatically generated from Svelte's source code, so they're always up to date.
