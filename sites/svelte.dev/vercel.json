@@ -3,5 +3,5 @@
 	"github": {
 		"silent": true
 	},
-	"buildCommand": "cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm build"
+	"buildCommand": "cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm rebuild sharp && pnpm build"
 }
