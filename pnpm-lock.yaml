@@ -190,6 +190,9 @@ importers:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.2
         version: 2.4.2(svelte@packages+svelte)(vite@4.3.9)
+      '@types/cookie':
+        specifier: ^0.5.1
+        version: 0.5.1
       '@types/marked':
         specifier: ^5.0.0
         version: 5.0.0

@@ -521,7 +521,7 @@ Transitions are local by default (in Svelte 3, they were global by default). Loc
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs#run-time-client-side-component-api) and marking the transition as `global`.
+> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs/client-side-component-api) and marking the transition as `global`.
 
 ## Transition parameters
 

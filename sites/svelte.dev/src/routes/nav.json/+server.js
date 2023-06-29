@@ -1,6 +1,7 @@
 import { get_blog_data, get_blog_list } from '$lib/server/blog/index.js';
 import { get_docs_data, get_docs_list } from '$lib/server/docs/index.js';
-import { get_examples_data, get_examples_list } from '$lib/server/examples/index.js';
+import { get_examples_list } from '$lib/server/examples/index.js';
+import examples_data from '$lib/generated/examples-data.js';
 import { json } from '@sveltejs/kit';
 
 export const prerender = true;
@@ -32,7 +33,7 @@ async function get_nav_list() {
 		}
 	];
 
-	const examples_list = get_examples_list(get_examples_data());
+	const examples_list = get_examples_list(examples_data);
 	const processed_examples_list = examples_list
 		.map(({ title, examples }) => ({
 			title,

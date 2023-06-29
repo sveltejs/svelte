@@ -7,7 +7,6 @@ import {
 	replaceExportTypePlaceholders
 } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
-import path from 'node:path';
 import glob from 'tiny-glob/sync.js';
 import { CONTENT_BASE } from '../../constants.js';
 
@@ -18,6 +17,11 @@ function get_href(parts) {
 	return parts.length > 1 ? `/docs/${parts[0]}#${parts.at(-1)}` : `/docs/${parts[0]}`;
 }
 
+/** @param {string} path  */
+function path_basename(path) {
+	return path.split(/[\\/]/).pop();
+}
+
 export function content() {
 	/** @type {import('@sveltejs/site-kit/search').Block[]} */
 	const blocks = [];
@@ -25,7 +29,7 @@ export function content() {
 	const breadcrumbs = [];
 
 	for (const file of glob('**/*.md', { cwd: `${base}/docs` })) {
-		const basename = path.basename(file);
+		const basename = path_basename(file);
 		const match = /\d{2}-(.+)\.md/.exec(basename);
 		if (!match) continue;
 
