@@ -33,9 +33,7 @@ We've also taken extra care to ensure that all the links from the old website wi
 
 The lack of search functionality could make finding stuff a nuisance as <kbr>Ctrl+F</kbr> only returns results in order of occurrence and not order of importance. While <kbr>Ctrl+F</kbr> did have its benefits such as working without JS, now that the site has multiple pages, it's not an option anymore.
 
-And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbr>Ctrl+K</kbr> (or <kbr>CMD+F</kbr> for Mac users) and start searching!
-
-And in case you're wondering, the search bar is fully accessible and works without JavaScript, at [svelte.dev/search](../search) page
+And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbr>Ctrl+K</kbr> (or <kbr>CMD+F</kbr> for Mac users) and start searching — it even works without JavaScript!
 
 ## Lights, TypeScript, Action!
 
