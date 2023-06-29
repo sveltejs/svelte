@@ -125,7 +125,7 @@ describe('utils', () => {
 		}
 
 		beforeAll(() => {
-			let host = 'https://svelte.dev';
+			const host = 'https://svelte.dev';
 			let _href = '';
 			// @ts-ignore
 			global.document = {
