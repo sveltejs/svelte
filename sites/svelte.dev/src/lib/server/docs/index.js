@@ -1,12 +1,10 @@
 import { base as app_base } from '$app/paths';
-import { modules } from '$lib/generated/type-info.js';
 import {
 	escape,
 	extractFrontmatter,
 	markedTransform,
 	normalizeSlugify,
-	removeMarkdown,
-	replaceExportTypePlaceholders
+	removeMarkdown
 } from '@sveltejs/site-kit/markdown';
 import fs from 'node:fs';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
