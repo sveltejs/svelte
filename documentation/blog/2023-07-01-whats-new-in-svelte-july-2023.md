@@ -8,16 +8,19 @@ authorURL: https://dreamindani.com
 Svelte 4 is out and folks have been building! There's a bunch of new showcases, libraries and tutorials to share. So let's get right into it...
 
 ## What's new in Svelte
-The big news this month was the release of Svelte 4.0! You can read all about it in the [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4). From performance fixes and developer experience improvements to a brand new site, docs and tutorial... this new release sets the stage for Svelte 5 with minimal breaking changes.
+The big news this month was the release of Svelte 4.0! You can read all about it in the [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4). From performance fixes and developer experience improvements to [a brand new site, docs and tutorial](https://svelte.dev/blog/svelte-dev-overhaul)... this new release sets the stage for Svelte 5 with minimal breaking changes.
 
 If you're already on Node.js 16, it's possible you won't see any breaking changes in your project. But be sure to read the [migration guide](https://svelte.dev/docs/v4-migration-guide) for all the details.
 
 For a full list of all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
 ## What's new in SvelteKit
-This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! There were no breaking changes or new features as work focused on stability.
+This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! No breaking changes to report, but a few features to mention:
+- The new `event.isSubRequest` boolean allows you to indicate whether this is a call to one of the app's own APIs during SSR (or prerendering) (**1.21.0**, [Docs](https://kit.svelte.dev/docs/types#public-types-requestevent), [#10170](https://github.com/sveltejs/kit/pull/10170))
+- A new config option, `config.kit.env.privatePrefix` will set a private prefix on environment variables. This defaults to `''` (**1.21.0**, [Docs](https://kit.svelte.dev/docs/configuration), [#9996](https://github.com/sveltejs/kit/pull/9996))
+- `VERSION` is now exported and accessible via `@sveltejs/kit`. This can be used for feature detection or anything else that requires knowledge of the current version of SvelteKit (**1.21.0**, [Docs](https://kit.svelte.dev/docs/modules#sveltejs-kit-version), [#9969](https://github.com/sveltejs/kit/pull/9969))
 
-If you're looking for adapter-specific changes, check out the CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
+For adapter-specific changes, check out the CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
 ---
 
@@ -36,6 +39,8 @@ If you're looking for adapter-specific changes, check out the CHANGELOGs in each
 - [YABin](https://github.com/Yureien/YABin) is Yet Another Pastebin with some very specific features
 
 **Learning Resources**
+- [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4)
+- [svelte.dev: A complete overhaul](https://svelte.dev/blog/svelte-dev-overhaul)
 
 _Featuring Svelte Contributors and Ambassadors_
 - [Dev Vlog: June 2023](https://www.youtube.com/watch?v=AOXq89h8saI) - Svelte 4.0 with Rich Harris
