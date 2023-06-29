@@ -1,5 +1,6 @@
 <script>
 	import Hoverable from './Hoverable.svelte';
+	let hovering = false;
 </script>
 
 <Hoverable>
