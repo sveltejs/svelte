@@ -24,7 +24,7 @@
 <div class="text" id="docs-content">
 	<a
 		class="edit"
-		href="https://github.com/sveltejs/svelte/edit/master/documentation/{data.page.file}"
+		href="https://github.com/sveltejs/svelte/edit/master/documentation/docs/{data.page.file}"
 	>
 		<Icon size={50} name="edit" /> Edit this page on GitHub
 	</a>
