@@ -7,7 +7,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 env:
-  # We only install Chromium manually 
+  # We only install Chromium manually
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:
@@ -49,4 +49,4 @@ jobs:
         with:
           node-version: 16
           cache: pnpm
-      - run: 'pnpm i && pnpm check && pnpm lint'
+      - run: 'pnpm i && pnpm typecheck && pnpm check && pnpm lint'

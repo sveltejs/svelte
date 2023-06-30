@@ -82,6 +82,7 @@
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm build",
     "types": "node ./scripts/generate-dts.js",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
