@@ -90,10 +90,9 @@ export function src_url_equal(element_src, url) {
  */
 export function srcset_url_equal(element_srcset, srcset) {
 	/** @param {string} _srcset */
-	function split(_srcset) {
+	const split = (_srcset) => {
 		return _srcset.split(',').map((src) => src.trim().split(' ').filter(Boolean));
-	}
-
+	};
 	const element_urls = split(element_srcset.srcset);
 	const urls = split(srcset);
 
@@ -102,9 +101,11 @@ export function srcset_url_equal(element_srcset, srcset) {
 		urls.every(
 			([url, width], i) =>
 				width === element_urls[i][1] &&
-				// We need to test both ways because Vite/imagetools (but not other tools) will create an absolute URL
-				// for the client, and the relative URLs inside srcset are not automatically resolved to absolute URLs
-				// by browsers (in contrast to img.src). This means both SSR and DOM code could contain relative or absolute URLs.
+				// We need to test both ways because Vite will create an a full URL with
+				// `new URL(asset, import.meta.url).href` for the client when `base: './'`, and the
+				// relative URLs inside srcset are not automatically resolved to absolute URLs by
+				// browsers (in contrast to img.src). This means both SSR and DOM code could
+				// contain relative or absolute URLs.
 				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
 		)
 	);
