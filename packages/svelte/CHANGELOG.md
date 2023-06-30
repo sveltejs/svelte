@@ -1,5 +1,19 @@
 # svelte
 
+## 4.0.1
+
+### Patch Changes
+
+- fix: ensure identifiers in destructuring contexts don't clash with existing ones ([#8840](https://github.com/sveltejs/svelte/pull/8840))
+
+- fix: ensure `createEventDispatcher` and `ActionReturn` work with types from generic function parameters ([#8872](https://github.com/sveltejs/svelte/pull/8872))
+
+- fix: apply transition to `<svelte:element>` with local transition ([#8865](https://github.com/sveltejs/svelte/pull/8865))
+
+- fix: relax a11y "no redundant role" rule for li, ul, ol ([#8867](https://github.com/sveltejs/svelte/pull/8867))
+
+- fix: remove tsconfig.json from published package ([#8859](https://github.com/sveltejs/svelte/pull/8859))
+
 ## 4.0.0
 
 ### Major Changes
@@ -24,8 +38,8 @@
 
 - breaking: Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
-- breaking: Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions 
-(see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
+- breaking: Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions
+  (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 
 - breaking: Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 
@@ -49,7 +63,6 @@
 
 ### Minor Changes
 
-
 - Add a way to modify attributes for script/style preprocessors ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 
 - Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
@@ -69,7 +82,6 @@
 - feat: smaller minified output for destructor chunks ([#8763](https://github.com/sveltejs/svelte/pull/8763))
 
 ### Patch Changes
-
 
 - Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
 

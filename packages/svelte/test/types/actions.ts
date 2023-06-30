@@ -124,3 +124,11 @@ invalidAttributes1;
 // @ts-expect-error missing prop
 const invalidAttributes2: Attributes = {};
 invalidAttributes2;
+
+function generic_action<T extends boolean>(_node: HTMLElement, param: T): ActionReturn<T> {
+	return {
+		update: (p) => p === param,
+		destroy: () => {}
+	};
+}
+generic_action;

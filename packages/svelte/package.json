@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Cybernetically enhanced web apps",
   "type": "module",
   "module": "src/runtime/index.js",
@@ -58,7 +58,7 @@
       "default": "./src/runtime/store/index.js"
     },
     "./internal/disclose-version": {
-      "import": "./src/runtime/internal/disclose-version/index.js"
+      "default": "./src/runtime/internal/disclose-version/index.js"
     },
     "./transition": {
       "types": "./types/index.d.ts",
