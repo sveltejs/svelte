@@ -19,7 +19,7 @@
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
 	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
-		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
+		<Nav slot="top-nav" title={data.nav.title} links={data.nav.links}>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
 			</svelte:fragment>

@@ -2,10 +2,24 @@ export const load = async ({ url, fetch }) => {
 	const nav_list = await fetch('/nav.json').then((r) => r.json());
 
 	return {
-		nav_title: get_nav_title(url),
-		nav_links: nav_list
+		nav: {
+			title: get_nav_title(url),
+			links: nav_list
+		},
+		search: {
+			priority_map: get_search_priority_list()
+		}
 	};
 };
+
+/** @returns {Record<string, number>} */
+function get_search_priority_list() {
+	return {
+		'docs/v4-migration-guide': 2,
+		'docs/typescript': 3,
+		docs: 4
+	};
+}
 
 /** @param {URL} url */
 function get_nav_title(url) {
