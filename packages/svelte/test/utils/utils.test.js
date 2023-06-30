@@ -124,11 +124,13 @@ describe('utils', () => {
 			});
 		}
 
+		let old_document;
+
 		beforeAll(() => {
 			const host = 'https://svelte.dev';
 			let _href = '';
-			// @ts-ignore
-			global.document = {
+			old_document = global.document;
+			global.document = /** @type {any} */ ({
 				createElement: () =>
 					/** @type {any} */ ({
 						get href() {
@@ -138,12 +140,11 @@ describe('utils', () => {
 							_href = host + value;
 						}
 					})
-			};
+			});
 		});
 
 		afterAll(() => {
-			// @ts-ignore
-			delete global.document;
+			global.document = old_document;
 		});
 
 		it('should return true if urls are equal', () => {

@@ -83,18 +83,19 @@ export function src_url_equal(element_src, url) {
 	return element_src === src_url_equal_anchor.href;
 }
 
+/** @param {string} srcset */
+function split_srcset(srcset) {
+	return srcset.split(',').map((src) => src.trim().split(' ').filter(Boolean));
+}
+
 /**
  * @param {HTMLSourceElement | HTMLImageElement} element_srcset
  * @param {string} srcset
  * @returns {boolean}
  */
 export function srcset_url_equal(element_srcset, srcset) {
-	/** @param {string} _srcset */
-	const split = (_srcset) => {
-		return _srcset.split(',').map((src) => src.trim().split(' ').filter(Boolean));
-	};
-	const element_urls = split(element_srcset.srcset);
-	const urls = split(srcset);
+	const element_urls = split_srcset(element_srcset.srcset);
+	const urls = split_srcset(srcset);
 
 	return (
 		urls.length === element_urls.length &&
