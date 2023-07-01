@@ -68,13 +68,48 @@ export function safe_not_equal(a, b) {
 
 let src_url_equal_anchor;
 
-/** @returns {boolean} */
+/**
+ * @param {string} element_src
+ * @param {string} url
+ * @returns {boolean}
+ */
 export function src_url_equal(element_src, url) {
+	if (element_src === url) return true;
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
 	}
+	// This is actually faster than doing URL(..).href
 	src_url_equal_anchor.href = url;
 	return element_src === src_url_equal_anchor.href;
+}
+
+/** @param {string} srcset */
+function split_srcset(srcset) {
+	return srcset.split(',').map((src) => src.trim().split(' ').filter(Boolean));
+}
+
+/**
+ * @param {HTMLSourceElement | HTMLImageElement} element_srcset
+ * @param {string} srcset
+ * @returns {boolean}
+ */
+export function srcset_url_equal(element_srcset, srcset) {
+	const element_urls = split_srcset(element_srcset.srcset);
+	const urls = split_srcset(srcset);
+
+	return (
+		urls.length === element_urls.length &&
+		urls.every(
+			([url, width], i) =>
+				width === element_urls[i][1] &&
+				// We need to test both ways because Vite will create an a full URL with
+				// `new URL(asset, import.meta.url).href` for the client when `base: './'`, and the
+				// relative URLs inside srcset are not automatically resolved to absolute URLs by
+				// browsers (in contrast to img.src). This means both SSR and DOM code could
+				// contain relative or absolute URLs.
+				(src_url_equal(element_urls[i][0], url) || src_url_equal(url, element_urls[i][0]))
+		)
+	);
 }
 
 /** @returns {boolean} */

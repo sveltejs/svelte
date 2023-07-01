@@ -36,7 +36,7 @@ import { createEventDispatcher } from 'svelte';
 const dispatch = createEventDispatcher<{
 	optional: number | null;
 	required: string;
-	noArgument: never;
+	noArgument: null;
 }>();
 
 // Svelte version 3:
@@ -50,10 +50,10 @@ dispatch('required'); // error, missing argument
 dispatch('noArgument', 'surprise'); // error, cannot pass an argument
 ```
 
-- `Action` and `ActionReturn` have a default parameter type of `never` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
+- `Action` and `ActionReturn` have a default parameter type of `undefined` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
 ```diff
--const action: Action = (node, params) => { .. } // this is now an error, as params is expected to not exist
+-const action: Action = (node, params) => { .. } // this is now an error if you use params in any way
 +const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
 ```
 
@@ -152,7 +152,7 @@ The order in which preprocessors are applied has changed. Now, preprocessors are
 
 - the `inert` attribute is now applied to outroing elements to make them invisible to assistive technology and prevent interaction. ([#8628](https://github.com/sveltejs/svelte/pull/8628))
 - the runtime now uses `classList.toggle(name, boolean)` which may not work in very old browsers. Consider using a [polyfill](https://github.com/eligrey/classList.js) if you need to support these browsers. ([#8629](https://github.com/sveltejs/svelte/issues/8629))
-- the runtime now uses the `CustomElement` constructor which may not work in very old browsers. Consider using a [polyfill](https://github.com/theftprevention/event-constructor-polyfill/tree/master) if you need to support these browsers. ([#8775](https://github.com/sveltejs/svelte/pull/8775))
+- the runtime now uses the `CustomEvent` constructor which may not work in very old browsers. Consider using a [polyfill](https://github.com/theftprevention/event-constructor-polyfill/tree/master) if you need to support these browsers. ([#8775](https://github.com/sveltejs/svelte/pull/8775))
 - people implementing their own stores from scratch using the `StartStopNotifier` interface (which is passed to the create function of `writable` etc) from `svelte/store` now need to pass an update function in addition to the set function. This has no effect on people using stores or creating stores using the existing Svelte stores. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
 - `derived` will now throw an error on falsy values instead of stores passed to it. ([#7947](https://github.com/sveltejs/svelte/issues/7947))
 - type definitions for `svelte/internal` were removed to further discourage usage of those internal methods which are not public API. Most of these will likely change for Svelte 5
