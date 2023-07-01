@@ -4,6 +4,6 @@ export const prerender = true;
 
 export async function load() {
 	return {
-		posts: get_blog_list(get_blog_data())
+		posts: get_blog_list(await get_blog_data())
 	};
 }

@@ -4,7 +4,7 @@ import { error } from '@sveltejs/kit';
 export const prerender = true;
 
 export async function load({ params }) {
-	const post = get_processed_blog_post(get_blog_data(), params.slug);
+	const post = get_processed_blog_post(await get_blog_data(), params.slug);
 
 	if (!post) throw error(404);
 

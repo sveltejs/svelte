@@ -10,6 +10,6 @@ export async function load({ url }) {
 	const { get_docs_data, get_docs_list } = await import('$lib/server/docs/index.js');
 
 	return {
-		sections: get_docs_list(get_docs_data())
+		sections: get_docs_list(await get_docs_data())
 	};
 }
