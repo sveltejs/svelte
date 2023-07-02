@@ -6,10 +6,11 @@ Note also that in dev mode, the REPL will currently only work in Chrome, [as not
 
 If you do want to use a database, set it up on [Supabase](https://supabase.com) with the instructions [here](https://github.com/sveltejs/sites/tree/master/db) and set the corresponding environment variables.
 
-Run the site sub-project:
+Build the `svelte` package, then run the site sub-project:
 
 ```bash
 pnpm install
+pnpm --dir ../../packages/svelte build
 pnpm dev
 ```
 
