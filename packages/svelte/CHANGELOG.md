@@ -1,5 +1,19 @@
 # svelte
 
+## 4.0.2
+
+### Patch Changes
+
+- fix: reflect all custom element prop updates back to attribute ([#8898](https://github.com/sveltejs/svelte/pull/8898))
+
+- fix: shrink custom element baseline a bit ([#8858](https://github.com/sveltejs/svelte/pull/8858))
+
+- fix: use non-destructive hydration for all `@html` tags ([#8880](https://github.com/sveltejs/svelte/pull/8880))
+
+- fix: align `disclose-version` exports specification ([#8874](https://github.com/sveltejs/svelte/pull/8874))
+
+- fix: check srcset when hydrating to prevent needless requests ([#8868](https://github.com/sveltejs/svelte/pull/8868))
+
 ## 4.0.1
 
 ### Patch Changes
