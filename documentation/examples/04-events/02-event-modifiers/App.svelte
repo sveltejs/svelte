@@ -1,7 +1,7 @@
 <script>
 	function handleClick() {
-		alert('no more alerts');
+		alert("plus d'alertes");
 	}
 </script>
 
-<button on:click|once={handleClick}> Click me </button>
+<button on:click|once={handleClick}> Cliquez moi </button>

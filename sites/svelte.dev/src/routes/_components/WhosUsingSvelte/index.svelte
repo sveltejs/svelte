@@ -7,19 +7,19 @@
 </script>
 
 <Section --background={$theme.current === 'light' ? 'var(--sk-back-4)' : '#222'}>
-	<h3>loved by developers</h3>
+	<h3>adoré par les développeurs et développeuses</h3>
 
 	<p>
-		We're proud that Svelte was recently voted the <a
+		Nous sommes fiers que Svelte ait récemment été élu <a
 			href="https://survey.stackoverflow.co/2023/#section-admired-and-desired-web-frameworks-and-technologies"
-			>most admired JS web framework</a
+			>framework JS web le plus admiré</a
 		>
-		in one industry survey while drawing the most interest in learning it in
+		dans un sondage à l'échelle de l'industrie, tout étant suscitant le plus de curiosité dans
 		<a
 			href="https://tsh.io/state-of-frontend/#which-of-the-following-frameworks-would-you-like-to-learn-in-the-future"
-			>two</a
-		> <a href="https://2022.stateofjs.com/en-US/libraries/front-end-frameworks/">others</a>. We
-		think you'll love it too.
+			>deux</a
+		> <a href="https://2022.stateofjs.com/en-US/libraries/front-end-frameworks/">autres</a>. Nous
+		pensons que vous allez l'aimer aussi.
 	</p>
 
 	<section class="whos-using-svelte-container" class:dark={$theme.current === 'dark'}>

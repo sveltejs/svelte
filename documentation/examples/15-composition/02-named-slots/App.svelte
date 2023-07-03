@@ -3,10 +3,10 @@
 </script>
 
 <ContactCard>
-	<span slot="name"> P. Sherman </span>
+	<span slot="name"> P. Dupont </span>
 
 	<span slot="address">
-		42 Wallaby Way<br />
-		Sydney
+		42 rue de la chocolatine<br />
+		Bordeaux
 	</span>
 </ContactCard>

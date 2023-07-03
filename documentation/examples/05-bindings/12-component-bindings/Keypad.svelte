@@ -21,9 +21,9 @@
 	<button on:click={select(8)}>8</button>
 	<button on:click={select(9)}>9</button>
 
-	<button disabled={!value} on:click={clear}>clear</button>
+	<button disabled={!value} on:click={clear}>effacer</button>
 	<button on:click={select(0)}>0</button>
-	<button disabled={!value} on:click={submit}>submit</button>
+	<button disabled={!value} on:click={submit}>valider</button>
 </div>
 
 <style>

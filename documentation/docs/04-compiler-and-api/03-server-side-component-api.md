@@ -1,5 +1,5 @@
 ---
-title: 'Server-side component API'
+title: 'API de composant server-side'
 ---
 
 ```js
@@ -7,11 +7,11 @@ title: 'Server-side component API'
 const result = Component.render(...)
 ```
 
-Unlike client-side components, server-side components don't have a lifespan after you render them — their whole job is to create some HTML and CSS. For that reason, the API is somewhat different.
+À la différence des composants <span class="vo">[client-side](/docs/web#client-side-rendering)</span>, les composants <span class="vo">[server-side](/docs/web#server-side-rendering)</span> n'ont pas d'existence après que vous les ayez rendus — leur seul et unique rôle est de créer du HTML et du CSS. Pour cette raison, leur <span class="vo">[API](/docs/development#api)</span> est un peu différente.
 
-A server-side component exposes a `render` method that can be called with optional props. It returns an object with `head`, `html`, and `css` properties, where `head` contains the contents of any `<svelte:head>` elements encountered.
+Un composant <span class="vo">[server-side](/docs/web#server-side-rendering)</span> expose une méthode `render` qui peut être appelée avec des <span class="vo">[props](/docs/sveltejs#props)</span> optionnelles. Cette méthode renvoie un objet avec des champs `head`, `html` et `css`, où `head` représente le contenu de tout élément `<svelte:head>` rencontré.
 
-You can import a Svelte component directly into Node using [`svelte/register`](/docs/svelte-register).
+Vous pouvez importer un composant Svelte directement dans Node en utilisant [`svelte/register`](/docs/svelte-register).
 
 ```js
 // @noErrors
@@ -24,18 +24,18 @@ const { head, html, css } = App.render({
 });
 ```
 
-The `.render()` method accepts the following parameters:
+La méthode `.render()` accepte les paramètres suivants :
 
-| parameter | default | description                                        |
+| paramètre | défaut | description                                        |
 | --------- | ------- | -------------------------------------------------- |
-| `props`   | `{}`    | An object of properties to supply to the component |
-| `options` | `{}`    | An object of options                               |
+| `props`   | `{}`    | Un objet de <span class="vo">[props](/docs/sveltejs#props)</span> à fournir au composant |
+| `options` | `{}`    | Un objet d'options                               |
 
-The `options` object takes in the following options:
+L'objet `options` accepte les champs suivants :
 
-| option    | default     | description                                                              |
+| option    | défaut     | description                                                              |
 | --------- | ----------- | ------------------------------------------------------------------------ |
-| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component |
+| `context` | `new Map()` | Une `Map` de paires clé-valeur de contexte à fournir au composant |
 
 ```js
 // @noErrors

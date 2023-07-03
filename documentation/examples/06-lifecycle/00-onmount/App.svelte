@@ -9,7 +9,7 @@
 	});
 </script>
 
-<h1>Photo album</h1>
+<h1>Album photo</h1>
 
 <div class="photos">
 	{#each photos as photo}
@@ -18,8 +18,8 @@
 			<figcaption>{photo.title}</figcaption>
 		</figure>
 	{:else}
-		<!-- this block renders when photos.length === 0 -->
-		<p>loading...</p>
+		<!-- ce bloc est affiché lorque photos.length === 0 -->
+		<p>chargement...</p>
 	{/each}
 </div>
 

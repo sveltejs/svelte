@@ -3,8 +3,8 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div on:mousemove={(e) => (m = { x: e.clientX, y: e.clientY })}>
-	The mouse position is {m.x} x {m.y}
+<div on:mousemove={e => (m = { x: e.clientX, y: e.clientY })}>
+	Le curseur se trouve à la position ({m.x} ; {m.y})
 </div>
 
 <style>

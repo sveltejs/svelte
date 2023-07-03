@@ -20,12 +20,12 @@
 	});
 
 	let todos = [
-		{ id: 1, done: false, description: 'write some docs' },
-		{ id: 2, done: false, description: 'start writing JSConf talk' },
-		{ id: 3, done: true, description: 'buy some milk' },
-		{ id: 4, done: false, description: 'mow the lawn' },
-		{ id: 5, done: false, description: 'feed the turtle' },
-		{ id: 6, done: false, description: 'fix some bugs' }
+		{ id: 1, done: false, description: 'écrire de la doc' },
+		{ id: 2, done: false, description: 'commencer ma près de JSTalk' },
+		{ id: 3, done: true, description: 'acheter du lait' },
+		{ id: 4, done: false, description: 'tondre la pelouse' },
+		{ id: 5, done: false, description: 'nourrir la tortue' },
+		{ id: 6, done: false, description: 'résoudre des bugs' }
 	];
 
 	let uid = todos.length + 1;
@@ -49,12 +49,12 @@
 <div class="board">
 	<input
 		class="new-todo"
-		placeholder="what needs to be done?"
+		placeholder="que dois-je faire ?"
 		on:keydown={(event) => event.key === 'Enter' && add(event.target)}
 	/>
 
 	<div class="left">
-		<h2>todo</h2>
+		<h2>à faire</h2>
 		{#each todos.filter((t) => !t.done) as todo (todo.id)}
 			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
 				<input type="checkbox" bind:checked={todo.done} />
@@ -65,7 +65,7 @@
 	</div>
 
 	<div class="right">
-		<h2>done</h2>
+		<h2>fait</h2>
 		{#each todos.filter((t) => t.done) as todo (todo.id)}
 			<label in:receive={{ key: todo.id }} out:send={{ key: todo.id }} animate:flip>
 				<input type="checkbox" bind:checked={todo.done} />

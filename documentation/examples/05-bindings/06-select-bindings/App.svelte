@@ -1,8 +1,11 @@
 <script>
 	let questions = [
-		{ id: 1, text: `Where did you go to school?` },
-		{ id: 2, text: `What is your mother's name?` },
-		{ id: 3, text: `What is another personal fact that an attacker could easily find with Google?` }
+		{ id: 1, text: `Où alliez-vous à l'école ?` },
+		{ id: 2, text: `Quel est le nom de jeune de fille de votre mère ?` },
+		{
+			id: 3,
+			text: `Donnez-nous un autre élément personnel qu'une personne mal intentionnée pourrait facilement trouver sur Google`
+		}
 	];
 
 	let selected;
@@ -10,11 +13,11 @@
 	let answer = '';
 
 	function handleSubmit() {
-		alert(`answered question ${selected.id} (${selected.text}) with "${answer}"`);
+		alert(`la réponse à la question ${selected.id} (${selected.text}) est "${answer}"`);
 	}
 </script>
 
-<h2>Insecurity questions</h2>
+<h2>Questions de non-sécurité</h2>
 
 <form on:submit|preventDefault={handleSubmit}>
 	<select bind:value={selected} on:change={() => (answer = '')}>
@@ -27,10 +30,10 @@
 
 	<input bind:value={answer} />
 
-	<button disabled={!answer} type="submit"> Submit </button>
+	<button disabled={!answer} type="submit"> Envoyer </button>
 </form>
 
-<p>selected question {selected ? selected.id : '[waiting...]'}</p>
+<p>question choisie {selected ? selected.id : '[en attente...]'}</p>
 
 <style>
 	input {

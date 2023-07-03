@@ -36,7 +36,7 @@
 	}
 
 	function remove() {
-		// Remove selected person from the source array (people), not the filtered array
+		// Supprime la personne sélectionnée du tableau source (people), mais pas du tableau filtré
 		const index = people.indexOf(selected);
 		people = [...people.slice(0, index), ...people.slice(index + 1)];
 
@@ -58,13 +58,13 @@
 	{/each}
 </select>
 
-<label><input bind:value={first} placeholder="first" /></label>
-<label><input bind:value={last} placeholder="last" /></label>
+<label><input bind:value={first} placeholder="premier" /></label>
+<label><input bind:value={last} placeholder="dernier" /></label>
 
 <div class="buttons">
-	<button on:click={create} disabled={!first || !last}>create</button>
-	<button on:click={update} disabled={!first || !last || !selected}>update</button>
-	<button on:click={remove} disabled={!selected}>delete</button>
+	<button on:click={create} disabled={!first || !last}>créer</button>
+	<button on:click={update} disabled={!first || !last || !selected}>éditer</button>
+	<button on:click={remove} disabled={!selected}>supprimer</button>
 </div>
 
 <style>

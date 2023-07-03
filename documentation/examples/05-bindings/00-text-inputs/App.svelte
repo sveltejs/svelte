@@ -2,5 +2,5 @@
 	let name = '';
 </script>
 
-<input bind:value={name} placeholder="enter your name" />
-<p>Hello {name || 'stranger'}!</p>
+<input bind:value={name} placeholder="tapez votre nom" />
+<p>Bonjour {name || 'étranger'} !</p>

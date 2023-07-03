@@ -5,16 +5,25 @@
 </script>
 
 <svelte:head>
-	<title>Search • Svelte</title>
+	<title>Rechercher • Svelte</title>
 </svelte:head>
 
 <main>
-	<h1>Search</h1>
+	<h1>Rechercher</h1>
 	<form>
-		<input name="q" value={data.query} type="search" aria-label="Search" placeholder="Search" spellcheck="false" />
+		<input
+			name="q"
+			value={data.query}
+			type="search"
+			aria-label="Rechercher"
+			placeholder="Rechercher"
+			spellcheck="false"
+		/>
 	</form>
 
-	<SearchResults results={data.results} query={data.query} />
+	<SearchResults results={data.results} query={data.query}>
+		<svelte:fragment slot="no-results">Aucun résultat</svelte:fragment>
+	</SearchResults>
 </main>
 
 <style>

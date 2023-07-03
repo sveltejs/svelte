@@ -4,7 +4,7 @@
 </script>
 
 <div class="chart">
-	<h2>Anscombe's quartet</h2>
+	<h2>Quartet d'Anscombe</h2>
 
 	<Scatterplot points={data.a} />
 	<Scatterplot points={data.b} />

@@ -6,6 +6,8 @@
 	// @ts-ignore
 	import MachineMobile from './svelte-machine-mobile.png?w=960&format=avif;webp;png;&as=picture';
 
+	import { PUBLIC_LEARN_SITE_URL } from '$env/static/public';
+
 	const srcset = (sources) => sources.map(({ src, w }) => `${src} ${w}w`).join(', ');
 </script>
 
@@ -16,10 +18,10 @@
 			<span style="white-space: nowrap">Cybernetically enhanced</span> <br /> web apps
 		</strong>
 		<div class="buttons">
-			<a href="https://learn.svelte.dev" rel="external" class="cta">
-				tutorial<Icon name="external-link" size="1em" />
+			<a href={PUBLIC_LEARN_SITE_URL} rel="external" class="cta">
+				tutoriel<Icon name="external-link" size="1em" />
 			</a>
-			<a href="/docs/introduction" class="cta basic">read the docs</a>
+			<a href="/docs/introduction" class="cta basic">lire la documentation</a>
 		</div>
 	</div>
 
@@ -42,7 +44,10 @@
 		<source srcset={srcset(MachineMobile.sources.avif)} type="image/avif" />
 		<source srcset={srcset(MachineMobile.sources.webp)} type="image/webp" />
 		<source srcset={srcset(MachineMobile.sources.png)} type="image/png" />
-		<img alt="The Svelte compiler packaging up your component code" src={MachineMobile.img.src} />
+		<img
+			alt="Le compilateur Svelte préparant le code de vos composants"
+			src={MachineMobile.img.src}
+		/>
 	</picture>
 </div>
 

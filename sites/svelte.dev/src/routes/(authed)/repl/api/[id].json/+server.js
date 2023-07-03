@@ -5,6 +5,8 @@ import examples_data from '$lib/generated/examples-data.js';
 import { get_example, get_examples_list } from '$lib/server/examples/index.js';
 import { error, json } from '@sveltejs/kit';
 
+import { PUBLIC_SVELTE_SITE_URL } from '$env/static/public';
+
 export const prerender = 'auto';
 
 const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
@@ -60,7 +62,7 @@ export async function GET({ params }) {
 	if (dev && !client) {
 		// in dev with no local Supabase configured, proxy to production
 		// this lets us at least load saved REPLs
-		const res = await fetch(`https://svelte.dev/repl/api/${params.id}.json`);
+		const res = await fetch(`${PUBLIC_SVELTE_SITE_URL}/repl/api/${params.id}.json`);
 
 		// returning the response directly results in a bizarre
 		// content encoding error, so we create a new one

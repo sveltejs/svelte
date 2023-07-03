@@ -4,9 +4,11 @@
 	let showModal = true;
 </script>
 
-<button on:click={() => (showModal = true)}>Show Modal</button>
+<button on:click={() => (showModal = true)}>Afficher la modale</button>
 {#if showModal}
-	<div class="box" use:clickOutside on:outclick={() => (showModal = false)}>Click outside me!</div>
+	<div class="box" use:clickOutside on:outclick={() => (showModal = false)}>
+		Cliquez à l'extérieur !
+	</div>
 {/if}
 
 <style>

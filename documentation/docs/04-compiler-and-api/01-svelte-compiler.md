@@ -2,15 +2,15 @@
 title: 'svelte/compiler'
 ---
 
-Typically, you won't interact with the Svelte compiler directly, but will instead integrate it into your build system using a bundler plugin. The bundler plugin that the Svelte team most recommends and invests in is [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte). The [SvelteKit](https://kit.svelte.dev/) framework provides a setup leveraging `vite-plugin-svelte` to build applications as well as a [tool for packaging Svelte component libraries](https://kit.svelte.dev/docs/packaging). Svelte Society maintains a list of [other bundler plugins](https://sveltesociety.dev/tools/#bundling) for additional tools like Rollup and Webpack.
+En général, vous n'interagirez pas directement avec le compilateur Svelte, mais vous l'intègrerez plutôt dans un processus de <span class="vo">[build](/docs/development#build)</span> à travers un <span class="vo">[plugin](/docs/development#plugin)</span> de <span class="vo">[bundler](/docs/web#bundler-packager)</span>. Le plugin que l'équipe Svelte recommande et avec lequel elle travaille est [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte). Le <span class="vo">[framework](/docs/web#framework)</span> [SvelteKit](PUBLIC_KIT_SITE_URL/) fournit une configuration de `vite-plugin-svelte` qui permet de compiler des applications et de <span class="vo">[packager](/docs/web#bundler-packager)</span> des [librairies de composants Svelte](PUBLIC_KIT_SITE_URL/docs/packaging). Svelte Society maintient des [plugins](https://sveltesociety.dev/tools/#bundling) pour d'autres bundlers (notamment Rollup et Webpack).
 
-Nonetheless, it's useful to understand how to use the compiler, since bundler plugins generally expose compiler options to you.
+Néanmoins, il est utile de comprendre comment utiliser le compilateur, puisque les plugins exposent généralement des options.
 
 ## compile
 
 > EXPORT_SNIPPET: svelte/compiler#compile
 
-This is where the magic happens. `svelte.compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+C'est ici que la magie opère. `svelte.compile` convertit le code source des composants en module JavaScript qui exporte des classes.
 
 ```js
 // @filename: ambient.d.ts
@@ -29,9 +29,9 @@ const result = compile(source, {
 });
 ```
 
-Refer to [CompileOptions](#types-compileoptions) for all the available options.
+Référez-vous à la section [CompilerOptions](#types-compileoptions) pour voir les options disponibles.
 
-The returned `result` object contains the code for your component, along with useful bits of metadata.
+L'objet retourné `result` contient le code du composant, ainsi que des métadonnées utiles.
 
 ```ts
 // @filename: ambient.d.ts
@@ -47,13 +47,13 @@ import { compile } from 'svelte/compiler';
 const { js, css, ast, warnings, vars, stats } = compile(source);
 ```
 
-Refer to [CompileResult](#types-compileresult) for a full description of the compile result.
+Référez-vous à la section [CompilerResult](#types-compileresult) pour une description du résultat compilé.
 
 ## parse
 
 > EXPORT_SNIPPET: svelte/compiler#parse
 
-The `parse` function parses a component, returning only its abstract syntax tree. Unlike compiling with the `generate: false` option, this will not perform any validation or other analysis of the component beyond parsing it. Note that the returned AST is not considered public API, so breaking changes could occur at any point in time.
+La méthode `parse` convertit un composant pour retourner son arbre de la syntaxe abstraite (<span class="vo">[AST](/docs/development#ast)</span>). Contrairement à la compilation avec l'option `generate: false`, aucune validation ni analyse n'est effectuée. Notez que l'AST n'est pas considéré comme une <span class="vo">[API](/docs/development#api)</span> publique ; des changements critiques pourraient survenir à n'importe quel moment.
 
 ```js
 // @filename: ambient.d.ts
@@ -74,21 +74,22 @@ const ast = parse(source, { filename: 'App.svelte' });
 
 > EXPORT_SNIPPET: svelte/compiler#preprocess
 
-A number of [official and community-maintained preprocessing plugins](https://sveltesociety.dev/tools#preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+Un certain nombre de [plugins de pré-processeur maintenus par la communauté](https://sveltesociety.dev/tools#preprocessors) est disponible pour vous permettre d'utiliser Svelte avec des outils comme TypeScript, PostCSS, SCSS, et Less.
 
-You can write your own preprocessor using the `svelte.preprocess` API.
+Vous pouvez écrire votre propre pré-processeur en utilisant l'<span class="vo">[API](/docs/development#api)</span> `svelte.
 
-The `preprocess` function provides convenient hooks for arbitrarily transforming component source code. For example, it can be used to convert a `<style lang="sass">` block into vanilla CSS.
+La fonction `preprocess` fournit des <span class="vo">[framework](/docs/web#framework)</span> pour transformer le code source d'un composant selon vos besoins. Par exemple, elle peut convertir un bloc `<style lang="sass">` en css natif.
 
-The first argument is the component source code. The second is an array of _preprocessors_ (or a single preprocessor, if you only have one), where a preprocessor is an object with a `name` which is required, and `markup`, `script` and `style` functions, each of which is optional.
+Le premier argument est le code source du composant lui-même. Le second argument est un tableau de _pré-processeurs_ (ou éventuellement un seul pré-processeur si vous n'en avez qu'un). Un pré-processeur est un objet contenant trois fonctions : `markup`, `script` et `style`, toutes optionnelles.
 
-The `markup` function receives the entire component source text, along with the component's `filename` if it was specified in the third argument.
+La fonction `markup` reçoit en argument le <span class="vo">[markup](/docs/web#markup)</span> du composant, et le nom du composant `filename` s'il était spécifié comme troisième argument.
 
-The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
+Les fonctions `script` et `style` reçoivent le contenu des blocs `<script>` et `<style>` respectivement (`content`) ainsi que toute la source textuelle (`markup`) du composant. En plus du nom du fichier `filename`, elles reçoivent un objet contenant les attributs de l'élément.
 
-Each `markup`, `script` or `style` function must return an object (or a Promise that resolves to an object) with a `code` property, representing the transformed source code. Optionally they can return an array of `dependencies` which represents files to watch for changes, and a `map` object which is a sourcemap mapping back the transformation to the original code. `script` and `style` preprocessors can optionally return a record of attributes which represent the updated attributes on the script/style tag.
+Chaque fonction `markup`, `script` et `style` doit retourner un objet (ou une Promesse qui résout un objet) contenant un attribut `code`, représentant le code source transformé. Ces fonctions peuvent aussi renvoyer un tableau facultatif de dépendances `dependencies` qui représente les fichiers dont les changements sont à surveiller, ainsi qu'un objet `map` qui est une <span class="vo">[sourcemap](/docs/web#sourcemap)</span> renvoyant la transformation vers le code d'origine.
+Les pré-processeurs `script` et `style` peuvent de manière optionnelle renvoyer un ensemble d'attributs qui représentent les attributs mis à jour sur les balises `<script>`/`<style>`.
 
-> Preprocessor functions should return a `map` object whenever possible or else debugging becomes harder as stack traces can't link to the original code correctly.
+> Les fonctions de <span class="vo">[preprocessing](/docs/web#preprocessing)</span> doivent également retourner un objet `map` en plus de `code` et `dependencies`, où `map` correspond à la <span class="vo">[sourcemap](/docs/web#sourcemap)</span> de la transformation.
 
 ```ts
 // @filename: ambient.d.ts
@@ -125,7 +126,7 @@ const { code } = await preprocess(
 );
 ```
 
-If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
+Si un tableau de dépendances `dependencies` est retourné, il sera inclus dans l'objet retourné. Ce tableau est utilisé par des librairies comme [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) pour surveiller les changements dans les fichiers, par exemple si un bloc `<style>` contient un import de type `@import`.
 
 ```ts
 /// file: preprocess-sass.js
@@ -150,14 +151,14 @@ const { code } = await preprocess(
 	{
 		name: 'my-fancy-preprocessor',
 		markup: ({ content, filename }) => {
-			// Return code as is when no foo string present
+			// renvoie le code tel quel quand aucune string foo n'est présente
 			const pos = content.indexOf('foo');
 			if (pos < 0) {
 				return;
 			}
 
-			// Replace foo with bar using MagicString which provides
-			// a source map along with the changed code
+			// Remplace foo par bar en utilisant MagicString qui fournit
+			// une sourcemap en plus du code modifié
 			const s = new MagicString(content, { filename });
 			s.overwrite(pos, pos + 3, 'bar', { storeName: true });
 
@@ -167,7 +168,7 @@ const { code } = await preprocess(
 			};
 		},
 		style: async ({ content, attributes, filename }) => {
-			// only process <style lang="sass">
+			// traite uniquement <style lang="sass">
 			if (attributes.lang !== 'sass') return;
 
 			const { css, stats } = await new Promise((resolve, reject) =>
@@ -184,7 +185,7 @@ const { code } = await preprocess(
 				)
 			);
 
-			// remove lang attribute from style tag
+			// supprime l'attribut lang de la balise <style>
 			delete attributes.lang;
 
 			return {
@@ -200,9 +201,9 @@ const { code } = await preprocess(
 );
 ```
 
-Multiple preprocessors can be used together. The output of the first becomes the input to the second. Within one preprocessor, `markup` runs first, then `script` and `style`.
+Plusieurs pré-processeurs peuvent être utilisés ensemble. La sortie du premier devient l'argument du second. Les fonctions sont exécutées dans l'ordre suivant : `markup`, `script` puis `style`.
 
-> In Svelte 3, all `markup` functions ran first, then all `script` and then all `style` preprocessors. This order was changed in Svelte 4.
+> En Svelte 3, toutes les fonctions `markup` étaient exécutées en premier, puis toutes les fonctions `script` et enfin toutes les fonctions `style`. Cet ordre a été changé dans Svelte 4.
 
 ```js
 /// file: multiple-preprocessor.js
@@ -220,27 +221,27 @@ import { preprocess } from 'svelte/compiler';
 
 const { code } = await preprocess(source, [
 	{
-		name: 'first preprocessor',
+		name: 'premier pré-processeur',
 		markup: () => {
-			console.log('this runs first');
+			console.log('ceci est éxécuté en premier');
 		},
 		script: () => {
-			console.log('this runs second');
+			console.log('ça en second');
 		},
 		style: () => {
-			console.log('this runs third');
+			console.log('ça en troisième');
 		}
 	},
 	{
-		name: 'second preprocessor',
+		name: 'second pré-processeur',
 		markup: () => {
-			console.log('this runs fourth');
+			console.log('ça en quatrième');
 		},
 		script: () => {
-			console.log('this runs fifth');
+			console.log('ça en cinquième');
 		},
 		style: () => {
-			console.log('this runs sixth');
+			console.log('ça en sixième');
 		}
 	}
 ], {
@@ -252,18 +253,18 @@ const { code } = await preprocess(source, [
 
 > EXPORT_SNIPPET: svelte/compiler#walk
 
-The `walk` function provides a way to walk the abstract syntax trees generated by the parser, using the compiler's own built-in instance of [estree-walker](https://github.com/Rich-Harris/estree-walker).
+La fonction `walk` fournit un un moyen de parcourir les arbres <span class="vo">[AST](/docs/development#ast)</span> générés par le <span class="vo">[parser](/docs/development#parser)</span>, en utilisant l'utilitaire [estree-walker](https://github.com/Rich-Harris/estree-walker) du compilateur.
 
-The walker takes an abstract syntax tree to walk and an object with two optional methods: `enter` and `leave`. For each node, `enter` is called (if present). Then, unless `this.skip()` is called during `enter`, each of the children are traversed, and then `leave` is called on the node.
+La fonction prend comme argument l'arbre <span class="vo">[AST](/docs/development#ast)</span> à traiter et un objet contenant 2 méthodes facultatives : `enter` et `leave`. `enter` est appelée pour chaque noeud (si la méthode est définie). Puis, à moins que `this.skip()` n'ait été appelée lors de l'exécution de `enter`, chaque enfant est également traversé. Enfin, la méthode `leave` est appelée pour le noeud actuel.
 
 ```js
 /// file: compiler-walk.js
 // @filename: ambient.d.ts
 declare global {
 	var ast: import('estree').Node;
-	function do_something(node: import('estree').Node): void;
-	function do_something_else(node: import('estree').Node): void;
-	function should_skip_children(node: import('estree').Node): boolean;
+	function faire_quelque_chose(node: import('estree').Node): void;
+	function faire_autre_chose(node: import('estree').Node): void;
+	function doit_ignorer_les_enfants(node: import('estree').Node): boolean;
 }
 
 export {};
@@ -275,13 +276,13 @@ import { walk } from 'svelte/compiler';
 
 walk(ast, {
 	enter(node, parent, prop, index) {
-		do_something(node);
-		if (should_skip_children(node)) {
+		faire_quelque_chose(node);
+		if (doit_ignorer_les_enfants(node)) {
 			this.skip();
 		}
 	},
 	leave(node, parent, prop, index) {
-		do_something_else(node);
+		faire_autre_chose(node);
 	}
 });
 ```
@@ -290,11 +291,11 @@ walk(ast, {
 
 > EXPORT_SNIPPET: svelte/compiler#VERSION
 
-The current version, as set in package.json.
+La version actuelle, définie dans le fichier `package.json`.
 
 ```js
 import { VERSION } from 'svelte/compiler';
-console.log(`running svelte version ${VERSION}`);
+console.log(`la version ${VERSION} de Svelte est en cours d'exécution`);
 ```
 
 ## Types

@@ -7,7 +7,7 @@
 	$: url = !item.domain ? `https://news.ycombinator.com/${item.url}` : item.url;
 </script>
 
-<a href={returnTo}>&laquo; back</a>
+<a href={returnTo}>&laquo; retour</a>
 
 <article>
 	<a href={url}>
@@ -17,7 +17,7 @@
 		{/if}
 	</a>
 
-	<p class="meta">submitted by {item.user} {item.time_ago}</p>
+	<p class="meta">posté par {item.user} {item.time_ago}</p>
 </article>
 
 <div class="comments">

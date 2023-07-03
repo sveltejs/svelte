@@ -1,4 +1,4 @@
-const formatter = new Intl.RelativeTimeFormat(undefined, {
+const formatter = new Intl.RelativeTimeFormat('fr', {
 	numeric: 'auto'
 });
 

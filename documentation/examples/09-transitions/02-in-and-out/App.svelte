@@ -9,5 +9,5 @@
 </label>
 
 {#if visible}
-	<p in:fly={{ y: 200, duration: 2000 }} out:fade>Flies in, fades out</p>
+	<p in:fly={{ y: 200, duration: 2000 }} out:fade>Entre en volant, sort en s'estompant</p>
 {/if}

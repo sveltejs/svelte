@@ -1,5 +1,5 @@
 <script>
-	// These values are bound to properties of the video
+	// Ces valeurs sont liées aux propriétés de la vidéo
 	let time = 0;
 	let duration;
 	let paused = true;
@@ -7,26 +7,27 @@
 	let showControls = true;
 	let showControlsTimeout;
 
-	// Used to track time of last mouse down event
+	// Utilisée pour suivre le timing du dernier évènement mousedown
 	let lastMouseDown;
 
 	function handleMove(e) {
-		// Make the controls visible, but fade out after
-		// 2.5 seconds of inactivity
+		// Rend les contrôles visibles, mais les estompe après
+		// 2.5 secondes d'inactivité
 		clearTimeout(showControlsTimeout);
 		showControlsTimeout = setTimeout(() => (showControls = false), 2500);
 		showControls = true;
 
-		if (!duration) return; // video not loaded yet
-		if (e.type !== 'touchmove' && !(e.buttons & 1)) return; // mouse not down
+		if (!duration) return; // la vidéo n'est pas encore chargée
+		if (e.type !== 'touchmove' && !(e.buttons & 1)) return; // la souris n'est pas encore enfoncée
 
 		const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
 		const { left, right } = this.getBoundingClientRect();
 		time = (duration * (clientX - left)) / (right - left);
 	}
 
-	// we can't rely on the built-in click event, because it fires
-	// after a drag — we have to listen for clicks ourselves
+	// nous ne pouvons pas nous fier à l'évènement clic natif,
+	// parce qu'il est déclenché après avoir fait glisser (drag) la souris
+	// — nous devons écouter les clics nous-mêmes
 	function handleMousedown(e) {
 		lastMouseDown = new Date();
 	}
@@ -50,7 +51,7 @@
 </script>
 
 <h1>Caminandes: Llamigos</h1>
-<p>From <a href="https://studio.blender.org/films">Blender Studio</a>. CC-BY</p>
+<p>Par <a href="https://studio.blender.org/films">Blender Studio</a>. CC-BY</p>
 
 <div>
 	<video
@@ -72,7 +73,9 @@
 
 		<div class="info">
 			<span class="time">{format(time)}</span>
-			<span>click anywhere to {paused ? 'play' : 'pause'} / drag to seek</span>
+			<span
+				>cliquez n'importe où pour {paused ? 'lire' : 'mettre en pause'} / glissez pour chercher</span
+			>
 			<span class="time">{format(duration)}</span>
 		</div>
 	</div>

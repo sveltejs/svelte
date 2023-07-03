@@ -7,7 +7,7 @@
 	let page;
 
 	async function hashchange() {
-		// the poor man's router!
+		// le routeur du pauvre !
 		const path = window.location.hash.slice(1);
 
 		if (path.startsWith('/item')) {
@@ -49,5 +49,9 @@
 		color: #999;
 		font-size: 12px;
 		margin: 0 0 1em 0;
+	}
+
+	main :global(a) {
+		color: rgb(0, 0, 150);
 	}
 </style>

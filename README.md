@@ -72,6 +72,12 @@ The source code for https://svelte.dev lives in the [sites](https://github.com/s
 
 Probably not, but it's possible. If you can't seem to access any `.dev` sites, check out [this SuperUser question and answer](https://superuser.com/q/1413402).
 
+## Translating Svelte docs
+
+This is the french version of the Svelte website.
+
+Read more about this was done [here](i18n.md).
+
 ## License
 
 [MIT](LICENSE.md)

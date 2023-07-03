@@ -3,9 +3,9 @@
 </script>
 
 {#if x > 10}
-	<p>{x} is greater than 10</p>
+  <p>{x} est plus grand que 10</p>
 {:else if 5 > x}
-	<p>{x} is less than 5</p>
+  <p>{x} est plus petit que 5</p>
 {:else}
-	<p>{x} is between 5 and 10</p>
+  <p>{x} est entre 5 et 10</p>
 {/if}

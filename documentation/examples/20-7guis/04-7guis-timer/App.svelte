@@ -24,15 +24,15 @@
 </script>
 
 <label>
-	elapsed time:
+	temps écoulé :
 	<progress value={elapsed / duration} />
 </label>
 
 <div>{(elapsed / 1000).toFixed(1)}s</div>
 
 <label>
-	duration:
+	durée :
 	<input type="range" bind:value={duration} min="1" max="20000" />
 </label>
 
-<button on:click={() => (elapsed = 0)}>reset</button>
+<button on:click={() => (elapsed = 0)}>réinitialiser</button>

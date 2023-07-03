@@ -10,4 +10,4 @@
 
 {@debug user}
 
-<h1>Hello {user.firstname}!</h1>
+<h1>Bonjour {user.firstname} !</h1>

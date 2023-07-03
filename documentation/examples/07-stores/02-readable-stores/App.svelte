@@ -1,7 +1,7 @@
 <script>
 	import { time } from './stores.js';
 
-	const formatter = new Intl.DateTimeFormat('en', {
+	const formatter = new Intl.DateTimeFormat('fr', {
 		hour12: true,
 		hour: 'numeric',
 		minute: '2-digit',
@@ -9,4 +9,4 @@
 	});
 </script>
 
-<h1>The time is {formatter.format($time)}</h1>
+<h1>Il est {formatter.format($time)}</h1>

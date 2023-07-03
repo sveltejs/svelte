@@ -1,14 +1,14 @@
 <script>
-	import Nested from './Nested.svelte';
+	import Nested from "./Nested.svelte";
 </script>
 
-<p>These styles...</p>
+<p>Ce style...</p>
 <Nested />
 
 <style>
 	p {
 		color: purple;
-		font-family: 'Comic Sans MS', cursive;
+		font-family: "Comic Sans MS", cursive;
 		font-size: 2em;
 	}
 </style>

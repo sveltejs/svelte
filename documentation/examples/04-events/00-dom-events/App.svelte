@@ -9,7 +9,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:mousemove={handleMousemove}>
-	The mouse position is {m.x} x {m.y}
+	Le curseur se trouve à la position ({m.x} ; {m.y})
 </div>
 
 <style>
