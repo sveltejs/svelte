@@ -1,5 +1,11 @@
 # svelte
 
+## 4.0.3
+
+### Patch Changes
+
+- fix: handle falsy srcset values ([#8901](https://github.com/sveltejs/svelte/pull/8901))
+
 ## 4.0.2
 
 ### Patch Changes
