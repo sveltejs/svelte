@@ -269,6 +269,31 @@ if (typeof HTMLElement === 'function') {
 						}
 					}
 				});
+
+				// Reflect component props as attributes
+				const reflect_attributes = () => {
+					this.$$r = true;
+					for (const key in this.$$p_d) {
+						this.$$d[key] = this.$$c.$$.ctx[this.$$c.$$.props[key]];
+						if (this.$$p_d[key].reflect) {
+							const attribute_value = get_custom_element_value(
+								key,
+								this.$$d[key],
+								this.$$p_d,
+								'toAttribute'
+							);
+							if (attribute_value == null) {
+								this.removeAttribute(key);
+							} else {
+								this.setAttribute(this.$$p_d[key].attribute || key, attribute_value);
+							}
+						}
+					}
+					this.$$r = false;
+				};
+				this.$$c.$$.after_update.push(reflect_attributes);
+				reflect_attributes(); // once initially because after_update is added too late for first render
+
 				for (const type in this.$$l) {
 					for (const listener of this.$$l[type]) {
 						const unsub = this.$$c.$on(type, listener);
@@ -386,21 +411,6 @@ export function create_custom_element(
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$d[prop] = value;
 				this.$$c?.$set({ [prop]: value });
-				if (props_definition[prop].reflect) {
-					this.$$r = true;
-					const attribute_value = get_custom_element_value(
-						prop,
-						value,
-						props_definition,
-						'toAttribute'
-					);
-					if (attribute_value == null) {
-						this.removeAttribute(prop);
-					} else {
-						this.setAttribute(props_definition[prop].attribute || prop, attribute_value);
-					}
-					this.$$r = false;
-				}
 			}
 		});
 	});
