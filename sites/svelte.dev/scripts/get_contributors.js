@@ -16,7 +16,7 @@ if (!force && fs.existsSync(outputFile)) {
 	process.exit(0);
 }
 
-const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
+const base = `https://api.github.com/repos/svelte-society-fr/svelte/contributors`;
 const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
 
 const MAX = 24;
