@@ -121,7 +121,18 @@ The migration script will do both automatically for you. ([#8512](https://github
 
 ## Transitions are local by default
 
-Transitions are now local by default to prevent confusion around page navigations. To make them global, add the `|global` modifier. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
+Transitions are now local by default to prevent confusion around page navigations. "local" means that a transition will not play if it's within a nested control flow block (`each/if/await/key`) and not the direct parent block but a block above it is created/destroyed. In the following example, the `slide` intro animation will only play when `success` goes from `false` to `true`, but it will _not_ play when `show` goes from `false` to `true`:
+
+```svelte
+{#if show}
+	...
+	{#if success}
+		<p in:slide>Success</p>
+	{/each}
+{/if}
+```
+
+To make transitions global, add the `|global` modifier - then they will play when _any_ control flow block above is created/destroyed. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 
 ## Default slot bindings
 
