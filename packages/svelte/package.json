@@ -74,7 +74,7 @@
   "types": "types/index.d.ts",
   "scripts": {
     "format": "prettier . --cache --plugin-search-dir=. --write",
-    "check": "prettier . --cache --plugin-search-dir=. --check",
+    "check": "tsc --noEmit",
     "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
     "build": "rollup -c && pnpm types",
     "generate:version": "node ./scripts/generate-version.js",
@@ -82,7 +82,7 @@
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm build",
     "types": "node ./scripts/generate-dts.js",
-    "lint": "eslint \"{src,test}/**/*.{ts,js}\" --cache"
+    "lint": "prettier . --cache --plugin-search-dir=. --check && eslint \"{src,test}/**/*.{ts,js}\" --cache"
   },
   "repository": {
     "type": "git",
