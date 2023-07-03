@@ -159,17 +159,23 @@ export let SvelteElement;
 
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
+		/** The Svelte component constructor */
 		$$ctor;
+		/** Slots */
 		$$s;
+		/** The Svelte component instance */
 		$$c;
+		/** Whether or not the custom element is connected */
 		$$cn = false;
+		/** Component props data */
 		$$d = {};
+		/** `true` if currently in the process of reflecting component props back to attributes */
 		$$r = false;
-		/** @type {Record<string, CustomElementPropDefinition>} */
+		/** @type {Record<string, CustomElementPropDefinition>} Props definition (name, reflected, type etc) */
 		$$p_d = {};
-		/** @type {Record<string, Function[]>} */
+		/** @type {Record<string, Function[]>} Event listeners */
 		$$l = {};
-		/** @type {Map<Function, Function>} */
+		/** @type {Map<Function, Function>} Event listener unsubscribe functions */
 		$$l_u = new Map();
 
 		constructor($$componentCtor, $$slots, use_shadow_dom) {
