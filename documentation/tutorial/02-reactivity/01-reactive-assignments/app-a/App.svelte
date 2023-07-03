@@ -5,12 +5,13 @@
 		// event handler code goes here
 	}
 </script>
-<style>
-button{
-width:200px;
-}
-</style>
 <button>
 	Clicked {count}
 	{count === 1 ? 'time' : 'times'}
 </button>
+
+<style>
+	button{
+		width:200px;
+	}
+</style>
