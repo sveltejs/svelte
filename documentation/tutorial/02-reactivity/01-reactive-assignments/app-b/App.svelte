@@ -12,7 +12,7 @@
 </button>
 
 <style>
-	button{
+	button {
 		width:200px;
 	}
 </style>
