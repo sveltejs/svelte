@@ -21,14 +21,14 @@
 
 	<div class="centered" out:fly={{ y: -20, duration: 800 }}>
 		{#each 'SVELTE' as char, i}
-			<span in:fade|global={{ delay: 1000 + i * 150, duration: 800 }}>{char}</span>
+			<span in:fade={{ delay: 1000 + i * 150, duration: 800 }}>{char}</span>
 		{/each}
 	</div>
 {/if}
 
 <label>
 	<input type="checkbox" bind:checked={visible} />
-	toggle me
+	activer
 </label>
 
 <link href="https://fonts.googleapis.com/css?family=Overpass:100,400" rel="stylesheet" />

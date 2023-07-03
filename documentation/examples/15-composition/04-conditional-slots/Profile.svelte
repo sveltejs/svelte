@@ -1,12 +1,12 @@
 <section>
-	<div>Name</div>
+	<div>Nom</div>
 	<slot name="name" />
 	{#if $$slots.email}
-		<div>Email</div>
+		<div>e-mail</div>
 		<slot name="email" />
 	{/if}
 	{#if $$slots.phone}
-		<div>Phone</div>
+		<div>Téléphone</div>
 		<slot name="phone" />
 	{/if}
 </section>

@@ -1,8 +1,8 @@
 ---
-title: Element directives
+title: Directives d'éléments
 ---
 
-As well as attributes, elements can have _directives_, which control the element's behaviour in some way.
+En plus des attributs, les éléments peuvent avoir des _directives_, qui contrôlent le comportement des éléments de différentes manières.
 
 ## on:_eventname_
 
@@ -10,68 +10,67 @@ As well as attributes, elements can have _directives_, which control the element
 <!--- copy: false --->
 on:eventname={handler}
 ```
-
 ```svelte
 <!--- copy: false --->
 on:eventname|modifiers={handler}
 ```
 
-Use the `on:` directive to listen to DOM events.
+Utilisez la directive `on:` pour écouter des évènements du <span class='vo'>[DOM](/docs/web#dom)</span>.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	let count = 0;
 
-	/** @param {MouseEvent} event */
 	function handleClick(event) {
 		count += 1;
 	}
 </script>
 
 <button on:click={handleClick}>
-	count: {count}
+	Compte: {count}
 </button>
 ```
 
-Handlers can be declared inline with no performance penalty. As with attributes, directive values may be quoted for the sake of syntax highlighters.
+Les gestionnaires d'évènement peuvent être déclarés directement sans pénaliser les performances. Comme pour les attributs, les valeurs utilisées pour les directives peuvent être mises entre guillemets afin d'aider la coloration syntaxique.
 
 ```svelte
-<button on:click={() => (count += 1)}>
-	count: {count}
+<button on:click="{() => count += 1}">
+	Compte: {count}
 </button>
 ```
 
-Add _modifiers_ to DOM events with the `|` character.
+Ajoutez des *modificateurs* aux évènements <span class='vo'>[DOM](/docs/web#dom)</span> avec le caractère `|`.
 
 ```svelte
 <form on:submit|preventDefault={handleSubmit}>
-	<!-- the `submit` event's default is prevented,
-	     so the page won't reload -->
+	<!-- le comportement par défaut de l'évènement `submit` est ignoré,
+		ce qui permet de ne pas recharger la page -->
 </form>
 ```
 
-The following modifiers are available:
+Les modificateurs suivants sont disponibles:
 
-- `preventDefault` — calls `event.preventDefault()` before running the handler
-- `stopPropagation` — calls `event.stopPropagation()`, preventing the event reaching the next element
-- `stopImmediatePropagation` - calls `event.stopImmediatePropagation()`, preventing other listeners of the same event from being fired.
-- `passive` — improves scrolling performance on touch/wheel events (Svelte will add it automatically where it's safe to do so)
-- `nonpassive` — explicitly set `passive: false`
-- `capture` — fires the handler during the _capture_ phase instead of the _bubbling_ phase
-- `once` — remove the handler after the first time it runs
-- `self` — only trigger handler if `event.target` is the element itself
-- `trusted` — only trigger handler if `event.isTrusted` is `true`. I.e. if the event is triggered by a user action.
+* `preventDefault` — appelle `event.preventDefault()` avant d'exécuter le gestionnaire d'évènement
+* `stopPropagation` — appelle `event.stopPropagation()`, empêchant l'évènement d'atteindre le prochain élément
+* `stopImmediatePropagation` - appelle `event.stopImmediatePropagation()`, empêchant d'autres gestionnaires du même évènement d'être exécutés
+* `passive` — améliore la performance du défilement pour les évènements `touch`/`wheel` (Svelte l'ajoutera automatiquement lorsque qu'il détecte que ce n'est pas problématique)
+* `nonpassive` — déclare explicitement l'évènement avec `passive: false`
+* `capture` — déclenche le gestionnaire d'évènement pendant la phase de <span class='vo'>[capture](/docs/javascript#bubble-capture)</span> plutôt que pendant la phase de <span class='vo'>[bubbling](/docs/javascript#bubble-capture)</span>
+* `once` — supprime le gestionnaire d'évènement après sa première exécution
+* `self` — ne déclenche le gestionnaire d'évènement que si `event.target` est l'élément lui-même
+* `trusted` — ne déclenche le gestionnaire d'évènement que si `event.isTrusted` est `true`. C'est-à-dire si l'évènement est déclenché par une action utilisateur.
 
-Modifiers can be chained together, e.g. `on:click|once|capture={...}`.
+Vous pouvez chaîner les modificateurs, par ex. `on:click|once|capture={...}`.
 
-If the `on:` directive is used without a value, the component will _forward_ the event, meaning that a consumer of the component can listen for it.
+Si la directive `on:` est utilisée sans valeur, le composant relaiera l'évènement à son parent, ce qui permettra à ce dernier de l'écouter.
 
 ```svelte
-<button on:click> The component itself will emit the click event </button>
+<button on:click>
+	Le composant lui-même va émettre un évènement clic
+</button>
 ```
 
-It's possible to have multiple event listeners for the same event:
+Il est possible d'avoir plusieurs gestionnaires pour le même évènement:
 
 ```svelte
 <script>
@@ -80,13 +79,12 @@ It's possible to have multiple event listeners for the same event:
 		counter = counter + 1;
 	}
 
-	/** @param {MouseEvent} event */
 	function track(event) {
-		trackEvent(event);
+		trackEvent(event)
 	}
 </script>
 
-<button on:click={increment} on:click={track}>Click me!</button>
+<button on:click={increment} on:click={track}>Cliquez moi !</button>
 ```
 
 ## bind:_property_
@@ -96,59 +94,64 @@ It's possible to have multiple event listeners for the same event:
 bind:property={variable}
 ```
 
-Data ordinarily flows down, from parent to child. The `bind:` directive allows data to flow the other way, from child to parent. Most bindings are specific to particular elements.
+En général, la donnée _descend_ du parent vers l'enfant. La directive `bind:` permet à la donnée de remonter de l'enfant vers le parent. Le plus souvent ces liaisons sont spécifiques à des éléments particuliers.
 
-The simplest bindings reflect the value of a property, such as `input.value`.
+L'exemple le plus simple d'une liaison reflète la valeur d'une propriété, comme `input.value`.
 
 ```svelte
-<input bind:value={name} />
-<textarea bind:value={text} />
+<input bind:value={name}>
+<textarea bind:value={text}></textarea>
 
-<input type="checkbox" bind:checked={yes} />
+<input type="checkbox" bind:checked={yes}>
 ```
 
-If the name matches the value, you can use a shorthand.
+Si le nom de la variable est le même que le nom de la propriété, vous pouvez simplifier l'écriture.
 
 ```svelte
-<input bind:value />
-<!-- equivalent to
-<input bind:value={value} />
--->
+<!-- Ces écritures sont équivalentes -->
+<input bind:value={value}>
+<input bind:value>
 ```
 
-Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
+Les valeurs numériques sont traitées comme des nombres ; même si `input.value` est une chaîne de caractères pour le <span class='vo'>[DOM](/docs/web#dom)</span>, Svelte traitera cette valeur comme un nombre. Si l'`<input>` est vide ou invalide (dans le cas de `type="number"` par exemple), la valeur sera `undefined`.
 
 ```svelte
-<input type="number" bind:value={num} />
-<input type="range" bind:value={num} />
+<input type="number" bind:value={num}>
+<input type="range" bind:value={num}>
 ```
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
+Sur les éléments `<input>` de type `type="file"`, vous pouvez utiliser `bind:files` pour obtenir la [`FileList` des fichiers sélectionnés](https://developer.mozilla.org/fr/docs/Web/API/FileList). Cette liste est en lecture seule.
 
 ```svelte
-<label for="avatar">Upload a picture:</label>
-<input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
-```
-
-If you're using `bind:` directives together with `on:` directives, the order that they're defined in affects the value of the bound variable when the event handler is called.
-
-```svelte
-<script>
-	let value = 'Hello World';
-</script>
-
+<label for="avatar">Choisissez une image :</label>
 <input
-	on:input={() => console.log('Old value:', value)}
-	bind:value
-	on:input={() => console.log('New value:', value)}
+	accept="image/png, image/jpeg"
+	bind:files
+	id="avatar"
+	name="avatar"
+	type="file"
 />
 ```
 
-Here we were binding to the value of a text input, which uses the `input` event. Bindings on other elements may use different events such as `change`.
+Si vous utilisez des directives `bind:` conjointement à des directives `on:`, l'ordre dans lequel elles sont définies affectera la valeur de la variable liée lorsque la fonction d'écoute sera appelée.
 
-## Binding `<select>` value
+```svelte
+<script>
+	let value = 'Bonjour tout le monde';
+</script>
 
-A `<select>` value binding corresponds to the `value` property on the selected `<option>`, which can be any value (not just strings, as is normally the case in the DOM).
+<input
+	on:input={() => console.log('Ancienne valeur:', value)}
+	bind:value
+	on:input={() => console.log('Nouvelle valeur:', value)}
+/>
+```
+
+Dans ce cas, nous avons lié la valeur d'un `<input>` de texte qui utilise l'évènement `input`. Des liaisons sur d'autres éléments pourraient utiliser d'autres évènements comme `change`.
+
+### Lier les valeurs de `<select>`
+
+Une liaison sur un `<select>` correspond à la propriété `value` de l'`<option>` sélectionnée, qui peut être n'importe quelle valeur (pas uniquement des chaînes de caractères, comme c'est le cas en général dans le <span class='vo'>[DOM](/docs/web#dom)</span>).
 
 ```svelte
 <select bind:value={selected}>
@@ -158,72 +161,73 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 </select>
 ```
 
-A `<select multiple>` element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the `value` property of each selected `<option>`.
+Un élément `<select multiple>` se comporte de manière similaire à un groupe de `<checkbox>`. La variable liée est un tableau avec un élément correspondant à la propriété `value` de chaque `<option>` sélectionnée.
 
 ```svelte
 <select multiple bind:value={fillings}>
-	<option value="Rice">Rice</option>
-	<option value="Beans">Beans</option>
-	<option value="Cheese">Cheese</option>
-	<option value="Guac (extra)">Guac (extra)</option>
+	<option value="Riz">Riz</option>
+	<option value="Haricots">Haricots</option>
+	<option value="Fromage">Fromage</option>
+	<option value="Guacamole (supplément)">Guacamole (supplément)</option>
 </select>
 ```
 
-When the value of an `<option>` matches its text content, the attribute can be omitted.
+Quand la valeur d'une `<option>` correspond à son contenu texte, l'attribut peut être ignoré.
 
 ```svelte
 <select multiple bind:value={fillings}>
-	<option>Rice</option>
-	<option>Beans</option>
-	<option>Cheese</option>
-	<option>Guac (extra)</option>
+	<option>Riz</option>
+	<option>Haricots</option>
+	<option>Formage</option>
+	<option>Guacamole (supplément)</option>
 </select>
 ```
 
-Elements with the `contenteditable` attribute support the following bindings:
+Les éléments avec l'attribut `contenteditable` permettent les liaisons suivantes:
+- [`innerHTML`](https://developer.mozilla.org/fr/docs/Web/API/Element/innerHTML)
+- [`innerText`](https://developer.mozilla.org/fr/docs/Web/API/HTMLElement/innerText)
+- [`textContent`](https://developer.mozilla.org/fr/docs/Web/API/Node/textContent)
 
-- [`innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML)
-- [`innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText)
-- [`textContent`](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
-
-There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
+Il y a de légères différences entre ces différentes liaisons, apprenez-en plus [ici](https://developer.mozilla.org/fr/docs/Web/API/Node/textContent#Differences_from_innerText).
 
 <!-- for some reason puts the comment and html on same line -->
 <!-- prettier-ignore -->
 ```svelte
-<div contenteditable="true" bind:innerHTML={html} />
+<div contenteditable="true" bind:innerHTML={html}></div>
 ```
 
-`<details>` elements support binding to the `open` property.
+Les éléments `<details>` permettent les liaisons avec la propriété `open`.
 
 ```svelte
 <details bind:open={isOpen}>
-	<summary>Details</summary>
-	<p>Something small enough to escape casual notice.</p>
+	<summary>Détails</summary>
+	<p>
+		Quelque chose suffisamment petit pour passer inaperçu.
+	</p>
 </details>
 ```
 
-## Media element bindings
+### Liaisons d'éléments media
 
-Media elements (`<audio>` and `<video>`) have their own set of bindings — seven _readonly_ ones...
+Les éléments media (`<audio>` et `<video>`) ont leurs propres liaisons — au nombre de 7 et en _lecture seule_ ...
 
-- `duration` (readonly) — the total duration of the video, in seconds
-- `buffered` (readonly) — an array of `{start, end}` objects
-- `played` (readonly) — ditto
-- `seekable` (readonly) — ditto
-- `seeking` (readonly) — boolean
-- `ended` (readonly) — boolean
-- `readyState` (readonly) — number between (and including) 0 and 4
+* `duration` (lecture seule) — durée totale de la vidéo, en secondes
+* `buffered` (lecture seule) — tableau d'objets `{start, end}`
+* `played` (lecture seule) — idem
+* `seekable` (lecture seule) — idem
+* `seeking` (lecture seule) — booléen
+* `ended` (lecture seule) — booléen
+* `readyState` (lecture seule) — nombre entre 0 (inclus) et 4 (inclus)
 
-...and five _two-way_ bindings:
+... et 5 liaisons _lecture-écriture_ :
 
-- `currentTime` — the current playback time in the video, in seconds
-- `playbackRate` — how fast or slow to play the video, where 1 is 'normal'
-- `paused` — this one should be self-explanatory
-- `volume` — a value between 0 and 1
-- `muted` — a boolean value indicating whether the player is muted
+* `currentTime` — temps actuel de lecture de la vidéo, en secondes
+* `playbackRate` — vitesse de lecture de la vidéo, 1 étant 'normal'
+* `paused` — a priori vous voyez ce que c'est
+* `volume` — une valeur entre 0 et 1
+* `muted` — booléen indiquant si le lecteur est en sourdine
 
-Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
+Les vidéos ont de plus des liaisons en lecture seule pour les attributs `videoWidth` et `videoHeight`.
 
 ```svelte
 <video
@@ -242,15 +246,15 @@ Videos additionally have readonly `videoWidth` and `videoHeight` bindings.
 	bind:muted
 	bind:videoWidth
 	bind:videoHeight
-/>
+></video>
 ```
 
-## Image element bindings
+### Liaisons des éléments image
 
-Image elements (`<img>`) have two readonly bindings:
+Les éléments d'image (`<img>`) ont deux liaisons en lecture seule :
 
-- `naturalWidth` (readonly) — the original width of the image, available after the image has loaded
-- `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
+* `naturalWidth` (lecture seule) — la largeur d'origine de l'image, disponible après le chargement de l'image
+* `naturalHeight` (lecture seule) — la hauteur d'origine de l'image, disponible après le chargement de l'image
 
 ```svelte
 <img
@@ -259,18 +263,21 @@ Image elements (`<img>`) have two readonly bindings:
 ></img>
 ```
 
-## Block-level element bindings
+### Liaisons des éléments de type `block`
 
-Block-level elements have 4 read-only bindings, measured using a technique similar to [this one](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/):
+Les éléments de type `block` ont 4 liaisons en lecture seule, mesurées en utilisant [une technique similaire à celle-ci](http://www.backalleycoder.com/2013/03/18/cross-browser-event-based-element-resize-detection/) (en anglais):
 
-- `clientWidth`
-- `clientHeight`
-- `offsetWidth`
-- `offsetHeight`
+* `clientWidth`
+* `clientHeight`
+* `offsetWidth`
+* `offsetHeight`
 
 ```svelte
-<div bind:offsetWidth={width} bind:offsetHeight={height}>
-	<Chart {width} {height} />
+<div
+	bind:offsetWidth={width}
+	bind:offsetHeight={height}
+>
+	<Chart {width} {height}/>
 </div>
 ```
 
@@ -281,29 +288,27 @@ Block-level elements have 4 read-only bindings, measured using a technique simil
 bind:group={variable}
 ```
 
-Inputs that work together can use `bind:group`.
+Les inputs qui fonctionnent ensemble peuvent utiliser `bind:group`.
 
 ```svelte
 <script>
-	let tortilla = 'Plain';
-
-	/** @type {Array<string>} */
+	let tortilla = 'Simple';
 	let fillings = [];
 </script>
 
-<!-- grouped radio inputs are mutually exclusive -->
-<input type="radio" bind:group={tortilla} value="Plain" />
-<input type="radio" bind:group={tortilla} value="Whole wheat" />
-<input type="radio" bind:group={tortilla} value="Spinach" />
+<!-- les inputs radio groupés sont mutuellement exclusifs -->
+<input type="radio" bind:group={tortilla} value="Simple">
+<input type="radio" bind:group={tortilla} value="Complète">
+<input type="radio" bind:group={tortilla} value="Épinards">
 
-<!-- grouped checkbox inputs populate an array -->
-<input type="checkbox" bind:group={fillings} value="Rice" />
-<input type="checkbox" bind:group={fillings} value="Beans" />
-<input type="checkbox" bind:group={fillings} value="Cheese" />
-<input type="checkbox" bind:group={fillings} value="Guac (extra)" />
+<!-- les inputs checkbox groupés remplissent un tableau -->
+<input type="checkbox" bind:group={fillings} value="Riz">
+<input type="checkbox" bind:group={fillings} value="Haricots">
+<input type="checkbox" bind:group={fillings} value="Fromage">
+<input type="checkbox" bind:group={fillings} value="Guacamole (supplément)">
 ```
 
-> `bind:group` only works if the inputs are in the same Svelte component.
+> `bind:group` ne fonctionne que si les `<input>` sont dans le même composant Svelte.
 
 ## bind:this
 
@@ -312,13 +317,12 @@ Inputs that work together can use `bind:group`.
 bind:this={dom_node}
 ```
 
-To get a reference to a DOM node, use `bind:this`.
+Utiliser `bind:this` vous permet d'obtenir une référence à un noeud <span class='vo'>[DOM](/docs/web#dom)</span>.
 
 ```svelte
 <script>
 	import { onMount } from 'svelte';
 
-	/** @type {HTMLCanvasElement} */
 	let canvasElement;
 
 	onMount(() => {
@@ -327,7 +331,7 @@ To get a reference to a DOM node, use `bind:this`.
 	});
 </script>
 
-<canvas bind:this={canvasElement} />
+<canvas bind:this={canvasElement}></canvas>
 ```
 
 ## class:_name_
@@ -336,23 +340,22 @@ To get a reference to a DOM node, use `bind:this`.
 <!--- copy: false --->
 class:name={value}
 ```
-
 ```svelte
 <!--- copy: false --->
 class:name
 ```
 
-A `class:` directive provides a shorter way of toggling a class on an element.
+Une directive `class:` permet de facilement ajouter ou enlever une classe à un élément.
 
 ```svelte
-<!-- These are equivalent -->
-<div class={isActive ? 'active' : ''}>...</div>
-<div class:active={isActive}>...</div>
+<!-- Ces syntaxes sont équivalentes -->
+<div class="{active ? 'active' : ''}">...</div>
+<div class:active={active}>...</div>
 
-<!-- Shorthand, for when name and value match -->
+<!-- Syntaxe raccourcie, quand le nom de la variable correspond au nom de la classe -->
 <div class:active>...</div>
 
-<!-- Multiple class toggles can be included -->
+<!-- Plusieurs directives `class:` peuvent être utilisées -->
 <div class:active class:inactive={!active} class:isAdmin>...</div>
 ```
 
@@ -361,39 +364,37 @@ A `class:` directive provides a shorter way of toggling a class on an element.
 ```svelte
 style:property={value}
 ```
-
 ```svelte
 style:property="value"
 ```
-
 ```svelte
 style:property
 ```
 
-The `style:` directive provides a shorthand for setting multiple styles on an element.
+La directive `style:` fournit un raccourci pour modifier directement le style d'un élément.
 
 ```svelte
-<!-- These are equivalent -->
+<!-- Ces syntaxes sont équivalentes -->
 <div style:color="red">...</div>
 <div style="color: red;">...</div>
 
-<!-- Variables can be used -->
+<!-- Vous pouvez utiliser des variables -->
 <div style:color={myColor}>...</div>
 
-<!-- Shorthand, for when property and variable name match -->
+<!-- Syntaxe raccourcie, quand le nom de la variable correspond au nom de la propriété -->
 <div style:color>...</div>
 
-<!-- Multiple styles can be included -->
-<div style:color style:width="12rem" style:background-color={darkMode ? 'black' : 'white'}>...</div>
+<!-- Plusieurs directives `style:` peuvent être utilisées -->
+<div style:color style:width="12rem" style:background-color={darkMode ? "black" : "white"}>...</div>
 
-<!-- Styles can be marked as important -->
+<!-- Vous pouvez définir des styles comme importants -->
 <div style:color|important="red">...</div>
 ```
 
-When `style:` directives are combined with `style` attributes, the directives will take precedence:
+Quand des directives `style:` sont combinées avec des attributs `style`, les directives sont prioritaires.
 
 ```svelte
-<div style="color: blue;" style:color="red">This will be red</div>
+<div style="color: blue;" style:color="red">Ceci sera rouge</div>
 ```
 
 ## use:_action_
@@ -402,7 +403,6 @@ When `style:` directives are combined with `style` attributes, the directives wi
 <!--- copy: false --->
 use:action
 ```
-
 ```svelte
 <!--- copy: false --->
 use:action={parameters}
@@ -417,53 +417,52 @@ action = (node: HTMLElement, parameters: any) => {
 }
 ```
 
-Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
+Les actions sont des fonctions exécutées lorsqu'un élément est créé. Elles peuvent renvoyer un objet avec une méthode `destroy` qui sera appelée lors de la destruction de l'élément.
 
 ```svelte
 <script>
-	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
-		// the node has been mounted in the DOM
+		// le noeud a été ajouté au DOM
 
 		return {
 			destroy() {
-				// the node has been removed from the DOM
+				// le noeud a été supprimé du DOM
 			}
 		};
 	}
 </script>
 
-<div use:foo />
+<div use:foo></div>
 ```
 
-An action can have a parameter. If the returned value has an `update` method, it will be called whenever that parameter changes, immediately after Svelte has applied updates to the markup.
+Une action peut avoir un argument. Si la valeur renvoyée possède une méthode `update`, celle-ci sera exécutée à chaque fois que cet argument changera, juste après que Svelte a appliqué les modifications au <span class="vo">[markup](/docs/web#markup)</span>.
 
-> Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
+> Ne vous inquiétez pas du fait que l'on redéclare la fonction `foo` pour chaque instance — Svelte garde en mémoire toute fonction qui ne dépend pas d'un état local en dehors de la définition du composant.
+
 
 ```svelte
 <script>
 	export let bar;
 
-	/** @type {import('svelte/action').Action}  */
 	function foo(node, bar) {
-		// the node has been mounted in the DOM
+		// le noeud a été ajouté au DOM
 
 		return {
 			update(bar) {
-				// the value of `bar` has changed
+				// la valeur de `bar` a changé
 			},
 
 			destroy() {
-				// the node has been removed from the DOM
+				// le noeud a été supprimé du DOM
 			}
 		};
 	}
 </script>
 
-<div use:foo={bar} />
+<div use:foo={bar}></div>
 ```
 
-Read more in the [`svelte/action`](/docs/svelte-action) page.
+Plus d'infos dans la page [`svelte/action`](/docs/svelte-action).
 
 ## transition:_fn_
 
@@ -509,53 +508,57 @@ transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out'
 }
 ```
 
-A transition is triggered by an element entering or leaving the DOM as a result of a state change.
+Une transition est déclenchée lorsqu'un élément entre ou sort du <span class='vo'>[DOM](/docs/web#dom)</span> après un changement d'état.
 
-When a block is transitioning out, all elements inside the block, including those that do not have their own transitions, are kept in the DOM until every transition in the block has been completed.
+Quand un bloc transitionne vers sa sortie, tous les éléments au sein du bloc, y compris ceux n'ayant pas de transition propre, sont laissés dans le DOM tant que toutes les transitions du bloc se soient terminées.
 
-The `transition:` directive indicates a _bidirectional_ transition, which means it can be smoothly reversed while the transition is in progress.
+La directive `transition:` établit une transition _bidirectionnelle_, ce qui implique qu'elle peut être inversée sans heurts en cours de transition.
 
 ```svelte
 {#if visible}
-	<div transition:fade>fades in and out</div>
+	<div transition:fade>
+		s'estompe en entrant et en sortant
+	</div>
 {/if}
 ```
 
-Transitions are local by default (in Svelte 3, they were global by default). Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
+Les transitions sont locales par défaut (dans Svelte 3, elles étaient globales par défaut). Les transitions locales sont jouées uniquement lorsque le bloc auquel elles appartiennent est créé ou détruit, _pas_ lorsqu'un bloc parent est créé ou détruit.
 
 ```svelte
 {#if x}
 	{#if y}
 		<!-- Svelte 3: <p transition:fade|local> -->
-		<p transition:fade>fades in and out only when y changes</p>
+		<p transition:fade>entre et sort en s'estompant seulement quand y change</p>
 
 		<!-- Svelte 3: <p transition:fade> -->
-		<p transition:fade|global>fades in and out when x or y change</p>
+		<p transition:fade|global>entre et sort en s'estompant quand x ou y change</p>
 	{/if}
 {/if}
 ```
 
-> By default intro transitions will not play on first render. You can modify this behaviour by setting `intro: true` when you [create a component](/docs/client-side-component-api) and marking the transition as `global`.
+> Par défaut, les transitions d'entrée (`in`) ne sont pas jouées au premier rendu. Vous pouvez modifier ce comportement en appliquant `intro: true` lorsque vous [instanciez manuellement un composant](/docs/client-side-component-api).
 
-## Transition parameters
+## Paramètres de transition
 
-Like actions, transitions can have parameters.
+À l'instar des actions, les transitions peuvent avoir des paramètres.
 
-(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+(La syntaxe `{{accolades}}` n'est pas spéciale ; il s'agit simplement d'un objet dans une balise d'expression.)
 
 ```svelte
 {#if visible}
-	<div transition:fade={{ duration: 2000 }}>fades in and out over two seconds</div>
+	<div transition:fade="{{ duration: 2000 }}">
+		s'estompe en entrant et en sortant sur une durée de 2 secondes
+	</div>
 {/if}
 ```
 
-## Custom transition functions
+## Transitions personnalisées
 
-Transitions can use custom functions. If the returned object has a `css` function, Svelte will create a CSS animation that plays on the element.
+Les transitions peuvent être définies par des fonctions personnalisées. Si l'objet retourné possède une fonction `css`, Svelte créera une animation CSS qui sera jouée sur l'élément.
 
-The `t` argument passed to `css` is a value between `0` and `1` after the `easing` function has been applied. _In_ transitions run from `0` to `1`, _out_ transitions run from `1` to `0` — in other words, `1` is the element's natural state, as though no transition had been applied. The `u` argument is equal to `1 - t`.
+L'argument `t` passé à `css` est une valeur entre `0` et `1` après que la fonction `easing` a été appliquée. Les transitions _entrantes_ sont jouées de `0` à `1`, les transitions _sortantes_ sont jouées de `1` à `0` — en d'autres termes, `1` est l'état normal de l'élément, comme si aucune transition ne lui était appliquée. L'argument `u` est égal à `1 - t`.
 
-The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
+La fonction est régulièrement appelée _avant_ que la transition ne commence, avec différentes valeurs pour `t` et `u`.
 
 ```svelte
 <script>
@@ -581,13 +584,13 @@ The function is called repeatedly _before_ the transition begins, with different
 </script>
 
 {#if visible}
-	<div in:whoosh>whooshes in</div>
+	<div in:whoosh>entre en faisant woosh</div>
 {/if}
 ```
 
-A custom transition function can also return a `tick` function, which is called _during_ the transition with the same `t` and `u` arguments.
+Une fonction de transition personnalisée peut aussi renvoyer une fonction `tick`, qui est appelée _pendant_ la transition avec les mêmes arguments `t` et `u`.
 
-> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+> Il est recommandé d'utiliser `css` plutôt que `tick`, si possible — les animations CSS sont exécutées sur un <span class='vo'>[thread](/docs/development#thread)</span> différent de celui de JS, évitant ainsi de ralentir les machines les moins puissantes.
 
 ```svelte
 <!--- file: App.svelte --->
@@ -599,10 +602,13 @@ A custom transition function can also return a `tick` function, which is called 
 	 * @param {{ speed?: number }} params
 	 */
 	function typewriter(node, { speed = 1 }) {
-		const valid = node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE;
+		const valid = (
+			node.childNodes.length === 1 &&
+			node.childNodes[0].nodeType === Node.TEXT_NODE
+		);
 
 		if (!valid) {
-			throw new Error(`This transition only works on elements with a single text node child`);
+			throw new Error(`Cette transition ne fonctionne que sur les éléments avec un seul noeud texte comme enfant`);
 		}
 
 		const text = node.textContent;
@@ -610,7 +616,7 @@ A custom transition function can also return a `tick` function, which is called 
 
 		return {
 			duration,
-			tick: (t) => {
+			tick: t => {
 				const i = ~~(text.length * t);
 				node.textContent = text.slice(0, i);
 			}
@@ -619,37 +625,39 @@ A custom transition function can also return a `tick` function, which is called 
 </script>
 
 {#if visible}
-	<p in:typewriter={{ speed: 1 }}>The quick brown fox jumps over the lazy dog</p>
+	<p in:typewriter="{{ speed: 1 }}">
+		Portez ce vieux whisky au juge blond qui fume
+	</p>
 {/if}
 ```
 
-If a transition returns a function instead of a transition object, the function will be called in the next microtask. This allows multiple transitions to coordinate, making [crossfade effects](https://learn.svelte.dev/tutorial/deferred-transitions) possible.
+Si une transition retourne une fonction au lieu d'un objet transition, la fonction sera appelée lors de la prochaine micro-tâche. Cela permet à plusieurs transitions de se coordonner, rendant les effets de [fondu croisé](PUBLIC_LEARN_SITE_URL/tutorial/deferred-transitions) possibles.
 
-Transition functions also receive a third argument, `options`, which contains information about the transition.
+Les fonctions de transition peuvent aussi avoir un troisième argument, `options`, qui contient des informations sur la transition.
 
-Available values in the `options` object are:
+Les valeurs possibles dans l'objet `options` sont:
 
-- `direction` - one of `in`, `out`, or `both` depending on the type of transition
+* `direction` - `in`, `out`, or `both`, selon le type de transition
 
-## Transition events
+## Évènements de transition
 
-An element with transitions will dispatch the following events in addition to any standard DOM events:
+Un élément ayant des transitions génére les évènements suivants en plus des évènements <span class='vo'>[DOM](/docs/web#dom)</span> standards:
 
-- `introstart`
-- `introend`
-- `outrostart`
-- `outroend`
+* `introstart`
+* `introend`
+* `outrostart`
+* `outroend`
 
 ```svelte
 {#if visible}
 	<p
-		transition:fly={{ y: 200, duration: 2000 }}
-		on:introstart={() => (status = 'intro started')}
-		on:outrostart={() => (status = 'outro started')}
-		on:introend={() => (status = 'intro ended')}
-		on:outroend={() => (status = 'outro ended')}
+		transition:fly="{{ y: 200, duration: 2000 }}"
+		on:introstart="{() => status = "début de l'entrée"}"
+		on:outrostart="{() => status = "début de la sortie"}"
+		on:introend="{() => status = "fin de l'entrée"}"
+		on:outroend="{() => status = "fin de la sortie"}"
 	>
-		Flies in and out
+		Entre et sort en volant
 	</p>
 {/if}
 ```
@@ -716,13 +724,15 @@ out:fn|local
 out:fn|local={params}
 ```
 
-Similar to `transition:`, but only applies to elements entering (`in:`) or leaving (`out:`) the DOM.
+Similaire à `transition:`, mais s'applique uniquement aux éléments entrant (`in:`) ou sortant (`out:`) du <span class='vo'>[DOM](/docs/web#dom)</span>.
 
-Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
+Contrairement à `transition:`, les transitions appliquées avec `in:` et `out:` ne sont pas bi-directionnelles — une transition entrante continuera sa course en parallèle de la transition sortante, plutôt que d'être inversée, si le bloc est supprimé pendant la transition en cours. Si une transition sortante est annulée, les transitions seront rejouées du début.
 
 ```svelte
 {#if visible}
-	<div in:fly out:fade>flies in, fades out</div>
+	<div in:fly out:fade>
+		entre en volant, sort en fondu
+	</div>
 {/if}
 ```
 
@@ -765,38 +775,38 @@ DOMRect {
 }
 ```
 
-An animation is triggered when the contents of a [keyed each block](/docs/logic-blocks#each) are re-ordered. Animations do not run when an element is added or removed, only when the index of an existing data item within the each block changes. Animate directives must be on an element that is an _immediate_ child of a keyed each block.
+Une animation est déclenchée quand le contenu d'un [bloc `each` à clé](/docs/logic-blocks#each) est réordonné. Les animations ne sont pas jouées lorsqu'un élément est ajouté ou supprimé, seulement lorsque l'indice d'un élément de liste change au sein d'un bloc `each`. Les directives `animate:` doivent appartenir à un élément enfant _direct_ d'un bloc `each` à clé.
 
-Animations can be used with Svelte's [built-in animation functions](/docs/svelte-animate) or [custom animation functions](/docs/element-directives#custom-animation-functions).
+Les animations peuvent être utilisées avec les [fonctions d'animation natives](/docs/svelte-animate) de Svelte ou avec des [fonctions d'animation personnalisées](/docs/element-directives#fonctions-d-animation-personnalis-es).
 
 ```svelte
-<!-- When `list` is reordered the animation will run-->
+<!-- Quand `list` est réordonnée, l'animation sera jouée -->
 {#each list as item, index (item)}
 	<li animate:flip>{item}</li>
 {/each}
 ```
 
-## Animation Parameters
+## Paramètres d'animation
 
-As with actions and transitions, animations can have parameters.
+À l'instar des actions et des transitions, les animations peuvent avoir des paramètres.
 
-(The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
+(La syntaxe `{{accolades}}` n'est pas spéciale; il s'agit simplement d'un objet dans une balise d'expression.)
 
 ```svelte
 {#each list as item, index (item)}
-	<li animate:flip={{ delay: 500 }}>{item}</li>
+	<li animate:flip="{{ delay: 500 }}">{item}</li>
 {/each}
 ```
 
-## Custom animation functions
+## Fonctions d'animation personnalisées
 
-Animations can use custom functions that provide the `node`, an `animation` object and any `parameters` as arguments. The `animation` parameter is an object containing `from` and `to` properties each containing a [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect#Properties) describing the geometry of the element in its `start` and `end` positions. The `from` property is the DOMRect of the element in its starting position, and the `to` property is the DOMRect of the element in its final position after the list has been reordered and the DOM updated.
+Les animations peuvent être définies par des fonctions fournissant un `node`, un objet `animation`, et n'importe quels `parameters` en arguments. L'argument `animation` est un objet ayant les propriétés `from` et `to`, chacune contenant un [DOMRect](https://developer.mozilla.org/fr/docs/Web/API/DOMRect#Properties) décrivant la géométrie de l'élément dans ses positions de départ (`start`) et arrivée (`end`). La propriété `from` est le DOMRect de l'élément dans sa position de départ, la propriété `to` est le DOMRect de l'élément dans sa position d'arrivée après que la liste a été réordonnée et le <span class='vo'>[DOM](/docs/web#dom)</span> mis à jour.
 
-If the returned object has a `css` method, Svelte will create a CSS animation that plays on the element.
+Si l'objet renvoyé a une méthode `css`, Svelte va créer une animation CSS qui sera jouée sur l'élément.
 
-The `t` argument passed to `css` is a value that goes from `0` and `1` after the `easing` function has been applied. The `u` argument is equal to `1 - t`.
+L'argument `t` passé à `css` est une valeur qui va de `0` à `1` avec que la fonction `easing` a été appliquée. L'argument `u` est égal à `1 - t`.
 
-The function is called repeatedly _before_ the animation begins, with different `t` and `u` arguments.
+La fonction est régulièrement appelée _avant_ que la transition ne commence, avec différentes valeurs pour `t` et `u`.
 
 <!-- TODO: Types -->
 
@@ -810,6 +820,7 @@ The function is called repeatedly _before_ the animation begins, with different 
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {
+
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
 
@@ -819,7 +830,7 @@ The function is called repeatedly _before_ the animation begins, with different 
 			delay: 0,
 			duration: Math.sqrt(d) * 120,
 			easing: cubicOut,
-			css: (t, u) => `transform: translate(${u * dx}px, ${u * dy}px) rotate(${t * 360}deg);`
+			css: (t, u) => `transform: translate(${u * dx}px, ${u * dy}px) rotate(${t*360}deg);`
 		};
 	}
 </script>
@@ -829,9 +840,9 @@ The function is called repeatedly _before_ the animation begins, with different 
 {/each}
 ```
 
-A custom animation function can also return a `tick` function, which is called _during_ the animation with the same `t` and `u` arguments.
+Une fonction d'animation personnalisée peut aussi renvoyer une fonction `tick`, qui est appelée _pendant_ la transition avec les mêmes arguments `t` et `u`.
 
-> If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
+> Il est recommandé d'utiliser `css` plutôt que `tick`, si possible — les animations CSS sont exécutées sur un <span class='vo'>[thread](/docs/development#thread)</span> différent de celui de JS, évitant ainsi de ralentir les machines les moins puissantes.
 
 ```svelte
 <script>
@@ -843,6 +854,7 @@ A custom animation function can also return a `tick` function, which is called _
 	 * @param {any} params
 	 */
 	function whizz(node, { from, to }, params) {
+
 		const dx = from.left - to.left;
 		const dy = from.top - to.top;
 
@@ -852,7 +864,8 @@ A custom animation function can also return a `tick` function, which is called _
 			delay: 0,
 			duration: Math.sqrt(d) * 120,
 			easing: cubicOut,
-			tick: (t, u) => Object.assign(node.style, { color: t > 0.5 ? 'Pink' : 'Blue' })
+			tick: (t, u) =>
+				Object.assign(node.style, { color: t > 0.5 ? 'Pink' : 'Blue' })
 		};
 	}
 </script>

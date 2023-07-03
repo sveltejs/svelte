@@ -112,7 +112,7 @@ export class SvelteComponent<
 }
 
 /**
- * @deprecated Use `SvelteComponent` instead. See TODO for more information.
+ * @deprecated Utilisez plutôt `SvelteComponent`. Voir TODO pour plus d'informations.
  */
 export class SvelteComponentTyped<
 	Props extends Record<string, any> = any,
@@ -121,7 +121,7 @@ export class SvelteComponentTyped<
 > extends SvelteComponent<Props, Events, Slots> {}
 
 /**
- * Convenience type to get the events the given component expects. Example:
+ * Type utile pour obtenir les évènements qu'un composant attend. Exemple :
  * ```html
  * <script lang="ts">
  *    import type { ComponentEvents } from 'svelte';
@@ -143,13 +143,13 @@ export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteC
 	: never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
+ * Type utile pour obtenir les <span class='vo'>[props](/docs/sveltejs#props)</span> qu'un composant attend. Exemple :
  * ```html
  * <script lang="ts">
  * 	import type { ComponentProps } from 'svelte';
  * 	import Component from './Component.svelte';
  *
- * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Errors if these aren't the correct props
+ * 	const props: ComponentProps<Component> = { foo: 'bar' }; // Affiche une erreur si ceci ne contient pas les bonnes props
  * </script>
  * ```
  */
@@ -158,10 +158,10 @@ export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteCo
 	: never;
 
 /**
- * Convenience type to get the type of a Svelte component. Useful for example in combination with
- * dynamic components using `<svelte:component>`.
+ * Type utile pour obtenir le type d'un composant Svelte. Utile en combinaison avec les
+ * composants dynamiques utilisant `<svelte:component>`.
  *
- * Example:
+ * Exemple:
  * ```html
  * <script lang="ts">
  * 	import type { ComponentType, SvelteComponent } from 'svelte';
@@ -181,7 +181,7 @@ export type ComponentType<Comp extends SvelteComponent> = (new (
 		Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
 	>
 ) => Comp) & {
-	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	/** La version "web component" du composant. Seulement présent si compilé avec l'option `customElement` */
 	element?: typeof HTMLElement;
 };
 
@@ -203,4 +203,3 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 }
 
 export * from './main-client.js';
-import './ambient.js';

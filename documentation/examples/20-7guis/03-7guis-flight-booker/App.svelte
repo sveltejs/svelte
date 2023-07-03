@@ -15,11 +15,11 @@
 	$: endDate = convertToDate(end);
 
 	function bookFlight() {
-		const type = isReturn ? 'return' : 'one-way';
+		const type = isReturn ? 'A-R' : 'aller simple';
 
-		let message = `You have booked a ${type} flight, leaving ${startDate.toDateString()}`;
-		if (type === 'return') {
-			message += ` and returning ${endDate.toDateString()}`;
+		let message = `Vous avez réservé un vol ${type}, qui décolle le ${startDate.toDateString()}`;
+		if (type === 'A-R') {
+			message += ` et revient le ${endDate.toDateString()}`;
 		}
 
 		alert(message);
@@ -38,14 +38,14 @@
 </script>
 
 <select bind:value={isReturn}>
-	<option value={false}>one-way flight</option>
-	<option value={true}>return flight</option>
+	<option value={false}>Aller simple</option>
+	<option value={true}>Aller-retour</option>
 </select>
 
 <input type="date" bind:value={start} />
 <input type="date" bind:value={end} disabled={!isReturn} />
 
-<button on:click={bookFlight} disabled={isReturn && startDate >= endDate}>book</button>
+<button on:click={bookFlight} disabled={isReturn && startDate >= endDate}>réserver</button>
 
 <style>
 	select,

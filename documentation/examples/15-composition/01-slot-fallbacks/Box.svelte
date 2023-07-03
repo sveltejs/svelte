@@ -1,6 +1,6 @@
 <div class="box">
 	<slot>
-		<em>no content was provided</em>
+		<em>aucun contenu n'a été fourni</em>
 	</slot>
 </div>
 

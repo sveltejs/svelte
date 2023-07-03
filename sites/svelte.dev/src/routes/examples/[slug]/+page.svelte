@@ -32,12 +32,12 @@
 <svelte:head>
 	<title>{data.example?.title} {data.example?.title ? '•' : ''} Svelte Examples</title>
 
-	<meta name="twitter:title" content="Svelte examples" />
+	<meta name="twitter:title" content="Exemples Svelte" />
 	<meta name="twitter:description" content="Cybernetically enhanced web apps" />
-	<meta name="Description" content="Interactive example Svelte apps" />
+	<meta name="Description" content="Exemples Svelte interactifs" />
 </svelte:head>
 
-<h1 class="visually-hidden">Examples</h1>
+<h1 class="visually-hidden">Exemples</h1>
 <div class="examples-container" bind:clientWidth={width}>
 	<div class="viewport offset-{offset}">
 		<TableOfContents

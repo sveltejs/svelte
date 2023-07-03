@@ -1,38 +1,38 @@
 ---
-title: Svelte 4 migration guide
+title: Guide de migration Svelte 4
 ---
 
-This migration guide provides an overview of how to migrate from Svelte version 3 to 4. See the linked PRs for more details about each change. Use the migration script to migrate some of these automatically: `npx svelte-migrate@latest svelte-4`
+Ce guide de migration fournit un aperçu de la manière dont vous devez migrer une application en Svelte 3 vers Svelte 4. Allez voir les <span class="vo">[PRs](/docs/development#pull-request)</span> associées pour plus de détails au sujet de chaque changement. Utilisez le script de migration pour migrer certains de ces changements automatiquement : `npx svelte-migrate@latest svelte-4`.
 
-If you're a library author, consider whether to only support Svelte 4 or if it's possible to support Svelte 3 too. Since most of the breaking changes don't affect many people, this may be easily possible. Also remember to update the version range in your `peerDependencies`.
+Si vous êtes l'auteur d'une librairie, considérez bien le choix de ne supporter que Svelte 4 ou, si cela est possible, de continuer à supporter Svelte 3 également. Comme la plupart des changements non réversibles n'affectent que peu de personnes, cela est facilement faisable la plupart du temps. Enfin, n'oubliez pas de mettre à jour la plage de versions des `peerDependencies`.
 
-## Minimum version requirements
+## Exigences minimales pour Svelte 4
 
-- Upgrade to Node 16 or higher. Earlier versions are no longer supported. ([#8566](https://github.com/sveltejs/svelte/issues/8566))
-- If you are using SvelteKit, upgrade to 1.20.4 or newer ([sveltejs/kit#10172](https://github.com/sveltejs/kit/pull/10172))
-- If you are using Vite without SvelteKit, upgrade to `vite-plugin-svelte` 2.4.1 or newer ([#8516](https://github.com/sveltejs/svelte/issues/8516))
-- If you are using webpack, upgrade to webpack 5 or higher and `svelte-loader` 3.1.8 or higher. Earlier versions are no longer supported. ([#8515](https://github.com/sveltejs/svelte/issues/8515), [198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
-- If you are using Rollup, upgrade to `rollup-plugin-svelte` 7.1.5 or higher ([198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
-- If you are using TypeScript, upgrade to TypeScript 5 or higher. Lower versions might still work, but no guarantees are made about that. ([#8488](https://github.com/sveltejs/svelte/issues/8488))
+- Mettez à jour vers Node 16 ou plus. Les versions précédentes ne sont plus supportées. ([#8566](https://github.com/sveltejs/svelte/issues/8566))
+- Si vous utilisez SvelteKit, mettez à jour sa version à 1.20.4 ou plus ([sveltejs/kit#10172](https://github.com/sveltejs/kit/pull/10172))
+- Si vous utilisez Vite sans SvelteKit, mettez à jour la version de `vite-plugin-svelte` à 2.4.1 ou plus ([#8516](https://github.com/sveltejs/svelte/issues/8516))
+- Si vous utilisez webpack, mettez à jour sa version à 5 ou plus et `svelte-loader` à 3.1.8 ou plus. Les versions précédentes ne sont plus supportées. ([#8515](https://github.com/sveltejs/svelte/issues/8515), [198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
+- Si vous utilisez Rollup, mettez à jour la version de `rollup-plugin-svelte` à 7.1.5 ou plus ([198dbcf](https://github.com/sveltejs/svelte/commit/198dbcf))
+- Si vous utilisez TypeScript, mettez à jour sa version à 5.0.0 ou plus. Les versions précédentes pourront probablement toujours fonctionner, mais nous ne pouvons pas le garantir. ([#8488](https://github.com/sveltejs/svelte/issues/8488))
 
-## Browser conditions for bundlers
+## Conditions de navigateurs pour les bundlers
 
-Bundlers must now specify the `browser` condition when building a frontend bundle for the browser. SvelteKit and Vite will handle this automatically for you. If you're using any others, you may observe lifecycle callbacks such as `onMount` not get called and you'll need to update the module resolution configuration.
+Les <span class="vo">[bundlers](/docs/web#bundler-packager)</span> doivent maintenant spécifier la condition `browser` lorsque vous créez un bundler frontend pour le navigateur. SvelteKit et Vite se chargeront de le préciser pour vous automatiquement. Si vous utilisez un autre bundler, il se peut que les <span class="vo">[callbacks](/docs/development#callback)</span> de cycle de vie comme `onMount` ne s'exécutent pas correctement, et vous devrez mettre à jour la configuration de la résolution de module.
 
-- For Rollup this is done within the `@rollup/plugin-node-resolve` plugin by setting `browser: true` in its options. See the [`rollup-plugin-svelte`](https://github.com/sveltejs/rollup-plugin-svelte/#usage) documentation for more details
-- For wepback this is done by adding `"browser"` to the `conditionNames` array. You may also have to update your `alias` config, if you have set it. See the [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) documentation for more details
+- Pour Rollup, vous pouvez faire cela dans le <span class="vo">[plugin](/docs/development#plugin)</span> `@rollup/plugin-node-resolve` en choisissant `browser: true` dans ses options. Voir la documentation de [`rollup-plugin-svelte`](https://github.com/sveltejs/rollup-plugin-svelte/#usage) pour plus de détail
+- Pour Webpack, vous pouvez faire cela en ajoutant `"browser"` au tableau `conditionNames`. Vous pourriez aussi avoir à mettre à jour votre configuration d'`alias`, si vous vous en servez. Voir la documentation de [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) pour plus de détail
 
 ([#8516](https://github.com/sveltejs/svelte/issues/8516))
 
-## Removal of CJS related output
+## Suppression des sorties de build en CJS
 
-Svelte no longer supports the CommonJS (CJS) format for compiler output and has also removed the `svelte/register` hook and the CJS runtime version. If you need to stay on the CJS output format, consider using a bundler to convert Svelte's ESM output to CJS in a post-build step. ([#8613](https://github.com/sveltejs/svelte/issues/8613))
+Svelte ne supporte plus le format CommonJS (CJS) comme format de sortie de la compilation. L'<span class="vo">[API](/docs/development#api)</span> `svelte/register` a été retirée ainsi que la version de runtime CJS. Si vous avez besoin de garder le format de sortie CJS, utilisez un <span class="vo">[bundler](/docs/web#bundler-packager)</span> pour convertir la sortie ESM en CJS avec une étape de post-build. ([#8613](https://github.com/sveltejs/svelte/issues/8613))
 
-## Stricter types for Svelte functions
+## Typage plus strict pour les fonctions Svelte
 
-There are now stricter types for `createEventDispatcher`, `Action`, `ActionReturn`, and `onMount`:
+Il y a maintenant des types plus stricts pour `createEventDispatcher`, `Action`, `ActionReturn` et `onMount` :
 
-- `createEventDispatcher` now supports specifying that a payload is optional, required, or non-existent, and the call sites are checked accordingly ([#7224](https://github.com/sveltejs/svelte/issues/7224))
+- `createEventDispatcher` supporte maintenant de pouvoir spécifier que son argument soit optionnel, obligatoire, ou simplement non défini ; les appels seront vérifiés en conséquence ([#7224](https://github.com/sveltejs/svelte/issues/7224)) :
 
 ```ts
 // @errors: 2554 2345
@@ -46,31 +46,31 @@ const dispatch = createEventDispatcher<{
 
 // Svelte version 3:
 dispatch('optional');
-dispatch('required'); // I can still omit the detail argument
-dispatch('noArgument', 'surprise'); // I can still add a detail argument
+dispatch('required'); // Il est possible de ne pas spécifier l'argument de détail
+dispatch('noArgument', 'surprise'); // Il est possible de spécifier un argument de détail
 
-// Svelte version 4 using TypeScript strict mode:
+// Svelte version 4 en utilisant le TypeScript avec le mode strict:
 dispatch('optional');
-dispatch('required'); // error, missing argument
-dispatch('noArgument', 'surprise'); // error, cannot pass an argument
+dispatch('required'); // erreur, argument manquant (error, missing argument)
+dispatch('noArgument', 'surprise'); // erreur, il n'est pas possible de passer un argument (error, cannot pass an argument)
 ```
 
-- `Action` and `ActionReturn` have a default parameter type of `undefined` now, which means you need to type the generic if you want to specify that this action receives a parameter. The migration script will migrate this automatically ([#7442](https://github.com/sveltejs/svelte/pull/7442))
+- `Action` et `ActionReturn` ont maintenant un type d'argument par défaut à `undefined`, ce qui signifie que vous devez typer le <span class="vo">[generic](/docs/javascript#generic)</span> si vous voulez spécifier que cette action reçoit un paramètre. Le script de migration prendra cette règle en compte automatiquement ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
 ```diff
--const action: Action = (node, params) => { .. } // this is now an error if you use params in any way
-+const action: Action<HTMLElement, string> = (node, params) => { .. } // params is of type string
+-const action: Action = (node, params) => { .. } // ceci lèvera maintenant une erreur si vous utilisez un paramètre
++const action: Action<HTMLElement, string> = (node, params) => { .. } // params est maintenant de type string
 ```
 
-- `onMount` now shows a type error if you return a function asynchronously from it, because this is likely a bug in your code where you expect the callback to be called on destroy, which it will only do for synchronously returned functions ([#8136](https://github.com/sveltejs/svelte/issues/8136))
+- `onMount` affichera maintenant une erreur de typage si vous retournez une fonction asynchrone. En effet, cela est probablement un bug dans votre code pour lequel vous vous attendez à ce que le <span class="vo">[callback](/docs/development#callback)</span> soit appelé à la destruction du composant, ce qui n'est le cas que pour des fonctions synchrones ([#8136](https://github.com/sveltejs/svelte/issues/8136))
 
 ```diff
-// Example where this change reveals an actual bug
+// Exemple pour lequel ce changement révèle un vrai bug
 onMount(
-- // someCleanup() not called because function handed to onMount is async
+- // someCleanup() n'est pas appelé car la fonction passée à onMount est asynchrone
 - async () => {
 -   const something = await foo();
-+ // someCleanup() is called because function handed to onMount is sync
++ // someCleanup() est appelé car la fonction passée à onMount est synchrone
 + () => {
 +  foo().then(something =>  ..
    // ..
@@ -79,20 +79,20 @@ onMount(
 );
 ```
 
-## Custom Elements with Svelte
+## Les Custom Elements avec Svelte
 
-The creation of custom elements with Svelte has been overhauled and significantly improved. The `tag` option is deprecated in favor of the new `customElement` option:
+La création des <span class="vo">[Custom Elements (ou Web Components)](/docs/web#web-component)</span> avec Svelte a complètement été repensée et significativement améliorée. L'option `tag` a été dépréciée en faveur de la nouvelle option `customElement` :
 
 ```diff
 -<svelte:options tag="my-component" />
 +<svelte:options customElement="my-component" />
 ```
 
-This change was made to allow [more configurability](custom-elements-api#component-options) for advanced use cases. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
+Ce changement est intervenu pour permettre [une meilleure configuration](custom-elements-api#options-de-composant) pour des cas d'usages avancés. Le code de migration ajustera votre code automatiquement. La temporalité des changements des propriétés a également légèrement changée. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
 
-## SvelteComponentTyped is deprecated
+## SvelteComponentTyped est déprécié
 
-`SvelteComponentTyped` is deprecated, as `SvelteComponent` now has all its typing capabilities. Replace all instances of `SvelteComponentTyped` with `SvelteComponent`.
+`SvelteComponentTyped` est déprécié, car `SvelteComponent` contient tout le typage nécessaire. Remplacez toutes les instances de `SvelteComponentTyped` par `SvelteComponent`.
 
 ```diff
 - import { SvelteComponentTyped } from 'svelte';
@@ -102,7 +102,7 @@ This change was made to allow [more configurability](custom-elements-api#compone
 + export class Foo extends SvelteComponent<{ aProp: string }> {}
 ```
 
-If you have used `SvelteComponent` as the component instance type previously, you may see a somewhat opaque type error now, which is solved by changing `: typeof SvelteComponent` to `: typeof SvelteComponent<any>`.
+Si par le passé vous utilisiez `SvelteComponent` comme type d'instance de composant, vous pourriez maintenant voir une erreur de type obscure, qui est résolue en changeant ` : typeof SvelteComponent` par ` : typeof SvelteComponent<any>`.
 
 ```diff
 <script>
@@ -118,30 +118,30 @@ If you have used `SvelteComponent` as the component instance type previously, yo
   }
 </script>
 
-<button on:click={choseRandomly}>random</button>
+<button on:click={choseRandomly}>aléatoire</button>
 <svelte:element this={component} />
 ```
 
-The migration script will do both automatically for you. ([#8512](https://github.com/sveltejs/svelte/issues/8512))
+Le script de migration changera les deux cas automatiquement pour vous. ([#8512](https://github.com/sveltejs/svelte/issues/8512))
 
-## Transitions are local by default
+## Les transitions sont locales par défaut
 
-Transitions are now local by default to prevent confusion around page navigations. "local" means that a transition will not play if it's within a nested control flow block (`each/if/await/key`) and not the direct parent block but a block above it is created/destroyed. In the following example, the `slide` intro animation will only play when `success` goes from `false` to `true`, but it will _not_ play when `show` goes from `false` to `true`:
+Les transitions sont désormais locales par défaut afin d'éviter toute confusion lors de la navigation dans les pages. "Local" signifie qu'une transition ne sera pas jouée si elle se trouve dans un bloc de contrôle imbriqué (`each/if/await/key`) et non dans le bloc parent direct, mais qu'un bloc au-dessus soit créé ou détruit. Dans l'exemple suivant, l'animation d'introduction `slide` ne sera jouée que lorsque `success` passera de `false` à `true`, mais elle ne sera _pas_ jouée lorsque `show` passera de `false` à `true` :
 
 ```svelte
 {#if show}
 	...
 	{#if success}
-		<p in:slide>Success</p>
+		<p in:slide>Succès</p>
 	{/each}
 {/if}
 ```
 
-To make transitions global, add the `|global` modifier - then they will play when _any_ control flow block above is created/destroyed. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
+Pour rendre les transitions globales, ajoutez le modificateur `|global` - elles seront alors jouées lorsque _n'importe quel_ bloc de flux de contrôle ci-dessus est créé ou détruit. Le script de migration le fera automatiquement pour vous. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 
-## Default slot bindings
+## Les binding de slot par défaut
 
-Default slot bindings are no longer exposed to named slots and vice versa:
+Les liaisons de <span class="vo">[slots](/docs/sveltejs#slot)</span> par défaut ne sont plus exposées aux slots nommés et vice versa :
 
 ```svelte
 <script>
@@ -150,19 +150,19 @@ Default slot bindings are no longer exposed to named slots and vice versa:
 
 <Nested let:count>
 	<p>
-		count in default slot - is available: {count}
+		count dans un slot par défaut - est accessible : {count}
 	</p>
 	<p slot="bar">
-		count in bar slot - is not available: {count}
+		count dans un slot nommé (bar) - n'est pas accessible: {count}
 	</p>
 </Nested>
 ```
 
-This makes slot bindings more consistent as the behavior is undefined when for example the default slot is from a list and the named slot is not. ([#6049](https://github.com/sveltejs/svelte/issues/6049))
+Cela rend les liaisons de <span class="vo">[slots](/docs/sveltejs#slot)</span> plus cohérentes car le comportement est indéfini lorsque, par exemple, le slot par défaut provient d'une liste et que le slot nommé n'en fait pas partie. ([#6049](https://github.com/sveltejs/svelte/issues/6049))
 
-## Preprocessors
+## Préprocesseurs
 
-The order in which preprocessors are applied has changed. Now, preprocessors are executed in order, and within one group, the order is markup, script, style.
+L'ordre dans lequel les préprocesseurs sont appliqués a changé. Désormais, les préprocesseurs sont exécutés dans l'ordre et, au sein d'un même groupe, l'ordre est le suivant : balisage, script, style.
 
 ```js
 // @errors: 2304
@@ -216,7 +216,7 @@ const { code } = await preprocess(
 // style-2
 ```
 
-This could affect you for example if you are using `MDsveX` - in which case you should make sure it comes before any script or style preprocessor.
+Ceci peut vous affecter si vous utilisez par exemple `MDsveX` - pour lequel vous devez vous assurer qu'il vient avant n'importe quel préprocesseur de script ou de style :
 
 ```diff
 preprocess: [
@@ -227,19 +227,19 @@ preprocess: [
 ]
 ```
 
-Each preprocessor must also have a name. ([#8618](https://github.com/sveltejs/svelte/issues/8618))
+Chaque préprocesseur doit également avoir un nom. ([#8618](https://github.com/sveltejs/svelte/issues/8618))
 
-## New eslint package
+## Nouvelle librairie eslint
 
-`eslint-plugin-svelte3` is deprecated. It may still work with Svelte 4 but we make no guarantees about that. We recommend switching to our new package [eslint-plugin-svelte](https://github.com/sveltejs/eslint-plugin-svelte). See [this Github post](https://github.com/sveltejs/kit/issues/10242#issuecomment-1610798405) for an instruction how to migrate. Alternatively, you can create a new project using `npm create svelte@latest`, select the eslint (and possibly TypeScript) option and then copy over the related files into your existing project.
+`eslint-plugin-svelte3` est déprécié. Il est possible qu'il fonctionne encore avec Svelte 4, mais nous ne le garantissons pas. Nous recommandons de passer à notre nouvelle librairie [eslint-plugin-svelte] (https://github.com/sveltejs/eslint-plugin-svelte). Voir [ce ticket Github](https://github.com/sveltejs/kit/issues/10242#issuecomment-1610798405) pour des instructions sur la façon de migrer. Alternativement, vous pouvez créer un nouveau projet en utilisant `npm create svelte@latest`, sélectionner l'option eslint (et éventuellement TypeScript) et ensuite copier les fichiers associés dans votre projet existant.
 
-## Other breaking changes
+## Autres changements majeurs
 
-- the `inert` attribute is now applied to outroing elements to make them invisible to assistive technology and prevent interaction. ([#8628](https://github.com/sveltejs/svelte/pull/8628))
-- the runtime now uses `classList.toggle(name, boolean)` which may not work in very old browsers. Consider using a [polyfill](https://github.com/eligrey/classList.js) if you need to support these browsers. ([#8629](https://github.com/sveltejs/svelte/issues/8629))
-- the runtime now uses the `CustomEvent` constructor which may not work in very old browsers. Consider using a [polyfill](https://github.com/theftprevention/event-constructor-polyfill/tree/master) if you need to support these browsers. ([#8775](https://github.com/sveltejs/svelte/pull/8775))
-- people implementing their own stores from scratch using the `StartStopNotifier` interface (which is passed to the create function of `writable` etc) from `svelte/store` now need to pass an update function in addition to the set function. This has no effect on people using stores or creating stores using the existing Svelte stores. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
-- `derived` will now throw an error on falsy values instead of stores passed to it. ([#7947](https://github.com/sveltejs/svelte/issues/7947))
-- type definitions for `svelte/internal` were removed to further discourage usage of those internal methods which are not public API. Most of these will likely change for Svelte 5
-- Removal of DOM nodes is now batched which slightly changes its order, which might affect the order of events fired if you're using a `MutationObserver` on these elements ([#8763](https://github.com/sveltejs/svelte/pull/8763))
-- if you enhanced the global typings through the `svelte.JSX` namespace before, you need to migrate this to use the `svelteHTML` namespace. Similarly if you used the `svelte.JSX` namespace to use type definitions from it, you need to migrate those to use the types from `svelte/elements` instead. You can find more information about what to do [here](https://github.com/sveltejs/language-tools/blob/master/docs/preprocessors/typescript.md#im-getting-deprecation-warnings-for-sveltejsx--i-want-to-migrate-to-the-new-typings)
+- l'attribut `inert` est maintenant appliqué aux éléments sortants pour les rendre invisibles aux technologies d'assistance et empêcher l'interaction. ([#8628](https://github.com/sveltejs/svelte/pull/8628))
+- le <span class="vo">[runtime](/docs/development#runtime)</span> utilise maintenant `classList.toggle(name, boolean)` qui peut ne pas fonctionner dans les très vieux navigateurs. Envisagez d'utiliser un [polyfill](https://github.com/eligrey/classList.js) si vous avez besoin de supporter ces navigateurs. ([#8629](https://github.com/sveltejs/svelte/issues/8629))
+- le <span class="vo">[runtime](/docs/development#runtime)</span> utilise maintenant le constructeur `CustomEvent` qui peut ne pas fonctionner dans les très vieux navigateurs. Envisagez d'utiliser un [polyfill] (https://github.com/theftprevention/event-constructor-polyfill/tree/master) si vous avez besoin de supporter ces navigateurs. ([#8775](https://github.com/sveltejs/svelte/pull/8775))
+- Les personnes qui implémentent leurs propres <span class="vo">[stores](/docs/sveltejs#store)</span> en utilisant l'interface `StartStopNotifier` (qui est passée à la fonction create de `writable` etc) de `svelte/store` doivent maintenant passer une fonction de mise à jour en plus de la fonction set. Cela n'a aucun effet sur les personnes qui utilisent des stores ou qui créent des stores en utilisant les stores Svelte existants. ([#6750](https://github.com/sveltejs/svelte/issues/6750))
+- `derived` lancera maintenant une erreur sur les valeurs <span class="vo">[falsy](/docs/javascript#falsy-truthy-falsy)</span> au lieu des <span class="vo">[stores](/docs/sveltejs#store)</span> qui lui sont passés. ([#7947](https://github.com/sveltejs/svelte/issues/7947))
+- les définitions de type pour `svelte/internal` ont été supprimées pour décourager encore plus l'utilisation de ces méthodes internes qui ne sont pas des <span class="vo">[API](/docs/development#api)</span> publiques. La plupart de ces éléments seront probablement modifiés pour Svelte 5.
+- La suppression des noeuds du <span class="vo">[DOM](/docs/web#dom)</span> se fait maintenant par lots, ce qui modifie légèrement l'ordre, ce qui peut affecter l'ordre des événements déclenchés si vous utilisez un `MutationObserver` sur ces éléments ([#8763](https://github.com/sveltejs/svelte/pull/8763))
+- si vous avez étendu les typages globaux à travers le <span class="vo">[namespace](/docs/development#namespace)</span> `svelte.JSX` auparavant, vous devez les migrer pour utiliser le namespace `svelteHTML`. De même, si vous avez utilisé le namespace `svelte.JSX` pour utiliser des définitions de types, vous devez les migrer pour utiliser les types de `svelte/elements` à la place. Vous pouvez trouver plus d'informations sur ce qu'il faut faire [ici](https://github.com/sveltejs/language-tools/blob/master/docs/preprocessors/typescript.md#im-getting-deprecation-warnings-for-sveltejsx--i-want-to-migrate-to-the-new-typings)

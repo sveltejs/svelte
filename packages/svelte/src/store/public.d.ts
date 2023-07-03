@@ -1,49 +1,50 @@
 import type { Invalidator } from './private.js';
 
-/** Callback to inform of a value updates. */
+/** <span class="vo">[Callback](/docs/development#callback)</span> pour informer des changements d'une valeur. */
 export type Subscriber<T> = (value: T) => void;
 
-/** Unsubscribes from value updates. */
+/** Permet de se désabonner des changements d'une valeur */
 export type Unsubscriber = () => void;
 
-/** Callback to update a value. */
+/** <span class="vo">[Callback](/docs/development#callback)</span> pour mettre à jour une valeur. */
 export type Updater<T> = (value: T) => T;
 
 /**
- * Start and stop notification callbacks.
- * This function is called when the first subscriber subscribes.
+ * Lance et arrête les <span class="vo">[callbacks](/docs/development#callback)</span> d'abonnement.
+ * Cette fonction est appelée quand le premier abonné s'abonne.
  *
- * @param {(value: T) => void} set Function that sets the value of the store.
- * @param {(value: Updater<T>) => void} update Function that sets the value of the store after passing the current value to the update function.
- * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
- * subscriber unsubscribes.
+ * @param {(value: T) => void} set Fonction qui change la valeur du <span class="vo">[store](/docs/sveltejs#store)</span>.
+ *
+ * @param {(value: Updater<T>) => void} update Fonction qui change la valeur du <span class="vo">[store](/docs/sveltejs#store)</span>
+ * après avoir passé la valeur actuelle à la fonction de mise à jour.
+ * @returns {void | (() => void)} Une fonction de nettoyage optionnelle qui est appelée quand le dernier abonné se désabonne.
  */
 export type StartStopNotifier<T> = (
 	set: (value: T) => void,
 	update: (fn: Updater<T>) => void
 ) => void | (() => void);
 
-/** Readable interface for subscribing. */
+/** Interface Readable pour s'abonner. */
 export interface Readable<T> {
 	/**
-	 * Subscribe on value changes.
-	 * @param run subscription callback
-	 * @param invalidate cleanup callback
+	 * Permet de s'abonner aux changements de valeur.
+	 * @param run <span class="vo">[callback](/docs/development#callback)</span> d'abonnement
+	 * @param invalidate <span class="vo">[callback](/docs/development#callback)</span> de nettoyage
 	 */
 	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
 }
 
-/** Writable interface for both updating and subscribing. */
+/** Interface Writable for s'abonner et mettre à jour. */
 export interface Writable<T> extends Readable<T> {
 	/**
-	 * Set value and inform subscribers.
-	 * @param value to set
+	 * Change la valeur et informe les abonnés.
+	 * @param value une valeur
 	 */
 	set(this: void, value: T): void;
 
 	/**
-	 * Update value using callback and inform subscribers.
-	 * @param updater callback
+	 * Met la valeur à jour en utilisant le <span class="vo">[callback](/docs/development#callback)</span> et informe les abonnés.
+	 * @param updater <span class="vo">[callback](/docs/development#callback)</span>
 	 */
 	update(this: void, updater: Updater<T>): void;
 }

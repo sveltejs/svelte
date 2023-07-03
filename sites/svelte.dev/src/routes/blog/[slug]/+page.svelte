@@ -40,7 +40,9 @@
 				title: data.post.title
 			}}
 			orientation="inline"
-		/>
+		>
+			Sur cette page
+		</DocsOnThisPage>
 
 		{@html data.post.content}
 	</article>

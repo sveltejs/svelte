@@ -4,4 +4,4 @@
 </script>
 
 <input type="number" bind:value={count} />
-<button on:click={() => (count += 1)}>count</button>
+<button on:click={() => (count += 1)}>compter</button>

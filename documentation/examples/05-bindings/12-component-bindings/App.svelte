@@ -2,10 +2,10 @@
 	import Keypad from './Keypad.svelte';
 
 	let pin;
-	$: view = pin ? pin.replace(/\d(?!$)/g, '•') : 'enter your pin';
+	$: view = pin ? pin.replace(/\d(?!$)/g, '•') : 'entrez votre code';
 
 	function handleSubmit() {
-		alert(`submitted ${pin}`);
+		alert(`votre code ${pin}`);
 	}
 </script>
 

@@ -1,4 +1,4 @@
-<button on:click> Click me </button>
+<button on:click> Cliquez moi </button>
 
 <style>
 	button {

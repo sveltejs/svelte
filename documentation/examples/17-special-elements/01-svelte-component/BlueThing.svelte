@@ -1,7 +1,7 @@
-<strong>Blue thing</strong>
+<strong>Truc rouge</strong>
 
 <style>
 	strong {
-		color: blue;
+		color: red;
 	}
 </style>

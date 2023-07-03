@@ -1,14 +1,15 @@
 /**
- * Actions can return an object containing the two properties defined in this interface. Both are optional.
- * - update: An action can have a parameter. This method will be called whenever that parameter changes,
- *   immediately after Svelte has applied updates to the markup. `ActionReturn` and `ActionReturn<undefined>` both
- *   mean that the action accepts no parameters.
- * - destroy: Method that is called after the element is unmounted
+ * Les actions peuvent renvoyer un objet contenant les deux propriétés définies dans cette interface.
+ * Les deux sont optionnelles.
+ * - update: Une action peut avoir un paramètre. Cette méthode est appelée à chaque fois que ce paramètre change,
+ *   juste après que Svelte ait appliqué les mises à jour au <span class="vo">[markup](/docs/web#markup)</span>.
+ * 	 `ActionReturn` et `ActionReturn<undefined>` signifient toutes les deux que l'action n'accepte pas de paramètre.
+ * - destroy: Méthode qui est appelée après la destruction de l'élément
  *
- * Additionally, you can specify which additional attributes and events the action enables on the applied element.
- * This applies to TypeScript typings only and has no effect at runtime.
+ * De plus, vous pouvez spécifier quels attributs et évènements additionnels l'action apporte à l'élément sur lequel elle est appliquée.
+ * Ceci n'a d'impact que sur les types Typescript et n'a pas d'effet au moment de l'exécution.
  *
- * Example usage:
+ * Exemple d'usage:
  * ```ts
  * interface Attributes {
  * 	newprop?: string;
@@ -41,19 +42,19 @@ export interface ActionReturn<
 }
 
 /**
- * Actions are functions that are called when an element is created.
- * You can use this interface to type such actions.
- * The following example defines an action that only works on `<div>` elements
- * and optionally accepts a parameter which it has a default value for:
+ * Les actions sont des fonctions exécutées lorsqu'un élément est créé.
+ * Vous pouvez utiliser cette interface pour les typer.
+ * L'exemple suivant définit une action qui ne fonctionne que pour les éléments `<div>`
+ * et accepte un paramètre optionnel qui a une valeur par défaut :
  * ```ts
  * export const myAction: Action<HTMLDivElement, { someProperty: boolean } | undefined> = (node, param = { someProperty: true }) => {
  *   // ...
  * }
  * ```
- * `Action<HTMLDivElement>` and `Action<HTMLDiveElement, undefined>` both signal that the action accepts no parameters.
+ * `Action<HTMLDivElement>` et `Action<HTMLDivElement, undefined>` indiquent tous les deux que l'action n'accepte pas de paramètre.
  *
- * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
- * See interface `ActionReturn` for more details.
+ * Une action peut renvoyer un objet avec les méthodes `update` et `destroy`, et vous pouvez typer quels attributs et évènements elle apporte.
+ * Voir l'interface `ActionReturn` pour plus de détails.
  *
  * Docs: https://svelte.dev/docs/svelte-action
  */

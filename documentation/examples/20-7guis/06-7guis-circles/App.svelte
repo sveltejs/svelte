@@ -1,9 +1,8 @@
 <!--
 https://eugenkiss.github.io/7guis/tasks#circle
 
-Click on the canvas to draw a circle. Click on a circle
-to select it. Right-click on the canvas to adjust the
-radius of the selected circle.
+Cliquez sur le canvas pour dessiner un cercle. Cliquez sur un cercle pour le sélectionner.
+Faites un clic-droit sur le canvas pour ajuster le rayon du cercle sélectionné
 -->
 
 <script>
@@ -18,8 +17,8 @@ radius of the selected circle.
 		if (adjusting) {
 			adjusting = false;
 
-			// if circle was adjusted,
-			// push to the stack
+			// si le cercle est ajusté,
+			// l'ajouter à la pile
 			if (adjusted) push();
 			return;
 		}
@@ -66,13 +65,12 @@ radius of the selected circle.
 </script>
 
 <div class="controls">
-	<button on:click={() => travel(-1)} disabled={i === 0}>undo</button>
-	<button on:click={() => travel(+1)} disabled={i === undoStack.length - 1}>redo</button>
+	<button on:click={() => travel(-1)} disabled={i === 0}>annuler</button>
+	<button on:click={() => travel(+1)} disabled={i === undoStack.length - 1}>refaire</button>
 </div>
-<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+
 <svg on:click={handleClick}>
 	{#each circles as circle}
-		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<circle
 			cx={circle.cx}
 			cy={circle.cy}
@@ -89,7 +87,7 @@ radius of the selected circle.
 
 {#if adjusting}
 	<div class="adjuster">
-		<p>adjust diameter of circle at {selected.cx}, {selected.cy}</p>
+		<p>ajuster le diamètre du cercle en position {selected.cx}, {selected.cy}</p>
 		<input type="range" value={selected.r} on:input={adjust} />
 	</div>
 {/if}

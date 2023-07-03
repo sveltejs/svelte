@@ -1,0 +1,47 @@
+name: Docs tracker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  track-docs:
+    runs-on: ubuntu-latest
+    name: Checking Docs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Svelte docs new commits
+        uses: AlexxNB/track-commits-to-issue@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: sveltejs
+          repo: svelte
+          dir: documentation
+  track-site:
+    runs-on: ubuntu-latest
+    name: Checking Site
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Svelte site new commits
+        uses: AlexxNB/track-commits-to-issue@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: sveltejs
+          repo: svelte
+          dir: sites/svelte.dev
+  track-svelte:
+    runs-on: ubuntu-latest
+    name: Checking Svelte core
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Svelte new commits
+        uses: AlexxNB/track-commits-to-issue@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: sveltejs
+          repo: svelte
+          dir: packages/svelte/src

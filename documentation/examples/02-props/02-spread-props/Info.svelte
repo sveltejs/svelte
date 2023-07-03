@@ -6,7 +6,7 @@
 </script>
 
 <p>
-	The <code>{name}</code> package is {speed} fast. Download version {version} from
-	<a href="https://www.npmjs.com/package/{name}">npm</a>
-	and <a href={website}>learn more here</a>
+	Le composant <code>{name}</code> est {speed} rapide.
+	Télécharger la version {version} depuis <a href="https://www.npmjs.com/package/{name}">npm</a>
+	et <a href={website}>apprenez-en plus ici</a>
 </p>

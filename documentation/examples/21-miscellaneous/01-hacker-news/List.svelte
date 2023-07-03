@@ -25,7 +25,7 @@
 
 	<a href="#/top/{page + 1}">page {page + 1}</a>
 {:else}
-	<p class="loading">loading...</p>
+	<p class="loading">chargement...</p>
 {/if}
 
 <style>

@@ -5,6 +5,8 @@ import { stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const { PUBLIC_GITHUB_ORG } = process.env;
+
 const force = process.env.FORCE_UPDATE === 'true';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -19,7 +21,7 @@ try {
 		process.exit(0);
 	}
 } catch {
-	const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
+	const base = `https://api.github.com/repos/${PUBLIC_GITHUB_ORG}/svelte/contributors`;
 	const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
 
 	const MAX = 24;

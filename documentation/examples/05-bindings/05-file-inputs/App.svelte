@@ -2,25 +2,25 @@
 	let files;
 
 	$: if (files) {
-		// Note that `files` is of type `FileList`, not an Array:
-		// https://developer.mozilla.org/en-US/docs/Web/API/FileList
+		// Notez que `files` est de type `FileList`, ce n'est pas un tableau :
+		// https://developer.mozilla.org/fr/docs/Web/API/FileList
 		console.log(files);
 
 		for (const file of files) {
-			console.log(`${file.name}: ${file.size} bytes`);
+			console.log(`${file.name}: ${file.size} octets`);
 		}
 	}
 </script>
 
-<label for="avatar">Upload a picture:</label>
+<label for="avatar">Sélectionnez une image :</label>
 <input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
 
-<label for="many">Upload multiple files of any type:</label>
+<label for="many">Sélectionnez plusieurs images de n'importe quel type :</label>
 <input bind:files id="many" multiple type="file" />
 
 {#if files}
-	<h2>Selected files:</h2>
+	<h2>Images sélectionnées :</h2>
 	{#each Array.from(files) as file}
-		<p>{file.name} ({file.size} bytes)</p>
+		<p>{file.name} ({file.size} octets)</p>
 	{/each}
 {/if}

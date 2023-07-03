@@ -9,5 +9,5 @@
 </label>
 
 {#if visible}
-	<p transition:fade>Fades in and out</p>
+	<p transition:fade>Entre et sort en s'estompant</p>
 {/if}

@@ -13,36 +13,36 @@ import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
 import type { Namespace, SvelteNode } from './template.js';
 
-/** The return value of `compile` from `svelte/compiler` */
+/** La forme de ce que renvoie `compile` du `svelte/compiler` */
 export interface CompileResult {
-	/** The compiled JavaScript */
+	/** Le code JavaScript généré après compilation du composant */
 	js: {
-		/** The generated code */
+		/** Le code généré */
 		code: string;
-		/** A source map */
+		/** Une <span class="vo">[sourcemap](/docs/web#sourcemap)</span> */
 		map: SourceMap;
 	};
-	/** The compiled CSS */
+	/** Le code CSS compilé */
 	css: null | {
-		/** The generated code */
+		/** Le code généré */
 		code: string;
-		/** A source map */
+		/** Une <span class="vo">[sourcemap](/docs/web#sourcemap)</span> */
 		map: SourceMap;
 	};
 	/**
-	 * An array of warning objects that were generated during compilation. Each warning has several properties:
-	 * - `code` is a string identifying the category of warning
-	 * - `message` describes the issue in human-readable terms
-	 * - `start` and `end`, if the warning relates to a specific location, are objects with `line`, `column` and `character` properties
+	 * * Un tableau de <span class="vo">[warnings](/docs/development#warning)</span> générés pendant la compilation. Chaque <span class="vo">[warning](/docs/development#warning)</span> possède les attributs suivants :
+	 * - `code` : une `string` identifiant la catégorie du <span class="vo">[warning](/docs/development#warning)</span>
+	 * - `message` : décrit le problème de manière intelligible
+	 * - `start` et `end` : si le <span class="vo">[warning](/docs/development#warning)</span> est relevé à un endroit particulier, ce sont des objets avec les propriétés `line`, `column` et `character`
 	 */
 	warnings: Warning[];
 	/**
-	 * Metadata about the compiled component
+	 * Méta-données du composant compilé
 	 */
 	metadata: {
 		/**
-		 * Whether the file was compiled in runes mode, either because of an explicit option or inferred from usage.
-		 * For `compileModule`, this is always `true`
+		 * Si oui ou non le fichier a été compilé avec le mode Runes, soit dû à une option explicite, soit inféré de l'usage.
+		 * Pour `compileModule`, ceci vaut toujours `true`
 		 */
 		runes: boolean;
 	};
@@ -78,102 +78,103 @@ export interface OptimizeOptions {
 
 export interface CompileOptions extends ModuleCompileOptions {
 	/**
-	 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
-	 * If unspecified, will be inferred from `filename`
+	 * Définit le nom de la classe JavaScript généré (bien que le compilateur la renomera si son nom entre en conflit avec une autre variable).
+	 * Il est normalement inféré à partir l'option `filename`.
 	 */
 	name?: string;
 	/**
-	 * If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
+	 * Si `true`, indique au compilateur de générer un constructeur de <span class="vo">[custom element](/docs/web#web-component)</span> à la place d'un composant Svelte traditionnel.
 	 *
 	 * @default false
 	 */
 	customElement?: boolean;
 	/**
-	 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
+	 * Si `true`, des <span class="vo">[getters et setters](/docs/development#getter-setter)</span> seront générés pour les <span class="vo">[props](/docs/sveltejs#props)</span> des composants. Si `false`, ils ne seront créés que pour les valeurs exportées en lecture seules (c'est-à-dire celles déclarées avec `const`, `class` et `function`). Activer l'option de compilation `customElement: true` changera la valeur par défaut de `accessors` à `true`.
 	 *
 	 * @default false
 	 */
 	accessors?: boolean;
 	/**
-	 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+	 * Le <span class="vo">[namespace](/docs/development#namespace)</span> de l'élément; par exemple, `"mathml"`, `"svg"`, `"foreign"`.
 	 *
 	 * @default 'html'
 	 */
 	namespace?: Namespace;
 	/**
-	 * If `true`, tells the compiler that you promise not to mutate any objects.
-	 * This allows it to be less conservative about checking whether values have changed.
+	 * Si `true`, indique au compilateur que vous vous engagez à ne pas muter d'objets.
+	 * Cela permet au compilateur d'être moins conservatif lorsqu'il vérifie si une valeur a changé.
 	 *
 	 * @default false
 	 */
 	immutable?: boolean;
 	/**
-	 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
-	 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
-	 * This is always `'injected'` when compiling with `customElement` mode.
+	 * - `'injected'`: le style sera inclus dans les classes JavaScript et injecté au <span class="vo">[runtime](/docs/development#runtime)</span> pour les composants réellement rendus.
+	 * - `'external'`: le style sera renvoyé dans la propriété `css` du résultat de la compilation. La plupart des <span class="vo">[plugins](/docs/development#plugin)</span> Svelte de <span class="vo">[bundler](/docs/web#bundler-packager)</span> définiront cette option à `'external'` et utiliseront le CSS généré statiquement. Cela permet d'atteindre de meilleures performances, puisque les <span class="vo">[bundles](/docs/web#bundler-packager)</span> JavaScript seront plus petits et le style généré sous forme de fichiers `.css` pourra être mis en cache.
+	 * Cette propriété vaut toujours `'injected'` lorsque l'on compile avec le mode `customElement`.
 	 */
 	css?: 'injected' | 'external';
 	/**
-	 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
-	 * It defaults to returning `svelte-${hash(css)}`.
+	 * Une fonction qui prend comme arguments `{ hash, css, name, filename }` et retourne un nom de classe utilisé pour le css <span class="vo">[scopé](/docs/development#scope)</span>.
+	 * La fonction par défaut retourne `svelte-${hash(css)}`.
 	 *
 	 * @default undefined
 	 */
 	cssHash?: CssHashGetter;
 	/**
-	 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+	 * Si `true`, les commentaires HTML seront conservés au cours du rendu côté serveur.
+	 * Par défault, ils sont supprimés.
 	 *
 	 * @default false
 	 */
 	preserveComments?: boolean;
 	/**
-	 *  If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
+	 * Si `true`, les caractères blancs (espaces, tabulations, ...) seront gardés tels quels, plutôt que supprimés ou fusionnés lorsque c'est possible.
 	 *
 	 * @default false
 	 */
 	preserveWhitespace?: boolean;
 	/**
-	 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
-	 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
-	 * Set to `undefined` (the default) to infer runes mode from the component code.
-	 * Is always `true` for JS/TS modules compiled with Svelte.
-	 * Will be `true` by default in Svelte 6.
+	 * Définir à `true` pour forcer le compilateur à utiliser le mode Runes, même s'il n'y a aucune indication de l'usage de Runes.
+	 * Définir à `false` pour forcer le compilateur à ignorer les Runes, même s'il y a des indications de l'usage de Runes.
+	 * Définir à `undefined` (valeur par défaut) pour inférer le mode Runes depuis le code du composant.
+	 * Vaut toujours `true` pour les modules JS/TS compilés avec Svelte.
+	 * Vaudra `true` par défaut avec Svelte 6.
 	 * @default undefined
 	 */
 	runes?: boolean | undefined;
 	/**
-	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 * Si `true`, expose la version majeure de Svelte dans l'objet global `window` du navigateur.
 	 *
 	 * @default true
 	 */
 	discloseVersion?: boolean;
 	/**
-	 * @deprecated Use these only as a temporary solution before migrating your code
+	 * @deprecated N'utilisez ceci que comme une solution temporaire avant de migrer votre code.
 	 */
 	legacy?: {
 		/**
-		 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
-		 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
-		 * or as an object with a `.render(...)` method when compiling for the server
+		 * Applique une transformation de sorte que l'export par défaut des fichiers Svelte puisse toujours être instancié de la même façon qu'avec Svelte 4 –
+		 * comme une classe lorsque l'on compile pour le navigateur (mais en utilisant `createClassComponent(MyComponent, {...})` depuis `svelte/legacy`)
+		 * ou comme un objet avec une méthode `.render(...)` lorsque l'on compile pour le serveur
 		 * @default false
 		 */
 		componentApi?: boolean;
 	};
 	/**
-	 * An initial sourcemap that will be merged into the final output sourcemap.
-	 * This is usually the preprocessor sourcemap.
+	 * Une <span class="vo">[sourcemap](/docs/web#sourcemap)</span> initiale qui sera fusionnée dans la sourcemap finale.
+	 * C'est souvent la sourcemap du pré-processeur.
 	 *
 	 * @default null
 	 */
 	sourcemap?: object | string;
 	/**
-	 * Used for your JavaScript sourcemap.
+	 * Nom de fichier utilisé pour les <span class="vo">[sourcemaps](/docs/web#sourcemap)</span> JavaScript.
 	 *
 	 * @default null
 	 */
 	outputFilename?: string;
 	/**
-	 * Used for your CSS sourcemap.
+	 * Nom de fichier utilisé pour les <span class="vo">[sourcemaps](/docs/web#sourcemap)</span> CSS.
 	 *
 	 * @default null
 	 */
