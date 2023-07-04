@@ -777,14 +777,14 @@ export function claim_comment(nodes, data) {
 	);
 }
 
-function find_comment(nodes, text, start) {
+function get_comment_idx(nodes, text, start) {
 	for (let i = start; i < nodes.length; i += 1) {
 		const node = nodes[i];
 		if (node.nodeType === 8 /* comment node */ && node.textContent.trim() === text) {
 			return i;
 		}
 	}
-	return nodes.length;
+	return -1;
 }
 
 /**
@@ -793,11 +793,12 @@ function find_comment(nodes, text, start) {
  */
 export function claim_html_tag(nodes, is_svg) {
 	// find html opening tag
-	const start_index = find_comment(nodes, 'HTML_TAG_START', 0);
-	const end_index = find_comment(nodes, 'HTML_TAG_END', start_index);
-	if (start_index === end_index) {
+	const start_index = get_comment_idx(nodes, 'HTML_TAG_START', 0);
+	const end_index = get_comment_idx(nodes, 'HTML_TAG_END', start_index + 1);
+	if (start_index === -1 || end_index === -1) {
 		return new HtmlTagHydration(is_svg);
 	}
+
 	init_claim_info(nodes);
 	const html_tag_nodes = nodes.splice(start_index, end_index - start_index + 1);
 	detach(html_tag_nodes[0]);
@@ -1048,17 +1049,13 @@ export class HtmlTag {
 	 * @default false
 	 */
 	is_svg = false;
-	// parent for creating node
-	/** */
+	/** parent for creating node */
 	e = undefined;
-	// html tag nodes
-	/** */
+	/** html tag nodes */
 	n = undefined;
-	// target
-	/** */
+	/** target */
 	t = undefined;
-	// anchor
-	/** */
+	/** anchor */
 	a = undefined;
 	constructor(is_svg = false) {
 		this.is_svg = is_svg;
