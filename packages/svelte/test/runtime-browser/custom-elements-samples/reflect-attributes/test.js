@@ -9,6 +9,7 @@ export default async function (target) {
 	const ceRoot = target.querySelector('custom-element').shadowRoot;
 	const div = ceRoot.querySelector('div');
 	const p = ceRoot.querySelector('p');
+	const button = ceRoot.querySelector('button');
 
 	assert.equal(getComputedStyle(div).color, 'rgb(255, 0, 0)');
 	assert.equal(getComputedStyle(p).color, 'rgb(255, 255, 255)');
@@ -19,4 +20,11 @@ export default async function (target) {
 
 	assert.equal(getComputedStyle(innerDiv).color, 'rgb(255, 0, 0)');
 	assert.equal(getComputedStyle(innerP).color, 'rgb(255, 255, 255)');
+
+	button.click();
+	await tick();
+	await tick();
+
+	assert.equal(getComputedStyle(div).color, 'rgb(0, 0, 0)');
+	assert.equal(getComputedStyle(innerDiv).color, 'rgb(0, 0, 0)');
 }

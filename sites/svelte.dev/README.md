@@ -2,14 +2,15 @@
 
 A local database is only required in dev mode if you want to test reading and writing saved REPLs on it. Without a local database in dev mode, the REPL will be able to load saved REPLs from the production database, but not save them.
 
-Note also that in dev mode, the REPL will currently only work in Chrome, [as noted in the Vite documentation](https://vitejs.dev/guide/features.html#web-workers), pending support in Firefox for `import` statements in web workers.
+Note also that in dev mode, the REPL requires support for [`import` statements in web workers](https://caniuse.com/mdn-javascript_operators_import_worker_support), [as noted in the Vite documentation](https://vitejs.dev/guide/features.html#web-workers). You may need to update your browser to the latest version.
 
 If you do want to use a database, set it up on [Supabase](https://supabase.com) with the instructions [here](https://github.com/sveltejs/sites/tree/master/db) and set the corresponding environment variables.
 
-Run the site sub-project:
+Build the `svelte` package, then run the site sub-project:
 
 ```bash
 pnpm install
+pnpm --dir ../../packages/svelte build
 pnpm dev
 ```
 
