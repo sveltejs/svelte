@@ -9,7 +9,7 @@
     "build": "pnpm -r --filter=./packages/* build",
     "build:sites": "pnpm -r --filter=./sites/* build",
     "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
-    "lint": "pnpm -r lint",
+    "lint": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r lint",
     "format": "pnpm -r format",
     "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
     "changeset:publish": "changeset publish"

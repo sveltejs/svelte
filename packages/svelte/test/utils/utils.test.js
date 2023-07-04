@@ -162,6 +162,7 @@ describe('utils', () => {
 		it('should return false if urls are different', () => {
 			assert.notOk(srcset_url_equal(create_element('a 1x'), 'b 1x'));
 			assert.notOk(srcset_url_equal(create_element('a 2x'), 'a 1x'));
+			assert.notOk(srcset_url_equal(create_element('a 2x'), null));
 		});
 	});
 });

@@ -10,3 +10,9 @@
 	Clicked {count}
 	{count === 1 ? 'time' : 'times'}
 </button>
+
+<style>
+	button {
+		width:200px;
+	}
+</style>
