@@ -1,0 +1,21 @@
+name: Docs tracker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  track-svelte:
+    runs-on: ubuntu-latest
+    name: Checking Svelte
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Svelte docs new commits
+        uses: AlexxNB/track-commits-to-issue@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: sveltejs
+          repo: svelte
+          dir: documentation
