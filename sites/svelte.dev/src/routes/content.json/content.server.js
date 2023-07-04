@@ -33,7 +33,12 @@ export function content() {
 
 		const filepath = `${base}/docs/${file}`;
 		// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
-		const markdown = replaceExportTypePlaceholders(fs.readFileSync(filepath, 'utf-8'), modules);
+		const markdown = replaceExportTypePlaceholders(
+			remove_export_snippets(fs.readFileSync(filepath, 'utf-8')),
+			modules
+		);
+
+		if (markdown.includes('writable')) console.log(markdown);
 
 		const { body, metadata } = extractFrontmatter(markdown);
 
@@ -42,7 +47,7 @@ export function content() {
 		const rank = +metadata.rank || undefined;
 
 		blocks.push({
-			breadcrumbs: [...breadcrumbs, removeMarkdown(remove_TYPE(metadata.title) ?? '')],
+			breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
 			href: get_href([slug]),
 			content: plaintext(intro),
 			rank
@@ -58,11 +63,7 @@ export function content() {
 			const intro = subsections.shift().trim();
 
 			blocks.push({
-				breadcrumbs: [
-					...breadcrumbs,
-					removeMarkdown(remove_TYPE(metadata.title)),
-					remove_TYPE(removeMarkdown(h2))
-				],
+				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h2)],
 				href: get_href([slug, normalizeSlugify(h2)]),
 				content: plaintext(intro),
 				rank
@@ -75,9 +76,9 @@ export function content() {
 				blocks.push({
 					breadcrumbs: [
 						...breadcrumbs,
-						removeMarkdown(remove_TYPE(metadata.title)),
-						removeMarkdown(remove_TYPE(h2)),
-						removeMarkdown(remove_TYPE(h3))
+						removeMarkdown(metadata.title),
+						removeMarkdown(h2),
+						removeMarkdown(h3)
 					],
 					href: get_href([slug, normalizeSlugify(h2) + '-' + normalizeSlugify(h3)]),
 					content: plaintext(lines.join('\n').trim()),
@@ -88,11 +89,6 @@ export function content() {
 	}
 
 	return blocks;
-}
-
-/** @param {string} str */
-function remove_TYPE(str) {
-	return str?.replace(/^\[TYPE\]:\s+(.+)/, '$1') ?? '';
 }
 
 /** @param {string} markdown */
@@ -133,4 +129,10 @@ function plaintext(markdown) {
 			return String.fromCharCode(code);
 		})
 		.trim();
+}
+
+/** @param {string} markdown */
+function remove_export_snippets(markdown) {
+	// Remove any > EXPORT_SNIPPET: svelte/store#writable
+	return markdown.replace(/^> EXPORT_SNIPPET: .+$/gm, '');
 }
