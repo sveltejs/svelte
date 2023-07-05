@@ -90,12 +90,12 @@ function split_srcset(srcset) {
 
 /**
  * @param {HTMLSourceElement | HTMLImageElement} element_srcset
- * @param {string} srcset
+ * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
 export function srcset_url_equal(element_srcset, srcset) {
 	const element_urls = split_srcset(element_srcset.srcset);
-	const urls = split_srcset(srcset);
+	const urls = split_srcset(srcset || '');
 
 	return (
 		urls.length === element_urls.length &&

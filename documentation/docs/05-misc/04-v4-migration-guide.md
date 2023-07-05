@@ -121,7 +121,18 @@ The migration script will do both automatically for you. ([#8512](https://github
 
 ## Transitions are local by default
 
-Transitions are now local by default to prevent confusion around page navigations. To make them global, add the `|global` modifier. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
+Transitions are now local by default to prevent confusion around page navigations. "local" means that a transition will not play if it's within a nested control flow block (`each/if/await/key`) and not the direct parent block but a block above it is created/destroyed. In the following example, the `slide` intro animation will only play when `success` goes from `false` to `true`, but it will _not_ play when `show` goes from `false` to `true`:
+
+```svelte
+{#if show}
+	...
+	{#if success}
+		<p in:slide>Success</p>
+	{/each}
+{/if}
+```
+
+To make transitions global, add the `|global` modifier - then they will play when _any_ control flow block above is created/destroyed. The migration script will do this automatically for you. ([#6686](https://github.com/sveltejs/svelte/issues/6686))
 
 ## Default slot bindings
 
@@ -147,6 +158,10 @@ This makes slot bindings more consistent as the behavior is undefined when for e
 ## Preprocessors
 
 The order in which preprocessors are applied has changed. Now, preprocessors are executed in order, and within one group, the order is markup, script, style. Each preprocessor must also have a name. ([#8618](https://github.com/sveltejs/svelte/issues/8618))
+
+## New eslint package
+
+`eslint-plugin-svelte3` is deprecated. It may still work with Svelte 4 but we make no guarantees about that. We recommend switching to our new package [eslint-plugin-svelte](https://github.com/sveltejs/eslint-plugin-svelte). See [this Github post](https://github.com/sveltejs/kit/issues/10242#issuecomment-1610798405) for an instruction how to migrate. Alternatively, you can create a new project using `npm create svelte@latest`, select the eslint (and possibly TypeScript) option and then copy over the related files into your existing project.
 
 ## Other breaking changes
 

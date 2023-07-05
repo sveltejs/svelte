@@ -1,5 +1,33 @@
 # svelte
 
+## 4.0.4
+
+### Patch Changes
+
+- fix: claim svg tags in raw mustache tags correctly ([#8910](https://github.com/sveltejs/svelte/pull/8910))
+
+- fix: repair invalid raw html content during hydration ([#8912](https://github.com/sveltejs/svelte/pull/8912))
+
+## 4.0.3
+
+### Patch Changes
+
+- fix: handle falsy srcset values ([#8901](https://github.com/sveltejs/svelte/pull/8901))
+
+## 4.0.2
+
+### Patch Changes
+
+- fix: reflect all custom element prop updates back to attribute ([#8898](https://github.com/sveltejs/svelte/pull/8898))
+
+- fix: shrink custom element baseline a bit ([#8858](https://github.com/sveltejs/svelte/pull/8858))
+
+- fix: use non-destructive hydration for all `@html` tags ([#8880](https://github.com/sveltejs/svelte/pull/8880))
+
+- fix: align `disclose-version` exports specification ([#8874](https://github.com/sveltejs/svelte/pull/8874))
+
+- fix: check srcset when hydrating to prevent needless requests ([#8868](https://github.com/sveltejs/svelte/pull/8868))
+
 ## 4.0.1
 
 ### Patch Changes
