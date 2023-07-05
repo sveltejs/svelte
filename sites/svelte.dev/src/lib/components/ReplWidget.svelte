@@ -26,7 +26,7 @@
 		}
 
 		if (gist) {
-			fetch(`/repl/${gist}.json`)
+			fetch(`/repl/api/${gist}.json`)
 				.then((r) => r.json())
 				.then((data) => {
 					const { description, components } = data;
