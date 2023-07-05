@@ -157,8 +157,8 @@ importers:
         specifier: ^2.26.0
         version: 2.26.0
       '@sveltejs/repl':
-        specifier: 0.5.0-next.10
-        version: 0.5.0-next.10(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.21.0)(svelte@packages+svelte)
+        specifier: 0.5.0-next.11
+        version: 0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.21.0)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1749,8 +1749,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0-next.10(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.21.0)(svelte@packages+svelte):
-    resolution: {integrity: sha512-Y167w5wExssjloafIeLeTCzN9Vh22Sg/DgE4ARfw4J/5VVkEkEINVBbHalpjDMHhXnvOejnbNCJEw0TYW2lN4A==}
+  /@sveltejs/repl@0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.3)(@lezer/lr@1.3.7)(@sveltejs/kit@1.21.0)(svelte@packages+svelte):
+    resolution: {integrity: sha512-bZ7WmmwwujhO1b1r7hN5Lt4z/Y4J3Bfx1DHiITOLshHTPgEU9XNOdq2JzSmN4DIWhmU0T/OVZ53XyXpaR1KTWA==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
@@ -1778,7 +1778,7 @@ packages:
       marked: 5.1.0
       resolve.exports: 2.0.2
       svelte: link:packages/svelte
-      svelte-json-tree: 1.0.0
+      svelte-json-tree: 2.1.0(svelte@packages+svelte)
     transitivePeerDependencies:
       - '@codemirror/lang-html'
       - '@codemirror/search'
@@ -5997,8 +5997,12 @@ packages:
     dependencies:
       svelte: link:packages/svelte
 
-  /svelte-json-tree@1.0.0:
-    resolution: {integrity: sha512-scs1OdkC8uFpTN4MX0yKkOzZ1/EG3eP1ARC+xcFthXp2IfcwBaXgab0FqA4Am0vQwffNNB+1Gd1LFkJBlynWTA==}
+  /svelte-json-tree@2.1.0(svelte@packages+svelte):
+    resolution: {integrity: sha512-IAU//hE5bIA0SoM9AuP7xOoD9PUcMh4fio0oI52r0XJ7iNDytW7AnBdkIn1QSYLUyWzvQX3tp59JfLYfhd7lTw==}
+    peerDependencies:
+      svelte: ^4.0.0
+    dependencies:
+      svelte: link:packages/svelte
     dev: false
 
   /svelte-local-storage-store@0.4.0(svelte@packages+svelte):
