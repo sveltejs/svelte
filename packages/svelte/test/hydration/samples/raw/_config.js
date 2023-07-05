@@ -1,6 +1,4 @@
 export default {
-	skip: true, // existing nodes are blown away
-
 	props: {
 		raw: '<p>this is some html</p> <p>and so is this</p>'
 	},
