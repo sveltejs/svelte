@@ -7,7 +7,7 @@
 	<Section --background="var(--background-2)">
 		<div class="grid" style="--columns: 2">
 			<div class="copy">
-				<h2>faites-vous votre opinion</h2>
+				<h2>faites-vous une opinion</h2>
 				<div>
 					Essayez en local, <a target="_blank" rel="noreferrer" href="https://sveltekit.new"
 						>sur StackBlitz</a
@@ -65,7 +65,7 @@
 
 	h2 {
 		display: inline-block;
-		width: 25rem;
+		width: 40rem;
 		margin: 0 0 1rem;
 		font-size: var(--sk-text-xl);
 	}
