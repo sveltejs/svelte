@@ -3,16 +3,11 @@ import { error } from '@sveltejs/kit';
 export async function load({ fetch, params, url }) {
 	const res = await fetch(`/repl/api/${params.id}.json`);
 
-	console.log(1, params);
-
 	if (!res.ok) {
 		throw error(res.status);
 	}
 
-	console.log(2);
-
 	const gist = await res.json();
-	console.log(3, gist);
 
 	return {
 		gist,
