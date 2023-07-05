@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 export async function load({ fetch, params, url }) {
 	const res = await fetch(`/repl/${params.id}.json`);
 
-	console.log(1, res);
+	console.log(1, await res.json());
 
 	if (!res.ok) {
 		throw error(res.status);
