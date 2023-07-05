@@ -11,15 +11,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 
 const outputFile = new URL(`../src/routes/_components/Supporters/donors.js`, import.meta.url);
-if (!force && (await stat(outputFile))) {
-	console.info(`[update/donors] ${outputFile} exists. Skipping`);
-	process.exit(0);
-}
 
-const MAX = 24;
-const SIZE = 128;
+try {
+	if (!force && (await stat(outputFile))) {
+		console.info(`[update/donors] ${outputFile} exists. Skipping`);
+		process.exit(0);
+	}
+} catch {
+	const MAX = 24;
+	const SIZE = 128;
 
-async function main() {
 	const res = await fetch('https://opencollective.com/svelte/members/all.json');
 	const donors = await res.json();
 
@@ -69,5 +70,3 @@ async function main() {
 
 	writeFile(outputFile, `export default ${str};`);
 }
-
-main();
