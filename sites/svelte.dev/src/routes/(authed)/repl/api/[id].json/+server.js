@@ -61,7 +61,7 @@ export async function GET({ params }) {
 	if (dev && !client) {
 		// in dev with no local Supabase configured, proxy to production
 		// this lets us at least load saved REPLs
-		const res = await fetch(`https://svelte.dev/repl/${params.id}.json`);
+		const res = await fetch(`https://svelte.dev/repl/api/${params.id}.json`);
 
 		// returning the response directly results in a bizarre
 		// content encoding error, so we create a new one
