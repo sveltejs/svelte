@@ -11,7 +11,7 @@
 
 <div class="hero">
 	<div class="hero-content">
-		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} width="331" height="62" />
+		<img alt="Svelte logotype" class="logotype" src={SvelteLogotype} width="300" height="56" />
 		<strong>
 			<span style="white-space: nowrap">Cybernetically enhanced</span> <br /> web apps
 		</strong>
@@ -28,42 +28,21 @@
 			srcset={srcset(MachineDesktop.sources.avif)}
 			type="image/avif"
 			media="(min-width: 800px)"
-			width="3795"
-			height="993"
 		/>
 		<source
 			srcset={srcset(MachineDesktop.sources.webp)}
 			type="image/webp"
 			media="(min-width: 800px)"
-			width="3795"
-			height="993"
 		/>
 		<source
 			srcset={srcset(MachineDesktop.sources.png)}
 			type="image/png"
 			media="(min-width: 800px)"
-			width="3795"
-			height="993"
 		/>
-		<source
-			srcset={srcset(MachineMobile.sources.avif)}
-			type="image/avif"
-			width="2208"
-			height="936"
-		/>
-		<source
-			srcset={srcset(MachineMobile.sources.webp)}
-			type="image/webp"
-			width="2208"
-			height="936"
-		/>
-		<source srcset={srcset(MachineMobile.sources.png)} type="image/png" width="2208" height="936" />
-		<img
-			alt="The Svelte compiler packaging up your component code"
-			src={MachineMobile.img.src}
-			width="2208"
-			height="936"
-		/>
+		<source srcset={srcset(MachineMobile.sources.avif)} type="image/avif" />
+		<source srcset={srcset(MachineMobile.sources.webp)} type="image/webp" />
+		<source srcset={srcset(MachineMobile.sources.png)} type="image/png" />
+		<img alt="The Svelte compiler packaging up your component code" src={MachineMobile.img.src} />
 	</picture>
 </div>
 
@@ -135,6 +114,7 @@
 
 	.logotype {
 		width: min(45vw, 40em);
+		height: auto;
 	}
 
 	@media (min-width: 800px) {
