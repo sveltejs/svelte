@@ -4,7 +4,10 @@
 
 	export let data;
 
-	$: title = $page.data.page?.title;
+	$: pageData = $page.data.page;
+
+	$: title = pageData?.title;
+	$: category = pageData?.category;
 </script>
 
 <div class="container">
@@ -13,6 +16,9 @@
 	</div>
 
 	<div class="page content">
+		{#if category}
+			<p class="category" aria-label="category">{category}</p>
+		{/if}
 		{#if title}
 			<h1>{title}</h1>
 		{/if}
@@ -40,6 +46,11 @@
 
 	.page :global(:where(h2, h3) code) {
 		all: unset;
+	}
+
+	.category {
+		margin: 0;
+		font-size: var(--sk-text-m);
 	}
 
 	@media (min-width: 832px) {
