@@ -21,26 +21,28 @@
 
 <Blurb --background="var(--sk-back-1)">
 	<div slot="one">
-		<h2>stylé</h2>
+		<h2>compilé</h2>
 		<p>
-			Svelte shifts as much work as possible out of the browser and into your build step. No more
-			manual optimisations — just faster, more efficient apps.
+			Svelte allège le travail du navigateur en déléguant un maximum de tâches au compilateur. Plus
+			besoin d'optimisations manuelles — vos apps sont simplement plus rapides et plus efficaces.
 		</p>
 	</div>
 
 	<div slot="two">
-		<h2>génial</h2>
+		<h2>compact</h2>
 		<p>
-			Write breathtakingly concise components using languages you already know — HTML, CSS and
-			JavaScript. Oh, and your application bundles will be tiny as well.
+			Écrivez des composants vraiment plus concis en utilisant des langages que vous connaissez déjà
+			— HTML, CSS et JavaScript. Ah, et les bundles de vos applications seront également plus
+			légers.
 		</p>
 	</div>
 
 	<div slot="three">
-		<h2>beau gosse</h2>
+		<h2>complet</h2>
 		<p>
-			Built-in scoped styling, state management, motion primitives, form bindings and more — don't
-			waste time trawling npm for the bare essentials. It's all here.
+			Styles scopés par défaut, gestion d'état, primitives d'animation, liaisons de formulaire et
+			bien d'autres — ne perdez plus votre temps à fouiller npm pour des fonctionnalités de bases.
+			Tout est inclus.
 		</p>
 	</div>
 </Blurb>
@@ -57,26 +59,27 @@
 	<footer>
 		<div class="logo" />
 		<div class="links">
-			<h4>resources</h4>
+			<h4>ressources</h4>
 			<a href="/docs">documentation</a>
-			<a href="/tutorial">tutorial</a>
-			<a href="/examples">examples</a>
+			<a href="/tutorial">tutoriel</a>
+			<a href="/examples">exemples</a>
 			<a href="/blog">blog</a>
 		</div>
 		<div class="links">
-			<h4>connect</h4>
+			<h4>réseau</h4>
 			<a href="https://github.com/sveltejs/svelte">github</a>
 			<a href="https://opencollective.com/svelte">open collective</a>
 			<a href="/chat">discord</a>
 			<a href="https://twitter.com/sveltejs">twitter</a>
 		</div>
 		<div class="copyright">
-			© 2023 <a href="https://github.com/sveltejs/svelte/graphs/contributors">Svelte contributors</a
+			© 2023 <a href="https://github.com/sveltejs/svelte/graphs/contributors"
+				>contributeurs Svelte</a
 			>
 		</div>
 		<div class="open-source">
-			Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released
-			under the MIT license
+			Svelte est <a href="https://github.com/sveltejs/svelte">logiciel gratuit en license ouverte</a
+			> publié sous la license MIT
 		</div>
 	</footer>
 </section>

@@ -6,25 +6,26 @@
 		{
 			id: 'hello-world',
 			title: 'Hello World',
-			description: 'Svelte components are built on top of HTML. Just add data.'
+			description:
+				"Les composants Svelte sont construits en se basant sur du HTML. Vous n'avez qu'à ajouter de la donnée."
 		},
 		{
 			id: 'nested-components',
-			title: 'Scoped CSS',
+			title: 'CSS scopé',
 			description:
-				'CSS is component-scoped by default — no more style collisions or specificity wars. Or you can <a href="/blog/svelte-css-in-js">use your favourite CSS-in-JS library</a >.'
+				'Votre CSS est par défaut scopé à votre composant — plus aucune collision de style ou guerre de spécificité. Vous pouvez aussi <a href="/blog/svelte-css-in-js">utiliser votre librairie CSS-in-JS préférée</a >.'
 		},
 		{
 			id: 'reactive-assignments',
-			title: 'Reactivity',
+			title: 'Réactivité',
 			description:
-				'Trigger efficient, granular updates by assigning to local variables. The compiler does the rest.'
+				"Déclenchez des mises à jour granulaires en assignant à des variables locales. Le compilateur s'occupe du reste."
 		},
 		{
 			id: 'svg-transitions',
 			title: 'Transitions',
 			description:
-				'Build beautiful UIs with a powerful, performant transition engine built right into the framework.'
+				"Construisez de superbes interfaces à l'aide d'un moteur de transition puissant et performant intégré dans le framework."
 		}
 	];
 
@@ -36,7 +37,7 @@
 </svelte:head>
 
 <Section --background="var(--sk-back-2)">
-	<h3>build with ease</h3>
+	<h3>développez en toute simplicité</h3>
 
 	<div class="container">
 		<div class="controls">
@@ -53,7 +54,7 @@
 				{/each}
 			</div>
 
-			<a href="/examples">more <span class="large-show">&nbsp;examples</span> &rarr;</a>
+			<a href="/examples">plus d'<span class="large-show">exemples</span> &rarr;</a>
 		</div>
 
 		{#if selected}
