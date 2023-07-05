@@ -10,13 +10,13 @@ export const load = async ({ url, fetch }) => {
 /** @param {URL} url */
 function get_nav_title(url) {
 	const list = new Map([
-		[/^docs/, 'Docs'],
+		[/^docs/, 'Documentation'],
 		[/^repl/, 'REPL'],
 		[/^blog/, 'Blog'],
-		[/^faq/, 'FAQ'],
-		[/^tutorial/, 'Tutorial'],
-		[/^search/, 'Search'],
-		[/^examples/, 'Examples']
+		[/^faq/, 'FÀQ'],
+		[/^tutorial/, 'Tutoriel'],
+		[/^search/, 'Recherche'],
+		[/^examples/, 'Exemples']
 	]);
 
 	for (const [regex, title] of list) {

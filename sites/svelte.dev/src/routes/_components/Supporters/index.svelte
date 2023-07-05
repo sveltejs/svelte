@@ -10,13 +10,15 @@
 </script>
 
 <Section --background="var(--sk-back-2">
-	<p class="intro">Svelte is made possible by the work of hundreds of supporters.</p>
+	<p class="intro">Svelte existe grâce au travail de centaines de personnes.</p>
 
 	<div class="layout">
 		<div class="contributors blurb">
-			<h3>contributors</h3>
+			<h3>contributeurs</h3>
 			<p>
-				<a href="https://github.com/sveltejs/svelte/graphs/contributors">Join us on GitHub</a>
+				<a href="https://github.com/sveltejs/svelte/graphs/contributors"
+					>Rejoignez-nous sur Github</a
+				>
 			</p>
 		</div>
 
@@ -34,8 +36,8 @@
 		</div>
 
 		<div class="donors blurb">
-			<h3>donors</h3>
-			<p><a href="https://opencollective.com/svelte">Support us on OpenCollective</a></p>
+			<h3>donateurs</h3>
+			<p><a href="https://opencollective.com/svelte">Soutenez-nous sur OpenCollective</a></p>
 		</div>
 
 		<div class="donors grid">

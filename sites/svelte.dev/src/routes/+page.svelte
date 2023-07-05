@@ -20,26 +20,28 @@
 
 <Blurb --background="var(--sk-back-1)">
 	<div slot="one">
-		<h2>stylé</h2>
+		<h2>compilé</h2>
 		<p>
-			Svelte shifts as much work as possible out of the browser and into your build step. No more
-			manual optimisations — just faster, more efficient apps.
+			Svelte allège le travail du navigateur en déléguant un maximum de tâches au compilateur. Plus
+			besoin d'optimisations manuelles — vos apps sont simplement plus rapides et plus efficaces.
 		</p>
 	</div>
 
 	<div slot="two">
-		<h2>génial</h2>
+		<h2>compact</h2>
 		<p>
-			Write breathtakingly concise components using languages you already know — HTML, CSS and
-			JavaScript. Oh, and your application bundles will be tiny as well.
+			Écrivez des composants vraiment plus concis en utilisant des langages que vous connaissez déjà
+			— HTML, CSS et JavaScript. Ah, et les bundles de vos applications seront également plus
+			légers.
 		</p>
 	</div>
 
 	<div slot="three">
-		<h2>beau gosse</h2>
+		<h2>complet</h2>
 		<p>
-			Built-in scoped styling, state management, motion primitives, form bindings and more — don't
-			waste time trawling npm for the bare essentials. It's all here.
+			Styles scopés par défaut, gestion d'état, primitives d'animation, liaisons de formulaire et
+			bien d'autres — ne perdez plus votre temps à fouiller npm pour des fonctionnalités de bases.
+			Tout est inclus.
 		</p>
 	</div>
 </Blurb>
@@ -60,11 +62,11 @@
 				href: '/docs'
 			},
 			{
-				title: 'tutorial',
+				title: 'tutoriel',
 				href: '/tutorial'
 			},
 			{
-				title: 'examples',
+				title: 'exemples',
 				href: '/examples'
 			},
 			{
@@ -93,8 +95,8 @@
 	}}
 >
 	<span slot="copyright">
-		Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released
-		under the MIT license
+		Svelte est <a href="https://github.com/sveltejs/svelte">logiciel gratuit en license ouverte</a> publié
+		sous la license MIT
 	</span>
 </Footer>
 
