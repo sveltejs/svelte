@@ -77,8 +77,8 @@
 		transition: box-shadow 0.1s ease-in-out, font-weight 0.1s ease-in-out;
 	}
 
-	:global(.text .vo a::hover) {
-		font-weight: bold;
-		box-shadow: inset 0 -2px 0 0 var(--sk-text-4);
+	:global(.text .vo a:hover) {
+		color: white;
+		box-shadow: inset 0 -1px 0 0 white;
 	}
 </style>
