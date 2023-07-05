@@ -5,8 +5,6 @@ import examples_data from '$lib/generated/examples-data.js';
 import { get_example, get_examples_list } from '$lib/server/examples/index.js';
 import { error, json } from '@sveltejs/kit';
 
-export const prerender = 'auto';
-
 const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
 
 /** @type {Set<string>} */
