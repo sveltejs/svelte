@@ -157,7 +157,72 @@ This makes slot bindings more consistent as the behavior is undefined when for e
 
 ## Preprocessors
 
-The order in which preprocessors are applied has changed. Now, preprocessors are executed in order, and within one group, the order is markup, script, style. Each preprocessor must also have a name. ([#8618](https://github.com/sveltejs/svelte/issues/8618))
+The order in which preprocessors are applied has changed. Now, preprocessors are executed in order, and within one group, the order is markup, script, style.
+
+```js
+// @errors: 2304
+import { preprocess } from 'svelte/compiler';
+
+const { code } = await preprocess(
+	source,
+	[
+		{
+			markup: () => {
+				console.log('markup-1');
+			},
+			script: () => {
+				console.log('script-1');
+			},
+			style: () => {
+				console.log('style-1');
+			}
+		},
+		{
+			markup: () => {
+				console.log('markup-2');
+			},
+			script: () => {
+				console.log('script-2');
+			},
+			style: () => {
+				console.log('style-2');
+			}
+		}
+	],
+	{
+		filename: 'App.svelte'
+	}
+);
+
+// Svelte 3 logs:
+// markup-1
+// markup-2
+// script-1
+// script-2
+// style-1
+// style-2
+
+// Svelte 4 logs:
+// markup-1
+// script-1
+// style-1
+// markup-2
+// script-2
+// style-2
+```
+
+This could affect you for example if you are using `MDsveX` - in which case you should make sure it comes before any script or style preprocessor.
+
+```diff
+preprocess: [
+-	vitePreprocess(),
+-	mdsvex(mdsvexConfig)
++	mdsvex(mdsvexConfig),
++	vitePreprocess()
+]
+```
+
+Each preprocessor must also have a name. ([#8618](https://github.com/sveltejs/svelte/issues/8618))
 
 ## New eslint package
 
