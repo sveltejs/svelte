@@ -4,18 +4,19 @@ import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sh from 'shelljs';
 
+const force = process.env.FORCE_UPDATE === 'true';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+sh.cd(path.join(__dirname, '..'));
+
+const outputFile = 'static/svelte-app.json';
+
 try {
-	const force = process.env.FORCE_UPDATE === 'true';
-
-	const __dirname = dirname(fileURLToPath(import.meta.url));
-	sh.cd(path.join(__dirname, '..'));
-
-	const outputFile = 'static/svelte-app.json';
 	if (!force && (await stat(outputFile))) {
 		console.info(`[update/template] ${outputFile} exists. Skipping`);
 		process.exit(0);
 	}
-
+} catch {
 	// fetch svelte app
 	sh.rm('-rf', 'scripts/svelte-app');
 	sh.exec('npx degit sveltejs/template scripts/svelte-app');
@@ -39,7 +40,4 @@ try {
 	}
 
 	writeFile(outputFile, JSON.stringify(files));
-} catch (e) {
-	console.error(e);
-	process.exit(1);
 }

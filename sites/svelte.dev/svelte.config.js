@@ -6,7 +6,7 @@ export default {
 	kit: {
 		adapter: adapter({ runtime: 'edge' }),
 		prerender: {
-			concurrency: 3
+			concurrency: 10
 		}
 	},
 
