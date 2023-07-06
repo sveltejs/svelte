@@ -160,6 +160,7 @@ This makes slot bindings more consistent as the behavior is undefined when for e
 The order in which preprocessors are applied has changed. Now, preprocessors are executed in order, and within one group, the order is markup, script, style.
 
 ```js
+// @errors: 2304
 import { preprocess } from 'svelte/compiler';
 
 const { code } = await preprocess(
