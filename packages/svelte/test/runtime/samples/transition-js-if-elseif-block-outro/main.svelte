@@ -20,4 +20,3 @@
 {:else if y}
 	<div bind:this={no} out:foo>no</div>
 {/if}
-
