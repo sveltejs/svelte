@@ -1,5 +1,11 @@
 # svelte
 
+## 4.0.5
+
+### Patch Changes
+
+- fix: generate type definition with nullable types ([#8924](https://github.com/sveltejs/svelte/pull/8924))
+
 ## 4.0.4
 
 ### Patch Changes
