@@ -1,27 +1,30 @@
+// @ts-check
 import 'dotenv/config';
-import fs from 'fs';
-import fetch from 'node-fetch';
 import Jimp from 'jimp';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { stat, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const force = process.env.FORCE_UPDATE === 'true';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 
-const outputFile = `../src/routes/_components/Supporters/donors.js`;
-if (!force && fs.existsSync(outputFile)) {
-	console.info(`[update/donors] ${outputFile} exists. Skipping`);
-	process.exit(0);
-}
+const outputFile = new URL(`../src/routes/_components/Supporters/donors.js`, import.meta.url);
 
-const MAX = 24;
-const SIZE = 128;
+try {
+	if (!force && (await stat(outputFile))) {
+		console.info(`[update/donors] ${outputFile} exists. Skipping`);
+		process.exit(0);
+	}
+} catch {
+	const MAX = 24;
+	const SIZE = 128;
 
-async function main() {
 	const res = await fetch('https://opencollective.com/svelte/members/all.json');
 	const donors = await res.json();
+
+	if (!Array.isArray(donors)) throw new Error('Expected an array');
 
 	const unique = new Map();
 	donors.forEach((d) => unique.set(d.profile, d));
@@ -39,6 +42,7 @@ async function main() {
 		try {
 			const image_data = await fetch(backer.image);
 			const buffer = await image_data.arrayBuffer();
+			// @ts-ignore
 			const image = await Jimp.read(buffer);
 			image.resize(SIZE, SIZE);
 			included.push({ backer, image });
@@ -52,7 +56,11 @@ async function main() {
 		sprite.composite(included[i].image, i * SIZE, 0);
 	}
 
-	await sprite.quality(80).write(`../src/routes/_components/Supporters/donors.jpg`);
+	await sprite
+		.quality(80)
+		.writeAsync(
+			new URL(`../src/routes/_components/Supporters/donors.jpg`, import.meta.url).pathname
+		);
 	// TODO: Optimizing the static/donors.jpg image should probably get automated as well
 	console.log(
 		'remember to additionally optimize the resulting /static/donors.jpg image file via e.g. https://squoosh.app '
@@ -60,7 +68,5 @@ async function main() {
 
 	const str = `[\n\t${included.map((a) => `${JSON.stringify(a.backer.name)}`).join(',\n\t')}\n]`;
 
-	fs.writeFileSync(outputFile, `export default ${str};`);
+	writeFile(outputFile, `export default ${str};`);
 }
-
-main();
