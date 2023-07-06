@@ -8,7 +8,7 @@
 	function foo(node, params) {
 		return {
 			duration: 100,
-			tick: t => {
+			tick: (t) => {
 				node.foo = t;
 			}
 		};
