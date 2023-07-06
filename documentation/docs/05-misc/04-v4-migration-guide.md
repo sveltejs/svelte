@@ -214,8 +214,8 @@ This could affect you for example if you are using `MDsveX` - in which case you 
 
 ```diff
 preprocess: [
--	mdsvex(mdsvexConfig),
--	vitePreprocess()
+-	vitePreprocess(),
+-	mdsvex(mdsvexConfig)
 +	mdsvex(mdsvexConfig),
 +	vitePreprocess()
 ]
