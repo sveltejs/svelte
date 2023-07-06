@@ -84,13 +84,12 @@ export default function bind_this(component, block, binding, variable) {
 			});
 		}
 	`);
-	if (block.has_outro_method)	{
-		block.chunks.outro.push(b`${callee}(null);`  );
+	if (block.has_outro_method) {
+		block.chunks.outro.push(b`${callee}(null);`);
 		block.chunks.destroy.push(b`if(#current) {
 			${callee}(null);
 		}`);
-	}
-	else {
+	} else {
 		block.chunks.destroy.push(b`${callee}(null);`);
 	}
 	return b`${callee}(${variable});`;
