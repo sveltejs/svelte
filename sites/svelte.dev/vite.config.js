@@ -37,6 +37,20 @@ function raw(ext) {
 /** @type {import('vite').UserConfig} */
 const config = {
 	logLevel: 'info',
+	css: {
+		transformer: 'lightningcss',
+		lightningcss: {
+			targets: {
+				chrome: 92,
+				safari: 14,
+				edge: 92,
+				firefox: 90
+			}
+		}
+	},
+	build: {
+		cssMinify: 'lightningcss'
+	},
 	plugins,
 	optimizeDeps: {
 		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']
