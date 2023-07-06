@@ -17,7 +17,7 @@
 
 	<div class="page content">
 		{#if category}
-			<p class="category" aria-label="category">{category}</p>
+			<p class="category">{category}</p>
 		{/if}
 		{#if title}
 			<h1>{title}</h1>
@@ -49,8 +49,9 @@
 	}
 
 	.category {
-		margin: 0;
-		font-size: var(--sk-text-m);
+		font: 700 var(--sk-text-s) var(--sk-font);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
 	}
 
 	@media (min-width: 832px) {
