@@ -50,8 +50,4 @@
 		font-size: 12px;
 		margin: 0 0 1em 0;
 	}
-
-	main :global(a) {
-		color: rgb(0, 0, 150);
-	}
 </style>
