@@ -16,6 +16,9 @@ fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.js';`);
 
 await createBundle({
 	output: 'types/index.d.ts',
+	compilerOptions: {
+		strict: true
+	},
 	modules: {
 		svelte: 'src/runtime/public.d.ts',
 		'svelte/compiler': 'src/compiler/public.d.ts',

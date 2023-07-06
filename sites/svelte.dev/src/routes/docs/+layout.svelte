@@ -32,7 +32,6 @@
 	}
 
 	.page {
-		--on-this-page-display: none;
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side);
 
 		min-width: 0 !important;
