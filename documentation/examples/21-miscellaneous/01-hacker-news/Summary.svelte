@@ -33,8 +33,4 @@
 		position: absolute;
 		left: 0;
 	}
-
-	a {
-		color: #333;
-	}
 </style>
