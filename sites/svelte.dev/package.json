@@ -30,7 +30,7 @@
     "@resvg/resvg-js": "^2.4.1",
     "@sveltejs/adapter-vercel": "^3.0.1",
     "@sveltejs/kit": "^1.21.0",
-    "@sveltejs/site-kit": "6.0.0-next.18",
+    "@sveltejs/site-kit": "6.0.0-next.20",
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@types/marked": "^5.0.0",
     "@types/node": "^20.3.2",
