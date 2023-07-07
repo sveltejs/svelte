@@ -1,5 +1,19 @@
 # svelte
 
+## 4.0.5
+
+### Patch Changes
+
+- fix: generate type definition with nullable types ([#8924](https://github.com/sveltejs/svelte/pull/8924))
+
+## 4.0.4
+
+### Patch Changes
+
+- fix: claim svg tags in raw mustache tags correctly ([#8910](https://github.com/sveltejs/svelte/pull/8910))
+
+- fix: repair invalid raw html content during hydration ([#8912](https://github.com/sveltejs/svelte/pull/8912))
+
 ## 4.0.3
 
 ### Patch Changes

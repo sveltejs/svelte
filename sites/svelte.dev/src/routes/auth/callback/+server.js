@@ -1,6 +1,5 @@
 import { uneval } from 'devalue';
 import * as cookie from 'cookie';
-import { stringify } from 'querystring';
 import * as session from '$lib/db/session';
 import { oauth, client_id, client_secret } from '../_config.js';
 
@@ -9,11 +8,11 @@ export async function GET({ url }) {
 		// Trade "code" for "access_token"
 		const r1 = await fetch(
 			`${oauth}/access_token?` +
-				stringify({
+				new URLSearchParams({
 					code: url.searchParams.get('code'),
 					client_id,
 					client_secret
-				})
+				}).toString()
 		);
 		const access_token = new URLSearchParams(await r1.text()).get('access_token');
 

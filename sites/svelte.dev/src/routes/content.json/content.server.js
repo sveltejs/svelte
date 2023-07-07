@@ -6,9 +6,8 @@ import {
 	removeMarkdown,
 	replaceExportTypePlaceholders
 } from '@sveltejs/site-kit/markdown';
-import fs from 'node:fs';
-import path from 'node:path';
-import glob from 'tiny-glob/sync.js';
+import { readFile } from 'node:fs/promises';
+import glob from 'tiny-glob';
 import { CONTENT_BASE } from '../../constants.js';
 
 const base = CONTENT_BASE;
@@ -18,14 +17,19 @@ function get_href(parts) {
 	return parts.length > 1 ? `/docs/${parts[0]}#${parts.at(-1)}` : `/docs/${parts[0]}`;
 }
 
-export function content() {
+/** @param {string} path  */
+function path_basename(path) {
+	return path.split(/[\\/]/).pop();
+}
+
+export async function content() {
 	/** @type {import('@sveltejs/site-kit/search').Block[]} */
 	const blocks = [];
 
 	const breadcrumbs = [];
 
-	for (const file of glob('**/*.md', { cwd: `${base}/docs` })) {
-		const basename = path.basename(file);
+	for (const file of await glob('**/*.md', { cwd: `${base}/docs` })) {
+		const basename = path_basename(file);
 		const match = /\d{2}-(.+)\.md/.exec(basename);
 		if (!match) continue;
 
@@ -34,7 +38,7 @@ export function content() {
 		const filepath = `${base}/docs/${file}`;
 		// const markdown = replace_placeholders(fs.readFileSync(filepath, 'utf-8'));
 		const markdown = replaceExportTypePlaceholders(
-			remove_export_snippets(fs.readFileSync(filepath, 'utf-8')),
+			remove_export_snippets(await readFile(filepath, 'utf-8')),
 			modules
 		);
 

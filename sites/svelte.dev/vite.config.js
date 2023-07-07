@@ -1,5 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import * as fs from 'fs';
+import { readFile } from 'node:fs/promises';
 
 const plugins = [raw(['.ttf']), sveltekit()];
 
@@ -25,9 +25,9 @@ if (!process.versions.webcontainer) {
 function raw(ext) {
 	return {
 		name: 'vite-plugin-raw',
-		transform(_, id) {
+		async transform(_, id) {
 			if (ext.some((e) => id.endsWith(e))) {
-				const buffer = fs.readFileSync(id);
+				const buffer = await readFile(id);
 				return { code: `export default ${JSON.stringify(buffer)}`, map: null };
 			}
 		}
