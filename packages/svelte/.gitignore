@@ -7,7 +7,6 @@
 _actual*.*
 _output
 /types
-.env
 
 action.d.ts
 animate.d.ts
