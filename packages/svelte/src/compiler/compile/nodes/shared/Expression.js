@@ -260,11 +260,9 @@ export default class Expression {
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
-							template_scope.dependencies_for_name.get(name).forEach(
-								(dependency) => {
-									dependencies.add(dependency);
-								}
-							);
+							template_scope.dependencies_for_name.get(name).forEach((dependency) => {
+								dependencies.add(dependency);
+							});
 						} else {
 							dependencies.add(name);
 							component.add_reference(node, name); // TODO is this redundant/misplaced?
