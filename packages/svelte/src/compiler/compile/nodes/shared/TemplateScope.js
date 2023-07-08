@@ -1,3 +1,4 @@
+/** The scope of constructs within the Svelte template */
 export default class TemplateScope {
 	/**
 	 * @typedef {import('../EachBlock').default

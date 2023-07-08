@@ -31,10 +31,16 @@ export default class Expression {
 	/** @type {Set<string>} */
 	references = new Set();
 
-	/** @type {Set<string>} */
+	/**
+	 * Dependencies declared in the script block
+	 * @type {Set<string>}
+	 */
 	dependencies = new Set();
 
-	/** @type {Set<string>} */
+	/**
+	 * Dependencies declared in the HTML-like template section
+	 * @type {Set<string>}
+	 */
 	contextual_dependencies = new Set();
 
 	/** @type {import('./TemplateScope.js').default} */
@@ -185,7 +191,7 @@ export default class Expression {
 				}
 			},
 
-			/** @param {import('estree').Node} node */
+			/** @type {import('estree-walker').SyncHandler} */
 			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
@@ -239,10 +245,7 @@ export default class Expression {
 		/** @type {Set<string>} */
 		let contextual_dependencies;
 		const node = walk(this.node, {
-			/**
-			 * @param {any} node
-			 * @param {any} parent
-			 */
+			/** @type {import('estree-walker').SyncHandler} */
 			enter(node, parent) {
 				if (node.type === 'Property' && node.shorthand) {
 					node.value = clone(node.value);
@@ -258,7 +261,7 @@ export default class Expression {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
 							template_scope.dependencies_for_name.get(name).forEach(
-								/** @param {any} dependency */ (dependency) => {
+								(dependency) => {
 									dependencies.add(dependency);
 								}
 							);
@@ -284,10 +287,7 @@ export default class Expression {
 				}
 			},
 
-			/**
-			 * @param {import('estree').Node} node
-			 * @param {import('estree').Node} parent
-			 */
+			/** @type {import('estree-walker').SyncHandler} */
 			leave(node, parent) {
 				if (map.has(node)) scope = scope.parent;
 				if (node === function_expression) {
@@ -474,8 +474,8 @@ export default class Expression {
 }
 
 /**
- * @param {any} _node
- * @param {any} parent
+ * @param {import('estree').Node} _node
+ * @param {import('../interfaces.js').INode} parent
  */
 function get_function_name(_node, parent) {
 	if (parent.type === 'EventHandler') {
