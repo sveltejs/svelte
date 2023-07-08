@@ -26,7 +26,7 @@ export default class RawMustacheTagWrapper extends Tag {
 	render(block, parent_node, _parent_nodes) {
 		const in_head = is_head(parent_node);
 		const can_use_innerhtml = !in_head && parent_node && !this.prev && !this.next;
-		if (can_use_innerhtml) {
+		if (can_use_innerhtml && !this.renderer.options.hydratable) {
 			/** @param {import('estree').Node} content */
 			const insert = (content) => b`${parent_node}.innerHTML = ${content};`[0];
 			const { init } = this.rename_this_method(block, (content) => insert(content));

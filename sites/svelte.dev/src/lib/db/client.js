@@ -4,4 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const client =
 	(!dev || (SUPABASE_URL && SUPABASE_KEY)) &&
-	createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch } });
+	createClient(SUPABASE_URL, SUPABASE_KEY, {
+		global: { fetch },
+		auth: { persistSession: false }
+	});

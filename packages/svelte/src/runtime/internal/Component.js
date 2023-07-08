@@ -13,7 +13,9 @@ import {
 	start_hydrating,
 	end_hydrating,
 	get_custom_elements_slots,
-	insert
+	insert,
+	element,
+	attr
 } from './dom.js';
 import { transition_in } from './transitions.js';
 
@@ -157,23 +159,29 @@ export let SvelteElement;
 
 if (typeof HTMLElement === 'function') {
 	SvelteElement = class extends HTMLElement {
-		$$componentCtor;
-		$$slots;
-		$$component;
-		$$connected = false;
-		$$data = {};
-		$$reflecting = false;
-		/** @type {Record<string, CustomElementPropDefinition>} */
-		$$props_definition = {};
-		/** @type {Record<string, Function[]>} */
-		$$listeners = {};
-		/** @type {Map<Function, Function>} */
-		$$listener_unsubscribe_fns = new Map();
+		/** The Svelte component constructor */
+		$$ctor;
+		/** Slots */
+		$$s;
+		/** The Svelte component instance */
+		$$c;
+		/** Whether or not the custom element is connected */
+		$$cn = false;
+		/** Component props data */
+		$$d = {};
+		/** `true` if currently in the process of reflecting component props back to attributes */
+		$$r = false;
+		/** @type {Record<string, CustomElementPropDefinition>} Props definition (name, reflected, type etc) */
+		$$p_d = {};
+		/** @type {Record<string, Function[]>} Event listeners */
+		$$l = {};
+		/** @type {Map<Function, Function>} Event listener unsubscribe functions */
+		$$l_u = new Map();
 
 		constructor($$componentCtor, $$slots, use_shadow_dom) {
 			super();
-			this.$$componentCtor = $$componentCtor;
-			this.$$slots = $$slots;
+			this.$$ctor = $$componentCtor;
+			this.$$s = $$slots;
 			if (use_shadow_dom) {
 				this.attachShadow({ mode: 'open' });
 			}
@@ -183,32 +191,32 @@ if (typeof HTMLElement === 'function') {
 			// We can't determine upfront if the event is a custom event or not, so we have to
 			// listen to both. If someone uses a custom event with the same name as a regular
 			// browser event, this fires twice - we can't avoid that.
-			this.$$listeners[type] = this.$$listeners[type] || [];
-			this.$$listeners[type].push(listener);
-			if (this.$$component) {
-				const unsub = this.$$component.$on(type, listener);
-				this.$$listener_unsubscribe_fns.set(listener, unsub);
+			this.$$l[type] = this.$$l[type] || [];
+			this.$$l[type].push(listener);
+			if (this.$$c) {
+				const unsub = this.$$c.$on(type, listener);
+				this.$$l_u.set(listener, unsub);
 			}
 			super.addEventListener(type, listener, options);
 		}
 
 		removeEventListener(type, listener, options) {
 			super.removeEventListener(type, listener, options);
-			if (this.$$component) {
-				const unsub = this.$$listener_unsubscribe_fns.get(listener);
+			if (this.$$c) {
+				const unsub = this.$$l_u.get(listener);
 				if (unsub) {
 					unsub();
-					this.$$listener_unsubscribe_fns.delete(listener);
+					this.$$l_u.delete(listener);
 				}
 			}
 		}
 
 		async connectedCallback() {
-			this.$$connected = true;
-			if (!this.$$component) {
+			this.$$cn = true;
+			if (!this.$$c) {
 				// We wait one tick to let possible child slot elements be created/mounted
 				await Promise.resolve();
-				if (!this.$$connected) {
+				if (!this.$$cn) {
 					return;
 				}
 				function create_slot(name) {
@@ -216,9 +224,9 @@ if (typeof HTMLElement === 'function') {
 						let node;
 						const obj = {
 							c: function create() {
-								node = document.createElement('slot');
+								node = element('slot');
 								if (name !== 'default') {
-									node.setAttribute('name', name);
+									attr(node, 'name', name);
 								}
 							},
 							/**
@@ -239,74 +247,89 @@ if (typeof HTMLElement === 'function') {
 				}
 				const $$slots = {};
 				const existing_slots = get_custom_elements_slots(this);
-				for (const name of this.$$slots) {
+				for (const name of this.$$s) {
 					if (name in existing_slots) {
 						$$slots[name] = [create_slot(name)];
 					}
 				}
 				for (const attribute of this.attributes) {
 					// this.$$data takes precedence over this.attributes
-					const name = this.$$get_prop_name(attribute.name);
-					if (!(name in this.$$data)) {
-						this.$$data[name] = get_custom_element_value(
-							name,
-							attribute.value,
-							this.$$props_definition,
-							'toProp'
-						);
+					const name = this.$$g_p(attribute.name);
+					if (!(name in this.$$d)) {
+						this.$$d[name] = get_custom_element_value(name, attribute.value, this.$$p_d, 'toProp');
 					}
 				}
-				this.$$component = new this.$$componentCtor({
+				this.$$c = new this.$$ctor({
 					target: this.shadowRoot || this,
 					props: {
-						...this.$$data,
+						...this.$$d,
 						$$slots,
 						$$scope: {
 							ctx: []
 						}
 					}
 				});
-				for (const type in this.$$listeners) {
-					for (const listener of this.$$listeners[type]) {
-						const unsub = this.$$component.$on(type, listener);
-						this.$$listener_unsubscribe_fns.set(listener, unsub);
+
+				// Reflect component props as attributes
+				const reflect_attributes = () => {
+					this.$$r = true;
+					for (const key in this.$$p_d) {
+						this.$$d[key] = this.$$c.$$.ctx[this.$$c.$$.props[key]];
+						if (this.$$p_d[key].reflect) {
+							const attribute_value = get_custom_element_value(
+								key,
+								this.$$d[key],
+								this.$$p_d,
+								'toAttribute'
+							);
+							if (attribute_value == null) {
+								this.removeAttribute(key);
+							} else {
+								this.setAttribute(this.$$p_d[key].attribute || key, attribute_value);
+							}
+						}
+					}
+					this.$$r = false;
+				};
+				this.$$c.$$.after_update.push(reflect_attributes);
+				reflect_attributes(); // once initially because after_update is added too late for first render
+
+				for (const type in this.$$l) {
+					for (const listener of this.$$l[type]) {
+						const unsub = this.$$c.$on(type, listener);
+						this.$$l_u.set(listener, unsub);
 					}
 				}
-				this.$$listeners = {};
+				this.$$l = {};
 			}
 		}
 
 		// We don't need this when working within Svelte code, but for compatibility of people using this outside of Svelte
 		// and setting attributes through setAttribute etc, this is helpful
 		attributeChangedCallback(attr, _oldValue, newValue) {
-			if (this.$$reflecting) return;
-			attr = this.$$get_prop_name(attr);
-			this.$$data[attr] = get_custom_element_value(
-				attr,
-				newValue,
-				this.$$props_definition,
-				'toProp'
-			);
-			this.$$component?.$set({ [attr]: this.$$data[attr] });
+			if (this.$$r) return;
+			attr = this.$$g_p(attr);
+			this.$$d[attr] = get_custom_element_value(attr, newValue, this.$$p_d, 'toProp');
+			this.$$c?.$set({ [attr]: this.$$d[attr] });
 		}
 
 		disconnectedCallback() {
-			this.$$connected = false;
+			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
 			Promise.resolve().then(() => {
-				if (!this.$$connected) {
-					this.$$component.$destroy();
-					this.$$component = undefined;
+				if (!this.$$cn) {
+					this.$$c.$destroy();
+					this.$$c = undefined;
 				}
 			});
 		}
 
-		$$get_prop_name(attribute_name) {
+		$$g_p(attribute_name) {
 			return (
-				Object.keys(this.$$props_definition).find(
+				Object.keys(this.$$p_d).find(
 					(key) =>
-						this.$$props_definition[key].attribute === attribute_name ||
-						(!this.$$props_definition[key].attribute && key.toLowerCase() === attribute_name)
+						this.$$p_d[key].attribute === attribute_name ||
+						(!this.$$p_d[key].attribute && key.toLowerCase() === attribute_name)
 				) || attribute_name
 			);
 		}
@@ -371,7 +394,7 @@ export function create_custom_element(
 	const Class = class extends SvelteElement {
 		constructor() {
 			super(Component, slots, use_shadow_dom);
-			this.$$props_definition = props_definition;
+			this.$$p_d = props_definition;
 		}
 		static get observedAttributes() {
 			return Object.keys(props_definition).map((key) =>
@@ -382,36 +405,19 @@ export function create_custom_element(
 	Object.keys(props_definition).forEach((prop) => {
 		Object.defineProperty(Class.prototype, prop, {
 			get() {
-				return this.$$component && prop in this.$$component
-					? this.$$component[prop]
-					: this.$$data[prop];
+				return this.$$c && prop in this.$$c ? this.$$c[prop] : this.$$d[prop];
 			},
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
-				this.$$data[prop] = value;
-				this.$$component?.$set({ [prop]: value });
-				if (props_definition[prop].reflect) {
-					this.$$reflecting = true;
-					const attribute_value = get_custom_element_value(
-						prop,
-						value,
-						props_definition,
-						'toAttribute'
-					);
-					if (attribute_value == null) {
-						this.removeAttribute(prop);
-					} else {
-						this.setAttribute(props_definition[prop].attribute || prop, attribute_value);
-					}
-					this.$$reflecting = false;
-				}
+				this.$$d[prop] = value;
+				this.$$c?.$set({ [prop]: value });
 			}
 		});
 	});
 	accessors.forEach((accessor) => {
 		Object.defineProperty(Class.prototype, accessor, {
 			get() {
-				return this.$$component?.[accessor];
+				return this.$$c?.[accessor];
 			}
 		});
 	});

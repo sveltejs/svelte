@@ -69,9 +69,10 @@ radius of the selected circle.
 	<button on:click={() => travel(-1)} disabled={i === 0}>undo</button>
 	<button on:click={() => travel(+1)} disabled={i === undoStack.length - 1}>redo</button>
 </div>
-
+<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
 <svg on:click={handleClick}>
 	{#each circles as circle}
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<circle
 			cx={circle.cx}
 			cy={circle.cy}

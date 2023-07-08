@@ -16,6 +16,7 @@ sites/svelte.dev/.vercel
 /test/**/expected*
 /test/**/_output
 /test/**/shards/*.test.js
+/test/hydration/samples/raw-repair/_after.html
 /types
 !rollup.config.js
 !vitest.config.js

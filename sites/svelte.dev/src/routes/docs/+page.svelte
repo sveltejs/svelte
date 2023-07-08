@@ -210,7 +210,7 @@
 	}
 
 	onMount(() => {
-		console.log(get_old_new_ids_map());
+		console.log(get_old_new_ids_map()); // for debugging purposes in prod
 		goto(get_url_to_redirect_to(), { replaceState: true });
 	});
 </script>

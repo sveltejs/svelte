@@ -3,8 +3,8 @@ import { json } from '@sveltejs/kit';
 
 export const prerender = true;
 
-export function GET() {
+export async function GET() {
 	return json({
-		blocks: content()
+		blocks: await content()
 	});
 }

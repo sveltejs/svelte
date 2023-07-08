@@ -191,7 +191,7 @@ export default app;`
 <div class="app-controls">
 	<input bind:value={name} on:focus={(e) => e.target.select()} use:enter={(e) => e.target.blur()} />
 
-	<div style="text-align: right; margin-right:.4rem">
+	<div class="buttons">
 		<button class="icon" on:click={() => (zen_mode = !zen_mode)} title="fullscreen editor">
 			{#if zen_mode}
 				<Icon name="close" />
@@ -251,9 +251,16 @@ export default app;`
 		flex: 0;
 	}
 
+	.buttons {
+		text-align: right;
+		margin-right: 0.4rem;
+		display: flex;
+		align-items: center;
+		gap: 0.2em;
+	}
+
 	.icon {
-		position: relative;
-		top: -0.1rem;
+		transform: translateY(0.1rem);
 		display: inline-block;
 		padding: 0.2em;
 		opacity: 0.7;
@@ -261,13 +268,11 @@ export default app;`
 		font-family: var(--sk-font);
 		font-size: 1.6rem;
 		color: var(--sk-text-1);
-		/* width: 1.6em;
-		height: 1.6em; */
 		line-height: 1;
-		margin: 0 0 0 0.2em;
 	}
 
-	.icon:hover {
+	.icon:hover,
+	.icon:focus-visible {
 		opacity: 1;
 	}
 	.icon:disabled {

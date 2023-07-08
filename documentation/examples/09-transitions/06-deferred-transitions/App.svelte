@@ -49,6 +49,7 @@
 		{#if selected}
 			{#await selected then d}
 				<div class="photo" in:receive={{ key: d.id }} out:send={{ key: d.id }}>
+					<!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
 					<img alt={d.alt} src="{ASSETS}/{d.id}.jpg" on:click={() => (selected = null)} />
 
 					<p class="credit">
