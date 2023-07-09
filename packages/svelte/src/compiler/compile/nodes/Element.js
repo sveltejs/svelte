@@ -1347,24 +1347,22 @@ export default class Element extends Node {
 		);
 	}
 	optimise() {
-		attributes_to_compact_whitespace.forEach(
-			/** @param {any} attribute_name */ (attribute_name) => {
-				const attribute = this.attributes.find((a) => a.name === attribute_name);
-				if (attribute && !attribute.is_true) {
-					attribute.chunks.forEach((chunk, index) => {
-						if (chunk.type === 'Text') {
-							let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
-							if (index === 0) {
-								data = data.trimLeft();
-							} else if (index === attribute.chunks.length - 1) {
-								data = data.trimRight();
-							}
-							chunk.data = data;
+		attributes_to_compact_whitespace.forEach((attribute_name) => {
+			const attribute = this.attributes.find((a) => a.name === attribute_name);
+			if (attribute && !attribute.is_true) {
+				attribute.chunks.forEach((chunk, index) => {
+					if (chunk.type === 'Text') {
+						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
+						if (index === 0) {
+							data = data.trimLeft();
+						} else if (index === attribute.chunks.length - 1) {
+							data = data.trimRight();
 						}
-					});
-				}
+						chunk.data = data;
+					}
+				});
 			}
-		);
+		});
 	}
 	get can_use_textcontent() {
 		return (

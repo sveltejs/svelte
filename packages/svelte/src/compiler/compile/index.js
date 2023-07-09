@@ -57,16 +57,14 @@ function validate_options(options, warnings) {
 	}
 
 	const { name, filename, loopGuardTimeout, dev, namespace, css } = options;
-	Object.keys(options).forEach(
-		/** @param {any} key */ (key) => {
-			if (!valid_options.includes(key)) {
-				const match = fuzzymatch(key, valid_options);
-				let message = `Unrecognized option '${key}'`;
-				if (match) message += ` (did you mean '${match}'?)`;
-				throw new Error(message);
-			}
+	Object.keys(options).forEach((key) => {
+		if (!valid_options.includes(key)) {
+			const match = fuzzymatch(key, valid_options);
+			let message = `Unrecognized option '${key}'`;
+			if (match) message += ` (did you mean '${match}'?)`;
+			throw new Error(message);
 		}
-	);
+	});
 	if (name && !regex_valid_identifier.test(name)) {
 		throw new Error(`options.name must be a valid identifier (got '${name}')`);
 	}
