@@ -1,4 +1,5 @@
 export {
+	SvelteComponentDev as SvelteComponent,
 	onMount,
 	onDestroy,
 	beforeUpdate,
@@ -9,6 +10,5 @@ export {
 	hasContext,
 	tick,
 	createEventDispatcher,
-	SvelteComponentDev as SvelteComponent,
 	SvelteComponentTyped
 } from './internal/index.js';

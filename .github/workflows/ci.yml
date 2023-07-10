@@ -1,13 +1,13 @@
 name: CI
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
 env:
-  # We only install Chromium manually 
+  # We only install Chromium manually
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:

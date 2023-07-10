@@ -23,7 +23,9 @@ function create_if_block(ctx) {
 			insert(target, div, anchor);
 		},
 		d(detaching) {
-			if (detaching) detach(div);
+			if (detaching) {
+				detach(div);
+			}
 		}
 	};
 }
@@ -46,8 +48,11 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
+			if (detaching) {
+				detach(if_block_anchor);
+			}
+
 			if (if_block) if_block.d(detaching);
-			if (detaching) detach(if_block_anchor);
 		}
 	};
 }

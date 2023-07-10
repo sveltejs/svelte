@@ -1,0 +1,27 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Playground: Browser",
+			"url": "http://localhost:10001"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"runtimeArgs": ["--watch"],
+			"name": "Playground: Server",
+			"outputCapture": "std",
+			"program": "start.js",
+			"cwd": "${workspaceFolder}/packages/playground",
+			"cascadeTerminateToConfigurations": ["Playground: Browser"]
+		}
+	],
+	"compounds": [
+		{
+			"name": "Playground: Full",
+			"configurations": ["Playground: Server", "Playground: Browser"]
+		}
+	]
+}

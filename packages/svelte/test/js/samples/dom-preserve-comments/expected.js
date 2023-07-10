@@ -39,11 +39,13 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(div0);
-			if (detaching) detach(t1);
-			if (detaching) detach(c);
-			if (detaching) detach(t2);
-			if (detaching) detach(div1);
+			if (detaching) {
+				detach(div0);
+				detach(t1);
+				detach(c);
+				detach(t2);
+				detach(div1);
+			}
 		}
 	};
 }

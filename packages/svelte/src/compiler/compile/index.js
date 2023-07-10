@@ -30,13 +30,15 @@ const valid_options = [
 	'loopGuardTimeout',
 	'preserveComments',
 	'preserveWhitespace',
-	'cssHash'
+	'cssHash',
+	'discloseVersion'
 ];
 const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
 const regex_starts_with_lowercase_character = /^[a-z]/;
 
 let warned_of_format = false;
+let warned_boolean_css = false;
 
 /**
  * @param {import('../interfaces.js').CompileOptions} options
@@ -86,23 +88,23 @@ function validate_options(options, warnings) {
 			toString: () => message
 		});
 	}
-	if (valid_css_values.indexOf(css) === -1) {
-		throw new Error(
-			`options.css must be true, false, 'injected', 'external', or 'none' (got '${css}')`
-		);
-	}
+
 	if (css === true || css === false) {
 		options.css = css === true ? 'injected' : 'external';
-		// possibly show this warning once we decided how Svelte 4 looks like
-		// const message = `options.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`;
-		// warnings.push({
-		// 	code: 'options-css-boolean-deprecated',
-		// 	message,
-		// 	filename,
-		// 	toString: () => message
-		// });
-		// }
+		if (!warned_boolean_css) {
+			console.warn(
+				`compilerOptions.css as a boolean is deprecated. Use '${options.css}' instead of ${css}.`
+			);
+			warned_boolean_css = true;
+		}
 	}
+
+	if (!valid_css_values.includes(options.css)) {
+		throw new Error(
+			`compilerOptions.css must be 'injected', 'external' or 'none' (got '${options.css}').`
+		);
+	}
+
 	if (namespace && valid_namespaces.indexOf(namespace) === -1) {
 		const match = fuzzymatch(namespace, valid_namespaces);
 		if (match) {
@@ -111,9 +113,16 @@ function validate_options(options, warnings) {
 			throw new Error(`Invalid namespace '${namespace}'`);
 		}
 	}
+
+	if (options.discloseVersion == undefined) {
+		options.discloseVersion = true;
+	}
 }
 
 /**
+ * `compile` takes your component source code, and turns it into a JavaScript module that exports a class.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source
  * @param {import('../interfaces.js').CompileOptions} options
  */

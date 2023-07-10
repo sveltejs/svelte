@@ -604,5 +604,17 @@ export default function dom(component, options) {
 			);
 		}
 	}
+
+	if (options.discloseVersion === true) {
+		component.imports.unshift({
+			type: 'ImportDeclaration',
+			specifiers: [],
+			source: {
+				type: 'Literal',
+				value: `${options.sveltePath ?? 'svelte'}/internal/disclose-version`
+			}
+		});
+	}
+
 	return { js: flatten(body), css };
 }

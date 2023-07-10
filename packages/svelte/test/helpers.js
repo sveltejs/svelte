@@ -90,7 +90,6 @@ export function show_output(cwd, options = {}) {
 			);
 
 			console.log(
-				// eslint-disable-line no-console
 				`\n>> ${colors.cyan().bold(file)}\n${add_line_numbers(js.code)}\n<< ${colors
 					.cyan()
 					.bold(file)}`
@@ -148,6 +147,7 @@ export function create_loader(compileOptions, cwd) {
 			// any imported Svelte components as well. A few edge cases aren't handled but also
 			// currently unused in the tests, for example `export * from`and live bindings.
 			let transformed = compiled.js.code
+				.replace(/^import ['"]([^'"]+)['"]/gm, 'await __import("$1")')
 				.replace(
 					/^import \* as (\w+) from ['"]([^'"]+)['"];?/gm,
 					'const $1 = await __import("$2");'
@@ -200,7 +200,7 @@ export function create_loader(compileOptions, cwd) {
 				const fn = new AsyncFunction('__import', '__exports', transformed);
 				await fn(__import, __exports);
 			} catch (err) {
-				console.error({ transformed }); // eslint-disable-line no-console
+				console.error(compileOptions, transformed);
 				throw err;
 			}
 

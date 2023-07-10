@@ -9,6 +9,7 @@
 
 		"baseUrl": ".",
 		"paths": {
+			"svelte": ["."],
 			"svelte/*": ["*"]
 		},
 		"allowJs": true,

@@ -58,3 +58,5 @@ export interface CrossfadeParams {
 	duration?: number | ((len: number) => number);
 	easing?: EasingFunction;
 }
+
+export * from './index.js';

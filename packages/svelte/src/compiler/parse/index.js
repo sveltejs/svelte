@@ -257,6 +257,9 @@ export class Parser {
 }
 
 /**
+ * The parse function parses a component, returning only its abstract syntax tree.
+ *
+ * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} template
  * @param {import('../interfaces.js').ParserOptions} options
  * @returns {import('../interfaces.js').Ast}
