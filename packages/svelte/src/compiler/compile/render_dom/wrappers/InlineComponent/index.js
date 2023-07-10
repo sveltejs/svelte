@@ -436,11 +436,6 @@ export default class InlineComponentWrapper extends Wrapper {
 					b`if (${name}) @claim_component(${name}.$$.fragment, ${claim_nodes});`
 				);
 			}
-			if (updates.length) {
-				block.chunks.update.push(b`
-					${updates}
-				`);
-			}
 			const tmp_anchor = this.get_or_create_anchor(block, parent_node, parent_nodes);
 			const anchor = has_css_custom_properties ? 'null' : tmp_anchor;
 			const update_mount_node = has_css_custom_properties
@@ -481,6 +476,7 @@ export default class InlineComponentWrapper extends Wrapper {
 						${name} = null;
 					}
 				} else if (${switch_value}) {
+					${updates}
 					${updates.length > 0 && b`${name}.$set(${name_changes});`}
 				}
 			`);
