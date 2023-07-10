@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-svelte:component evaluates props once
+fix: ensure `svelte:component` evaluates props once
