@@ -22,13 +22,12 @@ interface ComponentConstructorOptionsWithOptionalProps<
 	props?: Props;
 }
 
-export type ComponentConstructorOptions<Props extends Record<string, any> | never = never> = [
-	Props
-] extends [never]
-	? ComponentConstructorOptionsWithoutProps
-	: Record<string, any> extends Props
-	? ComponentConstructorOptionsWithOptionalProps
-	: ComponentConstructorOptionsWithProps<Props>;
+export type ComponentConstructorOptions<Props extends Record<string, any> | null = null> =
+	Props extends null
+		? ComponentConstructorOptionsWithoutProps
+		: Record<string, any> extends Props
+		? ComponentConstructorOptionsWithOptionalProps
+		: ComponentConstructorOptionsWithProps<Props>;
 
 /**
  * Convenience type to get the events the given component expects. Example:

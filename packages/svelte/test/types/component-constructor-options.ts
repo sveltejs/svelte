@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ComponentConstructorOptions } from '$runtime/internal/public.js';
 
 type NoProps = ComponentConstructorOptions;
