@@ -383,7 +383,6 @@ export interface Var {
 	writable?: boolean;
 
 	// used internally, but not exposed
-	immutable?: boolean;
 	global?: boolean;
 	internal?: boolean; // event handlers, bindings
 	initialised?: boolean;

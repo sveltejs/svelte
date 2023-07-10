@@ -770,25 +770,12 @@ export default class Component {
 			if (name[0] === '$') {
 				return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
 			}
-			const writable =
-				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
-
-			let immutable = false;
-			if (node.type === 'VariableDeclaration' && node.kind === 'const') {
-				immutable = true;
-				for (const declaration of node.declarations) {
-					if (declaration.init.type !== 'Literal') {
-						immutable = false;
-					}
-				}
-			}
-
+			const { type } = node;
 			this.add_var(node, {
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				imported: node.type.startsWith('Import'),
-				writable,
-				immutable
+				imported: type.startsWith('Import'),
+				writable: type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let')
 			});
 			this.node_for_declaration.set(name, node);
 		});

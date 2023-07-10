@@ -129,8 +129,11 @@ export default class Expression {
 								.forEach((name) => dependencies.add(name));
 						}
 					} else {
-						if (!lazy && !component.var_lookup.get(name)?.immutable) {
-							dependencies.add(name);
+						if (!lazy) {
+							const variable = component.var_lookup.get(name);
+							if (!variable || !variable.imported || variable.mutated || variable.reassigned) {
+								dependencies.add(name);
+							}
 						}
 						component.add_reference(node, name);
 						component.warn_if_undefined(name, nodes[0], template_scope, owner);
