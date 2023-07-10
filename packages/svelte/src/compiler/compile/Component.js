@@ -777,7 +777,7 @@ export default class Component {
 			if (node.type === 'VariableDeclaration' && node.kind === 'const') {
 				immutable = true;
 				for (const declaration of node.declarations) {
-					if (declaration.init.type !== 'Literal' || typeof declaration.init.value === 'object') {
+					if (declaration.init.type !== 'Literal') {
 						immutable = false;
 					}
 				}
