@@ -8,7 +8,8 @@ export default {
 		const button = target.querySelector('button');
 		await button.dispatchEvent(new window.Event('click'));
 		assert.htmlEqual(
-			target.innerHTML, `
+			target.innerHTML,
+			`
 				<p>value(2) = 2</p>
 				<button>Toggle Component</button>
 			`
@@ -16,7 +17,8 @@ export default {
 		assert.equal(component.n, 2);
 		await button.dispatchEvent(new window.Event('click'));
 		assert.htmlEqual(
-			target.innerHTML, `
+			target.innerHTML,
+			`
 				<p>value(1) = 3</p>
 				<button>Toggle Component</button>
 			`
