@@ -3,7 +3,7 @@
 // broken anything!
 import * as fs from 'node:fs';
 import { dirname } from 'node:path';
-import { fileURLtoPath } from "node:url";
+import { fileURLToPath } from 'node:url';
 import glob from 'tiny-glob/sync.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
