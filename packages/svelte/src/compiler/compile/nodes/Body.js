@@ -18,16 +18,14 @@ export default class Body extends Node {
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-		info.attributes.forEach(
-			/** @param {any} node */ (node) => {
-				if (node.type === 'EventHandler') {
-					this.handlers.push(new EventHandler(component, this, scope, node));
-				} else if (node.type === 'Action') {
-					this.actions.push(new Action(component, this, scope, node));
-				} else {
-					// TODO there shouldn't be anything else here...
-				}
+		info.attributes.forEach((node) => {
+			if (node.type === 'EventHandler') {
+				this.handlers.push(new EventHandler(component, this, scope, node));
+			} else if (node.type === 'Action') {
+				this.actions.push(new Action(component, this, scope, node));
+			} else {
+				// TODO there shouldn't be anything else here...
 			}
-		);
+		});
 	}
 }

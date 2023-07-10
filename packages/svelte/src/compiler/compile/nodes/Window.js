@@ -37,50 +37,48 @@ export default class Window extends Node {
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
-		info.attributes.forEach(
-			/** @param {any} node */ (node) => {
-				if (node.type === 'EventHandler') {
-					this.handlers.push(new EventHandler(component, this, scope, node));
-				} else if (node.type === 'Binding') {
-					if (node.expression.type !== 'Identifier') {
-						const { parts } = flatten_reference(node.expression);
-						// TODO is this constraint necessary?
-						return component.error(node.expression, compiler_errors.invalid_binding_window(parts));
-					}
-					if (!~valid_bindings.indexOf(node.name)) {
-						const match =
-							node.name === 'width'
-								? 'innerWidth'
-								: node.name === 'height'
-								? 'innerHeight'
-								: fuzzymatch(node.name, valid_bindings);
-						if (match) {
-							return component.error(
-								node,
-								compiler_errors.invalid_binding_on(
-									node.name,
-									'<svelte:window>',
-									` (did you mean '${match}'?)`
-								)
-							);
-						} else {
-							return component.error(
-								node,
-								compiler_errors.invalid_binding_on(
-									node.name,
-									'<svelte:window>',
-									` — valid bindings are ${list(valid_bindings)}`
-								)
-							);
-						}
-					}
-					this.bindings.push(new Binding(component, this, scope, node));
-				} else if (node.type === 'Action') {
-					this.actions.push(new Action(component, this, scope, node));
-				} else {
-					// TODO there shouldn't be anything else here...
+		info.attributes.forEach((node) => {
+			if (node.type === 'EventHandler') {
+				this.handlers.push(new EventHandler(component, this, scope, node));
+			} else if (node.type === 'Binding') {
+				if (node.expression.type !== 'Identifier') {
+					const { parts } = flatten_reference(node.expression);
+					// TODO is this constraint necessary?
+					return component.error(node.expression, compiler_errors.invalid_binding_window(parts));
 				}
+				if (!~valid_bindings.indexOf(node.name)) {
+					const match =
+						node.name === 'width'
+							? 'innerWidth'
+							: node.name === 'height'
+							? 'innerHeight'
+							: fuzzymatch(node.name, valid_bindings);
+					if (match) {
+						return component.error(
+							node,
+							compiler_errors.invalid_binding_on(
+								node.name,
+								'<svelte:window>',
+								` (did you mean '${match}'?)`
+							)
+						);
+					} else {
+						return component.error(
+							node,
+							compiler_errors.invalid_binding_on(
+								node.name,
+								'<svelte:window>',
+								` — valid bindings are ${list(valid_bindings)}`
+							)
+						);
+					}
+				}
+				this.bindings.push(new Binding(component, this, scope, node));
+			} else if (node.type === 'Action') {
+				this.actions.push(new Action(component, this, scope, node));
+			} else {
+				// TODO there shouldn't be anything else here...
 			}
-		);
+		});
 	}
 }
