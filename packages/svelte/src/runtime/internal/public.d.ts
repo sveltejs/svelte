@@ -1,17 +1,34 @@
 import { SvelteComponent } from './Component.js';
 import { SvelteComponentDev } from './dev.js';
 
-export interface ComponentConstructorOptions<
-	Props extends Record<string, any> = Record<string, any>
-> {
+interface ComponentConstructorOptionsWithoutProps {
 	target: Element | Document | ShadowRoot;
 	anchor?: Element;
-	props?: Props;
 	context?: Map<any, any>;
 	hydrate?: boolean;
 	intro?: boolean;
 	$$inline?: boolean;
 }
+
+interface ComponentConstructorOptionsWithProps<
+	Props extends Record<string, any> = Record<string, any>
+> extends ComponentConstructorOptionsWithoutProps {
+	props: Props;
+}
+
+interface ComponentConstructorOptionsWithOptionalProps<
+	Props extends Record<string, any> = Record<string, any>
+> extends ComponentConstructorOptionsWithoutProps {
+	props?: Props;
+}
+
+export type ComponentConstructorOptions<Props extends Record<string, any> | never = never> = [
+	Props
+] extends [never]
+	? ComponentConstructorOptionsWithoutProps
+	: Record<string, any> extends Props
+	? ComponentConstructorOptionsWithOptionalProps
+	: ComponentConstructorOptionsWithProps<Props>;
 
 /**
  * Convenience type to get the events the given component expects. Example:
