@@ -52,7 +52,7 @@
 		font: 700 var(--sk-text-s) var(--sk-font);
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
-		margin: 0;
+		margin: 0 0 0.5em;
 		color: var(--sk-text-3);
 	}
 
