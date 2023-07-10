@@ -104,6 +104,7 @@
 	}
 
 	label {
+		dislay: block;
 		position: relative;
 		line-height: 1.2;
 		padding: 0.5em 2.5em 0.5em 2em;
