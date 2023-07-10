@@ -2,9 +2,11 @@
 // equivalents. Only use it when you're sure that you haven't
 // broken anything!
 import * as fs from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLtoPath } from "node:url";
 import glob from 'tiny-glob/sync.js';
 
-const __dirname = new URL('.', import.meta.url).pathname;
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 glob('samples/*/_actual.json', { cwd: __dirname }).forEach((file) => {
 	const actual = fs.readFileSync(`${__dirname}/${file}`, 'utf-8');
