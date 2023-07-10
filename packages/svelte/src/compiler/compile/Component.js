@@ -807,26 +807,32 @@ export default class Component {
 		const { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
-		instance_scope.declarations.forEach(
-			/**
-			 * @param {any} node
-			 * @param {any} name
-			 */ (node, name) => {
-				if (name[0] === '$') {
-					return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
-				}
-				const writable =
-					node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
-				const imported = node.type.startsWith('Import');
-				this.add_var(node, {
-					name,
-					initialised: instance_scope.initialised_declarations.has(name),
-					writable,
-					imported
-				});
-				this.node_for_declaration.set(name, node);
+		instance_scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
 			}
-		);
+			const writable =
+				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+
+			let immutable = false;
+			if (node.type === 'VariableDeclaration' && node.kind === 'const') {
+				immutable = true;
+				for (const declaration of node.declarations) {
+					if (declaration.init.type !== 'Literal' || typeof declaration.init.value === 'object') {
+						immutable = false;
+					}
+				}
+			}
+
+			this.add_var(node, {
+				name,
+				initialised: instance_scope.initialised_declarations.has(name),
+				imported: node.type.startsWith('Import'),
+				writable,
+				immutable
+			});
+			this.node_for_declaration.set(name, node);
+		});
 		// NOTE: add store variable first, then only $store value
 		// as `$store` will mark `store` variable as referenced and subscribable
 		const global_keys = Array.from(globals.keys());

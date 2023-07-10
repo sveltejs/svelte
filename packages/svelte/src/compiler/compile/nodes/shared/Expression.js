@@ -48,7 +48,8 @@ export default class Expression {
 
 	/** @type {Array<import('estree').Node | import('estree').Node[]>} */
 	declarations = [];
-	/** */
+
+	/** @type {boolean} */
 	uses_context = false;
 
 	/** @type {import('estree').Node} */
@@ -122,7 +123,7 @@ export default class Expression {
 								.forEach(/** @param {any} name */ (name) => dependencies.add(name));
 						}
 					} else {
-						if (!lazy) {
+						if (!lazy && !component.var_lookup.get(name)?.immutable) {
 							dependencies.add(name);
 						}
 						component.add_reference(node, name);
@@ -231,6 +232,8 @@ export default class Expression {
 		if (this.manipulated) return this.manipulated;
 		const { component, declarations, scope_map: map, template_scope, owner } = this;
 		let scope = this.scope;
+
+		/** @type {import('estree').FunctionExpression | import('estree').ArrowFunctionExpression | null} */
 		let function_expression;
 
 		/** @type {Set<string>} */
