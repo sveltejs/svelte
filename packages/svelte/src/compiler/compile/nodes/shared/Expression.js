@@ -31,10 +31,16 @@ export default class Expression {
 	/** @type {Set<string>} */
 	references = new Set();
 
-	/** @type {Set<string>} */
+	/**
+	 * Dependencies declared in the script block
+	 * @type {Set<string>}
+	 */
 	dependencies = new Set();
 
-	/** @type {Set<string>} */
+	/**
+	 * Dependencies declared in the HTML-like template section
+	 * @type {Set<string>}
+	 */
 	contextual_dependencies = new Set();
 
 	/** @type {import('./TemplateScope.js').default} */
@@ -82,12 +88,12 @@ export default class Expression {
 		walk(info, {
 			/**
 			 * @param {any} node
-			 * @param {any} parent
+			 * @param {import('estree').Node} parent
 			 * @param {string} key
 			 */
 			enter(node, parent, key) {
 				// don't manipulate shorthand props twice
-				if (key === 'key' && parent.shorthand) return;
+				if (key === 'key' && /** @type {import('estree').Property} */ (parent).shorthand) return;
 				// don't manipulate `import.meta`, `new.target`
 				if (node.type === 'MetaProperty') return this.skip();
 				if (map.has(node)) {
@@ -119,7 +125,7 @@ export default class Expression {
 						if (!lazy || is_index) {
 							template_scope.dependencies_for_name
 								.get(name)
-								.forEach(/** @param {any} name */ (name) => dependencies.add(name));
+								.forEach((name) => dependencies.add(name));
 						}
 					} else {
 						if (!lazy) {
@@ -143,49 +149,48 @@ export default class Expression {
 					}
 				}
 				if (names) {
-					names.forEach(
-						/** @param {any} name */ (name) => {
-							if (template_scope.names.has(name)) {
-								if (template_scope.is_const(name)) {
-									component.error(node, compiler_errors.invalid_const_update(name));
-								}
-								template_scope.dependencies_for_name.get(name).forEach(
-									/** @param {any} name */ (name) => {
-										const variable = component.var_lookup.get(name);
-										if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
-									}
-								);
-								const each_block = template_scope.get_owner(name);
-								/** @type {import('../EachBlock.js').default} */ (each_block).has_binding = true;
-							} else {
-								component.add_reference(node, name);
+					names.forEach((name) => {
+						if (template_scope.names.has(name)) {
+							if (template_scope.is_const(name)) {
+								component.error(node, compiler_errors.invalid_const_update(name));
+							}
+							template_scope.dependencies_for_name.get(name).forEach((name) => {
 								const variable = component.var_lookup.get(name);
-								if (variable) {
-									variable[deep ? 'mutated' : 'reassigned'] = true;
-								}
+								if (variable) variable[deep ? 'mutated' : 'reassigned'] = true;
+							});
+							const each_block = template_scope.get_owner(name);
+							/** @type {import('../EachBlock.js').default} */ (each_block).has_binding = true;
+						} else {
+							component.add_reference(node, name);
+							const variable = component.var_lookup.get(name);
+							if (variable) {
+								variable[deep ? 'mutated' : 'reassigned'] = true;
+							}
 
-								/** @type {any} */
-								const declaration = scope.find_owner(name)?.declarations.get(name);
-								if (declaration) {
-									if (declaration.kind === 'const' && !deep) {
-										component.error(node, {
-											code: 'assignment-to-const',
-											message: 'You are assigning to a const'
-										});
-									}
-								} else if (variable && variable.writable === false && !deep) {
+							const declaration = scope.find_owner(name)?.declarations.get(name);
+							if (declaration) {
+								if (
+									/** @type {import('estree').VariableDeclaration} */ (declaration).kind ===
+										'const' &&
+									!deep
+								) {
 									component.error(node, {
 										code: 'assignment-to-const',
 										message: 'You are assigning to a const'
 									});
 								}
+							} else if (variable && variable.writable === false && !deep) {
+								component.error(node, {
+									code: 'assignment-to-const',
+									message: 'You are assigning to a const'
+								});
 							}
 						}
-					);
+					});
 				}
 			},
 
-			/** @param {import('estree').Node} node */
+			/** @type {import('estree-walker').SyncHandler} */
 			leave(node) {
 				if (map.has(node)) {
 					scope = scope.parent;
@@ -197,27 +202,22 @@ export default class Expression {
 		});
 	}
 	dynamic_dependencies() {
-		return Array.from(this.dependencies).filter(
-			/** @param {any} name */ (name) => {
-				if (this.template_scope.is_let(name)) return true;
-				if (is_reserved_keyword(name)) return true;
-				const variable = this.component.var_lookup.get(name);
-				return is_dynamic(variable);
-			}
-		);
+		return Array.from(this.dependencies).filter((name) => {
+			if (this.template_scope.is_let(name)) return true;
+			if (is_reserved_keyword(name)) return true;
+			const variable = this.component.var_lookup.get(name);
+			return is_dynamic(variable);
+		});
 	}
 	dynamic_contextual_dependencies() {
-		return Array.from(this.contextual_dependencies).filter(
-			/** @param {any} name */ (name) => {
-				return Array.from(this.template_scope.dependencies_for_name.get(name)).some(
-					/** @param {any} variable_name */
-					(variable_name) => {
-						const variable = this.component.var_lookup.get(variable_name);
-						return is_dynamic(variable);
-					}
-				);
-			}
-		);
+		return Array.from(this.contextual_dependencies).filter((name) => {
+			return Array.from(this.template_scope.dependencies_for_name.get(name)).some(
+				(variable_name) => {
+					const variable = this.component.var_lookup.get(variable_name);
+					return is_dynamic(variable);
+				}
+			);
+		});
 	}
 	// TODO move this into a render-dom wrapper?
 
@@ -239,10 +239,7 @@ export default class Expression {
 		/** @type {Set<string>} */
 		let contextual_dependencies;
 		const node = walk(this.node, {
-			/**
-			 * @param {any} node
-			 * @param {any} parent
-			 */
+			/** @type {import('estree-walker').SyncHandler} */
 			enter(node, parent) {
 				if (node.type === 'Property' && node.shorthand) {
 					node.value = clone(node.value);
@@ -257,11 +254,9 @@ export default class Expression {
 					if (function_expression) {
 						if (template_scope.names.has(name)) {
 							contextual_dependencies.add(name);
-							template_scope.dependencies_for_name.get(name).forEach(
-								/** @param {any} dependency */ (dependency) => {
-									dependencies.add(dependency);
-								}
-							);
+							template_scope.dependencies_for_name.get(name).forEach((dependency) => {
+								dependencies.add(dependency);
+							});
 						} else {
 							dependencies.add(name);
 							component.add_reference(node, name); // TODO is this redundant/misplaced?
@@ -284,10 +279,7 @@ export default class Expression {
 				}
 			},
 
-			/**
-			 * @param {import('estree').Node} node
-			 * @param {import('estree').Node} parent
-			 */
+			/** @type {import('estree-walker').SyncHandler} */
 			leave(node, parent) {
 				if (map.has(node)) scope = scope.parent;
 				if (node === function_expression) {
@@ -299,18 +291,15 @@ export default class Expression {
 						const has_args = function_expression.params.length > 0;
 						function_expression.params = [
 							...deps.map(
-								/** @param {any} name */ (name) =>
-									/** @type {import('estree').Identifier} */ ({ type: 'Identifier', name })
+								(name) => /** @type {import('estree').Identifier} */ ({ type: 'Identifier', name })
 							),
 							...function_expression.params
 						];
-						const context_args = deps.map(
-							/** @param {any} name */ (name) => block.renderer.reference(name, ctx)
-						);
+						const context_args = deps.map((name) => block.renderer.reference(name, ctx));
 						component.partly_hoisted.push(declaration);
 						block.renderer.add_to_context(id.name);
 						const callee = block.renderer.reference(id);
-						this.replace(/** @type {any} */ (id));
+						this.replace(id);
 						const func_declaration = has_args
 							? b`function ${id}(...args) {
 								return ${callee}(${context_args}, ...args);
@@ -325,10 +314,7 @@ export default class Expression {
 						if (contextual_dependencies.size === 0) {
 							let child_scope = scope;
 							walk(node, {
-								/**
-								 * @param {import('estree').Node} node
-								 * @param {any} parent
-								 */
+								/** @type {import('estree-walker').SyncHandler} */
 								enter(node, parent) {
 									if (map.has(node)) child_scope = map.get(node);
 									if (node.type === 'Identifier' && is_reference(node, parent)) {
@@ -349,7 +335,7 @@ export default class Expression {
 					} else if (dependencies.size === 0 && contextual_dependencies.size === 0) {
 						// we can hoist this out of the component completely
 						component.fully_hoisted.push(declaration);
-						this.replace(/** @type {any} */ (id));
+						this.replace(id);
 						component.add_var(node, {
 							name: id.name,
 							internal: true,
@@ -366,9 +352,7 @@ export default class Expression {
 						const { deps, func_declaration } = extract_functions();
 						if (owner.type === 'Attribute' && owner.parent.name === 'slot') {
 							/** @type {Set<import('../interfaces.js').INode>} */
-							const dep_scopes = new Set(
-								deps.map(/** @param {any} name */ (name) => template_scope.get_owner(name))
-							);
+							const dep_scopes = new Set(deps.map((name) => template_scope.get_owner(name)));
 							// find the nearest scopes
 
 							/** @type {import('../interfaces.js').INode} */
@@ -402,7 +386,7 @@ export default class Expression {
 									type: 'DestructuredVariable',
 									key: func_id,
 									modifier: () => func_expression,
-									default_modifier: /** @param {any} node */ (node) => node
+									default_modifier: (node) => node
 								});
 								this.replace(block.renderer.reference(func_id));
 							}
@@ -429,16 +413,14 @@ export default class Expression {
 
 					/** @type {Set<string>} */
 					const traced = new Set();
-					names.forEach(
-						/** @param {any} name */ (name) => {
-							const dependencies = template_scope.dependencies_for_name.get(name);
-							if (dependencies) {
-								dependencies.forEach(/** @param {any} name */ (name) => traced.add(name));
-							} else {
-								traced.add(name);
-							}
+					names.forEach((name) => {
+						const dependencies = template_scope.dependencies_for_name.get(name);
+						if (dependencies) {
+							dependencies.forEach((name) => traced.add(name));
+						} else {
+							traced.add(name);
 						}
-					);
+					});
 					const context = block.bindings.get(object_name);
 					if (context) {
 						// for `{#each array as item}`
@@ -463,19 +445,17 @@ export default class Expression {
 
 		if (declarations.length > 0) {
 			block.maintain_context = true;
-			declarations.forEach(
-				/** @param {any} declaration */ (declaration) => {
-					block.chunks.init.push(declaration);
-				}
-			);
+			declarations.forEach((declaration) => {
+				block.chunks.init.push(declaration);
+			});
 		}
 		return (this.manipulated = /** @type {import('estree').Node} */ (node));
 	}
 }
 
 /**
- * @param {any} _node
- * @param {any} parent
+ * @param {import('estree').Node} _node
+ * @param {import('../interfaces.js').INode} parent
  */
 function get_function_name(_node, parent) {
 	if (parent.type === 'EventHandler') {

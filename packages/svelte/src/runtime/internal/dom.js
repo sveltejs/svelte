@@ -588,14 +588,12 @@ export function init_binding_group_dynamic(group, indexes) {
 	};
 }
 
-/**
- * @returns {number} */
+/** @returns {number} */
 export function to_number(value) {
 	return value === '' ? null : +value;
 }
 
-/**
- * @returns {any[]} */
+/** @returns {any[]} */
 export function time_ranges_to_array(ranges) {
 	const array = [];
 	for (let i = 0; i < ranges.length; i += 1) {

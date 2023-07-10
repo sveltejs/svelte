@@ -29,11 +29,9 @@ export default class Head extends Node {
 			component,
 			parent,
 			scope,
-			info.children.filter(
-				/** @param {any} child */ (child) => {
-					return child.type !== 'Text' || regex_non_whitespace_character.test(child.data);
-				}
-			)
+			info.children.filter((child) => {
+				return child.type !== 'Text' || regex_non_whitespace_character.test(child.data);
+			})
 		);
 		if (this.children.length > 0) {
 			this.id = `svelte-${hash(this.component.source.slice(this.start, this.end))}`;
