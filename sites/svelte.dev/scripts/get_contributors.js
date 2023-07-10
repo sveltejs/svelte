@@ -65,7 +65,7 @@ try {
 	await sprite
 		.quality(80)
 		.writeAsync(
-			new URL(`../src/routes/_components/Supporters/contributors.jpeg`, import.meta.url).pathname
+			new URL(`../src/routes/_components/Supporters/contributors.jpg`, import.meta.url).pathname
 		);
 
 	// TODO: Optimizing the static/contributors.jpg image should probably get automated as well

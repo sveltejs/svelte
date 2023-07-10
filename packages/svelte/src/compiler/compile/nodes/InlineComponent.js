@@ -101,17 +101,13 @@ export default class InlineComponent extends Node {
 
 		this.scope = scope;
 
-		this.handlers.forEach(
-			/** @param {any} handler */ (handler) => {
-				handler.modifiers.forEach(
-					/** @param {any} modifier */ (modifier) => {
-						if (modifier !== 'once') {
-							return component.error(handler, compiler_errors.invalid_event_modifier_component);
-						}
-					}
-				);
-			}
-		);
+		this.handlers.forEach((handler) => {
+			handler.modifiers.forEach((modifier) => {
+				if (modifier !== 'once') {
+					return component.error(handler, compiler_errors.invalid_event_modifier_component);
+				}
+			});
+		});
 		const children = [];
 		for (let i = info.children.length - 1; i >= 0; i--) {
 			const child = info.children[i];
@@ -120,9 +116,7 @@ export default class InlineComponent extends Node {
 				info.children.splice(i, 1);
 			} else if (
 				(child.type === 'Element' || child.type === 'InlineComponent' || child.type === 'Slot') &&
-				child.attributes.find(
-					/** @param {any} attribute */ (attribute) => attribute.name === 'slot'
-				)
+				child.attributes.find((attribute) => attribute.name === 'slot')
 			) {
 				const slot_template = {
 					start: child.start,
@@ -156,7 +150,7 @@ export default class InlineComponent extends Node {
 				children[children.length - 1].children.unshift(child);
 			}
 		}
-		if (info.children.some(/** @param {any} node */ (node) => not_whitespace_text(node))) {
+		if (info.children.some((node) => not_whitespace_text(node))) {
 			children.push({
 				start: info.start,
 				end: info.end,
@@ -182,9 +176,7 @@ export default class InlineComponent extends Node {
 	}
 	get slot_template_name() {
 		return /** @type {string} */ (
-			this.attributes
-				.find(/** @param {any} attribute */ (attribute) => attribute.name === 'slot')
-				.get_static_value()
+			this.attributes.find((attribute) => attribute.name === 'slot').get_static_value()
 		);
 	}
 }

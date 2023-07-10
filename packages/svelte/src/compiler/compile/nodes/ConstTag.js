@@ -54,19 +54,16 @@ export default class ConstTag extends Node {
 		this.node = info;
 		this.scope = scope;
 		const { assignees, dependencies } = this;
-		extract_identifiers(info.expression.left).forEach(
-			/** @param {any}params_0 */ ({ name }) => {
-				assignees.add(name);
-				const owner = this.scope.get_owner(name);
-				if (owner === parent) {
-					component.error(info, compiler_errors.invalid_const_declaration(name));
-				}
+		extract_identifiers(info.expression.left).forEach(({ name }) => {
+			assignees.add(name);
+			const owner = this.scope.get_owner(name);
+			if (owner === parent) {
+				component.error(info, compiler_errors.invalid_const_declaration(name));
 			}
-		);
+		});
 		walk(info.expression.right, {
 			/**
-			 * @param {any} node
-			 * @param {any} parent
+			 * @type {import('estree-walker').SyncHandler}
 			 */
 			enter(node, parent) {
 				if (
@@ -75,7 +72,7 @@ export default class ConstTag extends Node {
 						/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
 					)
 				) {
-					const identifier = get_object(/** @type {any} */ (node));
+					const identifier = get_object(node);
 					const { name } = identifier;
 					dependencies.add(name);
 				}
@@ -92,18 +89,16 @@ export default class ConstTag extends Node {
 			context_rest_properties: this.context_rest_properties
 		});
 		this.expression = new Expression(this.component, this, this.scope, this.node.expression.right);
-		this.contexts.forEach(
-			/** @param {any} context */ (context) => {
-				if (context.type !== 'DestructuredVariable') return;
-				const owner = this.scope.get_owner(context.key.name);
-				if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
-					this.component.error(
-						this.node,
-						compiler_errors.invalid_const_declaration(context.key.name)
-					);
-				}
-				this.scope.add(context.key.name, this.expression.dependencies, this);
+		this.contexts.forEach((context) => {
+			if (context.type !== 'DestructuredVariable') return;
+			const owner = this.scope.get_owner(context.key.name);
+			if (owner && owner.type === 'ConstTag' && owner.parent === this.parent) {
+				this.component.error(
+					this.node,
+					compiler_errors.invalid_const_declaration(context.key.name)
+				);
 			}
-		);
+			this.scope.add(context.key.name, this.expression.dependencies, this);
+		});
 	}
 }
