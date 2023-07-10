@@ -42,8 +42,6 @@ export async function content() {
 			modules
 		);
 
-		if (markdown.includes('writable')) console.log(markdown);
-
 		const { body, metadata } = extractFrontmatter(markdown);
 
 		const sections = body.trim().split(/^## /m);
