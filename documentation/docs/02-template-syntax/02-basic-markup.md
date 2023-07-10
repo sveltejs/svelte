@@ -28,6 +28,7 @@ By default, attributes work exactly like their HTML counterparts.
 
 As in HTML, values may be unquoted.
 
+<!-- prettier-ignore -->
 ```svelte
 <input type=checkbox />
 ```
