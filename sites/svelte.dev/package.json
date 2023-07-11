@@ -36,9 +36,11 @@
     "@types/marked": "^5.0.0",
     "@types/node": "^20.3.3",
     "@types/prettier": "^2.7.3",
+    "browserslist": "^4.21.9",
     "degit": "^2.8.4",
     "dotenv": "^16.3.1",
     "jimp": "^0.22.8",
+    "lightningcss": "^1.21.5",
     "magic-string": "^0.30.1",
     "marked": "^5.1.0",
     "prettier": "^2.8.8",
@@ -54,7 +56,7 @@
     "svelte-preprocess": "^5.0.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.1.6",
-    "vite": "^4.4.2",
+    "vite": "^4.4.3",
     "vite-imagetools": "^5.0.5"
   }
 }

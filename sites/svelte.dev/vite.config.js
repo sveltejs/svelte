@@ -1,5 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { browserslistToTargets } from 'lightningcss';
 import { readFile } from 'node:fs/promises';
+import browserslist from 'browserslist';
 
 const plugins = [raw(['.ttf']), sveltekit()];
 
@@ -37,6 +39,15 @@ function raw(ext) {
 /** @type {import('vite').UserConfig} */
 const config = {
 	logLevel: 'info',
+	css: {
+		transformer: 'lightningcss',
+		lightningcss: {
+			targets: browserslistToTargets(browserslist(['>0.2%', 'not dead']))
+		}
+	},
+	build: {
+		cssMinify: 'lightningcss'
+	},
 	plugins,
 	optimizeDeps: {
 		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']
