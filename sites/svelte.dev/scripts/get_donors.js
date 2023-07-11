@@ -61,10 +61,6 @@ try {
 		.writeAsync(
 			new URL(`../src/routes/_components/Supporters/donors.jpg`, import.meta.url).pathname
 		);
-	// TODO: Optimizing the static/donors.jpg image should probably get automated as well
-	console.log(
-		'remember to additionally optimize the resulting /static/donors.jpg image file via e.g. https://squoosh.app '
-	);
 
 	const str = `[\n\t${included.map((a) => `${JSON.stringify(a.backer.name)}`).join(',\n\t')}\n]`;
 

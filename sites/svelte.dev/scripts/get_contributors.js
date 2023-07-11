@@ -68,11 +68,6 @@ try {
 			new URL(`../src/routes/_components/Supporters/contributors.jpg`, import.meta.url).pathname
 		);
 
-	// TODO: Optimizing the static/contributors.jpg image should probably get automated as well
-	console.log(
-		'remember to additionally optimize the resulting /static/contributors.jpg image file via e.g. https://squoosh.app '
-	);
-
 	const str = `[\n\t${authors.map((a) => `'${a.login}'`).join(',\n\t')}\n]`;
 
 	writeFile(outputFile, `export default ${str};`);
