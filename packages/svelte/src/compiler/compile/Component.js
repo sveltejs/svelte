@@ -1310,8 +1310,7 @@ export default class Component {
 				if (all_hoistable) {
 					node.declarations.forEach((d) => {
 						for (const name of extract_names(d.id)) {
-							const variable = this.var_lookup.get(name);
-							variable.hoistable = true;
+							this.var_lookup.get(name).hoistable = true;
 						}
 					});
 					hoistable_nodes.add(node);
