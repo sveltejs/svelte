@@ -584,7 +584,11 @@ export default function dom(component, options) {
 		const slots_str = [...component.slots.keys()].map((key) => `"${key}"`).join(',');
 		const accessors_str = accessors
 			.filter((accessor) => !writable_props.some((prop) => prop.export_name === accessor.key.name))
-			.map((accessor) => `"${accessor.key.name}"`)
+			.map((accessor) => {
+				return `{ name: "${accessor.key.name}", can_proxy: ${
+					accessor.value?.type === 'FunctionExpression'
+				} }`;
+			})
 			.join(',');
 		const use_shadow_dom =
 			component.component_options.customElement?.shadow !== 'none' ? 'true' : 'false';

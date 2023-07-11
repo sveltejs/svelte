@@ -388,7 +388,7 @@ function get_custom_element_value(prop, value, props_definition, transform) {
  * @param {import('./public.js').ComponentType} Component  A Svelte component constructor
  * @param {Record<string, CustomElementPropDefinition>} props_definition  The props to observe
  * @param {string[]} slots  The slots to create
- * @param {string[]} accessors  Other accessors besides the ones for props the component has
+ * @param {Array<{name: string, can_proxy: boolean}>} accessors  Other accessors besides the ones for props the component has
  * @param {boolean} use_shadow_dom  Whether to use shadow DOM
  */
 export function create_custom_element(
@@ -423,18 +423,24 @@ export function create_custom_element(
 		});
 	});
 	accessors.forEach((accessor) => {
-		Object.defineProperty(Class.prototype, accessor, {
+		Object.defineProperty(Class.prototype, accessor.name, {
 			get() {
 				if (this.$$c) {
-					return this.$$c[accessor];
+					return this.$$c[accessor.name];
 				} else {
 					// This is only an approximation of what's possible.
 					// It only handles the case where the accessor is a function without a return value
-					return (...args) => {
-						this.$$b.push(() => {
-							this.$$c[accessor](...args);
-						});
-					};
+					if (accessor.can_proxy) {
+						return (...args) => {
+							this.$$b.push(() => {
+								this.$$c[accessor.name](...args);
+							});
+						};
+					} else {
+						throw new Error(
+							`Cannot call '${accessor.name}' before the component is connected to the DOM`
+						);
+					}
 				}
 			}
 		});
