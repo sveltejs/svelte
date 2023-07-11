@@ -1,5 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import { browserslistToTargets } from 'lightningcss';
 import { readFile } from 'node:fs/promises';
+import browserslist from 'browserslist';
 
 const plugins = [raw(['.ttf']), sveltekit()];
 
@@ -40,12 +42,7 @@ const config = {
 	css: {
 		transformer: 'lightningcss',
 		lightningcss: {
-			targets: {
-				chrome: 92,
-				safari: 14,
-				edge: 92,
-				firefox: 90
-			}
+			targets: browserslistToTargets(browserslist(['>0.2%', 'not dead']))
 		}
 	},
 	build: {
