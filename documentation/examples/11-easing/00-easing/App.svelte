@@ -42,7 +42,7 @@
 		<g class="canvas">
 			<Grid x={$time} y={$value} />
 			<g class="graph">
-				<path d={$ease_path} stroke="#333" stroke-width="2" fill="none" />
+				<path d={$ease_path} stroke="#ff3e00" stroke-width="2" fill="none" />
 
 				<path
 					d="M0,23.647C0,22.41 27.014,0.407 28.496,0.025C29.978,-0.357 69.188,3.744 70.104,4.744C71.02,5.745 71.02,41.499 70.104,42.5C69.188,43.501 29.978,47.601 28.496,47.219C27.014,46.837 0,24.884 0,23.647Z"
