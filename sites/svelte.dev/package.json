@@ -55,7 +55,7 @@
     "svelte-preprocess": "^5.0.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.1.6",
-    "vite": "^4.4.2",
+    "vite": "^4.4.3",
     "vite-imagetools": "^5.0.5"
   }
 }
