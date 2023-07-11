@@ -314,19 +314,14 @@ function is_valid_aria_attribute_value(schema, value) {
 		case 'idlist': // if list of ids, split each
 			return (
 				typeof value === 'string' &&
-				value
-					.split(regex_any_repeated_whitespaces)
-					.every(/** @param {any} id */ (id) => typeof id === 'string')
+				value.split(regex_any_repeated_whitespaces).every((id) => typeof id === 'string')
 			);
 		case 'tokenlist': // if list of tokens, split each
 			return (
 				typeof value === 'string' &&
 				value
 					.split(regex_any_repeated_whitespaces)
-					.every(
-						/** @param {any} token */ (token) =>
-							(schema.values || []).indexOf(token.toLowerCase()) > -1
-					)
+					.every((token) => (schema.values || []).indexOf(token.toLowerCase()) > -1)
 			);
 		default:
 			return false;
@@ -393,7 +388,7 @@ export default class Element extends Node {
 	 * @param {import('../Component.js').default} component
 	 * @param {import('./shared/Node.js').default} parent
 	 * @param {import('./shared/TemplateScope.js').default} scope
-	 * @param {any} info  undefined
+	 * @param {any} info
 	 */
 	constructor(component, parent, scope, info) {
 		super(component, parent, scope, info);
@@ -435,9 +430,7 @@ export default class Element extends Node {
 			}
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
-					const value_attribute = info.attributes.find(
-						/** @param {any} node */ (node) => node.name === 'value'
-					);
+					const value_attribute = info.attributes.find((node) => node.name === 'value');
 					if (value_attribute) {
 						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
 						return;
@@ -456,9 +449,7 @@ export default class Element extends Node {
 				// Special case — treat these the same way:
 				//   <option>{foo}</option>
 				//   <option value={foo}>{foo}</option>
-				const value_attribute = info.attributes.find(
-					/** @param {any} attribute */ (attribute) => attribute.name === 'value'
-				);
+				const value_attribute = info.attributes.find((attribute) => attribute.name === 'value');
 				if (!value_attribute) {
 					info.attributes.push({
 						type: 'Attribute',
@@ -469,67 +460,58 @@ export default class Element extends Node {
 				}
 			}
 		}
-		const has_let = info.attributes.some(/** @param {any} node */ (node) => node.type === 'Let');
+		const has_let = info.attributes.some((node) => node.type === 'Let');
 		if (has_let) {
 			scope = scope.child();
 		}
 		// Binding relies on Attribute, defer its evaluation
 		const order = ['Binding']; // everything else is -1
-		info.attributes.sort(
-			/**
-			 * @param {any} a
-			 * @param {any} b
-			 */ (a, b) => order.indexOf(a.type) - order.indexOf(b.type)
-		);
-		info.attributes.forEach(
-			/** @param {any} node */ (node) => {
-				switch (node.type) {
-					case 'Action':
-						this.actions.push(new Action(component, this, scope, node));
-						break;
-					case 'Attribute':
-					case 'Spread':
-						// special case
-						if (node.name === 'xmlns') this.namespace = node.value[0].data;
-						this.attributes.push(new Attribute(component, this, scope, node));
-						break;
-					case 'Binding':
-						this.bindings.push(new Binding(component, this, scope, node));
-						break;
-					case 'Class':
-						this.classes.push(new Class(component, this, scope, node));
-						break;
-					case 'StyleDirective':
-						this.styles.push(new StyleDirective(component, this, scope, node));
-						break;
-					case 'EventHandler':
-						this.handlers.push(new EventHandler(component, this, scope, node));
-						break;
-					case 'Let': {
-						const l = new Let(component, this, scope, node);
-						this.lets.push(l);
-						const dependencies = new Set([l.name.name]);
-						l.names.forEach(
-							/** @param {any} name */ (name) => {
-								scope.add(name, dependencies, this);
-							}
-						);
-						break;
-					}
-					case 'Transition': {
-						const transition = new Transition(component, this, scope, node);
-						if (node.intro) this.intro = transition;
-						if (node.outro) this.outro = transition;
-						break;
-					}
-					case 'Animation':
-						this.animation = new Animation(component, this, scope, node);
-						break;
-					default:
-						throw new Error(`Not implemented: ${node.type}`);
+		info.attributes.sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+		info.attributes.forEach((node) => {
+			switch (node.type) {
+				case 'Action':
+					this.actions.push(new Action(component, this, scope, node));
+					break;
+				case 'Attribute':
+				case 'Spread':
+					// special case
+					if (node.name === 'xmlns') this.namespace = node.value[0].data;
+					this.attributes.push(new Attribute(component, this, scope, node));
+					break;
+				case 'Binding':
+					this.bindings.push(new Binding(component, this, scope, node));
+					break;
+				case 'Class':
+					this.classes.push(new Class(component, this, scope, node));
+					break;
+				case 'StyleDirective':
+					this.styles.push(new StyleDirective(component, this, scope, node));
+					break;
+				case 'EventHandler':
+					this.handlers.push(new EventHandler(component, this, scope, node));
+					break;
+				case 'Let': {
+					const l = new Let(component, this, scope, node);
+					this.lets.push(l);
+					const dependencies = new Set([l.name.name]);
+					l.names.forEach((name) => {
+						scope.add(name, dependencies, this);
+					});
+					break;
 				}
+				case 'Transition': {
+					const transition = new Transition(component, this, scope, node);
+					if (node.intro) this.intro = transition;
+					if (node.outro) this.outro = transition;
+					break;
+				}
+				case 'Animation':
+					this.animation = new Animation(component, this, scope, node);
+					break;
+				default:
+					throw new Error(`Not implemented: ${node.type}`);
 			}
-		);
+		});
 		this.scope = scope;
 		this.children = map_children(component, this, this.scope, info.children);
 		this.validate();
@@ -578,242 +560,226 @@ export default class Element extends Node {
 	}
 	validate_attributes() {
 		const { component, parent } = this;
-		this.attributes.forEach(
-			/** @param {any} attribute */ (attribute) => {
-				if (attribute.is_spread) return;
-				const name = attribute.name.toLowerCase();
-				// Errors
-				if (regex_illegal_attribute_character.test(name)) {
-					return component.error(attribute, compiler_errors.illegal_attribute(name));
+		this.attributes.forEach((attribute) => {
+			if (attribute.is_spread) return;
+			const name = attribute.name.toLowerCase();
+			// Errors
+			if (regex_illegal_attribute_character.test(name)) {
+				return component.error(attribute, compiler_errors.illegal_attribute(name));
+			}
+			if (name === 'slot') {
+				if (!attribute.is_static) {
+					return component.error(attribute, compiler_errors.invalid_slot_attribute);
 				}
-				if (name === 'slot') {
-					if (!attribute.is_static) {
-						return component.error(attribute, compiler_errors.invalid_slot_attribute);
-					}
-					if (component.slot_outlets.has(name)) {
-						return component.error(attribute, compiler_errors.duplicate_slot_attribute(name));
-						// this code was unreachable. Still needed?
-						// component.slot_outlets.add(name);
-					}
-					if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
-						return component.error(attribute, compiler_errors.invalid_slotted_content);
-					}
+				if (component.slot_outlets.has(name)) {
+					return component.error(attribute, compiler_errors.duplicate_slot_attribute(name));
+					// this code was unreachable. Still needed?
+					// component.slot_outlets.add(name);
 				}
-				// Warnings
-				if (this.namespace !== namespaces.foreign) {
-					if (name === 'is') {
-						component.warn(attribute, compiler_warnings.avoid_is);
-					}
-					if (react_attributes.has(attribute.name)) {
-						component.warn(
-							attribute,
-							compiler_warnings.invalid_html_attribute(
-								attribute.name,
-								react_attributes.get(attribute.name)
-							)
-						);
-					}
+				if (!(parent.type === 'SlotTemplate' || within_custom_element(parent))) {
+					return component.error(attribute, compiler_errors.invalid_slotted_content);
 				}
 			}
-		);
+			// Warnings
+			if (this.namespace !== namespaces.foreign) {
+				if (name === 'is') {
+					component.warn(attribute, compiler_warnings.avoid_is);
+				}
+				if (react_attributes.has(attribute.name)) {
+					component.warn(
+						attribute,
+						compiler_warnings.invalid_html_attribute(
+							attribute.name,
+							react_attributes.get(attribute.name)
+						)
+					);
+				}
+			}
+		});
 	}
 	validate_attributes_a11y() {
 		const { component, attributes, handlers } = this;
 		const attribute_map = new Map();
 		const handlers_map = new Map();
-		attributes.forEach(
-			/** @param {any} attribute */ (attribute) => attribute_map.set(attribute.name, attribute)
-		);
-		handlers.forEach(
-			/** @param {any} handler */ (handler) => handlers_map.set(handler.name, handler)
-		);
-		attributes.forEach(
-			/** @param {any} attribute */ (attribute) => {
-				if (attribute.is_spread) return;
-				const name = attribute.name.toLowerCase();
-				// aria-props
-				if (name.startsWith('aria-')) {
-					if (invisible_elements.has(this.name)) {
-						// aria-unsupported-elements
-						component.warn(attribute, compiler_warnings.a11y_aria_attributes(this.name));
-					}
-					const type = name.slice(5);
-					if (!aria_attribute_set.has(type)) {
-						const match = fuzzymatch(type, aria_attributes);
-						component.warn(attribute, compiler_warnings.a11y_unknown_aria_attribute(type, match));
-					}
-					if (name === 'aria-hidden' && regex_heading_tags.test(this.name)) {
-						component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
-					}
-					// aria-proptypes
-					let value = attribute.get_static_value();
-					if (value === 'true') value = true;
-					if (value === 'false') value = false;
-					if (
-						value !== null &&
-						value !== undefined &&
-						aria.has(/** @type {import('aria-query').ARIAProperty} */ (name))
-					) {
-						const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
-						if (!is_valid_aria_attribute_value(schema, value)) {
-							component.warn(
-								attribute,
-								compiler_warnings.a11y_incorrect_attribute_type(schema, name)
-							);
-						}
-					}
-					// aria-activedescendant-has-tabindex
-					if (
-						name === 'aria-activedescendant' &&
-						!this.is_dynamic_element &&
-						!is_interactive_element(this.name, attribute_map) &&
-						!attribute_map.has('tabindex')
-					) {
-						component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+		attributes.forEach((attribute) => attribute_map.set(attribute.name, attribute));
+		handlers.forEach((handler) => handlers_map.set(handler.name, handler));
+		attributes.forEach((attribute) => {
+			if (attribute.is_spread) return;
+			const name = attribute.name.toLowerCase();
+			// aria-props
+			if (name.startsWith('aria-')) {
+				if (invisible_elements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, compiler_warnings.a11y_aria_attributes(this.name));
+				}
+				const type = name.slice(5);
+				if (!aria_attribute_set.has(type)) {
+					const match = fuzzymatch(type, aria_attributes);
+					component.warn(attribute, compiler_warnings.a11y_unknown_aria_attribute(type, match));
+				}
+				if (name === 'aria-hidden' && regex_heading_tags.test(this.name)) {
+					component.warn(attribute, compiler_warnings.a11y_hidden(this.name));
+				}
+				// aria-proptypes
+				let value = attribute.get_static_value();
+				if (value === 'true') value = true;
+				if (value === 'false') value = false;
+				if (
+					value !== null &&
+					value !== undefined &&
+					aria.has(/** @type {import('aria-query').ARIAProperty} */ (name))
+				) {
+					const schema = aria.get(/** @type {import('aria-query').ARIAProperty} */ (name));
+					if (!is_valid_aria_attribute_value(schema, value)) {
+						component.warn(
+							attribute,
+							compiler_warnings.a11y_incorrect_attribute_type(schema, name)
+						);
 					}
 				}
-				// aria-role
-				if (name === 'role') {
-					if (invisible_elements.has(this.name)) {
-						// aria-unsupported-elements
-						component.warn(attribute, compiler_warnings.a11y_misplaced_role(this.name));
-					}
-					const value = attribute.get_static_value();
-					if (typeof value === 'string') {
-						value.split(regex_any_repeated_whitespaces).forEach(
-							/** @param {import('aria-query').ARIARoleDefinitionKey} current_role */ (
-								current_role
-							) => {
-								if (current_role && is_abstract_role(current_role)) {
-									component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
-								} else if (current_role && !aria_role_set.has(current_role)) {
-									const match = fuzzymatch(current_role, aria_roles);
-									component.warn(
-										attribute,
-										compiler_warnings.a11y_unknown_role(current_role, match)
-									);
-								}
-								// no-redundant-roles
-								if (
-									current_role === get_implicit_role(this.name, attribute_map) &&
-									// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
-									!['ul', 'ol', 'li'].includes(this.name)
-								) {
+				// aria-activedescendant-has-tabindex
+				if (
+					name === 'aria-activedescendant' &&
+					!this.is_dynamic_element &&
+					!is_interactive_element(this.name, attribute_map) &&
+					!attribute_map.has('tabindex')
+				) {
+					component.warn(attribute, compiler_warnings.a11y_aria_activedescendant_has_tabindex);
+				}
+			}
+			// aria-role
+			if (name === 'role') {
+				if (invisible_elements.has(this.name)) {
+					// aria-unsupported-elements
+					component.warn(attribute, compiler_warnings.a11y_misplaced_role(this.name));
+				}
+				const value = attribute.get_static_value();
+				if (typeof value === 'string') {
+					value.split(regex_any_repeated_whitespaces).forEach(
+						/** @param {import('aria-query').ARIARoleDefinitionKey} current_role */ (
+							current_role
+						) => {
+							if (current_role && is_abstract_role(current_role)) {
+								component.warn(attribute, compiler_warnings.a11y_no_abstract_role(current_role));
+							} else if (current_role && !aria_role_set.has(current_role)) {
+								const match = fuzzymatch(current_role, aria_roles);
+								component.warn(attribute, compiler_warnings.a11y_unknown_role(current_role, match));
+							}
+							// no-redundant-roles
+							if (
+								current_role === get_implicit_role(this.name, attribute_map) &&
+								// <ul role="list"> is ok because CSS list-style:none removes the semantics and this is a way to bring them back
+								!['ul', 'ol', 'li'].includes(this.name)
+							) {
+								component.warn(attribute, compiler_warnings.a11y_no_redundant_roles(current_role));
+							}
+							// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
+							const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
+							if (!is_parent_section_or_article) {
+								const has_nested_redundant_role =
+									current_role === a11y_nested_implicit_semantics.get(this.name);
+								if (has_nested_redundant_role) {
 									component.warn(
 										attribute,
 										compiler_warnings.a11y_no_redundant_roles(current_role)
 									);
 								}
-								// Footers and headers are special cases, and should not have redundant roles unless they are the children of sections or articles.
-								const is_parent_section_or_article = is_parent(this.parent, ['section', 'article']);
-								if (!is_parent_section_or_article) {
-									const has_nested_redundant_role =
-										current_role === a11y_nested_implicit_semantics.get(this.name);
-									if (has_nested_redundant_role) {
+							}
+							// role-has-required-aria-props
+							if (
+								!this.is_dynamic_element &&
+								!is_semantic_role_element(current_role, this.name, attribute_map)
+							) {
+								const role = roles.get(current_role);
+								if (role) {
+									const required_role_props = Object.keys(role.requiredProps);
+									const has_missing_props = required_role_props.some(
+										(prop) => !attributes.find((a) => a.name === prop)
+									);
+									if (has_missing_props) {
 										component.warn(
 											attribute,
-											compiler_warnings.a11y_no_redundant_roles(current_role)
+											compiler_warnings.a11y_role_has_required_aria_props(
+												current_role,
+												required_role_props
+											)
 										);
 									}
 								}
-								// role-has-required-aria-props
-								if (
-									!this.is_dynamic_element &&
-									!is_semantic_role_element(current_role, this.name, attribute_map)
-								) {
-									const role = roles.get(current_role);
-									if (role) {
-										const required_role_props = Object.keys(role.requiredProps);
-										const has_missing_props = required_role_props.some(
-											/** @param {any} prop */
-											(prop) => !attributes.find(/** @param {any} a */ (a) => a.name === prop)
-										);
-										if (has_missing_props) {
-											component.warn(
-												attribute,
-												compiler_warnings.a11y_role_has_required_aria_props(
-													current_role,
-													required_role_props
-												)
-											);
-										}
-									}
-								}
-								// interactive-supports-focus
-								if (
-									!has_disabled_attribute(attribute_map) &&
-									!is_hidden_from_screen_reader(this.name, attribute_map) &&
-									!is_presentation_role(current_role) &&
-									is_interactive_roles(current_role) &&
-									is_static_element(this.name, attribute_map) &&
-									!attribute_map.get('tabindex')
-								) {
-									const has_interactive_handlers = handlers.some(
-										/** @param {any} handler */ (handler) =>
-											a11y_interactive_handlers.has(handler.name)
-									);
-									if (has_interactive_handlers) {
-										component.warn(
-											this,
-											compiler_warnings.a11y_interactive_supports_focus(current_role)
-										);
-									}
-								}
-								// no-interactive-element-to-noninteractive-role
-								if (
-									is_interactive_element(this.name, attribute_map) &&
-									(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
-								) {
+							}
+							// interactive-supports-focus
+							if (
+								!has_disabled_attribute(attribute_map) &&
+								!is_hidden_from_screen_reader(this.name, attribute_map) &&
+								!is_presentation_role(current_role) &&
+								is_interactive_roles(current_role) &&
+								is_static_element(this.name, attribute_map) &&
+								!attribute_map.get('tabindex')
+							) {
+								const has_interactive_handlers = handlers.some((handler) =>
+									a11y_interactive_handlers.has(handler.name)
+								);
+								if (has_interactive_handlers) {
 									component.warn(
 										this,
-										compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(
-											current_role,
-											this.name
-										)
-									);
-								}
-								// no-noninteractive-element-to-interactive-role
-								if (
-									is_non_interactive_element(this.name, attribute_map) &&
-									is_interactive_roles(current_role) &&
-									!a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(
-										current_role
-									)
-								) {
-									component.warn(
-										this,
-										compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(
-											current_role,
-											this.name
-										)
+										compiler_warnings.a11y_interactive_supports_focus(current_role)
 									);
 								}
 							}
-						);
-					}
-				}
-				// no-access-key
-				if (name === 'accesskey') {
-					component.warn(attribute, compiler_warnings.a11y_accesskey);
-				}
-				// no-autofocus
-				if (name === 'autofocus') {
-					component.warn(attribute, compiler_warnings.a11y_autofocus);
-				}
-				// scope
-				if (name === 'scope' && !this.is_dynamic_element && this.name !== 'th') {
-					component.warn(attribute, compiler_warnings.a11y_misplaced_scope);
-				}
-				// tabindex-no-positive
-				if (name === 'tabindex') {
-					const value = attribute.get_static_value();
-					// @ts-ignore todo is tabindex=true correct case?
-					if (!isNaN(value) && +value > 0) {
-						component.warn(attribute, compiler_warnings.a11y_positive_tabindex);
-					}
+							// no-interactive-element-to-noninteractive-role
+							if (
+								is_interactive_element(this.name, attribute_map) &&
+								(is_non_interactive_roles(current_role) || is_presentation_role(current_role))
+							) {
+								component.warn(
+									this,
+									compiler_warnings.a11y_no_interactive_element_to_noninteractive_role(
+										current_role,
+										this.name
+									)
+								);
+							}
+							// no-noninteractive-element-to-interactive-role
+							if (
+								is_non_interactive_element(this.name, attribute_map) &&
+								is_interactive_roles(current_role) &&
+								!a11y_non_interactive_element_to_interactive_role_exceptions[this.name]?.includes(
+									current_role
+								)
+							) {
+								component.warn(
+									this,
+									compiler_warnings.a11y_no_noninteractive_element_to_interactive_role(
+										current_role,
+										this.name
+									)
+								);
+							}
+						}
+					);
 				}
 			}
-		);
+			// no-access-key
+			if (name === 'accesskey') {
+				component.warn(attribute, compiler_warnings.a11y_accesskey);
+			}
+			// no-autofocus
+			if (name === 'autofocus') {
+				component.warn(attribute, compiler_warnings.a11y_autofocus);
+			}
+			// scope
+			if (name === 'scope' && !this.is_dynamic_element && this.name !== 'th') {
+				component.warn(attribute, compiler_warnings.a11y_misplaced_scope);
+			}
+			// tabindex-no-positive
+			if (name === 'tabindex') {
+				const value = attribute.get_static_value();
+				// @ts-ignore todo is tabindex=true correct case?
+				if (!isNaN(value) && +value > 0) {
+					component.warn(attribute, compiler_warnings.a11y_positive_tabindex);
+				}
+			}
+		});
 		// click-events-have-key-events
 		if (handlers_map.has('click')) {
 			const role = attribute_map.get('role');
@@ -827,7 +793,7 @@ export default class Element extends Node {
 				!is_hidden_from_screen_reader(this.name, attribute_map) &&
 				(!role || is_non_presentation_role) &&
 				!is_interactive_element(this.name, attribute_map) &&
-				!this.attributes.find(/** @param {any} attr */ (attr) => attr.is_spread)
+				!this.attributes.find((attr) => attr.is_spread)
 			) {
 				const has_key_event =
 					handlers_map.has('keydown') || handlers_map.has('keyup') || handlers_map.has('keypress');
@@ -857,29 +823,25 @@ export default class Element extends Node {
 		// role-supports-aria-props
 		if (typeof role_value === 'string' && roles.has(role_value)) {
 			const { props } = roles.get(role_value);
-			const invalid_aria_props = new Set(
-				aria.keys().filter(/** @param {any} attribute */ (attribute) => !(attribute in props))
-			);
+			const invalid_aria_props = new Set(aria.keys().filter((attribute) => !(attribute in props)));
 			const is_implicit = role_value && role === undefined;
 			attributes
-				.filter(/** @param {any} prop */ (prop) => prop.type !== 'Spread')
-				.forEach(
-					/** @param {any} prop */ (prop) => {
-						if (
-							invalid_aria_props.has(/** @type {import('aria-query').ARIAProperty} */ (prop.name))
-						) {
-							component.warn(
-								prop,
-								compiler_warnings.a11y_role_supports_aria_props(
-									prop.name,
-									role_value,
-									is_implicit,
-									this.name
-								)
-							);
-						}
+				.filter((prop) => prop.type !== 'Spread')
+				.forEach((prop) => {
+					if (
+						invalid_aria_props.has(/** @type {import('aria-query').ARIAProperty} */ (prop.name))
+					) {
+						component.warn(
+							prop,
+							compiler_warnings.a11y_role_supports_aria_props(
+								prop.name,
+								role_value,
+								is_implicit,
+								this.name
+							)
+						);
 					}
-				);
+				});
 		}
 		// no-noninteractive-element-interactions
 		if (
@@ -890,9 +852,8 @@ export default class Element extends Node {
 				is_non_interactive_roles(role_static_value)) ||
 				(is_non_interactive_element(this.name, attribute_map) && !role))
 		) {
-			const has_interactive_handlers = handlers.some(
-				/** @param {any} handler */ (handler) =>
-					a11y_recommended_interactive_handlers.has(handler.name)
+			const has_interactive_handlers = handlers.some((handler) =>
+				a11y_recommended_interactive_handlers.has(handler.name)
 			);
 			if (has_interactive_handlers) {
 				component.warn(
@@ -914,11 +875,8 @@ export default class Element extends Node {
 			!is_abstract_role(role_static_value)
 		) {
 			const interactive_handlers = handlers
-				.map(/** @param {any} handler */ (handler) => handler.name)
-				.filter(
-					/** @param {any} handlerName */ (handlerName) =>
-						a11y_interactive_handlers.has(handlerName)
-				);
+				.map((handler) => handler.name)
+				.filter((handlerName) => a11y_interactive_handlers.has(handlerName));
 			if (interactive_handlers.length > 0) {
 				component.warn(
 					this,
@@ -931,12 +889,8 @@ export default class Element extends Node {
 		const { component, attributes, handlers } = this;
 		const attribute_map = new Map();
 		const handlers_map = new Map();
-		attributes.forEach(
-			/** @param {any} attribute */ (attribute) => attribute_map.set(attribute.name, attribute)
-		);
-		handlers.forEach(
-			/** @param {any} handler */ (handler) => handlers_map.set(handler.name, handler)
-		);
+		attributes.forEach((attribute) => attribute_map.set(attribute.name, attribute));
+		handlers.forEach((handler) => handlers_map.set(handler.name, handler));
 		if (this.name === 'a') {
 			const href_attribute = attribute_map.get('href') || attribute_map.get('xlink:href');
 			const id_attribute = attribute_map.get('id');
@@ -995,9 +949,7 @@ export default class Element extends Node {
 		} else {
 			const required_attributes = a11y_required_attributes[this.name];
 			if (required_attributes) {
-				const has_attribute = required_attributes.some(
-					/** @param {any} name */ (name) => attribute_map.has(name)
-				);
+				const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 				if (!has_attribute) {
 					should_have_attribute(this, required_attributes);
 				}
@@ -1007,9 +959,7 @@ export default class Element extends Node {
 			const type = attribute_map.get('type');
 			if (type && type.get_static_value() === 'image') {
 				const required_attributes = ['alt', 'aria-label', 'aria-labelledby'];
-				const has_attribute = required_attributes.some(
-					/** @param {any} name */ (name) => attribute_map.has(name)
-				);
+				const has_attribute = required_attributes.some((name) => attribute_map.has(name));
 				if (!has_attribute) {
 					should_have_attribute(this, required_attributes, 'input type="image"');
 				}
@@ -1043,7 +993,6 @@ export default class Element extends Node {
 			const has_input_child = (children) => {
 				if (
 					children.some(
-						/** @param {any} child */
 						(child) =>
 							child instanceof Element && (a11y_labelable.has(child.name) || child.name === 'slot')
 					)
@@ -1074,7 +1023,6 @@ export default class Element extends Node {
 			const track = this.children.find(/** @param {Element} i */ (i) => i.name === 'track');
 			if (track) {
 				has_caption = track.attributes.find(
-					/** @param {any} a */
 					(a) => a.name === 'kind' && a.get_static_value() === 'captions'
 				);
 			}
@@ -1104,15 +1052,13 @@ export default class Element extends Node {
 			}
 		}
 		if (this.name === 'figure') {
-			const children = this.children.filter(
-				/** @param {any} node */ (node) => {
-					if (node.type === 'Comment') return false;
-					if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
-					return true;
-				}
-			);
+			const children = this.children.filter((node) => {
+				if (node.type === 'Comment') return false;
+				if (node.type === 'Text') return regex_non_whitespace_character.test(node.data);
+				return true;
+			});
 			const index = children.findIndex(
-				/** @param {any} child */ (child) => /** @type {Element} */ (child).name === 'figcaption'
+				(child) => /** @type {Element} */ (child).name === 'figcaption'
 			);
 			if (index !== -1 && index !== 0 && index !== children.length - 1) {
 				component.warn(children[index], compiler_warnings.a11y_structure_first_or_last);
@@ -1129,16 +1075,11 @@ export default class Element extends Node {
 		}
 	}
 	validate_bindings_foreign() {
-		this.bindings.forEach(
-			/** @param {any} binding */ (binding) => {
-				if (binding.name !== 'this') {
-					return this.component.error(
-						binding,
-						compiler_errors.invalid_binding_foreign(binding.name)
-					);
-				}
+		this.bindings.forEach((binding) => {
+			if (binding.name !== 'this') {
+				return this.component.error(binding, compiler_errors.invalid_binding_foreign(binding.name));
 			}
-		);
+		});
 	}
 	validate_bindings() {
 		const { component } = this;
@@ -1157,160 +1098,154 @@ export default class Element extends Node {
 			}
 			return value;
 		};
-		this.bindings.forEach(
-			/** @param {any} binding */ (binding) => {
-				const { name } = binding;
-				if (name === 'value') {
-					if (this.name !== 'input' && this.name !== 'textarea' && this.name !== 'select') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_elements(this.name, 'value')
-						);
-					}
-					if (this.name === 'select') {
-						const attribute = this.attributes.find(
-							/** @param {import('./Attribute.js').default} attribute */
-							(attribute) => attribute.name === 'multiple'
-						);
-						if (attribute && !attribute.is_static) {
-							return component.error(attribute, compiler_errors.dynamic_multiple_attribute);
-						}
-					} else {
-						check_type_attribute();
-					}
-				} else if (name === 'checked' || name === 'indeterminate') {
-					if (this.name !== 'input') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_elements(this.name, name)
-						);
-					}
-					const type = check_type_attribute();
-					if (type !== 'checkbox') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_no_checkbox(name, type === 'radio')
-						);
-					}
-				} else if (name === 'group') {
-					if (this.name !== 'input') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_elements(this.name, 'group')
-						);
-					}
-					const type = check_type_attribute();
-					if (type !== 'checkbox' && type !== 'radio') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with(
-								'<input type="checkbox"> or <input type="radio">',
-								'group'
-							)
-						);
-					}
-				} else if (name === 'files') {
-					if (this.name !== 'input') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_elements(this.name, 'files')
-						);
-					}
-					const type = check_type_attribute();
-					if (type !== 'file') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with('<input type="file">', 'files')
-						);
-					}
-				} else if (name === 'open') {
-					if (this.name !== 'details') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with('<details>', name)
-						);
-					}
-				} else if (
-					name === 'currentTime' ||
-					name === 'duration' ||
-					name === 'paused' ||
-					name === 'buffered' ||
-					name === 'seekable' ||
-					name === 'played' ||
-					name === 'volume' ||
-					name === 'muted' ||
-					name === 'playbackRate' ||
-					name === 'seeking' ||
-					name === 'ended' ||
-					name === 'readyState'
-				) {
-					if (this.name !== 'audio' && this.name !== 'video') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with('audio> or <video>', name)
-						);
-					}
-				} else if (name === 'videoHeight' || name === 'videoWidth') {
-					if (this.name !== 'video') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with('<video>', name)
-						);
-					}
-				} else if (regex_dimensions.test(name)) {
-					if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_on(
-								binding.name,
-								`<svg>. Use '${name.replace('offset', 'client')}' instead`
-							)
-						);
-					} else if (is_svg(this.name)) {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_on(binding.name, 'SVG elements')
-						);
-					} else if (is_void(this.name)) {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_on(
-								binding.name,
-								`void elements like <${this.name}>. Use a wrapper element instead`
-							)
-						);
-					}
-				} else if (name === 'naturalWidth' || name === 'naturalHeight') {
-					if (this.name !== 'img') {
-						return component.error(
-							binding,
-							compiler_errors.invalid_binding_element_with('<img>', name)
-						);
-					}
-				} else if (is_name_contenteditable(name)) {
-					const contenteditable = get_contenteditable_attr(this);
-					if (!contenteditable) {
-						return component.error(binding, compiler_errors.missing_contenteditable_attribute);
-					} else if (contenteditable && !contenteditable.is_static) {
-						return component.error(
-							contenteditable,
-							compiler_errors.dynamic_contenteditable_attribute
-						);
-					}
-				} else if (name !== 'this' && !regex_box_size.test(name)) {
-					return component.error(binding, compiler_errors.invalid_binding(binding.name));
+		this.bindings.forEach((binding) => {
+			const { name } = binding;
+			if (name === 'value') {
+				if (this.name !== 'input' && this.name !== 'textarea' && this.name !== 'select') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'value')
+					);
 				}
+				if (this.name === 'select') {
+					const attribute = this.attributes.find(
+						/** @param {import('./Attribute.js').default} attribute */
+						(attribute) => attribute.name === 'multiple'
+					);
+					if (attribute && !attribute.is_static) {
+						return component.error(attribute, compiler_errors.dynamic_multiple_attribute);
+					}
+				} else {
+					check_type_attribute();
+				}
+			} else if (name === 'checked' || name === 'indeterminate') {
+				if (this.name !== 'input') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, name)
+					);
+				}
+				const type = check_type_attribute();
+				if (type !== 'checkbox') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_no_checkbox(name, type === 'radio')
+					);
+				}
+			} else if (name === 'group') {
+				if (this.name !== 'input') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'group')
+					);
+				}
+				const type = check_type_attribute();
+				if (type !== 'checkbox' && type !== 'radio') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with(
+							'<input type="checkbox"> or <input type="radio">',
+							'group'
+						)
+					);
+				}
+			} else if (name === 'files') {
+				if (this.name !== 'input') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_elements(this.name, 'files')
+					);
+				}
+				const type = check_type_attribute();
+				if (type !== 'file') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<input type="file">', 'files')
+					);
+				}
+			} else if (name === 'open') {
+				if (this.name !== 'details') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<details>', name)
+					);
+				}
+			} else if (
+				name === 'currentTime' ||
+				name === 'duration' ||
+				name === 'paused' ||
+				name === 'buffered' ||
+				name === 'seekable' ||
+				name === 'played' ||
+				name === 'volume' ||
+				name === 'muted' ||
+				name === 'playbackRate' ||
+				name === 'seeking' ||
+				name === 'ended' ||
+				name === 'readyState'
+			) {
+				if (this.name !== 'audio' && this.name !== 'video') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('audio> or <video>', name)
+					);
+				}
+			} else if (name === 'videoHeight' || name === 'videoWidth') {
+				if (this.name !== 'video') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<video>', name)
+					);
+				}
+			} else if (regex_dimensions.test(name)) {
+				if (this.name === 'svg' && (name === 'offsetWidth' || name === 'offsetHeight')) {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(
+							binding.name,
+							`<svg>. Use '${name.replace('offset', 'client')}' instead`
+						)
+					);
+				} else if (is_svg(this.name)) {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(binding.name, 'SVG elements')
+					);
+				} else if (is_void(this.name)) {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_on(
+							binding.name,
+							`void elements like <${this.name}>. Use a wrapper element instead`
+						)
+					);
+				}
+			} else if (name === 'naturalWidth' || name === 'naturalHeight') {
+				if (this.name !== 'img') {
+					return component.error(
+						binding,
+						compiler_errors.invalid_binding_element_with('<img>', name)
+					);
+				}
+			} else if (is_name_contenteditable(name)) {
+				const contenteditable = get_contenteditable_attr(this);
+				if (!contenteditable) {
+					return component.error(binding, compiler_errors.missing_contenteditable_attribute);
+				} else if (contenteditable && !contenteditable.is_static) {
+					return component.error(
+						contenteditable,
+						compiler_errors.dynamic_contenteditable_attribute
+					);
+				}
+			} else if (name !== 'this' && !regex_box_size.test(name)) {
+				return component.error(binding, compiler_errors.invalid_binding(binding.name));
 			}
-		);
+		});
 	}
 	validate_content() {
 		if (!a11y_required_content.has(this.name)) return;
 		if (this.contains_a11y_label) return;
-		if (
-			this.bindings.some(
-				/** @param {any} binding */ (binding) => ['textContent', 'innerHTML'].includes(binding.name)
-			)
-		)
+		if (this.bindings.some((binding) => ['textContent', 'innerHTML'].includes(binding.name)))
 			return;
 		if (this.children.length === 0) {
 			this.component.warn(this, compiler_warnings.a11y_missing_content(this.name));
@@ -1318,72 +1253,62 @@ export default class Element extends Node {
 	}
 	validate_event_handlers() {
 		const { component } = this;
-		this.handlers.forEach(
-			/** @param {any} handler */ (handler) => {
-				if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
-					return component.error(
-						handler,
-						compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault')
-					);
-				}
-				if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
-					return component.error(
-						handler,
-						compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive')
-					);
-				}
-				handler.modifiers.forEach(
-					/** @param {any} modifier */ (modifier) => {
-						if (!valid_modifiers.has(modifier)) {
-							return component.error(
-								handler,
-								compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers)))
-							);
-						}
-						if (modifier === 'passive') {
-							if (passive_events.has(handler.name)) {
-								if (handler.can_make_passive) {
-									component.warn(handler, compiler_warnings.redundant_event_modifier_for_touch);
-								}
-							} else {
-								component.warn(handler, compiler_warnings.redundant_event_modifier_passive);
-							}
-						}
-						if (
-							component.compile_options.legacy &&
-							(modifier === 'once' || modifier === 'passive')
-						) {
-							// TODO this could be supported, but it would need a few changes to
-							// how event listeners work
-							return component.error(
-								handler,
-								compiler_errors.invalid_event_modifier_legacy(modifier)
-							);
-						}
-					}
+		this.handlers.forEach((handler) => {
+			if (handler.modifiers.has('passive') && handler.modifiers.has('preventDefault')) {
+				return component.error(
+					handler,
+					compiler_errors.invalid_event_modifier_combination('passive', 'preventDefault')
 				);
-				if (
-					passive_events.has(handler.name) &&
-					handler.can_make_passive &&
-					!handler.modifiers.has('preventDefault') &&
-					!handler.modifiers.has('nonpassive')
-				) {
-					// touch/wheel events should be passive by default
-					handler.modifiers.add('passive');
-				}
 			}
-		);
+			if (handler.modifiers.has('passive') && handler.modifiers.has('nonpassive')) {
+				return component.error(
+					handler,
+					compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive')
+				);
+			}
+			handler.modifiers.forEach((modifier) => {
+				if (!valid_modifiers.has(modifier)) {
+					return component.error(
+						handler,
+						compiler_errors.invalid_event_modifier(list(Array.from(valid_modifiers)))
+					);
+				}
+				if (modifier === 'passive') {
+					if (passive_events.has(handler.name)) {
+						if (handler.can_make_passive) {
+							component.warn(handler, compiler_warnings.redundant_event_modifier_for_touch);
+						}
+					} else {
+						component.warn(handler, compiler_warnings.redundant_event_modifier_passive);
+					}
+				}
+				if (component.compile_options.legacy && (modifier === 'once' || modifier === 'passive')) {
+					// TODO this could be supported, but it would need a few changes to
+					// how event listeners work
+					return component.error(handler, compiler_errors.invalid_event_modifier_legacy(modifier));
+				}
+			});
+			if (
+				passive_events.has(handler.name) &&
+				handler.can_make_passive &&
+				!handler.modifiers.has('preventDefault') &&
+				!handler.modifiers.has('nonpassive')
+			) {
+				// touch/wheel events should be passive by default
+				handler.modifiers.add('passive');
+			}
+		});
 	}
 	is_media_node() {
 		return this.name === 'audio' || this.name === 'video';
 	}
 	add_css_class() {
-		if (this.attributes.some(/** @param {any} attr */ (attr) => attr.is_spread)) {
+		if (this.attributes.some((attr) => attr.is_spread)) {
 			this.needs_manual_style_scoping = true;
 			return;
 		}
 		const { id } = this.component.stylesheet;
-		const class_attribute = this.attributes.find(/** @param {any} a */ (a) => a.name === 'class');
+		const class_attribute = this.attributes.find((a) => a.name === 'class');
 		if (class_attribute && !class_attribute.is_true) {
 			if (class_attribute.chunks.length === 1 && class_attribute.chunks[0].type === 'Text') {
 				/** @type {import('./Text.js').default} */ (class_attribute.chunks[0]).data += ` ${id}`;
@@ -1418,44 +1343,31 @@ export default class Element extends Node {
 	}
 	get slot_template_name() {
 		return /** @type {string} */ (
-			this.attributes
-				.find(/** @param {any} attribute */ (attribute) => attribute.name === 'slot')
-				.get_static_value()
+			this.attributes.find((attribute) => attribute.name === 'slot').get_static_value()
 		);
 	}
 	optimise() {
-		attributes_to_compact_whitespace.forEach(
-			/** @param {any} attribute_name */ (attribute_name) => {
-				const attribute = this.attributes.find(
-					/** @param {any} a */ (a) => a.name === attribute_name
-				);
-				if (attribute && !attribute.is_true) {
-					attribute.chunks.forEach(
-						/**
-						 * @param {any} chunk
-						 * @param {any} index
-						 */ (chunk, index) => {
-							if (chunk.type === 'Text') {
-								let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
-								if (index === 0) {
-									data = data.trimLeft();
-								} else if (index === attribute.chunks.length - 1) {
-									data = data.trimRight();
-								}
-								chunk.data = data;
-							}
+		attributes_to_compact_whitespace.forEach((attribute_name) => {
+			const attribute = this.attributes.find((a) => a.name === attribute_name);
+			if (attribute && !attribute.is_true) {
+				attribute.chunks.forEach((chunk, index) => {
+					if (chunk.type === 'Text') {
+						let data = chunk.data.replace(regex_any_repeated_whitespaces, ' ');
+						if (index === 0) {
+							data = data.trimLeft();
+						} else if (index === attribute.chunks.length - 1) {
+							data = data.trimRight();
 						}
-					);
-				}
+						chunk.data = data;
+					}
+				});
 			}
-		);
+		});
 	}
 	get can_use_textcontent() {
 		return (
 			this.is_static_content &&
-			this.children.every(
-				/** @param {any} node */ (node) => node.type === 'Text' || node.type === 'MustacheTag'
-			)
+			this.children.every((node) => node.type === 'Text' || node.type === 'MustacheTag')
 		);
 	}
 	get can_optimise_to_html_string() {
