@@ -7,8 +7,6 @@
 	import contributors_img from './contributors.jpg?w=1200&format=webp';
 	// @ts-ignore
 	import donors_img from './donors.jpg?w=1200&format=webp';
-
-	console.log(contributors_img, donors_img);
 </script>
 
 <Section --background="var(--sk-back-2">
