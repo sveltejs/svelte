@@ -1299,7 +1299,7 @@ export default class Component {
 
 						if (
 							this.vars.find(
-								/** @param {any} variable */ (variable) => variable.name === name && variable.module
+								(variable) => variable.name === name && variable.module
 							)
 						) {
 							return false;
