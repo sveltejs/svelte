@@ -23,18 +23,8 @@ export default function create_module(
 	exports_from
 ) {
 	const internal_path = `${sveltePath}/internal`;
-	helpers.sort(
-		/**
-		 * @param {any} a
-		 * @param {any} b
-		 */ (a, b) => (a.name < b.name ? -1 : 1)
-	);
-	globals.sort(
-		/**
-		 * @param {any} a
-		 * @param {any} b
-		 */ (a, b) => (a.name < b.name ? -1 : 1)
-	);
+	helpers.sort((a, b) => (a.name < b.name ? -1 : 1));
+	globals.sort((a, b) => (a.name < b.name ? -1 : 1));
 	return esm(
 		program,
 		name,
@@ -73,19 +63,17 @@ function get_internal_globals(globals, helpers) {
 					type: 'VariableDeclarator',
 					id: {
 						type: 'ObjectPattern',
-						properties: globals.map(
-							/** @param {any} g */ (g) => ({
-								type: 'Property',
-								method: false,
-								shorthand: false,
-								computed: false,
-								key: { type: 'Identifier', name: g.name },
-								value: g.alias,
-								kind: 'init'
-							})
-						)
+						properties: globals.map((g) => ({
+							type: 'Property',
+							method: false,
+							shorthand: false,
+							computed: false,
+							key: { type: 'Identifier', name: g.name },
+							value: g.alias,
+							kind: 'init'
+						}))
 					},
-					init: helpers.find(/** @param {any}params_0 */ ({ name }) => name === 'globals').alias
+					init: helpers.find(({ name }) => name === 'globals').alias
 				}
 			]
 		}
@@ -118,13 +106,11 @@ function esm(
 ) {
 	const import_declaration = {
 		type: 'ImportDeclaration',
-		specifiers: helpers.map(
-			/** @param {any} h */ (h) => ({
-				type: 'ImportSpecifier',
-				local: h.alias,
-				imported: { type: 'Identifier', name: h.name }
-			})
-		),
+		specifiers: helpers.map((h) => ({
+			type: 'ImportSpecifier',
+			local: h.alias,
+			imported: { type: 'Identifier', name: h.name }
+		})),
 		source: { type: 'Literal', value: internal_path }
 	};
 	const internal_globals = get_internal_globals(globals, helpers);
@@ -142,13 +128,11 @@ function esm(
 	exports_from.forEach(rewrite_import);
 	const exports = module_exports.length > 0 && {
 		type: 'ExportNamedDeclaration',
-		specifiers: module_exports.map(
-			/** @param {any} x */ (x) => ({
-				type: 'Specifier',
-				local: { type: 'Identifier', name: x.name },
-				exported: { type: 'Identifier', name: x.as }
-			})
-		)
+		specifiers: module_exports.map((x) => ({
+			type: 'Specifier',
+			local: { type: 'Identifier', name: x.name },
+			exported: { type: 'Identifier', name: x.as }
+		}))
 	};
 	program.body = b`
 		/* ${banner} */

@@ -86,12 +86,12 @@
 	}
 
 	.tick line {
-		stroke: #aaa;
+		stroke: #888;
 		stroke-dasharray: 2;
 	}
 
 	.tick text {
-		fill: #666;
+		fill: #888;
 		text-anchor: start;
 	}
 

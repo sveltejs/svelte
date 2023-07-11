@@ -13,13 +13,13 @@
     "start": "node build",
     "check": "node scripts/update.js && pnpm generate && svelte-kit sync && svelte-check",
     "check:watch": "svelte-kit sync && svelte-check --watch",
-    "format": "pnpm run check:format -- --write",
+    "format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=. --write",
     "check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@supabase/supabase-js": "^2.26.0",
-    "@sveltejs/repl": "0.5.0-next.11",
+    "@sveltejs/repl": "0.5.0-next.12",
     "cookie": "^0.5.0",
     "devalue": "^4.3.2",
     "do-not-zip": "^1.0.0",
@@ -28,8 +28,8 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.4.1",
-    "@sveltejs/adapter-vercel": "^3.0.1",
-    "@sveltejs/kit": "^1.22.0",
+    "@sveltejs/adapter-vercel": "^3.0.2",
+    "@sveltejs/kit": "^1.22.2",
     "@sveltejs/site-kit": "6.0.0-next.20",
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@types/cookie": "^0.5.1",
@@ -56,6 +56,6 @@
     "tiny-glob": "^0.2.9",
     "typescript": "^5.1.6",
     "vite": "^4.4.2",
-    "vite-imagetools": "^5.0.4"
+    "vite-imagetools": "^5.0.5"
   }
 }

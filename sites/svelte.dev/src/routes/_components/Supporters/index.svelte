@@ -5,9 +5,7 @@
 </script>
 
 <Section --background="var(--sk-back-2">
-	<p class="intro">
-		Svelte is made possible by the work of hundreds of supporters.
-	</p>
+	<p class="intro">Svelte is made possible by the work of hundreds of supporters.</p>
 
 	<div class="layout">
 		<div class="contributors blurb">

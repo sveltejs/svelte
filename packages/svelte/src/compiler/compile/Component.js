@@ -265,7 +265,7 @@ export default class Component {
 		);
 		this.walk_instance_js_post_template();
 		this.pop_ignores();
-		this.elements.forEach(/** @param {any} element */ (element) => this.stylesheet.apply(element));
+		this.elements.forEach((element) => this.stylesheet.apply(element));
 		this.stylesheet.reify();
 		this.stylesheet.warn_on_unused_selectors(this);
 	}
@@ -405,19 +405,15 @@ export default class Component {
 			});
 			const referenced_globals = Array.from(
 				this.globals,
-				/** @param {any}params_0 */
 				([name, alias]) => name !== alias.name && { name, alias }
 			).filter(Boolean);
 			if (referenced_globals.length) {
 				this.helpers.set('globals', this.alias('globals'));
 			}
-			const imported_helpers = Array.from(
-				this.helpers,
-				/** @param {any}params_0 */ ([name, alias]) => ({
-					name,
-					alias
-				})
-			);
+			const imported_helpers = Array.from(this.helpers, ([name, alias]) => ({
+				name,
+				alias
+			}));
 			create_module(
 				program,
 				name,
@@ -427,15 +423,11 @@ export default class Component {
 				referenced_globals,
 				this.imports,
 				this.vars
-					.filter(
-						/** @param {any} variable */ (variable) => variable.module && variable.export_name
-					)
-					.map(
-						/** @param {any} variable */ (variable) => ({
-							name: variable.name,
-							as: variable.export_name
-						})
-					),
+					.filter((variable) => variable.module && variable.export_name)
+					.map((variable) => ({
+						name: variable.name,
+						as: variable.export_name
+					})),
 				this.exports_from
 			);
 			css = compile_options.customElement ? { code: null, map: null } : result.css;
@@ -499,12 +491,7 @@ export default class Component {
 		}
 		reserved.forEach(add);
 		internal_exports.forEach(add);
-		this.var_lookup.forEach(
-			/**
-			 * @param {any} _value
-			 * @param {any} key
-			 */ (_value, key) => add(key)
-		);
+		this.var_lookup.forEach((_value, key) => add(key));
 
 		/**
 		 * @param {string} name
@@ -534,20 +521,18 @@ export default class Component {
 				? []
 				: compile_options.varsReport === 'full'
 				? vars
-				: vars.filter(/** @param {any} v */ (v) => !v.global && !v.internal);
-		return vars_report.map(
-			/** @param {any} v */ (v) => ({
-				name: v.name,
-				export_name: v.export_name || null,
-				injected: v.injected || false,
-				module: v.module || false,
-				mutated: v.mutated || false,
-				reassigned: v.reassigned || false,
-				referenced: v.referenced || false,
-				writable: v.writable || false,
-				referenced_from_script: v.referenced_from_script || false
-			})
-		);
+				: vars.filter((v) => !v.global && !v.internal);
+		return vars_report.map((v) => ({
+			name: v.name,
+			export_name: v.export_name || null,
+			injected: v.injected || false,
+			module: v.module || false,
+			mutated: v.mutated || false,
+			reassigned: v.reassigned || false,
+			referenced: v.referenced || false,
+			writable: v.writable || false,
+			referenced_from_script: v.referenced_from_script || false
+		}));
 	}
 	/**
 	 * @param {{
@@ -639,36 +624,28 @@ export default class Component {
 			}
 			if (node.declaration) {
 				if (node.declaration.type === 'VariableDeclaration') {
-					node.declaration.declarations.forEach(
-						/** @param {any} declarator */ (declarator) => {
-							extract_names(declarator.id).forEach(
-								/** @param {any} name */ (name) => {
-									const variable = this.var_lookup.get(name);
-									variable.export_name = name;
-									if (
-										declarator.init?.type === 'Literal' &&
-										typeof declarator.init.value === 'boolean'
-									) {
-										variable.is_boolean = true;
-									}
-									if (
-										!module_script &&
-										variable.writable &&
-										!(
-											variable.referenced ||
-											variable.referenced_from_script ||
-											variable.subscribable
-										)
-									) {
-										this.warn(
-											/** @type {any} */ (declarator),
-											compiler_warnings.unused_export_let(this.name.name, name)
-										);
-									}
-								}
-							);
-						}
-					);
+					node.declaration.declarations.forEach((declarator) => {
+						extract_names(declarator.id).forEach((name) => {
+							const variable = this.var_lookup.get(name);
+							variable.export_name = name;
+							if (
+								declarator.init?.type === 'Literal' &&
+								typeof declarator.init.value === 'boolean'
+							) {
+								variable.is_boolean = true;
+							}
+							if (
+								!module_script &&
+								variable.writable &&
+								!(variable.referenced || variable.referenced_from_script || variable.subscribable)
+							) {
+								this.warn(
+									/** @type {any} */ (declarator),
+									compiler_warnings.unused_export_let(this.name.name, name)
+								);
+							}
+						});
+					});
 				} else {
 					const { name } = node.declaration.id;
 					const variable = this.var_lookup.get(name);
@@ -676,24 +653,22 @@ export default class Component {
 				}
 				return node.declaration;
 			} else {
-				node.specifiers.forEach(
-					/** @param {any} specifier */ (specifier) => {
-						const variable = this.var_lookup.get(specifier.local.name);
-						if (variable) {
-							variable.export_name = specifier.exported.name;
-							if (
-								!module_script &&
-								variable.writable &&
-								!(variable.referenced || variable.referenced_from_script || variable.subscribable)
-							) {
-								this.warn(
-									/** @type {any} */ (specifier),
-									compiler_warnings.unused_export_let(this.name.name, specifier.exported.name)
-								);
-							}
+				node.specifiers.forEach((specifier) => {
+					const variable = this.var_lookup.get(specifier.local.name);
+					if (variable) {
+						variable.export_name = specifier.exported.name;
+						if (
+							!module_script &&
+							variable.writable &&
+							!(variable.referenced || variable.referenced_from_script || variable.subscribable)
+						) {
+							this.warn(
+								/** @type {any} */ (specifier),
+								compiler_warnings.unused_export_let(this.name.name, specifier.exported.name)
+							);
 						}
 					}
-				);
+				});
 				return null;
 			}
 		}
@@ -702,16 +677,14 @@ export default class Component {
 	/** @param {any} script */
 	extract_javascript(script) {
 		if (!script) return null;
-		return script.content.body.filter(
-			/** @param {any} node */ (node) => {
-				if (!node) return false;
-				if (this.hoistable_nodes.has(node)) return false;
-				if (this.reactive_declaration_nodes.has(node)) return false;
-				if (node.type === 'ImportDeclaration') return false;
-				if (node.type === 'ExportDeclaration' && node.specifiers.length > 0) return false;
-				return true;
-			}
-		);
+		return script.content.body.filter((node) => {
+			if (!node) return false;
+			if (this.hoistable_nodes.has(node)) return false;
+			if (this.reactive_declaration_nodes.has(node)) return false;
+			if (node.type === 'ImportDeclaration') return false;
+			if (node.type === 'ExportDeclaration' && node.specifiers.length > 0) return false;
+			return true;
+		});
 	}
 	walk_module_js() {
 		const component = this;
@@ -730,42 +703,32 @@ export default class Component {
 		});
 		const { scope, globals } = create_scopes(script.content);
 		this.module_scope = scope;
-		scope.declarations.forEach(
-			/**
-			 * @param {any} node
-			 * @param {any} name
-			 */ (node, name) => {
-				if (name[0] === '$') {
-					return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
-				}
-				const writable =
-					node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
-				const imported = node.type.startsWith('Import');
+		scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
+			}
+			const writable =
+				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const imported = node.type.startsWith('Import');
+			this.add_var(node, {
+				name,
+				module: true,
+				hoistable: true,
+				writable,
+				imported
+			});
+		});
+		globals.forEach((node, name) => {
+			if (name[0] === '$') {
+				return this.error(/** @type {any} */ (node), compiler_errors.illegal_subscription);
+			} else {
 				this.add_var(node, {
 					name,
-					module: true,
-					hoistable: true,
-					writable,
-					imported
+					global: true,
+					hoistable: true
 				});
 			}
-		);
-		globals.forEach(
-			/**
-			 * @param {any} node
-			 * @param {any} name
-			 */ (node, name) => {
-				if (name[0] === '$') {
-					return this.error(/** @type {any} */ (node), compiler_errors.illegal_subscription);
-				} else {
-					this.add_var(node, {
-						name,
-						global: true,
-						hoistable: true
-					});
-				}
-			}
-		);
+		});
 		const { body } = script.content;
 		let i = body.length;
 		while (--i >= 0) {
@@ -788,94 +751,83 @@ export default class Component {
 		const script = this.ast.instance;
 		if (!script) return;
 		// inject vars for reactive declarations
-		script.content.body.forEach(
-			/** @param {any} node */ (node) => {
-				if (node.type !== 'LabeledStatement') return;
-				if (node.body.type !== 'ExpressionStatement') return;
-				const { expression } = node.body;
-				if (expression.type !== 'AssignmentExpression') return;
-				if (expression.left.type === 'MemberExpression') return;
-				extract_names(expression.left).forEach(
-					/** @param {any} name */ (name) => {
-						if (!this.var_lookup.has(name) && name[0] !== '$') {
-							this.injected_reactive_declaration_vars.add(name);
-						}
-					}
-				);
-			}
-		);
+		script.content.body.forEach((node) => {
+			if (node.type !== 'LabeledStatement') return;
+			if (node.body.type !== 'ExpressionStatement') return;
+			const { expression } = node.body;
+			if (expression.type !== 'AssignmentExpression') return;
+			if (expression.left.type === 'MemberExpression') return;
+			extract_names(expression.left).forEach((name) => {
+				if (!this.var_lookup.has(name) && name[0] !== '$') {
+					this.injected_reactive_declaration_vars.add(name);
+				}
+			});
+		});
 		const { scope: instance_scope, map, globals } = create_scopes(script.content);
 		this.instance_scope = instance_scope;
 		this.instance_scope_map = map;
-		instance_scope.declarations.forEach(
-			/**
-			 * @param {any} node
-			 * @param {any} name
-			 */ (node, name) => {
-				if (name[0] === '$') {
-					return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
-				}
-				const writable =
-					node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
-				const imported = node.type.startsWith('Import');
-				this.add_var(node, {
-					name,
-					initialised: instance_scope.initialised_declarations.has(name),
-					writable,
-					imported
-				});
-				this.node_for_declaration.set(name, node);
+		instance_scope.declarations.forEach((node, name) => {
+			if (name[0] === '$') {
+				return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
 			}
-		);
+			const writable =
+				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
+			const imported = node.type.startsWith('Import');
+			this.add_var(node, {
+				name,
+				initialised: instance_scope.initialised_declarations.has(name),
+				writable,
+				imported
+			});
+			this.node_for_declaration.set(name, node);
+		});
 		// NOTE: add store variable first, then only $store value
 		// as `$store` will mark `store` variable as referenced and subscribable
 		const global_keys = Array.from(globals.keys());
 		const sorted_globals = [
-			...global_keys.filter(/** @param {any} key */ (key) => key[0] !== '$'),
-			...global_keys.filter(/** @param {any} key */ (key) => key[0] === '$')
+			...global_keys.filter((key) => key[0] !== '$'),
+			...global_keys.filter((key) => key[0] === '$')
 		];
-		sorted_globals.forEach(
-			/** @param {any} name */ (name) => {
-				if (this.var_lookup.has(name)) return;
-				const node = globals.get(name);
-				if (this.injected_reactive_declaration_vars.has(name)) {
-					this.add_var(node, {
-						name,
-						injected: true,
-						writable: true,
-						reassigned: true,
-						initialised: true
-					});
-				} else if (is_reserved_keyword(name)) {
-					this.add_var(node, {
-						name,
-						injected: true
-					});
-				} else if (name[0] === '$') {
-					if (name === '$' || name[1] === '$') {
-						return this.error(/** @type {any} */ (node), compiler_errors.illegal_global(name));
-					}
-					this.add_var(node, {
-						name,
-						injected: true,
-						mutated: true,
-						writable: true
-					});
-					this.add_reference(node, name.slice(1));
-					const variable = this.var_lookup.get(name.slice(1));
-					if (variable) {
-						variable.subscribable = true;
-						variable.referenced_from_script = true;
-					}
-				} else {
-					this.add_var(node, {
-						name,
-						global: true,
-						hoistable: true
-					});
+		sorted_globals.forEach((name) => {
+			if (this.var_lookup.has(name)) return;
+			const node = globals.get(name);
+			if (this.injected_reactive_declaration_vars.has(name)) {
+				this.add_var(node, {
+					name,
+					injected: true,
+					writable: true,
+					reassigned: true,
+					initialised: true
+				});
+			} else if (is_reserved_keyword(name)) {
+				this.add_var(node, {
+					name,
+					injected: true
+				});
+			} else if (name[0] === '$') {
+				if (name === '$' || name[1] === '$') {
+					return this.error(/** @type {any} */ (node), compiler_errors.illegal_global(name));
 				}
+				this.add_var(node, {
+					name,
+					injected: true,
+					mutated: true,
+					writable: true
+				});
+				this.add_reference(node, name.slice(1));
+				const variable = this.var_lookup.get(name.slice(1));
+				if (variable) {
+					variable.subscribable = true;
+					variable.referenced_from_script = true;
+				}
+			} else {
+				this.add_var(node, {
+					name,
+					global: true,
+					hoistable: true
+				});
 			}
-		);
+		});
 		this.track_references_and_mutations();
 	}
 	walk_instance_js_post_template() {
@@ -909,12 +861,7 @@ export default class Component {
 		/** @type {import('estree').FunctionDeclaration | import('estree').FunctionExpression} */
 		let current_function = null;
 		walk(content, {
-			/**
-			 * @param {import('estree').Node} node
-			 * @param {import('estree').Node} parent
-			 * @param {any} prop
-			 * @param {any} index
-			 */
+			/** @type {import('estree-walker').SyncHandler} */
 			enter(node, parent, prop, index) {
 				if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
 					current_function_stack.push((current_function = node));
@@ -953,25 +900,27 @@ export default class Component {
 					names.push(name);
 				}
 				if (names.length > 0) {
-					names.forEach(
-						/** @param {any} name */ (name) => {
-							let current_scope = scope;
-							let declaration;
-							while (current_scope) {
-								if (current_scope.declarations.has(name)) {
-									declaration = current_scope.declarations.get(name);
-									break;
-								}
-								current_scope = current_scope.parent;
+					names.forEach((name) => {
+						let current_scope = scope;
+						let declaration;
+						while (current_scope) {
+							if (current_scope.declarations.has(name)) {
+								declaration = current_scope.declarations.get(name);
+								break;
 							}
-							if (declaration && /** @type {any} */ (declaration).kind === 'const' && !deep) {
-								component.error(/** @type {any} */ (node), {
-									code: 'assignment-to-const',
-									message: 'You are assigning to a const'
-								});
-							}
+							current_scope = current_scope.parent;
 						}
-					);
+						if (
+							declaration &&
+							/** @type {import('estree').VariableDeclaration} */ (declaration).kind === 'const' &&
+							!deep
+						) {
+							component.error(/** @type {any} */ (node), {
+								code: 'assignment-to-const',
+								message: 'You are assigning to a const'
+							});
+						}
+					});
 				}
 				if (node.type === 'ImportDeclaration') {
 					component.extract_imports(node);
@@ -1054,19 +1003,17 @@ export default class Component {
 					const assignee = node.type === 'AssignmentExpression' ? node.left : node.argument;
 					const names = extract_names(/** @type {import('estree').Node} */ (assignee));
 					const deep = assignee.type === 'MemberExpression';
-					names.forEach(
-						/** @param {any} name */ (name) => {
-							const scope_owner = scope.find_owner(name);
-							if (
-								scope_owner !== null
-									? scope_owner === instance_scope
-									: module_scope && module_scope.has(name)
-							) {
-								const variable = component.var_lookup.get(name);
-								variable[deep ? 'mutated' : 'reassigned'] = true;
-							}
+					names.forEach((name) => {
+						const scope_owner = scope.find_owner(name);
+						if (
+							scope_owner !== null
+								? scope_owner === instance_scope
+								: module_scope && module_scope.has(name)
+						) {
+							const variable = component.var_lookup.get(name);
+							variable[deep ? 'mutated' : 'reassigned'] = true;
 						}
-					);
+					});
 				}
 				if (is_used_as_reference(node, parent)) {
 					const object = get_object(node);
@@ -1339,37 +1286,29 @@ export default class Component {
 		for (let i = 0; i < body.length; i += 1) {
 			const node = body[i];
 			if (node.type === 'VariableDeclaration') {
-				const all_hoistable = node.declarations.every(
-					/** @param {any} d */ (d) => {
-						if (!d.init) return false;
-						if (d.init.type !== 'Literal') return false;
-						// everything except const values can be changed by e.g. svelte devtools
-						// which means we can't hoist it
-						if (node.kind !== 'const' && this.compile_options.dev) return false;
-						const { name } = /** @type {import('estree').Identifier} */ (d.id);
+				const all_hoistable = node.declarations.every((d) => {
+					if (!d.init) return false;
+					if (d.init.type !== 'Literal') return false;
+					// everything except const values can be changed by e.g. svelte devtools
+					// which means we can't hoist it
+					if (node.kind !== 'const' && this.compile_options.dev) return false;
+					for (const name of extract_names(d.id)) {
 						const v = this.var_lookup.get(name);
 						if (v.reassigned) return false;
 						if (v.export_name) return false;
-						if (this.var_lookup.get(name).reassigned) return false;
-						if (
-							this.vars.find(
-								/** @param {any} variable */ (variable) => variable.name === name && variable.module
-							)
-						) {
+
+						if (this.vars.find((variable) => variable.name === name && variable.module)) {
 							return false;
 						}
-						return true;
 					}
-				);
+					return true;
+				});
 				if (all_hoistable) {
-					node.declarations.forEach(
-						/** @param {any} d */ (d) => {
-							const variable = this.var_lookup.get(
-								/** @type {import('estree').Identifier} */ (d.id).name
-							);
-							variable.hoistable = true;
+					node.declarations.forEach((d) => {
+						for (const name of extract_names(d.id)) {
+							this.var_lookup.get(name).hoistable = true;
 						}
-					);
+					});
 					hoistable_nodes.add(node);
 					body.splice(i--, 1);
 					this.fully_hoisted.push(node);
@@ -1401,10 +1340,7 @@ export default class Component {
 			// handle cycles
 			walking.add(fn_declaration);
 			walk(fn_declaration, {
-				/**
-				 * @param {import('estree').Node} node
-				 * @param {any} parent
-				 */
+				/** @type {import('estree-walker').SyncHandler} */
 				enter(node, parent) {
 					if (!hoistable) return this.skip();
 					if (map.has(node)) {
@@ -1488,159 +1424,137 @@ export default class Component {
 		 * 		}>}
 		 */
 		const unsorted_reactive_declarations = [];
-		this.ast.instance.content.body.forEach(
-			/** @param {any} node */ (node) => {
-				const ignores = extract_svelte_ignore_from_comments(node);
-				if (ignores.length) this.push_ignores(ignores);
-				if (node.type === 'LabeledStatement' && node.label.name === '$') {
-					this.reactive_declaration_nodes.add(node);
-					const assignees = new Set();
-					const assignee_nodes = new Set();
-					const dependencies = new Set();
-					const module_dependencies = new Set();
-					let scope = this.instance_scope;
-					const { declarations: outset_scope_decalarations } = this.instance_scope;
-					const map = this.instance_scope_map;
-					walk(node.body, {
-						/**
-						 * @param {import('estree').Node} node
-						 * @param {any} parent
-						 */
-						enter(node, parent) {
-							if (node.type === 'VariableDeclaration' && node.kind === 'var') {
-								const is_var_in_outset = node.declarations.some(
-									/** @param {import('estree').VariableDeclarator} declaration */ (declaration) => {
-										/** @type {string[]} */
-										const names = extract_names(declaration.id);
-										return !!names.find(
-											/** @param {string} name */ (name) => {
-												const var_node = outset_scope_decalarations.get(name);
-												return var_node === node;
-											}
-										);
-									}
-								);
-								if (is_var_in_outset) {
-									return component.error(
-										/** @type {any} */ (node),
-										compiler_errors.invalid_var_declaration
+		this.ast.instance.content.body.forEach((node) => {
+			const ignores = extract_svelte_ignore_from_comments(node);
+			if (ignores.length) this.push_ignores(ignores);
+			if (node.type === 'LabeledStatement' && node.label.name === '$') {
+				this.reactive_declaration_nodes.add(node);
+				const assignees = new Set();
+				const assignee_nodes = new Set();
+				const dependencies = new Set();
+				const module_dependencies = new Set();
+				let scope = this.instance_scope;
+				const { declarations: outset_scope_decalarations } = this.instance_scope;
+				const map = this.instance_scope_map;
+				walk(node.body, {
+					/** @type {import('estree-walker').SyncHandler} */
+					enter(node, parent) {
+						if (node.type === 'VariableDeclaration' && node.kind === 'var') {
+							const is_var_in_outset = node.declarations.some(
+								/** @param {import('estree').VariableDeclarator} declaration */ (declaration) => {
+									/** @type {string[]} */
+									const names = extract_names(declaration.id);
+									return !!names.find(
+										/** @param {string} name */ (name) => {
+											const var_node = outset_scope_decalarations.get(name);
+											return var_node === node;
+										}
 									);
 								}
-							}
-							if (map.has(node)) {
-								scope = map.get(node);
-							}
-							if (node.type === 'AssignmentExpression') {
-								const left = get_object(node.left);
-								extract_identifiers(left).forEach(
-									/** @param {any} node */ (node) => {
-										assignee_nodes.add(node);
-										assignees.add(node.name);
-									}
-								);
-								if (node.operator !== '=') {
-									dependencies.add(left.name);
-								}
-							} else if (node.type === 'UpdateExpression') {
-								const identifier = get_object(node.argument);
-								assignees.add(identifier.name);
-							} else if (
-								is_reference(
-									/** @type {import('is-reference').NodeWithPropertyDefinition} */ (node),
-									/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
-								)
-							) {
-								const identifier = get_object(node);
-								if (!assignee_nodes.has(identifier)) {
-									const { name } = identifier;
-									const owner = scope.find_owner(name);
-									const variable = component.var_lookup.get(name);
-									let should_add_as_dependency = true;
-									if (variable) {
-										variable.is_reactive_dependency = true;
-										if (variable.module && variable.writable) {
-											should_add_as_dependency = false;
-											module_dependencies.add(name);
-										}
-									}
-									const is_writable_or_mutated =
-										variable && (variable.writable || variable.mutated);
-									if (
-										should_add_as_dependency &&
-										(!owner || owner === component.instance_scope) &&
-										(name[0] === '$' || is_writable_or_mutated)
-									) {
-										dependencies.add(name);
-									}
-								}
-								this.skip();
-							}
-						},
-
-						/** @param {import('estree').Node} node */
-						leave(node) {
-							if (map.has(node)) {
-								scope = scope.parent;
-							}
-						}
-					});
-					if (module_dependencies.size > 0 && dependencies.size === 0) {
-						component.warn(
-							/** @type {any} */ (node.body),
-							compiler_warnings.module_script_variable_reactive_declaration(
-								Array.from(module_dependencies)
-							)
-						);
-					}
-					const { expression } = /** @type {import('estree').ExpressionStatement} */ (node.body);
-					const declaration =
-						expression && /** @type {import('estree').AssignmentExpression} */ (expression).left;
-					unsorted_reactive_declarations.push({
-						assignees,
-						dependencies,
-						node,
-						declaration
-					});
-				}
-				if (ignores.length) this.pop_ignores();
-			}
-		);
-		const lookup = new Map();
-		unsorted_reactive_declarations.forEach(
-			/** @param {any} declaration */ (declaration) => {
-				declaration.assignees.forEach(
-					/** @param {any} name */ (name) => {
-						if (!lookup.has(name)) {
-							lookup.set(name, []);
-						}
-						// TODO warn or error if a name is assigned to in
-						// multiple reactive declarations?
-						lookup.get(name).push(declaration);
-					}
-				);
-			}
-		);
-		const cycle = check_graph_for_cycles(
-			unsorted_reactive_declarations.reduce(
-				/**
-				 * @param {any} acc
-				 * @param {any} declaration
-				 */ (acc, declaration) => {
-					declaration.assignees.forEach(
-						/** @param {any} v */ (v) => {
-							declaration.dependencies.forEach(
-								/** @param {any} w */ (w) => {
-									if (!declaration.assignees.has(w)) {
-										acc.push([v, w]);
-									}
-								}
 							);
+							if (is_var_in_outset) {
+								return component.error(
+									/** @type {any} */ (node),
+									compiler_errors.invalid_var_declaration
+								);
+							}
 						}
+						if (map.has(node)) {
+							scope = map.get(node);
+						}
+						if (node.type === 'AssignmentExpression') {
+							const left = get_object(node.left);
+							extract_identifiers(left).forEach((node) => {
+								assignee_nodes.add(node);
+								assignees.add(node.name);
+							});
+							if (node.operator !== '=') {
+								dependencies.add(left.name);
+							}
+						} else if (node.type === 'UpdateExpression') {
+							const identifier = get_object(node.argument);
+							assignees.add(identifier.name);
+						} else if (
+							is_reference(
+								/** @type {import('is-reference').NodeWithPropertyDefinition} */ (node),
+								/** @type {import('is-reference').NodeWithPropertyDefinition} */ (parent)
+							)
+						) {
+							const identifier = get_object(node);
+							if (!assignee_nodes.has(identifier)) {
+								const { name } = identifier;
+								const owner = scope.find_owner(name);
+								const variable = component.var_lookup.get(name);
+								let should_add_as_dependency = true;
+								if (variable) {
+									variable.is_reactive_dependency = true;
+									if (variable.module && variable.writable) {
+										should_add_as_dependency = false;
+										module_dependencies.add(name);
+									}
+								}
+								const is_writable_or_mutated = variable && (variable.writable || variable.mutated);
+								if (
+									should_add_as_dependency &&
+									(!owner || owner === component.instance_scope) &&
+									(name[0] === '$' || is_writable_or_mutated)
+								) {
+									dependencies.add(name);
+								}
+							}
+							this.skip();
+						}
+					},
+
+					/** @param {import('estree').Node} node */
+					leave(node) {
+						if (map.has(node)) {
+							scope = scope.parent;
+						}
+					}
+				});
+				if (module_dependencies.size > 0 && dependencies.size === 0) {
+					component.warn(
+						/** @type {any} */ (node.body),
+						compiler_warnings.module_script_variable_reactive_declaration(
+							Array.from(module_dependencies)
+						)
 					);
-					return acc;
-				},
-				[]
-			)
+				}
+				const { expression } = /** @type {import('estree').ExpressionStatement} */ (node.body);
+				const declaration =
+					expression && /** @type {import('estree').AssignmentExpression} */ (expression).left;
+				unsorted_reactive_declarations.push({
+					assignees,
+					dependencies,
+					node,
+					declaration
+				});
+			}
+			if (ignores.length) this.pop_ignores();
+		});
+		const lookup = new Map();
+		unsorted_reactive_declarations.forEach((declaration) => {
+			declaration.assignees.forEach((name) => {
+				if (!lookup.has(name)) {
+					lookup.set(name, []);
+				}
+				// TODO warn or error if a name is assigned to in
+				// multiple reactive declarations?
+				lookup.get(name).push(declaration);
+			});
+		});
+		const cycle = check_graph_for_cycles(
+			unsorted_reactive_declarations.reduce((acc, declaration) => {
+				declaration.assignees.forEach((v) => {
+					declaration.dependencies.forEach((w) => {
+						if (!declaration.assignees.has(w)) {
+							acc.push([v, w]);
+						}
+					});
+				});
+				return acc;
+			}, [])
 		);
 		if (cycle && cycle.length) {
 			const declarationList = lookup.get(cycle[0]);
@@ -1651,15 +1565,13 @@ export default class Component {
 		/** @param {any} declaration */
 		const add_declaration = (declaration) => {
 			if (this.reactive_declarations.includes(declaration)) return;
-			declaration.dependencies.forEach(
-				/** @param {any} name */ (name) => {
-					if (declaration.assignees.has(name)) return;
-					const earlier_declarations = lookup.get(name);
-					if (earlier_declarations) {
-						earlier_declarations.forEach(add_declaration);
-					}
+			declaration.dependencies.forEach((name) => {
+				if (declaration.assignees.has(name)) return;
+				const earlier_declarations = lookup.get(name);
+				if (earlier_declarations) {
+					earlier_declarations.forEach(add_declaration);
 				}
-			);
+			});
 			this.reactive_declarations.push(declaration);
 		};
 		unsorted_reactive_declarations.forEach(add_declaration);
@@ -1747,11 +1659,11 @@ function process_component_options(component, nodes) {
 		preserveWhitespace: !!component.compile_options.preserveWhitespace,
 		namespace: component.compile_options.namespace
 	};
-	const node = nodes.find(/** @param {any} node */ (node) => node.name === 'svelte:options');
+	const node = nodes.find((node) => node.name === 'svelte:options');
 
 	/**
 	 * @param {any} attribute
-	 * @param {any}params_0
+	 * @param {any} params_0
 	 */
 	function get_value(attribute, { code, message }) {
 		const { value } = attribute;
@@ -1767,153 +1679,144 @@ function process_component_options(component, nodes) {
 		return chunk.expression.value;
 	}
 	if (node) {
-		node.attributes.forEach(
-			/** @param {any} attribute */ (attribute) => {
-				if (attribute.type === 'Attribute') {
-					const { name } = attribute;
+		node.attributes.forEach((attribute) => {
+			if (attribute.type === 'Attribute') {
+				const { name } = attribute;
 
-					/**
-					 * @param {import('../interfaces.js').Attribute} attribute
-					 * @param {string} tag
-					 */
-					function parse_tag(attribute, tag) {
-						if (typeof tag !== 'string' && tag !== null) {
-							return component.error(attribute, compiler_errors.invalid_tag_attribute);
-						}
-						if (tag && !regex_valid_tag_name.test(tag)) {
-							return component.error(attribute, compiler_errors.invalid_tag_property);
-						}
-						if (tag && !component.compile_options.customElement) {
-							component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
-						}
+				/**
+				 * @param {import('../interfaces.js').Attribute} attribute
+				 * @param {string} tag
+				 */
+				function parse_tag(attribute, tag) {
+					if (typeof tag !== 'string' && tag !== null) {
+						return component.error(attribute, compiler_errors.invalid_tag_attribute);
+					}
+					if (tag && !regex_valid_tag_name.test(tag)) {
+						return component.error(attribute, compiler_errors.invalid_tag_property);
+					}
+					if (tag && !component.compile_options.customElement) {
+						component.warn(attribute, compiler_warnings.missing_custom_element_compile_options);
+					}
+					component_options.customElement =
+						component_options.customElement || /** @type {any} */ ({});
+					component_options.customElement.tag = tag;
+				}
+				switch (name) {
+					case 'tag': {
+						component.warn(attribute, compiler_warnings.tag_option_deprecated);
+						parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
+						break;
+					}
+					case 'customElement': {
 						component_options.customElement =
 							component_options.customElement || /** @type {any} */ ({});
-						component_options.customElement.tag = tag;
-					}
-					switch (name) {
-						case 'tag': {
-							component.warn(attribute, compiler_warnings.tag_option_deprecated);
+						const { value } = attribute;
+						if (value[0].type === 'MustacheTag' && value[0].expression?.value === null) {
+							component_options.customElement.tag = null;
+							break;
+						} else if (value[0].type === 'Text') {
 							parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
 							break;
+						} else if (value[0].expression.type !== 'ObjectExpression') {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
-						case 'customElement': {
-							component_options.customElement =
-								component_options.customElement || /** @type {any} */ ({});
-							const { value } = attribute;
-							if (value[0].type === 'MustacheTag' && value[0].expression?.value === null) {
-								component_options.customElement.tag = null;
-								break;
-							} else if (value[0].type === 'Text') {
-								parse_tag(attribute, get_value(attribute, compiler_errors.invalid_tag_attribute));
-								break;
-							} else if (value[0].expression.type !== 'ObjectExpression') {
-								return component.error(attribute, compiler_errors.invalid_customElement_attribute);
+						const tag = value[0].expression.properties.find((prop) => prop.key.name === 'tag');
+						if (tag) {
+							parse_tag(tag, tag.value?.value);
+						} else {
+							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
+						}
+						const props = value[0].expression.properties.find((prop) => prop.key.name === 'props');
+						if (props) {
+							const error = () =>
+								component.error(attribute, compiler_errors.invalid_props_attribute);
+							if (props.value?.type !== 'ObjectExpression') {
+								return error();
 							}
-							const tag = value[0].expression.properties.find(
-								/** @param {any} prop */ (prop) => prop.key.name === 'tag'
-							);
-							if (tag) {
-								parse_tag(tag, tag.value?.value);
-							} else {
-								return component.error(attribute, compiler_errors.invalid_customElement_attribute);
-							}
-							const props = value[0].expression.properties.find(
-								/** @param {any} prop */
-								(prop) => prop.key.name === 'props'
-							);
-							if (props) {
-								const error = () =>
-									component.error(attribute, compiler_errors.invalid_props_attribute);
-								if (props.value?.type !== 'ObjectExpression') {
+							component_options.customElement.props = {};
+							for (const property of /** @type {import('estree').ObjectExpression} */ (props.value)
+								.properties) {
+								if (
+									property.type !== 'Property' ||
+									property.computed ||
+									property.key.type !== 'Identifier' ||
+									property.value.type !== 'ObjectExpression'
+								) {
 									return error();
 								}
-								component_options.customElement.props = {};
-								for (const property of /** @type {import('estree').ObjectExpression} */ (
-									props.value
-								).properties) {
+								component_options.customElement.props[property.key.name] = {};
+								for (const prop of property.value.properties) {
 									if (
-										property.type !== 'Property' ||
-										property.computed ||
-										property.key.type !== 'Identifier' ||
-										property.value.type !== 'ObjectExpression'
+										prop.type !== 'Property' ||
+										prop.computed ||
+										prop.key.type !== 'Identifier' ||
+										prop.value.type !== 'Literal'
 									) {
 										return error();
 									}
-									component_options.customElement.props[property.key.name] = {};
-									for (const prop of property.value.properties) {
-										if (
-											prop.type !== 'Property' ||
-											prop.computed ||
-											prop.key.type !== 'Identifier' ||
-											prop.value.type !== 'Literal'
-										) {
-											return error();
-										}
-										if (
-											['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
-											(prop.key.name === 'type' &&
-												['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(
-													/** @type {string} */ (prop.value.value)
-												) === -1) ||
-											(prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean') ||
-											(prop.key.name === 'attribute' && typeof prop.value.value !== 'string')
-										) {
-											return error();
-										}
-										component_options.customElement.props[property.key.name][prop.key.name] =
-											prop.value.value;
+									if (
+										['reflect', 'attribute', 'type'].indexOf(prop.key.name) === -1 ||
+										(prop.key.name === 'type' &&
+											['String', 'Number', 'Boolean', 'Array', 'Object'].indexOf(
+												/** @type {string} */ (prop.value.value)
+											) === -1) ||
+										(prop.key.name === 'reflect' && typeof prop.value.value !== 'boolean') ||
+										(prop.key.name === 'attribute' && typeof prop.value.value !== 'string')
+									) {
+										return error();
 									}
+									component_options.customElement.props[property.key.name][prop.key.name] =
+										prop.value.value;
 								}
 							}
-							const shadow = value[0].expression.properties.find(
-								/** @param {any} prop */
-								(prop) => prop.key.name === 'shadow'
-							);
-							if (shadow) {
-								const shadowdom = shadow.value?.value;
-								if (shadowdom !== 'open' && shadowdom !== 'none') {
-									return component.error(shadow, compiler_errors.invalid_shadow_attribute);
-								}
-								component_options.customElement.shadow = shadowdom;
-							}
-							break;
 						}
-						case 'namespace': {
-							const ns = get_value(attribute, compiler_errors.invalid_namespace_attribute);
-							if (typeof ns !== 'string') {
-								return component.error(attribute, compiler_errors.invalid_namespace_attribute);
+						const shadow = value[0].expression.properties.find(
+							(prop) => prop.key.name === 'shadow'
+						);
+						if (shadow) {
+							const shadowdom = shadow.value?.value;
+							if (shadowdom !== 'open' && shadowdom !== 'none') {
+								return component.error(shadow, compiler_errors.invalid_shadow_attribute);
 							}
-							if (valid_namespaces.indexOf(ns) === -1) {
-								const match = fuzzymatch(ns, valid_namespaces);
-								return component.error(
-									attribute,
-									compiler_errors.invalid_namespace_property(ns, match)
-								);
-							}
-							component_options.namespace = ns;
-							break;
+							component_options.customElement.shadow = shadowdom;
 						}
-						case 'accessors':
-						case 'immutable':
-						case 'preserveWhitespace': {
-							const value = get_value(attribute, compiler_errors.invalid_attribute_value(name));
-							if (typeof value !== 'boolean') {
-								return component.error(attribute, compiler_errors.invalid_attribute_value(name));
-							}
-							component_options[name] = value;
-							break;
+						break;
+					}
+					case 'namespace': {
+						const ns = get_value(attribute, compiler_errors.invalid_namespace_attribute);
+						if (typeof ns !== 'string') {
+							return component.error(attribute, compiler_errors.invalid_namespace_attribute);
 						}
-						default:
+						if (valid_namespaces.indexOf(ns) === -1) {
+							const match = fuzzymatch(ns, valid_namespaces);
 							return component.error(
 								attribute,
-								compiler_errors.invalid_options_attribute_unknown(name)
+								compiler_errors.invalid_namespace_property(ns, match)
 							);
+						}
+						component_options.namespace = ns;
+						break;
 					}
-				} else {
-					return component.error(attribute, compiler_errors.invalid_options_attribute);
+					case 'accessors':
+					case 'immutable':
+					case 'preserveWhitespace': {
+						const value = get_value(attribute, compiler_errors.invalid_attribute_value(name));
+						if (typeof value !== 'boolean') {
+							return component.error(attribute, compiler_errors.invalid_attribute_value(name));
+						}
+						component_options[name] = value;
+						break;
+					}
+					default:
+						return component.error(
+							attribute,
+							compiler_errors.invalid_options_attribute_unknown(name)
+						);
 				}
+			} else {
+				return component.error(attribute, compiler_errors.invalid_options_attribute);
 			}
-		);
+		});
 	}
 	return component_options;
 }
