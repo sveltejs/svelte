@@ -2,6 +2,11 @@
 	import { Section } from '@sveltejs/site-kit/components';
 	import contributors from './contributors.js';
 	import donors from './donors.js';
+
+	// @ts-ignore
+	import contributors_img from './contributors.jpg?w=1200&format=webp;jpg&as=picture';
+	// @ts-check
+	import donors_img from './donors.jpg?w=1200&format=webp;jpg&as=picture';
 </script>
 
 <Section --background="var(--sk-back-2">
@@ -20,6 +25,7 @@
 				<a
 					class="supporter"
 					style="background-position: {(100 * i) / (contributors.length - 1)}% 0"
+					style:background-image="url({contributors_img.sources.webp[0].src})"
 					href="https://github.com/{contributor}"
 				>
 					{contributor}
@@ -37,6 +43,7 @@
 				<a
 					class="supporter"
 					style="background-position: {(100 * i) / (donors.length - 1)}% 0"
+					style:background-image="url({donors_img.sources.webp[0].src})"
 					href="https://opencollective.com/svelte">{donor}</a
 				>
 			{/each}
@@ -86,11 +93,11 @@
 	}
 
 	.contributors .supporter {
-		background-image: url(./contributors.jpg);
+		background-image: -webkit-image-set(url(./contributors.jpg));
 	}
 
 	.donors .supporter {
-		background-image: url(./donors.jpg);
+		background-image: -webkit-image-set(url(./donors.jpg));
 	}
 
 	@media (min-width: 480px) {
