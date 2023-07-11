@@ -1297,11 +1297,7 @@ export default class Component {
 						if (v.reassigned) return false;
 						if (v.export_name) return false;
 
-						if (
-							this.vars.find(
-								(variable) => variable.name === name && variable.module
-							)
-						) {
+						if (this.vars.find((variable) => variable.name === name && variable.module)) {
 							return false;
 						}
 					}
