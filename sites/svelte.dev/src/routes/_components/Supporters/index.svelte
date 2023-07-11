@@ -5,7 +5,7 @@
 
 	// @ts-ignore
 	import contributors_img from './contributors.jpg?w=1200&format=webp;jpg&as=picture';
-	// @ts-check
+	// @ts-ignore
 	import donors_img from './donors.jpg?w=1200&format=webp;jpg&as=picture';
 </script>
 
