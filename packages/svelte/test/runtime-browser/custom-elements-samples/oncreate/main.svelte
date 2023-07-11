@@ -1,7 +1,7 @@
 <svelte:options customElement="my-app" />
 
 <script>
-	import { onMount } from "svelte";
+	import { onMount } from 'svelte';
 
 	export let prop = false;
 	export let propsInitialized;

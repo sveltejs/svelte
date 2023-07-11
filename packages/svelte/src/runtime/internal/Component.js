@@ -169,6 +169,8 @@ if (typeof HTMLElement === 'function') {
 		$$cn = false;
 		/** Component props data */
 		$$d = {};
+		/** Component binding invocations recorded before the component was mounted, to playback on creation */
+		$$b = [];
 		/** `true` if currently in the process of reflecting component props back to attributes */
 		$$r = false;
 		/** @type {Record<string, CustomElementPropDefinition>} Props definition (name, reflected, type etc) */
@@ -269,6 +271,11 @@ if (typeof HTMLElement === 'function') {
 						}
 					}
 				});
+
+				// Replay binding invocations
+				for (const binding of this.$$b) {
+					binding();
+				}
 
 				// Reflect component props as attributes
 				const reflect_attributes = () => {
@@ -410,6 +417,7 @@ export function create_custom_element(
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$d[prop] = value;
+				console.log('did set', value, this.$$d);
 				this.$$c?.$set({ [prop]: value });
 			}
 		});
@@ -417,7 +425,17 @@ export function create_custom_element(
 	accessors.forEach((accessor) => {
 		Object.defineProperty(Class.prototype, accessor, {
 			get() {
-				return this.$$c?.[accessor];
+				if (this.$$c) {
+					return this.$$c[accessor];
+				} else {
+					// This is only an approximation of what's possible.
+					// It only handles the case where the accessor is a function without a return value
+					return (...args) => {
+						this.$$b.push(() => {
+							this.$$c[accessor](...args);
+						});
+					};
+				}
 			}
 		});
 	});
