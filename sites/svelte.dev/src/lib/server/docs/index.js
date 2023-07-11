@@ -75,6 +75,7 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 				title: page_title,
 				slug: page_slug,
 				content: page_content,
+				category: category_title,
 				sections: get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
 				file: `${category_dir}/${filename}`

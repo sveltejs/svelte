@@ -4,7 +4,10 @@
 
 	export let data;
 
-	$: title = $page.data.page?.title;
+	$: pageData = $page.data.page;
+
+	$: title = pageData?.title;
+	$: category = pageData?.category;
 </script>
 
 <div class="container">
@@ -13,6 +16,9 @@
 	</div>
 
 	<div class="page content">
+		{#if category}
+			<p class="category">{category}</p>
+		{/if}
 		{#if title}
 			<h1>{title}</h1>
 		{/if}
@@ -39,6 +45,14 @@
 
 	.page :global(:where(h2, h3) code) {
 		all: unset;
+	}
+
+	.category {
+		font: 700 var(--sk-text-s) var(--sk-font);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		margin: 0 0 0.5em;
+		color: var(--sk-text-3);
 	}
 
 	@media (min-width: 832px) {

@@ -47,16 +47,14 @@ export async function read(sessionid) {
 	if (!session_cache.get(sessionid)) {
 		session_cache.set(
 			sessionid,
-			await client
-				.rpc('get_user', { sessionid })
-				.then(({ data, error }) => {
-					if (error) {
-						session_cache.set(sessionid, null);
-						throw new Error(error.message);
-					}
+			await client.rpc('get_user', { sessionid }).then(({ data, error }) => {
+				if (error) {
+					session_cache.set(sessionid, null);
+					throw new Error(error.message);
+				}
 
-					return data.id && data;
-				})
+				return data.id && data;
+			})
 		);
 	}
 

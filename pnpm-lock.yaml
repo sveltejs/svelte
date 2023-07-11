@@ -157,8 +157,8 @@ importers:
         specifier: ^2.26.0
         version: 2.26.0
       '@sveltejs/repl':
-        specifier: 0.5.0-next.11
-        version: 0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte)
+        specifier: 0.5.0-next.12
+        version: 0.5.0-next.12(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -557,7 +557,7 @@ packages:
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.14.0
       '@lezer/common': 1.0.3
-      '@lezer/javascript': 1.4.3
+      '@lezer/javascript': 1.4.4
     dev: false
 
   /@codemirror/lang-json@6.0.1:
@@ -586,7 +586,7 @@ packages:
       '@codemirror/view': 6.14.0
       '@lezer/common': 1.0.3
       '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.7
+      '@lezer/lr': 1.3.9
       style-mod: 4.0.3
     dev: false
 
@@ -1280,7 +1280,7 @@ packages:
     resolution: {integrity: sha512-5TKMAReXukfEmIiZprDlGfZVfOOCyEStFi1YLzxclm9H3G/HHI49/2wzlRT6bQw5r7PoZVEtjTItEkb/UuZQyg==}
     dependencies:
       '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.7
+      '@lezer/lr': 1.3.9
     dev: false
 
   /@lezer/highlight@1.1.6:
@@ -1294,14 +1294,7 @@ packages:
     dependencies:
       '@lezer/common': 1.0.3
       '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.7
-    dev: false
-
-  /@lezer/javascript@1.4.3:
-    resolution: {integrity: sha512-k7Eo9z9B1supZ5cCD4ilQv/RZVN30eUQL+gGbr6ybrEY3avBAL5MDiYi2aa23Aj0A79ry4rJRvPAwE2TM8bd+A==}
-    dependencies:
-      '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.7
+      '@lezer/lr': 1.3.9
     dev: false
 
   /@lezer/javascript@1.4.4:
@@ -1315,13 +1308,7 @@ packages:
     resolution: {integrity: sha512-zbAuUY09RBzCoCA3lJ1+ypKw5WSNvLqGMtasdW6HvVOqZoCpPr8eWrsGnOVWGKGn8Rh21FnrKRVlJXrGAVUqRw==}
     dependencies:
       '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.7
-    dev: false
-
-  /@lezer/lr@1.3.7:
-    resolution: {integrity: sha512-ssHKb3p0MxhJXT2i7UBmgAY1BIM3Uq/D772Qutu3EVmxWIyNMU12nQ0rL3Fhu+MiFtiTzyTmd3xGwEf3ON5PSA==}
-    dependencies:
-      '@lezer/common': 1.0.3
+      '@lezer/lr': 1.3.9
     dev: false
 
   /@lezer/lr@1.3.9:
@@ -1810,8 +1797,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte):
-    resolution: {integrity: sha512-bZ7WmmwwujhO1b1r7hN5Lt4z/Y4J3Bfx1DHiITOLshHTPgEU9XNOdq2JzSmN4DIWhmU0T/OVZ53XyXpaR1KTWA==}
+  /@sveltejs/repl@0.5.0-next.12(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte):
+    resolution: {integrity: sha512-s6HFT8egQq9Y0LQguRHu4hPS3/E/L1UDUYnWRSpK9mRbcrLkpO9bDn70JNWfdJoWORQMGoSRm6XXtIvFWi9VYA==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
