@@ -158,7 +158,7 @@ importers:
         version: 2.26.0
       '@sveltejs/repl':
         specifier: 0.5.0-next.11
-        version: 0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.0)(svelte@packages+svelte)
+        version: 0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -179,14 +179,14 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1
       '@sveltejs/adapter-vercel':
-        specifier: ^3.0.1
-        version: 3.0.1(@sveltejs/kit@1.22.0)
+        specifier: ^3.0.2
+        version: 3.0.2(@sveltejs/kit@1.22.2)
       '@sveltejs/kit':
-        specifier: ^1.22.0
-        version: 1.22.0(svelte@packages+svelte)(vite@4.3.9)
+        specifier: ^1.22.2
+        version: 1.22.2(svelte@packages+svelte)(vite@4.3.9)
       '@sveltejs/site-kit':
         specifier: 6.0.0-next.20
-        version: 6.0.0-next.20(@sveltejs/kit@1.22.0)(svelte@packages+svelte)
+        version: 6.0.0-next.20(@sveltejs/kit@1.22.2)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.2
         version: 2.4.2(svelte@packages+svelte)(vite@4.3.9)
@@ -1566,7 +1566,7 @@ packages:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.5.3
+      semver: 7.5.4
       tar: 6.1.15
     transitivePeerDependencies:
       - encoding
@@ -1949,14 +1949,14 @@ packages:
       - supports-color
     dev: false
 
-  /@sveltejs/adapter-vercel@3.0.1(@sveltejs/kit@1.22.0):
-    resolution: {integrity: sha512-PBY3YRm7Q7Prax07mxD/rvcho2CntGkYncAIkz2DtG5NTcVG5JZ1RM627it5zYYtc2/RB3YjMkZuCMBqDCiPkA==}
+  /@sveltejs/adapter-vercel@3.0.2(@sveltejs/kit@1.22.2):
+    resolution: {integrity: sha512-CQcLoKeVmF5Si+sJax0v8KMtXviJXfDXozJt3zfPHHYytCwMcGpJXsgqpqUbkdaF2xxgXuhTD7ClhQRFThbprw==}
     peerDependencies:
       '@sveltejs/kit': ^1.5.0
     dependencies:
-      '@sveltejs/kit': 1.22.0(svelte@packages+svelte)(vite@4.3.9)
+      '@sveltejs/kit': 1.22.2(svelte@packages+svelte)(vite@4.3.9)
       '@vercel/nft': 0.22.6
-      esbuild: 0.17.19
+      esbuild: 0.18.11
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -1982,8 +1982,8 @@ packages:
       typescript: 5.1.3
     dev: true
 
-  /@sveltejs/kit@1.22.0(svelte@packages+svelte)(vite@4.3.9):
-    resolution: {integrity: sha512-LQhM7CvTaO7OopQffFMuJ2n1lBhfYJKVO2Rujc+/473Yb8jb1mpJm59q5Avbx29kcz8N9lvYUyRP3FXc63VIFA==}
+  /@sveltejs/kit@1.22.2(svelte@packages+svelte)(vite@4.3.9):
+    resolution: {integrity: sha512-T6GY5jSfQgoDnNPNqAuDi9IK+ZW0TspzTV16UAN6GTsxbri67DGVIbw7QOXPg8FMrZQMmda1AtAxPMfXbOqCgw==}
     engines: {node: ^16.14 || >=18}
     hasBin: true
     requiresBuild: true
@@ -2008,7 +2008,7 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.0)(svelte@packages+svelte):
+  /@sveltejs/repl@0.5.0-next.11(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.2)(svelte@packages+svelte):
     resolution: {integrity: sha512-bZ7WmmwwujhO1b1r7hN5Lt4z/Y4J3Bfx1DHiITOLshHTPgEU9XNOdq2JzSmN4DIWhmU0T/OVZ53XyXpaR1KTWA==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
@@ -2029,7 +2029,7 @@ packages:
       '@replit/codemirror-lang-svelte': 6.0.0(@codemirror/autocomplete@6.8.1)(@codemirror/lang-css@6.2.0)(@codemirror/lang-html@6.4.5)(@codemirror/lang-javascript@6.1.9)(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.0)(@lezer/common@1.0.3)(@lezer/highlight@1.1.6)(@lezer/javascript@1.4.4)(@lezer/lr@1.3.9)
       '@rich_harris/svelte-split-pane': 1.1.1(svelte@packages+svelte)
       '@rollup/browser': 3.25.3
-      '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.22.0)(svelte@packages+svelte)
+      '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.22.2)(svelte@packages+svelte)
       acorn: 8.9.0
       codemirror: 6.0.1(@lezer/common@1.0.3)
       esm-env: 1.0.0
@@ -2047,25 +2047,25 @@ packages:
       - '@sveltejs/kit'
     dev: false
 
-  /@sveltejs/site-kit@5.2.2(@sveltejs/kit@1.22.0)(svelte@packages+svelte):
+  /@sveltejs/site-kit@5.2.2(@sveltejs/kit@1.22.2)(svelte@packages+svelte):
     resolution: {integrity: sha512-XLLxVUV/dYytCsUeODAkjtzlaIBSn1kdcH5U36OuN7gMsPEHDy5L/dsWjf1/vDln3JStH5lqZPEN8Fovm33KhA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
       svelte: ^3.54.0
     dependencies:
-      '@sveltejs/kit': 1.22.0(svelte@packages+svelte)(vite@4.3.9)
+      '@sveltejs/kit': 1.22.2(svelte@packages+svelte)(vite@4.3.9)
       esm-env: 1.0.0
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.20(@sveltejs/kit@1.22.0)(svelte@packages+svelte):
+  /@sveltejs/site-kit@6.0.0-next.20(@sveltejs/kit@1.22.2)(svelte@packages+svelte):
     resolution: {integrity: sha512-tWT/pKdCFxY+Wsayoj287AcNOYsm0EW5fiOsSSVseEK+62R1KcWHcioSgm1Fk12HOUgFcYnskaJ9JOo+p7+9/w==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0
     dependencies:
-      '@sveltejs/kit': 1.22.0(svelte@packages+svelte)(vite@4.3.9)
+      '@sveltejs/kit': 1.22.2(svelte@packages+svelte)(vite@4.3.9)
       esm-env: 1.0.0
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.5.0(svelte@packages+svelte)
@@ -2387,7 +2387,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.3
+      semver: 7.5.4
       tsutils: 3.21.0(typescript@5.1.6)
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -2450,7 +2450,7 @@ packages:
       '@typescript-eslint/typescript-estree': 5.60.0(typescript@5.1.6)
       eslint: 8.43.0
       eslint-scope: 5.1.1
-      semver: 7.5.3
+      semver: 7.5.4
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -5111,7 +5111,7 @@ packages:
     resolution: {integrity: sha512-iwXuFrMAcFVi/ZoZiqq8BzAdsLw9kxDfTC0HMyjXfSL/6CSDAGD5UmR7azrAgWV1zKYq7dUUMj4owusBWKLsiQ==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.5.3
+      semver: 7.5.4
     dev: true
 
   /node-addon-api@6.1.0:
@@ -5988,7 +5988,7 @@ packages:
       detect-libc: 2.0.1
       node-addon-api: 6.1.0
       prebuild-install: 7.1.1
-      semver: 7.5.3
+      semver: 7.5.4
       simple-get: 4.0.1
       tar-fs: 2.1.1
       tunnel-agent: 0.6.0
