@@ -15,7 +15,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			b = element("b");
-			b.textContent = `${get_answer()}`;
+			b.textContent = `${get_answer()} ${length}`;
 		},
 		m(target, anchor) {
 			insert(target, b, anchor);
@@ -32,6 +32,7 @@ function create_fragment(ctx) {
 }
 
 const ANSWER = 42;
+const { length } = 'abc';
 
 function get_answer() {
 	return ANSWER;

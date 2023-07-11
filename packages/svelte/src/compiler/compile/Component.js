@@ -1292,26 +1292,22 @@ export default class Component {
 					// everything except const values can be changed by e.g. svelte devtools
 					// which means we can't hoist it
 					if (node.kind !== 'const' && this.compile_options.dev) return false;
-					const { name } = /** @type {import('estree').Identifier} */ (d.id);
-					const v = this.var_lookup.get(name);
-					if (v.reassigned) return false;
-					if (v.export_name) return false;
-					if (this.var_lookup.get(name).reassigned) return false;
-					if (
-						this.vars.find(
-							/** @param {any} variable */ (variable) => variable.name === name && variable.module
-						)
-					) {
-						return false;
+					for (const name of extract_names(d.id)) {
+						const v = this.var_lookup.get(name);
+						if (v.reassigned) return false;
+						if (v.export_name) return false;
+
+						if (this.vars.find((variable) => variable.name === name && variable.module)) {
+							return false;
+						}
 					}
 					return true;
 				});
 				if (all_hoistable) {
 					node.declarations.forEach((d) => {
-						const variable = this.var_lookup.get(
-							/** @type {import('estree').Identifier} */ (d.id).name
-						);
-						variable.hoistable = true;
+						for (const name of extract_names(d.id)) {
+							this.var_lookup.get(name).hoistable = true;
+						}
 					});
 					hoistable_nodes.add(node);
 					body.splice(i--, 1);
