@@ -45,9 +45,9 @@ Ou elles peuvent _être définies_ par des expressions JavaScript.
 <button disabled={!clickable}>...</button>
 ```
 
-Les attributs booléens sont inclus sur l'élément si leur valeur est [truthy](https://developer.mozilla.org/fr/docs/Glossary/Truthy) et exclus si leur valeur est [falsy](https://developer.mozilla.org/fr/docs/Glossary/Falsy).
+Les attributs booléens sont inclus sur l'élément si leur valeur est <span class="vo">[truthy](/docs/javascript#falsy-truthy-truthy)</span> et exclus si leur valeur est <span class="vo">[falsy](/docs/javascript#falsy-truthy-falsy)</span>.
 
-Tous les autres attributs sont inclus à moins que leur valeur soit [nullish](https://developer.mozilla.org/fr/docs/Glossary/Nullish) (`null` ou `undefined`).
+Tous les autres attributs sont inclus à moins que leur valeur soit <span class="vo">[nullish](/docs/javascript#nullish)</span>.
 
 ```svelte
 <input required={false} placeholder="Ce champ input n'est pas requis" />

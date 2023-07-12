@@ -1,23 +1,24 @@
 ---
-title: Component directives
+title: Directives de composant
 ---
 
-## on:_eventname_
+## on:*eventname*
 
 ```svelte
 on:eventname={handler}
 ```
 
-Components can emit events using [createEventDispatcher](/docs/svelte#createeventdispatcher), or by forwarding DOM events. Listening for component events looks the same as listening for DOM events:
+Les composants peuvent émettre des évènements en utilisant [createEventDispatcher](/docs/svelte#createeventdispatcher), ou en relayant les évènements <span class='vo'>[DOM](/docs/web#dom)</span>. Il est possible d'écouter des évènements de composant de la même manière que pour des évènements <span class='vo'>[DOM](/docs/web#dom)</span> :
 
 ```svelte
-<SomeComponent on:whatever={handler} />
+<UnComposant on:peuimporte={handler} />
 ```
 
-As with DOM events, if the `on:` directive is used without a value, the component will _forward_ the event, meaning that a consumer of the component can listen for it.
+Comme pour les évènements <span class='vo'>[DOM](/docs/web#dom)</span>, si la direction `on:` est utilisée sans valeur, le composant va *relayer* l'évènement, ce qui permet au parent du composant de l'écouter.
+
 
 ```svelte
-<SomeComponent on:whatever />
+<UnComposant on:peuimporte />
 ```
 
 ## --style-props
@@ -26,70 +27,83 @@ As with DOM events, if the `on:` directive is used without a value, the componen
 --style-props="anycssvalue"
 ```
 
-You can also pass styles as props to components for the purposes of theming, using CSS custom properties.
+Vous pouvez aussi passer des props de style aux composants en utilisant les [propriétés CSS personnalisées](https://developer.mozilla.org/fr/docs/Web/CSS/Using_CSS_custom_properties). Cela permet notamment d'appliquer des thèmes.
 
-Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
+Cette fonctionnalité est principalement du sucre syntaxique, que Svelte va transformer pour entourer l'élément, comme dans cet exemple :
 
 ```svelte
-<Slider bind:value min={0} --rail-color="black" --track-color="rgb(0, 0, 255)" />
+<Slider
+  bind:value
+  min={0}
+  --rail-color="black"
+  --track-color="rgb(0, 0, 255)"
+/>
 ```
 
-Desugars to this:
+Qui va générer :
 
 ```svelte
 <div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
-	<Slider bind:value min={0} max={100} />
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
 </div>
 ```
 
-**Note**: Since this is an extra `<div>`, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+**Note**: Faites attention, cette syntaxe ajoute une `<div>` à votre <span class="vo">[markup](/docs/web#markup)</span>, qui pourra être ciblée accidentellement par votre CSS. Ayez conscience de cet ajout d'élément lorsque vous utilisez cette fonctionnalité.
 
-For SVG namespace, the example above desugars into using `<g>` instead:
+Dans le <span class='vo'>[namespace](/docs/development#namespace)</span> SVG, l'exemple ci-dessus va générer un `<g>` à la place d'une `<div>` :
 
 ```svelte
 <g style="--rail-color: black; --track-color: rgb(0, 0, 255)">
-	<Slider bind:value min={0} max={100} />
+  <Slider
+    bind:value
+    min={0}
+    max={100}
+  />
 </g>
 ```
 
-**Note**: Since this is an extra `<g>`, beware that your CSS structure might accidentally target this. Be mindful of this added wrapper element when using this feature.
+**Note**: Faites attention, cette syntaxe ajoute un `<g>` à votre <span class="vo">[markup](/docs/web#markup)</span>, qui pourra être ciblé accidentellement par votre CSS. Ayez conscience de cet ajout d'élément lorsque vous utilisez cette fonctionnalité.
 
-Svelte's CSS Variables support allows for easily themeable components:
+Le support des variables CSS dans Svelte permet d'appliquer des thèmes aux composants de manière simple :
 
 ```svelte
 <!-- Slider.svelte -->
 <style>
-	.potato-slider-rail {
-		background-color: var(--rail-color, var(--theme-color, 'purple'));
-	}
+  .potato-slider-rail {
+    background-color: var(--rail-color, var(--theme-color, 'purple'));
+  }
 </style>
 ```
 
-So you can set a high-level theme color:
+Vous pouvez alors définir une couleur de thème à plus haut niveau :
 
 ```css
 /* global.css */
 html {
-	--theme-color: black;
+  --theme-color: black;
 }
 ```
 
-Or override it at the consumer level:
+Ou l'écraser au niveau de l'instantiation du composant :
 
 ```svelte
-<Slider --rail-color="goldenrod" />
+<Slider --rail-color="goldenrod"/>
 ```
 
-## bind:_property_
+## bind:*property*
 
 ```svelte
 bind:property={variable}
 ```
 
-You can bind to component props using the same syntax as for elements.
+Vous pouvez lier des props de composant en utilisant la même syntaxe que pour les éléments.
 
 ```svelte
-<Keypad bind:value={pin} />
+<Keypad bind:value={pin}/>
 ```
 
 ## bind:this
@@ -98,12 +112,12 @@ You can bind to component props using the same syntax as for elements.
 bind:this={component_instance}
 ```
 
-Components also support `bind:this`, allowing you to interact with component instances programmatically.
+Les composants permettent aussi `bind:this`, permettant d'interagir avec les instances de composant programmatiquement.
 
-> Note that we can't do `{cart.empty}` since `cart` is `undefined` when the button is first rendered and throws an error.
+> Notez qu'on ne peut pas écrire `{cart.empty}` puisque `cart` est `undefined` quand le bouton est rendu la première fois, ce qui provoquerait une erreur
 
 ```svelte
-<ShoppingCart bind:this={cart} />
+<ShoppingCart bind:this={cart}/>
 
-<button on:click={() => cart.empty()}> Empty shopping cart </button>
+<button on:click={() => cart.empty()}> Caddie vide </button>
 ```
