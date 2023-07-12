@@ -1,5 +1,5 @@
 ---
-title: Logic blocks
+title: Les blocs logiques
 ---
 
 ## {#if ...}
@@ -16,27 +16,27 @@ title: Logic blocks
 {#if expression}...{:else}...{/if}
 ```
 
-Content that is conditionally rendered can be wrapped in an if block.
+Il est possible d'afficher conditionnellement du contenu en l'encadrant par un bloc `if`.
 
 ```svelte
 {#if answer === 42}
-	<p>what was the question?</p>
+	<p>c'était quoi la question déjà ?</p>
 {/if}
 ```
 
-Additional conditions can be added with `{:else if expression}`, optionally ending in an `{:else}` clause.
+Des conditions supplémentaires peuvent être ajoutées avec `{:else if expression}`, et il est possible de terminer avec un `{:else}` optionnel.
 
 ```svelte
-{#if porridge.temperature > 100}
-	<p>too hot!</p>
-{:else if 80 > porridge.temperature}
-	<p>too cold!</p>
+{#if soupe.temperature > 100}
+	<p>trop chaud !</p>
+{:else if 80 > soupe.temperature}
+	<p>trop froid !</p>
 {:else}
-	<p>just right!</p>
+	<p>parfait !</p>
 {/if}
 ```
 
-(Blocks don't have to wrap elements, they can also wrap text within elements!)
+(Les blocs n'ont pas besoin d'entourer des éléments, ils peuvent aussi entourer du texte au sein d'éléments !)
 
 ## {#each ...}
 
@@ -60,10 +60,10 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 {#each expression as name}...{:else}...{/each}
 ```
 
-Iterating over lists of values can be done with an each block.
+Il est possible d'itérer sur des listes de valeurs avec un bloc `each`.
 
 ```svelte
-<h1>Shopping list</h1>
+<h1>Liste de courses</h1>
 <ul>
 	{#each items as item}
 		<li>{item.name} x {item.qty}</li>
@@ -71,9 +71,9 @@ Iterating over lists of values can be done with an each block.
 </ul>
 ```
 
-You can use each blocks to iterate over any array or array-like value — that is, any object with a `length` property.
+Vous pouvez utiliser des blocs `each` pour itérer sur n'importe quel tableau ou valeur similaire — c'est-à-dire un objet avec une propriété `length`.
 
-An each block can also specify an _index_, equivalent to the second argument in an `array.map(...)` callback:
+Un bloc `each` peut aussi spécifier un _indice_, équivalent au deuxième argument du <span class="vo">[callback](/docs/development#callback)</span> de `array.map(...)`:
 
 ```svelte
 {#each items as item, i}
@@ -81,20 +81,20 @@ An each block can also specify an _index_, equivalent to the second argument in 
 {/each}
 ```
 
-If a _key_ expression is provided — which must uniquely identify each list item — Svelte will use it to diff the list when data changes, rather than adding or removing items at the end. The key can be any object, but strings and numbers are recommended since they allow identity to persist when the objects themselves change.
+Vous pouvez spécifier une _clé_ à un bloc `each`. Cette clé doit identifier de manière unique chaque élément de la liste. Svelte s'en servira pour mettre à jour la liste avec précision lorsque la donnée changera, plutôt que d'ajouter ou enlever des éléments à la fin. La clé peut être n'importe quel objet, mais les chaînes de caractères ou les nombres sont recommandés car ils permettent de persister l'identité, ce qui n'est pas le cas des objets.
 
 ```svelte
 {#each items as item (item.id)}
 	<li>{item.name} x {item.qty}</li>
 {/each}
 
-<!-- or with additional index value -->
+<!-- ou en utilisant un indice -->
 {#each items as item, i (item.id)}
 	<li>{i + 1}: {item.name} x {item.qty}</li>
 {/each}
 ```
 
-You can freely use destructuring and rest patterns in each blocks.
+Vous pouvez librement utiliser la syntaxe de [décomposition](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) dans les blocs `each`.
 
 ```svelte
 {#each items as { id, name, qty }, i (id)}
@@ -110,17 +110,17 @@ You can freely use destructuring and rest patterns in each blocks.
 {/each}
 ```
 
-An each block can also have an `{:else}` clause, which is rendered if the list is empty.
+Un bloc `each` peut aussi avoir une clause `{:else}`, qui sera affichée si la liste est vide.
 
 ```svelte
 {#each todos as todo}
 	<p>{todo.text}</p>
 {:else}
-	<p>No tasks today!</p>
+	<p>Rien à faire aujourd'hui !</p>
 {/each}
 ```
 
-Since Svelte 4 it is possible to iterate over iterables like `Map` or `Set`. Iterables need to be finite and static (they shouldn't change while being iterated over). Under the hood, they are transformed to an array using `Array.from` before being passed off to rendering. If you're writing performance-sensitive code, try to avoid iterables and use regular arrays as they are more performant.
+Depuis Svelte 4, il est possible d'itérer sur les itérables comme `Map` ou `Set`. Les itérables doivent êtres finis et statiques (ils ne doivent pas changer lorsqu'on itère dessus). Sous le capot, ils sont transformés en tableau avec `Array.from` avant d'être envoyés au rendu. Si vous écrivez du code sensible à la performance, essayez d'éviter les itérables et utilisez plutôt des tableaux classiques, qui sont plus performants dans ce cas.
 
 ## {#await ...}
 
@@ -140,46 +140,46 @@ Since Svelte 4 it is possible to iterate over iterables like `Map` or `Set`. Ite
 {#await expression catch name}...{/await}
 ```
 
-Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. In SSR mode, only the pending state will be rendered on the server.
+Les blocs `await` permettent de différencier les trois états de promesse possibles — en attente, résolue ou rejetée. En mode <span class="vo">[SSR](/docs/web#server-side-rendering)</span>, seul l'état d'attente sera rendu sur le serveur.
 
 ```svelte
 {#await promise}
-	<!-- promise is pending -->
-	<p>waiting for the promise to resolve...</p>
+	<!-- la promesse est en attente -->
+	<p>en attente de la résolution de la promesse...</p>
 {:then value}
-	<!-- promise was fulfilled -->
-	<p>The value is {value}</p>
+	<!-- la promesse est résolue -->
+	<p>La valeur est {value}</p>
 {:catch error}
-	<!-- promise was rejected -->
-	<p>Something went wrong: {error.message}</p>
+	<!-- la promesse est rejetée -->
+	<p>Quelque chose ne va pas : {error.message}</p>
 {/await}
 ```
 
-The `catch` block can be omitted if you don't need to render anything when the promise rejects (or no error is possible).
+Le bloc `catch` peut être ignoré si vous n'avez pas besoin d'afficher quoi que ce soit lorsque la promesse est rejetée (ou si aucune erreur n'est possible).
 
 ```svelte
 {#await promise}
-	<!-- promise is pending -->
-	<p>waiting for the promise to resolve...</p>
+	<!-- la promesse est en attente -->
+	<p>en attente de la résolution de la promesse...</p>
 {:then value}
-	<!-- promise was fulfilled -->
-	<p>The value is {value}</p>
+	<!-- la promesse est résolue -->
+	<p>La valeur est {value}</p>
 {/await}
 ```
 
-If you don't care about the pending state, you can also omit the initial block.
+Si l'état d'attente ne vous concerne pas, vous pouvez aussi ignorer le bloc initial.
 
 ```svelte
 {#await promise then value}
-	<p>The value is {value}</p>
+	<p>La valeur est {value}</p>
 {/await}
 ```
 
-Similarly, if you only want to show the error state, you can omit the `then` block.
+De manière similaire, si vous voulez uniquement afficher l'état d'erreur, vous pouvez ignorer le bloc `then`.
 
 ```svelte
 {#await promise catch error}
-	<p>The error is {error}</p>
+	<p>L'erreur est {error}</p>
 {/await}
 ```
 
@@ -189,9 +189,9 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 {#key expression}...{/key}
 ```
 
-Key blocks destroy and recreate their contents when the value of an expression changes.
+Les blocs `key` détruisent et reconstruisent leur contenu quand la valeur de leur expression change.
 
-This is useful if you want an element to play its transition whenever a value changes.
+C'est utile lorsque vous voulez qu'un élément joue sa transition à chaque fois qu'une valeur se met à jour.
 
 ```svelte
 {#key value}
@@ -199,7 +199,7 @@ This is useful if you want an element to play its transition whenever a value ch
 {/key}
 ```
 
-When used around components, this will cause them to be reinstantiated and reinitialised.
+Utilisé autour de composants, un bloc `key` déclenchera leur réinstantiation et réinitialisation.
 
 ```svelte
 {#key value}
