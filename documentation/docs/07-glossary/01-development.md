@@ -104,6 +104,10 @@ Vous trouverez plus de détails sur les [getters](https://developer.mozilla.org/
 
 > Bientôt...
 
+## Thread
+
+> Bientôt...
+
 ## Template
 
 > Bientôt...
