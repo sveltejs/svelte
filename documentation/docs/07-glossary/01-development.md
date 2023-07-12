@@ -68,6 +68,10 @@ Vous trouverez plus de détails sur les [getters](https://developer.mozilla.org/
 
 > Bientôt...
 
+## Intellisense
+
+> Bientôt...
+
 ## Issue
 
 > Bientôt...

@@ -14,7 +14,7 @@ export interface ComponentConstructorOptions<
 }
 
 /**
- * Convenience type to get the events the given component expects. Example:
+ * Type utile pour obtenir les évènements qu'un composant attend. Exemple :
  * ```html
  * <script lang="ts">
  *    import type { ComponentEvents } from 'svelte';
@@ -32,7 +32,7 @@ export type ComponentEvents<Component extends SvelteComponent> =
 	Component extends SvelteComponentDev<any, infer Events> ? Events : never;
 
 /**
- * Convenience type to get the props the given component expects. Example:
+ * Type utile pour obtenir les <span class='vo'>[props](/docs/sveltejs#props)</span> qu'un composant attend. Exemple :
  * ```html
  * <script lang="ts">
  * 	import type { ComponentProps } from 'svelte';
@@ -46,10 +46,10 @@ export type ComponentProps<Component extends SvelteComponent> =
 	Component extends SvelteComponentDev<infer Props> ? Props : never;
 
 /**
- * Convenience type to get the type of a Svelte component. Useful for example in combination with
- * dynamic components using `<svelte:component>`.
+ * Type utile pour obtenir le type d'un composant Svelte. Pratique par exemple lorsqu'on utilise les
+ * composants dynamiques avec `<svelte:component>`.
  *
- * Example:
+ * Exemple:
  * ```html
  * <script lang="ts">
  * 	import type { ComponentType, SvelteComponent } from 'svelte';
@@ -69,7 +69,7 @@ export type ComponentType<Component extends SvelteComponentDev = SvelteComponent
 		Component extends SvelteComponentDev<infer Props> ? Props : Record<string, any>
 	>
 ) => Component) & {
-	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	/** La version "web component" du composant. Seulement présent si compilé avec l'option `customElement` */
 	element?: typeof HTMLElement;
 };
 
