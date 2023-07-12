@@ -1,166 +1,162 @@
 ---
-title: Svelte components
+title: Composants Svelte
 ---
 
-Components are the building blocks of Svelte applications. They are written into `.svelte` files, using a superset of HTML.
+Les composants sont les briques de base d'une application Svelte. Ils sont décrits dans des fichiers `.svelte`, qui utilisent un HTML augmenté.
 
-All three sections — script, styles and markup — are optional.
+Les trois sections qui le composent - scripts, styles, et <span class="vo">[markup](/docs/web#markup)</span> - sont optionnelles.
 
 ```svelte
 <script>
-	// logic goes here
+	// la logique
 </script>
 
-<!-- markup (zero or more items) goes here -->
+<!-- le markup (avec ou sans éléments) -->
 
 <style>
-	/* styles go here */
+	/* les styles */
 </style>
 ```
 
 ## &lt;script&gt;
 
-A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
+Un bloc `<script>` contient du JavaScript qui est exécuté lorsqu'une instance de composant est créée. Les variables déclarées (ou importées) à la racine du composant sont 'visibles' pour le <span class='vo'>[markup](/docs/web#markup)</span> du composant. Il y a quatre règles supplémentaires:
 
-### 1. `export` creates a component prop
+### 1. `export` crée une props de composant
 
-Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs/basic-markup#attributes-and-props) for more information).
+Svelte utilise le mot-clé `export` pour déclarer une variable en tant que _propriété_ ou <span class='vo'>[_props_](/docs/sveltejs#props)</span>, ce qui la rend accessible lorsque l'on consomme le composant (voir la section sur les [attributs et props](/docs/basic-markup#attributs-et-props)) pour plus d'informations.
 
 ```svelte
 <script>
 	export let foo;
 
-	// Values that are passed in as props
-	// are immediately available
+	// Les valeurs passées en tant que props
+	// sont immédiatement disponibles
 	console.log({ foo });
 </script>
 ```
 
-You can specify a default initial value for a prop. It will be used if the component's consumer doesn't specify the prop on the component (or if its initial value is `undefined`) when instantiating the component. Note that if the values of props are subsequently updated, then any prop whose value is not specified will be set to `undefined` (rather than its initial value).
+Vous pouvez spécifier une valeur initiale par défaut d'une <span class='vo'>[props](/docs/sveltejs#props)</span>. Elle sera utilisée si la <span class='vo'>[props](/docs/sveltejs#props)</span> n'est pas fournie au composant par le parent lors de l'instanciation du composant (ou si la valeur fournie est `undefined`). Notez que si les valeurs des <span class='vo'>[props](/docs/sveltejs#props)</span> sont mises à jour a posteriori, n'importe quelle valeur de <span class='vo'>[props](/docs/sveltejs#props)</span> non spécifiée sera mise à `undefined` (plutôt qu'à sa valeur initiale).
 
-In development mode (see the [compiler options](/docs/svelte-compiler#compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
+En mode développement (voir les [options de compilation](/docs/svelte-compiler#compile)), un <span class='vo'>[warning](/docs/development#warning)</span> sera affiché si aucune valeur initiale par défaut n'est fournie et que le parent ne précise pas de valeur. Pour museler ce <span class='vo'>[warning](/docs/development#warning)</span>, assurez-vous qu'une valeur initiale par défaut est définie, même si celle-ci est `undefined`.
 
 ```svelte
 <script>
-	export let bar = 'optional default initial value';
+	export let bar = 'valeur initiale par défaut, optionnelle';
 	export let baz = undefined;
 </script>
 ```
 
-If you export a `const`, `class` or `function`, it is readonly from outside the component. Functions are valid prop values, however, as shown below.
+Si vous exportez une `const`, une `class` ou une `function`, elle sera en lecture seule à l'extérieur du composant. En revanche, les fonctions sont des valeurs de <span class='vo'>[props](/docs/sveltejs#props)</span> valides, comme montré ci-dessous.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
-	// these are readonly
+	// ces exports sont en lecture seule
 	export const thisIs = 'readonly';
 
-	/** @param {string} name */
 	export function greet(name) {
 		alert(`hello ${name}!`);
 	}
 
-	// this is a prop
+	// ceci est une prop
 	export let format = (n) => n.toFixed(2);
 </script>
 ```
 
-Readonly props can be accessed as properties on the element, tied to the component using [`bind:this` syntax](/docs/component-directives#bind-this).
+Les <span class='vo'>[props](/docs/sveltejs#props)</span> en lecture seule sont accessibles comme propriétés de l'instance en utilisant la [syntaxe `bind:this`](/docs/component-directives#bind-this).
 
-You can use reserved words as prop names.
+Vous pouvez utiliser les mots réservés comme noms de <span class='vo'>[props](/docs/sveltejs#props)</span>.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
-	/** @type {string} */
 	let className;
 
-	// creates a `class` property, even
-	// though it is a reserved word
+	// crée une propriété `class`, même
+	// si le mot est réservé
 	export { className as class };
 </script>
 ```
 
-### 2. Assignments are 'reactive'
+### 2. Les assignations sont 'réactives'
 
-To change component state and trigger a re-render, just assign to a locally declared variable.
+Pour changer l'état d'un composant et déclencher une mise-à-jour du rendu, il suffit d'assigner une variable déclarée localement.
 
-Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
+Les expressions de mise-à-jour (`count += 1`) et les assignations de propriété (`obj.x = y`) produisent le même effet.
 
 ```svelte
 <script>
 	let count = 0;
 
 	function handleClick() {
-		// calling this function will trigger an
-		// update if the markup references `count`
+		// l'exécution de cette fonction déclenchera
+		// une mise à jour si le markup référence `count`
 		count = count + 1;
 	}
 </script>
 ```
 
-Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](https://learn.svelte.dev/tutorial/updating-arrays-and-objects).
+Puisque la réactivité de Svelte est basée sur les assignations, l'utilisation de méthodes de tableaux comme `.push()` et `.splice()` ne déclenchera pas de rendu. Une assignation sera alors nécessaire pour déclencher un nouveau rendu. Vous retrouverez cet exemple ainsi que plus de détails dans le [tutoriel](/tutorial/updating-arrays-and-objects).
 
 ```svelte
 <script>
 	let arr = [0, 1];
 
 	function handleClick() {
-		// this method call does not trigger an update
+		// l'appel de cette méthode ne déclenche pas de rendu
 		arr.push(2);
-		// this assignment will trigger an update
-		// if the markup references `arr`
+
+		// cette assignation déclenchera un rendu
+		// si le markup référence `arr`
 		arr = arr;
 	}
 </script>
 ```
 
-Svelte's `<script>` blocks are run only when the component is created, so assignments within a `<script>` block are not automatically run again when a prop updates. If you'd like to track changes to a prop, see the next example in the following section.
+En Svelte, les blocs `<script>` sont exécutés uniquement lorsque le composant est créé, ce qui signifie que les assignations au sein d'un bloc `<script>` ne sont pas automatiquement rejouées lorsqu'une <span class='vo'>[props](/docs/sveltejs#props)</span> est mise à jour. Si vous souhaitez suivre les changements d'une <span class='vo'>[props](/docs/sveltejs#props)</span>, allez voir le premier exemple dans la section qui suit.
 
 ```svelte
 <script>
 	export let person;
-	// this will only set `name` on component creation
-	// it will not update when `person` does
+	// ceci assigne seulement `name` lors de la création de l'instance
+	// `name` ne sera pas mise à jour lorsque `person` changera
 	let { name } = person;
 </script>
 ```
 
-### 3. `$:` marks a statement as reactive
+### 3. `$:` déclare une expression comme réactive
 
-Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run after other script code and before the component markup is rendered, whenever the values that they depend on have changed.
+Toute expression à la racine du composant (c-à-d ni dans un bloc ni dans une fonction) peut être rendu réactive en la préfixant avec la syntaxe `$:` empruntées aux [labels JS](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Statements/label). Les expressions réactives sont exécutées après tout autre code du script, et avant le rendu du <span class="vo">[markup](/docs/web#markup)</span> du composant, à chaque fois que les valeurs dont elle dépend changent.
 
 ```svelte
 <script>
 	export let title;
 	export let person;
 
-	// this will update `document.title` whenever
-	// the `title` prop changes
+	// ceci met à jour `document.title` lorsque
+	// la prop `title` change
 	$: document.title = title;
 
 	$: {
-		console.log(`multiple statements can be combined`);
-		console.log(`the current title is ${title}`);
+		console.log(`plusieurs expressions peuvent être combinées`);
+		console.log(`le titre actuel est ${title}`);
 	}
 
-	// this will update `name` when 'person' changes
+	// ceci met à jour `name` lorsque `person` change
 	$: ({ name } = person);
 
-	// don't do this. it will run before the previous line
+	// ne faites pas ça:
+	// cette expression est exécutée avant la ligne précédente
 	let name2 = name;
 </script>
 ```
 
-Only values which directly appear within the `$:` block will become dependencies of the reactive statement. For example, in the code below `total` will only update when `x` changes, but not `y`.
+Seules les valeurs qui apparaissent directement au sein d'un bloc `$:` sont des dépendances de l'expression réactive. Par exemple, dans le code ci-dessous `total` sera mise à jour uniquement lorsque `x` change, mais pas lorsque `y` change.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	let x = 0;
 	let y = 0;
 
-	/** @param {number} value */
 	function yPlusAValue(value) {
 		return value + y;
 	}
@@ -169,102 +165,99 @@ Only values which directly appear within the `$:` block will become dependencies
 </script>
 
 Total: {total}
-<button on:click={() => x++}> Increment X </button>
+<button on:click={() => x++}> Incrémenter X </button>
 
-<button on:click={() => y++}> Increment Y </button>
+<button on:click={() => y++}> Incrémenter Y </button>
 ```
 
-It is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that `yDependent` will not be updated when `x` is updated in the following example:
+Il est important de noter que les blocs réactifs sont ordonnés par une analyse statique simple au moment de la compilation, et tout ce que le compilateur considère sont les variables qui sont assignées et utilisées au sein du bloc lui-même, pas au sein d'éventuelles fonctions appelées par le bloc. Cela implique que `yDependent` ne sera pas mise à jour quand `x` change dans l'exemple suivant:
 
 ```svelte
 <script>
 	let x = 0;
 	let y = 0;
 
-	/** @param {number} value */
-	function setY(value) {
+	const setY = (value) => {
 		y = value;
-	}
+	};
 
 	$: yDependent = y;
 	$: setY(x);
 </script>
 ```
 
-Moving the line `$: yDependent = y` below `$: setY(x)` will cause `yDependent` to be updated when `x` is updated.
+Déplacer la ligne `$: yDependent = y` en-dessous de `$: setY(x)` implique que `yDependent` sera mise à jour lorsque `x` change.
 
-If a statement consists entirely of an assignment to an undeclared variable, Svelte will inject a `let` declaration on your behalf.
+Si une expression est entièrement constituée d'une assignation à une variable non déclarée, Svelte injectera une déclaration `let` à votre place.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
-	/** @type {number} */
 	export let num;
 
-	// we don't need to declare `squared` and `cubed`
-	// — Svelte does it for us
+	// nous n'avons pas besoin de déclarer `squared` et `cubed`
+	// — Svelte le fait pour nous
 	$: squared = num * num;
 	$: cubed = squared * num;
 </script>
 ```
 
-### 4. Prefix stores with `$` to access their values
+### 4. Préfixer les stores avec `$` pour accéder à leur valeur
 
-A _store_ is an object that allows reactive access to a value via a simple _store contract_. The [`svelte/store` module](/docs/svelte-store) contains minimal store implementations which fulfil this contract.
+Un <span class="vo">[_store_](/docs/sveltejs#store)</span> est un objet qui permet un accès réactif à une valeur via un simple _contrat de store_. Le [module `svelte/store`](/docs/svelte-store) contient des implémentations minimales qui remplissent ce contrat.
 
-Any time you have a reference to a store, you can access its value inside a component by prefixing it with the `$` character. This causes Svelte to declare the prefixed variable, subscribe to the store at component initialization and unsubscribe when appropriate.
+À chaque fois que vous avez une référence à un <span class="vo">[store](/docs/sveltejs#store)</span>, vous pouvez accéder à sa valeur au sein d'un composant en le préfixant avec le caractère `$`. Cela indique à Svelte de déclarer la variable préfixée, de s'abonner au <span class="vo">[store](/docs/sveltejs#store)</span> à l'initialisation du composant, et de se désabonner lorsque c'est pertinent.
 
-Assignments to `$`-prefixed variables require that the variable be a writable store, and will result in a call to the store's `.set` method.
+Les assignations aux variables préfixées avec `$` nécessitent que la variable soit un _<span class="vo">[writable](/docs/development#writable)</span> <span class="vo">[store](/docs/sveltejs#store)</span>_, et cela fera appel à la méthode `.set` du <span class="vo">[store](/docs/sveltejs#store)</span>.
 
-Note that the store must be declared at the top level of the component — not inside an `if` block or a function, for example.
+Notez que le <span class="vo">[store](/docs/sveltejs#store)</span> doit être déclaré à la racine du composant — et non au sein d'un bloc `if` ou d'une fonction, par exemple.
 
-Local variables (that do not represent store values) must _not_ have a `$` prefix.
+Les variables locales (qui ne représentent pas la valeur d'un <span class="vo">[store](/docs/sveltejs#store)</span>) ne doivent _pas_ être préfixées avec `$`.
 
 ```svelte
 <script>
 	import { writable } from 'svelte/store';
 
 	const count = writable(0);
-	console.log($count); // logs 0
+	console.log($count); // affiche 0
 
 	count.set(1);
-	console.log($count); // logs 1
+	console.log($count); // affiche 1
 
 	$count = 2;
-	console.log($count); // logs 2
+	console.log($count); // affiche 2
 </script>
 ```
 
-#### Store contract
+#### Le contrat de <span class="vo">[store](/docs/sveltejs#store)</span>
 
 ```ts
 // @noErrors
 store = { subscribe: (subscription: (value: any) => void) => (() => void), set?: (value: any) => void }
 ```
 
-You can create your own stores without relying on [`svelte/store`](/docs/svelte-store), by implementing the _store contract_:
+Vous pouvez créer vos propres <span class="vo">[stores](/docs/sveltejs#store)</span> sans dépendre de [`svelte/store`](/docs/svelte-store), en implémentant vous-même le _contrat de store_ :
 
-1. A store must contain a `.subscribe` method, which must accept as its argument a subscription function. This subscription function must be immediately and synchronously called with the store's current value upon calling `.subscribe`. All of a store's active subscription functions must later be synchronously called whenever the store's value changes.
-2. The `.subscribe` method must return an unsubscribe function. Calling an unsubscribe function must stop its subscription, and its corresponding subscription function must not be called again by the store.
-3. A store may _optionally_ contain a `.set` method, which must accept as its argument a new value for the store, and which synchronously calls all of the store's active subscription functions. Such a store is called a _writable store_.
+1. Un <span class="vo">[store](/docs/sveltejs#store)</span> doit contenir une méthode `.subscribe`, qui doit accepter comme argument une fonction d'abonnement. Lorsque `.subscribe` est appelée, cette fonction d'abonnement doit être appelée immédiatement et de manière synchrone avec la valeur actuelle du <span class="vo">[store](/docs/sveltejs#store)</span>. Toutes les fonctions d'abonnements actives d'un <span class="vo">[store](/docs/sveltejs#store)</span> doivent ensuite être appelées de manière synchrone à chaque fois que la valeur du <span class="vo">[store](/docs/sveltejs#store)</span> est mise à jour.
+2. La méthode `.subscribe` doit retourner une fonction de désabonnement. Exécuter une fonction de désabonnement doit mettre fin à l'abonnement, et la fonction d'abonnement correspondant ne doit plus être appelée par le <span class="vo">[store](/docs/sveltejs#store)</span>.
+3. Un <span class="vo">[store](/docs/sveltejs#store)</span> peut de manière _optionnelle_ contenir une méthode `.set`, qui doit accepter comme argument une nouvelle valeur pour le <span class="vo">[store](/docs/sveltejs#store)</span>, et qui appellera de manière synchrone toutes les fonctions d'abonnement actives du <span class="vo">[store](/docs/sveltejs#store)</span>. Un tel <span class="vo">[store](/docs/sveltejs#store)</span> est appelé un <span class="vo">[store](/docs/sveltejs#store)</span> d'écriture (_writable store_).
 
-For interoperability with RxJS Observables, the `.subscribe` method is also allowed to return an object with an `.unsubscribe` method, rather than return the unsubscription function directly. Note however that unless `.subscribe` synchronously calls the subscription (which is not required by the Observable spec), Svelte will see the value of the store as `undefined` until it does.
+Pour l'interopérabilité avec les Observables RxJS, la méthode `.subscribe` est également autorisée à retourner un objet avec une méthode `.unsubscribe`, au lieu de renvoyer directement la fonction de désabonnement. Notez toutefois qu'à moins que `.subscribe` appelle de manière synchrone la fonction d'abonnement (ce qui n'est pas requis par la spec Observable), Svelte aura `undefined` pour valeur du <span class="vo">[store](/docs/sveltejs#store)</span> jusqu'à ce qu'elle soit appelée.
 
 ## &lt;script context="module"&gt;
 
-A `<script>` tag with a `context="module"` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
+Une balise `<script>` avec un attribut `context="module"` est exécutée une seule fois quand le module est évalué la première fois, au lieu d'une fois pour chaque instance de composant. Les valeurs déclarées au sein de ce bloc sont accessibles depuis un `<script>` classique (et depuis le <span class="vo">[markup](/docs/web#markup)</span> du composant), mais pas inversement.
 
-You can `export` bindings from this block, and they will become exports of the compiled module.
+Vous pouvez `export` des valeurs depuis ce bloc, et elles seront exposées comme exports du module compilés.
 
-You cannot `export default`, since the default export is the component itself.
+Vous ne pouvez pas `export default`, puisque l'export par défaut est le composant lui-même.
 
-> Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs/svelte-store).
+> Les variables définies dans des scripts `module` ne sont pas réactives — les réassigner ne déclenchera pas de nouveau rendu même si la variable elle-même est mise à jour. Pour partager des valeurs entre différents composants, priviléviez l'usage d'un [store](/docs/svelte-store).
 
 ```svelte
 <script context="module">
 	let totalComponents = 0;
 
-	// the export keyword allows this function to imported with e.g.
+	// le mot clé "export" permet à cette fonction d'être importée ailleurs, par ex.
 	// `import Example, { alertTotal } from './Example.svelte'`
 	export function alertTotal() {
 		alert(totalComponents);
@@ -273,76 +266,75 @@ You cannot `export default`, since the default export is the component itself.
 
 <script>
 	totalComponents += 1;
-	console.log(`total number of times this component has been created: ${totalComponents}`);
+	console.log(`Nb de fois total où ce composant a été créé: ${totalComponents}`);
 </script>
 ```
 
 ## &lt;style&gt;
 
-CSS inside a `<style>` block will be scoped to that component.
+Le CSS au sein d'un bloc `<style>` sera <span class='vo'>[scopé](/docs/development#scope)</span> à ce composant.
 
-This works by adding a class to affected elements, which is based on a hash of the component styles (e.g. `svelte-123xyz`).
+Cela est possible grâce à l'ajout d'une classe aux éléments concernés, classe basée sur un <span class='vo'>[hash](/docs/development#hash)</span> des styles du composant (par ex. `svelte-123xyz`).
 
 ```svelte
 <style>
 	p {
-		/* this will only affect <p> elements in this component */
+		/* cela affectera uniquement les éléments `<p>` dans ce composant */
 		color: burlywood;
 	}
 </style>
 ```
 
-To apply styles to a selector globally, use the `:global(...)` modifier.
+Pour appliquer les styles d'un sélecteur globalement, vous pouvez utiliser le modificateur `:global(...)`.
 
 ```svelte
 <style>
 	:global(body) {
-		/* this will apply to <body> */
+		/* ceci s'applique au `<body>` */
 		margin: 0;
 	}
 
 	div :global(strong) {
-		/* this will apply to all <strong> elements, in any
-			 component, that are inside <div> elements belonging
-			 to this component */
+		/* ceci s'applique à tous les éléments `<strong>`, dans n'importe
+			 quel composant, qui sont à l'intérieur d'éléments `<div>`
+			 appartenant à ce composant */
 		color: goldenrod;
 	}
 
 	p:global(.red) {
-		/* this will apply to all <p> elements belonging to this
-			 component with a class of red, even if class="red" does
-			 not initially appear in the markup, and is instead
-			 added at runtime. This is useful when the class
-			 of the element is dynamically applied, for instance
-			 when updating the element's classList property directly. */
+		/* ceci s'applique à tous les éléments `<p>` appartenant à ce
+			 composant avec une classe `red`, même si `class="red"` n'apparaît pas
+			 initialement dans le markup, mais est ajoutée plus tard à runtime.
+			 Cela sert quand la classe de l'élément est dynamiquement appliquée,
+			 par exemple lorsque l'on met à jour la propriété `classList` d'un élément. */
 	}
 </style>
 ```
 
-If you want to make @keyframes that are accessible globally, you need to prepend your keyframe names with `-global-`.
+Si vous voulez utiliser des `@keyframes` accessibles globalement, vous devez préfixer votre <span class='vo'>[keyframe](/docs/web#keyframe)</span> avec `-global-`.
 
-The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
+Le préfixe `-global-` sera supprimé à la compilation, et la <span class='vo'>[keyframe](/docs/web#keyframe)</span> pourra alors être référencée en utilisant simplement `my-animation-name` ailleurs dans le code.
 
-```svelte
+```html
 <style>
 	@keyframes -global-my-animation-name {
-		/* code goes here */
+		...;
 	}
 </style>
 ```
 
-There should only be 1 top-level `<style>` tag per component.
+Il ne peut y avoir qu'une 1 seule balise `<style>` à la racine d'un component.
 
-However, it is possible to have `<style>` tag nested inside other elements or logic blocks.
+Toutefois, il est possible d'avoir une balise `<style>` imbriquée dans d'autres éléments ou blocs logiques.
 
-In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
+Dans ce cas, la balise `<style>` sera injectée telle quelle dans le <span class='vo'>[DOM](/docs/web#dom)</span>, aucun <span class='vo'>[scoping](/docs/development#scope)</span> ou formattage ne lui sera appliqué.
 
-```svelte
+```html
 <div>
 	<style>
-		/* this style tag will be inserted as-is */
+		/* cette balise sera injectée telle quelle */
 		div {
-			/* this will apply to all `<div>` elements in the DOM */
+			/* ceci s'appliquera à tous les éléments `<div>` du DOM */
 			color: red;
 		}
 	</style>
