@@ -270,22 +270,26 @@ export function construct_svelte_component_dev(component, props) {
 }
 
 /**
- * Base class for Svelte components with some minor dev-enhancements. Used when dev=true.
+ * Classe de base pour les composants Svelte avec quelques améliorations mineures. Utilisé lorsque `dev=true`.
  *
- * Can be used to create strongly typed Svelte components.
+ * Peut être utilisé pour créer des composants Svelte fortement typés.
  *
- * #### Example:
+ * #### Exemple :
  *
- * You have component library on npm called `component-library`, from which
- * you export a component called `MyComponent`. For Svelte+TypeScript users,
- * you want to provide typings. Therefore you create a `index.d.ts`:
+ * Vous avez une librairie de composants sur [npm](https://www.npmjs.com/) appelée `component-library`,
+ * depuis laquelle vous exportez un composant appelé `MyComponent`. Pour les personnes
+ * qui utilisent Svelte avec Typescript, vous voulez fournir du typage.
+ * Vous créez donc un `index.d.ts` :
+ *
  * ```ts
  * import { SvelteComponent } from "svelte";
  * export class MyComponent extends SvelteComponent<{foo: string}> {}
  * ```
- * Typing this makes it possible for IDEs like VS Code with the Svelte extension
- * to provide intellisense and to use the component like this in a Svelte file
- * with TypeScript:
+ *
+ * Typer ceci permet aux <span class='vo'>[IDEs](/docs/development#ide)</span> comme VS Code qui ont l'extension Svelte de fournir
+ * de l'<span class='vo'>[Intellisense](/docs/development#intellisense)</span>, et vous pouvez alors utiliser le composant de cette manière dans un
+ * fichier Svelte avec Typescript :
+ *
  * ```svelte
  * <script lang="ts">
  * 	import { MyComponent } from "component-library";
@@ -349,7 +353,7 @@ export class SvelteComponentDev extends SvelteComponent {
  * @template {Record<string, any>} [Props=any]
  * @template {Record<string, any>} [Events=any]
  * @template {Record<string, any>} [Slots=any]
- * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
+ * @deprecated Utilisez plutôt `SvelteComponent`. Voir la PR plus d'informations : https://github.com/sveltejs/svelte/pull/8512
  * @extends {SvelteComponentDev<Props, Events, Slots>}
  */
 export class SvelteComponentTyped extends SvelteComponentDev {}

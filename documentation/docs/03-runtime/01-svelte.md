@@ -2,27 +2,27 @@
 title: svelte
 ---
 
-The `svelte` package exposes [lifecycle functions](https://learn.svelte.dev/tutorial/onmount) and the [context API](https://learn.svelte.dev/tutorial/context-api).
+Le paquet `svelte` expose les [fonctions de cycle de vie](https://learn.svelte.dev/tutorial/onmount) et l'[API de contexte](https://learn.svelte.dev/tutorial/context-api).
 
 ## `onMount`
 
 > EXPORT_SNIPPET: svelte#onMount
 
-The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM. It must be called during the component's initialisation (but doesn't need to live _inside_ the component; it can be called from an external module).
+La fonction `onMount` permet de planifier l'exécution d'un <span class="vo">[callback](/docs/development#callback)</span> dès que le composant a été monté dans le <span class="vo">[DOM](/docs/web#dom)</span>. Elle doit être appelée pendant l'instantiation du composant (mais elle n'a pas besoin d'être définie _à l'intérieur_ du composant ; elle peut être appelée depuis un module externe).
 
-`onMount` does not run inside a [server-side component](/docs/server-side-component-api).
+`onMount` n'est pas exécutée pas à l'intérieur d'un [composant serveur](/docs/server-side-component-api).
 
 ```svelte
 <script>
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		console.log('the component has mounted');
+		console.log('le composant est monté');
 	});
 </script>
 ```
 
-If a function is returned from `onMount`, it will be called when the component is unmounted.
+Si une fonction est renvoyée par `onMount`, celle-ci sera appelée lorsque le composant sera démonté.
 
 ```svelte
 <script>
@@ -38,22 +38,22 @@ If a function is returned from `onMount`, it will be called when the component i
 </script>
 ```
 
-> This behaviour will only work when the function passed to `onMount` _synchronously_ returns a value. `async` functions always return a `Promise`, and as such cannot _synchronously_ return a function.
+> Ce comportement ne fonctionne que si la fonction passée à `onMount` renvoie une valeur de manière _synchrone_. Les fonctions `async` renvoient toujours une `Promise`, ce qui implique qu'elles ne peuvent jamais renvoyer une fonction de manière _synchrone_.
 
 ## `beforeUpdate`
 
 > EXPORT_SNIPPET: svelte#beforeUpdate
 
-Schedules a callback to run immediately before the component is updated after any state change.
+Planifie l'exécution d'un <span class="vo">[callback](/docs/development#callback)</span> immédiatement avant la mise à jour du composant, lorsqu'un changement d'état s'est produit.
 
-> The first time the callback runs will be before the initial `onMount`
+> La première exécution du <span class="vo">[callback](/docs/development#callback)</span> se produit juste avant l'appel du `onMount` initial.
 
 ```svelte
 <script>
 	import { beforeUpdate } from 'svelte';
 
 	beforeUpdate(() => {
-		console.log('the component is about to update');
+		console.log('le composant est sur le point de se mettre à jour');
 	});
 </script>
 ```
@@ -62,16 +62,16 @@ Schedules a callback to run immediately before the component is updated after an
 
 > EXPORT_SNIPPET: svelte#afterUpdate
 
-Schedules a callback to run immediately after the component has been updated.
+Planifie un <span class="vo">[callback](/docs/development#callback)</span> à exécuter immédiatement après la mise à jour du composant.
 
-> The first time the callback runs will be after the initial `onMount`
+> La première exécution du <span class="vo">[callback](/docs/development#callback)</span> se produit juste après l'appel du `onMount` initial.
 
-```svelte
+```sv
 <script>
 	import { afterUpdate } from 'svelte';
 
 	afterUpdate(() => {
-		console.log('the component just updated');
+		console.log("le composant vient d'être mis à jour");
 	});
 </script>
 ```
@@ -80,16 +80,16 @@ Schedules a callback to run immediately after the component has been updated.
 
 > EXPORT_SNIPPET: svelte#onDestroy
 
-Schedules a callback to run immediately before the component is unmounted.
+Planifie un <span class="vo">[callback](/docs/development#callback)</span> à exécuter immédiatement avant que le composant ne soit démonté.
 
-Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the only one that runs inside a server-side component.
+Parmi les <span class="vo">[callbacks](/docs/development#callback)</span> de `onMount`, `beforeUpdate`, `afterUpdate` et `onDestroy`, c'est le seul qui s'exécute dans un composant côté serveur.
 
 ```svelte
 <script>
 	import { onDestroy } from 'svelte';
 
 	onDestroy(() => {
-		console.log('the component is being destroyed');
+		console.log('le composant va être détruit');
 	});
 </script>
 ```
@@ -98,16 +98,16 @@ Out of `onMount`, `beforeUpdate`, `afterUpdate` and `onDestroy`, this is the onl
 
 > EXPORT_SNIPPET: svelte#tick
 
-Returns a promise that resolves once any pending state changes have been applied, or in the next microtask if there are none.
+Renvoie une promesse qui se résout une fois que tous les changements d'état en attente ont été appliqués, ou dans la micro-tâche suivante s'il n'y en a pas.
 
 ```svelte
 <script>
 	import { beforeUpdate, tick } from 'svelte';
 
 	beforeUpdate(async () => {
-		console.log('the component is about to update');
+		console.log('le composant est sur le point de se mettre à jour');
 		await tick();
-		console.log('the component just updated');
+		console.log('le composant vient de se mettre à jour');
 	});
 </script>
 ```
@@ -116,9 +116,9 @@ Returns a promise that resolves once any pending state changes have been applied
 
 > EXPORT_SNIPPET: svelte#setContext
 
-Associates an arbitrary `context` object with the current component and the specified `key` and returns that object. The context is then available to children of the component (including slotted content) with `getContext`.
+Associe un objet `context` arbitraire au composant courant et à la `key` spécifiée, puis retourne cet objet. Le contexte est alors accessible pour les enfants du composant (y compris le contenu de <span class="vo">[slot](/docs/sveltejs#slot)</span>) avec `getContext`.
 
-Like lifecycle functions, this must be called during component initialisation.
+Comme les fonctions de cycle de vie, elle doit être appelée pendant l'instantiation du composant.
 
 ```svelte
 <script>
@@ -128,13 +128,13 @@ Like lifecycle functions, this must be called during component initialisation.
 </script>
 ```
 
-> Context is not inherently reactive. If you need reactive values in context then you can pass a store into context, which _will_ be reactive.
+> Le contexte n'est pas intrinsèquement réactif. Si vous avez besoin de valeurs réactives dans le contexte, alors vous pouvez passer un store dans le contexte, store qui _sera_ réactif.
 
 ## `getContext`
 
 > EXPORT_SNIPPET: svelte#getContext
 
-Retrieves the context that belongs to the closest parent component with the specified `key`. Must be called during component initialisation.
+Récupère le contexte qui appartient au composant parent le plus proche avec la `key` spécifiée. Doit être appelé pendant l'instantiation du composant.
 
 ```svelte
 <script>
@@ -148,14 +148,14 @@ Retrieves the context that belongs to the closest parent component with the spec
 
 > EXPORT_SNIPPET: svelte#hasContext
 
-Checks whether a given `key` has been set in the context of a parent component. Must be called during component initialisation.
+Vérifie si une clé donnée a été définie dans le contexte d'un composant parent. Doit être appelé pendant l'instantiation du composant.
 
 ```svelte
 <script>
 	import { hasContext } from 'svelte';
 
 	if (hasContext('answer')) {
-		// do something
+		// faites quelque chose
 	}
 </script>
 ```
@@ -164,7 +164,7 @@ Checks whether a given `key` has been set in the context of a parent component. 
 
 > EXPORT_SNIPPET: svelte#getAllContexts
 
-Retrieves the whole context map that belongs to the closest parent component. Must be called during component initialisation. Useful, for example, if you programmatically create a component and want to pass the existing context to it.
+Récupère l'ensemble des contextes appartenant au composant parent le plus proche. Doit être appelé pendant l'instantiation du composant. Utile, par exemple, si vous créez un composant de manière programmatique et que vous voulez lui passer le contexte existant.
 
 ```svelte
 <script>
@@ -178,9 +178,9 @@ Retrieves the whole context map that belongs to the closest parent component. Mu
 
 > EXPORT_SNIPPET: svelte#createEventDispatcher
 
-Creates an event dispatcher that can be used to dispatch [component events](/docs/component-directives#on-eventname). Event dispatchers are functions that can take two arguments: `name` and `detail`.
+Crée un générateur d'événements qui peut être utilisé pour distribuer les [événements de composants] (/docs#template-syntaxe-component-directives-on-eventname). Les générateurs d'événements sont des fonctions qui peuvent prendre deux arguments : `name` et `detail`.
 
-Component events created with `createEventDispatcher` create a [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent). These events do not [bubble](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Building_blocks/Events#Event_bubbling_and_capture). The `detail` argument corresponds to the [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) property and can contain any type of data.
+Les événements de composants créés avec `createEventDispatcher` créent un [CustomEvent](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent) (en anglais). Ces événements ne suivent pas la chaîne de <span class="vo">[bubbling](/docs/javascript#bubble-capture-bubble)</span>. L'argument `detail` correspond à la propriété [CustomEvent.detail](https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail) (en anglais) et peut contenir tout type de données.
 
 ```svelte
 <script>
@@ -189,22 +189,22 @@ Component events created with `createEventDispatcher` create a [CustomEvent](htt
 	const dispatch = createEventDispatcher();
 </script>
 
-<button on:click={() => dispatch('notify', 'detail value')}>Fire Event</button>
+<button on:click="{() => dispatch('notify', 'detail value')}">Générer un événement</button>
 ```
 
-Events dispatched from child components can be listened to in their parent. Any data provided when the event was dispatched is available on the `detail` property of the event object.
+Les événements envoyés par les composants enfants peuvent être écoutés par leur parent. Toutes les données fournies lors de l'envoi de l'événement sont disponibles dans la propriété `detail` de l'objet événement.
 
 ```svelte
 <script>
 	function callbackFunction(event) {
-		console.log(`Notify fired! Detail: ${event.detail}`);
+		console.log(`Événement généré ! Détail: ${event.detail}`)
 	}
 </script>
 
-<Child on:notify={callbackFunction} />
+<Child on:notify="{callbackFunction}"/>
 ```
 
-Events can be cancelable by passing a third parameter to the dispatch function. The function returns `false` if the event is cancelled with `event.preventDefault()`, otherwise it returns `true`.
+Les événements peuvent être annulables en passant un troisième paramètre à la fonction `dispatch`. La fonction renvoie `false` si l'événement est annulé avec `event.preventDefault()`, sinon elle renvoie `true`.
 
 ```svelte
 <script>
@@ -215,15 +215,16 @@ Events can be cancelable by passing a third parameter to the dispatch function. 
 	function notify() {
 		const shouldContinue = dispatch('notify', 'detail value', { cancelable: true });
 		if (shouldContinue) {
-			// no one called preventDefault
+			// personne n'a appelé preventDefault
 		} else {
-			// a listener called preventDefault
+			// un listener a appelé preventDefault
 		}
 	}
 </script>
 ```
 
-You can type the event dispatcher to define which events it can receive. This will make your code more type safe both within the component (wrong calls are flagged) and when using the component (types of the events are now narrowed). See [here](typescript#script-lang-ts-events) how to do it.
+Vous pouvez typer le générateur d'évènement pour définir quels évènements il peut recevoir. Cela rendra votre
+code plus solide à la fois dans le composant (les mauvais appels seront mis en valeur) et lorsque vous utiliserez le composant (les types d'évènements seront réduits). Voir [cette section](typescript#script-lang-ts-events) pour plus de détail.
 
 ## Types
 
