@@ -108,3 +108,7 @@ Une valeur _nullish_ est une valeur qui est `null` ou `undefined`.
 
 Pour en savoir plus sur la différence entre `null` et `undefined`, vous pouvez par exemple lire [ceci](https://stackoverflow.com/questions/5076944/what-is-the-difference-between-null-and-undefined-in-javascript) (en anglais).
 
+
+## Shadow DOM
+
+> Bientôt...
