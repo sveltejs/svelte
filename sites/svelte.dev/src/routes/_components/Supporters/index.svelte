@@ -92,14 +92,6 @@
 		filter: drop-shadow(1px 2px 8px rgba(0, 0, 0, 0.3));
 	}
 
-	.contributors .supporter {
-		background-image: -webkit-image-set(url(./contributors.jpg));
-	}
-
-	.donors .supporter {
-		background-image: -webkit-image-set(url(./donors.jpg));
-	}
-
 	@media (min-width: 480px) {
 		.grid {
 			grid-template-columns: repeat(8, minmax(0, 1fr));
