@@ -17,7 +17,7 @@ If you're a library author, consider whether to only support Svelte 4 or if it's
 
 ## Browser conditions for bundlers
 
-Bundlers must now specify the browser condition when building a frontend bundle for the browser. SvelteKit and Vite will handle this automatically for you. For Rollup or webpack you may need to adjust your config to ensure it matches what is shown in the [`rollup-plugin-svelte`](https://github.com/sveltejs/rollup-plugin-svelte/#usage) and [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) documentation. ([#8516](https://github.com/sveltejs/svelte/issues/8516))
+Bundlers must now specify the `browser` condition when building a frontend bundle for the browser. SvelteKit and Vite will handle this automatically for you. If you're using any others, you may observe lifecycle callbacks such as `onMount` not get called and you'll need to update the module resolution configuration. For `@rollup/plugin-node-resolve`, this can be done by setting `browser: true` in its options. See the examples in the [`rollup-plugin-svelte`](https://github.com/sveltejs/rollup-plugin-svelte/#usage) and [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) documentation if you're using Rollup or Webpack. ([#8516](https://github.com/sveltejs/svelte/issues/8516))
 
 ## Removal of CJS related output
 
