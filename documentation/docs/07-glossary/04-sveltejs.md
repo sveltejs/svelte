@@ -12,7 +12,7 @@ Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est q
 
 > Bientôt...
 
-## Hooks
+## Hook
 
 > Bientôt...
 
@@ -25,8 +25,6 @@ Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est q
 > Bientôt...
 
 ## Store
-
-> Bientôt...
 
 Un _store_ est un concept au sein de Svelte qui permet de stocker une valeur, et de notifier n'importe quel module au sein de l'application de ses changements de valeur.
 

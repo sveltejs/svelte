@@ -48,7 +48,7 @@ Les transformations classiques effectuées lors d'un _bundling_ sont :
 
 > Bientôt...
 
-## Sourcemaps
+## Sourcemap
 
 > Bientôt...
 
