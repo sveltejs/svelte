@@ -2,7 +2,7 @@
 title: 'svelte/animate'
 ---
 
-The `svelte/animate` module exports one function for use with Svelte [animations](/docs/element-directives#animate-fn).
+Le module `svelte/animate` exporte une fonction à utiliser avec les [animations](/docs/element-directives#animate-fn) Svelte.
 
 ## `flip`
 
@@ -12,20 +12,21 @@ The `svelte/animate` module exports one function for use with Svelte [animations
 animate:flip={params}
 ```
 
-The `flip` function calculates the start and end position of an element and animates between them, translating the `x` and `y` values. `flip` stands for [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/).
+La méthode `flip` calcule la position de départ et d'arrivée d'un élément et génère une animation de translation des coordonnées `x` et `y`. Le mot `flip` est l'acronyme de [First, Last, Invert, Play](https://aerotwist.com/blog/flip-your-animations/) (en anglais).
 
-`flip` accepts the following parameters:
+Les paramètres suivants peuvent être utilisés avec `flip` :
 
-- `delay` (`number`, default 0) — milliseconds before starting
-- `duration` (`number` | `function`, default `d => Math.sqrt(d) * 120`) — see below
-- `easing` (`function`, default `cubicOut`) — an [easing function](/docs/svelte-easing)
+* `delay` (`number`, par défaut 0) - millisecondes avant le démarrage
+* `duration` (`number` | `function`, par défaut `d => Math.sqrt(d) * 120`) - voir ci-dessous
+* `easing` (`function`, par défaut `cubicOut`) — une [fonction de lissage](/docs/svelte-easing)
 
-`duration` can be provided as either:
 
-- a `number`, in milliseconds.
-- a function, `distance: number => duration: number`, receiving the distance the element will travel in pixels and returning the duration in milliseconds. This allows you to assign a duration that is relative to the distance travelled by each element.
+Le paramètre de durée `duration` peut être:
 
-You can see a full example on the [animations tutorial](https://learn.svelte.dev/tutorial/animate).
+- soit un nombre, en millisecondes.
+- une fonction, `distance: number => duration: number`, dont le paramètre correspond à la distance que l'élément va parcourir en pixels et qui retourne la durée en millisecondes. Cela permet de définir une durée, relative à la distance parcourue de l'élément.
+
+Un exemple complet est présenté dans le [tutoriel relatif aux animations](https://learn.svelte.dev/tutorial/animate).
 
 ```svelte
 <script>
