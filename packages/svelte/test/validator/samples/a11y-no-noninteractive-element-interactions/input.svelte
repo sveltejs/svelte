@@ -5,6 +5,7 @@
 <button on:click={() => {}} />
 <h1 contenteditable="true" on:keydown={() => {}}>Heading</h1>
 <h1>Heading</h1>
+<div role="application" on:keydown={() => {}} tabindex="-1"/>
 
 <!-- INVALID -->
 <div role="listitem" on:mousedown={() => {}} />
