@@ -12,6 +12,14 @@ Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est q
 
 > Bientôt...
 
+## AST
+
+> Bientôt...
+
+## Build
+
+Un _build_ est l'ensemble de fichiers produits par le <span class="vo">[bundler](/docs/web#bundler-packager)</span>. C'est le plus souvent ce qui sera utilisé pour déployer l'application en production.
+
 ## Callback
 
 Un _callback_ (ou fonction de rappel) est une fonction qui sera appelée lorsqu'un certain travail est terminé.

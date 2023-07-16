@@ -1,8 +1,8 @@
 ---
-title: 'Client-side component API'
+title: 'API de composant client-side'
 ---
 
-## Creating a component
+## Créer un composant
 
 ```ts
 // @errors: 2554
@@ -20,7 +20,7 @@ declare global {
 const component = new Component(options);
 ```
 
-A client-side component — that is, a component compiled with `generate: 'dom'` (or the `generate` option left unspecified) is a JavaScript class.
+Un composant <span class="vo">[client-side](/docs/web#client-side-rendering)</span> est une classe JavaScript correspondant à un composant compilé avec l'option `generate: 'dom'` (ou avec l'option `generate` non spécifiée).
 
 ```ts
 // @errors: 2554
@@ -40,31 +40,31 @@ import App from './App.svelte';
 const app = new App({
 	target: document.body,
 	props: {
-		// assuming App.svelte contains something like
+		// en supposant que App.svelte contienne :
 		// `export let answer`:
 		answer: 42
 	}
 });
 ```
 
-The following initialisation options can be provided:
+Les options d'initialisation suivantes peuvent être utilisées :
 
-| option    | default     | description                                                                                          |
-| --------- | ----------- | ---------------------------------------------------------------------------------------------------- |
-| `target`  | **none**    | An `HTMLElement` or `ShadowRoot` to render to. This option is required                               |
-| `anchor`  | `null`      | A child of `target` to render the component immediately before                                       |
-| `props`   | `{}`        | An object of properties to supply to the component                                                   |
-| `context` | `new Map()` | A `Map` of root-level context key-value pairs to supply to the component                             |
-| `hydrate` | `false`     | See below                                                                                            |
-| `intro`   | `false`     | If `true`, will play transitions on initial render, rather than waiting for subsequent state changes |
+| option | défaut | description |
+| --- | --- | --- |
+| `target` | **none** | Un élément `HTMLElement` ou `ShadowRoot` sur lequel rendre le composant. Cette option est obligatoire
+| `anchor` | `null` | Un enfant de la cible `target` à rendre juste avant le composant
+| `props` | `{}` | Des propriétés avec lesquelles le composant sera initialisé
+| `context` | `new Map()` | Une `Map` de paires clé-valeur de contexte à fournir au composant
+| `hydrate` | `false` | Voir plus bas
+| `intro` | `false` | Si `true`, jouera les transitions au premier rendu, plutôt que d'attendre de futurs changements d'état
 
-Existing children of `target` are left where they are.
+Les enfants existants de la cible `target` ne sont pas affectés.
 
-The `hydrate` option instructs Svelte to upgrade existing DOM (usually from server-side rendering) rather than creating new elements. It will only work if the component was compiled with the [`hydratable: true` option](/docs/svelte-compiler#compile). Hydration of `<head>` elements only works properly if the server-side rendering code was also compiled with `hydratable: true`, which adds a marker to each element in the `<head>` so that the component knows which elements it's responsible for removing during hydration.
+L'option d'hydratation `hydrate` indique à Svelte de mettre à jour le <span class="vo">[DOM](/docs/web#dom)</span> existant (habituellement à partir du <span class="vo">[SSR](/docs/web/#ssr)</span>) plutôt que de créer de nouveaux éléments. Cela ne fonctionnera que si le composant a été compilé avec l'option [`hydratable: true`](/docs/svelte-compiler#compile). L'hydratation de la section `<head>` ne fonctionnera que si le code généré côté serveur a également été compilé avec l'option `hydratable: true`. Cette option a pour effet d'identifier chaque élément à l'intérieur de la section `<head>` de telle sorte que le composant sache quels éléments il peut supprimer pendant l'hydratation.
 
-Whereas children of `target` are normally left alone, `hydrate: true` will cause any children to be removed. For that reason, the `anchor` option cannot be used alongside `hydrate: true`.
+Alors que les enfants de la cible `target` ne sont normalement pas modifiés, l'option `hydrate: true` causera leur suppression. Pour cette raison, l'option `anchor` ne peut pas être utilisée en même temps que `hydrate: true`.
 
-The existing DOM doesn't need to match the component — Svelte will 'repair' the DOM as it goes.
+Le <span class="vo">[DOM](/docs/web#dom)</span> existant n'a pas besoin de correspondre au composant, Svelte "réparera" le DOM au fur et à mesure.
 
 ```ts
 // @filename: ambient.d.ts
@@ -105,9 +105,9 @@ export {};
 component.$set(props);
 ```
 
-Programmatically sets props on an instance. `component.$set({ x: 1 })` is equivalent to `x = 1` inside the component's `<script>` block.
+`$set` définit programmatiquement les <span class="vo">[props](/docs/sveltejs#props)</span> d'une instance de composant. `component.$set({ x: 1 })` est équivalent à `x = 1` à l'intérieur de la balise `<script>` du composant.
 
-Calling this method schedules an update for the next microtask — the DOM is _not_ updated synchronously.
+L'appel de cette méthode déclenchera une mise à jour à la prochaine micro-tâche — le <span class="vo">[DOM](/docs/web#dom)</span> _n'est pas_ mis à jour de manière synchrone.
 
 ```ts
 // @filename: ambient.d.ts
@@ -145,9 +145,9 @@ export {};
 component.$on(ev, callback);
 ```
 
-Causes the `callback` function to be called whenever the component dispatches an `event`.
+`$on` enregistre un <span class="vo">[callback](/docs/development#callback)</span> qui sera appelé à chaque génération d'un évènement de type `event`.
 
-A function is returned that will remove the event listener when called.
+`$on` retourne une fonction dont l'exécution permet de supprimer l'écoute de cet événement.
 
 ```ts
 // @filename: ambient.d.ts
@@ -187,9 +187,9 @@ export {}
 component.$destroy();
 ```
 
-Removes a component from the DOM and triggers any `onDestroy` handlers.
+Retire un composant du <span class="vo">[DOM](/docs/web#dom)</span> et déclenche les <span class="vo">[callbacks](/docs/development#callback)</span> de type `onDestroy` associés.
 
-## Component props
+## Props de composant
 
 ```js
 // @filename: ambient.d.ts
@@ -226,9 +226,9 @@ export {}
 component.prop = value;
 ```
 
-If a component is compiled with `accessors: true`, each instance will have getters and setters corresponding to each of the component's props. Setting a value will cause a _synchronous_ update, rather than the default async update caused by `component.$set(...)`.
+Si un composant est compilé avec l'option `accessors: true`, chaque instance sera générée avec des <span class="vo">[getters et setters](/docs/development#getter-setter)</span> correspondant à chacune de ses <span class="vo">[props](/docs/sveltejs#props)</span>. Mettre à jour une des props déclenchera une mise à jour _synchrone_. Ce comportement est différent de la mise à jour asynchrone déclenchée par l'appel `component.$set(...)`.
 
-By default, `accessors` is `false`, unless you're compiling as a custom element.
+Par défaut, `accessors` est initialisé à `false`, à moins que vous ne compiliez un [web component](/docs/custom-elements-api).
 
 ```js
 // @filename: ambient.d.ts

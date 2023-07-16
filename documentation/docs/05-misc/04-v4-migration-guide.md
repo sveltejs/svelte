@@ -87,7 +87,7 @@ The creation of custom elements with Svelte has been overhauled and significantl
 +<svelte:options customElement="my-component" />
 ```
 
-This change was made to allow [more configurability](custom-elements-api#component-options) for advanced use cases. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
+This change was made to allow [more configurability](custom-elements-api#options-de-composant) for advanced use cases. The migration script will adjust your code automatically. The update timing of properties has changed slightly as well. ([#8457](https://github.com/sveltejs/svelte/issues/8457))
 
 ## SvelteComponentTyped is deprecated
 
