@@ -127,14 +127,14 @@
     "@types/node": "^14.18.51",
     "agadoo": "^3.0.0",
     "dts-buddy": "^0.1.7",
-    "esbuild": "^0.17.19",
+    "esbuild": "^0.18.11",
     "happy-dom": "^9.20.3",
     "jsdom": "^21.1.2",
     "kleur": "^4.1.5",
-    "rollup": "^3.25.1",
+    "rollup": "^3.26.2",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.1.3",
-    "vitest": "^0.31.4"
+    "vitest": "^0.33.0"
   }
 }

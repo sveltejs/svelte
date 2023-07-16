@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-// TODO: https://github.com/capricorn86/happy-dom/issues/916
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
