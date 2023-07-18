@@ -96,6 +96,11 @@
 		grid-column: 1/3;
 	}
 
+	.left, .right {
+		display: flex;
+		flex-direction: column;
+	}
+
 	h2 {
 		font-size: 2em;
 		font-weight: 200;
