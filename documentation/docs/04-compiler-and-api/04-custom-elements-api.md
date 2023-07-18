@@ -87,12 +87,20 @@ When constructing a custom element, you can tailor several aspects by defining `
 			name: { reflect: true, type: 'Number', attribute: 'element-index' }
 		},
 		extend: (customElementConstructor) => {
+			// Extend the class so we can let it participate in HTML forms
 			return class extends customElementConstructor {
 				static formAssociated = true;
 
 				constructor() {
 					super();
 					this.attachedInternals = this.attachInternals();
+				}
+
+				// Add the function here, not below in the component so that
+				// it's always available, not just when the inner Svelte component
+				// is mounted
+				randomIndex() {
+					this.elementIndex = Math.random();
 				}
 			};
 		}
@@ -102,6 +110,10 @@ When constructing a custom element, you can tailor several aspects by defining `
 <script>
 	export let elementIndex;
 	export let attachedInternals;
+	// ...
+	function check() {
+		attachedInternals.checkValidity();
+	}
 </script>
 
 ...
