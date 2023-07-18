@@ -1710,6 +1710,7 @@ function process_component_options(component, nodes) {
 					case 'customElement': {
 						component_options.customElement =
 							component_options.customElement || /** @type {any} */ ({});
+
 						const { value } = attribute;
 						if (value[0].type === 'MustacheTag' && value[0].expression?.value === null) {
 							component_options.customElement.tag = null;
@@ -1720,12 +1721,14 @@ function process_component_options(component, nodes) {
 						} else if (value[0].expression.type !== 'ObjectExpression') {
 							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
+
 						const tag = value[0].expression.properties.find((prop) => prop.key.name === 'tag');
 						if (tag) {
 							parse_tag(tag, tag.value?.value);
 						} else {
 							return component.error(attribute, compiler_errors.invalid_customElement_attribute);
 						}
+
 						const props = value[0].expression.properties.find((prop) => prop.key.name === 'props');
 						if (props) {
 							const error = () =>
@@ -1770,6 +1773,7 @@ function process_component_options(component, nodes) {
 								}
 							}
 						}
+
 						const shadow = value[0].expression.properties.find(
 							(prop) => prop.key.name === 'shadow'
 						);
@@ -1780,6 +1784,14 @@ function process_component_options(component, nodes) {
 							}
 							component_options.customElement.shadow = shadowdom;
 						}
+
+						const extend = value[0].expression.properties.find(
+							(prop) => prop.key.name === 'extend'
+						);
+						if (extend?.value) {
+							component_options.customElement.extend = extend.value;
+						}
+
 						break;
 					}
 					case 'namespace': {
@@ -1853,7 +1865,8 @@ function get_sourcemap_source_filename(compile_options) {
 		: get_basename(compile_options.filename);
 }
 
-/** @typedef {Object} ComponentOptions
+/**
+ * @typedef {Object} ComponentOptions
  * @property {string} [namespace]
  * @property {boolean} [immutable]
  * @property {boolean} [accessors]
@@ -1862,4 +1875,5 @@ function get_sourcemap_source_filename(compile_options) {
  * @property {string|null} customElement.tag
  * @property {'open'|'none'} [customElement.shadow]
  * @property {Record<string,{attribute?:string;reflect?:boolean;type?:'String'|'Boolean'|'Number'|'Array'|'Object';}>} [customElement.props]
+ * @property {(ceClass: new () => HTMLElement) => new () => HTMLElement} [customElement.extend]
  */

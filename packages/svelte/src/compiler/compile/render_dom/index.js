@@ -588,20 +588,19 @@ export default function dom(component, options) {
 			.join(',');
 		const use_shadow_dom =
 			component.component_options.customElement?.shadow !== 'none' ? 'true' : 'false';
+
+		const create_ce = x`@create_custom_element(${name}, ${JSON.stringify(
+			props_str
+		)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}, ${
+			component.component_options.customElement?.extend
+		})`;
+
 		if (component.component_options.customElement?.tag) {
 			body.push(
-				b`@_customElements.define("${
-					component.component_options.customElement.tag
-				}", @create_custom_element(${name}, ${JSON.stringify(
-					props_str
-				)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
+				b`@_customElements.define("${component.component_options.customElement.tag}", ${create_ce});`
 			);
 		} else {
-			body.push(
-				b`@create_custom_element(${name}, ${JSON.stringify(
-					props_str
-				)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom});`
-			);
+			body.push(b`${create_ce}`);
 		}
 	}
 
