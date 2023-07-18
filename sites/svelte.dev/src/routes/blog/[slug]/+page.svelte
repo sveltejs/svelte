@@ -1,5 +1,6 @@
 <script>
 	import { page } from '$app/stores';
+	import { copy_code_descendants } from '@sveltejs/site-kit/actions';
 	import { setupDocsHovers } from '@sveltejs/site-kit/docs';
 
 	export let data;
@@ -19,7 +20,7 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<article class="post listify text">
+<article class="post listify text" use:copy_code_descendants>
 	<h1>{data.post.title}</h1>
 	<p class="standfirst">{data.post.description}</p>
 
