@@ -61,7 +61,7 @@ Custom elements are created from Svelte components using a wrapper approach. Thi
 
 When a custom element is created, the Svelte component it wraps is _not_ created right away. It is only created in the next tick after the `connectedCallback` is invoked. Properties assigned to the custom element before it is inserted into the DOM are temporarily saved and then set on component creation, so their values are not lost. The same does not work for invoking exported functions on the custom element though, they are only available after the element has mounted. If you need to invoke functions before component creation, you can work around it by using the [`extend` option](#component-options).
 
-When a custom element written with Svelte is created or updated, the shadow dom will reflect the value in the next tick, not immediately. This way updates can be batched, and DOM moves which temporarily (but synchronously) detach the element from the DOM don't lead to unmounting the inner component.
+When a custom element written with Svelte is created or updated, the shadow DOM will reflect the value in the next tick, not immediately. This way updates can be batched, and DOM moves which temporarily (but synchronously) detach the element from the DOM don't lead to unmounting the inner component.
 
 The inner Svelte component is destroyed in the next tick after the `disconnectedCallback` is invoked.
 
