@@ -583,7 +583,11 @@ export default function dom(component, options) {
 		}, {});
 		const slots_str = [...component.slots.keys()].map((key) => `"${key}"`).join(',');
 		const accessors_str = accessors
-			.filter((accessor) => !writable_props.some((prop) => prop.export_name === accessor.key.name))
+			.filter(
+				(accessor) =>
+					accessor.kind === 'get' &&
+					!writable_props.some((prop) => prop.export_name === accessor.key.name)
+			)
 			.map((accessor) => `"${accessor.key.name}"`)
 			.join(',');
 		const use_shadow_dom =
