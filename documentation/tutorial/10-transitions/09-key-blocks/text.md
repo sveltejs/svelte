@@ -6,7 +6,7 @@ Key blocks destroy and recreate their contents when the value of an expression c
 
 ```svelte
 {#key number}
-  <span style="display: inline-block" in:fade>
+  <span style="display: inline-block" in:fly={{ y: -20 }}>
     {number}
   </span>
 {/key}
