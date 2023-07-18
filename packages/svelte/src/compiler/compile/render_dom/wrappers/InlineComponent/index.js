@@ -345,8 +345,8 @@ export default class InlineComponentWrapper extends Wrapper {
 				block.maintain_context = true; // TODO put this somewhere more logical
 			}
 			block.chunks.init.push(b`
-				function ${id}(#value) {
-					${callee}(${args});
+				function ${id}(#value, #skip_binding) {
+					${callee}(#skip_binding, ${args});
 				}
 			`);
 			let invalidate_binding = b`
@@ -360,9 +360,14 @@ export default class InlineComponentWrapper extends Wrapper {
 					}
 				`;
 			}
+			// `skip_binding` is set by runtime/internal `bind()` function only at first call
+			// this prevents child -> parent reflow that triggers unnecessary $$.update (#4265)
+			// ignore this flag when parent value is undefined
 			const body = b`
-				function ${id}(${params}) {
-					${invalidate_binding}
+				function ${id}(#skip_binding, ${params}) {
+					if (!#skip_binding || ${lhs} === void 0) {
+						${invalidate_binding}
+					}
 				}
 			`;
 			component.partly_hoisted.push(body);

@@ -21,10 +21,15 @@ import { transition_in } from './transitions.js';
 
 /** @returns {void} */
 export function bind(component, name, callback) {
-	const index = component.$$.props[name];
-	if (index !== undefined) {
-		component.$$.bound[index] = callback;
-		callback(component.$$.ctx[index]);
+	const i = component.$$.props[name];
+	if (i !== undefined) {
+		let dirty = false;
+		if (component.$$.dirty[0] !== -1) {
+			dirty = !!(component.$$.dirty[(i / 31) | 0] & (1 << i % 31));
+		}
+		component.$$.bound[i] = callback;
+		// first binding call, if child value is not yet dirty, skip to prevent unnecessary backflow
+		callback(component.$$.ctx[i], /** skip_binding */ !dirty);
 	}
 }
 
