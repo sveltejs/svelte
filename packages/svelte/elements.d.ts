@@ -1676,6 +1676,9 @@ export interface SvelteHTMLElements {
 								}
 						  >
 						| undefined;
+					extend?: (
+						svelteCustomElementClass: new () => HTMLElement
+					) => new () => HTMLElement | undefined;
 			  };
 		immutable?: boolean | undefined;
 		accessors?: boolean | undefined;
