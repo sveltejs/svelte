@@ -1,0 +1,91 @@
+{
+	"html": {
+		"start": 0,
+		"end": 77,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 0,
+				"end": 77,
+				"type": "EachBlock",
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 14,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 7
+						},
+						"end": {
+							"line": 1,
+							"column": 14
+						}
+					},
+					"name": "animals"
+				},
+				"children": [
+					{
+						"start": 27,
+						"end": 42,
+						"type": "Element",
+						"name": "p",
+						"attributes": [],
+						"children": [
+							{
+								"start": 30,
+								"end": 38,
+								"type": "MustacheTag",
+								"expression": {
+									"type": "Identifier",
+									"start": 31,
+									"end": 37,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 5
+										},
+										"end": {
+											"line": 2,
+											"column": 11
+										}
+									},
+									"name": "animal"
+								}
+							}
+						]
+					}
+				],
+				"context": {
+					"type": "Identifier",
+					"name": "animal",
+					"start": 18,
+					"end": 24
+				},
+				"else": {
+					"start": 50,
+					"end": 70,
+					"type": "ElseBlock",
+					"children": [
+						{
+							"start": 52,
+							"end": 69,
+							"type": "Element",
+							"name": "p",
+							"attributes": [],
+							"children": [
+								{
+									"start": 55,
+									"end": 65,
+									"type": "Text",
+									"raw": "no animals",
+									"data": "no animals"
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	}
+}

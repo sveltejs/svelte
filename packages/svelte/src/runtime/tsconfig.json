@@ -1,0 +1,18 @@
+{
+	"extends": "../../tsconfig.json",
+	"include": ["."],
+
+	"compilerOptions": {
+		"lib": ["es2015", "dom", "dom.iterable"],
+		"target": "es2015",
+		"types": [],
+
+		"baseUrl": ".",
+		"paths": {
+			"svelte": ["."],
+			"svelte/*": ["*"]
+		},
+		"allowJs": true,
+		"checkJs": true
+	}
+}

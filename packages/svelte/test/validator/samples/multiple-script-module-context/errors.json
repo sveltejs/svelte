@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-script",
+		"message": "A component can only have one <script context=\"module\"> element",
+		"start": {
+			"line": 5,
+			"column": 0
+		},
+		"end": {
+			"line": 5,
+			"column": 0
+		}
+	}
+]

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "binding-undeclared",
+		"message": "foo is not declared",
+		"start": {
+			"line": 2,
+			"column": 19
+		},
+		"end": {
+			"line": 2,
+			"column": 22
+		}
+	}
+]

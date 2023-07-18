@@ -1,0 +1,14 @@
+[
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"start": {
+			"column": 1,
+			"line": 8
+		},
+		"end": {
+			"column": 35,
+			"line": 8
+		}
+	}
+]

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "unexpected-token",
+		"message": "Expected =",
+		"start": {
+			"line": 5,
+			"column": 9
+		},
+		"end": {
+			"line": 5,
+			"column": 9
+		}
+	}
+]

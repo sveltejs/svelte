@@ -1,0 +1,8 @@
+[
+	{
+		"message": "Cyclical dependency detected: a → b → a",
+		"code": "cyclical-reactive-declaration",
+		"start": { "line": 5, "column": 1 },
+		"end": { "line": 5, "column": 14 }
+	}
+]

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-script",
+		"message": "If the context attribute is supplied, its value must be \"module\"",
+		"start": {
+			"line": 1,
+			"column": 8
+		},
+		"end": {
+			"line": 1,
+			"column": 8
+		}
+	}
+]

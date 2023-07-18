@@ -4,8 +4,8 @@ Svelte is a new way to build web applications. It's a compiler that takes your d
 
 The [Open Source Guides](https://opensource.guide/) website has a collection of resources for individuals, communities, and companies. These resources help people who want to learn how to run and contribute to open source projects. Contributors and people new to open source alike will find the following guides especially useful:
 
-* [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
-* [Building Welcoming Communities](https://opensource.guide/building-community/)
+- [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
+- [Building Welcoming Communities](https://opensource.guide/building-community/)
 
 ## Get involved
 
@@ -14,7 +14,7 @@ There are many ways to contribute to Svelte, and many of them do not involve wri
 - Simply start using Svelte. Go through the [Getting Started](https://svelte.dev/docs#getting-started) guide. Does everything work as expected? If not, we're always looking for improvements. Let us know by [opening an issue](#reporting-new-issues).
 - Look through the [open issues](https://github.com/sveltejs/svelte/issues). A good starting point would be issues tagged [good first issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). Provide workarounds, ask for clarification, or suggest labels. Help [triage issues](#triaging-issues-and-pull-requests).
 - If you find an issue you would like to fix, [open a pull request](#pull-requests).
-- Read through our [tutorials](https://svelte.dev/tutorial/basics). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this chapter" at the bottom left of the tutorial page.
+- Read through our [tutorials](https://learn.svelte.dev/). If you find anything that is confusing or can be improved, you can make edits by clicking "Edit this page" at the bottom left of the tutorial page.
 - Take a look at the [features requested](https://github.com/sveltejs/svelte/labels/feature%20request) by others in the community and consider opening a pull request if you see something you want to work on.
 
 Contributions are very welcome. If you think you need help planning your contribution, please ping us on Discord at [svelte.dev/chat](https://svelte.dev/chat) and let us know you are looking for a bit of help.
@@ -62,7 +62,7 @@ When [opening a new issue](https://github.com/sveltejs/svelte/issues/new/choose)
 
 ## Pull requests
 
-> HEADS UP: The Svelte repo is currently in the process of heavy restructuring for Svelte 4. After that, work on Svelte 5 will likely change a lot on the compiler aswell. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but feature PRs will likely not be merged.
+> HEADS UP: Svelte 5 will likely change a lot on the compiler. For that reason, please don't open PRs that are large in scope, touch more than a couple of files etc. In other words, bug fixes are fine, but big feature PRs will likely not be merged.
 
 ### Proposing a change
 
@@ -74,9 +74,10 @@ Small pull requests are much easier to review and more likely to get merged.
 
 ### Installation
 
-1. Ensure you have [npm](https://www.npmjs.com/get-npm) installed.
-1. After cloning the repository, run `npm install` in the root of the repository.
-1. To start a development server, run `npm run dev`.
+1. Ensure you have [pnpm](https://pnpm.io/installation) installed
+1. After cloning the repository, run `pnpm install`. You can do this in the root directory or in the `svelte` project
+1. Move into the `svelte` directory with `cd packages/svelte`
+1. To compile in watch mode, run `pnpm dev`
 
 ### Creating a branch
 
@@ -96,8 +97,10 @@ Test samples are kept in `/test/xxx/samples` folder.
 
 #### Running tests
 
-1. To run test, run `npm run test`.
-1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `npm run test -- -g transition`.
+> PREREQUISITE: Install chromium via playwright by running `pnpm playwright install chromium`
+
+1. To run test, run `pnpm test`.
+1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `pnpm test -- -g transition`.
 
 ##### Running solo test
 
@@ -108,11 +111,11 @@ Test samples are kept in `/test/xxx/samples` folder.
 ##### Updating `.expected` files
 
 1. Tests suites like `css`, `js`, `server-side-rendering` asserts that the generated output has to match the content in the `.expected` file. For example, in the `js` test suites, the generated js code is compared against the content in `expected.js`.
-1. To update the content of the `.expected` file, run the test with `--update` flag. (`npm run test --update`)
+1. To update the content of the `.expected` file, run the test with `--update` flag. (`pnpm test --update`)
 
 ### Style guide
 
-[Eslint](https://eslint.org) will catch most styling issues that may exist in your code. You can check the status of your code styling by simply running `npm run lint`.
+[Eslint](https://eslint.org) will catch most styling issues that may exist in your code. You can check the status of your code styling by simply running `pnpm lint`.
 
 #### Code conventions
 
@@ -124,8 +127,8 @@ Test samples are kept in `/test/xxx/samples` folder.
 Please make sure the following is done when submitting a pull request:
 
 1. Describe your **test plan** in your pull request description. Make sure to test your changes.
-1. Make sure your code lints (`npm run lint`).
-1. Make sure your tests pass (`npm run test`).
+1. Make sure your code lints (`pnpm lint`).
+1. Make sure your tests pass (`pnpm test`).
 
 All pull requests should be opened against the `master` branch. Make sure the PR does only one thing, otherwise please split it.
 

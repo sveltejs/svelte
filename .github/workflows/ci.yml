@@ -1,78 +1,42 @@
 name: CI
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
+
+env:
+  # We only install Chromium manually
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
 jobs:
-  Setup:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: npm
-      - run: npm install
-        env:
-          SKIP_PREPARE: true
-      - run: npm run build
-        env:
-          PUBLISH: true
-      - name: Upload build assets
-        id: upload-artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-assets
-          path: |
-            index.*
-            compiler.*
-            ssr.*
-            action/
-            animate/
-            easing/
-            internal/
-            motion/
-            store/
-            transition/
-            types/
   Tests:
-    needs: Setup
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       matrix:
-        node-version: [8, 10, 12, 14, 16, 18]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          - node-version: 16
+            os: ubuntu-latest
+          - node-version: 16
+            os: windows-latest
+          - node-version: 16
+            os: macOS-latest
+          - node-version: 18
+            os: ubuntu-latest
+          - node-version: 20
+            os: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
-      - name: Download build assets
-        uses: actions/download-artifact@v3
-        id: download-artifact
-        with:
-          name: build-assets
-      - name: Get Node version ${{ runner.os }}
-        run: echo "NODE_VERSION=`node --version`" >> $GITHUB_ENV
-        if: runner.os != 'Windows'
-      - name: Get Node version ${{ runner.os }}
-        run: |
-          chcp 65001
-          echo ("NODE_VERSION=$(node --version)") >> $env:GITHUB_ENV
-        if: runner.os == 'Windows'
-      - run: npm install --save-dev puppeteer@13
-        if: ${{ runner.os == 'Linux' && (!startsWith(env.NODE_VERSION, 'v8.') && !startsWith(env.NODE_VERSION, 'v10.')) }}
-      - run: npm install
-        env:
-          SKIP_PREPARE: true
-      - run: npm run test:integration
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
+      - run: pnpm test
         env:
           CI: true
   Lint:
@@ -80,22 +44,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
-          cache: npm
-      - run: 'npm i && npm run lint'
-  Unit:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          cache: npm
-      - run: npm install
-        env:
-          SKIP_PREPARE: true
-      - run: npm run test:unit
+          node-version: 16
+          cache: pnpm
+      - run: 'pnpm i && pnpm check && pnpm lint'
