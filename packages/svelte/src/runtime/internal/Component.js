@@ -417,7 +417,6 @@ export function create_custom_element(
 			set(value) {
 				value = get_custom_element_value(prop, value, props_definition);
 				this.$$d[prop] = value;
-				console.log('did set', value, this.$$d);
 				this.$$c?.$set({ [prop]: value });
 			}
 		});
