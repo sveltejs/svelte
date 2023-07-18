@@ -770,14 +770,12 @@ export default class Component {
 			if (name[0] === '$') {
 				return this.error(/** @type {any} */ (node), compiler_errors.illegal_declaration);
 			}
-			const writable =
-				node.type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let');
-			const imported = node.type.startsWith('Import');
+			const { type } = node;
 			this.add_var(node, {
 				name,
 				initialised: instance_scope.initialised_declarations.has(name),
-				writable,
-				imported
+				imported: type.startsWith('Import'),
+				writable: type === 'VariableDeclaration' && (node.kind === 'var' || node.kind === 'let')
 			});
 			this.node_for_declaration.set(name, node);
 		});
