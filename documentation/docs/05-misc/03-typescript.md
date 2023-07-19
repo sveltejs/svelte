@@ -97,8 +97,8 @@ Events can be typed with `createEventDispatcher`:
 
 	const dispatch = createEventDispatcher<{
 		event: null; // does not accept a payload
-		type: string; // has a required string payload
-		click: string | null; // has an optional string payload
+		click: string; // has a required string payload
+		type: string | null; // has an optional string payload
 	}>();
 
 	function handleClick() {
