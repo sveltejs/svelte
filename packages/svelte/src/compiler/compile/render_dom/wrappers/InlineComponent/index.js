@@ -361,11 +361,12 @@ export default class InlineComponentWrapper extends Wrapper {
 				`;
 			}
 			// `skip_binding` is set by runtime/internal `bind()` function only at first call
-			// this prevents child -> parent reflow that triggers unnecessary $$.update (#4265)
-			// ignore this flag when parent value is undefined
+			// this prevents child -> parent backflow that triggers unnecessary $$.update (#4265)
+			// the flag is used to detech reactive mutation to object in `child.$$.update`
+			// ignore this flag when parent_value !== child_value
 			const body = b`
 				function ${id}(#skip_binding, ${params}) {
-					if (!#skip_binding || ${lhs} === void 0) {
+					if (!#skip_binding || ${lhs} !== #value) {
 						${invalidate_binding}
 					}
 				}

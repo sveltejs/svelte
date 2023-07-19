@@ -24,9 +24,7 @@ export function bind(component, name, callback) {
 	const i = component.$$.props[name];
 	if (i !== undefined) {
 		let dirty = false;
-		if (component.$$.dirty[0] !== -1) {
-			dirty = !!(component.$$.dirty[(i / 31) | 0] & (1 << i % 31));
-		}
+		if (component.$$.bound[i]) dirty = true;
 		component.$$.bound[i] = callback;
 		// first binding call, if child value is not yet dirty, skip to prevent unnecessary backflow
 		callback(component.$$.ctx[i], /** skip_binding */ !dirty);
@@ -130,8 +128,9 @@ export function init(
 		? instance(component, options.props || {}, (i, ret, ...rest) => {
 				const value = rest.length ? rest[0] : ret;
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = value))) {
-					if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
+					if (!$$.skip_bound && is_function($$.bound[i])) $$.bound[i](value);
 					if (ready) make_dirty(component, i);
+					else $$.bound[i] = true; // dirty flag consumed in bind()
 				}
 				return ret;
 		  })
