@@ -215,7 +215,7 @@ if (typeof HTMLElement === 'function') {
 			this.$$cn = true;
 			if (!this.$$c) {
 				// We wait one tick to let possible child slot elements be created/mounted
-				await Promise.resolve();
+				await new Promise((f) => setTimeout(f)); // don't do Promise.resolve() as that fires too soon
 				if (!this.$$cn) {
 					return;
 				}
@@ -316,7 +316,8 @@ if (typeof HTMLElement === 'function') {
 		disconnectedCallback() {
 			this.$$cn = false;
 			// In a microtask, because this could be a move within the DOM
-			Promise.resolve().then(() => {
+			// don't do Promise.resolve() as that fires too soon
+			new Promise((f) => setTimeout(f)).then(() => {
 				if (!this.$$cn) {
 					this.$$c.$destroy();
 					this.$$c = undefined;
