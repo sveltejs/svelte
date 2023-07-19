@@ -91,7 +91,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach((prop) => {
 						this.node.dependencies.forEach((dependency) => {
-							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
+							if (this.node.scope.is_top_level(dependency)) {
+								this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
+							}
 						});
 					});
 				}
