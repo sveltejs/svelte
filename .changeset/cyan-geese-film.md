@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Remove let variable from select binding dependencies
+fix: remove `let:variable` slot bindings from select binding dependencies
