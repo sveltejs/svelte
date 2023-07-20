@@ -4,7 +4,7 @@ export default {
 		<button>Toggle Component</button>
 	`,
 
-	async test({ assert, component, window, target }) {
+	async test({ assert, window, target }) {
 		const button = target.querySelector('button');
 		await button.dispatchEvent(new window.Event('click'));
 		assert.htmlEqual(
