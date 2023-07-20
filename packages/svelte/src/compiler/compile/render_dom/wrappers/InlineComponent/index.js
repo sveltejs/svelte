@@ -268,6 +268,21 @@ export default class InlineComponentWrapper extends Wrapper {
 				`);
 				if (all_dependencies.size) {
 					const condition = renderer.dirty(Array.from(all_dependencies));
+					if (this.node.name === 'svelte:component') {
+						// statements will become switch_props function body
+						// rewrite last statement, add props update logic
+						statements[statements.length - 1] = b`
+							if (#dirty !== undefined && ${condition}) {
+								${props} = @get_spread_update(${levels}, [
+									${changes}
+								]);
+							} else {
+								for (let #i = 0; #i < ${levels}.length; #i += 1) {
+									${props} = @assign(${props}, ${levels}[#i]);
+								}
+							}
+						`;
+					}
 					updates.push(b`
 						const ${name_changes} = ${condition} ? @get_spread_update(${levels}, [
 							${changes}
@@ -396,7 +411,7 @@ export default class InlineComponentWrapper extends Wrapper {
 			block.chunks.init.push(b`
 				var ${switch_value} = ${snippet};
 
-				function ${switch_props}(#ctx) {
+				function ${switch_props}(#ctx, #dirty) {
 					${
 						(this.node.attributes.length > 0 || this.node.bindings.length > 0) &&
 						b`
@@ -464,7 +479,7 @@ export default class InlineComponentWrapper extends Wrapper {
 
 					if (${switch_value}) {
 						${update_insert}
-						${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx));
+						${name} = @construct_svelte_component(${switch_value}, ${switch_props}(#ctx, #dirty));
 
 						${munged_bindings}
 						${munged_handlers}
