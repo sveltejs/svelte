@@ -1,5 +1,11 @@
 # svelte
 
+## 4.1.1
+
+### Patch Changes
+
+- fix: `svelte:component` spread props change not picked up ([#9006](https://github.com/sveltejs/svelte/pull/9006))
+
 ## 4.1.0
 
 ### Minor Changes
