@@ -66,7 +66,7 @@ pnpm test -- -g transition
 
 ### svelte.dev
 
-The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/sites) repository, with all the documentation in the [site/content](site/content) directory. The site is built with [SvelteKit](https://kit.svelte.dev).
+The source code for https://svelte.dev lives in the [sites](https://github.com/sveltejs/svelte/tree/master/sites/svelte.dev) folder, with all the documentation right [here](https://github.com/sveltejs/svelte/tree/master/documentation). The site is built with [SvelteKit](https://kit.svelte.dev).
 
 ## Is svelte.dev down?
 
