@@ -383,15 +383,17 @@ function get_custom_element_value(prop, value, props_definition, transform) {
  * @param {string[]} slots  The slots to create
  * @param {string[]} accessors  Other accessors besides the ones for props the component has
  * @param {boolean} use_shadow_dom  Whether to use shadow DOM
+ * @param {(ce: new () => HTMLElement) => new () => HTMLElement} [extend]
  */
 export function create_custom_element(
 	Component,
 	props_definition,
 	slots,
 	accessors,
-	use_shadow_dom
+	use_shadow_dom,
+	extend
 ) {
-	const Class = class extends SvelteElement {
+	let Class = class extends SvelteElement {
 		constructor() {
 			super(Component, slots, use_shadow_dom);
 			this.$$p_d = props_definition;
@@ -421,6 +423,10 @@ export function create_custom_element(
 			}
 		});
 	});
+	if (extend) {
+		// @ts-expect-error - assigning here is fine
+		Class = extend(Class);
+	}
 	Component.element = /** @type {any} */ (Class);
 	return Class;
 }

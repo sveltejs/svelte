@@ -1,5 +1,29 @@
 # svelte
 
+## 4.1.1
+
+### Patch Changes
+
+- fix: `svelte:component` spread props change not picked up ([#9006](https://github.com/sveltejs/svelte/pull/9006))
+
+## 4.1.0
+
+### Minor Changes
+
+- feat: add ability to extend custom element class ([#8991](https://github.com/sveltejs/svelte/pull/8991))
+
+### Patch Changes
+
+- fix: ensure `svelte:component` evaluates props once ([#8946](https://github.com/sveltejs/svelte/pull/8946))
+
+- fix: remove `let:variable` slot bindings from select binding dependencies ([#8969](https://github.com/sveltejs/svelte/pull/8969))
+
+- fix: handle destructured primitive literals ([#8871](https://github.com/sveltejs/svelte/pull/8871))
+
+- perf: optimize imports that are not mutated or reassigned ([#8948](https://github.com/sveltejs/svelte/pull/8948))
+
+- fix: don't add accessor twice ([#8996](https://github.com/sveltejs/svelte/pull/8996))
+
 ## 4.0.5
 
 ### Patch Changes
