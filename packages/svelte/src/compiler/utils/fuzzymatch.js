@@ -19,18 +19,20 @@ const GRAM_SIZE_UPPER = 3;
  * @param {string} str2
  */
 function _distance(str1, str2) {
-	if (str1 === null && str2 === null) {
+	if (!str1 && !str2) {
 		throw 'Trying to compare two null values';
 	}
-	if (str1 === null || str2 === null) return 0;
+
+	if (!str1 || !str2) {
+		return 0
+	}
+
 	str1 = String(str1);
 	str2 = String(str2);
+
 	const distance = levenshtein(str1, str2);
-	if (str1.length > str2.length) {
-		return 1 - distance / str1.length;
-	} else {
-		return 1 - distance / str2.length;
-	}
+
+	return 1 - distance / (str1.length > str2.length ? str1.length : str2.length);
 }
 
 // helper functions
@@ -73,14 +75,15 @@ const non_word_regex = /[^\w, ]+/;
 function iterate_grams(value, gram_size = 2) {
 	const simplified = '-' + value.toLowerCase().replace(non_word_regex, '') + '-';
 	const len_diff = gram_size - simplified.length;
-	const results = [];
+	const len_results = simplified.length - gram_size + 1
+	const results = new Array(len_results);
 	if (len_diff > 0) {
 		for (let i = 0; i < len_diff; ++i) {
 			value += '-';
 		}
 	}
-	for (let i = 0; i < simplified.length - gram_size + 1; ++i) {
-		results.push(simplified.slice(i, i + gram_size));
+	for (let i = 0; i < len_results; ++i) {
+		results[i] = simplified.slice(i, i + gram_size)
 	}
 	return results;
 }
