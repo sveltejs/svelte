@@ -117,7 +117,7 @@ Text can also contain JavaScript expressions:
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
 
-<div>{/^[A-Za-z ]+$/.test(value) ? x : y}</div>
+<div>{(/^[A-Za-z ]+$/).test(value) ? x : y}</div>
 ```
 
 ## Comments
