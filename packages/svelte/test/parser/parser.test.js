@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import { assert, describe, it } from 'vitest';
 import * as svelte from 'svelte/compiler';
-import { try_load_json } from '../helpers.js';
+import { try_load_json, try_read_file } from '../helpers.js';
+import { walk } from 'estree-walker';
 
 describe('parse', () => {
 	fs.readdirSync(`${__dirname}/samples`).forEach((dir) => {
@@ -26,8 +27,23 @@ describe('parse', () => {
 				.trimEnd()
 				.replace(/\r/g, '');
 
-			const expectedOutput = try_load_json(`${__dirname}/samples/${dir}/output.json`);
-			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
+			const output_file = try_read_file(`${__dirname}/samples/${dir}/output.json`);
+
+			// Regexp literals are serialized as empty objects, so we need to convert the values back to RegExp
+			// to make the deepEqual comparison work.
+			let expectedOutput = output_file
+				? JSON.parse(output_file, (key, value) => {
+						if (
+							typeof value === 'object' &&
+							value !== null &&
+							value.type === 'Literal' &&
+							value.regex
+						) {
+							value.value = new RegExp(value.regex.pattern, value.regex.flags);
+						}
+						return value;
+				  })
+				: null;
 
 			try {
 				const { ast } = svelte.compile(
@@ -48,6 +64,8 @@ describe('parse', () => {
 				assert.deepEqual(ast.module, expectedOutput.module);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
+
+				const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 				if (!expectedError) throw err;
 				const { code, message, pos, start } = err;
 

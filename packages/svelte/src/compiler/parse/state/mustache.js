@@ -40,7 +40,7 @@ export default function mustache(parser) {
 	parser.index += 1;
 	parser.allow_whitespace();
 	// {/if}, {/each}, {/await} or {/key}
-	if (parser.eat('/')) {
+	if (parser.match('/')) {
 		let block = parser.current();
 		let expected;
 		if (closing_tag_omitted(block.name)) {
@@ -68,8 +68,19 @@ export default function mustache(parser) {
 		} else if (block.type === 'KeyBlock') {
 			expected = 'key';
 		} else {
-			parser.error(parser_errors.unexpected_block_close);
+			let possible_regex = read_expression(parser);
+			parser.allow_whitespace();
+			parser.eat('}', true);
+			parser.current().children.push({
+				start,
+				end: parser.index,
+				type: 'MustacheTag',
+				expression: possible_regex
+			});
+			return;
 		}
+		parser.index += 1;
+
 		parser.eat(expected, true);
 		parser.allow_whitespace();
 		parser.eat('}', true);
