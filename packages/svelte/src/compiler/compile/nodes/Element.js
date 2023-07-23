@@ -244,6 +244,7 @@ const valid_modifiers = new Set([
 	'passive',
 	'nonpassive',
 	'self',
+	'nonself',
 	'trusted'
 ]);
 const passive_events = new Set(['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel']);
@@ -599,7 +600,9 @@ export default class Element extends Node {
 	}
 	validate_attributes_a11y() {
 		const { component, attributes, handlers } = this;
+		/** @type {Map<string, Attribute>} */
 		const attribute_map = new Map();
+		/** @type {Map<string, EventHandler>} */
 		const handlers_map = new Map();
 		attributes.forEach((attribute) => attribute_map.set(attribute.name, attribute));
 		handlers.forEach((handler) => handlers_map.set(handler.name, handler));
@@ -781,7 +784,7 @@ export default class Element extends Node {
 			}
 		});
 		// click-events-have-key-events
-		if (handlers_map.has('click')) {
+		if (handlers_map.get('click')?.modifiers.has('nonself') === false) {
 			const role = attribute_map.get('role');
 			const is_non_presentation_role =
 				role?.is_static &&
@@ -852,8 +855,10 @@ export default class Element extends Node {
 				is_non_interactive_roles(role_static_value)) ||
 				(is_non_interactive_element(this.name, attribute_map) && !role))
 		) {
-			const has_interactive_handlers = handlers.some((handler) =>
-				a11y_recommended_interactive_handlers.has(handler.name)
+			const has_interactive_handlers = handlers.some(
+				(handler) =>
+					a11y_recommended_interactive_handlers.has(handler.name) &&
+					!handler.modifiers.has('nonself')
 			);
 			if (has_interactive_handlers) {
 				component.warn(
@@ -874,13 +879,19 @@ export default class Element extends Node {
 			!is_non_interactive_roles(role_static_value) &&
 			!is_abstract_role(role_static_value)
 		) {
-			const interactive_handlers = handlers
-				.map((handler) => handler.name)
-				.filter((handlerName) => a11y_interactive_handlers.has(handlerName));
-			if (interactive_handlers.length > 0) {
+			const interactive_handler_names = handlers
+				.filter(
+					(handler) =>
+						a11y_interactive_handlers.has(handler.name) && !handler.modifiers.has('nonself')
+				)
+				.map((handler) => handler.name);
+			if (interactive_handler_names.length > 0) {
 				component.warn(
 					this,
-					compiler_warnings.a11y_no_static_element_interactions(this.name, interactive_handlers)
+					compiler_warnings.a11y_no_static_element_interactions(
+						this.name,
+						interactive_handler_names
+					)
 				);
 			}
 		}
@@ -1264,6 +1275,12 @@ export default class Element extends Node {
 				return component.error(
 					handler,
 					compiler_errors.invalid_event_modifier_combination('passive', 'nonpassive')
+				);
+			}
+			if (handler.modifiers.has('self') && handler.modifiers.has('nonself')) {
+				return component.error(
+					handler,
+					compiler_errors.invalid_event_modifier_combination('self', 'nonself')
 				);
 			}
 			handler.modifiers.forEach((modifier) => {

@@ -46,5 +46,17 @@
 			"column": 0,
 			"line": 16
 		}
+	},
+	{
+		"code": "a11y-no-noninteractive-tabindex",
+		"end": {
+			"column": 102,
+			"line": 17
+		},
+		"message": "A11y: noninteractive element cannot have nonnegative tabIndex value",
+		"start": {
+			"column": 0,
+			"line": 17
+		}
 	}
 ]

@@ -50,6 +50,7 @@ export default class EventHandlerWrapper {
 		if (this.node.modifiers.has('stopImmediatePropagation'))
 			snippet = x`@stop_immediate_propagation(${snippet})`;
 		if (this.node.modifiers.has('self')) snippet = x`@self(${snippet})`;
+		if (this.node.modifiers.has('nonself')) snippet = x`@nonself(${snippet})`;
 		if (this.node.modifiers.has('trusted')) snippet = x`@trusted(${snippet})`;
 		const args = [];
 		const opts = ['nonpassive', 'passive', 'once', 'capture'].filter((mod) =>

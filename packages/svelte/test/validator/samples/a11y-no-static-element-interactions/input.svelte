@@ -12,6 +12,7 @@
 <div role={dynamicRole} on:click={() => {}} />
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <footer on:keydown={() => {}} />
+<div on:click|nonself={() => {}}><slot name="interactive-element-goes-here"></slot></div>
 
 <!-- invalid -->
 <div on:keydown={() => {}} />

@@ -14,3 +14,4 @@
 <div role='article' tabindex='0' />
 <article tabindex='0' />
 <article tabindex='{0}' />
+<div tabindex='0' on:click|nonself={() => {}}><slot name="interactive-element-goes-here"></slot></div>

@@ -5,6 +5,7 @@
 <button on:click={() => {}} />
 <h1 contenteditable="true" on:keydown={() => {}}>Heading</h1>
 <h1>Heading</h1>
+<div role="paragraph" on:mouseup|nonself={() => {}}><slot name="interactive-element-goes-here"></slot></div>
 
 <!-- INVALID -->
 <div role="listitem" on:mousedown={() => {}} />

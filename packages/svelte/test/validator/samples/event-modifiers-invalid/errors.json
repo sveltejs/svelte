@@ -1,6 +1,6 @@
 [
 	{
-		"message": "Valid event modifiers are preventDefault, stopPropagation, stopImmediatePropagation, capture, once, passive, nonpassive, self or trusted",
+		"message": "Valid event modifiers are preventDefault, stopPropagation, stopImmediatePropagation, capture, once, passive, nonpassive, self, nonself or trusted",
 		"code": "invalid-event-modifier",
 		"start": {
 			"line": 1,

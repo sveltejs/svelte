@@ -401,6 +401,15 @@ export function self(fn) {
 
 /**
  * @returns {(event: any) => void} */
+export function nonself(fn) {
+	return function (event) {
+		// @ts-ignore
+		if (event.target !== event.currentTarget) fn.call(this, event);
+	};
+}
+
+/**
+ * @returns {(event: any) => void} */
 export function trusted(fn) {
 	return function (event) {
 		// @ts-ignore
