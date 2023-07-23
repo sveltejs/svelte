@@ -6,6 +6,10 @@
     value = { foo: 'kid' }
   }
 
+  if (testcase === 'init_mutate') {
+    value.foo = 'kid'
+  }
+
   $: if (testcase === 'reactive_update') {
     value = { foo: 'kid' }
   }

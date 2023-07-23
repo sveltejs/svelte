@@ -6,7 +6,8 @@ export default {
 				{ testcase: 'child_default_populate_parent', value: undefined },
 				{ testcase: 'reactive_update', value: { foo: 'mon' } },
 				{ testcase: 'reactive_mutate', value: { foo: 'mon' } },
-				{ testcase: 'init_update', value: { foo: 'mon' } }
+				{ testcase: 'init_update', value: { foo: 'mon' } },
+				{ testcase: 'init_mutate', value: { foo: 'mon' } }
 			]
 		};
 	},
@@ -34,6 +35,10 @@ export default {
 		assert.equal(p.updates.length, 2);
 
 		p = parents['init_update'];
+		assert.deepEqual(p.value, { foo: 'kid' });
+		assert.equal(p.updates.length, 2);
+
+		p = parents['init_mutate'];
 		assert.deepEqual(p.value, { foo: 'kid' });
 		assert.equal(p.updates.length, 2);
 	}
