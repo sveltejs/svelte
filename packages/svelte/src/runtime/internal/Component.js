@@ -24,7 +24,8 @@ export function bind(component, name, callback) {
 	const i = component.$$.props[name];
 	if (i !== undefined) {
 		let dirty = false;
-		if (component.$$.bound[i]) dirty = true;
+		// special dirty flag for bind
+		if (component.$$.bound[i] === null) dirty = true;
 		component.$$.bound[i] = callback;
 		// first binding call, if child value is not yet dirty, skip to prevent unnecessary backflow
 		callback(component.$$.ctx[i], /** skip_binding */ !dirty);
@@ -127,10 +128,13 @@ export function init(
 	$$.ctx = instance
 		? instance(component, options.props || {}, (i, ret, ...rest) => {
 				const value = rest.length ? rest[0] : ret;
+				// `$$.bound[i] = null` as a special dirty flag to prevent unnecessary backflow, consumed in bind()
+				// only set at init phase during `instance()` call, and 1st `$$.update()` call before `ready`
+				if (!$$.ctx) $$.bound[i] = null;
 				if ($$.ctx && not_equal($$.ctx[i], ($$.ctx[i] = value))) {
-					if (!$$.skip_bound && is_function($$.bound[i])) $$.bound[i](value);
+					if (!$$.skip_bound && $$.bound[i]) $$.bound[i](value);
 					if (ready) make_dirty(component, i);
-					else $$.bound[i] = true; // dirty flag consumed in bind()
+					else $$.bound[i] = null;
 				}
 				return ret;
 		  })

@@ -38,7 +38,8 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 	 * @param {import('estree').Expression} [node]
 	 */
 	function get_invalidated(variable, node) {
-		if (main_execution_context && !variable.subscribable && variable.name[0] !== '$') {
+		const is_props = !!variable.export_name;
+		if (main_execution_context && !is_props && !variable.subscribable && variable.name[0] !== '$') {
 			return node;
 		}
 		return renderer_invalidate(renderer, variable.name, undefined, main_execution_context);
@@ -61,8 +62,9 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 		return x`@set_store_value(${head.name.slice(1)}, ${node}, ${head.name}, ${extra_args})`;
 	}
 
+	const is_props = !!head.export_name;
 	let invalidate;
-	if (!main_execution_context) {
+	if (!main_execution_context || is_props) {
 		const pass_value =
 			extra_args.length > 0 ||
 			(node.type === 'AssignmentExpression' && node.left.type !== 'Identifier') ||
@@ -96,8 +98,9 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
  */
 export function renderer_invalidate(renderer, name, value, main_execution_context = false) {
 	const variable = renderer.component.var_lookup.get(name);
+	const is_props = variable && variable.export_name && !variable.module;
 	if (variable && variable.subscribable && (variable.reassigned || variable.export_name)) {
-		if (main_execution_context) {
+		if (main_execution_context && !is_props) {
 			return x`${`$$subscribe_${name}`}(${value || name})`;
 		} else {
 			const member = renderer.context_lookup.get(name);
@@ -124,6 +127,9 @@ export function renderer_invalidate(renderer, name, value, main_execution_contex
 			const member = renderer.context_lookup.get(name);
 			return x`$$invalidate(${member.index}, ${value})`;
 		}
+	} else if (main_execution_context && is_props) {
+		const member = renderer.context_lookup.get(name);
+		return x`$$invalidate(${member.index}, ${name})`;
 	}
 	if (main_execution_context) return;
 	// if this is a reactive declaration, invalidate dependencies recursively
