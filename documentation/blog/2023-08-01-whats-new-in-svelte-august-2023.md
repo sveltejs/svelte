@@ -12,7 +12,7 @@ More on all that down below...
 ## What's new in Svelte & Language Tools
 There's been a bunch of minor bugfixes since the Svelte 4 release. You can find them in the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
-In addition, the **4.1.0 release** added the ability to extend custom element classes. Check out the [Custom Elements API docs](https://svelte.dev/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
+The **4.1.0 release** added the ability to extend custom element classes. Check out the [Custom Elements API docs](https://svelte.dev/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
 
 In addition to supporting SvelteKit's new `HEAD` server method, Svelte's language tools now support Prettier v3 (**extensions-107.9.0**) and workspace trust settings are now used to support all settings in workspace (**extensions-107.8.0**).
 
@@ -34,7 +34,7 @@ For all the patches and performance updates from this month, check out the [Svel
 - [JSON Bucket](https://github.com/Nico-Mayer/json-bucket) stores your JSON data so you can access it anywhere through generated API routes
 - [Soggy Planet](https://www.cosmicplayground.org/soggy-planet) is an interactive map of Earth where sea levels rise and fall and the lights of civilization shine through the night ([Source](https://github.com/ryanatkn/cosmicplayground))
 - [PaperClip](https://www.paperclipapp.xyz/) is a Chrome extension that makes it easy to memorize details from papers in machine learning, computer vision, and natural language processing.
-- [Maktaba](https://www.maktaba.digital/) is bookmark manager that "you will actually use"
+- [Maktaba](https://www.maktaba.digital/) is a bookmark manager that "you will actually use"
 - [Whispering](https://github.com/braden-w/whispering-extension) is a Chrome extension that lest you access OpenAI's Whisper API for fast transcription in the browser (including ChatGPT)
 - [DocuTalk](https://docutalk.co/) is an AI Customer Support chatbot for your website
 - [Krello](https://github.com/iamrishupatel/trello-clone) is a Trello clone built with Svelte, Appwrite and Flowbite 
@@ -46,13 +46,15 @@ For all the patches and performance updates from this month, check out the [Svel
 **Learning Resources**
 _Featuring Svelte Contributors and Ambassadors_
 - [Exploring Svelte 4 w/ Kevin AK: Performance, Compatibility, & Web Component Support | Modern Web Pod](https://www.youtube.com/watch?v=YOL0HGGVib4) by This Dot Media
+- [Svelte Sirens Stream Design Systems: Lessons Learned](https://www.youtube.com/live/YHZaiIGSqsE?feature=share) featuring Eric Liu creator of Carbon Components Svelte and Svelde the docgen library
 - This Week in Svelte:
   - [2023 June 30](https://www.youtube.com/watch?v=sDz4_BLoYQ4) - Svelte 4.0.1, SK 1.21, lists, screen readers, loading
   - [2023 July 7](https://www.youtube.com/watch?v=0tq1ph4DDFA) - Svelte 4.0.5, Kit 1.22.1, Svelte 5, local storage and markdown
   - [2023 July 21](https://www.youtube.com/watch?v=AG4_3kon3zU) - Svelte 4.1.1, SvelteKit 1.22.3, Progressive enhancement
 
 
-_To Watch_
+_To Watch/Hear_
+- [What is The Transitional Web? with Chris Ferdinandi](https://www.smashingmagazine.com/2023/07/smashing-podcast-episode-63/?ref=dailydevbytes.com) by Smashing Podcast
 - [SvelteKit in 100 seconds](https://www.youtube.com/watch?v=H1eEFfAkIik) by Fireship
 - [Primo V2 Introduction](https://www.youtube.com/watch?v=ThInVXgxJ1Q) by Primo (a [visual CMS](https://primocms.org/) based on Svelte)
 - [Understanding Svelte (vs React)](https://www.youtube.com/watch?v=lYYGhm7p74Q) by Kodaps Academy
