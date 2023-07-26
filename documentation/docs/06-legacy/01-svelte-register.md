@@ -2,9 +2,9 @@
 title: 'svelte/register'
 ---
 
-> This API is removed in Svelte 4. `require` hooks are deprecated and current Node versions understand ESM. Use a bundler like Vite or our full-stack framework [SvelteKit](https://kit.svelte.dev) instead to create JavaScript modules from Svelte components.
+> Cette <span class="vo">[API](/docs/development#api)</span> a été retirée de Svelte 4. La fonction `require` est maintenant dépréciée puisque les versions actuelles de Node comprennent le format ESM. Utilisez plutôt un <span class="vo">[bundler](/docs/web#bundler-packager)</span> comme Vite ou le <span class="vo">[framework](/docs/web#framework)</span> [SvelteKit](https://kit.svelte.dev) pour créer des modules JavaScript à partir de composants Svelte.
 
-To render Svelte components in Node.js without bundling, use `require('svelte/register')`. After that, you can use `require` to include any `.svelte` file.
+Pour rendre des composants Svelte en Node.js sans compilation, utilisez `require('svelte/register')`. Vous pourrez alors utiliser la fonction `require` pour inclure n'importe quel fichier `.svelte`.
 
 ```js
 // @noErrors
@@ -17,14 +17,14 @@ const App = require('./App.svelte').default;
 const { html, css, head } = App.render({ answer: 42 });
 ```
 
-> The `.default` is necessary because we're converting from native JavaScript modules to the CommonJS modules recognised by Node. Note that if your component imports JavaScript modules, they will fail to load in Node and you will need to use a bundler instead.
+> Le `.default` est nécessaire parce que nous convertissons des modules JavaScript natifs en modules CommonJS interprétés par Node. Notez cependant que si vos composent importent des modules JavaScript, ils ne réussirons pas à les charger avec Node et vous devrez utiliser un <span class="vo">[bundler](/docs/web#bundler-packager)</span>.
 
-To set compile options, or to use a custom file extension, call the `register` hook as a function:
+Pour définir des options de compilations ou utiliser une extension de fichier personnalisée, appelez le retour de la fonction `register()` comme une fonction :
 
 ```js
 // @noErrors
 require('svelte/register')({
-	extensions: ['.customextension'], // defaults to ['.html', '.svelte']
+	extensions: ['.customextension'], // par défaut ['.html', '.svelte']
 	preserveComments: true
 });
 ```
