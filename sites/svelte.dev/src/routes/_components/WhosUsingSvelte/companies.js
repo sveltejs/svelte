@@ -106,5 +106,12 @@ export const companies = [
 		alt: 'Transloadit',
 		width: 239,
 		height: 60
+	},
+	{
+		href: 'https://radiofrance.fr',
+		filename: 'radio-france.svg',
+		alt: 'Radiofrance',
+		width: 502,
+		height: 76
 	}
 ];
