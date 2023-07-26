@@ -26,7 +26,7 @@ function _distance(str1, str2) {
 	str1 = String(str1);
 	str2 = String(str2);
 	const distance = levenshtein(str1, str2);
-	return 1 - distance / Math.max(str1.length, str2.length)
+	return 1 - distance / Math.max(str1.length, str2.length);
 }
 
 // helper functions
