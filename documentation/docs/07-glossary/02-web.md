@@ -26,11 +26,13 @@ Les transformations classiques effectuées lors d'un _bundling_ sont :
 
 ## Client-side rendering
 
->> Bientôt
+> Bientôt
 
 ## DOM
 
-> Bientôt...
+Le _Document Object Model_ (DOM) est la représentation objet d'un document HTML chargé dans le navigateur web. Cette représentation du document permet de le voir comme un groupe structuré de nœuds et d'objets possédant différentes propriétés et méthodes. On parle souvent d'"arbre DOM".
+
+Le DOM relie les pages web aux scripts, fichiers de styles, ressources externes ou langages de programmation. Il peut être manipulé à l'aide du JavaScript.
 
 ## Framework
 
@@ -66,7 +68,15 @@ Les transformations classiques effectuées lors d'un _bundling_ sont :
 
 ## Server-side rendering
 
-> Bientôt...
+Le rendu côté serveur, ou _server-side rendering_ (SSR) est l'action de générer une page web avec tout ou partie des données métier directement sur le serveur. Il est à mettre en opposition avec le <span class='vo'>[rendu côté client](#client-side-rendering)</span>, ou _client-side rendering_, où les pages viennent charger la logique dans un premier temps et les données métiers avec des requêtes supplémentaires, ce qui implique de construire une grande partie de la page dans le navigateur.
+
+Le SSR a pour avantages :
+
+- une exécution plus rapide car nécessitant moins de requêtes
+- le fait de pouvoir générer l'entièreté d'une page à la première requête, ce qui permet d'afficher une page même si JavaScript n'est pas disponible côté client
+- bénéficie d'un meilleur référencement SEO, car les balises de référencement sont générées côté serveur et disponibles pour les outils d'indexation
+
+SvelteKit propose le SSR par défaut, qui peut être désactivé au cas par cas.
 
 ## Web component
 
