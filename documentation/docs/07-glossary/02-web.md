@@ -8,6 +8,10 @@ Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est q
 
 > Cette section de glossaire est spécifique à la documentation française de Svelte, et n'existe pas dans la documentation officielle.
 
+## ARIA
+
+> Bientôt...
+
 ## Bundler / Packager
 
 Un _bundler_ (ou _packager_) est un outil de développement qui permet à une application web répartie sur plusieurs fichiers sources d'être ramenée à un nombre réduit de fichiers (voir en un unique fichier).
@@ -35,6 +39,10 @@ Le _Document Object Model_ (DOM) est la représentation objet d'un document HTML
 Le DOM relie les pages web aux scripts, fichiers de styles, ressources externes ou langages de programmation. Il peut être manipulé à l'aide du JavaScript.
 
 ## Framework
+
+> Bientôt...
+
+## Hot Module Reloading
 
 > Bientôt...
 
