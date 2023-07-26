@@ -96,15 +96,9 @@ Les événements peuvent être typés avec `createEventDispatcher` :
 	import { createEventDispatcher } from 'svelte';
 
 	const dispatch = createEventDispatcher<{
-<<<<<<< HEAD
-		event: null; // does not accept a payload
-		click: string; // has a required string payload
-		type: string | null; // has an optional string payload
-=======
 		event: null; // n'accepte pas d'argument
-		type: string; // contient obligatoirement une string
-		click: string | null; // peut contenir une string ou être non défini
->>>>>>> b73f8e84a (translate doc 05-misc (#35))
+		click: string; // contient obligatoirement une string
+		type: string | null; // peut contenir une string ou être non défini
 	}>();
 
 	function handleClick() {
@@ -123,7 +117,7 @@ Les événements peuvent être typés avec `createEventDispatcher` :
 
 ## Surcharge des types de DOM natifs
 
-Svelte fournit des types aussi proche que possible pour chaque élément HTML du <span class="vo">[DOM](/docs/web#dom)</span> qui existe. Parfois, vous voudrez utiliser des attributs expérimentaux ou des événements personnalisés. Dans ces cas, TypeScript lèvera une erreur de type, en indiquant qu'il ne connaît pas ces types. S'il s'agit d'un attribut ou événement standard et non expérimental, il se peut tout à fait que ce soit un type manquant dans [le typage HTML de Svelte](https://github.com/sveltejs/svelte/blob/master/elements/index.d.ts). Dans ce cas, vous êtes invité•e à ouvrir une <span class="vo">[issue](/docs/development#issue)</span> ou une <span class="vo">[PR](/docs/development#pull-request)</span> pour le corriger.
+Svelte fournit des types aussi proche que possible pour chaque élément HTML du <span class="vo">[DOM](/docs/web#dom)</span> qui existe. Parfois, vous voudrez utiliser des attributs expérimentaux ou des événements personnalisés. Dans ces cas, TypeScript lèvera une erreur de type, en indiquant qu'il ne connaît pas ces types. S'il s'agit d'un attribut ou événement standard et non expérimental, il se peut tout à fait que ce soit un type manquant dans [le typage HTML de Svelte](https://github.com/sveltejs/svelte/blob/master/packages/svelte/elements.d.ts). Dans ce cas, vous êtes invité•e à ouvrir une <span class="vo">[issue](/docs/development#issue)</span> ou une <span class="vo">[PR](/docs/development#pull-request)</span> pour le corriger.
 
 S'il s'agit d'un attribut ou d'un événement expérimental ou personnalisé, vous pouvez étendre le typage comme suit :
 
