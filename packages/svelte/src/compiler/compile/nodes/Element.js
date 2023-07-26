@@ -530,7 +530,6 @@ export default class Element extends Node {
 				this.name === 'option' ||
 				this.is_dynamic_element ||
 				this.tag_expr.dynamic_dependencies().length ||
-				this.is_dynamic_element ||
 				component.compile_options.dev
 			) {
 				this.parent.cannot_use_innerhtml(); // need to use add_location
