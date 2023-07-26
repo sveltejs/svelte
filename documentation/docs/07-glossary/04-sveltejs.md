@@ -57,7 +57,10 @@ Un _store_ est un concept au sein de Svelte qui permet de stocker une valeur, et
 
 Plus d'infos sur [les stores Svelte dans la documentation](/docs/svelte-store).
 
-## Tick
+## Svelte Language Server
 
 > Bientôt...
 
+## Tick
+
+> Bientôt...

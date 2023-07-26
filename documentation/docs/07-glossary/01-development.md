@@ -41,6 +41,10 @@ function chargeLaDonnée(callback: () => void) {
 chargeLaDonnée(afficheCoucou);
 ```
 
+## End to end
+
+> Bientôt...
+
 ## Getter / Setter
 
 Un _getter_ est une fonction qui permet de lire une valeur.
@@ -81,6 +85,10 @@ Vous trouverez plus de détails sur les [getters](https://developer.mozilla.org/
 > Bientôt...
 
 ## Issue
+
+> Bientôt...
+
+## Log
 
 > Bientôt...
 
