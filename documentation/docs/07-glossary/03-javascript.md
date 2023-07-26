@@ -98,7 +98,30 @@ Plus d'infos sur les valeurs _truthy_ sur [le site de MDN](https://developer.moz
 
 ## Inline
 
-> Bientôt...
+L'adjectif _inline_ désigne le fait de définir du style, une condition, une fonction ou un composant sur une seule ligne. Toutes ces fonctionnalités ne sont pas permises nativement en Javascript. Certaines sont apportées par les frameworks de développement, comme Svelte.
+
+Exemples :
+
+```ts
+// @noErrors
+// fonction inline
+const saluer = (nom: string) => console.log(`Salut ${nom} !`)
+
+function saluer(nom: string) {
+	// condition inline
+	if (!nom) return;
+
+	// traitement
+}
+```
+
+```svelte
+<!-- style inline en HTML ou en Svelte -->
+<div style="margin: 8px;"/>
+
+<!-- autre manière d'écrire du style inline en Svelte -->
+<div style:margin="8px"/>
+```
 
 ## Nullish
 
