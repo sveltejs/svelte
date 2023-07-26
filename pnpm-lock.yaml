@@ -127,8 +127,8 @@ importers:
         specifier: ^9.20.3
         version: 9.20.3
       jsdom:
-        specifier: ^22.1.0
-        version: 22.1.0
+        specifier: ^22.0.0
+        version: 22.0.0
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
@@ -146,7 +146,7 @@ importers:
         version: 5.1.3
       vitest:
         specifier: ^0.33.0
-        version: 0.33.0(happy-dom@9.20.3)(jsdom@22.1.0)(playwright@1.35.1)
+        version: 0.33.0(happy-dom@9.20.3)(jsdom@22.0.0)(playwright@1.35.1)
 
   sites/svelte.dev:
     dependencies:
@@ -4345,8 +4345,8 @@ packages:
       argparse: 2.0.1
     dev: true
 
-  /jsdom@22.1.0:
-    resolution: {integrity: sha512-/9AVW7xNbsBv6GfWho4TTNjEo9fe6Zhf9O7s0Fhhr3u+awPwAJMKwAMXnkk5vBxflqLW9hTHX/0cs+P3gW+cQw==}
+  /jsdom@22.0.0:
+    resolution: {integrity: sha512-p5ZTEb5h+O+iU02t0GfEjAnkdYPrQSkfuTSMkMYyIoMvUNEHsbG0bHHbfXIcfTqD2UfvjQX7mmgiFsyRwGscVw==}
     engines: {node: '>=16'}
     peerDependencies:
       canvas: ^2.5.0
@@ -6535,7 +6535,7 @@ packages:
     dependencies:
       vite: 4.4.3(@types/node@20.3.3)(lightningcss@1.21.5)(sass@1.63.6)
 
-  /vitest@0.33.0(happy-dom@9.20.3)(jsdom@22.1.0)(playwright@1.35.1):
+  /vitest@0.33.0(happy-dom@9.20.3)(jsdom@22.0.0)(playwright@1.35.1):
     resolution: {integrity: sha512-1CxaugJ50xskkQ0e969R/hW47za4YXDUfWJDxip1hwbnhUjYolpfUn2AMOulqG/Dtd9WYAtkHmM/m3yKVrEejQ==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -6580,7 +6580,7 @@ packages:
       chai: 4.3.7
       debug: 4.3.4
       happy-dom: 9.20.3
-      jsdom: 22.1.0
+      jsdom: 22.0.0
       local-pkg: 0.4.3
       magic-string: 0.30.1
       pathe: 1.1.1
