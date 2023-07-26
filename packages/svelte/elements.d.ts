@@ -1451,6 +1451,9 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	yChannelSelector?: string | undefined | null;
 	z?: number | string | undefined | null;
 	zoomAndPan?: string | undefined | null;
+
+ 	// allow any data- attribute
+	[key: `data-${string}`]: any;
 }
 
 export interface HTMLWebViewAttributes extends HTMLAttributes<HTMLElement> {
