@@ -85,7 +85,7 @@ An element or component can have multiple spread attributes, interspersed with r
 <Widget {...things} />
 ```
 
-`$$props` references all props that are passed to a component, including ones that are not declared with `export`. Usage of `$props` will not perform as well as references to a specific prop because changes to any prop will cause Svelte to recheck all usages `$$props`. But it can be useful in some cases – for example, when you don't know at compile time what props might be passed to a component.
+`$$props` references all props that are passed to a component, including ones that are not declared with `export`. Using `$$props` will not perform as well as references to a specific prop because changes to any prop will cause Svelte to recheck all usages of `$$props`. But it can be useful in some cases – for example, when you don't know at compile time what props might be passed to a component.
 
 ```svelte
 <Widget {...$$props} />
