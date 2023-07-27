@@ -24,9 +24,10 @@
 <div class="text" id="docs-content">
 	<a
 		class="edit"
-		href="https://github.com/sveltejs/svelte/edit/master/documentation/docs/{data.page.file}"
+		href="https://github.com/Svelte-Society-Fr/svelte/edit/french/documentation/docs/{data.page
+			.file}"
 	>
-		<Icon size={50} name="edit" /> Edit this page on GitHub
+		<Icon size={50} name="edit" /> Modifier cette page sur Github
 	</a>
 
 	<DocsOnThisPage details={data.page} />
@@ -36,7 +37,7 @@
 
 <div class="controls">
 	<div>
-		<span class:faded={!prev}>previous</span>
+		<span class:faded={!prev}>précédent</span>
 
 		{#if prev}
 			<a href={prev.path}>{prev.title}</a>
@@ -44,7 +45,7 @@
 	</div>
 
 	<div>
-		<span class:faded={!next}>next</span>
+		<span class:faded={!next}>suivant</span>
 		{#if next}
 			<a href={next.path}>{next.title}</a>
 		{/if}
