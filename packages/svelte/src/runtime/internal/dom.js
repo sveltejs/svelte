@@ -361,58 +361,76 @@ export function listen(node, event, handler, options) {
 }
 
 /**
- * @returns {(event: any) => any} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => T}
+ */
 export function prevent_default(fn) {
+	/** @this HTMLElement */
 	return function (event) {
 		event.preventDefault();
-		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
 /**
- * @returns {(event: any) => any} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => T}
+ */
 export function stop_propagation(fn) {
+	/** @this HTMLElement */
 	return function (event) {
 		event.stopPropagation();
-		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
 /**
- * @returns {(event: any) => any} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => T}
+ */
 export function stop_immediate_propagation(fn) {
+	/** @this HTMLElement */
 	return function (event) {
 		event.stopImmediatePropagation();
-		// @ts-ignore
 		return fn.call(this, event);
 	};
 }
 
 /**
- * @returns {(event: any) => void} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => void}
+ */
 export function self(fn) {
+	/** @this HTMLElement */
 	return function (event) {
-		// @ts-ignore
 		if (event.target === this) fn.call(this, event);
 	};
 }
 
 /**
- * @returns {(event: any) => void} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => void}
+ */
 export function nonself(fn) {
+	/** @this HTMLElement */
 	return function (event) {
-		// @ts-ignore
 		if (event.target !== event.currentTarget) fn.call(this, event);
 	};
 }
 
 /**
- * @returns {(event: any) => void} */
+ * @template T
+ * @param {(event: Event) => T} fn
+ * @returns {(event: Event) => void}
+ */
 export function trusted(fn) {
+	/** @this HTMLElement */
 	return function (event) {
-		// @ts-ignore
 		if (event.isTrusted) fn.call(this, event);
 	};
 }
@@ -427,6 +445,7 @@ export function attr(node, attribute, value) {
 	if (value == null) node.removeAttribute(attribute);
 	else if (node.getAttribute(attribute) !== value) node.setAttribute(attribute, value);
 }
+
 /**
  * List of attributes that should always be set through the attr method,
  * because updating them through the property setter doesn't work reliably.
