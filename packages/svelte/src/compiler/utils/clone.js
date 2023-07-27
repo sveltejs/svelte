@@ -12,7 +12,7 @@ export function clone(val) {
 		return out;
 	}
 
-	if (Object.prototype.toString.call(val) === '[object Object]') {
+	if (val?.constructor === Object) {
 		out = {}; // null
 		for (k in val) {
 			if (k === '__proto__') {
