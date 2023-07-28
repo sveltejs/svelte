@@ -1413,7 +1413,9 @@ const regex_minus_sign = /-/;
 function within_custom_element(parent) {
 	while (parent) {
 		if (parent.type === 'InlineComponent') return false;
-		if (parent.type === 'Element' && regex_minus_sign.test(parent.name)) return true;
+		if (parent.type === 'Element') {
+			if (regex_minus_sign.test(parent.name) || parent.is_dynamic_element) return true;
+		}
 		parent = parent.parent;
 	}
 	return false;
