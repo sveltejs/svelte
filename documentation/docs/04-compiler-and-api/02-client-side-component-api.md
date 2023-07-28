@@ -178,16 +178,19 @@ import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 declare global {
 	class Component extends SvelteComponent {}
 	var component: Component;
+	var run_outro: boolean;
 }
 
 export {}
 
 // @filename: index.ts
 // ---cut---
-component.$destroy();
+component.$destroy(run_outro);
 ```
 
 Removes a component from the DOM and triggers any `onDestroy` handlers.
+
+If `run_outro` is `true`, any outro transitions will play before the component is destroyed.
 
 ## Component props
 

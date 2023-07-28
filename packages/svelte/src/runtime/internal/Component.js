@@ -17,7 +17,7 @@ import {
 	element,
 	attr
 } from './dom.js';
-import { transition_in } from './transitions.js';
+import { check_outros, group_outros, transition_in, transition_out } from './transitions.js';
 
 /** @returns {void} */
 export function bind(component, name, callback) {
@@ -455,10 +455,22 @@ export class SvelteComponent {
 	 */
 	$$set = undefined;
 
-	/** @returns {void} */
-	$destroy() {
-		destroy_component(this, 1);
-		this.$destroy = noop;
+	/**
+	 * @param {boolean} [run_outro]
+	 * @returns {void}
+	 */
+	$destroy(run_outro) {
+		if (run_outro && this.$$.fragment && this.$$.fragment.o) {
+			group_outros();
+			transition_out(this.$$.fragment, 0, 0, () => {
+				destroy_component(this, 1);
+				this.$destroy = noop;
+			});
+			check_outros();
+		} else {
+			destroy_component(this, 1);
+			this.$destroy = noop;
+		}
 	}
 
 	/**
