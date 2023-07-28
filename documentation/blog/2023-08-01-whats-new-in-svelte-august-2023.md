@@ -35,10 +35,10 @@ For all the patches and performance updates from this month, check out the [Svel
 - [Soggy Planet](https://www.cosmicplayground.org/soggy-planet) is an interactive map of Earth where sea levels rise and fall and the lights of civilization shine through the night ([Source](https://github.com/ryanatkn/cosmicplayground))
 - [PaperClip](https://www.paperclipapp.xyz/) is a Chrome extension that makes it easy to memorize details from papers in machine learning, computer vision, and natural language processing.
 - [Maktaba](https://www.maktaba.digital/) is a bookmark manager that "you will actually use"
-- [Whispering](https://github.com/braden-w/whispering-extension) is a Chrome extension that lest you access OpenAI's Whisper API for fast transcription in the browser (including ChatGPT)
+- [Whispering](https://github.com/braden-w/whispering-extension) is a Chrome extension that lets you access OpenAI's Whisper API for fast transcription in the browser (including ChatGPT)
 - [DocuTalk](https://docutalk.co/) is an AI Customer Support chatbot for your website
 - [Krello](https://github.com/iamrishupatel/trello-clone) is a Trello clone built with Svelte, Appwrite and Flowbite 
-- [Been](https://beeneverywhere.net/) is a map builder with travel stats like visited countries, extreme visited points etc.
+- [Been](https://beeneverywhere.net/) is a map builder with travel stats like visited countries, extreme visited points, etc.
 - [image-to-social-media-thumbnail](https://brody.fyi/tools/image-to-social-media-thumbnail) lets you convert any image to a social media thumbnail
 - [Svelte Capacitor Store](https://github.com/sdekna/svelte-capacitor-store) is a persistent store that uses capacitor (preferences) storage on native devices, and localStorage otherwise, making it ideal for multi-platform projects
 
