@@ -53,7 +53,7 @@ Référez-vous à la section [CompilerResult](#types-compileresult) pour une des
 
 > EXPORT_SNIPPET: svelte/compiler#parse
 
-La méthode `parse` convertit un composant pour retourner son arbre syntaxique abstrait (<span class="vo">[AST](/docs/development#ast)</span>). Contrairement à la compilation avec l'option `generate: false`, aucune validation ni analyse n'est effectuée. Notez que l'AST n'est pas considéré comme une <span class="vo">[API](/docs/development#api)</span> publique ; des changements critiques pourraient survenir à n'importe quel moment.
+La méthode `parse` convertit un composant pour retourner son arbre de la syntaxe abstraite (<span class="vo">[AST](/docs/development#ast)</span>). Contrairement à la compilation avec l'option `generate: false`, aucune validation ni analyse n'est effectuée. Notez que l'AST n'est pas considéré comme une <span class="vo">[API](/docs/development#api)</span> publique ; des changements critiques pourraient survenir à n'importe quel moment.
 
 ```js
 // @filename: ambient.d.ts

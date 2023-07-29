@@ -2,7 +2,7 @@
 title: 'Développement'
 ---
 
-Voici quelques informations sur les angliscismes usuels utilisés dans un contexte de développement informatique.
+Voici quelques informations sur les anglicismes usuels utilisés dans un contexte de développement informatique.
 
 Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est que très rarement utilisée. Nous préférons donc laisser leur version anglaise dans la documentation pour rester au plus près de l'usage courant.
 
@@ -10,11 +10,17 @@ Ces mots n'ont pas de réelle traduction en français, ou alors celle-ci n'est q
 
 ## API
 
-> Bientôt...
+Une API est une interface de programmation d'application. Il s'agit d'un ensemble de **points d'accès** publics ou privés basés sur le protocol HTTP et qui répondent des données, généralement exprimé en JSON.
+
+Une API peut suivre une architecture logicielle particulière. Les plus connues sont le REST (_Representational State Transfer_) ou le GraphQL (_Graph Query Language_).
+
+Dans le cadre de SvelteKit, il est possible de [définir une API publique](https://kit.svelte.dev/docs/routing#server) en définissant un fichier `+server.js` dans le dossier `routes`.
 
 ## AST
 
-> Bientôt...
+Un arbre de la syntaxe abstraite (_Abstract Syntax Tree_ ou _AST_) est un format de représentation de certains données sous forme d'arbre dont les nœuds internes et les feuilles (ou nœuds externes) possèdent des caractéristiques particulières.
+
+Svelte utilise le format _AST_ comme intermédiaire entre un composant Svelte et le code JavaScript natif interprété par le navigateur web.
 
 ## Build
 
@@ -43,7 +49,11 @@ chargeLaDonnée(afficheCoucou);
 
 ## End to end
 
-> Bientôt...
+L'adjectif bout en bout (_end to end_) s'applique à un processus qui soit complet (en opposition avec un processus unitaire).
+
+Il s'applique généralement aux tests _end to end_ qui permettent de tester l'ensemble de l'application (IHM et serveur) sans simuler tout ou partie du système.
+
+Dans le cadre de SvelteKit, il fait également référence au typage _end to end_, permettant de récupérer les types des données retournées par les méthodes `load()` des `layout` et des `routes` dans la variable `data` de la route correspondante.
 
 ## Getter / Setter
 
@@ -74,15 +84,17 @@ Vous trouverez plus de détails sur les [getters](https://developer.mozilla.org/
 
 ## Hash
 
-> Bientôt...
+Un _hash_ est le résultat d'une fonction de hachage (ou _hashing_). Une fonction de hachage est une fonction qui associe des valeurs de taille fixe à des données de taille arbitraire. Les _hash_ ont la particularité d'être statistiquement uniques, leur permettant d'être utilisés dans des applications d'indexation (pour une donnée, un hash unique est calculé et est stockée dans une table d'indexation).
+
+Dans le cadre de Svelte, les _hash_ sont utilisés pour générer les noms de classes CSS.
 
 ## IDE
 
-> Bientôt...
+Un environnement de développement intégré (_Integrated Development Environment) est un logiciel intégrant plusieurs outils facilitant le développement informatique. Parmi les plus célèbres dans le monde web: VSCode et WebStorm.
 
 ## Intellisense
 
-> Bientôt...
+Le terme _intelliSense_ fait référence à des aides à la saisie semi-automatique de code qui comprend un certain nombre de fonctionnalités : autocomplétion, liste des propriétés, etc. Ces outils peuvent être intégré aux <span class="vo">[IDE](/docs/development#ide)</span> ou ajouté via des <span class="vo">[plugins](/docs/development#plugin)</span>. Il sont dépendants du langage de programmation et peuvent souvent être fortement configurés.
 
 ## Issue
 
