@@ -72,13 +72,12 @@
 	}
 
 	:global(.text .vo a) {
-		color: unset;
+		color: var(--sk-text-1);
 		box-shadow: inset 0 -1px 0 0 var(--sk-text-4);
-		transition: box-shadow 0.1s ease-in-out, font-weight 0.1s ease-in-out;
+		transition: color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 	}
 
 	:global(.text .vo a:hover) {
-		color: white;
-		box-shadow: inset 0 -1px 0 0 white;
+		color: var(--sk-text-3);
 	}
 </style>
