@@ -39,17 +39,31 @@ De la même manière, il est possible de _binder_ des propriétés d'un composan
 
 Il est également possible de _binder_ des propriétés de certains éléments du <span class='vo'>[DOM](/docs/web#dom)</span> (les éléments de type bloc, les images, les vidéo, window via `svelte:window` et document via `svelte:document`).
 
-## Hook
-
-> Bientôt...
-
 ## Props
 
-> Bientôt...
+Les _props_ ou propriétés sont les valeurs passées aux composants. Les props sont définies avec le mot clé `export` au sein du `script` des composants :
+
+```sv
+<script>
+    export let value;
+</script>
+```
+
+Elles sont passées au composant de la même manière qu'un attribut HTML :
+
+```svelte
+<Widget value="salut" />
+```
+
+Plus d'infos sur les [props dans la documentation](/docs/basic-markup#attributs-et-props).
+
+> Le concept de props est exactement le même en Svelte qu'en React, Vue ou Solid.
 
 ## Slot
 
-> Bientôt...
+Un _slot_ correspond au contenu enfant d'un composant. Il est possible d'y accéder dans le markup via `<slot>` ou dans le bloc `script` via la variable globale `$$slots`. 
+
+Plus d'infos sur [les slots dans la documentation](/docs/special-elements#slot).
 
 ## Store
 
@@ -57,10 +71,10 @@ Un _store_ est un concept au sein de Svelte qui permet de stocker une valeur, et
 
 Plus d'infos sur [les stores Svelte dans la documentation](/docs/svelte-store).
 
-## Svelte Language Server
-
-> Bientôt...
-
 ## Tick
 
-> Bientôt...
+De manière générale, un _tick_ peut faire référence à une période de temps unitaire. 
+
+Dans le cadre de Svelte, la méthode _tick_ définit est une promesse qui se résout une fois que tous les changements d'état en attente ont été appliqués, ou dans la micro-tâche suivante s'il n'y en a pas.
+
+Plus d'infos sur [les ticks Svelte dans la documentation](/docs/svelte#tick).

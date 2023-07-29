@@ -30,7 +30,7 @@ Vous pouvez utiliser Prettier avec le <span class="vo">[plugin](/docs/developmen
 
 ## Comment documenter mes composants ?
 
-Dans les éditeurs qui utilisent le <span class="vo">[Svelte Language Server](/docs/sveltejs#svelte-language-server)</span> vous pouvez documenter les composants, fonctions et exports à l'aide de commentaires spécialement formatés.
+Dans les éditeurs qui utilisent le <span class="vo">[Language Server](/docs/web#language-server)</span> Svelte ([svelte-language-server](https://www.npmjs.com/package/svelte-language-server)), vous pouvez documenter les composants, fonctions et exports à l'aide de commentaires spécialement formatés.
 
 ```svelte
 <script>

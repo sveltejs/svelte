@@ -98,7 +98,17 @@ Plus d'infos sur les valeurs _truthy_ sur [le site de MDN](https://developer.moz
 
 ## Generic
 
-> Bientôt...
+Un _generic_ est une notion en TypeScript qui permet de définir une variable au sein d'un type. Il a pour fonctionnalité première de permettre de propager un type au sein d'une méthode lorsque le type est variable. L'exemple le plus simple est la fonction identité :
+
+```typescript
+function identity<Type>(arg: Type): Type {
+	return arg;
+}
+```
+
+Dans ce cas précis, le paramètre `arg` pourra être de n'importe quel type, représenté par le _generic_ `Type`. Le retour de la méthode aura le même type que le paramètre.
+
+Plus d'infos sur les [generics sur le site TypeScript](https://www.typescriptlang.org/docs/handbook/2/generics.html).
 
 ## Inline
 
@@ -137,9 +147,12 @@ Pour en savoir plus sur la différence entre `null` et `undefined`, vous pouvez 
 
 ## Polyfill
 
-> Bientôt...
+Un _polyfill_ est un bout de code (généralement en JavaScript sur le web) utilisé pour fournir des fonctionnalités récentes sur d'anciens navigateurs qui ne les supportent pas nativement.
 
+Plus d'infos sur les [polyfills sur le site MDN](https://developer.mozilla.org/fr/docs/Glossary/Polyfill).
 
 ## Shadow DOM
 
-> Bientôt...
+Un _shadow DOM_ (ou DOM fantôme) est un <span class='vo'>[DOM](/docs/web#dom)</span> dans le DOM. Il est monté via la méthode `element.attachShadow()` et a pour particularité d'être encapsulé, c'est-à-dire que sa structure de balisage est isolée, que son style est isolé et que son comportement est caché et séparé du reste de code de la page.
+
+Plus d'infos sur le [shadow DOM sur le site MDN](https://developer.mozilla.org/fr/docs/Web/API/Web_components/Using_shadow_DOM).
