@@ -1,23 +1,23 @@
 import {
-	attr,
+	add_render_callback,
+	flush,
+	flush_render_callbacks,
+	schedule_update,
+	dirty_components
+} from './scheduler.js';
+import { current_component, set_current_component } from './lifecycle.js';
+import { blank_object, is_empty, is_function, run, run_all, noop } from './utils.js';
+import {
 	children,
 	detach,
-	element,
+	start_hydrating,
 	end_hydrating,
 	get_custom_elements_slots,
 	insert,
-	start_hydrating
+	element,
+	attr
 } from './dom.js';
-import { current_component, set_current_component } from './lifecycle.js';
-import {
-	add_render_callback,
-	dirty_components,
-	flush,
-	flush_render_callbacks,
-	schedule_update
-} from './scheduler.js';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions.js';
-import { blank_object, is_empty, is_function, noop, run, run_all } from './utils.js';
 
 /** @returns {void} */
 export function bind(component, name, callback) {
