@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: August 2023"
-description: "Extending Custom Elements with CSS and new +server customizations"
+description: "Extending Custom Element Classes and new +server exports"
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -12,14 +12,14 @@ More on all that down below...
 ## What's new in Svelte & Language Tools
 There's been a bunch of minor bugfixes since the Svelte 4 release. You can find them in the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
-The **4.1.0 release** added the ability to extend custom element classes. Check out the [Custom Elements API docs](https://svelte.dev/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
+The **4.1.0 release** added the ability to further customize the custom element class that wraps the underlying Svelte component. Check out the [Custom Elements API docs](https://svelte.dev/docs/custom-elements-api) or the [PR](https://github.com/sveltejs/svelte/pull/8991) for more info!
 
 In addition to supporting SvelteKit's new `HEAD` server method, Svelte's language tools now support Prettier v3 (**extensions-107.9.0**) and workspace trust settings are now used to support all settings in workspace (**extensions-107.8.0**).
 
 ## What's new in SvelteKit
 - The `HEAD` server method is now available in API routes (**1.22.0**, [Docs](https://kit.svelte.dev/docs/routing#server), [#9753](https://github.com/sveltejs/kit/pull/9753))
-- Responses can now be cached with `Vary` header (except for `Vary: *`) (**1.22.0**, [Docs](https://kit.svelte.dev/docs/routing#server-content-negotiation), [#9993](https://github.com/sveltejs/kit/pull/9993))
-- There's now a more helpful error for preview if kit's build output doesn't exist (**1.22.2**, [#10337](https://github.com/sveltejs/kit/pull/10337))
+- Responses with `Vary` headers are now cached, too (except for `Vary: *`) (**1.22.0**, [Docs](https://kit.svelte.dev/docs/routing#server-content-negotiation), [#9993](https://github.com/sveltejs/kit/pull/9993))
+- There's now a more helpful error for preview if SvelteKit's build output doesn't exist (**1.22.2**, [#10337](https://github.com/sveltejs/kit/pull/10337))
 
 For all the patches and performance updates from this month, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
