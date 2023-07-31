@@ -178,7 +178,7 @@ import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 declare global {
 	class Component extends SvelteComponent {}
 	var component: Component;
-	var options: { runOutro: boolean };
+	var options: { runOutro: boolean } | undefined;
 }
 
 export {}
