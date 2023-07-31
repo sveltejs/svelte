@@ -3,7 +3,7 @@ export default {
 	skip_if_hydrate: true,
 	skip_if_hydrate_from_ssr: true,
 	test({ assert, component, target, raf }) {
-		component.$destroy(true);
+		component.$destroy({ runOutro: true });
 
 		return Promise.resolve().then(() => {
 			const div = target.querySelector('div');

@@ -1,23 +1,23 @@
 import {
-	add_render_callback,
-	flush,
-	flush_render_callbacks,
-	schedule_update,
-	dirty_components
-} from './scheduler.js';
-import { current_component, set_current_component } from './lifecycle.js';
-import { blank_object, is_empty, is_function, run, run_all, noop } from './utils.js';
-import {
+	attr,
 	children,
 	detach,
-	start_hydrating,
+	element,
 	end_hydrating,
 	get_custom_elements_slots,
 	insert,
-	element,
-	attr
+	start_hydrating
 } from './dom.js';
+import { current_component, set_current_component } from './lifecycle.js';
+import {
+	add_render_callback,
+	dirty_components,
+	flush,
+	flush_render_callbacks,
+	schedule_update
+} from './scheduler.js';
 import { check_outros, group_outros, transition_in, transition_out } from './transitions.js';
+import { blank_object, is_empty, is_function, noop, run, run_all } from './utils.js';
 
 /** @returns {void} */
 export function bind(component, name, callback) {
@@ -456,11 +456,11 @@ export class SvelteComponent {
 	$$set = undefined;
 
 	/**
-	 * @param {boolean} [run_outro]
+	 * @param {import('./private.js').ComponentDestroyOptions} [options]
 	 * @returns {void}
 	 */
-	$destroy(run_outro) {
-		if (run_outro && this.$$.fragment && this.$$.fragment.o) {
+	$destroy(options) {
+		if (options?.runOutro && this.$$.fragment && this.$$.fragment.o) {
 			group_outros();
 			transition_out(this.$$.fragment, 0, 0, () => {
 				destroy_component(this, 1);

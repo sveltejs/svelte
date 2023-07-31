@@ -75,6 +75,10 @@ export interface StyleInformation {
 	rules: Record<string, true>;
 }
 
+export interface ComponentDestroyOptions {
+	runOutro?: boolean;
+}
+
 export type TaskCallback = (now: number) => boolean | void;
 
 export type TaskEntry = { c: TaskCallback; f: () => void };
