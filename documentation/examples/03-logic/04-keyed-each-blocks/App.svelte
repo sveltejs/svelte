@@ -14,20 +14,22 @@
 	}
 </script>
 
-<button on:click={handleClick}> Remove first thing </button>
+<button on:click={handleClick}>
+	Supprimer le premier élément
+</button>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 1em">
 	<div>
-		<h2>Keyed</h2>
+		<h2>Avec clé</h2>
 		{#each things as thing (thing.id)}
-			<Thing current={thing.color} />
+			<Thing current={thing.color}/>
 		{/each}
 	</div>
 
 	<div>
-		<h2>Unkeyed</h2>
+		<h2>Sans clé</h2>
 		{#each things as thing}
-			<Thing current={thing.color} />
+			<Thing current={thing.color}/>
 		{/each}
 	</div>
 </div>

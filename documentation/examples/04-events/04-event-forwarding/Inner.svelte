@@ -5,9 +5,9 @@
 
 	function sayHello() {
 		dispatch('message', {
-			text: 'Hello!'
+			text: 'Bonjour !',
 		});
 	}
 </script>
 
-<button on:click={sayHello}> Click to say hello </button>
+<button on:click={sayHello}> Cliquez pour dire bonjour ! </button>
