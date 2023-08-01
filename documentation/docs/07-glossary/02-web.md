@@ -68,6 +68,10 @@ Plus d'infos sur le [site de la documentation du LSP](https://microsoft.github.i
 
 > Bientôt...
 
+## MPA
+
+> Bientôt...
+
 ## Preprocessing
 
 > Bientôt...
@@ -91,6 +95,10 @@ Le SSR a pour avantages :
 - bénéficie d'un meilleur référencement SEO, car les balises de référencement sont générées côté serveur et disponibles pour les outils d'indexation
 
 SvelteKit propose le SSR par défaut, qui peut être désactivé au cas par cas.
+
+## SPA
+
+> Bientôt...
 
 ## Web component
 

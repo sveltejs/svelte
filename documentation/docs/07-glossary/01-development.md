@@ -47,6 +47,10 @@ function chargeLaDonnée(callback: () => void) {
 chargeLaDonnée(afficheCoucou);
 ```
 
+## CLI
+
+> Bientôt...
+
 ## End to end
 
 L'adjectif bout en bout (_end to end_) s'applique à un processus qui soit complet (en opposition avec un processus unitaire).
@@ -108,6 +112,10 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 > Bientôt...
 
+## Number
+
+> Bientôt...
+
 ## Parser
 
 > Bientôt...
@@ -137,6 +145,10 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 > Bientôt...
 
 ## Scope
+
+> Bientôt...
+
+## String
 
 > Bientôt...
 
