@@ -5,13 +5,13 @@
 </script>
 
 <svelte:head>
-	<title>Search • Svelte</title>
+	<title>Rechercher • Svelte</title>
 </svelte:head>
 
 <main>
-	<h1>Search</h1>
+	<h1>Rechercher</h1>
 	<form>
-		<input name="q" value={data.query} placeholder="Search" spellcheck="false" />
+		<input name="q" value={data.query} placeholder="Rechercher" spellcheck="false" />
 	</form>
 
 	<SearchResults results={data.results} query={data.query} />

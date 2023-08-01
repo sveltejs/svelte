@@ -12,15 +12,15 @@ const o = {
 
 export const ago = (nd, s) => {
 	var r = Math.round,
-		dir = ' ago',
+		dir = 'il y a ',
 		pl = function (v, n) {
-			return s === undefined ? n + ' ' + v + (n > 1 ? 's' : '') + dir : n + v.substring(0, 1);
+			return s === undefined ? dir + n + ' ' + v + (n > 1 ? 's' : '') : n + v.substring(0, 1);
 		},
 		ts = Date.now() - new Date(nd).getTime(),
 		ii;
 	if (ts < 0) {
 		ts *= -1;
-		dir = ' from now';
+		dir = 'dans ';
 	}
 	for (var i in o) {
 		if (r(ts) < o[i]) return pl(ii || 'm', r(ts / (o[ii] || 1)));

@@ -17,8 +17,8 @@
 	<title>{data.page?.title} • Docs • Svelte</title>
 
 	<meta name="twitter:title" content="{data.page.title} • Docs • Svelte" />
-	<meta name="twitter:description" content="{data.page.title} • Svelte documentation" />
-	<meta name="Description" content="{data.page.title} • Svelte documentation" />
+	<meta name="twitter:description" content="{data.page.title} • Documentation Svelte " />
+	<meta name="Description" content="{data.page.title} • Documentation Svelte" />
 </svelte:head>
 
 <div class="text" id="docs-content">

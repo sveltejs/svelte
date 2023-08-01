@@ -46,13 +46,13 @@ async function get_nav_list() {
 
 	return [
 		{
-			title: 'Docs',
+			title: 'Documentation',
 			prefix: 'docs',
 			pathname: '/docs/introduction',
 			sections: processed_docs_list
 		},
 		{
-			title: 'Examples',
+			title: 'Exemples',
 			prefix: 'examples',
 			pathname: '/examples',
 			sections: processed_examples_list

@@ -86,9 +86,6 @@ Un élément ou un composant peut avoir plusieurs attributs décomposés, parsem
 <Widget {...things} />
 ```
 
-`$$props` references all props that are passed to a component, including ones that are not declared with `export`. Using `$$props` will not perform as well as references to a specific prop because changes to any prop will cause Svelte to recheck all usages of `$$props`. But it can be useful in some cases – for example, when you don't know at compile time what props might be passed to a component.
-
-
 La variable `$$props` référence toutes les props qui sont fournies à un composant, y compris celles qui ne sont pas déclarées avec `export`. Utiliser `$$props` ne sera pas aussi performant qu'utiliser une <span class="vo">[prop](/docs/sveltejs#props)</span> spécifique directement car les changements de n'importe quelle prop vont déclencher une nouvelle vérification de toutes les occurences de `$$props`. Toutefois `$$props` peut être utile dans certains cas — par exemple, lorsque vous ne savez pas à la compilation quelles props peuvent être passées au composant.
 
 ```svelte
