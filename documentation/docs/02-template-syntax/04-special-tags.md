@@ -15,6 +15,7 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 > Svelte does not sanitize expressions before injecting HTML. If the data comes from an untrusted source, you must sanitize it, or you are exposing your users to an XSS vulnerability.
 
 ```svelte
+<!--- file: App.svelte --->
 <div class="blog-post">
 	<h1>{post.title}</h1>
 	{@html post.content}
@@ -34,6 +35,7 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the values of specific variables whenever they change, and pauses code execution if you have devtools open.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let user = {
 		firstname: 'Ada',
@@ -49,6 +51,7 @@ The `{@debug ...}` tag offers an alternative to `console.log(...)`. It logs the 
 `{@debug ...}` accepts a comma-separated list of variable names (not arbitrary expressions).
 
 ```svelte
+<!--- file: App.svelte --->
 <!-- Compiles -->
 {@debug user}
 {@debug user1, user2, user3}
@@ -71,6 +74,7 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 The `{@const ...}` tag defines a local constant.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let boxes;
 </script>

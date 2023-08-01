@@ -7,6 +7,7 @@ Components are the building blocks of Svelte applications. They are written into
 All three sections — script, styles and markup — are optional.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	// logic goes here
 </script>
@@ -27,6 +28,7 @@ A `<script>` block contains JavaScript that runs when a component instance is cr
 Svelte uses the `export` keyword to mark a variable declaration as a _property_ or _prop_, which means it becomes accessible to consumers of the component (see the section on [attributes and props](/docs/basic-markup#attributes-and-props) for more information).
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let foo;
 
@@ -41,6 +43,7 @@ You can specify a default initial value for a prop. It will be used if the compo
 In development mode (see the [compiler options](/docs/svelte-compiler#compile)), a warning will be printed if no default initial value is provided and the consumer does not specify a value. To squelch this warning, ensure that a default initial value is specified, even if it is `undefined`.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let bar = 'optional default initial value';
 	export let baz = undefined;
@@ -88,6 +91,7 @@ To change component state and trigger a re-render, just assign to a locally decl
 Update expressions (`count += 1`) and property assignments (`obj.x = y`) have the same effect.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let count = 0;
 
@@ -102,6 +106,7 @@ Update expressions (`count += 1`) and property assignments (`obj.x = y`) have th
 Because Svelte's reactivity is based on assignments, using array methods like `.push()` and `.splice()` won't automatically trigger updates. A subsequent assignment is required to trigger the update. This and more details can also be found in the [tutorial](https://learn.svelte.dev/tutorial/updating-arrays-and-objects).
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let arr = [0, 1];
 
@@ -118,6 +123,7 @@ Because Svelte's reactivity is based on assignments, using array methods like `.
 Svelte's `<script>` blocks are run only when the component is created, so assignments within a `<script>` block are not automatically run again when a prop updates. If you'd like to track changes to a prop, see the next example in the following section.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let person;
 	// this will only set `name` on component creation
@@ -131,6 +137,7 @@ Svelte's `<script>` blocks are run only when the component is created, so assign
 Any top-level statement (i.e. not inside a block or a function) can be made reactive by prefixing it with the `$:` [JS label syntax](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label). Reactive statements run after other script code and before the component markup is rendered, whenever the values that they depend on have changed.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	export let title;
 	export let person;
@@ -177,6 +184,7 @@ Total: {total}
 It is important to note that the reactive blocks are ordered via simple static analysis at compile time, and all the compiler looks at are the variables that are assigned to and used within the block itself, not in any functions called by them. This means that `yDependent` will not be updated when `x` is updated in the following example:
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let x = 0;
 	let y = 0;
@@ -221,6 +229,7 @@ Note that the store must be declared at the top level of the component — not i
 Local variables (that do not represent store values) must _not_ have a `$` prefix.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { writable } from 'svelte/store';
 
@@ -261,6 +270,7 @@ You cannot `export default`, since the default export is the component itself.
 > Variables defined in `module` scripts are not reactive — reassigning them will not trigger a rerender even though the variable itself will update. For values shared between multiple components, consider using a [store](/docs/svelte-store).
 
 ```svelte
+<!--- file: App.svelte --->
 <script context="module">
 	let totalComponents = 0;
 
@@ -284,6 +294,7 @@ CSS inside a `<style>` block will be scoped to that component.
 This works by adding a class to affected elements, which is based on a hash of the component styles (e.g. `svelte-123xyz`).
 
 ```svelte
+<!--- file: App.svelte --->
 <style>
 	p {
 		/* this will only affect <p> elements in this component */
@@ -295,6 +306,7 @@ This works by adding a class to affected elements, which is based on a hash of t
 To apply styles to a selector globally, use the `:global(...)` modifier.
 
 ```svelte
+<!--- file: App.svelte --->
 <style>
 	:global(body) {
 		/* this will apply to <body> */
@@ -324,6 +336,7 @@ If you want to make @keyframes that are accessible globally, you need to prepend
 The `-global-` part will be removed when compiled, and the keyframe then be referenced using just `my-animation-name` elsewhere in your code.
 
 ```svelte
+<!--- file: App.svelte --->
 <style>
 	@keyframes -global-my-animation-name {
 		/* code goes here */
@@ -338,6 +351,7 @@ However, it is possible to have `<style>` tag nested inside other elements or lo
 In that case, the `<style>` tag will be inserted as-is into the DOM, no scoping or processing will be done on the `<style>` tag.
 
 ```svelte
+<!--- file: App.svelte --->
 <div>
 	<style>
 		/* this style tag will be inserted as-is */

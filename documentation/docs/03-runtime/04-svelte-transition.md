@@ -31,6 +31,7 @@ Animates the opacity of an element from 0 to the current opacity for `in` transi
 You can see the `fade` transition in action in the [transition tutorial](https://learn.svelte.dev/tutorial/transition).
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { fade } from 'svelte/transition';
 </script>
@@ -67,6 +68,7 @@ Animates a `blur` filter alongside an element's opacity.
 - `amount` (`number | string`, default 5) - the size of the blur. Supports css units (for example: `"4rem"`). The default unit is `px`
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { blur } from 'svelte/transition';
 </script>
@@ -107,6 +109,7 @@ x and y use `px` by default but support css units, for example `x: '100vw'` or `
 You can see the `fly` transition in action in the [transition tutorial](https://learn.svelte.dev/tutorial/adding-parameters-to-transitions).
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { fly } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -148,6 +151,7 @@ Slides an element in and out.
 * `axis` (`x` | `y`, default `y`) — the axis of motion along which the transition occurs
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -187,6 +191,7 @@ Animates the opacity and scale of an element. `in` transitions animate from an e
 - `opacity` (`number`, default 0) - the opacity value to animate out to and in from
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { scale } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -227,6 +232,7 @@ Animates the stroke of an SVG element, like a snake in a tube. `in` transitions 
 The `speed` parameter is a means of setting the duration of the transition relative to the path's length. It is a modifier that is applied to the length of the path: `duration = length / speed`. A path that is 1000 pixels with a speed of 1 will have a duration of `1000ms`, setting the speed to `0.5` will double that duration and setting it to `2` will halve it.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { draw } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
@@ -260,6 +266,7 @@ The `crossfade` function creates a pair of [transitions](/docs/element-directive
 - `fallback` (`function`) — A fallback [transition](/docs/element-directives#transition-fn) to use for send when there is no matching element being received, and for receive when there is no element being sent.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { crossfade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';

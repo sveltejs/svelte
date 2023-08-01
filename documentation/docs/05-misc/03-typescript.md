@@ -50,6 +50,7 @@ If you're using tools like Rollup or Webpack instead, install their respective S
 To use TypeScript inside your Svelte components, add `lang="ts"` to your `script` tags:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	let name: string = 'world';
 
@@ -74,6 +75,7 @@ Props can be typed directly on the `export let` statement:
 Slot and slot prop types are inferred from the types of the slot props passed to them:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	export let name: string;
 </script>
@@ -92,6 +94,7 @@ Slot and slot prop types are inferred from the types of the slot props passed to
 Events can be typed with `createEventDispatcher`:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 
@@ -153,6 +156,7 @@ A few features are missing from taking full advantage of TypeScript in more adva
 You cannot use TypeScript in your template's markup. For example, the following does not work:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	let count = 10;
 </script>
@@ -169,6 +173,7 @@ You cannot use TypeScript in your template's markup. For example, the following 
 You cannot type your reactive declarations with TypeScript in the way you type a variable. For example, the following does not work:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	let count = 0;
 
@@ -179,6 +184,7 @@ You cannot type your reactive declarations with TypeScript in the way you type a
 You cannot add a `: TYPE` because it's invalid syntax in this position. Instead, you can move the definition to a `let` statement just above:
 
 ```svelte
+<!--- file: App.svelte --->
 <script lang="ts">
 	let count = 0;
 

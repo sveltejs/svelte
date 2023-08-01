@@ -35,6 +35,7 @@ Use the `on:` directive to listen to DOM events.
 Handlers can be declared inline with no performance penalty. As with attributes, directive values may be quoted for the sake of syntax highlighters.
 
 ```svelte
+<!--- file: App.svelte --->
 <button on:click={() => (count += 1)}>
 	count: {count}
 </button>
@@ -43,6 +44,7 @@ Handlers can be declared inline with no performance penalty. As with attributes,
 Add _modifiers_ to DOM events with the `|` character.
 
 ```svelte
+<!--- file: App.svelte --->
 <form on:submit|preventDefault={handleSubmit}>
 	<!-- the `submit` event's default is prevented,
 	     so the page won't reload -->
@@ -99,6 +101,7 @@ Data ordinarily flows down, from parent to child. The `bind:` directive allows d
 The simplest bindings reflect the value of a property, such as `input.value`.
 
 ```svelte
+<!--- file: App.svelte --->
 <input bind:value={name} />
 <textarea bind:value={text} />
 
@@ -108,6 +111,7 @@ The simplest bindings reflect the value of a property, such as `input.value`.
 If the name matches the value, you can use a shorthand.
 
 ```svelte
+<!--- file: App.svelte --->
 <input bind:value />
 <!-- equivalent to
 <input bind:value={value} />
@@ -117,6 +121,7 @@ If the name matches the value, you can use a shorthand.
 Numeric input values are coerced; even though `input.value` is a string as far as the DOM is concerned, Svelte will treat it as a number. If the input is empty or invalid (in the case of `type="number"`), the value is `undefined`.
 
 ```svelte
+<!--- file: App.svelte --->
 <input type="number" bind:value={num} />
 <input type="range" bind:value={num} />
 ```
@@ -124,6 +129,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
 
 ```svelte
+<!--- file: App.svelte --->
 <label for="avatar">Upload a picture:</label>
 <input accept="image/png, image/jpeg" bind:files id="avatar" name="avatar" type="file" />
 ```
@@ -131,6 +137,7 @@ On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`
 If you're using `bind:` directives together with `on:` directives, the order that they're defined in affects the value of the bound variable when the event handler is called.
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	let value = 'Hello World';
 </script>
@@ -149,6 +156,7 @@ Here we were binding to the value of a text input, which uses the `input` event.
 A `<select>` value binding corresponds to the `value` property on the selected `<option>`, which can be any value (not just strings, as is normally the case in the DOM).
 
 ```svelte
+<!--- file: App.svelte --->
 <select bind:value={selected}>
 	<option value={a}>a</option>
 	<option value={b}>b</option>
@@ -159,6 +167,7 @@ A `<select>` value binding corresponds to the `value` property on the selected `
 A `<select multiple>` element behaves similarly to a checkbox group. The bound variable is an array with an entry corresponding to the `value` property of each selected `<option>`.
 
 ```svelte
+<!--- file: App.svelte --->
 <select multiple bind:value={fillings}>
 	<option value="Rice">Rice</option>
 	<option value="Beans">Beans</option>
@@ -170,6 +179,7 @@ A `<select multiple>` element behaves similarly to a checkbox group. The bound v
 When the value of an `<option>` matches its text content, the attribute can be omitted.
 
 ```svelte
+<!--- file: App.svelte --->
 <select multiple bind:value={fillings}>
 	<option>Rice</option>
 	<option>Beans</option>
@@ -186,13 +196,17 @@ Elements with the `contenteditable` attribute support the following bindings:
 
 There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
+<!-- for some reason puts the comment and html on same line -->
+<!-- prettier-ignore -->
 ```svelte
+<!--- file: App.svelte --->
 <div contenteditable="true" bind:innerHTML={html} />
 ```
 
 `<details>` elements support binding to the `open` property.
 
 ```svelte
+<!--- file: App.svelte --->
 <details bind:open={isOpen}>
 	<summary>Details</summary>
 	<p>Something small enough to escape casual notice.</p>
@@ -249,6 +263,7 @@ Image elements (`<img>`) have two readonly bindings:
 - `naturalHeight` (readonly) — the original height of the image, available after the image has loaded
 
 ```svelte
+<!--- file: App.svelte --->
 <img
 	bind:naturalWidth
 	bind:naturalHeight
@@ -265,6 +280,7 @@ Block-level elements have 4 read-only bindings, measured using a technique simil
 - `offsetHeight`
 
 ```svelte
+<!--- file: App.svelte --->
 <div bind:offsetWidth={width} bind:offsetHeight={height}>
 	<Chart {width} {height} />
 </div>
@@ -339,6 +355,7 @@ class:name
 A `class:` directive provides a shorter way of toggling a class on an element.
 
 ```svelte
+<!--- file: App.svelte --->
 <!-- These are equivalent -->
 <div class={isActive ? 'active' : ''}>...</div>
 <div class:active={isActive}>...</div>
@@ -367,6 +384,7 @@ style:property
 The `style:` directive provides a shorthand for setting multiple styles on an element.
 
 ```svelte
+<!--- file: App.svelte --->
 <!-- These are equivalent -->
 <div style:color="red">...</div>
 <div style="color: red;">...</div>
@@ -502,6 +520,7 @@ When a block is transitioning out, all elements inside the block, including thos
 The `transition:` directive indicates a _bidirectional_ transition, which means it can be smoothly reversed while the transition is in progress.
 
 ```svelte
+<!--- file: App.svelte --->
 {#if visible}
 	<div transition:fade>fades in and out</div>
 {/if}
@@ -510,6 +529,7 @@ The `transition:` directive indicates a _bidirectional_ transition, which means 
 Transitions are local by default (in Svelte 3, they were global by default). Local transitions only play when the block they belong to is created or destroyed, _not_ when parent blocks are created or destroyed.
 
 ```svelte
+<!--- file: App.svelte --->
 {#if x}
 	{#if y}
 		<!-- Svelte 3: <p transition:fade|local> -->
@@ -530,6 +550,7 @@ Like actions, transitions can have parameters.
 (The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
 
 ```svelte
+<!--- file: App.svelte --->
 {#if visible}
 	<div transition:fade={{ duration: 2000 }}>fades in and out over two seconds</div>
 {/if}
@@ -628,6 +649,7 @@ An element with transitions will dispatch the following events in addition to an
 - `outroend`
 
 ```svelte
+<!--- file: App.svelte --->
 {#if visible}
 	<p
 		transition:fly={{ y: 200, duration: 2000 }}
@@ -696,6 +718,7 @@ Similar to `transition:`, but only applies to elements entering (`in:`) or leavi
 Unlike with `transition:`, transitions applied with `in:` and `out:` are not bidirectional — an in transition will continue to 'play' alongside the out transition, rather than reversing, if the block is outroed while the transition is in progress. If an out transition is aborted, transitions will restart from scratch.
 
 ```svelte
+<!--- file: App.svelte --->
 {#if visible}
 	<div in:fly out:fade>flies in, fades out</div>
 {/if}
@@ -741,6 +764,7 @@ An animation is triggered when the contents of a [keyed each block](/docs/logic-
 Animations can be used with Svelte's [built-in animation functions](/docs/svelte-animate) or [custom animation functions](/docs/element-directives#custom-transition-functions).
 
 ```svelte
+<!--- file: App.svelte --->
 <!-- When `list` is reordered the animation will run-->
 {#each list as item, index (item)}
 	<li animate:flip>{item}</li>
@@ -754,6 +778,7 @@ As with actions and transitions, animations can have parameters.
 (The double `{{curlies}}` aren't a special syntax; this is an object literal inside an expression tag.)
 
 ```svelte
+<!--- file: App.svelte --->
 {#each list as item, index (item)}
 	<li animate:flip={{ delay: 500 }}>{item}</li>
 {/each}

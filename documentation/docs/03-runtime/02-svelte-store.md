@@ -61,8 +61,8 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 
 Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
 
-```js
-<!--- file: App.svelte --->
+```ts
+/// file: store.js
 // ---cut---
 import { readable } from 'svelte/store';
 
@@ -94,6 +94,7 @@ Derives a store from one or more other stores. The callback runs initially when 
 In the simplest version, `derived` takes a single store, and the callback returns a derived value.
 
 ```ts
+/// file: store.js
 // @filename: ambient.d.ts
 import { type Writable } from 'svelte/store';
 
@@ -115,6 +116,7 @@ The callback can set a value asynchronously by accepting a second argument, `set
 In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` or `update` is first called. If no initial value is specified, the store's initial value will be `undefined`.
 
 ```js
+/// file: store.js
 // @filename: ambient.d.ts
 import { type Writable } from 'svelte/store';
 
@@ -144,6 +146,7 @@ const delayedIncrement = derived(a, ($a, set, update) => {
 If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
 
 ```js
+/// file: store.js
 // @filename: ambient.d.ts
 import { type Writable } from 'svelte/store';
 
@@ -175,6 +178,7 @@ const tick = derived(
 In both cases, an array of arguments can be passed as the first argument instead of a single store.
 
 ```ts
+/// file: store.js
 // @filename: ambient.d.ts
 import { type Writable } from 'svelte/store';
 
@@ -204,6 +208,7 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
 
 ```js
+/// file: store.js
 import { readonly, writable } from 'svelte/store';
 
 const writableStore = writable(1);
@@ -225,6 +230,7 @@ Generally, you should read the value of a store by subscribing to it and using t
 > This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
 
 ```js
+/// file: store.js
 // @filename: ambient.d.ts
 import { type Writable } from 'svelte/store';
 

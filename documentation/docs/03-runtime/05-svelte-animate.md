@@ -28,6 +28,7 @@ The `flip` function calculates the start and end position of an element and anim
 You can see a full example on the [animations tutorial](https://learn.svelte.dev/tutorial/animate).
 
 ```svelte
+<!--- file: App.svelte --->
 <script>
 	import { flip } from 'svelte/animate';
 	import { quintOut } from 'svelte/easing';

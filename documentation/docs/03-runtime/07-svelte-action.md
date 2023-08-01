@@ -5,7 +5,7 @@ title: svelte/action
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```svelte
-<!--- file: App.svelte --->
+<!--- copy: true --->
 <script>
 	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
