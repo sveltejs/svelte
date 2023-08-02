@@ -69,11 +69,12 @@ const watcher = watch([
 				async generateBundle(_, bundle) {
 					const result = bundle['entry-server.js'];
 					const mod = (0, eval)(result.code);
-					const { html } = mod.render();
+					const { html, head } = mod.render();
 
 					writeFileSync(
 						'dist/index.html',
 						readFileSync('src/template.html', 'utf-8')
+							.replace('<!--app-head-->', head)
 							.replace('<!--app-html-->', html)
 							.replace('<!--app-title-->', svelte.VERSION)
 					);

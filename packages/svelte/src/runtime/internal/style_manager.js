@@ -1,5 +1,6 @@
 import { append_empty_stylesheet, detach, get_root_for_style } from './dom.js';
 import { raf } from './environment.js';
+import { hash } from './utils.js';
 
 // we need to store the information for multiple documents because a Svelte application could also contain iframes
 // https://github.com/sveltejs/svelte/issues/3624
@@ -7,18 +8,6 @@ import { raf } from './environment.js';
 const managed_styles = new Map();
 
 let active = 0;
-
-// https://github.com/darkskyapp/string-hash/blob/master/index.js
-/**
- * @param {string} str
- * @returns {number}
- */
-function hash(str) {
-	let hash = 5381;
-	let i = str.length;
-	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
-	return hash >>> 0;
-}
 
 /**
  * @param {Document | ShadowRoot} doc

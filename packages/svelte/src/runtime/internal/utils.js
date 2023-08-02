@@ -289,3 +289,15 @@ export function split_css_unit(value) {
 }
 
 export const contenteditable_truthy_values = ['', true, 1, 'true', 'contenteditable'];
+
+// https://github.com/darkskyapp/string-hash/blob/master/index.js
+/**
+ * @param {string} str
+ * @returns {number}
+ */
+export function hash(str) {
+	let hash = 5381;
+	let i = str.length;
+	while (i--) hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+	return hash >>> 0;
+}

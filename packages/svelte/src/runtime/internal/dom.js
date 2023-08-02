@@ -1,5 +1,5 @@
 import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
-import { contenteditable_truthy_values, has_prop } from './utils.js';
+import { contenteditable_truthy_values, has_prop, hash } from './utils.js';
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
 let is_hydrating = false;
@@ -789,11 +789,13 @@ function get_comment_idx(nodes, text, start) {
  * @param {boolean} is_svg
  * @returns {HtmlTagHydration}
  */
-export function claim_html_tag(nodes, is_svg) {
+export function claim_html_tag(nodes, is_svg, content) {
 	// find html opening tag
-	const start_index = get_comment_idx(nodes, 'HTML_TAG_START', 0);
-	const end_index = get_comment_idx(nodes, 'HTML_TAG_END', start_index + 1);
-	if (start_index === -1 || end_index === -1) {
+	const content_hash = hash(content + '');
+	const start_index = get_comment_idx(nodes, `HTML_${content_hash}_START`, 0);
+	const end_index = get_comment_idx(nodes, `HTML_${content_hash}_END`, start_index + 1);
+
+	if (start_index === -1 || end_index === -1) { // Content mismatch, recreate
 		return new HtmlTagHydration(is_svg);
 	}
 
