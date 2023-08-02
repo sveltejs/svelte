@@ -8,7 +8,7 @@ import { renderContentMarkdown, slugify } from '@sveltejs/site-kit/markdown';
  */
 export const render_content = (filename, body) =>
 	renderContentMarkdown(filename, body, {
-		cacheCodeSnippets: !!1,
+		cacheCodeSnippets: true,
 		modules,
 
 		resolveTypeLinks: (module_name, type_name) => {
