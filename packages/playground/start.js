@@ -6,6 +6,7 @@ import serve from 'rollup-plugin-serve';
 import * as svelte from '../svelte/src/compiler/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const no_ssr = process.argv.includes('--no-ssr');
 
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {
@@ -34,7 +35,7 @@ function create_plugin(ssr = false) {
 			const compiled = svelte.compile(code, {
 				filename: id,
 				generate: ssr ? 'ssr' : 'dom',
-				hydratable: true,
+				hydratable: !no_ssr,
 				css: 'injected'
 			});
 
@@ -54,9 +55,24 @@ const watcher = watch([
 			format: 'esm',
 			sourcemap: true
 		},
-		plugins: [client_plugin, serve('dist')]
+		plugins: [
+			client_plugin,
+			{
+				async generateBundle(_, bundle) {
+					writeFileSync(
+						'dist/index.html',
+						readFileSync('src/template.html', 'utf-8')
+							.replace('__HYDRATE__', !no_ssr)
+							.replace('<!--app-title-->', svelte.VERSION)
+							.replace('<!--app-html-->', '')
+					);
+					writeFileSync('dist/version.json', Date.now().toString());
+				}
+			},
+			serve('dist')
+		]
 	},
-	{
+	!no_ssr && {
 		input: 'src/entry-server.js',
 		output: {
 			dir: 'dist-ssr',
@@ -74,8 +90,9 @@ const watcher = watch([
 					writeFileSync(
 						'dist/index.html',
 						readFileSync('src/template.html', 'utf-8')
-							.replace('<!--app-html-->', html)
+							.replace('__HYDRATE__', !no_ssr)
 							.replace('<!--app-title-->', svelte.VERSION)
+							.replace('<!--app-html-->', html)
 					);
 					writeFileSync('dist/version.json', Date.now().toString());
 				}

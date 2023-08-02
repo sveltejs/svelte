@@ -260,13 +260,12 @@ export default class AwaitBlockWrapper extends Wrapper {
 			block.chunks.intro.push(b`@transition_in(${info}.block);`);
 		}
 		const dependencies = this.node.expression.dynamic_dependencies();
-		const update_await_block_branch = b`@update_await_block_branch(${info}, #ctx, #dirty)`;
+		const update_await_block_branch = b`@update_await_block_branch(${info}, ${info}.ctx = #ctx, #dirty)`;
 		if (dependencies.length > 0) {
 			const condition = x`
 				${block.renderer.dirty(dependencies)} &&
 				${promise} !== (${promise} = ${snippet}) &&
 				@handle_promise(${promise}, ${info})`;
-			block.chunks.update.push(b`${info}.ctx = #ctx;`);
 			if (this.pending.block.has_update_method) {
 				block.chunks.update.push(b`
 					if (${condition}) {
@@ -281,10 +280,9 @@ export default class AwaitBlockWrapper extends Wrapper {
 				`);
 			}
 		} else {
+			// TODO: Why is this specific to pending?
 			if (this.pending.block.has_update_method) {
-				block.chunks.update.push(b`
-					${update_await_block_branch}
-				`);
+				block.chunks.update.push(update_await_block_branch);
 			}
 		}
 		if (this.pending.block.has_outro_method) {
