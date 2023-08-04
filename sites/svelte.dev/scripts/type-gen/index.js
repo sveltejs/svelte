@@ -106,14 +106,15 @@ async function get_types(code, statements) {
 					}
 				}
 
-				const snippet = 
-					(await format(snippet_unformatted, {
+				const snippet = (
+					await format(snippet_unformatted, {
 						parser: 'typescript',
 						printWidth: 60,
 						useTabs: true,
 						singleQuote: true,
 						trailingComma: 'none'
-					}))
+					})
+				)
 					.replace(/\s*(\/\*…\*\/)\s*/g, '/*…*/')
 					.trim();
 
@@ -189,7 +190,7 @@ function munge_type_element(member, depth = 1) {
 				break;
 
 			case 'param':
-				bullets.push(`- \`${tag.name.getText()}\` ${tag.comment}`); 
+				bullets.push(`- \`${tag.name.getText()}\` ${tag.comment}`);
 				break;
 
 			case 'default':

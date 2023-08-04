@@ -1,5 +1,13 @@
 # svelte
 
+## 4.1.2
+
+### Patch Changes
+
+- fix: allow child element with slot attribute within svelte:element ([#9038](https://github.com/sveltejs/svelte/pull/9038))
+
+- fix: Add data-\* to svg attributes ([#9036](https://github.com/sveltejs/svelte/pull/9036))
+
 ## 4.1.1
 
 ### Patch Changes
