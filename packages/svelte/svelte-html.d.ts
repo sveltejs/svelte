@@ -1,4 +1,6 @@
 /// <reference lib="dom" />
+// This file is deliberately not exposed through the exports map.
+// It's meant to be loaded directly by the Svelte language server
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
 import * as svelteElements from './elements';
@@ -241,7 +243,7 @@ declare global {
 			'svelte:body': HTMLProps<'svelte:body', HTMLAttributes>;
 			'svelte:document': HTMLProps<'svelte:document', HTMLAttributes>;
 			'svelte:fragment': { slot?: string };
-			'svelte:options': { [name: string]: any };
+			'svelte:options': HTMLProps<'svelte:options', HTMLAttributes>;
 			'svelte:head': { [name: string]: any };
 
 			[name: string]: { [name: string]: any };
