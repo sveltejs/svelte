@@ -795,7 +795,8 @@ export function claim_html_tag(nodes, is_svg, content) {
 	const start_index = get_comment_idx(nodes, `HTML_${content_hash}_START`, 0);
 	const end_index = get_comment_idx(nodes, `HTML_${content_hash}_END`, start_index + 1);
 
-	if (start_index === -1 || end_index === -1) { // Content mismatch, recreate
+	if (start_index === -1 || end_index === -1) {
+		// Content mismatch, recreate
 		return new HtmlTagHydration(is_svg);
 	}
 
