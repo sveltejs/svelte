@@ -1,7 +1,7 @@
 // @ts-check
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import prettier from 'prettier';
+import { format } from 'prettier';
 import ts from 'typescript';
 
 /** @typedef {{
@@ -20,7 +20,7 @@ const modules = [];
  * @param {string} code
  * @param {ts.NodeArray<ts.Statement>} statements
  */
-function get_types(code, statements) {
+async function get_types(code, statements) {
 	/** @type {Extracted[]} */
 	const exports = [];
 
@@ -106,14 +106,15 @@ function get_types(code, statements) {
 					}
 				}
 
-				const snippet = prettier
-					.format(snippet_unformatted, {
+				const snippet = (
+					await format(snippet_unformatted, {
 						parser: 'typescript',
 						printWidth: 60,
 						useTabs: true,
 						singleQuote: true,
 						trailingComma: 'none'
 					})
+				)
 					.replace(/\s*(\/\*…\*\/)\s*/g, '/*…*/')
 					.trim();
 
@@ -273,7 +274,7 @@ async function read_d_ts_file(file) {
 				name,
 				comment,
 				// @ts-ignore
-				...get_types(code, statement.body?.statements)
+				...(await get_types(code, statement.body?.statements))
 			});
 		}
 	}
