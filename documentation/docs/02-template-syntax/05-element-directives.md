@@ -121,7 +121,7 @@ Numeric input values are coerced; even though `input.value` is a string as far a
 <input type="range" bind:value={num} />
 ```
 
-On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList). It is readonly.
+On `<input>` elements with `type="file"`, you can use `bind:files` to get the [`FileList` of selected files](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
 
 ```svelte
 <label for="avatar">Upload a picture:</label>

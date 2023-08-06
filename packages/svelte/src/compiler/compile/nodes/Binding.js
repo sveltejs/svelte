@@ -94,13 +94,12 @@ export default class Binding extends Node {
 				return;
 			}
 		}
-		const type = parent.get_static_attribute_value('type');
 		this.is_readonly =
 			regex_dimensions.test(this.name) ||
 			regex_box_size.test(this.name) ||
 			(isElement(parent) &&
-				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
-					(parent.name === 'input' && type === 'file'))) /* TODO others? */;
+				parent.is_media_node() &&
+				read_only_media_attributes.has(this.name)) /* TODO others? */;
 	}
 	is_readonly_media_attribute() {
 		return read_only_media_attributes.has(this.name);

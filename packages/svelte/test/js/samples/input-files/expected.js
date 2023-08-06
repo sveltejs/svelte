@@ -24,13 +24,18 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, input, anchor);
+			input.files = /*files*/ ctx[0];
 
 			if (!mounted) {
 				dispose = listen(input, "change", /*input_change_handler*/ ctx[1]);
 				mounted = true;
 			}
 		},
-		p: noop,
+		p(ctx, [dirty]) {
+			if (dirty & /*files*/ 1) {
+				input.files = /*files*/ ctx[0];
+			}
+		},
 		i: noop,
 		o: noop,
 		d(detaching) {

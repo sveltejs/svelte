@@ -30,8 +30,10 @@ function create_fragment(ctx) {
 		},
 		m(target, anchor) {
 			insert(target, input0, anchor);
+			input0.files = /*files*/ ctx[0];
 			insert(target, t, anchor);
 			insert(target, input1, anchor);
+			input1.files = /*files*/ ctx[0];
 
 			if (!mounted) {
 				dispose = [
@@ -42,7 +44,15 @@ function create_fragment(ctx) {
 				mounted = true;
 			}
 		},
-		p: noop,
+		p(ctx, [dirty]) {
+			if (dirty & /*files*/ 1) {
+				input0.files = /*files*/ ctx[0];
+			}
+
+			if (dirty & /*files*/ 1) {
+				input1.files = /*files*/ ctx[0];
+			}
+		},
 		i: noop,
 		o: noop,
 		d(detaching) {

@@ -176,6 +176,15 @@ export default function (node, renderer, options) {
 			node_contents = x`@escape(${snippet} || "")`;
 		} else if (binding.name === 'value' && node.name === 'select') {
 			// NOTE: do not add "value" attribute on <select />
+		} else if (
+			binding.name === 'value' &&
+			node.name === 'input' &&
+			node.get_static_attribute_value('type') === 'file'
+		) {
+			const value = node.get_static_attribute_value('value');
+			if (value !== '') {
+				// NOTE: do not add "value" attribute on <input type="file" />
+			}
 		} else {
 			const snippet = expression.node;
 			renderer.add_expression(
