@@ -43,12 +43,12 @@ export default class StyleDirective extends Node {
 		if (info.value === true || (info.value.length === 1 && info.value[0].type === 'MustacheTag')) {
 			const identifier =
 				info.value === true
-					? /** @type {any} */ ({
+					? {
 							type: 'Identifier',
 							start: info.end - info.name.length,
 							end: info.end,
 							name: info.name
-					  })
+					  }
 					: info.value[0].expression;
 			this.expression = new Expression(component, this, scope, identifier);
 			this.should_cache = false;

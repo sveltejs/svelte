@@ -17,6 +17,7 @@ export type Category = {
 
 export type Page = {
 	title: string;
+	category: string;
 	slug: string;
 	file: string;
 	path: string;

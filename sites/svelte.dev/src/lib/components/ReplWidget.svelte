@@ -5,7 +5,7 @@
 	import { theme } from '@sveltejs/site-kit/stores';
 	import { onMount } from 'svelte';
 
-	export let version = '3';
+	export let version = '4';
 	export let gist = null;
 	export let example = null;
 	export let embedded = false;
@@ -26,7 +26,7 @@
 		}
 
 		if (gist) {
-			fetch(`/repl/${gist}.json`)
+			fetch(`/repl/api/${gist}.json`)
 				.then((r) => r.json())
 				.then((data) => {
 					const { description, components } = data;

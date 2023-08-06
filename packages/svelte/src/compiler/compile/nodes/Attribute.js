@@ -56,15 +56,13 @@ export default class Attribute extends Node {
 			this.dependencies = new Set();
 			this.chunks = this.is_true
 				? []
-				: info.value.map(
-						/** @param {any} node */ (node) => {
-							if (node.type === 'Text') return node;
-							this.is_static = false;
-							const expression = new Expression(component, this, scope, node.expression);
-							add_to_set(this.dependencies, expression.dependencies);
-							return expression;
-						}
-				  );
+				: info.value.map((node) => {
+						if (node.type === 'Text') return node;
+						this.is_static = false;
+						const expression = new Expression(component, this, scope, node.expression);
+						add_to_set(this.dependencies, expression.dependencies);
+						return expression;
+				  });
 		}
 
 		if (this.dependencies.size > 0) {
@@ -88,13 +86,11 @@ export default class Attribute extends Node {
 
 		/** @type {Set<string>} */
 		const dependencies = new Set();
-		this.chunks.forEach(
-			/** @param {any} chunk */ (chunk) => {
-				if (chunk.type === 'Expression') {
-					add_to_set(dependencies, chunk.dynamic_dependencies());
-				}
+		this.chunks.forEach((chunk) => {
+			if (chunk.type === 'Expression') {
+				add_to_set(dependencies, chunk.dynamic_dependencies());
 			}
-		);
+		});
 		return Array.from(dependencies);
 	}
 
@@ -114,12 +110,7 @@ export default class Attribute extends Node {
 				/** @param {any} chunk */ (chunk) =>
 					chunk.type === 'Text' ? string_literal(chunk.data) : chunk.manipulate(block)
 			)
-			.reduce(
-				/**
-				 * @param {any} lhs
-				 * @param {any} rhs
-				 */ (lhs, rhs) => x`${lhs} + ${rhs}`
-			);
+			.reduce((lhs, rhs) => x`${lhs} + ${rhs}`);
 		if (this.chunks[0].type !== 'Text') {
 			expression = x`"" + ${expression}`;
 		}

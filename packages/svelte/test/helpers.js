@@ -100,7 +100,7 @@ export function show_output(cwd, options = {}) {
 	});
 }
 
-const svelte_path = fileURLToPath(new URL('..', import.meta.url)).replace(/\\/g, '/');
+const svelte_path = fileURLToPath(new URL('..', import.meta.url).href).replace(/\\/g, '/');
 
 const AsyncFunction = /** @type {typeof Function} */ (async function () {}.constructor);
 

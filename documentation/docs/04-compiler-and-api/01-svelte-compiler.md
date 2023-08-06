@@ -125,8 +125,6 @@ const { code } = await preprocess(
 );
 ```
 
-The `script` and `style` functions receive the contents of `<script>` and `<style>` elements respectively (`content`) as well as the entire component source text (`markup`). In addition to `filename`, they get an object of the element's attributes.
-
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```ts

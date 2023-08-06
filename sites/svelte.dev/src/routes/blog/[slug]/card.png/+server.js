@@ -11,8 +11,8 @@ const width = 1200;
 
 export const prerender = true;
 
-export const GET = async ({ params }) => {
-	const post = await get_processed_blog_post(get_blog_data(), params.slug);
+export async function GET({ params }) {
+	const post = await get_processed_blog_post(await get_blog_data(), params.slug);
 
 	if (!post) throw error(404);
 
@@ -48,4 +48,4 @@ export const GET = async ({ params }) => {
 			'cache-control': 'public, max-age=600' // cache for 10 minutes
 		}
 	});
-};
+}

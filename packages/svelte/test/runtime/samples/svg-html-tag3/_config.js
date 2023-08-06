@@ -1,9 +1,7 @@
 export default {
 	html: `
 			<svg>
-			  <foreignObject>
-				  <circle cx="25" cy="30" r="24" fill="#FFD166"></circle>
-				</foreignObject>
+				<foreignObject><!-- HTML_TAG_START --><circle cx="25" cy="30" r="24" fill="#FFD166"></circle><!-- HTML_TAG_END --></foreignObject>
 			</svg>
 		`,
 	test({ assert, target, component }) {

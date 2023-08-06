@@ -58,7 +58,7 @@ const get_rss = (posts) =>
 		.trim();
 
 export async function GET() {
-	const posts = get_blog_list(get_blog_data());
+	const posts = get_blog_list(await get_blog_data());
 
 	return new Response(get_rss(posts), {
 		headers: {

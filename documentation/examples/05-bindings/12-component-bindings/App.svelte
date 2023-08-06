@@ -9,6 +9,21 @@
 	}
 </script>
 
-<h1 style="color: {pin ? '#333' : '#ccc'}">{view}</h1>
+<h1 class:pin>{view}</h1>
 
 <Keypad bind:value={pin} on:submit={handleSubmit} />
+
+<style>
+	h1 {
+		color: #ccc;
+	}
+	h1.pin {
+		color: #333;
+	}
+	:global(body.dark) h1 {
+		color: #444;
+	}
+	:global(body.dark) h1.pin {
+		color: #fff;
+	}
+</style>
