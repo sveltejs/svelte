@@ -233,6 +233,14 @@ export default class ElementWrapper extends Wrapper {
 				strip_whitespace,
 				next_sibling
 			);
+
+			// in the case of `parent_block -> child_dynamic_element_block -> child_dynamic_element`
+			// `child_dynamic_element_block.add_intro/outro` is called inside `new ElementWrapper()`
+			// but when `is_local === true` it does not bubble to parent_block
+			// we manually add transitions back to the parent_block (#8233)
+			if (node.intro) block.add_intro(node.intro.is_local);
+			if (node.outro) block.add_outro(node.outro.is_local);
+
 			// the original svelte:element is never used for rendering, because
 			// it gets assigned a child_dynamic_element which is used in all rendering logic.
 			// so doing all of this on the original svelte:element will just cause double
@@ -266,10 +274,10 @@ export default class ElementWrapper extends Wrapper {
 		this.event_handlers = this.node.handlers.map(
 			(event_handler) => new EventHandler(event_handler, this)
 		);
-		if (node.intro || node.outro) {
-			if (node.intro) block.add_intro(node.intro.is_local);
-			if (node.outro) block.add_outro(node.outro.is_local);
-		}
+
+		if (node.intro) block.add_intro(node.intro.is_local);
+		if (node.outro) block.add_outro(node.outro.is_local);
+
 		if (node.animation) {
 			block.add_animation();
 		}
@@ -458,13 +466,13 @@ export default class ElementWrapper extends Wrapper {
 		block.add_variable(node);
 		const render_statement = this.get_render_statement(block);
 		block.chunks.create.push(b`${node} = ${render_statement};`);
-		const { can_use_textcontent, can_optimise_to_html_string } = this.node;
+		const { can_use_textcontent, can_optimise_to_html_string, can_optimise_hydration } = this.node;
 		if (hydratable) {
 			if (parent_nodes) {
 				block.chunks.claim.push(b`
-					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_to_html_string)};
+					${node} = ${this.get_claim_statement(block, parent_nodes, can_optimise_hydration)};
 				`);
-				if (!can_optimise_to_html_string && !this.void && this.node.children.length > 0) {
+				if (!can_optimise_hydration && !this.void && this.node.children.length > 0) {
 					block.chunks.claim.push(b`
 						var ${nodes} = ${children};
 					`);
@@ -500,7 +508,7 @@ export default class ElementWrapper extends Wrapper {
 		}
 		// insert static children with textContent or innerHTML
 		// skip textcontent for <template>.  append nodes to TemplateElement.content instead
-		if (can_optimise_to_html_string) {
+		if (can_optimise_to_html_string && (!hydratable || can_optimise_hydration)) {
 			if (this.fragment.nodes.length === 1 && this.fragment.nodes[0].node.type === 'Text') {
 				/** @type {import('estree').Node} */
 				let text = string_literal(
@@ -579,15 +587,17 @@ export default class ElementWrapper extends Wrapper {
 		this.add_classes(block);
 		this.add_styles(block);
 		this.add_manual_style_scoping(block);
-		if (nodes && hydratable && !this.void && !can_optimise_to_html_string) {
+		if (nodes && hydratable && !this.void && !can_optimise_hydration) {
 			block.chunks.claim.push(
 				b`${this.node.children.length > 0 ? nodes : children}.forEach(@detach);`
 			);
 		}
 		if (renderer.options.dev) {
-			const loc = renderer.locate(this.node.start);
+			const loc = renderer.meta_locate(this.node.start);
 			block.chunks.hydrate.push(
 				b`@add_location(${this.var}, ${renderer.file_var}, ${loc.line - 1}, ${loc.column}, ${
+					// TODO this.node.start isn't correct if there's a source map. But since we don't know how the
+					// original source file looked, there's not much we can do.
 					this.node.start
 				});`
 			);

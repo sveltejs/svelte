@@ -73,9 +73,7 @@ export default function read_context(parser) {
 		space_with_newline =
 			space_with_newline.slice(0, first_space) + space_with_newline.slice(first_space + 1);
 
-		return /** @type {any} */ (
-			parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, start - 1)
-		).left;
+		return parse_expression_at(`${space_with_newline}(${pattern_string} = 1)`, start - 1).left;
 	} catch (error) {
 		parser.acorn_error(error);
 	}

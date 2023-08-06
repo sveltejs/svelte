@@ -54,8 +54,8 @@ export default class Binding extends Node {
 		this.expression = new Expression(component, this, scope, info.expression);
 		this.raw_expression = clone(info.expression);
 		const { name } = get_object(this.expression.node);
-		this.is_contextual = Array.from(this.expression.references).some(
-			/** @param {any} name */ (name) => scope.names.has(name)
+		this.is_contextual = Array.from(this.expression.references).some((name) =>
+			scope.names.has(name)
 		);
 		if (this.is_contextual) this.validate_binding_rest_properties(scope);
 		// make sure we track this as a mutable ref
@@ -70,14 +70,12 @@ export default class Binding extends Node {
 			if (scope.is_const(name)) {
 				component.error(this, compiler_errors.invalid_binding_const);
 			}
-			scope.dependencies_for_name.get(name).forEach(
-				/** @param {any} name */ (name) => {
-					const variable = component.var_lookup.get(name);
-					if (variable) {
-						variable.mutated = true;
-					}
+			scope.dependencies_for_name.get(name).forEach((name) => {
+				const variable = component.var_lookup.get(name);
+				if (variable) {
+					variable.mutated = true;
 				}
-			);
+			});
 		} else {
 			const variable = component.var_lookup.get(name);
 			if (!variable || variable.global) {
@@ -110,20 +108,18 @@ export default class Binding extends Node {
 
 	/** @param {import('./shared/TemplateScope.js').default} scope */
 	validate_binding_rest_properties(scope) {
-		this.expression.references.forEach(
-			/** @param {any} name */ (name) => {
-				const each_block = scope.get_owner(name);
-				if (each_block && each_block.type === 'EachBlock') {
-					const rest_node = each_block.context_rest_properties.get(name);
-					if (rest_node) {
-						this.component.warn(
-							/** @type {any} */ (rest_node),
-							compiler_warnings.invalid_rest_eachblock_binding(name)
-						);
-					}
+		this.expression.references.forEach((name) => {
+			const each_block = scope.get_owner(name);
+			if (each_block && each_block.type === 'EachBlock') {
+				const rest_node = each_block.context_rest_properties.get(name);
+				if (rest_node) {
+					this.component.warn(
+						/** @type {any} */ (rest_node),
+						compiler_warnings.invalid_rest_eachblock_binding(name)
+					);
 				}
 			}
-		);
+		});
 	}
 }
 

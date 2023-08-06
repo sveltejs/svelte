@@ -12,7 +12,7 @@
 			}
 		},
 		{
-			"files": ["README.md", "packages/*/README.md"],
+			"files": ["README.md", "packages/*/README.md", "**/package.json"],
 			"options": {
 				"useTabs": false,
 				"tabWidth": 2

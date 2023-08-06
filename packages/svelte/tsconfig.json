@@ -35,6 +35,9 @@
 		"noImplicitThis": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"typeRoots": ["./node_modules/@types"]
+		"typeRoots": ["./node_modules/@types"],
+		"paths": {
+			"svelte": ["./src/runtime/public.d.ts"]
+		}
 	}
 }

@@ -23,7 +23,7 @@ export default {
 	},
 	module_script_variable_reactive_declaration: /** @param {string[]} names */ (names) => ({
 		code: 'module-script-reactive-declaration',
-		message: `${names.map(/** @param {any} name */ (name) => `"${name}"`).join(', ')} ${
+		message: `${names.map((name) => `"${name}"`).join(', ')} ${
 			names.length > 1 ? 'are' : 'is'
 		} declared in a module script and will not be reactive`
 	}),
@@ -175,7 +175,7 @@ export default {
 	 */ (role, props) => ({
 		code: 'a11y-role-has-required-aria-props',
 		message: `A11y: Elements with the ARIA role "${role}" must have the following attributes defined: ${props
-			.map(/** @param {any} name */ (name) => `"${name}"`)
+			.map((name) => `"${name}"`)
 			.join(', ')}`
 	}),
 	a11y_role_supports_aria_props: /**

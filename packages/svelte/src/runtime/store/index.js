@@ -11,9 +11,11 @@ const subscriber_queue = [];
 
 /**
  * Creates a `Readable` store that allows reading by subscription.
+ *
+ * https://svelte.dev/docs/svelte-store#readable
  * @template T
- * @param {T} value initial value
- * @param {import('./public.js').StartStopNotifier<T>} start
+ * @param {T} [value] initial value
+ * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Readable<T>}
  */
 export function readable(value, start) {
@@ -24,9 +26,11 @@ export function readable(value, start) {
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
+ *
+ * https://svelte.dev/docs/svelte-store#writable
  * @template T
- * @param {T} value initial value
- * @param {import('./public.js').StartStopNotifier<T>} start
+ * @param {T} [value] initial value
+ * @param {import('./public.js').StartStopNotifier<T>} [start]
  * @returns {import('./public.js').Writable<T>}
  */
 export function writable(value, start = noop) {
@@ -56,6 +60,7 @@ export function writable(value, start = noop) {
 			}
 		}
 	}
+
 	/**
 	 * @param {import('./public.js').Updater<T>} fn
 	 * @returns {void}
@@ -63,9 +68,10 @@ export function writable(value, start = noop) {
 	function update(fn) {
 		set(fn(value));
 	}
+
 	/**
 	 * @param {import('./public.js').Subscriber<T>} run
-	 * @param {import('./private.js').Invalidator<T>} invalidate
+	 * @param {import('./private.js').Invalidator<T>} [invalidate]
 	 * @returns {import('./public.js').Unsubscriber}
 	 */
 	function subscribe(run, invalidate = noop) {
@@ -91,11 +97,12 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
+ * https://svelte.dev/docs/svelte-store#derived
  * @template {import('./private.js').Stores} S
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>, set: import('./public.js').Subscriber<T>, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
+ * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */
@@ -104,11 +111,12 @@ export function writable(value, start = noop) {
  * Derived value store by synchronizing one or more readable stores and
  * applying an aggregation function over its input values.
  *
+ * https://svelte.dev/docs/svelte-store#derived
  * @template {import('./private.js').Stores} S
  * @template T
  * @overload
  * @param {S} stores - input stores
- * @param {(values: import('./public.js').StoresValues<S>) => T} fn - function callback that aggregates the values
+ * @param {(values: import('./private.js').StoresValues<S>) => T} fn - function callback that aggregates the values
  * @param {T} [initial_value] - initial value
  * @returns {import('./public.js').Readable<T>}
  */
@@ -177,6 +185,7 @@ export function derived(stores, fn, initial_value) {
 /**
  * Takes a store and returns a new one derived from the old one that is readable.
  *
+ * https://svelte.dev/docs/svelte-store#readonly
  * @template T
  * @param {import('./public.js').Readable<T>} store  - store to make readonly
  * @returns {import('./public.js').Readable<T>}
@@ -187,10 +196,4 @@ export function readonly(store) {
 	};
 }
 
-/**
- * Get the current value from a store by subscribing and immediately unsubscribing.
- * @template T
- * @param {import('./public.js').Readable<T>} store readable
- * @returns {T}
- */
 export { get_store_value as get };

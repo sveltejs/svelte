@@ -65,6 +65,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 	is_src;
 
 	/** @type {boolean} */
+	is_srcset;
+
+	/** @type {boolean} */
 	is_select_value_attribute;
 
 	/** @type {boolean} */
@@ -88,7 +91,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				if (select && select.select_binding_dependencies) {
 					select.select_binding_dependencies.forEach((prop) => {
 						this.node.dependencies.forEach((dependency) => {
-							this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
+							if (this.node.scope.is_top_level(dependency)) {
+								this.parent.renderer.component.indirect_dependencies.get(prop).add(dependency);
+							}
 						});
 					});
 				}
@@ -119,6 +124,9 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		// TODO retire this exception in favour of https://github.com/sveltejs/svelte/issues/3750
 		this.is_src =
 			this.name === 'src' &&
+			(!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
+		this.is_srcset =
+			this.name === 'srcset' &&
 			(!this.parent.node.namespace || this.parent.node.namespace === namespaces.html);
 		this.should_cache = should_cache(this);
 	}
@@ -162,6 +170,11 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 		} else if (this.is_src) {
 			block.chunks.hydrate.push(
 				b`if (!@src_url_equal(${element.var}.src, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
+			);
+			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
+		} else if (this.is_srcset) {
+			block.chunks.hydrate.push(
+				b`if (!@srcset_url_equal(${element.var}, ${init})) ${method}(${element.var}, "${name}", ${this.last});`
 			);
 			updater = b`${method}(${element.var}, "${name}", ${should_cache ? this.last : value});`;
 		} else if (property_name) {
@@ -403,7 +416,7 @@ Object.keys(attribute_lookup).forEach((name) => {
 
 /** @param {AttributeWrapper} attribute */
 function should_cache(attribute) {
-	return attribute.is_src || attribute.node.should_cache();
+	return attribute.is_src || attribute.is_srcset || attribute.node.should_cache();
 }
 const regex_contains_checked_or_group = /checked|group/;
 

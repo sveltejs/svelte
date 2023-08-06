@@ -79,20 +79,18 @@ function get_constructor(type) {
 export default function map_children(component, parent, scope, children) {
 	let last = null;
 	let ignores = [];
-	return children.map(
-		/** @param {any} child */ (child) => {
-			const constructor = get_constructor(child.type);
-			const use_ignores = child.type !== 'Text' && child.type !== 'Comment' && ignores.length;
-			if (use_ignores) component.push_ignores(ignores);
-			const node = new constructor(component, parent, scope, child);
-			if (use_ignores) component.pop_ignores(), (ignores = []);
-			if (node.type === 'Comment' && node.ignores.length) {
-				push_array(ignores, node.ignores);
-			}
-			if (last) last.next = node;
-			node.prev = last;
-			last = node;
-			return node;
+	return children.map((child) => {
+		const constructor = get_constructor(child.type);
+		const use_ignores = child.type !== 'Text' && child.type !== 'Comment' && ignores.length;
+		if (use_ignores) component.push_ignores(ignores);
+		const node = new constructor(component, parent, scope, child);
+		if (use_ignores) component.pop_ignores(), (ignores = []);
+		if (node.type === 'Comment' && node.ignores.length) {
+			push_array(ignores, node.ignores);
 		}
-	);
+		if (last) last.next = node;
+		node.prev = last;
+		last = node;
+		return node;
+	});
 }

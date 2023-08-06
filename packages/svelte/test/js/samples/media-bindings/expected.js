@@ -108,7 +108,10 @@ function create_fragment(ctx) {
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(audio);
+			if (detaching) {
+				detach(audio);
+			}
+
 			mounted = false;
 			run_all(dispose);
 		}
