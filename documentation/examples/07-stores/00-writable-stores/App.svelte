@@ -11,7 +11,7 @@
 	});
 </script>
 
-<h1>The count is {countValue}</h1>
+<h1>Le compteur vaut {countValue}</h1>
 
 <Incrementer />
 <Decrementer />

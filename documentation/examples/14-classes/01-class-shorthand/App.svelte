@@ -4,11 +4,11 @@
 
 <label>
 	<input type="checkbox" bind:checked={big} />
-	big
+	grand
 </label>
 
 <div class:big>
-	some {big ? 'big' : 'small'} text
+	un texte de {big ? 'grande' : 'petite'} taille
 </div>
 
 <style>

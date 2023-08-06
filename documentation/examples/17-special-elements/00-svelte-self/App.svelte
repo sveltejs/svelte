@@ -4,16 +4,16 @@
 	let root = [
 		{
 			type: 'folder',
-			name: 'Important work stuff',
+			name: 'Trucs importants de boulot',
 			files: [{ type: 'file', name: 'quarterly-results.xlsx' }]
 		},
 		{
 			type: 'folder',
-			name: 'Animal GIFs',
+			name: "GIF d'animaux",
 			files: [
 				{
 					type: 'folder',
-					name: 'Dogs',
+					name: 'Chiens',
 					files: [
 						{ type: 'file', name: 'treadmill.gif' },
 						{ type: 'file', name: 'rope-jumping.gif' }
@@ -21,7 +21,7 @@
 				},
 				{
 					type: 'folder',
-					name: 'Goats',
+					name: 'Chèvres',
 					files: [
 						{ type: 'file', name: 'parkour.gif' },
 						{ type: 'file', name: 'rampage.gif' }
@@ -32,7 +32,7 @@
 				{ type: 'file', name: 'monkey-on-a-pig.gif' }
 			]
 		},
-		{ type: 'file', name: 'TODO.md' }
+		{ type: 'file', name: 'À_FAIRE.md' }
 	];
 </script>
 

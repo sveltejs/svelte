@@ -16,7 +16,7 @@
 
 <div class="easing-sidebar">
 	<div class="easing-types">
-		<h3>Ease</h3>
+		<h3>Lissage</h3>
 		{#if mobile}
 			<select bind:value={current_ease}>
 				{#each [...eases] as [name]}
@@ -53,7 +53,7 @@
 			</ul>
 		{/if}
 	</div>
-	<h4>Duration</h4>
+	<h4>Durée</h4>
 	<div class="duration">
 		<span>
 			<input type="number" bind:value={duration} min="0" step="100" />
@@ -61,7 +61,7 @@
 			<button class="number" on:click={() => (duration += 100)}>+</button>
 		</span>
 		<button class="play" on:click={() => dispatch('play')}>
-			{playing ? 'Restart' : 'Play'}
+			{playing ? 'Recommencer' : 'Jouer'}
 		</button>
 	</div>
 </div>

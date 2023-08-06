@@ -9,10 +9,10 @@
 	});
 </script>
 
-<h1>The time is {formatter.format($time)}</h1>
+<h1>Il est {formatter.format($time)}</h1>
 
 <p>
-	This page has been open for
+	Cette page est ouverte depuis
 	{$elapsed}
-	{$elapsed === 1 ? 'second' : 'seconds'}
+	{$elapsed > 1 ? 'secondes' : 'seconde'}
 </p>

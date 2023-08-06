@@ -13,9 +13,9 @@
 <button
 	use:longpress={duration}
 	on:longpress={() => (pressed = true)}
-	on:mouseenter={() => (pressed = false)}>press and hold</button
+	on:mouseenter={() => (pressed = false)}>maintenez appuyé</button
 >
 
 {#if pressed}
-	<p>congratulations, you pressed and held for {duration}ms</p>
+	<p>félicitations, vous avez maintenu le bouton appuyé pendant {duration} ms</p>
 {/if}

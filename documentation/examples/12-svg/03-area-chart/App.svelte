@@ -27,21 +27,21 @@
 	}
 </script>
 
-<h2>Arctic sea ice minimum</h2>
+<h2>Épaisseur minimum de la calotte glacière en Arctique</h2>
 
 <div class="chart" bind:clientWidth={width} bind:clientHeight={height}>
 	<svg>
-		<!-- y axis -->
+		<!-- axe y -->
 		<g class="axis y-axis" transform="translate(0, {padding.top})">
 			{#each yTicks as tick}
 				<g class="tick tick-{tick}" transform="translate(0, {yScale(tick) - padding.bottom})">
 					<line x2="100%" />
-					<text y="-4">{tick} {tick === 8 ? ' million sq km' : ''}</text>
+					<text y="-4">{tick} {tick === 8 ? ' millions de km2' : ''}</text>
 				</g>
 			{/each}
 		</g>
 
-		<!-- x axis -->
+		<!-- axe x -->
 		<g class="axis x-axis">
 			{#each xTicks as tick}
 				<g class="tick tick-{tick}" transform="translate({xScale(tick)},{height})">
@@ -51,15 +51,15 @@
 			{/each}
 		</g>
 
-		<!-- data -->
+		<!-- donnée -->
 		<path class="path-area" d={area} />
 		<path class="path-line" d={path} />
 	</svg>
 </div>
 
 <p>
-	Average September extent. Source: <a href="https://climate.nasa.gov/vital-signs/arctic-sea-ice/"
-		>NSIDC/NASA</a
+	Étendue moyenne de septembre. Source: <a
+		href="https://climate.nasa.gov/vital-signs/arctic-sea-ice/">NSIDC/NASA</a
 	>
 </p>
 
@@ -86,12 +86,12 @@
 	}
 
 	.tick line {
-		stroke: #888;
+		stroke: #aaa;
 		stroke-dasharray: 2;
 	}
 
 	.tick text {
-		fill: #888;
+		fill: #666;
 		text-anchor: start;
 	}
 

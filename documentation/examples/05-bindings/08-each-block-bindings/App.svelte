@@ -1,8 +1,8 @@
 <script>
 	let todos = [
-		{ done: false, text: 'finish Svelte tutorial' },
-		{ done: false, text: 'build an app' },
-		{ done: false, text: 'world domination' }
+		{ done: false, text: 'finir le tutoriel Svelte' },
+		{ done: false, text: 'construire une app' },
+		{ done: false, text: 'dominer le monde' }
 	];
 
 	function add() {
@@ -22,12 +22,16 @@
 	<div>
 		<input type="checkbox" bind:checked={todo.done} />
 
-		<input placeholder="What needs to be done?" bind:value={todo.text} disabled={todo.done} />
+		<input
+			placeholder="Qu'avez-vous besoin de faire ?"
+			bind:value={todo.text}
+			disabled={todo.done}
+		/>
 	</div>
 {/each}
 
-<p>{remaining} remaining</p>
+<p>Encore {remaining}</p>
 
-<button on:click={add}> Add new </button>
+<button on:click={add}> Ajouter </button>
 
-<button on:click={clear}> Clear completed </button>
+<button on:click={clear}> Effacer les tâches complétées </button>

@@ -1,19 +1,19 @@
 <article class="contact-card">
 	<h2>
 		<slot name="name">
-			<span class="missing">Unknown name</span>
+			<span class="missing">Nom inconnu</span>
 		</slot>
 	</h2>
 
 	<div class="address">
 		<slot name="address">
-			<span class="missing">Unknown address</span>
+			<span class="missing">Adresse inconnue</span>
 		</slot>
 	</div>
 
 	<div class="email">
 		<slot name="email">
-			<span class="missing">Unknown email</span>
+			<span class="missing">e-mail inconnu</span>
 		</slot>
 	</div>
 </article>
