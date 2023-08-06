@@ -1,5 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import * as fs from 'fs';
+import { browserslistToTargets } from 'lightningcss';
+import { readFile } from 'node:fs/promises';
+import browserslist from 'browserslist';
 
 const plugins = [raw(['.ttf']), sveltekit()];
 
@@ -18,16 +20,16 @@ if (!process.versions.webcontainer) {
 	);
 }
 
-/** 
+/**
  * @param {string[]} ext
- * @returns {import("vite").Plugin} 
+ * @returns {import("vite").Plugin}
  */
 function raw(ext) {
 	return {
 		name: 'vite-plugin-raw',
-		transform(_, id) {
+		async transform(_, id) {
 			if (ext.some((e) => id.endsWith(e))) {
-				const buffer = fs.readFileSync(id);
+				const buffer = await readFile(id);
 				return { code: `export default ${JSON.stringify(buffer)}`, map: null };
 			}
 		}
@@ -37,6 +39,15 @@ function raw(ext) {
 /** @type {import('vite').UserConfig} */
 const config = {
 	logLevel: 'info',
+	css: {
+		transformer: 'lightningcss',
+		lightningcss: {
+			targets: browserslistToTargets(browserslist(['>0.2%', 'not dead']))
+		}
+	},
+	build: {
+		cssMinify: 'lightningcss'
+	},
 	plugins,
 	optimizeDeps: {
 		exclude: ['@sveltejs/site-kit', '@sveltejs/repl']

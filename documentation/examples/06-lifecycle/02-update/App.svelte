@@ -89,6 +89,7 @@
 	}
 
 	span {
+		color: black;
 		padding: 0.5em 1em;
 		display: inline-block;
 	}

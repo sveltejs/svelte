@@ -23,13 +23,11 @@ export default class Title extends Node {
 			component.error(info.attributes[0], compiler_errors.illegal_attribute_title);
 			return;
 		}
-		info.children.forEach(
-			/** @param {any} child */ (child) => {
-				if (child.type !== 'Text' && child.type !== 'MustacheTag') {
-					return component.error(child, compiler_errors.illegal_structure_title);
-				}
+		info.children.forEach((child) => {
+			if (child.type !== 'Text' && child.type !== 'MustacheTag') {
+				return component.error(child, compiler_errors.illegal_structure_title);
 			}
-		);
+		});
 		this.should_cache =
 			info.children.length === 1
 				? info.children[0].type !== 'Identifier' || scope.names.has(info.children[0].name)

@@ -4,7 +4,7 @@ import { error } from '@sveltejs/kit';
 export const prerender = true;
 
 export async function load({ params }) {
-	const processed_page = await get_parsed_docs(get_docs_data(), params.slug);
+	const processed_page = await get_parsed_docs(await get_docs_data(), params.slug);
 
 	if (!processed_page) throw error(404);
 

@@ -1,28 +1,30 @@
+// @ts-check
 import 'dotenv/config';
-import fs from 'fs';
-import fetch from 'node-fetch';
 import Jimp from 'jimp';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { stat, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const force = process.env.FORCE_UPDATE === 'true';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(__dirname);
 
-const outputFile = `../src/routes/_components/Supporters/contributors.js`;
-if (!force && fs.existsSync(outputFile)) {
-	console.info(`[update/contributors] ${outputFile} exists. Skipping`);
-	process.exit(0);
-}
+// ../src/routes/_components/Supporters/contributors.js
+const outputFile = new URL(`../src/routes/_components/Supporters/contributors.js`, import.meta.url);
 
-const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
+try {
+	if (!force && (await stat(outputFile))) {
+		console.info(`[update/contributors] ${outputFile} exists. Skipping`);
+		process.exit(0);
+	}
+} catch {
+	const base = `https://api.github.com/repos/sveltejs/svelte/contributors`;
+	const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = process.env;
 
-const MAX = 24;
-const SIZE = 128;
+	const MAX = 24;
+	const SIZE = 128;
 
-async function main() {
 	const contributors = [];
 	let page = 1;
 
@@ -31,6 +33,8 @@ async function main() {
 			`${base}?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}&per_page=100&page=${page++}`
 		);
 		const list = await res.json();
+
+		if (!Array.isArray(list)) throw new Error('Expected an array');
 
 		if (list.length === 0) break;
 
@@ -51,21 +55,20 @@ async function main() {
 		const image_data = await fetch(author.avatar_url);
 		const buffer = await image_data.arrayBuffer();
 
+		// @ts-ignore
 		const image = await Jimp.read(buffer);
 		image.resize(SIZE, SIZE);
 
 		sprite.composite(image, i * SIZE, 0);
 	}
 
-	await sprite.quality(80).write(`../src/routes/_components/Supporters/contributors.jpg`);
-	// TODO: Optimizing the static/contributors.jpg image should probably get automated as well
-	console.log(
-		'remember to additionally optimize the resulting /static/contributors.jpg image file via e.g. https://squoosh.app '
-	);
+	await sprite
+		.quality(80)
+		.writeAsync(
+			new URL(`../src/routes/_components/Supporters/contributors.jpg`, import.meta.url).pathname
+		);
 
 	const str = `[\n\t${authors.map((a) => `'${a.login}'`).join(',\n\t')}\n]`;
 
-	fs.writeFileSync(outputFile, `export default ${str};`);
+	writeFile(outputFile, `export default ${str};`);
 }
-
-main();

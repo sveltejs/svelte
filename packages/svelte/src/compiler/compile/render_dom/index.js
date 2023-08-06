@@ -583,25 +583,28 @@ export default function dom(component, options) {
 		}, {});
 		const slots_str = [...component.slots.keys()].map((key) => `"${key}"`).join(',');
 		const accessors_str = accessors
-			.filter((accessor) => !writable_props.some((prop) => prop.export_name === accessor.key.name))
+			.filter(
+				(accessor) =>
+					accessor.kind === 'get' &&
+					!writable_props.some((prop) => prop.export_name === accessor.key.name)
+			)
 			.map((accessor) => `"${accessor.key.name}"`)
 			.join(',');
 		const use_shadow_dom =
 			component.component_options.customElement?.shadow !== 'none' ? 'true' : 'false';
+
+		const create_ce = x`@create_custom_element(${name}, ${JSON.stringify(
+			props_str
+		)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}, ${
+			component.component_options.customElement?.extend
+		})`;
+
 		if (component.component_options.customElement?.tag) {
 			body.push(
-				b`@_customElements.define("${
-					component.component_options.customElement.tag
-				}", @create_custom_element(${name}, ${JSON.stringify(
-					props_str
-				)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom}));`
+				b`@_customElements.define("${component.component_options.customElement.tag}", ${create_ce});`
 			);
 		} else {
-			body.push(
-				b`@create_custom_element(${name}, ${JSON.stringify(
-					props_str
-				)}, [${slots_str}], [${accessors_str}], ${use_shadow_dom});`
-			);
+			body.push(b`${create_ce}`);
 		}
 	}
 

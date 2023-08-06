@@ -1,4 +1,4 @@
-import type { Action, ActionReturn } from '$runtime/action';
+import type { Action, ActionReturn } from '$runtime/action/public';
 
 // ---------------- Action
 
@@ -65,30 +65,27 @@ const optional4: Action<HTMLElement, boolean | undefined> = (_node, _param?) => 
 };
 optional4;
 
-const no: Action<HTMLElement, never> = (_node) => {};
+const no: Action<HTMLElement, undefined> = (_node) => {};
 // @ts-expect-error second param
 no(null as any, true);
 no(null as any);
 // @ts-expect-error second param
 no(null as any, 'string');
 
-const no1: Action<HTMLElement, never> = (_node) => {
+const no1: Action<HTMLElement, undefined> = (_node) => {
 	return {
 		destroy: () => {}
 	};
 };
 no1;
 
-// @ts-expect-error param given
-const no2: Action<HTMLElement, never> = (_node, _param?) => {};
-no2;
+const no2: Action<HTMLElement, undefined> = (_node, _param?) => {};
+no2(null as any);
 
-// @ts-expect-error param given
-const no3: Action<HTMLElement, never> = (_node, _param) => {};
+const no3: Action<HTMLElement, undefined> = (_node, _param) => {};
 no3;
 
-// @ts-expect-error update method given
-const no4: Action<HTMLElement, never> = (_node) => {
+const no4: Action<HTMLElement, undefined> = (_node) => {
 	return {
 		update: () => {},
 		destroy: () => {}
@@ -106,7 +103,7 @@ requiredReturn;
 const optionalReturn: ActionReturn<boolean | undefined> = {
 	update: (p) => {
 		p === true;
-		// @ts-expect-error could be undefined
+		// @ts-expect-error (only in strict mode) could be undefined
 		p.toString();
 	}
 };
@@ -118,7 +115,7 @@ const invalidProperty: ActionReturn = {
 };
 invalidProperty;
 
-type Attributes = ActionReturn<never, { a: string }>['$$_attributes'];
+type Attributes = ActionReturn<undefined, { a: string }>['$$_attributes'];
 const attributes: Attributes = { a: 'a' };
 attributes;
 // @ts-expect-error wrong type
@@ -127,3 +124,11 @@ invalidAttributes1;
 // @ts-expect-error missing prop
 const invalidAttributes2: Attributes = {};
 invalidAttributes2;
+
+function generic_action<T extends boolean>(_node: HTMLElement, param: T): ActionReturn<T> {
+	return {
+		update: (p) => p === param,
+		destroy: () => {}
+	};
+}
+generic_action;

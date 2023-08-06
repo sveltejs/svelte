@@ -1,5 +1,85 @@
 # svelte
 
+## 4.1.2
+
+### Patch Changes
+
+- fix: allow child element with slot attribute within svelte:element ([#9038](https://github.com/sveltejs/svelte/pull/9038))
+
+- fix: Add data-\* to svg attributes ([#9036](https://github.com/sveltejs/svelte/pull/9036))
+
+## 4.1.1
+
+### Patch Changes
+
+- fix: `svelte:component` spread props change not picked up ([#9006](https://github.com/sveltejs/svelte/pull/9006))
+
+## 4.1.0
+
+### Minor Changes
+
+- feat: add ability to extend custom element class ([#8991](https://github.com/sveltejs/svelte/pull/8991))
+
+### Patch Changes
+
+- fix: ensure `svelte:component` evaluates props once ([#8946](https://github.com/sveltejs/svelte/pull/8946))
+
+- fix: remove `let:variable` slot bindings from select binding dependencies ([#8969](https://github.com/sveltejs/svelte/pull/8969))
+
+- fix: handle destructured primitive literals ([#8871](https://github.com/sveltejs/svelte/pull/8871))
+
+- perf: optimize imports that are not mutated or reassigned ([#8948](https://github.com/sveltejs/svelte/pull/8948))
+
+- fix: don't add accessor twice ([#8996](https://github.com/sveltejs/svelte/pull/8996))
+
+## 4.0.5
+
+### Patch Changes
+
+- fix: generate type definition with nullable types ([#8924](https://github.com/sveltejs/svelte/pull/8924))
+
+## 4.0.4
+
+### Patch Changes
+
+- fix: claim svg tags in raw mustache tags correctly ([#8910](https://github.com/sveltejs/svelte/pull/8910))
+
+- fix: repair invalid raw html content during hydration ([#8912](https://github.com/sveltejs/svelte/pull/8912))
+
+## 4.0.3
+
+### Patch Changes
+
+- fix: handle falsy srcset values ([#8901](https://github.com/sveltejs/svelte/pull/8901))
+
+## 4.0.2
+
+### Patch Changes
+
+- fix: reflect all custom element prop updates back to attribute ([#8898](https://github.com/sveltejs/svelte/pull/8898))
+
+- fix: shrink custom element baseline a bit ([#8858](https://github.com/sveltejs/svelte/pull/8858))
+
+- fix: use non-destructive hydration for all `@html` tags ([#8880](https://github.com/sveltejs/svelte/pull/8880))
+
+- fix: align `disclose-version` exports specification ([#8874](https://github.com/sveltejs/svelte/pull/8874))
+
+- fix: check srcset when hydrating to prevent needless requests ([#8868](https://github.com/sveltejs/svelte/pull/8868))
+
+## 4.0.1
+
+### Patch Changes
+
+- fix: ensure identifiers in destructuring contexts don't clash with existing ones ([#8840](https://github.com/sveltejs/svelte/pull/8840))
+
+- fix: ensure `createEventDispatcher` and `ActionReturn` work with types from generic function parameters ([#8872](https://github.com/sveltejs/svelte/pull/8872))
+
+- fix: apply transition to `<svelte:element>` with local transition ([#8865](https://github.com/sveltejs/svelte/pull/8865))
+
+- fix: relax a11y "no redundant role" rule for li, ul, ol ([#8867](https://github.com/sveltejs/svelte/pull/8867))
+
+- fix: remove tsconfig.json from published package ([#8859](https://github.com/sveltejs/svelte/pull/8859))
+
 ## 4.0.0
 
 ### Major Changes
@@ -24,8 +104,8 @@
 
 - breaking: Stricter types for `Action` and `ActionReturn` (see PR for migration instructions) ([#7442](https://github.com/sveltejs/svelte/pull/7442))
 
-- breaking: Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions 
-(see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
+- breaking: Stricter types for `onMount` - now throws a type error when returning a function asynchronously to catch potential mistakes around callback functions
+  (see PR for migration instructions) ([#8136](https://github.com/sveltejs/svelte/pull/8136))
 
 - breaking: Overhaul and drastically improve creating custom elements with Svelte (see PR for list of changes and migration instructions) ([#8457](https://github.com/sveltejs/svelte/pull/8457))
 
@@ -49,7 +129,6 @@
 
 ### Minor Changes
 
-
 - Add a way to modify attributes for script/style preprocessors ([#8618](https://github.com/sveltejs/svelte/pull/8618))
 
 - Improve hydration speed by adding `data-svelte-h` attribute to detect unchanged HTML elements ([#7426](https://github.com/sveltejs/svelte/pull/7426))
@@ -69,7 +148,6 @@
 - feat: smaller minified output for destructor chunks ([#8763](https://github.com/sveltejs/svelte/pull/8763))
 
 ### Patch Changes
-
 
 - Bind `null` option and input values consistently ([#8312](https://github.com/sveltejs/svelte/issues/8312))
 
