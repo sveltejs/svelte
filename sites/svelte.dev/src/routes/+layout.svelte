@@ -20,6 +20,7 @@
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
 	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
+			<svelte:fragment slot="theme-label">Thème</svelte:fragment>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
 			</svelte:fragment>
@@ -58,7 +59,15 @@
 </div>
 
 {#if browser}
-	<SearchBox />
+	<SearchBox>
+		<svelte:fragment slot="search-description">
+			Les résultats se mettent à jour quand vous écrivez
+		</svelte:fragment>
+		<svelte:fragment slot="idle" let:has_recent_searches>
+			{has_recent_searches ? 'Recherchs récentes' : 'Aucune recherche récente'}
+		</svelte:fragment>
+		<svelte:fragment slot="no-results">Aucun résultat</svelte:fragment>
+	</SearchBox>
 {/if}
 
 <style>
