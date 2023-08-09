@@ -14,7 +14,9 @@
 		<input name="q" value={data.query} placeholder="Rechercher" spellcheck="false" />
 	</form>
 
-	<SearchResults results={data.results} query={data.query} />
+	<SearchResults results={data.results} query={data.query}>
+		<svelte:fragment slot="no-results">Aucun résultat</svelte:fragment>
+	</SearchResults>
 </main>
 
 <style>

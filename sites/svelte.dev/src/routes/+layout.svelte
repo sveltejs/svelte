@@ -31,7 +31,7 @@
 
 			<svelte:fragment slot="search">
 				{#if $page.url.pathname !== '/search'}
-					<Search />
+					<Search label="Recherche" />
 				{/if}
 			</svelte:fragment>
 
