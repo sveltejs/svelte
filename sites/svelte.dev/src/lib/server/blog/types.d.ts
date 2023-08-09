@@ -15,10 +15,13 @@ export interface BlogPost {
 
 export type BlogData = BlogPost[];
 
-export interface BlogPostSummary {
+export interface BlogPostRSS {
 	slug: string;
 	title: string;
-	description: string;
+	content: string;
+	author: {
+		name: string;
+	};
 	date: string;
 	draft: boolean;
 }

@@ -65,6 +65,21 @@ export function get_blog_list(blog_data) {
 	}));
 }
 
+/** @param {import('./types').BlogData} blog_data */
+export async function get_rss_contents(blog_data) {
+	return await Promise.all(
+		blog_data.map(async ({ slug, title, content, file, author, date, draft }) => ({
+			slug,
+			title,
+			content: await render_content(file, content),
+			author,
+			date,
+			draft,
+		}))
+	)
+}
+
+
 /** @param {string} filename */
 function get_date_and_slug(filename) {
 	const match = BLOG_NAME_REGEX.exec(filename);
