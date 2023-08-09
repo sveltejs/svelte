@@ -52,7 +52,7 @@
 		>Essayez en local, <a target="_blank" rel="noreferrer" href="https://sveltekit.new"
 			>sur StackBlitz</a
 		>, ou bien avec
-		<a target="_blank" href="learn-svelte-dev-french.vercel.app">le tutoriel interactif</a
+		<a target="_blank" href="https://learn-svelte-dev-french.vercel.app">le tutoriel interactif</a
 		>.</svelte:fragment
 	>
 </TrySection>
