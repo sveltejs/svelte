@@ -426,14 +426,20 @@ function read_attribute(parser, unique_names) {
  * @returns {import('../../interfaces.js').DirectiveType}
  */
 function get_directive_type(name) {
-	if (name === 'use') return 'Action';
-	if (name === 'animate') return 'Animation';
-	if (name === 'bind') return 'Binding';
-	if (name === 'class') return 'Class';
-	if (name === 'style') return 'StyleDirective';
-	if (name === 'on') return 'EventHandler';
-	if (name === 'let') return 'Let';
-	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
+	const directives = {
+		use: 'Action',
+		animate: 'Animation',
+		bind: 'Binding',
+		class: 'Class',
+		style: 'StyleDirective',
+		on: 'EventHandler',
+		let: 'Let',
+		in: 'Transition',
+		out: 'Transition',
+		transition: 'Transition',
+	}
+
+	return directives[name];
 }
 
 /**
