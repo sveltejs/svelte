@@ -8,8 +8,8 @@ export function nodes_match(a, b) {
 			return a.every((child, i) => nodes_match(child, b[i]));
 		}
 
-		const a_keys = Object.keys(a).sort();
-		const b_keys = Object.keys(b).sort();
+		const a_keys = Object.keys(a).filter(x=> x !=='trailingComments').sort();
+		const b_keys = Object.keys(b).filter(x=> x !=='trailingComments').sort();
 
 		if (a_keys.length !== b_keys.length) return false;
 
