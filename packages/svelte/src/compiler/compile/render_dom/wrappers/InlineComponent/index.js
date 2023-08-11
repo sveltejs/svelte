@@ -116,7 +116,7 @@ export default class InlineComponentWrapper extends Wrapper {
 		if (
 			variable.reassigned ||
 			variable.export_name || // or a prop
-			variable.mutated 
+			variable.mutated
 		) {
 			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
