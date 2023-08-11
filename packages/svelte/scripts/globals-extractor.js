@@ -16,7 +16,7 @@ const GLOBAL_TS_PATH = './src/compiler/utils/globals.js';
 const SPECIALS = ['global', 'globalThis', 'InternalError', 'process', 'undefined'];
 
 const get_url = (name) =>
-	`https://raw.githubusercontent.com/microsoft/TypeScript/main/lib/lib.${name}.d.ts`;
+	`https://raw.githubusercontent.com/microsoft/TypeScript/main/src/lib/${name}.d.ts`;
 const extract_name = (split) => split.match(/^[a-zA-Z0-9_$]+/)[0];
 
 const extract_functions_and_references = (name, data) => {
