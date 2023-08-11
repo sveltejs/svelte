@@ -142,7 +142,7 @@ Then make sure that `d.ts` file is referenced in your `tsconfig.json`. If it rea
 
 Since Svelte version 4.2 / `svelte-check` version 3.5 / VS Code extension version 107.10.0 you can also declare the typings by augmenting the the `svelte/elements` module like this:
 
-```js
+```ts
 /// file: additional-svelte-typings.d.ts
 import { HTMLButtonAttributes } from 'svelte/elements'
 
