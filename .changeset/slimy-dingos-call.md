@@ -2,4 +2,4 @@
 'svelte': minor
 ---
 
-fix: move svelteHTML from language-tools to load the correct svelte/element
+feat: move `svelteHTML` from language-tools into core to load the correct `svelte/element` types
