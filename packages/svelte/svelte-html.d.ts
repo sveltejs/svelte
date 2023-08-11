@@ -3,13 +3,13 @@
 // It's meant to be loaded directly by the Svelte language server
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import * as svelteElements from './elements';
+import * as svelteElements from './elements.js';
 
 /**
  * @internal do not use
  */
 type HTMLProps<Property extends string, Override> = Omit<
-	import('./elements').SvelteHTMLElements[Property],
+	import('./elements.js').SvelteHTMLElements[Property],
 	keyof Override
 > &
 	Override;
