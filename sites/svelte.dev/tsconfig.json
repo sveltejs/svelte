@@ -1,6 +1,9 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
+		// silences wrong TS error, we don't compile, we only typecheck
+		"outDir": "./irrelevant/unused",
+
 		"allowJs": true,
 		"checkJs": true,
 		"allowSyntheticDefaultImports": true,
