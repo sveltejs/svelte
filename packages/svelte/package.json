@@ -19,6 +19,7 @@
     "motion.d.ts",
     "action.d.ts",
     "elements.d.ts",
+    "svelte-html.d.ts",
     "README.md"
   ],
   "exports": {
