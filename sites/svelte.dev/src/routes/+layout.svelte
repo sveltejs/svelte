@@ -64,7 +64,7 @@
 			Les résultats se mettent à jour quand vous écrivez
 		</svelte:fragment>
 		<svelte:fragment slot="idle" let:has_recent_searches>
-			{has_recent_searches ? 'Recherchs récentes' : 'Aucune recherche récente'}
+			{has_recent_searches ? 'Recherches récentes' : 'Aucune recherche récente'}
 		</svelte:fragment>
 		<svelte:fragment slot="no-results">Aucun résultat</svelte:fragment>
 	</SearchBox>
