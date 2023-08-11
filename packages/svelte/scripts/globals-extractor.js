@@ -29,7 +29,7 @@ const extract_functions_and_references = (name, data) => {
 			functions.push(extract_name(split[2]));
 		} else if (trimmed.startsWith('/// <reference')) {
 			const matched = trimmed.match(/ lib="(.+)"/);
-			const reference = matched && matched[1];
+			const reference = matched?.[1];
 			if (reference) references.push(reference);
 		}
 	});

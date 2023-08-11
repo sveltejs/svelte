@@ -182,8 +182,7 @@ export default class Selector {
 
 	/** @param {import('../Component.js').default} component */
 	validate_invalid_combinator_without_selector(component) {
-		for (let i = 0; i < this.blocks.length; i++) {
-			const block = this.blocks[i];
+		for (const block of this.blocks) {
 			if (block.combinator && block.selectors.length === 0) {
 				component.error(
 					this.node,

@@ -25,7 +25,7 @@ const is_keyframes_node = (node) => remove_css_prefix(node.name) === 'keyframes'
  * @returns {true}
  */
 const at_rule_has_declaration = ({ block }) =>
-	block && block.children && block.children.find((node) => node.type === 'Declaration');
+	block?.children?.find((node) => node.type === 'Declaration');
 
 /**
  * @param {import('magic-string').default} code
@@ -373,7 +373,7 @@ export default class Stylesheet {
 		this.ast = ast;
 		this.filename = filename;
 		this.dev = dev;
-		if (ast.css && ast.css.children.length) {
+		if (ast.css?.children.length) {
 			this.id = get_css_hash({
 				filename,
 				name: component_name,
@@ -438,8 +438,7 @@ export default class Stylesheet {
 	/** @param {import('../nodes/Element.js').default} node */
 	apply(node) {
 		if (!this.has_styles) return;
-		for (let i = 0; i < this.children.length; i += 1) {
-			const child = this.children[i];
+		for (const child of this.children) {
 			child.apply(node);
 		}
 	}
