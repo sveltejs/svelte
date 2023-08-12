@@ -43,7 +43,7 @@ const cqSyntax = fork({
 
 					this.skipSC();
 
-					if (this.tokenType == Function && this.cmpStr(this.tokenStart, this.tokenEnd, 'layer(')) {
+					if (this.tokenType === Function && this.cmpStr(this.tokenStart, this.tokenEnd, 'layer(')) {
 						children.push(
 							this.Function(() => {
 								const children = this.createList();
@@ -54,7 +54,7 @@ const cqSyntax = fork({
 							}, this.scope.AtrulePrelude)
 						);
 					} else if (
-						this.tokenType == Ident &&
+						this.tokenType === Ident &&
 						this.cmpStr(this.tokenStart, this.tokenEnd, 'layer')
 					) {
 						children.push(this.Identifier());
@@ -63,7 +63,7 @@ const cqSyntax = fork({
 					this.skipSC();
 
 					if (
-						this.tokenType == Function &&
+						this.tokenType === Function &&
 						this.cmpStr(this.tokenStart, this.tokenEnd, 'supports(')
 					) {
 						children.push(
