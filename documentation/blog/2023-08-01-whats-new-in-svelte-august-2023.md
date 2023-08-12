@@ -46,7 +46,7 @@ For all the patches and performance updates from this month, check out the [Svel
 **Learning Resources**
 _Featuring Svelte Contributors and Ambassadors_
 - [Exploring Svelte 4 w/ Kevin AK: Performance, Compatibility, & Web Component Support | Modern Web Pod](https://www.youtube.com/watch?v=YOL0HGGVib4) by This Dot Media
-- [Svelte Sirens Stream Design Systems: Lessons Learned](https://www.youtube.com/live/YHZaiIGSqsE?feature=share) featuring Eric Liu creator of Carbon Components Svelte and Svelde the docgen library
+- [Svelte Sirens Stream Design Systems: Lessons Learned](https://www.youtube.com/live/YHZaiIGSqsE?feature=share) featuring Eric Liu, creator of Carbon Components Svelte and the `sveld` docgen library
 - This Week in Svelte:
   - [2023 June 30](https://www.youtube.com/watch?v=sDz4_BLoYQ4) - Svelte 4.0.1, SK 1.21, lists, screen readers, loading
   - [2023 July 7](https://www.youtube.com/watch?v=0tq1ph4DDFA) - Svelte 4.0.5, Kit 1.22.1, Svelte 5, local storage and markdown
