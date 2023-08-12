@@ -1,7 +1,7 @@
 // @ts-nocheck
 export const name = 'SupportsCondition';
 export const structure = {
-	children: [[]],
+	children: [[]]
 };
 
 // TODO: Wait until css-tree has better @supports condition AST and remove this file
@@ -19,4 +19,3 @@ export function parse() {
 export function generate(node) {
 	this.children(node);
 }
-

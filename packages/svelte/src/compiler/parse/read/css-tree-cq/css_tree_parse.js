@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { fork } from 'css-tree';
-import { String, Url, Function, RightParenthesis, Ident, Semicolon } from 'css-tree/tokenizer';
+import { String, Url, Function, Ident, Semicolon } from 'css-tree/tokenizer';
 
 import * as node from './node/index.js';
 
@@ -44,31 +44,41 @@ const cqSyntax = fork({
 					this.skipSC();
 
 					if (this.tokenType == Function && this.cmpStr(this.tokenStart, this.tokenEnd, 'layer(')) {
-						children.push(this.Function(() => {
-							const children = this.createList();
-							this.skipSC();
-							children.push(this.LayerName());
-							this.skipSC();
-							return children;
-						}, this.scope.AtrulePrelude));
-					} else if (this.tokenType == Ident && this.cmpStr(this.tokenStart, this.tokenEnd, 'layer')) {
+						children.push(
+							this.Function(() => {
+								const children = this.createList();
+								this.skipSC();
+								children.push(this.LayerName());
+								this.skipSC();
+								return children;
+							}, this.scope.AtrulePrelude)
+						);
+					} else if (
+						this.tokenType == Ident &&
+						this.cmpStr(this.tokenStart, this.tokenEnd, 'layer')
+					) {
 						children.push(this.Identifier());
 					}
 
 					this.skipSC();
 
-					if (this.tokenType == Function && this.cmpStr(this.tokenStart, this.tokenEnd, 'supports(')) {
-						children.push(this.Function(() => {
-							const children = this.createList();
-							this.skipSC();
-							children.push(this.SupportsCondition());
-							this.skipSC();
-							return children;
-						}, this.scope.AtrulePrelude));
+					if (
+						this.tokenType == Function &&
+						this.cmpStr(this.tokenStart, this.tokenEnd, 'supports(')
+					) {
+						children.push(
+							this.Function(() => {
+								const children = this.createList();
+								this.skipSC();
+								children.push(this.SupportsCondition());
+								this.skipSC();
+								return children;
+							}, this.scope.AtrulePrelude)
+						);
 					}
 
 					this.skipSC();
-					
+
 					if (this.tokenType !== Semicolon) {
 						children.push(this.MediaQueryList());
 					}
@@ -77,7 +87,7 @@ const cqSyntax = fork({
 				},
 				block: null
 			}
-		},
+		}
 	},
 	node
 });
