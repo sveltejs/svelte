@@ -1,0 +1,17 @@
+**/_actual.js
+**/expected.js
+_output
+test/*/samples/*/output.js
+
+# automatically generated
+internal_exports.js
+
+# output files
+animate/*.js
+esing/*.js
+internal/*.js
+motion/*.js
+store/*.js
+transition/*.js
+index.js
+compiler.js

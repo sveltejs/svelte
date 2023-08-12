@@ -1,0 +1,3 @@
+packages:
+  - 'sites/*'
+  - 'packages/*'

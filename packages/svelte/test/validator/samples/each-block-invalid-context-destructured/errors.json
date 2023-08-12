@@ -1,0 +1,14 @@
+[
+	{
+		"code": "parse-error",
+		"message": "Unexpected token",
+		"start": {
+			"line": 1,
+			"column": 17
+		},
+		"end": {
+			"line": 1,
+			"column": 17
+		}
+	}
+]

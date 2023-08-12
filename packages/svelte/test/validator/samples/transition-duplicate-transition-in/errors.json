@@ -1,0 +1,14 @@
+[
+	{
+		"code": "duplicate-transition",
+		"message": "An element cannot have both a 'transition' directive and an 'in' directive",
+		"start": {
+			"line": 6,
+			"column": 20
+		},
+		"end": {
+			"line": 6,
+			"column": 26
+		}
+	}
+]

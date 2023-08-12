@@ -1,0 +1,47 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 2,
+    "total": 4,
+    "workspacePrefix": "/Users/mathiaspicker/Documents/2023/svelte"
+  },
+  "1 debug pnpm:lifecycle": {
+    "depPath": "/Users/mathiaspicker/Documents/2023/svelte/packages/svelte",
+    "optional": false,
+    "script": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
+    "stage": "test",
+    "wd": "/Users/mathiaspicker/Documents/2023/svelte/packages/svelte"
+  },
+  "2 debug pnpm:lifecycle": {
+    "depPath": "/Users/mathiaspicker/Documents/2023/svelte/packages/svelte",
+    "line": "sh: vitest: command not found",
+    "stage": "test",
+    "stdio": "stderr",
+    "wd": "/Users/mathiaspicker/Documents/2023/svelte/packages/svelte"
+  },
+  "3 info pnpm": {
+    "err": {
+      "name": "Error",
+      "message": "svelte@4.2.0 test: `vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"`\nspawn ENOENT",
+      "code": "ELIFECYCLE",
+      "stack": "Error: svelte@4.2.0 test: `vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"`\nspawn ENOENT\n    at ChildProcess.<anonymous> (/Users/mathiaspicker/pnpm-global/5/node_modules/.pnpm/pnpm@7.3.0/node_modules/pnpm/dist/pnpm.cjs:94974:22)\n    at ChildProcess.emit (node:events:513:28)\n    at maybeClose (node:internal/child_process:1091:16)\n    at Socket.<anonymous> (node:internal/child_process:449:11)\n    at Socket.emit (node:events:513:28)\n    at Pipe.<anonymous> (node:net:313:12)"
+    }
+  },
+  "4 error pnpm": {
+    "code": "ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL",
+    "errno": "ENOENT",
+    "syscall": "spawn",
+    "file": "sh",
+    "pkgid": "svelte@4.2.0",
+    "stage": "test",
+    "script": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
+    "pkgname": "svelte",
+    "prefix": "/Users/mathiaspicker/Documents/2023/svelte/packages/svelte",
+    "err": {
+      "name": "pnpm",
+      "message": "svelte@4.2.0 test: `vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"`\nspawn ENOENT",
+      "code": "ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL",
+      "stack": "Error: svelte@4.2.0 test: `vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"`\nspawn ENOENT\n    at ChildProcess.<anonymous> (/Users/mathiaspicker/pnpm-global/5/node_modules/.pnpm/pnpm@7.3.0/node_modules/pnpm/dist/pnpm.cjs:94974:22)\n    at ChildProcess.emit (node:events:513:28)\n    at maybeClose (node:internal/child_process:1091:16)\n    at Socket.<anonymous> (node:internal/child_process:449:11)\n    at Socket.emit (node:events:513:28)\n    at Pipe.<anonymous> (node:net:313:12)"
+    }
+  },
+  "5 warn pnpm:global": " Local package.json exists, but node_modules missing, did you mean to install?"
+}
