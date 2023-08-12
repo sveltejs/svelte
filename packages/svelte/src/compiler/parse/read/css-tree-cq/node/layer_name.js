@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Delim } from 'css-tree/tokenizer';
+import { Delim, Ident } from 'css-tree/tokenizer';
 
 const FULLSTOP = 0x002e; // U+002E FULL STOP (.)
 
