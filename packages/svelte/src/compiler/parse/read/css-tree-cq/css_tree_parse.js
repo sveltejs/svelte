@@ -43,7 +43,10 @@ const cqSyntax = fork({
 
 					this.skipSC();
 
-					if (this.tokenType === Function && this.cmpStr(this.tokenStart, this.tokenEnd, 'layer(')) {
+					if (
+						this.tokenType === Function &&
+						this.cmpStr(this.tokenStart, this.tokenEnd, 'layer(')
+					) {
 						children.push(
 							this.Function(() => {
 								const children = this.createList();
