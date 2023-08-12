@@ -207,7 +207,8 @@ class Atrule {
 			this.node.name === 'container' ||
 			this.node.name === 'media' ||
 			this.node.name === 'supports' ||
-			this.node.name === 'layer'
+			this.node.name === 'layer' ||
+			this.node.name === 'import'
 		) {
 			this.children.forEach((child) => {
 				child.apply(node);
