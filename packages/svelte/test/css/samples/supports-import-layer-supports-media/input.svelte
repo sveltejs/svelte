@@ -1,0 +1,52 @@
+<style>
+   @import "theme.css";
+   @import url(themes.css);
+   @import url("http://themes.css");
+   @import "theme.css" layer;
+   @import url(theme.css) layer;
+   @import url("http://themes.css") layer;
+   @import "theme.css" layer(abcd);
+   @import url(theme.css) layer(abcd);
+   @import url("http://themes.css") layer(abcd);
+   @import "theme.css" layer(abcd.efgh.ijkl);
+   @import url(theme.css) layer(abcd.efgh.ijkl);
+   @import url("http://themes.css") layer(abcd.efgh.ijkl);
+   @import "theme.css" screen and (orientation: portrait);
+   @import url(theme.css) screen and (orientation: portrait);
+   @import url("http://themes.css") screen and (orientation: portrait);
+   @import "theme.css" layer (min-width: 500px);
+   @import url(theme.css) layer (min-width: 500px);
+   @import url("http://themes.css") layer (min-width: 500px);
+   @import "theme.css" layer(abcd) screen and (orientation: portrait);
+   @import url(theme.css) layer(abcd) screen and (orientation: portrait);
+   @import url("http://themes.css") layer(abcd) screen and (orientation: portrait);
+   @import "theme.css" layer(abcd.efgh.ijkl) (min-width: 500px);
+   @import url(theme.css) layer(abcd.efgh.ijkl) (min-width: 500px);
+   @import url("http://themes.css") layer(abcd.efgh.ijkl) (min-width: 500px);
+
+   /* As of August 11 2023, supports in @import is supported only by Firefox */
+   @import "theme.css" supports((display: flex));
+   @import url(themes.css) supports((selector(h2 > p)) and (font-tech(color-COLRv1)));
+   @import url("http://themes.css") supports(not (display: grid) and (display: flex));
+   @import "theme.css" layer supports((selector(h2 > p)) and (font-tech(color-COLRv1))); 
+   @import url(theme.css) layer supports(not (display: grid) and (display: flex));
+   @import url("http://themes.css") layer supports((display: flex));
+   @import "theme.css" layer(abcd) supports(not (display: grid) and (display: flex));
+   @import url(theme.css) layer(abcd) supports((display: flex));
+   @import url("http://themes.css") layer(abcd) supports((selector(h2 > p)) and (font-tech(color-COLRv1)));
+   @import "theme.css" layer(abcd.efgh.ijkl) supports((display: flex));
+   @import url(theme.css) layer(abcd.efgh.ijkl) supports((selector(h2 > p)) and (font-tech(color-COLRv1)));
+   @import url("http://themes.css") layer(abcd.efgh.ijkl) supports(not (display: grid) and (display: flex));
+   @import "theme.css" supports((selector(h2 > p)) and (font-tech(color-COLRv1))) screen and (orientation: portrait);
+   @import url(theme.css) supports(not (display: grid) and (display: flex)) screen and (orientation: portrait);
+   @import url("http://themes.css") supports((display: flex)) screen and (orientation: portrait);
+   @import "theme.css" layer supports(not (display: grid) and (display: flex) (min-width: 500px));
+   @import url(theme.css) layer supports((display : flex)) (min-width: 500px);
+   @import url("http://themes.css") supports((selector(h2 > p)) and (font-tech(color-COLRv1))) layer (min-width: 500px);
+   @import "theme.css" layer(abcd) supports(not (display: grid) and (display: flex)) screen and (orientation: portrait);
+   @import url(theme.css) layer(abcd) supports((display : flex)) screen and (orientation: portrait);
+   @import url("http://themes.css") layer(abcd) supports((selector(h2 > p)) and (font-tech(color-COLRv1))) screen and (orientation: portrait);
+   @import "theme.css" layer(abcd.efgh.ijkl) supports(not (display: grid) and (display: flex)) (min-width: 500px);
+   @import url(theme.css) layer(abcd.efgh.ijkl) supports((display : flex)) (min-width: 500px);
+   @import url("http://themes.css") layer(abcd.efgh.ijkl) supports((selector(h2 > p)) and (font-tech(color-COLRv1))) (min-width: 500px);
+</style>
