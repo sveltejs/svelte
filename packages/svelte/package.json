@@ -83,7 +83,7 @@
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm build",
     "types": "node ./scripts/generate-dts.js",
-    "lint": "prettier . --cache --plugin-search-dir=. --check && eslint \"{src,test}/**/*.{ts,js}\" --cache"
+    "lint": "prettier . --cache --plugin-search-dir=. --check && eslint \"{src,test,scripts}/**/*.{ts,js}\" --cache"
   },
   "repository": {
     "type": "git",
