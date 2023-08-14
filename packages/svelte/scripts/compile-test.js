@@ -1,10 +1,11 @@
 // Compile all Svelte files in a directory to JS and CSS files
 // Usage: node scripts/compile-test.js <directory>
 
-import { mkdirSync, readFileSync, writeFileSync } from 'fs';
-import path from 'path';
-import glob from 'tiny-glob/sync.js';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+
 import { compile } from '../src/compiler/index.js';
+import glob from 'tiny-glob/sync.js';
+import path from 'node:path';
 
 const cwd = path.resolve(process.argv[2]);
 
