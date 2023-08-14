@@ -10,11 +10,11 @@ export {
 	SvelteComponentTyped
 } from './index.js';
 
-/** @returns {void} */
+// eslint-disable-next-line id-match
 export function onMount() {}
 
-/** @returns {void} */
+// eslint-disable-next-line id-match
 export function beforeUpdate() {}
 
-/** @returns {void} */
+// eslint-disable-next-line id-match
 export function afterUpdate() {}

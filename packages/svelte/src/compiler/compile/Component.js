@@ -1,6 +1,6 @@
-import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
+import { TraceMap, originalPositionFor as original_position_for } from '@jridgewell/trace-mapping';
 import { walk } from 'estree-walker';
-import { getLocator } from 'locate-character';
+import { getLocator as get_locator } from 'locate-character';
 import { reserved, is_valid } from '../utils/names.js';
 import globals from '../utils/globals.js';
 import { namespaces, valid_namespaces } from '../utils/namespaces.js';
@@ -213,7 +213,7 @@ export default class Component {
 				: compile_options.filename);
 
 		// line numbers in stack trace frames are 1-based. source maps are 0-based
-		this.locate = getLocator(this.source, { offsetLine: 1 });
+		this.locate = get_locator(this.source, { offsetLine: 1 });
 		/** @type {TraceMap | null | undefined} initialise lazy because only used in dev mode */
 		let tracer;
 		this.meta_locate = (c) => {
@@ -225,7 +225,7 @@ export default class Component {
 			}
 			if (tracer) {
 				// originalPositionFor returns 1-based lines like locator
-				location = originalPositionFor(tracer, location);
+				location = original_position_for(tracer, location);
 			}
 			return location;
 		};
@@ -1555,8 +1555,8 @@ export default class Component {
 			}, [])
 		);
 		if (cycle && cycle.length) {
-			const declarationList = lookup.get(cycle[0]);
-			const declaration = declarationList[0];
+			const declaration_list = lookup.get(cycle[0]);
+			const declaration = declaration_list[0];
 			return this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
 		}
 

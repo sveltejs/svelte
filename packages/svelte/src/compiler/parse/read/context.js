@@ -1,4 +1,4 @@
-import { isIdentifierStart } from 'acorn';
+import { isIdentifierStart as is_identifier_start } from 'acorn';
 import full_char_code_at from '../../utils/full_char_code_at.js';
 import {
 	is_bracket_open,
@@ -19,7 +19,7 @@ export default function read_context(parser) {
 	let i = parser.index;
 
 	const code = full_char_code_at(parser.template, i);
-	if (isIdentifierStart(code, true)) {
+	if (is_identifier_start(code, true)) {
 		return {
 			type: 'Identifier',
 			name: parser.read_identifier(),

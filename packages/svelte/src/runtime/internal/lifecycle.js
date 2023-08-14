@@ -21,7 +21,7 @@ export function get_current_component() {
  * @param {() => any} fn
  * @returns {void}
  */
-export function beforeUpdate(fn) {
+export function before_update(fn) {
 	get_current_component().$$.before_update.push(fn);
 }
 
@@ -39,7 +39,7 @@ export function beforeUpdate(fn) {
  * @param {() => import('./private.js').NotFunction<T> | Promise<import('./private.js').NotFunction<T>> | (() => any)} fn
  * @returns {void}
  */
-export function onMount(fn) {
+export function on_mount(fn) {
 	get_current_component().$$.on_mount.push(fn);
 }
 
@@ -52,7 +52,7 @@ export function onMount(fn) {
  * @param {() => any} fn
  * @returns {void}
  */
-export function afterUpdate(fn) {
+export function after_update(fn) {
 	get_current_component().$$.after_update.push(fn);
 }
 
@@ -66,7 +66,7 @@ export function afterUpdate(fn) {
  * @param {() => any} fn
  * @returns {void}
  */
-export function onDestroy(fn) {
+export function on_destroy(fn) {
 	get_current_component().$$.on_destroy.push(fn);
 }
 
@@ -93,7 +93,7 @@ export function onDestroy(fn) {
  * @template {Record<string, any>} [EventMap=any]
  * @returns {import('./public.js').EventDispatcher<EventMap>}
  */
-export function createEventDispatcher() {
+export function create_event_dispatcher() {
 	const component = get_current_component();
 	return (type, detail, { cancelable = false } = {}) => {
 		const callbacks = component.$$.callbacks[type];
@@ -123,7 +123,7 @@ export function createEventDispatcher() {
  * @param {T} context
  * @returns {T}
  */
-export function setContext(key, context) {
+export function set_context(key, context) {
 	get_current_component().$$.context.set(key, context);
 	return context;
 }
@@ -137,7 +137,7 @@ export function setContext(key, context) {
  * @param {any} key
  * @returns {T}
  */
-export function getContext(key) {
+export function get_context(key) {
 	return get_current_component().$$.context.get(key);
 }
 
@@ -150,7 +150,7 @@ export function getContext(key) {
  * @template {Map<any, any>} [T=Map<any, any>]
  * @returns {T}
  */
-export function getAllContexts() {
+export function get_all_contexts() {
 	return get_current_component().$$.context;
 }
 
@@ -162,7 +162,7 @@ export function getAllContexts() {
  * @param {any} key
  * @returns {boolean}
  */
-export function hasContext(key) {
+export function has_context(key) {
 	return get_current_component().$$.context.has(key);
 }
 

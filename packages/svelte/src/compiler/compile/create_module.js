@@ -41,11 +41,11 @@ export default function create_module(
 
 /**
  * @param {any} source
- * @param {any} sveltePath
+ * @param {any} svelte_path
  */
-function edit_source(source, sveltePath) {
+function edit_source(source, svelte_path) {
 	return source === 'svelte' || source.startsWith('svelte/')
-		? source.replace('svelte', sveltePath)
+		? source.replace('svelte', svelte_path)
 		: source;
 }
 
@@ -84,7 +84,7 @@ function get_internal_globals(globals, helpers) {
  * @param {any} program
  * @param {import('estree').Identifier} name
  * @param {string} banner
- * @param {string} sveltePath
+ * @param {string} svelte_path
  * @param {string} internal_path
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
@@ -96,7 +96,7 @@ function esm(
 	program,
 	name,
 	banner,
-	sveltePath,
+	svelte_path,
 	internal_path,
 	helpers,
 	globals,
@@ -118,7 +118,7 @@ function esm(
 
 	/** @param {any} node */
 	function rewrite_import(node) {
-		const value = edit_source(node.source.value, sveltePath);
+		const value = edit_source(node.source.value, svelte_path);
 		if (node.source.value !== value) {
 			node.source.value = value;
 			node.source.raw = null;

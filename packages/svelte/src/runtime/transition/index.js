@@ -1,5 +1,5 @@
-import { cubicOut, cubicInOut, linear } from '../easing/index.js';
-import { assign, split_css_unit, is_function } from '../internal/index.js';
+import { assign, is_function, split_css_unit } from '../internal/index.js';
+import { cubicInOut as cubic_in_out, cubicOut as cubic_out, linear } from '../easing/index.js';
 
 /**
  * Animates a `blur` filter alongside an element's opacity.
@@ -11,7 +11,7 @@ import { assign, split_css_unit, is_function } from '../internal/index.js';
  */
 export function blur(
 	node,
-	{ delay = 0, duration = 400, easing = cubicInOut, amount = 5, opacity = 0 } = {}
+	{ delay = 0, duration = 400, easing = cubic_in_out, amount = 5, opacity = 0 } = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -54,7 +54,7 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
  */
 export function fly(
 	node,
-	{ delay = 0, duration = 400, easing = cubicOut, x = 0, y = 0, opacity = 0 } = {}
+	{ delay = 0, duration = 400, easing = cubic_out, x = 0, y = 0, opacity = 0 } = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -80,7 +80,7 @@ export function fly(
  * @param {import('./public').SlideParams} [params]
  * @returns {import('./public').TransitionConfig}
  */
-export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis = 'y' } = {}) {
+export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axis = 'y' } = {}) {
 	const style = getComputedStyle(node);
 	const opacity = +style.opacity;
 	const primary_property = axis === 'y' ? 'height' : 'width';
@@ -126,7 +126,7 @@ export function slide(node, { delay = 0, duration = 400, easing = cubicOut, axis
  */
 export function scale(
 	node,
-	{ delay = 0, duration = 400, easing = cubicOut, start = 0, opacity = 0 } = {}
+	{ delay = 0, duration = 400, easing = cubic_out, start = 0, opacity = 0 } = {}
 ) {
 	const style = getComputedStyle(node);
 	const target_opacity = +style.opacity;
@@ -152,7 +152,7 @@ export function scale(
  * @param {import('./public').DrawParams} [params]
  * @returns {import('./public').TransitionConfig}
  */
-export function draw(node, { delay = 0, speed, duration, easing = cubicInOut } = {}) {
+export function draw(node, { delay = 0, speed, duration, easing = cubic_in_out } = {}) {
 	let len = node.getTotalLength();
 	const style = getComputedStyle(node);
 	if (style.strokeLinecap !== 'butt') {
@@ -202,7 +202,7 @@ export function crossfade({ fallback, ...defaults }) {
 		const {
 			delay = 0,
 			duration = (d) => Math.sqrt(d) * 30,
-			easing = cubicOut
+			easing = cubic_out
 		} = assign(assign({}, defaults), params);
 		const from = from_node.getBoundingClientRect();
 		const to = node.getBoundingClientRect();

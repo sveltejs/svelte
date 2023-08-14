@@ -1,5 +1,6 @@
-import { set_current_component, current_component } from './lifecycle.js';
-import { run_all, blank_object } from './utils.js';
+import { blank_object, run_all } from './utils.js';
+import { current_component, set_current_component } from './lifecycle.js';
+
 import { boolean_attributes } from '../../shared/boolean_attributes.js';
 import { ensure_array_like } from './each.js';
 export { is_void } from '../../shared/utils/names.js';

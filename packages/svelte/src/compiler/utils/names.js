@@ -1,4 +1,7 @@
-import { isIdentifierStart, isIdentifierChar } from 'acorn';
+import {
+	isIdentifierStart as is_identifier_start,
+	isIdentifierChar as is_identifier_char
+} from 'acorn';
 import full_char_code_at from './full_char_code_at.js';
 import { regex_starts_with_underscore, regex_ends_with_underscore } from './patterns.js';
 
@@ -62,7 +65,7 @@ export function is_valid(str) {
 
 	while (i < str.length) {
 		const code = full_char_code_at(str, i);
-		if (!(i === 0 ? isIdentifierStart : isIdentifierChar)(code, true)) return false;
+		if (!(i === 0 ? is_identifier_start : is_identifier_char)(code, true)) return false;
 
 		i += code <= 0xffff ? 1 : 2;
 	}

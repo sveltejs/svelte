@@ -90,9 +90,9 @@ export function clear_rules() {
 	raf(() => {
 		if (active) return;
 		managed_styles.forEach((info) => {
-			const { ownerNode } = info.stylesheet;
+			const { ownerNode: owner_node } = info.stylesheet;
 			// there is no ownerNode if it runs on jsdom.
-			if (ownerNode) detach(ownerNode);
+			if (owner_node) detach(owner_node);
 		});
 		managed_styles.clear();
 	});

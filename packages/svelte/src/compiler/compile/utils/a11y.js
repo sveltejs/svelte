@@ -1,5 +1,5 @@
-import { roles as roles_map, elementRoles } from 'aria-query';
-import { AXObjects, AXObjectRoles, elementAXObjects } from 'axobject-query';
+import { roles as roles_map, elementRoles as element_roles } from 'aria-query';
+import { AXObjects, AXObjectRoles, elementAXObjects as element_ax_objects } from 'axobject-query';
 import { regex_whitespaces } from '../../utils/patterns.js';
 
 const aria_roles = roles_map.keys();
@@ -104,7 +104,7 @@ export function has_disabled_attribute(attribute_map) {
  * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const non_interactive_element_role_schemas = [];
-elementRoles.entries().forEach(([schema, roles]) => {
+element_roles.entries().forEach(([schema, roles]) => {
 	if ([...roles].every((role) => role !== 'generic' && non_interactive_roles.has(role))) {
 		non_interactive_element_role_schemas.push(schema);
 	}
@@ -114,7 +114,7 @@ elementRoles.entries().forEach(([schema, roles]) => {
  * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const interactive_element_role_schemas = [];
-elementRoles.entries().forEach(([schema, roles]) => {
+element_roles.entries().forEach(([schema, roles]) => {
 	if ([...roles].every((role) => interactive_roles.has(role))) {
 		interactive_element_role_schemas.push(schema);
 	}
@@ -132,7 +132,7 @@ const non_interactive_ax_objects = new Set(
  * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const interactive_element_ax_object_schemas = [];
-elementAXObjects.entries().forEach(([schema, ax_object]) => {
+element_ax_objects.entries().forEach(([schema, ax_object]) => {
 	if ([...ax_object].every((role) => interactive_ax_objects.has(role))) {
 		interactive_element_ax_object_schemas.push(schema);
 	}
@@ -142,7 +142,7 @@ elementAXObjects.entries().forEach(([schema, ax_object]) => {
  * @type {import('aria-query').ARIARoleRelationConcept[]}
  */
 const non_interactive_element_ax_object_schemas = [];
-elementAXObjects.entries().forEach(([schema, ax_object]) => {
+element_ax_objects.entries().forEach(([schema, ax_object]) => {
 	if ([...ax_object].every((role) => non_interactive_ax_objects.has(role))) {
 		non_interactive_element_ax_object_schemas.push(schema);
 	}
@@ -241,7 +241,7 @@ export function is_static_element(tag_name, attribute_map) {
  * @param {Map<string, import('../nodes/Attribute.js').default>} attribute_map
  */
 export function is_semantic_role_element(role, tag_name, attribute_map) {
-	for (const [schema, ax_object] of elementAXObjects.entries()) {
+	for (const [schema, ax_object] of element_ax_objects.entries()) {
 		if (
 			schema.name === tag_name &&
 			(!schema.attributes ||

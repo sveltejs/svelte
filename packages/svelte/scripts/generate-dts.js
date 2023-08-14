@@ -1,5 +1,6 @@
 import * as fs from 'fs';
-import { createBundle } from 'dts-buddy';
+
+import { createBundle as create_bundle } from 'dts-buddy';
 
 // It may look weird, but the imports MUST be ending with index.js to be properly resolved in all TS modes
 for (const name of ['action', 'animate', 'easing', 'motion', 'store', 'transition']) {
@@ -14,7 +15,7 @@ fs.mkdirSync('./types/compiler', { recursive: true });
 fs.writeFileSync('./types/compiler/preprocess.d.ts', `import '../index.js';`);
 fs.writeFileSync('./types/compiler/interfaces.d.ts', `import '../index.js';`);
 
-await createBundle({
+await create_bundle({
 	output: 'types/index.d.ts',
 	compilerOptions: {
 		strict: true

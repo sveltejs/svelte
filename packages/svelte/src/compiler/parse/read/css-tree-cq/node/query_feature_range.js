@@ -16,7 +16,7 @@ export const structure = {
 	value: ['Identifier', 'Number', 'Comparison', 'Dimension', 'QueryCSSFunction', 'Ratio', null]
 };
 
-function lookup_non_WS_type_and_value(offset, type, referenceStr) {
+function lookup_non_ws_type_and_value(offset, type, reference_str) {
 	let current_type;
 
 	do {
@@ -26,7 +26,7 @@ function lookup_non_WS_type_and_value(offset, type, referenceStr) {
 		}
 	} while (current_type !== 0); // NULL -> 0
 
-	return current_type === type ? this.lookupValue(offset - 1, referenceStr) : false;
+	return current_type === type ? this.lookupValue(offset - 1, reference_str) : false;
 }
 
 export function parse() {
@@ -40,7 +40,7 @@ export function parse() {
 	while (!this.eof && this.tokenType !== RightParenthesis) {
 		switch (this.tokenType) {
 			case Number:
-				if (lookup_non_WS_type_and_value.call(this, 1, Delim, '/')) {
+				if (lookup_non_ws_type_and_value.call(this, 1, Delim, '/')) {
 					child = this.Ratio();
 				} else {
 					child = this.Number();
