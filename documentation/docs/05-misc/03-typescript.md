@@ -156,6 +156,8 @@ declare module 'svelte/elements' {
         'veryexperimentalattribute'?: string;
     }
 }
+
+export {}; // ensure this is not an ambient module, else types will be overridden instead of augmented
 ```
 
 ## Experimental advanced typings
