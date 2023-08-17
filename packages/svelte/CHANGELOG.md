@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.0
+
+### Minor Changes
+
+- feat: move `svelteHTML` from language-tools into core to load the correct `svelte/element` types ([#9070](https://github.com/sveltejs/svelte/pull/9070))
+
 ## 4.1.2
 
 ### Patch Changes

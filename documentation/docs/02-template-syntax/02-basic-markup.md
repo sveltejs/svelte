@@ -56,8 +56,9 @@ All other attributes are included unless their value is [nullish](https://develo
 
 An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
+<!-- prettier-ignore -->
 ```svelte
-<button disabled={number !== 42}>...</button>
+<button disabled="{number !== 42}">...</button>
 ```
 
 When the attribute name and value match (`name={name}`), they can be replaced with `{name}`.
