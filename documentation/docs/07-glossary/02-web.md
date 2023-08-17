@@ -42,6 +42,10 @@ Le _Document Object Model_ (DOM) est la représentation objet d'un document HTML
 
 Le DOM relie les pages web aux scripts, fichiers de styles, ressources externes ou langages de programmation. Il peut être manipulé à l'aide du JavaScript.
 
+## Endpoint
+
+> Bientôt...
+
 ## Framework
 
 > Bientôt...
