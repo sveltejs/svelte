@@ -140,7 +140,7 @@ declare namespace svelteHTML {
 
 Ensuite, assurez vous que les fichiers `d.ts` soient référencés dans `tsconfig.json`. Si vous lisez quelque chose comme : `"include": ["src/**/*"]` et vos fichiers `d.ts` sont dans votre dossier `src`, ça devrait marcher. Vous devrez peut-être relancer votre serveur pour que le changement prenne effet.
 
-Since Svelte version 4.2 / `svelte-check` version 3.5 / VS Code extension version 107.10.0 you can also declare the typings by augmenting the `svelte/elements` module like this:
+Depuis Svelte version 4.2 / `svelte-check` version 3.5 / l'extension VSCode version 107.10.0, vous pouvez aussi déclarer les types en étendant le module `svelte/elements` comme ceci :
 
 ```ts
 /// file: additional-svelte-typings.d.ts
@@ -151,16 +151,16 @@ declare module 'svelte/elements' {
         'custom-button': HTMLButtonAttributes;
     }
 
-	// allows for more granular control over what element to add the typings to
+	// permet un contrôle plus fin sur l'élément auquel vous ajoutez les types
     export interface HTMLButtonAttributes {
         'veryexperimentalattribute'?: string;
     }
 }
 
-export {}; // ensure this is not an ambient module, else types will be overridden instead of augmented
+export {}; // assure que ceci n'est pas un module "ambiant", sinon les types seront écrasés au lieu d'être augmentés
 ```
 
-## Experimental advanced typings
+## Typings avancés expérimentaux
 
 Quelques fonctionnalités sont manquantes pour bénéficier de tous les avantages de TypeScript dans des cas plus avancés, comme pour typer qu'un composant étend une interface, pour typer les <span class="vo">[slots](/docs/sveltejs#slot)</span> ou pour utiliser des génériques. Tout ceci est rendu possible en utilisant des fonctionnalités expérimentales avancées. Voir [la RFC](https://github.com/dummdidumm/rfcs/blob/ts-typedefs-within-svelte-components/text/ts-typing-props-slots-events.md) pour savoir comment définir de tels typages.
 
