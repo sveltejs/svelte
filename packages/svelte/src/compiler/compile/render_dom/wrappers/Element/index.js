@@ -993,7 +993,7 @@ export default class ElementWrapper extends Wrapper {
 			if (attr instanceof SpreadAttributeWrapper) {
 				const { name } = flatten_reference(attr.node.expression.node);
 				const snippet = { type: 'SpreadElement', argument: attr.node.expression.manipulate(block) };
-				static_attributes.push(p`${name}: {${snippet}}`);
+				static_attributes.push(p`${snippet}`);
 			} else {
 				const name = attr.property_name || attr.name;
 				static_attributes.push(p`${name}: ${attr.get_value(block)}`);
