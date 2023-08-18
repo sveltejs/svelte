@@ -47,7 +47,7 @@ export async function content() {
 		blocks.push({
 			breadcrumbs: [...breadcrumbs, removeMarkdown(remove_TYPE(metadata.title) ?? '')],
 			href: get_href([slug]),
-			content: plaintext(intro),
+			content: await plaintext(intro),
 			rank
 		});
 
@@ -67,7 +67,7 @@ export async function content() {
 					remove_TYPE(removeMarkdown(h2))
 				],
 				href: get_href([slug, normalizeSlugify(h2)]),
-				content: plaintext(intro),
+				content: await plaintext(intro),
 				rank
 			});
 
@@ -83,7 +83,7 @@ export async function content() {
 						removeMarkdown(remove_TYPE(h3))
 					],
 					href: get_href([slug, normalizeSlugify(h2) + '-' + normalizeSlugify(h3)]),
-					content: plaintext(lines.join('\n').trim()),
+					content: await plaintext(lines.join('\n').trim()),
 					rank
 				});
 			}
@@ -99,37 +99,39 @@ function remove_TYPE(str) {
 }
 
 /** @param {string} markdown */
-function plaintext(markdown) {
+async function plaintext(markdown) {
 	/** @param {unknown} text */
 	const block = (text) => `${text}\n`;
 
 	/** @param {string} text */
 	const inline = (text) => text;
 
-	return markedTransform(markdown, {
-		code: (source) => source.split('// ---cut---\n').pop(),
-		blockquote: block,
-		html: () => '\n',
-		heading: (text) => `${text}\n`,
-		hr: () => '',
-		list: block,
-		listitem: block,
-		checkbox: block,
-		paragraph: (text) => `${text}\n\n`,
-		table: block,
-		tablerow: block,
-		tablecell: (text, opts) => {
-			return text + ' ';
-		},
-		strong: inline,
-		em: inline,
-		codespan: inline,
-		br: () => '',
-		del: inline,
-		link: (href, title, text) => text,
-		image: (href, title, text) => text,
-		text: inline
-	})
+	return (
+		await markedTransform(markdown, {
+			code: (source) => source.split('// ---cut---\n').pop(),
+			blockquote: block,
+			html: () => '\n',
+			heading: (text) => `${text}\n`,
+			hr: () => '',
+			list: block,
+			listitem: block,
+			checkbox: block,
+			paragraph: (text) => `${text}\n\n`,
+			table: block,
+			tablerow: block,
+			tablecell: (text, opts) => {
+				return text + ' ';
+			},
+			strong: inline,
+			em: inline,
+			codespan: inline,
+			br: () => '',
+			del: inline,
+			link: (href, title, text) => text,
+			image: (href, title, text) => text,
+			text: inline
+		})
+	)
 		.replace(/&lt;/g, '<')
 		.replace(/&gt;/g, '>')
 		.replace(/&#(\d+);/g, (match, code) => {
