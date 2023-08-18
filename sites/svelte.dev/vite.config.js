@@ -2,8 +2,26 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { browserslistToTargets } from 'lightningcss';
 import { readFile } from 'node:fs/promises';
 import browserslist from 'browserslist';
+import { transformWithEsbuild } from 'vite';
 
-const plugins = [raw(['.ttf']), sveltekit()];
+/** @type {import('vite').Plugin[]} */
+const plugins = [
+	raw(['.ttf']),
+	sveltekit(),
+	{
+		name: 'minified-raw-js',
+
+		async load(id) {
+			if (id.endsWith('.js?minified')) {
+				const file = id.replace('?minified', '');
+				let code = await readFile(file, 'utf-8');
+				return `export default ${JSON.stringify(
+					(await transformWithEsbuild(code, file, { minify: true, format: 'esm' })).code
+				)}`;
+			}
+		}
+	}
+];
 
 // Only enable sharp if we're not in a webcontainer env
 if (!process.versions.webcontainer) {
