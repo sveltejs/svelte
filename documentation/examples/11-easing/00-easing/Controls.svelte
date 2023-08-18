@@ -77,7 +77,6 @@
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 3px;
-		align-items: flex-start;
 		font-size: 18px;
 	}
 
