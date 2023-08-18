@@ -1,2 +1,2 @@
 User-agent: *
-Disallow: /tutorial/* # new tutorial is at learn.svelte.dev
+Disallow:
