@@ -37,7 +37,6 @@ import {
 import create_debugging_comment from '../shared/create_debugging_comment.js';
 import { push_array } from '../../../../utils/push_array.js';
 import CommentWrapper from '../Comment.js';
-import flatten_reference from '../../../../compile/utils/flatten_reference.js';
 
 const regex_contains_radio_or_checkbox_or_file = /radio|checkbox|file/;
 const regex_contains_radio_or_checkbox_or_range_or_file = /radio|checkbox|range|file/;
@@ -991,7 +990,6 @@ export default class ElementWrapper extends Wrapper {
 		const static_attributes = [];
 		this.attributes.forEach((attr) => {
 			if (attr instanceof SpreadAttributeWrapper) {
-				const { name } = flatten_reference(attr.node.expression.node);
 				const snippet = { type: 'SpreadElement', argument: attr.node.expression.manipulate(block) };
 				static_attributes.push(p`${snippet}`);
 			} else {
