@@ -28,7 +28,7 @@ function minified_raw_plugin() {
 		name: 'minified-raw-js',
 		async resolveId(id, importer) {
 			if (id.startsWith(prefix)) {
-				const resolved = await this.resolve(id.slice(prefix.length), importer);
+				const resolved = await this.resolve(id.slice(prefix.length), importer, { skipSelf: true });
 				return '\0' + prefix + resolved.id;
 			}
 		},
