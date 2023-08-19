@@ -31,10 +31,6 @@
 	let selected = examples[0];
 </script>
 
-<svelte:head>
-	<link rel="prefetch" href="/fonts/overpass/overpass-latin-400.woff2" />
-</svelte:head>
-
 <Section --background="var(--sk-back-2)">
 	<h3>build with ease</h3>
 
