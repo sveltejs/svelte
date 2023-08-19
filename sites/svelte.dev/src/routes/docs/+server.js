@@ -1,5 +1,5 @@
 // @ts-expect-error custom suffix doesn't have types
-import js from './redirect.js?minified';
+import js from 'minified-raw:./redirect.js';
 
 // prerenderer will choke otherwise
 export const prerender = false;
