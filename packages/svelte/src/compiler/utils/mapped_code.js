@@ -299,7 +299,9 @@ export function apply_preprocessor_sourcemap(filename, svelte_map, preprocessor_
 				} else if (typeof Buffer !== 'undefined') {
 					b64 = Buffer.from(this.toString(), 'utf8').toString('base64');
 				} else {
-					throw new Error('Unsupported environment: `window.btoa` or `Buffer` should be present to use toUrl.');
+					throw new Error(
+						'Unsupported environment: `window.btoa` or `Buffer` should be present to use toUrl.'
+					);
 				}
 				return 'data:application/json;charset=utf-8;base64,' + b64;
 			}
