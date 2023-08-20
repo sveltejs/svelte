@@ -6,6 +6,12 @@ export type AnimationFn = (
 	params: any
 ) => AnimationConfig;
 
+export interface AnimationInformation {
+	name: string;
+	/** is not valorized in Node environment */
+	animation?: CSSAnimation;
+}
+
 export type Listener = (entry: ResizeObserverEntry) => any;
 
 //todo: documentation says it is DOMRect, but in IE it would be ClientRect

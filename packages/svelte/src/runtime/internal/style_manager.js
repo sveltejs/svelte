@@ -40,7 +40,7 @@ function create_style_information(doc, node) {
  * @param {(t: number) => number} ease
  * @param {(t: number, u: number) => string} fn
  * @param {number} uid
- * @returns {string}
+ * @returns {import("./private.d.ts").AnimationInformation}
  */
 export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 	const step = 16.666 / duration;
@@ -50,19 +50,36 @@ export function create_rule(node, a, b, duration, delay, ease, fn, uid = 0) {
 		keyframes += p * 100 + `%{${fn(t, 1 - t)}}\n`;
 	}
 	const rule = keyframes + `100% {${fn(b, 1 - b)}}\n}`;
-	const name = `__svelte_${hash(rule)}_${uid}`;
+	const keyframe_name = `__svelte_${hash(rule)}_${uid}`;
 	const doc = get_root_for_style(node);
 	const { stylesheet, rules } = managed_styles.get(doc) || create_style_information(doc, node);
-	if (!rules[name]) {
-		rules[name] = true;
-		stylesheet.insertRule(`@keyframes ${name} ${rule}`, stylesheet.cssRules.length);
+	if (!rules[keyframe_name]) {
+		rules[keyframe_name] = true;
+		stylesheet.insertRule(`@keyframes ${keyframe_name} ${rule}`, stylesheet.cssRules.length);
 	}
-	const animation = node.style.animation || '';
+	const current_animation_style = node.style.animation || '';
 	node.style.animation = `${
-		animation ? `${animation}, ` : ''
-	}${name} ${duration}ms linear ${delay}ms 1 both`;
+		current_animation_style ? `${current_animation_style}, ` : ''
+	}${keyframe_name} ${duration}ms linear ${delay}ms 1 both`;
+
+	/** @type {CSSAnimation[] | undefined} */
+	const all_animations = /** @type {any} */ (node.getAnimations?.()); // `getAnimations` is not supported in Node environment
+	/** @type {import("./private.d.ts").AnimationInformation} */
+	let animation_info = {
+		name: keyframe_name
+	};
+	if (all_animations) {
+		for (const a of all_animations) {
+			// TODO: perhaps a map may avoid unnecessary iterations
+			if (a.animationName === keyframe_name) {
+				animation_info.animation = a;
+				break;
+			}
+		}
+	}
+
 	active += 1;
-	return name;
+	return animation_info;
 }
 
 /**

@@ -132,7 +132,14 @@ export function create_in_transition(node, fn, params) {
 			tick = noop,
 			css
 		} = config || null_transition;
-		if (css) animation_name = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
+
+		/** @type {import("./private.js").AnimationInformation | undefined} */
+		let css_animation_info = undefined;
+		if (css) {
+			css_animation_info = create_rule(node, 0, 1, duration, delay, easing, css, uid++);
+			animation_name = css_animation_info.name;
+		}
+
 		tick(0, 1);
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
@@ -141,7 +148,10 @@ export function create_in_transition(node, fn, params) {
 		add_render_callback(() => dispatch(node, true, 'start'));
 		task = loop((now) => {
 			if (running) {
-				if (now >= end_time) {
+				const css_animation_state = css_animation_info?.animation?.playState;
+				const is_css_animation_finished =
+					!css_animation_state || css_animation_state === 'finished';
+				if (now >= end_time && is_css_animation_finished) {
 					tick(1, 0);
 					dispatch(node, true, 'end');
 					cleanup();
@@ -208,7 +218,12 @@ export function create_out_transition(node, fn, params) {
 			css
 		} = config || null_transition;
 
-		if (css) animation_name = create_rule(node, 1, 0, duration, delay, easing, css);
+		/** @type {import("./private.js").AnimationInformation | undefined} */
+		let css_animation_info = undefined;
+		if (css) {
+			css_animation_info = create_rule(node, 1, 0, duration, delay, easing, css);
+			animation_name = css_animation_info.name;
+		}
 
 		const start_time = now() + delay;
 		const end_time = start_time + duration;
@@ -221,7 +236,10 @@ export function create_out_transition(node, fn, params) {
 
 		loop((now) => {
 			if (running) {
-				if (now >= end_time) {
+				const css_animation_state = css_animation_info?.animation?.playState;
+				const is_css_animation_finished =
+					!css_animation_state || css_animation_state === 'finished';
+				if (now >= end_time && is_css_animation_finished) {
 					tick(0, 1);
 					dispatch(node, false, 'end');
 					if (!--group.r) {
@@ -358,15 +376,19 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 		if (running_program || pending_program) {
 			pending_program = program;
 		} else {
+			/** @type {import("./private.js").AnimationInformation | undefined} */
+			let css_animation_info = undefined;
 			// if this is an intro, and there's a delay, we need to do
 			// an initial tick and/or apply CSS animation immediately
 			if (css) {
 				clear_animation();
-				animation_name = create_rule(node, t, b, duration, delay, easing, css);
+				css_animation_info = create_rule(node, t, b, duration, delay, easing, css);
+				animation_name = css_animation_info.name;
 			}
 			if (b) tick(0, 1);
 			running_program = init(program, duration);
 			add_render_callback(() => dispatch(node, b, 'start'));
+
 			loop((now) => {
 				if (pending_program && now > pending_program.start) {
 					running_program = init(pending_program, duration);
@@ -374,7 +396,7 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 					dispatch(node, running_program.b, 'start');
 					if (css) {
 						clear_animation();
-						animation_name = create_rule(
+						css_animation_info = create_rule(
 							node,
 							t,
 							running_program.b,
@@ -383,10 +405,14 @@ export function create_bidirectional_transition(node, fn, params, intro) {
 							easing,
 							config.css
 						);
+						animation_name = css_animation_info.name;
 					}
 				}
 				if (running_program) {
-					if (now >= running_program.end) {
+					const css_animation_state = css_animation_info?.animation?.playState;
+					const is_css_animation_finished =
+						!css_animation_state || css_animation_state === 'finished';
+					if (now >= running_program.end && is_css_animation_finished) {
 						tick((t = running_program.b), 1 - t);
 						dispatch(node, running_program.b, 'end');
 						if (!pending_program) {
