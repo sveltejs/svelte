@@ -36,6 +36,10 @@ Les transformations classiques effectuées lors d'un _bundling_ sont :
 
 > Bientôt...
 
+## Desktop
+
+> Bientôt...
+
 ## DOM
 
 Le _Document Object Model_ (DOM) est la représentation objet d'un document HTML chargé dans le navigateur web. Cette représentation du document permet de le voir comme un groupe structuré de nœuds et d'objets possédant différentes propriétés et méthodes. On parle souvent d'"arbre DOM".
