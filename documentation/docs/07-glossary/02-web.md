@@ -132,6 +132,10 @@ SvelteKit propose le SSR par défaut, qui peut être désactivé au cas par cas.
 
 > Bientôt...
 
+## SSG
+
+> Bientôt...
+
 ## Web component
 
 > Bientôt...
