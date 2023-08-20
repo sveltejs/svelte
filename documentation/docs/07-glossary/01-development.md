@@ -148,6 +148,10 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 > Bientôt...
 
+## Slash
+
+> Bientôt...
+
 ## Stack trace
 
 > Bientôt...
