@@ -136,6 +136,10 @@ SvelteKit propose le SSR par défaut, qui peut être désactivé au cas par cas.
 
 > Bientôt...
 
+## Trailing slash
+
+> Bientôt...
+
 ## Web component
 
 > Bientôt...
