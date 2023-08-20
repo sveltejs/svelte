@@ -76,6 +76,10 @@ Un _language server_ est un algorithme exécuté par un <span class="vo">[IDE](/
 
 Plus d'infos sur le [site de la documentation du LSP](https://microsoft.github.io/language-server-protocol/).
 
+## Layout
+
+> Bientôt...
+
 ## Lazy loading
 
 > Bientôt...
