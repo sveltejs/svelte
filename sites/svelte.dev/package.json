@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",
-    "@supabase/supabase-js": "^2.32.0",
+    "@supabase/supabase-js": "^2.33.1",
     "@sveltejs/repl": "0.5.0",
     "cookie": "^0.5.0",
     "devalue": "^4.3.2",
@@ -33,7 +33,7 @@
     "@sveltejs/site-kit": "6.0.0-next.32",
     "@sveltejs/vite-plugin-svelte": "^2.4.5",
     "@types/cookie": "^0.5.1",
-    "@types/node": "^20.5.1",
+    "@types/node": "^20.5.3",
     "browserslist": "^4.21.10",
     "degit": "^2.8.4",
     "dotenv": "^16.3.1",
