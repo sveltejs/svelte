@@ -157,8 +157,8 @@ importers:
         specifier: ^2.31.0
         version: 2.31.0
       '@sveltejs/repl':
-        specifier: 0.5.0
-        version: 0.5.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.5)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.4)(svelte@packages+svelte)
+        specifier: 0.6.0
+        version: 0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.5)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.4)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -557,7 +557,7 @@ packages:
       '@codemirror/state': 6.2.1
       '@codemirror/view': 6.14.1
       '@lezer/common': 1.0.3
-      '@lezer/javascript': 1.4.4
+      '@lezer/javascript': 1.4.5
     dev: false
 
   /@codemirror/lang-json@6.0.1:
@@ -1499,13 +1499,6 @@ packages:
       '@lezer/lr': 1.3.9
     dev: false
 
-  /@lezer/javascript@1.4.4:
-    resolution: {integrity: sha512-0BiBjpEcrt2IXrIzEAsdTLylrVhGHRqVQL3baTBx1sf4qewjIvhG1/pTUumu7W/7YR0AASjLQOQxFmo5EvNmzQ==}
-    dependencies:
-      '@lezer/highlight': 1.1.6
-      '@lezer/lr': 1.3.9
-    dev: false
-
   /@lezer/javascript@1.4.5:
     resolution: {integrity: sha512-FmBUHz8K1V22DgjTd6SrIG9owbzOYZ1t3rY6vGEmw+e2RVBd7sqjM8uXEVRFmfxKFn1Mx2ABJehHjrN3G2ZpmA==}
     dependencies:
@@ -1654,6 +1647,22 @@ packages:
       '@lezer/highlight': 1.1.6
       '@lezer/javascript': 1.4.5
       '@lezer/lr': 1.3.9
+    dev: false
+
+  /@replit/codemirror-vim@6.0.14(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.1):
+    resolution: {integrity: sha512-wwhqhvL76FdRTdwfUWpKCbv0hkp2fvivfMosDVlL/popqOiNLtUhL02ThgHZH8mus/NkVr5Mj582lyFZqQrjOA==}
+    peerDependencies:
+      '@codemirror/commands': ^6.0.0
+      '@codemirror/language': ^6.1.0
+      '@codemirror/search': ^6.2.0
+      '@codemirror/state': ^6.0.1
+      '@codemirror/view': ^6.0.3
+    dependencies:
+      '@codemirror/commands': 6.2.4
+      '@codemirror/language': 6.8.0
+      '@codemirror/search': 6.5.0
+      '@codemirror/state': 6.2.1
+      '@codemirror/view': 6.14.1
     dev: false
 
   /@resvg/resvg-js-android-arm-eabi@2.4.1:
@@ -2006,8 +2015,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.5.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.5)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.4)(svelte@packages+svelte):
-    resolution: {integrity: sha512-SyrMn3moP74PY7OtQONom9X53SYREQ7p8CEgspeNK0VG9AYUWc2UPvDDRAHTK94TC7GoNWgOafDw04HJGrOl2g==}
+  /@sveltejs/repl@0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.0)(@lezer/common@1.0.3)(@lezer/javascript@1.4.5)(@lezer/lr@1.3.9)(@sveltejs/kit@1.22.4)(svelte@packages+svelte):
+    resolution: {integrity: sha512-NADKN0NZhLlSatTSh5CCsdzgf2KHJFRef/8krA/TVWAWos5kSwmZ5fF0UImuqs61Pu/SiMXksaWNTGTiOtr4fQ==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
@@ -2025,6 +2034,7 @@ packages:
       '@lezer/highlight': 1.1.6
       '@neocodemirror/svelte': 0.0.15(@codemirror/autocomplete@6.8.1)(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/lint@6.4.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.1)
       '@replit/codemirror-lang-svelte': 6.0.0(@codemirror/autocomplete@6.8.1)(@codemirror/lang-css@6.2.0)(@codemirror/lang-html@6.4.5)(@codemirror/lang-javascript@6.1.9)(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.1)(@lezer/common@1.0.3)(@lezer/highlight@1.1.6)(@lezer/javascript@1.4.5)(@lezer/lr@1.3.9)
+      '@replit/codemirror-vim': 6.0.14(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.14.1)
       '@rich_harris/svelte-split-pane': 1.1.1(svelte@packages+svelte)
       '@rollup/browser': 3.26.2
       '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.22.4)(svelte@packages+svelte)
@@ -7103,9 +7113,9 @@ packages:
         optional: true
     dependencies:
       '@types/node': 14.18.51
-      esbuild: 0.18.11
+      esbuild: 0.18.17
       postcss: 8.4.27
-      rollup: 3.26.2
+      rollup: 3.27.1
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
