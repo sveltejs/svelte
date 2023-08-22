@@ -76,7 +76,7 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 				slug: page_slug,
 				content: page_content,
 				category: category_title,
-				sections: get_sections(page_content),
+				sections: await get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
 				file: `${category_dir}/${filename}`
 			});
@@ -99,9 +99,9 @@ export function get_docs_list(docs_data) {
 	}));
 }
 
-const titled = (str) =>
+const titled = async (str) =>
 	removeMarkdown(
-		escape(markedTransform(str, { paragraph: (txt) => txt }))
+		escape(await markedTransform(str, { paragraph: (txt) => txt }))
 			.replace(/<\/?code>/g, '')
 			.replace(/&#39;/g, "'")
 			.replace(/&quot;/g, '"')
@@ -111,7 +111,7 @@ const titled = (str) =>
 	);
 
 /** @param {string} markdown */
-function get_sections(markdown) {
+async function get_sections(markdown) {
 	const lines = markdown.split('\n');
 	const root = /** @type {import('./types').Section} */ ({
 		title: 'Root',
@@ -122,11 +122,11 @@ function get_sections(markdown) {
 	});
 	let currentNodes = [root];
 
-	lines.forEach((line) => {
+	for (const line of lines) {
 		const match = line.match(/^(#{2,4})\s(.*)/);
 		if (match) {
 			const level = match[1].length - 2;
-			const text = titled(match[2]);
+			const text = await titled(match[2]);
 			const slug = normalizeSlugify(text);
 
 			// Prepare new node
@@ -149,7 +149,7 @@ function get_sections(markdown) {
 			// Add non-heading line to the text of the current section
 			currentNodes[currentNodes.length - 1].text += line + '\n';
 		}
-	});
+	}
 
 	return root.sections;
 }
