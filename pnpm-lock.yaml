@@ -36,18 +36,6 @@ importers:
         specifier: ^2.10.1
         version: 2.10.1(prettier@2.8.8)(svelte@packages+svelte)
 
-  packages/playground:
-    devDependencies:
-      rollup:
-        specifier: ^3.25.1
-        version: 3.25.1
-      rollup-plugin-serve:
-        specifier: ^2.0.2
-        version: 2.0.2
-      svelte:
-        specifier: workspace:*
-        version: link:../svelte
-
   packages/svelte:
     dependencies:
       '@ampproject/remapping':
@@ -147,6 +135,18 @@ importers:
       vitest:
         specifier: ^0.33.0
         version: 0.33.0(happy-dom@9.20.3)(jsdom@21.1.2)(playwright@1.35.1)
+
+  playgrounds/basic:
+    devDependencies:
+      rollup:
+        specifier: ^3.25.1
+        version: 3.26.2
+      rollup-plugin-serve:
+        specifier: ^2.0.2
+        version: 2.0.2
+      svelte:
+        specifier: workspace:*
+        version: link:../../packages/svelte
 
   sites/svelte.dev:
     dependencies:
@@ -2062,7 +2062,7 @@ packages:
       rollup: 3.26.2
     dev: true
 
-  /@rollup/plugin-virtual@3.0.1(rollup@3.26.2):
+  /@rollup/plugin-virtual@3.0.1(rollup@3.28.0):
     resolution: {integrity: sha512-fK8O0IL5+q+GrsMLuACVNk2x21g3yaw+sG2qn16SnUd3IlBsQyvWxLMGHmCmXRMecPjGRSZ/1LmZB4rjQm68og==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -2071,7 +2071,7 @@ packages:
       rollup:
         optional: true
     dependencies:
-      rollup: 3.26.2
+      rollup: 3.28.0
     dev: true
 
   /@rollup/pluginutils@4.2.1:
@@ -2894,9 +2894,9 @@ packages:
     resolution: {integrity: sha512-gq+fjT3Ilrhb88Jf+vYMjdO/+3znYfa7vJ4IMLPFsBPUxglnr40Ed3yCLrW6IABdJAedB94b2BkqR6I04lh3dg==}
     hasBin: true
     dependencies:
-      '@rollup/plugin-virtual': 3.0.1(rollup@3.26.2)
+      '@rollup/plugin-virtual': 3.0.1(rollup@3.28.0)
       acorn: 8.9.0
-      rollup: 3.26.2
+      rollup: 3.28.0
     dev: true
 
   /agent-base@6.0.2:
@@ -6350,14 +6350,6 @@ packages:
     dependencies:
       mime: 3.0.0
       opener: 1.5.2
-    dev: true
-
-  /rollup@3.25.1:
-    resolution: {integrity: sha512-tywOR+rwIt5m2ZAWSe5AIJcTat8vGlnPFAv15ycCrw33t6iFsXZ6mzHVFh2psSjxQPmI+xgzMZZizUAukBI4aQ==}
-    engines: {node: '>=14.18.0', npm: '>=8.0.0'}
-    hasBin: true
-    optionalDependencies:
-      fsevents: 2.3.3
     dev: true
 
   /rollup@3.26.2:
