@@ -2,7 +2,7 @@ import * as session from '$lib/db/session';
 
 /** @type {import('@sveltejs/adapter-vercel').Config} */
 export const config = {
-	regions: ['iad1'], // our supabase instance is in us-east-1. stay close to it
+	regions: ['iad1'], // supabase instance is in us-east-1 (iad1)
 	runtime: 'edge'
 };
 
