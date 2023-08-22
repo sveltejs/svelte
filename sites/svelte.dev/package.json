@@ -19,7 +19,7 @@
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@supabase/supabase-js": "^2.33.1",
-    "@sveltejs/repl": "0.5.0",
+    "@sveltejs/repl": "0.6.0",
     "cookie": "^0.5.0",
     "devalue": "^4.3.2",
     "do-not-zip": "^1.0.0",

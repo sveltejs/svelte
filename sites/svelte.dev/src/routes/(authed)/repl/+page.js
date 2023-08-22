@@ -5,6 +5,7 @@ export function load({ url }) {
 	const gist = query.get('gist');
 	const example = query.get('example');
 	const version = query.get('version');
+	const vim = query.get('vim');
 
 	// redirect to v2 REPL if appropriate
 	if (/^[^>]?[12]/.test(version)) {
@@ -12,7 +13,12 @@ export function load({ url }) {
 	}
 
 	const id = gist || example || 'hello-world';
-	const q = version ? `?version=${version}` : ``;
-
-	throw redirect(301, `/repl/${id}${q}`);
+	// we need to filter out null values
+	const q = new URLSearchParams(
+		Object.entries({
+			version,
+			vim
+		}).filter(([, value]) => value !== null)
+	).toString();
+	throw redirect(301, `/repl/${id}?${q}`);
 }
