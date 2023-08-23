@@ -4,7 +4,7 @@ import adapter from '@sveltejs/adapter-vercel';
 /** @type {import('@sveltejs/kit').Config} */
 export default {
 	kit: {
-		adapter: adapter({ runtime: 'edge' }),
+		adapter: adapter(),
 		prerender: {
 			concurrency: 10
 		}
