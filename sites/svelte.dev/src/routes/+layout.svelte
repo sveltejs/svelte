@@ -59,7 +59,7 @@
 </div>
 
 {#if browser}
-	<SearchBox>
+	<SearchBox placeholder="Recherche">
 		<svelte:fragment slot="search-description">
 			Les résultats se mettent à jour quand vous écrivez
 		</svelte:fragment>
