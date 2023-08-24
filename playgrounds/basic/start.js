@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { watch } from 'rollup';
 import serve from 'rollup-plugin-serve';
-import * as svelte from '../svelte/src/compiler/index.js';
+import * as svelte from '../../packages/svelte/src/compiler/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -15,10 +15,10 @@ function create_plugin(ssr = false) {
 			if (id === 'svelte') {
 				return path.resolve(
 					__dirname,
-					ssr ? '../svelte/src/runtime/ssr.js' : '../svelte/src/runtime/index.js'
+					ssr ? '../../packages/svelte/src/runtime/ssr.js' : '../../packages/svelte/src/runtime/index.js'
 				);
 			} else if (id.startsWith('svelte/')) {
-				return path.resolve(__dirname, `../svelte/src/runtime/${id.slice(7)}/index.js`);
+				return path.resolve(__dirname, `../../packages/svelte/src/runtime/${id.slice(7)}/index.js`);
 			}
 		},
 		transform(code, id) {
