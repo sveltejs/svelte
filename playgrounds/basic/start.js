@@ -6,6 +6,7 @@ import serve from 'rollup-plugin-serve';
 import * as svelte from '../../packages/svelte/src/compiler/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const runtime_path = path.resolve(__dirname, '../../packages/svelte/src/runtime');
 
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {
@@ -13,12 +14,9 @@ function create_plugin(ssr = false) {
 		name: 'custom-svelte-ssr-' + ssr,
 		resolveId(id) {
 			if (id === 'svelte') {
-				return path.resolve(
-					__dirname,
-					ssr ? '../../packages/svelte/src/runtime/ssr.js' : '../../packages/svelte/src/runtime/index.js'
-				);
+				return path.resolve(runtime_path, ssr ? 'ssr.js' : 'index.js');
 			} else if (id.startsWith('svelte/')) {
-				return path.resolve(__dirname, `../../packages/svelte/src/runtime/${id.slice(7)}/index.js`);
+				return path.resolve(runtime_path, `${id.slice(7)}/index.js`);
 			}
 		},
 		transform(code, id) {
