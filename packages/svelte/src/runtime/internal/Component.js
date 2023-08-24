@@ -283,7 +283,7 @@ if (typeof HTMLElement === 'function') {
 								'toAttribute'
 							);
 							if (attribute_value == null) {
-								this.removeAttribute(key);
+								this.removeAttribute(this.$$p_d[key].attribute || key);
 							} else {
 								this.setAttribute(this.$$p_d[key].attribute || key, attribute_value);
 							}
