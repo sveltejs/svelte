@@ -98,6 +98,7 @@
 	.selected > button {
 		background: #ff3e00;
 		color: white;
+		font-weight: bold;
 	}
 
 	h3 {
