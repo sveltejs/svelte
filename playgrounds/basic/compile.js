@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { compile } from '../svelte/src/compiler/index.js';
+import { compile } from '../../packages/svelte/src/compiler/index.js';
 
 const code = readFileSync('src/App.svelte', 'utf8');
 
