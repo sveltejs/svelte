@@ -22,6 +22,14 @@ Un arbre de la syntaxe abstraite (_Abstract Syntax Tree_ ou _AST_) est un format
 
 Svelte utilise le format _AST_ comme intermédiaire entre un composant Svelte et le code JavaScript natif interprété par le navigateur web.
 
+## Bug
+
+Vous le savez très certainement, un _bug_ (["insecte"](https://fr.wikipedia.org/wiki/Bug_(informatique)#/media/Fichier:First_Computer_Bug,_1945.jpg) en anglais) est une erreur ou un problème qui empêche le bon fonctionnement d'un logiciel.
+
+Il est courant d'utiliser un _debugger_ ou "débuggueur" pour aider à la résolution de ces _bugs_.
+
+Le mot francisé est "bogue", mais il semble que personne ne s'en serve.
+
 ## Build
 
 Un _build_ est l'ensemble de fichiers produits par le <span class="vo">[bundler](/docs/web#bundler-packager)</span>. C'est le plus souvent ce qui sera utilisé pour déployer l'application en production.
@@ -49,7 +57,25 @@ chargeLaDonnée(afficheCoucou);
 
 ## CLI
 
-> Bientôt...
+_CLI_ est l'acronyme de "Command Line Interface" ("Interface en ligne de commande"), et désigne l'<span class="vo">[API](#api)</span> d'un programme que l'on lance en ligne de commande.
+
+Il s'agit donc de toutes les interactions possibles avec un programme que vous allez lancer en entrant des instructions dans votre terminal.
+
+Par exemple, [npm](https://www.npmjs.com/) est un programme en ligne de commande, et possède donc un CLI. [Git](https://git-scm.com/book/fr/v2/D%C3%A9marrage-rapide-La-ligne-de-commande) est un autre exemple de programme pouvant s'exécuter via un CLI.
+
+```bash
+npm install
+npm publish
+
+git init
+git clone
+git branch
+...
+```
+
+## Debugger
+
+Un _debugger_ est un outil logiciel aidant à la résolution de <span class="vo">[bugs](#bug)</span>.
 
 ## End to end
 
@@ -102,11 +128,13 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 ## Issue
 
-> Bientôt...
+Une _issue_ (qui signifie "problème" en anglais) est une note sur un dépôt à propos de quelque chose qui nécessite une attention particulière. Il peut s'agir d'un bogue, d'une demande de fonctionnalité, d'une question ou de bien d'autres choses. Cette terminologie est très utilisée entre autres sur les sites [Github](https://github.com), [Gitlab](https://gitlab.com) et [Bitbucket](https://bitbucket.org).
+
+On parle parfois en français de "ticket".
 
 ## Log
 
-> Bientôt...
+Un _log_ est l'affichage d'une information lors de l'exécution d'un programme. Ils peuvent être affichées en direct, ou bien stockées dans un fichier de logs.
 
 ## Namespace
 
@@ -130,7 +158,9 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 ## Pull Request
 
-> Bientôt...
+Une _Pull Request_ est une demande d'intégration de nouveau code dans le code existant d'un logiciel. Ce terme est en général utilisé lorsque le logiciel est versionné avec Git.
+
+Comme <span class="vo">[issue](#issue)</span>, cette terminologie est très utilisée entre autres sur les sites [Github](https://github.com) et [Bitbucket](https://bitbucket.org). Sur [Gitlab](https://gitlab.com), on parle de _Merge Request_, qui est synonyme.
 
 ## Race condition
 
@@ -138,7 +168,9 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 ## Readonly
 
-> Bientôt...
+On dit d'une entité qu'elle est _readonly_ lorsqu'on ne peut pas changer sa valeur une fois que celle-ci a été définie. On parle aussi de "lecture seule" en français.
+
+Ce terme est à mettre en opposition avec <span class="vo">[writable](#writable)</span>.
 
 ## Runtime
 
@@ -174,7 +206,7 @@ Le terme _intelliSense_ fait référence à des aides à la saisie semi-automati
 
 ## Warning
 
-> Bientôt...
+Un _warning_ est un avertissement, moins grave qu'une erreur, mais suffisamment important pour qu'il soit porté à l'attention des personnes concernées.
 
 ## Wrapper
 
@@ -204,4 +236,6 @@ nouveauBonjour("Jean") // "Bonjour Jean! Comment vas-tu?"
 
 ## Writable
 
-> Bientôt...
+On dit d'une entité qu'elle est _writable_ lorsqu'on peut pas changer sa valeur une fois que celle-ci a été définie. Le terme _writable_ est à mettre en opposition avec <span class="vo">[readonly](#readonly)</span>.
+
+Dans le cadre de Svelte, _writable_ fait souvent référence à un <span class="vo">[store](/docs/sveltejs#store)</span> _writable_, dont la valeur peut être mise à jour.
