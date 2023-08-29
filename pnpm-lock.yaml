@@ -185,8 +185,8 @@ importers:
         specifier: ^1.22.6
         version: 1.22.6(svelte@packages+svelte)(vite@4.4.9)
       '@sveltejs/site-kit':
-        specifier: 6.0.0-next.32
-        version: 6.0.0-next.32(@sveltejs/kit@1.22.6)(svelte@packages+svelte)
+        specifier: 6.0.0-next.36
+        version: 6.0.0-next.36(@sveltejs/kit@1.22.6)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.5
         version: 2.4.5(svelte@packages+svelte)(vite@4.4.9)
@@ -215,8 +215,8 @@ importers:
         specifier: ^0.30.3
         version: 0.30.3
       marked:
-        specifier: ^7.0.4
-        version: 7.0.4
+        specifier: ^7.0.5
+        version: 7.0.5
       prettier:
         specifier: ^3.0.2
         version: 3.0.2
@@ -2291,8 +2291,8 @@ packages:
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.32(@sveltejs/kit@1.22.6)(svelte@packages+svelte):
-    resolution: {integrity: sha512-paWcxEnx9XRcoHRjfTpf62Rk3RT69K1nKOtVYz7bvKAiB7hPVrUBaP/ENomq/zXk7pP3yjrxezarCGZO4VGEyg==}
+  /@sveltejs/site-kit@6.0.0-next.36(@sveltejs/kit@1.22.6)(svelte@packages+svelte):
+    resolution: {integrity: sha512-DZC+eqpHt76X3mCRZzaynPCFyA8J9IzZufsZMf6SOT/BU53WrbvjENzf4LKKz3Ktg7wYdo72sUuGGgO9SEEbdQ==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0
@@ -5383,8 +5383,8 @@ packages:
     hasBin: true
     dev: false
 
-  /marked@7.0.4:
-    resolution: {integrity: sha512-t8eP0dXRJMtMvBojtkcsA7n48BkauktUKzfkPSCq85ZMTJ0v76Rke4DYz01omYpPTUh4p/f7HePgRo3ebG8+QQ==}
+  /marked@7.0.5:
+    resolution: {integrity: sha512-lwNAFTfXgqpt/XvK17a/8wY9/q6fcSPZT1aP6QW0u74VwaJF/Z9KbRcX23sWE4tODM+AolJNcUtErTkgOeFP/Q==}
     engines: {node: '>= 16'}
     hasBin: true
     dev: true
