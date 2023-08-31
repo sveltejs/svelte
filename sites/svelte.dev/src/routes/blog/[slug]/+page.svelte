@@ -20,8 +20,10 @@
 </svelte:head>
 
 <article class="post listify text">
-	<h1>{data.post.title}</h1>
-	<p class="standfirst">{data.post.description}</p>
+	<h1 style:--name="post-title-{$page.params.slug}">{data.post.title}</h1>
+	<p class="standfirst" style:--name="post-description-{$page.params.slug}">
+		{data.post.description}
+	</p>
 
 	<p class="byline">
 		<a href={data.post.author.url}>{data.post.author.name}</a>
@@ -50,6 +52,13 @@
 		font-size: var(--sk-text-s);
 		color: var(--sk-text-3);
 		margin: 0 0 1em 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		h1,
+		.standfirst {
+			view-transition-name: var(--name);
+		}
 	}
 
 	.byline {

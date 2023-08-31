@@ -4,9 +4,21 @@
 	import { Icon, Shell } from '@sveltejs/site-kit/components';
 	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
+	import { onNavigate } from '$app/navigation';
 	import '@sveltejs/site-kit/styles/index.css';
 
 	export let data;
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <svelte:head>

@@ -158,7 +158,7 @@ importers:
         version: 2.33.1
       '@sveltejs/repl':
         specifier: 0.6.0
-        version: 0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.1)(@lezer/common@1.0.4)(@lezer/javascript@1.4.6)(@lezer/lr@1.3.10)(@sveltejs/kit@1.22.6)(svelte@packages+svelte)
+        version: 0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.1)(@lezer/common@1.0.4)(@lezer/javascript@1.4.6)(@lezer/lr@1.3.10)(@sveltejs/kit@1.24.0)(svelte@packages+svelte)
       cookie:
         specifier: ^0.5.0
         version: 0.5.0
@@ -180,13 +180,13 @@ importers:
         version: 2.4.1
       '@sveltejs/adapter-vercel':
         specifier: ^3.0.3
-        version: 3.0.3(@sveltejs/kit@1.22.6)
+        version: 3.0.3(@sveltejs/kit@1.24.0)
       '@sveltejs/kit':
-        specifier: ^1.22.6
-        version: 1.22.6(svelte@packages+svelte)(vite@4.4.9)
+        specifier: ^1.24.0
+        version: 1.24.0(svelte@packages+svelte)(vite@4.4.9)
       '@sveltejs/site-kit':
         specifier: 6.0.0-next.36
-        version: 6.0.0-next.36(@sveltejs/kit@1.22.6)(svelte@packages+svelte)
+        version: 6.0.0-next.36(@sveltejs/kit@1.24.0)(svelte@packages+svelte)
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.4.5
         version: 2.4.5(svelte@packages+svelte)(vite@4.4.9)
@@ -2180,12 +2180,12 @@ packages:
       - supports-color
     dev: false
 
-  /@sveltejs/adapter-vercel@3.0.3(@sveltejs/kit@1.22.6):
+  /@sveltejs/adapter-vercel@3.0.3(@sveltejs/kit@1.24.0):
     resolution: {integrity: sha512-0FQMjR6klW4627ewdclSr0lUe/DqiiyOaRTfgb5cXgNbVMsZMOA2fQ77TYQnJdvMfSEWe6y8uznV48XqKh9+vA==}
     peerDependencies:
       '@sveltejs/kit': ^1.5.0
     dependencies:
-      '@sveltejs/kit': 1.22.6(svelte@packages+svelte)(vite@4.4.9)
+      '@sveltejs/kit': 1.24.0(svelte@packages+svelte)(vite@4.4.9)
       '@vercel/nft': 0.23.0
       esbuild: 0.18.17
     transitivePeerDependencies:
@@ -2213,8 +2213,8 @@ packages:
       typescript: 5.1.3
     dev: true
 
-  /@sveltejs/kit@1.22.6(svelte@packages+svelte)(vite@4.4.9):
-    resolution: {integrity: sha512-SDKxI/QpsReCwIn5czjT53fKlPBybbmMk67d317gUqfeORroBAFN1Z6s/x0E1JYi+04i7kKllS+Sz9wVfmUkAQ==}
+  /@sveltejs/kit@1.24.0(svelte@packages+svelte)(vite@4.4.9):
+    resolution: {integrity: sha512-r7Gj0/VcdAIRL1yE1cJ5rurWJ5drrR7BzRv+P+NAathtvnMCi0u4FhezO7T4bj7DJdQ3TNsax3yQcrVWxh60fg==}
     engines: {node: ^16.14 || >=18}
     hasBin: true
     requiresBuild: true
@@ -2234,12 +2234,13 @@ packages:
       set-cookie-parser: 2.6.0
       sirv: 2.0.3
       svelte: link:packages/svelte
+      tiny-glob: 0.2.9
       undici: 5.23.0
       vite: 4.4.9(@types/node@20.5.3)(lightningcss@1.21.7)(sass@1.66.1)
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/repl@0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.1)(@lezer/common@1.0.4)(@lezer/javascript@1.4.6)(@lezer/lr@1.3.10)(@sveltejs/kit@1.22.6)(svelte@packages+svelte):
+  /@sveltejs/repl@0.6.0(@codemirror/lang-html@6.4.5)(@codemirror/search@6.5.1)(@lezer/common@1.0.4)(@lezer/javascript@1.4.6)(@lezer/lr@1.3.10)(@sveltejs/kit@1.24.0)(svelte@packages+svelte):
     resolution: {integrity: sha512-NADKN0NZhLlSatTSh5CCsdzgf2KHJFRef/8krA/TVWAWos5kSwmZ5fF0UImuqs61Pu/SiMXksaWNTGTiOtr4fQ==}
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
@@ -2261,7 +2262,7 @@ packages:
       '@replit/codemirror-vim': 6.0.14(@codemirror/commands@6.2.4)(@codemirror/language@6.8.0)(@codemirror/search@6.5.1)(@codemirror/state@6.2.1)(@codemirror/view@6.16.0)
       '@rich_harris/svelte-split-pane': 1.1.1(svelte@packages+svelte)
       '@rollup/browser': 3.26.2
-      '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.22.6)(svelte@packages+svelte)
+      '@sveltejs/site-kit': 5.2.2(@sveltejs/kit@1.24.0)(svelte@packages+svelte)
       acorn: 8.10.0
       codemirror: 6.0.1(@lezer/common@1.0.4)
       esm-env: 1.0.0
@@ -2279,25 +2280,25 @@ packages:
       - '@sveltejs/kit'
     dev: false
 
-  /@sveltejs/site-kit@5.2.2(@sveltejs/kit@1.22.6)(svelte@packages+svelte):
+  /@sveltejs/site-kit@5.2.2(@sveltejs/kit@1.24.0)(svelte@packages+svelte):
     resolution: {integrity: sha512-XLLxVUV/dYytCsUeODAkjtzlaIBSn1kdcH5U36OuN7gMsPEHDy5L/dsWjf1/vDln3JStH5lqZPEN8Fovm33KhA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
       svelte: ^3.54.0
     dependencies:
-      '@sveltejs/kit': 1.22.6(svelte@packages+svelte)(vite@4.4.9)
+      '@sveltejs/kit': 1.24.0(svelte@packages+svelte)(vite@4.4.9)
       esm-env: 1.0.0
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.36(@sveltejs/kit@1.22.6)(svelte@packages+svelte):
+  /@sveltejs/site-kit@6.0.0-next.36(@sveltejs/kit@1.24.0)(svelte@packages+svelte):
     resolution: {integrity: sha512-DZC+eqpHt76X3mCRZzaynPCFyA8J9IzZufsZMf6SOT/BU53WrbvjENzf4LKKz3Ktg7wYdo72sUuGGgO9SEEbdQ==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0
     dependencies:
-      '@sveltejs/kit': 1.22.6(svelte@packages+svelte)(vite@4.4.9)
+      '@sveltejs/kit': 1.24.0(svelte@packages+svelte)(vite@4.4.9)
       esm-env: 1.0.0
       svelte: link:packages/svelte
       svelte-local-storage-store: 0.6.0(svelte@packages+svelte)
@@ -4580,7 +4581,6 @@ packages:
 
   /globalyzer@0.1.0:
     resolution: {integrity: sha512-40oNTM9UfG6aBmuKxk/giHn5nQ8RVz/SS4Ir6zgzOv9/qC3kKZ9v4etGTcJbEl/NyVQH7FGU7d+X1egr57Md2Q==}
-    dev: true
 
   /globby@11.1.0:
     resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
@@ -4596,7 +4596,6 @@ packages:
 
   /globrex@0.1.2:
     resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
-    dev: true
 
   /gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
@@ -7037,7 +7036,6 @@ packages:
     dependencies:
       globalyzer: 0.1.0
       globrex: 0.1.2
-    dev: true
 
   /tiny-inflate@1.0.3:
     resolution: {integrity: sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==}
