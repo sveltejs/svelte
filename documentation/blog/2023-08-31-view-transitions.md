@@ -74,7 +74,7 @@ onNavigate((navigation) => {
 
 With that, every navigation that occurs will trigger a view transition. You can already see this in action – by default, the browser will crossfade between the old and new pages.
 
-<video src="https://raw.githubusercontent.com/geoffrich/assets/grich/view-transitions/video/vt-demo-1.mp4" controls muted playsinline></video>
+<video src="https://sveltejs.github.io/assets/video/vt-demo-1.mp4" controls muted playsinline></video>
 
 <details>
 <summary>How the code works</summary>
@@ -158,7 +158,7 @@ header {
 
 Now, the header will not transition in and out on navigation, but the rest of the page will.
 
-<video src="https://raw.githubusercontent.com/geoffrich/assets/grich/view-transitions/video/vt-demo-2.mp4" controls muted playsinline></video>
+<video src="https://sveltejs.github.io/assets/video/vt-demo-2.mp4" controls muted playsinline></video>
 
 <details>
 <summary>Fixing the types</summary>
@@ -210,7 +210,7 @@ li[aria-current='page']::before {
 
 By adding that single line, the indicator will now smoothly slide to its new position instead of jumping.
 
-<video src="https://raw.githubusercontent.com/geoffrich/assets/grich/view-transitions/video/vt-demo-3.mp4" controls muted playsinline></video>
+<video src="https://sveltejs.github.io/assets/video/vt-demo-3.mp4" controls muted playsinline></video>
 
 (It might be easy to miss the difference – look at the small moving triangle indicator at the top of the screen!)
 
