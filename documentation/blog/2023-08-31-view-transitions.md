@@ -252,7 +252,9 @@ While this may be the safest option, reduced motion does not necessarily mean no
 
 As you can see, SvelteKit doesn’t abstract a whole lot about _how_ view transitions work – you’re interacting directly with the browser’s built-in `document.startViewTransition` and `::view-transition` APIs, rather than framework abstractions like those found in Nuxt and Astro. We’re eager to see how people end up using view transitions in SvelteKit apps, and whether it makes sense to add higher level abstractions of our own in future.
 
-## Further reading
+## Resources
+
+You can find the demo code from this post [on GitHub](https://github.com/geoffrich/sveltekit-onnavigate-demo) and the live version [deployed to Vercel](https://sveltekit-onnavigate-demo.vercel.app/). Here are some other view transitions resources you may find helpful:
 
 - [MDN view transitions docs](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API)
 - [Chrome view transitions API explainer](https://developer.chrome.com/docs/web-platform/view-transitions/)
