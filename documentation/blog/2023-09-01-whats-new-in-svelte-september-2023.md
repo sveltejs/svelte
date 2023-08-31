@@ -5,7 +5,9 @@ author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
 
-Happy September y'all! With all the [sneak peeks at what's coming soon in Svelte 5](https://twitter.com/Rich_Harris/status/1688581184018583558), we thought it'd be best to look back at the last month to see what's shipped and what the community is building with Svelte...
+Happy September y'all! With all the [sneak peeks at what's coming soon in Svelte 5](https://twitter.com/Rich_Harris/status/1688581184018583558), we thought it'd be best to look back at the last month to see what's shipped and what the community is building with Svelte.
+
+Before we jump in, a warm welcome to the new Svelte Ambassadors: [@cainux](https://github.com/cainux) and [@grischaerbe](https://github.com/grischaerbe)! Welcome to the crew ⛴️
 
 ## What's new in Svelte & Language Tools
 - `svelteHTML` has moved from language-tools into Svelte core so that `svelte/element` types will now load correctly (**4.2.0** in Svelte, **107.10.0** in Language Tools)
@@ -13,7 +15,7 @@ Happy September y'all! With all the [sneak peeks at what's coming soon in Svelte
 ## What's new in SvelteKit
 - `URL` is now accepted in the `redirect` function (**1.23.0**, [Docs](https://kit.svelte.dev/docs/modules#sveltejs-kit-redirect), [#10570](https://github.com/sveltejs/kit/pull/10570))
 - Mistyped route filenames will now throw a warning (**1.23.0**, [#10558](https://github.com/sveltejs/kit/pull/10558))
-- The new `onNavigate` lifecycle function enables view transitions (**1.24.0**, [Docs](https://kit.svelte.dev/docs/modules#app-navigation-onnavigate), [#9605](https://github.com/sveltejs/kit/pull/9605))
+- The new `onNavigate` lifecycle function enables view transitions - Check out the [blog post](https://svelte.dev/blog/view-transitions) for more info (**1.24.0**, [Docs](https://kit.svelte.dev/docs/modules#app-navigation-onnavigate), [#9605](https://github.com/sveltejs/kit/pull/9605))
 
 But that's just the new features! For all the patches and performance updates from this month, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
@@ -42,6 +44,7 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Building a Blog using SvelteKit and Nostr as a CMS (Part 1](https://kevinak.se/blog/building-a-blog-using-sveltekit-and-nostr-as-a-cms-part-1-1690807337563)) by Kev
 - [Mastering SvelteKit with Geoff Rich | JS Drops](https://www.youtube.com/watch?v=MaF8kRbHbi0) by This Dot Media
 - [Learn Svelte By Making A Matching Game](https://www.youtube.com/watch?v=w2q9caYXgkg) and [Who Needs API Permission When You Can Use Web Scraping](https://www.youtube.com/watch?v=T-lBPpeokfY) by Joy of Code
+- [The missing guide to understanding adapter-static in SvelteKit](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/) by Stanislav Khromov
 - This Week in Svelte:
   - [2023 July 28](https://www.youtube.com/watch?v=mvTEQ_C0qRQ) - Screen reader market share, Svelte to plain JS, Web Components
   - [2023 Aug 4](https://www.youtube.com/watch?v=Ye8cCJyPZjg) - Svelte 4.1.2, SvelteKit 1.22.4, ES Modules, Types in markup
@@ -73,7 +76,6 @@ _To Read_
 - [Automatically generate sitemap.xml in SvelteKit](https://alex-schnabl.medium.com/automatically-generate-sitemap-xml-in-sveltekit-910bd09d17e7) by Alex Schnabl
 - [Discovering Svelte: Things I Learned While Using Svelte](https://www.tronic247.com/discovering-svelte-things-i-learned-while-using-svelte/) by Posandu Mapa
 - [Typed fetch with Sveltekit and Hono using RPC](https://dev.to/subhendupsingh/typed-fetch-with-sveltekit-and-hono-using-rpc-2clf) by Subhendu Pratap Singh
-- [The missing guide to understanding adapter-static in SvelteKit](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/) by Stanislav Khromov
 - [Svelte Context Module Scripts Explained](https://raqueebuddinaziz.com/blog/svelte-context-module-scripts-explained) by raqueebuddin aziz
 - [Building with GPT4 and Svelte](https://kvak.io/meoweler) by levmiseri
 - [Type-safe User Authentication in SvelteKit with Lucia, Planetscale, and Upstash Redis](https://upstash.com/blog/lucia-sveltekit) by Chris Jayden
