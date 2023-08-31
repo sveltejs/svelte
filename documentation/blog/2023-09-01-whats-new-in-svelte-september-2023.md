@@ -43,7 +43,7 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Svelte Society - London August 2023](https://www.youtube.com/watch?v=90Psdk5rAnU)
 - [Building a Blog using SvelteKit and Nostr as a CMS (Part 1](https://kevinak.se/blog/building-a-blog-using-sveltekit-and-nostr-as-a-cms-part-1-1690807337563)) by Kev
 - [Mastering SvelteKit with Geoff Rich | JS Drops](https://www.youtube.com/watch?v=MaF8kRbHbi0) by This Dot Media
-- [Learn Svelte By Making A Matching Game](https://www.youtube.com/watch?v=w2q9caYXgkg) and [Who Needs API Permission When You Can Use Web Scraping](https://www.youtube.com/watch?v=T-lBPpeokfY) by Joy of Code
+- [Using GitHub Contributions To Flex On The Normies](https://youtu.be/f9fd1L1FEts?si=3hbihW-X5-GKSJxN), [Learn Svelte By Making A Matching Game](https://www.youtube.com/watch?v=w2q9caYXgkg) and [Who Needs API Permission When You Can Use Web Scraping](https://www.youtube.com/watch?v=T-lBPpeokfY) by Joy of Code
 - [The missing guide to understanding adapter-static in SvelteKit](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/) by Stanislav Khromov
 - This Week in Svelte:
   - [2023 July 28](https://www.youtube.com/watch?v=mvTEQ_C0qRQ) - Screen reader market share, Svelte to plain JS, Web Components
