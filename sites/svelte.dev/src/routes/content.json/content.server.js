@@ -36,7 +36,10 @@ export async function content() {
 		const slug = match[1];
 
 		const filepath = `${base}/docs/${file}`;
-		const markdown = replaceExportTypePlaceholders(await readFile(filepath, 'utf-8'), modules);
+		const markdown = await replaceExportTypePlaceholders(
+			await readFile(filepath, 'utf-8'),
+			modules
+		);
 
 		const { body, metadata } = extractFrontmatter(markdown);
 
