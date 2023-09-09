@@ -6,6 +6,7 @@ export interface TransitionConfig {
 	easing?: EasingFunction;
 	css?: (t: number, u: number) => string;
 	tick?: (t: number, u: number) => void;
+	condition?: () => boolean;
 }
 
 export interface BlurParams {
