@@ -133,13 +133,14 @@ You can see a [community-maintained list of routers on sveltesociety.dev](https:
 
 ## Can I tell Svelte not to remove my unused styles?
 
-No.
+No. Svelte removes the styles from the component and warns you about them in order to prevent issues that would otherwise arise.
 
-Svelte's component style scoping works by generating a class unique to the given component, and then adding it to the relevant elements in the component that are under Svelte's control, and then also adding it to each of the selectors in that component's styles. If the compiler can't see which elements a given selector applies to, it has two options if it were to keep it, both of them bad.
+Svelte's component style scoping works by generating a class unique to the given component, adding it to the relevant elements in the component that are under Svelte's control, and then adding it to each of the selectors in that component's styles. When the compiler can't see what elements a style selector applies to, there would be two bad options for keeping it:
 
-If it still adds the scoping class to the selector, there is no guarantee that it will match the expected elements in the component, especially if they were created by a child component or something like `{@html}`. If it keeps the selector without adding the scoping class to it, it will become a global style, affecting your entire page. The third option, which is what Svelte takes, is to remove the styles from the component and warn you about them.
+- If it keeps the selector and adds the scoping scoping class to it, there is no guarantee that the selector will match the expected elements in the component, and they definitely won't if they were created by a child component or `{@html ...}`.
+- If it keeps the selector without adding the scoping class to it, the given style will become a global style, affecting your entire page.
 
-If you need to style something that Svelte can't identify at compile time, you will need to explicitly opt in to global styles by using `:global(...)`. But also keep in mind that you can wrap `:global(...)` around only part of a selector. `.foo :global(.bar) { ... }` will style any `.bar` elements that appear within the component's `.foo` elements. As long as there's some parent element in the current component to start from, partially global selectors like this will almost always be able to get you what you want.
+If you need to style something that Svelte can't identify at compile time, you will need to explicitly opt into global styles by using `:global(...)`. But also keep in mind that you can wrap `:global(...)` around only part of a selector. `.foo :global(.bar) { ... }` will style any `.bar` elements that appear within the component's `.foo` elements. As long as there's some parent element in the current component to start from, partially global selectors like this will almost always be able to get you what you want.
 
 ## Is Svelte v2 still available?
 
