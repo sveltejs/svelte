@@ -131,6 +131,16 @@ If you need hash-based routing on the client side, check out [svelte-spa-router]
 
 You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/components#routers).
 
+## Can I tell Svelte not to remove my unused styles?
+
+No.
+
+Svelte's component style scoping works by generating a class unique to the given component, and then adding it to the relevant elements in the component that are under Svelte's control, and then also adding it to each of the selectors in that component's styles. If the compiler can't see which elements a given selector applies to, it has two options if it were to keep it, both of them bad.
+
+If it still adds the scoping class to the selector, there is no guarantee that it will match the expected elements in the component, especially if they were created by a child component or something like `{@html}`. If it keeps the selector without adding the scoping class to it, it will become a global style, affecting your entire page. The third option, which is what Svelte takes, is to remove the styles from the component and warn you about them.
+
+If you need to style something that Svelte can't identify at compile time, you will need to explicitly opt in to global styles by using `:global(...)`. But also keep in mind that you can wrap `:global(...)` around only part of a selector. `.foo :global(.bar) { ... }` will style any `.bar` elements that appear within the component's `.foo` elements. As long as there's some parent element in the current component to start from, partially global selectors like this will almost always be able to get you what you want.
+
 ## Is Svelte v2 still available?
 
 New features aren't being added to it, and bugs will probably only be fixed if they are extremely nasty or present some sort of security vulnerability.
