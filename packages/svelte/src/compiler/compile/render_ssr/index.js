@@ -31,7 +31,7 @@ export default function ssr(component, options) {
 	// TODO concatenate CSS maps
 	const css = options.customElement
 		? { code: null, map: null }
-		: component.stylesheet.render(options.filename);
+		: component.stylesheet.render(options.filename, options.preserveUnusedSelectors);
 	const uses_rest = component.var_lookup.has('$$restProps');
 	const props = component.vars.filter((variable) => !variable.module && variable.export_name);
 	const rest = uses_rest

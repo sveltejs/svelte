@@ -24,7 +24,7 @@ export default function dom(component, options) {
 		const file = component.file ? x`"${component.file}"` : x`undefined`;
 		body.push(b`const ${renderer.file_var} = ${file};`);
 	}
-	const css = component.stylesheet.render(options.filename);
+	const css = component.stylesheet.render(options.filename, options.preserveUnusedSelectors);
 	const css_sourcemap_enabled = check_enable_sourcemap(options.enableSourcemap, 'css');
 	if (css_sourcemap_enabled) {
 		css.map = apply_preprocessor_sourcemap(

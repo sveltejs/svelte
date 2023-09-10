@@ -350,6 +350,13 @@ export interface CompileOptions {
 	 * @default true
 	 */
 	discloseVersion?: boolean;
+
+	/**
+	 * If `true`, unused stylesheet selectors will be kept instead of removed.
+	 *
+	 * @default false
+	 */
+	preserveUnusedSelectors?: boolean;
 }
 
 export interface ParserOptions {

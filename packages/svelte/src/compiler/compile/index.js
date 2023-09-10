@@ -31,7 +31,8 @@ const valid_options = [
 	'preserveComments',
 	'preserveWhitespace',
 	'cssHash',
-	'discloseVersion'
+	'discloseVersion',
+	'preserveUnusedSelectors'
 ];
 const valid_css_values = [true, false, 'injected', 'external', 'none'];
 const regex_valid_identifier = /^[a-zA-Z_$][a-zA-Z_$0-9]*$/;
@@ -126,7 +127,13 @@ function validate_options(options, warnings) {
  */
 export default function compile(source, options = {}) {
 	options = Object.assign(
-		{ generate: 'dom', dev: false, enableSourcemap: true, css: 'injected' },
+		{
+			generate: 'dom',
+			dev: false,
+			enableSourcemap: true,
+			css: 'injected',
+			preserveUnusedSelectors: false
+		},
 		options
 	);
 	const stats = new Stats();

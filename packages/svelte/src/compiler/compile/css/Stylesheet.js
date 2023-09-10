@@ -86,12 +86,13 @@ class Rule {
 	/**
 	 * @param {import('magic-string').default} code
 	 * @param {boolean} _dev
+	 * @param {boolean} preserveUnusedSelectors
 	 */
-	minify(code, _dev) {
+	minify(code, _dev, preserveUnusedSelectors) {
 		let c = this.node.start;
 		let started = false;
 		this.selectors.forEach((selector) => {
-			if (selector.used) {
+			if (preserveUnusedSelectors === true || selector.used) {
 				const separator = started ? ',' : '';
 				if (selector.node.start - c > separator.length) {
 					code.update(c, selector.node.start, separator);
@@ -229,8 +230,9 @@ class Atrule {
 	/**
 	 * @param {import('magic-string').default} code
 	 * @param {boolean} dev
+	 * @param {boolean} _preserveUnusedSelectors
 	 */
-	minify(code, dev) {
+	minify(code, dev, _preserveUnusedSelectors) {
 		if (this.node.name === 'media') {
 			const expression_char = code.original[this.node.prelude.start];
 			let c = this.node.start + (expression_char === '(' ? 6 : 7);
@@ -449,8 +451,11 @@ export default class Stylesheet {
 		});
 	}
 
-	/** @param {string} file */
-	render(file) {
+	/**
+	 * @param {string} file
+	 * @param {boolean} preserveUnusedSelectors
+	 */
+	render(file, preserveUnusedSelectors) {
 		if (!this.has_styles) {
 			return { code: null, map: null };
 		}
@@ -469,9 +474,9 @@ export default class Stylesheet {
 		});
 		let c = 0;
 		this.children.forEach((child) => {
-			if (child.is_used(this.dev)) {
+			if (preserveUnusedSelectors === true || child.is_used(this.dev)) {
 				code.remove(c, child.node.start);
-				child.minify(code, this.dev);
+				child.minify(code, this.dev, preserveUnusedSelectors);
 				c = child.node.end;
 			}
 		});
