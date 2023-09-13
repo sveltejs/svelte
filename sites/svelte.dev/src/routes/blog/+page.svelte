@@ -22,8 +22,8 @@
 		{#if !post.draft}
 			<article class="post" data-pubdate={post.date}>
 				<a class="no-underline" href="/blog/{post.slug}" title="Read the article »">
-					<h2 style:--name="post-title-{post.slug}">{post.title}</h2>
-					<p class="description" style:--name="post-description-{post.slug}">{post.description}</p>
+					<h2>{post.title}</h2>
+					<p>{post.description}</p>
 				</a>
 			</article>
 		{/if}
@@ -47,13 +47,6 @@
 		max-width: 18em;
 		font-size: var(--sk-text-m);
 		font-weight: 400;
-	}
-
-	@media (prefers-reduced-motion: no-preference) {
-		h2,
-		.description {
-			view-transition-name: var(--name);
-		}
 	}
 
 	.post:first-child {
