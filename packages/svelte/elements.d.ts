@@ -808,6 +808,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	height?: number | string | undefined | null;
+	indeterminate?: boolean | undefined | null;
 	list?: string | undefined | null;
 	max?: number | string | undefined | null;
 	maxlength?: number | undefined | null;
