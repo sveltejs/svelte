@@ -91,17 +91,11 @@ function iterate_grams(value, gram_size = 2) {
  */
 function gram_counter(value, gram_size = 2) {
 	// return an object where key=gram, value=number of occurrences
-	const result = {};
-	const grams = iterate_grams(value, gram_size);
-	let i = 0;
-	for (i; i < grams.length; ++i) {
-		if (grams[i] in result) {
-			result[grams[i]] += 1;
-		} else {
-			result[grams[i]] = 1;
-		}
-	}
-	return result;
+	return iterate_grams(value, gram_size)
+    .reduce((acc, value) => {
+      acc[value] = value in acc ? acc[value]++ : 1;
+      return acc;
+    }, {});
 }
 
 /**
