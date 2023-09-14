@@ -8,9 +8,13 @@ export default {
 
 	async test({ assert, target }) {
 		const first_span_list = target.children[0];
-		assert.htmlEqualWithOptions(first_span_list.innerHTML, expected, { withoutNormalizeHtml: true });
+		assert.htmlEqualWithOptions(first_span_list.innerHTML, expected, {
+			withoutNormalizeHtml: true
+		});
 
 		const second_span_list = target.children[1];
-		assert.htmlEqualWithOptions(second_span_list.innerHTML, expected, { withoutNormalizeHtml: true });
+		assert.htmlEqualWithOptions(second_span_list.innerHTML, expected, {
+			withoutNormalizeHtml: true
+		});
 	}
 };

@@ -63,7 +63,10 @@ describe('sourcemaps', async () => {
 					JSON.stringify(preprocessed.map, null, 2)
 				);
 			}
-			fs.writeFileSync(`${output_base}.js`, `${js.code}\n//# sourceMappingURL=${output_name}.js.map`);
+			fs.writeFileSync(
+				`${output_base}.js`,
+				`${js.code}\n//# sourceMappingURL=${output_name}.js.map`
+			);
 			fs.writeFileSync(`${output_base}.js.map`, JSON.stringify(js.map, null, 2));
 			if (css.code) {
 				fs.writeFileSync(

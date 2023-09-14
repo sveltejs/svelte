@@ -59,7 +59,10 @@ multiple leading newlines</textarea></div>`,
 			element_textarea_without_leading_newline.children[2].value,
 			' \nnewline after leading space'
 		);
-		assert.equal(element_textarea_with_multiple_leading_newline.value, '\n\nmultiple leading newlines');
+		assert.equal(
+			element_textarea_with_multiple_leading_newline.value,
+			'\n\nmultiple leading newlines'
+		);
 		assert.equal(
 			element_div_with_textarea_with_multiple_leading_newline.children[0].value,
 			'\n\nmultiple leading newlines'
