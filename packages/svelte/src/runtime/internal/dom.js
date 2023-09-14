@@ -1,5 +1,7 @@
-import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
 import { contenteditable_truthy_values, has_prop } from './utils.js';
+
+import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
+
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
 let is_hydrating = false;
@@ -624,9 +626,9 @@ function init_claim_info(nodes) {
  * @template {ChildNodeEx} R
  * @param {ChildNodeArray} nodes
  * @param {(node: ChildNodeEx) => node is R} predicate
- * @param {(node: ChildNodeEx) => ChildNodeEx | undefined} processNode
- * @param {() => R} createNode
- * @param {boolean} dontUpdateLastIndex
+ * @param {(node: ChildNodeEx) => ChildNodeEx | undefined} process_node
+ * @param {() => R} create_node
+ * @param {boolean} dont_update_last_index
  * @returns {R}
  */
 function claim_node(nodes, predicate, process_node, create_node, dont_update_last_index = false) {
