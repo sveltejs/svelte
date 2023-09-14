@@ -4,7 +4,7 @@ import { b } from 'code-red';
  * @param {any} program
  * @param {import('estree').Identifier} name
  * @param {string} banner
- * @param {any} sveltePath
+ * @param {any} svelte_path
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
  * @param {import('estree').ImportDeclaration[]} imports
@@ -41,7 +41,7 @@ export default function create_module(
 
 /**
  * @param {any} source
- * @param {any} sveltePath
+ * @param {any} svelte_path
  */
 function edit_source(source, svelte_path) {
 	return source === 'svelte' || source.startsWith('svelte/')
@@ -84,7 +84,7 @@ function get_internal_globals(globals, helpers) {
  * @param {any} program
  * @param {import('estree').Identifier} name
  * @param {string} banner
- * @param {string} sveltePath
+ * @param {string} svelte_path
  * @param {string} internal_path
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} helpers
  * @param {Array<{ name: string; alias: import('estree').Identifier }>} globals
