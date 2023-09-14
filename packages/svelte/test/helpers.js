@@ -1,10 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import glob from 'tiny-glob/sync';
-import colors from 'kleur';
+
 import { assert } from 'vitest';
+import colors from 'kleur';
 import { compile } from 'svelte/compiler';
 import { fileURLToPath } from 'node:url';
+import glob from 'tiny-glob/sync';
 
 export function try_load_json(file) {
 	try {
@@ -158,8 +159,8 @@ export function create_loader(compileOptions, cwd) {
 				)
 				.replace(
 					/^import (\w+, )?{([^}]+)} from ['"](.+)['"];?/gm,
-					(_, default_, names, source) => {
-						const d = default_ ? `default: ${default_}` : '';
+					(_, _default, names, source) => {
+						const d = _default ? `default: ${_default}` : '';
 						return `const { ${d} ${names.replaceAll(
 							' as ',
 							': '
