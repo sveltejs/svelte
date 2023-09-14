@@ -31,12 +31,12 @@ function run_runtime_samples(suite) {
 		const it_fn = config.skip ? it.skip : solo ? it.only : it;
 
 		it_fn(dir, async () => {
-			const compileOptions = {
+			const compile_options = {
 				...config.compileOptions,
 				generate: 'ssr'
 			};
 
-			const load = create_loader(compileOptions, cwd);
+			const load = create_loader(compile_options, cwd);
 
 			try {
 				if (config.before_test) config.before_test();
@@ -48,12 +48,12 @@ function run_runtime_samples(suite) {
 
 				if (config.ssrHtml) {
 					assert_html_equal_with_options(html, config.ssrHtml, {
-						preserveComments: compileOptions.preserveComments,
+						preserveComments: compile_options.preserveComments,
 						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				} else if (config.html) {
 					assert_html_equal_with_options(html, config.html, {
-						preserveComments: compileOptions.preserveComments,
+						preserveComments: compile_options.preserveComments,
 						withoutNormalizeHtml: config.withoutNormalizeHtml
 					});
 				}
@@ -93,7 +93,7 @@ function run_runtime_samples(suite) {
 						mkdirp(dir);
 
 						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8'), {
-							...compileOptions,
+							...compile_options,
 							filename: file
 						});
 

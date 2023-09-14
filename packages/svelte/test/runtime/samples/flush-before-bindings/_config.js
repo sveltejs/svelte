@@ -11,11 +11,11 @@ export default {
 	`,
 
 	test({ assert, component }) {
-		const visibleThings = component.visibleThings;
-		assert.deepEqual(visibleThings, ['first thing', 'second thing']);
+		const visible_things = component.visibleThings;
+		assert.deepEqual(visible_things, ['first thing', 'second thing']);
 
 		const snapshots = component.snapshots;
-		assert.deepEqual(snapshots, [visibleThings]);
+		assert.deepEqual(snapshots, [visible_things]);
 
 		// TODO minimise the number of recomputations during oncreate
 		// assert.equal(counter.count, 1);

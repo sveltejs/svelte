@@ -4,7 +4,7 @@ export default {
 	<button>invalid</button>`,
 
 	async test({ assert, target, window }) {
-		const [buttonUndef, buttonNull, buttonInvalid] = target.querySelectorAll('button');
+		const [button_undef, button_null, button_invalid] = target.querySelectorAll('button');
 
 		const event = new window.MouseEvent('click');
 		let err = '';
@@ -14,13 +14,13 @@ export default {
 		});
 
 		// All three should not throw if proper checking is done in runtime code
-		await buttonUndef.dispatchEvent(event);
+		await button_undef.dispatchEvent(event);
 		assert.equal(err, '', err);
 
-		await buttonNull.dispatchEvent(event);
+		await button_null.dispatchEvent(event);
 		assert.equal(err, '', err);
 
-		await buttonInvalid.dispatchEvent(event);
+		await button_invalid.dispatchEvent(event);
 		assert.equal(err, '', err);
 	}
 };

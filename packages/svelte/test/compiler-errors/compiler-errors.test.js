@@ -20,14 +20,14 @@ describe('compiler-errors', () => {
 		it_fn(dir, () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			const compileOptions = Object.assign({}, config.compileOptions || {}, {
+			const compile_options = Object.assign({}, config.compileOptions || {}, {
 				immutable: config.immutable,
 				accessors: 'accessors' in config ? config.accessors : true,
 				generate: 'dom'
 			});
 
 			try {
-				compile(fs.readFileSync(`${cwd}/main.svelte`, 'utf-8'), compileOptions);
+				compile(fs.readFileSync(`${cwd}/main.svelte`, 'utf-8'), compile_options);
 			} catch (error) {
 				if (typeof config.error === 'function') {
 					config.error(assert, error);

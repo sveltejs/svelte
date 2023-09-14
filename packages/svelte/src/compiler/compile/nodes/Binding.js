@@ -98,7 +98,7 @@ export default class Binding extends Node {
 		this.is_readonly =
 			regex_dimensions.test(this.name) ||
 			regex_box_size.test(this.name) ||
-			(isElement(parent) &&
+			(is_element(parent) &&
 				((parent.is_media_node() && read_only_media_attributes.has(this.name)) ||
 					(parent.name === 'input' && type === 'file'))) /* TODO others? */;
 	}
@@ -127,6 +127,6 @@ export default class Binding extends Node {
  * @param {import('./shared/Node.js').default} node
  * @returns {node is import('./Element.js').default}
  */
-function isElement(node) {
+function is_element(node) {
 	return !!(/** @type {any} */ (node).is_media_node);
 }

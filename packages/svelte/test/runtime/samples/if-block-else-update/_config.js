@@ -2,9 +2,9 @@ export default {
 	async test({ assert, target, window }) {
 		const [btn1, btn2] = target.querySelectorAll('button');
 
-		const clickEvent = new window.MouseEvent('click');
+		const click_event = new window.MouseEvent('click');
 
-		await btn2.dispatchEvent(clickEvent);
+		await btn2.dispatchEvent(click_event);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -17,7 +17,7 @@ export default {
 		`
 		);
 
-		await btn1.dispatchEvent(clickEvent);
+		await btn1.dispatchEvent(click_event);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -30,7 +30,7 @@ export default {
 		`
 		);
 
-		await btn2.dispatchEvent(clickEvent);
+		await btn2.dispatchEvent(click_event);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -43,7 +43,7 @@ export default {
 		`
 		);
 
-		await btn1.dispatchEvent(clickEvent);
+		await btn1.dispatchEvent(click_event);
 		assert.htmlEqual(
 			target.innerHTML,
 			`

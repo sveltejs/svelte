@@ -10,12 +10,12 @@ export async function test({ assert, css, js }) {
 
 	assert.notEqual(match, null);
 
-	const [mimeType, encoding, cssMapBase64] = match.slice(2);
-	assert.equal(mimeType, 'application/json');
+	const [mime_type, encoding, css_map_base64] = match.slice(2);
+	assert.equal(mime_type, 'application/json');
 	assert.equal(encoding, 'utf-8');
 
-	const cssMapJson = b64dec(cssMapBase64);
-	css.mapConsumer = await new SourceMapConsumer(cssMapJson);
+	const css_map_json = b64dec(css_map_base64);
+	css.mapConsumer = await new SourceMapConsumer(css_map_json);
 
 	// TODO make util fn + move to test index.js
 	const sourcefile = 'input.svelte';

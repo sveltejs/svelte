@@ -2,12 +2,12 @@ export default {
 	props: {},
 
 	snapshot(target) {
-		const nullText = target.querySelectorAll('p')[0].textContent;
-		const undefinedText = target.querySelectorAll('p')[1].textContent;
+		const null_text = target.querySelectorAll('p')[0].textContent;
+		const undefined_text = target.querySelectorAll('p')[1].textContent;
 
 		return {
-			nullText,
-			undefinedText
+			nullText: null_text,
+			undefinedText: undefined_text
 		};
 	}
 };

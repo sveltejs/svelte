@@ -18,12 +18,12 @@ describe('hydration', async () => {
 		it_fn(dir, async () => {
 			const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-			const compileOptions = Object.assign({}, config.compileOptions, {
+			const compile_options = Object.assign({}, config.compileOptions, {
 				accessors: 'accessors' in config ? config.accessors : true,
 				hydratable: true
 			});
 
-			const { default: SvelteComponent } = await create_loader(compileOptions, cwd)('main.svelte');
+			const { default: SvelteComponent } = await create_loader(compile_options, cwd)('main.svelte');
 
 			const target = window.document.body;
 			const head = window.document.head;

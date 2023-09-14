@@ -28,17 +28,17 @@ describe('ssr', async () => {
 		it_fn(dir, async () => {
 			dir = path.resolve(`${__dirname}/samples`, dir);
 
-			const compileOptions = {
+			const compile_options = {
 				...config.compileOptions,
 				generate: 'ssr'
 			};
 
-			const load = create_loader(compileOptions, dir);
+			const load = create_loader(compile_options, dir);
 
 			const Component = (await load(`${dir}/main.svelte`)).default;
 
-			const expectedHtml = try_read_file(`${dir}/_expected.html`);
-			const expectedCss = try_read_file(`${dir}/_expected.css`) || '';
+			const expected_html = try_read_file(`${dir}/_expected.html`);
+			const expected_css = try_read_file(`${dir}/_expected.css`) || '';
 
 			const props = try_load_json(`${dir}/data.json`) || undefined;
 
@@ -49,8 +49,8 @@ describe('ssr', async () => {
 			if (css.code) fs.writeFileSync(`${dir}/_actual.css`, css.code);
 
 			try {
-				assert_html_equal_with_options(html, expectedHtml, {
-					preserveComments: compileOptions.preserveComments,
+				assert_html_equal_with_options(html, expected_html, {
+					preserveComments: compile_options.preserveComments,
 					withoutNormalizeHtml: config.withoutNormalizeHtml
 				});
 			} catch (error) {
@@ -66,7 +66,7 @@ describe('ssr', async () => {
 			try {
 				assert.equal(
 					css.code.trim().replace(/[\r\n]/g, ''),
-					expectedCss.trim().replace(/[\r\n]/g, '')
+					expected_css.trim().replace(/[\r\n]/g, '')
 				);
 			} catch (error) {
 				if (should_update_expected()) {
@@ -86,7 +86,7 @@ describe('ssr', async () => {
 						head,
 						fs.readFileSync(`${dir}/_expected-head.html`, 'utf-8'),
 						{
-							preserveComments: compileOptions.hydratable
+							preserveComments: compile_options.hydratable
 						}
 					);
 				} catch (error) {

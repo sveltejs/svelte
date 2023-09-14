@@ -9,9 +9,9 @@ export default {
 		const input = target.querySelector('input');
 
 		input.value = 'foo';
-		const inputEvent = new window.InputEvent('input');
+		const input_event = new window.InputEvent('input');
 
-		await input.dispatchEvent(inputEvent);
+		await input.dispatchEvent(input_event);
 
 		assert.htmlEqual(
 			target.innerHTML,

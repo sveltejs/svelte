@@ -55,18 +55,18 @@ async function run_test(dir) {
 
 		const cwd = path.resolve(`${__dirname}/samples/${dir}`);
 
-		const compileOptions = Object.assign({}, config.compileOptions || {}, {
+		const compile_options = Object.assign({}, config.compileOptions || {}, {
 			hydratable: hydrate,
 			immutable: config.immutable,
 			accessors: 'accessors' in config ? config.accessors : true
 		});
 
-		const load = create_loader(compileOptions, cwd);
+		const load = create_loader(compile_options, cwd);
 
 		let mod;
 		let SvelteComponent;
 
-		let unintendedError = null;
+		let unintended_error = null;
 
 		if (config.expect_unhandled_rejections) {
 			listeners.forEach((listener) => {
@@ -111,7 +111,7 @@ async function run_test(dir) {
 			let snapshot = undefined;
 
 			if (hydrate && from_ssr_html) {
-				const load_ssr = create_loader({ ...compileOptions, generate: 'ssr' }, cwd);
+				const load_ssr = create_loader({ ...compile_options, generate: 'ssr' }, cwd);
 
 				// ssr into target
 				if (config.before_test) config.before_test();
@@ -152,14 +152,14 @@ async function run_test(dir) {
 			console.warn = warn;
 
 			if (config.error) {
-				unintendedError = true;
+				unintended_error = true;
 				assert.fail('Expected a runtime error');
 			}
 
 			if (config.warnings) {
 				assert.deepEqual(warnings, config.warnings);
 			} else if (warnings.length) {
-				unintendedError = true;
+				unintended_error = true;
 				assert.fail('Received unexpected warnings');
 			}
 
@@ -183,7 +183,7 @@ async function run_test(dir) {
 						snapshot,
 						window,
 						raf,
-						compileOptions,
+						compileOptions: compile_options,
 						load
 					});
 				}
@@ -201,7 +201,7 @@ async function run_test(dir) {
 
 		await test()
 			.catch((err) => {
-				if (config.error && !unintendedError) {
+				if (config.error && !unintended_error) {
 					if (typeof config.error === 'function') {
 						config.error(assert, err);
 					} else {
@@ -217,7 +217,7 @@ async function run_test(dir) {
 						mkdirp(path.dirname(out)); // file could be in subdirectory, therefore don't use dir
 
 						const { js } = compile(fs.readFileSync(`${cwd}/${file}`, 'utf-8').replace(/\r/g, ''), {
-							...compileOptions,
+							...compile_options,
 							filename: file
 						});
 						fs.writeFileSync(out, js.code);
