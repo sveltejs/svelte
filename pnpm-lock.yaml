@@ -111,6 +111,9 @@ importers:
       esbuild:
         specifier: ^0.18.11
         version: 0.18.11
+      eslint-plugin-lube:
+        specifier: ^0.1.7
+        version: 0.1.7
       happy-dom:
         specifier: ^9.20.3
         version: 9.20.3
@@ -3930,6 +3933,12 @@ packages:
       eslint: '>=7.0.0'
     dependencies:
       eslint: 8.47.0
+    dev: true
+
+  /eslint-plugin-lube@0.1.7:
+    resolution: {integrity: sha512-jqeRZAG3vQWZR6Hue2tSx4bQUfpDYqeSOFf3MlqpUycb5q6av1bhnmfDkxHgsLQoK4Pt7H+puI0cYc/iEvFwfw==}
+    dependencies:
+      '@types/estree': 1.0.1
     dev: true
 
   /eslint-plugin-svelte@2.32.2(eslint@8.44.0)(svelte@packages+svelte):

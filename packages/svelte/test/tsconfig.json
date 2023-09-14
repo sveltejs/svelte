@@ -1,15 +1,10 @@
 {
 	"extends": "../tsconfig.json",
-	"include": ["."],
 	"exclude": ["./**/_output/**/*"],
 
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,
-		"noEmit": true,
-		"paths": {
-			"svelte": [".."],
-			"svelte/*": ["../*"]
-		}
+		"noEmit": true
 	}
 }
