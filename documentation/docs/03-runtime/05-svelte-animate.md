@@ -9,6 +9,7 @@ The `svelte/animate` module exports one function for use with Svelte [animations
 > EXPORT_SNIPPET: svelte/animate#flip
 
 ```svelte
+<!--- copy: false --->
 animate:flip={params}
 ```
 
@@ -28,7 +29,6 @@ The `flip` function calculates the start and end position of an element and anim
 You can see a full example on the [animations tutorial](https://learn.svelte.dev/tutorial/animate).
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { flip } from 'svelte/animate';
 	import { quintOut } from 'svelte/easing';

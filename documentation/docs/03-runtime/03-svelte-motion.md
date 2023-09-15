@@ -22,7 +22,6 @@ Both functions return a Promise that resolves when the tween completes. If the t
 Out of the box, Svelte will interpolate between two numbers, two arrays or two objects (as long as the arrays and objects are the same 'shape', and their 'leaf' properties are also numbers).
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
@@ -46,7 +45,6 @@ Out of the box, Svelte will interpolate between two numbers, two arrays or two o
 If the initial value is `undefined` or `null`, the first value change will take effect immediately. This is useful when you have tweened values that are based on props, and don't want any motion when the component first renders.
 
 ```ts
-/// file: motion.js
 // @filename: ambient.d.ts
 declare global {
 	var $size: number;
@@ -70,7 +68,6 @@ $: $size = big ? 100 : 10;
 The `interpolate` option allows you to tween between _any_ arbitrary values. It must be an `(a, b) => t => value` function, where `a` is the starting value, `b` is the target value, `t` is a number between 0 and 1, and `value` is the result. For example, we can use the [d3-interpolate](https://github.com/d3/d3-interpolate) package to smoothly interpolate between two colours.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { interpolateLab } from 'd3-interpolate';
 	import { tweened } from 'svelte/motion';
@@ -105,7 +102,6 @@ A `spring` store gradually changes to its target value based on its `stiffness` 
 All of the options above can be changed while the spring is in motion, and will take immediate effect.
 
 ```js
-/// file: motion.js
 import { spring } from 'svelte/motion';
 
 const size = spring(100);
@@ -119,7 +115,6 @@ As with [`tweened`](/docs/svelte-motion#tweened) stores, `set` and `update` retu
 Both `set` and `update` can take a second argument — an object with `hard` or `soft` properties. `{ hard: true }` sets the target value immediately; `{ soft: n }` preserves existing momentum for `n` seconds before settling. `{ soft: true }` is equivalent to `{ soft: 0.5 }`.
 
 ```js
-/// file: motion.js
 import { spring } from 'svelte/motion';
 
 const coords = spring({ x: 50, y: 50 });
@@ -137,7 +132,6 @@ coords.update(
 [See a full example on the spring tutorial.](https://learn.svelte.dev/tutorial/springs)
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { spring } from 'svelte/motion';
 
@@ -154,7 +148,6 @@ coords.update(
 If the initial value is `undefined` or `null`, the first value change will take effect immediately, just as with `tweened` values (see above).
 
 ```ts
-/// file: motion.js
 // @filename: ambient.d.ts
 declare global {
 	var $size: number;

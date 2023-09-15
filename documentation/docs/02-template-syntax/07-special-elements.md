@@ -177,7 +177,6 @@ The `<svelte:component>` element renders a component dynamically, using the comp
 If `this` is falsy, no component is rendered.
 
 ```svelte
-<!--- file: App.svelte --->
 <svelte:component this={currentSelection.component} foo={bar} />
 ```
 
@@ -196,7 +195,6 @@ If `this` has a nullish value, the element and its children will not be rendered
 If `this` is the name of a [void element](https://developer.mozilla.org/en-US/docs/Glossary/Void_element) (e.g., `br`) and `<svelte:element>` has child elements, a runtime error will be thrown in development mode.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	let tag = 'div';
 
@@ -221,7 +219,6 @@ The `<svelte:window>` element allows you to add event listeners to the `window` 
 Unlike `<svelte:self>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/** @param {KeyboardEvent} event */
 	function handleKeydown(event) {
@@ -301,7 +298,6 @@ This element makes it possible to insert elements into `document.head`. During s
 As with `<svelte:window>`, `<svelte:document>` and `<svelte:body>`, this element may only appear at the top level of your component and must never be inside a block or element.
 
 ```svelte
-<!--- file: App.svelte --->
 <svelte:head>
 	<title>Hello world!</title>
 	<meta name="description" content="This is where the description goes for SEO" />

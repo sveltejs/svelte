@@ -33,7 +33,6 @@ You can use prettier with the [prettier-plugin-svelte](https://www.npmjs.com/pac
 In editors which use the Svelte Language Server you can document Components, functions and exports using specially formatted comments.
 
 ````svelte
-<!--- file: App.svelte --->
 <script>
 	/** What should we call the user? */
 	export let name = 'world';

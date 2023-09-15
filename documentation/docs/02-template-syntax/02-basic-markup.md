@@ -116,7 +116,6 @@ Text can also contain JavaScript expressions:
 
 <!-- prettier-ignore -->
 ```svelte
-<!--- file: App.svelte --->
 <h1>Hello {name}!</h1>
 <p>{a} + {b} = {a + b}.</p>
 

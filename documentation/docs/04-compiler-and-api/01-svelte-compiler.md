@@ -90,8 +90,7 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 > Preprocessor functions should return a `map` object whenever possible or else debugging becomes harder as stack traces can't link to the original code correctly.
 
-```js
-/// file: preprocess-example.js
+```ts
 // @filename: ambient.d.ts
 declare global {
 	var source: string;

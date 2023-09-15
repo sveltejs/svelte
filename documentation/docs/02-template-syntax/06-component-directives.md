@@ -5,13 +5,13 @@ title: Component directives
 ## on:_eventname_
 
 ```svelte
+<!--- copy: false --->
 on:eventname={handler}
 ```
 
 Components can emit events using [`createEventDispatcher`](/docs/svelte#createeventdispatcher) or by forwarding DOM events.
 
 ```svelte
-<!--- file: SomeComponent.svelte --->
 <script>
 	import { createEventDispatcher } from 'svelte';
 
@@ -28,20 +28,19 @@ Components can emit events using [`createEventDispatcher`](/docs/svelte#createev
 Listening for component events looks the same as listening for DOM events:
 
 ```svelte
-<!--- file: App.svelte --->
 <SomeComponent on:whatever={handler} />
 ```
 
 As with DOM events, if the `on:` directive is used without a value, the event will be forwarded, meaning that a consumer can listen for it.
 
 ```svelte
-<!--- file: App.svelte --->
 <SomeComponent on:whatever />
 ```
 
 ## --style-props
 
 ```svelte
+<!--- copy: false --->
 --style-props="anycssvalue"
 ```
 
@@ -50,14 +49,12 @@ You can also pass styles as props to components for the purposes of theming, usi
 Svelte's implementation is essentially syntactic sugar for adding a wrapper element. This example:
 
 ```svelte
-<!--- file: App.svelte --->
 <Slider bind:value min={0} --rail-color="black" --track-color="rgb(0, 0, 255)" />
 ```
 
 Desugars to this:
 
 ```svelte
-<!--- file: App.svelte --->
 <div style="display: contents; --rail-color: black; --track-color: rgb(0, 0, 255)">
 	<Slider bind:value min={0} max={100} />
 </div>
@@ -68,7 +65,6 @@ Desugars to this:
 For SVG namespace, the example above desugars into using `<g>` instead:
 
 ```svelte
-<!--- file: App.svelte --->
 <g style="--rail-color: black; --track-color: rgb(0, 0, 255)">
 	<Slider bind:value min={0} max={100} />
 </g>
@@ -79,7 +75,6 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 Svelte's CSS Variables support allows for easily themeable components:
 
 ```svelte
-<!--- file: Slider.svelte --->
 <style>
 	.potato-slider-rail {
 		background-color: var(--rail-color, var(--theme-color, 'purple'));
@@ -99,7 +94,6 @@ html {
 Or override it at the consumer level:
 
 ```svelte
-<!--- file: App.svelte --->
 <Slider --rail-color="goldenrod" />
 ```
 
@@ -112,7 +106,6 @@ bind:property={variable}
 You can bind to component props using the same syntax as for elements.
 
 ```svelte
-<!--- file: App.svelte --->
 <Keypad bind:value={pin} />
 ```
 
@@ -121,13 +114,13 @@ While Svelte props are reactive without binding, that reactivity only flows down
 ## bind:this
 
 ```svelte
+<!--- copy: false --->
 bind:this={component_instance}
 ```
 
 Components also support `bind:this`, allowing you to interact with component instances programmatically.
 
 ```svelte
-<!--- file: App.svelte --->
 <ShoppingCart bind:this={cart} />
 
 <button on:click={() => cart.empty()}> Empty shopping cart </button>
