@@ -120,7 +120,7 @@ Text can also contain JavaScript expressions:
 <div>{/^[A-Za-z ]+$/.test(value) ? x : y}</div>
 ```
 
-To include regular curly braces in the HTML, use their [HTML Entity](https://developer.mozilla.org/docs/Glossary/Entity) strings.
+To include regular curly braces in the HTML, use their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings.
 
 ```svelte
 <p>&#123; in curly braces &#123; &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;</p>
