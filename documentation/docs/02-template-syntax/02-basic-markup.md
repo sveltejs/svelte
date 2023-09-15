@@ -111,11 +111,6 @@ An element or component can have multiple spread attributes, interspersed with r
 
 Curly braces can be included by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
 
-```svelte
-<p>&#123; in curly braces &#123; &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;</p>
-<p>&#123; it also works only escaping the start curly brace }</p>
-```
-
 Text can also contain the result of JavaScript expressions.
 
 > If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
