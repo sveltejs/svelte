@@ -1,6 +1,4 @@
 <script>
-	import { assets } from '$app/paths';
-	import { page } from '$app/stores';
 	import teaser from './teaser.jpg';
 </script>
 
@@ -18,8 +16,11 @@
 		content="We've got something to show you. We think you're going to like it."
 	/>
 
-	<meta name="twitter:image" content="{$page.url.origin}{teaser}" />
-	<meta name="og:image" content="{$page.url.origin}{teaser}" />
+	<meta
+		name="twitter:image"
+		content="https://sveltejs.github.io/assets/artwork/svelte-5-teaser.jpg"
+	/>
+	<meta name="og:image" content="https://sveltejs.github.io/assets/artwork/svelte-5-teaser.jpg" />
 </svelte:head>
 
 <article class="post listify text">
