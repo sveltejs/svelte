@@ -18,8 +18,8 @@
 		content="We've got something to show you. We think you're going to like it."
 	/>
 
-	<meta name="twitter:image" content={teaser} />
-	<meta name="og:image" content={teaser} />
+	<meta name="twitter:image" content="{$page.url.origin}{teaser}" />
+	<meta name="og:image" content="{$page.url.origin}{teaser}" />
 </svelte:head>
 
 <article class="post listify text">
