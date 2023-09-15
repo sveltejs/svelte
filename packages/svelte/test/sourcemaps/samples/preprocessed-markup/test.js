@@ -1,6 +1,6 @@
 export function test({ assert, input, js }) {
-	const expectedBar = input.locate('baritone.baz');
-	const expectedBaz = input.locate('.baz');
+	const expected_bar = input.locate('baritone.baz');
+	const expected_baz = input.locate('.baz');
 
 	let start = js.locate('bar.baz');
 
@@ -12,8 +12,8 @@ export function test({ assert, input, js }) {
 	assert.deepEqual(actualbar, {
 		source: 'input.svelte',
 		name: 'baritone',
-		line: expectedBar.line + 1,
-		column: expectedBar.column
+		line: expected_bar.line + 1,
+		column: expected_bar.column
 	});
 
 	start = js.locate('.baz');
@@ -26,7 +26,7 @@ export function test({ assert, input, js }) {
 	assert.deepEqual(actualbaz, {
 		source: 'input.svelte',
 		name: null,
-		line: expectedBaz.line + 1,
-		column: expectedBaz.column
+		line: expected_baz.line + 1,
+		column: expected_baz.column
 	});
 }

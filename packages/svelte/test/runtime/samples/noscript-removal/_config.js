@@ -14,7 +14,7 @@ export default {
 
 		// it's okay not to remove the node during hydration
 		// will not be seen by user anyway
-		removeNoScript(target);
+		remove_no_script(target);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -26,7 +26,7 @@ export default {
 	}
 };
 
-function removeNoScript(target) {
+function remove_no_script(target) {
 	target.querySelectorAll('noscript').forEach((elem) => {
 		elem.parentNode.removeChild(elem);
 	});

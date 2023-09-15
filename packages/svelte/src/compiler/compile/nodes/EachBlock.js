@@ -84,7 +84,9 @@ export default class EachBlock extends AbstractBlock {
 		this.has_animation = false;
 		[this.const_tags, this.children] = get_const_tags(info.children, component, this, this);
 		if (this.has_animation) {
-			this.children = this.children.filter((child) => !isEmptyNode(child) && !isCommentNode(child));
+			this.children = this.children.filter(
+				(child) => !is_empty_node(child) && !is_comment_node(child)
+			);
 			if (this.children.length !== 1) {
 				const child = this.children.find(
 					(child) => !!(/** @type {import('./Element.js').default} */ (child).animation)
@@ -102,11 +104,11 @@ export default class EachBlock extends AbstractBlock {
 }
 
 /** @param {import('./interfaces.js').INode} node */
-function isEmptyNode(node) {
+function is_empty_node(node) {
 	return node.type === 'Text' && node.data.trim() === '';
 }
 
 /** @param {import('./interfaces.js').INode} node */
-function isCommentNode(node) {
+function is_comment_node(node) {
 	return node.type === 'Comment';
 }

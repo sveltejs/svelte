@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-let original_scrollTo;
+let original_scroll_to;
 export default {
 	before_test() {
 		vi.useFakeTimers();
@@ -17,7 +17,7 @@ export default {
 				writable: true
 			}
 		});
-		original_scrollTo = window.scrollTo;
+		original_scroll_to = window.scrollTo;
 		window.scrollTo = (x, y) => {
 			window.pageXOffset = x;
 			window.pageYOffset = y;
@@ -26,7 +26,7 @@ export default {
 
 	after_test() {
 		vi.useRealTimers();
-		window.scrollTo = original_scrollTo;
+		window.scrollTo = original_scroll_to;
 	},
 
 	async test({ assert, component, window }) {

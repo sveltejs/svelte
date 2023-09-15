@@ -20,7 +20,7 @@ describe('vars', () => {
 				.trimEnd()
 				.replace(/\r/g, '');
 
-			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
+			const expected_error = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			/**
 			 * @type {{ options: any, test: (assert: typeof import('vitest').assert, vars: any[]) => void }}}
@@ -31,19 +31,19 @@ describe('vars', () => {
 				const { vars } = compile(input, { ...options, generate });
 				test(assert, vars);
 			} catch (error) {
-				if (expectedError) {
-					assert.equal(error.message, expectedError.message);
-					assert.deepEqual(error.start, expectedError.start);
-					assert.deepEqual(error.end, expectedError.end);
-					assert.equal(error.pos, expectedError.pos);
+				if (expected_error) {
+					assert.equal(error.message, expected_error.message);
+					assert.deepEqual(error.start, expected_error.start);
+					assert.deepEqual(error.end, expected_error.end);
+					assert.equal(error.pos, expected_error.pos);
 					return;
 				} else {
 					throw error;
 				}
 			}
 
-			if (expectedError) {
-				assert.fail(`Expected an error: ${JSON.stringify(expectedError)}`);
+			if (expected_error) {
+				assert.fail(`Expected an error: ${JSON.stringify(expected_error)}`);
 			}
 		});
 	});

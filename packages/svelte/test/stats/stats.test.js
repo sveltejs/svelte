@@ -17,7 +17,7 @@ describe('stats', () => {
 			const filename = `${__dirname}/samples/${dir}/input.svelte`;
 			const input = fs.readFileSync(filename, 'utf-8').replace(/\s+$/, '');
 
-			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
+			const expected_error = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			let result;
 			let error;
@@ -29,19 +29,19 @@ describe('stats', () => {
 				error = e;
 			}
 
-			if (error || expectedError) {
-				if (error && !expectedError) {
+			if (error || expected_error) {
+				if (error && !expected_error) {
 					throw error;
 				}
 
-				if (expectedError && !error) {
-					throw new Error(`Expected an error: ${expectedError.message}`);
+				if (expected_error && !error) {
+					throw new Error(`Expected an error: ${expected_error.message}`);
 				}
 
-				assert.equal(error.message, expectedError.message);
-				assert.deepEqual(error.start, expectedError.start);
-				assert.deepEqual(error.end, expectedError.end);
-				assert.equal(error.pos, expectedError.pos);
+				assert.equal(error.message, expected_error.message);
+				assert.deepEqual(error.start, expected_error.start);
+				assert.deepEqual(error.end, expected_error.end);
+				assert.equal(error.pos, expected_error.pos);
 			}
 		});
 	});

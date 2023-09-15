@@ -11,8 +11,8 @@ export default {
 		// and we determine if svelte does not set the `input.value` again by
 		// spying on the setter of `input.value`
 
-		const spy1 = spyOnValueSetter(input1, input1.value);
-		const spy2 = spyOnValueSetter(input2, input2.value);
+		const spy1 = spy_on_value_setter(input1, input1.value);
+		const spy2 = spy_on_value_setter(input2, input2.value);
 
 		const event = new window.Event('input');
 
@@ -38,25 +38,25 @@ export default {
 	}
 };
 
-function spyOnValueSetter(input, initialValue) {
-	let value = initialValue;
-	let isSet = false;
+function spy_on_value_setter(input, initial_value) {
+	let value = initial_value;
+	let is_set = false;
 	Object.defineProperty(input, 'value', {
 		get() {
 			return value;
 		},
 		set(_value) {
 			value = _value;
-			isSet = true;
+			is_set = true;
 		}
 	});
 
 	return {
 		isSetCalled() {
-			return isSet;
+			return is_set;
 		},
 		reset() {
-			isSet = false;
+			is_set = false;
 		}
 	};
 }

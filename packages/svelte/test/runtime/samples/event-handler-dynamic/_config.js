@@ -9,7 +9,7 @@ export default {
 	`,
 
 	async test({ assert, target, window }) {
-		const [updateButton1, updateButton2, button] = target.querySelectorAll('button');
+		const [update_button1, update_button2, button] = target.querySelectorAll('button');
 
 		const event = new window.MouseEvent('click');
 		let err = '';
@@ -32,7 +32,7 @@ export default {
 		`
 		);
 
-		await updateButton1.dispatchEvent(event);
+		await update_button1.dispatchEvent(event);
 		await button.dispatchEvent(event);
 		assert.htmlEqual(
 			target.innerHTML,
@@ -46,7 +46,7 @@ export default {
 		`
 		);
 
-		await updateButton2.dispatchEvent(event);
+		await update_button2.dispatchEvent(event);
 		await button.dispatchEvent(event);
 		assert.htmlEqual(
 			target.innerHTML,

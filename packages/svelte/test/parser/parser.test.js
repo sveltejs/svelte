@@ -26,8 +26,8 @@ describe('parse', () => {
 				.trimEnd()
 				.replace(/\r/g, '');
 
-			const expectedOutput = try_load_json(`${__dirname}/samples/${dir}/output.json`);
-			const expectedError = try_load_json(`${__dirname}/samples/${dir}/error.json`);
+			const expected_output = try_load_json(`${__dirname}/samples/${dir}/output.json`);
+			const expected_error = try_load_json(`${__dirname}/samples/${dir}/error.json`);
 
 			try {
 				const { ast } = svelte.compile(
@@ -42,16 +42,16 @@ describe('parse', () => {
 					JSON.stringify(ast, null, '\t')
 				);
 
-				assert.deepEqual(ast.html, expectedOutput.html);
-				assert.deepEqual(ast.css, expectedOutput.css);
-				assert.deepEqual(ast.instance, expectedOutput.instance);
-				assert.deepEqual(ast.module, expectedOutput.module);
+				assert.deepEqual(ast.html, expected_output.html);
+				assert.deepEqual(ast.css, expected_output.css);
+				assert.deepEqual(ast.instance, expected_output.instance);
+				assert.deepEqual(ast.module, expected_output.module);
 			} catch (err) {
 				if (err.name !== 'ParseError') throw err;
-				if (!expectedError) throw err;
+				if (!expected_error) throw err;
 				const { code, message, pos, start } = err;
 
-				assert.deepEqual({ code, message, pos, start }, expectedError);
+				assert.deepEqual({ code, message, pos, start }, expected_error);
 			}
 		});
 	});

@@ -1,12 +1,12 @@
 let fulfil;
 
-const thePromise = new Promise((f) => {
+const the_promise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
 	get props() {
-		return { show: true, thePromise };
+		return { show: true, thePromise: the_promise };
 	},
 
 	html: `
@@ -16,7 +16,7 @@ export default {
 	test({ assert, component, target }) {
 		fulfil(42);
 
-		return thePromise.then(() => {
+		return the_promise.then(() => {
 			assert.htmlEqual(
 				target.innerHTML,
 				`
@@ -35,7 +35,7 @@ export default {
 
 			component.show = true;
 
-			return thePromise.then(() => {
+			return the_promise.then(() => {
 				assert.htmlEqual(
 					target.innerHTML,
 					`
