@@ -57,7 +57,7 @@
 	}
 
 	.copy-inner {
-		max-width: var(--sk-page-main-width);
+		max-width: 70rem;
 		margin: 0 auto;
 	}
 
@@ -70,6 +70,7 @@
 		margin: 0 0 0em 0;
 		line-height: 1.2;
 		max-width: 9em;
+		font-size: 4rem;
 	}
 
 	p {
@@ -84,6 +85,12 @@
 	@media (min-width: 600px) {
 		h1 {
 			max-width: none;
+		}
+	}
+
+	@media (min-width: 800px) {
+		h1 {
+			font-size: 5.4rem;
 		}
 		p {
 			font-size: 2rem;
