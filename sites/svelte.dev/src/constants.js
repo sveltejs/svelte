@@ -4,6 +4,7 @@ export const CONTENT_BASE = '../../documentation';
 export const CONTENT_BASE_PATHS = {
 	BLOG: `${CONTENT_BASE}/blog`,
 	TUTORIAL: `${CONTENT_BASE}/tutorial`,
-	DOCS: `${CONTENT_BASE}/docs`,
+	DOCS_LATEST: `${CONTENT_BASE}/docs/4`,
+	DOCS_5: `${CONTENT_BASE}/docs/5`,
 	EXAMPLES: `${CONTENT_BASE}/examples`
 };

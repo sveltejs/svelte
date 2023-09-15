@@ -29,7 +29,7 @@ export async function get_parsed_docs(docs_data, slug) {
 }
 
 /** @return {Promise<import('./types').DocsData>} */
-export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
+export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS_LATEST) {
 	const { readdir, readFile } = await import('node:fs/promises');
 
 	/** @type {import('./types').DocsData} */
