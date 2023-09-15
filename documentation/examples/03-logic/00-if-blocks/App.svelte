@@ -1,15 +1,7 @@
 <script>
-	let user = { loggedIn: false };
-
-	function toggle() {
-		user.loggedIn = !user.loggedIn;
-	}
+  let user = { loggedIn: false };
 </script>
 
-{#if user.loggedIn}
-	<button on:click={toggle}> Log out </button>
-{/if}
-
-{#if !user.loggedIn}
-	<button on:click={toggle}> Log in </button>
-{/if}
+<button on:click={() => user.loggedIn = !user.loggedIn}>
+  {user.loggedIn ? "Log out" : "Log in"}
+</button>
