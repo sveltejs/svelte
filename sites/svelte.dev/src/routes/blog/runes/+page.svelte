@@ -41,6 +41,7 @@
 		top: 0;
 		width: 100%;
 		height: 100%;
+		background-color: black;
 		background-image: url(https://sveltejs.github.io/assets/artwork/svelte-5-teaser-background.jpg);
 		background-size: cover;
 		background-position: center;
