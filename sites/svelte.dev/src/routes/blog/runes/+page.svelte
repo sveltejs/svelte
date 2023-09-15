@@ -19,23 +19,73 @@
 	<meta name="og:image" content="https://sveltejs.github.io/assets/artwork/svelte-5-teaser.jpg" />
 </svelte:head>
 
-<article class="post listify text">
-	<h1>Something magical is coming</h1>
-	<p>We've got something to show you. We think you're going to like it.</p>
-	<p>
-		Join us here on <strong>Wednesday September 20</strong> for a glimpse at the future of Svelte.
-	</p>
-</article>
+<div class="teaser">
+	<div class="copy">
+		<div class="copy-inner">
+			<h1>Something magical is coming</h1>
+			<p>We've got something to show you. We think you're going to like it.</p>
+			<p>
+				Join us here on <strong>Wednesday September 20</strong> for a glimpse at the future of Svelte.
+			</p>
+		</div>
+	</div>
+</div>
 
 <style>
-	.post {
+	.teaser {
+		display: flex;
+		flex-direction: column;
+		justify-content: end;
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background-image: url(https://sveltejs.github.io/assets/artwork/svelte-5-teaser-background.jpg);
+		background-size: cover;
+		background-position: center;
+	}
+
+	.copy {
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
+		width: 100%;
+		margin: 0 auto;
+		color: white;
+		background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+		padding-bottom: 8rem;
+	}
+
+	.copy-inner {
 		max-width: var(--sk-page-main-width);
 		margin: 0 auto;
 	}
 
+	h1,
+	p {
+		color: white;
+	}
+
 	h1 {
-		font-size: 4rem;
-		font-weight: 400;
+		margin: 0 0 0em 0;
+		line-height: 1.2;
+		max-width: 9em;
+	}
+
+	p {
+		margin: 0.5em 0;
+		text-wrap: balance;
+	}
+
+	strong {
+		white-space: nowrap;
+	}
+
+	@media (min-width: 600px) {
+		h1 {
+			max-width: none;
+		}
+		p {
+			font-size: 2rem;
+		}
 	}
 </style>
