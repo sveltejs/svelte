@@ -109,7 +109,7 @@ An element or component can have multiple spread attributes, interspersed with r
 {expression}
 ```
 
-Curly braces can be included by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings.
+Curly braces can be included by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
 
 ```svelte
 <p>&#123; in curly braces &#123; &lbrace; in curly braces &rbrace; or &lcub; in curly braces &rcub;</p>
