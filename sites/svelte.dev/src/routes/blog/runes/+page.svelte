@@ -38,23 +38,4 @@
 		font-size: 4rem;
 		font-weight: 400;
 	}
-
-	@media (min-width: 910px) {
-		.post :global(.max) {
-			width: calc(100vw - 2 * var(--sk-page-padding-side));
-			margin: 0 calc(var(--sk-page-main-width) / 2 - 50vw);
-			text-align: center;
-		}
-
-		.post :global(.max) > :global(*) {
-			width: 100%;
-			max-width: 1200px;
-		}
-
-		.post :global(iframe) {
-			width: 100%;
-			max-width: 1100px;
-			margin: 2em auto;
-		}
-	}
 </style>
