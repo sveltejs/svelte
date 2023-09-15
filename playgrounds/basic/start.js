@@ -3,9 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { watch } from 'rollup';
 import serve from 'rollup-plugin-serve';
-import * as svelte from '../svelte/src/compiler/index.js';
+import * as svelte from '../../packages/svelte/src/compiler/index.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const runtime_path = path.resolve(__dirname, '../../packages/svelte/src/runtime');
 
 /** @returns {import('rollup').Plugin}*/
 function create_plugin(ssr = false) {
@@ -13,12 +14,9 @@ function create_plugin(ssr = false) {
 		name: 'custom-svelte-ssr-' + ssr,
 		resolveId(id) {
 			if (id === 'svelte') {
-				return path.resolve(
-					__dirname,
-					ssr ? '../svelte/src/runtime/ssr.js' : '../svelte/src/runtime/index.js'
-				);
+				return path.resolve(runtime_path, ssr ? 'ssr.js' : 'index.js');
 			} else if (id.startsWith('svelte/')) {
-				return path.resolve(__dirname, `../svelte/src/runtime/${id.slice(7)}/index.js`);
+				return path.resolve(runtime_path, `${id.slice(7)}/index.js`);
 			}
 		},
 		transform(code, id) {
@@ -69,11 +67,12 @@ const watcher = watch([
 				async generateBundle(_, bundle) {
 					const result = bundle['entry-server.js'];
 					const mod = (0, eval)(result.code);
-					const { html } = mod.render();
+					const { html, head } = mod.render();
 
 					writeFileSync(
 						'dist/index.html',
 						readFileSync('src/template.html', 'utf-8')
+							.replace('<!--app-head-->', head)
 							.replace('<!--app-html-->', html)
 							.replace('<!--app-title-->', svelte.VERSION)
 					);

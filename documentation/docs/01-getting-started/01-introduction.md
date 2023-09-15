@@ -21,7 +21,7 @@ SvelteKit will handle calling [the Svelte compiler](https://www.npmjs.com/packag
 
 ### Alternatives to SvelteKit
 
-If you don't want to use SvelteKit for some reason, you can also use Svelte with Vite (but without SvelteKit) by running `npm init vite` and selecting the `svelte` option. With this, `npm run build` will generate HTML, JS and CSS files inside the `dist` directory. In most cases, you will probably need to [choose a routing library](/faq#is-there-a-router) as well.
+If you don't want to use SvelteKit for some reason, you can also use Svelte with Vite (but without SvelteKit) by running `npm create vite@latest` and selecting the `svelte` option. With this, `npm run build` will generate HTML, JS and CSS files inside the `dist` directory. In most cases, you will probably need to [choose a routing library](/faq#is-there-a-router) as well.
 
 Alternatively, there are [plugins for all the major web bundlers](https://sveltesociety.dev/tools#bundling) to handle Svelte compilation — which will output `.js` and `.css` that you can insert into your HTML — but most others won't handle SSR.
 
