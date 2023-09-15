@@ -1,7 +1,3 @@
-<script>
-	import teaser from './teaser.jpg';
-</script>
-
 <svelte:head>
 	<title>Something magical is coming</title>
 
@@ -30,9 +26,6 @@
 		Join us here on <strong>Wednesday September 20</strong> for a glimpse at the future of Svelte.
 	</p>
 </article>
-
-<!-- the crawler doesn't understand twitter:image etc, so we have to add this hack. TODO fix in sveltekit -->
-<img hidden src={teaser} alt="Social card for teaser page" />
 
 <style>
 	.post {
