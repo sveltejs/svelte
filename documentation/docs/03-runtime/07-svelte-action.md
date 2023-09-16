@@ -5,7 +5,6 @@ title: svelte/action
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
@@ -27,7 +26,6 @@ An action can have a parameter. If the returned value has an `update` method, it
 > Don't worry that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/** @type {string} */
 	export let bar;
@@ -56,7 +54,6 @@ An action can have a parameter. If the returned value has an `update` method, it
 Sometimes actions emit custom events and apply custom attributes to the element they are applied to. To support this, actions typed with `Action` or `ActionReturn` type can have a last parameter, `Attributes`:
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/**
 	 * @type {import('svelte/action').Action<HTMLDivElement, { prop: any }, { 'on:emit': (e: CustomEvent<string>) => void }>}
