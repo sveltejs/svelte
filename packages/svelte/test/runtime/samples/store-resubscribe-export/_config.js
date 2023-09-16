@@ -1,11 +1,11 @@
-let unsubscribeCalled = false;
+let unsubscribe_called = false;
 
-const fakeStore = (val) => ({
+const fake_store = (val) => ({
 	subscribe: (cb) => {
 		cb(val);
 		return {
 			unsubscribe: () => {
-				unsubscribeCalled = true;
+				unsubscribe_called = true;
 			}
 		};
 	}
@@ -13,17 +13,17 @@ const fakeStore = (val) => ({
 
 export default {
 	get props() {
-		return { foo: fakeStore(1) };
+		return { foo: fake_store(1) };
 	},
 	html: `
 		<h1>1</h1>
 	`,
 
 	async test({ assert, component, target }) {
-		component.foo = fakeStore(5);
+		component.foo = fake_store(5);
 
 		assert.htmlEqual(target.innerHTML, '<h1>5</h1>');
 
-		assert.ok(unsubscribeCalled);
+		assert.ok(unsubscribe_called);
 	}
 };

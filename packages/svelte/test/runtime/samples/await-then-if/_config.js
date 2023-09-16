@@ -1,12 +1,12 @@
 let fulfil;
 
-const thePromise = new Promise((f) => {
+const the_promise = new Promise((f) => {
 	fulfil = f;
 });
 
 export default {
 	get props() {
-		return { thePromise };
+		return { thePromise: the_promise };
 	},
 
 	html: `
@@ -16,7 +16,7 @@ export default {
 	async test({ assert, target }) {
 		fulfil([]);
 
-		await thePromise;
+		await the_promise;
 
 		assert.htmlEqual(
 			target.innerHTML,

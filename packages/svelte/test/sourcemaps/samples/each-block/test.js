@@ -1,8 +1,8 @@
 export function test({ assert, input, js }) {
-	const startIndex = js.code.indexOf('create_main_fragment');
+	const start_index = js.code.indexOf('create_main_fragment');
 
 	const expected = input.locate('each');
-	const start = js.locate('length', startIndex);
+	const start = js.locate('length', start_index);
 
 	const actual = js.mapConsumer.originalPositionFor({
 		line: start.line + 1,

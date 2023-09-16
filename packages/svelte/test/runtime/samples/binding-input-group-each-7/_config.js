@@ -23,7 +23,7 @@ export default {
 	async test({ assert, target, window }) {
 		const inputs = target.querySelectorAll('input');
 		const checked = new Set();
-		const checkInbox = async (i) => {
+		const check_inbox = async (i) => {
 			checked.add(i);
 			inputs[i].checked = true;
 			await inputs[i].dispatchEvent(event);
@@ -35,17 +35,17 @@ export default {
 
 		const event = new window.Event('change');
 
-		await checkInbox(2);
+		await check_inbox(2);
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
-		await checkInbox(12);
+		await check_inbox(12);
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}
 
-		await checkInbox(8);
+		await check_inbox(8);
 		for (let i = 0; i < 18; i++) {
 			assert.equal(inputs[i].checked, checked.has(i));
 		}

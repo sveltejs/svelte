@@ -1,8 +1,8 @@
-const realPromise = Promise.resolve(42);
+const real_promise = Promise.resolve(42);
 
 const promise = () => {};
-promise.then = realPromise.then.bind(realPromise);
-promise.catch = realPromise.catch.bind(realPromise);
+promise.then = real_promise.then.bind(real_promise);
+promise.catch = real_promise.catch.bind(real_promise);
 
 export default {
 	get props() {

@@ -9,10 +9,10 @@ export default {
 	<button>Test</button>
 	`,
 	async test({ assert, target, window }) {
-		let [incrementBtn, ...buttons] = target.querySelectorAll('button');
+		let [increment_btn, ...buttons] = target.querySelectorAll('button');
 
-		const clickEvent = new window.MouseEvent('click');
-		await buttons[0].dispatchEvent(clickEvent);
+		const click_event = new window.MouseEvent('click');
+		await buttons[0].dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -27,7 +27,7 @@ export default {
 		`
 		);
 
-		await buttons[0].dispatchEvent(clickEvent);
+		await buttons[0].dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -42,8 +42,8 @@ export default {
 		`
 		);
 
-		await buttons[2].dispatchEvent(clickEvent);
-		await buttons[2].dispatchEvent(clickEvent);
+		await buttons[2].dispatchEvent(click_event);
+		await buttons[2].dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -58,7 +58,7 @@ export default {
 		`
 		);
 
-		await incrementBtn.dispatchEvent(clickEvent);
+		await increment_btn.dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -75,9 +75,9 @@ export default {
 		`
 		);
 
-		[incrementBtn, ...buttons] = target.querySelectorAll('button');
+		[increment_btn, ...buttons] = target.querySelectorAll('button');
 
-		await buttons[3].dispatchEvent(clickEvent);
+		await buttons[3].dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -25,15 +25,15 @@ describe('sourcemaps', async () => {
 		it_fn(dir, async () => {
 			const { test } = await import(`./samples/${dir}/test.js`);
 
-			const inputFile = path.resolve(`${__dirname}/samples/${dir}/input.svelte`);
-			const outputName = '_actual';
-			const outputBase = path.resolve(`${__dirname}/samples/${dir}/${outputName}`);
+			const input_file = path.resolve(`${__dirname}/samples/${dir}/input.svelte`);
+			const output_name = '_actual';
+			const output_base = path.resolve(`${__dirname}/samples/${dir}/${output_name}`);
 
-			const inputCode = fs.readFileSync(inputFile, 'utf-8');
+			const input_code = fs.readFileSync(input_file, 'utf-8');
 			const input = {
-				code: inputCode,
-				locate: getLocator(inputCode),
-				locate_1: getLocator(inputCode, { offsetLine: 1 })
+				code: input_code,
+				locate: getLocator(input_code),
+				locate_1: getLocator(input_code, { offsetLine: 1 })
 			};
 			const preprocessed = await svelte.preprocess(
 				input.code,
@@ -46,8 +46,8 @@ describe('sourcemaps', async () => {
 				filename: 'input.svelte',
 				// filenames for sourcemaps
 				sourcemap: preprocessed.map,
-				outputFilename: `${outputName}.js`,
-				cssOutputFilename: `${outputName}.css`,
+				outputFilename: `${output_name}.js`,
+				cssOutputFilename: `${output_name}.css`,
 				...(config.compile_options || {})
 			});
 
@@ -55,22 +55,25 @@ describe('sourcemaps', async () => {
 				match.replace(/\d/g, 'x')
 			);
 
-			fs.writeFileSync(`${outputBase}.svelte`, preprocessed.code);
+			fs.writeFileSync(`${output_base}.svelte`, preprocessed.code);
 			if (preprocessed.map) {
 				fs.writeFileSync(
-					`${outputBase}.svelte.map`,
+					`${output_base}.svelte.map`,
 					// TODO encode mappings for output - svelte.preprocess returns decoded mappings
 					JSON.stringify(preprocessed.map, null, 2)
 				);
 			}
-			fs.writeFileSync(`${outputBase}.js`, `${js.code}\n//# sourceMappingURL=${outputName}.js.map`);
-			fs.writeFileSync(`${outputBase}.js.map`, JSON.stringify(js.map, null, 2));
+			fs.writeFileSync(
+				`${output_base}.js`,
+				`${js.code}\n//# sourceMappingURL=${output_name}.js.map`
+			);
+			fs.writeFileSync(`${output_base}.js.map`, JSON.stringify(js.map, null, 2));
 			if (css.code) {
 				fs.writeFileSync(
-					`${outputBase}.css`,
-					`${css.code}\n/*# sourceMappingURL=${outputName}.css.map */`
+					`${output_base}.css`,
+					`${css.code}\n/*# sourceMappingURL=${output_name}.css.map */`
 				);
-				fs.writeFileSync(`${outputBase}.css.map`, JSON.stringify(css.map, null, '  '));
+				fs.writeFileSync(`${output_base}.css.map`, JSON.stringify(css.map, null, '  '));
 			}
 
 			if (js.map) {

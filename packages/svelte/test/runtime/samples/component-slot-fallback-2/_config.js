@@ -3,7 +3,7 @@ export default {
 	ssrHtml: '<input value="Blub"> <input value="Blub"> <input value="Blub">',
 
 	async test({ assert, target, component, window }) {
-		const [input1, input2, inputFallback] = target.querySelectorAll('input');
+		const [input1, input2, input_fallback] = target.querySelectorAll('input');
 
 		assert.equal(component.getSubscriberCount(), 3);
 
@@ -13,7 +13,7 @@ export default {
 		await input1.dispatchEvent(new window.Event('input'));
 		assert.equal(input1.value, 'ab');
 		assert.equal(input2.value, 'ab');
-		assert.equal(inputFallback.value, 'ab');
+		assert.equal(input_fallback.value, 'ab');
 
 		component.props = 'hello';
 

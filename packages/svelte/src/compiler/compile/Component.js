@@ -1555,8 +1555,8 @@ export default class Component {
 			}, [])
 		);
 		if (cycle && cycle.length) {
-			const declarationList = lookup.get(cycle[0]);
-			const declaration = declarationList[0];
+			const declaration_list = lookup.get(cycle[0]);
+			const declaration = declaration_list[0];
 			return this.error(declaration.node, compiler_errors.cyclical_reactive_declaration(cycle));
 		}
 

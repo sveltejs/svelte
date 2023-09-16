@@ -30,7 +30,7 @@ export default async function (target) {
 
 		const component = new SvelteComponent(options);
 
-		const waitUntil = async (fn, ms = 500) => {
+		const wait_until = async (fn, ms = 500) => {
 			const start = new Date().getTime();
 			do {
 				if (fn()) return;
@@ -48,7 +48,7 @@ export default async function (target) {
 				component,
 				target,
 				window,
-				waitUntil
+				waitUntil: wait_until
 			});
 
 			component.$destroy();

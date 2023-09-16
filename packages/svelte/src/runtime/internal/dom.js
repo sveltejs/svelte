@@ -1,5 +1,7 @@
-import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
 import { contenteditable_truthy_values, has_prop } from './utils.js';
+
+import { ResizeObserverSingleton } from './ResizeObserverSingleton.js';
+
 // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
 // at the end of hydration without touching the remaining nodes.
 let is_hydrating = false;
@@ -50,14 +52,14 @@ function init_hydrate(target) {
 	let children = /** @type {ArrayLike<NodeEx2>} */ (target.childNodes);
 	// If target is <head>, there may be children without claim_order
 	if (target.nodeName === 'HEAD') {
-		const myChildren = [];
+		const my_children = [];
 		for (let i = 0; i < children.length; i++) {
 			const node = children[i];
 			if (node.claim_order !== undefined) {
-				myChildren.push(node);
+				my_children.push(node);
 			}
 		}
-		children = myChildren;
+		children = my_children;
 	}
 	/*
 	 * Reorder claimed children optimally.
@@ -87,15 +89,15 @@ function init_hydrate(target) {
 		// Find the largest subsequence length such that it ends in a value less than our current value
 		// upper_bound returns first greater value, so we subtract one
 		// with fast path for when we are on the current longest subsequence
-		const seqLen =
+		const seq_len =
 			(longest > 0 && children[m[longest]].claim_order <= current
 				? longest + 1
 				: upper_bound(1, longest, (idx) => children[m[idx]].claim_order, current)) - 1;
-		p[i] = m[seqLen] + 1;
-		const newLen = seqLen + 1;
+		p[i] = m[seq_len] + 1;
+		const new_len = seq_len + 1;
 		// We can guarantee that current is the smallest value. Otherwise, we would have generated a longer sequence.
-		m[newLen] = i;
-		longest = Math.max(newLen, longest);
+		m[new_len] = i;
+		longest = Math.max(new_len, longest);
 	}
 	// The longest increasing subsequence of nodes (initially reversed)
 
@@ -108,28 +110,28 @@ function init_hydrate(target) {
 	/**
 	 * @type {NodeEx2[]}
 	 */
-	const toMove = [];
+	const to_move = [];
 	let last = children.length - 1;
 	for (let cur = m[longest] + 1; cur != 0; cur = p[cur - 1]) {
 		lis.push(children[cur - 1]);
 		for (; last >= cur; last--) {
-			toMove.push(children[last]);
+			to_move.push(children[last]);
 		}
 		last--;
 	}
 	for (; last >= 0; last--) {
-		toMove.push(children[last]);
+		to_move.push(children[last]);
 	}
 	lis.reverse();
 	// We sort the nodes being moved to guarantee that their insertion order matches the claim order
-	toMove.sort((a, b) => a.claim_order - b.claim_order);
+	to_move.sort((a, b) => a.claim_order - b.claim_order);
 	// Finally, we move the nodes
-	for (let i = 0, j = 0; i < toMove.length; i++) {
-		while (j < lis.length && toMove[i].claim_order >= lis[j].claim_order) {
+	for (let i = 0, j = 0; i < to_move.length; i++) {
+		while (j < lis.length && to_move[i].claim_order >= lis[j].claim_order) {
 			j++;
 		}
 		const anchor = j < lis.length ? lis[j] : null;
-		target.insertBefore(toMove[i], anchor);
+		target.insertBefore(to_move[i], anchor);
 	}
 }
 
@@ -624,26 +626,26 @@ function init_claim_info(nodes) {
  * @template {ChildNodeEx} R
  * @param {ChildNodeArray} nodes
  * @param {(node: ChildNodeEx) => node is R} predicate
- * @param {(node: ChildNodeEx) => ChildNodeEx | undefined} processNode
- * @param {() => R} createNode
- * @param {boolean} dontUpdateLastIndex
+ * @param {(node: ChildNodeEx) => ChildNodeEx | undefined} process_node
+ * @param {() => R} create_node
+ * @param {boolean} dont_update_last_index
  * @returns {R}
  */
-function claim_node(nodes, predicate, processNode, createNode, dontUpdateLastIndex = false) {
+function claim_node(nodes, predicate, process_node, create_node, dont_update_last_index = false) {
 	// Try to find nodes in an order such that we lengthen the longest increasing subsequence
 	init_claim_info(nodes);
-	const resultNode = (() => {
+	const result_node = (() => {
 		// We first try to find an element after the previous one
 		for (let i = nodes.claim_info.last_index; i < nodes.length; i++) {
 			const node = nodes[i];
 			if (predicate(node)) {
-				const replacement = processNode(node);
+				const replacement = process_node(node);
 				if (replacement === undefined) {
 					nodes.splice(i, 1);
 				} else {
 					nodes[i] = replacement;
 				}
-				if (!dontUpdateLastIndex) {
+				if (!dont_update_last_index) {
 					nodes.claim_info.last_index = i;
 				}
 				return node;
@@ -654,13 +656,13 @@ function claim_node(nodes, predicate, processNode, createNode, dontUpdateLastInd
 		for (let i = nodes.claim_info.last_index - 1; i >= 0; i--) {
 			const node = nodes[i];
 			if (predicate(node)) {
-				const replacement = processNode(node);
+				const replacement = process_node(node);
 				if (replacement === undefined) {
 					nodes.splice(i, 1);
 				} else {
 					nodes[i] = replacement;
 				}
-				if (!dontUpdateLastIndex) {
+				if (!dont_update_last_index) {
 					nodes.claim_info.last_index = i;
 				} else if (replacement === undefined) {
 					// Since we spliced before the last_index, we decrease it
@@ -670,11 +672,11 @@ function claim_node(nodes, predicate, processNode, createNode, dontUpdateLastInd
 			}
 		}
 		// If we can't find any matching node, we create a new one
-		return createNode();
+		return create_node();
 	})();
-	resultNode.claim_order = nodes.claim_info.total_claimed;
+	result_node.claim_order = nodes.claim_info.total_claimed;
 	nodes.claim_info.total_claimed += 1;
-	return resultNode;
+	return result_node;
 }
 
 /**
@@ -736,13 +738,13 @@ export function claim_text(nodes, data) {
 		(node) => node.nodeType === 3,
 		/** @param {Text} node */
 		(node) => {
-			const dataStr = '' + data;
-			if (node.data.startsWith(dataStr)) {
-				if (node.data.length !== dataStr.length) {
-					return node.splitText(dataStr.length);
+			const data_str = '' + data;
+			if (node.data.startsWith(data_str)) {
+				if (node.data.length !== data_str.length) {
+					return node.splitText(data_str.length);
 				}
 			} else {
-				node.data = dataStr;
+				node.data = data_str;
 			}
 		},
 		() => text(data),

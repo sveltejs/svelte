@@ -13,9 +13,9 @@ export default {
 	},
 	async test({ assert, target, window }) {
 		const btn = target.querySelector('button');
-		const clickEvent = new window.MouseEvent('click');
+		const click_event = new window.MouseEvent('click');
 
-		await btn.dispatchEvent(clickEvent);
+		await btn.dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -28,7 +28,7 @@ export default {
 		`
 		);
 
-		await btn.dispatchEvent(clickEvent);
+		await btn.dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,

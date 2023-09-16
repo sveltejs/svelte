@@ -6,8 +6,8 @@ Please run `node scripts/globals-extractor.js` at the project root.
 see: https://github.com/microsoft/TypeScript/tree/main/lib
  ---------------------------------------------------------------------- */
 
-import http from 'https';
-import fs from 'fs';
+import http from 'node:https';
+import fs from 'node:fs';
 
 const GLOBAL_TS_PATH = './src/compiler/utils/globals.js';
 
