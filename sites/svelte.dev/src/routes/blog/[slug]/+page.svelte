@@ -1,6 +1,6 @@
 <script>
 	import { page } from '$app/stores';
-	import { setupDocsHovers } from '@sveltejs/site-kit/docs';
+	import { DocsOnThisPage, setupDocsHovers } from '@sveltejs/site-kit/docs';
 
 	export let data;
 
@@ -28,6 +28,18 @@
 		<time datetime={data.post.date}>{data.post.date_formatted}</time>
 	</p>
 
+	<DocsOnThisPage
+		details={{
+			content: '',
+			file: '',
+			path: `/blog/${data.post.slug}`,
+			sections: data.post.sections,
+			slug: data.post.slug,
+			title: data.post.title
+		}}
+		orientation="inline"
+	/>
+
 	{@html data.post.content}
 </article>
 
@@ -53,7 +65,7 @@
 	}
 
 	.byline {
-		margin: 0 0 6rem 0;
+		margin: 0 0 1rem 0;
 		padding: 1.6rem 0 0 0;
 		border-top: var(--sk-thick-border-width) solid #6767785b;
 		font-size: var(--sk-text-xs);

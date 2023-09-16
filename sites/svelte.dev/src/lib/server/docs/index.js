@@ -107,11 +107,12 @@ const titled = async (str) =>
 			.replace(/&quot;/g, '"')
 			.replace(/&lt;/g, '<')
 			.replace(/&gt;/g, '>')
+			.replace(/&amp;/, '&')
 			.replace(/<(\/)?(em|b|strong|code)>/g, '')
 	);
 
 /** @param {string} markdown */
-async function get_sections(markdown) {
+export async function get_sections(markdown) {
 	const lines = markdown.split('\n');
 	const root = /** @type {import('./types').Section} */ ({
 		title: 'Root',
