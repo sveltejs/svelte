@@ -20,29 +20,31 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<article class="post listify text" use:copy_code_descendants>
-	<h1>{data.post.title}</h1>
-	<p class="standfirst">{data.post.description}</p>
+<div class="content">
+	<article class="post listify text" use:copy_code_descendants>
+		<h1>{data.post.title}</h1>
+		<p class="standfirst">{data.post.description}</p>
 
-	<p class="byline">
-		<a href={data.post.author.url}>{data.post.author.name}</a>
-		<time datetime={data.post.date}>{data.post.date_formatted}</time>
-	</p>
+		<p class="byline">
+			<a href={data.post.author.url}>{data.post.author.name}</a>
+			<time datetime={data.post.date}>{data.post.date_formatted}</time>
+		</p>
 
-	<DocsOnThisPage
-		details={{
-			content: '',
-			file: '',
-			path: `/blog/${data.post.slug}`,
-			sections: data.post.sections,
-			slug: data.post.slug,
-			title: data.post.title
-		}}
-		orientation="inline"
-	/>
+		<DocsOnThisPage
+			details={{
+				content: '',
+				file: '',
+				path: `/blog/${data.post.slug}`,
+				sections: data.post.sections,
+				slug: data.post.slug,
+				title: data.post.title
+			}}
+			orientation="inline"
+		/>
 
-	{@html data.post.content}
-</article>
+		{@html data.post.content}
+	</article>
+</div>
 
 <!-- the crawler doesn't understand twitter:image etc, so we have to add this hack. TODO fix in sveltekit -->
 <img hidden src="/blog/{$page.params.slug}/card.png" alt="Social card for {data.post.title}" />
