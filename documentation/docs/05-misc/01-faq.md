@@ -59,42 +59,13 @@ It will show up on hover.
 
 Note: The `@component` is necessary in the HTML comment which describes your component.
 
-## What about TypeScript support?
-
-You need to install a preprocessor such as [svelte-preprocess](https://github.com/sveltejs/svelte-preprocess). You can run type checking from the command line with [svelte-check](https://www.npmjs.com/package/svelte-check).
-
-To declare the type of a reactive variable in a Svelte template, you should use the following syntax:
-
-```ts
-const count: number = 100;
-
-// ---cut---
-let x: number;
-$: x = count + 1;
-```
-
-To import a type or interface make sure to use [TypeScript's `type` modifier](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export):
-
-```ts
-// @filename: SomeFile.ts
-export interface SomeInterface {
-	foo: string;
-}
-
-// @filename: index.ts
-// ---cut---
-import type { SomeInterface } from './SomeFile';
-```
-
-You must use the `type` modifier because `svelte-preprocess` doesn't know whether an import is a type or a value — it only transpiles one file at a time without knowledge of the other files and therefore can't safely erase imports which only contain types without this modifier present.
-
 ## Does Svelte scale?
 
 There will be a blog post about this eventually, but in the meantime, check out [this issue](https://github.com/sveltejs/svelte/issues/2546).
 
 ## Is there a UI component library?
 
-There are several UI component libraries as well as standalone components. Find them under the [components section](https://sveltesociety.dev/components#design-systems) of the Svelte Society website.
+There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/components#design-systems) on the Svelte Society website.
 
 ## How do I test Svelte apps?
 
