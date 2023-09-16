@@ -26,7 +26,7 @@ async function get_nav_list() {
 
 	const processed_blog_list = [
 		{
-			title: 'Blog',
+			title: '',
 			sections: blog_list.map(({ title, slug, date }) => ({
 				title,
 				path: '/blog/' + slug,
@@ -49,13 +49,23 @@ async function get_nav_list() {
 			title: 'Docs',
 			prefix: 'docs',
 			pathname: '/docs/introduction',
-			sections: processed_docs_list
+			sections: [
+				{
+					title: 'DOCS',
+					sections: processed_docs_list
+				}
+			]
 		},
 		{
 			title: 'Examples',
 			prefix: 'examples',
 			pathname: '/examples',
-			sections: processed_examples_list
+			sections: [
+				{
+					title: 'EXAMPLES',
+					sections: processed_examples_list
+				}
+			]
 		},
 		{
 			title: 'REPL',
@@ -66,7 +76,12 @@ async function get_nav_list() {
 			title: 'Blog',
 			prefix: 'blog',
 			pathname: '/blog',
-			sections: processed_blog_list
+			sections: [
+				{
+					title: 'BLOG',
+					sections: processed_blog_list
+				}
+			]
 		}
 	];
 }

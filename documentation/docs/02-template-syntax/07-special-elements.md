@@ -198,7 +198,6 @@ If `this` is the name of a [void element](https://developer.mozilla.org/en-US/do
 <script>
 	let tag = 'div';
 
-	/** @type {(e: MouseEvent) => void} */
 	export let handler;
 </script>
 

@@ -5,28 +5,24 @@ title: Component directives
 ## on:_eventname_
 
 ```svelte
+<!--- copy: false --->
 on:eventname={handler}
 ```
 
 Components can emit events using [`createEventDispatcher`](/docs/svelte#createeventdispatcher) or by forwarding DOM events.
 
 ```svelte
-<!-- SomeComponent.svelte -->
 <script>
-  import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 
-  const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 </script>
 
 <!-- programmatic dispatching -->
-<button on:click={() => dispatch('hello')}>
-  one
-</button>
+<button on:click={() => dispatch('hello')}> one </button>
 
 <!-- declarative event forwarding -->
-<button on:click>
-  two
-</button>
+<button on:click> two </button>
 ```
 
 Listening for component events looks the same as listening for DOM events:
@@ -44,6 +40,7 @@ As with DOM events, if the `on:` directive is used without a value, the event wi
 ## --style-props
 
 ```svelte
+<!--- copy: false --->
 --style-props="anycssvalue"
 ```
 
@@ -78,7 +75,6 @@ For SVG namespace, the example above desugars into using `<g>` instead:
 Svelte's CSS Variables support allows for easily themeable components:
 
 ```svelte
-<!-- Slider.svelte -->
 <style>
 	.potato-slider-rail {
 		background-color: var(--rail-color, var(--theme-color, 'purple'));
@@ -118,6 +114,7 @@ While Svelte props are reactive without binding, that reactivity only flows down
 ## bind:this
 
 ```svelte
+<!--- copy: false --->
 bind:this={component_instance}
 ```
 

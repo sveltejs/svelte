@@ -36,7 +36,10 @@ export async function content() {
 		const slug = match[1];
 
 		const filepath = `${base}/docs/${file}`;
-		const markdown = replaceExportTypePlaceholders(await readFile(filepath, 'utf-8'), modules);
+		const markdown = await replaceExportTypePlaceholders(
+			await readFile(filepath, 'utf-8'),
+			modules
+		);
 
 		const { body, metadata } = extractFrontmatter(markdown);
 
@@ -45,7 +48,7 @@ export async function content() {
 		const rank = +metadata.rank || undefined;
 
 		blocks.push({
-			breadcrumbs: [...breadcrumbs, removeMarkdown(remove_TYPE(metadata.title) ?? '')],
+			breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
 			href: get_href([slug]),
 			content: await plaintext(intro),
 			rank
@@ -61,11 +64,7 @@ export async function content() {
 			const intro = subsections.shift().trim();
 
 			blocks.push({
-				breadcrumbs: [
-					...breadcrumbs,
-					removeMarkdown(remove_TYPE(metadata.title)),
-					remove_TYPE(removeMarkdown(h2))
-				],
+				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title), removeMarkdown(h2)],
 				href: get_href([slug, normalizeSlugify(h2)]),
 				content: await plaintext(intro),
 				rank
@@ -78,9 +77,9 @@ export async function content() {
 				blocks.push({
 					breadcrumbs: [
 						...breadcrumbs,
-						removeMarkdown(remove_TYPE(metadata.title)),
-						removeMarkdown(remove_TYPE(h2)),
-						removeMarkdown(remove_TYPE(h3))
+						removeMarkdown(metadata.title),
+						removeMarkdown(h2),
+						removeMarkdown(h3)
 					],
 					href: get_href([slug, normalizeSlugify(h2) + '-' + normalizeSlugify(h3)]),
 					content: await plaintext(lines.join('\n').trim()),
@@ -91,11 +90,6 @@ export async function content() {
 	}
 
 	return blocks;
-}
-
-/** @param {string} str */
-function remove_TYPE(str) {
-	return str?.replace(/^\[TYPE\]:\s+(.+)/, '$1') ?? '';
 }
 
 /** @param {string} markdown */
