@@ -90,7 +90,7 @@ Each `markup`, `script` or `style` function must return an object (or a Promise 
 
 > Preprocessor functions should return a `map` object whenever possible or else debugging becomes harder as stack traces can't link to the original code correctly.
 
-```js
+```ts
 // @filename: ambient.d.ts
 declare global {
 	var source: string;
@@ -128,6 +128,7 @@ const { code } = await preprocess(
 If a `dependencies` array is returned, it will be included in the result object. This is used by packages like [vite-plugin-svelte](https://github.com/sveltejs/vite-plugin-svelte) and [rollup-plugin-svelte](https://github.com/sveltejs/rollup-plugin-svelte) to watch additional files for changes, in the case where your `<style>` tag has an `@import` (for example).
 
 ```ts
+/// file: preprocess-sass.js
 // @filename: ambient.d.ts
 declare global {
 	var source: string;
@@ -204,6 +205,7 @@ Multiple preprocessors can be used together. The output of the first becomes the
 > In Svelte 3, all `markup` functions ran first, then all `script` and then all `style` preprocessors. This order was changed in Svelte 4.
 
 ```js
+/// file: multiple-preprocessor.js
 // @errors: 2322
 // @filename: ambient.d.ts
 declare global {
@@ -255,6 +257,7 @@ The `walk` function provides a way to walk the abstract syntax trees generated b
 The walker takes an abstract syntax tree to walk and an object with two optional methods: `enter` and `leave`. For each node, `enter` is called (if present). Then, unless `this.skip()` is called during `enter`, each of the children are traversed, and then `leave` is called on the node.
 
 ```js
+/// file: compiler-walk.js
 // @filename: ambient.d.ts
 declare global {
 	var ast: import('estree').Node;
