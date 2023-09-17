@@ -1,0 +1,6 @@
+{
+	"plugins": ["lube"],
+	"rules": {
+		"lube/svelte-naming-convention": ["error", { "fixSameNames": true }]
+	}
+}

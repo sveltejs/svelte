@@ -15,12 +15,12 @@ export default {
 
 	test({ assert, component, target, window }) {
 		const { cats } = component;
-		const newCats = cats.slice();
-		newCats.push({
+		const new_cats = cats.slice();
+		new_cats.push({
 			name: 'cat ' + cats.length,
 			checked: false
 		});
-		component.cats = newCats;
+		component.cats = new_cats;
 
 		let inputs = target.querySelectorAll('input');
 		assert.equal(inputs.length, 3);

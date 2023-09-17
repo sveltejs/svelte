@@ -13,10 +13,10 @@ export default {
 		assert.equal(input1.value, '');
 		assert.equal(input2.value, 'hello');
 
-		const inputEvent = new window.InputEvent('input');
+		const input_event = new window.InputEvent('input');
 
 		input2.value = 'world';
-		input2.dispatchEvent(inputEvent);
+		input2.dispatchEvent(input_event);
 		assert.equal(input2.value, 'world');
 		assert.equal(component.array[1].value, 'world');
 	}

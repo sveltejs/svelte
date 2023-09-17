@@ -1,6 +1,6 @@
 export function test({ assert, input, js, css }) {
-	const expectedBar = input.locate('baritone');
-	const expectedBaz = input.locate('--bazitone');
+	const expected_bar = input.locate('baritone');
+	const expected_baz = input.locate('--bazitone');
 
 	let start = js.locate('bar');
 
@@ -12,8 +12,8 @@ export function test({ assert, input, js, css }) {
 	assert.deepEqual(actualbar, {
 		source: 'input.svelte',
 		name: 'baritone',
-		line: expectedBar.line + 1,
-		column: expectedBar.column
+		line: expected_bar.line + 1,
+		column: expected_bar.column
 	});
 
 	start = css.locate('--baz');
@@ -26,7 +26,7 @@ export function test({ assert, input, js, css }) {
 	assert.deepEqual(actualbaz, {
 		source: 'input.svelte',
 		name: '--bazitone',
-		line: expectedBaz.line + 1,
-		column: expectedBaz.column
+		line: expected_baz.line + 1,
+		column: expected_baz.column
 	});
 }

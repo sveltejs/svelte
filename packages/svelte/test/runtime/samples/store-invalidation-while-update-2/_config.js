@@ -16,11 +16,11 @@ export default {
 		const input = target.querySelector('input');
 		const button = target.querySelector('button');
 
-		const inputEvent = new window.InputEvent('input');
-		const clickEvent = new window.MouseEvent('click');
+		const input_event = new window.InputEvent('input');
+		const click_event = new window.MouseEvent('click');
 
 		input.value = 'foo';
-		await input.dispatchEvent(inputEvent);
+		await input.dispatchEvent(input_event);
 
 		assert.htmlEqual(
 			target.innerHTML,
@@ -32,7 +32,7 @@ export default {
 		`
 		);
 
-		await button.dispatchEvent(clickEvent);
+		await button.dispatchEvent(click_event);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -44,7 +44,7 @@ export default {
 		);
 
 		input.value = 'bar';
-		await input.dispatchEvent(inputEvent);
+		await input.dispatchEvent(input_event);
 
 		assert.htmlEqual(
 			target.innerHTML,

@@ -293,7 +293,7 @@ describe('store', () => {
 
 		it('passes optional set and update functions', () => {
 			const number = writable(1);
-			const evensAndSquaresOf4 = derived(
+			const evens_and_squares_of4 = derived(
 				number,
 				(n, set, update) => {
 					if (n % 2 === 0) set(n);
@@ -304,7 +304,7 @@ describe('store', () => {
 
 			const values = [];
 
-			const unsubscribe = evensAndSquaresOf4.subscribe((value) => {
+			const unsubscribe = evens_and_squares_of4.subscribe((value) => {
 				values.push(value);
 			});
 
@@ -542,18 +542,18 @@ describe('store', () => {
 
 	describe('readonly', () => {
 		it('makes a store readonly', () => {
-			const writableStore = writable(1);
-			const readableStore = readonly(writableStore);
+			const writable_store = writable(1);
+			const readable_store = readonly(writable_store);
 
-			assert.equal(get(readableStore), get(writableStore));
+			assert.equal(get(readable_store), get(writable_store));
 
-			writableStore.set(2);
+			writable_store.set(2);
 
-			assert.equal(get(readableStore), 2);
-			assert.equal(get(readableStore), get(writableStore));
+			assert.equal(get(readable_store), 2);
+			assert.equal(get(readable_store), get(writable_store));
 
 			// @ts-ignore
-			assert.throws(() => readableStore.set(3));
+			assert.throws(() => readable_store.set(3));
 		});
 	});
 });

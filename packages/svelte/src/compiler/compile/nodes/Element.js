@@ -875,7 +875,7 @@ export default class Element extends Node {
 		) {
 			const interactive_handlers = handlers
 				.map((handler) => handler.name)
-				.filter((handlerName) => a11y_interactive_handlers.has(handlerName));
+				.filter((handler_name) => a11y_interactive_handlers.has(handler_name));
 			if (interactive_handlers.length > 0) {
 				component.warn(
 					this,

@@ -6,8 +6,8 @@ export default {
 	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
 
-		const clickEvent = new window.MouseEvent('click');
-		await button.dispatchEvent(clickEvent);
+		const click_event = new window.MouseEvent('click');
+		await button.dispatchEvent(click_event);
 
 		assert.htmlEqual(
 			target.innerHTML,

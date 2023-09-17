@@ -9,13 +9,13 @@ const components = [
 	}
 ];
 
-const selectedComponent = components[0];
+const selected_component = components[0];
 
 export default {
 	skip: true, // doesn't reflect real-world bug, maybe a JSDOM quirk
 
 	get props() {
-		return { components, selectedComponent };
+		return { components, selectedComponent: selected_component };
 	},
 
 	html: `

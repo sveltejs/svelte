@@ -5,10 +5,10 @@ export default {
 
 	async test({ assert, target, window }) {
 		const button = target.querySelector('button');
-		const eventEnter = new window.MouseEvent('mouseenter');
-		const eventLeave = new window.MouseEvent('mouseleave');
+		const event_enter = new window.MouseEvent('mouseenter');
+		const event_leave = new window.MouseEvent('mouseleave');
 
-		await button.dispatchEvent(eventEnter);
+		await button.dispatchEvent(event_enter);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -17,7 +17,7 @@ export default {
 		`
 		);
 
-		await button.dispatchEvent(eventLeave);
+		await button.dispatchEvent(event_leave);
 		assert.htmlEqual(
 			target.innerHTML,
 			`
