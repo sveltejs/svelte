@@ -2,6 +2,7 @@
 import { extractFrontmatter } from '@sveltejs/site-kit/markdown';
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer.js';
+import { get_sections } from '../docs/index.js';
 
 /**
  * @param {import('./types').BlogData} blog_data
@@ -47,7 +48,8 @@ export async function get_blog_data(base = CONTENT_BASE_PATHS.BLOG) {
 			author: {
 				name: metadata.author,
 				url: metadata.authorURL
-			}
+			},
+			sections: await get_sections(body)
 		});
 	}
 

@@ -1,3 +1,5 @@
+import type { Section } from '../docs/types';
+
 export interface BlogPost {
 	title: string;
 	description: string;
@@ -11,6 +13,7 @@ export interface BlogPost {
 	};
 	draft: boolean;
 	content: string;
+	sections: Section[];
 }
 
 export type BlogData = BlogPost[];

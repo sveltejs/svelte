@@ -1,7 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import { copy_code_descendants } from '@sveltejs/site-kit/actions';
-	import { setupDocsHovers } from '@sveltejs/site-kit/docs';
+	import { DocsOnThisPage, setupDocsHovers } from '@sveltejs/site-kit/docs';
 
 	export let data;
 
@@ -20,17 +20,31 @@
 	<meta name="og:image" content="https://svelte.dev/blog/{$page.params.slug}/card.png" />
 </svelte:head>
 
-<article class="post listify text" use:copy_code_descendants>
-	<h1>{data.post.title}</h1>
-	<p class="standfirst">{data.post.description}</p>
+<div class="content">
+	<article class="post listify text" use:copy_code_descendants>
+		<h1>{data.post.title}</h1>
+		<p class="standfirst">{data.post.description}</p>
 
-	<p class="byline">
-		<a href={data.post.author.url}>{data.post.author.name}</a>
-		<time datetime={data.post.date}>{data.post.date_formatted}</time>
-	</p>
+		<p class="byline">
+			<a href={data.post.author.url}>{data.post.author.name}</a>
+			<time datetime={data.post.date}>{data.post.date_formatted}</time>
+		</p>
 
-	{@html data.post.content}
-</article>
+		<DocsOnThisPage
+			details={{
+				content: '',
+				file: '',
+				path: `/blog/${data.post.slug}`,
+				sections: data.post.sections,
+				slug: data.post.slug,
+				title: data.post.title
+			}}
+			orientation="inline"
+		/>
+
+		{@html data.post.content}
+	</article>
+</div>
 
 <!-- the crawler doesn't understand twitter:image etc, so we have to add this hack. TODO fix in sveltekit -->
 <img hidden src="/blog/{$page.params.slug}/card.png" alt="Social card for {data.post.title}" />
@@ -54,7 +68,7 @@
 	}
 
 	.byline {
-		margin: 0 0 6rem 0;
+		margin: 0 0 1rem 0;
 		padding: 1.6rem 0 0 0;
 		border-top: var(--sk-thick-border-width) solid #6767785b;
 		font-size: var(--sk-text-xs);
