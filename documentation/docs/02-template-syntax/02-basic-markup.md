@@ -143,8 +143,7 @@ You can document components with the `@component` tag. These comments will appea
 
 ```svelte
 <!--
-@component
-This is a component description.
+@component this is a component description
 -->
 <h1>Hello world</h1>
 ```
