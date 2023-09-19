@@ -139,7 +139,7 @@ Comments beginning with `svelte-ignore` disable warnings for the next block of m
 <input bind:value={name} autofocus />
 ```
 
-You can document components with the `@component` tag. Component comments will appear when hovering over a component in your IDE using the [Svelte Language Server](https://github.com/sveltejs/language-tools).
+You can document components with the `@component` tag. These comments will appear when hovering over a component in IDEs with support such as VS Code with [the Svelte VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
 
 ```svelte
 <!--
