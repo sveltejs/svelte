@@ -138,3 +138,13 @@ Comments beginning with `svelte-ignore` disable warnings for the next block of m
 <!-- svelte-ignore a11y-autofocus -->
 <input bind:value={name} autofocus />
 ```
+
+You can document components with the `@component` tag. Component comments will appear when hovering over a component in your IDE using the [Svelte Language Server](https://github.com/sveltejs/language-tools).
+
+```svelte
+<!--
+@component
+This is a component description.
+-->
+<h1>Hello world</h1>
+```
