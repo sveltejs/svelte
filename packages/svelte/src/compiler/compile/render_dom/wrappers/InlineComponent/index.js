@@ -105,14 +105,19 @@ export default class InlineComponentWrapper extends Wrapper {
 		this.slots.set(name, slot_definition);
 	}
 	warn_if_reactive() {
-		const { name } = this.node;
-		const variable = this.renderer.component.var_lookup.get(name);
+		let { name } = this.node;
+		const top = name.split('.')[0]; // <T.foo/> etc. should check for T instead of "T.foo"
+		const variable = this.renderer.component.var_lookup.get(top);
 		if (!variable) {
 			return;
 		}
 		const ignores = extract_ignores_above_node(this.node);
 		this.renderer.component.push_ignores(ignores);
-		if (variable.reassigned || variable.export_name || variable.is_reactive_dependency) {
+		if (
+			variable.reassigned ||
+			variable.export_name || // or a prop
+			variable.mutated
+		) {
 			this.renderer.component.warn(this.node, compiler_warnings.reactive_component(name));
 		}
 		this.renderer.component.pop_ignores();
