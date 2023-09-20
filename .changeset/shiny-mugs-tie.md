@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: false reactive component warning
+fix: silence false positive reactive component warning
