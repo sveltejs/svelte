@@ -74,9 +74,7 @@
 		<slot />
 
 		<div slot="banner-bottom" class="banner-bottom">
-			<a href="/blog/introducing-runes" class="banner-bottom">
-				Announcing Runes, the upcoming Svelte 5 API
-			</a>
+			<a href="/blog/runes" class="banner-bottom"> Announcing Runes, the upcoming Svelte 5 API </a>
 		</div>
 	</Shell>
 </div>
