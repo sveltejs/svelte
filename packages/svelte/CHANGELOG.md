@@ -1,5 +1,27 @@
 # svelte
 
+## 4.2.1
+
+### Patch Changes
+
+- fix: update style directive when style attribute is present and is updated via an object prop ([#9187](https://github.com/sveltejs/svelte/pull/9187))
+
+- fix: css sourcemap generation with unicode filenames ([#9120](https://github.com/sveltejs/svelte/pull/9120))
+
+- fix: do not add module declared variables as dependencies ([#9122](https://github.com/sveltejs/svelte/pull/9122))
+
+- fix: handle `svelte:element` with dynamic this and spread attributes ([#9112](https://github.com/sveltejs/svelte/pull/9112))
+
+- fix: silence false positive reactive component warning ([#9094](https://github.com/sveltejs/svelte/pull/9094))
+
+- fix: head duplication when binding is present ([#9124](https://github.com/sveltejs/svelte/pull/9124))
+
+- fix: take custom attribute name into account when reflecting property ([#9140](https://github.com/sveltejs/svelte/pull/9140))
+
+- fix: add `indeterminate` to the list of HTMLAttributes ([#9180](https://github.com/sveltejs/svelte/pull/9180))
+
+- fix: recognize option value on spread attribute ([#9125](https://github.com/sveltejs/svelte/pull/9125))
+
 ## 4.2.0
 
 ### Minor Changes
