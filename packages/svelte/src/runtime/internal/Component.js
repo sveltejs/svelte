@@ -84,7 +84,17 @@ function make_dirty(component, i) {
 	component.$$.dirty[(i / 31) | 0] |= 1 << i % 31;
 }
 
-/** @returns {void} */
+// TODO: Document the other params
+/**
+ * @param {SvelteComponent} component
+ * @param {import('./public.js').ComponentConstructorOptions} options
+ *
+ * @param {import('./utils.js')['not_equal']} not_equal Used to compare props and state values.
+ * @param {(target: Element | ShadowRoot) => void} [append_styles] Function that appends styles to the DOM when the component is first initialised.
+ * This will be the `add_css` function from the compiled component.
+ *
+ * @returns {void}
+ */
 export function init(
 	component,
 	options,
@@ -92,7 +102,7 @@ export function init(
 	create_fragment,
 	not_equal,
 	props,
-	append_styles,
+	append_styles = null,
 	dirty = [-1]
 ) {
 	const parent_component = current_component;
@@ -139,8 +149,9 @@ export function init(
 	if (options.target) {
 		if (options.hydrate) {
 			start_hydrating();
+			// TODO: what is the correct type here?
+			// @ts-expect-error
 			const nodes = children(options.target);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			$$.fragment && $$.fragment.l(nodes);
 			nodes.forEach(detach);
 		} else {
