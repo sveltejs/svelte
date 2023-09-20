@@ -32,7 +32,11 @@
 </svelte:head>
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
-	<Shell nav_visible={$page.url.pathname !== '/repl/embed'} bind:snapshot={shell_snapshot}>
+	<Shell
+		nav_visible={$page.url.pathname !== '/repl/embed'}
+		bind:snapshot={shell_snapshot}
+		banner_bottom_height="42px"
+	>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
@@ -68,6 +72,10 @@
 		</Nav>
 
 		<slot />
+
+		<div slot="banner-bottom" class="banner-bottom">
+			<a href="/blog/runes" class="banner-bottom">Introducing the upcoming Svelte 5 API: Runes</a>
+		</div>
 	</Shell>
 </div>
 
@@ -83,5 +91,13 @@
 	:global(html, body) {
 		height: 100%;
 		width: 100%;
+	}
+
+	.banner-bottom {
+		text-align: center;
+		background: var(--sk-theme-1-variant);
+		color: white;
+		text-decoration: underline;
+		padding: 8px;
 	}
 </style>
