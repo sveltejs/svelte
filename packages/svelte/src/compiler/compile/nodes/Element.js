@@ -1,5 +1,6 @@
 import { is_html, is_svg, is_void } from '../../../shared/utils/names.js';
 import Node from './shared/Node.js';
+import { walk } from 'estree-walker';
 import Attribute from './Attribute.js';
 import Binding from './Binding.js';
 import EventHandler from './EventHandler.js';
@@ -430,7 +431,7 @@ export default class Element extends Node {
 			}
 			if (this.name === 'textarea') {
 				if (info.children.length > 0) {
-					const value_attribute = info.attributes.find((node) => node.name === 'value');
+					const value_attribute = get_value_attribute(info.attributes);
 					if (value_attribute) {
 						component.error(value_attribute, compiler_errors.textarea_duplicate_value);
 						return;
@@ -449,7 +450,7 @@ export default class Element extends Node {
 				// Special case — treat these the same way:
 				//   <option>{foo}</option>
 				//   <option value={foo}>{foo}</option>
-				const value_attribute = info.attributes.find((attribute) => attribute.name === 'value');
+				const value_attribute = get_value_attribute(info.attributes);
 				if (!value_attribute) {
 					info.attributes.push({
 						type: 'Attribute',
@@ -1419,4 +1420,31 @@ function within_custom_element(parent) {
 		parent = parent.parent;
 	}
 	return false;
+}
+
+/**
+ * @param {any[]} attributes
+ */
+function get_value_attribute(attributes) {
+	let node_value;
+	attributes.forEach((node) => {
+		if (node.type !== 'Spread' && node.name.toLowerCase() === 'value') {
+			node_value = node;
+		}
+		if (node.type === 'Spread') {
+			walk(/** @type {any} */ (node.expression), {
+				enter(/** @type {import('estree').Node} */ node) {
+					if (node_value) {
+						this.skip();
+					}
+					if (node.type === 'Identifier') {
+						if (/** @type {import('estree').Identifier} */ (node).name.toLowerCase() === 'value') {
+							node_value = node;
+						}
+					}
+				}
+			});
+		}
+	});
+	return node_value;
 }
