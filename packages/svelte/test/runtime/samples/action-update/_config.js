@@ -7,7 +7,7 @@ export default {
 		const button = target.querySelector('button');
 		const enter = new window.MouseEvent('mouseenter');
 		const leave = new window.MouseEvent('mouseleave');
-		const ctrlPress = new window.KeyboardEvent('keydown', { ctrlKey: true });
+		const ctrl_press = new window.KeyboardEvent('keydown', { ctrlKey: true });
 
 		await button.dispatchEvent(enter);
 		assert.htmlEqual(
@@ -18,7 +18,7 @@ export default {
 		`
 		);
 
-		await window.dispatchEvent(ctrlPress);
+		await window.dispatchEvent(ctrl_press);
 		assert.htmlEqual(
 			target.innerHTML,
 			`

@@ -53,11 +53,11 @@ function create_fragment(ctx) {
 			div7 = element("div");
 			t7 = space();
 			div8 = element("div");
-			toggle_class(div0, "update1", reactiveModuleVar);
-			toggle_class(div1, "update2", /*reactiveConst*/ ctx[0].x);
-			toggle_class(div2, "update3", nonReactiveGlobal && /*reactiveConst*/ ctx[0].x);
-			toggle_class(div3, "update4", /*$reactiveStoreVal*/ ctx[2]);
-			toggle_class(div4, "update5", /*$reactiveDeclaration*/ ctx[3]);
+			toggle_class(div0, "update2", /*reactiveConst*/ ctx[0].x);
+			toggle_class(div1, "update3", nonReactiveGlobal && /*reactiveConst*/ ctx[0].x);
+			toggle_class(div2, "update4", /*$reactiveStoreVal*/ ctx[2]);
+			toggle_class(div3, "update5", /*$reactiveDeclaration*/ ctx[3]);
+			toggle_class(div4, "update1", reassignedModuleVar);
 			toggle_class(div5, "static1", nonReactiveModuleVar);
 			toggle_class(div6, "static2", nonReactiveGlobal);
 			toggle_class(div7, "static3", nonReactiveModuleVar && nonReactiveGlobal);
@@ -83,24 +83,20 @@ function create_fragment(ctx) {
 			insert(target, div8, anchor);
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*reactiveModuleVar*/ 0) {
-				toggle_class(div0, "update1", reactiveModuleVar);
-			}
-
 			if (dirty & /*reactiveConst*/ 1) {
-				toggle_class(div1, "update2", /*reactiveConst*/ ctx[0].x);
+				toggle_class(div0, "update2", /*reactiveConst*/ ctx[0].x);
 			}
 
 			if (dirty & /*nonReactiveGlobal, reactiveConst*/ 1) {
-				toggle_class(div2, "update3", nonReactiveGlobal && /*reactiveConst*/ ctx[0].x);
+				toggle_class(div1, "update3", nonReactiveGlobal && /*reactiveConst*/ ctx[0].x);
 			}
 
 			if (dirty & /*$reactiveStoreVal*/ 4) {
-				toggle_class(div3, "update4", /*$reactiveStoreVal*/ ctx[2]);
+				toggle_class(div2, "update4", /*$reactiveStoreVal*/ ctx[2]);
 			}
 
 			if (dirty & /*$reactiveDeclaration*/ 8) {
-				toggle_class(div4, "update5", /*$reactiveDeclaration*/ ctx[3]);
+				toggle_class(div3, "update5", /*$reactiveDeclaration*/ ctx[3]);
 			}
 		},
 		i: noop,
@@ -130,7 +126,7 @@ function create_fragment(ctx) {
 }
 
 let nonReactiveModuleVar = Math.random();
-let reactiveModuleVar = Math.random();
+let reassignedModuleVar = Math.random();
 
 function instance($$self, $$props, $$invalidate) {
 	let reactiveDeclaration;
@@ -144,13 +140,13 @@ function instance($$self, $$props, $$invalidate) {
 	$$self.$$.on_destroy.push(() => $$unsubscribe_reactiveDeclaration());
 	nonReactiveGlobal = Math.random();
 	const reactiveConst = { x: Math.random() };
-	reactiveModuleVar += 1;
+	reassignedModuleVar += 1;
 
 	if (Math.random()) {
 		reactiveConst.x += 1;
 	}
 
-	$: $$subscribe_reactiveDeclaration($$invalidate(1, reactiveDeclaration = reactiveModuleVar * 2));
+	$: $$subscribe_reactiveDeclaration($$invalidate(1, reactiveDeclaration = reassignedModuleVar * 2));
 	return [reactiveConst, reactiveDeclaration, $reactiveStoreVal, $reactiveDeclaration];
 }
 

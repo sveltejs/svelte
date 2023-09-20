@@ -59,42 +59,13 @@ It will show up on hover.
 
 Note: The `@component` is necessary in the HTML comment which describes your component.
 
-## What about TypeScript support?
-
-You need to install a preprocessor such as [svelte-preprocess](https://github.com/sveltejs/svelte-preprocess). You can run type checking from the command line with [svelte-check](https://www.npmjs.com/package/svelte-check).
-
-To declare the type of a reactive variable in a Svelte template, you should use the following syntax:
-
-```ts
-const count: number = 100;
-
-// ---cut---
-let x: number;
-$: x = count + 1;
-```
-
-To import a type or interface make sure to use [TypeScript's `type` modifier](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export):
-
-```ts
-// @filename: SomeFile.ts
-export interface SomeInterface {
-	foo: string;
-}
-
-// @filename: index.ts
-// ---cut---
-import type { SomeInterface } from './SomeFile';
-```
-
-You must use the `type` modifier because `svelte-preprocess` doesn't know whether an import is a type or a value — it only transpiles one file at a time without knowledge of the other files and therefore can't safely erase imports which only contain types without this modifier present.
-
 ## Does Svelte scale?
 
 There will be a blog post about this eventually, but in the meantime, check out [this issue](https://github.com/sveltejs/svelte/issues/2546).
 
 ## Is there a UI component library?
 
-There are several UI component libraries as well as standalone components. Find them under the [components section](https://sveltesociety.dev/components#design-systems) of the Svelte Society website.
+There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/components#design-systems) on the Svelte Society website.
 
 ## How do I test Svelte apps?
 
@@ -130,6 +101,17 @@ If you need hash-based routing on the client side, check out [svelte-spa-router]
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 
 You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/components#routers).
+
+## Can I tell Svelte not to remove my unused styles?
+
+No. Svelte removes the styles from the component and warns you about them in order to prevent issues that would otherwise arise.
+
+Svelte's component style scoping works by generating a class unique to the given component, adding it to the relevant elements in the component that are under Svelte's control, and then adding it to each of the selectors in that component's styles. When the compiler can't see what elements a style selector applies to, there would be two bad options for keeping it:
+
+- If it keeps the selector and adds the scoping class to it, the selector will likely not match the expected elements in the component, and they definitely won't if they were created by a child component or `{@html ...}`.
+- If it keeps the selector without adding the scoping class to it, the given style will become a global style, affecting your entire page.
+
+If you need to style something that Svelte can't identify at compile time, you will need to explicitly opt into global styles by using `:global(...)`. But also keep in mind that you can wrap `:global(...)` around only part of a selector. `.foo :global(.bar) { ... }` will style any `.bar` elements that appear within the component's `.foo` elements. As long as there's some parent element in the current component to start from, partially global selectors like this will almost always be able to get you what you want.
 
 ## Is Svelte v2 still available?
 

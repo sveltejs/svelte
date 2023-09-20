@@ -45,14 +45,14 @@ export default {
 		`
 		);
 
-		const circleColor1 = target.querySelector('#svg-1 circle');
-		const rectColor1 = target.querySelector('#svg-1 rect');
-		const circleColor2 = target.querySelector('#svg-2 circle');
-		const rectColor2 = target.querySelector('#svg-2 rect');
+		const circle_color1 = target.querySelector('#svg-1 circle');
+		const rect_color1 = target.querySelector('#svg-1 rect');
+		const circle_color2 = target.querySelector('#svg-2 circle');
+		const rect_color2 = target.querySelector('#svg-2 rect');
 
-		assert.htmlEqual(window.getComputedStyle(circleColor1).fill, 'rgb(255, 0, 0)');
-		assert.htmlEqual(window.getComputedStyle(rectColor1).fill, 'rgb(255, 255, 0)');
-		assert.htmlEqual(window.getComputedStyle(circleColor2).fill, 'rgb(0, 255, 255)');
-		assert.htmlEqual(window.getComputedStyle(rectColor2).fill, 'rgb(0, 0, 0)');
+		assert.htmlEqual(window.getComputedStyle(circle_color1).fill, 'rgb(255, 0, 0)');
+		assert.htmlEqual(window.getComputedStyle(rect_color1).fill, 'rgb(255, 255, 0)');
+		assert.htmlEqual(window.getComputedStyle(circle_color2).fill, 'rgb(0, 255, 255)');
+		assert.htmlEqual(window.getComputedStyle(rect_color2).fill, 'rgb(0, 0, 0)');
 	}
 };

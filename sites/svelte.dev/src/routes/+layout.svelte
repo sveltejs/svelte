@@ -7,6 +7,20 @@
 	import '@sveltejs/site-kit/styles/index.css';
 
 	export let data;
+
+	/** @type {import('@sveltejs/kit').Snapshot<number>} */
+	let shell_snapshot;
+
+	export const snapshot = {
+		capture() {
+			return {
+				shell: shell_snapshot?.capture()
+			};
+		},
+		restore(data) {
+			shell_snapshot?.restore(data.shell);
+		}
+	};
 </script>
 
 <svelte:head>
@@ -18,7 +32,7 @@
 </svelte:head>
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
-	<Shell nav_visible={$page.url.pathname !== '/repl/embed'}>
+	<Shell nav_visible={$page.url.pathname !== '/repl/embed'} bind:snapshot={shell_snapshot}>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev

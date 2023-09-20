@@ -1,6 +1,6 @@
-let originalDivGetBoundingClientRect;
-let originalSpanGetBoundingClientRect;
-let originalParagraphGetBoundingClientRect;
+let original_div_get_bounding_client_rect;
+let original_span_get_bounding_client_rect;
+let original_paragraph_get_bounding_client_rect;
 
 export default {
 	skip_if_ssr: true,
@@ -26,16 +26,16 @@ export default {
 	`,
 
 	before_test() {
-		originalDivGetBoundingClientRect = window.HTMLDivElement.prototype.getBoundingClientRect;
-		originalSpanGetBoundingClientRect = window.HTMLSpanElement.prototype.getBoundingClientRect;
-		originalParagraphGetBoundingClientRect =
+		original_div_get_bounding_client_rect = window.HTMLDivElement.prototype.getBoundingClientRect;
+		original_span_get_bounding_client_rect = window.HTMLSpanElement.prototype.getBoundingClientRect;
+		original_paragraph_get_bounding_client_rect =
 			window.HTMLParagraphElement.prototype.getBoundingClientRect;
 
-		window.HTMLDivElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
-		window.HTMLParagraphElement.prototype.getBoundingClientRect = fakeGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = fake_get_bounding_client_rect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = fake_get_bounding_client_rect;
+		window.HTMLParagraphElement.prototype.getBoundingClientRect = fake_get_bounding_client_rect;
 
-		function fakeGetBoundingClientRect() {
+		function fake_get_bounding_client_rect() {
 			const index = [...this.parentNode.children].indexOf(this);
 			const top = index * 30;
 
@@ -48,10 +48,10 @@ export default {
 		}
 	},
 	after_test() {
-		window.HTMLDivElement.prototype.getBoundingClientRect = originalDivGetBoundingClientRect;
-		window.HTMLSpanElement.prototype.getBoundingClientRect = originalSpanGetBoundingClientRect;
+		window.HTMLDivElement.prototype.getBoundingClientRect = original_div_get_bounding_client_rect;
+		window.HTMLSpanElement.prototype.getBoundingClientRect = original_span_get_bounding_client_rect;
 		window.HTMLParagraphElement.prototype.getBoundingClientRect =
-			originalParagraphGetBoundingClientRect;
+			original_paragraph_get_bounding_client_rect;
 	},
 
 	async test({ assert, component, raf }) {

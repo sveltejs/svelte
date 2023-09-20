@@ -14,14 +14,14 @@ export default {
 		</div>
 	`,
 	test({ target, window, assert }) {
-		const railColor1 = target.querySelector('#slider-1 p');
-		const trackColor1 = target.querySelector('#slider-1 span');
-		const railColor2 = target.querySelector('#slider-2 p');
-		const trackColor2 = target.querySelector('#slider-2 span');
+		const rail_color1 = target.querySelector('#slider-1 p');
+		const track_color1 = target.querySelector('#slider-1 span');
+		const rail_color2 = target.querySelector('#slider-2 p');
+		const track_color2 = target.querySelector('#slider-2 span');
 
-		assert.htmlEqual(window.getComputedStyle(railColor1).color, 'rgb(0, 0, 0)');
-		assert.htmlEqual(window.getComputedStyle(trackColor1).color, 'rgb(255, 0, 0)');
-		assert.htmlEqual(window.getComputedStyle(railColor2).color, 'rgb(0, 255, 0)');
-		assert.htmlEqual(window.getComputedStyle(trackColor2).color, 'rgb(0, 0, 255)');
+		assert.htmlEqual(window.getComputedStyle(rail_color1).color, 'rgb(0, 0, 0)');
+		assert.htmlEqual(window.getComputedStyle(track_color1).color, 'rgb(255, 0, 0)');
+		assert.htmlEqual(window.getComputedStyle(rail_color2).color, 'rgb(0, 255, 0)');
+		assert.htmlEqual(window.getComputedStyle(track_color2).color, 'rgb(0, 0, 255)');
 	}
 };

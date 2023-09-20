@@ -8,7 +8,7 @@ import * as node from './node/index.js';
  *
  * The new nodes are located in `./node`.
  */
-const cqSyntax = fork({
+const cq_syntax = fork({
 	atrule: {
 		// extend or override at-rule dictionary
 		container: {
@@ -16,8 +16,8 @@ const cqSyntax = fork({
 				prelude() {
 					return this.createSingleNodeList(this.ContainerQuery());
 				},
-				block(isStyleBlock = false) {
-					return this.Block(isStyleBlock);
+				block(is_style_block = false) {
+					return this.Block(is_style_block);
 				}
 			}
 		}
@@ -25,4 +25,4 @@ const cqSyntax = fork({
 	node
 });
 
-export const parse = cqSyntax.parse;
+export const parse = cq_syntax.parse;

@@ -1,6 +1,6 @@
 const VALUES = Array.from('abcdefghijklmnopqrstuvwxyz');
 
-function toObjects(array) {
+function to_objects(array) {
 	return array.split('').map((x) => ({ id: x }));
 }
 
@@ -17,7 +17,7 @@ function permute() {
 
 export default {
 	get props() {
-		return { values: toObjects('abc') };
+		return { values: to_objects('abc') };
 	},
 
 	html: '(a)(b)(c)',
@@ -29,7 +29,7 @@ export default {
 				.split('')
 				.map((x) => `(${x})`)
 				.join('');
-			component.values = toObjects(sequence);
+			component.values = to_objects(sequence);
 			assert.htmlEqual(
 				target.innerHTML,
 				expected,

@@ -73,8 +73,8 @@ function sort_consts_nodes(consts_nodes, component) {
 		}, [])
 	);
 	if (cycle && cycle.length) {
-		const nodeList = lookup.get(cycle[0]);
-		const node = nodeList[0];
+		const node_list = lookup.get(cycle[0]);
+		const node = node_list[0];
 		component.error(node.node, compiler_errors.cyclical_const_tags(cycle));
 	}
 

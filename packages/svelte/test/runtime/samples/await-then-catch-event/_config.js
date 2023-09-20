@@ -28,10 +28,10 @@ export default {
 
 				assert.equal(component.clicked, 42);
 
-				const thePromise = Promise.resolve(43);
-				component.thePromise = thePromise;
+				const the_promise = Promise.resolve(43);
+				component.thePromise = the_promise;
 
-				return thePromise;
+				return the_promise;
 			})
 			.then(() => {
 				const { button } = component;

@@ -5,13 +5,13 @@ export default {
 	`,
 
 	async test({ assert, component, target, window }) {
-		const [updateButton, button] = target.querySelectorAll('button');
+		const [update_button, button] = target.querySelectorAll('button');
 		const event = new window.MouseEvent('click');
 
 		await button.dispatchEvent(event);
 		assert.equal(component.count, 1);
 
-		await updateButton.dispatchEvent(event);
+		await update_button.dispatchEvent(event);
 		await button.dispatchEvent(event);
 		assert.equal(component.count, 11);
 	}
