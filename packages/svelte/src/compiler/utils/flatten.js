@@ -20,8 +20,7 @@
  * @returns {any[]}
  */
 export function flatten(nodes, target = []) {
-	for (let i = 0; i < nodes.length; i += 1) {
-		const node = nodes[i];
+	for (const node of nodes) {
 		if (Array.isArray(node)) {
 			flatten(node, target);
 		} else {
