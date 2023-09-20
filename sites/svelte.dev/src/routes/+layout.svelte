@@ -35,7 +35,7 @@
 	<Shell
 		nav_visible={$page.url.pathname !== '/repl/embed'}
 		bind:snapshot={shell_snapshot}
-		banner_bottom_height="26px"
+		banner_bottom_height="42px"
 	>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
@@ -98,5 +98,6 @@
 		background: var(--sk-theme-1-variant);
 		color: white;
 		text-decoration: underline;
+		padding: 8px;
 	}
 </style>
