@@ -1240,11 +1240,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 				if (this.dynamic_style_dependencies.size > 0) {
 					maybe_create_style_changed_var();
-					// If all dependencies are same as the style attribute dependencies, then we can skip the dirty check
-					condition =
-						all_deps.size === this.dynamic_style_dependencies.size
-							? style_changed_var
-							: x`${style_changed_var} || ${condition}`;
+					condition = x`${condition} || ${style_changed_var}`;
 				}
 				block.chunks.update.push(b`
 					if (${condition}) {
