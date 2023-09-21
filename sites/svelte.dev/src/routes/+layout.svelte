@@ -99,5 +99,6 @@
 		color: white;
 		text-decoration: underline;
 		padding: 8px;
+    z-index: 10;
 	}
 </style>
