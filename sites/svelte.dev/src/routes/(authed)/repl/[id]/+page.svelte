@@ -104,8 +104,8 @@
 <style>
 	.repl-outer {
 		position: relative;
-		height: calc(100% - var(--sk-nav-height));
-		height: calc(100dvh - var(--sk-nav-height));
+		height: calc(100% - var(--sk-nav-height) - var(--sk-banner-bottom-height));
+		height: calc(100dvh - var(--sk-nav-height) - var(--sk-banner-bottom-height));
 		--app-controls-h: 5.6rem;
 		--pane-controls-h: 4.2rem;
 		overflow: hidden;
