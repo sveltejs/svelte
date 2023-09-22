@@ -1,7 +1,7 @@
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import { Icon, Shell } from '@sveltejs/site-kit/components';
+	import { Banner, Icon, Shell } from '@sveltejs/site-kit/components';
 	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
 	import '@sveltejs/site-kit/styles/index.css';
@@ -24,7 +24,7 @@
 </script>
 
 <svelte:head>
-	{#if !$page.route.id.startsWith('/blog/')}
+	{#if !$page.route?.id?.startsWith('/blog/')}
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
 		<meta name="og:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
@@ -32,11 +32,7 @@
 </svelte:head>
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
-	<Shell
-		nav_visible={$page.url.pathname !== '/repl/embed'}
-		bind:snapshot={shell_snapshot}
-		banner_bottom_height="42px"
-	>
+	<Shell nav_visible={$page.url.pathname !== '/repl/embed'} bind:snapshot={shell_snapshot}>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
@@ -73,9 +69,9 @@
 
 		<slot />
 
-		<div slot="banner-bottom" class="banner-bottom">
-			<a href="/blog/runes" class="banner-bottom">Introducing the upcoming Svelte 5 API: Runes</a>
-		</div>
+		<Banner arrow slot="banner-bottom" id="svelte-5-runes">
+			<a href="/blog/runes">Introducing the upcoming Svelte 5 API: Runes</a>
+		</Banner>
 	</Shell>
 </div>
 
@@ -91,13 +87,5 @@
 	:global(html, body) {
 		height: 100%;
 		width: 100%;
-	}
-
-	.banner-bottom {
-		text-align: center;
-		background: var(--sk-theme-1-variant);
-		color: white;
-		text-decoration: underline;
-		padding: 8px;
 	}
 </style>
