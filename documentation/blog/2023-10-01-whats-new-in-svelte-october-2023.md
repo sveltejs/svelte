@@ -20,6 +20,8 @@ That's all for the new features! If you're looking for other patches and perform
 
 ## Community Showcase
 
+[Svelte Summit Fall](https://www.sveltesummit.com/) is happening on Nov 11, 2023. The 7th Virtual Svelte Conference is [open for proposals until October 15](https://sessionize.com/svelte-summit-fall-2023/) - anyone can submit!
+
 Threlte [is throwing a hackathon](https://threlte.xyz/hackathon) (**motion warning for the landing page** - it will respect Reduce Motion settings). The kickoff event is on Sunday, 15 October 2023 16:00 UTC.
 
 **Apps & Sites built with Svelte**
