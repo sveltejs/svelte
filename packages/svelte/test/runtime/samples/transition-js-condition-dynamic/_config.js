@@ -30,7 +30,7 @@ export default {
 
 		// Create a condition object that can be toggled
 		let shouldRun = true;
-		let conditionObject = {
+		const conditionObject = {
 			get condition() {
 				return shouldRun;
 			}
@@ -40,7 +40,7 @@ export default {
 		component.visible = false;
 		raf.tick(400);
 		assert.htmlEqual(target.innerHTML, '');
-		
+
 		// in: true, out: false
 		shouldRun = true;
 		component.visible = true;

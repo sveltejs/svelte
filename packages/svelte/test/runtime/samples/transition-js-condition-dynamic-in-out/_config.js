@@ -36,7 +36,7 @@ export default {
 		// Create a condition objects that can be toggled
 		let shouldRunIn = true;
 		let shouldRunOut = true;
-		let conditionObject = {
+		const conditionObject = {
 			get conditionIn() {
 				return shouldRunIn;
 			},
