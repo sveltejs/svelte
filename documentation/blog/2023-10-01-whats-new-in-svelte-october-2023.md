@@ -9,10 +9,10 @@ Svelte 5 isn't out yet (you can, however, [preview it now](https://svelte-5-prev
 
 ## What's new in Svelte & Language Tools
 - [Svelte 4.2.1](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md#421) was released with a bunch of fixes to HTML, CSS and sourcemap compilation
-- [The latest version of the Svelte language tools](https://github.com/sveltejs/language-tools/releases/tag/extensions-107.11.0) [enhances component references](https://github.com/sveltejs/language-tools/pull/2157) in the "Find All References" command and [adds fallback handling to auto-types](https://github.com/sveltejs/language-tools/issues/2156) (like those found in SvelteKit's `+server.js` files)
+- [The latest version of the Svelte language tools](https://github.com/sveltejs/language-tools/releases/tag/extensions-107.11.0) [enhances component references](https://github.com/sveltejs/language-tools/pull/2157) in the "Find All References" command, [fixes a persistent issue with automated types going missing](https://github.com/sveltejs/language-tools/pull/2160) after restarting a project and [adds fallback handling to auto-types](https://github.com/sveltejs/language-tools/issues/2156) (like those found in SvelteKit's `+server.js` files)
 
 ## What's new in SvelteKit
-- `+server.js` now have a catch-all handler that handles all unimplemented valid server requests. Just export a `fallback` function! (**1.25.0**, [Docs](https://kit.svelte.dev/docs/routing#server-fallback-method-handler), [#9755](https://github.com/sveltejs/kit/pull/9755))
+- `+server.js` now has a catch-all handler that handles all unimplemented valid server requests. Just export a `fallback` function! (**1.25.0**, [Docs](https://kit.svelte.dev/docs/routing#server-fallback-method-handler), [#9755](https://github.com/sveltejs/kit/pull/9755))
 
 That's all for the new features! If you're looking for other patches and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
@@ -41,6 +41,7 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Conditionally stream data in SvelteKit](https://geoffrich.net/posts/conditionally-stream-data/) by Geoff Rich
 - [Svelte Runes Change How Reactivity Works In Svelte](https://www.youtube.com/watch?v=TOTUXiYZhf4), [Make A 3D GitHub Skyline With Svelte To Flex On Your Peers](https://www.youtube.com/watch?v=f9fd1L1FEts), [Simple Page Transitions Using The View Transitions API With SvelteKit](https://www.youtube.com/watch?v=q_2irZO4SS8) and [Using JavaScript Libraries With Svelte Is Easy](https://www.youtube.com/watch?v=N9OjaQ0XtKQ) by Joy of Code
 - [Modern Web Podcast S11E2](https://modernweb.podbean.com/e/modern-web-podcast-s11e2-exploring-svelte-open-source-and-discord-bots-with-willow-ghost/) - Exploring Svelte, Open Source, and Discord Bots with Willow (GHOST)
+- [We are back! Svelte 5, Transitions, What's New?!](https://www.svelteradio.com/episodes/we-are-back-svelte-5-transitions-whats-new) by Svelte Radio
 - This Week in Svelte:
   - [2023 September 1](https://www.youtube.com/watch?v=fonBnVCIrjE) - SvelteKit 1.24.0, View Transitions API, AbortController
   - [2023 September 8](https://www.youtube.com/watch?v=jfBjmczZwRc) - SvelteKit 1.24.1, Capacitor walkthrough, reusing prop types
@@ -59,6 +60,7 @@ _To Watch_
 _To Read_
 - [Create the Perfect Sharable Rune in Svelte](https://dev.to/jdgamble555/create-the-perfect-sharable-rune-in-svelte-ij8) by Jonathan Gamble
 - [You Don't Need to "Learn" Svelte](https://kaviisuri.com/you-dont-need-to-learn-svelte) by KaviiSuri
+- [Build Websites with Prismic and SvelteKit](https://prismic.io/blog/sveltekit-prismic-integration) by Angelo Ashmore
 - [How to embed Svelte apps inside PHP?](https://www.okupter.com/blog/php-embed-svelte) by Justin Ahinon
 - [Using Web Browser's Indexed DB in SvelteKit](https://dev.to/theether0/using-web-browsers-indexed-db-in-sveltekit-3oo3) by Shivam Meena
 - [Integrate Storybook in Svelte: Doing it the Svelte-way](https://mainmatter.com/blog/2023/09/18/integrate-storybook-in-svelte-doing-it-the-svelte-way/) by Oscar Dominguez
