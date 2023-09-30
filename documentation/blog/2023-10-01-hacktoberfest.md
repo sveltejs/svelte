@@ -1,3 +1,10 @@
+---
+title: "Hacktoberfest 2023 with SvelteKit"
+description: "SvelteKit joins in the Hacktoberfest event in 2023"
+author: Willow (GHOST) & Braden Wiggins
+authorURL: https://ghostdev.xyz
+---
+
 # Sveltekit 🧡 Hacktoberfest
 
 We're excited to announce SvelteKit's participation in this year's Hacktoberfest! Hacktoberfest is a global event that takes place every October, during which developers are encouraged to contribute to open-source projects like SvelteKit. The goal is to foster a vibrant open-source community, celebrate shared knowledge, and make the world of coding more accessible to all. You can find other participating repositories by searching the [`hacktoberfest` topic](https://github.com/topics/hacktoberfest) on github.
