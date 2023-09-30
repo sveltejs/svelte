@@ -36,6 +36,7 @@ Threlte [is throwing a hackathon](https://threlte.xyz/hackathon) (**motion warni
 
 
 **Learning Resources**
+
 _Featuring Svelte Contributors and Ambassadors_
 - [Svelte 5: Introducing Runes... with Rich Harris](https://www.youtube.com/watch?v=RVnxF3j3N8U) and its follow-up: [Svelte 5 runes: what's the deal with getters and setters?](https://www.youtube.com/watch?v=NR8L5m73dtE)
 - [Conditionally stream data in SvelteKit](https://geoffrich.net/posts/conditionally-stream-data/) by Geoff Rich
