@@ -11,7 +11,7 @@ We're excited to announce SvelteKit's participation in this year's Hacktoberfest
 
 ## Getting Started
 
-The first step is to [register for Hacktoberfest](https://hacktoberfest.com/register). Once you've registered, any PR's submitted to Sveltekit will count towards your participation in the event!
+The first step is to [register for Hacktoberfest](https://hacktoberfest.com/register). Once you've registered, any PRs submitted to Sveltekit will count towards your participation in the event!
 
 ## Contributing
 
