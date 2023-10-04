@@ -59,7 +59,7 @@ try {
 	await sprite
 		.quality(80)
 		.writeAsync(
-			new URL(`../src/routes/_components/Supporters/donors.jpg`, import.meta.url).pathname
+			fileURLToPath(new URL(`../src/routes/_components/Supporters/donors.jpg`, import.meta.url))
 		);
 
 	const str = `[\n\t${included.map((a) => `${JSON.stringify(a.backer.name)}`).join(',\n\t')}\n]`;
