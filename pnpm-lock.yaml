@@ -72,8 +72,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       magic-string:
-        specifier: ^0.30.0
-        version: 0.30.0
+        specifier: ^0.30.4
+        version: 0.30.4
       periscopic:
         specifier: ^3.1.0
         version: 3.1.0
@@ -516,20 +516,6 @@ packages:
       '@lezer/common': 1.0.4
     dev: false
 
-  /@codemirror/autocomplete@6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4):
-    resolution: {integrity: sha512-yma56tqD7khIZK4gy4X5lX3/k5ArMiCGat7HEWRF/8L2kqOjVdp2qKZqpcJjwTIjSj6fqKAHqi7IjtH3QFE+Bw==}
-    peerDependencies:
-      '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
-      '@codemirror/view': ^6.0.0
-      '@lezer/common': ^1.0.0
-    dependencies:
-      '@codemirror/language': 6.8.0
-      '@codemirror/state': 6.2.1
-      '@codemirror/view': 6.19.0
-      '@lezer/common': 1.0.4
-    dev: false
-
   /@codemirror/autocomplete@6.9.1(@codemirror/language@6.9.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4):
     resolution: {integrity: sha512-yma56tqD7khIZK4gy4X5lX3/k5ArMiCGat7HEWRF/8L2kqOjVdp2qKZqpcJjwTIjSj6fqKAHqi7IjtH3QFE+Bw==}
     peerDependencies:
@@ -556,19 +542,7 @@ packages:
   /@codemirror/lang-css@6.2.0(@codemirror/view@6.16.0):
     resolution: {integrity: sha512-oyIdJM29AyRPM3+PPq1I2oIk8NpUfEN3kAM05XWDDs6o3gSneIKaVJifT2P+fqONLou2uIgXynFyMUDQvo/szA==}
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4)
-      '@codemirror/language': 6.8.0
-      '@codemirror/state': 6.2.1
-      '@lezer/common': 1.0.4
-      '@lezer/css': 1.1.3
-    transitivePeerDependencies:
-      - '@codemirror/view'
-    dev: false
-
-  /@codemirror/lang-css@6.2.0(@codemirror/view@6.19.0):
-    resolution: {integrity: sha512-oyIdJM29AyRPM3+PPq1I2oIk8NpUfEN3kAM05XWDDs6o3gSneIKaVJifT2P+fqONLou2uIgXynFyMUDQvo/szA==}
-    dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.16.0)(@lezer/common@1.0.4)
       '@codemirror/language': 6.8.0
       '@codemirror/state': 6.2.1
       '@lezer/common': 1.0.4
@@ -1919,7 +1893,7 @@ packages:
       '@codemirror/state': ^6.2.0
       '@codemirror/view': ^6.12.0
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.16.0)(@lezer/common@1.0.4)
       '@codemirror/commands': 6.2.4
       '@codemirror/language': 6.8.0
       '@codemirror/lint': 6.4.0
@@ -1980,8 +1954,8 @@ packages:
       '@lezer/javascript': ^1.2.0
       '@lezer/lr': ^1.0.0
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4)
-      '@codemirror/lang-css': 6.2.0(@codemirror/view@6.19.0)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.16.0)(@lezer/common@1.0.4)
+      '@codemirror/lang-css': 6.2.0(@codemirror/view@6.16.0)
       '@codemirror/lang-html': 6.4.6
       '@codemirror/lang-javascript': 6.1.9
       '@codemirror/language': 6.8.0
@@ -2360,7 +2334,7 @@ packages:
       devalue: 4.3.2
       esm-env: 1.0.0
       kleur: 4.1.5
-      magic-string: 0.30.3
+      magic-string: 0.30.4
       mime: 3.0.0
       sade: 1.8.1
       set-cookie-parser: 2.6.0
@@ -2377,9 +2351,9 @@ packages:
     peerDependencies:
       svelte: ^3.54.0 || ^4.0.0-next.0 || ^4.0.0
     dependencies:
-      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.9.0)(@codemirror/state@6.2.1)(@codemirror/view@6.19.0)(@lezer/common@1.0.4)
+      '@codemirror/autocomplete': 6.9.1(@codemirror/language@6.8.0)(@codemirror/state@6.2.1)(@codemirror/view@6.16.0)(@lezer/common@1.0.4)
       '@codemirror/commands': 6.2.4
-      '@codemirror/lang-css': 6.2.0(@codemirror/view@6.19.0)
+      '@codemirror/lang-css': 6.2.0(@codemirror/view@6.16.0)
       '@codemirror/lang-javascript': 6.1.9
       '@codemirror/lang-json': 6.0.1
       '@codemirror/lang-markdown': 6.2.0
@@ -2462,7 +2436,7 @@ packages:
       debug: 4.3.4
       deepmerge: 4.3.1
       kleur: 4.1.5
-      magic-string: 0.30.3
+      magic-string: 0.30.4
       svelte: link:packages/svelte
       svelte-hmr: 0.15.3(svelte@packages+svelte)
       vite: 4.4.9(@types/node@20.6.1)(lightningcss@1.21.8)(sass@1.67.0)
@@ -2958,7 +2932,7 @@ packages:
   /@vitest/snapshot@0.33.0:
     resolution: {integrity: sha512-tJjrl//qAHbyHajpFvr8Wsk8DIOODEebTu7pgBrP07iOepR5jYkLFiqLq2Ltxv+r0uptUb4izv1J8XBOwKkVYA==}
     dependencies:
-      magic-string: 0.30.3
+      magic-string: 0.30.4
       pathe: 1.1.1
       pretty-format: 29.6.1
     dev: true
@@ -3790,7 +3764,7 @@ packages:
       globrex: 0.1.2
       kleur: 4.1.5
       locate-character: 3.0.0
-      magic-string: 0.30.0
+      magic-string: 0.30.4
       sade: 1.8.1
       tiny-glob: 0.2.9
       ts-api-utils: 0.0.46(typescript@5.1.3)
@@ -5477,14 +5451,15 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /magic-string@0.30.0:
-    resolution: {integrity: sha512-LA+31JYDJLs82r2ScLrlz1GjSgu66ZV518eyWT+S8VhyQn/JL0u9MeBOvQMGYiPk1DBiSN9DDMOcXvigJZaViQ==}
+  /magic-string@0.30.3:
+    resolution: {integrity: sha512-B7xGbll2fG/VjP+SWg4sX3JynwIU0mjoTc6MPpKNuIvftk6u6vqhDnk1R80b8C2GBR6ywqy+1DcKBrevBg+bmw==}
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
 
-  /magic-string@0.30.3:
-    resolution: {integrity: sha512-B7xGbll2fG/VjP+SWg4sX3JynwIU0mjoTc6MPpKNuIvftk6u6vqhDnk1R80b8C2GBR6ywqy+1DcKBrevBg+bmw==}
+  /magic-string@0.30.4:
+    resolution: {integrity: sha512-Q/TKtsC5BPm0kGqgBIF9oXAs/xEf2vRKiIB4wCRQTJOQIByZ1d+NnUOotvJOvNpi5RNIgVOMC3pOuaP1ZTDlVg==}
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
@@ -7628,7 +7603,7 @@ packages:
       happy-dom: 9.20.3
       jsdom: 21.1.2
       local-pkg: 0.4.3
-      magic-string: 0.30.3
+      magic-string: 0.30.4
       pathe: 1.1.1
       picocolors: 1.0.0
       playwright: 1.35.1
