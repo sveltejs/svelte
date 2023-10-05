@@ -131,7 +131,7 @@
     "esbuild": "^0.18.11",
     "eslint-plugin-lube": "^0.1.7",
     "happy-dom": "^9.20.3",
-    "jsdom": "^21.1.2",
+    "jsdom": "22.0.0",
     "kleur": "^4.1.5",
     "rollup": "^3.26.2",
     "source-map": "^0.7.4",
