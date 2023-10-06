@@ -147,7 +147,7 @@ When adding a new breaking change, follow this template in your pull request:
 
 ## License
 
-By contributing to Svelte, you agree that your contributions will be licensed under its [MIT license](https://github.com/sveltejs/svelte/blob/master/LICENSE).
+By contributing to Svelte, you agree that your contributions will be licensed under its [MIT license](https://github.com/sveltejs/svelte/blob/master/LICENSE.md).
 
 ## Questions
 
