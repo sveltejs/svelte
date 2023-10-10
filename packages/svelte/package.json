@@ -137,6 +137,6 @@
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9",
     "typescript": "^5.1.3",
-    "vitest": "^0.33.0"
+    "vitest": "^0.34.6"
   }
 }
