@@ -480,7 +480,10 @@ export function set_custom_element_data_map(node, data_map) {
 /**
  * @returns {void} */
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
+	const lower = prop.toLowerCase(); // for backwards compatibility with existing behavior we do lowercase first
+	if (lower in node) {
+		node[lower] = typeof node[lower] === 'boolean' && value === '' ? true : value;
+	} else if (prop in node) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
