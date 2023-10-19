@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-ignore trailing comments when comparing nodes while invalidating
+fix: ignore trailing comments when comparing nodes
