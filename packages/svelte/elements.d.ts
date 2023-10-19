@@ -1405,6 +1405,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'text-rendering'?: number | string | undefined | null;
 	to?: number | string | undefined | null;
 	transform?: string | undefined | null;
+	'transform-origin'?: string | undefined | null;
 	u1?: number | string | undefined | null;
 	u2?: number | string | undefined | null;
 	'underline-position'?: number | string | undefined | null;
