@@ -6,5 +6,5 @@
  * https://svelte.dev/docs/svelte-compiler#svelte-version
  * @type {string}
  */
-export const VERSION = '4.2.1';
+export const VERSION = '4.2.2';
 export const PUBLIC_VERSION = '4';

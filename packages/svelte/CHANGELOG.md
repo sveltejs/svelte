@@ -1,5 +1,17 @@
 # svelte
 
+## 4.2.2
+
+### Patch Changes
+
+- fix: support camelCase properties on custom elements ([#9328](https://github.com/sveltejs/svelte/pull/9328))
+
+- fix: add missing plaintext-only value to contenteditable type ([#9242](https://github.com/sveltejs/svelte/pull/9242))
+
+- chore: upgrade magic-string to 0.30.4 ([#9292](https://github.com/sveltejs/svelte/pull/9292))
+
+- fix: ignore trailing comments when comparing nodes ([#9197](https://github.com/sveltejs/svelte/pull/9197))
+
 ## 4.2.1
 
 ### Patch Changes
