@@ -36,7 +36,13 @@ const at_rule_has_declaration = ({ block }) =>
 function minify_declarations(code, start, declarations) {
 	let c = start;
 	declarations.forEach((declaration, i) => {
-		const separator = i > 0 ? ';' : '';
+		let separator = i > 0 ? ';' : '';
+		
+		// Check the type of the previous declaration.node to decide whether to insert a semicolon
+		if (i > 0 && declarations[i - 1].node.type === "Rule") {
+			separator = '';
+		}
+
 		if (declaration.node.start - c > separator.length) {
 			code.update(c, declaration.node.start, separator);
 		}
@@ -55,19 +61,23 @@ class Rule {
 	/** @type {import('./private.js').CssNode} */
 	node;
 
-	/** @type {Atrule} */
+	/** @type {Atrule|Rule} */
 	parent;
+
+	/** @type {boolean} */
+	is_nested;
 
 	/**
 	 * @param {import('./private.js').CssNode} node
 	 * @param {any} stylesheet
-	 * @param {Atrule} [parent]
+	 * @param {Atrule|Rule} [parent]
 	 */
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
 		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
-		this.declarations = node.block.children.map((node) => new Declaration(node));
+		this.declarations = node.block.children.map((node) => node.type === "Rule" ? new Rule(node, stylesheet, this) : new Declaration(node));
+		this.is_nested = parent && parent.node.type === 'Rule';
 	}
 
 	/** @param {import('../nodes/Element.js').default} node */
@@ -91,7 +101,7 @@ class Rule {
 		let c = this.node.start;
 		let started = false;
 		this.selectors.forEach((selector) => {
-			if (selector.used) {
+			if (selector.used || this.is_nested) {
 				const separator = started ? ',' : '';
 				if (selector.node.start - c > separator.length) {
 					code.update(c, selector.node.start, separator);

@@ -1,0 +1,1 @@
+button.svelte-xyz{color:red;&>div{color:blue}& .foo{color:yellow}&:last-child{color:green}color:black}

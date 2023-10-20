@@ -76,7 +76,7 @@
   "scripts": {
     "format": "prettier . --cache --plugin-search-dir=. --write",
     "check": "tsc --noEmit",
-    "test": "vitest run && echo \"manually check that there are no type errors in test/types by opening the files in there\"",
+    "test": "vitest run",
     "build": "rollup -c && pnpm types",
     "generate:version": "node ./scripts/generate-version.js",
     "dev": "rollup -cw",
