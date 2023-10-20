@@ -21,7 +21,7 @@ function create_dynamic_element_3(ctx) {
 	return {
 		c() {
 			svelte_element = element(static_value);
-			set_dynamic_element_data(static_value)(svelte_element, { static_value, ...static_obj });
+			set_dynamic_element_data(static_value)(svelte_element, { static_value, .../*static_obj*/ ctx[2] });
 			toggle_class(svelte_element, "foo", static_value);
 		},
 		m(target, anchor) {
@@ -43,7 +43,7 @@ function create_dynamic_element_2(ctx) {
 	return {
 		c() {
 			svelte_element = element(/*dynamic_value*/ ctx[0]);
-			set_dynamic_element_data(/*dynamic_value*/ ctx[0])(svelte_element, { static_value, ...static_obj });
+			set_dynamic_element_data(/*dynamic_value*/ ctx[0])(svelte_element, { static_value, .../*static_obj*/ ctx[2] });
 			toggle_class(svelte_element, "foo", static_value);
 		},
 		m(target, anchor) {

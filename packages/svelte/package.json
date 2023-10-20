@@ -1,6 +1,6 @@
 {
   "name": "svelte",
-  "version": "4.1.2",
+  "version": "4.2.2",
   "description": "Cybernetically enhanced web apps",
   "type": "module",
   "module": "src/runtime/index.js",
@@ -19,6 +19,7 @@
     "motion.d.ts",
     "action.d.ts",
     "elements.d.ts",
+    "svelte-html.d.ts",
     "README.md"
   ],
   "exports": {
@@ -82,7 +83,7 @@
     "posttest": "agadoo src/internal/index.js",
     "prepublishOnly": "pnpm build",
     "types": "node ./scripts/generate-dts.js",
-    "lint": "prettier . --cache --plugin-search-dir=. --check && eslint \"{src,test}/**/*.{ts,js}\" --cache"
+    "lint": "prettier . --cache --plugin-search-dir=. --check && eslint \"{scripts,src,test}/**/*.js\" --cache --fix"
   },
   "repository": {
     "type": "git",
@@ -113,7 +114,7 @@
     "estree-walker": "^3.0.3",
     "is-reference": "^3.0.1",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.0",
+    "magic-string": "^0.30.4",
     "periscopic": "^3.1.0"
   },
   "devDependencies": {
@@ -128,8 +129,9 @@
     "agadoo": "^3.0.0",
     "dts-buddy": "^0.1.7",
     "esbuild": "^0.18.11",
+    "eslint-plugin-lube": "^0.1.7",
     "happy-dom": "^9.20.3",
-    "jsdom": "^21.1.2",
+    "jsdom": "22.0.0",
     "kleur": "^4.1.5",
     "rollup": "^3.26.2",
     "source-map": "^0.7.4",

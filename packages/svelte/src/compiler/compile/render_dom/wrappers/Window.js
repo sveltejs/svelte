@@ -94,14 +94,14 @@ export default class WindowWrapper extends Wrapper {
 					bindings.scrollX && bindings.scrollY
 						? x`"${bindings.scrollX}" in this._state || "${bindings.scrollY}" in this._state`
 						: x`"${bindings.scrollX || bindings.scrollY}" in this._state`;
-				const scrollX = bindings.scrollX && x`this._state.${bindings.scrollX}`;
-				const scrollY = bindings.scrollY && x`this._state.${bindings.scrollY}`;
+				const scroll_x = bindings.scrollX && x`this._state.${bindings.scrollX}`;
+				const scroll_y = bindings.scrollY && x`this._state.${bindings.scrollY}`;
 				renderer.meta_bindings.push(b`
 					if (${condition}) {
-						@_scrollTo(${scrollX || '@_window.pageXOffset'}, ${scrollY || '@_window.pageYOffset'});
+						@_scrollTo(${scroll_x || '@_window.pageXOffset'}, ${scroll_y || '@_window.pageYOffset'});
 					}
-					${scrollX && `${scrollX} = @_window.pageXOffset;`}
-					${scrollY && `${scrollY} = @_window.pageYOffset;`}
+					${scroll_x && `${scroll_x} = @_window.pageXOffset;`}
+					${scroll_y && `${scroll_y} = @_window.pageYOffset;`}
 				`);
 				block.event_listeners.push(x`
 					@listen(@_window, "${event}", () => {
@@ -132,17 +132,17 @@ export default class WindowWrapper extends Wrapper {
 		// special case... might need to abstract this out if we add more special cases
 		if (bindings.scrollX || bindings.scrollY) {
 			const condition = renderer.dirty([bindings.scrollX, bindings.scrollY].filter(Boolean));
-			const scrollX = bindings.scrollX
+			const scroll_x = bindings.scrollX
 				? renderer.reference(bindings.scrollX)
 				: x`@_window.pageXOffset`;
-			const scrollY = bindings.scrollY
+			const scroll_y = bindings.scrollY
 				? renderer.reference(bindings.scrollY)
 				: x`@_window.pageYOffset`;
 			block.chunks.update.push(b`
 				if (${condition} && !${scrolling}) {
 					${scrolling} = true;
 					@_clearTimeout(${scrolling_timeout});
-					@_scrollTo(${scrollX}, ${scrollY});
+					@_scrollTo(${scroll_x}, ${scroll_y});
 					${scrolling_timeout} = @_setTimeout(${clear_scrolling}, 100);
 				}
 			`);

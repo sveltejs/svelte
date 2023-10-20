@@ -33,10 +33,10 @@ export function ok(condition, message) {
 }
 
 export function htmlEqual(actual, expected, message) {
-	return deepEqual(normalizeHtml(window, actual), normalizeHtml(window, expected), message);
+	return deepEqual(normalize_html(window, actual), normalize_html(window, expected), message);
 }
 
-function normalizeHtml(window, html) {
+function normalize_html(window, html) {
 	try {
 		const node = window.document.createElement('div');
 		node.innerHTML = html
@@ -44,7 +44,7 @@ function normalizeHtml(window, html) {
 			.replace(/>[\s\r\n]+</g, '><')
 			.trim();
 
-		normalizeStyles(node);
+		normalize_styles(node);
 
 		return node.innerHTML.replace(/<\/?noscript\/?>/g, '');
 	} catch (err) {
@@ -52,14 +52,14 @@ function normalizeHtml(window, html) {
 	}
 }
 
-function normalizeStyles(node) {
+function normalize_styles(node) {
 	if (node.nodeType === 1) {
 		if (node.hasAttribute('style')) {
 			node.style = node.style.cssText;
 		}
 
 		for (const child of node.childNodes) {
-			normalizeStyles(child);
+			normalize_styles(child);
 		}
 	}
 }

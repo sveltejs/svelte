@@ -50,7 +50,7 @@ export function invalidate(renderer, scope, node, names, main_execution_context 
 	if (
 		node.type === 'AssignmentExpression' &&
 		node.operator === '=' &&
-		nodes_match(node.left, node.right) &&
+		nodes_match(node.left, node.right, ['trailingComments', 'leadingComments']) &&
 		tail.length === 0
 	) {
 		return get_invalidated(head, node);

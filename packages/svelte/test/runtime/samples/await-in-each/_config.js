@@ -1,13 +1,13 @@
 let fulfil;
 
-const thePromise = new Promise((f) => {
+const the_promise = new Promise((f) => {
 	fulfil = f;
 });
 
 const items = [
 	{
 		title: 'a title',
-		data: thePromise
+		data: the_promise
 	}
 ];
 
@@ -23,7 +23,7 @@ export default {
 	test({ assert, target }) {
 		fulfil(42);
 
-		return thePromise.then(() => {
+		return the_promise.then(() => {
 			assert.htmlEqual(
 				target.innerHTML,
 				`

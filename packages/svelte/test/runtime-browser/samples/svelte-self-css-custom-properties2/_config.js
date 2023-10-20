@@ -25,51 +25,51 @@ export default {
 	`,
 	test({ target, window, assert, component }) {
 		function assert_slider_1() {
-			const railColor1 = target.querySelector('#component1 p');
-			const trackColor1 = target.querySelector('#component1 span');
-			const railColor2 = target.querySelector('#component2 p');
-			const trackColor2 = target.querySelector('#component2 span');
-			const nestRailColor1 = target.querySelector('#nest-component1 p');
-			const nestTrackColor1 = target.querySelector('#nest-component1 span');
-			const nestRailColor2 = target.querySelector('#nest-component2 p');
-			const nestTrackColor2 = target.querySelector('#nest-component2 span');
+			const rail_color1 = target.querySelector('#component1 p');
+			const track_color1 = target.querySelector('#component1 span');
+			const rail_color2 = target.querySelector('#component2 p');
+			const track_color2 = target.querySelector('#component2 span');
+			const nest_rail_color1 = target.querySelector('#nest-component1 p');
+			const nest_track_color1 = target.querySelector('#nest-component1 span');
+			const nest_rail_color2 = target.querySelector('#nest-component2 p');
+			const nest_track_color2 = target.querySelector('#nest-component2 span');
 
-			assert.equal(window.getComputedStyle(railColor1).color, 'rgb(0, 0, 0)');
-			assert.equal(window.getComputedStyle(trackColor1).color, 'rgb(255, 0, 0)');
-			assert.equal(window.getComputedStyle(railColor2).color, 'rgb(0, 255, 0)');
-			assert.equal(window.getComputedStyle(trackColor2).color, 'rgb(0, 0, 255)');
-			assert.equal(window.getComputedStyle(nestRailColor1).color, 'rgb(255, 255, 0)');
-			assert.equal(window.getComputedStyle(nestTrackColor1).color, 'rgb(255, 0, 255)');
-			assert.equal(window.getComputedStyle(nestRailColor2).color, 'rgb(255, 255, 0)');
-			assert.equal(window.getComputedStyle(nestTrackColor2).color, 'rgb(255, 0, 255)');
-			assert.equal(railColor1.textContent, 'Slider1');
-			assert.equal(railColor2.textContent, 'Slider1');
-			assert.equal(nestRailColor1.textContent, 'Slider1');
-			assert.equal(nestRailColor2.textContent, 'Slider1');
+			assert.equal(window.getComputedStyle(rail_color1).color, 'rgb(0, 0, 0)');
+			assert.equal(window.getComputedStyle(track_color1).color, 'rgb(255, 0, 0)');
+			assert.equal(window.getComputedStyle(rail_color2).color, 'rgb(0, 255, 0)');
+			assert.equal(window.getComputedStyle(track_color2).color, 'rgb(0, 0, 255)');
+			assert.equal(window.getComputedStyle(nest_rail_color1).color, 'rgb(255, 255, 0)');
+			assert.equal(window.getComputedStyle(nest_track_color1).color, 'rgb(255, 0, 255)');
+			assert.equal(window.getComputedStyle(nest_rail_color2).color, 'rgb(255, 255, 0)');
+			assert.equal(window.getComputedStyle(nest_track_color2).color, 'rgb(255, 0, 255)');
+			assert.equal(rail_color1.textContent, 'Slider1');
+			assert.equal(rail_color2.textContent, 'Slider1');
+			assert.equal(nest_rail_color1.textContent, 'Slider1');
+			assert.equal(nest_rail_color2.textContent, 'Slider1');
 		}
 
 		function assert_slider_2() {
-			const railColor1 = target.querySelector('#component1 p');
-			const trackColor1 = target.querySelector('#component1 span');
-			const railColor2 = target.querySelector('#component2 p');
-			const trackColor2 = target.querySelector('#component2 span');
-			const nestRailColor1 = target.querySelector('#nest-component1 p');
-			const nestTrackColor1 = target.querySelector('#nest-component1 span');
-			const nestRailColor2 = target.querySelector('#nest-component2 p');
-			const nestTrackColor2 = target.querySelector('#nest-component2 span');
+			const rail_color1 = target.querySelector('#component1 p');
+			const track_color1 = target.querySelector('#component1 span');
+			const rail_color2 = target.querySelector('#component2 p');
+			const track_color2 = target.querySelector('#component2 span');
+			const nest_rail_color1 = target.querySelector('#nest-component1 p');
+			const nest_track_color1 = target.querySelector('#nest-component1 span');
+			const nest_rail_color2 = target.querySelector('#nest-component2 p');
+			const nest_track_color2 = target.querySelector('#nest-component2 span');
 
-			assert.equal(window.getComputedStyle(railColor1).color, 'rgb(0, 0, 0)');
-			assert.equal(window.getComputedStyle(trackColor1).color, 'rgb(255, 0, 0)');
-			assert.equal(window.getComputedStyle(railColor2).color, 'rgb(0, 255, 0)');
-			assert.equal(window.getComputedStyle(trackColor2).color, 'rgb(0, 0, 255)');
-			assert.equal(window.getComputedStyle(nestRailColor1).color, 'rgb(0, 255, 255)');
-			assert.equal(window.getComputedStyle(nestTrackColor1).color, 'rgb(255, 255, 255)');
-			assert.equal(window.getComputedStyle(nestRailColor2).color, 'rgb(0, 255, 255)');
-			assert.equal(window.getComputedStyle(nestTrackColor2).color, 'rgb(255, 255, 255)');
-			assert.equal(railColor1.textContent, 'Slider2');
-			assert.equal(railColor2.textContent, 'Slider2');
-			assert.equal(nestRailColor1.textContent, 'Slider2');
-			assert.equal(nestRailColor2.textContent, 'Slider2');
+			assert.equal(window.getComputedStyle(rail_color1).color, 'rgb(0, 0, 0)');
+			assert.equal(window.getComputedStyle(track_color1).color, 'rgb(255, 0, 0)');
+			assert.equal(window.getComputedStyle(rail_color2).color, 'rgb(0, 255, 0)');
+			assert.equal(window.getComputedStyle(track_color2).color, 'rgb(0, 0, 255)');
+			assert.equal(window.getComputedStyle(nest_rail_color1).color, 'rgb(0, 255, 255)');
+			assert.equal(window.getComputedStyle(nest_track_color1).color, 'rgb(255, 255, 255)');
+			assert.equal(window.getComputedStyle(nest_rail_color2).color, 'rgb(0, 255, 255)');
+			assert.equal(window.getComputedStyle(nest_track_color2).color, 'rgb(255, 255, 255)');
+			assert.equal(rail_color1.textContent, 'Slider2');
+			assert.equal(rail_color2.textContent, 'Slider2');
+			assert.equal(nest_rail_color1.textContent, 'Slider2');
+			assert.equal(nest_rail_color2.textContent, 'Slider2');
 		}
 
 		assert_slider_1();

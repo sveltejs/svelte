@@ -1,3 +1,4 @@
 packages:
-  - 'sites/*'
   - 'packages/*'
+  - 'playgrounds/*'
+  - 'sites/*'

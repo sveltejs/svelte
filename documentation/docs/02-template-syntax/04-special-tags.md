@@ -5,6 +5,7 @@ title: Special tags
 ## {@html ...}
 
 ```svelte
+<!--- copy: false --->
 {@html expression}
 ```
 
@@ -24,10 +25,12 @@ The expression should be valid standalone HTML — `{@html "<div>"}content{@html
 ## {@debug ...}
 
 ```svelte
+<!--- copy: false --->
 {@debug}
 ```
 
 ```svelte
+<!--- copy: false --->
 {@debug var1, var2, ..., varN}
 ```
 
@@ -65,6 +68,7 @@ The `{@debug}` tag without any arguments will insert a `debugger` statement that
 ## {@const ...}
 
 ```svelte
+<!--- copy: false --->
 {@const assignment}
 ```
 

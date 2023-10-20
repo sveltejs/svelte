@@ -486,7 +486,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	accesskey?: string | undefined | null;
 	autofocus?: boolean | undefined | null;
 	class?: string | undefined | null;
-	contenteditable?: Booleanish | 'inherit' | undefined | null;
+	contenteditable?: Booleanish | 'inherit' | 'plaintext-only' | undefined | null;
 	contextmenu?: string | undefined | null;
 	dir?: string | undefined | null;
 	draggable?: Booleanish | undefined | null;
@@ -808,6 +808,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	formnovalidate?: boolean | undefined | null;
 	formtarget?: string | undefined | null;
 	height?: number | string | undefined | null;
+	indeterminate?: boolean | undefined | null;
 	list?: string | undefined | null;
 	max?: number | string | undefined | null;
 	maxlength?: number | undefined | null;
@@ -1404,6 +1405,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'text-rendering'?: number | string | undefined | null;
 	to?: number | string | undefined | null;
 	transform?: string | undefined | null;
+	'transform-origin'?: string | undefined | null;
 	u1?: number | string | undefined | null;
 	u2?: number | string | undefined | null;
 	'underline-position'?: number | string | undefined | null;

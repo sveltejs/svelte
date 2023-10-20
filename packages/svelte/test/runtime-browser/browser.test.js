@@ -93,7 +93,7 @@ async function run_browser_test(dir) {
 			globalName: 'test'
 		});
 
-		function assertWarnings() {
+		function assert_warnings() {
 			if (config.warnings) {
 				assert.deepStrictEqual(
 					warnings.map((w) => ({
@@ -112,7 +112,7 @@ async function run_browser_test(dir) {
 			}
 		}
 
-		assertWarnings();
+		assert_warnings();
 
 		try {
 			const page = await browser.newPage();
@@ -191,7 +191,7 @@ async function run_custom_elements_test(dir) {
 			globalName: 'test'
 		});
 
-		function assertWarnings() {
+		function assert_warnings() {
 			if (expected_warnings) {
 				assert.deepStrictEqual(
 					warnings.map((w) => ({
@@ -205,7 +205,7 @@ async function run_custom_elements_test(dir) {
 				);
 			}
 		}
-		assertWarnings();
+		assert_warnings();
 
 		const page = await browser.newPage();
 		page.on('console', (type) => {

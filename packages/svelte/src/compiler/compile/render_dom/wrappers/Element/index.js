@@ -990,7 +990,8 @@ export default class ElementWrapper extends Wrapper {
 		const static_attributes = [];
 		this.attributes.forEach((attr) => {
 			if (attr instanceof SpreadAttributeWrapper) {
-				static_attributes.push({ type: 'SpreadElement', argument: attr.node.expression.node });
+				const snippet = { type: 'SpreadElement', argument: attr.node.expression.manipulate(block) };
+				static_attributes.push(snippet);
 			} else {
 				const name = attr.property_name || attr.name;
 				static_attributes.push(p`${name}: ${attr.get_value(block)}`);
@@ -1240,11 +1241,7 @@ export default class ElementWrapper extends Wrapper {
 				}
 				if (this.dynamic_style_dependencies.size > 0) {
 					maybe_create_style_changed_var();
-					// If all dependencies are same as the style attribute dependencies, then we can skip the dirty check
-					condition =
-						all_deps.size === this.dynamic_style_dependencies.size
-							? style_changed_var
-							: x`${style_changed_var} || ${condition}`;
+					condition = x`${condition} || ${style_changed_var}`;
 				}
 				block.chunks.update.push(b`
 					if (${condition}) {

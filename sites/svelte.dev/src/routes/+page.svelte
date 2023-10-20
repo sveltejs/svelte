@@ -92,7 +92,7 @@
 		]
 	}}
 >
-	<span slot="copyright">
+	<span slot="license">
 		Svelte is <a href="https://github.com/sveltejs/svelte">free and open source software</a> released
 		under the MIT license
 	</span>

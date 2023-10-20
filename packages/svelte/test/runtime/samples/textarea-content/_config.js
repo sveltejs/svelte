@@ -18,50 +18,53 @@ multiple leading newlines</textarea> <div id="div-with-textarea-with-multiple-le
 multiple leading newlines</textarea></div>`,
 	test({ assert, target }) {
 		// Test for <textarea> tag
-		const elementTextarea = target.querySelector('#textarea');
+		const element_textarea = target.querySelector('#textarea');
 		// Test for <textarea> tag in non <textarea> tag
-		const elementDivWithTextarea = target.querySelector('#div-with-textarea');
+		const element_div_with_textarea = target.querySelector('#div-with-textarea');
 		// Test for <textarea> tag with leading newline
-		const elementTextareaWithLeadingNewline = target.querySelector(
+		const element_textarea_with_leading_newline = target.querySelector(
 			'#textarea-with-leading-newline'
 		);
-		const elementTextareaWithoutLeadingNewline = target.querySelector(
+		const element_textarea_without_leading_newline = target.querySelector(
 			'#textarea-without-leading-newline'
 		);
-		const elementTextareaWithMultipleLeadingNewline = target.querySelector(
+		const element_textarea_with_multiple_leading_newline = target.querySelector(
 			'#textarea-with-multiple-leading-newlines'
 		);
-		const elementDivWithTextareaWithMultipleLeadingNewline = target.querySelector(
+		const element_div_with_textarea_with_multiple_leading_newline = target.querySelector(
 			'#div-with-textarea-with-multiple-leading-newlines'
 		);
 
 		assert.equal(
-			elementTextarea.value,
+			element_textarea.value,
 			`  A
   B
 `
 		);
 		assert.equal(
-			elementDivWithTextarea.children[0].value,
+			element_div_with_textarea.children[0].value,
 			`    A
     B
   `
 		);
-		assert.equal(elementTextareaWithLeadingNewline.children[0].value, 'leading newline');
+		assert.equal(element_textarea_with_leading_newline.children[0].value, 'leading newline');
 		assert.equal(
-			elementTextareaWithLeadingNewline.children[1].value,
+			element_textarea_with_leading_newline.children[1].value,
 			'  leading newline and spaces'
 		);
-		assert.equal(elementTextareaWithLeadingNewline.children[2].value, '\nleading newlines');
-		assert.equal(elementTextareaWithoutLeadingNewline.children[0].value, 'without spaces');
-		assert.equal(elementTextareaWithoutLeadingNewline.children[1].value, '  with spaces  ');
+		assert.equal(element_textarea_with_leading_newline.children[2].value, '\nleading newlines');
+		assert.equal(element_textarea_without_leading_newline.children[0].value, 'without spaces');
+		assert.equal(element_textarea_without_leading_newline.children[1].value, '  with spaces  ');
 		assert.equal(
-			elementTextareaWithoutLeadingNewline.children[2].value,
+			element_textarea_without_leading_newline.children[2].value,
 			' \nnewline after leading space'
 		);
-		assert.equal(elementTextareaWithMultipleLeadingNewline.value, '\n\nmultiple leading newlines');
 		assert.equal(
-			elementDivWithTextareaWithMultipleLeadingNewline.children[0].value,
+			element_textarea_with_multiple_leading_newline.value,
+			'\n\nmultiple leading newlines'
+		);
+		assert.equal(
+			element_div_with_textarea_with_multiple_leading_newline.children[0].value,
 			'\n\nmultiple leading newlines'
 		);
 	}

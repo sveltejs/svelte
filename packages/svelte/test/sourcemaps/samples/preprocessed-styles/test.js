@@ -1,6 +1,6 @@
 export function test({ assert, input, css }) {
-	const expectedBar = input.locate('--baritone');
-	const expectedBaz = input.locate('--baz');
+	const expected_bar = input.locate('--baritone');
+	const expected_baz = input.locate('--baz');
 
 	let start = css.locate('--bar');
 
@@ -14,8 +14,8 @@ export function test({ assert, input, css }) {
 		{
 			source: 'input.svelte',
 			name: null,
-			line: expectedBar.line + 1,
-			column: expectedBar.column
+			line: expected_bar.line + 1,
+			column: expected_bar.column
 		},
 		"couldn't find bar in source"
 	);
@@ -32,8 +32,8 @@ export function test({ assert, input, css }) {
 		{
 			source: 'input.svelte',
 			name: null,
-			line: expectedBaz.line + 1,
-			column: expectedBaz.column
+			line: expected_baz.line + 1,
+			column: expected_baz.column
 		},
 		"couldn't find baz in source"
 	);

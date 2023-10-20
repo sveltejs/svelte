@@ -67,6 +67,7 @@ Whereas children of `target` are normally left alone, `hydrate: true` will cause
 The existing DOM doesn't need to match the component — Svelte will 'repair' the DOM as it goes.
 
 ```ts
+/// file: index.js
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
@@ -150,6 +151,7 @@ Causes the `callback` function to be called whenever the component dispatches an
 A function is returned that will remove the event listener when called.
 
 ```ts
+/// file: index.js
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
@@ -231,6 +233,7 @@ If a component is compiled with `accessors: true`, each instance will have gette
 By default, `accessors` is `false`, unless you're compiling as a custom element.
 
 ```js
+/// file: index.js
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 

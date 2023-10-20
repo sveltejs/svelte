@@ -10,15 +10,15 @@ export function test({ assert, preprocessed, js, css }) {
 	function test_name(old_name, new_name, where) {
 		let loc = { character: -1 };
 		while ((loc = where.locate(new_name, loc.character + 1))) {
-			const actualMapping = where.mapConsumer.originalPositionFor({
+			const actual_mapping = where.mapConsumer.originalPositionFor({
 				line: loc.line + 1,
 				column: loc.column
 			});
-			if (actualMapping.line === null) {
+			if (actual_mapping.line === null) {
 				// location is not mapped - ignore
 				continue;
 			}
-			assert.equal(actualMapping.name, old_name);
+			assert.equal(actual_mapping.name, old_name);
 		}
 		if (loc === undefined) {
 			// workaround for bug in locate-character, TODO remove

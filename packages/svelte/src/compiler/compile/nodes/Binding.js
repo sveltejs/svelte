@@ -126,6 +126,6 @@ export default class Binding extends Node {
  * @param {import('./shared/Node.js').default} node
  * @returns {node is import('./Element.js').default}
  */
-function isElement(node) {
+function is_element(node) {
 	return !!(/** @type {any} */ (node).is_media_node);
 }

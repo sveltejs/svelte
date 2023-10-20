@@ -56,8 +56,9 @@ All other attributes are included unless their value is [nullish](https://develo
 
 An expression might include characters that would cause syntax highlighting to fail in regular HTML, so quoting the value is permitted. The quotes do not affect how the value is parsed:
 
+<!-- prettier-ignore -->
 ```svelte
-<button disabled={number !== 42}>...</button>
+<button disabled="{number !== 42}">...</button>
 ```
 
 When the attribute name and value match (`name={name}`), they can be replaced with `{name}`.
@@ -105,11 +106,13 @@ An element or component can have multiple spread attributes, interspersed with r
 
 ## Text expressions
 
+A JavaScript expression can be included as text by surrounding it with curly braces.
+
 ```svelte
 {expression}
 ```
 
-Text can also contain JavaScript expressions:
+Curly braces can be included in a Svelte template by using their [HTML entity](https://developer.mozilla.org/docs/Glossary/Entity) strings: `&lbrace;`, `&lcub;`, or `&#123;` for `{` and `&rbrace;`, `&rcub;`, or `&#125;` for `}`.
 
 > If you're using a regular expression (`RegExp`) [literal notation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp#literal_notation_and_constructor), you'll need to wrap it in parentheses.
 

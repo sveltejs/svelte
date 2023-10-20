@@ -7,10 +7,12 @@ As well as attributes, elements can have _directives_, which control the element
 ## on:_eventname_
 
 ```svelte
+<!--- copy: false --->
 on:eventname={handler}
 ```
 
 ```svelte
+<!--- copy: false --->
 on:eventname|modifiers={handler}
 ```
 
@@ -72,7 +74,6 @@ If the `on:` directive is used without a value, the component will _forward_ the
 It's possible to have multiple event listeners for the same event:
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	let counter = 0;
 	function increment() {
@@ -91,6 +92,7 @@ It's possible to have multiple event listeners for the same event:
 ## bind:_property_
 
 ```svelte
+<!--- copy: false --->
 bind:property={variable}
 ```
 
@@ -186,6 +188,8 @@ Elements with the `contenteditable` attribute support the following bindings:
 
 There are slight differences between each of these, read more about them [here](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent#Differences_from_innerText).
 
+<!-- for some reason puts the comment and html on same line -->
+<!-- prettier-ignore -->
 ```svelte
 <div contenteditable="true" bind:innerHTML={html} />
 ```
@@ -273,13 +277,13 @@ Block-level elements have 4 read-only bindings, measured using a technique simil
 ## bind:group
 
 ```svelte
+<!--- copy: false --->
 bind:group={variable}
 ```
 
 Inputs that work together can use `bind:group`.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	let tortilla = 'Plain';
 
@@ -304,13 +308,13 @@ Inputs that work together can use `bind:group`.
 ## bind:this
 
 ```svelte
+<!--- copy: false --->
 bind:this={dom_node}
 ```
 
 To get a reference to a DOM node, use `bind:this`.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { onMount } from 'svelte';
 
@@ -329,10 +333,12 @@ To get a reference to a DOM node, use `bind:this`.
 ## class:_name_
 
 ```svelte
+<!--- copy: false --->
 class:name={value}
 ```
 
 ```svelte
+<!--- copy: false --->
 class:name
 ```
 
@@ -393,14 +399,17 @@ When `style:` directives are combined with `style` attributes, the directives wi
 ## use:_action_
 
 ```svelte
+<!--- copy: false --->
 use:action
 ```
 
 ```svelte
+<!--- copy: false --->
 use:action={parameters}
 ```
 
 ```ts
+/// copy: false
 // @noErrors
 action = (node: HTMLElement, parameters: any) => {
 	update?: (parameters: any) => void,
@@ -411,7 +420,6 @@ action = (node: HTMLElement, parameters: any) => {
 Actions are functions that are called when an element is created. They can return an object with a `destroy` method that is called after the element is unmounted:
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	/** @type {import('svelte/action').Action}  */
 	function foo(node) {
@@ -433,7 +441,6 @@ An action can have a parameter. If the returned value has an `update` method, it
 > Don't worry about the fact that we're redeclaring the `foo` function for every component instance — Svelte will hoist any functions that don't depend on local state out of the component definition.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	export let bar;
 
@@ -461,30 +468,37 @@ Read more in the [`svelte/action`](/docs/svelte-action) page.
 ## transition:_fn_
 
 ```svelte
+<!--- copy: false --->
 transition:fn
 ```
 
 ```svelte
+<!--- copy: false --->
 transition:fn={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 transition:fn|global
 ```
 
 ```svelte
+<!--- copy: false --->
 transition:fn|global={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 transition:fn|local
 ```
 
 ```svelte
+<!--- copy: false --->
 transition:fn|local={params}
 ```
 
 ```js
+/// copy: false
 // @noErrors
 transition = (node: HTMLElement, params: any, options: { direction: 'in' | 'out' | 'both' }) => {
 	delay?: number,
@@ -544,7 +558,6 @@ The `t` argument passed to `css` is a value between `0` and `1` after the `easin
 The function is called repeatedly _before_ the transition begins, with different `t` and `u` arguments.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { elasticOut } from 'svelte/easing';
 
@@ -644,50 +657,62 @@ An element with transitions will dispatch the following events in addition to an
 ## in:_fn_/out:_fn_
 
 ```svelte
+<!--- copy: false --->
 in:fn
 ```
 
 ```svelte
+<!--- copy: false --->
 in:fn={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 in:fn|global
 ```
 
 ```svelte
+<!--- copy: false --->
 in:fn|global={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 in:fn|local
 ```
 
 ```svelte
+<!--- copy: false --->
 in:fn|local={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn|global
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn|global={params}
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn|local
 ```
 
 ```svelte
+<!--- copy: false --->
 out:fn|local={params}
 ```
 
@@ -704,14 +729,17 @@ Unlike with `transition:`, transitions applied with `in:` and `out:` are not bid
 ## animate:_fn_
 
 ```svelte
+<!--- copy: false --->
 animate:name
 ```
 
 ```svelte
+<!--- copy: false --->
 animate:name={params}
 ```
 
 ```js
+/// copy: false
 // @noErrors
 animation = (node: HTMLElement, { from: DOMRect, to: DOMRect } , params: any) => {
 	delay?: number,
@@ -723,6 +751,7 @@ animation = (node: HTMLElement, { from: DOMRect, to: DOMRect } , params: any) =>
 ```
 
 ```ts
+/// copy: false
 // @noErrors
 DOMRect {
 	bottom: number,
@@ -772,7 +801,6 @@ The function is called repeatedly _before_ the animation begins, with different 
 <!-- TODO: Types -->
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 
@@ -806,7 +834,6 @@ A custom animation function can also return a `tick` function, which is called _
 > If it's possible to use `css` instead of `tick`, do so — CSS animations can run off the main thread, preventing jank on slower devices.
 
 ```svelte
-<!--- file: App.svelte --->
 <script>
 	import { cubicOut } from 'svelte/easing';
 
