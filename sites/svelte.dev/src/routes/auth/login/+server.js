@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import { client_id, oauth } from '../_config.js';
 
 export const GET = client_id
-	? ({ url }) => {
+	? /** @param {{url: URL}} opts */ ({ url }) => {
 			const Location =
 				`${oauth}/authorize?` +
 				new URLSearchParams({

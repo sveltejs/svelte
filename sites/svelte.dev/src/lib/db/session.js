@@ -5,7 +5,7 @@ import { client } from './client.js';
 /** @typedef {import('./types').User} User */
 
 /**
- * @type {import('flru').flruCache<User>}
+ * @type {import('flru').flruCache<User | null>}
  */
 const session_cache = flru(1000);
 
@@ -39,7 +39,7 @@ export async function create(user) {
 
 /**
  * @param {string} sessionid
- * @returns {Promise<User>}
+ * @returns {Promise<User | null>}
  */
 export async function read(sessionid) {
 	if (!sessionid) return null;
@@ -58,7 +58,7 @@ export async function read(sessionid) {
 		);
 	}
 
-	return session_cache.get(sessionid);
+	return session_cache.get(sessionid) || null;
 }
 
 /** @param {string} sessionid */

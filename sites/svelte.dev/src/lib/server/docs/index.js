@@ -99,6 +99,7 @@ export function get_docs_list(docs_data) {
 	}));
 }
 
+/** @param {string} str */
 const titled = async (str) =>
 	removeMarkdown(
 		escape(await markedTransform(str, { paragraph: (txt) => txt }))
@@ -111,7 +112,10 @@ const titled = async (str) =>
 			.replace(/<(\/)?(em|b|strong|code)>/g, '')
 	);
 
-/** @param {string} markdown */
+/**
+ * @param {string} markdown
+ * @returns {Promise<import('./types').Section[]>}
+ */
 export async function get_sections(markdown) {
 	const lines = markdown.split('\n');
 	const root = /** @type {import('./types').Section} */ ({
@@ -141,7 +145,9 @@ export async function get_sections(markdown) {
 			};
 
 			// Add the new node to the tree
-			currentNodes[level].sections.push(newNode);
+			const sections = currentNodes[level].sections;
+			if (!sections) throw new Error(`Could not find section ${level}`);
+			sections.push(newNode);
 
 			// Prepare for potential children of the new node
 			currentNodes = currentNodes.slice(0, level + 1);
@@ -152,5 +158,5 @@ export async function get_sections(markdown) {
 		}
 	}
 
-	return root.sections;
+	return /** @type {import('./types').Section[]} */ (root.sections);
 }

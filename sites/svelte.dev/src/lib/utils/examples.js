@@ -1,3 +1,11 @@
+/**
+ * @param {Array<{
+ *   content: string;
+ *   name: string;
+ *   source: string;
+ *   type: string;
+ * }>} files
+ */
 export function process_example(files) {
 	return files
 		.map((file) => {
@@ -12,5 +20,7 @@ export function process_example(files) {
 
 			if (a.type === 'svelte') return -1;
 			if (b.type === 'svelte') return 1;
+
+			return 0;
 		});
 }

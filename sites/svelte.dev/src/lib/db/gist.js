@@ -8,6 +8,10 @@ const PAGE_SIZE = 90;
 
 /**
  * @param {User} user
+ * @param {{
+ *   offset: number;
+ *   search: string | null;
+ * }} opts
  */
 export async function list(user, { offset, search }) {
 	const { data, error } = await client.rpc('gist_list', {
@@ -20,9 +24,11 @@ export async function list(user, { offset, search }) {
 	if (error) throw new Error(error.message);
 
 	// normalize IDs
-	data.forEach((gist) => {
-		gist.id = gist.id.replace(/-/g, '');
-	});
+	data.forEach(
+		/** @param {{id:string}} gist */ (gist) => {
+			gist.id = gist.id.replace(/-/g, '');
+		}
+	);
 
 	return {
 		gists: data.slice(0, PAGE_SIZE),
