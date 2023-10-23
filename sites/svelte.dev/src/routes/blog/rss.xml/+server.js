@@ -43,7 +43,7 @@ const get_rss = (posts) =>
 		<item>
 			<title>${escapeHTML(post.title)}</title>
 			<link>https://svelte.dev/blog/${post.slug}</link>
-			<description>${escapeHTML(post.description)}</description>
+			<description><![CDATA[${post.content}]]></description>
 			<pubDate>${formatPubdate(post.date)}</pubDate>
 		</item>
 	`
