@@ -24,7 +24,7 @@
 </script>
 
 <svelte:head>
-	{#if !$page.route.id.startsWith('/blog/')}
+	{#if !$page.route.id?.startsWith('/blog/')}
 		<meta name="twitter:card" content="summary" />
 		<meta name="twitter:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
 		<meta name="og:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
