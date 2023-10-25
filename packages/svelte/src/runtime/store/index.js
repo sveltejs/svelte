@@ -47,17 +47,20 @@ export function writable(value, start = noop) {
 			if (stop) {
 				// store is ready
 				const run_queue = !subscriber_queue.length;
-				for (const subscriber of subscribers) {
-					subscriber[1]();
-					subscriber_queue.push(subscriber, value);
+				
+				for (const [runSubscriber, invalidateSubscriber] of subscribers) {
+					invalidateSubscriber(); // Call the invalidate function
+					subscriber_queue.push(runSubscriber, value);
 				}
+				
 				if (run_queue) {
 					for (let i = 0; i < subscriber_queue.length; i += 2) {
-						subscriber_queue[i][0](subscriber_queue[i + 1]);
+						subscriber_queue[i](subscriber_queue[i + 1]); // Call the runSubscriber function
 					}
 					subscriber_queue.length = 0;
 				}
 			}
+			
 		}
 	}
 
