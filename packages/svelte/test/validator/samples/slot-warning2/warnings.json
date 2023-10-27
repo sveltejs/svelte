@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event.",
+		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether another element might be more appropriate such as a <button type=\"button\"> element for actions or <a> element for navigations. Otherwise, add an on:keydown, on:keyup, or on:keypress event handler.",
 		"start": {
 			"column": 1,
 			"line": 8
