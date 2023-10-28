@@ -56,7 +56,7 @@ Enforce that visible, non-interactive elements with an `on:click` event are acco
 
 Users should first consider whether an interactive element might be more appropriate such as a `<button type="button">` element for actions or `<a>` element for navigations. These elements are more semantically meaningful and will have built-in key handling. E.g. `Space` and `Enter` will trigger a `<button>` while `Space` will focus an `<a>` and `Enter` will cause a navigation for an `<a>`.
 
-If it is required to use a non-interactive element then `on:click` should be accompanied by an `on:keyup` or `on:keydown` handler that enables the user to perform equivalent actions via the keyboard. While an `on:keypress` handler will also silence this warning, it should be noted that the `keypress` event is deprecated.
+If it is required to use a non-interactive element then `on:click` should be accompanied by an `on:keyup` or `on:keydown` handler that enables the user to perform equivalent actions via the keyboard. In order for the user to be able to press a key on such an element it will also need a `tabindex` attribute in order to be focusable. While an `on:keypress` handler will also silence this warning, it should be noted that the `keypress` event is deprecated.
 
 ```svelte
 <!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. -->
