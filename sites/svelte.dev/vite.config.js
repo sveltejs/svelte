@@ -22,7 +22,7 @@ function raw(ext) {
 
 /** @returns {import('vite').Plugin} */
 function minified_raw_plugin() {
-	const prefix = 'minified-raw:';
+	const prefix = 'virtual:minified-raw:';
 
 	return {
 		name: 'minified-raw-js',
