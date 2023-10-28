@@ -54,7 +54,7 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 
 Enforce that visible, non-interactive elements with an `on:click` event are accompanied by a keyboard event handler.
 
-Users should first consider whether an interactive element might be more appropriate such as a `<button type="button">` element for actions or `<a>` element for navigations. These elements are more semantically meaningful and will have built-in key handling. E.g. `Space` and `Enter` will trigger a `<button>` element's navigation while `Space` will focus an `<a>` element and `Enter` will trigger an `<a>` element's navigation.
+Users should first consider whether an interactive element might be more appropriate such as a `<button type="button">` element for actions or `<a>` element for navigations. These elements are more semantically meaningful and will have built-in key handling. E.g. `Space` and `Enter` will trigger a `<button>` element's action while `Space` will scroll to an `<a>` element and `Enter` will trigger an `<a>` element's navigation.
 
 If a non-interactive element is required then `on:click` should be accompanied by an `on:keyup` or `on:keydown` handler that enables the user to perform equivalent actions via the keyboard. In order for the user to be able to trigger a key press, the element will also need to be focusable by adding a [`tabindex`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex). While an `on:keypress` handler will also silence this warning, it should be noted that the `keypress` event is deprecated.
 
