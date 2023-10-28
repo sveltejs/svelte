@@ -271,7 +271,7 @@ export default {
 	a11y_click_events_have_key_events: {
 		code: 'a11y-click-events-have-key-events',
 		message:
-			'A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether another element might be more appropriate such as a <button type="button"> element for actions or <a> element for navigations. Otherwise, add an on:keydown, on:keyup, or on:keypress event handler.'
+			'A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type="button"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.'
 	},
 	a11y_missing_content: /** @param {string} name */ (name) => ({
 		code: 'a11y-missing-content',
