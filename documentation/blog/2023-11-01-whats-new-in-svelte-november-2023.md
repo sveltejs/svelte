@@ -14,9 +14,9 @@ Let's take a closer look 👀...
 - Extensions 107.12.0 improves block folding for functions, if statements and more ([Release Notes](https://github.com/sveltejs/language-tools/releases/tag/extensions-107.12.0), [PR](https://github.com/sveltejs/language-tools/pull/2169))
 
 ## What's new in SvelteKit
-- Route parameter types will now be inferred from the applicable matcher's guard check (**1.26.0**, [Docs](https://kit.svelte.dev/docs/advanced-routing#matching), [#10755](https://github.com/sveltejs/kit/pull/10755))
-- The new `invalidateAll` boolean option lets you turn on and off the `invalidateAll()` form function within the `enhance` callback (**1.27.0**, [Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#9476](https://github.com/sveltejs/kit/issues/9476))
-- The output of the project creation wizard will now reflect which package manager you're using ([#10811](https://github.com/sveltejs/kit/pull/10811))
+- Route parameter types will now be inferred from the applicable matcher's guard check (**kit@1.26.0**, [Docs](https://kit.svelte.dev/docs/advanced-routing#matching), [#10755](https://github.com/sveltejs/kit/pull/10755))
+- The new `invalidateAll` boolean option lets you turn on and off the `invalidateAll()` form function within the `enhance` callback (**kit@1.27.0**, [Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#9476](https://github.com/sveltejs/kit/issues/9476))
+- The output of the project creation wizard will now reflect which package manager you're using (**create-svelte@5.1.1**, [#10811](https://github.com/sveltejs/kit/pull/10811))
 
 For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
