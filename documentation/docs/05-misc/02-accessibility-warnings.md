@@ -52,16 +52,18 @@ Enforce that `autofocus` is not used on elements. Autofocusing elements can caus
 
 ## `a11y-click-events-have-key-events`
 
-Enforce `on:click` is accompanied by at least one of the following: `on:keyup`, `on:keydown`, `on:keypress`. Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
+Enforce that visible, non-interactive elements with an `on:click` event are accompanied by a keyboard event handler.
 
-This does not apply for interactive or hidden elements.
+Users should first consider whether an interactive element might be more appropriate such as a `<button type="button">` element for actions or `<a>` element for navigations. These elements are more semantically meaningful and will have built-in key handling. E.g. `Space` and `Enter` will trigger a `<button>` and `Enter` will trigger an `<a>` element.
+
+If a non-interactive element is required then `on:click` should be accompanied by an `on:keyup` or `on:keydown` handler that enables the user to perform equivalent actions via the keyboard. In order for the user to be able to trigger a key press, the element will also need to be focusable by adding a [`tabindex`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex). While an `on:keypress` handler will also silence this warning, it should be noted that the `keypress` event is deprecated.
 
 ```svelte
-<!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by an on:keydown, on:keyup, or on:keypress event. -->
+<!-- A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. -->
 <div on:click={() => {}} />
 ```
 
-Note that the `keypress` event is now deprecated, so it is officially recommended to use either the `keyup` or `keydown` event instead, accordingly.
+Coding for the keyboard is important for users with physical disabilities who cannot use a mouse, AT compatibility, and screenreader users.
 
 ## `a11y-distracting-elements`
 
