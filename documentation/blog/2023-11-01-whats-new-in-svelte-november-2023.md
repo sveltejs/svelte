@@ -16,6 +16,7 @@ Let's take a closer look 👀...
 ## What's new in SvelteKit
 - Route parameter types will now be inferred from the applicable matcher's guard check (**1.26.0**, [Docs](https://kit.svelte.dev/docs/advanced-routing#matching), [#10755](https://github.com/sveltejs/kit/pull/10755))
 - The new `invalidateAll` boolean option lets you turn on and off the `invalidateAll()` form function within the `enhance` callback (**1.27.0**, [Docs](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance), [#9476](https://github.com/sveltejs/kit/issues/9476))
+- The output of the project creation wizard will now reflect which package manager you're using ([#10811](https://github.com/sveltejs/kit/pull/10811))
 
 For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
@@ -62,7 +63,7 @@ _To Read_
 - [What we learned from migrating our web app to SvelteKit](https://blog.datawrapper.de/migrating-our-web-app-to-sveltekit/) by Marten Sigwart
 - [SvelteKit Tutorial: Build a Website From Scratch](https://prismic.io/blog/svelte-sveltekit-tutorial) by Prismic has been updated based on the latest SvelteKit features
 - [Svelte by Example](https://sveltebyexample.com/) is a succinct, gentle introduction to Svelte & SvelteKit
-- [The Comprehensive Guide to Locals in SvelteKit](https://khromov.se/the-comprehensive-guide-to-locals-in-sveltekit/) and [The Comprehensive Guide to Locals in SvelteKit](https://khromov.se/the-comprehensive-guide-to-locals-in-sveltekit/) by Stanislav Khromov
+- [The Comprehensive Guide to Locals in SvelteKit](https://khromov.se/the-comprehensive-guide-to-locals-in-sveltekit/) by Stanislav Khromov
 - [How to build a blog, the hard way](https://cpf.sh/blog/2023/10/27/how-to-build-a-blog-the-hard-way) by Curtis Parfitt-Ford
 - [How to make a full-content RSS feed for your SvelteKit blog](https://www.kylenazario.com/blog/full-content-rss-feed-with-sveltekit) by Kyle Nazario
 - [A simple hash-routed dialog system with Svelte](https://inorganik.net/posts/2023-10-08-routed-svelte-dialogs) by Jamie Perkins
