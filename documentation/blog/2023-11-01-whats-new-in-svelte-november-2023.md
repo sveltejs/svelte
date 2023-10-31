@@ -1,9 +1,11 @@
 ---
 title: "What's new in Svelte: November 2023"
-description: "Block folding, inferred types and a more configurable use:enhance"
+description: "Svelte Summit on Nov 11 and better DevEx for all!"
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
+
+Mark your calendars! [Svelte Summit Fall](https://www.sveltesummit.com/2023/fall) is on November 11th. Join us on [YouTube](https://www.youtube.com/@SvelteSociety/streams) and in the [Discord](https://svelte.dev/chat) for hours of Svelte-focused fun 🎥
 
 Every month, maintainers within the Svelte ecosystem fix bugs, improve performance and bring new features to Svelte, SvelteKit and the tooling around them. This month's releases brings an improved developer experience with better [block folding](https://code.visualstudio.com/docs/editor/codebasics#_folding), inferred types and configuration for `use:enhance`.
 
@@ -23,8 +25,6 @@ For a complete list of bug fixes and performance updates, check out the [SvelteK
 ---
 
 ## Community Showcase
-
-Mark your calendars! [Svelte Summit Fall](https://www.sveltesummit.com/2023/fall) is on November 11th. Join us on [YouTube](https://www.youtube.com/@SvelteSociety/streams) and in the [Discord](https://svelte.dev/chat) for hours of Svelte-focused fun 🎥
 
 **Apps & Sites built with Svelte**
 - [4THSEX](https://4thsex.com/) is a creative website for the producer / creative director with the same name
@@ -73,6 +73,7 @@ _To Read_
 - [Open Neovim From Your Browser - Integrating nvim with Svelte’s Inspector](https://theosteiner.de/open-neovim-from-your-browser-integrating-nvim-with-sveltes-inspector) by Theo Steiner
 
 **Libraries, Tools & Components**
+- [Deno now supports](https://github.com/denoland/deno/pull/21026) creating SvelteKit projects out-of-the-box! Previously you had to create them with npm and then you could run them with Deno.
 - [Purplix](https://github.com/WardPearce/Purplix.io) is an open-source collection of tools dedicated to user privacy and creating trust with your audience
 - [Obra Icons](https://github.com/Obra-Studio/obra-icons-svelte-public) is a simple, consistent set of icons, perfect for user interfaces
 - [svelte-chat-langchain](https://github.com/SimonPrammer/svelte-chat-langchain) is a minimal version of "Chat LangChain" implemented with SvelteKit, Vercel AI SDK and or course Langchain
