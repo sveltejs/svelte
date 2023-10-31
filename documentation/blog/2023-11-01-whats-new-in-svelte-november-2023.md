@@ -24,6 +24,8 @@ For a complete list of bug fixes and performance updates, check out the [SvelteK
 
 ## Community Showcase
 
+Mark your calendars! [Svelte Summit Fall](https://www.sveltesummit.com/2023/fall) is on November 11th. Join us on [YouTube](https://www.youtube.com/@SvelteSociety/streams) and in the [Discord](https://svelte.dev/chat) for hours of Svelte-focused fun 🎥
+
 **Apps & Sites built with Svelte**
 - [4THSEX](https://4thsex.com/) is a creative website for the producer / creative director with the same name
 - [Syntax.fm](https://github.com/syntaxfm/website) has been redesigned from the ground up with SvelteKit
