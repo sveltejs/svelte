@@ -122,3 +122,7 @@ The documentation is still available [here](https://v2.svelte.dev/guide).
 ## How do I do hot module reloading?
 
 We recommend using [SvelteKit](https://kit.svelte.dev/), which supports HMR out of the box and is built on top of [Vite](https://vitejs.dev/) and [svelte-hmr](https://github.com/sveltejs/svelte-hmr). There are also community plugins for [rollup](https://github.com/rixo/rollup-plugin-svelte-hot) and [webpack](https://github.com/sveltejs/svelte-loader).
+
+## Is Svelte an "Alex Russell Approved" framework?
+
+Yes! Alex Russell ([@slightlylate](https://twitter.com/slightlylate)), known for his contributions to PWAs, W3C TAG, WC, TC39 & ES6, Chrome Frame, Dojo, and more, is often highly critical of JavaScript frameworks. Nonetheless, [he approves of Svelte](https://infrequently.org/2023/02/the-market-for-lemons/#fn-alex-approved-1).
