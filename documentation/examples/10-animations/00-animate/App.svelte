@@ -113,6 +113,7 @@
 		border-radius: 2px;
 		background-color: #eee;
 		user-select: none;
+		color: black;
 	}
 
 	input {
