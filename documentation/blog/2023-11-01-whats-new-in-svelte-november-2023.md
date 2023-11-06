@@ -76,7 +76,7 @@ _To Read_
 - Work to [support SvelteKit in Deno](https://github.com/denoland/deno/issues/17248) is ongoing and [Deno now supports](https://github.com/denoland/deno/pull/21026) creating SvelteKit projects out-of-the-box!
 - [Purplix](https://github.com/WardPearce/Purplix.io) is an open-source collection of tools dedicated to user privacy and creating trust with your audience
 - [Obra Icons](https://github.com/Obra-Studio/obra-icons-svelte-public) is a simple, consistent set of icons, perfect for user interfaces
-- [svelte-chat-langchain](https://github.com/SimonPrammer/svelte-chat-langchain) is a minimal version of "Chat LangChain" implemented with SvelteKit, Vercel AI SDK and or course Langchain
+- [svelte-chat-langchain](https://github.com/SimonPrammer/svelte-chat-langchain) is a minimal version of "Chat LangChain" implemented with SvelteKit, Vercel AI SDK and of course Langchain
 - [Cloudinary just released](https://svelte.cloudinary.dev/) an official Svelte SDK ([GitHub](https://github.com/cloudinary-community/svelte-cloudinary))
 
 That's it for this month! Feel free to let us know if we missed anything on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.gg/svelte).
