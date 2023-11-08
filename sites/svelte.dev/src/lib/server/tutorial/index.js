@@ -30,6 +30,7 @@ export async function get_tutorial_data(base = CONTENT_BASE_PATHS.TUTORIAL) {
 	const tutorials = [];
 
 	for (const subdir of await readdir(base)) {
+		/** @type {import('./types').TutorialDatum} */
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
@@ -55,6 +56,12 @@ export async function get_tutorial_data(base = CONTENT_BASE_PATHS.TUTORIAL) {
 			const { metadata, body } = extractFrontmatter(contents);
 
 			// Get the contents of the apps.
+			/**
+			 * @type {{
+			 *   initial: import('./types').CompletionState[];
+			 *   complete: import('./types').CompletionState[];
+			 * }}
+			 */
 			const completion_states_data = { initial: [], complete: [] };
 			for (const app_dir of await readdir(tutorial_base_dir)) {
 				if (!app_dir.startsWith('app-')) continue;
@@ -63,9 +70,13 @@ export async function get_tutorial_data(base = CONTENT_BASE_PATHS.TUTORIAL) {
 				const app_contents = await readdir(app_dir_path, 'utf-8');
 
 				for (const file of app_contents) {
+					const type = file.split('.').at(-1);
+					if (!type) {
+						throw new Error(`Could not determine type from ${file}`);
+					}
 					completion_states_data[app_dir === 'app-a' ? 'initial' : 'complete'].push({
 						name: file,
-						type: file.split('.').at(-1),
+						type,
 						content: await readFile(`${app_dir_path}/${file}`, 'utf-8')
 					});
 				}

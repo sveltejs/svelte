@@ -8,17 +8,14 @@ export function load({ url }) {
 	const vim = query.get('vim');
 
 	// redirect to v2 REPL if appropriate
-	if (/^[^>]?[12]/.test(version)) {
+	if (version && /^[^>]?[12]/.test(version)) {
 		throw redirect(302, `https://v2.svelte.dev/repl?${query}`);
 	}
 
 	const id = gist || example || 'hello-world';
 	// we need to filter out null values
-	const q = new URLSearchParams(
-		Object.entries({
-			version,
-			vim
-		}).filter(([, value]) => value !== null)
-	).toString();
+	const q = new URLSearchParams();
+	if (version) q.set('version', version);
+	if (vim) q.set('vim', vim);
 	throw redirect(301, `/repl/${id}?${q}`);
 }

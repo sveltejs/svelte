@@ -6,14 +6,13 @@ import { oauth, client_id, client_secret } from '../_config.js';
 export async function GET({ url }) {
 	try {
 		// Trade "code" for "access_token"
-		const r1 = await fetch(
-			`${oauth}/access_token?` +
-				new URLSearchParams({
-					code: url.searchParams.get('code'),
-					client_id,
-					client_secret
-				}).toString()
-		);
+		const code = url.searchParams.get('code') || undefined;
+		const params = new URLSearchParams({
+			client_id,
+			client_secret
+		});
+		if (code) params.set('code', code);
+		const r1 = await fetch(`${oauth}/access_token?` + params.toString());
 		const access_token = new URLSearchParams(await r1.text()).get('access_token');
 
 		// Now fetch User details
