@@ -62,13 +62,14 @@ function compile({ id, source, options, return_ast }) {
 				generate: options.generate
 			});
 
-			const { js, css, metadata } = compiled;
+			const { js, css, warnings, metadata } = compiled;
 
 			return {
 				id,
 				result: {
 					js: js.code,
-					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`
+					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
+					warnings
 				},
 				metadata
 			};
@@ -83,7 +84,8 @@ function compile({ id, source, options, return_ast }) {
 					id,
 					result: {
 						js: compiled.js.code,
-						css
+						css,
+						warnings: compiled.warnings
 					},
 					metadata: compiled.metadata
 				};

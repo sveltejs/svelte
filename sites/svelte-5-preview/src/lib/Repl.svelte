@@ -11,6 +11,7 @@
 	import Output from './Output/Output.svelte';
 	import { set_repl_context } from './context.js';
 	import { get_full_filename } from './utils.js';
+	import Compiler from './Output/Compiler.js';
 
 	export let packagesUrl = 'https://unpkg.com';
 	export let svelteUrl = `${BROWSER ? location.origin : ''}/svelte`;
@@ -64,32 +65,6 @@
 		$files = $files.map((val) => ({ ...val, modified: false }));
 	}
 
-	/** @param {{ files: import('./types').File[], css?: string }} data */
-	export function update(data) {
-		$files = data.files;
-
-		const matched_file = data.files.find((file) => get_full_filename(file) === $selected_name);
-
-		$selected_name = matched_file ? get_full_filename(matched_file) : 'App.svelte';
-
-		injectedCSS = data.css ?? '';
-
-		if (matched_file) {
-			$module_editor?.update({
-				code: matched_file.source,
-				lang: matched_file.type
-			});
-
-			$output?.update?.(matched_file, $compile_options);
-
-			$module_editor?.clearEditorState();
-		}
-
-		populate_editor_state();
-
-		dispatch('change', { files: $files });
-	}
-
 	/** @type {ReturnType<typeof createEventDispatcher<{ change: { files: import('./types').File[] } }>>} */
 	const dispatch = createEventDispatcher();
 
@@ -135,9 +110,6 @@
 	/** @type {ReplContext['module_editor']} */
 	const module_editor = writable(null);
 
-	/** @type {ReplContext['output']} */
-	const output = writable(null);
-
 	/** @type {ReplContext['toggleable']} */
 	const toggleable = writable(false);
 
@@ -160,7 +132,6 @@
 		compile_options,
 		cursor_pos,
 		module_editor,
-		output,
 		toggleable,
 		runes_mode,
 
@@ -205,8 +176,6 @@
 		} else {
 			$module_editor?.clearEditorState();
 		}
-
-		$output?.set($selected, $compile_options);
 
 		is_select_changing = false;
 	}
@@ -273,8 +242,18 @@
 		}
 	}
 
-	$: if ($output && $selected) {
-		$output?.update?.($selected, $compile_options);
+	const compiler = BROWSER ? new Compiler(svelteUrl) : null;
+
+	/** @type {import('./workers/workers').CompileMessageData | null} */
+	let compiled = null;
+
+	$: if (compiler && $selected) {
+		if ($selected.type === 'svelte' || $selected.type === 'js') {
+			compiler.compile($selected, $compile_options, false).then((data) => {
+				compiled = data;
+				$runes_mode = data.metadata?.runes ?? false;
+			});
+		}
 	}
 
 	$: mobile = width < 540;
@@ -347,8 +326,6 @@
 
 			<section slot="b" style="height: 100%;">
 				<Output
-					bind:this={$output}
-					{svelteUrl}
 					status={status_visible ? status : null}
 					{embedded}
 					{relaxed}
@@ -356,6 +333,8 @@
 					{injectedCSS}
 					{showAst}
 					{previewTheme}
+					selected={$selected}
+					{compiled}
 				/>
 			</section>
 		</SplitPane>
