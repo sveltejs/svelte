@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;+BAUMA,GAAU,IAACC,GAAQ;;;;;;;;;;;;;;wBACYC,UAAU;;;;;GAF/C,MAAkB;;GAClB,MAAgC;;;GAChC,MAAsD;;;2EADhDF,GAAU,IAACC,GAAQ;;;;;;;;;;;;;;;;IARpBC,UAAU,GAAG,SAAS;;;OADfF,UAAU,KAAKC,GAAQ,EAAE,CAAC",
+  "names": [
+    "old_name_1",
+    "baritone",
+    "old_name_2"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

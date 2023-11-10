@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\timport { onMount } from 'svelte';\n\n\tonMount(() => {\n\t\tconsole.log(42);\n\t});\n</script>\n\n<div></div>\n"
+  ],
+  "mappings": ";;;;;;;;;;;;SACU,OAAO,QAAQ,QAAQ;;;;;;;;;;GAOjC,MAAW;;;;;;;;;;;;;;CALV,OAAO;EACN,OAAO,CAAC,GAAG,CAAC,EAAE;;;;;;;;;;;;;"
+}

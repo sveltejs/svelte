@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\texport let foo;\n</script>\n\n{foo.bar.baz}\n"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;uBAIC,GAAG,IAAC,GAAG,CAAC,GAAG;;;;;;;;;;;2DAAX,GAAG,IAAC,GAAG,CAAC,GAAG;;;;;;;;;;;;;OAHA,GAAG;;;;;;;;;;;;;;;;"
+}

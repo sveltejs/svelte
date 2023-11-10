@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "{#each foo as bar}\n\t<span>{bar}</span>\n{/each}"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;iCACQ,GAAG;;;GAAV,MAAkB;;;;;;;;;;;;;oCADZ,GAAG;;;gCAAR,MAAI;;;;;;;;;;;;;;;;;;;;;;;mCAAC,GAAG;;;+BAAR,MAAI;;;;;;;;;;;;;;;;oCAAJ,MAAI;;;;;;;;;;;;;;;;;;;;;;"
+}

@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "file": "input.svelte",
+  "mappings": "AACCA,kCAAkB,CACjB,KAAK,CAAE,GACR",
+  "names": [
+    ".replace_me_style"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

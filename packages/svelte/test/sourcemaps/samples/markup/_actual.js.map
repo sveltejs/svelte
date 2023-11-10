@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<h1>decoded-sourcemap</h1>\n<div>replace me</div>"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;GAAA,MAA0B;;GAC1B,MAAqB;;;;;;;;;;;;;;;;;;;;;;"
+}

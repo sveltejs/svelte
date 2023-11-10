@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "mappings": ";;;;;;;;;;;;;;;uBAIC,GAAG,IAACA,GAAQ,CAAC,GAAG;;;;;;;;;;;2DAAhB,GAAG,IAACA,GAAQ,CAAC,GAAG;;;;;;;;;;;;;OAHL,GAAG",
+  "names": [
+    "baritone"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

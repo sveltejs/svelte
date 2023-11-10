@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "mappings": "AAAA,CAAC,KAAK;AACN;;SAACA,qBAAiB,CAAC;AACnB,EAAE,KAAK,CAAC,CAAC,GAAG;AACZ,CAAC;;;AACD,CAAC,CAAC,KAAK;AACP,CAAC,MAAM;AACP,CAAC;AACD;;KAAEC,qBAAiB,CAAC,CAAC,CAAC,CAAC,KAAK;AAC5B,CAAC;;;AACD,CAAC,CAAC,MAAM;AACR,CAAC,EAAE,CAAC,KAAK,CAAC,CAAC,oBAAoB,CAAC,CAAC,CAAC,qBAAqB,CAAC,CAAC,CAAC,EAAE",
+  "names": [
+    ".replace_me_style",
+    "replace_me_script"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

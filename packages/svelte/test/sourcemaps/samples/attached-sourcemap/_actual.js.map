@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;uBAUkC,qBAAqB;;;;GAAvD,MAA4D;;;;;;;;;;;;;IAH1DA,qBAAiB,GAAG,OAAM",
+  "names": [
+    "replace_me_script"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

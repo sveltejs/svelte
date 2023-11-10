@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;GAGA,MAAyB;;;;;;;;;;;;;ICHrB,MAAM,GAAG,EAAE;ICAX,OAAO,GAAG,EAAE;;;OFCJ,IAAI;CGDhB,OAAO,CAAC,GAAG,CAAC,MAAM;CCAlB,OAAO,CAAC,GAAG,CAAC,OAAO",
+  "names": [],
+  "sources": [
+    "input.svelte",
+    "foo.js",
+    "foo2.js",
+    "bar.js",
+    "bar2.js"
+  ]
+}

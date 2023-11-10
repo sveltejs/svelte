@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "input.svelte",
+  "mappings": "AACuB,iBAAG,CAAC,KAAK,CAAE,GAAI,CCD0B,iBAAG,CAAC,KAAK,CAAE,IAAK",
+  "names": [],
+  "sources": [
+    "input.svelte",
+    "input.css"
+  ]
+}

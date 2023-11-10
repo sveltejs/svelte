@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "file": "input.svelte",
+  "mappings": "AACA,mBAAK,CACJ,mBAAmB,CAAE,GACtB",
+  "names": [],
+  "sources": [
+    "external_code.css"
+  ]
+}

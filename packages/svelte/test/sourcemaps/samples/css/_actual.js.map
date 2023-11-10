@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<p class='foo'>red</p>\n\n<style>\n\t.foo {\n\t\tcolor: red;\n\t}\n</style>"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAAA,MAAsB;;;;;;;;;;;;;;;;;;;;"
+}

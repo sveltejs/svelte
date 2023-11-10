@@ -1,0 +1,12 @@
+{
+  "version": 3,
+  "file": "input.svelte",
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\texport let foo;\n</script>\n\n<p>{foo}</p>\n\n<style>\n\tp {\n\t\tcolor: red;\n\t}\n</style>\n"
+  ],
+  "names": [],
+  "mappings": "AAOC,gBAAE,CACD,KAAK,CAAE,GACR"
+}

@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "mappings": "AAAA,CAAC,GAAG,CAAC,KAAK,CAAC,CAAC,KAAK,CAAC,KAAK,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,GAAG;;AAEpC,CAAC,KAAK,CAAC,KAAK,CAAC,CAAC,GAAG,CAAC,oBAAC,CAAC,CAAC,KAAK",
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ]
+}

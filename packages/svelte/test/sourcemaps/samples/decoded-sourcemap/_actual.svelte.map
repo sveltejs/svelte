@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "mappings": "AAAA,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC;AAC1B,CAAC,CAAC,CAAC,CAAC,CAACA,OAAU,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC",
+  "names": [
+    "replace me"
+  ],
+  "sources": [
+    "input.svelte"
+  ]
+}

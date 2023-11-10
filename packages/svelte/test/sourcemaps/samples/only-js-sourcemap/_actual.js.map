@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "names": [],
+  "sources": [
+    "input.svelte"
+  ],
+  "sourcesContent": [
+    "<script>\n\texport let foo;\n</script>\n\n<p>{foo}</p>\n\n<style>\n\tp {\n\t\tcolor: red;\n\t}\n</style>\n"
+  ],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;oBAII,GAAG;;;;GAAP,MAAY;;;;8CAAR,GAAG;;;;;;;;;;;;;OAHK,GAAG;;;;;;;;;;;;;;;;"
+}
