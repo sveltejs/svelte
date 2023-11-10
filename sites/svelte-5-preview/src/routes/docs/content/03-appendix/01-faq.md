@@ -37,7 +37,7 @@ Beyond the complexities listed above, the current design imposes some unfortunat
   // @errors: 2362 2363 2304 1005
   // @filename: ambient.d.ts
   declare global {
-	const dark: boolean;
+  const dark: boolean;
   }
   export {};
   // @filename: index.ts
@@ -48,7 +48,7 @@ Beyond the complexities listed above, the current design imposes some unfortunat
   ```ts
   // @filename: ambient.d.ts
   declare global {
-	const dark: boolean;
+  	const dark: boolean;
   }
   export {};
   // @filename: index.ts
@@ -70,13 +70,14 @@ Having said that, the underlying mechanisms are totally different. It's inevitab
 
 ### No but really, am I going to have to rewrite everything?
 
-Eventually, you'll have to make some changes — most of which we hope to automate. We don't want to end up in a situation where people feel like they have to juggle knowledge of a bunch of	different ways of doing things.
+Eventually, you'll have to make some changes — most of which we hope to automate. We don't want to end up in a situation where people feel like they have to juggle knowledge of a bunch of different ways of doing things.
 
 Our current plan is that some or all of the features that runes make unnecessary like `let`-style reactivity, `$:`, `$$props` and `$$restProps` will be deprecated in Svelte 6 and removed in Svelte 7. But don't worry — that won't happen for some time, and we'll provide automatic migration tooling to do as much of the change as possible. There are no plans to deprecate `onMount` or stores at the current time.
 
 ### Which things are disabled in runes mode?
 
 When you opt into runes mode, you can no longer use the features that runes replace:
+
 - `$state` replaces top-level `let` declarations implicitly creating reactive state
 - `$derived` replaces `$: x = ...`
 - `$effect` replaces `$: {'{ ... }'}`

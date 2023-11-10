@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: July 2023"
-description: "Svelte 4.0, new website and a tour around the community"
+description: 'Svelte 4.0, new website and a tour around the community'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -8,6 +8,7 @@ authorURL: https://dreamindani.com
 Svelte 4 is out and folks have been building! There's a bunch of new showcases, libraries and tutorials to share. So let's get right into it...
 
 ## What's new in Svelte
+
 The big news this month was the release of Svelte 4.0! You can read all about it in the [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4). From performance fixes and developer experience improvements to [a brand new site, docs and tutorial](https://svelte.dev/blog/svelte-dev-overhaul)... this new release sets the stage for Svelte 5 with minimal breaking changes.
 
 If you're already on Node.js 16, it's possible you won't see any breaking changes in your project. But be sure to read the [migration guide](https://svelte.dev/docs/v4-migration-guide) for all the details.
@@ -15,7 +16,9 @@ If you're already on Node.js 16, it's possible you won't see any breaking change
 For a full list of all the changes to the Svelte compiler, including unreleased changes, check out the [CHANGELOG](https://github.com/sveltejs/svelte/blob/master/packages/svelte/CHANGELOG.md).
 
 ## What's new in SvelteKit
+
 This month there were lots of awesome [bug fixes](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md), so be sure to upgrade to the latest version! There are also a few new features to mention:
+
 - The new `event.isSubRequest` boolean indicates whether this is a same-origin fetch request to one of the app's own APIs during a server request (**1.21.0**, [Docs](https://kit.svelte.dev/docs/types#public-types-requestevent), [#10170](https://github.com/sveltejs/kit/pull/10170))
 - A new config option, `config.kit.env.privatePrefix` will set a private prefix on environment variables. This defaults to `''` (**1.21.0**, [Docs](https://kit.svelte.dev/docs/configuration), [#9996](https://github.com/sveltejs/kit/pull/9996))
 - `VERSION` is now exported and accessible via `@sveltejs/kit`. This can be used for feature detection or anything else that requires knowledge of the current version of SvelteKit (**1.21.0**, [Docs](https://kit.svelte.dev/docs/modules#sveltejs-kit-version), [#9969](https://github.com/sveltejs/kit/pull/9969))
@@ -27,6 +30,7 @@ For adapter-specific changes, check out the CHANGELOGs in each of [the `adapter`
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Heerdle](https://github.com/DreaminDani/heerdle) is a remake of Spotify's now-defunct Heardle - the daily music guessing game
 - [Meoweler](https://meoweler.com/) is a travel site filled with cats and helpful facts about popular destinations
 - [A tech lead from IKEA](https://www.reddit.com/r/sveltejs/comments/13w4zg3/comment/jmaxial/?utm_source=share&utm_medium=web2x&context=3) gave a few more details on the way they build pages (and page template) using Svelte
@@ -39,10 +43,12 @@ For adapter-specific changes, check out the CHANGELOGs in each of [the `adapter`
 - [YABin](https://github.com/Yureien/YABin) is Yet Another Pastebin with some very specific features
 
 **Learning Resources**
+
 - [Announcing Svelte 4 post](https://svelte.dev/blog/svelte-4)
 - [svelte.dev: A complete overhaul](https://svelte.dev/blog/svelte-dev-overhaul)
 
 _Featuring Svelte Contributors and Ambassadors_
+
 - [Dev Vlog: June 2023](https://www.youtube.com/watch?v=AOXq89h8saI) - Svelte 4.0 with Rich Harris
 - [PodRocket: Svelte 4](https://podrocket.logrocket.com/svelte-4) with Geoff
 - [This Dot Media: Svelte 4 Launch Party](https://www.youtube.com/watch?v=-9gy_leMmcQ) with Simon, Ben, Geoff, and Puru
@@ -60,12 +66,13 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Svelte Society - London June 2023](https://www.youtube.com/watch?v=EkH0aMgeIKw)
 - [Using The Svelte Context API With Stores](https://www.youtube.com/watch?v=dp-7NvLDrK4), [Impossible FLIP Layout Animations With Svelte And GSAP](https://www.youtube.com/watch?v=ecP8RwpkiQw) and [Create Beautiful Presentations With Svelte](https://www.youtube.com/watch?v=67lqa5kTQkA) by Joy of Code
 
-
 _To Watch_
+
 - [Server-side filtered, paginated and sorted Table in SvelteKit](https://www.youtube.com/watch?v=VgCU0cVWgJE) by hartenfellerdev
 - [Best Icon Library for Svelte and SvelteKit in 2023](https://www.youtube.com/watch?v=qJP6hC4YIhk) by SvelteRust
 
 _To Read_
+
 - [From Zero to Production with SvelteKit](https://www.okupter.com/events/from-zero-to-production-with-sveltekit) by Justin Ahinon
 - [Thoughts on Svelte(Kit), one year and 3 billion requests later](https://claudioholanda.ch/en/blog/svelte-kit-after-3-billion-requests/) by Claudio Holanda
 - [How I published a gratitude journaling app for iOS and Android using SvelteKit and Capacitor](https://khromov.se/how-i-published-a-gratitude-journaling-app-for-ios-and-android-using-sveltekit-and-capacitor/) by Stanislav Khromov
@@ -77,8 +84,8 @@ _To Read_
 - [Svelte Real‑time Multiplayer Game: User Presence](https://rodneylab.com/svelte-realtime-multiplayer-game/) and [SvelteKit PostCSS Tutorial: use Future CSS Today](https://rodneylab.com/sveltekit-postcss-tutorial/) by Rodney Lab
 - [SvelteKit’s World of Routing: Unleash power of your app using Dynamic Routes and Parameters](https://www.inow.dev/sveltekits-world-of-routing-unleash-power-of-your-app-using-dynamic-routes-and-parameters/) by Igor Nowosad
 
-
 **Libraries, Tools & Components**
+
 - [The Vercel AI SDK](https://vercel.com/blog/introducing-the-vercel-ai-sdk) is an interoperable, streaming-enabled, edge-ready software development kit for AI apps built with React and Svelte
 - [Superforms 1.0](https://superforms.rocks/) has been released. Check out the [migration guide](https://superforms.rocks/migration) and [new feature list](https://superforms.rocks/whats-new-v1) for more details
 - [Panda CSS](https://panda-css.com/docs/getting-started/svelte) is CSS-in-JS with build time generated styles, RSC compatibility and multi-variant support

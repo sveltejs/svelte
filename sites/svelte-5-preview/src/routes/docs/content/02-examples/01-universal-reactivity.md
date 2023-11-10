@@ -60,7 +60,9 @@ export function createCounter() {
 	}
 
 	return {
-		get count() { return count; },
+		get count() {
+			return count;
+		},
 		increment
 	};
 }
