@@ -74,7 +74,7 @@
 		<slot />
 
 		<div slot="banner-bottom" class="banner-bottom">
-			<a href="/blog/runes" class="banner-bottom">Introducing the upcoming Svelte 5 API: Runes</a>
+			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom">Join us at Svelte Summit on Nov 11</a>
 		</div>
 	</Shell>
 </div>
