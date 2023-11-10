@@ -3,9 +3,6 @@
 	import { get_full_filename } from '$lib/utils.js';
 	import CodeMirror from '../CodeMirror.svelte';
 
-	/** @type {import('$lib/types').StartOrEnd | null} */
-	export let errorLoc = null;
-
 	/** @type {boolean} */
 	export let autocomplete;
 
@@ -58,7 +55,6 @@
 	<div class="editor notranslate" translate="no">
 		<CodeMirror
 			bind:this={$module_editor}
-			{errorLoc}
 			{autocomplete}
 			diagnostics={$selected && $bundle ? diagnostics : () => []}
 			on:change={handle_change}

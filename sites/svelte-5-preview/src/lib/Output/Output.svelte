@@ -10,9 +10,6 @@
 	/** @type {string | null} */
 	export let status;
 
-	/** @type {import('$lib/types').StartOrEnd | null} */
-	export let sourceErrorLoc = null;
-
 	/** @type {import('$lib/types').MessageDetails | null} */
 	export let runtimeError = null;
 
@@ -97,11 +94,11 @@
 <!-- js output -->
 <div class="tab-content" class:visible={selected?.type !== 'md' && view === 'js'}>
 	{#if embedded}
-		<CodeMirror bind:this={js_editor} errorLoc={sourceErrorLoc} readonly />
+		<CodeMirror bind:this={js_editor} readonly />
 	{:else}
 		<PaneWithPanel pos="50%" panel="Compiler options">
 			<div slot="main">
-				<CodeMirror bind:this={js_editor} errorLoc={sourceErrorLoc} readonly />
+				<CodeMirror bind:this={js_editor} readonly />
 			</div>
 
 			<div slot="panel-body">
@@ -113,7 +110,7 @@
 
 <!-- css output -->
 <div class="tab-content" class:visible={selected?.type !== 'md' && view === 'css'}>
-	<CodeMirror bind:this={css_editor} errorLoc={sourceErrorLoc} readonly />
+	<CodeMirror bind:this={css_editor} readonly />
 </div>
 
 <!-- ast output -->

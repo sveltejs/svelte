@@ -12,9 +12,6 @@
 	import Message from './Message.svelte';
 	import { svelteTheme } from './theme.js';
 
-	/** @type {import('./types').StartOrEnd | null} */
-	export let errorLoc = null;
-
 	/** @type {import('@codemirror/lint').LintSource | undefined} */
 	export let diagnostics = undefined;
 
@@ -171,9 +168,6 @@
 
 	let marked = false;
 
-	/** @type {number | null}*/
-	let error_line = null;
-
 	let updating_externally = false;
 
 	/** @type {import('@codemirror/state').Extension[]} */
@@ -181,27 +175,15 @@
 
 	let cursor_pos = 0;
 
-	$: {
-		if ($cmInstance.view) {
-			fulfil_module_editor_ready();
-		}
+	$: if ($cmInstance.view) {
+		fulfil_module_editor_ready();
 	}
 
 	$: if ($cmInstance.view && w && h) resize();
 
-	$: {
-		if (marked) {
-			unmarkText();
-			marked = false;
-		}
-
-		if (errorLoc) {
-			markText({ from: errorLoc.character, to: errorLoc.character + 1, className: 'error-loc' });
-
-			error_line = errorLoc.line;
-		} else {
-			error_line = null;
-		}
+	$: if (marked) {
+		unmarkText();
+		marked = false;
 	}
 
 	const watcher = EditorView.updateListener.of((viewUpdate) => {

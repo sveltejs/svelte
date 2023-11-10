@@ -260,8 +260,6 @@
 
 	$: $toggleable = mobile && orientation === 'columns';
 
-	/** @type {import('./types').StartOrEnd} */
-	let sourceErrorLoc;
 	let width = 0;
 	let show_output = false;
 
@@ -321,7 +319,7 @@
 		>
 			<section slot="a">
 				<ComponentSelector show_modified={showModified} on:add on:remove />
-				<ModuleEditor errorLoc={sourceErrorLoc} {autocomplete} />
+				<ModuleEditor {autocomplete} />
 			</section>
 
 			<section slot="b" style="height: 100%;">
