@@ -5,7 +5,7 @@ import { createBundle } from 'dts-buddy';
 const dir = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf-8'));
 
-console.error('the dir is:', dir);
+throw new Error('the dir is:' + dir);
 
 // For people not using moduleResolution: 'bundler', we need to generate these files. Think about removing this in Svelte 6 or 7
 // It may look weird, but the imports MUST be ending with index.js to be properly resolved in all TS modes
