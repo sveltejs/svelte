@@ -2843,17 +2843,13 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 	if (!setters) map_set(setters_cache, dom.nodeName, (setters = get_setters(dom)));
 
 	for (const key in next) {
-		if (key.startsWith('$$')) continue;
-
 		let value = next[key];
-		if (has_hash && key === 'class') {
-			if (value) value += ' ';
-			value += css_hash;
-		}
-
 		if (value === prev?.[key]) continue;
 
-		if (key.startsWith('on')) {
+		const prefix = key.slice(0, 2);
+		if (prefix === '$$') continue;
+
+		if (prefix === 'on') {
 			// TODO delegate?
 			/** @type {{ capture?: true }} */
 			const opts = {};
@@ -2895,6 +2891,11 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 				dom[key] = value;
 			}
 		} else if (typeof value !== 'function') {
+			if (has_hash && key === 'class') {
+				if (value) value += ' ';
+				value += css_hash;
+			}
+
 			attr(dom, key, value);
 		}
 	}
