@@ -27,6 +27,8 @@
     "changeset:publish": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.26.1",
+    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
     "@sveltejs/eslint-config": "^6.0.4",
     "@types/node": "^18.18.8",
     "@typescript-eslint/eslint-plugin": "^5.22.0",

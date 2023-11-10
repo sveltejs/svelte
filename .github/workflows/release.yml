@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - svelte-5
+      - main
 
 permissions: {}
 jobs:
