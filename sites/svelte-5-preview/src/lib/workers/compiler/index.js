@@ -69,9 +69,10 @@ function compile({ id, source, options, return_ast }) {
 				result: {
 					js: js.code,
 					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
-					warnings
-				},
-				metadata
+					error: null,
+					warnings,
+					metadata
+				}
 			};
 		} else if (options.filename.endsWith('.svelte.js')) {
 			const compiled = svelte.compileModule(source, {
@@ -85,9 +86,10 @@ function compile({ id, source, options, return_ast }) {
 					result: {
 						js: compiled.js.code,
 						css,
-						warnings: compiled.warnings
-					},
-					metadata: compiled.metadata
+						error: null,
+						warnings: compiled.warnings,
+						metadata: compiled.metadata
+					}
 				};
 			}
 		}
@@ -96,7 +98,10 @@ function compile({ id, source, options, return_ast }) {
 			id,
 			result: {
 				js: `// Select a component, or a '.svelte.js' module that uses runes, to see compiled output`,
-				css
+				css,
+				error: null,
+				warnings: [],
+				metadata: null
 			}
 		};
 	} catch (err) {
@@ -107,7 +112,13 @@ function compile({ id, source, options, return_ast }) {
 			id,
 			result: {
 				js: message,
-				css: message
+				css: message,
+				error: {
+					message: err.message,
+					position: err.position
+				},
+				warnings: [],
+				metadata: null
 			}
 		};
 	}

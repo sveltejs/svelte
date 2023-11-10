@@ -247,14 +247,20 @@
 	/** @type {import('./workers/workers').CompileMessageData | null} */
 	let compiled = null;
 
-	$: if (compiler && $selected) {
+	/**
+	 * @param {import('./types').File | null} $selected
+	 * @param {import('svelte/compiler').CompileOptions} $compile_options
+	 */
+	async function recompile($selected, $compile_options) {
+		if (!compiler || !$selected) return;
+
 		if ($selected.type === 'svelte' || $selected.type === 'js') {
-			compiler.compile($selected, $compile_options, false).then((data) => {
-				compiled = data;
-				$runes_mode = data.metadata?.runes ?? false;
-			});
+			compiled = await compiler.compile($selected, $compile_options, false);
+			$runes_mode = compiled.metadata?.runes ?? false;
 		}
 	}
+
+	$: recompile($selected, $compile_options);
 
 	$: mobile = width < 540;
 
@@ -319,7 +325,7 @@
 		>
 			<section slot="a">
 				<ComponentSelector show_modified={showModified} on:add on:remove />
-				<ModuleEditor {autocomplete} />
+				<ModuleEditor {autocomplete} error={compiled?.result.error} warnings={compiled?.result.warnings ?? []} />
 			</section>
 
 			<section slot="b" style="height: 100%;">
