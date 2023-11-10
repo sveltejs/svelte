@@ -5,19 +5,21 @@ import { createBundle } from 'dts-buddy';
 const dir = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf-8'));
 
+console.error('the dir is:', dir);
+
 // For people not using moduleResolution: 'bundler', we need to generate these files. Think about removing this in Svelte 6 or 7
 // It may look weird, but the imports MUST be ending with index.js to be properly resolved in all TS modes
 for (const name of ['action', 'animate', 'easing', 'motion', 'store', 'transition', 'legacy']) {
-	fs.writeFileSync(`${name}.d.ts`, "import './types/index.js';");
+	fs.writeFileSync(`${dir}/${name}.d.ts`, "import './types/index.js';");
 }
 
-fs.writeFileSync('index.d.ts', "import './types/index.js';");
-fs.writeFileSync('compiler.d.ts', "import './types/index.js';");
+fs.writeFileSync(`${dir}/index.d.ts`, "import './types/index.js';");
+fs.writeFileSync(`${dir}/compiler.d.ts`, "import './types/index.js';");
 
 // TODO: Remove these in Svelte 6. They are here so that tooling (which historically made use of these) can support Svelte 4-6 in one minor version
-fs.mkdirSync('./types/compiler', { recursive: true });
-fs.writeFileSync('./types/compiler/preprocess.d.ts', "import '../index.js';");
-fs.writeFileSync('./types/compiler/interfaces.d.ts', "import '../index.js';");
+fs.mkdirSync(`${dir}/types/compiler`, { recursive: true });
+fs.writeFileSync(`${dir}/types/compiler/preprocess.d.ts`, "import '../index.js';");
+fs.writeFileSync(`${dir}/types/compiler/interfaces.d.ts`, "import '../index.js';");
 
 await createBundle({
 	output: `${dir}/types/index.d.ts`,
