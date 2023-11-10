@@ -1,5 +1,13 @@
 # svelte
 
+## 4.2.3
+
+### Patch Changes
+
+- fix: improve a11y-click-events-have-key-events message ([#9358](https://github.com/sveltejs/svelte/pull/9358))
+
+- fix: more robust hydration of html tag ([#9184](https://github.com/sveltejs/svelte/pull/9184))
+
 ## 4.2.2
 
 ### Patch Changes
