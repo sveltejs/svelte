@@ -34,5 +34,6 @@ sites/svelte.dev/src/lib/generated
 .github/CODEOWNERS
 .prettierignore
 .eslintignore
+.changeset
 pnpm-lock.yaml
 pnpm-workspace.yaml
