@@ -81,7 +81,7 @@ Small pull requests are much easier to review and more likely to get merged.
 
 ### Creating a branch
 
-Fork [the repository](https://github.com/sveltejs/svelte) and create your branch from `master`. If you've never sent a GitHub pull request before, you can learn how from [this free video series](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
+Fork [the repository](https://github.com/sveltejs/svelte) and create your branch from `main`. If you've never sent a GitHub pull request before, you can learn how from [this free video series](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
 
 ### Testing
 
@@ -130,7 +130,7 @@ Please make sure the following is done when submitting a pull request:
 1. Make sure your code lints (`pnpm lint`).
 1. Make sure your tests pass (`pnpm test`).
 
-All pull requests should be opened against the `master` branch. Make sure the PR does only one thing, otherwise please split it.
+All pull requests should be opened against the `main` branch. Make sure the PR does only one thing, otherwise please split it.
 
 #### Breaking changes
 
