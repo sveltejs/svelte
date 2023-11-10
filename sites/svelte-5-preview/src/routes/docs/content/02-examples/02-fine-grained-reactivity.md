@@ -10,7 +10,7 @@ In Svelte 4, reactivity centres on the _component_ and the top-level state decla
 
 	function remaining(todos) {
 		console.log('recalculating');
-		return todos.filter(todo => !todo.done).length;
+		return todos.filter((todo) => !todo.done).length;
 	}
 
 	function addTodo(event) {
@@ -19,10 +19,13 @@ In Svelte 4, reactivity centres on the _component_ and the top-level state decla
 		let done = false;
 		let text = event.target.value;
 
-		todos = [...todos, {
-			done,
-			text
-		}];
+		todos = [
+			...todos,
+			{
+				done,
+				text
+			}
+		];
 
 		event.target.value = '';
 	}

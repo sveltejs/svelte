@@ -1,12 +1,12 @@
 /types
 /compiler.cjs
 
-action.d.ts
-animate.d.ts
-compiler.d.ts
-easing.d.ts
-index.d.ts
-legacy.d.ts
-motion.d.ts
-store.d.ts
-transition.d.ts
+/action.d.ts
+/animate.d.ts
+/compiler.d.ts
+/easing.d.ts
+/index.d.ts
+/legacy.d.ts
+/motion.d.ts
+/store.d.ts
+/transition.d.ts

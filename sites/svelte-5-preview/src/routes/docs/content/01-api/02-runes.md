@@ -187,6 +187,7 @@ Current Svelte code will continue to work without any adjustments. Components us
 
 The easiest way to opt in to runes mode is to just start using them in your code. Alternatively, you can force the compiler into runes or non-runes mode either on a per-component basis...
 
+<!-- prettier-ignore -->
 ```svelte
 <!--- file: YourComponent.svelte --->
 <!-- this can be `true` or `false` -->
