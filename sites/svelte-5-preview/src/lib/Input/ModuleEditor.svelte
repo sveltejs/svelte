@@ -25,12 +25,14 @@
 			{autocomplete}
 			diagnostics={() => {
 				if (error) {
-					return [{
-						severity: 'error',
-						from: error.position[0],
-						to: error.position[1],
-						message: error.message
-					}];
+					return [
+						{
+							severity: 'error',
+							from: error.position[0],
+							to: error.position[1],
+							message: error.message
+						}
+					];
 				}
 
 				if (warnings) {
@@ -38,7 +40,7 @@
 						severity: 'warning',
 						from: warning.start.character,
 						to: warning.end.character,
-						message: warning.message,
+						message: warning.message
 					}));
 				}
 

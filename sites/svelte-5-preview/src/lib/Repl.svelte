@@ -325,7 +325,11 @@
 		>
 			<section slot="a">
 				<ComponentSelector show_modified={showModified} on:add on:remove />
-				<ModuleEditor {autocomplete} error={compiled?.result.error} warnings={compiled?.result.warnings ?? []} />
+				<ModuleEditor
+					{autocomplete}
+					error={compiled?.result.error}
+					warnings={compiled?.result.warnings ?? []}
+				/>
 			</section>
 
 			<section slot="b" style="height: 100%;">

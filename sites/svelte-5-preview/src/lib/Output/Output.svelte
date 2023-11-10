@@ -38,13 +38,9 @@
 		if (selected.type === 'json') {
 			js_editor.set({ code: `/* Select a component to see its compiled code */`, lang: 'js' });
 			css_editor.set({ code: `/* Select a component to see its compiled code */`, lang: 'css' });
-		}
-
-		else if (selected.type=== 'md') {
+		} else if (selected.type === 'md') {
 			markdown = marked(selected.source);
-		}
-
-		else if (compiled) {
+		} else if (compiled) {
 			js_editor.set({ code: compiled.result.js, lang: 'js' });
 			css_editor.set({ code: compiled.result.css, lang: 'css' });
 		}
