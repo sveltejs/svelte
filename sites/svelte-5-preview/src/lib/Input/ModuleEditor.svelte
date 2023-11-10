@@ -1,66 +1,51 @@
 <script>
 	import { get_repl_context } from '$lib/context.js';
-	import { get_full_filename } from '$lib/utils.js';
 	import CodeMirror from '../CodeMirror.svelte';
-
-	/** @type {import('$lib/types').StartOrEnd | null} */
-	export let errorLoc = null;
 
 	/** @type {boolean} */
 	export let autocomplete;
+
+	/** @type {any} */ // TODO
+	export let error;
+
+	/** @type {any[]} */ // TODO
+	export let warnings;
 
 	export function focus() {
 		$module_editor?.focus();
 	}
 
-	const { bundle, handle_change, module_editor, selected, bundling } = get_repl_context();
-
-	async function diagnostics() {
-		/** @type {import('@codemirror/lint').Diagnostic[]} */
-		const diagnostics = [];
-
-		if (!$selected || !$bundle) return diagnostics;
-
-		await $bundling;
-
-		const filename = get_full_filename($selected);
-
-		if (
-			$bundle.error &&
-			$bundle.error.filename === filename &&
-			$bundle.error.start &&
-			$bundle.error.end
-		) {
-			diagnostics.push({
-				from: $bundle.error.start.character,
-				to: $bundle.error.end.character,
-				severity: 'error',
-				message: $bundle.error.message
-			});
-		}
-
-		for (const warning of $bundle.warnings) {
-			if (warning.filename === filename) {
-				diagnostics.push({
-					from: warning.start.character,
-					to: warning.end.character,
-					severity: 'warning',
-					message: warning.message
-				});
-			}
-		}
-
-		return diagnostics;
-	}
+	const { handle_change, module_editor } = get_repl_context();
 </script>
 
 <div class="editor-wrapper">
 	<div class="editor notranslate" translate="no">
 		<CodeMirror
 			bind:this={$module_editor}
-			{errorLoc}
 			{autocomplete}
-			diagnostics={$selected && $bundle ? diagnostics : () => []}
+			diagnostics={() => {
+				if (error) {
+					return [
+						{
+							severity: 'error',
+							from: error.position[0],
+							to: error.position[1],
+							message: error.message
+						}
+					];
+				}
+
+				if (warnings) {
+					return warnings.map((warning) => ({
+						severity: 'warning',
+						from: warning.start.character,
+						to: warning.end.character,
+						message: warning.message
+					}));
+				}
+
+				return [];
+			}}
 			on:change={handle_change}
 		/>
 	</div>

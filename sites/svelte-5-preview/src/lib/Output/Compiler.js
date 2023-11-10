@@ -40,9 +40,9 @@ export default class Compiler {
 
 	/**
 	 * @param {import('$lib/types').File} file
-	 * @param {import('svelte/types/compiler').CompileOptions} options
+	 * @param {import('svelte/compiler').CompileOptions} options
 	 * @param {boolean} return_ast
-	 * @returns
+	 * @returns {Promise<import('$lib/workers/workers').CompileMessageData>}
 	 */
 	compile(file, options, return_ast) {
 		return new Promise((fulfil) => {

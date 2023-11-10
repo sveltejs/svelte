@@ -62,15 +62,17 @@ function compile({ id, source, options, return_ast }) {
 				generate: options.generate
 			});
 
-			const { js, css, metadata } = compiled;
+			const { js, css, warnings, metadata } = compiled;
 
 			return {
 				id,
 				result: {
 					js: js.code,
-					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`
-				},
-				metadata
+					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
+					error: null,
+					warnings,
+					metadata
+				}
 			};
 		} else if (options.filename.endsWith('.svelte.js')) {
 			const compiled = svelte.compileModule(source, {
@@ -83,9 +85,11 @@ function compile({ id, source, options, return_ast }) {
 					id,
 					result: {
 						js: compiled.js.code,
-						css
-					},
-					metadata: compiled.metadata
+						css,
+						error: null,
+						warnings: compiled.warnings,
+						metadata: compiled.metadata
+					}
 				};
 			}
 		}
@@ -94,7 +98,10 @@ function compile({ id, source, options, return_ast }) {
 			id,
 			result: {
 				js: `// Select a component, or a '.svelte.js' module that uses runes, to see compiled output`,
-				css
+				css,
+				error: null,
+				warnings: [],
+				metadata: null
 			}
 		};
 	} catch (err) {
@@ -105,7 +112,13 @@ function compile({ id, source, options, return_ast }) {
 			id,
 			result: {
 				js: message,
-				css: message
+				css: message,
+				error: {
+					message: err.message,
+					position: err.position
+				},
+				warnings: [],
+				metadata: null
 			}
 		};
 	}
