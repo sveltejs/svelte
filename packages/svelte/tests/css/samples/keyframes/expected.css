@@ -1,0 +1,14 @@
+	@keyframes svelte-xyz-why {
+		0% { color: red; }
+		33.3% { color: yellow }
+		66.7% { color: green }
+		100% { color: blue; }
+	}
+
+	.animated.svelte-xyz {
+		animation: svelte-xyz-why 2s;
+	}
+
+	.also-animated.svelte-xyz {
+		animation: not-defined-here 2s;
+	}

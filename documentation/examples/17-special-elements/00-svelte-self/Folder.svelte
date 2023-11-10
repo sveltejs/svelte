@@ -34,8 +34,8 @@
 		background-size: 1em 1em;
 		font-weight: bold;
 		cursor: pointer;
-		border:none;
-		font-size:14px;
+		border: none;
+		font-size: 14px;
 	}
 
 	.expanded {

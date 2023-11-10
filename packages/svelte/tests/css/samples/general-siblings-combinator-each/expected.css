@@ -1,0 +1,3 @@
+	div.svelte-xyz ~ span.svelte-xyz {
+		color: green;
+	}

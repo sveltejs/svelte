@@ -1,0 +1,4 @@
+src/*
+dist/*
+!src/entry-client.ts
+!src/entry-server.ts

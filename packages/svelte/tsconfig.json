@@ -1,43 +1,35 @@
 {
-	"include": ["src/**/*"],
-
 	"compilerOptions": {
-		"rootDir": "src",
-
-		// target node v8+ (https://node.green/)
-		// the only missing feature is Array.prototype.values
-		"lib": ["es2017", "DOM", "DOM.Iterable"],
-		"target": "es2017",
-
-		// silences wrong TS error, we don't compile, we only typecheck
-		"outDir": "./irrelevant/unused",
-
-		"declaration": true,
-		"declarationDir": "types",
-
+		"module": "esnext",
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"target": "esnext",
+		"noEmit": true,
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
 		"noEmitOnError": true,
 		"noErrorTruncation": true,
-
+		"allowSyntheticDefaultImports": true,
+		"verbatimModuleSyntax": true,
+		"types": ["node"],
+		"strict": true,
 		"allowJs": true,
 		"checkJs": true,
-
-		// rollup takes care of these
-		"module": "esnext",
-		"moduleResolution": "node",
-		"resolveJsonModule": true,
-		"allowSyntheticDefaultImports": true,
-
-		// Hides exports flagged with @internal from the d.ts output
-		"stripInternal": true,
-
-		// TODO: error all the things
-		//"strict": true,
-		"noImplicitThis": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"typeRoots": ["./node_modules/@types"],
 		"paths": {
-			"svelte": ["./src/runtime/public.d.ts"]
+			"svelte": ["./src/main/public.d.ts"],
+			"svelte/action": ["./src/action/public.d.ts"],
+			"svelte/compiler": ["./src/compiler/public.d.ts"],
+			"svelte/internal": ["./src/internal/index.js"],
+			"svelte/legacy": ["./src/legacy/public.d.ts"],
+			"svelte/server": ["./src/server/index.js"],
+			"svelte/store": ["./src/store/public.d.ts"],
+			"#compiler": ["./src/compiler/types/index.d.ts"]
 		}
-	}
+	},
+	"include": [
+		"./src",
+		"./tests/*/test.ts",
+		"./tests/runtime-browser/test-ssr.ts",
+		"./tests/*/samples/*/_config.js"
+	],
+	"exclude": ["./src/compiler/optimizer"]
 }

@@ -102,7 +102,9 @@
 
 	.cta:hover {
 		text-decoration: none;
-		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
+		box-shadow:
+			0px 0.8px 3.8px rgba(0, 0, 0, 0.115),
+			0px 6px 30px rgba(0, 0, 0, 0.23);
 	}
 
 	.cta.basic {

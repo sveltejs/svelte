@@ -1,8 +1,0 @@
-<div>hello</div>
-
-<div><div>bye</div></div>
-
-<div>
-	<div>aaa</div>
-	<div>bbb</div>
-</div>

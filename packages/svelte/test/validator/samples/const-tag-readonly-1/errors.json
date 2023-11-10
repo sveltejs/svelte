@@ -1,8 +1,0 @@
-[
-	{
-		"code": "invalid-const-update",
-		"message": "'b' is declared using {@const ...} and is read-only",
-		"start": { "line": 7, "column": 26 },
-		"end": { "line": 7, "column": 30 }
-	}
-]

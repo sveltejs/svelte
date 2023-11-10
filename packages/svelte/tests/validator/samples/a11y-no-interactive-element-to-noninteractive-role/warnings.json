@@ -1,0 +1,710 @@
+[
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 2
+		},
+		"message": "A11y: <a> cannot have role 'article'",
+		"start": {
+			"column": 0,
+			"line": 2
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 37,
+			"line": 3
+		},
+		"message": "A11y: <a> cannot have role 'banner'",
+		"start": {
+			"column": 0,
+			"line": 3
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 44,
+			"line": 4
+		},
+		"message": "A11y: <a> cannot have role 'complementary'",
+		"start": {
+			"column": 0,
+			"line": 4
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 34,
+			"line": 5
+		},
+		"message": "A11y: <a> cannot have role 'img'",
+		"start": {
+			"column": 0,
+			"line": 5
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 39,
+			"line": 6
+		},
+		"message": "A11y: <a> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 6
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 35,
+			"line": 7
+		},
+		"message": "A11y: <a> cannot have role 'main'",
+		"start": {
+			"column": 0,
+			"line": 7
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 37,
+			"line": 8
+		},
+		"message": "A11y: <a> cannot have role 'region'",
+		"start": {
+			"column": 0,
+			"line": 8
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 9
+		},
+		"message": "A11y: <a> cannot have role 'tooltip'",
+		"start": {
+			"column": 0,
+			"line": 9
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 13
+		},
+		"message": "A11y: <button> cannot have role 'article'",
+		"start": {
+			"column": 0,
+			"line": 13
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 37,
+			"line": 14
+		},
+		"message": "A11y: <button> cannot have role 'banner'",
+		"start": {
+			"column": 0,
+			"line": 14
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 44,
+			"line": 15
+		},
+		"message": "A11y: <button> cannot have role 'complementary'",
+		"start": {
+			"column": 0,
+			"line": 15
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 34,
+			"line": 16
+		},
+		"message": "A11y: <button> cannot have role 'img'",
+		"start": {
+			"column": 0,
+			"line": 16
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 39,
+			"line": 17
+		},
+		"message": "A11y: <button> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 17
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 35,
+			"line": 18
+		},
+		"message": "A11y: <button> cannot have role 'main'",
+		"start": {
+			"column": 0,
+			"line": 18
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 37,
+			"line": 19
+		},
+		"message": "A11y: <button> cannot have role 'region'",
+		"start": {
+			"column": 0,
+			"line": 19
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 20
+		},
+		"message": "A11y: <button> cannot have role 'tooltip'",
+		"start": {
+			"column": 0,
+			"line": 20
+		}
+	},
+	{
+		"code": "a11y-no-redundant-roles",
+		"end": {
+			"column": 21,
+			"line": 21
+		},
+		"message": "A11y: Redundant role 'button'",
+		"start": {
+			"column": 8,
+			"line": 21
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 24,
+			"line": 24
+		},
+		"message": "A11y: <input> cannot have role 'article'",
+		"start": {
+			"column": 0,
+			"line": 24
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 23,
+			"line": 25
+		},
+		"message": "A11y: <input> cannot have role 'banner'",
+		"start": {
+			"column": 0,
+			"line": 25
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 30,
+			"line": 26
+		},
+		"message": "A11y: <input> cannot have role 'complementary'",
+		"start": {
+			"column": 0,
+			"line": 26
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 20,
+			"line": 27
+		},
+		"message": "A11y: <input> cannot have role 'img'",
+		"start": {
+			"column": 0,
+			"line": 27
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 25,
+			"line": 28
+		},
+		"message": "A11y: <input> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 28
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 21,
+			"line": 29
+		},
+		"message": "A11y: <input> cannot have role 'main'",
+		"start": {
+			"column": 0,
+			"line": 29
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 23,
+			"line": 30
+		},
+		"message": "A11y: <input> cannot have role 'region'",
+		"start": {
+			"column": 0,
+			"line": 30
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 24,
+			"line": 31
+		},
+		"message": "A11y: <input> cannot have role 'tooltip'",
+		"start": {
+			"column": 0,
+			"line": 31
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 25,
+			"line": 35
+		},
+		"message": "A11y: <select> cannot have role 'article'",
+		"start": {
+			"column": 0,
+			"line": 35
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 24,
+			"line": 36
+		},
+		"message": "A11y: <select> cannot have role 'banner'",
+		"start": {
+			"column": 0,
+			"line": 36
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 31,
+			"line": 37
+		},
+		"message": "A11y: <select> cannot have role 'complementary'",
+		"start": {
+			"column": 0,
+			"line": 37
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 21,
+			"line": 38
+		},
+		"message": "A11y: <select> cannot have role 'img'",
+		"start": {
+			"column": 0,
+			"line": 38
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 26,
+			"line": 39
+		},
+		"message": "A11y: <select> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 39
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 22,
+			"line": 40
+		},
+		"message": "A11y: <select> cannot have role 'main'",
+		"start": {
+			"column": 0,
+			"line": 40
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 24,
+			"line": 41
+		},
+		"message": "A11y: <select> cannot have role 'region'",
+		"start": {
+			"column": 0,
+			"line": 41
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 25,
+			"line": 42
+		},
+		"message": "A11y: <select> cannot have role 'tooltip'",
+		"start": {
+			"column": 0,
+			"line": 42
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 27,
+			"line": 46
+		},
+		"message": "A11y: <textarea> cannot have role 'article'",
+		"start": {
+			"column": 0,
+			"line": 46
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 26,
+			"line": 47
+		},
+		"message": "A11y: <textarea> cannot have role 'banner'",
+		"start": {
+			"column": 0,
+			"line": 47
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 33,
+			"line": 48
+		},
+		"message": "A11y: <textarea> cannot have role 'complementary'",
+		"start": {
+			"column": 0,
+			"line": 48
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 23,
+			"line": 49
+		},
+		"message": "A11y: <textarea> cannot have role 'img'",
+		"start": {
+			"column": 0,
+			"line": 49
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 28,
+			"line": 50
+		},
+		"message": "A11y: <textarea> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 50
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 24,
+			"line": 51
+		},
+		"message": "A11y: <textarea> cannot have role 'main'",
+		"start": {
+			"column": 0,
+			"line": 51
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 26,
+			"line": 52
+		},
+		"message": "A11y: <textarea> cannot have role 'region'",
+		"start": {
+			"column": 0,
+			"line": 52
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 27,
+			"line": 53
+		},
+		"message": "A11y: <textarea> cannot have role 'tooltip'",
+		"start": {
+			"column": 0,
+			"line": 53
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 19,
+			"line": 57
+		},
+		"message": "A11y: Abstract role 'command' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 57
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 21,
+			"line": 58
+		},
+		"message": "A11y: Abstract role 'composite' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 58
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 17,
+			"line": 59
+		},
+		"message": "A11y: Abstract role 'input' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 59
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 20,
+			"line": 60
+		},
+		"message": "A11y: Abstract role 'landmark' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 60
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 17,
+			"line": 61
+		},
+		"message": "A11y: Abstract role 'range' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 61
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 20,
+			"line": 62
+		},
+		"message": "A11y: Abstract role 'roletype' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 62
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 19,
+			"line": 63
+		},
+		"message": "A11y: Abstract role 'section' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 63
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 23,
+			"line": 64
+		},
+		"message": "A11y: Abstract role 'sectionhead' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 64
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 18,
+			"line": 65
+		},
+		"message": "A11y: Abstract role 'select' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 65
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 21,
+			"line": 66
+		},
+		"message": "A11y: Abstract role 'structure' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 66
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 18,
+			"line": 71
+		},
+		"message": "A11y: Abstract role 'widget' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 71
+		}
+	},
+	{
+		"code": "a11y-no-abstract-role",
+		"end": {
+			"column": 18,
+			"line": 72
+		},
+		"message": "A11y: Abstract role 'window' is forbidden",
+		"start": {
+			"column": 5,
+			"line": 72
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 28,
+			"line": 143
+		},
+		"message": "A11y: <menuitem> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 143
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 144
+		},
+		"message": "A11y: <option> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 144
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 38,
+			"line": 145
+		},
+		"message": "A11y: <select> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 145
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 40,
+			"line": 146
+		},
+		"message": "A11y: <textarea> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 146
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 22,
+			"line": 147
+		},
+		"message": "A11y: <tr> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 147
+		}
+	},
+	{
+		"code": "a11y-no-interactive-element-to-noninteractive-role",
+		"end": {
+			"column": 27,
+			"line": 148
+		},
+		"message": "A11y: <summary> cannot have role 'listitem'",
+		"start": {
+			"column": 0,
+			"line": 148
+		}
+	}
+]

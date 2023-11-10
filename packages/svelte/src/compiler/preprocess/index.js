@@ -14,7 +14,7 @@ const regex_filepath_separator = /[/\\]/;
  * @param {string} filename
  */
 function get_file_basename(filename) {
-	return filename.split(regex_filepath_separator).pop();
+	return /** @type {string} */ (filename.split(regex_filepath_separator).pop());
 }
 
 /**
@@ -43,17 +43,16 @@ class PreprocessResult {
 	dependencies = [];
 
 	/**
-	 * @type {string}
+	 * @type {string | null  }
 	 */
-	file_basename = undefined;
+	file_basename = /** @type {any} */ (undefined);
 
 	/**
 	 * @type {ReturnType<typeof getLocator>}
 	 */
-	get_location = undefined;
+	get_location = /** @type {any} */ (undefined);
 
 	/**
-	 *
 	 * @param {string} source
 	 * @param {string} [filename]
 	 */
@@ -86,6 +85,7 @@ class PreprocessResult {
 	 */
 	to_processed() {
 		// Combine all the source maps for each preprocessor function into one
+		// @ts-expect-error TODO there might be a bug in hiding here
 		const map = combine_sourcemaps(this.file_basename, this.sourcemap_list);
 		return {
 			// TODO return separated output, in future version where svelte.compile supports it:
@@ -94,6 +94,7 @@ class PreprocessResult {
 			// markup { code: markupCode, map: markupMap },
 			code: this.source,
 			dependencies: [...new Set(this.dependencies)],
+			// @ts-expect-error TODO there might be a bug in hiding here
 			map,
 			toString: () => this.source
 		};
@@ -110,13 +111,13 @@ function processed_content_to_code(processed, location, file_basename) {
 	// Convert the preprocessed code and its sourcemap to a MappedCode
 
 	/**
-	 * @type {import('@ampproject/remapping').DecodedSourceMap}
+	 * @type {import('@ampproject/remapping').DecodedSourceMap | undefined}
 	 */
-	let decoded_map;
+	let decoded_map = undefined;
 	if (processed.map) {
 		decoded_map = decode_map(processed);
 		// decoded map may not have sources for empty maps like `{ mappings: '' }`
-		if (decoded_map.sources) {
+		if (decoded_map?.sources) {
 			// offset only segments pointing at original component source
 			const source_index = decoded_map.sources.indexOf(file_basename);
 			if (source_index !== -1) {
@@ -226,7 +227,7 @@ function parse_tag_attributes(str) {
 	/** @type {Record<string, string | boolean>} */
 	const attrs = {};
 
-	/** @type {RegExpMatchArray} */
+	/** @type {RegExpMatchArray | null} */
 	let match;
 	while ((match = attribute_pattern.exec(str)) !== null) {
 		const name = match[1];
@@ -352,12 +353,15 @@ export default async function preprocess(source, preprocessor, options) {
 	// to make debugging easier = detect low-resolution sourcemaps in fn combine_mappings
 	for (const preprocessor of preprocessors) {
 		if (preprocessor.markup) {
+			// @ts-expect-error TODO there might be a bug in hiding here
 			result.update_source(await process_markup(preprocessor.markup, result));
 		}
 		if (preprocessor.script) {
+			// @ts-expect-error TODO there might be a bug in hiding here
 			result.update_source(await process_tag('script', preprocessor.script, result));
 		}
 		if (preprocessor.style) {
+			// @ts-expect-error TODO there might be a bug in hiding here
 			result.update_source(await process_tag('style', preprocessor.style, result));
 		}
 	}

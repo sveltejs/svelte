@@ -1,0 +1,302 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 122,
+		"end": 207,
+		"children": [
+			{
+				"type": "Text",
+				"start": 120,
+				"end": 122,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 122,
+				"end": 207,
+				"name": "button",
+				"attributes": [
+					{
+						"start": 131,
+						"end": 196,
+						"type": "EventHandler",
+						"name": "click",
+						"modifiers": [],
+						"expression": {
+							"type": "ArrowFunctionExpression",
+							"start": 153,
+							"end": 195,
+							"loc": {
+								"start": {
+									"line": 13,
+									"column": 1
+								},
+								"end": {
+									"line": 16,
+									"column": 2
+								}
+							},
+							"id": null,
+							"expression": false,
+							"generator": false,
+							"async": false,
+							"params": [],
+							"body": {
+								"type": "BlockStatement",
+								"start": 159,
+								"end": 195,
+								"loc": {
+									"start": {
+										"line": 13,
+										"column": 7
+									},
+									"end": {
+										"line": 16,
+										"column": 2
+									}
+								},
+								"body": [
+									{
+										"type": "ExpressionStatement",
+										"start": 187,
+										"end": 192,
+										"loc": {
+											"start": {
+												"line": 15,
+												"column": 2
+											},
+											"end": {
+												"line": 15,
+												"column": 7
+											}
+										},
+										"expression": {
+											"type": "CallExpression",
+											"start": 187,
+											"end": 191,
+											"loc": {
+												"start": {
+													"line": 15,
+													"column": 2
+												},
+												"end": {
+													"line": 15,
+													"column": 6
+												}
+											},
+											"callee": {
+												"type": "Identifier",
+												"start": 187,
+												"end": 189,
+												"loc": {
+													"start": {
+														"line": 15,
+														"column": 2
+													},
+													"end": {
+														"line": 15,
+														"column": 4
+													}
+												},
+												"name": "fn"
+											},
+											"arguments": [],
+											"optional": false
+										},
+										"leadingComments": [
+											{
+												"type": "Block",
+												"value": " another comment ",
+												"start": 163,
+												"end": 184,
+												"has_trailing_newline": true
+											}
+										]
+									}
+								]
+							},
+							"leadingComments": [
+								{
+									"type": "Line",
+									"value": " comment",
+									"start": 141,
+									"end": 151,
+									"has_trailing_newline": true
+								}
+							]
+						}
+					}
+				],
+				"children": []
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 120,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 111,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 9,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 32,
+					"end": 47,
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 1
+						},
+						"end": {
+							"line": 3,
+							"column": 16
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 38,
+							"end": 46,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 7
+								},
+								"end": {
+									"line": 3,
+									"column": 15
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 38,
+								"end": 39,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 7
+									},
+									"end": {
+										"line": 3,
+										"column": 8
+									}
+								},
+								"name": "a"
+							},
+							"init": {
+								"type": "Literal",
+								"start": 42,
+								"end": 46,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 11
+									},
+									"end": {
+										"line": 3,
+										"column": 15
+									}
+								},
+								"value": true,
+								"raw": "true"
+							}
+						}
+					],
+					"kind": "const",
+					"leadingComments": [
+						{
+							"type": "Line",
+							"value": " a leading comment",
+							"start": 10,
+							"end": 30,
+							"has_trailing_newline": true
+						}
+					],
+					"trailingComments": [
+						{
+							"type": "Line",
+							"value": " a trailing comment",
+							"start": 48,
+							"end": 69
+						}
+					]
+				},
+				{
+					"type": "FunctionDeclaration",
+					"start": 90,
+					"end": 110,
+					"loc": {
+						"start": {
+							"line": 6,
+							"column": 1
+						},
+						"end": {
+							"line": 8,
+							"column": 2
+						}
+					},
+					"id": {
+						"type": "Identifier",
+						"start": 99,
+						"end": 102,
+						"loc": {
+							"start": {
+								"line": 6,
+								"column": 10
+							},
+							"end": {
+								"line": 6,
+								"column": 13
+							}
+						},
+						"name": "asd"
+					},
+					"expression": false,
+					"generator": false,
+					"async": false,
+					"params": [],
+					"body": {
+						"type": "BlockStatement",
+						"start": 105,
+						"end": 110,
+						"loc": {
+							"start": {
+								"line": 6,
+								"column": 16
+							},
+							"end": {
+								"line": 8,
+								"column": 2
+							}
+						},
+						"body": []
+					},
+					"leadingComments": [
+						{
+							"type": "Block",
+							"value": "* a comment ",
+							"start": 72,
+							"end": 88,
+							"has_trailing_newline": true
+						}
+					]
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

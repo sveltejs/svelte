@@ -1,0 +1,11 @@
+	:root {
+		--root-test: 20;
+	}
+	div.svelte-xyz {
+		--test: 10;
+	}
+
+	div.svelte-xyz {
+		--foo: ;
+		--bar: !important;
+	}

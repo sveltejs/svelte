@@ -14,7 +14,7 @@
 			"name": "Playground: Server",
 			"outputCapture": "std",
 			"program": "start.js",
-			"cwd": "${workspaceFolder}/packages/playground",
+			"cwd": "${workspaceFolder}/playgrounds/demo",
 			"cascadeTerminateToConfigurations": ["Playground: Browser"]
 		}
 	],

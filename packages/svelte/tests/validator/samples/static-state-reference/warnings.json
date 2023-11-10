@@ -1,0 +1,26 @@
+[
+	{
+		"code": "static-state-reference",
+		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"start": {
+			"column": 13,
+			"line": 5
+		},
+		"end": {
+			"column": 18,
+			"line": 5
+		}
+	},
+	{
+		"code": "static-state-reference",
+		"message": "State referenced in its own scope will never update. Did you mean to reference it inside a closure?",
+		"start": {
+			"column": 13,
+			"line": 6
+		},
+		"end": {
+			"column": 20,
+			"line": 6
+		}
+	}
+]

@@ -1,0 +1,11 @@
+	div {
+		color: red;
+	}
+
+	div.foo {
+		color: pink;
+	}
+
+	.foo {
+		font-weight: bold;
+	}

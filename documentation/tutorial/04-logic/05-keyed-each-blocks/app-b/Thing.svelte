@@ -34,7 +34,7 @@
 		padding: 0.2em 1em 0.3em;
 		text-align: center;
 		border-radius: 0.2em;
-		color:#333333;
+		color: #333333;
 		background-color: #ffdfd3;
 	}
 </style>

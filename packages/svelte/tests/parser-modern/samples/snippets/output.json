@@ -1,0 +1,95 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 58,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "SnippetBlock",
+				"start": 0,
+				"end": 41,
+				"expression": {
+					"type": "Identifier",
+					"start": 10,
+					"end": 13,
+					"name": "foo"
+				},
+				"context": null,
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 16,
+							"end": 18,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 18,
+							"end": 30,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "Text",
+										"start": 21,
+										"end": 26,
+										"raw": "hello",
+										"data": "hello"
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 30,
+							"end": 31,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": false
+				}
+			},
+			{
+				"type": "Text",
+				"start": 41,
+				"end": 43,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "RenderTag",
+				"start": 43,
+				"end": 58,
+				"expression": {
+					"type": "Identifier",
+					"start": 52,
+					"end": 55,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 9
+						},
+						"end": {
+							"line": 5,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"argument": null
+			}
+		],
+		"transparent": false
+	},
+	"options": null
+}

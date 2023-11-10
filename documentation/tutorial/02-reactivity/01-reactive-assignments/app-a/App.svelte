@@ -13,6 +13,6 @@
 
 <style>
 	button {
-		width:200px;
+		width: 200px;
 	}
 </style>

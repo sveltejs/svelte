@@ -1,0 +1,30 @@
+	@page vertical {
+		size: A4 portrait;
+		@top-center {
+			content: "Vertical";
+		}
+	}
+
+	@page :right {
+		@top-center {
+			content: "Preliminary edition";
+		}
+
+		@bottom-center {
+			content: counter(page);
+		}
+	}
+
+	@page :first {
+		color: green;
+		font-size: 20pt;
+
+		@top-left {
+			content: "foo";
+			color: blue;
+		}
+
+		@top-right {
+			content: "bar";
+		}
+	}
