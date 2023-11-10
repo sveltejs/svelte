@@ -2843,6 +2843,8 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 	if (!setters) map_set(setters_cache, dom.nodeName, (setters = get_setters(dom)));
 
 	for (const key in next) {
+		if (key.startsWith('$$')) continue;
+
 		let value = next[key];
 		if (has_hash && key === 'class') {
 			if (value) value += ' ';
