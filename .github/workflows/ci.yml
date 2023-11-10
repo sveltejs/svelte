@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [master]
+    branches: [svelte-4]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
