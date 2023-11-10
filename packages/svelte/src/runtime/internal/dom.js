@@ -807,6 +807,9 @@ export function claim_html_tag(nodes, is_svg) {
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
+	if (claimed_nodes.length === 0) {
+		return new HtmlTagHydration(is_svg);
+	}
 	for (const n of claimed_nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
