@@ -13,24 +13,13 @@ This repo tries to migrate as many tests from the currente Svelte project over t
 ## Breaking changes
 
 - Order of list insertions has changed: It's now back to front because that's faster
-- Directives are not applied in order for all directives anymore, see `apply-directives-in-order-2` for an example
 - Slight timing differences mean that things may fire less in some cases (behavior should be unaffected though) - see `component-binding-each-remount-unkeyed` for an example
 - It's currently possible to create infinite loops with `$:` invoking each other
 - Fallback value is now set on all `undefined` values, not just on the first one
-- whitespace handling is now different: surrounding space is always trimmed, space within on text nodes is kept as-is, unless whitespace only, in which case it's trimmed to one whitespace
-- assignment to `@const` destructured parts is no longer allowed (see change to `const-tag-each-destructure-computed-props` / `const-tag-each-destructure-computed-in-computed`). This was an oversight that this was ever allowed
-- the CSS hash no longer comes last (can be first or inbetween) (not really breaking, unless you have very very weird css selectors https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css)
-- The `css` compiler option no longer exists. CSS will always be outputted, and will never be inlined into the JS
 - CSS is no longer minified. Unused styles are instead commented out
 - `:global(...)` compound selectors (e.g. `.foo:global(.bar)` or `:global(.foo).bar`) are no longer permitted. These are nonsensical and don't do anything useful in Svelte 4 — better to just get rid of them
-- `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template
 - transitions: when one element fades out and a new one (which is on the same element but another instance of it) fades in at the same time, the new one is now below the old one (was above before)
 - transitions: now wait one tick before they start playing to align with web animations API
-- `bind:clientWidth/clientHeight/offsetWidth/offsetHeight` now use mutation observers intead of iframes to measure stuff
-- APIs for instantiating/rendering components have changed. Instead of `new App(...)`, it's `mount(App)`, and instead of `App.render(...)` it's `render(App)`
-- unlike `App.render(...)`, `render(App, ...)` does not emit CSS
-- If you have a `contenteditable` node with a corresponding binding _and_ a reactive value inside it (example: `<div contenteditable=true bind:textContent>count is {count}</div>`) then the value inside the contenteditable will not be updated by updates to `count` because the binding takes full control over the content immediately and it should only be updated through it.
-- `legacy` option to generate IE10/11 compatible code was removed
 
 ## TODOs
 
