@@ -2810,7 +2810,7 @@ function get_setters(element) {
 	/** @type {string[]} */
 	const setters = [];
 	// @ts-expect-error
-	const descriptors = Object.getOwnPropertyDescriptors(element.__proto__);
+	const descriptors = get_descriptors(element.__proto__);
 	for (const key in descriptors) {
 		if (descriptors[key].set && !always_set_through_set_attribute.includes(key)) {
 			setters.push(key);
