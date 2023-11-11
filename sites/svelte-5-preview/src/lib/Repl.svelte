@@ -258,8 +258,6 @@
 		} else {
 			runes = false;
 		}
-
-		console.error({ runes })
 	}
 
 	$: recompile($selected, $compile_options);
