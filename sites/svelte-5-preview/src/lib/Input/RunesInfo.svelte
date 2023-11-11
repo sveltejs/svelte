@@ -1,9 +1,12 @@
 <script>
 	import { get_repl_context } from '$lib/context.js';
 
+	/** @type {boolean} */
+	export let runes;
+
 	let open = false;
 
-	const { selected_name, runes_mode } = get_repl_context();
+	const { selected_name } = get_repl_context();
 </script>
 
 <svelte:window
@@ -13,7 +16,7 @@
 />
 
 <div class="container">
-	<button class:active={$runes_mode} class:open on:click={() => (open = !open)}>
+	<button class:active={runes} class:open on:click={() => (open = !open)}>
 		<svg viewBox="0 0 24 24">
 			<path d="M9.4,1H19l-5.9,7.7h8L8.3,23L11,12.6H3.5L9.4,1z" />
 		</svg>
@@ -40,7 +43,7 @@
 					extension to <code>.svelte.js</code>.
 				</p>
 			{:else if $selected_name.endsWith('.svelte')}
-				{#if $runes_mode}
+				{#if runes}
 					<p>
 						This component is in
 						<a href="https://svelte.dev/blog/runes">runes mode</a>.

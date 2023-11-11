@@ -29,6 +29,8 @@
 	export let showAst = false;
 	export let autocomplete = true;
 
+	let runes = false;
+
 	export function toJSON() {
 		return {
 			imports: $bundle?.imports ?? [],
@@ -113,9 +115,6 @@
 	/** @type {ReplContext['toggleable']} */
 	const toggleable = writable(false);
 
-	/** @type {ReplContext['runes_mode']} */
-	const runes_mode = writable(false);
-
 	/** @type {ReplContext['bundler']} */
 	const bundler = writable(null);
 
@@ -133,7 +132,6 @@
 		cursor_pos,
 		module_editor,
 		toggleable,
-		runes_mode,
 
 		EDITOR_STATE_MAP,
 
@@ -256,7 +254,9 @@
 
 		if ($selected.type === 'svelte' || $selected.type === 'js') {
 			compiled = await compiler.compile($selected, $compile_options, false);
-			$runes_mode = compiled.metadata?.runes ?? false;
+			runes = compiled.result.metadata?.runes ?? false;
+		} else {
+			runes = false;
 		}
 	}
 
@@ -324,7 +324,7 @@
 			max="-4.1rem"
 		>
 			<section slot="a">
-				<ComponentSelector show_modified={showModified} on:add on:remove />
+				<ComponentSelector show_modified={showModified} {runes} on:add on:remove />
 				<ModuleEditor
 					{autocomplete}
 					error={compiled?.result.error}

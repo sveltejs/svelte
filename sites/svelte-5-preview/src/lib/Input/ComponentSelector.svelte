@@ -7,6 +7,9 @@
 	/** @type {boolean}  */
 	export let show_modified;
 
+	/** @type {boolean} */
+	export let runes;
+
 	/** @type {ReturnType<typeof createEventDispatcher<{
 	 * remove: { files: import('$lib/types').File[]; diff: import('$lib/types').File },
 	 * add: { files: import('$lib/types').File[]; diff: import('$lib/types').File },
@@ -292,7 +295,7 @@
 		</svg>
 	</button>
 
-	<div class="runes-info"><RunesInfo /></div>
+	<div class="runes-info"><RunesInfo {runes} /></div>
 </div>
 
 <style>
