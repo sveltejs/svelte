@@ -26,7 +26,14 @@
 		<p class="standfirst">{data.post.description}</p>
 
 		<p class="byline">
-			<a href={data.post.author.url}>{data.post.author.name}</a>
+			{#each data.post.authors as author, i}
+				{@const show_comma = data.post.authors.length > 2 && i < data.post.authors.length - 1}
+				{@const show_and = i === data.post.authors.length - 2}
+				<svelte:element this={author.url ? 'a' : 'span'} href={author.url}
+					>{author.name}</svelte:element
+				>{#if show_comma},&nbsp;{/if}
+				{#if show_and}and&nbsp;{/if}
+			{/each}
 			<time datetime={data.post.date}>{data.post.date_formatted}</time>
 		</p>
 
