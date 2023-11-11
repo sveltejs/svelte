@@ -47,7 +47,6 @@ export type ReplState = {
 	cursor_pos: number;
 	toggleable: boolean;
 	module_editor: import('./CodeMirror.svelte').default | null;
-	runes_mode: boolean;
 };
 
 export type ReplContext = {
@@ -61,7 +60,6 @@ export type ReplContext = {
 	cursor_pos: Writable<ReplState['cursor_pos']>;
 	toggleable: Writable<ReplState['toggleable']>;
 	module_editor: Writable<ReplState['module_editor']>;
-	runes_mode: Writable<ReplState['runes_mode']>;
 
 	EDITOR_STATE_MAP: Map<string, EditorState>;
 
