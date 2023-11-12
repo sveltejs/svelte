@@ -1,4 +1,4 @@
-export { flushSync, onDestroy, selector, tick, untrack } from '../internal/client/runtime.js';
+export { flushSync, onDestroy, selector, tick, untrack } from '../internal/common/runtime.js';
 
 export { getAllContexts, getContext, hasContext, setContext } from '../internal/common/index.js';
 
@@ -11,5 +11,5 @@ export function beforeUpdate() {}
 /** @returns {void} */
 export function afterUpdate() {}
 
-// TODO: Replace with empty functions because these should not be run on the server
+// TODO: Either move to common or replace with empty functions because some of these
 export { createRoot, createEventDispatcher, mount } from './main-client.js';

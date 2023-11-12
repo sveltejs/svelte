@@ -10,7 +10,7 @@ import {
 	DYNAMIC_ELEMENT_BLOCK,
 	SNIPPET_BLOCK
 } from './block.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
+import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from '../common/runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 

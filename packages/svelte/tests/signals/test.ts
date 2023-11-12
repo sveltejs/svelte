@@ -1,5 +1,5 @@
 import { describe, assert, it } from 'vitest';
-import * as $ from '../../src/internal/client/runtime';
+import * as $ from '../../src/internal/common/runtime';
 
 function run_test(runes: boolean, fn: () => void) {
 	return () => {

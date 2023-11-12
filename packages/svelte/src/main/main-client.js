@@ -8,7 +8,7 @@ import {
 	managed_effect,
 	untrack,
 	user_effect
-} from '../internal/client/runtime.js';
+} from '../internal/common/runtime.js';
 import { is_array } from '../internal/client/utils.js';
 import { unwrap } from '../internal/index.js';
 

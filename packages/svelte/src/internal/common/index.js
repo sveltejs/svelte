@@ -1,4 +1,4 @@
-import { get_or_init_context_map } from "../client/runtime";
+import { get_or_init_context_map } from "./runtime";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const EMPTY_FUNC = () => {};

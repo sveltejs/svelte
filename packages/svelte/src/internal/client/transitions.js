@@ -14,7 +14,7 @@ import {
 	effect,
 	managed_pre_effect,
 	untrack
-} from './runtime.js';
+} from '../common/runtime.js';
 import { raf } from './timing.js';
 
 const active_tick_animations = new Set();

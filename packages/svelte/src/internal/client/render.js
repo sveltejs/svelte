@@ -61,7 +61,7 @@ import {
 	current_component_context,
 	pop,
 	schedule_task
-} from './runtime.js';
+} from '../common/runtime.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,

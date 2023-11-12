@@ -1,4 +1,4 @@
-import { current_block } from './runtime.js';
+import { current_block } from '../common/runtime.js';
 
 export const ROOT_BLOCK = 0;
 export const IF_BLOCK = 1;

@@ -37,7 +37,7 @@ export {
 	pop,
 	push,
 	reactive_import
-} from './client/runtime.js';
+} from './common/runtime.js';
 
 export * from './client/validate.js';
 

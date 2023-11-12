@@ -1,8 +1,8 @@
 import { subscribe_to_store } from '../../store/utils.js';
-import { EMPTY_FUNC } from '../common/index.js';
-import { unwrap } from './render.js';
-import { map_delete, map_get, map_set } from './operations.js';
-import { is_array } from './utils.js';
+import { EMPTY_FUNC } from './index.js';
+import { unwrap } from '../client/render.js';
+import { map_delete, map_get, map_set } from '../client/operations.js';
+import { is_array } from '../client/utils.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -35,10 +35,10 @@ let is_task_queued = false;
 let is_signal_exposed = false;
 // Handle effect queues
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('../client/types.js').EffectSignal[]} */
 let current_queued_pre_and_render_effects = [];
 
-/** @type {import('./types.js').EffectSignal[]} */
+/** @type {import('../client/types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
 /** @type {Array<() => void>} */
@@ -46,13 +46,13 @@ let current_queued_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
-/** @type {null | import('./types.js').Signal} */
+/** @type {null | import('../client/types.js').Signal} */
 let current_consumer = null;
 
-/** @type {null | import('./types.js').EffectSignal} */
+/** @type {null | import('../client/types.js').EffectSignal} */
 export let current_effect = null;
 
-/** @type {null | import('./types.js').Signal[]} */
+/** @type {null | import('../client/types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
 // Used to prevent over-subscribing dependencies on a consumer
@@ -65,7 +65,7 @@ export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
 
-/** @type {null | import('./types.js').Signal} */
+/** @type {null | import('../client/types.js').Signal} */
 let current_captured_signal = null;
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the consumer.
@@ -75,11 +75,11 @@ let is_signals_recorded = false;
 let captured_signals = new Set();
 // Handle rendering tree blocks and anchors
 
-/** @type {null | import('./types.js').Block} */
+/** @type {null | import('../client/types.js').Block} */
 export let current_block = null;
 // Handling runtime component context
 
-/** @type {import('./types.js').ComponentContext | null} */
+/** @type {import('../client/types.js').ComponentContext | null} */
 export let current_component_context = null;
 export let is_ssr = false;
 
@@ -92,8 +92,8 @@ export function set_is_ssr(ssr) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
- * @returns {import('./types.js').ComponentContext}
+ * @param {import('../client/types.js').MaybeSignal<Record<string, unknown>>} props
+ * @returns {import('../client/types.js').ComponentContext}
  */
 export function create_component_context(props) {
 	const parent = current_component_context;
@@ -111,7 +111,7 @@ export function create_component_context(props) {
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context
+ * @param {null | import('../client/types.js').ComponentContext} context
  * @returns {boolean}
  */
 function is_runes(context) {
@@ -120,7 +120,7 @@ function is_runes(context) {
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context_stack_item
+ * @param {null | import('../client/types.js').ComponentContext} context_stack_item
  * @returns {void}
  */
 export function set_current_component_context(context_stack_item) {
@@ -138,10 +138,10 @@ function default_equals(a, b) {
 
 /**
  * @template V
- * @param {import('./types.js').SignalFlags} flags
+ * @param {import('../client/types.js').SignalFlags} flags
  * @param {V} value
- * @param {import('./types.js').Block | null} block
- * @returns {import('./types.js').Signal<V>}
+ * @param {import('../client/types.js').Block | null} block
+ * @returns {import('../client/types.js').Signal<V>}
  */
 function create_signal_object(flags, value, block) {
 	return {
@@ -160,8 +160,8 @@ function create_signal_object(flags, value, block) {
 }
 
 /**
- * @param {import('./types.js').Signal} target_signal
- * @param {import('./types.js').Signal} ref_signal
+ * @param {import('../client/types.js').Signal} target_signal
+ * @param {import('../client/types.js').Signal} ref_signal
  * @returns {void}
  */
 function push_reference(target_signal, ref_signal) {
@@ -175,7 +175,7 @@ function push_reference(target_signal, ref_signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
@@ -214,7 +214,7 @@ function is_signal_dirty(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @returns {V}
  */
 function execute_signal_fn(signal) {
@@ -228,7 +228,7 @@ function execute_signal_fn(signal) {
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (signal.flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
-	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
+	current_dependencies = /** @type {null | import('../client/types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
 	if (current_read_clock === MAX_SAFE_INT) {
 		current_read_clock = 1;
@@ -250,8 +250,8 @@ function execute_signal_fn(signal) {
 	try {
 		let res;
 		if (is_render_effect) {
-			res = /** @type {(block: import('./types.js').Block) => V} */ (init)(
-				/** @type {import('./types.js').Block} */ (signal.block)
+			res = /** @type {(block: import('../client/types.js').Block) => V} */ (init)(
+				/** @type {import('../client/types.js').Block} */ (signal.block)
 			);
 		} else {
 			res = /** @type {() => V} */ (init)();
@@ -301,7 +301,7 @@ function execute_signal_fn(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {number} start_index
  * @param {boolean} remove_unowned
  * @returns {void}
@@ -334,7 +334,7 @@ function remove_consumer(signal, start_index, remove_unowned) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @returns {void}
  */
 function destroy_references(signal) {
@@ -349,12 +349,12 @@ function destroy_references(signal) {
 }
 
 /**
- * @param {import('./types.js').Block} block
+ * @param {import('../client/types.js').Block} block
  * @param {unknown} error
  * @returns {void}
  */
 function report_error(block, error) {
-	/** @type {import('./types.js').Block | null} */
+	/** @type {import('../client/types.js').Block | null} */
 	let current_block = block;
 
 	if (current_block !== null) {
@@ -363,7 +363,7 @@ function report_error(block, error) {
 }
 
 /**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('../client/types.js').EffectSignal} signal
  * @returns {void}
  */
 export function execute_effect(signal) {
@@ -404,7 +404,7 @@ export function execute_effect(signal) {
 }
 
 /**
- * @param {Array<import('./types.js').EffectSignal>} effects
+ * @param {Array<import('../client/types.js').EffectSignal>} effects
  * @returns {void}
  */
 function flush_queued_effects(effects) {
@@ -451,7 +451,7 @@ function process_microtask() {
 }
 
 /**
- * @param {import('./types.js').EffectSignal} signal
+ * @param {import('../client/types.js').EffectSignal} signal
  * @param {boolean} sync
  * @returns {void}
  */
@@ -513,7 +513,7 @@ export function flush_local_render_effects() {
 }
 
 /**
- * @param {null | import('./types.js').ComponentContext} context
+ * @param {null | import('../client/types.js').ComponentContext} context
  * @returns {void}
  */
 export function flush_local_pre_effects(context) {
@@ -539,10 +539,10 @@ export function flushSync(fn) {
 	const previous_queued_pre_and_render_effects = current_queued_pre_and_render_effects;
 	const previous_queued_effects = current_queued_effects;
 	try {
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('../client/types.js').EffectSignal[]} */
 		const pre_and_render_effects = [];
 
-		/** @type {import('./types.js').EffectSignal[]} */
+		/** @type {import('../client/types.js').EffectSignal[]} */
 		const effects = [];
 		current_scheduler_mode = FLUSH_SYNC;
 		flush_count = 0;
@@ -579,7 +579,7 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -590,7 +590,7 @@ function update_derived(signal, force_schedule) {
 			? DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
-	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.equals);
+	const equals = /** @type {import('../client/types.js').EqualsFunctions} */ (signal.equals);
 	if (!equals(value, signal.value)) {
 		signal.value = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
@@ -602,13 +602,13 @@ function update_derived(signal, force_schedule) {
  * signal that will be updated when the store is. The store references container is needed to
  * track reassignments to stores and to track the correct component context.
  * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
+ * @param {import('../client/types.js').Store<V> | null | undefined} store
  * @param {string} store_name
- * @param {import('./types.js').StoreReferencesContainer} stores
+ * @param {import('../client/types.js').StoreReferencesContainer} stores
  * @returns {V}
  */
 export function store_get(store, store_name, stores) {
-	/** @type {import('./types.js').StoreReferencesContainer[''] | undefined} */
+	/** @type {import('../client/types.js').StoreReferencesContainer[''] | undefined} */
 	let entry = stores[store_name];
 	const is_new = entry === undefined;
 
@@ -620,8 +620,8 @@ export function store_get(store, store_name, stores) {
 			unsubscribe: EMPTY_FUNC
 		};
 		push_destroy_fn(entry.value, () => {
-			/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).last_value =
-				/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).value.value;
+			/** @type {import('../client/types.js').StoreReferencesContainer['']} */ (entry).last_value =
+				/** @type {import('../client/types.js').StoreReferencesContainer['']} */ (entry).value.value;
 		});
 		stores[store_name] = entry;
 	}
@@ -640,8 +640,8 @@ export function store_get(store, store_name, stores) {
 
 /**
  * @template V
- * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('../client/types.js').Store<V> | null | undefined} store
+ * @param {import('../client/types.js').Signal<V>} source
  */
 function connect_store_to_signal(store, source) {
 	if (store == null) {
@@ -661,7 +661,7 @@ function connect_store_to_signal(store, source) {
 /**
  * Sets the new value of a store and returns that value.
  * @template V
- * @param {import('./types.js').Store<V>} store
+ * @param {import('../client/types.js').Store<V>} store
  * @param {V} value
  * @returns {V}
  */
@@ -672,7 +672,7 @@ export function store_set(store, value) {
 
 /**
  * Unsubscribes from all auto-subscribed stores on destroy
- * @param {import('./types.js').StoreReferencesContainer} stores
+ * @param {import('../client/types.js').StoreReferencesContainer} stores
  */
 export function unsubscribe_on_destroy(stores) {
 	onDestroy(() => {
@@ -704,7 +704,7 @@ export function exposable(fn) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @returns {V}
  */
 export function get(signal) {
@@ -754,7 +754,7 @@ export function get(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {V} value
  * @returns {V}
  */
@@ -765,7 +765,7 @@ export function set(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {V} value
  * @returns {void}
  */
@@ -802,7 +802,7 @@ export function expose(possible_signal_fn) {
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn
- * @returns {Set<import('./types.js').Signal>}
+ * @returns {Set<import('../client/types.js').Signal>}
  */
 export function invalidate_inner_signals(fn) {
 	const previous_is_signals_recorded = is_signals_recorded;
@@ -828,7 +828,7 @@ export function invalidate_inner_signals(fn) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('../client/types.js').Signal<V>} source
  * @param {V} value
  */
 export function mutate(source, value) {
@@ -841,7 +841,7 @@ export function mutate(source, value) {
 
 /**
  * Updates a store with a new value.
- * @param {import('./types.js').Store<V>} store  the store to update
+ * @param {import('../client/types.js').Store<V>} store  the store to update
  * @param {any} expression  the expression that mutates the store
  * @param {V} new_value  the new store value
  * @template V
@@ -852,7 +852,7 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @param {import('./types.js').Signal} signal
+ * @param {import('../client/types.js').Signal} signal
  * @param {boolean} inert
  * @returns {void}
  */
@@ -861,7 +861,7 @@ export function mark_subtree_inert(signal, inert) {
 	if (((flags & INERT) === 0 && inert) || ((flags & INERT) !== 0 && !inert)) {
 		signal.flags ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
-			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
+			schedule_effect(/** @type {import('../client/types.js').EffectSignal} */ (signal), false);
 		}
 	}
 	const references = signal.references;
@@ -875,7 +875,7 @@ export function mark_subtree_inert(signal, inert) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {number} to_status
  * @param {boolean} force_schedule
  * @returns {void}
@@ -899,7 +899,7 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			set_signal_status(consumer, to_status);
 			if ((flags & CLEAN) !== 0) {
 				if ((consumer.flags & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
+					schedule_effect(/** @type {import('../client/types.js').EffectSignal} */ (consumer), false);
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
 				}
@@ -910,7 +910,7 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {V} value
  * @returns {void}
  */
@@ -930,7 +930,7 @@ export function set_signal_value(signal, value) {
 	}
 	if (
 		(signal.flags & SOURCE) !== 0 &&
-		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.equals)(value, signal.value))
+		!(/** @type {import('../client/types.js').EqualsFunctions} */ (signal.equals)(value, signal.value))
 	) {
 		const component_context = signal.context;
 		signal.value = value;
@@ -972,7 +972,7 @@ export function set_signal_value(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @returns {void}
  */
 export function destroy_signal(signal) {
@@ -1007,21 +1007,21 @@ export function destroy_signal(signal) {
 /**
  * @template V
  * @param {() => V} init
- * @param {import('./types.js').EqualsFunctions} [equals]
- * @returns {import('./types.js').Signal<V>}
+ * @param {import('../client/types.js').EqualsFunctions} [equals]
+ * @returns {import('../client/types.js').Signal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(init, equals) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('./types.js').Signal<V>} */ (
+	const signal = /** @type {import('../client/types.js').Signal<V>} */ (
 		create_signal_object(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.init = init;
 	signal.context = current_component_context;
 	signal.equals = get_equals_method(equals);
 	if (!is_unowned) {
-		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
+		push_reference(/** @type {import('../client/types.js').EffectSignal} */ (current_effect), signal);
 	}
 	return signal;
 }
@@ -1029,8 +1029,8 @@ export function derived(init, equals) {
 /**
  * @template V
  * @param {V} initial_value
- * @param {import('./types.js').EqualsFunctions<V>} [equals]
- * @returns {import('./types.js').Signal<V>}
+ * @param {import('../client/types.js').EqualsFunctions<V>} [equals]
+ * @returns {import('../client/types.js').Signal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value, equals) {
@@ -1041,8 +1041,8 @@ export function source(initial_value, equals) {
 }
 
 /**
- * @param {import('./types.js').EqualsFunctions} [equals]
- * @returns {import('./types.js').EqualsFunctions}
+ * @param {import('../client/types.js').EqualsFunctions} [equals]
+ * @returns {import('../client/types.js').EqualsFunctions}
  */
 function get_equals_method(equals) {
 	if (equals !== undefined) {
@@ -1074,12 +1074,12 @@ export function untrack(fn) {
 }
 
 /**
- * @param {import('./types.js').EffectType} type
- * @param {(() => void | (() => void)) | ((b: import('./types.js').Block) => void | (() => void))} init
+ * @param {import('../client/types.js').EffectType} type
+ * @param {(() => void | (() => void)) | ((b: import('../client/types.js').Block) => void | (() => void))} init
  * @param {boolean} sync
- * @param {null | import('./types.js').Block} block
+ * @param {null | import('../client/types.js').Block} block
  * @param {boolean} schedule
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 function internal_create_effect(type, init, sync, block, schedule) {
 	const signal = create_signal_object(type | DIRTY, null, block);
@@ -1096,7 +1096,7 @@ function internal_create_effect(type, init, sync, block, schedule) {
 
 /**
  * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function user_effect(init) {
 	if (current_effect === null) {
@@ -1114,10 +1114,10 @@ export function user_effect(init) {
 		!apply_component_effect_heuristics
 	);
 	if (apply_component_effect_heuristics) {
-		let effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
+		let effects = /** @type {import('../client/types.js').ComponentContext} */ (current_component_context)
 			.effects;
 		if (effects === null) {
-			effects = /** @type {import('./types.js').ComponentContext} */ (
+			effects = /** @type {import('../client/types.js').ComponentContext} */ (
 				current_component_context
 			).effects = [];
 		}
@@ -1128,7 +1128,7 @@ export function user_effect(init) {
 
 /**
  * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function effect(init) {
 	return internal_create_effect(EFFECT, init, false, current_block, true);
@@ -1136,7 +1136,7 @@ export function effect(init) {
 
 /**
  * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function managed_effect(init) {
 	return internal_create_effect(EFFECT | MANAGED, init, false, current_block, true);
@@ -1145,7 +1145,7 @@ export function managed_effect(init) {
 /**
  * @param {() => void | (() => void)} init
  * @param {boolean} sync
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function managed_pre_effect(init, sync) {
 	return internal_create_effect(PRE_EFFECT | MANAGED, init, sync, current_block, true);
@@ -1153,7 +1153,7 @@ export function managed_pre_effect(init, sync) {
 
 /**
  * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function pre_effect(init) {
 	const sync = current_effect !== null && (current_effect.flags & RENDER_EFFECT) !== 0;
@@ -1172,19 +1172,19 @@ export function pre_effect(init) {
 
 /**
  * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 function sync_effect(init) {
 	return internal_create_effect(SYNC_EFFECT, init, true, current_block, true);
 }
 
 /**
- * @template {import('./types.js').Block} B
+ * @template {import('../client/types.js').Block} B
  * @param {(block: B) => void | (() => void)} init
  * @param {any} block
  * @param {any} managed
  * @param {any} sync
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function render_effect(init, block = current_block, managed = false, sync = true) {
 	let flags = RENDER_EFFECT;
@@ -1195,11 +1195,11 @@ export function render_effect(init, block = current_block, managed = false, sync
 }
 
 /**
- * @template {import('./types.js').Block} B
+ * @template {import('../client/types.js').Block} B
  * @param {(block: B) => void | (() => void)} init
  * @param {any} block
  * @param {any} sync
- * @returns {import('./types.js').EffectSignal}
+ * @returns {import('../client/types.js').EffectSignal}
  */
 export function managed_render_effect(init, block = current_block, sync = true) {
 	const flags = RENDER_EFFECT | MANAGED;
@@ -1208,7 +1208,7 @@ export function managed_render_effect(init, block = current_block, sync = true) 
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {() => void} destroy_fn
  * @returns {void}
  */
@@ -1225,7 +1225,7 @@ export function push_destroy_fn(signal, destroy_fn) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('../client/types.js').Signal<V>} signal
  * @param {number} status
  * @returns {void}
  */
@@ -1245,10 +1245,10 @@ export function set_signal_status(signal, status) {
 
 /** @template V */
 class Selector {
-	/** @type {Map<V, Set<import('./types.js').Signal>>} */
+	/** @type {Map<V, Set<import('../client/types.js').Signal>>} */
 	#consumers_map = new Map();
 
-	/** @type {import('./types.js').Signal<V | null>} */
+	/** @type {import('../client/types.js').Signal<V | null>} */
 	#active_key;
 
 	/** @param {V | null} [key] */
@@ -1286,7 +1286,7 @@ class Selector {
 	}
 
 	/**
-	 * @param {Set<import('./types.js').Signal>} consumers
+	 * @param {Set<import('../client/types.js').Signal>} consumers
 	 * @returns {void}
 	 */
 	#update_consumers(consumers) {
@@ -1294,7 +1294,7 @@ class Selector {
 		for (consumer of consumers) {
 			set_signal_status(consumer, DIRTY);
 			if ((consumer.flags & IS_EFFECT) !== 0) {
-				schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
+				schedule_effect(/** @type {import('../client/types.js').EffectSignal} */ (consumer), false);
 			} else {
 				mark_signal_consumers(consumer, DIRTY, true);
 			}
@@ -1318,7 +1318,7 @@ class Selector {
 		if (effect !== null && consumer !== null && !consumers.has(consumer)) {
 			consumers.add(consumer);
 			push_destroy_fn(effect, () => {
-				const consumers_set = /** @type {Set<import('./types.js').Signal>} */ (consumers);
+				const consumers_set = /** @type {Set<import('../client/types.js').Signal>} */ (consumers);
 				consumers_set.delete(effect);
 				if (consumers_set.size === 0) {
 					map_delete(consumers_map, key);
@@ -1344,27 +1344,27 @@ export function selector(key) {
 
 /**
  * @template V
- * @param {V | import('./types.js').Signal<V>} val
- * @returns {val is import('./types.js').Signal<V>}
+ * @param {V | import('../client/types.js').Signal<V>} val
+ * @returns {val is import('../client/types.js').Signal<V>}
  */
 export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Signal<V>} */ (val).flags) === 'number'
+		typeof (/** @type {import('../client/types.js').Signal<V>} */ (val).flags) === 'number'
 	);
 }
 
 /**
  * @template V
  * @param {unknown} val
- * @returns {val is import('./types.js').Store<V>}
+ * @returns {val is import('../client/types.js').Store<V>}
  */
 export function is_store(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Store<V>} */ (val).subscribe) === 'function'
+		typeof (/** @type {import('../client/types.js').Store<V>} */ (val).subscribe) === 'function'
 	);
 }
 
@@ -1380,15 +1380,15 @@ export function is_store(val) {
  *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
  *	 from within the component itself, call the setter of the parent which will propagate the value change back
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {import('../client/types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
  * @param {V | (() => V)} [default_value]
  * @param {boolean} [call_default_value]
- * @returns {import('./types.js').Signal<V> | (() => V)}
+ * @returns {import('../client/types.js').Signal<V> | (() => V)}
  */
 export function prop_source(props_obj, key, default_value, call_default_value) {
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
+	const possible_signal = /** @type {import('../client/types.js').MaybeSignal<V>} */ (
 		expose(() => props[key])
 	);
 	const update_bound_prop = Object.getOwnPropertyDescriptor(props, key)?.set;
@@ -1422,7 +1422,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 	// Synchronize prop changes with source signal.
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
-	const immutable = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
+	const immutable = /** @type {import('../client/types.js').ComponentContext} */ (current_component_context)
 		.immutable;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
@@ -1470,13 +1470,13 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 		});
 	}
 
-	return /** @type {import('./types.js').Signal<V>} */ (source_signal);
+	return /** @type {import('../client/types.js').Signal<V>} */ (source_signal);
 }
 
 /**
  * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {import('../client/types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
  * @returns {any}
  */
@@ -1544,7 +1544,7 @@ export function get_or_init_context_map() {
 }
 
 /**
- * @param {import('./types.js').ComponentContext} component_context
+ * @param {import('../client/types.js').ComponentContext} component_context
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {
@@ -1561,7 +1561,7 @@ function get_parent_context(component_context) {
 
 /**
  * @this {any}
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} $$props
+ * @param {import('../client/types.js').MaybeSignal<Record<string, unknown>>} $$props
  * @param {Event} event
  * @returns {void}
  */
@@ -1582,7 +1582,7 @@ export function bubble_event($$props, event) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('../client/types.js').Signal<number>} signal
  * @returns {number}
  */
 export function increment(signal) {
@@ -1592,7 +1592,7 @@ export function increment(signal) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
+ * @param {import('../client/types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
  */
@@ -1602,7 +1602,7 @@ export function increment_store(store, store_value) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('../client/types.js').Signal<number>} signal
  * @returns {number}
  */
 export function decrement(signal) {
@@ -1612,7 +1612,7 @@ export function decrement(signal) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
+ * @param {import('../client/types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
  */
@@ -1622,7 +1622,7 @@ export function decrement_store(store, store_value) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('../client/types.js').Signal<number>} signal
  * @returns {number}
  */
 export function increment_pre(signal) {
@@ -1632,7 +1632,7 @@ export function increment_pre(signal) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
+ * @param {import('../client/types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
  */
@@ -1643,7 +1643,7 @@ export function increment_pre_store(store, store_value) {
 }
 
 /**
- * @param {import('./types.js').Signal<number>} signal
+ * @param {import('../client/types.js').Signal<number>} signal
  * @returns {number}
  */
 export function decrement_pre(signal) {
@@ -1653,7 +1653,7 @@ export function decrement_pre(signal) {
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
+ * @param {import('../client/types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
  */
@@ -1722,7 +1722,7 @@ export function onDestroy(fn) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {import('../client/types.js').MaybeSignal<Record<string, unknown>>} props
  * @param {any} runes
  * @param {any} immutable
  * @returns {void}
