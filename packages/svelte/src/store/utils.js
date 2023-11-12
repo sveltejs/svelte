@@ -1,4 +1,4 @@
-import { EMPTY_FUNC } from '../internal/common.js';
+import { EMPTY_FUNC } from '../internal/common/index.js';
 
 /**
  * @template T

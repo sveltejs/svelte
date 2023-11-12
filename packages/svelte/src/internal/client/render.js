@@ -69,7 +69,7 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
-import { is_promise } from '../common.js';
+import { is_promise } from '../common/index.js';
 import { bind_transition } from './transitions.js';
 
 /** @type {Set<string>} */

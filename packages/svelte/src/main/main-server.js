@@ -1,17 +1,6 @@
-export {
-	createRoot,
-	createEventDispatcher,
-	flushSync,
-	getAllContexts,
-	getContext,
-	hasContext,
-	mount,
-	onDestroy,
-	selector,
-	setContext,
-	tick,
-	untrack
-} from './main-client.js';
+export { flushSync, onDestroy, selector, tick, untrack } from '../internal/client/runtime.js';
+
+export { getAllContexts, getContext, hasContext, setContext } from '../internal/common/index.js';
 
 /** @returns {void} */
 export function onMount() {}
@@ -21,3 +10,6 @@ export function beforeUpdate() {}
 
 /** @returns {void} */
 export function afterUpdate() {}
+
+// TODO: Replace with empty functions because these should not be run on the server
+export { createRoot, createEventDispatcher, mount } from './main-client.js';
