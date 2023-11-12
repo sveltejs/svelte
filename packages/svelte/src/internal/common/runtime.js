@@ -621,7 +621,9 @@ export function store_get(store, store_name, stores) {
 		};
 		push_destroy_fn(entry.value, () => {
 			/** @type {import('../client/types.js').StoreReferencesContainer['']} */ (entry).last_value =
-				/** @type {import('../client/types.js').StoreReferencesContainer['']} */ (entry).value.value;
+				/** @type {import('../client/types.js').StoreReferencesContainer['']} */ (
+					entry
+				).value.value;
 		});
 		stores[store_name] = entry;
 	}
@@ -899,7 +901,10 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			set_signal_status(consumer, to_status);
 			if ((flags & CLEAN) !== 0) {
 				if ((consumer.flags & IS_EFFECT) !== 0) {
-					schedule_effect(/** @type {import('../client/types.js').EffectSignal} */ (consumer), false);
+					schedule_effect(
+						/** @type {import('../client/types.js').EffectSignal} */ (consumer),
+						false
+					);
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
 				}
@@ -930,7 +935,12 @@ export function set_signal_value(signal, value) {
 	}
 	if (
 		(signal.flags & SOURCE) !== 0 &&
-		!(/** @type {import('../client/types.js').EqualsFunctions} */ (signal.equals)(value, signal.value))
+		!(
+			/** @type {import('../client/types.js').EqualsFunctions} */ (signal.equals)(
+				value,
+				signal.value
+			)
+		)
 	) {
 		const component_context = signal.context;
 		signal.value = value;
@@ -1021,7 +1031,10 @@ export function derived(init, equals) {
 	signal.context = current_component_context;
 	signal.equals = get_equals_method(equals);
 	if (!is_unowned) {
-		push_reference(/** @type {import('../client/types.js').EffectSignal} */ (current_effect), signal);
+		push_reference(
+			/** @type {import('../client/types.js').EffectSignal} */ (current_effect),
+			signal
+		);
 	}
 	return signal;
 }
@@ -1114,8 +1127,9 @@ export function user_effect(init) {
 		!apply_component_effect_heuristics
 	);
 	if (apply_component_effect_heuristics) {
-		let effects = /** @type {import('../client/types.js').ComponentContext} */ (current_component_context)
-			.effects;
+		let effects = /** @type {import('../client/types.js').ComponentContext} */ (
+			current_component_context
+		).effects;
 		if (effects === null) {
 			effects = /** @type {import('../client/types.js').ComponentContext} */ (
 				current_component_context
@@ -1422,8 +1436,9 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 	// Synchronize prop changes with source signal.
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
-	const immutable = /** @type {import('../client/types.js').ComponentContext} */ (current_component_context)
-		.immutable;
+	const immutable = /** @type {import('../client/types.js').ComponentContext} */ (
+		current_component_context
+	).immutable;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
 

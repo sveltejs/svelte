@@ -1,4 +1,4 @@
-import { get_or_init_context_map } from "./runtime";
+import { get_or_init_context_map } from './runtime';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const EMPTY_FUNC = () => {};
@@ -18,7 +18,6 @@ export function is_promise(value) {
 		typeof (/** @type {any} */ (value).then) === 'function'
 	);
 }
-
 
 /**
  * Retrieves the context that belongs to the closest parent component with the specified `key`.
