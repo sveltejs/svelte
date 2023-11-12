@@ -12,4 +12,5 @@ export function beforeUpdate() {}
 export function afterUpdate() {}
 
 // TODO: Either move to common or replace with empty functions because some of these
+// shouldn't be called on the server
 export { createRoot, createEventDispatcher, mount } from './main-client.js';
