@@ -401,7 +401,11 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 				`.replace(/\t/g, '');
 				}
 			} else if (id.endsWith('.svelte.js')) {
-				result = svelte.compileModule(code, { filename: name + '.js', generate: 'client', dev: true });
+				result = svelte.compileModule(code, {
+					filename: name + '.js',
+					generate: 'client',
+					dev: true
+				});
 				if (!result) {
 					return null;
 				}

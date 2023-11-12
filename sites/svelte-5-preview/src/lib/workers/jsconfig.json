@@ -1,9 +1,9 @@
 {
-    "include": ["./**/*"],
-    "compilerOptions": {
-        "paths": {
-            "svelte": ["../../../static/svelte/main"],
-            "svelte/*": ["../../../static/svelte/*"]
-        }
-    }
+	"include": ["./**/*"],
+	"compilerOptions": {
+		"paths": {
+			"svelte": ["../../../static/svelte/main"],
+			"svelte/*": ["../../../static/svelte/*"]
+		}
+	}
 }
