@@ -1,6 +1,8 @@
 ## Svelte compiler rewrite
 
-Please note that [the Svelte codebase is currently being rewritten](https://svelte.dev/blog/runes). Thus, it's best to hold off on new features or refactorings for the time being.
+Please note that [the Svelte codebase is currently being rewritten](https://svelte.dev/blog/runes) — it's best to hold off on new features or refactorings for the time being.
+
+If your PR concerns Svelte 4 (including updates to `svelte.dev/docs`), **please ensure the base branch is `svelte-4` and not `main`**.
 
 ### Before submitting the PR, please make sure you do the following
 
