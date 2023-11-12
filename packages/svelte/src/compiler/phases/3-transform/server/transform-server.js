@@ -847,26 +847,21 @@ function serialize_inline_component(node, component_name, context) {
 		const body = create_block(node, children[slot_name], context);
 		if (body.length === 0) continue;
 
+		const slot_fn = b.arrow(
+			[b.id('$$payload'), b.id('$$slotProps')],
+			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
+		);
+
 		if (slot_name === 'default') {
 			push_prop(
 				b.prop(
 					'init',
 					b.id('children'),
-					b.arrow(
-						[b.id('$$payload'), b.id('$$slotProps')],
-						b.block([...(slot_name === 'default' ? default_lets : []), ...body])
-					)
+					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
 		} else {
-			const slot = b.prop(
-				'init',
-				b.literal(slot_name),
-				b.arrow(
-					[b.id('$$payload'), b.id('$$slotProps')],
-					b.block([...(slot_name === 'default' ? default_lets : []), ...body])
-				)
-			);
+			const slot = b.prop('init', b.literal(slot_name), slot_fn);
 			serialized_slots.push(slot);
 		}
 	}
