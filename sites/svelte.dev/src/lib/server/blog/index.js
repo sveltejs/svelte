@@ -35,6 +35,8 @@ export async function get_blog_data(base = CONTENT_BASE_PATHS.BLOG) {
 
 		const { date, date_formatted, slug } = get_date_and_slug(file);
 		const { metadata, body } = extractFrontmatter(await readFile(`${base}/${file}`, 'utf-8'));
+		const authors = metadata.author.split(',').map((author) => author.trim());
+		const authorUrls = metadata.authorURL.split(',').map((author) => author.trim());
 
 		blog_posts.push({
 			date,
@@ -45,10 +47,10 @@ export async function get_blog_data(base = CONTENT_BASE_PATHS.BLOG) {
 			slug,
 			title: metadata.title,
 			file,
-			author: {
-				name: metadata.author,
-				url: metadata.authorURL
-			},
+			authors: authors.map((author, i) => ({
+				name: author,
+				url: authorUrls[i]
+			})),
 			sections: await get_sections(body)
 		});
 	}

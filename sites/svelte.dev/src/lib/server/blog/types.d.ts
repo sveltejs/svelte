@@ -7,10 +7,10 @@ export interface BlogPost {
 	date_formatted: string;
 	slug: string;
 	file: string;
-	author: {
+	authors: {
 		name: string;
 		url?: string;
-	};
+	}[];
 	draft: boolean;
 	content: string;
 	sections: Section[];
