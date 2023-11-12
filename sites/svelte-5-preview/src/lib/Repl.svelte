@@ -76,7 +76,8 @@
 
 	/** @type {import('svelte/compiler').CompileOptions} */
 	const DEFAULT_COMPILE_OPTIONS = {
-		generate: 'client'
+		generate: 'client',
+		dev: false
 	};
 
 	/** @type {Map<string, import('@codemirror/state').EditorState>} */
