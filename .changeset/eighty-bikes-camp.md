@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: Added missing context of `svelte.js` for validation
+fix: added missing context of `svelte.js` for validation
