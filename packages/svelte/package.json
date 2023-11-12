@@ -46,8 +46,8 @@
     "./internal": {
       "default": "./src/internal/index.js"
     },
-    "./internal/disclose-version": {
-      "default": "./src/internal/disclose-version.js"
+    "./internal/common/disclose-version": {
+      "default": "./src/internal/common/disclose-version.js"
     },
     "./internal/server": {
       "default": "./src/internal/server/index.js"

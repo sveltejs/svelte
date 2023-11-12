@@ -344,7 +344,7 @@ export function client_component(source, analysis, options) {
 	];
 
 	if (options.discloseVersion) {
-		body.unshift(b.imports([], 'svelte/internal/disclose-version'));
+		body.unshift(b.imports([], 'svelte/internal/common/disclose-version'));
 	}
 
 	if (options.legacy.componentApi) {

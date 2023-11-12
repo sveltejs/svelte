@@ -1,5 +1,4 @@
 import * as $ from '../common/runtime.js';
-import { set_is_ssr } from '../common/runtime.js';
 import { is_promise } from '../common/index.js';
 import { subscribe_to_store } from '../../store/utils.js';
 
@@ -119,7 +118,7 @@ export function render(component, options) {
 	const root_anchor = create_anchor(payload);
 	const root_head_anchor = create_anchor(payload.head);
 
-	set_is_ssr(true);
+	$.set_is_ssr(true);
 	payload.out += root_anchor;
 
 	if (options.context) {
@@ -133,7 +132,7 @@ export function render(component, options) {
 		$.pop();
 	}
 	payload.out += root_anchor;
-	set_is_ssr(false);
+	$.set_is_ssr(false);
 
 	return {
 		head:

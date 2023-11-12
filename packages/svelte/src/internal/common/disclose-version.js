@@ -1,4 +1,4 @@
-import { PUBLIC_VERSION } from '../version.js';
+import { PUBLIC_VERSION } from '../../version.js';
 
 if (typeof window !== 'undefined')
 	// @ts-ignore
