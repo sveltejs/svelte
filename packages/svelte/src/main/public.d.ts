@@ -1,18 +1,24 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
-// Once we convert to JSDoc make it a d.ts file.
-
-import type {
-	ComponentConstructorOptions,
-	SvelteComponent,
-	SvelteComponentTyped
-} from '../legacy/public.js';
-
-// For Svelte 6 we can think about only exporting these from svelte/legacy
-export { SvelteComponent, SvelteComponentTyped, ComponentConstructorOptions };
 
 /**
- * Base interface for Svelte components.
- *
+ * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
+ * Use `mount` or `createRoot` instead to instantiate components.
+ * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+ * for more info.
+ */
+export interface ComponentConstructorOptions<
+	Props extends Record<string, any> = Record<string, any>
+> {
+	target: Element | Document | ShadowRoot;
+	anchor?: Element;
+	props?: Props;
+	context?: Map<any, any>;
+	hydrate?: boolean;
+	intro?: boolean;
+	$$inline?: boolean;
+}
+
+/**
  * Can be used to create strongly typed Svelte components.
  *
  * #### Example:
@@ -21,8 +27,8 @@ export { SvelteComponent, SvelteComponentTyped, ComponentConstructorOptions };
  * you export a component called `MyComponent`. For Svelte+TypeScript users,
  * you want to provide typings. Therefore you create a `index.d.ts`:
  * ```ts
- * import type { Component } from "svelte";
- * export type MyComponent = Component<{foo: string}>
+ * import { SvelteComponent } from "svelte";
+ * export class MyComponent extends SvelteComponent<{foo: string}> {}
  * ```
  * Typing this makes it possible for IDEs like VS Code with the Svelte extension
  * to provide intellisense and to use the component like this in a Svelte file
@@ -33,26 +39,86 @@ export { SvelteComponent, SvelteComponentTyped, ComponentConstructorOptions };
  * </script>
  * <MyComponent foo={'bar'} />
  * ```
+ *
+ * This was the base class for Svelte components in Svelte 4. Svelte 5+ components
+ * are completely different under the hood. You should only use this type for typing,
+ * not actually instantiate components with `new` - use `mount` or `createRoot` instead.
+ * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+ * for more info.
  */
-export interface Component<
-	Props extends Record<string, any> = {},
-	Exports extends Record<string, any> | undefined = undefined,
-	Events extends Record<string, any> = {},
-	Slots extends Record<string, any> = {}
+export class SvelteComponent<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
 > {
-	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-	element?: typeof HTMLElement;
+	[prop: string]: any;
 
 	/**
-	 * ## DO NOT USE THIS
-	 * This only exists for typing purposes and has no runtime value.
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
 	 */
-	z_$$(
-		props: Props,
-		events: Events,
-		slots: Slots
-	): Exports extends undefined ? Props | undefined : Exports & Partial<Props>;
+	constructor(props: Props);
+	/**
+	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
+	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
+	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
+	 */
+	constructor(options: ComponentConstructorOptions<Props>);
+	/**
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 * */
+	$$prop_def: Props;
+	/**
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 *
+	 * */
+	$$events_def: Events;
+	/**
+	 * For type checking capabilities only.
+	 * Does not exist at runtime.
+	 * ### DO NOT USE!
+	 *
+	 * */
+	$$slot_def: Slots;
+
+	/**
+	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * for more info.
+	 */
+	$destroy(): void;
+
+	/**
+	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * for more info.
+	 */
+	$on<K extends Extract<keyof Events, string>>(
+		type: K,
+		callback: (e: Events[K]) => void
+	): () => void;
+
+	/**
+	 * @deprecated This method only exists when using one of the legacy compatibility helpers, which
+	 * is a stop-gap solution. See https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes
+	 * for more info.
+	 */
+	$set(props: Partial<Props>): void;
 }
+
+/**
+ * @deprecated Use `SvelteComponent` instead. See TODO for more information.
+ */
+export class SvelteComponentTyped<
+	Props extends Record<string, any> = any,
+	Events extends Record<string, any> = any,
+	Slots extends Record<string, any> = any
+> extends SvelteComponent<Props, Events, Slots> {}
 
 /**
  * Convenience type to get the events the given component expects. Example:
@@ -69,12 +135,12 @@ export interface Component<
  * <Component on:close={handleCloseEvent} />
  * ```
  */
-export type ComponentEvents<Comp extends Component<any, any, any, any> | SvelteComponent> =
-	Comp extends SvelteComponent<any, infer Events>
-		? Events
-		: Comp extends Component<any, any, infer Events, any>
-		? Events
-		: never;
+export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
+	any,
+	infer Events
+>
+	? Events
+	: never;
 
 /**
  * Convenience type to get the props the given component expects. Example:
@@ -87,16 +153,12 @@ export type ComponentEvents<Comp extends Component<any, any, any, any> | SvelteC
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends Component<any, any, any, any> | SvelteComponent> =
-	Comp extends SvelteComponent<infer Props>
-		? Props
-		: Comp extends Component<infer Props, any, any, any>
-		? Props
-		: never;
+export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
+	? Props
+	: never;
 
 /**
- * Convenience type to get the type of a Svelte component. Not necessary when using the `Component` type,
- * but useful when using the deprecated `SvelteComponent` type and for example in combination with
+ * Convenience type to get the type of a Svelte component. Useful for example in combination with
  * dynamic components using `<svelte:component>`.
  *
  * Example:
@@ -114,17 +176,14 @@ export type ComponentProps<Comp extends Component<any, any, any, any> | SvelteCo
  * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
  * ```
  */
-export type ComponentType<Comp extends Component<any, any, any, any> | SvelteComponent> =
-	Comp extends SvelteComponent
-		? (new (
-				options: ComponentConstructorOptions<
-					Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
-				>
-		  ) => Comp) & {
-				/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
-				element?: typeof HTMLElement;
-		  }
-		: Comp;
+export type ComponentType<Comp extends SvelteComponent> = (new (
+	options: ComponentConstructorOptions<
+		Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
+	>
+) => Comp) & {
+	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
+	element?: typeof HTMLElement;
+};
 
 interface DispatchOptions {
 	cancelable?: boolean;

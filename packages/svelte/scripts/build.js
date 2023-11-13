@@ -27,7 +27,7 @@ await createBundle({
 		[`${pkg.name}/animate`]: `${dir}/src/animate/public.d.ts`,
 		[`${pkg.name}/compiler`]: `${dir}/src/compiler/index.js`,
 		[`${pkg.name}/easing`]: `${dir}/src/easing/index.js`,
-		[`${pkg.name}/legacy`]: `${dir}/src/legacy/public.d.ts`,
+		[`${pkg.name}/legacy`]: `${dir}/src/legacy/legacy-client.js`,
 		[`${pkg.name}/motion`]: `${dir}/src/motion/public.d.ts`,
 		[`${pkg.name}/server`]: `${dir}/src/server/index.js`,
 		[`${pkg.name}/store`]: `${dir}/src/store/public.d.ts`,
