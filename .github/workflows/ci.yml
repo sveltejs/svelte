@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [svelte-4]
+    branches: [main]
   pull_request:
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -17,11 +17,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 16
-            os: ubuntu-latest
-          - node-version: 16
+          - node-version: 18
             os: windows-latest
-          - node-version: 16
+          - node-version: 18
             os: macOS-latest
           - node-version: 18
             os: ubuntu-latest
@@ -47,6 +45,6 @@ jobs:
       - uses: pnpm/action-setup@v2.2.4
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
           cache: pnpm
       - run: 'pnpm i && pnpm check && pnpm lint'

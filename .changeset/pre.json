@@ -1,0 +1,14 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "svelte": "5.0.0-next.0",
+    "svelte-playgrounds-demo": "0.0.1",
+    "svelte-playgrounds-sandbox": "0.0.1",
+    "svelte-5-preview": "0.5.0",
+    "svelte.dev": "1.0.0"
+  },
+  "changesets": [
+    "rotten-buckets-develop"
+  ]
+}

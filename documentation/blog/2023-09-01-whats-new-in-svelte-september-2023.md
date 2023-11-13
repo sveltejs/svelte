@@ -10,9 +10,11 @@ Happy September y'all! With all the [sneak peeks at what's coming soon in Svelte
 Before we jump in, a warm welcome to the new Svelte Ambassadors: [@cainux](https://github.com/cainux) and [@grischaerbe](https://github.com/grischaerbe)! Welcome to the crew ⛴️
 
 ## What's new in Svelte & Language Tools
+
 - `svelteHTML` has moved from language-tools into Svelte core so that `svelte/element` types will now load correctly (**4.2.0** in Svelte, **107.10.0** in Language Tools)
 
 ## What's new in SvelteKit
+
 - `URL` is now accepted in the `redirect` function (**1.23.0**, [Docs](https://kit.svelte.dev/docs/modules#sveltejs-kit-redirect), [#10570](https://github.com/sveltejs/kit/pull/10570))
 - Mistyped route filenames will now throw a warning (**1.23.0**, [#10558](https://github.com/sveltejs/kit/pull/10558))
 - The new `onNavigate` lifecycle function enables view transitions - Check out the [blog post](https://svelte.dev/blog/view-transitions) for more info (**1.24.0**, [Docs](https://kit.svelte.dev/docs/modules#app-navigation-onnavigate), [#9605](https://github.com/sveltejs/kit/pull/9605))
@@ -24,6 +26,7 @@ But that's just the new features! For all the patches and performance updates fr
 ## Community Showcase
 
 **Apps & Sites built with Svelte**
+
 - [Planet Of The Bugs](https://planetofthebugs.xyz/) allows developers to practice and hone their skill-sets by exposing them to an endless supply of unique, curated issues and bugs from popular open-source projects on Github
 - [Minesweeper](https://github.com/ProductionPanic/minesweeper/tree/main) is an Android game built with SvelteKit, Capacitor, TailwindCSS and DaisyUI (check it out on the [Google Play Store](https://play.google.com/store/apps/details?id=com.production.panic.minesweeper&pli=1))
 - [Pendor](https://www.pendor.ai/) is an AI component generator for Svelte
@@ -36,10 +39,9 @@ But that's just the new features! For all the patches and performance updates fr
 - [Ubuntu 22.04 in Svelte](https://github.com/manhhungpc/ubuntu2204-svelte) aims to replicate the Ubuntu 22.04 desktop experience on the web
 - [My Queue](https://www.myqueue.so/) creates a playlist of written articles by turning them into audio stories
 
-
-
 **Learning Resources**
 _Featuring Svelte Contributors and Ambassadors_
+
 - [Svelte Society - London August 2023](https://www.youtube.com/watch?v=90Psdk5rAnU)
 - [Building a Blog using SvelteKit and Nostr as a CMS (Part 1](https://kevinak.se/blog/building-a-blog-using-sveltekit-and-nostr-as-a-cms-part-1-1690807337563)) by Kev
 - [Mastering SvelteKit with Geoff Rich | JS Drops](https://www.youtube.com/watch?v=MaF8kRbHbi0) by This Dot Media
@@ -60,15 +62,15 @@ _Featuring Svelte Contributors and Ambassadors_
   - [Medusa and SvelteKit E-Commerce Stack](https://www.youtube.com/watch?v=rVVHxows9dY) with Lacey Pevey
   - [Design Systems: Lessons Learned](https://www.youtube.com/watch?v=YHZaiIGSqsE) with Eric Liu
 
-
 _To Watch_
-- [Image optimization in SvelteKit with vite-imagetools](https://www.youtube.com/watch?v=285vSLe9LQ8) by hartenfellerdev
--  [Building a Todo App with Rust and SvelteKit: Complete Tutorial](https://www.youtube.com/watch?v=w7is2bCTUg0) and [Stripe Payment In SvelteKit With Dynamic Pricing](https://www.youtube.com/watch?v=o8gvCLgz1vs) by SvelteRust
-- [Leaflet maps in SvelteKit like it's 2023 (HowTo)](https://www.youtube.com/watch?v=JFctWXEzFZw)
-ShipBit
 
+- [Image optimization in SvelteKit with vite-imagetools](https://www.youtube.com/watch?v=285vSLe9LQ8) by hartenfellerdev
+- [Building a Todo App with Rust and SvelteKit: Complete Tutorial](https://www.youtube.com/watch?v=w7is2bCTUg0) and [Stripe Payment In SvelteKit With Dynamic Pricing](https://www.youtube.com/watch?v=o8gvCLgz1vs) by SvelteRust
+- [Leaflet maps in SvelteKit like it's 2023 (HowTo)](https://www.youtube.com/watch?v=JFctWXEzFZw)
+  ShipBit
 
 _To Read_
+
 - [Internationalization in SvelteKit (Series)](https://blog.aakashgoplani.in/series/i18n-in-sveltekit) by Aakash Goplani
 - [The easiest Chatbot you will ever build](https://simon-prammer.vercel.app/blog/post/sveltekit-langchain) and [Intro to LangSmith🦜️🛠️](https://simon-prammer.vercel.app/blog/post/langsmith) by Simon Prammer
 - [SvelteKit: How to make code-based router, instead of file-based router [August 2023]](https://dev.to/maxcore/sveltekit-how-to-make-code-based-router-instead-of-file-based-router-august-2023-5f9) by Max Core
@@ -81,9 +83,8 @@ _To Read_
 - [Type-safe User Authentication in SvelteKit with Lucia, Planetscale, and Upstash Redis](https://upstash.com/blog/lucia-sveltekit) by Chris Jayden
 - [Document Svelte Projects with HTML and JSDoc Comments](https://blog.robino.dev/posts/doc-comments-svelte) by Ross Robino
 
-
-
 **Libraries, Tools & Components**
+
 - [Carta](https://github.com/BearToCode/carta-md) is a lightweight, fast and extensible Svelte Markdown editor and viewer, based on Marked
 - [Threlte](https://threlte.xyz/), the 3D framework built from Svelte and Three.js has released version 6
 - [vite-plugin-web-extension](https://vite-plugin-web-extension.aklinker1.io/guide/frontend-frameworks.html#svelte-integration) works great with Svelte to make building browser extensions easier

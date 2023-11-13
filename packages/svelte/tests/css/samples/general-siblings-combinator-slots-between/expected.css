@@ -1,0 +1,11 @@
+	h1.svelte-xyz ~ span.svelte-xyz {
+		color: green;
+	}
+
+  h1.svelte-xyz ~ p.svelte-xyz {
+    color: red;
+  }
+
+	span.svelte-xyz ~ p.svelte-xyz {
+		color: blue;
+	}

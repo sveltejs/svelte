@@ -1,0 +1,21 @@
+{
+  "name": "svelte-playgrounds-demo",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "ssr": "node ./server.js",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "svelte": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^2.5.1",
+    "express": "^4.18.2",
+    "nodemon": "^3.0.1",
+    "vite": "^4.4.9"
+  }
+}

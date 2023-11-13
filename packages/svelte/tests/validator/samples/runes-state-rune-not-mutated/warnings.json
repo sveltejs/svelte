@@ -1,0 +1,14 @@
+[
+	{
+		"code": "state-rune-not-mutated",
+		"end": {
+			"column": 11,
+			"line": 3
+		},
+		"message": "count is declared with $state(...) but is never updated. Did you mean to create a function that changes its value?",
+		"start": {
+			"column": 6,
+			"line": 3
+		}
+	}
+]

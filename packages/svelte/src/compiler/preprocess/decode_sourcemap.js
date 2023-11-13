@@ -9,18 +9,20 @@ import { decode as decode_mappings } from '@jridgewell/sourcemap-codec';
  */
 function decoded_sourcemap_from_generator(generator) {
 	let previous_generated_line = 1;
+	/** @type {number[][][]} */
 	const converted_mappings = [[]];
-	let result_line;
+	let result_line = converted_mappings[0];
 	let result_segment;
 	let mapping;
 	const source_idx = generator._sources
 		.toArray()
+		// @ts-ignore
 		.reduce((acc, val, idx) => ((acc[val] = idx), acc), {});
 	const name_idx = generator._names
 		.toArray()
+		// @ts-ignore
 		.reduce((acc, val, idx) => ((acc[val] = idx), acc), {});
 	const mappings = generator._mappings.toArray();
-	result_line = converted_mappings[0];
 	for (let i = 0, len = mappings.length; i < len; i++) {
 		mapping = mappings[i];
 		if (mapping.generatedLine > previous_generated_line) {
@@ -54,6 +56,16 @@ function decoded_sourcemap_from_generator(generator) {
 			}
 		}
 	}
+
+	/**
+	 * @type {{
+	 *  version: number;
+	 * sources: string[];
+	 * names: string[];
+	 * mappings: number[][][];
+	 * file?: string;
+	 * }}
+	 */
 	const map = {
 		version: generator._version,
 		sources: generator._sources.toArray(),

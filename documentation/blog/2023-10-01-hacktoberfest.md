@@ -1,6 +1,6 @@
 ---
-title: "Hacktoberfest 2023 with SvelteKit"
-description: "SvelteKit joins in the Hacktoberfest event in 2023"
+title: 'Hacktoberfest 2023 with SvelteKit'
+description: 'SvelteKit joins in the Hacktoberfest event in 2023'
 author: Willow (GHOST) & Braden Wiggins
 authorURL: https://ghostdev.xyz
 ---

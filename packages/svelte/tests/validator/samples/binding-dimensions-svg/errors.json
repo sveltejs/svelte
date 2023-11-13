@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "'offsetWidth' binding can only be used with non-<svg> elements. Use 'clientWidth' for <svg> instead",
+		"start": {
+			"line": 5,
+			"column": 5
+		},
+		"end": {
+			"line": 5,
+			"column": 21
+		}
+	}
+]

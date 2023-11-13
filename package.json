@@ -4,31 +4,44 @@
   "description": "monorepo for svelte and friends",
   "private": true,
   "type": "module",
-  "scripts": {
-    "test": "pnpm test -r --filter=./packages/*",
-    "build": "pnpm -r --filter=./packages/* build",
-    "build:sites": "pnpm -r --filter=./sites/* build",
-    "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
-    "lint": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r lint",
-    "format": "pnpm -r format",
-    "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
-    "changeset:publish": "changeset publish"
+  "license": "MIT",
+  "packageManager": "pnpm@8.6.12",
+  "engines": {
+    "pnpm": "^8.0.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sveltejs/svelte.git"
   },
-  "license": "MIT",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development concurrently \"npm run watch\" \"npm run dev --prefix playgrounds/demo\"",
+    "build": "pnpm -r --filter=./packages/* build",
+    "build:sites": "pnpm -r --filter=./sites/* build",
+    "preview-site": "npm run build --prefix sites/svelte-5-preview",
+    "check": "cd packages/svelte && pnpm build && cd ../../ && pnpm -r check",
+    "format": "prettier --write --plugin prettier-plugin-svelte .",
+    "lint": "prettier --check --plugin prettier-plugin-svelte . && eslint ./",
+    "test": "vitest run --coverage",
+    "test-output": "vitest run --reporter=json --outputFile=sites/svelte-5-preview/src/routes/status/results.json",
+    "changeset:version": "changeset version && pnpm -r generate:version && git add --all",
+    "changeset:publish": "changeset publish"
+  },
   "devDependencies": {
     "@changesets/cli": "^2.26.1",
     "@svitejs/changesets-changelog-github-compact": "^1.1.0",
-    "@typescript-eslint/eslint-plugin": "^5.60.0",
-    "eslint": "^8.44.0",
-    "eslint-plugin-svelte": "^2.32.2",
-    "eslint-plugin-unicorn": "^47.0.0",
+    "@sveltejs/eslint-config": "^6.0.4",
+    "@types/node": "^18.18.8",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
+    "@vitest/coverage-v8": "^0.34.6",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.49.0",
+    "eslint-plugin-lube": "^0.1.7",
+    "jsdom": "22.0.0",
     "playwright": "^1.35.1",
-    "prettier": "^2.8.8",
-    "prettier-plugin-svelte": "^2.10.1"
-  },
-  "packageManager": "pnpm@8.6.3"
+    "prettier": "^3.0.1",
+    "prettier-plugin-svelte": "^3.0.3",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  }
 }

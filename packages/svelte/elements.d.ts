@@ -66,146 +66,350 @@ export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEve
 export interface DOMAttributes<T extends EventTarget> {
 	// Clipboard Events
 	'on:copy'?: ClipboardEventHandler<T> | undefined | null;
+	oncopy?: ClipboardEventHandler<T> | undefined | null;
+	oncopycapture?: ClipboardEventHandler<T> | undefined | null;
 	'on:cut'?: ClipboardEventHandler<T> | undefined | null;
+	oncut?: ClipboardEventHandler<T> | undefined | null;
+	oncutcapture?: ClipboardEventHandler<T> | undefined | null;
 	'on:paste'?: ClipboardEventHandler<T> | undefined | null;
+	onpaste?: ClipboardEventHandler<T> | undefined | null;
+	onpastecapture?: ClipboardEventHandler<T> | undefined | null;
 
 	// Composition Events
 	'on:compositionend'?: CompositionEventHandler<T> | undefined | null;
+	oncompositionend?: CompositionEventHandler<T> | undefined | null;
+	oncompositionendcapture?: CompositionEventHandler<T> | undefined | null;
 	'on:compositionstart'?: CompositionEventHandler<T> | undefined | null;
+	oncompositionstart?: CompositionEventHandler<T> | undefined | null;
+	oncompositionstartcapture?: CompositionEventHandler<T> | undefined | null;
 	'on:compositionupdate'?: CompositionEventHandler<T> | undefined | null;
+	oncompositionupdate?: CompositionEventHandler<T> | undefined | null;
+	oncompositionupdatecapture?: CompositionEventHandler<T> | undefined | null;
 
 	// Focus Events
 	'on:focus'?: FocusEventHandler<T> | undefined | null;
+	onfocus?: FocusEventHandler<T> | undefined | null;
+	onfocuscapture?: FocusEventHandler<T> | undefined | null;
 	'on:focusin'?: FocusEventHandler<T> | undefined | null;
+	onfocusin?: FocusEventHandler<T> | undefined | null;
+	onfocusincapture?: FocusEventHandler<T> | undefined | null;
 	'on:focusout'?: FocusEventHandler<T> | undefined | null;
+	onfocusout?: FocusEventHandler<T> | undefined | null;
+	onfocusoutcapture?: FocusEventHandler<T> | undefined | null;
 	'on:blur'?: FocusEventHandler<T> | undefined | null;
+	onblur?: FocusEventHandler<T> | undefined | null;
+	onblurcapture?: FocusEventHandler<T> | undefined | null;
 
 	// Form Events
 	'on:change'?: FormEventHandler<T> | undefined | null;
+	onchange?: FormEventHandler<T> | undefined | null;
+	onchangecapture?: FormEventHandler<T> | undefined | null;
 	'on:beforeinput'?: EventHandler<InputEvent, T> | undefined | null;
+	onbeforeinput?: EventHandler<InputEvent, T> | undefined | null;
+	onbeforeinputcapture?: EventHandler<InputEvent, T> | undefined | null;
 	'on:input'?: FormEventHandler<T> | undefined | null;
+	oninput?: FormEventHandler<T> | undefined | null;
+	oninputcapture?: FormEventHandler<T> | undefined | null;
 	'on:reset'?: FormEventHandler<T> | undefined | null;
+	onreset?: FormEventHandler<T> | undefined | null;
+	onresetcapture?: FormEventHandler<T> | undefined | null;
 	'on:submit'?: EventHandler<SubmitEvent, T> | undefined | null;
+	onsubmit?: EventHandler<SubmitEvent, T> | undefined | null;
+	onsubmitcapture?: EventHandler<SubmitEvent, T> | undefined | null;
 	'on:invalid'?: EventHandler<Event, T> | undefined | null;
+	oninvalid?: EventHandler<Event, T> | undefined | null;
+	oninvalidcapture?: EventHandler<Event, T> | undefined | null;
 	'on:formdata'?: EventHandler<FormDataEvent, T> | undefined | null;
+	onformdata?: EventHandler<FormDataEvent, T> | undefined | null;
+	onformdatacapture?: EventHandler<FormDataEvent, T> | undefined | null;
 
 	// Image Events
 	'on:load'?: EventHandler | undefined | null;
+	onload?: EventHandler | undefined | null;
+	onloadcapture?: EventHandler | undefined | null;
 	'on:error'?: EventHandler | undefined | null; // also a Media Event
+	onerror?: EventHandler | undefined | null; // also a Media Event
+	onerrorcapture?: EventHandler | undefined | null; // also a Media Event
 
 	// Detail Events
 	'on:toggle'?: EventHandler<Event, T> | undefined | null;
+	ontoggle?: EventHandler<Event, T> | undefined | null;
+	ontogglecapture?: EventHandler<Event, T> | undefined | null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
+	onkeydown?: KeyboardEventHandler<T> | undefined | null;
+	onkeydowncapture?: KeyboardEventHandler<T> | undefined | null;
 	'on:keypress'?: KeyboardEventHandler<T> | undefined | null;
+	onkeypress?: KeyboardEventHandler<T> | undefined | null;
+	onkeypresscapture?: KeyboardEventHandler<T> | undefined | null;
 	'on:keyup'?: KeyboardEventHandler<T> | undefined | null;
+	onkeyup?: KeyboardEventHandler<T> | undefined | null;
+	onkeyupcapture?: KeyboardEventHandler<T> | undefined | null;
 
 	// Media Events
 	'on:abort'?: EventHandler<Event, T> | undefined | null;
+	onabort?: EventHandler<Event, T> | undefined | null;
+	onabortcapture?: EventHandler<Event, T> | undefined | null;
 	'on:canplay'?: EventHandler<Event, T> | undefined | null;
+	oncanplay?: EventHandler<Event, T> | undefined | null;
+	oncanplaycapture?: EventHandler<Event, T> | undefined | null;
 	'on:canplaythrough'?: EventHandler<Event, T> | undefined | null;
+	oncanplaythrough?: EventHandler<Event, T> | undefined | null;
+	oncanplaythroughcapture?: EventHandler<Event, T> | undefined | null;
 	'on:cuechange'?: EventHandler<Event, T> | undefined | null;
+	oncuechange?: EventHandler<Event, T> | undefined | null;
+	oncuechangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:durationchange'?: EventHandler<Event, T> | undefined | null;
+	ondurationchange?: EventHandler<Event, T> | undefined | null;
+	ondurationchangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:emptied'?: EventHandler<Event, T> | undefined | null;
+	onemptied?: EventHandler<Event, T> | undefined | null;
+	onemptiedcapture?: EventHandler<Event, T> | undefined | null;
 	'on:encrypted'?: EventHandler<Event, T> | undefined | null;
+	onencrypted?: EventHandler<Event, T> | undefined | null;
+	onencryptedcapture?: EventHandler<Event, T> | undefined | null;
 	'on:ended'?: EventHandler<Event, T> | undefined | null;
+	onended?: EventHandler<Event, T> | undefined | null;
+	onendedcapture?: EventHandler<Event, T> | undefined | null;
 	'on:loadeddata'?: EventHandler<Event, T> | undefined | null;
+	onloadeddata?: EventHandler<Event, T> | undefined | null;
+	onloadeddatacapture?: EventHandler<Event, T> | undefined | null;
 	'on:loadedmetadata'?: EventHandler<Event, T> | undefined | null;
+	onloadedmetadata?: EventHandler<Event, T> | undefined | null;
+	onloadedmetadatacapture?: EventHandler<Event, T> | undefined | null;
 	'on:loadstart'?: EventHandler<Event, T> | undefined | null;
+	onloadstart?: EventHandler<Event, T> | undefined | null;
+	onloadstartcapture?: EventHandler<Event, T> | undefined | null;
 	'on:pause'?: EventHandler<Event, T> | undefined | null;
+	onpause?: EventHandler<Event, T> | undefined | null;
+	onpausecapture?: EventHandler<Event, T> | undefined | null;
 	'on:play'?: EventHandler<Event, T> | undefined | null;
+	onplay?: EventHandler<Event, T> | undefined | null;
+	onplaycapture?: EventHandler<Event, T> | undefined | null;
 	'on:playing'?: EventHandler<Event, T> | undefined | null;
+	onplaying?: EventHandler<Event, T> | undefined | null;
+	onplayingcapture?: EventHandler<Event, T> | undefined | null;
 	'on:progress'?: EventHandler<Event, T> | undefined | null;
+	onprogress?: EventHandler<Event, T> | undefined | null;
+	onprogresscapture?: EventHandler<Event, T> | undefined | null;
 	'on:ratechange'?: EventHandler<Event, T> | undefined | null;
+	onratechange?: EventHandler<Event, T> | undefined | null;
+	onratechangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:seeked'?: EventHandler<Event, T> | undefined | null;
+	onseeked?: EventHandler<Event, T> | undefined | null;
+	onseekedcapture?: EventHandler<Event, T> | undefined | null;
 	'on:seeking'?: EventHandler<Event, T> | undefined | null;
+	onseeking?: EventHandler<Event, T> | undefined | null;
+	onseekingcapture?: EventHandler<Event, T> | undefined | null;
 	'on:stalled'?: EventHandler<Event, T> | undefined | null;
+	onstalled?: EventHandler<Event, T> | undefined | null;
+	onstalledcapture?: EventHandler<Event, T> | undefined | null;
 	'on:suspend'?: EventHandler<Event, T> | undefined | null;
+	onsuspend?: EventHandler<Event, T> | undefined | null;
+	onsuspendcapture?: EventHandler<Event, T> | undefined | null;
 	'on:timeupdate'?: EventHandler<Event, T> | undefined | null;
+	ontimeupdate?: EventHandler<Event, T> | undefined | null;
+	ontimeupdatecapture?: EventHandler<Event, T> | undefined | null;
 	'on:volumechange'?: EventHandler<Event, T> | undefined | null;
+	onvolumechange?: EventHandler<Event, T> | undefined | null;
+	onvolumechangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:waiting'?: EventHandler<Event, T> | undefined | null;
+	onwaiting?: EventHandler<Event, T> | undefined | null;
+	onwaitingcapture?: EventHandler<Event, T> | undefined | null;
 
 	// MouseEvents
 	'on:auxclick'?: MouseEventHandler<T> | undefined | null;
+	onauxclick?: MouseEventHandler<T> | undefined | null;
+	onauxclickcapture?: MouseEventHandler<T> | undefined | null;
 	'on:click'?: MouseEventHandler<T> | undefined | null;
+	onclick?: MouseEventHandler<T> | undefined | null;
+	onclickcapture?: MouseEventHandler<T> | undefined | null;
 	'on:contextmenu'?: MouseEventHandler<T> | undefined | null;
+	oncontextmenu?: MouseEventHandler<T> | undefined | null;
+	oncontextmenucapture?: MouseEventHandler<T> | undefined | null;
 	'on:dblclick'?: MouseEventHandler<T> | undefined | null;
+	ondblclick?: MouseEventHandler<T> | undefined | null;
+	ondblclickcapture?: MouseEventHandler<T> | undefined | null;
 	'on:drag'?: DragEventHandler<T> | undefined | null;
+	ondrag?: DragEventHandler<T> | undefined | null;
+	ondragcapture?: DragEventHandler<T> | undefined | null;
 	'on:dragend'?: DragEventHandler<T> | undefined | null;
+	ondragend?: DragEventHandler<T> | undefined | null;
+	ondragendcapture?: DragEventHandler<T> | undefined | null;
 	'on:dragenter'?: DragEventHandler<T> | undefined | null;
+	ondragenter?: DragEventHandler<T> | undefined | null;
+	ondragentercapture?: DragEventHandler<T> | undefined | null;
 	'on:dragexit'?: DragEventHandler<T> | undefined | null;
+	ondragexit?: DragEventHandler<T> | undefined | null;
+	ondragexitcapture?: DragEventHandler<T> | undefined | null;
 	'on:dragleave'?: DragEventHandler<T> | undefined | null;
+	ondragleave?: DragEventHandler<T> | undefined | null;
+	ondragleavecapture?: DragEventHandler<T> | undefined | null;
 	'on:dragover'?: DragEventHandler<T> | undefined | null;
+	ondragover?: DragEventHandler<T> | undefined | null;
+	ondragovercapture?: DragEventHandler<T> | undefined | null;
 	'on:dragstart'?: DragEventHandler<T> | undefined | null;
+	ondragstart?: DragEventHandler<T> | undefined | null;
+	ondragstartcapture?: DragEventHandler<T> | undefined | null;
 	'on:drop'?: DragEventHandler<T> | undefined | null;
+	ondrop?: DragEventHandler<T> | undefined | null;
+	ondropcapture?: DragEventHandler<T> | undefined | null;
 	'on:mousedown'?: MouseEventHandler<T> | undefined | null;
+	onmousedown?: MouseEventHandler<T> | undefined | null;
+	onmousedowncapture?: MouseEventHandler<T> | undefined | null;
 	'on:mouseenter'?: MouseEventHandler<T> | undefined | null;
+	onmouseenter?: MouseEventHandler<T> | undefined | null;
 	'on:mouseleave'?: MouseEventHandler<T> | undefined | null;
+	onmouseleave?: MouseEventHandler<T> | undefined | null;
 	'on:mousemove'?: MouseEventHandler<T> | undefined | null;
+	onmousemove?: MouseEventHandler<T> | undefined | null;
+	onmousemovecapture?: MouseEventHandler<T> | undefined | null;
 	'on:mouseout'?: MouseEventHandler<T> | undefined | null;
+	onmouseout?: MouseEventHandler<T> | undefined | null;
+	onmouseoutcapture?: MouseEventHandler<T> | undefined | null;
 	'on:mouseover'?: MouseEventHandler<T> | undefined | null;
+	onmouseover?: MouseEventHandler<T> | undefined | null;
+	onmouseovercapture?: MouseEventHandler<T> | undefined | null;
 	'on:mouseup'?: MouseEventHandler<T> | undefined | null;
+	onmouseup?: MouseEventHandler<T> | undefined | null;
+	onmouseupcapture?: MouseEventHandler<T> | undefined | null;
 
 	// Selection Events
 	'on:select'?: EventHandler<Event, T> | undefined | null;
+	onselect?: EventHandler<Event, T> | undefined | null;
+	onselectcapture?: EventHandler<Event, T> | undefined | null;
 	'on:selectionchange'?: EventHandler<Event, T> | undefined | null;
+	onselectionchange?: EventHandler<Event, T> | undefined | null;
+	onselectionchangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:selectstart'?: EventHandler<Event, T> | undefined | null;
+	onselectstart?: EventHandler<Event, T> | undefined | null;
+	onselectstartcapture?: EventHandler<Event, T> | undefined | null;
 
 	// Touch Events
 	'on:touchcancel'?: TouchEventHandler<T> | undefined | null;
+	ontouchcancel?: TouchEventHandler<T> | undefined | null;
+	ontouchcancelcapture?: TouchEventHandler<T> | undefined | null;
 	'on:touchend'?: TouchEventHandler<T> | undefined | null;
+	ontouchend?: TouchEventHandler<T> | undefined | null;
+	ontouchendcapture?: TouchEventHandler<T> | undefined | null;
 	'on:touchmove'?: TouchEventHandler<T> | undefined | null;
+	ontouchmove?: TouchEventHandler<T> | undefined | null;
+	ontouchmovecapture?: TouchEventHandler<T> | undefined | null;
 	'on:touchstart'?: TouchEventHandler<T> | undefined | null;
+	ontouchstart?: TouchEventHandler<T> | undefined | null;
+	ontouchstartcapture?: TouchEventHandler<T> | undefined | null;
 
 	// Pointer Events
 	'on:gotpointercapture'?: PointerEventHandler<T> | undefined | null;
+	ongotpointercapture?: PointerEventHandler<T> | undefined | null;
+	ongotpointercapturecapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointercancel'?: PointerEventHandler<T> | undefined | null;
+	onpointercancel?: PointerEventHandler<T> | undefined | null;
+	onpointercancelcapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerdown'?: PointerEventHandler<T> | undefined | null;
+	onpointerdown?: PointerEventHandler<T> | undefined | null;
+	onpointerdowncapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerenter'?: PointerEventHandler<T> | undefined | null;
+	onpointerenter?: PointerEventHandler<T> | undefined | null;
+	onpointerentercapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerleave'?: PointerEventHandler<T> | undefined | null;
+	onpointerleave?: PointerEventHandler<T> | undefined | null;
+	onpointerleavecapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointermove'?: PointerEventHandler<T> | undefined | null;
+	onpointermove?: PointerEventHandler<T> | undefined | null;
+	onpointermovecapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerout'?: PointerEventHandler<T> | undefined | null;
+	onpointerout?: PointerEventHandler<T> | undefined | null;
+	onpointeroutcapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerover'?: PointerEventHandler<T> | undefined | null;
+	onpointerover?: PointerEventHandler<T> | undefined | null;
+	onpointerovercapture?: PointerEventHandler<T> | undefined | null;
 	'on:pointerup'?: PointerEventHandler<T> | undefined | null;
+	onpointerup?: PointerEventHandler<T> | undefined | null;
+	onpointerupcapture?: PointerEventHandler<T> | undefined | null;
 	'on:lostpointercapture'?: PointerEventHandler<T> | undefined | null;
+	onlostpointercapture?: PointerEventHandler<T> | undefined | null;
+	onlostpointercapturecapture?: PointerEventHandler<T> | undefined | null;
 
 	// UI Events
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
+	onscroll?: UIEventHandler<T> | undefined | null;
+	onscrollcapture?: UIEventHandler<T> | undefined | null;
 	'on:resize'?: UIEventHandler<T> | undefined | null;
+	onresize?: UIEventHandler<T> | undefined | null;
+	onresizecapture?: UIEventHandler<T> | undefined | null;
 
 	// Wheel Events
 	'on:wheel'?: WheelEventHandler<T> | undefined | null;
+	onwheel?: WheelEventHandler<T> | undefined | null;
+	onwheelcapture?: WheelEventHandler<T> | undefined | null;
 
 	// Animation Events
 	'on:animationstart'?: AnimationEventHandler<T> | undefined | null;
+	onanimationstart?: AnimationEventHandler<T> | undefined | null;
+	onanimationstartcapture?: AnimationEventHandler<T> | undefined | null;
 	'on:animationend'?: AnimationEventHandler<T> | undefined | null;
+	onanimationend?: AnimationEventHandler<T> | undefined | null;
+	onanimationendcapture?: AnimationEventHandler<T> | undefined | null;
 	'on:animationiteration'?: AnimationEventHandler<T> | undefined | null;
+	onanimationiteration?: AnimationEventHandler<T> | undefined | null;
+	onanimationiterationcapture?: AnimationEventHandler<T> | undefined | null;
 
 	// Transition Events
 	'on:transitionstart'?: TransitionEventHandler<T> | undefined | null;
+	ontransitionstart?: TransitionEventHandler<T> | undefined | null;
+	ontransitionstartcapture?: TransitionEventHandler<T> | undefined | null;
 	'on:transitionrun'?: TransitionEventHandler<T> | undefined | null;
+	ontransitionrun?: TransitionEventHandler<T> | undefined | null;
+	ontransitionruncapture?: TransitionEventHandler<T> | undefined | null;
 	'on:transitionend'?: TransitionEventHandler<T> | undefined | null;
+	ontransitionend?: TransitionEventHandler<T> | undefined | null;
+	ontransitionendcapture?: TransitionEventHandler<T> | undefined | null;
 	'on:transitioncancel'?: TransitionEventHandler<T> | undefined | null;
+	ontransitioncancel?: TransitionEventHandler<T> | undefined | null;
+	ontransitioncancelcapture?: TransitionEventHandler<T> | undefined | null;
 
 	// Svelte Transition Events
 	'on:outrostart'?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onoutrostart?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onoutrostartcapture?: EventHandler<CustomEvent<null>, T> | undefined | null;
 	'on:outroend'?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onoutroend?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onoutroendcapture?: EventHandler<CustomEvent<null>, T> | undefined | null;
 	'on:introstart'?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onintrostart?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onintrostartcapture?: EventHandler<CustomEvent<null>, T> | undefined | null;
 	'on:introend'?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onintroend?: EventHandler<CustomEvent<null>, T> | undefined | null;
+	onintroendcapture?: EventHandler<CustomEvent<null>, T> | undefined | null;
 
 	// Message Events
 	'on:message'?: MessageEventHandler<T> | undefined | null;
+	onmessage?: MessageEventHandler<T> | undefined | null;
+	onmessagecapture?: MessageEventHandler<T> | undefined | null;
 	'on:messageerror'?: MessageEventHandler<T> | undefined | null;
+	onmessageerror?: MessageEventHandler<T> | undefined | null;
+	onmessageerrorcapture?: MessageEventHandler<T> | undefined | null;
 
 	// Document Events
 	'on:visibilitychange'?: EventHandler<Event, T> | undefined | null;
+	onvisibilitychange?: EventHandler<Event, T> | undefined | null;
+	onvisibilitychangecapture?: EventHandler<Event, T> | undefined | null;
 
 	// Global Events
 	'on:cancel'?: EventHandler<Event, T> | undefined | null;
+	oncancel?: EventHandler<Event, T> | undefined | null;
+	oncancelcapture?: EventHandler<Event, T> | undefined | null;
 	'on:close'?: EventHandler<Event, T> | undefined | null;
+	onclose?: EventHandler<Event, T> | undefined | null;
+	onclosecapture?: EventHandler<Event, T> | undefined | null;
 	'on:fullscreenchange'?: EventHandler<Event, T> | undefined | null;
+	onfullscreenchange?: EventHandler<Event, T> | undefined | null;
+	onfullscreenchangecapture?: EventHandler<Event, T> | undefined | null;
 	'on:fullscreenerror'?: EventHandler<Event, T> | undefined | null;
+	onfullscreenerror?: EventHandler<Event, T> | undefined | null;
+	onfullscreenerrorcapture?: EventHandler<Event, T> | undefined | null;
 }
 
 // All the WAI-ARIA 1.1 attributes from https://www.w3.org/TR/wai-aria-1.1/
@@ -828,6 +1032,7 @@ export interface HTMLInputAttributes extends HTMLAttributes<HTMLInputElement> {
 	width?: number | string | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLInputElement> | undefined | null;
+	onchange?: ChangeEventHandler<HTMLInputElement> | undefined | null;
 
 	'bind:checked'?: boolean | undefined | null;
 	'bind:value'?: any;
@@ -1021,6 +1226,7 @@ export interface HTMLSelectAttributes extends HTMLAttributes<HTMLSelectElement> 
 	value?: any;
 
 	'on:change'?: ChangeEventHandler<HTMLSelectElement> | undefined | null;
+	onchange?: ChangeEventHandler<HTMLSelectElement> | undefined | null;
 
 	'bind:value'?: any;
 }
@@ -1071,6 +1277,7 @@ export interface HTMLTextareaAttributes extends HTMLAttributes<HTMLTextAreaEleme
 	wrap?: string | undefined | null;
 
 	'on:change'?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
+	onchange?: ChangeEventHandler<HTMLTextAreaElement> | undefined | null;
 
 	'bind:value'?: any;
 }
@@ -1140,36 +1347,56 @@ export interface SvelteWindowAttributes extends HTMLAttributes<Window> {
 	'bind:scrollY'?: Window['scrollY'] | undefined | null;
 	readonly 'bind:online'?: Window['navigator']['onLine'] | undefined | null;
 
-	// SvelteKit
-	'on:sveltekit:start'?: EventHandler<CustomEvent, Window> | undefined | null;
-	'on:sveltekit:navigation-start'?: EventHandler<CustomEvent, Window> | undefined | null;
-	'on:sveltekit:navigation-end'?: EventHandler<CustomEvent, Window> | undefined | null;
-
 	'on:devicelight'?: EventHandler<Event, Window> | undefined | null;
+	ondevicelight?: EventHandler<Event, Window> | undefined | null;
 	'on:beforeinstallprompt'?: EventHandler<Event, Window> | undefined | null;
+	onbeforeinstallprompt?: EventHandler<Event, Window> | undefined | null;
 	'on:deviceproximity'?: EventHandler<Event, Window> | undefined | null;
+	ondeviceproximity?: EventHandler<Event, Window> | undefined | null;
 	'on:paint'?: EventHandler<Event, Window> | undefined | null;
+	onpaint?: EventHandler<Event, Window> | undefined | null;
 	'on:userproximity'?: EventHandler<Event, Window> | undefined | null;
+	onuserproximity?: EventHandler<Event, Window> | undefined | null;
 	'on:beforeprint'?: EventHandler<Event, Window> | undefined | null;
+	onbeforeprint?: EventHandler<Event, Window> | undefined | null;
 	'on:afterprint'?: EventHandler<Event, Window> | undefined | null;
+	onafterprint?: EventHandler<Event, Window> | undefined | null;
 	'on:languagechange'?: EventHandler<Event, Window> | undefined | null;
+	onlanguagechange?: EventHandler<Event, Window> | undefined | null;
 	'on:orientationchange'?: EventHandler<Event, Window> | undefined | null;
+	onorientationchange?: EventHandler<Event, Window> | undefined | null;
 	'on:message'?: EventHandler<MessageEvent, Window> | undefined | null;
+	onmessage?: EventHandler<MessageEvent, Window> | undefined | null;
 	'on:messageerror'?: EventHandler<MessageEvent, Window> | undefined | null;
+	onmessageerror?: EventHandler<MessageEvent, Window> | undefined | null;
 	'on:offline'?: EventHandler<Event, Window> | undefined | null;
+	onoffline?: EventHandler<Event, Window> | undefined | null;
 	'on:online'?: EventHandler<Event, Window> | undefined | null;
+	ononline?: EventHandler<Event, Window> | undefined | null;
 	'on:beforeunload'?: EventHandler<BeforeUnloadEvent, Window> | undefined | null;
+	onbeforeunload?: EventHandler<BeforeUnloadEvent, Window> | undefined | null;
 	'on:unload'?: EventHandler<Event, Window> | undefined | null;
+	onunload?: EventHandler<Event, Window> | undefined | null;
 	'on:storage'?: EventHandler<StorageEvent, Window> | undefined | null;
+	onstorage?: EventHandler<StorageEvent, Window> | undefined | null;
 	'on:hashchange'?: EventHandler<HashChangeEvent, Window> | undefined | null;
+	onhashchange?: EventHandler<HashChangeEvent, Window> | undefined | null;
 	'on:pagehide'?: EventHandler<PageTransitionEvent, Window> | undefined | null;
+	onpagehide?: EventHandler<PageTransitionEvent, Window> | undefined | null;
 	'on:pageshow'?: EventHandler<PageTransitionEvent, Window> | undefined | null;
+	onpageshow?: EventHandler<PageTransitionEvent, Window> | undefined | null;
 	'on:popstate'?: EventHandler<PopStateEvent, Window> | undefined | null;
+	onpopstate?: EventHandler<PopStateEvent, Window> | undefined | null;
 	'on:devicemotion'?: EventHandler<DeviceMotionEvent> | undefined | null;
+	ondevicemotion?: EventHandler<DeviceMotionEvent> | undefined | null;
 	'on:deviceorientation'?: EventHandler<DeviceOrientationEvent, Window> | undefined | null;
+	ondeviceorientation?: EventHandler<DeviceOrientationEvent, Window> | undefined | null;
 	'on:deviceorientationabsolute'?: EventHandler<DeviceOrientationEvent, Window> | undefined | null;
+	ondeviceorientationabsolute?: EventHandler<DeviceOrientationEvent, Window> | undefined | null;
 	'on:unhandledrejection'?: EventHandler<PromiseRejectionEvent, Window> | undefined | null;
+	onunhandledrejection?: EventHandler<PromiseRejectionEvent, Window> | undefined | null;
 	'on:rejectionhandled'?: EventHandler<PromiseRejectionEvent, Window> | undefined | null;
+	onrejectionhandled?: EventHandler<PromiseRejectionEvent, Window> | undefined | null;
 }
 
 export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DOMAttributes<T> {
@@ -1454,7 +1681,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	z?: number | string | undefined | null;
 	zoomAndPan?: string | undefined | null;
 
- 	// allow any data- attribute
+	// allow any data- attribute
 	[key: `data-${string}`]: any;
 }
 

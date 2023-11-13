@@ -1,6 +1,27 @@
+# Dependency directories
+node_modules/
+
+# IDE related
 .idea
-.DS_Store
 .vscode/*
 !.vscode/launch.json
-node_modules
+
+# Test coverage
+coverage
+*.lcov
+
+# Optional eslint cache
 .eslintcache
+
+# dotenv environment variables file
+.env
+.env.test
+
+# build output
+dist
+.vercel
+
+# OS-specific
+.DS_Store
+
+tmp

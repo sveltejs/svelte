@@ -1,0 +1,19 @@
+  .foo.svelte-xyz {color: red;}
+  /* (unused) .fooaa {color: red;}*/
+  /* (unused) .foobb {color: red;}*/
+  .foocc.svelte-xyz {color: red;}
+  /* (unused) .foodd {color: red;}*/
+  .aa.svelte-xyz {color: red;}
+  .bb.svelte-xyz {color: red;}
+  .cc.svelte-xyz {color: red;}
+  .dd.svelte-xyz {color: red;}
+  .aabar.svelte-xyz {color: red;}
+  /* (unused) .bbbar {color: red;}*/
+  /* (unused) .ccbar {color: red;}*/
+  /* (unused) .ddbar {color: red;}*/
+  /* (unused) .fooaabar {color: red;}*/
+  /* (unused) .foobbbar {color: red;}*/
+  /* (unused) .fooccbar {color: red;}*/
+  .fooddbar.svelte-xyz {color: red;}
+  .baz.svelte-xyz {color: red;}
+  /* (unused) .unused {color: red;}*/

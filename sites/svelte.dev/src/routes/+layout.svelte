@@ -74,7 +74,9 @@
 		<slot />
 
 		<div slot="banner-bottom" class="banner-bottom">
-			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom">Join us at Svelte Summit on Nov 11</a>
+			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom"
+				>Join us at Svelte Summit on Nov 11</a
+			>
 		</div>
 	</Shell>
 </div>

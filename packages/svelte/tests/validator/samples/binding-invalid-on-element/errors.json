@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "'value' binding can only be used with <input>, <textarea>, <select>",
+		"start": {
+			"line": 5,
+			"column": 5
+		},
+		"end": {
+			"line": 5,
+			"column": 15
+		}
+	}
+]
