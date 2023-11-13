@@ -95,7 +95,6 @@ export function fly(
 	};
 }
 
-
 /**
  * Slides an element in and out.
  *
