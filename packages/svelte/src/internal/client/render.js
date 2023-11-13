@@ -3020,7 +3020,7 @@ export function unwrap(value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').Component<Props, Exports, Events>} component
+ * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -3139,7 +3139,7 @@ export function createRoot(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').Component<Props, Exports, Events>} component
+ * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;

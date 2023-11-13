@@ -59,7 +59,8 @@ function compile({ id, source, options, return_ast }) {
 		if (options.filename.endsWith('.svelte')) {
 			const compiled = svelte.compile(source, {
 				filename: options.filename,
-				generate: options.generate
+				generate: options.generate,
+				dev: options.dev
 			});
 
 			const { js, css, warnings, metadata } = compiled;
@@ -77,7 +78,8 @@ function compile({ id, source, options, return_ast }) {
 		} else if (options.filename.endsWith('.svelte.js')) {
 			const compiled = svelte.compileModule(source, {
 				filename: options.filename,
-				generate: options.generate
+				generate: options.generate,
+				dev: options.dev
 			});
 
 			if (compiled) {
