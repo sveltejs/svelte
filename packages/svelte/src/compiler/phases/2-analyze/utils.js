@@ -2,6 +2,25 @@ import { error } from '../../errors.js';
 import { get_rune } from '../scope';
 
 /**
+ * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
+ * @param {import('./types').Context} context
+ */
+export const function_visitor = (node, context) => {
+	// TODO retire this in favour of a more general solution based on bindings
+	node.metadata = {
+		// module context -> already hoisted
+		hoistable: context.state.ast_type === 'module' ? 'impossible' : false,
+		hoistable_params: [],
+		scope: context.state.scope
+	};
+
+	context.next({
+		...context.state,
+		function_depth: context.state.function_depth + 1
+	});
+};
+
+/**
  * @param {import('../../errors.js').NodeLike} node
  * @param {import('estree').Pattern | import('estree').Expression} argument
  * @param {import('../scope').Scope} scope
