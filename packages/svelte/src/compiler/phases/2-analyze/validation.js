@@ -325,6 +325,10 @@ export const validation = {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
 						error(node, 'invalid-binding', node.name, '<input type="checkbox">');
 					}
+
+					if (node.name === 'files' && type?.value[0].data !== 'file') {
+						error(node, 'invalid-binding', node.name, '<input type="file">');
+					}
 				}
 
 				if (parent.name === 'select') {

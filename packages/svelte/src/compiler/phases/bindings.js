@@ -179,5 +179,10 @@ export const binding_properties = {
 	},
 	value: {
 		valid_elements: ['input', 'textarea', 'select']
+	},
+	files: {
+		event: 'change',
+		valid_elements: ['input'],
+		omit_in_ssr: true
 	}
 };
