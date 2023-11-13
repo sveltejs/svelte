@@ -8,7 +8,7 @@ import { is_custom_element_node } from '../nodes.js';
 import { regex_not_whitespace, regex_only_whitespaces } from '../patterns.js';
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
-import { a11y_validators } from './a11y.js';
+import { a11y_validators } from './visitors/validate-a11y.js';
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node

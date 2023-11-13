@@ -6,11 +6,11 @@ import {
 	regex_not_whitespace,
 	regex_starts_with_vowel,
 	regex_whitespaces
-} from '../patterns.js';
-import { warn } from '../../warnings.js';
-import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { is_text_attribute } from '../../utils/ast.js';
-import { ContentEditableBindings } from '../constants.js';
+} from '../../patterns.js';
+import { warn } from '../../../warnings.js';
+import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
+import { is_text_attribute } from '../../../utils/ast.js';
+import { ContentEditableBindings } from '../../constants.js';
 import { walk } from 'zimmerframe';
 
 const aria_roles = roles_map.keys();
@@ -666,7 +666,7 @@ function get_static_text_value(attribute) {
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('./types.js').AnalysisState} state
+ * @param {import('../types.js').AnalysisState} state
  * @param {import('#compiler').SvelteNode[]} path
  */
 function check_element(node, state, path) {
@@ -674,10 +674,10 @@ function check_element(node, state, path) {
 	if (state.options.namespace === 'foreign') return;
 
 	/**
-	 * @template {keyof import('../../warnings.js').AllWarnings} T
+	 * @template {keyof import('../../../warnings.js').AllWarnings} T
 	 * @param {{ start?: number, end?: number }} node
 	 * @param {T} code
-	 * @param  {Parameters<import('../../warnings.js').AllWarnings[T]>} args
+	 * @param  {Parameters<import('../../../warnings.js').AllWarnings[T]>} args
 	 * @returns {void}
 	 */
 	const push_warning = (node, code, ...args) =>
@@ -1157,7 +1157,7 @@ function check_element(node, state, path) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('../types.js').AnalysisState>}
  */
 export const a11y_validators = {
 	RegularElement(node, context) {
