@@ -1,7 +1,10 @@
 // This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
 
 /**
- * @deprecated Use `Component` instead. See TODO for more information.
+ * @deprecated Svelte components were classes in Svelte 4. In Svelte 5, thy are not anymore.
+ * Use `mount` or `createRoot` instead to instantiate components.
+ * See [breaking changes](https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes)
+ * for more info.
  */
 export interface ComponentConstructorOptions<
 	Props extends Record<string, any> = Record<string, any>
