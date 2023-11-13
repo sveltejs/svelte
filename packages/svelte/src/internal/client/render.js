@@ -2263,9 +2263,10 @@ export function each_item_block(item, key, index, render_fn, flags) {
  * @param {null | ((item: V) => string)} key_fn
  * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-export function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
+function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	const block = create_each_block(flags, anchor_node);
 
@@ -2385,20 +2386,7 @@ export function each(anchor_node, collection, flags, key_fn, render_fn, fallback
 			const flags = block.flags;
 			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 			const anchor_node = block.anchor;
-			if ((flags & EACH_KEYED) !== 0) {
-				reconcile_tracked_array(
-					array,
-					block,
-					anchor_node,
-					is_controlled,
-					render_fn,
-					keys,
-					flags,
-					true
-				);
-			} else {
-				reconcile_indexed_array(array, block, anchor_node, is_controlled, render_fn, flags, true);
-			}
+			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
 		},
 		block,
 		true
@@ -2424,6 +2412,33 @@ export function each(anchor_node, collection, flags, key_fn, render_fn, fallback
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
 	block.effect = each;
+}
+
+/**
+ * @template V
+ * @param {Element | Comment} anchor_node
+ * @param {() => V[]} collection
+ * @param {number} flags
+ * @param {null | ((item: V) => string)} key_fn
+ * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @returns {void}
+ */
+export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
+	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+}
+
+/**
+ * @template V
+ * @param {Element | Comment} anchor_node
+ * @param {() => V[]} collection
+ * @param {number} flags
+ * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @returns {void}
+ */
+export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
+	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
 }
 
 /**

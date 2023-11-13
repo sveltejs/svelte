@@ -260,9 +260,9 @@ export function reconcile_indexed_array(
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
- * @param {Array<string> | null} keys
  * @param {number} flags
  * @param {boolean} apply_transitions
+ * @param {Array<string> | null} keys
  * @returns {void}
  */
 export function reconcile_tracked_array(
@@ -271,9 +271,9 @@ export function reconcile_tracked_array(
 	dom,
 	is_controlled,
 	render_fn,
-	keys,
 	flags,
-	apply_transitions
+	apply_transitions,
+	keys
 ) {
 	var a_blocks = each_block.items;
 	const is_computed_key = keys !== null;
