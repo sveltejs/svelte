@@ -343,7 +343,13 @@ function destroy_references(signal) {
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			destroy_signal(references[i]);
+			const reference = references[i];
+			if ((reference.flags & IS_EFFECT) !== 0) {
+				destroy_signal(reference);
+			} else {
+				remove_consumer(reference, 0, true);
+				reference.dependencies = null;
+			}
 		}
 	}
 }
@@ -710,7 +716,7 @@ export function exposable(fn) {
 export function get(signal) {
 	const flags = signal.flags;
 	if ((flags & DESTROYED) !== 0) {
-		return /** @type {V} */ (UNINITIALIZED);
+		return signal.value;
 	}
 
 	if (is_signal_exposed && current_should_capture_signal) {
@@ -1156,6 +1162,11 @@ export function managed_pre_effect(init, sync) {
  * @returns {import('./types.js').EffectSignal}
  */
 export function pre_effect(init) {
+	if (current_effect === null) {
+		throw new Error(
+			'The Svelte $effect.pre rune can only be used during component initialisation.'
+		);
+	}
 	const sync = current_effect !== null && (current_effect.flags & RENDER_EFFECT) !== 0;
 	return internal_create_effect(
 		PRE_EFFECT,
