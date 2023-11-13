@@ -7,9 +7,7 @@ const has_browser_globals = typeof window !== 'undefined';
 // We cache the Node and Element prototype methods, so that subsequent calls-sites are monomorphic rather
 // than megamorphic.
 const node_prototype = /** @type {Node} */ (has_browser_globals ? Node.prototype : {});
-const html_element_prototype = /** @type {Element} */ (
-	has_browser_globals ? HTMLElement.prototype : {}
-);
+const element_prototype = /** @type {Element} */ (has_browser_globals ? Element.prototype : {});
 const text_prototype = /** @type {Text} */ (has_browser_globals ? Text.prototype : {});
 const map_prototype = Map.prototype;
 const append_child_method = node_prototype.appendChild;
@@ -18,11 +16,11 @@ const map_set_method = map_prototype.set;
 const map_get_method = map_prototype.get;
 const map_delete_method = map_prototype.delete;
 // @ts-expect-error improve perf of expando on DOM events
-html_element_prototype.__click = undefined;
+element_prototype.__click = undefined;
 // @ts-expect-error improve perf of expando on DOM text updates
 text_prototype.__nodeValue = ' ';
 // @ts-expect-error improve perf of expando on DOM className updates
-html_element_prototype.__className = '';
+element_prototype.__className = '';
 
 const first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 	// @ts-ignore
@@ -37,6 +35,11 @@ const next_sibling_get = /** @type {(this: Node) => ChildNode | null} */ (
 const text_content_set = /** @type {(this: Node, text: string ) => void} */ (
 	// @ts-ignore
 	has_browser_globals ? get_descriptor(node_prototype, 'textContent').set : null
+);
+
+const class_name_set = /** @type {(this: Element, class_name: string) => void} */ (
+	// @ts-ignore
+	has_browser_globals ? get_descriptor(element_prototype, 'className').set : null
 );
 
 /**
@@ -142,6 +145,16 @@ export function sibling(node) {
 		return capture_fragment_from_node(next_sibling);
 	}
 	return next_sibling;
+}
+
+/**
+ * @template {Element} N
+ * @param {N} node
+ * @param {string} class_name
+ * @returns {void}
+ */
+export function set_class_name(node, class_name) {
+	class_name_set.call(node, class_name);
 }
 
 /**
