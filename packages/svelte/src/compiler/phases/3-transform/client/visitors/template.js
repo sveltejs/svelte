@@ -954,6 +954,7 @@ function create_block(parent, name, nodes, context) {
 		init: [],
 		update: [],
 		update_effects: [],
+		before_update: [],
 		after_update: [],
 		template: [],
 		metadata: {
@@ -1034,6 +1035,8 @@ function create_block(parent, name, nodes, context) {
 			body.push(...state.init);
 		}
 	}
+
+	body.push(...state.before_update);
 
 	if (state.update.length > 0 || state.update_effects.length > 0) {
 		/** @type {import('estree').Statement | undefined} */
@@ -1220,7 +1223,7 @@ function serialize_event(node, context) {
 				delegated_assignment = handler;
 			}
 
-			state.after_update.push(
+			state.before_update.push(
 				b.stmt(
 					b.assignment(
 						'=',
@@ -1951,6 +1954,7 @@ export const template_visitors = {
 				init: [],
 				update: [],
 				update_effects: [],
+				before_update: [],
 				after_update: []
 			}
 		};
@@ -1998,6 +2002,7 @@ export const template_visitors = {
 
 		/** @type {import('estree').Statement[]} */
 		const inner = inner_context.state.init;
+		inner.push(...inner_context.state.before_update);
 		if (inner_context.state.update.length > 0 || inner_context.state.update_effects.length > 0) {
 			if (inner_context.state.update_effects.length > 0) {
 				for (const render of inner_context.state.update_effects) {

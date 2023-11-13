@@ -2881,6 +2881,12 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 				dom.removeEventListener(event_name, /** @type {any} */ (prev[key]), opts);
 			}
 			if (value != null) {
+				const delegated_property = '__' + event_name;
+				// @ts-expect-error internal event property
+				if (dom[delegated_property]) {
+					// @ts-expect-error internal event property
+					dom[delegated_property] = undefined;
+				}
 				dom.addEventListener(event_name, value, opts);
 			}
 		} else if (value == null) {
