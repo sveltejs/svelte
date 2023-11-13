@@ -5,9 +5,9 @@ import { validate_module } from './validate-module.js';
 
 /**
  * Validation that applies to components in runes mode
- * @type {import('../types').Visitors}
+ * @type {import('../types.js').Visitors}
  */
-export const validate_runes = {
+export const validate_component_runes = {
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);
 		if (parent && parent.type === 'ConstTag') return;

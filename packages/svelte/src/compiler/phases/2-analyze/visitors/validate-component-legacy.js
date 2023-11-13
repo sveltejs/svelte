@@ -3,9 +3,9 @@ import { validate_assignment } from '../utils.js';
 
 /**
  * Validation that only applies in non-runes mode
- * @type {import('../types').Visitors}
+ * @type {import('../types.js').Visitors}
  */
-export const validate_legacy = {
+export const validate_component_legacy = {
 	VariableDeclarator(node) {
 		if (node.init?.type !== 'CallExpression') return;
 

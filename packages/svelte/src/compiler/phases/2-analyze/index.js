@@ -13,9 +13,9 @@ import { analyze_component_scope_runes } from './visitors/analyze-component-scop
 import { analyze_module_scope_runes } from './visitors/analyze-module-scope-runes.js';
 import { component_visitors } from './visitors/component.js';
 import { validate_a11y } from './visitors/validate-a11y.js';
-import { validate_legacy } from './visitors/validate-legacy.js';
+import { validate_component_legacy } from './visitors/validate-component-legacy.js';
 import { validate_module } from './visitors/validate-module.js';
-import { validate_runes } from './visitors/validate-runes.js';
+import { validate_component_runes } from './visitors/validate-component-runes.js';
 import { validate_template } from './visitors/validate-template.js';
 
 /**
@@ -236,7 +236,7 @@ export function analyze_component(root, options) {
 					set_scope(scopes),
 					validate_template,
 					validate_a11y,
-					validate_runes,
+					validate_component_runes,
 					analyze_component_scope_runes,
 					component_visitors
 				)
@@ -281,7 +281,7 @@ export function analyze_component(root, options) {
 					set_scope(scopes),
 					validate_template,
 					validate_a11y,
-					validate_legacy,
+					validate_component_legacy,
 					analyze_component_scope_legacy,
 					component_visitors
 				)
