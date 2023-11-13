@@ -1,13 +1,5 @@
 import { DEV } from 'esm-env';
-import {
-	append_child,
-	child,
-	clone_node,
-	create_element,
-	map_get,
-	map_set,
-	set_class_name
-} from './operations.js';
+import { append_child, child, clone_node, create_element, map_get, map_set } from './operations.js';
 import {
 	create_root_block,
 	create_each_item_block,
@@ -357,7 +349,7 @@ export function class_name(dom, value) {
 		if (next_class_name === '') {
 			dom.removeAttribute('class');
 		} else {
-			set_class_name(dom, next_class_name);
+			dom.className = next_class_name;
 		}
 		// @ts-expect-error need to add __className to patched prototype
 		dom.__className = next_class_name;

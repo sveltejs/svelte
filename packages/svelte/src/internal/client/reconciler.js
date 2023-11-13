@@ -1,4 +1,4 @@
-import { append_child, map_get, map_set, text_content } from './operations.js';
+import { append_child, map_get, map_set, clear_text_content } from './operations.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -198,7 +198,7 @@ export function reconcile_indexed_array(
 		b_blocks = [];
 		// Remove old blocks
 		if (is_controlled && a !== 0) {
-			text_content(dom, '');
+			clear_text_content(dom);
 		}
 		while (index < length) {
 			block = a_blocks[index++];
@@ -295,7 +295,7 @@ export function reconcile_tracked_array(
 		b_blocks = [];
 		// Remove old blocks
 		if (is_controlled && a !== 0) {
-			text_content(dom, '');
+			clear_text_content(dom);
 		}
 		while (a > 0) {
 			block = a_blocks[--a];
