@@ -285,3 +285,9 @@ export { Css };
 
 // TODO this chain is a bit weird
 export { ReactiveStatement } from '../phases/types.js';
+
+export interface RawWarning {
+	code: string;
+	message: string;
+	position: [number, number] | undefined;
+}

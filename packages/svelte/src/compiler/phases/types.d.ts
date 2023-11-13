@@ -2,6 +2,7 @@ import type {
 	BindDirective,
 	Binding,
 	Fragment,
+	RawWarning,
 	RegularElement,
 	SvelteElement,
 	SvelteNode,
@@ -31,12 +32,6 @@ export interface ReactiveStatement {
 export interface BindingGroup {
 	name: Identifier;
 	directives: BindDirective[];
-}
-
-export interface RawWarning {
-	code: string;
-	message: string;
-	position: [number, number] | undefined;
 }
 
 /**

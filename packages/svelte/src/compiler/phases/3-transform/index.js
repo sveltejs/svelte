@@ -3,6 +3,7 @@ import { VERSION } from '../../../version.js';
 import { server_component, server_module } from './server/transform-server.js';
 import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
+import { transform_warnings } from '../../utils/warnings.js';
 
 /**
  * @param {import('../types').ComponentAnalysis} analysis
@@ -101,39 +102,4 @@ export function transform_module(analysis, source, options) {
 			runes: true
 		}
 	};
-}
-
-/**
- * @param {string} source
- * @param {string | undefined} name
- * @param {import('../types').RawWarning[]} warnings
- * @returns {import('#compiler').Warning[]}
- */
-function transform_warnings(source, name, warnings) {
-	if (warnings.length === 0) return [];
-
-	const locate = getLocator(source, { offsetLine: 1 });
-
-	/** @type {import('#compiler').Warning[]} */
-	const result = [];
-
-	for (const warning of warnings) {
-		const start =
-			warning.position &&
-			/** @type {import('locate-character').Location} */ (locate(warning.position[0]));
-
-		const end =
-			warning.position &&
-			/** @type {import('locate-character').Location} */ (locate(warning.position[1]));
-
-		result.push({
-			start,
-			end,
-			filename: name,
-			message: warning.message,
-			code: warning.code
-		});
-	}
-
-	return result;
 }
