@@ -1,10 +1,9 @@
-import is_reference from 'is-reference';
 import { walk } from 'zimmerframe';
 import { error } from '../../errors.js';
-import { extract_identifiers, extract_paths, get_callee_name } from '../../utils/ast.js';
+import { get_callee_name } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes } from '../constants.js';
-import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
+import { Scope, ScopeRoot, create_scopes, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import Stylesheet from './css/Stylesheet.js';
 import { warn } from '../../warnings.js';
@@ -14,6 +13,9 @@ import { validate_a11y } from './visitors/validate-a11y.js';
 import { validate_legacy } from './visitors/validate-legacy.js';
 import { validate_runes } from './visitors/validate-runes.js';
 import { common_visitors } from './visitors/common.js';
+import { analyze_scope_legacy } from './visitors/analyze-scope-legacy.js';
+import { analyze_scope_runes_component } from './visitors/analyze-scope-runes-component.js';
+import { analyze_scope_runes_module } from './visitors/analyse-scope-runes-module.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -70,7 +72,7 @@ export function analyze_module(ast, options) {
 		/** @type {import('estree').Node} */ (ast),
 		{ scope },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
+		merge(set_scope(scopes), validation_runes_js, analyze_scope_runes_module)
 	);
 
 	/** @type {import('../types').RawWarning[]} */
@@ -234,7 +236,7 @@ export function analyze_component(root, options) {
 					validate_template,
 					validate_a11y,
 					validate_runes,
-					runes_scope_tweaker,
+					analyze_scope_runes_component,
 					common_visitors
 				)
 			);
@@ -279,7 +281,7 @@ export function analyze_component(root, options) {
 					validate_template,
 					validate_a11y,
 					validate_legacy,
-					legacy_scope_tweaker,
+					analyze_scope_legacy,
 					common_visitors
 				)
 			);
@@ -301,282 +303,6 @@ export function analyze_component(root, options) {
 
 	return analysis;
 }
-
-/** @type {import('./types').Visitors<import('./types').LegacyAnalysisState>} */
-const legacy_scope_tweaker = {
-	LabeledStatement(node, { next, path, state }) {
-		if (
-			state.ast_type !== 'instance' ||
-			node.label.name !== '$' ||
-			/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program'
-		) {
-			return next();
-		}
-
-		// Find all dependencies of this `$: {...}` statement
-		/** @type {import('../types.js').ReactiveStatement} */
-		const reactive_statement = {
-			assignments: new Set(),
-			dependencies: new Set()
-		};
-
-		next({ ...state, reactive_statement, function_depth: state.scope.function_depth + 1 });
-
-		for (const [name, nodes] of state.scope.references) {
-			const binding = state.scope.get(name);
-			if (binding === null) continue;
-
-			// Include bindings that have references other than assignments and their own declarations
-			if (
-				nodes.some((n) => n.node !== binding.node && !reactive_statement.assignments.has(n.node))
-			) {
-				reactive_statement.dependencies.add(binding);
-			}
-		}
-
-		state.reactive_statements.set(node, reactive_statement);
-
-		if (
-			node.body.type === 'ExpressionStatement' &&
-			node.body.expression.type === 'AssignmentExpression'
-		) {
-			for (const id of extract_identifiers(node.body.expression.left)) {
-				const binding = state.scope.get(id.name);
-				if (binding?.kind === 'legacy_reactive') {
-					// TODO does this include `let double; $: double = x * 2`?
-					binding.legacy_dependencies = Array.from(reactive_statement.dependencies);
-				}
-			}
-		}
-	},
-	AssignmentExpression(node, { state, next }) {
-		if (state.reactive_statement && node.operator === '=') {
-			for (const id of extract_identifiers(node.left)) {
-				state.reactive_statement.assignments.add(id);
-			}
-		}
-
-		next();
-	},
-	Identifier(node, { state, path }) {
-		const parent = /** @type {import('estree').Node} */ (path.at(-1));
-		if (is_reference(node, parent)) {
-			if (node.name === '$$props') {
-				state.analysis.uses_props = true;
-			}
-
-			if (node.name === '$$restProps') {
-				state.analysis.uses_rest_props = true;
-			}
-
-			if (node.name === '$$slots') {
-				state.analysis.uses_slots = true;
-			}
-
-			let binding = state.scope.get(node.name);
-
-			if (binding?.kind === 'store_sub') {
-				// get the underlying store to mark it as reactive in case it's mutated
-				binding = state.scope.get(node.name.slice(1));
-			}
-
-			if (
-				binding !== null &&
-				binding.kind === 'normal' &&
-				((binding.scope === state.instance_scope && binding.declaration_kind !== 'function') ||
-					binding.declaration_kind === 'import')
-			) {
-				if (binding.declaration_kind === 'import') {
-					if (
-						binding.mutated &&
-						// TODO could be more fine-grained - not every mention in the template implies a state binding
-						(state.reactive_statement || state.ast_type === 'template') &&
-						parent.type === 'MemberExpression'
-					) {
-						binding.kind = 'state';
-					}
-				} else if (
-					binding.mutated &&
-					// TODO could be more fine-grained - not every mention in the template implies a state binding
-					(state.reactive_statement || state.ast_type === 'template')
-				) {
-					binding.kind = 'state';
-				} else if (
-					state.reactive_statement &&
-					parent.type === 'AssignmentExpression' &&
-					parent.left === binding.node
-				) {
-					binding.kind = 'derived';
-				} else {
-					let idx = -1;
-					let ancestor = path.at(idx);
-					while (ancestor) {
-						if (ancestor.type === 'EachBlock') {
-							// Ensures that the array is reactive when only its entries are mutated
-							// TODO: this doesn't seem correct. We should be checking at the points where
-							// the identifier (the each expression) is used in a way that makes it reactive.
-							// This just forces the collection identifier to always be reactive even if it's
-							// not.
-							if (ancestor.expression === (idx === -1 ? node : path.at(idx + 1))) {
-								binding.kind = 'state';
-								break;
-							}
-						}
-						ancestor = path.at(--idx);
-					}
-				}
-			}
-		}
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (state.ast_type !== 'instance') {
-			return next();
-		}
-
-		if (!node.declaration) {
-			for (const specifier of node.specifiers) {
-				const binding = /** @type {import('#compiler').Binding} */ (
-					state.scope.get(specifier.local.name)
-				);
-				if (
-					binding.kind === 'state' ||
-					(binding.kind === 'normal' && binding.declaration_kind === 'let')
-				) {
-					binding.kind = 'prop';
-					if (specifier.exported.name !== specifier.local.name) {
-						binding.prop_alias = specifier.exported.name;
-					}
-				} else {
-					state.analysis.exports.push({
-						name: specifier.local.name,
-						alias: specifier.exported.name
-					});
-				}
-			}
-			return next();
-		}
-
-		if (node.declaration.type === 'FunctionDeclaration') {
-			state.analysis.exports.push({
-				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration') {
-			if (node.declaration.kind === 'const') {
-				for (const declarator of node.declaration.declarations) {
-					for (const node of extract_identifiers(declarator.id)) {
-						state.analysis.exports.push({ name: node.name, alias: null });
-					}
-				}
-				return next();
-			}
-
-			for (const declarator of node.declaration.declarations) {
-				for (const id of extract_identifiers(declarator.id)) {
-					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					binding.kind = 'prop';
-				}
-			}
-		}
-	}
-};
-
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
-const runes_scope_js_tweaker = {
-	VariableDeclarator(node, { state }) {
-		if (node.init?.type !== 'CallExpression') return;
-		if (get_rune(node.init, state.scope) === null) return;
-
-		const callee = node.init.callee;
-		if (callee.type !== 'Identifier') return;
-
-		const name = callee.name;
-		if (name !== '$state' && name !== '$derived') return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
-			binding.kind = name === '$state' ? 'state' : 'derived';
-		}
-	}
-};
-
-/** @type {import('./types').Visitors} */
-const runes_scope_tweaker = {
-	VariableDeclarator(node, { state }) {
-		if (node.init?.type !== 'CallExpression') return;
-		if (get_rune(node.init, state.scope) === null) return;
-
-		const callee = node.init.callee;
-		if (callee.type !== 'Identifier') return;
-
-		const name = callee.name;
-		if (name !== '$state' && name !== '$derived' && name !== '$props') return;
-
-		for (const path of extract_paths(node.id)) {
-			// @ts-ignore this fails in CI for some insane reason
-			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
-			binding.kind =
-				name === '$state'
-					? 'state'
-					: name === '$derived'
-					? 'derived'
-					: path.is_rest
-					? 'rest_prop'
-					: 'prop';
-		}
-
-		if (name === '$props') {
-			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
-				if (property.type !== 'Property') continue;
-
-				const name =
-					property.value.type === 'AssignmentPattern'
-						? /** @type {import('estree').Identifier} */ (property.value.left).name
-						: /** @type {import('estree').Identifier} */ (property.value).name;
-				const alias =
-					property.key.type === 'Identifier'
-						? property.key.name
-						: /** @type {string} */ (/** @type {import('estree').Literal} */ (property.key).value);
-				const initial = property.value.type === 'AssignmentPattern' ? property.value.right : null;
-
-				const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(name));
-				binding.prop_alias = alias;
-				binding.initial = initial; // rewire initial from $props() to the actual initial value
-			}
-		}
-	},
-	ExportSpecifier(node, { state }) {
-		state.analysis.exports.push({
-			name: node.local.name,
-			alias: node.exported.name
-		});
-	},
-	ExportNamedDeclaration(node, { next, state }) {
-		if (!node.declaration) {
-			return next();
-		}
-
-		if (node.declaration.type === 'FunctionDeclaration') {
-			state.analysis.exports.push({
-				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
-				alias: null
-			});
-			return next();
-		}
-
-		if (node.declaration.type === 'VariableDeclaration' && node.declaration.kind === 'const') {
-			for (const declarator of node.declaration.declarations) {
-				for (const node of extract_identifiers(declarator.id)) {
-					state.analysis.exports.push({ name: node.name, alias: null });
-				}
-			}
-		}
-	}
-};
 
 /**
  * @param {Map<import('estree').LabeledStatement, import('../types.js').ReactiveStatement>} unsorted_reactive_declarations
