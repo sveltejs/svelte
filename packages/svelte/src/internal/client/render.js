@@ -68,7 +68,7 @@ import {
 	hydrate_block_anchor,
 	set_current_hydration_fragment
 } from './hydration.js';
-import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
+import { array_from, define_property, get_descriptor, is_array } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition } from './transitions.js';
 
@@ -2408,7 +2408,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			fallback = fallback.prev;
 		}
 		// Clear the array
-		reconcile_indexed_array([], block, anchor_node, is_controlled, render_fn, flags, false);
+		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
 	block.effect = each;
