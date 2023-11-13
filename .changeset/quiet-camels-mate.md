@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-improve keyblock treeshaking
+chore: improve keyblock treeshaking
