@@ -882,7 +882,12 @@ function serialize_inline_component(node, component_name, context) {
 	/** @type {import('estree').Statement} */
 	let statement = b.stmt(
 		(typeof component_name === 'string' ? b.call : b.maybe_call)(
-			component_name,
+			context.state.options.dev
+				? b.call(
+						'$.validate_component',
+						typeof component_name === 'string' ? b.id(component_name) : component_name
+				  )
+				: component_name,
 			b.id('$$payload'),
 			props_expression
 		)
