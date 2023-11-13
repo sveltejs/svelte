@@ -15,12 +15,14 @@ import { DelegatedEvents, ReservedKeywords, Runes, SVGElements } from '../consta
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import Stylesheet from './css/Stylesheet.js';
-import { validation_legacy, validation_runes } from './visitors/validate.js';
-import { validate_javascript_runes } from './visitors/validate-javascript-runes.js';
 import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
+import { validate_template } from './visitors/validate-template.js';
+import { validate_a11y } from './visitors/validate-a11y.js';
+import { validate_legacy } from './visitors/validate-legacy.js';
+import { validate_runes } from './visitors/validate-runes.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -349,7 +351,14 @@ export function analyze_component(root, options) {
 			walk(
 				/** @type {import('#compiler').SvelteNode} */ (ast),
 				state,
-				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
+				merge(
+					set_scope(scopes),
+					validate_template,
+					validate_a11y,
+					validate_runes,
+					runes_scope_tweaker,
+					common_visitors
+				)
 			);
 		}
 
@@ -386,8 +395,15 @@ export function analyze_component(root, options) {
 			walk(
 				/** @type {import('#compiler').SvelteNode} */ (ast),
 				state,
-				// @ts-expect-error TODO
-				merge(set_scope(scopes), validation_legacy, legacy_scope_tweaker, common_visitors)
+				merge(
+					// @ts-expect-error TODO
+					set_scope(scopes),
+					validate_template,
+					validate_a11y,
+					validate_legacy,
+					legacy_scope_tweaker,
+					common_visitors
+				)
 			);
 		}
 
