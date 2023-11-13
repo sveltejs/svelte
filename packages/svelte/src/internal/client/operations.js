@@ -8,21 +8,19 @@ const has_browser_globals = typeof window !== 'undefined';
 // than megamorphic.
 const node_prototype = /** @type {Node} */ (has_browser_globals ? Node.prototype : {});
 const element_prototype = /** @type {Element} */ (has_browser_globals ? Element.prototype : {});
-const event_target_prototype = /** @type {EventTarget} */ (
-	has_browser_globals ? EventTarget.prototype : {}
-);
+const text_prototype = /** @type {Text} */ (has_browser_globals ? Text.prototype : {});
 const map_prototype = Map.prototype;
 const append_child_method = node_prototype.appendChild;
 const clone_node_method = node_prototype.cloneNode;
 const map_set_method = map_prototype.set;
 const map_get_method = map_prototype.get;
 const map_delete_method = map_prototype.delete;
-// @ts-expect-error improve perf of expando on DOM nodes for events
-event_target_prototype.__click = undefined;
-// @ts-expect-error improve perf of expando on DOM textValue updates
-event_target_prototype.__nodeValue = ' ';
+// @ts-expect-error improve perf of expando on DOM events
+element_prototype.__click = undefined;
+// @ts-expect-error improve perf of expando on DOM text updates
+text_prototype.__nodeValue = ' ';
 // @ts-expect-error improve perf of expando on DOM className updates
-event_target_prototype.__className = '';
+element_prototype.__className = '';
 
 const first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 	// @ts-ignore
@@ -162,11 +160,10 @@ export function set_class_name(node, class_name) {
 /**
  * @template {Node} N
  * @param {N} node
- * @param {string} text
  * @returns {void}
  */
-export function text_content(node, text) {
-	text_content_set.call(node, text);
+export function clear_text_content(node) {
+	text_content_set.call(node, '');
 }
 
 /** @param {string} name */
