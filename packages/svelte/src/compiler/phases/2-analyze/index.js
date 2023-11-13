@@ -8,15 +8,15 @@ import { merge } from '../visitors.js';
 import Stylesheet from './css/Stylesheet.js';
 import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
-import { validate_template } from './visitors/validate-template.js';
-import { validate_a11y } from './visitors/validate-a11y.js';
-import { validate_legacy } from './visitors/validate-legacy.js';
-import { validate_runes } from './visitors/validate-runes.js';
-import { common_visitors } from './visitors/common.js';
 import { analyze_component_scope_legacy } from './visitors/analyze-component-scope-legacy.js';
 import { analyze_component_scope_runes } from './visitors/analyze-component-scope-runes.js';
 import { analyze_module_scope_runes } from './visitors/analyze-module-scope-runes.js';
-import { validate_javascript_runes } from './visitors/validate-javascript-runes.js';
+import { component_visitors } from './visitors/component.js';
+import { validate_a11y } from './visitors/validate-a11y.js';
+import { validate_legacy } from './visitors/validate-legacy.js';
+import { validate_module } from './visitors/validate-module.js';
+import { validate_runes } from './visitors/validate-runes.js';
+import { validate_template } from './visitors/validate-template.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -73,7 +73,7 @@ export function analyze_module(ast, options) {
 		/** @type {import('estree').Node} */ (ast),
 		{ scope },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validate_javascript_runes, analyze_module_scope_runes)
+		merge(set_scope(scopes), validate_module, analyze_module_scope_runes)
 	);
 
 	/** @type {import('../types').RawWarning[]} */
@@ -238,7 +238,7 @@ export function analyze_component(root, options) {
 					validate_a11y,
 					validate_runes,
 					analyze_component_scope_runes,
-					common_visitors
+					component_visitors
 				)
 			);
 		}
@@ -283,7 +283,7 @@ export function analyze_component(root, options) {
 					validate_a11y,
 					validate_legacy,
 					analyze_component_scope_legacy,
-					common_visitors
+					component_visitors
 				)
 			);
 		}

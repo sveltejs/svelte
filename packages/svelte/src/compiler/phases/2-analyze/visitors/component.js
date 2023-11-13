@@ -10,7 +10,7 @@ import { regex_starts_with_newline } from '../../patterns.js';
 
 /**
  * @param {Pick<import('#compiler').OnDirective, 'expression'| 'name' | 'modifiers'>} node
- * @param {import('../types').Context} context
+ * @param {import('../types.js').Context} context
  * @returns {null | import('#compiler').DelegatedEvent}
  */
 function get_delegated_event(node, context) {
@@ -123,7 +123,7 @@ function get_delegated_event(node, context) {
 
 /**
  * @param {import('estree').CallExpression} node
- * @param {import('../types').Context} context
+ * @param {import('../types.js').Context} context
  * @returns {boolean}
  */
 function is_known_safe_call(node, context) {
@@ -162,8 +162,8 @@ function is_known_safe_call(node, context) {
 	return false;
 }
 
-/** @type {import('../types').Visitors} */
-export const common_visitors = {
+/** @type {import('../types.js').Visitors} */
+export const component_visitors = {
 	Attribute(node, context) {
 		if (node.value === true) return;
 

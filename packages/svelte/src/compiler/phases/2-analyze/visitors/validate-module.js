@@ -5,9 +5,9 @@ import { validate_assignment, validate_call_expression, validate_export } from '
 
 /**
  * Validation that applies to .svelte.js files (TODO and <script context="module">?)
- * @type {import('../types').Visitors}
+ * @type {import('../types.js').Visitors}
  */
-export const validate_javascript_runes = {
+export const validate_module = {
 	ExportSpecifier(node, { state }) {
 		validate_export(node, state.scope, node.local.name);
 	},

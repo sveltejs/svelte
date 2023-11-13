@@ -1,7 +1,7 @@
 import { error } from '../../../errors.js';
 import { get_rune } from '../../scope.js';
 import { validate_assignment, validate_call_expression, validate_export } from '../utils.js';
-import { validate_javascript_runes } from './validate-javascript-runes.js';
+import { validate_module } from './validate-module.js';
 
 /**
  * Validation that applies to components in runes mode
@@ -93,5 +93,5 @@ export const validate_runes = {
 		}
 	},
 	// TODO move this
-	ClassBody: validate_javascript_runes.ClassBody
+	ClassBody: validate_module.ClassBody
 };
