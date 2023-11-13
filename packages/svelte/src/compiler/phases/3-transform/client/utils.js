@@ -251,6 +251,8 @@ export const function_visitor = (node, context) => {
 		const in_constructor = parent.type === 'MethodDefinition' && parent.kind === 'constructor';
 
 		state = { ...context.state, in_constructor };
+	} else {
+		state = { ...context.state, in_constructor: false };
 	}
 
 	if (metadata?.hoistable === true) {

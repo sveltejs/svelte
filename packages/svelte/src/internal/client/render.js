@@ -1270,15 +1270,15 @@ function handle_event_propagation(root_element, event) {
 	}
 
 	// composedPath contains list of nodes the event has propagated through.
-	// We check __handled_event_at to skip all nodes below it in case this is a
-	// parent of the __handled_event_at node, which indicates that there's nested
+	// We check __root to skip all nodes below it in case this is a
+	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	// We're deliberately not skipping if the index is the same or higher, because
 	// someone could create an event programmatically and emit it multiple times,
 	// in which case we want to handle the whole propagation chain properly each time.
 	let path_idx = 0;
 	// @ts-expect-error is added below
-	const handled_at = event.__handled_event_at;
+	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
 		if (at_idx < path.indexOf(root_element)) {
@@ -1317,7 +1317,7 @@ function handle_event_propagation(root_element, event) {
 	}
 
 	// @ts-expect-error is used above
-	event.__handled_event_at = root_element;
+	event.__root = root_element;
 }
 
 /**
