@@ -2078,7 +2078,7 @@ function get_first_element(block) {
 /**
  * @param {import('./types.js').EachItemBlock} block
  * @param {any} item
- * @param {import('./types.js').MaybeSignal<number>} index
+ * @param {number} index
  * @param {number} type
  * @returns {void}
  */
@@ -2093,7 +2093,6 @@ export function update_each_item_block(block, item, index, type) {
 		let prev_index = block.index;
 		if (index_is_reactive) {
 			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).value;
-			index = /** @type {import('./types.js').Signal<number>} */ (index).value;
 		}
 		const items = block.parent.items;
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
