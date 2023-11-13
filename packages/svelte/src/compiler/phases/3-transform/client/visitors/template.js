@@ -850,7 +850,14 @@ function serialize_inline_component(node, component_name, context) {
 					b.thunk(b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))))
 			  );
 	/** @param {import('estree').Identifier} node_id */
-	let fn = (node_id) => b.call(component_name, node_id, props_expression);
+	let fn = (node_id) =>
+		b.call(
+			context.state.options.dev
+				? b.call('$.validate_component', b.id(component_name))
+				: component_name,
+			node_id,
+			props_expression
+		);
 
 	if (bind_this !== null) {
 		const prev = fn;

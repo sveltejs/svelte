@@ -102,13 +102,13 @@ export function loop_guard(timeout) {
 	};
 }
 
-const symbol = Symbol.for('svelte.snippet');
+const snippet_symbol = Symbol.for('svelte.snippet');
 
 /**
  * @param {any} fn
  */
 export function add_snippet_symbol(fn) {
-	fn[symbol] = true;
+	fn[snippet_symbol] = true;
 	return fn;
 }
 
@@ -117,11 +117,22 @@ export function add_snippet_symbol(fn) {
  * @param {any} snippet_fn
  */
 export function validate_snippet(snippet_fn) {
-	if (snippet_fn[symbol] !== true) {
+	if (snippet_fn[snippet_symbol] !== true) {
 		throw new Error(
 			'The argument to `{@render ...}` must be a snippet function, not a component or some other kind of function. ' +
 				'If you want to dynamically render one snippet or another, use `$derived` and pass its result to `{@render ...}`.'
 		);
 	}
 	return snippet_fn;
+}
+
+/**
+ * Validate that the function behind `<Component />` isn't a snippet.
+ * @param {any} component_fn
+ */
+export function validate_component(component_fn) {
+	if (component_fn?.[snippet_symbol] === true) {
+		throw new Error('A snippet must be rendered with `{@render ...}`');
+	}
+	return component_fn;
 }
