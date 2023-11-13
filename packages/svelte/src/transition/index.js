@@ -83,14 +83,14 @@ export function fly(
 	const target_opacity = +style.opacity;
 	const transform = style.transform === 'none' ? '' : style.transform;
 	const od = target_opacity * (1 - opacity);
-	const [xValue, xUnit] = split_css_unit(x);
-	const [yValue, yUnit] = split_css_unit(y);
+	const [x_value, x_unit] = split_css_unit(x);
+	const [y_value, y_unit] = split_css_unit(y);
 	return {
 		delay,
 		duration,
 		easing,
 		css: (t, u) => `
-			transform: ${transform} translate(${(1 - t) * xValue}${xUnit}, ${(1 - t) * yValue}${yUnit});
+			transform: ${transform} translate(${(1 - t) * x_value}${x_unit}, ${(1 - t) * y_value}${y_unit});
 			opacity: ${target_opacity - od * u}`
 	};
 }

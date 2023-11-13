@@ -22,4 +22,3 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 	});
 </script>
 ```
-
