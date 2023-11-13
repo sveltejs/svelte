@@ -3,7 +3,10 @@ import { get_rune } from '../../scope.js';
 import { validate_assignment, validate_call_expression, validate_export } from '../utils.js';
 import { validate_javascript_runes } from './validate-javascript-runes.js';
 
-/** @type {import('../types').Visitors} */
+/**
+ * Validation that applies to components in runes mode
+ * @type {import('../types').Visitors}
+ */
 export const validate_runes = {
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);
