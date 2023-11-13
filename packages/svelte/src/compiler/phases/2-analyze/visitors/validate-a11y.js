@@ -1159,7 +1159,7 @@ function check_element(node, state, path) {
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('../types.js').AnalysisState>}
  */
-export const a11y_validators = {
+export const validate_a11y = {
 	RegularElement(node, context) {
 		check_element(node, context.state, context.path);
 	},

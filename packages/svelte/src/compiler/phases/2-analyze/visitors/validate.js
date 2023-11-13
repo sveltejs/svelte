@@ -8,7 +8,9 @@ import { is_custom_element_node } from '../../nodes.js';
 import { regex_not_whitespace, regex_only_whitespaces } from '../../patterns.js';
 import { Scope, get_rune } from '../../scope.js';
 import { merge } from '../../visitors.js';
-import { a11y_validators } from './validate-a11y.js';
+import { validate_assignment, validate_no_const_assignment } from '../utils.js';
+import { validate_a11y } from './validate-a11y.js';
+import { validate_legacy } from './validate-legacy.js';
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
@@ -438,39 +440,7 @@ export const validation = {
 	}
 };
 
-export const validation_legacy = merge(validation, a11y_validators, {
-	VariableDeclarator(node) {
-		if (node.init?.type !== 'CallExpression') return;
-
-		const callee = node.init.callee;
-		if (
-			callee.type !== 'Identifier' ||
-			(callee.name !== '$state' && callee.name !== '$derived' && callee.name !== '$props')
-		) {
-			return;
-		}
-
-		// TODO check if it's a store subscription that's called? How likely is it that someone uses a store that contains a function?
-		error(node.init, 'invalid-rune-usage', callee.name);
-	},
-	ExportNamedDeclaration(node) {
-		if (
-			node.declaration &&
-			node.declaration.type !== 'VariableDeclaration' &&
-			node.declaration.type !== 'FunctionDeclaration'
-		) {
-			error(node, 'TODO', 'whatever this is');
-		}
-	},
-	AssignmentExpression(node, { state, path }) {
-		const parent = path.at(-1);
-		if (parent && parent.type === 'ConstTag') return;
-		validate_assignment(node, node.left, state);
-	},
-	UpdateExpression(node, { state }) {
-		validate_assignment(node, node.argument, state);
-	}
-});
+export const validation_legacy = merge(validation, validate_a11y, validate_legacy);
 
 /**
  *
@@ -580,61 +550,7 @@ export const validation_runes_js = {
 	}
 };
 
-/**
- * @param {import('../../../errors.js').NodeLike} node
- * @param {import('estree').Pattern | import('estree').Expression} argument
- * @param {Scope} scope
- * @param {boolean} is_binding
- */
-function validate_no_const_assignment(node, argument, scope, is_binding) {
-	if (argument.type === 'Identifier') {
-		const binding = scope.get(argument.name);
-		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
-			error(
-				node,
-				'invalid-const-assignment',
-				is_binding,
-				// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
-				// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-				binding.kind !== 'state' && (binding.kind !== 'normal' || !binding.initial)
-			);
-		}
-	}
-}
-
-/**
- * @param {import('estree').AssignmentExpression | import('estree').UpdateExpression} node
- * @param {import('estree').Pattern | import('estree').Expression} argument
- * @param {import('../types.js').AnalysisState} state
- */
-function validate_assignment(node, argument, state) {
-	validate_no_const_assignment(node, argument, state.scope, false);
-
-	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
-
-	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
-	let property = null;
-
-	while (left.type === 'MemberExpression') {
-		property = left.property;
-		left = left.object;
-	}
-
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
-		}
-	}
-
-	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
-		if (state.private_derived_state.includes(property.name)) {
-			error(node, 'invalid-derived-assignment');
-		}
-	}
-}
-
-export const validation_runes = merge(validation, a11y_validators, {
+export const validation_runes = merge(validation, validate_a11y, {
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);
 		if (parent && parent.type === 'ConstTag') return;
