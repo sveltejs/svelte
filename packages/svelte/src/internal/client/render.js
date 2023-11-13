@@ -68,7 +68,7 @@ import {
 	hydrate_block_anchor,
 	set_current_hydration_fragment
 } from './hydration.js';
-import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
+import { array_from, define_property, get_descriptor, is_array } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition } from './transitions.js';
 
@@ -1270,15 +1270,15 @@ function handle_event_propagation(root_element, event) {
 	}
 
 	// composedPath contains list of nodes the event has propagated through.
-	// We check __handled_event_at to skip all nodes below it in case this is a
-	// parent of the __handled_event_at node, which indicates that there's nested
+	// We check __root to skip all nodes below it in case this is a
+	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
 	// We're deliberately not skipping if the index is the same or higher, because
 	// someone could create an event programmatically and emit it multiple times,
 	// in which case we want to handle the whole propagation chain properly each time.
 	let path_idx = 0;
 	// @ts-expect-error is added below
-	const handled_at = event.__handled_event_at;
+	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
 		if (at_idx < path.indexOf(root_element)) {
@@ -1317,7 +1317,7 @@ function handle_event_propagation(root_element, event) {
 	}
 
 	// @ts-expect-error is used above
-	event.__handled_event_at = root_element;
+	event.__root = root_element;
 }
 
 /**
@@ -2078,7 +2078,7 @@ function get_first_element(block) {
 /**
  * @param {import('./types.js').EachItemBlock} block
  * @param {any} item
- * @param {import('./types.js').MaybeSignal<number>} index
+ * @param {number} index
  * @param {number} type
  * @returns {void}
  */
@@ -2093,7 +2093,6 @@ export function update_each_item_block(block, item, index, type) {
 		let prev_index = block.index;
 		if (index_is_reactive) {
 			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).value;
-			index = /** @type {import('./types.js').Signal<number>} */ (index).value;
 		}
 		const items = block.parent.items;
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
@@ -2263,9 +2262,10 @@ export function each_item_block(item, key, index, render_fn, flags) {
  * @param {null | ((item: V) => string)} key_fn
  * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
  */
-export function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
+function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
 	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 	const block = create_each_block(flags, anchor_node);
 
@@ -2385,20 +2385,7 @@ export function each(anchor_node, collection, flags, key_fn, render_fn, fallback
 			const flags = block.flags;
 			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 			const anchor_node = block.anchor;
-			if ((flags & EACH_KEYED) !== 0) {
-				reconcile_tracked_array(
-					array,
-					block,
-					anchor_node,
-					is_controlled,
-					render_fn,
-					keys,
-					flags,
-					true
-				);
-			} else {
-				reconcile_indexed_array(array, block, anchor_node, is_controlled, render_fn, flags, true);
-			}
+			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
 		},
 		block,
 		true
@@ -2420,10 +2407,37 @@ export function each(anchor_node, collection, flags, key_fn, render_fn, fallback
 			fallback = fallback.prev;
 		}
 		// Clear the array
-		reconcile_indexed_array([], block, anchor_node, is_controlled, render_fn, flags, false);
+		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
 	block.effect = each;
+}
+
+/**
+ * @template V
+ * @param {Element | Comment} anchor_node
+ * @param {() => V[]} collection
+ * @param {number} flags
+ * @param {null | ((item: V) => string)} key_fn
+ * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @returns {void}
+ */
+export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
+	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+}
+
+/**
+ * @template V
+ * @param {Element | Comment} anchor_node
+ * @param {() => V[]} collection
+ * @param {number} flags
+ * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((anchor: Node) => void)} fallback_fn
+ * @returns {void}
+ */
+export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
+	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
 }
 
 /**
@@ -3020,7 +3034,7 @@ export function unwrap(value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').Component<Props, Exports, Events>} component
+ * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -3139,7 +3153,7 @@ export function createRoot(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').Component<Props, Exports, Events>} component
+ * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;

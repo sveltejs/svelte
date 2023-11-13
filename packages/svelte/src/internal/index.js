@@ -13,7 +13,6 @@ export {
 	user_effect,
 	render_effect,
 	pre_effect,
-	selector,
 	flushSync,
 	bubble_event,
 	safe_equal,

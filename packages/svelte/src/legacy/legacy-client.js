@@ -11,12 +11,12 @@ import * as $ from '../internal/index.js';
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('./public.js').ComponentConstructorOptions<Props> & {
- * 	component: import('../main/public.js').Component<Props, Exports, Events, Slots>;
+ * @param {import('../main/public.js').ComponentConstructorOptions<Props> & {
+ * 	component: import('../main/public.js').SvelteComponent<Props, Events, Slots>;
  * 	immutable?: boolean;
  * 	recover?: false;
  * }} options
- * @returns {import('./public.js').SvelteComponent<Props & Exports, Events, Slots>}
+ * @returns {import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function createClassComponent(options) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -33,8 +33,8 @@ export function createClassComponent(options) {
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('../main/public.js').Component<Props, Exports, Events, Slots>} component
- * @returns {typeof import('./public.js').SvelteComponent<Props & Exports, Events, Slots>}
+ * @param {import('../main/public.js').SvelteComponent<Props, Events, Slots>} component
+ * @returns {typeof import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function asClassComponent(component) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -57,7 +57,7 @@ class Svelte4Component {
 	#instance;
 
 	/**
-	 * @param {import('./public.js').ComponentConstructorOptions & {
+	 * @param {import('../main/public.js').ComponentConstructorOptions & {
 	 *  component: any;
 	 * 	immutable?: boolean;
 	 * 	recover?: false;

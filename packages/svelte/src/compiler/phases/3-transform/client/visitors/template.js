@@ -819,15 +819,21 @@ function serialize_inline_component(node, component_name, context) {
 		const body = create_block(node, `${node.name}_${slot_name}`, children[slot_name], context);
 		if (body.length === 0) continue;
 
-		const fn = b.arrow(
+		const slot_fn = b.arrow(
 			[b.id('$$anchor'), b.id('$$slotProps')],
 			b.block([...(slot_name === 'default' ? default_lets : []), ...body])
 		);
 
 		if (slot_name === 'default') {
-			push_prop(b.prop('init', b.id('children'), fn));
+			push_prop(
+				b.prop(
+					'init',
+					b.id('children'),
+					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
+				)
+			);
 		} else {
-			serialized_slots.push(b.prop('init', b.key(slot_name), fn));
+			serialized_slots.push(b.prop('init', b.key(slot_name), slot_fn));
 		}
 	}
 
@@ -2221,19 +2227,34 @@ export const template_visitors = {
 			declarations.push(b.let(node.index, index));
 		}
 
-		context.state.after_update.push(
-			b.stmt(
-				b.call(
-					'$.each',
-					context.state.node,
-					each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
-					b.literal(each_type),
-					key_function,
-					b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children))),
-					else_block
+		if ((each_type & EACH_KEYED) !== 0) {
+			context.state.after_update.push(
+				b.stmt(
+					b.call(
+						'$.each_keyed',
+						context.state.node,
+						each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+						b.literal(each_type),
+						key_function,
+						b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children))),
+						else_block
+					)
 				)
-			)
-		);
+			);
+		} else {
+			context.state.after_update.push(
+				b.stmt(
+					b.call(
+						'$.each_indexed',
+						context.state.node,
+						each_node_meta.array_name ? each_node_meta.array_name : b.thunk(collection),
+						b.literal(each_type),
+						b.arrow([b.id('$$anchor'), item, index], b.block(declarations.concat(children))),
+						else_block
+					)
+				)
+			);
+		}
 	},
 	IfBlock(node, context) {
 		context.state.template.push('<!>');

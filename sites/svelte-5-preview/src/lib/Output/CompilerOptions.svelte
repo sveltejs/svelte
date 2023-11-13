@@ -1,6 +1,7 @@
 <!-- svelte-ignore a11y-label-has-associated-control -->
 <script>
 	import { get_repl_context } from '$lib/context.js';
+	import Checkbox from '../Checkbox.svelte';
 
 	const { compile_options } = get_repl_context();
 </script>
@@ -16,6 +17,12 @@
 		<input id="server" type="radio" bind:group={$compile_options.generate} value="server" />
 		<label for="server"><span class="string">"server"</span>,</label>
 	</div>
+
+	<label class="option">
+		<span class="key">dev:</span>
+		<Checkbox bind:checked={$compile_options.dev} />
+		<span class="boolean">{$compile_options.dev}</span>,
+	</label>
 	});
 </div>
 

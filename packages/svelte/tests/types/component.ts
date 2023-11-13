@@ -1,7 +1,7 @@
-import { SvelteComponent, asClassComponent, createClassComponent } from 'svelte/legacy';
+import { asClassComponent, createClassComponent } from 'svelte/legacy';
 import {
 	createRoot,
-	type Component,
+	SvelteComponent,
 	type ComponentEvents,
 	type ComponentProps,
 	type ComponentType
@@ -15,11 +15,11 @@ class LegacyComponent extends SvelteComponent<
 	{ slot: { slotProps: boolean } }
 > {}
 
+// @ts-expect-error
 const legacyComponent = new LegacyComponent({
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
 		prop: 'foo',
-		// @ts-expect-error
 		x: ''
 	}
 });
@@ -48,35 +48,34 @@ const legacyComponentEvents2: ComponentEvents<LegacyComponent> = {
 
 // --------------------------------------------------------------------------- new: functions
 
-type NewComponent = Component<
+class NewComponent extends SvelteComponent<
 	{ prop: string },
-	{ anExport: number },
 	{ event: MouseEvent },
 	{ slot: { slotProps: boolean } }
->;
+> {
+	anExport: string = '';
+}
 
-const newComponent: NewComponent = {
-	z_$$: (props, events, slots) => {
-		props.prop;
-		// @ts-expect-error
-		props.x;
+// @ts-expect-error
+new NewComponent({
+	prop: 'foo',
+	x: ''
+});
 
-		events.event;
-		// @ts-expect-error
-		events.x;
+const newComponent: NewComponent = new NewComponent({
+	prop: 'foo'
+});
+newComponent.$$events_def.event;
+// @ts-expect-error
+newComponent.$$events_def.x;
+newComponent.$$slot_def.slot;
+// @ts-expect-error
+newComponent.$$slot_def.x;
+newComponent.anExport === '';
+// @ts-expect-error
+newComponent.anExport === 1;
 
-		slots.slot;
-		// @ts-expect-error
-		slots.x;
-
-		return {
-			anExport: 1,
-			prop: props.prop
-		};
-	}
-};
-
-const newComponentType: ComponentType<NewComponent> = newComponent;
+const newComponentType: ComponentType<NewComponent> = NewComponent;
 
 const newComponentProps1: ComponentProps<NewComponent> = {
 	prop: '',
@@ -124,12 +123,18 @@ instance.anExport === 1;
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
-const asLegacyComponent = new AsLegacyComponent({
+// @ts-expect-error
+new AsLegacyComponent({
 	target: null as any,
 	props: {
 		prop: '',
-		// @ts-expect-error
 		x: ''
+	}
+});
+const asLegacyComponent = new AsLegacyComponent({
+	target: null as any,
+	props: {
+		prop: ''
 	}
 });
 asLegacyComponent.$on('event', (e) => e.clientX);
@@ -138,6 +143,8 @@ asLegacyComponent.$on('event', (e) => e.foo);
 // @ts-expect-error
 asLegacyComponent.$on('bar', (e) => e);
 asLegacyComponent.$$prop_def.prop = '';
+asLegacyComponent.anExport = '';
+// @ts-expect-error
 asLegacyComponent.$$prop_def.anExport = 1;
 // @ts-expect-error
 asLegacyComponent.$$prop_def.prop = 1;

@@ -387,7 +387,8 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 			} else if (id.endsWith('.svelte')) {
 				result = svelte.compile(code, {
 					filename: name + '.svelte',
-					generate: 'client'
+					generate: 'client',
+					dev: true
 				});
 
 				if (result.css) {
@@ -400,7 +401,11 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 				`.replace(/\t/g, '');
 				}
 			} else if (id.endsWith('.svelte.js')) {
-				result = svelte.compileModule(code, { filename: name + '.js', generate: 'client' });
+				result = svelte.compileModule(code, {
+					filename: name + '.js',
+					generate: 'client',
+					dev: true
+				});
 				if (!result) {
 					return null;
 				}
@@ -420,7 +425,7 @@ async function get_bundle(uid, mode, cache, local_files_lookup) {
 				warnings.push(warning);
 			});
 
-			/** @type {import('rollup').TransformResult} */
+			/** @type {import('@rollup/browser').TransformResult} */
 			const transform_result = {
 				code: result.js.code,
 				map: result.js.map

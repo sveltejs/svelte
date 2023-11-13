@@ -1,4 +1,4 @@
-import { append_child, map_get, map_set, text_content } from './operations.js';
+import { append_child, map_get, map_set, clear_text_content } from './operations.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -198,7 +198,7 @@ export function reconcile_indexed_array(
 		b_blocks = [];
 		// Remove old blocks
 		if (is_controlled && a !== 0) {
-			text_content(dom, '');
+			clear_text_content(dom);
 		}
 		while (index < length) {
 			block = a_blocks[index++];
@@ -260,9 +260,9 @@ export function reconcile_indexed_array(
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
- * @param {Array<string> | null} keys
  * @param {number} flags
  * @param {boolean} apply_transitions
+ * @param {Array<string> | null} keys
  * @returns {void}
  */
 export function reconcile_tracked_array(
@@ -271,9 +271,9 @@ export function reconcile_tracked_array(
 	dom,
 	is_controlled,
 	render_fn,
-	keys,
 	flags,
-	apply_transitions
+	apply_transitions,
+	keys
 ) {
 	var a_blocks = each_block.items;
 	const is_computed_key = keys !== null;
@@ -295,7 +295,7 @@ export function reconcile_tracked_array(
 		b_blocks = [];
 		// Remove old blocks
 		if (is_controlled && a !== 0) {
-			text_content(dom, '');
+			clear_text_content(dom);
 		}
 		while (a > 0) {
 			block = a_blocks[--a];

@@ -6,7 +6,7 @@ import { render } from '../internal/server/index.js';
 export { createClassComponent };
 
 /**
- * Takes the component function and returns a Svelte 4 compatible component constructor.
+ * Takes a Svelte 5 component and returns a Svelte 4 compatible component constructor.
  *
  * @deprecated Use this only as a temporary solution to migrate your imperative component code to Svelte 5.
  *
@@ -15,8 +15,8 @@ export { createClassComponent };
  * @template {Record<string, any>} Events
  * @template {Record<string, any>} Slots
  *
- * @param {import('../main/public.js').Component<Props, Exports, Events, Slots>} component
- * @returns {typeof import('./public.js').SvelteComponent<Props & Exports, Events, Slots>}
+ * @param {import('../main/public.js').SvelteComponent<Props, Events, Slots>} component
+ * @returns {typeof import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
  */
 export function asClassComponent(component) {
 	const component_constructor = as_class_component(component);
@@ -30,8 +30,9 @@ export function asClassComponent(component) {
 			html: result.html
 		};
 	};
-	// @ts-expect-error this is present for SSR
+	// this is present for SSR
 	component_constructor.render = _render;
 
+	// @ts-ignore
 	return component_constructor;
 }

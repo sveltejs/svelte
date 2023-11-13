@@ -22,22 +22,3 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 	});
 </script>
 ```
-
-## `selector`
-
-`selector` allows you to track the currently selected item in a list in a performance optimized manner that runs in constant time (`O(1)`). With `selector`, you can immediately determine if an item is selected:
-
-```svelte
-<script>
-	import { selector } from 'svelte';
-
-	let array = $state([1, 2, 3]);
-	let selected = selector();
-</script>
-
-{#each array as item}
-	<button on:click={() => selected.set(item)}>{selected.is(item)}</button>
-{/each}
-
-<p>{selected.current}</p>
-```
