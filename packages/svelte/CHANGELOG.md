@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- chore: remove selector api ([#9426](https://github.com/sveltejs/svelte/pull/9426))
+- breaking: remove selector api ([#9426](https://github.com/sveltejs/svelte/pull/9426))
 
 - fix: correct update_block index type ([#9425](https://github.com/sveltejs/svelte/pull/9425))
 
