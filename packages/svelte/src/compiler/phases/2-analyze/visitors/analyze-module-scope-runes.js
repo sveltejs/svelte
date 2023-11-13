@@ -1,8 +1,8 @@
 import { extract_paths } from '../../../utils/ast.js';
 import { get_rune } from '../../scope.js';
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: import('../../scope').Scope }>} */
-export const analyze_scope_runes_module = {
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: import('../../scope.js').Scope }>} */
+export const analyze_module_scope_runes = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
 		if (get_rune(node.init, state.scope) === null) return;

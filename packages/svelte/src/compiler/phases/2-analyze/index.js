@@ -13,9 +13,9 @@ import { validate_a11y } from './visitors/validate-a11y.js';
 import { validate_legacy } from './visitors/validate-legacy.js';
 import { validate_runes } from './visitors/validate-runes.js';
 import { common_visitors } from './visitors/common.js';
-import { analyze_scope_legacy } from './visitors/analyze-scope-legacy.js';
-import { analyze_scope_runes_component } from './visitors/analyze-scope-runes-component.js';
-import { analyze_scope_runes_module } from './visitors/analyse-scope-runes-module.js';
+import { analyze_component_scope_legacy } from './visitors/analyze-component-scope-legacy.js';
+import { analyze_component_scope_runes } from './visitors/analyze-component-scope-runes.js';
+import { analyze_module_scope_runes } from './visitors/analyze-module-scope-runes.js';
 import { validate_javascript_runes } from './visitors/validate-javascript-runes.js';
 
 /**
@@ -73,7 +73,7 @@ export function analyze_module(ast, options) {
 		/** @type {import('estree').Node} */ (ast),
 		{ scope },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validate_javascript_runes, analyze_scope_runes_module)
+		merge(set_scope(scopes), validate_javascript_runes, analyze_module_scope_runes)
 	);
 
 	/** @type {import('../types').RawWarning[]} */
@@ -237,7 +237,7 @@ export function analyze_component(root, options) {
 					validate_template,
 					validate_a11y,
 					validate_runes,
-					analyze_scope_runes_component,
+					analyze_component_scope_runes,
 					common_visitors
 				)
 			);
@@ -282,7 +282,7 @@ export function analyze_component(root, options) {
 					validate_template,
 					validate_a11y,
 					validate_legacy,
-					analyze_scope_legacy,
+					analyze_component_scope_legacy,
 					common_visitors
 				)
 			);

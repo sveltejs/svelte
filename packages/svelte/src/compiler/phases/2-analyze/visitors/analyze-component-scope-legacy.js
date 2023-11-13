@@ -1,8 +1,8 @@
 import is_reference from 'is-reference';
 import { extract_identifiers } from '../../../utils/ast.js';
 
-/** @type {import('../types').Visitors<import('../types').LegacyAnalysisState>} */
-export const analyze_scope_legacy = {
+/** @type {import('../types.js').Visitors<import('../types.js').LegacyAnalysisState>} */
+export const analyze_component_scope_legacy = {
 	LabeledStatement(node, { next, path, state }) {
 		if (
 			state.ast_type !== 'instance' ||

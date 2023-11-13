@@ -1,8 +1,8 @@
 import { extract_identifiers, extract_paths } from '../../../utils/ast.js';
 import { get_rune } from '../../scope.js';
 
-/** @type {import('../types').Visitors} */
-export const analyze_scope_runes_component = {
+/** @type {import('../types.js').Visitors} */
+export const analyze_component_scope_runes = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
 		if (get_rune(node.init, state.scope) === null) return;
