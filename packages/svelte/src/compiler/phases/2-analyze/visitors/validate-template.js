@@ -10,7 +10,7 @@ import { validate_no_const_assignment } from '../utils.js';
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
+ * @param {import('../types').Context} context
  */
 function validate_component(node, context) {
 	for (const attribute of node.attributes) {
@@ -34,7 +34,7 @@ function validate_component(node, context) {
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
+ * @param {import('../types').Context} context
  */
 function validate_element(node, context) {
 	for (const attribute of node.attributes) {
@@ -53,7 +53,7 @@ function validate_element(node, context) {
 }
 
 /**
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
+ * @param {import('../types').Context} context
  * @param {import('#compiler').Attribute} attribute
  */
 function validate_slot_attribute(context, attribute) {
