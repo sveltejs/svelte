@@ -16,6 +16,7 @@ import { common_visitors } from './visitors/common.js';
 import { analyze_scope_legacy } from './visitors/analyze-scope-legacy.js';
 import { analyze_scope_runes_component } from './visitors/analyze-scope-runes-component.js';
 import { analyze_scope_runes_module } from './visitors/analyse-scope-runes-module.js';
+import { validate_javascript_runes } from './visitors/validate-javascript-runes.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -72,7 +73,7 @@ export function analyze_module(ast, options) {
 		/** @type {import('estree').Node} */ (ast),
 		{ scope },
 		// @ts-expect-error TODO clean this mess up
-		merge(set_scope(scopes), validation_runes_js, analyze_scope_runes_module)
+		merge(set_scope(scopes), validate_javascript_runes, analyze_scope_runes_module)
 	);
 
 	/** @type {import('../types').RawWarning[]} */

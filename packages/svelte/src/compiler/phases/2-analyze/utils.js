@@ -1,5 +1,5 @@
 import { error } from '../../errors.js';
-import { get_rune } from '../scope';
+import { get_rune } from '../scope.js';
 
 /**
  * @param {import('estree').ArrowFunctionExpression | import('estree').FunctionExpression | import('estree').FunctionDeclaration} node
