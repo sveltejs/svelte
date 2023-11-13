@@ -90,7 +90,7 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && node scripts/build.js",
+    "build": "rollup -c && node scripts/build.js && node scripts/check-treeshakeability.js",
     "watch": "rollup -cw",
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
@@ -103,6 +103,7 @@
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.3",
     "@types/estree": "^1.0.5",
     "dts-buddy": "^0.4.0",
