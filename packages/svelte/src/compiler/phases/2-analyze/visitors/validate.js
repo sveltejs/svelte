@@ -1,18 +1,18 @@
-import { error } from '../../errors.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
-import { warn } from '../../warnings.js';
-import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { binding_properties } from '../bindings.js';
-import { SVGElements } from '../constants.js';
-import { is_custom_element_node } from '../nodes.js';
-import { regex_not_whitespace, regex_only_whitespaces } from '../patterns.js';
-import { Scope, get_rune } from '../scope.js';
-import { merge } from '../visitors.js';
-import { a11y_validators } from './visitors/validate-a11y.js';
+import { error } from '../../../errors.js';
+import { extract_identifiers, is_text_attribute } from '../../../utils/ast.js';
+import { warn } from '../../../warnings.js';
+import fuzzymatch from '../../1-parse/utils/fuzzymatch.js';
+import { binding_properties } from '../../bindings.js';
+import { SVGElements } from '../../constants.js';
+import { is_custom_element_node } from '../../nodes.js';
+import { regex_not_whitespace, regex_only_whitespaces } from '../../patterns.js';
+import { Scope, get_rune } from '../../scope.js';
+import { merge } from '../../visitors.js';
+import { a11y_validators } from './validate-a11y.js';
 
 /**
  * @param {import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
  */
 function validate_component(node, context) {
 	for (const attribute of node.attributes) {
@@ -36,7 +36,7 @@ function validate_component(node, context) {
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
  */
 function validate_element(node, context) {
 	for (const attribute of node.attributes) {
@@ -55,7 +55,7 @@ function validate_element(node, context) {
 }
 
 /**
- * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
+ * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('../types.js').AnalysisState>} context
  * @param {import('#compiler').Attribute} attribute
  */
 function validate_slot_attribute(context, attribute) {
@@ -235,7 +235,7 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('../types.js').AnalysisState>}
  */
 export const validation = {
 	Attribute(node) {
@@ -475,7 +475,7 @@ export const validation_legacy = merge(validation, a11y_validators, {
 /**
  *
  * @param {import('estree').Node} node
- * @param {import('../scope').Scope} scope
+ * @param {import('../../scope.js').Scope} scope
  * @param {string} name
  */
 function validate_export(node, scope, name) {
@@ -513,7 +513,7 @@ function validate_call_expression(node, scope, path) {
 }
 
 /**
- * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
+ * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('../types.js').AnalysisState>}
  */
 export const validation_runes_js = {
 	ExportSpecifier(node, { state }) {
@@ -581,7 +581,7 @@ export const validation_runes_js = {
 };
 
 /**
- * @param {import('../../errors.js').NodeLike} node
+ * @param {import('../../../errors.js').NodeLike} node
  * @param {import('estree').Pattern | import('estree').Expression} argument
  * @param {Scope} scope
  * @param {boolean} is_binding
@@ -605,7 +605,7 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 /**
  * @param {import('estree').AssignmentExpression | import('estree').UpdateExpression} node
  * @param {import('estree').Pattern | import('estree').Expression} argument
- * @param {import('./types.js').AnalysisState} state
+ * @param {import('../types.js').AnalysisState} state
  */
 function validate_assignment(node, argument, state) {
 	validate_no_const_assignment(node, argument, state.scope, false);
