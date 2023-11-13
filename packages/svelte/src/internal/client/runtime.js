@@ -343,7 +343,13 @@ function destroy_references(signal) {
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			destroy_signal(references[i]);
+			const reference = references[i];
+			if ((reference.flags & IS_EFFECT) !== 0) {
+				destroy_signal(reference);
+			} else {
+				remove_consumer(reference, 0, true);
+				reference.dependencies = null;
+			}
 		}
 	}
 }
@@ -710,7 +716,7 @@ export function exposable(fn) {
 export function get(signal) {
 	const flags = signal.flags;
 	if ((flags & DESTROYED) !== 0) {
-		return /** @type {V} */ (UNINITIALIZED);
+		return signal.value;
 	}
 
 	if (is_signal_exposed && current_should_capture_signal) {
@@ -1156,6 +1162,11 @@ export function managed_pre_effect(init, sync) {
  * @returns {import('./types.js').EffectSignal}
  */
 export function pre_effect(init) {
+	if (current_effect === null) {
+		throw new Error(
+			'The Svelte $effect.pre rune can only be used during component initialisation.'
+		);
+	}
 	const sync = current_effect !== null && (current_effect.flags & RENDER_EFFECT) !== 0;
 	return internal_create_effect(
 		PRE_EFFECT,
@@ -1241,105 +1252,6 @@ export function set_signal_status(signal, status) {
 		}
 		signal.flags ^= status;
 	}
-}
-
-/** @template V */
-class Selector {
-	/** @type {Map<V, Set<import('./types.js').Signal>>} */
-	#consumers_map = new Map();
-
-	/** @type {import('./types.js').Signal<V | null>} */
-	#active_key;
-
-	/** @param {V | null} [key] */
-	constructor(key) {
-		this.#active_key = source(key || null);
-	}
-
-	get current() {
-		return get(this.#active_key);
-	}
-
-	/**
-	 * @param {V | null} key
-	 * @returns {void}
-	 */
-	set(key) {
-		const active_key = this.#active_key;
-		const previous_key = active_key.value;
-		if (previous_key === key) {
-			return;
-		}
-
-		set_signal_value(active_key, key);
-
-		const consumers_map = this.#consumers_map;
-		let consumers = map_get(consumers_map, /** @type {V} */ (previous_key));
-		if (consumers !== undefined) {
-			this.#update_consumers(consumers);
-		}
-
-		consumers = map_get(consumers_map, /** @type {V} */ (key));
-		if (consumers !== undefined) {
-			this.#update_consumers(consumers);
-		}
-	}
-
-	/**
-	 * @param {Set<import('./types.js').Signal>} consumers
-	 * @returns {void}
-	 */
-	#update_consumers(consumers) {
-		let consumer;
-		for (consumer of consumers) {
-			set_signal_status(consumer, DIRTY);
-			if ((consumer.flags & IS_EFFECT) !== 0) {
-				schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
-			} else {
-				mark_signal_consumers(consumer, DIRTY, true);
-			}
-		}
-	}
-
-	/**
-	 * @param {V} key
-	 * @returns {boolean}
-	 */
-	is(key) {
-		const consumers_map = this.#consumers_map;
-		let consumers = map_get(consumers_map, key);
-		if (consumers === undefined) {
-			consumers = new Set();
-			map_set(consumers_map, key, consumers);
-		}
-
-		const consumer = current_consumer;
-		const effect = current_effect;
-		if (effect !== null && consumer !== null && !consumers.has(consumer)) {
-			consumers.add(consumer);
-			push_destroy_fn(effect, () => {
-				const consumers_set = /** @type {Set<import('./types.js').Signal>} */ (consumers);
-				consumers_set.delete(effect);
-				if (consumers_set.size === 0) {
-					map_delete(consumers_map, key);
-				}
-			});
-		}
-		return this.#active_key.value === key;
-	}
-}
-
-/**
- * `selector` allows you to track the currently selected item in a list in a performance optimized manner
- * that runs in constant time (O(1)) - this is only noticable for very large lists.
- *
- * https://svelte-5-preview.vercel.app/docs/functions#selector
- * @template Key
- * @param {Key | null} [key]
- * @returns {Selector<Key>}
- */
-export function selector(key) {
-	return new Selector(key);
 }
 
 /**

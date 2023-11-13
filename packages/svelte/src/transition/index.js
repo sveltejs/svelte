@@ -8,6 +8,48 @@ function cubic_out(t) {
 }
 
 /**
+ * https://svelte.dev/docs/svelte-easing
+ * @param {number} t
+ * @returns {number}
+ */
+export function cubic_in_out(t) {
+	return t < 0.5 ? 4.0 * t * t * t : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0;
+}
+
+/** @param {number | string} value
+ * @returns {[number, string]}
+ */
+export function split_css_unit(value) {
+	const split = typeof value === 'string' && value.match(/^\s*(-?[\d.]+)([^\s]*)\s*$/);
+	return split ? [parseFloat(split[1]), split[2] || 'px'] : [/** @type {number} */ (value), 'px'];
+}
+
+/**
+ * Animates a `blur` filter alongside an element's opacity.
+ *
+ * https://svelte.dev/docs/svelte-transition#blur
+ * @param {Element} node
+ * @param {import('./public').BlurParams} [params]
+ * @returns {import('./public').TransitionConfig}
+ */
+export function blur(
+	node,
+	{ delay = 0, duration = 400, easing = cubic_in_out, amount = 5, opacity = 0 } = {}
+) {
+	const style = getComputedStyle(node);
+	const target_opacity = +style.opacity;
+	const f = style.filter === 'none' ? '' : style.filter;
+	const od = target_opacity * (1 - opacity);
+	const [value, unit] = split_css_unit(amount);
+	return {
+		delay,
+		duration,
+		easing,
+		css: (_t, u) => `opacity: ${target_opacity - od * u}; filter: ${f} blur(${u * value}${unit});`
+	};
+}
+
+/**
  * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
  *
  * https://svelte.dev/docs/svelte-transition#fade
@@ -22,6 +64,34 @@ export function fade(node, { delay = 0, duration = 400, easing = linear } = {}) 
 		duration,
 		easing,
 		css: (t) => `opacity: ${t * o}`
+	};
+}
+
+/**
+ * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
+ *
+ * https://svelte.dev/docs/svelte-transition#fly
+ * @param {Element} node
+ * @param {import('./public').FlyParams} [params]
+ * @returns {import('./public').TransitionConfig}
+ */
+export function fly(
+	node,
+	{ delay = 0, duration = 400, easing = cubic_out, x = 0, y = 0, opacity = 0 } = {}
+) {
+	const style = getComputedStyle(node);
+	const target_opacity = +style.opacity;
+	const transform = style.transform === 'none' ? '' : style.transform;
+	const od = target_opacity * (1 - opacity);
+	const [x_value, x_unit] = split_css_unit(x);
+	const [y_value, y_unit] = split_css_unit(y);
+	return {
+		delay,
+		duration,
+		easing,
+		css: (t, u) => `
+			transform: ${transform} translate(${(1 - t) * x_value}${x_unit}, ${(1 - t) * y_value}${y_unit});
+			opacity: ${target_opacity - od * u}`
 	};
 }
 
@@ -66,6 +136,68 @@ export function slide(node, { delay = 0, duration = 400, easing = cubic_out, axi
 			`margin-${secondary_properties[1]}: ${t * margin_end_value}px;` +
 			`border-${secondary_properties[0]}-width: ${t * border_width_start_value}px;` +
 			`border-${secondary_properties[1]}-width: ${t * border_width_end_value}px;`
+	};
+}
+
+/**
+ * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
+ *
+ * https://svelte.dev/docs/svelte-transition#scale
+ * @param {Element} node
+ * @param {import('./public').ScaleParams} [params]
+ * @returns {import('./public').TransitionConfig}
+ */
+export function scale(
+	node,
+	{ delay = 0, duration = 400, easing = cubic_out, start = 0, opacity = 0 } = {}
+) {
+	const style = getComputedStyle(node);
+	const target_opacity = +style.opacity;
+	const transform = style.transform === 'none' ? '' : style.transform;
+	const sd = 1 - start;
+	const od = target_opacity * (1 - opacity);
+	return {
+		delay,
+		duration,
+		easing,
+		css: (_t, u) => `
+			transform: ${transform} scale(${1 - sd * u});
+			opacity: ${target_opacity - od * u}
+		`
+	};
+}
+
+/**
+ * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
+ *
+ * https://svelte.dev/docs/svelte-transition#draw
+ * @param {SVGElement & { getTotalLength(): number }} node
+ * @param {import('./public').DrawParams} [params]
+ * @returns {import('./public').TransitionConfig}
+ */
+export function draw(node, { delay = 0, speed, duration, easing = cubic_in_out } = {}) {
+	let len = node.getTotalLength();
+	const style = getComputedStyle(node);
+	if (style.strokeLinecap !== 'butt') {
+		len += parseInt(style.strokeWidth);
+	}
+	if (duration === undefined) {
+		if (speed === undefined) {
+			duration = 800;
+		} else {
+			duration = len / speed;
+		}
+	} else if (typeof duration === 'function') {
+		duration = duration(len);
+	}
+	return {
+		delay,
+		duration,
+		easing,
+		css: (_, u) => `
+			stroke-dasharray: ${len};
+			stroke-dashoffset: ${u * len};
+		`
 	};
 }
 
