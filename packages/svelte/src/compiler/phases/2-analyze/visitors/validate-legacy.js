@@ -1,7 +1,10 @@
 import { error } from '../../../errors.js';
 import { validate_assignment } from '../utils.js';
 
-/** @type {import('../types').Visitors} */
+/**
+ * Validation that only applies in non-runes mode
+ * @type {import('../types').Visitors}
+ */
 export const validate_legacy = {
 	VariableDeclarator(node) {
 		if (node.init?.type !== 'CallExpression') return;

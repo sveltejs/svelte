@@ -1,4 +1,5 @@
 import { error } from '../../errors.js';
+import { get_rune } from '../scope';
 
 /**
  * @param {import('../../errors.js').NodeLike} node
@@ -50,6 +51,46 @@ export function validate_assignment(node, argument, state) {
 	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
 		if (state.private_derived_state.includes(property.name)) {
 			error(node, 'invalid-derived-assignment');
+		}
+	}
+}
+
+/**
+ *
+ * @param {import('estree').Node} node
+ * @param {import('../scope.js').Scope} scope
+ * @param {string} name
+ */
+export function validate_export(node, scope, name) {
+	const binding = scope.get(name);
+	if (binding && (binding.kind === 'derived' || binding.kind === 'state')) {
+		error(node, 'invalid-rune-export', `$${binding.kind}`);
+	}
+}
+
+/**
+ * @param {import('estree').CallExpression} node
+ * @param {import('../scope').Scope} scope
+ * @param {import('#compiler').SvelteNode[]} path
+ * @returns
+ */
+export function validate_call_expression(node, scope, path) {
+	const rune = get_rune(node, scope);
+	if (rune === null) return;
+
+	if (rune === '$props' && path.at(-1)?.type !== 'VariableDeclarator') {
+		error(node, 'invalid-props-location');
+	} else if (
+		(rune === '$state' || rune === '$derived') &&
+		path.at(-1)?.type !== 'VariableDeclarator' &&
+		path.at(-1)?.type !== 'PropertyDefinition'
+	) {
+		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
+	} else if (rune === '$effect') {
+		if (path.at(-1)?.type !== 'ExpressionStatement') {
+			error(node, 'invalid-effect-location');
+		} else if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', '$effect', [1]);
 		}
 	}
 }
