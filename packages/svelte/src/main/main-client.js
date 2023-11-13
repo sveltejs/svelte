@@ -255,12 +255,4 @@ export function afterUpdate(fn) {
 
 // TODO bring implementations in here
 // (except probably untrack — do we want to expose that, if there's also a rune?)
-export {
-	flushSync,
-	createRoot,
-	mount,
-	tick,
-	untrack,
-	onDestroy,
-	selector
-} from '../internal/index.js';
+export { flushSync, createRoot, mount, tick, untrack, onDestroy } from '../internal/index.js';

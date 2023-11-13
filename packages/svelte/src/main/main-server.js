@@ -7,7 +7,6 @@ export {
 	hasContext,
 	mount,
 	onDestroy,
-	selector,
 	setContext,
 	tick,
 	untrack
