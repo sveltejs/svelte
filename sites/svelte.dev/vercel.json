@@ -3,5 +3,6 @@
 	"github": {
 		"silent": true
 	},
-	"buildCommand": "cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm rebuild sharp && pnpm build"
+	"buildCommand": "echo \"TODO reinstate in future: cd ../../packages/svelte && pnpm prepublishOnly && cd ../../sites/svelte.dev && pnpm rebuild sharp && pnpm build\"",
+	"outputDirectory": "placeholder"
 }
