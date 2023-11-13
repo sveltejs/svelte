@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Fix runtime signal issues
+fix: tighten up signals implementation
