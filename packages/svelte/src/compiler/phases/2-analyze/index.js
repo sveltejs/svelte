@@ -1028,6 +1028,7 @@ function determine_element_spread_and_delegatable(node) {
 	let events = new Map();
 	let has_spread = false;
 	let has_on = false;
+	let has_action_or_bind = false;
 	for (const attribute of node.attributes) {
 		if (
 			attribute.type === 'OnDirective' ||
@@ -1046,10 +1047,20 @@ function determine_element_spread_and_delegatable(node) {
 			}
 		} else if (!has_spread && attribute.type === 'SpreadAttribute') {
 			has_spread = true;
+		} else if (
+			!has_action_or_bind &&
+			(attribute.type === 'BindDirective' || attribute.type === 'UseDirective')
+		) {
+			has_action_or_bind = true;
 		}
 	}
 	node.metadata.can_delegate_events =
-		!(has_spread && has_on) && ![...events.values()].some((count) => count > 1);
+		// Actions/bindings need the old on:-events to fire in order
+		!has_action_or_bind &&
+		// spreading events means we don't know if there's an event attribute with the same name as an on:-event
+		!(has_spread && has_on) &&
+		// multiple on:-events/event attributes with the same name
+		![...events.values()].some((count) => count > 1);
 	node.metadata.has_spread = has_spread;
 
 	return node;
