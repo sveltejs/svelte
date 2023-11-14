@@ -39,7 +39,7 @@ Traditional `on:` event handlers will continue to work, but are deprecated in Sv
 
 In Svelte 4, components could emit events by creating a dispatcher with [`createEventDispatcher`](https://svelte.dev/docs/svelte#createeventdispatcher).
 
-This function is deprecated in Svelte 5. Instead, components should accept _callback props_ ([demo](/#H4sIAAAAAAAAE41TS27bMBC9yoBtELu1Pg6gBlAkob1B91UXijSKiVAkIdJ2XEH7rrroBbrq_XqEkBTlD-JFFxLIx_fecIYzA2kpQ0XSbwPhVYckJV-kJCuiD9Ju1A6ZRrNXYtvXFslU3VOpi5KXmnZS9Bq-bjsJbS86uA0juwkn2e2DJdmPoQZFfyDk8F7pSuNinSzNaRad3Hhmpc6Wt8xw8mGxhLyAwblop_-YQzK5atrCwmEF3CfL2T52p-No_w1e8znTrWddMNtaYeRuM7wzxImXG6IzzJSsONSsUiovyWPFmBC8JKD0gaFBVF0xTGGIw3gNH5x6LEnx78-vnyZTozXOQ4pM4TU7ITpH_v33RI5oO7rauBCu6E7kc5FCUU0FT6GlL9j4yjBsdeorUWot5Gmzp43epLCO4xuPbJA-bfQF1AquA3t5h-72sxG-6KBi9MmEq5Fr7Od4lGNw9HmYr0YtJcCdoaoUuOA4ldjmU-rQl29ORfcVn5NxdYQ4vFOXClOhmV5x2lUT28FxmChoRb-v-uZC9fkZD21vWlvBuT6-gQH8e8XhJxgn-C65wO-T-cCW5-xkgkfXwf5lzJB0oqEtxYakut_iuDrOlO3s_x0qOysD-BlYgW9iGO3syF5ItXg7OQ3dHftI2ikizip73Jrn5yB4zWj9nA_edSz8IosmxnW2Dz0WfnHGziITsnib8vfxFf2EUSRSBAAA)):
+This function is deprecated in Svelte 5. Instead, components should accept _callback props_ ([demo](/#H4sIAAAAAAAAE41TS27bMBS8yoPaIHZry3IANYAiCe0Nuq-6UKTHmAhFCuKzHVfQvqsueoGuer8eISRF-YN40YUEcjgz5Bvy9QHjAnWQfOsDWTYYJMGXtg0WAR1aO9E7FIRmrtW2qyyS6qrjLeWFLIg3reoIvm6bFlinGrgNV3YSjrLbB0uyn0ACzX8gZPBeU0k4W8dzs5quTm4ytVJnK5kwnKyfzSHLoXcu5PQfM4hHV-IMZg7L4T6eT_aRWx0G-6_xms-Zbj3plpOtFa7cafp3hjjyMkN0hqluSwmVKLXOiuCxFEIpWQSg6SDQILoqBSbQR2G0hg9OPRRB_u_Pr5-mUqM1zn2CQuM1O6UaR_7990RecTa4bNwWLnQn8rW0SnPiSibA-AvWPhmBjBKfREGk2tNkz2vaJLCOohuPbJA_begCYkrS0h7eobv9ZIQvtCwFfzLbVSgJu2k_LnF59HmYjsYtZYk7Q9UJSCVxjNjWU1Do45tKoa6UUzEuR4jCO32pMAlN9FLyphzZDo7CWANT3b7s6gvV52c8sM48bQ3n-ugGevD3FYWfYBjhu_gCv4-nBRvP2coID-4F-5sxTdKomjOOdZBQt8Vhcewp-7L_t6lsr_Tge2AB_hHDYHun7VSrZ28753FrrlmCkpXg1XPWe_WQ-0G6Ghn5Fa7fYMj94Mh9W9D34RU91y9AMAQAAA==)):
 
 ```svelte
 <script>
@@ -72,10 +72,8 @@ This function is deprecated in Svelte 5. Instead, components should accept _call
 	let { inflate, deflate } = $props();
 </script>
 
-<div class="pump">
-	<button onclick={inflate}>inflate</button>
-	<button onclick={deflate}>deflate</button>
-</div>
+<button onclick={inflate}>inflate</button>
+<button onclick={deflate}>deflate</button>
 ```
 
 ## Bubbling events
