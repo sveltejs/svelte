@@ -157,7 +157,7 @@ function get_delegated_event(node, context) {
 		if (
 			binding !== null &&
 			// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-			((!context.state.analysis.runes && binding.kind === 'each') ||
+			(binding.kind === 'each' ||
 				// or any normal not reactive bindings that are mutated.
 				(binding.kind === 'normal' && context.state.analysis.runes) ||
 				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
