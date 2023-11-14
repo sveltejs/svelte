@@ -127,7 +127,9 @@ export default function tag(parser) {
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
-						svg: false
+						svg: false,
+						has_spread: false,
+						can_delegate_events: null
 					},
 					parent: null
 			  }

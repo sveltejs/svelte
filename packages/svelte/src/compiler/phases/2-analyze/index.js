@@ -11,7 +11,7 @@ import {
 	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
-import { DelegatedEvents, ReservedKeywords, Runes, SVGElements } from '../constants.js';
+import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
 import { Scope, ScopeRoot, create_scopes, get_rune, set_scope } from '../scope.js';
 import { merge } from '../visitors.js';
 import Stylesheet from './css/Stylesheet.js';
@@ -20,6 +20,7 @@ import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
+import { DelegatedEvents } from '../../../constants.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -58,7 +59,7 @@ function get_component_name(filename) {
 }
 
 /**
- * @param {Pick<import('#compiler').OnDirective, 'expression'| 'name' | 'modifiers'>} node
+ * @param {Pick<import('#compiler').OnDirective, 'expression'| 'name' | 'modifiers'> & { type: string }} node
  * @param {import('./types').Context} context
  * @returns {null | import('#compiler').DelegatedEvent}
  */
@@ -70,16 +71,13 @@ function get_delegated_event(node, context) {
 	if (!handler || node.modifiers.includes('capture') || !DelegatedEvents.includes(event_name)) {
 		return null;
 	}
-	// If we are not working with a RegularElement/SlotElement, then bail-out.
+	// If we are not working with a RegularElement, then bail-out.
 	const element = context.path.at(-1);
-	if (element == null || (element.type !== 'RegularElement' && element.type !== 'SlotElement')) {
+	if (element?.type !== 'RegularElement') {
 		return null;
 	}
-	// If we have multiple OnDirectives of the same type, bail-out.
-	if (
-		element.attributes.filter((attr) => attr.type === 'OnDirective' && attr.name === event_name)
-			.length > 1
-	) {
+	// If element says we can't delegate because we have multiple OnDirectives of the same type, bail-out.
+	if (!element.metadata.can_delegate_events) {
 		return null;
 	}
 
@@ -88,6 +86,11 @@ function get_delegated_event(node, context) {
 	/** @type {import('estree').FunctionExpression | import('estree').FunctionDeclaration | import('estree').ArrowFunctionExpression | null} */
 	let target_function = null;
 	let binding = null;
+
+	if (node.type === 'Attribute' && element.metadata.has_spread) {
+		// event attribute becomes part of the dynamic spread array
+		return non_hoistable;
+	}
 
 	if (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression') {
 		target_function = handler;
@@ -101,16 +104,29 @@ function get_delegated_event(node, context) {
 					return non_hoistable;
 				}
 
-				const element =
-					parent.type === 'OnDirective'
-						? path.at(-2)
-						: parent.type === 'ExpressionTag' &&
-						  is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
-						? path.at(-3)
-						: null;
+				/** @type {import('#compiler').RegularElement | null} */
+				let element = null;
+				/** @type {string | null} */
+				let event_name = null;
+				if (parent.type === 'OnDirective') {
+					element = /** @type {import('#compiler').RegularElement} */ (path.at(-2));
+					event_name = parent.name;
+				} else if (
+					parent.type === 'ExpressionTag' &&
+					is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
+				) {
+					element = /** @type {import('#compiler').RegularElement} */ (path.at(-3));
+					const attribute = /** @type {import('#compiler').Attribute} */ (path.at(-2));
+					event_name = get_attribute_event_name(attribute.name);
+				}
 
-				if (element) {
-					if (element.type !== 'RegularElement' && element.type !== 'SlotElement') {
+				if (element && event_name) {
+					if (
+						element.type !== 'RegularElement' ||
+						!determine_element_spread_and_delegatable(element).metadata.can_delegate_events ||
+						(element.metadata.has_spread && node.type === 'Attribute') ||
+						!DelegatedEvents.includes(event_name)
+					) {
 						return non_hoistable;
 					}
 				} else if (parent.type !== 'FunctionDeclaration' && parent.type !== 'VariableDeclarator') {
@@ -772,16 +788,15 @@ const common_visitors = {
 
 			let name = node.name.slice(2);
 
-			if (
-				name.endsWith('capture') &&
-				name !== 'ongotpointercapture' &&
-				name !== 'onlostpointercapture'
-			) {
+			if (is_capture_event(name)) {
 				name = name.slice(0, -7);
 				modifiers.push('capture');
 			}
 
-			const delegated_event = get_delegated_event({ name, expression, modifiers }, context);
+			const delegated_event = get_delegated_event(
+				{ type: node.type, name, expression, modifiers },
+				context
+			);
 
 			if (delegated_event !== null) {
 				if (delegated_event.type === 'hoistable') {
@@ -950,6 +965,8 @@ const common_visitors = {
 			node.metadata.svg = true;
 		}
 
+		determine_element_spread_and_delegatable(node);
+
 		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
 		if (
 			context.state.options.namespace !== 'foreign' &&
@@ -1004,6 +1021,77 @@ const common_visitors = {
 		state.analysis.elements.push(node);
 	}
 };
+
+/**
+ * Check if events on this element can theoretically be delegated. They can if there's no
+ * possibility of an OnDirective and an event attribute on the same element, and if there's
+ * no OnDirectives of the same type (the latter is a bit too strict because `on:click on:click on:keyup`
+ * means that `on:keyup` can be delegated but we gloss over this edge case).
+ * @param {import('#compiler').RegularElement} node
+ */
+function determine_element_spread_and_delegatable(node) {
+	if (typeof node.metadata.can_delegate_events === 'boolean') {
+		return node; // did this already
+	}
+
+	let events = new Map();
+	let has_spread = false;
+	let has_on = false;
+	let has_action_or_bind = false;
+	for (const attribute of node.attributes) {
+		if (
+			attribute.type === 'OnDirective' ||
+			(attribute.type === 'Attribute' && is_event_attribute(attribute))
+		) {
+			let event_name = attribute.name;
+			if (attribute.type === 'Attribute') {
+				event_name = get_attribute_event_name(event_name);
+			}
+			events.set(event_name, (events.get(event_name) || 0) + 1);
+			if (!has_on && attribute.type === 'OnDirective') {
+				has_on = true;
+			}
+		} else if (!has_spread && attribute.type === 'SpreadAttribute') {
+			has_spread = true;
+		} else if (
+			!has_action_or_bind &&
+			(attribute.type === 'BindDirective' || attribute.type === 'UseDirective')
+		) {
+			has_action_or_bind = true;
+		}
+	}
+	node.metadata.can_delegate_events =
+		// Actions/bindings need the old on:-events to fire in order
+		!has_action_or_bind &&
+		// spreading events means we don't know if there's an event attribute with the same name as an on:-event
+		!(has_spread && has_on) &&
+		// multiple on:-events/event attributes with the same name
+		![...events.values()].some((count) => count > 1);
+	node.metadata.has_spread = has_spread;
+
+	return node;
+}
+
+/**
+ * @param {string} event_name
+ */
+function get_attribute_event_name(event_name) {
+	if (is_capture_event(event_name)) {
+		event_name = event_name.slice(0, -7);
+	}
+	event_name = event_name.slice(2);
+	return event_name;
+}
+
+/**
+ * @param {string} name
+ * @returns boolean
+ */
+function is_capture_event(name) {
+	return (
+		name.endsWith('capture') && name !== 'ongotpointercapture' && name !== 'onlostpointercapture'
+	);
+}
 
 /**
  * @param {Map<import('estree').LabeledStatement, import('../types.js').ReactiveStatement>} unsorted_reactive_declarations
