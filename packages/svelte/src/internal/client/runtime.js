@@ -963,7 +963,11 @@ export function set_signal_value(signal, value) {
 		// If we have afterUpdates locally on the component, but we're within a render effect
 		// then we will need to manually invoke the beforeUpdate/afterUpdate logic.
 		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
-		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
+		if (
+			current_effect === null &&
+			current_queued_pre_and_render_effects.filter((e) => e.context === component_context)
+				.length === 0
+		) {
 			const update_callbacks = component_context?.update_callbacks;
 			if (update_callbacks != null) {
 				update_callbacks.before.forEach(/** @param {any} c */ (c) => c());
