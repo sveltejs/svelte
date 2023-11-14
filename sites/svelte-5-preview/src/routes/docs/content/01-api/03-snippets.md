@@ -215,6 +215,8 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 </table>
 ```
 
+> Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
+
 ## Snippets and slots
 
 In Svelte 4, content can be passed to components using [slots](https://svelte.dev/docs/special-elements#slot). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.

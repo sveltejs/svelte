@@ -54,6 +54,10 @@ Svelte now use Mutation Observers intead of IFrames to measure dimensions for `b
 - The `tag` option was removed. Use `<svelte:options customElement="tag-name" />` inside the component instead
 - The `loopGuardTimeout`, `format`, `sveltePath`, `errorMode` and `varsReport` options were removed
 
+## The `children` prop is reserved
+
+Content inside component tags becomes a [snippet prop](/docs/snippets) called `children`. You cannot have a separate prop by that name.
+
 ## Other breaking changes
 
 ### Stricter `@const` assignment validation
