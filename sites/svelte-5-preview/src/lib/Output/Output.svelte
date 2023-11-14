@@ -58,8 +58,7 @@
 	let view = 'result';
 	let markdown = '';
 
-	/** @type {import('svelte/types/compiler/interfaces').Ast} */
-	let ast;
+	$: ast = compiled?.result?.ast;
 </script>
 
 <div class="view-toggle">
@@ -110,7 +109,7 @@
 </div>
 
 <!-- ast output -->
-{#if showAst}
+{#if showAst && ast}
 	<div class="tab-content" class:visible={selected?.type !== 'md' && view === 'ast'}>
 		<!-- ast view interacts with the module editor, wait for it first -->
 		{#if $module_editor}
