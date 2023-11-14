@@ -254,7 +254,7 @@
 		if (!compiler || !$selected) return;
 
 		if ($selected.type === 'svelte' || $selected.type === 'js') {
-			compiled = await compiler.compile($selected, $compile_options, false);
+			compiled = await compiler.compile($selected, $compile_options, true);
 			runes = compiled.result.metadata?.runes ?? false;
 		} else {
 			runes = false;
