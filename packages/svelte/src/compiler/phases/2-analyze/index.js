@@ -762,7 +762,7 @@ const common_visitors = {
 				return false;
 			}
 
-			return chunk.metadata.dynamic;
+			return chunk.metadata.dynamic || chunk.metadata.contains_call_expression;
 		});
 
 		if (is_event_attribute(node)) {
