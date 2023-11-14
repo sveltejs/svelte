@@ -71,3 +71,7 @@ Previously Svelte would always insert the CSS hash last. This is no longer guara
 ### `contenteditable` behavior change
 
 If you have a `contenteditable` node with a corresponding binding _and_ a reactive value inside it (example: `<div contenteditable=true bind:textContent>count is {count}</div>`), then the value inside the contenteditable will not be updated by updates to `count` because the binding takes full control over the content immediately and it should only be updated through it.
+
+### `oneventname` attributes no longer accept string values
+
+In Svelte4, it was possible to specify HTML event attributes like `<button onclick="foo">`. However, this is no longer allowed in Svelte5.
