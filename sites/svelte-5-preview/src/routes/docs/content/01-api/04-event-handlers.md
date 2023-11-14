@@ -39,31 +39,38 @@ Traditional `on:` event handlers will continue to work, but are deprecated in Sv
 
 In Svelte 4, components could emit events by creating a dispatcher with [`createEventDispatcher`](https://svelte.dev/docs/svelte#createeventdispatcher).
 
-This function is deprecated in Svelte 5. Instead, components should accept _callback props_ ([demo](/#H4sIAAAAAAAAE41TS27bMBS8yoPaIHZry3IANYAiCe0Nuq-6UKTHmAhFCuKzHVfQvqsueoGuer8eISRF-YN40YUEcjgz5Bvy9QHjAnWQfOsDWTYYJMGXtg0WAR1aO9E7FIRmrtW2qyyS6qrjLeWFLIg3reoIvm6bFlinGrgNV3YSjrLbB0uyn0ACzX8gZPBeU0k4W8dzs5quTm4ytVJnK5kwnKyfzSHLoXcu5PQfM4hHV-IMZg7L4T6eT_aRWx0G-6_xms-Zbj3plpOtFa7cafp3hjjyMkN0hqluSwmVKLXOiuCxFEIpWQSg6SDQILoqBSbQR2G0hg9OPRRB_u_Pr5-mUqM1zn2CQuM1O6UaR_7990RecTa4bNwWLnQn8rW0SnPiSibA-AvWPhmBjBKfREGk2tNkz2vaJLCOohuPbJA_begCYkrS0h7eobv9ZIQvtCwFfzLbVSgJu2k_LnF59HmYjsYtZYk7Q9UJSCVxjNjWU1Do45tKoa6UUzEuR4jCO32pMAlN9FLyphzZDo7CWANT3b7s6gvV52c8sM48bQ3n-ugGevD3FYWfYBjhu_gCv4-nBRvP2coID-4F-5sxTdKomjOOdZBQt8Vhcewp-7L_t6lsr_Tge2AB_hHDYHun7VSrZ28753FrrlmCkpXg1XPWe_WQ-0G6Ghn5Fa7fYMj94Mh9W9D34RU91y9AMAQAAA==)):
+This function is deprecated in Svelte 5. Instead, components should accept _callback props_ ([demo](/#H4sIAAAAAAAAE41TS27bMBC9ykBtELu1ZTmAG0C2hPYG3dddyPIwJkKRAjmy4wrad9VFL5BV75cjlKQof5osutCHb968-XCmjRgXaKL0WxvJosIojb7UdTSJ6Fi7g9mjILRnoxpdOmRlSs1rytdyTbyqlSb42lQ1MK0quI1n7hD3brdLR3KPQALDfyBk8N5QQTiaL8bLwbJptKGziRXCoLdaO2tkSVxJ0GiQRmNovSYFtfmij0GDhnf2WLeWq9k5WblymfmsJRM2TtZatSy_EvyYwSDIGYw8lsP9YnzKkXQT5Dv33uJbWhe-ybgvfDooO7-ZT6h9Z3le10utNg2RLVTJUvDyMWt9xV0u8QCbQgilbD09xzd_ZepCQikKY7J1tFGqWkf5y_PvP7Zqa7GcNkXbjO4Nci-3jsDQUaBFTFkITKFN4mQOH3zKnZXry3l5_vXTi5yEZ5x1vqfe39N8gFB_rQx3l5YC40-4DR0VyCiFJJxI1efDgW9pl8I8SW4CskP-sKMriClJU5eZR_eHQQifaFoI_mDDlSgJ9RCPS5yedJZDatxRpri3VJOCVPI0Lu4Th94MpZAu5FCMbxIk8Z259rCtH-iF5FXRsz2cxAsDTOlDobdXXp8f8ci03TgDl_7JDbQQLiOJP0HXw3eLK_x-MRhcey4sPdxPfrgZu7uV2nLGcRulbnq7yWnV3Ub87667RW0h7M4EwuBD5_a21qo2I7ey1xv370QH7y4PPxfz_IobAnR5-DlxXxf0vfsLb_4Z08cEAAA=)):
 
 ```svelte
 <script>
 	import Pump from './Pump.svelte';
 
 	let size = $state(15);
+	let burst = $state(false);
+
+	function reset() {
+		size = 15;
+		burst = false;
+	}
 </script>
 
 <Pump
 	inflate={() => {
 		size += 5;
-		if (size > 75) size = 0;
+		if (size > 75) burst = true;
 	}}
 	deflate={() => {
-		if (size > 15) size -= 5;
+		if (size > 0) size -= 5;
 	}}
 />
 
-{#if size >= 15}
+{#if burst}
+	<button onclick={reset}>new balloon</button>
+	<span class="boom">💥</span>
+{:else}
 	<span class="balloon" style="scale: {0.01 * size}">
 		🎈
 	</span>
-{:else}
-	<span class="boom"> 💥 </span>
 {/if}
 ```
 
