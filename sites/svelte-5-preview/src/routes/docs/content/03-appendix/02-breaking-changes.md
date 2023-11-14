@@ -74,4 +74,10 @@ If you have a `contenteditable` node with a corresponding binding _and_ a reacti
 
 ### `oneventname` attributes no longer accept string values
 
-In Svelte 4, it was possible to specify HTML event attributes like `<button onclick="foo">`. However, this is no longer allowed in Svelte 5.
+In Svelte 4, it was possible to specify event attributes on HTML elements as a string:
+
+```svelte
+<button onclick="alert('hello')">...</button>
+```
+
+This is considered an anti-pattern and is no longer possible in Svelte 5, where properties like `onclick` replace `on:click` as the mechanism for adding [event handlers](/docs/event-handlers).
