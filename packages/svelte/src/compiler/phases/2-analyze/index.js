@@ -104,19 +104,28 @@ function get_delegated_event(node, context) {
 					return non_hoistable;
 				}
 
-				const element =
-					parent.type === 'OnDirective'
-						? path.at(-2)
-						: parent.type === 'ExpressionTag' &&
-						  is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
-						? path.at(-3)
-						: null;
+				/** @type {import('#compiler').RegularElement | null} */
+				let element = null;
+				/** @type {string | null} */
+				let event_name = null;
+				if (parent.type === 'OnDirective') {
+					element = /** @type {import('#compiler').RegularElement} */ (path.at(-2));
+					event_name = parent.name;
+				} else if (
+					parent.type === 'ExpressionTag' &&
+					is_event_attribute(/** @type {import('#compiler').Attribute} */ (path.at(-2)))
+				) {
+					element = /** @type {import('#compiler').RegularElement} */ (path.at(-3));
+					const attribute = /** @type {import('#compiler').Attribute} */ (path.at(-2));
+					event_name = get_attribute_event_name(attribute.name);
+				}
 
-				if (element) {
+				if (element && event_name) {
 					if (
 						element.type !== 'RegularElement' ||
 						!determine_element_spread_and_delegatable(element).metadata.can_delegate_events ||
-						(element.metadata.has_spread && node.type === 'Attribute')
+						(element.metadata.has_spread && node.type === 'Attribute') ||
+						!DelegatedEvents.includes(event_name)
 					) {
 						return non_hoistable;
 					}
@@ -1036,10 +1045,7 @@ function determine_element_spread_and_delegatable(node) {
 		) {
 			let event_name = attribute.name;
 			if (attribute.type === 'Attribute') {
-				if (is_capture_event(event_name)) {
-					event_name = event_name.slice(0, -7);
-				}
-				event_name = event_name.slice(2);
+				event_name = get_attribute_event_name(event_name);
 			}
 			events.set(event_name, (events.get(event_name) || 0) + 1);
 			if (!has_on && attribute.type === 'OnDirective') {
@@ -1064,6 +1070,17 @@ function determine_element_spread_and_delegatable(node) {
 	node.metadata.has_spread = has_spread;
 
 	return node;
+}
+
+/**
+ * @param {string} event_name
+ */
+function get_attribute_event_name(event_name) {
+	if (is_capture_event(event_name)) {
+		event_name = event_name.slice(0, -7);
+	}
+	event_name = event_name.slice(2);
+	return event_name;
 }
 
 /**
