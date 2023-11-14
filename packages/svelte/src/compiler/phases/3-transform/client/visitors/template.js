@@ -2066,7 +2066,10 @@ export const template_visitors = {
 		/** @type {number} */
 		let each_type;
 
-		if (node.key) {
+		if (
+			node.key &&
+			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
+		) {
 			each_type = EACH_KEYED;
 			if (
 				node.key.type === 'Identifier' &&
