@@ -965,8 +965,7 @@ export function set_signal_value(signal, value) {
 		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
 		if (
 			current_effect === null &&
-			current_queued_pre_and_render_effects.filter((e) => e.context === component_context)
-				.length === 0
+			current_queued_pre_and_render_effects.every((e) => e.context !== component_context)
 		) {
 			const update_callbacks = component_context?.update_callbacks;
 			if (update_callbacks != null) {
