@@ -66,32 +66,6 @@ export const VoidElements = [
 	'wbr'
 ];
 
-// list of Element events that will be delegated
-export const DelegatedEvents = [
-	'beforeinput',
-	'click',
-	'dblclick',
-	'contextmenu',
-	'focusin',
-	'focusout',
-	// 'input', This conflicts with bind:input
-	'keydown',
-	'keyup',
-	'mousedown',
-	'mousemove',
-	'mouseout',
-	'mouseover',
-	'mouseup',
-	'pointerdown',
-	'pointermove',
-	'pointerout',
-	'pointerover',
-	'pointerup',
-	'touchend',
-	'touchmove',
-	'touchstart'
-];
-
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
 // TODO this is currently unused

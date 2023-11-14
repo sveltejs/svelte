@@ -1,7 +1,0 @@
-<script>
-	const {log, children, ...restProps} = $props();
-</script>
-
-<button onclick={() => log.push('internal!')} {...restProps}>
-	{@render children()}
-</button>
