@@ -53,7 +53,9 @@ Beyond the complexities listed above, the current design imposes some unfortunat
   export {};
   // @filename: index.ts
   // ---cut---
-  let theme: 'light' | 'dark' = $derived(dark ? 'dark' : 'light');
+  let theme: 'light' | 'dark' = $derived(
+  	dark ? 'dark' : 'light'
+  );
   ```
 - Updating values inside `$:` statements can cause [confusing behaviour](https://github.com/sveltejs/svelte/issues/6732) and [impossible to resolve bugs](https://github.com/sveltejs/svelte/issues/4933) and the statements may run in an [unexpected order](https://github.com/sveltejs/svelte/issues/4516)
 - `$: {...}` doesn't let you return a cleanup function the way that [`$effect`](runes#$effect) does
