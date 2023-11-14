@@ -80,4 +80,4 @@ In Svelte 4, it was possible to specify event attributes on HTML elements as a s
 <button onclick="alert('hello')">...</button>
 ```
 
-This is considered an anti-pattern and is no longer possible in Svelte 5, where properties like `onclick` replace `on:click` as the mechanism for adding [event handlers](/docs/event-handlers).
+This is not recommended, and is no longer possible in Svelte 5, where properties like `onclick` replace `on:click` as the mechanism for adding [event handlers](/docs/event-handlers).
