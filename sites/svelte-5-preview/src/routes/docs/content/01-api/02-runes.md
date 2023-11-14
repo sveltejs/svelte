@@ -128,7 +128,10 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 		messages;
 
 		// autoscroll when new messages are added
-		if (div.offsetHeight + div.scrollTop > div.scrollHeight - 20) {
+		if (
+			div.offsetHeight + div.scrollTop >
+			div.scrollHeight - 20
+		) {
 			tick().then(() => {
 				div.scrollTo(0, div.scrollHeight);
 			});
