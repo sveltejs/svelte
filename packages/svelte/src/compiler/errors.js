@@ -141,7 +141,7 @@ const special_elements = {
 	/** @param {string} name */
 	'duplicate-svelte-element': (name) => `A component can only have one <${name}> element`,
 	'invalid-self-placement': () =>
-		`<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, or slots passed to components`,
+		`<svelte:self> components can only exist inside {#if} blocks, {#each} blocks, {#snippet} blocks or slots passed to components`,
 	'missing-svelte-element-definition': () => `<svelte:element> must have a 'this' attribute`,
 	'missing-svelte-component-definition': () => `<svelte:component> must have a 'this' attribute`,
 	'invalid-svelte-element-definition': () => `Invalid element definition — must be an {expression}`,

@@ -333,7 +333,8 @@ function read_tag_name(parser) {
 			if (
 				fragment.type === 'IfBlock' ||
 				fragment.type === 'EachBlock' ||
-				fragment.type === 'Component'
+				fragment.type === 'Component' ||
+				fragment.type === 'SnippetBlock'
 			) {
 				legal = true;
 				break;
