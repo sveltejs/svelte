@@ -176,5 +176,5 @@ By deprecating `createEventDispatcher` and the `on:` directive in favour of call
 - remove the overhead of creating `CustomEvent` objects for events that may not even have listeners
 - add the ability to spread event handlers
 - add the ability to know which event handlers were provided to a component
-- add the ability to express whether a given event handler is required or optional (props with default values are considered optional, those without are considered required)
+- add the ability to express whether a given event handler is required or optional
 - increase type safety (previously, it was effectively impossible for Svelte to guarantee that a component didn't emit a particular event)
