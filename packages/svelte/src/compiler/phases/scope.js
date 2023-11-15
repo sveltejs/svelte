@@ -274,15 +274,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	};
 
 	/**
-	 * @type {import('zimmerframe').Visitor<import('#compiler').SvelteNode, State, import('#compiler').SvelteNode>}
-	 */
-	const CreateBlock = (node, { state, next }) => {
-		const scope = state.scope.child();
-		scopes.set(node, scope);
-		next({ scope });
-	};
-
-	/**
 	 * @param {import('#compiler').ElementLike} node
 	 * @param {Scope} parent
 	 */
@@ -566,18 +557,24 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		SnippetBlock(node, context) {
-			state.scope.declare(node.expression, 'normal', 'function', node.expression);
+			// Special-case for root-level snippets: they become part of the instance scope
+			const is_top_level = !context.path.at(-2);
+			let scope = state.scope;
+			if (is_top_level) {
+				scope = /** @type {Scope} */ (parent);
+			}
+			scope.declare(node.expression, 'normal', 'function', node.expression);
 
-			const scope = state.scope.child();
-			scopes.set(node, scope);
+			const child_scope = state.scope.child();
+			scopes.set(node, child_scope);
 
 			if (node.context) {
 				for (const id of extract_identifiers(node.context)) {
-					scope.declare(id, 'each', 'let');
+					child_scope.declare(id, 'each', 'let');
 				}
 			}
 
-			context.next({ scope });
+			context.next({ scope: child_scope });
 		},
 
 		Fragment: (node, context) => {
@@ -585,9 +582,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			scopes.set(node, scope);
 			context.next({ scope });
 		},
-
-		// TODO this will be unnecessary when we switch to fragments
-		IfBlock: CreateBlock,
 
 		BindDirective(node, context) {
 			updates.push([
