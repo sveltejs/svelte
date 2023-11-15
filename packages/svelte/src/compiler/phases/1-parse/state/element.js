@@ -467,16 +467,7 @@ function read_attribute(parser, unique_names) {
 	}
 
 	if (type) {
-		const [base_directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
-
-		// this allow for accessing members of an object
-		const splitted_directive = base_directive_name.split('.');
-
-		let directive_name = splitted_directive.shift() ?? '';
-
-		for (let new_piece of splitted_directive) {
-			directive_name += `['${new_piece}']`;
-		}
+		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
 			error(start + colon_index + 1, 'empty-directive-name', type);

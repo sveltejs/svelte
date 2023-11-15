@@ -75,6 +75,22 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 }
 
 /**
+ * goes from nested.access to nested['access']
+ * @param {string} expression
+ */
+function member_expression_id_to_literal(expression) {
+	// this allow for accessing members of an object
+	const splitted_expression = expression.split('.');
+
+	let new_expression = splitted_expression.shift() ?? '';
+
+	for (let new_piece of splitted_expression) {
+		new_expression += `['${new_piece}']`;
+	}
+	return new_expression;
+}
+
+/**
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').ClassDirective[]} class_directives
@@ -1676,7 +1692,16 @@ export const template_visitors = {
 				? b.literal(null)
 				: b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
 
-		state.init.push(b.stmt(b.call('$.animate', state.node, b.id(node.name), expression)));
+		state.init.push(
+			b.stmt(
+				b.call(
+					'$.animate',
+					state.node,
+					b.id(member_expression_id_to_literal(node.name)),
+					expression
+				)
+			)
+		);
 	},
 	ClassDirective(node, { state, next }) {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
@@ -1696,7 +1721,7 @@ export const template_visitors = {
 				b.call(
 					type,
 					state.node,
-					b.id(node.name),
+					b.id(member_expression_id_to_literal(node.name)),
 					expression,
 					node.modifiers.includes('global') ? b.true : b.false
 				)
@@ -2417,7 +2442,13 @@ export const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const args = [
 			state.node,
-			b.arrow(params, b.call(serialize_get_binding(b.id(node.name), state), ...params))
+			b.arrow(
+				params,
+				b.call(
+					serialize_get_binding(b.id(member_expression_id_to_literal(node.name)), state),
+					...params
+				)
+			)
 		];
 
 		if (node.expression) {
