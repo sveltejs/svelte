@@ -16,6 +16,9 @@ var element_prototype;
  * @type {Text}
  */
 var text_prototype;
+/**
+ * @type {Map}
+ */
 var map_prototype;
 /**
  * @type {typeof Node.prototype.appendChild}
