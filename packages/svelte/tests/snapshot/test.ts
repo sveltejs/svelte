@@ -7,11 +7,14 @@ import { VERSION } from 'svelte/compiler';
 
 interface SnapshotTest extends BaseTest {
 	compileOptions?: Partial<import('#compiler').CompileOptions>;
+	skip_if_ssr?: boolean;
 }
 
 const { test, run } = suite<SnapshotTest>(async (config, cwd) => {
 	compile_directory(cwd, 'client', config.compileOptions);
-	compile_directory(cwd, 'server', config.compileOptions);
+	if (!config.skip_if_ssr) {
+		compile_directory(cwd, 'server', config.compileOptions);
+	}
 
 	// run `UPDATE_SNAPSHOTS=true pnpm test snapshot` to update snapshot tests
 	if (process.env.UPDATE_SNAPSHOTS) {
