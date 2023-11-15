@@ -2658,9 +2658,12 @@ export function attr_effect(dom, attribute, value) {
  * @param {string | null} value
  */
 export function attr(dom, attribute, value) {
+	value = value == null ? null : value + '';
+
 	if (DEV) {
 		check_src_in_dev_hydration(dom, attribute, value);
 	}
+
 	if (
 		current_hydration_fragment === null ||
 		(dom.getAttribute(attribute) !== value &&
@@ -2671,7 +2674,7 @@ export function attr(dom, attribute, value) {
 			attribute !== 'src' &&
 			attribute !== 'srcset')
 	) {
-		if (value == null) {
+		if (value === null) {
 			dom.removeAttribute(attribute);
 		} else {
 			dom.setAttribute(attribute, value);
