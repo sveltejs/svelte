@@ -960,10 +960,18 @@ export function set_signal_value(signal, value) {
 			schedule_effect(current_effect, false);
 		}
 		mark_signal_consumers(signal, DIRTY, true);
-		// If we have afterUpdates locally on the component, but we're within a render effect
-		// then we will need to manually invoke the beforeUpdate/afterUpdate logic.
+		// This logic checks if there are any render effects queued after the above marking
+		// of consumers. If there are render effects that have the same component context as
+		// the source signal we're writing to, then we can bail-out of this logic as there
+		// will be a render effect in the queue that hopefully takes case of triggering the
+		// beforeUpdate/afterUpdate logic (doing it again here would duplicate them). However,
+		// if the render effects scheduled in the queue are unrelated to the component context,
+		// then we need to trigger the beforeUpdate/afterUpdate logic here instead.
 		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
-		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
+		if (
+			current_effect === null &&
+			current_queued_pre_and_render_effects.every((e) => e.context !== component_context)
+		) {
 			const update_callbacks = component_context?.update_callbacks;
 			if (update_callbacks != null) {
 				update_callbacks.before.forEach(/** @param {any} c */ (c) => c());

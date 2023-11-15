@@ -31,7 +31,7 @@ We've also taken extra care to ensure that all the links from the old website wi
 
 The lack of search functionality could make finding stuff a nuisance as <kbd>Ctrl+F</kbd> only returns results in order of occurrence and not order of importance. While <kbd>Ctrl+F</kbd> did have its benefits such as not requiring JS, now that the site has multiple pages, it's not an option anymore.
 
-And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbd>Ctrl+K</kbd> (or <kbd>CMD+F</kbd> for Mac users) and start searching — it even works without JavaScript!
+And for that, the new website comes with a search bar, which searches through the docs and the API surface. Hit <kbd>Ctrl+K</kbd> (or <kbd>CMD+K</kbd> for Mac users) and start searching — it even works without JavaScript!
 
 ## Lights, TypeScript, Action!
 

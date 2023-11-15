@@ -17,6 +17,12 @@
 				"useTabs": false,
 				"tabWidth": 2
 			}
+		},
+		{
+			"files": ["sites/svelte-5-preview/src/routes/docs/content/**/*.md"],
+			"options": {
+				"printWidth": 60
+			}
 		}
 	]
 }

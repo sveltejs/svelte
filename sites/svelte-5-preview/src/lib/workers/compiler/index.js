@@ -3,6 +3,7 @@ self.window = self; //TODO: still need?: egregious hack to get magic-string to w
 
 /**
  * @type {{
+ * 	 parse: typeof import('svelte/compiler').parse;
  *   compile: typeof import('svelte/compiler').compile;
  *   compileModule: typeof import('svelte/compiler').compileModule;
  *   VERSION: string;
@@ -65,6 +66,8 @@ function compile({ id, source, options, return_ast }) {
 
 			const { js, css, warnings, metadata } = compiled;
 
+			const ast = return_ast ? svelte.parse(source, { modern: true }) : undefined;
+
 			return {
 				id,
 				result: {
@@ -72,7 +75,8 @@ function compile({ id, source, options, return_ast }) {
 					css: css?.code || `/* Add a <sty` + `le> tag to see compiled CSS */`,
 					error: null,
 					warnings,
-					metadata
+					metadata,
+					ast
 				}
 			};
 		} else if (options.filename.endsWith('.svelte.js')) {

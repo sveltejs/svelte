@@ -92,4 +92,5 @@
 	on:change={change_from_editor}
 	on:remove={change_from_editor}
 	previewTheme={$theme.current}
+	showAst={true}
 />

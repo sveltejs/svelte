@@ -325,6 +325,10 @@ export const validation = {
 					if (node.name === 'checked' && type?.value[0].data !== 'checkbox') {
 						error(node, 'invalid-binding', node.name, '<input type="checkbox">');
 					}
+
+					if (node.name === 'files' && type?.value[0].data !== 'file') {
+						error(node, 'invalid-binding', node.name, '<input type="file">');
+					}
 				}
 
 				if (parent.name === 'select') {
@@ -448,15 +452,6 @@ export const validation_legacy = merge(validation, a11y_validators, {
 
 		// TODO check if it's a store subscription that's called? How likely is it that someone uses a store that contains a function?
 		error(node.init, 'invalid-rune-usage', callee.name);
-	},
-	ExportNamedDeclaration(node) {
-		if (
-			node.declaration &&
-			node.declaration.type !== 'VariableDeclaration' &&
-			node.declaration.type !== 'FunctionDeclaration'
-		) {
-			error(node, 'TODO', 'whatever this is');
-		}
 	},
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);

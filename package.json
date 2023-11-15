@@ -14,7 +14,6 @@
     "url": "git+https://github.com/sveltejs/svelte.git"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=development concurrently \"npm run watch\" \"npm run dev --prefix playgrounds/demo\"",
     "build": "pnpm -r --filter=./packages/* build",
     "build:sites": "pnpm -r --filter=./sites/* build",
     "preview-site": "npm run build --prefix sites/svelte-5-preview",

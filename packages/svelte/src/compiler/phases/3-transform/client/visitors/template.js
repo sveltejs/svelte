@@ -75,6 +75,22 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 }
 
 /**
+ * goes from nested.access to nested['access']
+ * @param {string} expression
+ */
+function member_expression_id_to_literal(expression) {
+	// this allow for accessing members of an object
+	const splitted_expression = expression.split('.');
+
+	let new_expression = splitted_expression.shift() ?? '';
+
+	for (let new_piece of splitted_expression) {
+		new_expression += `['${new_piece}']`;
+	}
+	return new_expression;
+}
+
+/**
  * Serializes each class directive into something like `$.class_toogle(element, class_name, value)`
  * and adds it either to init or update, depending on whether or not the value or the attributes are dynamic.
  * @param {import('#compiler').ClassDirective[]} class_directives
@@ -710,7 +726,6 @@ function serialize_inline_component(node, component_name, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
-			if (attribute.name === 'slot') continue;
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
 					b.init(attribute.name, serialize_attribute_value(attribute.value, context)[1])
@@ -850,7 +865,14 @@ function serialize_inline_component(node, component_name, context) {
 					b.thunk(b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))))
 			  );
 	/** @param {import('estree').Identifier} node_id */
-	let fn = (node_id) => b.call(component_name, node_id, props_expression);
+	let fn = (node_id) =>
+		b.call(
+			context.state.options.dev
+				? b.call('$.validate_component', b.id(component_name))
+				: component_name,
+			node_id,
+			props_expression
+		);
 
 	if (bind_this !== null) {
 		const prev = fn;
@@ -1670,7 +1692,16 @@ export const template_visitors = {
 				? b.literal(null)
 				: b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
 
-		state.init.push(b.stmt(b.call('$.animate', state.node, b.id(node.name), expression)));
+		state.init.push(
+			b.stmt(
+				b.call(
+					'$.animate',
+					state.node,
+					b.id(member_expression_id_to_literal(node.name)),
+					expression
+				)
+			)
+		);
 	},
 	ClassDirective(node, { state, next }) {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
@@ -1690,7 +1721,7 @@ export const template_visitors = {
 				b.call(
 					type,
 					state.node,
-					b.id(node.name),
+					b.id(member_expression_id_to_literal(node.name)),
 					expression,
 					node.modifiers.includes('global') ? b.true : b.false
 				)
@@ -1721,7 +1752,6 @@ export const template_visitors = {
 		const is_custom_element = is_custom_element_node(node);
 		let needs_input_reset = false;
 		let needs_content_reset = false;
-		let has_spread = false;
 
 		/** @type {import('#compiler').BindDirective | null} */
 		let value_binding = null;
@@ -1741,27 +1771,22 @@ export const template_visitors = {
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
-				if (is_event_attribute(attribute)) {
-					serialize_event_attribute(attribute, context);
-				} else {
-					attributes.push(attribute);
-					if (
-						(attribute.name === 'value' || attribute.name === 'checked') &&
-						!is_text_attribute(attribute)
-					) {
-						needs_input_reset = true;
-						needs_content_reset = true;
-					} else if (
-						attribute.name === 'contenteditable' &&
-						(attribute.value === true ||
-							(is_text_attribute(attribute) && attribute.value[0].data === 'true'))
-					) {
-						is_content_editable = true;
-					}
+				attributes.push(attribute);
+				if (
+					(attribute.name === 'value' || attribute.name === 'checked') &&
+					!is_text_attribute(attribute)
+				) {
+					needs_input_reset = true;
+					needs_content_reset = true;
+				} else if (
+					attribute.name === 'contenteditable' &&
+					(attribute.value === true ||
+						(is_text_attribute(attribute) && attribute.value[0].data === 'true'))
+				) {
+					is_content_editable = true;
 				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
-				has_spread = true;
 				needs_input_reset = true;
 				needs_content_reset = true;
 			} else if (attribute.type === 'ClassDirective') {
@@ -1822,7 +1847,7 @@ export const template_visitors = {
 
 		// Then do attributes
 		let is_attributes_reactive = false;
-		if (has_spread) {
+		if (node.metadata.has_spread) {
 			const spread_id = serialize_element_spread_attributes(attributes, context, node_id);
 			if (child_metadata.namespace !== 'foreign') {
 				add_select_to_spread_update(spread_id, node, context, node_id);
@@ -1830,6 +1855,11 @@ export const template_visitors = {
 			is_attributes_reactive = spread_id !== null;
 		} else {
 			for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
+				if (is_event_attribute(attribute)) {
+					serialize_event_attribute(attribute, context);
+					continue;
+				}
+
 				if (needs_special_value_handling && attribute.name === 'value') {
 					serialize_element_special_value_attribute(node.name, node_id, attribute, context);
 					continue;
@@ -2059,7 +2089,10 @@ export const template_visitors = {
 		/** @type {number} */
 		let each_type;
 
-		if (node.key) {
+		if (
+			node.key &&
+			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
+		) {
 			each_type = EACH_KEYED;
 			if (
 				node.key.type === 'Identifier' &&
@@ -2409,7 +2442,13 @@ export const template_visitors = {
 		/** @type {import('estree').Expression[]} */
 		const args = [
 			state.node,
-			b.arrow(params, b.call(serialize_get_binding(b.id(node.name), state), ...params))
+			b.arrow(
+				params,
+				b.call(
+					serialize_get_binding(b.id(member_expression_id_to_literal(node.name)), state),
+					...params
+				)
+			)
 		];
 
 		if (node.expression) {

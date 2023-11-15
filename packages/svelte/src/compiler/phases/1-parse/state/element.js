@@ -127,7 +127,9 @@ export default function tag(parser) {
 					attributes: [],
 					fragment: create_fragment(true),
 					metadata: {
-						svg: false
+						svg: false,
+						has_spread: false,
+						can_delegate_events: null
 					},
 					parent: null
 			  }
@@ -331,7 +333,8 @@ function read_tag_name(parser) {
 			if (
 				fragment.type === 'IfBlock' ||
 				fragment.type === 'EachBlock' ||
-				fragment.type === 'Component'
+				fragment.type === 'Component' ||
+				fragment.type === 'SnippetBlock'
 			) {
 				legal = true;
 				break;

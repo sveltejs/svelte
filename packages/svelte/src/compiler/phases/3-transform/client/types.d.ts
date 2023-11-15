@@ -42,7 +42,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		/** Used if condition for singular prop is false (see comment above) */
 		grouped: Statement;
 	}[];
-	/** Stuff that happens after the render effect (bindings, events, actions) */
+	/** Stuff that happens after the render effect (bindings, actions) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
 	readonly template: string[];
