@@ -61,9 +61,10 @@ export function init_operations() {
 	if (node_prototype !== undefined) {
 		return;
 	}
-	node_prototype = /** @type {Node} */ (Node.prototype);
-	element_prototype = /** @type {Element} */ (Element.prototype);
-	text_prototype = /** @type {Text} */ (Text.prototype);
+
+	node_prototype = Node.prototype;
+	element_prototype = Element.prototype;
+	text_prototype = Text.prototype;
 	map_prototype = Map.prototype;
 	append_child_method = node_prototype.appendChild;
 	clone_node_method = node_prototype.cloneNode;
