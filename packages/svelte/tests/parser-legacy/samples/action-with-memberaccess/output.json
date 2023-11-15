@@ -1,0 +1,26 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 0,
+		"end": 25,
+		"children": [
+			{
+				"type": "Element",
+				"start": 0,
+				"end": 25,
+				"name": "input",
+				"attributes": [
+					{
+						"start": 7,
+						"end": 24,
+						"type": "Action",
+						"name": "nested['action']",
+						"modifiers": [],
+						"expression": null
+					}
+				],
+				"children": []
+			}
+		]
+	}
+}
