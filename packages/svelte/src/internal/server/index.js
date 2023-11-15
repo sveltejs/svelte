@@ -32,7 +32,7 @@ const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
 
 // This is duplicated from the compiler, but we need it at runtime too.
-const DOMBooleans = [
+export const DOMBooleanAttributes = [
 	'allowfullscreen',
 	'async',
 	'autofocus',
@@ -58,9 +58,6 @@ const DOMBooleans = [
 	'seamless',
 	'selected'
 ];
-
-/** @type {Set<string>} */
-export const DOMBooleanAttributes = new Set(DOMBooleans);
 
 export const VoidElements = new Set([
 	'area',
@@ -280,7 +277,7 @@ export function spread_attributes(attrs, class_hash, additional) {
 
 	for (name in merged_attrs) {
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		const is_boolean = DOMBooleanAttributes.has(name);
+		const is_boolean = DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 

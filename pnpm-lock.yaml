@@ -108,6 +108,9 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.3.0)
+      '@rollup/plugin-virtual':
+        specifier: ^3.0.2
+        version: 3.0.2(rollup@4.3.0)
       '@types/aria-query':
         specifier: ^5.0.3
         version: 5.0.4
@@ -1960,6 +1963,18 @@ packages:
       serialize-javascript: 6.0.1
       smob: 1.4.1
       terser: 5.24.0
+    dev: true
+
+  /@rollup/plugin-virtual@3.0.2(rollup@4.3.0):
+    resolution: {integrity: sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+    dependencies:
+      rollup: 4.3.0
     dev: true
 
   /@rollup/pluginutils@4.2.1:
