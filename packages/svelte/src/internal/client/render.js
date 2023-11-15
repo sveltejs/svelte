@@ -4,6 +4,7 @@ import {
 	child,
 	clone_node,
 	create_element,
+	init_operations,
 	map_get,
 	map_set,
 	set_class_name
@@ -3173,6 +3174,7 @@ export function createRoot(component, options) {
  * @returns {[Exports, () => void]}
  */
 export function mount(component, options) {
+	init_operations();
 	const registered_events = new Set();
 	const container = options.target;
 	const block = create_root_block(container, options.intro || false);
