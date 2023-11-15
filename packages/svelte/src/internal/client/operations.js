@@ -17,7 +17,7 @@ var element_prototype;
  */
 var text_prototype;
 /**
- * @type {Map}
+ * @type {Map<any, any>}
  */
 var map_prototype;
 /**
