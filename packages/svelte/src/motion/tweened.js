@@ -71,7 +71,8 @@ function get_interpolator(a, b) {
 }
 
 /**
- * A tweened store in Svelte is a special type of store that provides smooth transitions between state values over time.
+ * A tweened store in Svelte is a special type of store that provides smooth transitions between
+ * state values over time.
  *
  * https://svelte.dev/docs/svelte-motion#tweened
  * @template T
@@ -89,11 +90,12 @@ export function tweened(value, defaults = {}) {
 	 * @param {import('./private').TweenedOptions<T>} [opts]
 	 */
 	function set(new_value, opts) {
+		target_value = new_value;
+
 		if (value == null) {
 			store.set((value = new_value));
 			return Promise.resolve();
 		}
-		target_value = new_value;
 
 		/** @type {import('../internal/client/private').Task | null} */
 		let previous_task = task;
@@ -123,8 +125,9 @@ export function tweened(value, defaults = {}) {
 			if (now < start) return true;
 			if (!started) {
 				fn = interpolate(/** @type {any} */ (value), new_value);
-				if (typeof duration === 'function')
+				if (typeof duration === 'function') {
 					duration = duration(/** @type {any} */ (value), new_value);
+				}
 				started = true;
 			}
 			if (previous_task) {
