@@ -2658,7 +2658,7 @@ export function attr_effect(dom, attribute, value) {
  * @param {string | null} value
  */
 export function attr(dom, attribute, value) {
-	value = value == null ? null : stringify(value);
+	value = value == null ? null : value + '';
 
 	if (DEV) {
 		check_src_in_dev_hydration(dom, attribute, value);
