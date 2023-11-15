@@ -109,10 +109,16 @@ function open(parser) {
 
 			// @ts-expect-error 'TSAsExpression' is not recognized as an estree type
 			if (expression.type === 'TSAsExpression') {
+				// we can't reset `parser.index` to `expression.expression.end` because
+				// it will ignore any parentheses — we need to jump through this hoop
+				let end = /** @type {any} */ (/** @type {any} */ (expression).typeAnnotation).start - 2;
+				while (parser.template.slice(end, end + 2) !== 'as') end -= 1;
+
 				expression = /** @type {import('estree').Expression} */ (
 					/** @type {any} */ (expression).expression
 				);
-				parser.index = /** @type {number} */ (expression.end);
+
+				parser.index = end;
 				parser.allow_whitespace();
 			}
 		}
