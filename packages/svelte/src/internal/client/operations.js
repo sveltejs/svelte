@@ -5,15 +5,15 @@ import { get_descriptor } from './utils.js';
 // expensive prototype chain lookups.
 
 /**
- * @type {typeof Node.prototype}
+ * @type {Node}
  */
 var node_prototype;
 /**
- * @type {typeof Element.prototype}
+ * @type {Element}
  */
 var element_prototype;
 /**
- * @type {typeof Text.prototype}
+ * @type {Text}
  */
 var text_prototype;
 var map_prototype;
