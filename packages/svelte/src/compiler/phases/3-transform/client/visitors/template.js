@@ -2416,8 +2416,11 @@ export const template_visitors = {
 		let callee;
 		if (node.name.includes('.')) {
 			const parts = node.name.split('.');
-			const key = b.key(parts[1]);
-			callee = b.member(serialize_get_binding(b.id(parts[0]), state), key, key.type === 'Literal');
+			callee = serialize_get_binding(b.id(parts[0]), state);
+			for (let i = 1; i < parts.length; i++) {
+				const key = b.key(parts[i]);
+				callee = b.member(callee, key, key.type === 'Literal');
+			}
 		} else {
 			callee = serialize_get_binding(b.id(node.name), state);
 		}
