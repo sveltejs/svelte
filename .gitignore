@@ -3,8 +3,6 @@ node_modules/
 
 # IDE related
 .idea
-.vscode/*
-!.vscode/launch.json
 
 # Test coverage
 coverage
