@@ -34,6 +34,7 @@ import {
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../../constants.js';
+import { regex_is_valid_identifier } from '../../../patterns.js';
 
 /**
  * Serializes each style directive into something like `$.style(element, style_property, value)`
@@ -75,19 +76,24 @@ function serialize_style_directives(style_directives, element_id, context, is_at
 }
 
 /**
- * goes from nested.access to nested['access']
- * @param {string} expression
+ * For unfortunate legacy reasons, directive names can look like this `use:a.b-c`
+ * This turns that string into a member expression
+ * @param {string} name
  */
-function member_expression_id_to_literal(expression) {
+function parse_directive_name(name) {
 	// this allow for accessing members of an object
-	const splitted_expression = expression.split('.');
+	const parts = name.split('.');
+	let part = /** @type {string} */ (parts.shift());
 
-	let new_expression = splitted_expression.shift() ?? '';
+	/** @type {import('estree').Identifier | import('estree').MemberExpression} */
+	let expression = b.id(part);
 
-	for (let new_piece of splitted_expression) {
-		new_expression += `['${new_piece}']`;
+	while ((part = /** @type {string} */ (parts.shift()))) {
+		const computed = !regex_is_valid_identifier.test(part);
+		expression = b.member(expression, computed ? b.literal(part) : b.id(part), computed);
 	}
-	return new_expression;
+
+	return expression;
 }
 
 /**
@@ -1697,7 +1703,7 @@ export const template_visitors = {
 				b.call(
 					'$.animate',
 					state.node,
-					b.id(member_expression_id_to_literal(node.name)),
+					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
 					expression
 				)
 			)
@@ -1721,7 +1727,7 @@ export const template_visitors = {
 				b.call(
 					type,
 					state.node,
-					b.id(member_expression_id_to_literal(node.name)),
+					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
 					expression,
 					node.modifiers.includes('global') ? b.true : b.false
 				)
@@ -2445,7 +2451,7 @@ export const template_visitors = {
 			b.arrow(
 				params,
 				b.call(
-					serialize_get_binding(b.id(member_expression_id_to_literal(node.name)), state),
+					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
 					...params
 				)
 			)
