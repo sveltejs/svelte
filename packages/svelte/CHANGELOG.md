@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.4
+
+### Patch Changes
+
+- revert: address bug in before/after update ([#9480](https://github.com/sveltejs/svelte/pull/9480))
+
 ## 5.0.0-next.3
 
 ### Patch Changes
