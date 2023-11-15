@@ -1,19 +1,32 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
+import { tsPlugin } from 'acorn-typescript';
+import { strip_types } from './strip-types.js';
+
+// @ts-expect-error
+const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
  * @param {string} source
  */
 export function parse(source) {
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = acorn.parse(source, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 13,
-		locations: true
-	});
+	const ast = /** @type {import('estree').Program} */ (
+		strip_types(
+			// @ts-expect-error
+			ParserWithTS.parse(source, {
+				onComment,
+				sourceType: 'module',
+				ecmaVersion: 13,
+				locations: true
+			})
+		)
+	);
+
+	// @ts-expect-error
 	add_comments(ast);
-	return /** @type {import('estree').Program} */ (ast);
+
+	return ast;
 }
 
 /**
@@ -22,14 +35,22 @@ export function parse(source) {
  */
 export function parse_expression_at(source, index) {
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = acorn.parseExpressionAt(source, index, {
-		onComment,
-		sourceType: 'module',
-		ecmaVersion: 13,
-		locations: true
-	});
+	const ast = /** @type {import('estree').Expression} */ (
+		strip_types(
+			// @ts-expect-error
+			ParserWithTS.parseExpressionAt(source, index, {
+				onComment,
+				sourceType: 'module',
+				ecmaVersion: 13,
+				locations: true
+			})
+		)
+	);
+
+	// @ts-expect-error
 	add_comments(ast);
-	return /** @type {import('estree').Expression} */ (ast);
+
+	return ast;
 }
 
 /**

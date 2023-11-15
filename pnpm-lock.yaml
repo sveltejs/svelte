@@ -68,6 +68,9 @@ importers:
       acorn:
         specifier: ^8.10.0
         version: 8.11.2
+      acorn-typescript:
+        specifier: ^1.4.11
+        version: 1.4.11(acorn@8.11.2)
       aria-query:
         specifier: ^5.3.0
         version: 5.3.0
@@ -2745,6 +2748,14 @@ packages:
     dependencies:
       acorn: 8.11.2
     dev: true
+
+  /acorn-typescript@1.4.11(acorn@8.11.2):
+    resolution: {integrity: sha512-cRGgp+4HMxMZAiMS61ZmQ3iuU/+A4g4ZYZsyLZdmvrEVN/TOwfJ40rPWcLqi3H5ut75SYAdOOJj6QGCcrkK57w==}
+    peerDependencies:
+      acorn: '>=8.9.0'
+    dependencies:
+      acorn: 8.11.2
+    dev: false
 
   /acorn-walk@8.3.0:
     resolution: {integrity: sha512-FS7hV565M5l1R08MXqo8odwMTB02C2UqzB17RVgu9EyuYFBqJZ3/ZY97sQD5FewVu1UyDFc1yztUDrAwT0EypA==}

@@ -67,10 +67,55 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const template = parser.template;
+		let end = parser.template.length;
+
+		/** @type {import('estree').Expression | undefined} */
+		let expression;
+
+		// we have to do this loop because `{#each x as { y = z }}` fails to parse —
+		// the `as { y = z }` is treated as an Expression but it's actually a Pattern.
+		// the 'fix' is to backtrack and hide everything from the `as` onwards, until
+		// we get a valid expression
+		while (!expression) {
+			try {
+				expression = read_expression(parser);
+			} catch (err) {
+				end = /** @type {any} */ (err).position[0] - 2;
+
+				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
+					end -= 1;
+				}
+
+				if (end <= start) throw err;
+
+				// @ts-expect-error parser.template is meant to be readonly, this is a special case
+				parser.template = template.slice(0, end);
+			}
+		}
+
+		// @ts-expect-error
+		parser.template = template;
+
 		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
+		if (!parser.match('as')) {
+			// this could be a TypeScript assertion that was erroneously eaten.
+
+			if (expression.type === 'SequenceExpression') {
+				expression = expression.expressions[0];
+			}
+
+			// @ts-expect-error 'TSAsExpression' is not recognized as an estree type
+			if (expression.type === 'TSAsExpression') {
+				expression = /** @type {import('estree').Expression} */ (
+					/** @type {any} */ (expression).expression
+				);
+				parser.index = /** @type {number} */ (expression.end);
+				parser.allow_whitespace();
+			}
+		}
 		parser.eat('as', true);
 		parser.require_whitespace();
 

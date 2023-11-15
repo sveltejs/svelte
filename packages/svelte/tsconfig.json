@@ -10,6 +10,7 @@
 		"noErrorTruncation": true,
 		"allowSyntheticDefaultImports": true,
 		"verbatimModuleSyntax": true,
+		"skipLibCheck": true,
 		"types": ["node"],
 		"strict": true,
 		"allowJs": true,

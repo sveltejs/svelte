@@ -27,6 +27,7 @@
 			"body": [
 				{
 					"type": "ImportDeclaration",
+					"importKind": "value",
 					"start": 10,
 					"end": 43,
 					"loc": {
@@ -42,6 +43,7 @@
 					"specifiers": [
 						{
 							"type": "ImportSpecifier",
+							"importKind": "value",
 							"start": 19,
 							"end": 26,
 							"loc": {
