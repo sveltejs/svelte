@@ -33,7 +33,7 @@
 
 <article class:playing={!paused}>
 	<h2>{title}</h2>
-	<p><strong>{composer}</strong> / performed by {performer}</p>
+	<p><strong>{composer}</strong> / interprété par {performer}</p>
 
 	<audio bind:this={audio} bind:paused on:play={stopOthers} controls {src} />
 </article>

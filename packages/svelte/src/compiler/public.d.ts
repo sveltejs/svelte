@@ -1,3 +1,5 @@
-export { CompileOptions, CompileResult, EnableSourcemap, CssHashGetter } from './interfaces';
-export * from './preprocess/public.js';
+export type { Preprocessor, PreprocessorGroup } from './preprocess/public';
+
+export type { CompileOptions } from './types/index';
+
 export * from './index.js';

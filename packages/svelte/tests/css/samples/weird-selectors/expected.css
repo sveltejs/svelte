@@ -1,0 +1,6 @@
+	.-foo.svelte-xyz {
+		color: red;
+	}
+	[title='['].svelte-xyz {
+		color: blue;
+	}

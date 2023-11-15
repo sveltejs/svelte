@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-const-assignment",
+		"message": "Invalid binding to const variable",
+		"start": {
+			"line": 5,
+			"column": 7
+		},
+		"end": {
+			"line": 5,
+			"column": 25
+		}
+	}
+]

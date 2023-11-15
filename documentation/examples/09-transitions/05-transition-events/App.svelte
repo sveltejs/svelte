@@ -2,10 +2,10 @@
 	import { fly } from 'svelte/transition';
 
 	let visible = true;
-	let status = 'waiting...';
+	let status = 'en attente...';
 </script>
 
-<p>status: {status}</p>
+<p>statut: {status}</p>
 
 <label>
 	<input type="checkbox" bind:checked={visible} />
@@ -15,11 +15,11 @@
 {#if visible}
 	<p
 		transition:fly={{ y: 200, duration: 2000 }}
-		on:introstart={() => (status = 'intro started')}
-		on:outrostart={() => (status = 'outro started')}
-		on:introend={() => (status = 'intro ended')}
-		on:outroend={() => (status = 'outro ended')}
+		on:introstart={() => (status = `début de l'entrée`)}
+		on:outrostart={() => (status = 'début de la sortie')}
+		on:introend={() => (status = `fin de l'entrée`)}
+		on:outroend={() => (status = `fin de la sortie`)}
 	>
-		Flies in and out
+		Entre et sort en volant
 	</p>
 {/if}

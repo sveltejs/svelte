@@ -25,10 +25,10 @@ export function sourcemap_add_offset(map, offset, source_index) {
 				// also ensures that seg.length >= 4
 				// shift column if it points at the first line
 				if (seg[2] === 0) {
-					seg[3] += offset.column;
+					/** @type {any} */ (seg[3]) += offset.column;
 				}
 				// shift line
-				seg[2] += offset.line;
+				/** @type {any} */ (seg[2]) += offset.line;
 			}
 		}
 	}
@@ -71,12 +71,17 @@ export class MappedCode {
 	/**
 	 * @type {string}
 	 */
-	string = undefined;
+	string = /** @type {any} */ (undefined);
 
 	/**
 	 * @type {import('@ampproject/remapping').DecodedSourceMap}
 	 */
-	map = undefined;
+	map = /** @type {any} */ (undefined);
+
+	/**
+	 * @param {string} string
+	 * @param {import('@ampproject/remapping').DecodedSourceMap | null} map
+	 */
 	constructor(string = '', map = null) {
 		this.string = string;
 		if (map) {
@@ -127,7 +132,9 @@ export class MappedCode {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
+					// @ts-ignore
 					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
+					// @ts-ignore
 					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
@@ -136,6 +143,7 @@ export class MappedCode {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
+					// @ts-ignore
 					if (seg[1] >= 0) seg[1] = new_source_idx[seg[1]];
 				}
 			}
@@ -144,6 +152,7 @@ export class MappedCode {
 				const segment_list = m2.mappings[line];
 				for (let segment = 0; segment < segment_list.length; segment++) {
 					const seg = segment_list[segment];
+					// @ts-ignore
 					if (seg[4] >= 0) seg[4] = new_name_idx[seg[4]];
 				}
 			}
@@ -160,7 +169,10 @@ export class MappedCode {
 			}
 		}
 		// combine last line + first line
-		push_array(m1.mappings[m1.mappings.length - 1], m2.mappings.shift());
+		push_array(
+			m1.mappings[m1.mappings.length - 1],
+			/** @type {import('@ampproject/remapping').SourceMapSegment[]} */ (m2.mappings.shift())
+		);
 		// append other lines
 		push_array(m1.mappings, m2.mappings);
 		return this;
@@ -224,6 +236,7 @@ export class MappedCode {
 		// shift columns in first line
 		const segment_list = map.mappings[0];
 		for (let segment = 0; segment < segment_list.length; segment++) {
+			// @ts-ignore
 			segment_list[segment][3] += offset.column;
 		}
 		return new MappedCode(source, map);
@@ -331,6 +344,7 @@ export function parse_attached_sourcemap(processed, tag_name) {
 		// code_start: help to find preprocessor
 		const code_start =
 			processed.code.length < 100 ? processed.code : processed.code.slice(0, 100) + ' [...]';
+		// eslint-disable-next-line no-console
 		console.warn(`warning: ${message}. processed.code = ${JSON.stringify(code_start)}`);
 	}
 	processed.code = processed.code.replace(regex, (_, match1, match2) => {

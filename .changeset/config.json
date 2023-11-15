@@ -5,7 +5,7 @@
 	"fixed": [],
 	"linked": [],
 	"access": "public",
-	"baseBranch": "svelte-4",
+	"baseBranch": "main",
 	"bumpVersionsWithWorkspaceProtocolOnly": true,
 	"ignore": ["!(@sveltejs/*|svelte)"]
 }

@@ -1,0 +1,22 @@
+	/* boundary of each */
+	.a.svelte-xyz ~ .b.svelte-xyz {
+		color: green;
+	}
+	.c.svelte-xyz ~ .d.svelte-xyz {
+		color: green;
+	}
+	/* if array is empty */
+	.a.svelte-xyz ~ .d.svelte-xyz {
+		color: green;
+	}
+	/* if array has multiple items */
+	.c.svelte-xyz ~ .b.svelte-xyz {
+		color: green;
+	}
+	/* normal sibling */
+	.b.svelte-xyz ~ .c.svelte-xyz {
+		color: green;
+	}
+	.a.svelte-xyz ~ .c.svelte-xyz {
+		color: green;
+	}

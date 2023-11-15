@@ -1,6 +1,7 @@
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
+	import { PUBLIC_KIT_SITE_URL, PUBLIC_LEARN_SITE_URL } from '$env/static/public';
 	import { Icon, Shell } from '@sveltejs/site-kit/components';
 	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
@@ -38,6 +39,7 @@
 		banner_bottom_height="42px"
 	>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
+			<svelte:fragment slot="theme-label">Thème</svelte:fragment>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
 			</svelte:fragment>
@@ -48,14 +50,14 @@
 
 			<svelte:fragment slot="search">
 				{#if $page.url.pathname !== '/search'}
-					<Search />
+					<Search label="Recherche" />
 				{/if}
 			</svelte:fragment>
 
 			<svelte:fragment slot="external-links">
-				<a href="https://learn.svelte.dev/">Tutorial</a>
+				<a href={PUBLIC_LEARN_SITE_URL}>Tutoriel</a>
 
-				<a href="https://kit.svelte.dev">SvelteKit</a>
+				<a href={PUBLIC_KIT_SITE_URL}>SvelteKit</a>
 
 				<Separator />
 
@@ -74,13 +76,23 @@
 		<slot />
 
 		<div slot="banner-bottom" class="banner-bottom">
-			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom">Join us at Svelte Summit on Nov 11</a>
+			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom"
+				>Rejoignez-nous pour le Svelte Summit le 11 novembre</a
+			>
 		</div>
 	</Shell>
 </div>
 
 {#if browser}
-	<SearchBox />
+	<SearchBox placeholder="Recherche">
+		<svelte:fragment slot="search-description">
+			Les résultats se mettent à jour quand vous écrivez
+		</svelte:fragment>
+		<svelte:fragment slot="idle" let:has_recent_searches>
+			{has_recent_searches ? 'Recherches récentes' : 'Aucune recherche récente'}
+		</svelte:fragment>
+		<svelte:fragment slot="no-results">Aucun résultat</svelte:fragment>
+	</SearchBox>
 {/if}
 
 <style>
@@ -99,5 +111,15 @@
 		color: white;
 		text-decoration: underline;
 		padding: 8px;
+	}
+
+	:global(.text .vo a) {
+		color: var(--sk-text-1);
+		box-shadow: inset 0 -1px 0 0 var(--sk-text-4);
+		transition: color 0.2s ease-in-out;
+	}
+
+	:global(.text .vo a:hover) {
+		color: var(--sk-text-3);
 	}
 </style>

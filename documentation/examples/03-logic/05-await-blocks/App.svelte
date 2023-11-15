@@ -1,6 +1,4 @@
 <script>
-	let promise = getRandomNumber();
-
 	async function getRandomNumber() {
 		const res = await fetch(`/tutorial/random-number`);
 		const text = await res.text();
@@ -12,17 +10,19 @@
 		}
 	}
 
+	let promise = getRandomNumber();
+
 	function handleClick() {
 		promise = getRandomNumber();
 	}
 </script>
 
-<button on:click={handleClick}> generate random number </button>
+<button on:click={handleClick}> générer un nombre aléatoire </button>
 
 {#await promise}
-	<p>...waiting</p>
+	<p>...en attente</p>
 {:then number}
-	<p>The number is {number}</p>
+	<p>Le nombre est {number}</p>
 {:catch error}
 	<p style="color: red">{error.message}</p>
 {/await}

@@ -6,7 +6,7 @@
 </script>
 
 <p>
-	The page has been open for
+	La page est ouverte depuis
 	{seconds}
-	{seconds === 1 ? 'second' : 'seconds'}
+	{seconds > 1 ? 'secondes' : 'seconde'}
 </p>

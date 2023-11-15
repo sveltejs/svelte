@@ -9,6 +9,13 @@ import {
 import { CONTENT_BASE_PATHS } from '../../../constants.js';
 import { render_content } from '../renderer';
 
+import {
+	PUBLIC_KIT_SITE_URL,
+	PUBLIC_SVELTE_SITE_URL,
+	PUBLIC_LEARN_SITE_URL,
+	PUBLIC_GITHUB_ORG
+} from '$env/static/public';
+
 /**
  * @param {import('./types').DocsData} docs_data
  * @param {string} slug
@@ -74,7 +81,11 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 			category.pages.push({
 				title: page_title,
 				slug: page_slug,
-				content: page_content,
+				content: page_content
+					.replace(/PUBLIC_KIT_SITE_URL/g, PUBLIC_KIT_SITE_URL)
+					.replace(/PUBLIC_SVELTE_SITE_URL/g, PUBLIC_SVELTE_SITE_URL)
+					.replace(/PUBLIC_LEARN_SITE_URL/g, PUBLIC_LEARN_SITE_URL)
+					.replace(/PUBLIC_GITHUB_ORG/g, PUBLIC_GITHUB_ORG),
 				category: category_title,
 				sections: await get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
@@ -102,7 +113,11 @@ export function get_docs_list(docs_data) {
 /** @param {string} str */
 const titled = async (str) =>
 	removeMarkdown(
-		escape(await markedTransform(str, { paragraph: (txt) => txt }))
+		escape(
+			await markedTransform(str, {
+				paragraph: (txt) => txt
+			})
+		)
 			.replace(/<\/?code>/g, '')
 			.replace(/&#39;/g, "'")
 			.replace(/&quot;/g, '"')

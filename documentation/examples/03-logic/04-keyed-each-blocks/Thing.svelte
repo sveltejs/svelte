@@ -1,14 +1,14 @@
 <script>
-	// `current` is updated whenever the prop value changes...
+	// `current` est mis à jour à chaque fois que la valeur de la prop change...
 	export let current;
 
-	// ...but `initial` is fixed upon initialisation
+	// ...mais la variable "initial" est fixée au moment de l'instantiation du composant
 	const initial = current;
 </script>
 
 <p>
 	<span style="background-color: {initial}">initial</span>
-	<span style="background-color: {current}">current</span>
+	<span style="background-color: {current}">actuel</span>
 </p>
 
 <style>

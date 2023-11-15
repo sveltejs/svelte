@@ -14,9 +14,9 @@
 
 	async function destroy_selected() {
 		const confirmed = confirm(
-			`Are you sure you want to delete ${selected.length} ${
-				selected.length === 1 ? 'app' : 'apps'
-			}?`
+			`Êtes vous sûr.e de vouloir supprimer ${selected.length} ${
+				selected.length === 1 ? 'application' : 'applications'
+			} ?`
 		);
 		if (!confirmed) return;
 
@@ -40,7 +40,7 @@
 			// TODO raise an issue
 			// location.reload();
 		} else {
-			alert('Deletion failed');
+			alert('La suppression a échoué');
 		}
 
 		destroying = false;
@@ -51,13 +51,13 @@
 </script>
 
 <svelte:head>
-	<title>Your apps • Svelte</title>
+	<title>Vos applications • Svelte</title>
 </svelte:head>
 
 <div class="apps">
 	{#if data.user}
 		<header>
-			<h1>Your apps</h1>
+			<h1>Vos applications</h1>
 			<div class="user">
 				<img
 					class="avatar"
@@ -66,7 +66,7 @@
 				/>
 				<span>
 					{data.user.github_name || data.user.github_login}
-					(<a on:click|preventDefault={logout} href="/auth/logout">log out</a>)
+					(<a on:click|preventDefault={logout} href="/auth/logout">Se déconnecter</a>)
 				</span>
 			</div>
 		</header>
@@ -75,11 +75,11 @@
 			{#if selected.length > 0}
 				<button class="delete" on:click={() => destroy_selected()} disabled={destroying}>
 					<Icon name="delete" />
-					Delete {selected.length}
-					{selected.length === 1 ? 'app' : 'apps'}
+					Supprimer {selected.length}
+					{selected.length === 1 ? 'application' : 'applications'}
 				</button>
 
-				<button on:click={() => (selected = [])}>Clear selection</button>
+				<button on:click={() => (selected = [])}>Désélectionner les applications</button>
 			{:else}
 				<form
 					on:submit|preventDefault={(e) => {
@@ -89,8 +89,8 @@
 				>
 					<input
 						type="search"
-						placeholder="Search"
-						aria-label="Search"
+						placeholder="Chercher"
+						aria-label="Chercher"
 						name="search"
 						value={data.search}
 					/>
@@ -104,12 +104,12 @@
 					<li class:selected={selected.includes(gist.id)}>
 						<a href={selecting ? undefined : `/repl/${gist.id}`}>
 							<h2>{gist.name}</h2>
-							<span>updated {format(gist.updated_at || gist.created_at)}</span>
+							<span>Mis à jour {format(gist.updated_at || gist.created_at)}</span>
 						</a>
 
 						<label>
 							<input
-								aria-label="Select for delection"
+								aria-label="Sélectionner pour suppression"
 								type="checkbox"
 								bind:group={selected}
 								value={gist.id}
@@ -125,16 +125,17 @@
 					<a
 						href="/apps?offset={data.next}{data.search
 							? `&search=${encodeURIComponent(data.search)}`
-							: ''}">Next page...</a
+							: ''}">Page suivante...</a
 					>
 				{/if}
 			</div>
 		{:else}
-			<p>No apps here. <a href="/repl">Go make one!</a></p>
+			<p>Vous n'avez pas d'application. <a href="/repl">En créer une !</a></p>
 		{/if}
 	{:else}
 		<p>
-			Please <a on:click|preventDefault={login} href="/auth/login">log in</a> to see your saved apps.
+			Merci de <a on:click|preventDefault={login} href="/auth/login">vous connecter</a> pour voir vos
+			applications sauvegardées.
 		</p>
 	{/if}
 </div>

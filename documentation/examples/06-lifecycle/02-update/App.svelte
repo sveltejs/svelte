@@ -31,22 +31,28 @@
 
 			const reply = eliza.transform(text);
 
-			setTimeout(() => {
-				comments = comments.concat({
-					author: 'eliza',
-					text: '...',
-					placeholder: true
-				});
+			setTimeout(
+				() => {
+					comments = comments.concat({
+						author: 'eliza',
+						text: '...',
+						placeholder: true
+					});
 
-				setTimeout(() => {
-					comments = comments
-						.filter((comment) => !comment.placeholder)
-						.concat({
-							author: 'eliza',
-							text: reply
-						});
-				}, 500 + Math.random() * 500);
-			}, 200 + Math.random() * 200);
+					setTimeout(
+						() => {
+							comments = comments
+								.filter((comment) => !comment.placeholder)
+								.concat({
+									author: 'eliza',
+									text: reply
+								});
+						},
+						500 + Math.random() * 500
+					);
+				},
+				200 + Math.random() * 200
+			);
 		}
 	}
 </script>

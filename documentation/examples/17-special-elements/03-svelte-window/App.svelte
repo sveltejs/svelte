@@ -12,10 +12,10 @@
 
 <div style="text-align: center">
 	{#if key}
-		<kbd>{key === ' ' ? 'Space' : key}</kbd>
+		<kbd>{key === ' ' ? 'Espace' : key}</kbd>
 		<p>{keyCode}</p>
 	{:else}
-		<p>Focus this window and press any key</p>
+		<p>Mettez le focus sur cette fenêtre et appuyez sur n'importe quelle touche</p>
 	{/if}
 </div>
 

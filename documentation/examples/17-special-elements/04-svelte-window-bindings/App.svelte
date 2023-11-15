@@ -11,16 +11,16 @@
 		<img
 			style="transform: translate(0,{(-y * layer) / (layers.length - 1)}px)"
 			src="https://www.firewatchgame.com/images/parallax/parallax{layer}.png"
-			alt="parallax layer {layer}"
+			alt="couche parallax {layer}"
 		/>
 	{/each}
 </a>
 
 <div class="text">
-	<span style="opacity: {1 - Math.max(0, y / 40)}"> scroll down </span>
+	<span style="opacity: {1 - Math.max(0, y / 40)}"> Faites défiler vers le bas </span>
 
 	<div class="foreground">
-		You have scrolled {y} pixels
+		Vous avez parcouru {y} pixels
 	</div>
 </div>
 

@@ -1,0 +1,13 @@
+	.a.svelte-xyz ~ .b.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .c.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .d.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .e.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .f.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .g.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz ~ .h.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+
+	.b.svelte-xyz ~ .d.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.c.svelte-xyz ~ .d.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }
+	.b.svelte-xyz ~ .e.svelte-xyz ~ .f.svelte-xyz ~ .h.svelte-xyz { color: green; }
+	.b.svelte-xyz ~ .d.svelte-xyz ~ .h.svelte-xyz.svelte-xyz { color: green; }
+	.c.svelte-xyz ~ .g.svelte-xyz.svelte-xyz.svelte-xyz { color: green; }

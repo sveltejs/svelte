@@ -1,12 +1,12 @@
 <script>
 	let scoops = 1;
-	let flavours = ['Mint choc chip'];
+	let flavours = ['Éclats de menthe'];
 
-	let menu = ['Cookies and cream', 'Mint choc chip', 'Raspberry ripple'];
+	let menu = ['Cookie crémeux', 'Éclats de menthe', 'Vague à la fraise'];
 
 	function join(flavours) {
 		if (flavours.length === 1) return flavours[0];
-		return `${flavours.slice(0, -1).join(', ')} and ${flavours[flavours.length - 1]}`;
+		return `${flavours.slice(0, -1).join(', ')} et ${flavours[flavours.length - 1]}`;
 	}
 </script>
 
@@ -14,20 +14,20 @@
 
 <label>
 	<input type="radio" bind:group={scoops} value={1} />
-	One scoop
+	Une boule
 </label>
 
 <label>
 	<input type="radio" bind:group={scoops} value={2} />
-	Two scoops
+	Deux boules
 </label>
 
 <label>
 	<input type="radio" bind:group={scoops} value={3} />
-	Three scoops
+	Trois boules
 </label>
 
-<h2>Flavours</h2>
+<h2>Parfums</h2>
 
 <select multiple bind:value={flavours}>
 	{#each menu as flavour}
@@ -38,13 +38,13 @@
 </select>
 
 {#if flavours.length === 0}
-	<p>Please select at least one flavour</p>
+	<p>Veuillez choisir au moins un parfum</p>
 {:else if flavours.length > scoops}
-	<p>Can't order more flavours than scoops!</p>
+	<p>Vous ne pouvez pas choisir plus de parfums que de boules !</p>
 {:else}
 	<p>
-		You ordered {scoops}
-		{scoops === 1 ? 'scoop' : 'scoops'}
-		of {join(flavours)}
+		Vous avez commandé {scoops}
+		{scoops === 1 ? 'boule' : 'boules'}
+		de {join(flavours)}
 	</p>
 {/if}

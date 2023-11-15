@@ -100,7 +100,7 @@
 <svelte:head>
 	<title>{selected.section.title} / {selected.chapter.title} • Svelte Tutorial</title>
 
-	<meta name="twitter:title" content="Svelte tutorial" />
+	<meta name="twitter:title" content="Tutoriel Svelte" />
 	<meta name="twitter:description" content="{selected.section.title} / {selected.chapter.title}" />
 	<meta name="Description" content="{selected.section.title} / {selected.chapter.title}" />
 </svelte:head>
@@ -122,17 +122,17 @@
 						<!-- TODO disable this button when the contents of the REPL
 							matches the expected end result -->
 						<button class="show" on:click={() => (completed ? reset() : complete())}>
-							{completed ? 'Reset' : 'Show me'}
+							{completed ? 'Réinitialiser' : 'Montrez-moi'}
 						</button>
 					{/if}
 
 					{#if selected.next}
-						<a class="next" href="/tutorial/{selected.next.slug}">Next</a>
+						<a class="next" href="/tutorial/{selected.next.slug}">Suivant</a>
 					{/if}
 				</div>
 
 				<div class="improve-chapter">
-					<a class="no-underline" href={improve_link}>Edit this chapter</a>
+					<a class="no-underline" href={improve_link}>Éditer ce chapitre</a>
 				</div>
 			</div>
 		</div>

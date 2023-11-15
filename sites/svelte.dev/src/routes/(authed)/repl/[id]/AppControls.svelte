@@ -82,7 +82,7 @@
 			if (navigator.onLine) {
 				alert(err.message);
 			} else {
-				alert(`It looks like you're offline! Find the internet and try again`);
+				alert(`Vous semblez être hors ligne ! Connectez-vous et réessayez`);
 			}
 		}
 
@@ -91,7 +91,7 @@
 
 	async function save() {
 		if (!user) {
-			alert('Please log in before saving your app');
+			alert('Merci de vous connecter pour sauvegarder votre application');
 			return;
 		}
 		if (saving) return;
@@ -137,7 +137,7 @@
 			if (navigator.onLine) {
 				alert(err.message);
 			} else {
-				alert(`It looks like you're offline! Find the internet and try again`);
+				alert('Merci de vous connecter pour sauvegarder votre application');
 			}
 		}
 
@@ -189,10 +189,14 @@ export default app;`
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<input bind:value={name} on:focus={(e) => e.target.select()} use:enter={(e) => /** @type {HTMLInputElement} */ (e.target).blur()} />
+	<input
+		bind:value={name}
+		on:focus={(e) => e.target.select()}
+		use:enter={(e) => /** @type {HTMLInputElement} */ (e.target).blur()}
+	/>
 
 	<div class="buttons">
-		<button class="icon" on:click={() => (zen_mode = !zen_mode)} title="fullscreen editor">
+		<button class="icon fullscreen" on:click={() => (zen_mode = !zen_mode)} title="Plein écran">
 			{#if zen_mode}
 				<Icon name="close" />
 			{:else}
@@ -200,7 +204,12 @@ export default app;`
 			{/if}
 		</button>
 
-		<button class="icon" disabled={downloading} on:click={download} title="download zip file">
+		<button
+			class="icon"
+			disabled={downloading}
+			on:click={download}
+			title="Télécharger le fichier zip"
+		>
 			<Icon name="download" />
 		</button>
 
@@ -212,7 +221,7 @@ export default app;`
 			{/if}
 		</button>
 
-		<button class="icon" disabled={saving || !user} on:click={save} title="save">
+		<button class="icon" disabled={saving || !user} on:click={save} title="Sauvegarder">
 			{#if justSaved}
 				<Icon name="check" />
 			{:else}
@@ -228,7 +237,7 @@ export default app;`
 		{:else}
 			<button class="icon" on:click|preventDefault={login}>
 				<Icon name="log-in" />
-				<span>&nbsp;Log in to save</span>
+				<span>&nbsp;Se connecter pour sauvegarder</span>
 			</button>
 		{/if}
 	</div>
@@ -279,7 +288,7 @@ export default app;`
 		opacity: 0.3;
 	}
 
-	.icon[title^='fullscreen'] {
+	.icon.fullscreen {
 		display: none;
 	}
 
@@ -324,7 +333,7 @@ export default app;`
 	}
 
 	@media (min-width: 600px) {
-		.icon[title^='fullscreen'] {
+		.icon.fullscreen {
 			display: inline;
 		}
 

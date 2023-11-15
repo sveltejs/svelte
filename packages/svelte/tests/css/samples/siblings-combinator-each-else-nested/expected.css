@@ -1,0 +1,27 @@
+	.a.svelte-xyz + .e.svelte-xyz.svelte-xyz { color: green; }
+	.a.svelte-xyz + .f.svelte-xyz.svelte-xyz { color: green; }
+	.b.svelte-xyz + .c.svelte-xyz.svelte-xyz { color: green; }
+	.b.svelte-xyz + .d.svelte-xyz.svelte-xyz { color: green; }
+	.c.svelte-xyz + .e.svelte-xyz.svelte-xyz { color: green; }
+	.c.svelte-xyz + .f.svelte-xyz.svelte-xyz { color: green; }
+	.d.svelte-xyz + .e.svelte-xyz.svelte-xyz { color: green; }
+	.d.svelte-xyz + .f.svelte-xyz.svelte-xyz { color: green; }
+	.e.svelte-xyz + .e.svelte-xyz.svelte-xyz { color: green; }
+	.i.svelte-xyz + .j.svelte-xyz.svelte-xyz { color: green; }
+	.g.svelte-xyz + .h.svelte-xyz + .j.svelte-xyz { color: green; }
+	.g.svelte-xyz + .i.svelte-xyz + .j.svelte-xyz { color: green; }
+	.m.svelte-xyz + .m.svelte-xyz.svelte-xyz { color: green; }
+	.m.svelte-xyz + .l.svelte-xyz.svelte-xyz { color: green; }
+	.l.svelte-xyz + .m.svelte-xyz.svelte-xyz { color: green; }
+
+	/* no match */
+	/* (unused) .a + .c { color: green; }*/
+	/* (unused) .a + .g { color: green; }*/
+	/* (unused) .b + .e { color: green; }*/
+	/* (unused) .c + .g { color: green; }*/
+	/* (unused) .c + .k { color: green; }*/
+	/* (unused) .d + .d { color: green; }*/
+	/* (unused) .e + .f { color: green; }*/
+	/* (unused) .f + .f { color: green; }*/
+	/* (unused) .g + .j { color: green; }*/
+	/* (unused) .g + .h + .i + .j { color: green; }*/

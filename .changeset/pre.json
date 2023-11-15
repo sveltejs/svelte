@@ -1,0 +1,21 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "svelte": "5.0.0-next.0",
+    "svelte-playgrounds-demo": "0.0.1",
+    "svelte-playgrounds-sandbox": "0.0.1",
+    "svelte-5-preview": "0.5.0",
+    "svelte.dev": "1.0.0"
+  },
+  "changesets": [
+    "chilly-dolphins-lick",
+    "eight-steaks-shout",
+    "khaki-mails-draw",
+    "moody-owls-cry",
+    "quiet-camels-mate",
+    "rotten-buckets-develop",
+    "small-papayas-laugh",
+    "tall-shrimps-worry"
+  ]
+}

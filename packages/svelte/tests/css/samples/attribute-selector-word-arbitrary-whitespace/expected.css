@@ -1,0 +1,6 @@
+	.foo.svelte-xyz {
+		color: red;
+	}
+	[class~="bar"].svelte-xyz {
+		background: blue;
+	}

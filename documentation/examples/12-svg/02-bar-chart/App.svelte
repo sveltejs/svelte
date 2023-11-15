@@ -33,21 +33,21 @@
 	$: barWidth = innerWidth / xTicks.length;
 </script>
 
-<h2>US birthrate by year</h2>
+<h2>Taux de natalité aux États-unis par année</h2>
 
 <div class="chart" bind:clientWidth={width} bind:clientHeight={height}>
 	<svg>
-		<!-- y axis -->
+		<!-- axe y -->
 		<g class="axis y-axis">
 			{#each yTicks as tick}
 				<g class="tick tick-{tick}" transform="translate(0, {yScale(tick)})">
 					<line x2="100%" />
-					<text y="-4">{tick} {tick === 20 ? ' per 1,000 population' : ''}</text>
+					<text y="-4">{tick} {tick === 20 ? ' pour 1 000 habitants' : ''}</text>
 				</g>
 			{/each}
 		</g>
 
-		<!-- x axis -->
+		<!-- axe x -->
 		<g class="axis x-axis">
 			{#each points as point, i}
 				<g class="tick" transform="translate({xScale(i)},{height})">
