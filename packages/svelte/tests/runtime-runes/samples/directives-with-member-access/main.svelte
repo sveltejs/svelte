@@ -1,7 +1,11 @@
 <script>
-	const one = ()=>{};
-	const nested = {one, "with-string": one};
-	const evenmore = {nested};
+	/**
+	 * @param {Element} [node]
+	 * @param {any} [options]
+	 */
+	const one = (node, options) => ({});
+	const nested = { one, "with-string": one };
+	const evenmore = { nested };
 </script>
 
 <div use:one />
@@ -24,6 +28,8 @@
 <div out:nested.one />
 <div out:evenmore.nested.one />
 
+<!-- these will yield TypeScript errors, because it looks like e.g. `nested.with - string`,
+     in other words a number. Relatedly, people should not do this. It is stupid. -->
 <div use:nested.with-string />
 <div use:evenmore.nested.with-string />
 
