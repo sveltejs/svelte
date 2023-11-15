@@ -577,7 +577,10 @@ const legacy_scope_tweaker = {
 			return next();
 		}
 
-		if (node.declaration.type === 'FunctionDeclaration') {
+		if (
+			node.declaration.type === 'FunctionDeclaration' ||
+			node.declaration.type === 'ClassDeclaration'
+		) {
 			state.analysis.exports.push({
 				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
 				alias: null
@@ -681,7 +684,10 @@ const runes_scope_tweaker = {
 			return next();
 		}
 
-		if (node.declaration.type === 'FunctionDeclaration') {
+		if (
+			node.declaration.type === 'FunctionDeclaration' ||
+			node.declaration.type === 'ClassDeclaration'
+		) {
 			state.analysis.exports.push({
 				name: /** @type {import('estree').Identifier} */ (node.declaration.id).name,
 				alias: null
