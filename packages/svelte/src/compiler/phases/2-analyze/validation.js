@@ -546,6 +546,28 @@ export const validation_runes_js = {
 	},
 	UpdateExpression(node, { state }) {
 		validate_assignment(node, node.argument, state);
+	},
+	ClassBody(node, context) {
+		/** @type {string[]} */
+		const private_derived_state = [];
+
+		for (const definition of node.body) {
+			if (
+				definition.type === 'PropertyDefinition' &&
+				definition.key.type === 'PrivateIdentifier' &&
+				definition.value?.type === 'CallExpression'
+			) {
+				const rune = get_rune(definition.value, context.state.scope);
+				if (rune === '$derived') {
+					private_derived_state.push(definition.key.name);
+				}
+			}
+		}
+
+		context.next({
+			...context.state,
+			private_derived_state
+		});
 	}
 };
 
@@ -688,26 +710,5 @@ export const validation_runes = merge(validation, a11y_validators, {
 			}
 		}
 	},
-	ClassBody(node, context) {
-		/** @type {string[]} */
-		const private_derived_state = [];
-
-		for (const definition of node.body) {
-			if (
-				definition.type === 'PropertyDefinition' &&
-				definition.key.type === 'PrivateIdentifier' &&
-				definition.value?.type === 'CallExpression'
-			) {
-				const rune = get_rune(definition.value, context.state.scope);
-				if (rune === '$derived') {
-					private_derived_state.push(definition.key.name);
-				}
-			}
-		}
-
-		context.next({
-			...context.state,
-			private_derived_state
-		});
-	}
+	ClassBody: validation_runes_js.ClassBody
 });
