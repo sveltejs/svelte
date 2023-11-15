@@ -1,7 +1,7 @@
 import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
 import { is_promise } from '../common.js';
-import { subscribe_to_store } from '../../store/utils.js';
+import { subscribe_to_store } from '../../store/index.js';
 
 export * from '../client/validate.js';
 

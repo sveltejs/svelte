@@ -1,4 +1,4 @@
-import { subscribe_to_store } from '../../store/utils.js';
+import { subscribe_to_store } from '../../store/index.js';
 import { EMPTY_FUNC } from '../common.js';
 import { unwrap } from './render.js';
 import { map_delete, map_get, map_set } from './operations.js';

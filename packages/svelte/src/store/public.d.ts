@@ -1,51 +1,43 @@
-import type { Invalidator } from './private.js';
+import { SubscriberInvalidator, Stores, StoresValues } from './private.js';
 
-/** Callback to inform of a value updates. */
-export type Subscriber<T> = (value: T) => void;
+/** A function which sets a store's value. */
+export type Setter<T> = (value: T) => void;
 
-/** Unsubscribes from value updates. */
-export type Unsubscriber = () => void;
-
-/** Callback to update a value. */
+/** A function which returns a new value for a store derived from its current value. */
 export type Updater<T> = (value: T) => T;
 
-/**
- * Start and stop notification callbacks.
- * This function is called when the first subscriber subscribes.
- *
- * @param {(value: T) => void} set Function that sets the value of the store.
- * @param {(value: Updater<T>) => void} update Function that sets the value of the store after passing the current value to the update function.
- * @returns {void | (() => void)} Optionally, a cleanup function that is called when the last remaining
- * subscriber unsubscribes.
- */
-export type StartStopNotifier<T> = (
-	set: (value: T) => void,
+/** A function which is called when a store's value changes. */
+export type Subscriber<T> = (value: T) => void;
+
+/** A store not created by this module, e.g., an RxJS `Observable`. */
+export type ExternalReadable<T = unknown> = {
+	subscribe: (subscriber: Subscriber<T>) => (() => void) | { unsubscribe: () => void };
+};
+
+/** A store created by this module which can be subscribed to. */
+export type Readable<T> = {
+	subscribe: (subscriber: Subscriber<T> | SubscriberInvalidator<T>) => () => void;
+};
+
+/** A store which can be subscribed to and has `set` and `update` methods. */
+export type Writable<T> = Readable<T> & {
+	set: Setter<T>;
+	update: (fn: Updater<T>) => void;
+};
+
+/** A function which is called whenever a store receives its first subscriber, and whose return
+ * value, if a function, is called when the same store loses its last subscriber. */
+export type OnStart<T> = (set: Setter<T>, update: (fn: Updater<T>) => void) => void | (() => void);
+
+/** A function which derives a value from the dependency stores' values and optionally calls the
+ * passed `set` or `update` functions to change the store. */
+export type ComplexDeriveValue<S, T> = (
+	values: S extends Stores ? StoresValues<S> : S,
+	set: Setter<T>,
 	update: (fn: Updater<T>) => void
 ) => void | (() => void);
 
-/** Readable interface for subscribing. */
-export interface Readable<T> {
-	/**
-	 * Subscribe on value changes.
-	 * @param run subscription callback
-	 * @param invalidate cleanup callback
-	 */
-	subscribe(this: void, run: Subscriber<T>, invalidate?: Invalidator<T>): Unsubscriber;
-}
+/** A function which derives a value from the dependency stores' values and returns it. */
+export type SimpleDeriveValue<S, T> = (values: S extends Stores ? StoresValues<S> : S) => T;
 
-/** Writable interface for both updating and subscribing. */
-export interface Writable<T> extends Readable<T> {
-	/**
-	 * Set value and inform subscribers.
-	 * @param value to set
-	 */
-	set(this: void, value: T): void;
-
-	/**
-	 * Update value using callback and inform subscribers.
-	 * @param updater callback
-	 */
-	update(this: void, updater: Updater<T>): void;
-}
-
-export * from './index.js';
+export { writable, readable, derived, readonly, get } from './index.js';

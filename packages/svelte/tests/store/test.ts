@@ -103,6 +103,23 @@ describe('writable', () => {
 		unsubscribe();
 		assert.doesNotThrow(() => unsubscribe());
 	});
+
+	it('allows multiple subscriptions of one handler', () => {
+		let call_count = 0;
+
+		const value = writable(1);
+
+		const handle_new_value = () => {
+			call_count += 1;
+		};
+		const unsubscribers = [1, 2, 3].map((_) => value.subscribe(handle_new_value));
+
+		assert.equal(call_count, 3);
+		value.set(2);
+		assert.equal(call_count, 6);
+
+		for (const unsubscribe of unsubscribers) unsubscribe();
+	});
 });
 
 describe('readable', () => {
@@ -234,8 +251,6 @@ const fake_observable = {
 describe('derived', () => {
 	it('maps a single store', () => {
 		const a = writable(1);
-
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(a, (n) => n * 2);
 
 		const values: number[] = [];
@@ -256,8 +271,6 @@ describe('derived', () => {
 	it('maps multiple stores', () => {
 		const a = writable(2);
 		const b = writable(3);
-
-		// @ts-expect-error TODO feels like inference should work here
 		const c = derived([a, b], ([a, b]) => a * b);
 
 		const values: number[] = [];
@@ -276,11 +289,46 @@ describe('derived', () => {
 		assert.deepEqual(values, [6, 12, 20]);
 	});
 
+	it('allows derived with different types', () => {
+		const a = writable('one');
+		const b = writable(1);
+		const c = derived([a, b], ([a, b]) => `${a} ${b}`);
+
+		assert.deepEqual(get(c), 'one 1');
+
+		a.set('two');
+		b.set(2);
+		assert.deepEqual(get(c), 'two 2');
+	});
+
+	it('errors on undefined stores #1', () => {
+		assert.throws(() => {
+			// @ts-expect-error `null` and `undefined` should create type errors, but this code is testing
+			// that the implementation also throws an error.
+			derived(null, (n) => n);
+		});
+	});
+
+	it('errors on undefined stores #2', () => {
+		assert.throws(() => {
+			const a = writable(1);
+			// @ts-expect-error `null` and `undefined` should create type errors, but this code is testing
+			// that the implementation also throws an error.
+			derived([a, null, undefined], ([n]) => {
+				return n * 2;
+			});
+		});
+	});
+
+	it('works with RxJS-style observables', () => {
+		const d = derived(fake_observable, (_) => _);
+		assert.equal(get(d), 42);
+	});
+
 	it('passes optional `set` function', () => {
 		const number = writable(1);
 		const evens = derived(
 			number,
-			// @ts-expect-error TODO feels like inference should work here
 			(n, set) => {
 				if (n % 2 === 0) set(n);
 			},
@@ -311,10 +359,8 @@ describe('derived', () => {
 		const number = writable(1);
 		const evens_and_squares_of_4 = derived(
 			number,
-			// @ts-expect-error TODO feels like inference should work here
 			(n, set, update) => {
 				if (n % 2 === 0) set(n);
-				// @ts-expect-error TODO feels like inference should work here
 				if (n % 4 === 0) update((n) => n * n);
 			},
 			0
@@ -331,28 +377,24 @@ describe('derived', () => {
 		number.set(4);
 		number.set(5);
 		number.set(6);
-		assert.deepEqual(values, [0, 2, 4, 16, 6]);
+		assert.deepEqual(values, [0, 2, 16, 6]);
 
 		number.set(7);
 		number.set(8);
 		number.set(9);
 		number.set(10);
-		assert.deepEqual(values, [0, 2, 4, 16, 6, 8, 64, 10]);
+		assert.deepEqual(values, [0, 2, 16, 6, 64, 10]);
 
 		unsubscribe();
 
 		number.set(11);
 		number.set(12);
-		assert.deepEqual(values, [0, 2, 4, 16, 6, 8, 64, 10]);
+		assert.deepEqual(values, [0, 2, 16, 6, 64, 10]);
 	});
 
 	it('prevents glitches', () => {
 		const last_name = writable('Jekyll');
-
-		// @ts-expect-error TODO feels like inference should work here
 		const first_name = derived(last_name, (n) => (n === 'Jekyll' ? 'Henry' : 'Edward'));
-
-		// @ts-expect-error TODO feels like inference should work here
 		const full_name = derived([first_name, last_name], (names) => names.join(' '));
 
 		const values: string[] = [];
@@ -368,21 +410,39 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
+	it('only calls `derive_value` when necessary', () => {
+		let call_count = 0;
+
+		const sequence = writable(['a', 'b']);
+		const length = derived(sequence, ($sequence) => {
+			call_count += 1;
+			return $sequence.length;
+		});
+
+		assert.equal(call_count, 0);
+
+		const unsubscribes = [
+			length.subscribe(() => {}),
+			length.subscribe(() => {}),
+			length.subscribe(() => {})
+		];
+		assert.equal(call_count, 1);
+
+		for (const unsubscribe of unsubscribes) unsubscribe();
+	});
+
 	it('prevents diamond dependency problem', () => {
 		const count = writable(0);
 		const values: string[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const a = derived(count, ($count) => {
 			return 'a' + $count;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(count, ($count) => {
 			return 'b' + $count;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const combined = derived([a, b], ([a, b]) => {
 			return a + b;
 		});
@@ -399,17 +459,178 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
+	it('avoids premature updates of dependent stores on invalid state', () => {
+		const values: number[] = [];
+
+		const sequence = writable(['a', 'b']);
+		const length = derived(sequence, ($sequence) => $sequence.length);
+		const lengths_sum = derived(
+			[sequence, length],
+			([$sequence, $length]) => $sequence.length + $length
+		);
+
+		const unsubscribe = lengths_sum.subscribe((value) => values.push(value));
+
+		assert.deepEqual(values, [4]);
+		sequence.set(['a', 'b', 'c']);
+		assert.deepEqual(values, [4, 6]);
+
+		unsubscribe();
+	});
+
+	it('avoids premature updates of dependent stores on invalid state', () => {
+		const values: number[] = [];
+
+		const sequence = writable(['a', 'b']);
+		const length = derived(sequence, ($sequence) => $sequence.length);
+		const length_dec = derived(length, ($length) => $length - 1);
+		const lengths_sum = derived(
+			[sequence, length_dec],
+			([$sequence, $length_dec]) => $sequence.length + $length_dec
+		);
+
+		const unsubscribe = lengths_sum.subscribe((value) => values.push(value));
+
+		assert.deepEqual(values, [3]);
+		sequence.set(['a', 'b', 'c']);
+		assert.deepEqual(values, [3, 5]);
+
+		unsubscribe();
+	});
+
+	it('avoids premature updates of dependent stores on invalid state', () => {
+		const values: string[] = [];
+
+		const length = writable(2);
+		const length_dec = derived(length, ($length) => $length - 1);
+		const length_dec_inc = derived(length_dec, ($length_dec) => $length_dec + 1);
+		const sequence = derived(length_dec_inc, ($length_dec_inc) =>
+			[...Array($length_dec_inc)].map((_, i) => i)
+		);
+		const last_as_string = derived([length_dec_inc, sequence], ([$length_dec_inc, $sequence]) =>
+			$sequence[$length_dec_inc - 1].toString()
+		);
+
+		const unsubscribe = last_as_string.subscribe((value) => values.push(value));
+
+		assert.deepEqual(values, ['1']);
+		length.set(3);
+		assert.deepEqual(values, ['1', '2']);
+
+		unsubscribe();
+	});
+
+	it('does not freeze when depending on an asynchronous store', () => {
+		const values: number[] = [];
+
+		const noop = () => {};
+		// `do_later` allows deferring store updates in `length_delayed` without having to handle
+		// strictly asynchronous execution.
+		let do_later = noop;
+
+		const length = writable(1);
+		const length_delayed = derived(
+			length,
+			($length, set) => {
+				do_later = () => {
+					set($length);
+				};
+				return () => {
+					do_later = noop;
+				};
+			},
+			0
+		);
+		const lengths_derivative = derived(
+			[length, length_delayed],
+			([$length, $length_delayed]) => $length * 3 - $length_delayed
+		);
+
+		const unsubscribe = lengths_derivative.subscribe((value) => values.push(value));
+
+		if (typeof do_later === 'function') do_later();
+		length.set(2);
+		length.set(3);
+		length.set(4);
+		if (typeof do_later === 'function') do_later();
+		if (typeof do_later === 'function') do_later();
+		assert.deepEqual(values, [3, 2, 5, 8, 11, 8]);
+
+		unsubscribe();
+	});
+
+	it('disables `set` and `update` functions during `on_start` clean-up (`on_stop`)', () => {
+		const noop = () => {};
+		// `do_later()` allows deferring store updates in `length_delayed` without having to handle
+		// strictly asynchronous execution.
+		let do_later = noop;
+
+		const length = readable(0, (set) => {
+			if (do_later === noop) do_later = () => set(1);
+			// No clean-up function is returned, so `do_later()` remains set even after it should.
+		});
+
+		assert.equal(get(length, true), 0);
+
+		const unsubscribe = length.subscribe(noop);
+		unsubscribe();
+
+		assert.equal(get(length, true), 0);
+		if (typeof do_later === 'function') do_later();
+		assert.equal(get(length, true), 0);
+
+		// The original `set()` is still disabled even after re-subscribing, since `set` and `update`
+		// are created anew each time.
+		const unsubscribe_2 = length.subscribe(noop);
+		if (typeof do_later === 'function') do_later();
+		assert.equal(get(length, true), 0);
+
+		unsubscribe_2();
+	});
+
+	it('disables `set` and `update` functions during `derived` clean-up', () => {
+		const noop = () => {};
+		// `do_later()` allows deferring store updates in `length_delayed` without having to handle
+		// strictly asynchronous execution.
+		let do_later = noop;
+
+		const length = writable(1);
+		const length_delayed = derived(
+			length,
+			($length, _, update) => {
+				if (do_later === noop) do_later = () => update((_) => $length);
+				// No clean-up function is returned, so `do_later()` remains set even after it should.
+			},
+			0
+		);
+
+		assert.equal(get(length_delayed, true), 0);
+
+		const unsubscribe = length_delayed.subscribe(noop);
+		unsubscribe();
+
+		assert.equal(get(length_delayed, true), 0);
+		if (typeof do_later === 'function') do_later();
+		assert.equal(get(length_delayed, true), 0);
+
+		// The original `update()` is still disabled even after re-subscribing, since `set` and `update`
+		// are created anew each time.
+		const unsubscribe_2 = length.subscribe(noop);
+		if (typeof do_later === 'function') do_later();
+		assert.equal(get(length_delayed, true), 0);
+
+		unsubscribe_2();
+	});
+
 	it('derived dependency does not update and shared ancestor updates', () => {
 		const root = writable({ a: 0, b: 0 });
 
 		const values: string[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const a = derived(root, ($root) => {
 			return 'a' + $root.a;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived([a, root], ([$a, $root]) => {
 			return 'b' + $root.b + $a;
 		});
@@ -431,7 +652,6 @@ describe('derived', () => {
 
 		const number = writable(1);
 
-		// @ts-expect-error TODO feels like inference should work here
 		const numbers = derived(number, ($number) => {
 			arr[0] = $number;
 			return arr;
@@ -451,17 +671,16 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
-	it('calls a `cleanup` function', () => {
+	it('calls an `on_stop` function', () => {
 		const num = writable(1);
 
 		const values: number[] = [];
 		const cleaned_up: number[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const d = derived(num, ($num, set) => {
 			set($num * 2);
 
-			return function cleanup() {
+			return function on_stop() {
 				cleaned_up.push($num);
 			};
 		});
@@ -488,7 +707,10 @@ describe('derived', () => {
 
 		const values: number[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
+		// @ts-expect-error Returning a non-function value from `derive_value` forces TypeScript to
+		// assume the function is a `SimpleDeriveValue<S, T>` as opposed to a `ComplexDeriveValue<S,
+		// T>`. Since the value will be discarded by the implementation, showing a type error is
+		// justified.
 		const d = derived(num, ($num, set) => {
 			set($num * 2);
 			return {};
@@ -508,31 +730,10 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
-	it('allows derived with different types', () => {
-		const a = writable('one');
-		const b = writable(1);
-
-		// @ts-expect-error TODO feels like inference should work here
-		const c = derived([a, b], ([a, b]) => `${a} ${b}`);
-
-		assert.deepEqual(get(c), 'one 1');
-
-		a.set('two');
-		b.set(2);
-		assert.deepEqual(get(c), 'two 2');
-	});
-
-	it('works with RxJS-style observables', () => {
-		// @ts-expect-error TODO feels like inference should work here
-		const d = derived(fake_observable, (_) => _);
-		assert.equal(get(d), 42);
-	});
-
 	it('does not restart when unsubscribed from another store with a shared ancestor', () => {
 		const a = writable(true);
 		let b_started = false;
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(a, (_, __) => {
 			b_started = true;
 			return () => {
@@ -541,7 +742,6 @@ describe('derived', () => {
 			};
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const c = derived(a, ($a, set) => {
 			if ($a) return b.subscribe(set);
 		});
@@ -549,23 +749,6 @@ describe('derived', () => {
 		c.subscribe(() => {});
 		a.set(false);
 		assert.equal(b_started, false);
-	});
-
-	it('errors on undefined stores #1', () => {
-		assert.throws(() => {
-			// @ts-expect-error TODO feels like inference should work here
-			derived(null, (n) => n);
-		});
-	});
-
-	it('errors on undefined stores #2', () => {
-		assert.throws(() => {
-			const a = writable(1);
-			// @ts-expect-error TODO feels like inference should work here
-			derived([a, null, undefined], ([n]) => {
-				return n * 2;
-			});
-		});
 	});
 });
 
@@ -592,7 +775,8 @@ describe('readonly', () => {
 		assert.equal(get(readable_store), 2);
 		assert.equal(get(readable_store), get(writable_store));
 
-		// @ts-ignore
+		// @ts-expect-error This should create a type errors, but this code is testing that the
+		// implementation also throws an error.
 		assert.throws(() => readable_store.set(3));
 	});
 });

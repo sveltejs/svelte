@@ -4,7 +4,7 @@ title: 'svelte/store'
 
 The `svelte/store` module exports functions for creating [readable](/docs/svelte-store#readable), [writable](/docs/svelte-store#writable) and [derived](/docs/svelte-store#derived) stores.
 
-Keep in mind that you don't _have_ to use these functions to enjoy the [reactive `$store` syntax](/docs/svelte-components#script-4-prefix-stores-with-$-to-access-their-values) in your components. Any object that correctly implements `.subscribe`, unsubscribe, and (optionally) `.set` is a valid store, and will work both with the special syntax, and with Svelte's built-in [`derived` stores](/docs/svelte-store#derived).
+Keep in mind that you don't _have_ to use these functions to enjoy the [reactive `$store` syntax](/docs/svelte-components#script-4-prefix-stores-with-$-to-access-their-values) in your components. Any object that correctly implements the `subscribe` (including returning unsubscribe functions) and (optionally) `set` methods is a valid store, and will work both with the special syntax and with Svelte's built-in [derived stores](/docs/svelte-store#derived).
 
 This makes it possible to wrap almost any other reactive state handling library for use in Svelte. Read more about the [store contract](/docs/svelte-components#script-4-prefix-stores-with-$-to-access-their-values) to see what a correct implementation looks like.
 
@@ -18,8 +18,7 @@ Function that creates a store which has values that can be set from 'outside' co
 
 `update` is a method that takes one argument which is a callback. The callback takes the existing store value as its argument and returns the new value to be set to the store.
 
-```js
-/// file: store.js
+```ts
 import { writable } from 'svelte/store';
 
 const count = writable(0);
@@ -35,8 +34,7 @@ count.update((n) => n + 1); // logs '2'
 
 If a function is passed as the second argument, it will be called when the number of subscribers goes from zero to one (but not from one to two, etc). That function will be passed a `set` function which changes the value of the store, and an `update` function which works like the `update` method on the store, taking a callback to calculate the store's new value from its old value. It must return a `stop` function that is called when the subscriber count goes from one to zero.
 
-```js
-/// file: store.js
+```ts
 import { writable } from 'svelte/store';
 
 const count = writable(0, () => {
@@ -59,27 +57,60 @@ Note that the value of a `writable` is lost when it is destroyed, for example wh
 
 > EXPORT_SNIPPET: svelte/store#readable
 
-Creates a store whose value cannot be set from 'outside', the first argument is the store's initial value, and the second argument to `readable` is the same as the second argument to `writable`.
+Creates a store which can be subscribed to, but does not have the `set` and `update` methods that a writable store has. The value of a readable store is instead set by the `initial_value` argument at creation and then updated internally by an `on_start` function. This function is called when the store receives its first subscriber.
+
+The `on_start` function allows the creation of stores whose value changes automatically based on application-specific logic. It's passed `set` and `update` functions that behave like the methods available on writable stores.
+
+The `on_start` function can optionally return an `on_stop` function which will be called when the store loses its last subscriber. This allows stores to go dormant when not being used by any other code.
 
 ```ts
 import { readable } from 'svelte/store';
 
-const time = readable(new Date(), (set) => {
-	set(new Date());
+const lastPressedSimpleKey = readable('', (set) => {
+	const handleEvent = (event: KeyboardEvent) => {
+		if (event.key.length === 1) {
+			set(event.key);
+		}
+	};
 
-	const interval = setInterval(() => {
-		set(new Date());
-	}, 1000);
+	window.addEventListener('keypress', handleEvent, { passive: true });
 
-	return () => clearInterval(interval);
+	return function onStop() {
+		window.removeEventListener('keypress', handleEvent);
+	};
 });
 
-const ticktock = readable('tick', (set, update) => {
-	const interval = setInterval(() => {
-		update((sound) => (sound === 'tick' ? 'tock' : 'tick'));
-	}, 1000);
+lastPressedSimpleKey.subscribe((value) => {
+	console.log(`Most recently pressed simple key is "${value}".`);
+});
+```
 
-	return () => clearInterval(interval);
+`on_start` could also set up a timer to poll an API for data which changes frequently, or even establish a WebSocket connection. The following example creates a store which polls [Open Notify's public ISS position API](http://open-notify.org/Open-Notify-API/ISS-Location-Now/) every 3 seconds.
+
+> If `set` or `update` are called after the store has lost its last subscriber, they will have no effect. You should still take care to clean up any asynchronous callbacks registered in `on_start` by providing a suitable `on_stop` function, but a few accidental late calls will not negatively affect the store.
+>
+> For instance, in the example below `set` may be called late if the `issPosition` store loses its last subscriber after a `fetch` call is made but before the corresponding HTTP response is received.
+
+```ts
+import { readable } from 'svelte/store';
+
+const issPosition = readable({ latitude: 0, longitude: 0 }, (set) => {
+	const interval = setInterval(() => {
+		fetch('http://api.open-notify.org/iss-now.json')
+			.then((response) => response.json())
+			.then((payload) => set(payload.iss_position));
+	}, 3000);
+
+	return function onStop() {
+		clearInterval(interval);
+	};
+});
+
+issPosition.subscribe(({ latitude, longitude }) => {
+	console.log(
+		`The ISS is currently above ${latitude}°, ${longitude}°` +
+			` in the ${latitude > 0 ? 'northern' : 'southern'} hemisphere.`
+	);
 });
 ```
 
@@ -108,7 +139,9 @@ import { derived } from 'svelte/store';
 const doubled = derived(a, ($a) => $a * 2);
 ```
 
-The callback can set a value asynchronously by accepting a second argument, `set`, and an optional third argument, `update`, calling either or both of them when appropriate.
+The `derive_value` function can set values asynchronously by accepting a second argument, `set`, and an optional third argument, `update`, and calling either or both of these functions when appropriate.
+
+> If `set` and `update` are, in combination, called multiple times synchronously, only the last change will cause the store's subscribers to be notified. For instance, calling `update` and then `set` synchronously in a `derive_value` function will only cause the value passed to `set` to be sent to subscribers.
 
 In this case, you can also pass a third argument to `derived` — the initial value of the derived store before `set` or `update` is first called. If no initial value is specified, the store's initial value will be `undefined`.
 
@@ -123,7 +156,7 @@ declare global {
 export {};
 
 // @filename: index.ts
-// @errors: 18046 2769 7006
+// @errors: 18046 2769 7006 2722
 // ---cut---
 import { derived } from 'svelte/store';
 
@@ -143,7 +176,7 @@ const delayedIncrement = derived(a, ($a, set, update) => {
 });
 ```
 
-If you return a function from the callback, it will be called when a) the callback runs again, or b) the last subscriber unsubscribes.
+If you return a function from the `derive_value` function, it will be called a) before the function runs again, or b) after the last subscriber unsubscribes.
 
 ```ts
 // @filename: ambient.d.ts
@@ -188,7 +221,6 @@ declare global {
 export {};
 
 // @filename: index.ts
-
 // ---cut---
 import { derived } from 'svelte/store';
 
@@ -199,13 +231,75 @@ const delayed = derived([a, b], ([$a, $b], set) => {
 });
 ```
 
+### TypeScript type inference
+
+If a multi-argument `derive_value` function is passed to `derive`, TypeScript may not be able to infer the type of the derived store, yielding a store of type `Readable<unknown>`. Set an initial value for the store to resolve this; `undefined` with a type assertion is sufficient. Alternatively, you may use type arguments, although this requires specifying the types of the dependency stores, too.
+
+```ts
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const a: Writable<number>;
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
+import { derived } from 'svelte/store';
+
+// @errors: 2769
+const aInc = derived(
+	a,
+	($a, set) => setTimeout(() => set($a + 1), 1000),
+	undefined as unknown as number
+);
+
+const concatenated = derived<[number, number], string>([a, aInc], ([$a, $aInc], set) =>
+	setTimeout(() => set(`${$a}${$aInc}`), 1000)
+);
+```
+
+`derived` can derive new stores from stores not created by Svelte, including from RxJS `Observable`s. In this case, TypeScript may not be able to infer the types of data held by the dependency stores. Use a type assertion to `ExternalStore` or a type argument to provide the missing context.
+
+Until TypeScript gains support for [partial type argument inference](https://github.com/microsoft/TypeScript/issues/26242), the latter option requires also specifying the return type of `derive_store`.
+
+```ts
+// @filename: ambient.d.ts
+import { type Writable } from 'svelte/store';
+
+declare global {
+	const a: Writable<number>;
+	const observable: {
+		subscribe: (fn: (value: unknown) => void) => { unsubscribe: () => void };
+	};
+}
+
+export {};
+
+// @filename: index.ts
+// ---cut---
+import { derived, type ExternalStore } from 'svelte/store';
+
+const sum = derived(
+	[a, observable as ExternalStore<number>],
+	([$a, $observable]) => $a + $observable
+);
+
+const sumMore = derived<[number, number], number>(
+	[sum, observable],
+	([$sum, $observable]) => $sum + $observable
+);
+```
+
 ## `readonly`
 
 > EXPORT_SNIPPET: svelte/store#readonly
 
 This simple helper function makes a store readonly. You can still subscribe to the changes from the original one using this new readable store.
 
-```js
+```ts
 import { readonly, writable } from 'svelte/store';
 
 const writableStore = writable(1);
@@ -224,7 +318,7 @@ readableStore.set(2); // ERROR
 
 Generally, you should read the value of a store by subscribing to it and using the value as it changes over time. Occasionally, you may need to retrieve the value of a store to which you're not subscribed. `get` allows you to do so.
 
-> This works by creating a subscription, reading the value, then unsubscribing. It's therefore not recommended in hot code paths.
+> By default, `get` subscribes to the given store, makes note of its value, then unsubscribes again. Passing `true` as a second argument causes `get` to directly read the internal state of the store instead, which, in the case of a derived store, may be outdated or `undefined`. Where performance is important, it's recommended to set `allow_stale` to `true` or not use `get`.
 
 ```ts
 // @filename: ambient.d.ts
