@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: added missing context of `svelte.js` for validation
+fix: handle private fields in `class` in `.svelte.js` files
