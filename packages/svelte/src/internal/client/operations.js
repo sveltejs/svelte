@@ -4,58 +4,43 @@ import { get_descriptor } from './utils.js';
 // We cache the Node and Element prototype methods, so that we can avoid doing
 // expensive prototype chain lookups.
 
-/**
- * @type {Node}
- */
+/** @type {Node} */
 var node_prototype;
-/**
- * @type {Element}
- */
+
+/** @type {Element} */
 var element_prototype;
-/**
- * @type {Text}
- */
+
+/** @type {Text} */
 var text_prototype;
-/**
- * @type {Map<any, any>}
- */
+
+/** @type {Map<any, any>} */
 var map_prototype;
-/**
- * @type {typeof Node.prototype.appendChild}
- */
+
+/** @type {typeof Node.prototype.appendChild} */
 var append_child_method;
-/**
- * @type {typeof Node.prototype.cloneNode}
- */
+
+/** @type {typeof Node.prototype.cloneNode} */
 var clone_node_method;
-/**
- * @type {typeof Map.prototype.set}
- */
+
+/** @type {typeof Map.prototype.set} */
 var map_set_method;
-/**
- * @type {typeof Map.prototype.get}
- */
+
+/** @type {typeof Map.prototype.get} */
 var map_get_method;
-/**
- * @type {typeof Map.prototype.delete}
- */
+
+/** @type {typeof Map.prototype.delete} */
 var map_delete_method;
-/**
- * @type {(this: Node) => ChildNode | null}
- */
+
+/** @type {(this: Node) => ChildNode | null} */
 var first_child_get;
-/**
- * @type {(this: Node) => ChildNode | null}
- */
+
+/** @type {(this: Node) => ChildNode | null} */
 var next_sibling_get;
-/**
- * @type {(this: Node, text: string ) => void}
- */
+
+/** @type {(this: Node, text: string ) => void} */
 var text_content_set;
 
-/**
- * @type {(this: Element, class_name: string) => void}
- */
+/** @type {(this: Element, class_name: string) => void} */
 var class_name_set;
 
 // export these for reference in the compiled code, making global name deduplication unnecessary
