@@ -1,3 +1,4 @@
+import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../constants.js';
 import {
 	AWAIT_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
@@ -7,12 +8,16 @@ import {
 	KEY_BLOCK,
 	ROOT_BLOCK
 } from './block.js';
+import { append_child } from './operations.js';
+import { destroy_each_item_block, empty } from './render.js';
 import {
 	current_block,
 	current_effect,
 	destroy_signal,
 	effect,
+	managed_effect,
 	managed_pre_effect,
+	mark_subtree_inert,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -414,6 +419,8 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 	while (transition_block !== null) {
 		if (is_transition_block(transition_block)) {
 			if (transition_block.type === EACH_ITEM_BLOCK) {
+				// Lazily apply the each block transition
+				transition_block.transition = each_item_transition;
 				transition_block = transition_block.parent;
 			} else if (transition_block.type === AWAIT_BLOCK && transition_block.pending) {
 				skip_intro = false;
@@ -495,4 +502,105 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 			};
 		});
 	}
+}
+
+/**
+ * @param {Set<import('./types.js').Transition>} transitions
+ */
+export function remove_in_transitions(transitions) {
+	for (let other of transitions) {
+		if (other.direction === 'in') {
+			transitions.delete(other);
+		}
+	}
+}
+
+/**
+ * @param {Set<import('./types.js').Transition>} transitions
+ * @param {'in' | 'out' | 'key'} target_direction
+ * @param {DOMRect} [from]
+ * @returns {void}
+ */
+export function trigger_transitions(transitions, target_direction, from) {
+	/** @type {Array<() => void>} */
+	const outros = [];
+	for (const transition of transitions) {
+		const direction = transition.direction;
+		if (target_direction === 'in') {
+			if (direction === 'in' || direction === 'both') {
+				if (direction === 'in') {
+					transition.cancel();
+				}
+				transition.in();
+			} else {
+				transition.cancel();
+			}
+			transition.dom.inert = false;
+			mark_subtree_inert(transition.effect, false);
+		} else if (target_direction === 'key') {
+			if (direction === 'key') {
+				transition.payload = transition.init(/** @type {DOMRect} */ (from));
+				transition.in();
+			}
+		} else {
+			if (direction === 'out' || direction === 'both') {
+				transition.payload = transition.init();
+				outros.push(transition.out);
+			}
+			transition.dom.inert = true;
+			mark_subtree_inert(transition.effect, true);
+		}
+	}
+	if (outros.length > 0) {
+		// Defer the outros to a microtask
+		const e = managed_pre_effect(() => {
+			destroy_signal(e);
+			const e2 = managed_effect(() => {
+				destroy_signal(e2);
+				outros.forEach(/** @param {any} o */ (o) => o());
+			});
+		}, false);
+	}
+}
+
+/**
+ * @this {import('./types.js').EachItemBlock}
+ * @param {import('./types.js').Transition} transition
+ * @returns {void}
+ */
+function each_item_transition(transition) {
+	const block = this;
+	const each_block = block.parent;
+	const is_controlled = (each_block.flags & EACH_IS_CONTROLLED) !== 0;
+	// Disable optimization
+	if (is_controlled) {
+		const anchor = empty();
+		each_block.flags ^= EACH_IS_CONTROLLED;
+		append_child(/** @type {Element} */ (each_block.anchor), anchor);
+		each_block.anchor = anchor;
+	}
+	if (transition.direction === 'key' && (each_block.flags & EACH_IS_ANIMATED) === 0) {
+		each_block.flags |= EACH_IS_ANIMATED;
+	}
+	let transitions = block.transitions;
+	if (transitions === null) {
+		block.transitions = transitions = new Set();
+	}
+	transition.finished(() => {
+		if (transitions !== null) {
+			transitions.delete(transition);
+			if (transition.direction !== 'key') {
+				for (let other of transitions) {
+					if (other.direction === 'key' || other.direction === 'in') {
+						transitions.delete(other);
+					}
+				}
+				if (transitions.size === 0) {
+					block.transitions = null;
+					destroy_each_item_block(block, null, true);
+				}
+			}
+		}
+	});
+	transitions.add(transition);
 }
