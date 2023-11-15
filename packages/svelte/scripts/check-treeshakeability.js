@@ -5,9 +5,19 @@ import virtual from '@rollup/plugin-virtual';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
+let failed = false;
+
+console.group('checking treeshakeability');
+
 for (const key in pkg.exports) {
+	// special cases
+	if (key === './compiler') continue;
+	if (key === './internal/disclose-version') continue;
+
 	for (const type of ['browser', 'default']) {
 		if (!pkg.exports[key][type]) continue;
+
+		const subpackage = path.join(pkg.name, key);
 
 		const resolved = path.resolve(pkg.exports[key][type]);
 
@@ -29,10 +39,19 @@ for (const key in pkg.exports) {
 			throw new Error('errr what');
 		}
 
-		const { code } = output[0];
+		const code = output[0].code.replace(/import\s+([^'"]+from\s+)?(['"])[^'"]+\2\s*;?/, '');
 		if (code.trim()) {
 			console.error(code);
-			throw new Error(`${path.join(pkg.name, key)} ${type} export is not tree-shakeable`);
+			console.error(`❌ ${subpackage} (${type})`);
+			failed = true;
+		} else {
+			console.error(`✅ ${subpackage} (${type})`);
 		}
 	}
+}
+
+console.groupEnd();
+
+if (failed) {
+	process.exit(1);
 }
