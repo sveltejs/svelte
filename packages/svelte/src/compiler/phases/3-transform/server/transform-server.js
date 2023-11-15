@@ -611,9 +611,15 @@ const javascript_visitors_runes = {
  * @param {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} attribute_value
  * @param {import('./types').ComponentContext} context
  * @param {boolean} trim_whitespace
+ * @param {boolean} is_component
  * @returns {import('estree').Expression}
  */
-function serialize_attribute_value(attribute_value, context, trim_whitespace = false) {
+function serialize_attribute_value(
+	attribute_value,
+	context,
+	trim_whitespace = false,
+	is_component = false
+) {
 	if (attribute_value === true) {
 		return b.true;
 	}
@@ -629,7 +635,8 @@ function serialize_attribute_value(attribute_value, context, trim_whitespace = f
 			if (trim_whitespace) {
 				data = data.replace(regex_whitespaces_strict, ' ').trim();
 			}
-			return b.literal(escape_html(data, true));
+
+			return b.literal(is_component ? data : escape_html(data, true));
 		} else {
 			return /** @type {import('estree').Expression} */ (context.visit(value.expression));
 		}
@@ -777,12 +784,12 @@ function serialize_inline_component(node, component_name, context) {
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name === 'slot') continue;
 			if (attribute.name.startsWith('--')) {
-				const value = serialize_attribute_value(attribute.value, context);
+				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
 				continue;
 			}
 
-			const value = serialize_attribute_value(attribute.value, context);
+			const value = serialize_attribute_value(attribute.value, context, false, true);
 			push_prop(b.prop('init', b.key(attribute.name), value));
 		} else if (attribute.type === 'BindDirective') {
 			// TODO this needs to turn the whole thing into a while loop because the binding could be mutated eagerly in the child
