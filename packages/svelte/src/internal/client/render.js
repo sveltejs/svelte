@@ -53,12 +53,10 @@ import {
 	flushSync,
 	expose,
 	safe_not_equal,
-	managed_pre_effect,
 	current_block,
 	set_signal_value,
 	source,
 	managed_effect,
-	mark_subtree_inert,
 	safe_equal,
 	push,
 	current_component_context,
@@ -73,7 +71,7 @@ import {
 } from './hydration.js';
 import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
 import { is_promise } from '../common.js';
-import { bind_transition } from './transitions.js';
+import { bind_transition, remove_in_transitions, trigger_transitions } from './transitions.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -82,7 +80,7 @@ const all_registerd_events = new Set();
 const root_event_handles = new Set();
 
 /** @returns {Text} */
-function empty() {
+export function empty() {
 	return document.createTextNode('');
 }
 
@@ -1370,11 +1368,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				consequent_transitions.add(transition);
 				transition.finished(() => {
 					consequent_transitions.delete(transition);
-					for (let other of consequent_transitions) {
-						if (other.direction === 'in') {
-							consequent_transitions.delete(other);
-						}
-					}
+					remove_in_transitions(consequent_transitions);
 					if (consequent_transitions.size === 0) {
 						execute_effect(consequent_effect);
 					}
@@ -1383,11 +1377,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				alternate_transitions.add(transition);
 				transition.finished(() => {
 					alternate_transitions.delete(transition);
-					for (let other of alternate_transitions) {
-						if (other.direction === 'in') {
-							alternate_transitions.delete(other);
-						}
-					}
+					remove_in_transitions(alternate_transitions);
 					if (alternate_transitions.size === 0) {
 						execute_effect(alternate_effect);
 					}
@@ -1675,11 +1665,7 @@ export function component(anchor_node, component_fn, render_fn) {
 			transitions.add(transition);
 			transition.finished(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
+				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.effect !== null) {
 						if (render.dom !== null) {
@@ -1806,11 +1792,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transitions.add(transition);
 			transition.finished(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
+				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.effect !== null) {
 						if (render.dom !== null) {
@@ -1864,6 +1846,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			return;
 		}
 		const transitions = render.transitions;
+		remove_in_transitions(transitions);
 		if (transitions.size === 0) {
 			if (render.dom !== null) {
 				remove(render.dom);
@@ -1968,11 +1951,7 @@ export function key(anchor_node, key, render_fn) {
 			transitions.add(transition);
 			transition.finished(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
+				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.effect !== null) {
 						if (render.dom !== null) {
@@ -2013,6 +1992,7 @@ export function key(anchor_node, key, render_fn) {
 			return;
 		}
 		const transitions = render.transitions;
+		remove_in_transitions(transitions);
 		if (transitions.size === 0) {
 			if (render.dom !== null) {
 				remove(render.dom);
@@ -2141,96 +2121,6 @@ export function destroy_each_item_block(
 }
 
 /**
- * @this {import('./types.js').EachItemBlock}
- * @param {import('./types.js').Transition} transition
- * @returns {void}
- */
-function each_item_transition(transition) {
-	const block = this;
-	const each_block = block.parent;
-	const is_controlled = (each_block.flags & EACH_IS_CONTROLLED) !== 0;
-	// Disable optimization
-	if (is_controlled) {
-		const anchor = empty();
-		each_block.flags ^= EACH_IS_CONTROLLED;
-		append_child(/** @type {Element} */ (each_block.anchor), anchor);
-		each_block.anchor = anchor;
-	}
-	if (transition.direction === 'key' && (each_block.flags & EACH_IS_ANIMATED) === 0) {
-		each_block.flags |= EACH_IS_ANIMATED;
-	}
-	let transitions = block.transitions;
-	if (transitions === null) {
-		block.transitions = transitions = new Set();
-	}
-	transition.finished(() => {
-		if (transitions !== null) {
-			transitions.delete(transition);
-			if (transition.direction !== 'key') {
-				for (let other of transitions) {
-					if (other.direction === 'key' || other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
-				if (transitions.size === 0) {
-					block.transitions = null;
-					destroy_each_item_block(block, null, true);
-				}
-			}
-		}
-	});
-	transitions.add(transition);
-}
-
-/**
- * @param {Set<import('./types.js').Transition>} transitions
- * @param {'in' | 'out' | 'key'} target_direction
- * @param {DOMRect} [from]
- * @returns {void}
- */
-export function trigger_transitions(transitions, target_direction, from) {
-	/** @type {Array<() => void>} */
-	const outros = [];
-	for (const transition of transitions) {
-		const direction = transition.direction;
-		if (target_direction === 'in') {
-			if (direction === 'in' || direction === 'both') {
-				if (direction === 'in') {
-					transition.cancel();
-				}
-				transition.in();
-			} else {
-				transition.cancel();
-			}
-			transition.dom.inert = false;
-			mark_subtree_inert(transition.effect, false);
-		} else if (target_direction === 'key') {
-			if (direction === 'key') {
-				transition.payload = transition.init(/** @type {DOMRect} */ (from));
-				transition.in();
-			}
-		} else {
-			if (direction === 'out' || direction === 'both') {
-				transition.payload = transition.init();
-				outros.push(transition.out);
-			}
-			transition.dom.inert = true;
-			mark_subtree_inert(transition.effect, true);
-		}
-	}
-	if (outros.length > 0) {
-		// Defer the outros to a microtask
-		const e = managed_pre_effect(() => {
-			destroy_signal(e);
-			const e2 = managed_effect(() => {
-				destroy_signal(e2);
-				outros.forEach(/** @param {any} o */ (o) => o());
-			});
-		}, false);
-	}
-}
-
-/**
  * @template V
  * @param {V} item
  * @param {unknown} key
@@ -2243,7 +2133,6 @@ export function each_item_block(item, key, index, render_fn, flags) {
 	const item_value = (flags & EACH_ITEM_REACTIVE) === 0 ? item : source(item);
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
-	block.transition = each_item_transition;
 	const effect = render_effect(
 		/** @param {import('./types.js').EachItemBlock} block */
 		(block) => {
@@ -2291,11 +2180,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			transitions.add(transition);
 			transition.finished(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
+				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (fallback.effect !== null) {
 						if (fallback.dom !== null) {
