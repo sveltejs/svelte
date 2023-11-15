@@ -119,7 +119,6 @@ function open(parser) {
 				);
 
 				parser.index = end;
-				parser.allow_whitespace();
 			}
 		}
 		parser.eat('as', true);
