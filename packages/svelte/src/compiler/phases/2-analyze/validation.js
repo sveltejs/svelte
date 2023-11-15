@@ -453,15 +453,6 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		// TODO check if it's a store subscription that's called? How likely is it that someone uses a store that contains a function?
 		error(node.init, 'invalid-rune-usage', callee.name);
 	},
-	ExportNamedDeclaration(node) {
-		if (
-			node.declaration &&
-			node.declaration.type !== 'VariableDeclaration' &&
-			node.declaration.type !== 'FunctionDeclaration'
-		) {
-			error(node, 'TODO', 'whatever this is');
-		}
-	},
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);
 		if (parent && parent.type === 'ConstTag') return;
