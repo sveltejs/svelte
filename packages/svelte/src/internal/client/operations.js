@@ -68,6 +68,10 @@ export var $window;
  */
 export var $document;
 
+/**
+ * Initialize these lazily to avoid issues when using the runtime in a server context
+ * where these globals are not available while avoiding a separate server entry point
+ */
 export function init_operations() {
 	if (node_prototype !== undefined) {
 		return;
