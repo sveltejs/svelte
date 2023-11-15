@@ -66,19 +66,23 @@ export function init_operations() {
 	element_prototype = Element.prototype;
 	text_prototype = Text.prototype;
 	map_prototype = Map.prototype;
+
 	append_child_method = node_prototype.appendChild;
 	clone_node_method = node_prototype.cloneNode;
 	map_set_method = map_prototype.set;
 	map_get_method = map_prototype.get;
 	map_delete_method = map_prototype.delete;
-	// @ts-expect-error improve perf of expando on DOM events
-	element_prototype.__click = undefined;
-	// @ts-expect-error improve perf of expando on DOM text updates
-	text_prototype.__nodeValue = ' ';
-	// @ts-expect-error improve perf of expando on DOM className updates
-	element_prototype.__className = '';
+
 	$window = window;
 	$document = document;
+
+	// the following assignments improve perf of lookups on DOM nodes
+	// @ts-expect-error
+	element_prototype.__click = undefined;
+	// @ts-expect-error
+	text_prototype.__nodeValue = ' ';
+	// @ts-expect-error
+	element_prototype.__className = '';
 
 	first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 		// @ts-ignore
