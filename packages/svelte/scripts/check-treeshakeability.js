@@ -7,6 +7,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 let failed = false;
 
+// eslint-disable-next-line no-console
 console.group('checking treeshakeability');
 
 for (const key in pkg.exports) {
@@ -41,15 +42,19 @@ for (const key in pkg.exports) {
 
 		const code = output[0].code.replace(/import\s+([^'"]+from\s+)?(['"])[^'"]+\2\s*;?/, '');
 		if (code.trim()) {
+			// eslint-disable-next-line no-console
 			console.error(code);
+			// eslint-disable-next-line no-console
 			console.error(`❌ ${subpackage} (${type})`);
 			failed = true;
 		} else {
+			// eslint-disable-next-line no-console
 			console.error(`✅ ${subpackage} (${type})`);
 		}
 	}
 }
 
+// eslint-disable-next-line no-console
 console.groupEnd();
 
 if (failed) {
