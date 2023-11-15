@@ -782,7 +782,6 @@ function serialize_inline_component(node, component_name, context) {
 		} else if (attribute.type === 'SpreadAttribute') {
 			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		} else if (attribute.type === 'Attribute') {
-			if (attribute.name === 'slot') continue;
 			if (attribute.name.startsWith('--')) {
 				const value = serialize_attribute_value(attribute.value, context, false, true);
 				custom_css_props.push(b.init(attribute.name, value));
