@@ -2413,12 +2413,17 @@ export const template_visitors = {
 		if (node.expression) {
 			params.push(b.id('$$props'));
 		}
+		let callee;
+		if (node.name.includes('.')) {
+			const parts = node.name.split('.');
+			const key = b.key(parts[1]);
+			callee = b.member(serialize_get_binding(b.id(parts[0]), state), key, key.type === 'Literal');
+		} else {
+			callee = serialize_get_binding(b.id(node.name), state);
+		}
 
 		/** @type {import('estree').Expression[]} */
-		const args = [
-			state.node,
-			b.arrow(params, b.call(serialize_get_binding(b.id(node.name), state), ...params))
-		];
+		const args = [state.node, b.arrow(params, b.call(callee, ...params))];
 
 		if (node.expression) {
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression))));
