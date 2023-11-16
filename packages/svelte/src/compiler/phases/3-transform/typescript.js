@@ -30,6 +30,14 @@ export const remove_types = {
 
 		return node;
 	},
+	ExportDefaultDeclaration(node) {
+		if (node.exportKind === 'type') return b.empty;
+		return node;
+	},
+	ExportAllDeclaration(node) {
+		if (node.exportKind === 'type') return b.empty;
+		return node;
+	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
 	},
