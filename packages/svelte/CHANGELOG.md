@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.4
+
+### Patch Changes
+
+- fix: handle closing tags inside attribute values ([#9486](https://github.com/sveltejs/svelte/pull/9486))
+
 ## 4.2.3
 
 ### Patch Changes
