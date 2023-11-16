@@ -680,7 +680,7 @@ const runes_scope_tweaker = {
 		});
 	},
 	ExportNamedDeclaration(node, { next, state }) {
-		if (!node.declaration) {
+		if (!node.declaration || state.ast_type !== 'instance') {
 			return next();
 		}
 
