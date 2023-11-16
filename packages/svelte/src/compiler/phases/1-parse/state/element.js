@@ -191,15 +191,24 @@ export default function tag(parser) {
 		};
 	}
 
-	/** @type {Set<string>} */
-	const unique_names = new Set();
+	/** @type {string[]} */
+	const unique_names = [];
 
 	const current = parser.current();
 	const is_top_level_script_or_style =
 		(name === 'script' || name === 'style') && current.type === 'Root';
 
+	const read = is_top_level_script_or_style ? read_static_attribute : read_attribute;
+
 	let attribute;
-	while ((attribute = read_attribute(parser, unique_names, is_top_level_script_or_style))) {
+	while ((attribute = read(parser))) {
+		if (
+			(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+			unique_names.includes(attribute.name)
+		) {
+			error(attribute.start, 'duplicate-attribute');
+		}
+
 		element.attributes.push(attribute);
 		parser.allow_whitespace();
 	}
@@ -376,22 +385,58 @@ const regex_starts_with_quote_characters = /^["']/;
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {Set<string>} unique_names
- * @param {boolean} is_static If `true`, `{` and `}` are not treated as delimiters for expressions
- * @returns {any}
+ * @returns {import('#compiler').Attribute | null}
  */
-function read_attribute(parser, unique_names, is_static) {
+function read_static_attribute(parser) {
 	const start = parser.index;
 
-	/** @param {string} name */
-	function check_unique(name) {
-		if (unique_names.has(name)) {
-			error(start, 'duplicate-attribute');
+	const name = parser.read_until(regex_token_ending_character);
+	if (!name) return null;
+
+	/** @type {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} */
+	let value = true;
+
+	if (parser.eat('=')) {
+		parser.allow_whitespace();
+		let raw = parser.match_regex(regex_attribute_value);
+		if (!raw) {
+			error(parser.index, 'missing-attribute-value');
 		}
-		unique_names.add(name);
+
+		parser.index += raw.length;
+
+		const quoted = raw[0] === '"' || raw[0] === "'";
+		if (quoted) {
+			raw = raw.slice(1, -1);
+		}
+
+		value = [
+			{
+				start: parser.index - raw.length - (quoted ? 1 : 0),
+				end: quoted ? parser.index - 1 : parser.index,
+				type: 'Text',
+				raw: raw,
+				data: decode_character_references(raw, true),
+				parent: null
+			}
+		];
 	}
 
-	if (!is_static && parser.eat('{')) {
+	if (parser.match_regex(regex_starts_with_quote_characters)) {
+		error(parser.index, 'expected-token', '=');
+	}
+
+	return create_attribute(name, start, parser.index, value);
+}
+
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {import('#compiler').Attribute | import('#compiler').SpreadAttribute | import('#compiler').Directive | null}
+ */
+function read_attribute(parser) {
+	const start = parser.index;
+
+	if (parser.eat('{')) {
 		parser.allow_whitespace();
 
 		if (parser.eat('...')) {
@@ -420,8 +465,6 @@ function read_attribute(parser, unique_names, is_static) {
 			if (name === null) {
 				error(start, 'empty-attribute-shorthand');
 			}
-
-			check_unique(name);
 
 			parser.allow_whitespace();
 			parser.eat('}', true);
@@ -462,23 +505,17 @@ function read_attribute(parser, unique_names, is_static) {
 	let value = true;
 	if (parser.eat('=')) {
 		parser.allow_whitespace();
-		value = read_attribute_value(parser, is_static);
+		value = read_attribute_value(parser);
 		end = parser.index;
 	} else if (parser.match_regex(regex_starts_with_quote_characters)) {
 		error(parser.index, 'expected-token', '=');
 	}
 
-	if (!is_static && type) {
+	if (type) {
 		const [directive_name, ...modifiers] = name.slice(colon_index + 1).split('|');
 
 		if (directive_name === '') {
 			error(start + colon_index + 1, 'empty-directive-name', type);
-		}
-
-		if (type === 'BindDirective' && directive_name !== 'this') {
-			check_unique(directive_name);
-		} else if (type !== 'OnDirective' && type !== 'UseDirective') {
-			check_unique(name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -548,8 +585,6 @@ function read_attribute(parser, unique_names, is_static) {
 		return directive;
 	}
 
-	check_unique(name);
-
 	return create_attribute(name, start, end, value);
 }
 
@@ -573,33 +608,8 @@ const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]))/;
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {boolean} is_static If `true`, `{` and `}` are not treated as delimiters for expressions
  */
-function read_attribute_value(parser, is_static) {
-	if (is_static) {
-		let value = parser.match_regex(regex_attribute_value);
-		if (!value) {
-			error(parser.index, 'missing-attribute-value');
-		}
-
-		parser.index += value.length;
-
-		const quoted = value[0] === '"' || value[0] === "'";
-		if (quoted) {
-			value = value.slice(1, -1);
-		}
-
-		return [
-			{
-				start: parser.index - value.length - (quoted ? 1 : 0),
-				end: quoted ? parser.index - 1 : parser.index,
-				type: 'Text',
-				raw: value,
-				data: decode_character_references(value, true)
-			}
-		];
-	}
-
+function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;
 	if (quote_mark && parser.eat(quote_mark)) {
 		return [
