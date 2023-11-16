@@ -14,8 +14,12 @@ export const remove_types = {
 
 		return node;
 	},
-	ExportNamedDeclaration(node) {
+	ExportNamedDeclaration(node, context) {
 		if (node.importKind === 'type') return b.empty;
+
+		if (node.declaration) {
+			return context.next();
+		}
 
 		if (node.specifiers) {
 			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
