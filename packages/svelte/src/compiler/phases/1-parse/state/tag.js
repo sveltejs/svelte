@@ -112,8 +112,9 @@ function open(parser) {
 			let assertion = null;
 
 			expression = walk(expression, null, {
+				// @ts-expect-error
 				TSAsExpression(node, context) {
-					if (node.end === expression.end) {
+					if (node.end === /** @type {import('estree').Expression} */ (expression).end) {
 						assertion = node;
 						return node.expression;
 					}
