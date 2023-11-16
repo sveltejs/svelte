@@ -130,7 +130,7 @@ export function client_component(source, analysis, options) {
 					},
 					ExportNamedDeclaration(node, context) {
 						if (node.declaration) {
-							return remove_types.ExportDeclaration(context.visit(node.declaration), context);
+							return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
 						}
 
 						return b.empty;

@@ -5,18 +5,26 @@ export const remove_types = {
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
-		const specifiers = node.specifiers.filter((s) => s.importKind === 'value');
-		if (specifiers.length === 0) return b.empty;
+		if (node.specifiers) {
+			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
+			if (specifiers.length === 0) return b.empty;
 
-		return { ...node, specifiers };
+			return { ...node, specifiers };
+		}
+
+		return node;
 	},
-	ExportNamedDeclaration(node, context) {
+	ExportNamedDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
-		const specifiers = node.specifiers.filter((s) => s.importKind === 'value');
-		if (specifiers.length === 0) return b.empty;
+		if (node.specifiers) {
+			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
+			if (specifiers.length === 0) return b.empty;
 
-		return { ...node, specifiers };
+			return { ...node, specifiers };
+		}
+
+		return node;
 	},
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
