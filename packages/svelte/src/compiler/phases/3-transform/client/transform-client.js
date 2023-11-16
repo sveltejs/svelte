@@ -125,11 +125,13 @@ export function client_component(source, analysis, options) {
 				analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy,
 				{
 					ImportDeclaration(node, context) {
+						// @ts-expect-error
 						state.hoisted.push(remove_types.ImportDeclaration(node, context));
 						return b.empty;
 					},
 					ExportNamedDeclaration(node, context) {
 						if (node.declaration) {
+							// @ts-expect-error
 							return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
 						}
 

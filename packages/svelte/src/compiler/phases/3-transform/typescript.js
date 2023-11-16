@@ -6,7 +6,7 @@ export const remove_types = {
 		if (node.importKind === 'type') return b.empty;
 
 		if (node.specifiers?.length > 0) {
-			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
+			const specifiers = node.specifiers.filter((/** @type {any} */ s) => s.importKind !== 'type');
 			if (specifiers.length === 0) return b.empty;
 
 			return { ...node, specifiers };
@@ -22,7 +22,7 @@ export const remove_types = {
 		}
 
 		if (node.specifiers) {
-			const specifiers = node.specifiers.filter((s) => s.exportKind !== 'type');
+			const specifiers = node.specifiers.filter((/** @type {any} */ s) => s.exportKind !== 'type');
 			if (specifiers.length === 0) return b.empty;
 
 			return { ...node, specifiers };
