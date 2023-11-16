@@ -5,7 +5,7 @@ export const remove_types = {
 	ImportDeclaration(node) {
 		if (node.importKind === 'type') return b.empty;
 
-		if (node.specifiers) {
+		if (node.specifiers?.length > 0) {
 			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
 			if (specifiers.length === 0) return b.empty;
 
