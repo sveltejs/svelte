@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import glob from 'tiny-glob/sync.js';
 import minimist from 'minimist';
-import { compile, compileModule } from 'svelte/compiler';
+import { compile, compileModule, parse } from 'svelte/compiler';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -48,6 +48,14 @@ for (const generate of ['client', 'server']) {
 		fs.writeFileSync(output_js, compiled.js.code);
 		if (compiled.css) {
 			fs.writeFileSync(output_css, compiled.css.code);
+		}
+
+		if (generate === 'client') {
+			const ast = parse(source, {
+				modern: true
+			});
+
+			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
 		}
 	}
 
