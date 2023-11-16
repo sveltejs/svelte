@@ -2,45 +2,24 @@ import { walk } from 'zimmerframe';
 import * as b from '../../utils/builders.js';
 
 /**
+ * @param {string} source
  * @param {import('estree').Node} node
  */
-export function strip_types(node) {
+export function strip_types(source, node) {
 	return walk(node, null, {
 		_(node, context) {
-			// @ts-expect-error
-			if (node.exportKind === 'type' || node.importKind === 'type') {
-				console.log('>>>', node);
-				return b.empty;
-			}
-
 			// @ts-expect-error
 			delete node.loc.start.index;
 			// @ts-expect-error
 			delete node.loc.end.index;
-			// // @ts-expect-error
-			// delete node.returnType;
-			// // @ts-expect-error
-			// delete node.importKind;
-			// // @ts-expect-error
-			// delete node.exportKind;
-			// // @ts-expect-error
-			// delete node.typeAnnotation;
-			// // @ts-expect-error
-			// delete node.typeParameters;
 
-			// if (node.type.startsWith('TS')) {
-			// 	const ts_node = /** @type {any} */ (node);
-
-			// 	switch (ts_node.type) {
-			// 		case 'TSAsExpression':
-			// 		case 'TSNonNullExpression':
-			// 			// hack to make sure parser skips over the type assertion
-			// 			ts_node.expression.end = ts_node.end;
-			// 			return context.visit(ts_node.expression);
-			// 		default:
-			// 			return b.empty;
-			// 	}
-			// }
+			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
+				// i think there might be a bug in acorn-typescript that prevents
+				// `end` from being assigned when there's a type annotation
+				let end = /** @type {any} */ (node).typeAnnotation.start;
+				while (/\s/.test(source[end - 1])) end -= 1;
+				node.end = end;
+			}
 
 			context.next();
 		}

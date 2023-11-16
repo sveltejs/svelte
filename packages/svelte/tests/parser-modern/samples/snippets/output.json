@@ -2,7 +2,7 @@
 	"css": null,
 	"js": [],
 	"start": 0,
-	"end": 58,
+	"end": 72,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
@@ -10,39 +10,73 @@
 			{
 				"type": "SnippetBlock",
 				"start": 0,
-				"end": 41,
+				"end": 52,
 				"expression": {
 					"type": "Identifier",
 					"start": 10,
 					"end": 13,
 					"name": "foo"
 				},
-				"context": null,
+				"context": {
+					"type": "Identifier",
+					"name": "msg",
+					"start": 14,
+					"end": 17,
+					"typeAnnotation": {
+						"type": "TSStringKeyword",
+						"start": 19,
+						"end": 25,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 19
+							},
+							"end": {
+								"line": 1,
+								"column": 25
+							}
+						}
+					}
+				},
 				"body": {
 					"type": "Fragment",
 					"nodes": [
 						{
 							"type": "Text",
-							"start": 16,
-							"end": 18,
+							"start": 27,
+							"end": 29,
 							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
 							"type": "RegularElement",
-							"start": 18,
-							"end": 30,
+							"start": 29,
+							"end": 41,
 							"name": "p",
 							"attributes": [],
 							"fragment": {
 								"type": "Fragment",
 								"nodes": [
 									{
-										"type": "Text",
-										"start": 21,
-										"end": 26,
-										"raw": "hello",
-										"data": "hello"
+										"type": "ExpressionTag",
+										"start": 32,
+										"end": 37,
+										"expression": {
+											"type": "Identifier",
+											"start": 33,
+											"end": 36,
+											"loc": {
+												"start": {
+													"line": 2,
+													"column": 5
+												},
+												"end": {
+													"line": 2,
+													"column": 8
+												}
+											},
+											"name": "msg"
+										}
 									}
 								],
 								"transparent": true
@@ -50,8 +84,8 @@
 						},
 						{
 							"type": "Text",
-							"start": 30,
-							"end": 31,
+							"start": 41,
+							"end": 42,
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -61,19 +95,19 @@
 			},
 			{
 				"type": "Text",
-				"start": 41,
-				"end": 43,
+				"start": 52,
+				"end": 54,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "RenderTag",
-				"start": 43,
-				"end": 58,
+				"start": 54,
+				"end": 72,
 				"expression": {
 					"type": "Identifier",
-					"start": 52,
-					"end": 55,
+					"start": 63,
+					"end": 66,
 					"loc": {
 						"start": {
 							"line": 5,
@@ -86,7 +120,22 @@
 					},
 					"name": "foo"
 				},
-				"argument": null
+				"argument": {
+					"type": "Identifier",
+					"start": 67,
+					"end": 70,
+					"loc": {
+						"start": {
+							"line": 5,
+							"column": 13
+						},
+						"end": {
+							"line": 5,
+							"column": 16
+						}
+					},
+					"name": "msg"
+				}
 			}
 		],
 		"transparent": false

@@ -2,6 +2,7 @@ import read_context from '../read/context.js';
 import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
+import { parse_expression_at } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -260,6 +261,18 @@ function open(parser) {
 		parser.allow_whitespace();
 
 		const context = parser.match(')') ? null : read_context(parser);
+
+		parser.allow_whitespace();
+		if (context && parser.eat(':')) {
+			// we need to trick Acorn into parsing the type annotation
+			const insert = '_ as ';
+			let a = parser.index - insert.length;
+			const template = ' '.repeat(a) + insert + parser.template.slice(parser.index);
+			const expression = parse_expression_at(template, a);
+
+			context.typeAnnotation = /** @type {any} */ (expression).typeAnnotation;
+			parser.index = /** @type {number} */ (expression.end);
+		}
 
 		parser.allow_whitespace();
 		parser.eat(')', true);

@@ -1,5 +1,5 @@
-{#snippet foo()}
-	<p>hello</p>
+{#snippet foo(msg: string)}
+	<p>{msg}</p>
 {/snippet}
 
-{@render foo()}
+{@render foo(msg)}

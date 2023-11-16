@@ -13,6 +13,7 @@ export function parse(source) {
 	const { onComment, add_comments } = get_comment_handlers(source);
 	const ast = /** @type {import('estree').Program} */ (
 		strip_types(
+			source,
 			// @ts-expect-error
 			ParserWithTS.parse(source, {
 				onComment,
@@ -37,6 +38,7 @@ export function parse_expression_at(source, index) {
 	const { onComment, add_comments } = get_comment_handlers(source);
 	const ast = /** @type {import('estree').Expression} */ (
 		strip_types(
+			source,
 			// @ts-expect-error
 			ParserWithTS.parseExpressionAt(source, index, {
 				onComment,
