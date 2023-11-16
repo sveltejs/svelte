@@ -674,6 +674,8 @@ const runes_scope_tweaker = {
 		}
 	},
 	ExportSpecifier(node, { state }) {
+		if (state.ast_type !== 'instance') return;
+
 		state.analysis.exports.push({
 			name: node.local.name,
 			alias: node.exported.name

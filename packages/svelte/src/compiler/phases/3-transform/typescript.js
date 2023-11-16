@@ -15,14 +15,14 @@ export const remove_types = {
 		return node;
 	},
 	ExportNamedDeclaration(node, context) {
-		if (node.importKind === 'type') return b.empty;
+		if (node.exportKind === 'type') return b.empty;
 
 		if (node.declaration) {
 			return context.next();
 		}
 
 		if (node.specifiers) {
-			const specifiers = node.specifiers.filter((s) => s.importKind !== 'type');
+			const specifiers = node.specifiers.filter((s) => s.exportKind !== 'type');
 			if (specifiers.length === 0) return b.empty;
 
 			return { ...node, specifiers };
