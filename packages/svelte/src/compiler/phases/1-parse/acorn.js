@@ -1,7 +1,6 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
-import { strip_types } from './strip-types.js';
 
 // @ts-expect-error
 const ParserWithTS = acorn.Parser.extend(tsPlugin());
@@ -12,7 +11,7 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
 export function parse(source) {
 	const { onComment, add_comments } = get_comment_handlers(source);
 	const ast = /** @type {import('estree').Program} */ (
-		strip_types(
+		amend(
 			source,
 			// @ts-expect-error
 			ParserWithTS.parse(source, {
@@ -37,7 +36,7 @@ export function parse(source) {
 export function parse_expression_at(source, index) {
 	const { onComment, add_comments } = get_comment_handlers(source);
 	const ast = /** @type {import('estree').Expression} */ (
-		strip_types(
+		amend(
 			source,
 			// @ts-expect-error
 			ParserWithTS.parseExpressionAt(source, index, {
@@ -130,4 +129,30 @@ export function get_comment_handlers(source) {
 			);
 		}
 	};
+}
+
+/**
+ * Tidy up some stuff left behind by acorn-typescript
+ * @param {string} source
+ * @param {import('estree').Node} node
+ */
+export function amend(source, node) {
+	return walk(node, null, {
+		_(node, context) {
+			// @ts-expect-error
+			delete node.loc.start.index;
+			// @ts-expect-error
+			delete node.loc.end.index;
+
+			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
+				// i think there might be a bug in acorn-typescript that prevents
+				// `end` from being assigned when there's a type annotation
+				let end = /** @type {any} */ (node).typeAnnotation.start;
+				while (/\s/.test(source[end - 1])) end -= 1;
+				node.end = end;
+			}
+
+			context.next();
+		}
+	});
 }
