@@ -274,6 +274,10 @@ export const validation = {
 				error(node.expression, 'invalid-binding-value');
 			}
 
+			if (binding.kind === 'derived') {
+				error(node.expression, 'invalid-derived-binding');
+			}
+
 			// TODO handle mutations of non-state/props in runes mode
 		}
 
