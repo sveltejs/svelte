@@ -881,9 +881,10 @@ export function bind_window_size(type, update) {
 	const callback = () => update(window[type]);
 	listen_to_events(window, ['resize'], callback);
 }
+
 /**
  * Finds the containing `<select>` element and potentially updates its `selected` state.
- * @param {Element} dom
+ * @param {HTMLOptionElement} dom
  * @returns {void}
  */
 export function selected(dom) {
@@ -902,10 +903,15 @@ export function selected(dom) {
 			const select_value = select.__value;
 			// @ts-ignore
 			const option_value = dom.__value;
-			// @ts-ignore
-			dom.selected = select_value === option_value;
-			// @ts-ignore
+			const selected = select_value === option_value;
+			dom.selected = selected;
 			dom.value = option_value;
+			// Handle the edge case of new options being added to a select when its state is "nothing selected"
+			// and keeping the selection state in sync (the DOM auto-selects the first option on insert)
+			// @ts-ignore
+			if (select.__value === null) {
+				/** @type {HTMLSelectElement} */ (select).value = '';
+			}
 		}
 	});
 }
@@ -957,13 +963,16 @@ export function bind_select_value(dom, get_value, update) {
 		}
 		update(value);
 	});
-	render_effect(() => {
+	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
+	effect(() => {
 		const value = get_value();
 		if (value == null && !mounted) {
 			/** @type {HTMLOptionElement | null} */
 			let selected_option = value === undefined ? dom.querySelector(':checked') : null;
 			if (selected_option === null) {
 				dom.value = '';
+				// @ts-ignore
+				dom.__value = null;
 			}
 			const options = dom.querySelectorAll('option');
 			for (const option of options) {

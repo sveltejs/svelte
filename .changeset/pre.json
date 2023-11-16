@@ -9,13 +9,30 @@
     "svelte.dev": "1.0.0"
   },
   "changesets": [
+    "brave-walls-destroy",
+    "brown-spoons-boil",
     "chilly-dolphins-lick",
+    "cuddly-pianos-drop",
+    "curly-lizards-dream",
     "eight-steaks-shout",
+    "eighty-bikes-camp",
+    "fresh-weeks-trade",
+    "funny-wombats-argue",
+    "good-pianos-jump",
+    "honest-icons-change",
+    "itchy-lions-wash",
     "khaki-mails-draw",
+    "lazy-spiders-think",
+    "lucky-schools-hang",
     "moody-owls-cry",
+    "poor-eggs-enjoy",
     "quiet-camels-mate",
     "rotten-buckets-develop",
     "small-papayas-laugh",
-    "tall-shrimps-worry"
+    "sour-rules-march",
+    "strong-lemons-provide",
+    "tall-shrimps-worry",
+    "thirty-flowers-sit",
+    "tiny-kings-whisper"
   ]
 }
