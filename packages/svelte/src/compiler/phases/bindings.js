@@ -182,6 +182,7 @@ export const binding_properties = {
 	},
 	files: {
 		event: 'change',
+		type: 'set',
 		valid_elements: ['input'],
 		omit_in_ssr: true
 	}

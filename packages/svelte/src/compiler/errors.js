@@ -187,6 +187,7 @@ const runes = {
 				: ''
 		}`,
 	'invalid-derived-assignment': () => `Invalid assignment to derived state`,
+	'invalid-derived-binding': () => `Invalid binding to derived state`,
 	/**
 	 * @param {string} rune
 	 * @param {number[]} args
