@@ -101,5 +101,13 @@ export const global_visitors = {
 				return b.call(b.thunk(b.block(statements)));
 			}
 		}
+	},
+	// @ts-expect-error
+	TSAsExpression(node, context) {
+		return context.visit(node.expression);
+	},
+	// @ts-expect-error
+	TSNonNullExpression(node, context) {
+		return context.visit(node.expression);
 	}
 };
