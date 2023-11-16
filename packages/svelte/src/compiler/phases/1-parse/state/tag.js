@@ -110,18 +110,22 @@ function open(parser) {
 			}
 
 			let assertion = null;
+			let end = expression.end;
 
 			expression = walk(expression, null, {
 				// @ts-expect-error
 				TSAsExpression(node, context) {
 					if (node.end === /** @type {import('estree').Expression} */ (expression).end) {
 						assertion = node;
+						end = node.expression.end;
 						return node.expression;
 					}
 
 					context.next();
 				}
 			});
+
+			expression.end = end;
 
 			if (assertion) {
 				// we can't reset `parser.index` to `expression.expression.end` because
