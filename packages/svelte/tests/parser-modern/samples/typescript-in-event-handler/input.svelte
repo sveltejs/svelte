@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let count = $state(0);
 </script>
 

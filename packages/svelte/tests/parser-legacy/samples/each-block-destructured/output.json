@@ -196,7 +196,6 @@
 			"body": [
 				{
 					"type": "ExportNamedDeclaration",
-					"exportKind": "value",
 					"start": 10,
 					"end": 29,
 					"loc": {

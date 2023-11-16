@@ -282,7 +282,7 @@ function open(parser) {
 			const insert = '_ as ';
 			let a = parser.index - insert.length;
 			const template = ' '.repeat(a) + insert + parser.template.slice(parser.index);
-			const expression = parse_expression_at(template, a);
+			const expression = parse_expression_at(template, parser.ts, a);
 
 			context.typeAnnotation = /** @type {any} */ (expression).typeAnnotation;
 			parser.index = /** @type {number} */ (expression.end);

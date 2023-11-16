@@ -7,48 +7,42 @@ const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
  * @param {string} source
+ * @param {boolean} typescript
  */
-export function parse(source) {
+export function parse(source, typescript) {
+	const parser = typescript ? ParserWithTS : acorn.Parser;
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = /** @type {import('estree').Program} */ (
-		amend(
-			source,
-			// @ts-expect-error
-			ParserWithTS.parse(source, {
-				onComment,
-				sourceType: 'module',
-				ecmaVersion: 13,
-				locations: true
-			})
-		)
-	);
 
-	// @ts-expect-error
+	const ast = parser.parse(source, {
+		onComment,
+		sourceType: 'module',
+		ecmaVersion: 13,
+		locations: true
+	});
+
+	if (typescript) amend(source, ast);
 	add_comments(ast);
 
-	return ast;
+	return /** @type {import('estree').Program} */ (ast);
 }
 
 /**
  * @param {string} source
+ * @param {boolean} typescript
  * @param {number} index
  */
-export function parse_expression_at(source, index) {
+export function parse_expression_at(source, typescript, index) {
+	const parser = typescript ? ParserWithTS : acorn.Parser;
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = /** @type {import('estree').Expression} */ (
-		amend(
-			source,
-			// @ts-expect-error
-			ParserWithTS.parseExpressionAt(source, index, {
-				onComment,
-				sourceType: 'module',
-				ecmaVersion: 13,
-				locations: true
-			})
-		)
-	);
 
-	// @ts-expect-error
+	const ast = parser.parseExpressionAt(source, index, {
+		onComment,
+		sourceType: 'module',
+		ecmaVersion: 13,
+		locations: true
+	});
+
+	if (typescript) amend(source, ast);
 	add_comments(ast);
 
 	return ast;
@@ -134,7 +128,7 @@ export function get_comment_handlers(source) {
 /**
  * Tidy up some stuff left behind by acorn-typescript
  * @param {string} source
- * @param {import('estree').Node} node
+ * @param {import('acorn').Node} node
  */
 export function amend(source, node) {
 	return walk(node, null, {
