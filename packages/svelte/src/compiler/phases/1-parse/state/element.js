@@ -382,6 +382,7 @@ function read_tag_name(parser) {
 // eslint-disable-next-line no-useless-escape
 const regex_token_ending_character = /[\s=\/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]))/;
 
 /**
  * @param {import('../index.js').Parser} parser
@@ -603,8 +604,6 @@ function get_directive_type(name) {
 	if (name === 'in' || name === 'out' || name === 'transition') return 'TransitionDirective';
 	return false;
 }
-
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]))/;
 
 /**
  * @param {import('../index.js').Parser} parser
