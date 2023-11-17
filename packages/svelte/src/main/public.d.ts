@@ -202,5 +202,25 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 	): boolean;
 }
 
+/**
+ * Provided as key to `setContext`, `hasContext` and `getContext` in order to enable strict typing
+ */
+export interface ContextKey<T> extends Symbol {}
+
+declare const isChecked: unique symbol;
+export interface CheckedContextKey<T> extends ContextKey<T> {
+	[isChecked]: undefined;
+}
+
+/**
+ * Retrieves the context that belongs to the closest parent component with the specified `key`.
+ * Must be called during component initialisation.
+ *
+ * https://svelte.dev/docs/svelte#getcontext
+ */
+export function getContext<T>(key: CheckedContextKey<T>): T;
+export function getContext<T>(key: ContextKey<T>): T | undefined;
+export function getContext<T>(key: {}): T;
+
 export * from './main-client.js';
 import './ambient.js';
