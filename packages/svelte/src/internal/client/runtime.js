@@ -895,15 +895,17 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 		for (i = 0; i < length; i++) {
 			const consumer = consumers[i];
 			const flags = consumer.flags;
+			const unowned = (flags & UNOWNED) !== 0;
+			const dirty = (flags & DIRTY) !== 0;
 			if (
-				(flags & DIRTY) !== 0 ||
+				(dirty && !unowned) ||
 				(!runes && consumer === current_effect) ||
 				(!force_schedule && consumer === current_effect)
 			) {
 				continue;
 			}
 			set_signal_status(consumer, to_status);
-			if ((flags & CLEAN) !== 0) {
+			if ((flags & CLEAN) !== 0 || (dirty && unowned)) {
 				if ((consumer.flags & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
 				} else {
