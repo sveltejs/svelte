@@ -897,14 +897,16 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			const flags = consumer.flags;
 			const unowned = (flags & UNOWNED) !== 0;
 			const dirty = (flags & DIRTY) !== 0;
-			if (
-				(dirty && !unowned) ||
-				(!runes && consumer === current_effect) ||
-				(!force_schedule && consumer === current_effect)
-			) {
+			// We skip any effects that are already dirty (but not unowned). Additionally, we also
+			// skip if the consumer is the same as the current effect (except if we're not in runes or we
+			// are in force schedule mode).
+			if ((dirty && !unowned) || ((!force_schedule || !runes) && consumer === current_effect)) {
 				continue;
 			}
 			set_signal_status(consumer, to_status);
+			// If the signal is not clean, then skip over it – with the exception of unowned signals that
+			// are already dirty. Unowned signals might be dirty because they are not captured as part of an
+			// effect.
 			if ((flags & CLEAN) !== 0 || (dirty && unowned)) {
 				if ((consumer.flags & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);

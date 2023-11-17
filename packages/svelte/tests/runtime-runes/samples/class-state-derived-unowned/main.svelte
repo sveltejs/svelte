@@ -1,11 +1,11 @@
 <script context="module">
 		class SomeLogic {
-		someValue = $state(0);
-		isAboveThree = $derived(this.someValue > 3)
-		trigger(){
-			this.someValue++;
+			someValue = $state(0);
+			isAboveThree = $derived(this.someValue > 3);
+			trigger() {
+				this.someValue++;
+			}
 		}
-	}
 
 	const someLogic = new SomeLogic();
 </script>
@@ -23,11 +23,9 @@
 		log.push(someLogic.someValue);
 	});
 	$effect(() => {
-		// Does not trigger
 		log.push('class trigger ' + someLogic.isAboveThree)
 	});
 	$effect(() => {
-		// Does Triggers
 		log.push('local trigger ' + localDerived)
 	});
 
