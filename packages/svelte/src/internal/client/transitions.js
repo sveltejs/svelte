@@ -460,7 +460,8 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 			);
 
 		transition = create_transition(dom, init, direction, transition_effect);
-		const show_intro = !skip_intro && (direction === 'in' || direction === 'both');
+		const is_intro = direction === 'in';
+		const show_intro = !skip_intro && (is_intro || direction === 'both');
 
 		if (show_intro) {
 			transition.payload = transition.init();
@@ -484,6 +485,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 					}
 					if (
 						parent === null ||
+						is_intro ||
 						(!global &&
 							(transition_block.type !== IF_BLOCK || parent.type !== IF_BLOCK || parent.current))
 					) {
