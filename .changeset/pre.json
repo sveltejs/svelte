@@ -9,13 +9,16 @@
     "svelte.dev": "1.0.0"
   },
   "changesets": [
+    "afraid-moose-matter",
     "brave-walls-destroy",
     "brown-spoons-boil",
     "chilly-dolphins-lick",
+    "clean-eels-beg",
     "cuddly-pianos-drop",
     "curly-lizards-dream",
     "eight-steaks-shout",
     "eighty-bikes-camp",
+    "fifty-steaks-float",
     "fresh-weeks-trade",
     "funny-wombats-argue",
     "good-pianos-jump",
@@ -27,12 +30,16 @@
     "moody-owls-cry",
     "poor-eggs-enjoy",
     "quiet-camels-mate",
+    "rich-sheep-burn",
     "rotten-buckets-develop",
+    "sharp-gorillas-impress",
     "small-papayas-laugh",
+    "soft-geese-learn",
     "sour-rules-march",
     "strong-lemons-provide",
     "tall-shrimps-worry",
     "thirty-flowers-sit",
-    "tiny-kings-whisper"
+    "tiny-kings-whisper",
+    "wicked-doors-train"
   ]
 }
