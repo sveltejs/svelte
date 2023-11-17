@@ -44,7 +44,7 @@ As before, you can disable whitespace trimming by setting the `preserveWhitespac
 
 ## More recent browser required
 
-Svelte now use Mutation Observers intead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
+Svelte now use Mutation Observers instead of IFrames to measure dimensions for `bind:clientWidth/clientHeight/offsetWidth/offsetHeight`. It also no longer listens to the `change` event on range inputs. Lastly, the `legacy` option was removed (or rather, replaced with a different set of settings).
 
 ## Changes to compiler options
 
