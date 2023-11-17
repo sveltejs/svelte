@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.5
+
+### Patch Changes
+
+- fix: ignore expressions in top level script/style tag attributes ([#9498](https://github.com/sveltejs/svelte/pull/9498))
+
 ## 4.2.4
 
 ### Patch Changes
