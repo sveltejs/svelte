@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.6
+
+### Patch Changes
+
+- fix: do not propagate global intro transitions ([#9515](https://github.com/sveltejs/svelte/pull/9515))
+
 ## 5.0.0-next.5
 
 ### Patch Changes
