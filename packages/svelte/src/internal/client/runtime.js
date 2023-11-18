@@ -55,9 +55,6 @@ export let current_effect = null;
 /** @type {null | import('./types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
-// Used to prevent over-subscribing dependencies on a consumer
-let current_consumer_read_clock = 1;
-let current_read_clock = 1;
 // Handling capturing of signals from object property getters
 let current_should_capture_signal = false;
 /** If `true`, `get`ting the signal should not register it as a dependency */
@@ -153,7 +150,6 @@ function create_signal_object(flags, value, block) {
 		equals: null,
 		flags,
 		init: null,
-		read: 0,
 		references: null,
 		value
 	};
@@ -190,13 +186,15 @@ function is_signal_dirty(signal) {
 			let i;
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
+				const dep_flags = dependency.flags;
 
-				if ((dependency.flags & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
+				if ((dep_flags & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
-				if ((dependency.flags & DIRTY) !== 0 || dependency.value === UNINITIALIZED) {
-					if ((dependency.flags & DERIVED) !== 0) {
+				// The flags can be marked as dirty from the above is_signal_dirty call.
+				if ((dependency.flags & DIRTY) !== 0) {
+					if ((dep_flags & DERIVED) !== 0) {
 						update_derived(dependency, true);
 						// Might have been mutated from above get.
 						if ((signal.flags & DIRTY) !== 0) {
@@ -221,7 +219,6 @@ function execute_signal_fn(signal) {
 	const init = signal.init;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
-	const previous_consumer_read_clock = current_consumer_read_clock;
 	const previous_consumer = current_consumer;
 	const previous_block = current_block;
 	const previous_component_context = current_component_context;
@@ -230,12 +227,6 @@ function execute_signal_fn(signal) {
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
-	if (current_read_clock === MAX_SAFE_INT) {
-		current_read_clock = 1;
-	} else {
-		current_read_clock++;
-	}
-	current_consumer_read_clock = current_read_clock;
 	current_consumer = signal;
 	current_block = signal.block;
 	current_component_context = signal.context;
@@ -290,7 +281,6 @@ function execute_signal_fn(signal) {
 	} finally {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
-		current_consumer_read_clock = previous_consumer_read_clock;
 		current_consumer = previous_consumer;
 		current_block = previous_block;
 		current_component_context = previous_component_context;
@@ -427,7 +417,7 @@ function flush_queued_effects(effects) {
 		for (i = 0; i < length; i++) {
 			const signal = effects[i];
 			const flags = signal.flags;
-			if ((flags & DESTROYED) === 0 && (flags & INERT) === 0) {
+			if ((flags & (DESTROYED | INERT)) === 0) {
 				if (is_signal_dirty(signal)) {
 					set_signal_status(signal, CLEAN);
 					execute_effect(signal);
@@ -744,11 +734,8 @@ export function get(signal) {
 			current_dependencies_index++;
 		} else if (current_dependencies === null) {
 			current_dependencies = [signal];
-		} else if (signal.read !== current_consumer_read_clock) {
+		} else if (signal !== current_dependencies.at(-1)) {
 			current_dependencies.push(signal);
-		}
-		if (!unowned) {
-			signal.read = current_consumer_read_clock;
 		}
 	}
 
