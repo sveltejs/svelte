@@ -46,7 +46,7 @@ let current_queued_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
-/** @type {null | import('./types.js').Signal} */
+/** @type {null | import('./types.js').ComputationSignal} */
 let current_consumer = null;
 
 /** @type {null | import('./types.js').EffectSignal} */
@@ -137,10 +137,27 @@ function default_equals(a, b) {
  * @template V
  * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
- * @param {import('./types.js').Block | null} block
- * @returns {import('./types.js').Signal<V>}
+ * @returns {import('./types.js').SourceSignal<V>}
  */
-function create_signal_object(flags, value, block) {
+function create_source_signal(flags, value) {
+	return {
+		consumers: null,
+		// We can remove this if we get rid of beforeUpdate/afterUpdate
+		context: null,
+		equals: null,
+		flags,
+		value
+	};
+}
+
+/**
+ * @template V
+ * @param {import('./types.js').SignalFlags} flags
+ * @param {V} value
+ * @param {import('./types.js').Block | null} block
+ * @returns {import('./types.js').ComputationSignal<V>}
+ */
+function create_computation_signal(flags, value, block) {
 	return {
 		block,
 		consumers: null,
@@ -156,8 +173,8 @@ function create_signal_object(flags, value, block) {
 }
 
 /**
- * @param {import('./types.js').Signal} target_signal
- * @param {import('./types.js').Signal} ref_signal
+ * @param {import('./types.js').ComputationSignal} target_signal
+ * @param {import('./types.js').ComputationSignal} ref_signal
  * @returns {void}
  */
 function push_reference(target_signal, ref_signal) {
@@ -180,7 +197,7 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = signal.dependencies;
+		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).dependencies;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
@@ -195,7 +212,7 @@ function is_signal_dirty(signal) {
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.flags & DIRTY) !== 0) {
 					if ((dep_flags & DERIVED) !== 0) {
-						update_derived(dependency, true);
+						update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), true);
 						// Might have been mutated from above get.
 						if ((signal.flags & DIRTY) !== 0) {
 							return true;
@@ -212,7 +229,7 @@ function is_signal_dirty(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @returns {V}
  */
 function execute_signal_fn(signal) {
@@ -247,7 +264,7 @@ function execute_signal_fn(signal) {
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
-		let dependencies = signal.dependencies;
+		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.dependencies);
 
 		if (current_dependencies !== null) {
 			let i;
@@ -259,7 +276,7 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.dependencies = dependencies = current_dependencies;
+				signal.dependencies = /** @type {import('./types.js').Signal<V>[]} **/ (dependencies = current_dependencies);
 			}
 
 			if (!current_skip_consumer) {
@@ -291,7 +308,7 @@ function execute_signal_fn(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {number} start_index
  * @param {boolean} remove_unowned
  * @returns {void}
@@ -316,7 +333,11 @@ function remove_consumer(signal, start_index, remove_unowned) {
 				}
 			}
 			if (remove_unowned && consumers_length === 0 && (dependency.flags & UNOWNED) !== 0) {
-				remove_consumer(dependency, 0, true);
+				remove_consumer(
+					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
+					0,
+					true
+				);
 			}
 		}
 	}
@@ -324,7 +345,7 @@ function remove_consumer(signal, start_index, remove_unowned) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @returns {void}
  */
 function destroy_references(signal) {
@@ -575,7 +596,7 @@ export async function tick() {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {boolean} force_schedule
  * @returns {void}
  */
@@ -615,10 +636,11 @@ export function store_get(store, store_name, stores) {
 			value: source(UNINITIALIZED),
 			unsubscribe: EMPTY_FUNC
 		};
-		push_destroy_fn(entry.value, () => {
-			/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).last_value =
-				/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).value.value;
-		});
+		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
+		// push_destroy_fn(entry.value, () => {
+		// 	/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).last_value =
+		// 		/** @type {import('./types.js').StoreReferencesContainer['']} */ (entry).value.value;
+		// });
 		stores[store_name] = entry;
 	}
 
@@ -676,7 +698,8 @@ export function unsubscribe_on_destroy(stores) {
 		for (store_name in stores) {
 			const ref = stores[store_name];
 			ref.unsubscribe();
-			destroy_signal(ref.value);
+			// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
+			// destroy_signal(ref.value);
 		}
 	});
 }
@@ -740,7 +763,7 @@ export function get(signal) {
 	}
 
 	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
-		update_derived(signal, false);
+		update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
 	}
 	return signal.value;
 }
@@ -845,7 +868,7 @@ export function mutate_store(store, expression, new_value) {
 }
 
 /**
- * @param {import('./types.js').Signal} signal
+ * @param {import('./types.js').ComputationSignal} signal
  * @param {boolean} inert
  * @returns {void}
  */
@@ -969,12 +992,13 @@ export function set_signal_value(signal, value) {
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @returns {void}
  */
 export function destroy_signal(signal) {
 	const teardown = /** @type {null | (() => void)} */ (signal.value);
 	const destroy = signal.destroy;
+	const flags = signal.flags;
 	destroy_references(signal);
 	remove_consumer(signal, 0, true);
 	signal.init = null;
@@ -1005,14 +1029,14 @@ export function destroy_signal(signal) {
  * @template V
  * @param {() => V} init
  * @param {import('./types.js').EqualsFunctions} [equals]
- * @returns {import('./types.js').Signal<V>}
+ * @returns {import('./types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function derived(init, equals) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
-	const signal = /** @type {import('./types.js').Signal<V>} */ (
-		create_signal_object(flags | CLEAN, UNINITIALIZED, current_block)
+	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
+		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
 	signal.init = init;
 	signal.context = current_component_context;
@@ -1027,11 +1051,11 @@ export function derived(init, equals) {
  * @template V
  * @param {V} initial_value
  * @param {import('./types.js').EqualsFunctions<V>} [equals]
- * @returns {import('./types.js').Signal<V>}
+ * @returns {import('./types.js').SourceSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value, equals) {
-	const source = create_signal_object(SOURCE | CLEAN, initial_value, null);
+	const source = create_source_signal(SOURCE | CLEAN, initial_value);
 	source.context = current_component_context;
 	source.equals = get_equals_method(equals);
 	return source;
@@ -1079,7 +1103,7 @@ export function untrack(fn) {
  * @returns {import('./types.js').EffectSignal}
  */
 function internal_create_effect(type, init, sync, block, schedule) {
-	const signal = create_signal_object(type | DIRTY, null, block);
+	const signal = create_computation_signal(type | DIRTY, null, block);
 	signal.init = init;
 	signal.context = current_component_context;
 	if (schedule) {
@@ -1210,7 +1234,7 @@ export function managed_render_effect(init, block = current_block, sync = true) 
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {() => void} destroy_fn
  * @returns {void}
  */

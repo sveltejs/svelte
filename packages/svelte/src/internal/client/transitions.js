@@ -253,7 +253,7 @@ function handle_raf(time) {
  * @param {HTMLElement} dom
  * @param {() => import('./types.js').TransitionPayload} init
  * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {import('./types.js').Signal<unknown>} effect
+ * @param {import('./types.js').EffectSignal} effect
  * @returns {import('./types.js').Transition}
  */
 function create_transition(dom, init, direction, effect) {
