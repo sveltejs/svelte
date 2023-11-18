@@ -30,28 +30,42 @@ export type Store<V> = {
 	set(value: V): void;
 };
 
+// For all the core internal objects, we use signal character property strings.
+// This not only reduces code-size and parsing, but it also improves the performance
+// when the JS VM JITs the code.
+
 export type ComponentContext = {
-	props: MaybeSignal<Record<string, unknown>>;
-	accessors: Record<string, any> | null;
-	effects: null | Array<EffectSignal>;
-	mounted: boolean;
-	parent: null | ComponentContext;
-	context: null | Map<unknown, unknown>;
-	immutable: boolean;
-	runes: boolean;
-	update_callbacks: null | {
-		before: Array<() => void>;
-		after: Array<() => void>;
-		execute: () => void;
+	/** props */
+	s: MaybeSignal<Record<string, unknown>>;
+	/** accessors */
+	a: Record<string, any> | null;
+	/** effectgs */
+	e: null | Array<EffectSignal>;
+	/** mounted */
+	m: boolean;
+	/** parent */
+	p: null | ComponentContext;
+	/** context */
+	c: null | Map<unknown, unknown>;
+	/** immutable */
+	i: boolean;
+	/** runes */
+	r: boolean;
+	/** update_callbacks */
+	u: null | {
+		/** before */
+		b: Array<() => void>;
+		/** after */
+		a: Array<() => void>;
+		/** execute */
+		e: () => void;
 	};
 };
 
-// For both SourceSignal and ComputationSignal, we use signal character property string.
-// This now only reduces code-size and parsing, but it also improves the performance of the JIT compiler.
-// It's likely not to have any real wins wwhen the JIT is disabled. Lastly, we keep two shapes rather than
-// a single monomorphic shape to improve the memory usage. Source signals don't need the same shape as they
-// simply don't do as much as computations (effects and derived signals). Thus we can improve the memory
-// profile at the slight cost of some runtime performance.
+// We keep two shapes rather than a single monomorphic shape to improve the memory usage.
+// Source signals don't need the same shape as they simply don't do as much as computations
+// (effects and derived signals). Thus we can improve the memory profile at the slight cost
+// of some runtime performance.
 
 export type SourceSignal<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
@@ -114,108 +128,177 @@ export type BlockType =
 export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
-	effect: EffectSignal;
-	payload: null | TransitionPayload;
-	init: (from?: DOMRect) => TransitionPayload;
-	finished: (fn: () => void) => void;
+	/** effect */
+	e: EffectSignal;
+	/** payload */
+	p: null | TransitionPayload;
+	/** init */
+	i: (from?: DOMRect) => TransitionPayload;
+	/** finished */
+	f: (fn: () => void) => void;
 	in: () => void;
-	out: () => void;
-	cancel: () => void;
-	cleanup: () => void;
-	direction: 'in' | 'out' | 'both' | 'key';
-	dom: HTMLElement;
+	/** out */
+	o: () => void;
+	/** cancel */
+	c: () => void;
+	/** cleanup */
+	x: () => void;
+	/** direction */
+	r: 'in' | 'out' | 'both' | 'key';
+	/** dom */
+	d: HTMLElement;
 };
 
 export type RootBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	container: Node;
-	intro: boolean;
-	parent: null;
-	transition: null | ((transition: Transition) => void);
-	type: typeof ROOT_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** intro */
+	i: boolean;
+	/** parent */
+	p: null;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof ROOT_BLOCK;
 };
 
 export type IfBlock = {
-	current: boolean;
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	type: typeof IF_BLOCK;
+	/** current */
+	c: boolean;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof IF_BLOCK;
 };
 
 export type KeyBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	type: typeof KEY_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof KEY_BLOCK;
 };
 
 export type HeadBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	type: typeof HEAD_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof HEAD_BLOCK;
 };
 
 export type DynamicElementBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	type: typeof DYNAMIC_ELEMENT_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof DYNAMIC_ELEMENT_BLOCK;
 };
 
 export type DynamicComponentBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	type: typeof DYNAMIC_COMPONENT_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof DYNAMIC_COMPONENT_BLOCK;
 };
 
 export type AwaitBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	parent: Block;
-	pending: boolean;
-	transition: null | ((transition: Transition) => void);
-	type: typeof AWAIT_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** pending */
+	n: boolean;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** type */
+	t: typeof AWAIT_BLOCK;
 };
 
 export type EachBlock = {
-	anchor: Element | Comment;
-	flags: number;
-	dom: null | TemplateNode | Array<TemplateNode>;
-	items: EachItemBlock[];
-	effect: null | ComputationSignal;
-	parent: Block;
-	transition: null | ((transition: Transition) => void);
-	transitions: Array<EachItemBlock>;
-	type: typeof EACH_BLOCK;
+	/** anchor */
+	a: Element | Comment;
+	/** flags */
+	f: number;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** items */
+	v: EachItemBlock[];
+	/** effewct */
+	e: null | ComputationSignal;
+	/** parent */
+	p: Block;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** transitions */
+	s: Array<EachItemBlock>;
+	/** type */
+	t: typeof EACH_BLOCK;
 };
 
 export type EachItemBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | ComputationSignal;
-	item: any | Signal<any>;
-	index: number | Signal<number>;
-	key: unknown;
-	parent: EachBlock;
-	transition: null | ((transition: Transition) => void);
-	transitions: null | Set<Transition>;
-	type: typeof EACH_ITEM_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | ComputationSignal;
+	/** item */
+	v: any | Signal<any>;
+	/** index */
+	i: number | Signal<number>;
+	/** key */
+	k: unknown;
+	/** parent */
+	p: EachBlock;
+	/** transition */
+	r: null | ((transition: Transition) => void);
+	/** transitions */
+	s: null | Set<Transition>;
+	/** type */
+	t: typeof EACH_ITEM_BLOCK;
 };
 
 export type SnippetBlock = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	parent: Block;
-	effect: null | ComputationSignal;
-	transition: null;
-	type: typeof SNIPPET_BLOCK;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** parent */
+	p: Block;
+	/** effect */
+	e: null | ComputationSignal;
+	/** transition */
+	r: null;
+	/** type */
+	t: typeof SNIPPET_BLOCK;
 };
 
 export type Block =
@@ -264,10 +347,14 @@ export type StoreReferencesContainer = Record<
 export type ActionPayload<P> = { destroy?: () => void; update?: (value: P) => void };
 
 export type Render = {
-	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | EffectSignal;
-	transitions: Set<Transition>;
-	prev: Render | null;
+	/** dom */
+	d: null | TemplateNode | Array<TemplateNode>;
+	/** effect */
+	e: null | EffectSignal;
+	/** transitions */
+	s: Set<Transition>;
+	/** prev */
+	p: Render | null;
 };
 
 export type Raf = {

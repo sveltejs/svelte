@@ -94,15 +94,24 @@ export function set_is_ssr(ssr) {
 export function create_component_context(props) {
 	const parent = current_component_context;
 	return {
-		effects: null,
-		props,
-		parent,
-		accessors: null,
-		context: null,
-		immutable: false,
-		mounted: false,
-		runes: false,
-		update_callbacks: null
+		// accessors
+		a: null,
+		// context
+		c: null,
+		// effects
+		e: null,
+		// immutable
+		i: false,
+		// mounted
+		m: false,
+		// parent
+		p: parent,
+		// props
+		s: props,
+		// runes
+		r: false,
+		// update_callbacks
+		u: null
 	};
 }
 
@@ -112,7 +121,7 @@ export function create_component_context(props) {
  */
 function is_runes(context) {
 	const component_context = context || current_component_context;
-	return component_context !== null && component_context.runes;
+	return component_context !== null && component_context.r;
 }
 
 /**
@@ -139,14 +148,19 @@ function default_equals(a, b) {
  * @returns {import('./types.js').SourceSignal<V>}
  */
 function create_source_signal(flags, value) {
-	return {
+	const source = {
+		// consumers
 		c: null,
-		// We can remove this if we get rid of beforeUpdate/afterUpdate
-		x: null,
+		// equals
 		e: null,
+		// flags
 		f: flags,
-		v: value
+		// value
+		v: value,
+		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+		x: null
 	};
+	return source;
 }
 
 /**
@@ -158,16 +172,26 @@ function create_source_signal(flags, value) {
  */
 function create_computation_signal(flags, value, block) {
 	return {
+		// block
 		b: block,
+		// consumers
 		c: null,
-		x: null,
+		// destroy
 		d: null,
-		y: null,
+		// equals
 		e: null,
+		// flags
 		f: flags,
+		// init
 		i: null,
+		// references
 		r: null,
-		v: value
+		// value
+		v: value,
+		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+		x: null,
+		// destroy
+		y: null
 	};
 }
 
@@ -252,8 +276,9 @@ function execute_signal_fn(signal) {
 	current_untracking = false;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
-	if (is_render_effect && current_component_context?.update_callbacks != null) {
-		current_component_context.update_callbacks.execute();
+	if (is_render_effect && current_component_context?.u != null) {
+		// update_callbacks.execute()
+		current_component_context.u.e();
 	}
 
 	try {
@@ -978,12 +1003,12 @@ export function set_signal_value(signal, value) {
 		// then we will need to manually invoke the beforeUpdate/afterUpdate logic.
 		// TODO: should we put this being a is_runes check and only run it in non-runes mode?
 		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
-			const update_callbacks = component_context?.update_callbacks;
+			const update_callbacks = component_context?.u;
 			if (update_callbacks != null) {
-				update_callbacks.before.forEach(/** @param {any} c */ (c) => c());
+				update_callbacks.b.forEach(/** @param {any} c */ (c) => c());
 				const managed = managed_effect(() => {
 					destroy_signal(managed);
-					update_callbacks.after.forEach(/** @param {any} c */ (c) => c());
+					update_callbacks.a.forEach(/** @param {any} c */ (c) => c());
 				});
 			}
 		}
@@ -1070,7 +1095,7 @@ function get_equals_method(equals) {
 		return equals;
 	}
 	const context = current_component_context;
-	if (context && !context.immutable) {
+	if (context && !context.i) {
 		return safe_equal;
 	}
 	return default_equals;
@@ -1126,7 +1151,7 @@ export function user_effect(init) {
 	const apply_component_effect_heuristics =
 		current_effect.f & RENDER_EFFECT &&
 		current_component_context !== null &&
-		!current_component_context.mounted;
+		!current_component_context.m;
 	const effect = internal_create_effect(
 		EFFECT,
 		init,
@@ -1136,11 +1161,10 @@ export function user_effect(init) {
 	);
 	if (apply_component_effect_heuristics) {
 		let effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-			.effects;
+			.e;
 		if (effects === null) {
-			effects = /** @type {import('./types.js').ComponentContext} */ (
-				current_component_context
-			).effects = [];
+			effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context).e =
+				[];
 		}
 		effects.push(effect);
 	}
@@ -1350,7 +1374,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
 	const immutable = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-		.immutable;
+		.i;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
 
@@ -1462,10 +1486,10 @@ export function get_or_init_context_map() {
 	if (component_context === null) {
 		throw new Error('Context can only be used during component initialisation.');
 	}
-	let context_map = component_context.context;
+	let context_map = component_context.c;
 	if (context_map === null) {
 		const parent_context = get_parent_context(component_context);
-		context_map = component_context.context = new Map(parent_context || undefined);
+		context_map = component_context.c = new Map(parent_context || undefined);
 	}
 	return context_map;
 }
@@ -1475,13 +1499,13 @@ export function get_or_init_context_map() {
  * @returns {Map<unknown, unknown> | null}
  */
 function get_parent_context(component_context) {
-	let parent = component_context.parent;
+	let parent = component_context.p;
 	while (parent !== null) {
-		const context_map = parent.context;
+		const context_map = parent.c;
 		if (context_map !== null) {
 			return context_map;
 		}
-		parent = parent.parent;
+		parent = parent.p;
 	}
 	return null;
 }
@@ -1656,8 +1680,8 @@ export function onDestroy(fn) {
  */
 export function push(props, runes = false, immutable = false) {
 	const context_stack_item = create_component_context(props);
-	context_stack_item.runes = runes;
-	context_stack_item.immutable = immutable;
+	context_stack_item.r = runes;
+	context_stack_item.i = immutable;
 	current_component_context = context_stack_item;
 }
 
@@ -1669,16 +1693,16 @@ export function pop(accessors) {
 	const context_stack_item = current_component_context;
 	if (context_stack_item !== null) {
 		if (accessors !== undefined) {
-			context_stack_item.accessors = accessors;
+			context_stack_item.a = accessors;
 		}
-		const effects = context_stack_item.effects;
+		const effects = context_stack_item.e;
 		if (effects !== null) {
-			context_stack_item.effects = null;
+			context_stack_item.e = null;
 			for (let i = 0; i < effects.length; i++) {
 				schedule_effect(effects[i], false);
 			}
 		}
-		current_component_context = context_stack_item.parent;
-		context_stack_item.mounted = true;
+		current_component_context = context_stack_item.p;
+		context_stack_item.m = true;
 	}
 }

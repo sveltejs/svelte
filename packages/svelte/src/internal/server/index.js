@@ -121,9 +121,8 @@ export function render(component, options) {
 
 	if (options.context) {
 		$.push({});
-		/** @type {import('../client/types.js').ComponentContext} */ (
-			$.current_component_context
-		).context = options.context;
+		/** @type {import('../client/types.js').ComponentContext} */ ($.current_component_context).c =
+			options.context;
 	}
 	component(payload, options.props, {}, {});
 	if (options.context) {
