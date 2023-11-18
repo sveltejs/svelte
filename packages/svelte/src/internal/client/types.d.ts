@@ -46,7 +46,6 @@ export type ComponentContext = {
 	};
 };
 
-
 // For both SourceSignal and ComputationSignal, we use signal character property string.
 // This now only reduces code-size and parsing, but it also improves the performance of the JIT compiler.
 // It's likely not to have any real wins wwhen the JIT is disabled. Lastly, we keep two shapes rather than
