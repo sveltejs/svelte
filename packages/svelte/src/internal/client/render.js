@@ -1399,6 +1399,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				block.current = result;
 				if (has_mounted) {
 					if (result) {
+						remove_in_transitions(alternate_transitions);
 						if (alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
@@ -1410,6 +1411,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 							trigger_transitions(consequent_transitions, 'in');
 						}
 					} else {
+						remove_in_transitions(consequent_transitions);
 						if (consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {

@@ -14,7 +14,7 @@ export default test({
 
 		raf.tick(500);
 		component.x = true;
-		assert.equal(component.no, target.querySelector('div'));
+		assert.equal(component.no, null);
 		assert.equal(component.yes.foo, undefined);
 
 		raf.tick(700);
