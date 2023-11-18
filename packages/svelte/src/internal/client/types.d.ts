@@ -49,7 +49,10 @@ export type ComponentContext = {
 
 // For both SourceSignal and ComputationSignal, we use signal character property string.
 // This now only reduces code-size and parsing, but it also improves the performance of the JIT compiler.
-// It's likely not to have any real wins wwhen the JIT is disabled however.
+// It's likely not to have any real wins wwhen the JIT is disabled. Lastly, we keep two shapes rather than
+// a single monomorphic shape to improve the memory usage. Source signals don't need the same shape as they
+// simply don't do as much as computations (effects and derived signals). Thus we can improve the memory
+// profile at the slight cost of some runtime performance.
 
 export type SourceSignal<V = unknown> = {
 	/** consumers: Signals that read from the current signal */
