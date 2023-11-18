@@ -63,8 +63,6 @@ export type Signal<V = unknown> = {
 	flags: SignalFlags;
 	/** The function that we invoke for effects and computeds */
 	init: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
-	/** The read clock from the given context the signal was read/written to */
-	read: number;
 	/** Anything that a signal owns */
 	references: null | Signal[];
 	/** The latest value for this signal, doubles as the teardown for effects */
