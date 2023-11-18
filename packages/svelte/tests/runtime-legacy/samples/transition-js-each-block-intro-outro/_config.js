@@ -34,7 +34,7 @@ export default test({
 
 		component.visible = true;
 
-		raf.tick(80);
+		raf.tick(100);
 		assert.equal(divs[0].foo, 1);
 		assert.equal(divs[1].foo, 1);
 		assert.equal(divs[2].foo, 1);
