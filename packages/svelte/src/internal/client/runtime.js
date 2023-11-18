@@ -873,7 +873,8 @@ export function mutate_store(store, expression, new_value) {
  */
 export function mark_subtree_inert(signal, inert) {
 	const flags = signal.f;
-	if (((flags & INERT) === 0 && inert) || ((flags & INERT) !== 0 && !inert)) {
+	const is_already_inert = (flags & INERT) !== 0;
+	if (is_already_inert !== inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
 			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
