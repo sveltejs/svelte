@@ -2082,7 +2082,7 @@ export function update_each_item_block(block, item, index, type) {
 	if (transitions !== null && (type & EACH_KEYED) !== 0) {
 		let prev_index = block.index;
 		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).value;
+			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
 		}
 		const items = block.parent.items;
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {

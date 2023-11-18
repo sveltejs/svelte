@@ -140,12 +140,12 @@ function default_equals(a, b) {
  */
 function create_source_signal(flags, value) {
 	return {
-		consumers: null,
+		c: null,
 		// We can remove this if we get rid of beforeUpdate/afterUpdate
-		context: null,
-		equals: null,
-		flags,
-		value
+		x: null,
+		e: null,
+		f: flags,
+		v: value
 	};
 }
 
@@ -158,16 +158,16 @@ function create_source_signal(flags, value) {
  */
 function create_computation_signal(flags, value, block) {
 	return {
-		block,
-		consumers: null,
-		context: null,
-		dependencies: null,
-		destroy: null,
-		equals: null,
-		flags,
-		init: null,
-		references: null,
-		value
+		b: block,
+		c: null,
+		x: null,
+		d: null,
+		y: null,
+		e: null,
+		f: flags,
+		i: null,
+		r: null,
+		v: value
 	};
 }
 
@@ -177,9 +177,9 @@ function create_computation_signal(flags, value, block) {
  * @returns {void}
  */
 function push_reference(target_signal, ref_signal) {
-	const references = target_signal.references;
+	const references = target_signal.r;
 	if (references === null) {
-		target_signal.references = [ref_signal];
+		target_signal.r = [ref_signal];
 	} else {
 		references.push(ref_signal);
 	}
@@ -191,32 +191,31 @@ function push_reference(target_signal, ref_signal) {
  * @returns {boolean}
  */
 function is_signal_dirty(signal) {
-	const flags = signal.flags;
-	if ((flags & DIRTY) !== 0 || signal.value === UNINITIALIZED) {
+	const flags = signal.f;
+	if ((flags & DIRTY) !== 0 || signal.v === UNINITIALIZED) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal)
-			.dependencies;
+		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).d;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
 
-				if ((dependency.flags & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
+				if ((dependency.f & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
 				// The flags can be marked as dirty from the above is_signal_dirty call.
-				if ((dependency.flags & DIRTY) !== 0) {
-					if ((dependency.flags & DERIVED) !== 0) {
+				if ((dependency.f & DIRTY) !== 0) {
+					if ((dependency.f & DERIVED) !== 0) {
 						update_derived(
 							/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
 							true
 						);
 						// Might have been mutated from above get.
-						if ((signal.flags & DIRTY) !== 0) {
+						if ((signal.f & DIRTY) !== 0) {
 							return true;
 						}
 					} else {
@@ -235,21 +234,21 @@ function is_signal_dirty(signal) {
  * @returns {V}
  */
 function execute_signal_fn(signal) {
-	const init = signal.init;
+	const init = signal.i;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
 	const previous_consumer = current_consumer;
 	const previous_block = current_block;
 	const previous_component_context = current_component_context;
 	const previous_skip_consumer = current_skip_consumer;
-	const is_render_effect = (signal.flags & RENDER_EFFECT) !== 0;
+	const is_render_effect = (signal.f & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
 	current_consumer = signal;
-	current_block = signal.block;
-	current_component_context = signal.context;
-	current_skip_consumer = current_effect === null && (signal.flags & UNOWNED) !== 0;
+	current_block = signal.b;
+	current_component_context = signal.x;
+	current_skip_consumer = current_effect === null && (signal.f & UNOWNED) !== 0;
 	current_untracking = false;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
@@ -261,12 +260,12 @@ function execute_signal_fn(signal) {
 		let res;
 		if (is_render_effect) {
 			res = /** @type {(block: import('./types.js').Block) => V} */ (init)(
-				/** @type {import('./types.js').Block} */ (signal.block)
+				/** @type {import('./types.js').Block} */ (signal.b)
 			);
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
-		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.dependencies);
+		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
 
 		if (current_dependencies !== null) {
 			let i;
@@ -278,7 +277,7 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.dependencies = /** @type {import('./types.js').Signal<V>[]} **/ (
+				signal.d = /** @type {import('./types.js').Signal<V>[]} **/ (
 					dependencies = current_dependencies
 				);
 			}
@@ -287,10 +286,10 @@ function execute_signal_fn(signal) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
 
-					if (dependency.consumers === null) {
-						dependency.consumers = [signal];
+					if (dependency.c === null) {
+						dependency.c = [signal];
 					} else {
-						dependency.consumers.push(signal);
+						dependency.c.push(signal);
 					}
 				}
 			}
@@ -318,17 +317,17 @@ function execute_signal_fn(signal) {
  * @returns {void}
  */
 function remove_consumer(signal, start_index, remove_unowned) {
-	const dependencies = signal.dependencies;
+	const dependencies = signal.d;
 	if (dependencies !== null) {
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			const consumers = dependency.consumers;
+			const consumers = dependency.c;
 			let consumers_length = 0;
 			if (consumers !== null) {
 				consumers_length = consumers.length - 1;
 				if (consumers_length === 0) {
-					dependency.consumers = null;
+					dependency.c = null;
 				} else {
 					const index = consumers.indexOf(signal);
 					// Swap with last element and then remove.
@@ -336,7 +335,7 @@ function remove_consumer(signal, start_index, remove_unowned) {
 					consumers.pop();
 				}
 			}
-			if (remove_unowned && consumers_length === 0 && (dependency.flags & UNOWNED) !== 0) {
+			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
 				remove_consumer(
 					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
 					0,
@@ -353,17 +352,17 @@ function remove_consumer(signal, start_index, remove_unowned) {
  * @returns {void}
  */
 function destroy_references(signal) {
-	const references = signal.references;
-	signal.references = null;
+	const references = signal.r;
+	signal.r = null;
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
 			const reference = references[i];
-			if ((reference.flags & IS_EFFECT) !== 0) {
+			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
 				remove_consumer(reference, 0, true);
-				reference.dependencies = null;
+				reference.d = null;
 			}
 		}
 	}
@@ -388,10 +387,10 @@ function report_error(block, error) {
  * @returns {void}
  */
 export function execute_effect(signal) {
-	if ((signal.flags & DESTROYED) !== 0) {
+	if ((signal.f & DESTROYED) !== 0) {
 		return;
 	}
-	const teardown = signal.value;
+	const teardown = signal.v;
 	const previous_effect = current_effect;
 	current_effect = signal;
 
@@ -402,10 +401,10 @@ export function execute_effect(signal) {
 		}
 		const possible_teardown = execute_signal_fn(signal);
 		if (typeof possible_teardown === 'function') {
-			signal.value = possible_teardown;
+			signal.v = possible_teardown;
 		}
 	} catch (error) {
-		const block = signal.block;
+		const block = signal.b;
 		if (block !== null) {
 			report_error(block, error);
 		} else {
@@ -414,10 +413,10 @@ export function execute_effect(signal) {
 	} finally {
 		current_effect = previous_effect;
 	}
-	const component_context = signal.context;
+	const component_context = signal.x;
 	if (
 		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
-		(signal.flags & PRE_EFFECT) !== 0 &&
+		(signal.f & PRE_EFFECT) !== 0 &&
 		current_queued_pre_and_render_effects.length > 0
 	) {
 		flush_local_pre_effects(component_context);
@@ -441,7 +440,7 @@ function flush_queued_effects(effects) {
 		let i;
 		for (i = 0; i < length; i++) {
 			const signal = effects[i];
-			const flags = signal.flags;
+			const flags = signal.f;
 			if ((flags & (DESTROYED | INERT)) === 0) {
 				if (is_signal_dirty(signal)) {
 					set_signal_status(signal, CLEAN);
@@ -477,7 +476,7 @@ function process_microtask() {
  * @returns {void}
  */
 export function schedule_effect(signal, sync) {
-	const flags = signal.flags;
+	const flags = signal.f;
 	if (sync || (flags & SYNC_EFFECT) !== 0) {
 		execute_effect(signal);
 		set_signal_status(signal, CLEAN);
@@ -524,7 +523,7 @@ export function flush_local_render_effects() {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.flags & RENDER_EFFECT) !== 0 && effect.context === current_component_context) {
+		if ((effect.f & RENDER_EFFECT) !== 0 && effect.x === current_component_context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -541,7 +540,7 @@ export function flush_local_pre_effects(context) {
 	const effects = [];
 	for (let i = 0; i < current_queued_pre_and_render_effects.length; i++) {
 		const effect = current_queued_pre_and_render_effects[i];
-		if ((effect.flags & PRE_EFFECT) !== 0 && effect.context === context) {
+		if ((effect.f & PRE_EFFECT) !== 0 && effect.x === context) {
 			effects.push(effect);
 			current_queued_pre_and_render_effects.splice(i, 1);
 			i--;
@@ -607,13 +606,13 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const value = execute_signal_fn(signal);
 	const status =
-		current_skip_consumer || (current_effect === null && (signal.flags & UNOWNED) !== 0)
+		current_skip_consumer || (current_effect === null && (signal.f & UNOWNED) !== 0)
 			? DIRTY
 			: CLEAN;
 	set_signal_status(signal, status);
-	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.equals);
-	if (!equals(value, signal.value)) {
-		signal.value = value;
+	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
+	if (!equals(value, signal.v)) {
+		signal.v = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
 	}
 }
@@ -731,9 +730,9 @@ export function exposable(fn) {
  * @returns {V}
  */
 export function get(signal) {
-	const flags = signal.flags;
+	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
-		return signal.value;
+		return signal.v;
 	}
 
 	if (is_signal_exposed && current_should_capture_signal) {
@@ -745,13 +744,9 @@ export function get(signal) {
 	}
 
 	// Register the dependency on the current consumer signal.
-	if (
-		current_consumer !== null &&
-		(current_consumer.flags & MANAGED) === 0 &&
-		!current_untracking
-	) {
-		const unowned = (current_consumer.flags & UNOWNED) !== 0;
-		const dependencies = current_consumer.dependencies;
+	if (current_consumer !== null && (current_consumer.f & MANAGED) === 0 && !current_untracking) {
+		const unowned = (current_consumer.f & UNOWNED) !== 0;
+		const dependencies = current_consumer.d;
 		if (
 			current_dependencies === null &&
 			dependencies !== null &&
@@ -769,7 +764,7 @@ export function get(signal) {
 	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
 		update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
 	}
-	return signal.value;
+	return signal.v;
 }
 
 /**
@@ -877,14 +872,14 @@ export function mutate_store(store, expression, new_value) {
  * @returns {void}
  */
 export function mark_subtree_inert(signal, inert) {
-	const flags = signal.flags;
+	const flags = signal.f;
 	if (((flags & INERT) === 0 && inert) || ((flags & INERT) !== 0 && !inert)) {
-		signal.flags ^= INERT;
+		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
 			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
 		}
 	}
-	const references = signal.references;
+	const references = signal.r;
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
@@ -901,14 +896,14 @@ export function mark_subtree_inert(signal, inert) {
  * @returns {void}
  */
 function mark_signal_consumers(signal, to_status, force_schedule) {
-	const runes = is_runes(signal.context);
-	const consumers = signal.consumers;
+	const runes = is_runes(signal.x);
+	const consumers = signal.c;
 	if (consumers !== null) {
 		const length = consumers.length;
 		let i;
 		for (i = 0; i < length; i++) {
 			const consumer = consumers[i];
-			const flags = consumer.flags;
+			const flags = consumer.f;
 			const unowned = (flags & UNOWNED) !== 0;
 			const dirty = (flags & DIRTY) !== 0;
 			// We skip any effects that are already dirty (but not unowned). Additionally, we also
@@ -922,7 +917,7 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			// are already dirty. Unowned signals might be dirty because they are not captured as part of an
 			// effect.
 			if ((flags & CLEAN) !== 0 || (dirty && unowned)) {
-				if ((consumer.flags & IS_EFFECT) !== 0) {
+				if ((consumer.f & IS_EFFECT) !== 0) {
 					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
@@ -943,8 +938,8 @@ export function set_signal_value(signal, value) {
 		!current_untracking &&
 		!ignore_mutation_validation &&
 		current_consumer !== null &&
-		is_runes(signal.context) &&
-		(current_consumer.flags & DERIVED) !== 0
+		is_runes(signal.x) &&
+		(current_consumer.f & DERIVED) !== 0
 	) {
 		throw new Error(
 			"Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
@@ -953,11 +948,11 @@ export function set_signal_value(signal, value) {
 		);
 	}
 	if (
-		(signal.flags & SOURCE) !== 0 &&
-		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.equals)(value, signal.value))
+		(signal.f & SOURCE) !== 0 &&
+		!(/** @type {import('./types.js').EqualsFunctions} */ (signal.e)(value, signal.v))
 	) {
-		const component_context = signal.context;
-		signal.value = value;
+		const component_context = signal.x;
+		signal.v = value;
 		// If the current signal is running for the first time, it won't have any
 		// consumers as we only allocate and assign the consumers after the signal
 		// has fully executed. So in the case of ensuring it registers the consumer
@@ -969,8 +964,8 @@ export function set_signal_value(signal, value) {
 		if (
 			is_runes(component_context) &&
 			current_effect !== null &&
-			current_effect.consumers === null &&
-			(current_effect.flags & CLEAN) !== 0 &&
+			current_effect.c === null &&
+			(current_effect.f & CLEAN) !== 0 &&
 			current_dependencies !== null &&
 			current_dependencies.includes(signal)
 		) {
@@ -1000,19 +995,19 @@ export function set_signal_value(signal, value) {
  * @returns {void}
  */
 export function destroy_signal(signal) {
-	const teardown = /** @type {null | (() => void)} */ (signal.value);
-	const destroy = signal.destroy;
-	const flags = signal.flags;
+	const teardown = /** @type {null | (() => void)} */ (signal.v);
+	const destroy = signal.y;
+	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumer(signal, 0, true);
-	signal.init = null;
-	signal.references = null;
-	signal.destroy = null;
-	signal.context = null;
-	signal.block = null;
-	signal.value = /** @type {V} */ (null);
-	signal.dependencies = null;
-	signal.consumers = null;
+	signal.i = null;
+	signal.r = null;
+	signal.y = null;
+	signal.x = null;
+	signal.b = null;
+	signal.v = /** @type {V} */ (null);
+	signal.d = null;
+	signal.c = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {
@@ -1024,7 +1019,7 @@ export function destroy_signal(signal) {
 			destroy();
 		}
 	}
-	if (teardown !== null && (signal.flags & IS_EFFECT) !== 0) {
+	if (teardown !== null && (flags & IS_EFFECT) !== 0) {
 		teardown();
 	}
 }
@@ -1042,9 +1037,9 @@ export function derived(init, equals) {
 	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
 		create_computation_signal(flags | CLEAN, UNINITIALIZED, current_block)
 	);
-	signal.init = init;
-	signal.context = current_component_context;
-	signal.equals = get_equals_method(equals);
+	signal.i = init;
+	signal.x = current_component_context;
+	signal.e = get_equals_method(equals);
 	if (!is_unowned) {
 		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
 	}
@@ -1060,8 +1055,8 @@ export function derived(init, equals) {
 /*#__NO_SIDE_EFFECTS__*/
 export function source(initial_value, equals) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
-	source.context = current_component_context;
-	source.equals = get_equals_method(equals);
+	source.x = current_component_context;
+	source.e = get_equals_method(equals);
 	return source;
 }
 
@@ -1108,8 +1103,8 @@ export function untrack(fn) {
  */
 function internal_create_effect(type, init, sync, block, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null, block);
-	signal.init = init;
-	signal.context = current_component_context;
+	signal.i = init;
+	signal.x = current_component_context;
 	if (schedule) {
 		schedule_effect(signal, sync);
 	}
@@ -1128,7 +1123,7 @@ export function user_effect(init) {
 		throw new Error('The Svelte $effect rune can only be used during component initialisation.');
 	}
 	const apply_component_effect_heuristics =
-		current_effect.flags & RENDER_EFFECT &&
+		current_effect.f & RENDER_EFFECT &&
 		current_component_context !== null &&
 		!current_component_context.mounted;
 	const effect = internal_create_effect(
@@ -1186,7 +1181,7 @@ export function pre_effect(init) {
 			'The Svelte $effect.pre rune can only be used during component initialisation.'
 		);
 	}
-	const sync = current_effect !== null && (current_effect.flags & RENDER_EFFECT) !== 0;
+	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
 	return internal_create_effect(
 		PRE_EFFECT,
 		() => {
@@ -1243,13 +1238,13 @@ export function managed_render_effect(init, block = current_block, sync = true) 
  * @returns {void}
  */
 export function push_destroy_fn(signal, destroy_fn) {
-	let destroy = signal.destroy;
+	let destroy = signal.y;
 	if (destroy === null) {
-		signal.destroy = destroy_fn;
+		signal.y = destroy_fn;
 	} else if (is_array(destroy)) {
 		destroy.push(destroy_fn);
 	} else {
-		signal.destroy = [destroy, destroy_fn];
+		signal.y = [destroy, destroy_fn];
 	}
 }
 
@@ -1260,16 +1255,16 @@ export function push_destroy_fn(signal, destroy_fn) {
  * @returns {void}
  */
 export function set_signal_status(signal, status) {
-	const flags = signal.flags;
+	const flags = signal.f;
 	if ((flags & status) === 0) {
 		if ((flags & MAYBE_DIRTY) !== 0) {
-			signal.flags ^= MAYBE_DIRTY;
+			signal.f ^= MAYBE_DIRTY;
 		} else if ((flags & CLEAN) !== 0) {
-			signal.flags ^= CLEAN;
+			signal.f ^= CLEAN;
 		} else if ((flags & DIRTY) !== 0) {
-			signal.flags ^= DIRTY;
+			signal.f ^= DIRTY;
 		}
-		signal.flags ^= status;
+		signal.f ^= status;
 	}
 }
 
@@ -1282,7 +1277,7 @@ export function is_signal(val) {
 	return (
 		typeof val === 'object' &&
 		val !== null &&
-		typeof (/** @type {import('./types.js').Signal<V>} */ (val).flags) === 'number'
+		typeof (/** @type {import('./types.js').Signal<V>} */ (val).f) === 'number'
 	);
 }
 
@@ -1328,9 +1323,9 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 
 	if (
 		is_signal(possible_signal) &&
-		possible_signal.value === value &&
+		possible_signal.v === value &&
 		update_bound_prop === undefined &&
-		get_equals_method() === possible_signal.equals
+		get_equals_method() === possible_signal.e
 	) {
 		if (should_set_default_value) {
 			set(
@@ -1372,7 +1367,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 			return;
 		}
 
-		if (not_equal(immutable, propagating_value, source_signal.value)) {
+		if (not_equal(immutable, propagating_value, source_signal.v)) {
 			ignore_next2 = true;
 			// TODO figure out why we need it this way and the explain in a comment;
 			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
@@ -1394,7 +1389,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 				return;
 			}
 
-			if (not_equal(immutable, propagating_value, possible_signal.value)) {
+			if (not_equal(immutable, propagating_value, possible_signal.v)) {
 				ignore_next1 = true;
 				untrack(() => update_bound_prop(propagating_value));
 			}

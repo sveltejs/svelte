@@ -46,40 +46,45 @@ export type ComponentContext = {
 	};
 };
 
+
+// For both SourceSignal and ComputationSignal, we use signal character property string.
+// This now only reduces code-size and parsing, but it also improves the performance of the JIT compiler.
+// It's likely not to have any real wins wwhen the JIT is disabled however.
+
 export type SourceSignal<V = unknown> = {
-	/** Signals that read from the current signal */
-	consumers: null | ComputationSignal[];
-	/** The associated component if this signal is an effect/computed */
-	context: null | ComponentContext;
-	/** For value equality */
-	equals: null | EqualsFunctions;
-	/** The types that the signal represent, as a bitwise value */
-	flags: SignalFlags;
-	/** The latest value for this signal, doubles as the teardown for effects */
-	value: V;
+	/** consumers: Signals that read from the current signal */
+	c: null | ComputationSignal[];
+	/** context: The associated component if this signal is an effect/computed */
+	x: null | ComponentContext;
+	/** equals: For value equality */
+	e: null | EqualsFunctions;
+	/** flags: The types that the signal represent, as a bitwise value */
+	f: SignalFlags;
+	/** value: The latest value for this signal */
+	v: V;
 };
 
 export type ComputationSignal<V = unknown> = {
-	/** The block associated with this effect/computed */
-	block: null | Block;
-	/** Signals that read from the current signal */
-	consumers: null | ComputationSignal[];
-	/** The associated component if this signal is an effect/computed */
-	context: null | ComponentContext;
-	/** Signals that this signal reads from */
-	dependencies: null | Signal<V>[];
-	/** Thing(s) that need destroying */
-	destroy: null | (() => void) | Array<() => void>;
-	/** For value equality */
-	equals: null | EqualsFunctions;
+	/** block: The block associated with this effect/computed */
+	b: null | Block;
+	/** consumers: Signals that read from the current signal */
+	c: null | ComputationSignal[];
+	/** context: The associated component if this signal is an effect/computed */
+	x: null | ComponentContext;
+	/** dependencies: Signals that this signal reads from */
+	d: null | Signal<V>[];
+	/** destroy: Thing(s) that need destroying */
+	y: null | (() => void) | Array<() => void>;
+	/** equals: For value equality */
+	e: null | EqualsFunctions;
 	/** The types that the signal represent, as a bitwise value */
-	flags: SignalFlags;
-	/** The function that we invoke for effects and computeds */
-	init: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
-	/** Anything that a signal owns */
-	references: null | ComputationSignal[];
-	/** The latest value for this signal, doubles as the teardown for effects */
-	value: V;
+	f: SignalFlags;
+	/** init: The function that we invoke for effects and computeds */
+	i: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
+	/** references: Anything that a signal owns */
+	r: null | ComputationSignal[];
+	/** value: The latest value for this signal, doubles as the teardown for effects */
+	v: V;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
