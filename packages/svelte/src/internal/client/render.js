@@ -26,7 +26,6 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_INDEX_REACTIVE,
 	EACH_ITEM_REACTIVE,
-	EACH_IS_ANIMATED,
 	PassiveDelegatedEvents,
 	DelegatedEvents
 } from '../../constants.js';
@@ -2244,11 +2243,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				? []
 				: Array.from(maybe_array);
 			if (key_fn !== null) {
-				const length = array.length;
-				keys = Array(length);
-				for (let i = 0; i < length; i++) {
-					keys[i] = key_fn(array[i]);
-				}
+				keys = array.map(key_fn);
 			}
 			if (fallback_fn !== null) {
 				if (array.length === 0) {
