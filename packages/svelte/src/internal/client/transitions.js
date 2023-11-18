@@ -485,7 +485,6 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 					}
 					if (
 						parent === null ||
-						is_intro ||
 						(!global &&
 							(transition_block.type !== IF_BLOCK || parent.type !== IF_BLOCK || parent.current))
 					) {
@@ -530,9 +529,6 @@ export function trigger_transitions(transitions, target_direction, from) {
 		const direction = transition.direction;
 		if (target_direction === 'in') {
 			if (direction === 'in' || direction === 'both') {
-				if (direction === 'in') {
-					transition.cancel();
-				}
 				transition.in();
 			} else {
 				transition.cancel();
