@@ -46,30 +46,52 @@ export type ComponentContext = {
 	};
 };
 
-export type Signal<V = unknown> = {
-	/** The block associated with this effect/computed */
-	block: null | Block;
-	/** Signals that read from the current signal */
-	consumers: null | Signal[];
-	/** The associated component if this signal is an effect/computed */
-	context: null | ComponentContext;
-	/** Signals that this signal reads from */
-	dependencies: null | Signal[];
-	/** Thing(s) that need destroying */
-	destroy: null | (() => void) | Array<() => void>;
-	/** For value equality */
-	equals: null | EqualsFunctions;
-	/** The types that the signal represent, as a bitwise value */
-	flags: SignalFlags;
-	/** The function that we invoke for effects and computeds */
-	init: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
-	/** Anything that a signal owns */
-	references: null | Signal[];
-	/** The latest value for this signal, doubles as the teardown for effects */
-	value: V;
+// For both SourceSignal and ComputationSignal, we use signal character property string.
+// This now only reduces code-size and parsing, but it also improves the performance of the JIT compiler.
+// It's likely not to have any real wins wwhen the JIT is disabled. Lastly, we keep two shapes rather than
+// a single monomorphic shape to improve the memory usage. Source signals don't need the same shape as they
+// simply don't do as much as computations (effects and derived signals). Thus we can improve the memory
+// profile at the slight cost of some runtime performance.
+
+export type SourceSignal<V = unknown> = {
+	/** consumers: Signals that read from the current signal */
+	c: null | ComputationSignal[];
+	/** context: The associated component if this signal is an effect/computed */
+	x: null | ComponentContext;
+	/** equals: For value equality */
+	e: null | EqualsFunctions;
+	/** flags: The types that the signal represent, as a bitwise value */
+	f: SignalFlags;
+	/** value: The latest value for this signal */
+	v: V;
 };
 
-export type EffectSignal = Signal<null | (() => void)>;
+export type ComputationSignal<V = unknown> = {
+	/** block: The block associated with this effect/computed */
+	b: null | Block;
+	/** consumers: Signals that read from the current signal */
+	c: null | ComputationSignal[];
+	/** context: The associated component if this signal is an effect/computed */
+	x: null | ComponentContext;
+	/** dependencies: Signals that this signal reads from */
+	d: null | Signal<V>[];
+	/** destroy: Thing(s) that need destroying */
+	y: null | (() => void) | Array<() => void>;
+	/** equals: For value equality */
+	e: null | EqualsFunctions;
+	/** The types that the signal represent, as a bitwise value */
+	f: SignalFlags;
+	/** init: The function that we invoke for effects and computeds */
+	i: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
+	/** references: Anything that a signal owns */
+	r: null | ComputationSignal[];
+	/** value: The latest value for this signal, doubles as the teardown for effects */
+	v: V;
+};
+
+export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
+
+export type EffectSignal = ComputationSignal<null | (() => void)>;
 
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
@@ -92,7 +114,7 @@ export type BlockType =
 export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
-	effect: Signal;
+	effect: EffectSignal;
 	payload: null | TransitionPayload;
 	init: (from?: DOMRect) => TransitionPayload;
 	finished: (fn: () => void) => void;
@@ -106,7 +128,7 @@ export type Transition = {
 
 export type RootBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	container: Node;
 	intro: boolean;
 	parent: null;
@@ -117,7 +139,7 @@ export type RootBlock = {
 export type IfBlock = {
 	current: boolean;
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	type: typeof IF_BLOCK;
@@ -125,7 +147,7 @@ export type IfBlock = {
 
 export type KeyBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	type: typeof KEY_BLOCK;
@@ -133,7 +155,7 @@ export type KeyBlock = {
 
 export type HeadBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	type: typeof HEAD_BLOCK;
@@ -141,7 +163,7 @@ export type HeadBlock = {
 
 export type DynamicElementBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	type: typeof DYNAMIC_ELEMENT_BLOCK;
@@ -149,7 +171,7 @@ export type DynamicElementBlock = {
 
 export type DynamicComponentBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	type: typeof DYNAMIC_COMPONENT_BLOCK;
@@ -157,7 +179,7 @@ export type DynamicComponentBlock = {
 
 export type AwaitBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	pending: boolean;
 	transition: null | ((transition: Transition) => void);
@@ -169,7 +191,7 @@ export type EachBlock = {
 	flags: number;
 	dom: null | TemplateNode | Array<TemplateNode>;
 	items: EachItemBlock[];
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	parent: Block;
 	transition: null | ((transition: Transition) => void);
 	transitions: Array<EachItemBlock>;
@@ -178,7 +200,7 @@ export type EachBlock = {
 
 export type EachItemBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	item: any | Signal<any>;
 	index: number | Signal<number>;
 	key: unknown;
@@ -191,7 +213,7 @@ export type EachItemBlock = {
 export type SnippetBlock = {
 	dom: null | TemplateNode | Array<TemplateNode>;
 	parent: Block;
-	effect: null | Signal;
+	effect: null | ComputationSignal;
 	transition: null;
 	type: typeof SNIPPET_BLOCK;
 };

@@ -26,7 +26,6 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_INDEX_REACTIVE,
 	EACH_ITEM_REACTIVE,
-	EACH_IS_ANIMATED,
 	PassiveDelegatedEvents,
 	DelegatedEvents
 } from '../../constants.js';
@@ -624,7 +623,7 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').Signal | undefined} */
+	/** @type {import('./types.js').ComputationSignal | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
@@ -2083,7 +2082,7 @@ export function update_each_item_block(block, item, index, type) {
 	if (transitions !== null && (type & EACH_KEYED) !== 0) {
 		let prev_index = block.index;
 		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).value;
+			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
 		}
 		const items = block.parent.items;
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
@@ -2125,7 +2124,7 @@ export function destroy_each_item_block(
 		if (!controlled && dom !== null) {
 			remove(dom);
 		}
-		destroy_signal(/** @type {import('./types.js').Signal} */ (block.effect));
+		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.effect));
 	}
 }
 
@@ -2244,11 +2243,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				? []
 				: Array.from(maybe_array);
 			if (key_fn !== null) {
-				const length = array.length;
-				keys = Array(length);
-				for (let i = 0; i < length; i++) {
-					keys[i] = key_fn(array[i]);
-				}
+				keys = array.map(key_fn);
 			}
 			if (fallback_fn !== null) {
 				if (array.length === 0) {
@@ -3163,7 +3158,7 @@ export function mount(component, options) {
 			if (hydration_fragment !== null) {
 				remove(hydration_fragment);
 			}
-			destroy_signal(/** @type {import('./types.js').Signal} */ (block.effect));
+			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.effect));
 		}
 	];
 }

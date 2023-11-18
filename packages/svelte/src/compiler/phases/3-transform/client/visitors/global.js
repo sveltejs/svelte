@@ -14,21 +14,21 @@ export const global_visitors = {
 	},
 	MemberExpression(node, { state, next }) {
 		if (node.object.type === 'ThisExpression') {
-			// rewrite `this.#foo` as `this.#foo.value` inside a constructor
+			// rewrite `this.#foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'PrivateIdentifier') {
 				const field = state.private_state.get(node.property.name);
 
 				if (field) {
-					return state.in_constructor ? b.member(node, b.id('value')) : b.call('$.get', node);
+					return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
 				}
 			}
 
-			// rewrite `this.foo` as `this.#foo.value` inside a constructor
+			// rewrite `this.foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'Identifier' && !node.computed) {
 				const field = state.public_state.get(node.property.name);
 
 				if (field && state.in_constructor) {
-					return b.member(b.member(b.this, field.id), b.id('value'));
+					return b.member(b.member(b.this, field.id), b.id('v'));
 				}
 			}
 		}
