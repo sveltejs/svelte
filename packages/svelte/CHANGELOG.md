@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.7
+
+### Patch Changes
+
+- chore: more signal perf tuning ([#9531](https://github.com/sveltejs/svelte/pull/9531))
+
+- fix: address intro transition bugs ([#9528](https://github.com/sveltejs/svelte/pull/9528))
+
+- chore: tweak signals for better runtime perf ([#9529](https://github.com/sveltejs/svelte/pull/9529))
+
 ## 5.0.0-next.6
 
 ### Patch Changes
