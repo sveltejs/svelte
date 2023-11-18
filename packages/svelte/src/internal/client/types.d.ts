@@ -35,26 +35,29 @@ export type Store<V> = {
 // when the JS VM JITs the code.
 
 export type ComponentContext = {
-	// props
+	/** props */
 	s: MaybeSignal<Record<string, unknown>>;
-	// accessors
+	/** accessors */
 	a: Record<string, any> | null;
-	// effects
+	/** effectgs */
 	e: null | Array<EffectSignal>;
-	// mounted
+	/** mounted */
 	m: boolean;
-	// parent
+	/** parent */
 	p: null | ComponentContext;
-	// context
+	/** context */
 	c: null | Map<unknown, unknown>;
-	// immutable
+	/** immutable */
 	i: boolean;
-	// runes
+	/** runes */
 	r: boolean;
-	// update_callbacks
+	/** update_callbacks */
 	u: null | {
+		/** before */
 		b: Array<() => void>;
+		/** after */
 		a: Array<() => void>;
+		/** execute */
 		e: () => void;
 	};
 };
@@ -125,176 +128,176 @@ export type BlockType =
 export type TemplateNode = Text | Element | Comment;
 
 export type Transition = {
-	// effect
+	/** effect */
 	e: EffectSignal;
-	// payload
+	/** payload */
 	p: null | TransitionPayload;
-	// init
+	/** init */
 	i: (from?: DOMRect) => TransitionPayload;
-	// finished
+	/** finished */
 	f: (fn: () => void) => void;
 	in: () => void;
-	// out
+	/** out */
 	o: () => void;
-	// cancel
+	/** cancel */
 	c: () => void;
-	// cleanup
+	/** cleanup */
 	x: () => void;
-	// direction
+	/** direction */
 	r: 'in' | 'out' | 'both' | 'key';
-	// dom
+	/** dom */
 	d: HTMLElement;
 };
 
 export type RootBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// intro
+	/** intro */
 	i: boolean;
-	// parent
+	/** parent */
 	p: null;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof ROOT_BLOCK;
 };
 
 export type IfBlock = {
-	// current
+	/** current */
 	c: boolean;
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof IF_BLOCK;
 };
 
 export type KeyBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof KEY_BLOCK;
 };
 
 export type HeadBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof HEAD_BLOCK;
 };
 
 export type DynamicElementBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof DYNAMIC_ELEMENT_BLOCK;
 };
 
 export type DynamicComponentBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof DYNAMIC_COMPONENT_BLOCK;
 };
 
 export type AwaitBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// pending
+	/** pending */
 	n: boolean;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// type
+	/** type */
 	t: typeof AWAIT_BLOCK;
 };
 
 export type EachBlock = {
-	// anchor
+	/** anchor */
 	a: Element | Comment;
-	// flags
+	/** flags */
 	f: number;
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// items
+	/** items */
 	v: EachItemBlock[];
-	// effect
+	/** effewct */
 	e: null | ComputationSignal;
-	// parent
+	/** parent */
 	p: Block;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// transitions
+	/** transitions */
 	s: Array<EachItemBlock>;
-	// type
+	/** type */
 	t: typeof EACH_BLOCK;
 };
 
 export type EachItemBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// item
+	/** item */
 	v: any | Signal<any>;
-	// index
+	/** index */
 	i: number | Signal<number>;
-	// key
+	/** key */
 	k: unknown;
-	// parent
+	/** parent */
 	p: EachBlock;
-	// transition
+	/** transition */
 	r: null | ((transition: Transition) => void);
-	// transitions
+	/** transitions */
 	s: null | Set<Transition>;
-	// type
+	/** type */
 	t: typeof EACH_ITEM_BLOCK;
 };
 
 export type SnippetBlock = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// parent
+	/** parent */
 	p: Block;
-	// effect
+	/** effect */
 	e: null | ComputationSignal;
-	// transition
+	/** transition */
 	r: null;
-	// type
+	/** type */
 	t: typeof SNIPPET_BLOCK;
 };
 
@@ -344,13 +347,13 @@ export type StoreReferencesContainer = Record<
 export type ActionPayload<P> = { destroy?: () => void; update?: (value: P) => void };
 
 export type Render = {
-	// dom
+	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
-	// effect
+	/** effect */
 	e: null | EffectSignal;
-	// transitions
+	/** transitions */
 	s: Set<Transition>;
-	// prev
+	/** prev */
 	p: Render | null;
 };
 
