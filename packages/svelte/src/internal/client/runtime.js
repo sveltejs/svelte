@@ -1,7 +1,6 @@
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC } from '../common.js';
 import { unwrap } from './render.js';
-import { map_delete, map_get, map_set } from './operations.js';
 import { is_array } from './utils.js';
 
 export const SOURCE = 1;
@@ -197,22 +196,25 @@ function is_signal_dirty(signal) {
 		return true;
 	}
 	if ((flags & MAYBE_DIRTY) !== 0) {
-		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal).dependencies;
+		const dependencies = /** @type {import('./types.js').ComputationSignal<V>} **/ (signal)
+			.dependencies;
 		if (dependencies !== null) {
 			const length = dependencies.length;
 			let i;
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
-				const dep_flags = dependency.flags;
 
-				if ((dep_flags & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
+				if ((dependency.flags & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
 					set_signal_status(dependency, CLEAN);
 					continue;
 				}
 				// The flags can be marked as dirty from the above is_signal_dirty call.
 				if ((dependency.flags & DIRTY) !== 0) {
-					if ((dep_flags & DERIVED) !== 0) {
-						update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), true);
+					if ((dependency.flags & DERIVED) !== 0) {
+						update_derived(
+							/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
+							true
+						);
 						// Might have been mutated from above get.
 						if ((signal.flags & DIRTY) !== 0) {
 							return true;
@@ -276,7 +278,9 @@ function execute_signal_fn(signal) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
 				}
 			} else {
-				signal.dependencies = /** @type {import('./types.js').Signal<V>[]} **/ (dependencies = current_dependencies);
+				signal.dependencies = /** @type {import('./types.js').Signal<V>[]} **/ (
+					dependencies = current_dependencies
+				);
 			}
 
 			if (!current_skip_consumer) {
