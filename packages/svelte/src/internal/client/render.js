@@ -2225,7 +2225,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					block.d = null;
 				}
 				let anchor = block.a;
-				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 				if (is_controlled) {
 					anchor = empty();
 					block.a.appendChild(anchor);
@@ -2290,7 +2289,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	);
 	push_destroy_fn(each, () => {
 		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 		const anchor_node = block.a;
 		let fallback = current_fallback;
 		while (fallback !== null) {
@@ -3115,7 +3113,10 @@ export function mount(component, options) {
 		if (options.recover !== false && hydration_fragment !== null) {
 			// eslint-disable-next-line no-console
 			console.error(
-				'Hydration failed because the initial UI does not match what was rendered on the server.',
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
 				error
 			);
 			remove(hydration_fragment);

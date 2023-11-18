@@ -341,8 +341,7 @@ export function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block =
-				(flags & EACH_ITEM_REACTIVE) !== 0 || (flags & EACH_INDEX_REACTIVE) !== 0;
+			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */

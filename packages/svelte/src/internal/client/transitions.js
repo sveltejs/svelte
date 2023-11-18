@@ -1,4 +1,5 @@
 import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../constants.js';
+import { run_all } from '../common.js';
 import {
 	AWAIT_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
@@ -561,7 +562,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 			destroy_signal(e);
 			const e2 = managed_effect(() => {
 				destroy_signal(e2);
-				outros.forEach(/** @param {any} o */ (o) => o());
+				run_all(outros);
 			});
 		}, false);
 	}
