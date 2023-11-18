@@ -756,7 +756,7 @@ export function get(signal) {
 			current_dependencies_index++;
 		} else if (current_dependencies === null) {
 			current_dependencies = [signal];
-		} else if (signal !== current_dependencies.at(-1)) {
+		} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
 			current_dependencies.push(signal);
 		}
 	}
