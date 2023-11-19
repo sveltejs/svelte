@@ -2225,6 +2225,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					block.d = null;
 				}
 				let anchor = block.a;
+				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 				if (is_controlled) {
 					anchor = empty();
 					block.a.appendChild(anchor);
@@ -2290,6 +2291,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	push_destroy_fn(each, () => {
 		const flags = block.f;
 		const anchor_node = block.a;
+		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 		let fallback = current_fallback;
 		while (fallback !== null) {
 			const dom = fallback.d;
