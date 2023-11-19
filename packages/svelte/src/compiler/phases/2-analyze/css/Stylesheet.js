@@ -58,22 +58,25 @@ class Rule {
 	/** @type {import('#compiler').Css.Rule} */
 	node;
 
-	/** @type {Atrule | undefined} */
+	/** @type {Atrule | Rule | undefined} */
 	parent;
 
 	/**
 	 * @param {import('#compiler').Css.Rule} node
 	 * @param {any} stylesheet
-	 * @param {Atrule | undefined} parent
+	 * @param {Atrule | Rule | undefined} parent
 	 */
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
 		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
 
-		this.declarations = /** @type {import('#compiler').Css.Declaration[]} */ (
-			node.block.children
-		).map((node) => new Declaration(node));
+		this.nested_rules = node.block.children
+			.filter((node) => node.type === 'Rule')
+			.map(node => new Rule(/** @type {import('#compiler').Css.Rule}*/ (node), stylesheet, this));
+		this.declarations = node.block.children
+			.filter((node) => node.type === 'Declaration')
+			.map((node) => new Declaration(/** @type {import('#compiler').Css.Declaration} */ (node)));
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
@@ -109,6 +112,7 @@ class Rule {
 			selector.transform(code, attr, max_amount_class_specificity_increased)
 		);
 		this.declarations.forEach((declaration) => declaration.transform(code, keyframes));
+		this.nested_rules.forEach((rule) => rule.transform(code, id, keyframes, max_amount_class_specificity_increased));
 	}
 
 	/** @param {import('../../types.js').ComponentAnalysis} analysis */
@@ -381,6 +385,7 @@ export default class Stylesheet {
 			css: ast.content.styles,
 			hash
 		});
+
 		this.has_styles = true;
 
 		const state = {

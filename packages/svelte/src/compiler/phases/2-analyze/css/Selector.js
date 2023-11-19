@@ -105,7 +105,10 @@ export default class Selector {
 					}
 					continue;
 				}
-				if (selector.type === 'TypeSelector' && selector.name === '*') {
+				if (selector.type === "NestedSelector") {
+					// do we want to add the attr to the nested selector?
+					// it's kind of implied that it's a child of the parent selector
+				} else if (selector.type === 'TypeSelector' && selector.name === '*') {
 					code.update(selector.start, selector.end, attr);
 				} else {
 					code.appendLeft(selector.end, attr);
@@ -114,16 +117,18 @@ export default class Selector {
 			}
 		}
 		this.blocks.forEach((block, index) => {
+			console.log(block)
 			if (block.global) {
 				remove_global_pseudo_class(block.selectors[0]);
 			}
-			if (block.should_encapsulate)
+			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
 					index === this.blocks.length - 1
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);
+			}
 		});
 	}
 
@@ -308,6 +313,10 @@ function block_might_apply_to_node(block, node) {
 		if (selector.type === 'Percentage') continue;
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
+
+		// if(name === "&") {
+		// 	return POSSIBLE_MATCH;
+		// }
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return NO_MATCH;

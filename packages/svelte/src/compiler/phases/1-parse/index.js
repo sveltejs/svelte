@@ -129,7 +129,7 @@ export class Parser {
 	 * @param {string} str
 	 * @param {boolean} [required]
 	 */
-	eat(str, required) {
+	eat(str, required = false) {
 		if (this.match(str)) {
 			this.index += str.length;
 			return true;
