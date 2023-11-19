@@ -1035,7 +1035,7 @@ export function destroy_signal(signal) {
 		signal.y =
 		signal.x =
 		signal.b =
-		// @ts-expect-error - this is fine
+		// @ts-expect-error - this is fine, since we're assigning to null to clear out a destroyed signal
 		signal.v =
 		signal.d =
 		signal.c =
@@ -1282,6 +1282,7 @@ export function push_destroy_fn(signal, destroy_fn) {
 	}
 }
 
+const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
@@ -1289,7 +1290,7 @@ export function push_destroy_fn(signal, destroy_fn) {
  * @returns {void}
  */
 export function set_signal_status(signal, status) {
-	signal.f = (signal.f & ~(DIRTY | MAYBE_DIRTY | CLEAN)) | status;
+	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**
