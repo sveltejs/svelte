@@ -15,6 +15,7 @@ import {
 	current_effect,
 	destroy_signal,
 	effect,
+	execute_effect,
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
@@ -418,7 +419,8 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 	const block = current_block;
 	const props = props_fn === null ? {} : props_fn();
 
-	let skip_intro = true;
+	let can_show_intro_on_mount = true;
+	let can_apply_lazy_transitions = false;
 
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
@@ -429,19 +431,22 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 				transition_block.r = each_item_transition;
 				transition_block = transition_block.p;
 			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
-				skip_intro = false;
+				can_show_intro_on_mount = false;
+			} else if (transition_block.t === IF_BLOCK) {
+				transition_block.r = if_block_transition;
 			}
-			if (skip_intro) {
-				skip_intro = transition_block.e === null;
+			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
+				can_show_intro_on_mount = transition_block.e === null;
 			}
-			if (!skip_intro || !global) {
-				break;
+			if (!can_show_intro_on_mount || !global) {
+				can_apply_lazy_transitions = true;
 			}
 		} else if (
+			!can_apply_lazy_transitions &&
 			transition_block.t === ROOT_BLOCK &&
 			(transition_block.e !== null || transition_block.i)
 		) {
-			skip_intro = false;
+			can_show_intro_on_mount = false;
 		}
 		transition_block = transition_block.p;
 	}
@@ -467,7 +472,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 
 		transition = create_transition(dom, init, direction, transition_effect);
 		const is_intro = direction === 'in';
-		const show_intro = !skip_intro && (is_intro || direction === 'both');
+		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
 
 		if (show_intro) {
 			transition.p = transition.i();
@@ -483,7 +488,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 
 			/** @type {import('./types.js').Block | null} */
 			let transition_block = block;
-			while (transition_block !== null) {
+			while (!is_intro && transition_block !== null) {
 				const parent = transition_block.p;
 				if (is_transition_block(transition_block)) {
 					if (transition_block.r !== null) {
@@ -491,7 +496,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 					}
 					if (
 						parent === null ||
-						(!global && (transition_block.t !== IF_BLOCK || parent.t !== IF_BLOCK || parent.c))
+						(!global && (transition_block.t !== IF_BLOCK || parent.t !== IF_BLOCK || parent.v))
 					) {
 						break;
 					}
@@ -507,18 +512,6 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 				transition.x();
 			};
 		});
-	}
-}
-
-/**
- * @param {Set<import('./types.js').Transition>} transitions
- */
-export function remove_in_transitions(transitions) {
-	for (let transition of transitions) {
-		const direction = transition.r;
-		if (direction === 'in') {
-			transitions.delete(transition);
-		}
 	}
 }
 
@@ -564,6 +557,43 @@ export function trigger_transitions(transitions, target_direction, from) {
 				outros.forEach(/** @param {any} o */ (o) => o());
 			});
 		}, false);
+	}
+}
+
+/**
+ * @this {import('./types.js').IfBlock}
+ * @param {import('./types.js').Transition} transition
+ * @returns {void}
+ */
+function if_block_transition(transition) {
+	const block = this;
+	// block.value === true
+	if (block.v) {
+		let consequent_transitions = block.c;
+		if (consequent_transitions === null) {
+			consequent_transitions = block.c = new Set();
+		}
+		consequent_transitions.add(transition);
+		transition.f(() => {
+			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
+			c.delete(transition);
+			if (c.size === 0) {
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ce));
+			}
+		});
+	} else {
+		let alternate_transitions = block.a;
+		if (alternate_transitions === null) {
+			alternate_transitions = block.a = new Set();
+		}
+		alternate_transitions.add(transition);
+		transition.f(() => {
+			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
+			a.delete(transition);
+			if (a.size === 0) {
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ae));
+			}
+		});
 	}
 }
 

@@ -165,16 +165,24 @@ export type RootBlock = {
 };
 
 export type IfBlock = {
-	/** current */
-	c: boolean;
+	/** value */
+	v: boolean;
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | EffectSignal;
 	/** parent */
 	p: Block;
 	/** transition */
 	r: null | ((transition: Transition) => void);
+	/** consequent transitions */
+	c: null | Set<Transition>;
+	/** alternate transitions */
+	a: null | Set<Transition>;
+	/** effect */
+	ce: null | EffectSignal;
+	/** effect */
+	ae: null | EffectSignal;
 	/** type */
 	t: typeof IF_BLOCK;
 };
@@ -183,7 +191,7 @@ export type KeyBlock = {
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */
-	e: null | ComputationSignal;
+	e: null | EffectSignal;
 	/** parent */
 	p: Block;
 	/** transition */
