@@ -35,8 +35,14 @@ export function create_root_block(intro) {
 /** @returns {import('./types.js').IfBlock} */
 export function create_if_block() {
 	return {
-		// current
-		c: false,
+		// alternate transitions
+		a: null,
+		// alternate effect
+		ae: null,
+		// consequent transitions
+		c: null,
+		// consequent effect
+		ce: null,
 		// dom
 		d: null,
 		// effect
@@ -46,7 +52,9 @@ export function create_if_block() {
 		// transition
 		r: null,
 		// type
-		t: IF_BLOCK
+		t: IF_BLOCK,
+		// value
+		v: false
 	};
 }
 

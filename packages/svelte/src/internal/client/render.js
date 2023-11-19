@@ -70,7 +70,7 @@ import {
 } from './hydration.js';
 import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
 import { is_promise } from '../common.js';
-import { bind_transition, remove_in_transitions, trigger_transitions } from './transitions.js';
+import { bind_transition, trigger_transitions } from './transitions.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -1355,8 +1355,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
 	hydrate_block_anchor(anchor_node);
-	const consequent_transitions = new Set();
-	const alternate_transitions = new Set();
 	const previous_hydration_fragment = current_hydration_fragment;
 
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
@@ -1366,59 +1364,32 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	let has_mounted = false;
 	let has_mounted_branch = false;
 
-	block.r =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			// block.current
-			if (block.c) {
-				consequent_transitions.add(transition);
-				transition.f(() => {
-					consequent_transitions.delete(transition);
-					remove_in_transitions(consequent_transitions);
-					if (consequent_transitions.size === 0) {
-						execute_effect(consequent_effect);
-					}
-				});
-			} else {
-				alternate_transitions.add(transition);
-				transition.f(() => {
-					alternate_transitions.delete(transition);
-					remove_in_transitions(alternate_transitions);
-					if (alternate_transitions.size === 0) {
-						execute_effect(alternate_effect);
-					}
-				});
-			}
-		};
 	const if_effect = render_effect(
 		() => {
 			const result = !!condition_fn();
-			if (block.c !== result || !has_mounted) {
-				block.c = result;
+			if (block.v !== result || !has_mounted) {
+				block.v = result;
 				if (has_mounted) {
+					const consequent_transitions = block.c;
+					const alternate_transitions = block.a;
 					if (result) {
-						remove_in_transitions(alternate_transitions);
-						if (alternate_transitions.size === 0) {
+						if (alternate_transitions === null || alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'out');
 						}
-						if (consequent_transitions.size === 0) {
+						if (consequent_transitions === null || consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'in');
 						}
 					} else {
-						remove_in_transitions(consequent_transitions);
-						if (consequent_transitions.size === 0) {
+						if (consequent_transitions === null || consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'out');
 						}
-						if (alternate_transitions.size === 0) {
+						if (alternate_transitions === null || alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'in');
@@ -1455,7 +1426,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.c) {
+			if (block.v) {
 				consequent_fn(anchor_node);
 				if (!has_mounted_branch) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
@@ -1469,6 +1440,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 		block,
 		true
 	);
+	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
 		() => {
@@ -1476,7 +1448,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.c) {
+			if (!block.v) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
@@ -1492,6 +1464,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 		block,
 		true
 	);
+	block.ae = alternate_effect;
 	push_destroy_fn(if_effect, () => {
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
@@ -1676,7 +1649,6 @@ export function component(anchor_node, component_fn, render_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.e !== null) {
 						if (render.d !== null) {
@@ -1724,7 +1696,6 @@ export function component(anchor_node, component_fn, render_fn) {
 			return;
 		}
 		const transitions = render.s;
-		remove_in_transitions(transitions);
 		if (transitions.size === 0) {
 			if (render.d !== null) {
 				remove(render.d);
@@ -1804,7 +1775,6 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.e !== null) {
 						if (render.d !== null) {
@@ -1861,7 +1831,6 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			return;
 		}
 		const transitions = render.s;
-		remove_in_transitions(transitions);
 		if (transitions.size === 0) {
 			if (render.d !== null) {
 				remove(render.d);
@@ -1966,7 +1935,6 @@ export function key(anchor_node, key, render_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (render.e !== null) {
 						if (render.d !== null) {
@@ -2007,7 +1975,6 @@ export function key(anchor_node, key, render_fn) {
 			return;
 		}
 		const transitions = render.s;
-		remove_in_transitions(transitions);
 		if (transitions.size === 0) {
 			if (render.d !== null) {
 				remove(render.d);
@@ -2195,7 +2162,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				remove_in_transitions(transitions);
 				if (transitions.size === 0) {
 					if (fallback.e !== null) {
 						if (fallback.d !== null) {
