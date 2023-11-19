@@ -1,5 +1,11 @@
 # svelte
 
+## 5.0.0-next.8
+
+### Patch Changes
+
+- chore: rename internal object properties ([#9532](https://github.com/sveltejs/svelte/pull/9532))
+
 ## 5.0.0-next.7
 
 ### Patch Changes
