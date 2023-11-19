@@ -322,9 +322,7 @@ function create_transition(dom, init, direction, effect) {
 			const is_outro = curr_direction === 'out';
 			/** @type {Animation | TickAnimation} */ (animation).pause();
 			if (is_outro) {
-				for (const sub of subs) {
-					sub();
-				}
+				run_all(subs);
 				subs = [];
 			}
 			dispatch_event(dom, is_outro ? 'outroend' : 'introend');
@@ -378,9 +376,7 @@ function create_transition(dom, init, direction, effect) {
 		},
 		// cleanup
 		x() {
-			for (const sub of subs) {
-				sub();
-			}
+			run_all(subs);
 			subs = [];
 		},
 		r: direction,
