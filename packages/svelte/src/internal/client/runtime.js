@@ -22,7 +22,6 @@ const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT | SYNC_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-const MAX_SAFE_INT = Number.MAX_SAFE_INTEGER;
 
 export const UNINITIALIZED = Symbol();
 
