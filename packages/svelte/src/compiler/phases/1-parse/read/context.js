@@ -22,7 +22,7 @@ export default function read_context(parser) {
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
-		// // eslint-disable-next-line lube/svelte-naming-convention
+		// eslint-disable-next-line lube/svelte-naming-convention
 		const typeAnnotation = read_type_annotation(parser);
 
 		return {
