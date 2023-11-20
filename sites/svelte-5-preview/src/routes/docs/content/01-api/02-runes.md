@@ -24,6 +24,22 @@ Reactive state is declared with the `$state` rune:
 </button>
 ```
 
+You can also use `$state` in class fields (whether public or private):
+
+```js
+// @errors: 7006 2554
+class Todo {
+	done = $state(false);
+	text = $state();
+
+	constructor(text) {
+		this.text = text;
+	}
+}
+```
+
+> In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
+
 ### What this replaces
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
@@ -46,6 +62,8 @@ Derived state is declared with the `$derived` rune:
 ```
 
 The expression inside `$derived(...)` should be free of side-effects. Svelte will disallow state changes (e.g. `count++`) inside derived expressions.
+
+As with `$state`, you can mark class fields as `$derived`.
 
 ### What this replaces
 
