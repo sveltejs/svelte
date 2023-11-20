@@ -6,7 +6,6 @@ import hash from '../utils/hash.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
-import assert from 'assert';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 
@@ -71,8 +70,6 @@ class Rule {
 	 * @param {Atrule | Rule | undefined} parent
 	 */
 	constructor(node, stylesheet, parent) {
-		// console.log('...............')
-		// console.log(JSON.stringify(node, null, 4))
 		this.node = node;
 		this.parent = parent;
 		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
