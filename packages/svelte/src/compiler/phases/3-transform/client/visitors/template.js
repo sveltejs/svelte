@@ -567,7 +567,11 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 	const inner_assignment = b.assignment(
 		'=',
 		b.member(node_id, b.id('value')),
-		b.assignment('=', b.member(node_id, b.id('__value')), value)
+		b.conditional(
+			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, b.id('__value')), value)),
+			b.literal(''), // render null/undefined values as empty string to support placeholder options
+			value
+		)
 	);
 	const is_reactive = attribute.metadata.dynamic;
 	const needs_selected_call =
@@ -582,9 +586,12 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 					b.call('$.selected', node_id)
 			  ])
 			: needs_option_call
-			? // This ensures a one-way street to the DOM in case it's <select {value}>
-			  // and not <select bind:value>
-			  b.call('$.select_option', node_id, inner_assignment)
+			? b.sequence([
+					inner_assignment,
+					// This ensures a one-way street to the DOM in case it's <select {value}>
+					// and not <select bind:value>
+					b.call('$.select_option', node_id, value)
+			  ])
 			: inner_assignment
 	);
 
