@@ -1,4 +1,5 @@
 import { EACH_IS_ANIMATED, EACH_IS_CONTROLLED } from '../../constants.js';
+import { run_all } from '../common.js';
 import {
 	AWAIT_BLOCK,
 	DYNAMIC_COMPONENT_BLOCK,
@@ -322,9 +323,7 @@ function create_transition(dom, init, direction, effect) {
 			const is_outro = curr_direction === 'out';
 			/** @type {Animation | TickAnimation} */ (animation).pause();
 			if (is_outro) {
-				for (const sub of subs) {
-					sub();
-				}
+				run_all(subs);
 				subs = [];
 			}
 			dispatch_event(dom, is_outro ? 'outroend' : 'introend');
@@ -378,9 +377,7 @@ function create_transition(dom, init, direction, effect) {
 		},
 		// cleanup
 		x() {
-			for (const sub of subs) {
-				sub();
-			}
+			run_all(subs);
 			subs = [];
 		},
 		r: direction,
@@ -554,7 +551,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 			destroy_signal(e);
 			const e2 = managed_effect(() => {
 				destroy_signal(e2);
-				outros.forEach(/** @param {any} o */ (o) => o());
+				run_all(outros);
 			});
 		}, false);
 	}

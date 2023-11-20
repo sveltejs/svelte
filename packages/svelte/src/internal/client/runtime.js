@@ -1,5 +1,6 @@
+import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
-import { EMPTY_FUNC } from '../common.js';
+import { EMPTY_FUNC, run_all } from '../common.js';
 import { unwrap } from './render.js';
 import { is_array } from './utils.js';
 
@@ -21,7 +22,6 @@ const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT | SYNC_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
-const MAX_SAFE_INT = Number.MAX_SAFE_INTEGER;
 
 export const UNINITIALIZED = Symbol();
 
@@ -457,8 +457,11 @@ function flush_queued_effects(effects) {
 	if (length > 0) {
 		if (flush_count > 100) {
 			throw new Error(
-				'Maximum update depth exceeded. This can happen when a reactive block or effect ' +
-					'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
+				'ERR_SVELTE_TOO_MANY_UPDATES' +
+					(DEV
+						? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
+						  'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
+						: '')
 			);
 		}
 		flush_count++;
@@ -524,9 +527,7 @@ function process_task() {
 	is_task_queued = false;
 	const tasks = current_queued_tasks.slice();
 	current_queued_tasks = [];
-	for (let i = 0; i < tasks.length; i++) {
-		tasks[i]();
-	}
+	run_all(tasks);
 }
 
 /**
@@ -968,9 +969,12 @@ export function set_signal_value(signal, value) {
 		(current_consumer.f & DERIVED) !== 0
 	) {
 		throw new Error(
-			"Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-				'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-				'to be reactive do not use the "$state" rune for that declaration.'
+			'ERR_SVELTE_UNSAFE_MUTATION' +
+				(DEV
+					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
+					  'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
+					  'to be reactive do not use the "$state" rune for that declaration.'
+					: '')
 		);
 	}
 	if (
@@ -1005,10 +1009,10 @@ export function set_signal_value(signal, value) {
 		if (current_effect === null && current_queued_pre_and_render_effects.length === 0) {
 			const update_callbacks = component_context?.u;
 			if (update_callbacks != null) {
-				update_callbacks.b.forEach(/** @param {any} c */ (c) => c());
+				run_all(update_callbacks.b);
 				const managed = managed_effect(() => {
 					destroy_signal(managed);
-					update_callbacks.a.forEach(/** @param {any} c */ (c) => c());
+					run_all(update_callbacks.a);
 				});
 			}
 		}
@@ -1026,21 +1030,20 @@ export function destroy_signal(signal) {
 	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumer(signal, 0, true);
-	signal.i = null;
-	signal.r = null;
-	signal.y = null;
-	signal.x = null;
-	signal.b = null;
-	signal.v = /** @type {V} */ (null);
-	signal.d = null;
-	signal.c = null;
+	signal.i =
+		signal.r =
+		signal.y =
+		signal.x =
+		signal.b =
+		// @ts-expect-error - this is fine, since we're assigning to null to clear out a destroyed signal
+		signal.v =
+		signal.d =
+		signal.c =
+			null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {
-			let i;
-			for (i = 0; i < destroy.length; i++) {
-				destroy[i]();
-			}
+			run_all(destroy);
 		} else {
 			destroy();
 		}
@@ -1146,7 +1149,10 @@ function internal_create_effect(type, init, sync, block, schedule) {
  */
 export function user_effect(init) {
 	if (current_effect === null) {
-		throw new Error('The Svelte $effect rune can only be used during component initialisation.');
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV ? ': The Svelte $effect rune can only be used during component initialisation.' : '')
+		);
 	}
 	const apply_component_effect_heuristics =
 		current_effect.f & RENDER_EFFECT &&
@@ -1203,7 +1209,10 @@ export function managed_pre_effect(init, sync) {
 export function pre_effect(init) {
 	if (current_effect === null) {
 		throw new Error(
-			'The Svelte $effect.pre rune can only be used during component initialisation.'
+			'ERR_SVELTE_ORPHAN_EFFECT' +
+				(DEV
+					? ': The Svelte $effect.pre rune can only be used during component initialisation.'
+					: '')
 		);
 	}
 	const sync = current_effect !== null && (current_effect.f & RENDER_EFFECT) !== 0;
@@ -1273,6 +1282,7 @@ export function push_destroy_fn(signal, destroy_fn) {
 	}
 }
 
+const STATUS_MASK = ~(DIRTY | MAYBE_DIRTY | CLEAN);
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
@@ -1280,17 +1290,7 @@ export function push_destroy_fn(signal, destroy_fn) {
  * @returns {void}
  */
 export function set_signal_status(signal, status) {
-	const flags = signal.f;
-	if ((flags & status) === 0) {
-		if ((flags & MAYBE_DIRTY) !== 0) {
-			signal.f ^= MAYBE_DIRTY;
-		} else if ((flags & CLEAN) !== 0) {
-			signal.f ^= CLEAN;
-		} else if ((flags & DIRTY) !== 0) {
-			signal.f ^= DIRTY;
-		}
-		signal.f ^= status;
-	}
+	signal.f = (signal.f & STATUS_MASK) | status;
 }
 
 /**
@@ -1484,7 +1484,10 @@ export function safe_equal(a, b) {
 export function get_or_init_context_map() {
 	const component_context = current_component_context;
 	if (component_context === null) {
-		throw new Error('Context can only be used during component initialisation.');
+		throw new Error(
+			'ERR_SVELTE_ORPHAN_CONTEXT' +
+				(DEV ? 'Context can only be used during component initialisation.' : '')
+		);
 	}
 	let context_map = component_context.c;
 	if (context_map === null) {

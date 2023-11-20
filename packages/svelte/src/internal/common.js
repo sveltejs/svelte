@@ -16,3 +16,10 @@ export function is_promise(value) {
 		typeof (/** @type {any} */ (value).then) === 'function'
 	);
 }
+
+/** @param {Array<() => void>} arr */
+export function run_all(arr) {
+	for (var i = 0; i < arr.length; i++) {
+		arr[i]();
+	}
+}
