@@ -22,14 +22,14 @@ export default function read_context(parser) {
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
-		const typeAnnotation = read_type_annotation(parser);
+		const annotation = read_type_annotation(parser);
 
 		return {
 			type: 'Identifier',
 			name,
 			start,
 			end: parser.index,
-			typeAnnotation
+			typeAnnotation: annotation
 		};
 	}
 
