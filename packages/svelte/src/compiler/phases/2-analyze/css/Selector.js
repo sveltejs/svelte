@@ -100,15 +100,12 @@ export default class Selector {
 			while (i--) {
 				const selector = block.selectors[i];
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
-					if (selector.name !== 'root' && selector.name !== 'host') {
+					if (!block.root && !block.host && !block.nested) {
 						if (i === 0) code.prependRight(selector.start, attr);
 					}
 					continue;
 				}
-				if (selector.type === "NestedSelector") {
-					// do we want to add the attr to the nested selector?
-					// it's kind of implied that it's a child of the parent selector
-				} else if (selector.type === 'TypeSelector' && selector.name === '*') {
+				if (selector.type === 'TypeSelector' && selector.name === '*') {
 					code.update(selector.start, selector.end, attr);
 				} else {
 					code.appendLeft(selector.end, attr);
@@ -123,7 +120,7 @@ export default class Selector {
 			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
-					index === this.blocks.filter(block => block.nested !== true).length - 1
+					index === this.blocks.length - 1 + (block.nested ? 1 : 0)
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);
@@ -838,12 +835,18 @@ function group_selectors(selector) {
 
 	selector.children.forEach((child) => {
 		if (child.type === 'Combinator') {
-			block = new Block(child);
-			blocks.push(block);
+			if(block.nested && !block.combinator) {
+				block.combinator = child;
+			} else {
+				block = new Block(child);
+				blocks.push(block);
+			}
+		} else if (child.type === "NestedSelector") {
+			block.nested = true;
 		} else {
-			if (child.type === "NestedSelector") block.nested = true;
 			block.add(child);
 		}
 	});
+
 	return blocks;
 }

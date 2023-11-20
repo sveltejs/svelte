@@ -129,14 +129,15 @@ function read_at_rule(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} nested Whether this rule is nested inside another rule
  * @returns {import('#compiler').Css.Rule}
  */
-function read_rule(parser) {
+function read_rule(parser, nested = false) {
 	const start = parser.index;
 
 	return {
 		type: 'Rule',
-		prelude: read_selector_list(parser),
+		prelude: read_selector_list(parser, nested),
 		block: read_block(parser),
 		start,
 		end: parser.index
@@ -145,16 +146,17 @@ function read_rule(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} nested Whether this selector list is nested inside another rule
  * @returns {import('#compiler').Css.SelectorList}
  */
-function read_selector_list(parser) {
+function read_selector_list(parser, nested) {
 	/** @type {import('#compiler').Css.Selector[]} */
 	const children = [];
 
 	const start = parser.index;
 
 	while (parser.index < parser.template.length) {
-		children.push(read_selector(parser));
+		children.push(read_selector(parser, nested));
 
 		const end = parser.index;
 
@@ -178,32 +180,33 @@ function read_selector_list(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} nested Whether this selector is nested inside another rule
  * @returns {import('#compiler').Css.Selector}
  */
-function read_selector(parser) {
+function read_selector(parser, nested) {
 	const list_start = parser.index;
 
-	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator>} */
+	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator | import('#compiler').Css.NestingSelector>} */
 	const children = [];
 
 	while (parser.index < parser.template.length) {
 		const start = parser.index;
 
-	if (parser.eat('*')) {
-		children.push({
-			type: 'TypeSelector',
-			name: '*',
-			start,
-			end: parser.index
-		});
-	} else if (parser.eat('&')){
-		children.push({
-			type: 'NestedSelector',
-			name: '&',
-			start,
-			end: parser.index
-		});
-	} else if (parser.eat('#')) {
+		if (nested && parser.eat('&')){
+			children.push({
+				type: 'NestedSelector',
+				name: '&',
+				start,
+				end: parser.index
+			});
+		} else if (parser.eat('*')) {
+			children.push({
+				type: 'TypeSelector',
+				name: '*',
+				start,
+				end: parser.index
+			});
+		} else if (parser.eat('#')) {
 			children.push({
 				type: 'IdSelector',
 				name: read_identifier(parser),
@@ -396,7 +399,7 @@ function read_declaration_or_rule(parser) {
 	// due to complexities with https://bugs.chromium.org/p/chromium/issues/detail?id=1427259
 	// as most browsers as of 17/11/2023 do not support nesting without & selector
 	if (parser.match('&')) {
-		return read_rule(parser)
+		return read_rule(parser, true)
 	} else {
 		return read_declaration(parser);
 	}

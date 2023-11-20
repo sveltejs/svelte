@@ -25,7 +25,7 @@ export interface SelectorList extends BaseNode {
 
 export interface Selector extends BaseNode {
 	type: 'Selector';
-	children: Array<SimpleSelector | Combinator>;
+	children: Array<SimpleSelector | Combinator | NestingSelector>;
 }
 
 export interface TypeSelector extends BaseNode {
@@ -67,11 +67,6 @@ export interface Percentage extends BaseNode {
 	value: string;
 }
 
-export interface NestedSelector extends BaseNode {
-	type: 'NestedSelector';
-	name: "&";
-}
-
 export type SimpleSelector =
 	| TypeSelector
 	| IdSelector
@@ -79,12 +74,16 @@ export type SimpleSelector =
 	| AttributeSelector
 	| PseudoElementSelector
 	| PseudoClassSelector
-	| NestedSelector
 	| Percentage;
 
 export interface Combinator extends BaseNode {
 	type: 'Combinator';
 	name: string;
+}
+
+export interface NestingSelector extends BaseNode {
+	type: 'NestedSelector';
+	name: "&";
 }
 
 export interface Block extends BaseNode {
