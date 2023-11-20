@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.7
+
+### Patch Changes
+
+- fix: handle spreads within static strings ([#9554](https://github.com/sveltejs/svelte/pull/9554))
+
 ## 4.2.6
 
 ### Patch Changes
