@@ -98,6 +98,7 @@ export default function read_context(parser) {
  * @returns {any}
  */
 function read_type_annotation(parser) {
+	const index = parser.index;
 	parser.allow_whitespace();
 
 	if (parser.eat(':')) {
@@ -109,5 +110,7 @@ function read_type_annotation(parser) {
 
 		parser.index = /** @type {number} */ (expression.end);
 		return /** @type {any} */ (expression).typeAnnotation;
+	} else {
+		parser.index = index;
 	}
 }
