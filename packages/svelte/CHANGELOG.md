@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.9
+
+### Patch Changes
+
+- chore: more transition code-golfing ([#9536](https://github.com/sveltejs/svelte/pull/9536))
+
+- feat: native TypeScript support ([#9482](https://github.com/sveltejs/svelte/pull/9482))
+
 ## 5.0.0-next.8
 
 ### Patch Changes
