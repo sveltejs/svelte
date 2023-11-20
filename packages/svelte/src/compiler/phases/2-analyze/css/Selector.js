@@ -117,14 +117,13 @@ export default class Selector {
 			}
 		}
 		this.blocks.forEach((block, index) => {
-			console.log(block)
 			if (block.global) {
 				remove_global_pseudo_class(block.selectors[0]);
 			}
 			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
-					index === this.blocks.length - 1
+					index === this.blocks.filter(block => block.nested !== true).length - 1
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);
@@ -313,10 +312,6 @@ function block_might_apply_to_node(block, node) {
 		if (selector.type === 'Percentage') continue;
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
-
-		// if(name === "&") {
-		// 	return POSSIBLE_MATCH;
-		// }
 
 		if (selector.type === 'PseudoClassSelector' && (name === 'host' || name === 'root')) {
 			return NO_MATCH;
@@ -806,6 +801,7 @@ class Block {
 		this.combinator = combinator;
 		this.host = false;
 		this.root = false;
+		this.nested = false;
 		this.selectors = [];
 		this.start = -1;
 		this.end = -1;
@@ -845,6 +841,7 @@ function group_selectors(selector) {
 			block = new Block(child);
 			blocks.push(block);
 		} else {
+			if (child.type === "NestedSelector") block.nested = true;
 			block.add(child);
 		}
 	});

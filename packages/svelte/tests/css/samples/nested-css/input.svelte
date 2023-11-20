@@ -1,6 +1,8 @@
 <button>
     <div class="foo"/>
-    <div class="bar"/>
+    <div class="bar">
+        <div class="hello"/>
+    </div>
 </button>
 <style>
 button {
@@ -13,6 +15,12 @@ button {
     }
     &:last-child {
         color: green;
+    }
+
+    & .bar {
+        & .hello {
+            color: orange;
+        }
     }
 
     color: black;

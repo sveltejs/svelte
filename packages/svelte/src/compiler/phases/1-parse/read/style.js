@@ -189,21 +189,21 @@ function read_selector(parser) {
 	while (parser.index < parser.template.length) {
 		const start = parser.index;
 
-		if (parser.eat('&')){
-			children.push({
-				type: 'NestedSelector',
-				name: '&',
-				start,
-				end: parser.index
-			});
-		} else if (parser.eat('*')) {
-			children.push({
-				type: 'TypeSelector',
-				name: '*',
-				start,
-				end: parser.index
-			});
-		} else if (parser.eat('#')) {
+	if (parser.eat('*')) {
+		children.push({
+			type: 'TypeSelector',
+			name: '*',
+			start,
+			end: parser.index
+		});
+	} else if (parser.eat('&')){
+		children.push({
+			type: 'NestedSelector',
+			name: '&',
+			start,
+			end: parser.index
+		});
+	} else if (parser.eat('#')) {
 			children.push({
 				type: 'IdSelector',
 				name: read_identifier(parser),
@@ -392,9 +392,9 @@ function read_declaration(parser) {
  * @returns {import('#compiler').Css.Declaration | import('#compiler').Css.Rule}
  */
 function read_declaration_or_rule(parser) {
-	// We will only allow css nesting using & selector
+	// We will only allow css nesting using & selector for now
 	// due to complexities with https://bugs.chromium.org/p/chromium/issues/detail?id=1427259
-	// as most browsers as of 17/11/2023 do not support nesting without & selector prefix
+	// as most browsers as of 17/11/2023 do not support nesting without & selector
 	if (parser.match('&')) {
 		return read_rule(parser)
 	} else {

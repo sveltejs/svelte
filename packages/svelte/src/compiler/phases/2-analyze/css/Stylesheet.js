@@ -6,6 +6,7 @@ import hash from '../utils/hash.js';
 // import { extract_ignores_above_position } from '../utils/extract_svelte_ignore.js';
 import { push_array } from '../utils/push_array.js';
 import { create_attribute } from '../../nodes.js';
+import assert from 'assert';
 
 const regex_css_browser_prefix = /^-((webkit)|(moz)|(o)|(ms))-/;
 
@@ -61,12 +62,17 @@ class Rule {
 	/** @type {Atrule | Rule | undefined} */
 	parent;
 
+	/** @type {Rule[]} */
+	nested_rules;
+
 	/**
 	 * @param {import('#compiler').Css.Rule} node
-	 * @param {any} stylesheet
+	 * @param {Stylesheet} stylesheet
 	 * @param {Atrule | Rule | undefined} parent
 	 */
 	constructor(node, stylesheet, parent) {
+		// console.log('...............')
+		// console.log(JSON.stringify(node, null, 4))
 		this.node = node;
 		this.parent = parent;
 		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
@@ -82,9 +88,13 @@ class Rule {
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
 	apply(node) {
 		this.selectors.forEach((selector) => selector.apply(node)); // TODO move the logic in here?
+		this.nested_rules.forEach((rule) => rule.apply(node));
 	}
 
-	/** @param {boolean} dev */
+	/**
+	 * @param {boolean} dev
+	 * @returns {boolean}
+	 */
 	is_used(dev) {
 		if (this.parent && this.parent.node.type === 'Atrule' && is_keyframes_node(this.parent.node))
 			return true;
@@ -93,7 +103,7 @@ class Rule {
 		// see them in devtools
 		if (this.declarations.length === 0) return dev;
 
-		return this.selectors.some((s) => s.used);
+		return [this.selectors.some((s) => s.used), this.nested_rules.some(r => r.is_used(dev))].some(Boolean);
 	}
 
 	/**
@@ -120,12 +130,18 @@ class Rule {
 		this.selectors.forEach((selector) => {
 			selector.validate(analysis);
 		});
+		this.nested_rules.forEach((rule) => {
+			rule.validate(analysis);
+		});
 	}
 
 	/** @param {(selector: import('./Selector.js').default) => void} handler */
 	warn_on_unused_selector(handler) {
 		this.selectors.forEach((selector) => {
 			if (!selector.used) handler(selector);
+		});
+		this.nested_rules.forEach((rule) => {
+			rule.warn_on_unused_selector(handler);
 		});
 	}
 
@@ -134,6 +150,7 @@ class Rule {
 		return Math.max(
 			...this.selectors.map((selector) => selector.get_amount_class_specificity_increased())
 		);
+		// do we need to check nested rules?
 	}
 
 	/**
@@ -147,7 +164,7 @@ class Rule {
 
 		// keep empty rules in dev, because it's convenient to
 		// see them in devtools
-		if (this.declarations.length === 0) {
+		if (this.declarations.length === 0 && this.nested_rules.length === 0) {
 			if (!dev) {
 				code.prependRight(this.node.start, '/* (empty) ');
 				code.appendLeft(this.node.end, '*/');
@@ -198,6 +215,10 @@ class Rule {
 				code.appendLeft(last, '*/');
 			}
 		}
+
+		this.nested_rules.forEach((rule) => {
+			rule.prune(code, dev);
+		});
 	}
 }
 
@@ -390,8 +411,11 @@ export default class Stylesheet {
 
 		const state = {
 			/** @type {Atrule | undefined} */
-			atrule: undefined
+			atrule: undefined,
 		};
+
+		/** @type {import('#compiler').Css.Node}*/
+		let prev_node;
 
 		walk(/** @type {import('#compiler').Css.Node} */ (ast), state, {
 			Atrule: (node, context) => {
@@ -429,12 +453,17 @@ export default class Stylesheet {
 			},
 			Rule: (node, context) => {
 				const rule = new Rule(node, this, context.state.atrule);
+
 				if (context.state.atrule) {
 					context.state.atrule.children.push(rule);
 				} else {
 					this.children.push(rule);
 				}
 
+				if (rule.nested_rules.length > 0) {
+					// Skip nested rules as they are instantiated in the Rule constructor
+					return node
+				}
 				context.next();
 			}
 		});

@@ -10,5 +10,11 @@ button.svelte-xyz {
         color: green;
     }
 
+    & .bar.svelte-xyz {
+        & .hello.svelte-xyz {
+            color: orange;
+        }
+    }
+
     color: black;
 }
