@@ -15,6 +15,7 @@ import {
 	current_effect,
 	destroy_signal,
 	effect,
+	execute_effect,
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
@@ -253,7 +254,7 @@ function handle_raf(time) {
  * @param {HTMLElement} dom
  * @param {() => import('./types.js').TransitionPayload} init
  * @param {'in' | 'out' | 'both' | 'key'} direction
- * @param {import('./types.js').Signal<unknown>} effect
+ * @param {import('./types.js').EffectSignal} effect
  * @returns {import('./types.js').Transition}
  */
 function create_transition(dom, init, direction, effect) {
@@ -267,7 +268,7 @@ function create_transition(dom, init, direction, effect) {
 	let cancelled = false;
 
 	const create_animation = () => {
-		let payload = /** @type {import('./types.js').TransitionPayload} */ (transition.payload);
+		let payload = /** @type {import('./types.js').TransitionPayload} */ (transition.p);
 		if (typeof payload === 'function') {
 			// @ts-ignore
 			payload = payload({ direction: curr_direction });
@@ -332,12 +333,14 @@ function create_transition(dom, init, direction, effect) {
 
 	/** @type {import('./types.js').Transition} */
 	const transition = {
-		effect,
-		init,
-		payload: null,
+		e: effect,
+		i: init,
+		// payload
+		p: null,
 
+		// finished
 		/** @param {() => void} fn */
-		finished(fn) {
+		f(fn) {
 			subs.push(fn);
 		},
 		in() {
@@ -353,7 +356,8 @@ function create_transition(dom, init, direction, effect) {
 			}
 			/** @type {Animation | TickAnimation} */ (animation).play();
 		},
-		out() {
+		// out
+		o() {
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
 			if (animation === null || cancelled) {
@@ -367,18 +371,20 @@ function create_transition(dom, init, direction, effect) {
 				/** @type {Animation | TickAnimation} */ (animation).play();
 			}
 		},
-		cancel() {
+		// cancel
+		c() {
 			/** @type {Animation | TickAnimation} */ (animation).cancel();
 			cancelled = true;
 		},
-		cleanup() {
+		// cleanup
+		x() {
 			for (const sub of subs) {
 				sub();
 			}
 			subs = [];
 		},
-		direction,
-		dom
+		r: direction,
+		d: dom
 	};
 	return transition;
 }
@@ -388,13 +394,14 @@ function create_transition(dom, init, direction, effect) {
  * @returns {boolean}
  */
 function is_transition_block(block) {
+	const type = block.t;
 	return (
-		block.type === IF_BLOCK ||
-		block.type === EACH_ITEM_BLOCK ||
-		block.type === KEY_BLOCK ||
-		block.type === AWAIT_BLOCK ||
-		block.type === DYNAMIC_COMPONENT_BLOCK ||
-		(block.type === EACH_BLOCK && block.items.length === 0)
+		type === IF_BLOCK ||
+		type === EACH_ITEM_BLOCK ||
+		type === KEY_BLOCK ||
+		type === AWAIT_BLOCK ||
+		type === DYNAMIC_COMPONENT_BLOCK ||
+		(type === EACH_BLOCK && block.v.length === 0)
 	);
 }
 
@@ -412,32 +419,36 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 	const block = current_block;
 	const props = props_fn === null ? {} : props_fn();
 
-	let skip_intro = true;
+	let can_show_intro_on_mount = true;
+	let can_apply_lazy_transitions = false;
 
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
 	while (transition_block !== null) {
 		if (is_transition_block(transition_block)) {
-			if (transition_block.type === EACH_ITEM_BLOCK) {
+			if (transition_block.t === EACH_ITEM_BLOCK) {
 				// Lazily apply the each block transition
-				transition_block.transition = each_item_transition;
-				transition_block = transition_block.parent;
-			} else if (transition_block.type === AWAIT_BLOCK && transition_block.pending) {
-				skip_intro = false;
+				transition_block.r = each_item_transition;
+				transition_block = transition_block.p;
+			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
+				can_show_intro_on_mount = false;
+			} else if (transition_block.t === IF_BLOCK) {
+				transition_block.r = if_block_transition;
 			}
-			if (skip_intro) {
-				skip_intro = transition_block.effect === null;
+			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
+				can_show_intro_on_mount = transition_block.e === null;
 			}
-			if (!skip_intro || !global) {
-				break;
+			if (!can_show_intro_on_mount || !global) {
+				can_apply_lazy_transitions = true;
 			}
 		} else if (
-			transition_block.type === ROOT_BLOCK &&
-			(transition_block.effect !== null || transition_block.intro)
+			!can_apply_lazy_transitions &&
+			transition_block.t === ROOT_BLOCK &&
+			(transition_block.e !== null || transition_block.i)
 		) {
-			skip_intro = false;
+			can_show_intro_on_mount = false;
 		}
-		transition_block = transition_block.parent;
+		transition_block = transition_block.p;
 	}
 
 	/** @type {import('./types.js').Transition} */
@@ -460,10 +471,11 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 			);
 
 		transition = create_transition(dom, init, direction, transition_effect);
-		const show_intro = !skip_intro && (direction === 'in' || direction === 'both');
+		const is_intro = direction === 'in';
+		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
 
 		if (show_intro) {
-			transition.payload = transition.init();
+			transition.p = transition.i();
 		}
 
 		const effect = managed_pre_effect(() => {
@@ -476,16 +488,15 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 
 			/** @type {import('./types.js').Block | null} */
 			let transition_block = block;
-			while (transition_block !== null) {
-				const parent = transition_block.parent;
+			while (!is_intro && transition_block !== null) {
+				const parent = transition_block.p;
 				if (is_transition_block(transition_block)) {
-					if (transition_block.transition !== null) {
-						transition_block.transition(transition);
+					if (transition_block.r !== null) {
+						transition_block.r(transition);
 					}
 					if (
 						parent === null ||
-						(!global &&
-							(transition_block.type !== IF_BLOCK || parent.type !== IF_BLOCK || parent.current))
+						(!global && (transition_block.t !== IF_BLOCK || parent.t !== IF_BLOCK || parent.v))
 					) {
 						break;
 					}
@@ -498,20 +509,9 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 	if (direction === 'key') {
 		effect(() => {
 			return () => {
-				transition.cleanup();
+				transition.x();
 			};
 		});
-	}
-}
-
-/**
- * @param {Set<import('./types.js').Transition>} transitions
- */
-export function remove_in_transitions(transitions) {
-	for (let other of transitions) {
-		if (other.direction === 'in') {
-			transitions.delete(other);
-		}
 	}
 }
 
@@ -525,30 +525,27 @@ export function trigger_transitions(transitions, target_direction, from) {
 	/** @type {Array<() => void>} */
 	const outros = [];
 	for (const transition of transitions) {
-		const direction = transition.direction;
+		const direction = transition.r;
 		if (target_direction === 'in') {
 			if (direction === 'in' || direction === 'both') {
-				if (direction === 'in') {
-					transition.cancel();
-				}
 				transition.in();
 			} else {
-				transition.cancel();
+				transition.c();
 			}
-			transition.dom.inert = false;
-			mark_subtree_inert(transition.effect, false);
+			transition.d.inert = false;
+			mark_subtree_inert(transition.e, false);
 		} else if (target_direction === 'key') {
 			if (direction === 'key') {
-				transition.payload = transition.init(/** @type {DOMRect} */ (from));
+				transition.p = transition.i(/** @type {DOMRect} */ (from));
 				transition.in();
 			}
 		} else {
 			if (direction === 'out' || direction === 'both') {
-				transition.payload = transition.init();
-				outros.push(transition.out);
+				transition.p = transition.i();
+				outros.push(transition.o);
 			}
-			transition.dom.inert = true;
-			mark_subtree_inert(transition.effect, true);
+			transition.d.inert = true;
+			mark_subtree_inert(transition.e, true);
 		}
 	}
 	if (outros.length > 0) {
@@ -564,39 +561,76 @@ export function trigger_transitions(transitions, target_direction, from) {
 }
 
 /**
+ * @this {import('./types.js').IfBlock}
+ * @param {import('./types.js').Transition} transition
+ * @returns {void}
+ */
+function if_block_transition(transition) {
+	const block = this;
+	// block.value === true
+	if (block.v) {
+		let consequent_transitions = block.c;
+		if (consequent_transitions === null) {
+			consequent_transitions = block.c = new Set();
+		}
+		consequent_transitions.add(transition);
+		transition.f(() => {
+			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
+			c.delete(transition);
+			if (c.size === 0) {
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ce));
+			}
+		});
+	} else {
+		let alternate_transitions = block.a;
+		if (alternate_transitions === null) {
+			alternate_transitions = block.a = new Set();
+		}
+		alternate_transitions.add(transition);
+		transition.f(() => {
+			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
+			a.delete(transition);
+			if (a.size === 0) {
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ae));
+			}
+		});
+	}
+}
+
+/**
  * @this {import('./types.js').EachItemBlock}
  * @param {import('./types.js').Transition} transition
  * @returns {void}
  */
 function each_item_transition(transition) {
 	const block = this;
-	const each_block = block.parent;
-	const is_controlled = (each_block.flags & EACH_IS_CONTROLLED) !== 0;
+	const each_block = block.p;
+	const is_controlled = (each_block.f & EACH_IS_CONTROLLED) !== 0;
 	// Disable optimization
 	if (is_controlled) {
 		const anchor = empty();
-		each_block.flags ^= EACH_IS_CONTROLLED;
-		append_child(/** @type {Element} */ (each_block.anchor), anchor);
-		each_block.anchor = anchor;
+		each_block.f ^= EACH_IS_CONTROLLED;
+		append_child(/** @type {Element} */ (each_block.a), anchor);
+		each_block.a = anchor;
 	}
-	if (transition.direction === 'key' && (each_block.flags & EACH_IS_ANIMATED) === 0) {
-		each_block.flags |= EACH_IS_ANIMATED;
+	if (transition.r === 'key' && (each_block.f & EACH_IS_ANIMATED) === 0) {
+		each_block.f |= EACH_IS_ANIMATED;
 	}
-	let transitions = block.transitions;
+	let transitions = block.s;
 	if (transitions === null) {
-		block.transitions = transitions = new Set();
+		block.s = transitions = new Set();
 	}
-	transition.finished(() => {
+	transition.f(() => {
 		if (transitions !== null) {
 			transitions.delete(transition);
-			if (transition.direction !== 'key') {
+			if (transition.r !== 'key') {
 				for (let other of transitions) {
-					if (other.direction === 'key' || other.direction === 'in') {
+					if (other.r === 'key' || other.r === 'in') {
 						transitions.delete(other);
 					}
 				}
 				if (transitions.size === 0) {
-					block.transitions = null;
+					block.s = null;
 					destroy_each_item_block(block, null, true);
 				}
 			}

@@ -112,7 +112,7 @@ export function reconcile_html(dom, value, svg) {
  * @returns {Text | Element | Comment}
  */
 function insert_each_item_block(block, dom, is_controlled, sibling) {
-	var current = /** @type {import('./types.js').TemplateNode} */ (block.dom);
+	var current = /** @type {import('./types.js').TemplateNode} */ (block.d);
 	if (sibling === null) {
 		if (is_controlled) {
 			return insert(current, /** @type {Element} */ (dom), null);
@@ -128,7 +128,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
  * @returns {Text | Element | Comment}
  */
 function get_first_child(block) {
-	var current = block.dom;
+	var current = block.d;
 	if (is_array(current)) {
 		return /** @type {Text | Element | Comment} */ (current[0]);
 	}
@@ -147,9 +147,9 @@ function destroy_active_transition_blocks(active_transitions) {
 		var transition;
 		for (; i < length; i++) {
 			block = active_transitions[i];
-			transition = block.transition;
+			transition = block.r;
 			if (transition !== null) {
-				block.transition = null;
+				block.r = null;
 				destroy_each_item_block(block, null, false);
 			}
 		}
@@ -177,8 +177,8 @@ export function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
-	var a_blocks = each_block.items;
-	var active_transitions = each_block.transitions;
+	var a_blocks = each_block.v;
+	var active_transitions = each_block.s;
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -245,7 +245,7 @@ export function reconcile_indexed_array(
 			}
 		}
 	}
-	each_block.items = b_blocks;
+	each_block.v = b_blocks;
 }
 // Reconcile arrays by the equality of the elements in the array. This algorithm
 // is based on Ivi's reconcilation logic:
@@ -275,9 +275,9 @@ export function reconcile_tracked_array(
 	apply_transitions,
 	keys
 ) {
-	var a_blocks = each_block.items;
+	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var active_transitions = each_block.transitions;
+	var active_transitions = each_block.s;
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -352,7 +352,7 @@ export function reconcile_tracked_array(
 			// Step 1
 			outer: while (true) {
 				// From the end
-				while (a_blocks[a_end].key === key) {
+				while (a_blocks[a_end].k === key) {
 					block = a_blocks[a_end--];
 					item = array[b_end];
 					if (should_update_block) {
@@ -368,7 +368,7 @@ export function reconcile_tracked_array(
 				item = array[start];
 				key = is_computed_key ? keys[start] : item;
 				// At the start
-				while (start <= a_end && start <= b_end && a_blocks[start].key === key) {
+				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
 					item = array[start];
 					block = a_blocks[start];
 					if (should_update_block) {
@@ -410,7 +410,7 @@ export function reconcile_tracked_array(
 					map_set(item_index, key, a);
 				}
 				for (b = start; b <= a_end; ++b) {
-					a = map_get(item_index, /** @type {V} */ (a_blocks[b].key));
+					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
 					if (a !== undefined) {
 						pos = pos < a ? a : MOVED_BLOCK;
@@ -464,7 +464,7 @@ export function reconcile_tracked_array(
 			}
 		}
 	}
-	each_block.items = b_blocks;
+	each_block.v = b_blocks;
 }
 // Longest Increased Subsequence algorithm.
 

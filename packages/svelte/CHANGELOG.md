@@ -1,5 +1,45 @@
 # svelte
 
+## 5.0.0-next.8
+
+### Patch Changes
+
+- chore: rename internal object properties ([#9532](https://github.com/sveltejs/svelte/pull/9532))
+
+## 5.0.0-next.7
+
+### Patch Changes
+
+- chore: more signal perf tuning ([#9531](https://github.com/sveltejs/svelte/pull/9531))
+
+- fix: address intro transition bugs ([#9528](https://github.com/sveltejs/svelte/pull/9528))
+
+- chore: tweak signals for better runtime perf ([#9529](https://github.com/sveltejs/svelte/pull/9529))
+
+## 5.0.0-next.6
+
+### Patch Changes
+
+- fix: do not propagate global intro transitions ([#9515](https://github.com/sveltejs/svelte/pull/9515))
+
+## 5.0.0-next.5
+
+### Patch Changes
+
+- fix: tweak script/style tag parsing/preprocessing logic ([#9502](https://github.com/sveltejs/svelte/pull/9502))
+
+- fix: emit useful error on invalid binding to derived state ([#9497](https://github.com/sveltejs/svelte/pull/9497))
+
+- fix: address unowned propagation signal issue ([#9510](https://github.com/sveltejs/svelte/pull/9510))
+
+- fix: add top level snippets to instance scope ([#9467](https://github.com/sveltejs/svelte/pull/9467))
+
+- fix: only treat instance context exports as accessors ([#9500](https://github.com/sveltejs/svelte/pull/9500))
+
+- fix: allow setting files binding for `<input type="file" />` ([#9463](https://github.com/sveltejs/svelte/pull/9463))
+
+- fix: add missing visitor for assignments during compilation ([#9511](https://github.com/sveltejs/svelte/pull/9511))
+
 ## 5.0.0-next.4
 
 ### Patch Changes

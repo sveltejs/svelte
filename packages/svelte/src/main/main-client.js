@@ -140,7 +140,7 @@ export function createEventDispatcher() {
 
 	return (type, detail, options) => {
 		const $$events = /** @type {Record<string, Function | Function[]>} */ (
-			unwrap(component_context.props).$$events
+			unwrap(component_context.s).$$events
 		);
 		const events = $$events?.[/** @type {any} */ (type)];
 
@@ -151,9 +151,9 @@ export function createEventDispatcher() {
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
 				if (is_signal(fn)) {
-					get(fn).call(component_context.accessors, event);
+					get(fn).call(component_context.a, event);
 				} else {
-					fn.call(component_context.accessors, event);
+					fn.call(component_context.a, event);
 				}
 			}
 			return !event.defaultPrevented;
@@ -167,17 +167,17 @@ function init_update_callbacks() {
 	let called_before = false;
 	let called_after = false;
 
-	/** @type {NonNullable<import('../internal/client/types.js').ComponentContext['update_callbacks']>} */
+	/** @type {NonNullable<import('../internal/client/types.js').ComponentContext['u']>} */
 	const update_callbacks = {
-		before: [],
-		after: [],
-		execute() {
+		b: [],
+		a: [],
+		e() {
 			if (!called_before) {
 				called_before = true;
 				// TODO somehow beforeUpdate ran twice on mount in Svelte 4 if it causes a render
 				// possibly strategy to get this back if needed: analyse beforeUpdate function for assignements to state,
 				// if yes, add a call to the component to force-run beforeUpdate once.
-				untrack(() => update_callbacks.before.forEach(/** @param {any} c */ (c) => c()));
+				untrack(() => update_callbacks.b.forEach(/** @param {any} c */ (c) => c()));
 				flush_local_render_effects();
 				// beforeUpdate can run again once if afterUpdate causes another update,
 				// but afterUpdate shouldn't be called again in that case to prevent infinite loops
@@ -185,7 +185,7 @@ function init_update_callbacks() {
 					user_effect(() => {
 						called_before = false;
 						called_after = true;
-						untrack(() => update_callbacks.after.forEach(/** @param {any} c */ (c) => c()));
+						untrack(() => update_callbacks.a.forEach(/** @param {any} c */ (c) => c()));
 						// managed_effect so that it's not cleaned up when the parent effect is cleaned up
 						const managed = managed_effect(() => {
 							destroy_signal(managed);
@@ -223,10 +223,10 @@ export function beforeUpdate(fn) {
 		throw new Error('beforeUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.update_callbacks === null) {
-		component_context.update_callbacks = init_update_callbacks();
+	if (component_context.u === null) {
+		component_context.u = init_update_callbacks();
 	}
-	component_context.update_callbacks.before.push(fn);
+	component_context.u.b.push(fn);
 }
 
 /**
@@ -247,10 +247,10 @@ export function afterUpdate(fn) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.update_callbacks === null) {
-		component_context.update_callbacks = init_update_callbacks();
+	if (component_context.u === null) {
+		component_context.u = init_update_callbacks();
 	}
-	component_context.update_callbacks.after.push(fn);
+	component_context.u.a.push(fn);
 }
 
 // TODO bring implementations in here

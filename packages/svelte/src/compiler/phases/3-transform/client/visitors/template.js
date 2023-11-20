@@ -775,7 +775,7 @@ function serialize_inline_component(node, component_name, context) {
 					const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 					push_prop(
 						b.set(attribute.name, [
-							b.stmt(serialize_set_binding(assignment, context, () => assignment))
+							b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
 						])
 					);
 				}

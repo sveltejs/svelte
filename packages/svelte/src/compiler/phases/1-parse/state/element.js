@@ -191,11 +191,24 @@ export default function tag(parser) {
 		};
 	}
 
-	/** @type {Set<string>} */
-	const unique_names = new Set();
+	/** @type {string[]} */
+	const unique_names = [];
+
+	const current = parser.current();
+	const is_top_level_script_or_style =
+		(name === 'script' || name === 'style') && current.type === 'Root';
+
+	const read = is_top_level_script_or_style ? read_static_attribute : read_attribute;
 
 	let attribute;
-	while ((attribute = read_attribute(parser, unique_names))) {
+	while ((attribute = read(parser))) {
+		if (
+			(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
+			unique_names.includes(attribute.name)
+		) {
+			error(attribute.start, 'duplicate-attribute');
+		}
+
 		element.attributes.push(attribute);
 		parser.allow_whitespace();
 	}
@@ -245,10 +258,7 @@ export default function tag(parser) {
 				: chunk.expression;
 	}
 
-	const current = parser.current();
-
-	// special cases – top-level <script> and <style>
-	if ((name === 'script' || name === 'style') && current.type === 'Root') {
+	if (is_top_level_script_or_style) {
 		parser.eat('>', true);
 		if (name === 'script') {
 			const content = read_script(parser, start, element.attributes);
@@ -372,22 +382,60 @@ function read_tag_name(parser) {
 // eslint-disable-next-line no-useless-escape
 const regex_token_ending_character = /[\s=\/>"']/;
 const regex_starts_with_quote_characters = /^["']/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]))/;
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {Set<string>} unique_names
- * @returns {any}
+ * @returns {import('#compiler').Attribute | null}
  */
-function read_attribute(parser, unique_names) {
+function read_static_attribute(parser) {
 	const start = parser.index;
 
-	/** @param {string} name */
-	function check_unique(name) {
-		if (unique_names.has(name)) {
-			error(start, 'duplicate-attribute');
+	const name = parser.read_until(regex_token_ending_character);
+	if (!name) return null;
+
+	/** @type {true | Array<import('#compiler').Text | import('#compiler').ExpressionTag>} */
+	let value = true;
+
+	if (parser.eat('=')) {
+		parser.allow_whitespace();
+		let raw = parser.match_regex(regex_attribute_value);
+		if (!raw) {
+			error(parser.index, 'missing-attribute-value');
 		}
-		unique_names.add(name);
+
+		parser.index += raw.length;
+
+		const quoted = raw[0] === '"' || raw[0] === "'";
+		if (quoted) {
+			raw = raw.slice(1, -1);
+		}
+
+		value = [
+			{
+				start: parser.index - raw.length - (quoted ? 1 : 0),
+				end: quoted ? parser.index - 1 : parser.index,
+				type: 'Text',
+				raw: raw,
+				data: decode_character_references(raw, true),
+				parent: null
+			}
+		];
 	}
+
+	if (parser.match_regex(regex_starts_with_quote_characters)) {
+		error(parser.index, 'expected-token', '=');
+	}
+
+	return create_attribute(name, start, parser.index, value);
+}
+
+/**
+ * @param {import('../index.js').Parser} parser
+ * @returns {import('#compiler').Attribute | import('#compiler').SpreadAttribute | import('#compiler').Directive | null}
+ */
+function read_attribute(parser) {
+	const start = parser.index;
 
 	if (parser.eat('{')) {
 		parser.allow_whitespace();
@@ -418,8 +466,6 @@ function read_attribute(parser, unique_names) {
 			if (name === null) {
 				error(start, 'empty-attribute-shorthand');
 			}
-
-			check_unique(name);
 
 			parser.allow_whitespace();
 			parser.eat('}', true);
@@ -471,12 +517,6 @@ function read_attribute(parser, unique_names) {
 
 		if (directive_name === '') {
 			error(start + colon_index + 1, 'empty-directive-name', type);
-		}
-
-		if (type === 'BindDirective' && directive_name !== 'this') {
-			check_unique(directive_name);
-		} else if (type !== 'OnDirective' && type !== 'UseDirective') {
-			check_unique(name);
 		}
 
 		if (type === 'StyleDirective') {
@@ -546,8 +586,6 @@ function read_attribute(parser, unique_names) {
 		return directive;
 	}
 
-	check_unique(name);
-
 	return create_attribute(name, start, end, value);
 }
 
@@ -569,7 +607,6 @@ function get_directive_type(name) {
 
 /**
  * @param {import('../index.js').Parser} parser
- * @returns {any[]}
  */
 function read_attribute_value(parser) {
 	const quote_mark = parser.eat("'") ? "'" : parser.eat('"') ? '"' : null;

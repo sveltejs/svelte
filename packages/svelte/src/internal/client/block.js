@@ -12,87 +12,131 @@ export const DYNAMIC_ELEMENT_BLOCK = 8;
 export const SNIPPET_BLOCK = 9;
 
 /**
- * @param {Node} container
  * @param {boolean} intro
  * @returns {import('./types.js').RootBlock}
  */
-export function create_root_block(container, intro) {
+export function create_root_block(intro) {
 	return {
-		dom: null,
-		effect: null,
-		container,
-		intro,
-		parent: null,
-		transition: null,
-		type: ROOT_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// intro
+		i: intro,
+		// parent
+		p: null,
+		// transition
+		r: null,
+		// type
+		t: ROOT_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').IfBlock} */
 export function create_if_block() {
 	return {
-		current: false,
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		type: IF_BLOCK
+		// alternate transitions
+		a: null,
+		// alternate effect
+		ae: null,
+		// consequent transitions
+		c: null,
+		// consequent effect
+		ce: null,
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// type
+		t: IF_BLOCK,
+		// value
+		v: false
 	};
 }
 
 /** @returns {import('./types.js').KeyBlock} */
 export function create_key_block() {
 	return {
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		type: KEY_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// type
+		t: KEY_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').HeadBlock} */
 export function create_head_block() {
 	return {
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		type: HEAD_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// type
+		t: HEAD_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').DynamicElementBlock} */
 export function create_dynamic_element_block() {
 	return {
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		type: DYNAMIC_ELEMENT_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// type
+		t: DYNAMIC_ELEMENT_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').DynamicComponentBlock} */
 export function create_dynamic_component_block() {
 	return {
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		type: DYNAMIC_COMPONENT_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// type
+		t: DYNAMIC_COMPONENT_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').AwaitBlock} */
 export function create_await_block() {
 	return {
-		dom: null,
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		pending: true,
-		transition: null,
-		type: AWAIT_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// pending
+		n: true,
+		// transition
+		r: null,
+		// type
+		t: AWAIT_BLOCK
 	};
 }
 
@@ -103,15 +147,23 @@ export function create_await_block() {
  */
 export function create_each_block(flags, anchor) {
 	return {
-		anchor,
-		dom: null,
-		flags,
-		items: [],
-		effect: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		transition: null,
-		transitions: [],
-		type: EACH_BLOCK
+		// anchor
+		a: anchor,
+		// dom
+		d: null,
+		// flags
+		f: flags,
+		// items
+		v: [],
+		// effect
+		e: null,
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: [],
+		// type
+		t: EACH_BLOCK
 	};
 }
 
@@ -123,25 +175,38 @@ export function create_each_block(flags, anchor) {
  */
 export function create_each_item_block(item, index, key) {
 	return {
-		dom: null,
-		effect: null,
-		index,
-		key,
-		item,
-		parent: /** @type {import('./types.js').EachBlock} */ (current_block),
-		transition: null,
-		transitions: null,
-		type: EACH_ITEM_BLOCK
+		// dom
+		d: null,
+		// effect
+		e: null,
+		i: index,
+		// key
+		k: key,
+		// item
+		v: item,
+		// parent
+		p: /** @type {import('./types.js').EachBlock} */ (current_block),
+		// transition
+		r: null,
+		// transitions
+		s: null,
+		// type
+		t: EACH_ITEM_BLOCK
 	};
 }
 
 /** @returns {import('./types.js').SnippetBlock} */
 export function create_snippet_block() {
 	return {
-		dom: null,
-		parent: /** @type {import('./types.js').Block} */ (current_block),
-		effect: null,
-		transition: null,
-		type: SNIPPET_BLOCK
+		// dom
+		d: null,
+		// parent
+		p: /** @type {import('./types.js').Block} */ (current_block),
+		// effect
+		e: null,
+		// transition
+		r: null,
+		// type
+		t: SNIPPET_BLOCK
 	};
 }
