@@ -437,7 +437,7 @@ function get_directive_type(name) {
 	if (name === 'in' || name === 'out' || name === 'transition') return 'Transition';
 }
 
-const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]))/;
+const regex_attribute_value = /^(?:"([^"]*)"|'([^'])*'|([^>\s]+))/;
 
 /**
  * @param {import('../index.js').Parser} parser
