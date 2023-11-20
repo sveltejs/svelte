@@ -28,7 +28,7 @@
 					"type": "Identifier",
 					"name": "msg",
 					"start": 43,
-					"end": 46,
+					"end": 54,
 					"typeAnnotation": {
 						"type": "TSStringKeyword",
 						"start": 48,
