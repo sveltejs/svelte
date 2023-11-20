@@ -22,12 +22,14 @@ export default function read_context(parser) {
 	const code = full_char_code_at(parser.template, i);
 	if (isIdentifierStart(code, true)) {
 		const name = /** @type {string} */ (parser.read_identifier());
+		const annotation = read_type_annotation(parser);
+
 		return {
 			type: 'Identifier',
 			name,
 			start,
 			end: parser.index,
-			typeAnnotation: read_type_annotation(parser)
+			typeAnnotation: annotation
 		};
 	}
 
@@ -81,6 +83,10 @@ export default function read_context(parser) {
 		).left;
 
 		expression.typeAnnotation = read_type_annotation(parser);
+		if (expression.typeAnnotation) {
+			expression.end = expression.typeAnnotation.end;
+		}
+
 		return expression;
 	} catch (error) {
 		parser.acorn_error(error);
@@ -92,6 +98,7 @@ export default function read_context(parser) {
  * @returns {any}
  */
 function read_type_annotation(parser) {
+	const index = parser.index;
 	parser.allow_whitespace();
 
 	if (parser.eat(':')) {
@@ -103,5 +110,7 @@ function read_type_annotation(parser) {
 
 		parser.index = /** @type {number} */ (expression.end);
 		return /** @type {any} */ (expression).typeAnnotation;
+	} else {
+		parser.index = index;
 	}
 }
