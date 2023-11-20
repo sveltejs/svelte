@@ -106,7 +106,12 @@ function read_type_annotation(parser) {
 		const insert = '_ as ';
 		let a = parser.index - insert.length;
 		const template = ' '.repeat(a) + insert + parser.template.slice(parser.index);
-		const expression = parse_expression_at(template, parser.ts, a);
+		let expression = parse_expression_at(template, parser.ts, a);
+
+		// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
+		if (expression.type === 'SequenceExpression') {
+			expression = expression.expressions[0];
+		}
 
 		parser.index = /** @type {number} */ (expression.end);
 		return /** @type {any} */ (expression).typeAnnotation;
