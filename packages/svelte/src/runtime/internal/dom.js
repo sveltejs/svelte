@@ -1180,6 +1180,36 @@ export function attribute_to_object(attributes) {
 	return result;
 }
 
+const escaped = {
+	'"': '&quot;',
+	'&': '&amp;',
+	'<': '&lt;'
+};
+
+const regex_attribute_characters_to_escape = /["&<]/g;
+
+/**
+ * Note that the attribute itself should be surrounded in double quotes
+ * @param {any} attribute
+ */
+function escape_attribute(attribute) {
+	return String(attribute).replace(regex_attribute_characters_to_escape, (match) => escaped[match]);
+}
+
+/**
+ * @param {Record<string, string>} attributes
+ */
+export function stringify_spread(attributes) {
+	let str = ' ';
+	for (const key in attributes) {
+		if (attributes[key] != null) {
+			str += `${key}="${escape_attribute(attributes[key])}" `;
+		}
+	}
+
+	return str;
+}
+
 /**
  * @param {HTMLElement} element
  * @returns {{}}
