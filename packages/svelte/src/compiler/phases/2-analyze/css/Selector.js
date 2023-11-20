@@ -828,14 +828,17 @@ class Block {
 	}
 }
 
-/** @param {import('#compiler').Css.Selector} selector */
+/**
+ * Groups selectors by combinator into blocks
+ * @param {import('#compiler').Css.Selector} selector
+ * */
 function group_selectors(selector) {
 	let block = new Block(null);
 	const blocks = [block];
 
-	selector.children.forEach((child) => {
+	for (const child of selector.children) {
 		if (child.type === 'Combinator') {
-			if(block.nested && !block.combinator) {
+			if (block.nested && !block.combinator) {
 				block.combinator = child;
 			} else {
 				block = new Block(child);
@@ -846,7 +849,7 @@ function group_selectors(selector) {
 		} else {
 			block.add(child);
 		}
-	});
+	}
 
 	return blocks;
 }
