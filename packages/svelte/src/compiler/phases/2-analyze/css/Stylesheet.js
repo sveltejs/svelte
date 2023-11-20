@@ -411,9 +411,6 @@ export default class Stylesheet {
 			atrule: undefined,
 		};
 
-		/** @type {import('#compiler').Css.Node}*/
-		let prev_node;
-
 		walk(/** @type {import('#compiler').Css.Node} */ (ast), state, {
 			Atrule: (node, context) => {
 				const atrule = new Atrule(node);
