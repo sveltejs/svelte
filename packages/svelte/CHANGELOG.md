@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.6
+
+### Patch Changes
+
+- fix: adjust static attribute regex ([#9551](https://github.com/sveltejs/svelte/pull/9551))
+
 ## 4.2.5
 
 ### Patch Changes
