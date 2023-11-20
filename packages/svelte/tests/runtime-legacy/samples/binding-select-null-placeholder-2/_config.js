@@ -24,5 +24,11 @@ export default test({
 		component.foo = items[0];
 		assert.equal(options[0].selected, false);
 		assert.equal(options[1].selected, true);
+
+		component.foo = { id: 'c' }; // doesn't match an option
+		assert.equal(select.value, '');
+		assert.equal(select.selectedIndex, -1);
+		assert.equal(options[0].selected, false);
+		assert.equal(options[1].selected, false);
 	}
 });

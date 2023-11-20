@@ -458,7 +458,7 @@ export function select_option(select, value, mounting) {
 		}
 	}
 	if (!mounting || value !== undefined) {
-		select.value = '';
+		select.selectedIndex = -1; // no option should be selected
 	}
 }
 
