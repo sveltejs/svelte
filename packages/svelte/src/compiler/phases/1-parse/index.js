@@ -10,6 +10,9 @@ import read_options from './read/options.js';
 
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
+const regex_lang_attribute =
+	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s])\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/;
+
 export class Parser {
 	/**
 	 * @readonly
@@ -19,6 +22,9 @@ export class Parser {
 
 	/** */
 	index = 0;
+
+	/** Whether we're parsing in TypeScript mode */
+	ts = false;
 
 	/** @type {import('#compiler').TemplateNode[]} */
 	stack = [];
@@ -42,6 +48,8 @@ export class Parser {
 		}
 
 		this.template = template.trimRight();
+
+		this.ts = regex_lang_attribute.exec(template)?.[2] === 'ts';
 
 		this.root = {
 			css: null,

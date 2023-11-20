@@ -2,6 +2,8 @@ import read_context from '../read/context.js';
 import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
+import { parse_expression_at } from '../acorn.js';
+import { walk } from 'zimmerframe';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -67,10 +69,73 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const template = parser.template;
+		let end = parser.template.length;
+
+		/** @type {import('estree').Expression | undefined} */
+		let expression;
+
+		// we have to do this loop because `{#each x as { y = z }}` fails to parse —
+		// the `as { y = z }` is treated as an Expression but it's actually a Pattern.
+		// the 'fix' is to backtrack and hide everything from the `as` onwards, until
+		// we get a valid expression
+		while (!expression) {
+			try {
+				expression = read_expression(parser);
+			} catch (err) {
+				end = /** @type {any} */ (err).position[0] - 2;
+
+				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
+					end -= 1;
+				}
+
+				if (end <= start) throw err;
+
+				// @ts-expect-error parser.template is meant to be readonly, this is a special case
+				parser.template = template.slice(0, end);
+			}
+		}
+
+		// @ts-expect-error
+		parser.template = template;
+
 		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
+		if (!parser.match('as')) {
+			// this could be a TypeScript assertion that was erroneously eaten.
+
+			if (expression.type === 'SequenceExpression') {
+				expression = expression.expressions[0];
+			}
+
+			let assertion = null;
+			let end = expression.end;
+
+			expression = walk(expression, null, {
+				// @ts-expect-error
+				TSAsExpression(node, context) {
+					if (node.end === /** @type {import('estree').Expression} */ (expression).end) {
+						assertion = node;
+						end = node.expression.end;
+						return node.expression;
+					}
+
+					context.next();
+				}
+			});
+
+			expression.end = end;
+
+			if (assertion) {
+				// we can't reset `parser.index` to `expression.expression.end` because
+				// it will ignore any parentheses — we need to jump through this hoop
+				let end = /** @type {any} */ (/** @type {any} */ (assertion).typeAnnotation).start - 2;
+				while (parser.template.slice(end, end + 2) !== 'as') end -= 1;
+
+				parser.index = end;
+			}
+		}
 		parser.eat('as', true);
 		parser.require_whitespace();
 

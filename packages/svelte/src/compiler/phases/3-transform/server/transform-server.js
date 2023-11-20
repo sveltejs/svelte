@@ -19,6 +19,7 @@ import { create_attribute, is_element_node } from '../../nodes.js';
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
+import { remove_types } from '../typescript.js';
 
 /**
  * @param {string} value
@@ -1904,38 +1905,34 @@ export function server_component(analysis, options) {
 	};
 
 	const module = /** @type {import('estree').Program} */ (
-		walk(
-			/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast),
-			state,
-			// @ts-expect-error TODO
-			{
-				...set_scope(analysis.module.scopes),
-				...global_visitors,
-				...javascript_visitors,
-				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
-			}
-		)
+		walk(/** @type {import('#compiler').SvelteNode} */ (analysis.module.ast), state, {
+			...set_scope(analysis.module.scopes),
+			...global_visitors,
+			...remove_types,
+			...javascript_visitors,
+			...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy)
+		})
 	);
 
 	const instance = /** @type {import('estree').Program} */ (
 		walk(
 			/** @type {import('#compiler').SvelteNode} */ (analysis.instance.ast),
 			{ ...state, scope: analysis.instance.scope },
-			// @ts-expect-error TODO
 			{
 				...set_scope(analysis.instance.scopes),
 				...global_visitors,
+				...{ ...remove_types, ImportDeclaration: undefined, ExportNamedDeclaration: undefined },
 				...javascript_visitors,
 				...(analysis.runes ? javascript_visitors_runes : javascript_visitors_legacy),
-				ImportDeclaration(node, { state }) {
-					// @ts-expect-error TODO the merged visitors have the lowest common denominator
-					// state which is ServerTransformState, but it's actually using ComponentServerTransformState
-					state.hoisted.push(node);
-					return { type: 'EmptyStatement' };
+				ImportDeclaration(node, context) {
+					// @ts-expect-error
+					state.hoisted.push(remove_types.ImportDeclaration(node, context));
+					return b.empty;
 				},
-				ExportNamedDeclaration(node, { state, visit }) {
+				ExportNamedDeclaration(node, context) {
 					if (node.declaration) {
-						return visit(node.declaration);
+						// @ts-expect-error
+						return remove_types.ExportNamedDeclaration(context.visit(node.declaration), context);
 					}
 
 					return b.empty;
@@ -1948,10 +1945,10 @@ export function server_component(analysis, options) {
 		walk(
 			/** @type {import('#compiler').SvelteNode} */ (analysis.template.ast),
 			{ ...state, scope: analysis.template.scope },
-			// @ts-expect-error TODO
 			{
 				...set_scope(analysis.template.scopes),
 				...global_visitors,
+				...remove_types,
 				...template_visitors
 			}
 		)

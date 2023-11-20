@@ -53,7 +53,7 @@ export function compile(source, options) {
 export function compileModule(source, options) {
 	try {
 		const validated = validate_module_options(options, '');
-		const analysis = analyze_module(parse_acorn(source), validated);
+		const analysis = analyze_module(parse_acorn(source, false), validated);
 		return transform_module(analysis, source, validated);
 	} catch (e) {
 		if (/** @type {any} */ (e).name === 'CompileError') {

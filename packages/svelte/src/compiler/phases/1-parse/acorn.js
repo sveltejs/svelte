@@ -1,35 +1,51 @@
 import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
+import { tsPlugin } from 'acorn-typescript';
+
+// @ts-expect-error
+const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
  * @param {string} source
+ * @param {boolean} typescript
  */
-export function parse(source) {
+export function parse(source, typescript) {
+	const parser = typescript ? ParserWithTS : acorn.Parser;
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = acorn.parse(source, {
+
+	const ast = parser.parse(source, {
 		onComment,
 		sourceType: 'module',
 		ecmaVersion: 13,
 		locations: true
 	});
+
+	if (typescript) amend(source, ast);
 	add_comments(ast);
+
 	return /** @type {import('estree').Program} */ (ast);
 }
 
 /**
  * @param {string} source
+ * @param {boolean} typescript
  * @param {number} index
  */
-export function parse_expression_at(source, index) {
+export function parse_expression_at(source, typescript, index) {
+	const parser = typescript ? ParserWithTS : acorn.Parser;
 	const { onComment, add_comments } = get_comment_handlers(source);
-	const ast = acorn.parseExpressionAt(source, index, {
+
+	const ast = parser.parseExpressionAt(source, index, {
 		onComment,
 		sourceType: 'module',
 		ecmaVersion: 13,
 		locations: true
 	});
+
+	if (typescript) amend(source, ast);
 	add_comments(ast);
-	return /** @type {import('estree').Expression} */ (ast);
+
+	return ast;
 }
 
 /**
@@ -107,4 +123,30 @@ export function get_comment_handlers(source) {
 			);
 		}
 	};
+}
+
+/**
+ * Tidy up some stuff left behind by acorn-typescript
+ * @param {string} source
+ * @param {import('acorn').Node} node
+ */
+export function amend(source, node) {
+	return walk(node, null, {
+		_(node, context) {
+			// @ts-expect-error
+			delete node.loc.start.index;
+			// @ts-expect-error
+			delete node.loc.end.index;
+
+			if (/** @type {any} */ (node).typeAnnotation && node.end === undefined) {
+				// i think there might be a bug in acorn-typescript that prevents
+				// `end` from being assigned when there's a type annotation
+				let end = /** @type {any} */ (node).typeAnnotation.start;
+				while (/\s/.test(source[end - 1])) end -= 1;
+				node.end = end;
+			}
+
+			context.next();
+		}
+	});
 }
