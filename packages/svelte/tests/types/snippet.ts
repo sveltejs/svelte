@@ -35,3 +35,6 @@ const h: Snippet<{ a: true }> = (a) => {
 	a.a === true;
 	return return_type;
 };
+const i: Snippet = () => {
+	return return_type;
+};
