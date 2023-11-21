@@ -185,6 +185,19 @@ export type ComponentType<Comp extends SvelteComponent> = (new (
 	element?: typeof HTMLElement;
 };
 
+declare const SnippetReturn: unique symbol;
+
+/**
+ * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
+ * ```ts
+ * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+ * ```
+ * You can only call a snippet through the `{@render ...}` tag.
+ */
+export interface Snippet<T = void> {
+	(arg: T): typeof SnippetReturn;
+}
+
 interface DispatchOptions {
 	cancelable?: boolean;
 }

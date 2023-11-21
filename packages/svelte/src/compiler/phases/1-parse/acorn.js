@@ -2,7 +2,6 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
 
-// @ts-expect-error
 const ParserWithTS = acorn.Parser.extend(tsPlugin());
 
 /**
