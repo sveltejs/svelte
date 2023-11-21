@@ -1076,26 +1076,7 @@ function create_block(parent, name, nodes, context) {
 			}
 		}
 		if (state.update.length > 0) {
-			let render;
-			if (state.update.length === 1 && state.update[0].singular) {
-				render = state.update[0].singular;
-			} else {
-				render = b.stmt(
-					b.call(
-						'$.render_effect',
-						b.thunk(
-							b.block(
-								state.update.map((n) => {
-									if (n.init) {
-										body.push(n.init);
-									}
-									return n.grouped;
-								})
-							)
-						)
-					)
-				);
-			}
+			const render = serialize_render_stmt(state, body);
 			if (!update) {
 				update = render;
 			}
@@ -1133,6 +1114,35 @@ function create_block(parent, name, nodes, context) {
 	}
 
 	return body;
+}
+
+/**
+ *
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Statement[]} body
+ */
+function serialize_render_stmt(state, body) {
+	let render;
+	if (state.update.length === 1 && state.update[0].singular) {
+		render = state.update[0].singular;
+	} else {
+		render = b.stmt(
+			b.call(
+				'$.render_effect',
+				b.thunk(
+					b.block(
+						state.update.map((n) => {
+							if (n.init) {
+								body.push(n.init);
+							}
+							return n.grouped;
+						})
+					)
+				)
+			)
+		);
+	}
+	return render;
 }
 
 /**
@@ -2041,27 +2051,7 @@ export const template_visitors = {
 				}
 			}
 			if (inner_context.state.update.length > 0) {
-				let render;
-				if (inner_context.state.update.length === 1 && inner_context.state.update[0].singular) {
-					render = inner_context.state.update[0].singular;
-				} else {
-					render = b.stmt(
-						b.call(
-							'$.render_effect',
-							b.thunk(
-								b.block(
-									inner_context.state.update.map((n) => {
-										if (n.init) {
-											inner.push(n.init);
-										}
-										return n.grouped;
-									})
-								)
-							)
-						)
-					);
-				}
-				inner.push(render);
+				inner.push(serialize_render_stmt(inner_context.state, inner));
 			}
 		}
 		inner.push(...inner_context.state.after_update);
