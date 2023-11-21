@@ -11,7 +11,7 @@ import read_options from './read/options.js';
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 const regex_lang_attribute =
-	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s])\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/;
+	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/;
 
 export class Parser {
 	/**
