@@ -20,8 +20,8 @@ export interface ClientTransformState extends TransformState {
 	readonly in_constructor: boolean;
 
 	/**
-	 * `true` if the current lexical scope belongs to the alternate of an IfBlock. This
-	 * allows us to hoist alternate if-blocks to the same scope as the original IfBlock.
+	 * Contains the current lexical init statement block of the starting IfBlock in the case
+	 * where we have many else-if blocks that can be hoisted.
 	 */
 	readonly else_if_init: null | Statement[];
 
