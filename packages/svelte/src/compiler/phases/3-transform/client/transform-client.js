@@ -93,7 +93,8 @@ export function client_component(source, analysis, options) {
 		preserve_whitespace: options.preserveWhitespace,
 		public_state: new Map(),
 		private_state: new Map(),
-		in_constructor: false
+		in_constructor: false,
+		else_if_init: null
 	};
 
 	const module = /** @type {import('estree').Program} */ (
@@ -466,7 +467,8 @@ export function client_module(analysis, options) {
 		legacy_reactive_statements: new Map(),
 		public_state: new Map(),
 		private_state: new Map(),
-		in_constructor: false
+		in_constructor: false,
+		else_if_init: null
 	};
 
 	const module = /** @type {import('estree').Program} */ (

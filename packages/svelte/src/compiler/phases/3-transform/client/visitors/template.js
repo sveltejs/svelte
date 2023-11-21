@@ -2298,6 +2298,28 @@ export const template_visitors = {
 		const consequent = /** @type {import('estree').BlockStatement} */ (
 			context.visit(node.consequent)
 		);
+		const in_else_if =
+			node.alternate !== null &&
+			node.alternate.nodes.length === 1 &&
+			node.alternate.nodes[0].type === 'IfBlock';
+		const else_if_init = in_else_if ? context.state.else_if_init || context.state.init : null;
+		const else_if_block_id = in_else_if ? context.state.scope.generate('else_if') : null;
+
+		const alternate = node.alternate
+			? b.arrow(
+					[b.id('$$anchor')],
+					/** @type {import('estree').BlockStatement} */ (
+						context.visit(node.alternate, {
+							...context.state,
+							else_if_init
+						})
+					)
+			  )
+			: null;
+
+		if (else_if_block_id && else_if_init && alternate) {
+			else_if_init.push(b.var(else_if_block_id, alternate));
+		}
 
 		context.state.after_update.push(
 			b.stmt(
@@ -2306,12 +2328,7 @@ export const template_visitors = {
 					context.state.node,
 					b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.test))),
 					b.arrow([b.id('$$anchor')], consequent),
-					node.alternate
-						? b.arrow(
-								[b.id('$$anchor')],
-								/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-						  )
-						: b.literal(null)
+					alternate ? (else_if_block_id ? b.id(else_if_block_id) : alternate) : b.literal(null)
 				)
 			)
 		);
