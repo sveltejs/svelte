@@ -583,7 +583,14 @@ export const validation_runes_js = {
 	NewExpression(node, context) {
 		const callee = node.callee;
 
-		if (callee.type === 'ClassExpression' && context.state.scope.function_depth !== 0) {
+		const binding = callee.type === 'Identifier' ? context.state.scope.get(callee.name) : null;
+		if (
+			(callee.type === 'ClassExpression' && context.state.scope.function_depth !== 0) ||
+			(binding !== null &&
+				binding.initial !== null &&
+				binding.initial.type === 'ClassDeclaration' &&
+				binding.scope.function_depth !== 0)
+		) {
 			warn(context.state.analysis.warnings, node, context.path, 'inline-new-class');
 		}
 	}

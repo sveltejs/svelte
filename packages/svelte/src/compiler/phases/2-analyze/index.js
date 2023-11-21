@@ -201,15 +201,19 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	/** @type {import('../types').RawWarning[]} */
+	const warnings = [];
+
+	const analysis = {
+		warnings
+	};
+
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope },
+		{ scope, analysis },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
-
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
 
 	// If we are in runes mode, then check for possible misuses of state runes
 	for (const [, scope] of scopes) {
@@ -608,7 +612,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { warnings: import('../types').RawWarning[] } }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
