@@ -184,6 +184,10 @@ export class Scope {
 			declaration.references.push({ node, path });
 		} else if (this.#parent) {
 			this.#parent.reference(node, path);
+		} else {
+			// no declaration was found, and this is the top level scope,
+			// which means this is a global
+			this.root.conflicts.add(node.name);
 		}
 	}
 }
