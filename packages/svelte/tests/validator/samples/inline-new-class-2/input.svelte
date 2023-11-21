@@ -1,6 +1,8 @@
 <script>
-	class Foo {
-		foo = $state(0)
+	function bar() {
+		class Foo {
+			foo = $state(0)
+		}
+		const a = new Foo();
 	}
-	const a = new Foo();
 </script>
