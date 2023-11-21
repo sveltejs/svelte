@@ -255,7 +255,7 @@ function setup_select_synchronization(value_binding, context) {
  * 	value = $.spread_attributes(element, value, [...])
  * });
  * ```
- * Returns the id of the spread_attribute varialbe if spread is deemed reactive, `null` otherwise.
+ * Returns the id of the spread_attribute variable if spread is deemed reactive, `null` otherwise.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('estree').Identifier} element_id
@@ -376,7 +376,7 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 }
 
 /**
- * Serializes an assigment to an element property by adding relevant statements to either only
+ * Serializes an assignment to an element property by adding relevant statements to either only
  * the init or the the init and update arrays, depending on whether or not the value is dynamic.
  * Resulting code for static looks something like this:
  * ```js
@@ -551,7 +551,7 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 }
 
 /**
- * Serializes an assigment to the value property of a `<select>`, `<option>` or `<input>` element
+ * Serializes an assignment to the value property of a `<select>`, `<option>` or `<input>` element
  * that needs the hidden `__value` property.
  * Returns true if attribute is deemed reactive, false otherwise.
  * @param {string} element
@@ -567,13 +567,17 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 	const inner_assignment = b.assignment(
 		'=',
 		b.member(node_id, b.id('value')),
-		b.assignment('=', b.member(node_id, b.id('__value')), value)
+		b.conditional(
+			b.binary('==', b.literal(null), b.assignment('=', b.member(node_id, b.id('__value')), value)),
+			b.literal(''), // render null/undefined values as empty string to support placeholder options
+			value
+		)
 	);
 	const is_reactive = attribute.metadata.dynamic;
 	const needs_selected_call =
 		element === 'option' && (is_reactive || collect_parent_each_blocks(context).length > 0);
 	const needs_option_call = element === 'select' && is_reactive;
-	const assigment = b.stmt(
+	const assignment = b.stmt(
 		needs_selected_call
 			? b.sequence([
 					inner_assignment,
@@ -582,9 +586,12 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 					b.call('$.selected', node_id)
 			  ])
 			: needs_option_call
-			? // This ensures a one-way street to the DOM in case it's <select {value}>
-			  // and not <select bind:value>
-			  b.call('$.select_option', node_id, inner_assignment)
+			? b.sequence([
+					inner_assignment,
+					// This ensures a one-way street to the DOM in case it's <select {value}>
+					// and not <select bind:value>
+					b.call('$.select_option', node_id, value)
+			  ])
 			: inner_assignment
 	);
 
@@ -595,12 +602,12 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 			id,
 			undefined,
 			value,
-			{ grouped: assigment },
+			{ grouped: assignment },
 			contains_call_expression
 		);
 		return true;
 	} else {
-		state.init.push(assigment);
+		state.init.push(assignment);
 		return false;
 	}
 }

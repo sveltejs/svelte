@@ -444,20 +444,22 @@ export function class_toggle(dom, class_name, value) {
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
+ * @param {boolean} [mounting]
  */
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	if (select.multiple) {
 		return select_options(select, value);
 	}
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		const option_value = get_option_value(option);
 		if (option_value === value) {
 			option.selected = true;
 			return;
 		}
 	}
-	select.value = '';
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 /**
@@ -466,8 +468,7 @@ export function select_option(select, value) {
  * @param {V} value
  */
 function select_options(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		// @ts-ignore
 		option.selected = ~value.indexOf(get_option_value(option));
 	}
@@ -897,20 +898,10 @@ export function selected(dom) {
 			}
 			select = select.parentNode;
 		}
-		if (select != null) {
-			// @ts-ignore
-			const select_value = select.__value;
-			// @ts-ignore
-			const option_value = dom.__value;
-			const selected = select_value === option_value;
-			dom.selected = selected;
-			dom.value = option_value;
-			// Handle the edge case of new options being added to a select when its state is "nothing selected"
-			// and keeping the selection state in sync (the DOM auto-selects the first option on insert)
-			// @ts-ignore
-			if (select.__value === null) {
-				/** @type {HTMLSelectElement} */ (select).value = '';
-			}
+		// @ts-ignore
+		if (select != null && dom.__value === select.__value) {
+			// never set to false, since this causes browser to select default option
+			dom.selected = true;
 		}
 	});
 }
@@ -949,7 +940,7 @@ export function bind_value(dom, get_value, update) {
  * @returns {void}
  */
 export function bind_select_value(dom, get_value, update) {
-	let mounted = false;
+	let mounting = true;
 	dom.addEventListener('change', () => {
 		/** @type {unknown} */
 		let value;
@@ -964,40 +955,19 @@ export function bind_select_value(dom, get_value, update) {
 	});
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
-		const value = get_value();
-		if (value == null && !mounted) {
+		let value = get_value();
+		select_option(dom, value, mounting);
+		if (mounting && value === undefined) {
 			/** @type {HTMLOptionElement | null} */
-			let selected_option = value === undefined ? dom.querySelector(':checked') : null;
-			if (selected_option === null) {
-				dom.value = '';
-				// @ts-ignore
-				dom.__value = null;
+			let selected_option = dom.querySelector(':checked');
+			if (selected_option !== null) {
+				value = get_option_value(selected_option);
+				update(value);
 			}
-			const options = dom.querySelectorAll('option');
-			for (const option of options) {
-				if (get_option_value(option) === value || option.hasAttribute('selected')) {
-					if (option.disabled) {
-						option.value = '';
-					}
-					option.selected = true;
-					selected_option = option;
-					break;
-				}
-			}
-			if (selected_option != null) {
-				const non_null_value = get_option_value(selected_option);
-				update(non_null_value);
-				if (selected_option.hasAttribute('selected')) {
-					selected_option.removeAttribute('selected');
-					selected_option.selected = true;
-				}
-			}
-		} else {
-			select_option(dom, value);
-			// @ts-ignore
-			dom.__value = value;
 		}
-		mounted = true;
+		// @ts-ignore
+		dom.__value = value;
+		mounting = false;
 	});
 }
 
