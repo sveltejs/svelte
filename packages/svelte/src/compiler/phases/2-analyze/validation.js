@@ -579,6 +579,13 @@ export const validation_runes_js = {
 			...context.state,
 			private_derived_state
 		});
+	},
+	NewExpression(node, context) {
+		const callee = node.callee;
+
+		if (callee.type === 'ClassExpression' && context.state.scope.function_depth !== 0) {
+			warn(context.state.analysis.warnings, node, context.path, 'inline-new-class');
+		}
 	}
 };
 
@@ -721,5 +728,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 			}
 		}
 	},
-	ClassBody: validation_runes_js.ClassBody
+	ClassBody: validation_runes_js.ClassBody,
+	NewExpression: validation_runes_js.NewExpression
 });
