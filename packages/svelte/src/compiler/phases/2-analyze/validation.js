@@ -490,18 +490,25 @@ function validate_call_expression(node, scope, path) {
 	const rune = get_rune(node, scope);
 	if (rune === null) return;
 
-	if (rune === '$props' && path.at(-1)?.type !== 'VariableDeclarator') {
+	const parent = /** @type {import('#compiler').SvelteNode} */ (path.at(-1));
+
+	if (rune === '$props') {
+		if (parent.type === 'VariableDeclarator') return;
 		error(node, 'invalid-props-location');
-	} else if (
-		(rune === '$state' || rune === '$derived') &&
-		path.at(-1)?.type !== 'VariableDeclarator' &&
-		path.at(-1)?.type !== 'PropertyDefinition'
-	) {
+	}
+
+	if (rune === '$state' || rune === '$derived') {
+		if (parent.type === 'VariableDeclarator') return;
+		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
-	} else if (rune === '$effect') {
-		if (path.at(-1)?.type !== 'ExpressionStatement') {
+	}
+
+	if (rune === '$effect') {
+		if (parent.type !== 'ExpressionStatement') {
 			error(node, 'invalid-effect-location');
-		} else if (node.arguments.length !== 1) {
+		}
+
+		if (node.arguments.length !== 1) {
 			error(node, 'invalid-rune-args-length', '$effect', [1]);
 		}
 	}
