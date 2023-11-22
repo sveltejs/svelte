@@ -1011,7 +1011,7 @@ function create_block(parent, name, nodes, context) {
 
 		body.push(
 			b.var(
-				id.name,
+				id,
 				b.call(
 					'$.open',
 					b.id('$$anchor'),
