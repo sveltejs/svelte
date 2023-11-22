@@ -157,7 +157,7 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
