@@ -3,11 +3,7 @@ import { walk } from 'zimmerframe';
 import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
-import {
-	extract_identifiers,
-	extract_identifiers_from_expression,
-	get_callee_name
-} from '../utils/ast.js';
+import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
 import { Runes } from './constants.js';
 
 export class Scope {
