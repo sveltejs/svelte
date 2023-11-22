@@ -1028,40 +1028,40 @@ function create_block(parent, name, nodes, context) {
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.init);
-	} else {
+	} else if (trimmed.length > 0) {
 		id = b.id(context.state.scope.generate('fragment'));
+
+		body.push(
+			b.var(
+				id,
+				b.call(
+					'$.open_frag',
+					b.id('$$anchor'),
+					b.literal(!state.metadata.template_needs_import_node),
+					template_name
+				)
+			)
+		);
 
 		process_children(trimmed, b.call('$.child_frag', id), {
 			...context,
 			state
 		});
 
-		if (state.template.length > 0) {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
+		const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
 
-			state.hoisted.push(
-				b.var(
-					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
-				)
-			);
+		state.hoisted.push(
+			b.var(
+				template_name,
+				b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
+			)
+		);
 
-			body.push(
-				b.var(
-					id.name,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
-					)
-				),
-				...state.init
-			);
-			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-		} else {
-			body.push(...state.init);
-		}
+		body.push(...state.init);
+
+		close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+	} else {
+		body.push(...state.init);
 	}
 
 	if (state.update.length > 0 || state.update_effects.length > 0) {
