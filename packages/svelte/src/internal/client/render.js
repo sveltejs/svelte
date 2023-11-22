@@ -2,6 +2,7 @@ import { DEV } from 'esm-env';
 import {
 	append_child,
 	child,
+	child_frag,
 	clone_node,
 	create_element,
 	init_operations,
@@ -174,6 +175,9 @@ export function open(anchor, use_clone_node, template_element_fn) {
 export function open_frag(anchor, use_clone_node, template_element_fn) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
+
+export const space = template(' ', true);
+export const comment = template('<!>', true);
 
 /**
  * @param {Element | Text} dom
