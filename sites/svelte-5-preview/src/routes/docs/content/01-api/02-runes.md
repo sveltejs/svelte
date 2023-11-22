@@ -168,6 +168,24 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 
 Previously, you would have used `beforeUpdate`, which — like `afterUpdate` — is deprecated in Svelte 5.
 
+## `$effect.active`
+
+The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template:
+
+```svelte
+<script>
+	console.log('in component setup:', $effect.active()); // false
+
+	$effect(() => {
+		console.log('in effect:', $effect.active()); // true
+	});
+</script>
+
+<p>in template: {$effect.active()}</p> <!-- true -->
+```
+
+This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
+
 ## `$props`
 
 To declare component props, use the `$props` rune:
