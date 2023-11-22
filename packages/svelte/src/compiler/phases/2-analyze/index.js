@@ -284,7 +284,11 @@ export function analyze_component(root, options) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					error(references[0].node, 'illegal-global', name);
 				} else if (declaration !== null && Runes.includes(name)) {
-					warn(warnings, declaration.node, [], 'store-with-rune-name', store_name);
+					for (const { node, path } of references) {
+						if (path.at(-1)?.type === 'CallExpression') {
+							warn(warnings, node, [], 'store-with-rune-name', store_name);
+						}
+					}
 				}
 			}
 
@@ -302,6 +306,8 @@ export function analyze_component(root, options) {
 
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
+			instance.scope.references.set(name, references);
+			module.scope.references.delete(name);
 		}
 	}
 
