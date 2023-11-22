@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: add $effect.active rune
+feat: add $effect.active rune
