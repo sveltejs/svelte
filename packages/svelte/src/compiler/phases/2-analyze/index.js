@@ -268,6 +268,7 @@ export function analyze_component(root, options) {
 			(declaration !== null &&
 				// const state = $state(0) is valid
 				get_rune(declaration.initial, instance.scope) === null &&
+				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
 					declaration.initial?.type === 'ImportDeclaration' &&
