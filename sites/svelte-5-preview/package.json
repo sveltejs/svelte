@@ -18,7 +18,7 @@
     "@sveltejs/kit": "^1.22.5",
     "@sveltejs/site-kit": "6.0.0-next.51",
     "@types/marked": "^5.0.1",
-    "esrap": "^1.1.1",
+    "esrap": "^1.2.0",
     "marked": "^9.0.0",
     "publint": "^0.2.0",
     "shiki": "^0.14.4",

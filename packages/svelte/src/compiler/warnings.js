@@ -193,9 +193,9 @@ const state = {
 
 /** @satisfies {Warnings} */
 const performance = {
-	'inline-new-class': () =>
-		`Creating inline classes will likely cause performance issues. ` +
-		`Instead, declare the class at the module-level and create new instances from the class reference.`
+	'avoid-inline-class': () =>
+		`Avoid 'new class' — instead, declare the class at the top level scope`,
+	'avoid-nested-class': () => `Avoid declaring classes below the top level scope`
 };
 
 /** @satisfies {Warnings} */

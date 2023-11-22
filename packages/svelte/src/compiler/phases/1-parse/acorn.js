@@ -58,7 +58,6 @@ export function get_comment_handlers(source) {
 	 * @typedef {import('estree').Comment & {
 	 *   start: number;
 	 *   end: number;
-	 *   has_trailing_newline?: boolean
 	 * }} CommentWithLocation
 	 */
 
@@ -91,35 +90,26 @@ export function get_comment_handlers(source) {
 		add_comments(ast) {
 			if (comments.length === 0) return;
 
-			walk(
-				ast,
-				{},
-				{
-					_(node, { next }) {
-						let comment;
+			walk(ast, null, {
+				_(node, { next }) {
+					let comment;
 
-						while (comments[0] && comments[0].start < node.start) {
-							comment = /** @type {CommentWithLocation} */ (comments.shift());
+					while (comments[0] && comments[0].start < node.start) {
+						comment = /** @type {CommentWithLocation} */ (comments.shift());
+						(node.leadingComments ||= []).push(comment);
+					}
 
-							const next = comments[0] || node;
-							comment.has_trailing_newline =
-								comment.type === 'Line' || /\n/.test(source.slice(comment.end, next.start));
+					next();
 
-							(node.leadingComments ||= []).push(comment);
-						}
+					if (comments[0]) {
+						const slice = source.slice(node.end, comments[0].start);
 
-						next();
-
-						if (comments[0]) {
-							const slice = source.slice(node.end, comments[0].start);
-
-							if (/^[,) \t]*$/.test(slice)) {
-								node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
-							}
+						if (/^[,) \t]*$/.test(slice)) {
+							node.trailingComments = [/** @type {CommentWithLocation} */ (comments.shift())];
 						}
 					}
 				}
-			);
+			});
 		}
 	};
 }
