@@ -1,7 +1,7 @@
 [
 	{
-		"code": "inline-new-class",
-		"message": "Creating inline classes will likely cause performance issues. Instead, declare the class at the module-level and create new instances from the class reference.",
+		"code": "avoid-inline-class",
+		"message": "Avoid 'new class' — instead, declare the class at the top level scope",
 		"start": {
 			"column": 12,
 			"line": 3
