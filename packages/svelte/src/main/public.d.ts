@@ -195,7 +195,9 @@ declare const SnippetReturn: unique symbol;
  * You can only call a snippet through the `{@render ...}` tag.
  */
 export interface Snippet<T = void> {
-	(arg: T): typeof SnippetReturn;
+	(arg: T): typeof SnippetReturn & {
+		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+	};
 }
 
 interface DispatchOptions {
