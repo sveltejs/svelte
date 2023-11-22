@@ -176,7 +176,7 @@ export function open_frag(anchor, use_clone_node, template_element_fn) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
 
-const space_template = template(' ', true);
+const space_template = template(' ', false);
 const comment_template = template('<!>', true);
 
 /**
@@ -184,7 +184,7 @@ const comment_template = template('<!>', true);
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function space(anchor) {
-	return open_frag(anchor, true, space_template);
+	return open(anchor, true, space_template);
 }
 
 /**

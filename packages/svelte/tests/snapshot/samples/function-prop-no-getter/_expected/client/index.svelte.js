@@ -21,12 +21,11 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseup,
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var fragment_1 = $.space($$anchor);
-			var node_1 = $.child_frag(fragment_1);
+			var node_1 = $.space($$anchor);
 
 			/* Update */
 			$.text_effect(node_1, () => `clicks: ${$.stringify($.get(count))}`);
-			$.close_frag($$anchor, fragment_1);
+			$.close($$anchor, node_1);
 		}
 	});
 

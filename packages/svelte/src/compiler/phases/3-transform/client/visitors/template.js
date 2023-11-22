@@ -1037,15 +1037,17 @@ function create_block(parent, name, nodes, context) {
 		const template = state.template[0];
 
 		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			const callee = b.id(template === ' ' ? '$.space' : '$.comment');
-
-			body.push(
-				b.var(id, b.call(callee, b.id('$$anchor'))),
-				b.var(node_id, b.call('$.child_frag', id)),
-				...state.init
-			);
-
-			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+			if (template === ' ') {
+				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
+			} else {
+				body.push(
+					b.var(id, b.call('$.comment', b.id('$$anchor'))),
+					b.var(node_id, b.call('$.child_frag', id)),
+					...state.init
+				);
+				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+			}
 		} else {
 			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
 
