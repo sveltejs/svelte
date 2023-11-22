@@ -1379,7 +1379,6 @@ function process_children(nodes, parent, { visit, state }) {
 
 			state.template.push(' ');
 
-			/** @type {import('estree').Expression} */
 			let text_id = expression;
 
 			if (text_id.type !== 'Identifier') {
@@ -1428,17 +1427,22 @@ function process_children(nodes, parent, { visit, state }) {
 
 		state.template.push(' ');
 
-		const name = state.scope.generate('text');
+		let text_id = expression;
+
+		if (text_id.type !== 'Identifier') {
+			text_id = b.id(state.scope.generate('text'));
+			state.init.push(b.var(text_id, expression));
+		}
+
 		const contains_call_expression = sequence.some(
 			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
 		);
-		state.init.push(b.var(name, expression));
 		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.id(`${name}.nodeValue`), assignment));
+		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
 		const singular = b.stmt(
 			b.call(
 				'$.text_effect',
-				b.id(name),
+				text_id,
 				b.thunk(serialize_template_literal(sequence, visit, state)[1])
 			)
 		);
@@ -1451,13 +1455,13 @@ function process_children(nodes, parent, { visit, state }) {
 		) {
 			state.update.push({
 				singular,
-				grouped: b.stmt(b.call('$.text', b.id(name), assignment))
+				grouped: b.stmt(b.call('$.text', text_id, assignment))
 			});
 		} else {
 			state.init.push(init);
 		}
 
-		expression = b.call('$.sibling', b.id(name));
+		expression = b.call('$.sibling', text_id);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -1493,10 +1497,15 @@ function process_children(nodes, parent, { visit, state }) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
-					const name = state.scope.generate(node.type === 'RegularElement' ? node.name : 'node');
-					const id = b.id(name);
+					let id = expression;
 
-					state.init.push(b.var(name, expression));
+					if (id.type !== 'Identifier') {
+						const name = state.scope.generate(node.type === 'RegularElement' ? node.name : 'node');
+						id = b.id(name);
+
+						state.init.push(b.var(id, expression));
+					}
+
 					expression = b.call('$.sibling', id);
 
 					visit(node, {
