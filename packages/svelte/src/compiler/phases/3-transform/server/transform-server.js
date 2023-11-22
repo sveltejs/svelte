@@ -550,7 +550,7 @@ const javascript_visitors_runes = {
 
 		for (const declarator of node.declarations) {
 			const rune = get_rune(declarator.init, state.scope);
-			if (!rune || rune === '$effect') {
+			if (!rune || rune === '$effect.active') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -607,16 +607,11 @@ const javascript_visitors_runes = {
 	},
 	CallExpression(node, { state, next }) {
 		const rune = get_rune(node, state.scope);
-		const callee = node.callee;
 
-		if (
-			rune === '$effect' &&
-			callee.type === 'MemberExpression' &&
-			callee.property.type === 'Identifier' &&
-			callee.property.name === 'active'
-		) {
+		if (rune === '$effect.active') {
 			return b.literal(false);
 		}
+
 		next();
 	}
 };

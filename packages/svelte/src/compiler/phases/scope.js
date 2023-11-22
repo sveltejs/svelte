@@ -668,31 +668,30 @@ export function set_scope(scopes) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {import('estree').Expression | null | undefined} node
+ * @param {import('estree').Node | null | undefined} node
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {
 	if (!node) return null;
+	if (node.type !== 'CallExpression') return null;
+
+	let n = node.callee;
 
 	let joined = '';
 
-	while (node?.type === 'MemberExpression') {
-		if (node.computed) return null;
-		if (
-			node.property.type !== 'Identifier' ||
-			(node.object.type !== 'Identifier' && node.object.type !== 'MemberExpression')
-		)
-			return null;
-		joined = '.' + node.property.name + joined;
-		node = node.object;
+	while (n.type === 'MemberExpression') {
+		if (n.computed) return null;
+		if (n.property.type !== 'Identifier') return null;
+		joined = '.' + n.property.name + joined;
+		n = n.object;
 	}
 
-	if (node.type !== 'Identifier') return null;
+	if (n.type !== 'Identifier') return null;
 
-	joined = node.name + joined;
+	joined = n.name + joined;
 	if (!Runes.includes(joined)) return null;
 
-	const binding = scope.get(node.name);
+	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
 	return joined;
