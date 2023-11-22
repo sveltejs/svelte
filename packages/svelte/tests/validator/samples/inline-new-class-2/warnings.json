@@ -1,14 +1,14 @@
 [
 	{
-		"code": "inline-new-class",
-		"message": "Creating inline classes will likely cause performance issues. Instead, declare the class at the module-level and create new instances from the class reference.",
+		"code": "avoid-nested-class",
+		"message": "Avoid declaring classes below the top level scope",
 		"start": {
-			"column": 12,
-			"line": 6
+			"column": 2,
+			"line": 3
 		},
 		"end": {
-			"column": 21,
-			"line": 6
+			"column": 3,
+			"line": 5
 		}
 	}
 ]
