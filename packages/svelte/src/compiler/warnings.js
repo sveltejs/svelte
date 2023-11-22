@@ -192,11 +192,19 @@ const state = {
 };
 
 /** @satisfies {Warnings} */
+const performance = {
+	'inline-new-class': () =>
+		`Creating inline classes will likely cause performance issues. ` +
+		`Instead, declare the class at the module-level and create new instances from the class reference.`
+};
+
+/** @satisfies {Warnings} */
 const warnings = {
 	...css,
 	...attributes,
 	...runes,
 	...a11y,
+	...performance,
 	...state
 };
 

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "inline-new-class",
+		"message": "Creating inline classes will likely cause performance issues. Instead, declare the class at the module-level and create new instances from the class reference.",
+		"start": {
+			"column": 11,
+			"line": 2
+		},
+		"end": {
+			"column": 2,
+			"line": 4
+		}
+	}
+]
