@@ -504,6 +504,17 @@ function validate_call_expression(node, scope, path) {
 	}
 
 	if (rune === '$effect') {
+		const callee = node.callee;
+		if (
+			callee.type === 'MemberExpression' &&
+			callee.property.type === 'Identifier' &&
+			callee.property.name === 'active'
+		) {
+			if (node.arguments.length !== 0) {
+				error(node, 'invalid-rune-args-length', '$effect.active', [0]);
+			}
+			return;
+		}
 		if (parent.type !== 'ExpressionStatement') {
 			error(node, 'invalid-effect-location');
 		}
