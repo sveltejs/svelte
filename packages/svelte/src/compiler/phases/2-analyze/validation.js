@@ -503,24 +503,19 @@ function validate_call_expression(node, scope, path) {
 		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
 	}
 
-	if (rune === '$effect') {
-		const callee = node.callee;
-		if (
-			callee.type === 'MemberExpression' &&
-			callee.property.type === 'Identifier' &&
-			callee.property.name === 'active'
-		) {
-			if (node.arguments.length !== 0) {
-				error(node, 'invalid-rune-args-length', '$effect.active', [0]);
-			}
-			return;
-		}
+	if (rune === '$effect' || rune === '$effect.pre') {
 		if (parent.type !== 'ExpressionStatement') {
 			error(node, 'invalid-effect-location');
 		}
 
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$effect', [1]);
+			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+
+	if (rune === '$effect.active') {
+		if (node.arguments.length !== 0) {
+			error(node, 'invalid-rune-args-length', '$effect.active', [0]);
 		}
 	}
 }

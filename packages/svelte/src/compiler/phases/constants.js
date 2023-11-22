@@ -110,7 +110,7 @@ export const ElementBindings = [
 	'indeterminate'
 ];
 
-export const Runes = ['$state', '$props', '$derived', '$effect'];
+export const Runes = ['$state', '$props', '$derived', '$effect', '$effect.pre', '$effect.active'];
 
 /**
  * Whitespace inside one of these elements will not result in
