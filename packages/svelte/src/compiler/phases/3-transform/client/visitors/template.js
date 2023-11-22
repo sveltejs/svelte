@@ -1037,18 +1037,10 @@ function create_block(parent, name, nodes, context) {
 		const template = state.template[0];
 
 		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			const template_name = b.id(template === ' ' ? '$.space' : '$.comment');
+			const callee = b.id(template === ' ' ? '$.space' : '$.comment');
 
 			body.push(
-				b.var(
-					id,
-					b.call(
-						'$.open_frag',
-						b.id('$$anchor'),
-						b.literal(!state.metadata.template_needs_import_node),
-						template_name
-					)
-				),
+				b.var(id, b.call(callee, b.id('$$anchor'))),
 				b.var(node_id, b.call('$.child_frag', id)),
 				...state.init
 			);

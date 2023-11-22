@@ -134,7 +134,7 @@ export function svg_replace(node) {
  * @param {boolean} is_fragment
  * @param {boolean} use_clone_node
  * @param {null | Text | Comment | Element} anchor
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
@@ -168,7 +168,7 @@ export function open(anchor, use_clone_node, template_element_fn) {
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -176,8 +176,24 @@ export function open_frag(anchor, use_clone_node, template_element_fn) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
 }
 
-export const space = template(' ', true);
-export const comment = template('<!>', true);
+const space_template = template(' ', true);
+const comment_template = template('<!>', true);
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	return open_frag(anchor, true, space_template);
+}
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function comment(anchor) {
+	return open_frag(anchor, true, comment_template);
+}
 
 /**
  * @param {Element | Text} dom

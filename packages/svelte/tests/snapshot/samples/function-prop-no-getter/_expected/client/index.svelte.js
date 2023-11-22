@@ -1,4 +1,4 @@
-// index.svelte (Svelte VERSION)
+// index.svelte (Svelte v5.0.0-next.9)
 // Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
@@ -13,7 +13,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	}
 
 	/* Init */
-	var fragment = $.open_frag($$anchor, true, $.comment);
+	var fragment = $.comment($$anchor);
 	var node = $.child_frag(fragment);
 
 	Button(node, {
@@ -21,7 +21,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseup,
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var fragment_1 = $.open_frag($$anchor, true, $.space);
+			var fragment_1 = $.space($$anchor);
 			var node_1 = $.child_frag(fragment_1);
 
 			/* Update */
