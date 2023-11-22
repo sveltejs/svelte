@@ -5,7 +5,6 @@ import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
 	extract_paths,
-	get_callee_name,
 	is_event_attribute,
 	is_text_attribute,
 	object
@@ -268,11 +267,7 @@ export function analyze_component(root, options) {
 			!Runes.includes(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				!Runes.includes(
-					/** @type {string} */ (
-						get_callee_name(/** @type {import('estree').Expression} */ (declaration.initial))
-					)
-				) &&
+				get_rune(declaration.initial, instance.scope) === null &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&

@@ -21,19 +21,6 @@ export function object(expression) {
 }
 
 /**
- * Returns the name of callee if the given expression is a call expression.
- * @param {import('estree').Expression | null | undefined} node
- */
-export function get_callee_name(node) {
-	if (!node) return null;
-	if (node.type !== 'CallExpression') return null;
-	if (node.callee.type !== 'Identifier' && node.callee.type !== 'MemberExpression') return null;
-
-	const id = object(node.callee);
-	return id === null ? null : id.name;
-}
-
-/**
  * Returns true if the attribute contains a single static text node.
  * @param {import('#compiler').Attribute} attribute
  * @returns {attribute is import('#compiler').Attribute & { value: [import('#compiler').Text] }}
