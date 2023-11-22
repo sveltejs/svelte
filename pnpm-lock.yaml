@@ -13,7 +13,7 @@ importers:
         version: 2.26.2
       '@sveltejs/eslint-config':
         specifier: ^6.0.4
-        version: 6.0.4(@typescript-eslint/eslint-plugin@5.62.0)(@typescript-eslint/parser@5.62.0)(eslint-config-prettier@9.0.0)(eslint-plugin-svelte@2.35.0)(eslint-plugin-unicorn@49.0.0)(eslint@8.53.0)(typescript@5.2.2)
+        version: 6.0.4(@typescript-eslint/eslint-plugin@5.62.0)(@typescript-eslint/parser@5.62.0)(eslint-config-prettier@9.0.0)(eslint-plugin-svelte@2.35.1)(eslint-plugin-unicorn@49.0.0)(eslint@8.53.0)(typescript@5.2.2)
       '@svitejs/changesets-changelog-github-compact':
         specifier: ^1.1.0
         version: 1.1.0
@@ -81,8 +81,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       esrap:
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^1.2.0
+        version: 1.2.0
       is-reference:
         specifier: ^3.0.1
         version: 3.0.2
@@ -261,8 +261,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.2
       esrap:
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^1.2.0
+        version: 1.2.0
       publint:
         specifier: ^0.2.0
         version: 0.2.5
@@ -2188,7 +2188,7 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltejs/eslint-config@6.0.4(@typescript-eslint/eslint-plugin@5.62.0)(@typescript-eslint/parser@5.62.0)(eslint-config-prettier@9.0.0)(eslint-plugin-svelte@2.35.0)(eslint-plugin-unicorn@49.0.0)(eslint@8.53.0)(typescript@5.2.2):
+  /@sveltejs/eslint-config@6.0.4(@typescript-eslint/eslint-plugin@5.62.0)(@typescript-eslint/parser@5.62.0)(eslint-config-prettier@9.0.0)(eslint-plugin-svelte@2.35.1)(eslint-plugin-unicorn@49.0.0)(eslint@8.53.0)(typescript@5.2.2):
     resolution: {integrity: sha512-U9pwmDs+DbmsnCgTfu6Bacdwqn0DuI1IQNSiQqTgzVyYfaaj+zy9ZoQCiJfxFBGXHkklyXuRHp0KMx346N0lcQ==}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': '>= 5'
@@ -2203,7 +2203,7 @@ packages:
       '@typescript-eslint/parser': 5.62.0(eslint@8.53.0)(typescript@5.2.2)
       eslint: 8.53.0
       eslint-config-prettier: 9.0.0(eslint@8.53.0)
-      eslint-plugin-svelte: 2.35.0(eslint@8.53.0)(svelte@packages+svelte)
+      eslint-plugin-svelte: 2.35.1(eslint@8.53.0)(svelte@packages+svelte)
       eslint-plugin-unicorn: 49.0.0(eslint@8.53.0)
       typescript: 5.2.2
     dev: true
@@ -3911,8 +3911,8 @@ packages:
       '@types/estree': 1.0.5
     dev: true
 
-  /eslint-plugin-svelte@2.35.0(eslint@8.53.0)(svelte@packages+svelte):
-    resolution: {integrity: sha512-3WDFxNrkXaMlpqoNo3M1ZOQuoFLMO9+bdnN6oVVXaydXC7nzCJuGy9a0zqoNDHMSRPYt0Rqo6hIdHMEaI5sQnw==}
+  /eslint-plugin-svelte@2.35.1(eslint@8.53.0)(svelte@packages+svelte):
+    resolution: {integrity: sha512-IF8TpLnROSGy98Z3NrsKXWDSCbNY2ReHDcrYTuXZMbfX7VmESISR78TWgO9zdg4Dht1X8coub5jKwHzP0ExRug==}
     engines: {node: ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0-0
@@ -4056,8 +4056,8 @@ packages:
       estraverse: 5.3.0
     dev: true
 
-  /esrap@1.1.1:
-    resolution: {integrity: sha512-PIgHGLP8VAG4Iao4CbOc+/5tgn+TpzGhyAuVCR5qgcFgPOUk9Ds61bH7hD2lbjDuu86lagofx3lVrRFWcIF+Gg==}
+  /esrap@1.2.0:
+    resolution: {integrity: sha512-ZWd00MnkN45Hcj+nIV5FPiZk6Nx7RDUL8G0KGp1cg1xSKXOEac0IhMQdsrGswXB1O0fMzH+MXq288Lt0Abpg/Q==}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@types/estree': 1.0.5
