@@ -672,11 +672,28 @@ export function set_scope(scopes) {
  * @param {Scope} scope
  */
 export function get_rune(node, scope) {
-	const callee = get_callee_name(node);
-	if (callee === null || !Runes.includes(callee)) return null;
+	if (!node) return null;
 
-	const binding = scope.get(callee);
+	let joined = '';
+
+	while (node?.type === 'MemberExpression') {
+		if (node.computed) return null;
+		if (
+			node.property.type !== 'Identifier' ||
+			(node.object.type !== 'Identifier' && node.object.type !== 'MemberExpression')
+		)
+			return null;
+		joined = '.' + node.property.name + joined;
+		node = node.object;
+	}
+
+	if (node.type !== 'Identifier') return null;
+
+	joined = node.name + joined;
+	if (!Runes.includes(joined)) return null;
+
+	const binding = scope.get(node.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return callee;
+	return joined;
 }
