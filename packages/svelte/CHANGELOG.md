@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.10
+
+### Patch Changes
+
+- chore: add inline new class warning ([#9583](https://github.com/sveltejs/svelte/pull/9583))
+
+- fix: prevent false positives when detecting runes mode ([#9599](https://github.com/sveltejs/svelte/pull/9599))
+
+- fix: deconflict generated names against globals ([#9570](https://github.com/sveltejs/svelte/pull/9570))
+
+- chore: bump esrap ([#9590](https://github.com/sveltejs/svelte/pull/9590))
+
+- feat: add $effect.active rune ([#9591](https://github.com/sveltejs/svelte/pull/9591))
+
+- feat: add Snippet type ([#9584](https://github.com/sveltejs/svelte/pull/9584))
+
+- fix: adjust event delegation heuristics ([#9581](https://github.com/sveltejs/svelte/pull/9581))
+
+- chore: remove unused code ([#9593](https://github.com/sveltejs/svelte/pull/9593))
+
+- fix: adjust regex ([#9572](https://github.com/sveltejs/svelte/pull/9572))
+
 ## 5.0.0-next.9
 
 ### Patch Changes
