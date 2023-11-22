@@ -1086,9 +1086,7 @@ function create_block(parent, name, nodes, context) {
 		/** @type {import('estree').Statement} */ (update).leadingComments = [
 			{
 				type: 'Block',
-				value: ` Update `,
-				// @ts-expect-error
-				has_trailing_newline: true
+				value: ` Update `
 			}
 		];
 	}
@@ -1106,9 +1104,7 @@ function create_block(parent, name, nodes, context) {
 		body[0].leadingComments = [
 			{
 				type: 'Block',
-				value: ` Init `,
-				// @ts-expect-error
-				has_trailing_newline: true
+				value: ` Init `
 			}
 		];
 	}
