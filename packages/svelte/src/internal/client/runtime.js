@@ -1144,6 +1144,13 @@ function internal_create_effect(type, init, sync, block, schedule) {
 }
 
 /**
+ * @returns {boolean}
+ */
+export function effect_active() {
+	return current_effect ? (current_effect.f & MANAGED) === 0 : false;
+}
+
+/**
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */

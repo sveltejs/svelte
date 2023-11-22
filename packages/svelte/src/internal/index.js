@@ -35,7 +35,8 @@ export {
 	onDestroy,
 	pop,
 	push,
-	reactive_import
+	reactive_import,
+	effect_active
 } from './client/runtime.js';
 
 export * from './client/validate.js';
