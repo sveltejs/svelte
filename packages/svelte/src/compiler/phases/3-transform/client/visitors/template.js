@@ -12,13 +12,7 @@ import {
 	escape_html,
 	infer_namespace
 } from '../../utils.js';
-import {
-	AttributeAliases,
-	DOMBooleanAttributes,
-	DOMProperties,
-	PassiveEvents,
-	VoidElements
-} from '../../../constants.js';
+import { DOMProperties, PassiveEvents, VoidElements } from '../../../constants.js';
 import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import { error } from '../../../../errors.js';
@@ -29,6 +23,8 @@ import {
 	serialize_set_binding
 } from '../utils.js';
 import {
+	AttributeAliases,
+	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
 	EACH_IS_CONTROLLED,
 	EACH_ITEM_REACTIVE,
@@ -36,6 +32,26 @@ import {
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
+
+/**
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ * @param {import('#compiler').Attribute} attribute
+ * @param {{ state: { metadata: { namespace: import('#compiler').Namespace }}}} context
+ */
+function get_attribute_name(element, attribute, context) {
+	let name = attribute.name;
+	if (
+		element.type === 'RegularElement' &&
+		!element.metadata.svg &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
+		name = name.toLowerCase();
+		if (name in AttributeAliases) {
+			name = AttributeAliases[name];
+		}
+	}
+	return name;
+}
 
 /**
  * Serializes each style directive into something like `$.style(element, style_property, value)`
@@ -259,10 +275,11 @@ function setup_select_synchronization(value_binding, context) {
  * Returns the id of the spread_attribute variable if spread is deemed reactive, `null` otherwise.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
+ * @param {import('#compiler').RegularElement} element
  * @param {import('estree').Identifier} element_id
  * @returns {string | null}
  */
-function serialize_element_spread_attributes(attributes, context, element_id) {
+function serialize_element_spread_attributes(attributes, context, element, element_id) {
 	let is_reactive = false;
 
 	/** @type {import('estree').Expression[]} */
@@ -270,7 +287,7 @@ function serialize_element_spread_attributes(attributes, context, element_id) {
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const name = get_attribute_name(attribute, context.state);
+			const name = get_attribute_name(element, attribute, context);
 			// TODO: handle contains_call_expression
 			const [, value] = serialize_attribute_value(attribute.value, context);
 			values.push(b.object([b.init(name, value)]));
@@ -280,6 +297,9 @@ function serialize_element_spread_attributes(attributes, context, element_id) {
 
 		is_reactive ||= attribute.metadata.dynamic;
 	}
+
+	const lowercase_attributes =
+		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
 
 	if (is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
@@ -294,6 +314,7 @@ function serialize_element_spread_attributes(attributes, context, element_id) {
 						element_id,
 						b.id(id),
 						b.array(values),
+						lowercase_attributes,
 						b.literal(context.state.analysis.stylesheet.id)
 					)
 				)
@@ -308,6 +329,7 @@ function serialize_element_spread_attributes(attributes, context, element_id) {
 					element_id,
 					b.literal(null),
 					b.array(values),
+					lowercase_attributes,
 					b.literal(context.state.analysis.stylesheet.id)
 				)
 			)
@@ -398,14 +420,15 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
  * });
  * ```
  * Returns true if attribute is deemed reactive, false otherwise.
+ * @param {import('#compiler').RegularElement} element
  * @param {import('estree').Identifier} node_id
  * @param {import('#compiler').Attribute} attribute
  * @param {import('../types.js').ComponentContext} context
  * @returns {boolean}
  */
-function serialize_element_attribute_update_assignment(node_id, attribute, context) {
+function serialize_element_attribute_update_assignment(element, node_id, attribute, context) {
 	const state = context.state;
-	const name = get_attribute_name(attribute, state);
+	const name = get_attribute_name(element, attribute, context);
 	let [contains_call_expression, value] = serialize_attribute_value(attribute.value, context);
 
 	// The foreign namespace doesn't have any special handling, everything goes through the attr function
@@ -670,21 +693,6 @@ function collect_parent_each_blocks(context) {
 	return /** @type {import('#compiler').EachBlock[]} */ (
 		context.path.filter((node) => node.type === 'EachBlock')
 	);
-}
-
-/**
- * @param {import('#compiler').Attribute} attribute
- * @param {import('../types.js').ComponentClientTransformState} state
- */
-function get_attribute_name(attribute, state) {
-	let name = attribute.name;
-	if (state.metadata.namespace !== 'foreign') {
-		name = name.toLowerCase();
-		if (name !== 'class' && name in AttributeAliases) {
-			name = AttributeAliases[name];
-		}
-	}
-	return name;
 }
 
 /**
@@ -1899,7 +1907,7 @@ export const template_visitors = {
 		// Then do attributes
 		let is_attributes_reactive = false;
 		if (node.metadata.has_spread) {
-			const spread_id = serialize_element_spread_attributes(attributes, context, node_id);
+			const spread_id = serialize_element_spread_attributes(attributes, context, node, node_id);
 			if (child_metadata.namespace !== 'foreign') {
 				add_select_to_spread_update(spread_id, node, context, node_id);
 			}
@@ -1920,7 +1928,7 @@ export const template_visitors = {
 					attribute.name !== 'autofocus' &&
 					(attribute.value === true || is_text_attribute(attribute))
 				) {
-					const name = get_attribute_name(attribute, context.state);
+					const name = get_attribute_name(node, attribute, context);
 					const literal_value = /** @type {import('estree').Literal} */ (
 						serialize_attribute_value(attribute.value, context)[1]
 					).value;
@@ -1941,7 +1949,7 @@ export const template_visitors = {
 				const is =
 					is_custom_element && child_metadata.namespace !== 'foreign'
 						? serialize_custom_element_attribute_update_assignment(node_id, attribute, context)
-						: serialize_element_attribute_update_assignment(node_id, attribute, context);
+						: serialize_element_attribute_update_assignment(node, node_id, attribute, context);
 				if (is) is_attributes_reactive = true;
 			}
 		}
