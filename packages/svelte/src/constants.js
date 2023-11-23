@@ -32,3 +32,48 @@ export const DelegatedEvents = [
 
 /** List of Element events that will be delegated and are passive */
 export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
+
+/**
+ * @type {Record<string, string>}
+ * List of attribute names that should be aliased to their property names
+ * because they behave differently between setting them as an attribute and
+ * setting them as a property.
+ */
+export const AttributeAliases = {
+	// no `class: 'className'` because we handle that separately
+	formnovalidate: 'formNoValidate',
+	ismap: 'isMap',
+	nomodule: 'noModule',
+	playsinline: 'playsInline',
+	readonly: 'readOnly'
+};
+
+/**
+ * Attributes that are boolean, i.e. they are present or not present.
+ */
+export const DOMBooleanAttributes = [
+	'allowfullscreen',
+	'async',
+	'autofocus',
+	'autoplay',
+	'checked',
+	'controls',
+	'default',
+	'disabled',
+	'formnovalidate',
+	'hidden',
+	'indeterminate',
+	'ismap',
+	'loop',
+	'multiple',
+	'muted',
+	'nomodule',
+	'novalidate',
+	'open',
+	'playsinline',
+	'readonly',
+	'required',
+	'reversed',
+	'seamless',
+	'selected'
+];

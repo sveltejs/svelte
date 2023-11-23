@@ -2,6 +2,7 @@ import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
 import { is_promise } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
+import { DOMBooleanAttributes } from '../../constants.js';
 
 export * from '../client/validate.js';
 
@@ -30,34 +31,6 @@ const CONTENT_REGEX = /[&<]/g;
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-// This is duplicated from the compiler, but we need it at runtime too.
-export const DOMBooleanAttributes = [
-	'allowfullscreen',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'seamless',
-	'selected'
-];
 
 export const VoidElements = new Set([
 	'area',
@@ -225,11 +198,13 @@ export function css_props(payload, is_html, props, component) {
 
 /**
  * @param {Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {boolean} is_svg
  * @param {string} class_hash
  * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
  * @returns {string}
  */
-export function spread_attributes(attrs, class_hash, additional) {
+export function spread_attributes(attrs, lowercase_attributes, is_svg, class_hash, additional) {
 	/** @type {Record<string, unknown>} */
 	const merged_attrs = {};
 	let key;
@@ -276,7 +251,10 @@ export function spread_attributes(attrs, class_hash, additional) {
 
 	for (name in merged_attrs) {
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		const is_boolean = DOMBooleanAttributes.includes(name);
+		if (lowercase_attributes) {
+			name = name.toLowerCase();
+		}
+		const is_boolean = !is_svg && DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 
