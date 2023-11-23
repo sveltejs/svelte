@@ -2,7 +2,6 @@ import { DEV } from 'esm-env';
 import {
 	append_child,
 	child,
-	child_frag,
 	clone_node,
 	create_element,
 	init_operations,
@@ -61,7 +60,8 @@ import {
 	push,
 	current_component_context,
 	pop,
-	schedule_task
+	schedule_task,
+	managed_render_effect
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -79,16 +79,9 @@ const all_registerd_events = new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
 
-/** @type {any[] | null} */
-export let bind_this_context = null;
-
 /** @returns {Text} */
 export function empty() {
 	return document.createTextNode('');
-}
-
-export function clear_bind_this_context() {
-	bind_this_context = null;
 }
 
 /**
@@ -1237,19 +1230,10 @@ export function bind_prop(props, prop, value) {
  */
 export function bind_this(element_or_component, update, binding) {
 	untrack(() => {
-		// If a bind_this is shared across multple targets, then we
-		// need to ensure we correctly assign the value rather than
-		// only setting `null` for when they unmount.
-		if (is_signal(binding)) {
-			if (bind_this_context === null) {
-				bind_this_context = [];
-			}
-			bind_this_context.push(binding);
-		}
 		update(element_or_component);
 		render_effect(() => () => {
-			untrack(() => {
-				if (bind_this_context === null || !bind_this_context.includes(binding)) {
+			managed_render_effect(() => {
+				if (!is_signal(binding) || binding.v === element_or_component) {
 					update(null);
 				}
 			});
