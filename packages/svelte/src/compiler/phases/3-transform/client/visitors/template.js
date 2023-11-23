@@ -974,9 +974,6 @@ function create_block(parent, name, nodes, context) {
 	/** @type {import('estree').Statement | undefined} */
 	let close = undefined;
 
-	/** @type {import('estree').Identifier | undefined} */
-	let id = undefined;
-
 	/** @type {import('../types').ComponentClientTransformState} */
 	const state = {
 		...context.state,
@@ -999,7 +996,7 @@ function create_block(parent, name, nodes, context) {
 	if (is_single_element) {
 		const element = /** @type {import('#compiler').RegularElement} */ (trimmed[0]);
 
-		id = b.id(context.state.scope.generate(element.name));
+		const id = b.id(context.state.scope.generate(element.name));
 
 		context.visit(element, {
 			...state,
@@ -1014,7 +1011,7 @@ function create_block(parent, name, nodes, context) {
 
 		body.push(
 			b.var(
-				id.name,
+				id,
 				b.call(
 					'$.open',
 					b.id('$$anchor'),
@@ -1028,15 +1025,30 @@ function create_block(parent, name, nodes, context) {
 	} else if (is_single_child_not_needing_template) {
 		context.visit(trimmed[0], state);
 		body.push(...state.init);
-	} else {
-		id = b.id(context.state.scope.generate('fragment'));
+	} else if (trimmed.length > 0) {
+		const id = b.id(context.state.scope.generate('fragment'));
+		const node_id = b.id(context.state.scope.generate('node'));
 
-		process_children(trimmed, b.call('$.child_frag', id), {
+		process_children(trimmed, node_id, {
 			...context,
 			state
 		});
 
-		if (state.template.length > 0) {
+		const template = state.template[0];
+
+		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
+			if (template === ' ') {
+				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
+			} else {
+				body.push(
+					b.var(id, b.call('$.comment', b.id('$$anchor'))),
+					b.var(node_id, b.call('$.child_frag', id)),
+					...state.init
+				);
+				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
+			}
+		} else {
 			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
 
 			state.hoisted.push(
@@ -1048,7 +1060,7 @@ function create_block(parent, name, nodes, context) {
 
 			body.push(
 				b.var(
-					id.name,
+					id,
 					b.call(
 						'$.open_frag',
 						b.id('$$anchor'),
@@ -1056,12 +1068,14 @@ function create_block(parent, name, nodes, context) {
 						template_name
 					)
 				),
+				b.var(node_id, b.call('$.child_frag', id)),
 				...state.init
 			);
+
 			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-		} else {
-			body.push(...state.init);
 		}
+	} else {
+		body.push(...state.init);
 	}
 
 	if (state.update.length > 0 || state.update_effects.length > 0) {
@@ -1359,13 +1373,11 @@ function process_children(nodes, parent, { visit, state }) {
 
 			state.template.push(' ');
 
-			const name = state.scope.generate('text');
-			state.init.push(b.var(name, expression));
-
+			const text_id = get_node_id(expression, state, 'text');
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
-					b.id(name),
+					text_id,
 					b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)))
 				)
 			);
@@ -1378,7 +1390,7 @@ function process_children(nodes, parent, { visit, state }) {
 					grouped: b.stmt(
 						b.call(
 							'$.text',
-							b.id(name),
+							text_id,
 							/** @type {import('estree').Expression} */ (visit(node.expression))
 						)
 					)
@@ -1388,7 +1400,7 @@ function process_children(nodes, parent, { visit, state }) {
 					b.stmt(
 						b.assignment(
 							'=',
-							b.id(`${name}.nodeValue`),
+							b.member(text_id, b.id('nodeValue')),
 							b.call(
 								'$.stringify',
 								/** @type {import('estree').Expression} */ (visit(node.expression))
@@ -1403,17 +1415,16 @@ function process_children(nodes, parent, { visit, state }) {
 
 		state.template.push(' ');
 
-		const name = state.scope.generate('text');
+		const text_id = get_node_id(expression, state, 'text');
 		const contains_call_expression = sequence.some(
 			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
 		);
-		state.init.push(b.var(name, expression));
 		const assignment = serialize_template_literal(sequence, visit, state)[1];
-		const init = b.stmt(b.assignment('=', b.id(`${name}.nodeValue`), assignment));
+		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
 		const singular = b.stmt(
 			b.call(
 				'$.text_effect',
-				b.id(name),
+				text_id,
 				b.thunk(serialize_template_literal(sequence, visit, state)[1])
 			)
 		);
@@ -1426,13 +1437,13 @@ function process_children(nodes, parent, { visit, state }) {
 		) {
 			state.update.push({
 				singular,
-				grouped: b.stmt(b.call('$.text', b.id(name), assignment))
+				grouped: b.stmt(b.call('$.text', text_id, assignment))
 			});
 		} else {
 			state.init.push(init);
 		}
 
-		expression = b.call('$.sibling', b.id(name));
+		expression = b.call('$.sibling', text_id);
 	}
 
 	for (let i = 0; i < nodes.length; i += 1) {
@@ -1456,9 +1467,6 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				const name = state.scope.generate(node.type === 'RegularElement' ? node.name : 'node');
-				const id = b.id(name);
-
 				// Optimization path for each blocks. If the parent isn't a fragment and it only has
 				// a single child, then we can classify the block as being "controlled".
 				if (
@@ -1471,7 +1479,12 @@ function process_children(nodes, parent, { visit, state }) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
-					state.init.push(b.var(name, expression));
+					const id = get_node_id(
+						expression,
+						state,
+						node.type === 'RegularElement' ? node.name : 'node'
+					);
+
 					expression = b.call('$.sibling', id);
 
 					visit(node, {
@@ -1486,6 +1499,22 @@ function process_children(nodes, parent, { visit, state }) {
 	if (sequence.length > 0) {
 		flush_sequence(sequence);
 	}
+}
+
+/**
+ * @param {import('estree').Expression} expression
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {string} name
+ */
+function get_node_id(expression, state, name) {
+	let id = expression;
+
+	if (id.type !== 'Identifier') {
+		id = b.id(state.scope.generate(name));
+
+		state.init.push(b.var(id, expression));
+	}
+	return id;
 }
 
 /**
