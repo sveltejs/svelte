@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.11
+
+### Patch Changes
+
+- feat: add type of `$effect.active` ([#9624](https://github.com/sveltejs/svelte/pull/9624))
+
+- fix: correct bind this multiple bindings ([#9617](https://github.com/sveltejs/svelte/pull/9617))
+
+- chore: reuse common templates ([#9601](https://github.com/sveltejs/svelte/pull/9601))
+
+- fix: handle undefined bubble events ([#9614](https://github.com/sveltejs/svelte/pull/9614))
+
+- fix: dont error on stores looking like runes when runes explicitly turned off ([#9615](https://github.com/sveltejs/svelte/pull/9615))
+
+- fix: improve member expression mutation logic ([#9625](https://github.com/sveltejs/svelte/pull/9625))
+
+- chore: untrack keyed validation logic ([#9618](https://github.com/sveltejs/svelte/pull/9618))
+
+- fix: ensure snippets have correct scope ([#9623](https://github.com/sveltejs/svelte/pull/9623))
+
+- fix: better attribute casing logic ([#9626](https://github.com/sveltejs/svelte/pull/9626))
+
 ## 5.0.0-next.10
 
 ### Patch Changes
