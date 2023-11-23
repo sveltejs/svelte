@@ -2191,27 +2191,7 @@ export const template_visitors = {
 					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
 				} else {
 					const original_left = /** @type {import('estree').MemberExpression} */ (assignment.left);
-
-					/**
-					 *
-					 * @param {import('estree').Expression | import('estree').Super} object
-					 * @param {import('estree').Expression | import('estree').PrivateIdentifier} property
-					 * @param {boolean} computed
-					 * @returns {import('estree').MemberExpression}
-					 */
-					const construct_member = (object, property, computed) => {
-						if (object.type === 'MemberExpression') {
-							return b.member(
-								construct_member(object.object, object.property, computed),
-								property,
-								computed
-							);
-						}
-						return b.member(object, property, computed);
-					};
-					const left = context.visit(
-						construct_member(original_left.object, original_left.property, original_left.computed)
-					);
+					const left = context.visit(original_left);
 					const assign = b.assignment(assignment.operator, left, value);
 					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
 				}
