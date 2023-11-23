@@ -1373,13 +1373,7 @@ function process_children(nodes, parent, { visit, state }) {
 
 			state.template.push(' ');
 
-			let text_id = expression;
-
-			if (text_id.type !== 'Identifier') {
-				text_id = b.id(state.scope.generate('text'));
-				state.init.push(b.var(text_id, expression));
-			}
-
+			const text_id = get_node_id(expression, state, 'text');
 			const singular = b.stmt(
 				b.call(
 					'$.text_effect',
@@ -1421,13 +1415,7 @@ function process_children(nodes, parent, { visit, state }) {
 
 		state.template.push(' ');
 
-		let text_id = expression;
-
-		if (text_id.type !== 'Identifier') {
-			text_id = b.id(state.scope.generate('text'));
-			state.init.push(b.var(text_id, expression));
-		}
-
+		const text_id = get_node_id(expression, state, 'text');
 		const contains_call_expression = sequence.some(
 			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
 		);
@@ -1491,14 +1479,11 @@ function process_children(nodes, parent, { visit, state }) {
 					node.metadata.is_controlled = true;
 					visit(node, state);
 				} else {
-					let id = expression;
-
-					if (id.type !== 'Identifier') {
-						const name = state.scope.generate(node.type === 'RegularElement' ? node.name : 'node');
-						id = b.id(name);
-
-						state.init.push(b.var(id, expression));
-					}
+					const id = get_node_id(
+						expression,
+						state,
+						node.type === 'RegularElement' ? node.name : 'node'
+					);
 
 					expression = b.call('$.sibling', id);
 
@@ -1514,6 +1499,22 @@ function process_children(nodes, parent, { visit, state }) {
 	if (sequence.length > 0) {
 		flush_sequence(sequence);
 	}
+}
+
+/**
+ * @param {import('estree').Expression} expression
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {string} name
+ */
+function get_node_id(expression, state, name) {
+	let id = expression;
+
+	if (id.type !== 'Identifier') {
+		id = b.id(state.scope.generate(name));
+
+		state.init.push(b.var(id, expression));
+	}
+	return id;
 }
 
 /**
