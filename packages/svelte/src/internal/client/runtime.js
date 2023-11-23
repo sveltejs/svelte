@@ -1530,7 +1530,7 @@ export function bubble_event($$props, event) {
 	const events = /** @type {Record<string, Function[] | Function>} */ (unwrap($$props).$$events)?.[
 		event.type
 	];
-	const callbacks = is_array(events) ? events.slice() : [events];
+	const callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
 	let fn;
 	for (fn of callbacks) {
 		// Preserve "this" context
