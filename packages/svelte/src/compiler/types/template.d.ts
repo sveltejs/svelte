@@ -2,7 +2,8 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
-	AssignmentExpression,
+	VariableDeclaration,
+	VariableDeclarator,
 	Expression,
 	FunctionDeclaration,
 	FunctionExpression,
@@ -11,8 +12,7 @@ import type {
 	Node,
 	ObjectExpression,
 	Pattern,
-	Program,
-	VariableDeclaration
+	Program
 } from 'estree';
 
 export interface BaseNode {
@@ -131,7 +131,9 @@ export interface Comment extends BaseNode {
 /** A `{@const ...}` tag */
 export interface ConstTag extends BaseNode {
 	type: 'ConstTag';
-	expression: AssignmentExpression;
+	declaration: VariableDeclaration & {
+		declarations: [VariableDeclarator & { id: Identifier, init: Expression } ]
+	};
 }
 
 /** A `{@debug ...}` tag */

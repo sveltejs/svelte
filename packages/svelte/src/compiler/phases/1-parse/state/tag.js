@@ -573,14 +573,7 @@ function special(parser) {
 				type: 'ConstTag',
 				start,
 				end: parser.index,
-				expression: {
-					type: 'AssignmentExpression',
-					start: (declaration.start ?? 0) + CONST_LENGTH,
-					end: declaration.end ?? 0,
-					operator: '=',
-					left: declaration.declarations[0].id,
-					right: declaration.declarations[0].init
-				}
+				declaration
 			})
 		);
 	}
