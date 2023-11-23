@@ -51,11 +51,11 @@ Derived state is declared with the `$derived` rune:
 ```diff
 <script>
 	let count = $state(0);
-+	let double = $derived(count * 2);
++	let doubled = $derived(count * 2);
 </script>
 
 <button on:click={() => count++}>
-	{double}
+	{doubled}
 </button>
 
 +<p>{count} doubled is {doubled}</p>
@@ -92,13 +92,13 @@ To run code whenever specific values change, or when a component is mounted to t
 ```diff
 <script>
 	let count = $state(0);
-	let double = $derived(count * 2);
+	let doubled = $derived(count * 2);
 
 +	$effect(() => {
 +		// runs when the component is mounted, and again
-+		// whenever `count` or `double` change,
++		// whenever `count` or `doubled` change,
 +		// after the DOM has been updated
-+		console.log({ count, double });
++		console.log({ count, doubled });
 +
 +		return () => {
 +			// if a callback is provided, it will run
@@ -110,7 +110,7 @@ To run code whenever specific values change, or when a component is mounted to t
 </script>
 
 <button on:click={() => count++}>
-	{double}
+	{doubled}
 </button>
 
 <p>{count} doubled is {doubled}</p>
@@ -158,7 +158,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </script>
 
 <div bind:this={div}>
-	{#each message as message}
+	{#each messages as message}
 		<p>{message}</p>
 	{/each}
 </div>
