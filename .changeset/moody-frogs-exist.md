@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: fix member expression mutation logic
+fix: improve member expression mutation logic
