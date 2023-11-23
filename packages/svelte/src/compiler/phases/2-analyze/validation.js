@@ -443,7 +443,7 @@ export const validation = {
 };
 
 export const validation_legacy = merge(validation, a11y_validators, {
-	VariableDeclarator(node) {
+	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
 
 		const callee = node.init.callee;
@@ -454,8 +454,9 @@ export const validation_legacy = merge(validation, a11y_validators, {
 			return;
 		}
 
-		// TODO check if it's a store subscription that's called? How likely is it that someone uses a store that contains a function?
-		error(node.init, 'invalid-rune-usage', callee.name);
+		if (state.scope.get(callee.name)?.kind !== 'store_sub') {
+			error(node.init, 'invalid-rune-usage', callee.name);
+		}
 	},
 	AssignmentExpression(node, { state, path }) {
 		const parent = path.at(-1);
