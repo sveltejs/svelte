@@ -11,7 +11,8 @@ import type {
 	Node,
 	ObjectExpression,
 	Pattern,
-	Program
+	Program,
+	VariableDeclaration
 } from 'estree';
 
 export interface BaseNode {
