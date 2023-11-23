@@ -1,3 +1,4 @@
+import { untrack } from './runtime.js';
 import { is_array } from './utils.js';
 
 /** regex of all html void element names */
@@ -69,7 +70,7 @@ export function validate_dynamic_element_tag(tag_fn) {
  */
 export function validate_each_keys(collection, key_fn) {
 	const keys = new Map();
-	const maybe_array = collection();
+	const maybe_array = untrack(() => collection());
 	const array = is_array(maybe_array)
 		? maybe_array
 		: maybe_array == null
