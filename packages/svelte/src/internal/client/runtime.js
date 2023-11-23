@@ -945,7 +945,6 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
 			// effect.
 			if ((flags & CLEAN) !== 0 || (dirty && unowned)) {
 				if ((consumer.f & IS_EFFECT) !== 0) {
-					debugger;
 					schedule_effect(/** @type {import('./types.js').EffectSignal} */ (consumer), false);
 				} else {
 					mark_signal_consumers(consumer, MAYBE_DIRTY, force_schedule);
