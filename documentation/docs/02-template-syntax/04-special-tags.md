@@ -80,7 +80,7 @@ The `{@const ...}` tag defines a local constant.
 </script>
 
 {#each boxes as box}
-	{@const area = box.width * box.height}
+	{@const }
 	{box.width} * {box.height} = {area}
 {/each}
 ```

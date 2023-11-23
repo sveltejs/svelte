@@ -212,7 +212,7 @@
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div class="file-tabs" on:dblclick={add_new}>
 		{#each $files as file, index (file.name)}
-			{@const filename = get_full_filename(file)}
+			{@const }
 			<div
 				id={file.name}
 				class="button"
@@ -236,7 +236,7 @@
 						App.svelte{#if show_modified && file.modified}*{/if}
 					</div>
 				{:else if filename === editing_name}
-					{@const editing_file = $files.find((file) => get_full_filename(file) === editing_name)}
+					{@const }
 
 					{#if editing_file}
 						<span class="input-sizer">
