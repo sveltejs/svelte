@@ -2170,17 +2170,15 @@ export const template_visitors = {
 
 		/**
 		 * @param {import('estree').Pattern} expression_for_id
-		 * @param {import('estree').Expression} expression_for_other
 		 * @returns {import('#compiler').Binding['mutation']}
 		 */
-		const create_mutation = (expression_for_id, expression_for_other) => {
+		const create_mutation = (expression_for_id) => {
 			return (assignment, context) => {
 				if (assignment.left.type !== 'Identifier' && assignment.left.type !== 'MemberExpression') {
 					// serialize_set_binding turns other patterns into IIFEs and separates the assignments
 					// into separate expressions, at which point this is called again with an identifier or member expression
 					return serialize_set_binding(assignment, context, () => assignment);
 				}
-
 				const left = object(assignment.left);
 				const value = get_assignment_value(assignment, context);
 				const invalidate = b.call(
@@ -2193,11 +2191,7 @@ export const template_visitors = {
 					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
 				} else {
 					const original_left = /** @type {import('estree').MemberExpression} */ (assignment.left);
-					const left = b.member(
-						expression_for_other,
-						context.visit(original_left).property,
-						original_left.computed
-					);
+					const left = context.visit(original_left);
 					const assign = b.assignment(assignment.operator, left, value);
 					return context.state.analysis.runes ? assign : b.sequence([assign, invalidate]);
 				}
@@ -2223,8 +2217,7 @@ export const template_visitors = {
 					each_node_meta.array_name ? b.call(each_node_meta.array_name) : collection,
 					index,
 					true
-				),
-				binding.expression
+				)
 			);
 		} else {
 			const unwrapped = binding.expression;
@@ -2252,8 +2245,7 @@ export const template_visitors = {
 
 				binding.expression = b.call(name);
 				binding.mutation = create_mutation(
-					/** @type {import('estree').Pattern} */ (path.update_expression(unwrapped)),
-					binding.expression
+					/** @type {import('estree').Pattern} */ (path.update_expression(unwrapped))
 				);
 			}
 		}
