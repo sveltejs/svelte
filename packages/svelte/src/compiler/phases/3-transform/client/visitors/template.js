@@ -891,6 +891,7 @@ function serialize_inline_component(node, component_name, context) {
 	if (bind_this !== null) {
 		const prev = fn;
 		const assignment = b.assignment('=', bind_this, b.id('$$value'));
+		const bind_this_id = bind_this;
 		fn = (node_id) =>
 			b.call(
 				'$.bind_this',
@@ -898,7 +899,8 @@ function serialize_inline_component(node, component_name, context) {
 				b.arrow(
 					[b.id('$$value')],
 					serialize_set_binding(assignment, context, () => context.visit(assignment))
-				)
+				),
+				bind_this_id
 			);
 	}
 
@@ -2620,7 +2622,7 @@ export const template_visitors = {
 				}
 
 				case 'this':
-					call_expr = b.call(`$.bind_this`, state.node, setter);
+					call_expr = b.call(`$.bind_this`, state.node, setter, node.expression);
 					break;
 
 				case 'textContent':

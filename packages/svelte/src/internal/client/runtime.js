@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { unwrap } from './render.js';
+import { bind_this_context, clear_bind_this_context, unwrap } from './render.js';
 import { is_array } from './utils.js';
 
 export const SOURCE = 1;
@@ -477,6 +477,9 @@ function flush_queued_effects(effects) {
 					set_signal_status(signal, CLEAN);
 				}
 			}
+		}
+		if (bind_this_context !== null) {
+			clear_bind_this_context();
 		}
 		effects.length = 0;
 	}
