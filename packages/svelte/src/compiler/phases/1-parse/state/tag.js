@@ -568,6 +568,12 @@ function special(parser) {
 		parser.index = end_index;
 		parser.eat('}', true);
 
+		const id = declaration.declarations[0].id;
+		if (id.type === 'Identifier') {
+			// Tidy up some stuff left behind by acorn-typescript
+			id.end = (id.start ?? 0) + id.name.length;
+		}
+
 		parser.append(
 			/** @type {import('#compiler').ConstTag} */ ({
 				type: 'ConstTag',
