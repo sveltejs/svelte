@@ -177,7 +177,7 @@ function init_update_callbacks() {
 				// TODO somehow beforeUpdate ran twice on mount in Svelte 4 if it causes a render
 				// possibly strategy to get this back if needed: analyse beforeUpdate function for assignements to state,
 				// if yes, add a call to the component to force-run beforeUpdate once.
-				untrack(() => update_callbacks.b.forEach(/** @param {any} c */ (c) => c()));
+				update_callbacks.b.forEach((c) => c());
 				flush_local_render_effects();
 				// beforeUpdate can run again once if afterUpdate causes another update,
 				// but afterUpdate shouldn't be called again in that case to prevent infinite loops
@@ -185,7 +185,7 @@ function init_update_callbacks() {
 					user_effect(() => {
 						called_before = false;
 						called_after = true;
-						untrack(() => update_callbacks.a.forEach(/** @param {any} c */ (c) => c()));
+						update_callbacks.a.forEach((c) => c());
 						// managed_effect so that it's not cleaned up when the parent effect is cleaned up
 						const managed = managed_effect(() => {
 							destroy_signal(managed);

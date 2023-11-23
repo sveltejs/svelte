@@ -39,7 +39,7 @@ export type ComponentContext = {
 	s: MaybeSignal<Record<string, unknown>>;
 	/** accessors */
 	a: Record<string, any> | null;
-	/** effectgs */
+	/** effects */
 	e: null | Array<EffectSignal>;
 	/** mounted */
 	m: boolean;
