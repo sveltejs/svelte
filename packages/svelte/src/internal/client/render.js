@@ -1233,6 +1233,7 @@ export function bind_this(element_or_component, update, binding) {
 		update(element_or_component);
 		render_effect(() => () => {
 			// Defer to the next tick so that all updates can be reconciled first.
+			// This solves the case where one variable is shared across multiple this-bindings.
 			render_effect(() => {
 				untrack(() => {
 					if (!is_signal(binding) || binding.v === element_or_component) {
