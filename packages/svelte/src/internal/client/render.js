@@ -1232,10 +1232,13 @@ export function bind_this(element_or_component, update, binding) {
 	untrack(() => {
 		update(element_or_component);
 		render_effect(() => () => {
-			managed_render_effect(() => {
-				if (!is_signal(binding) || binding.v === element_or_component) {
-					update(null);
-				}
+			// Defer to the next tick so that all updates can be reconciled first.
+			render_effect(() => {
+				untrack(() => {
+					if (!is_signal(binding) || binding.v === element_or_component) {
+						update(null);
+					}
+				});
 			});
 		});
 	});
