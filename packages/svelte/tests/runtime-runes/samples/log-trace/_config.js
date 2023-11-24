@@ -30,7 +30,7 @@ export default test({
 		await Promise.resolve();
 
 		assert.deepEqual(log[0], 0);
-		assert.deepEqual(log[1].startsWith('$log.trace: Module.increment'), true);
+		assert.deepEqual(log[1].startsWith('$log.trace: HTMLButtonElement.on_click'), true);
 		assert.deepEqual(log[2], 1);
 	}
 });

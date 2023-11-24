@@ -825,17 +825,16 @@ export function get(signal) {
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
- * @param {V} value
- * @returns {V}
+ * @returns {void}
  */
-export function set(signal, value) {
+function attach_trace(signal) {
 	if (DEV && (signal.f & SOURCE) !== 0) {
 		let stack_debug = null;
 		try {
 			const error = new Error();
 			stack_debug = error.stack
 				?.split('\n')
-				?.at(2)
+				?.at(3)
 				?.replace(/\s+at\s+/, '');
 		} catch {
 			// Do nothing
@@ -848,6 +847,16 @@ export function set(signal, value) {
 			debug_source.d = stack_debug;
 		}
 	}
+}
+
+/**
+ * @template V
+ * @param {import('./types.js').Signal<V>} signal
+ * @param {V} value
+ * @returns {V}
+ */
+export function set(signal, value) {
+	attach_trace(signal);
 	set_signal_value(signal, value);
 	return value;
 }
@@ -921,7 +930,8 @@ export function invalidate_inner_signals(fn) {
  * @param {V} value
  */
 export function mutate(source, value) {
-	set(
+	attach_trace(source);
+	set_signal_value(
 		source,
 		untrack(() => get(source))
 	);
@@ -1596,7 +1606,8 @@ export function bubble_event($$props, event) {
  */
 export function increment(signal) {
 	const value = get(signal);
-	set(signal, value + 1);
+	attach_trace(signal);
+	set_signal_value(signal, value + 1);
 	return value;
 }
 
@@ -1616,7 +1627,8 @@ export function increment_store(store, store_value) {
  */
 export function decrement(signal) {
 	const value = get(signal);
-	set(signal, value - 1);
+	attach_trace(signal);
+	set_signal_value(signal, value - 1);
 	return value;
 }
 
@@ -1636,7 +1648,8 @@ export function decrement_store(store, store_value) {
  */
 export function increment_pre(signal) {
 	const value = get(signal) + 1;
-	set(signal, value);
+	attach_trace(signal);
+	set_signal_value(signal, value);
 	return value;
 }
 
@@ -1657,7 +1670,8 @@ export function increment_pre_store(store, store_value) {
  */
 export function decrement_pre(signal) {
 	const value = get(signal) - 1;
-	set(signal, value);
+	attach_trace(signal);
+	set_signal_value(signal, value);
 	return value;
 }
 
