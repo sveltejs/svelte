@@ -812,6 +812,7 @@ export function get(signal) {
 				signal
 			);
 		if (debug_source.d !== null) {
+			// eslint-disable-next-line no-console
 			console.log('$log.trace: ' + debug_source.d);
 			queueMicrotask(() => {
 				debug_source.d = null;
@@ -823,12 +824,12 @@ export function get(signal) {
 
 /**
  * @template V
- * @param {import('./types.js').SourceSignal<V>} signal
+ * @param {import('./types.js').Signal<V>} signal
  * @param {V} value
  * @returns {V}
  */
 export function set(signal, value) {
-	if (DEV) {
+	if (DEV && (signal.f & SOURCE) !== 0) {
 		let stack_debug = null;
 		try {
 			const error = new Error();
@@ -858,7 +859,7 @@ export function set(signal, value) {
  * @returns {void}
  */
 export function set_sync(signal, value) {
-	flushSync(() => set_signal_value(signal, value));
+	flushSync(() => set(signal, value));
 }
 
 /**
@@ -920,7 +921,7 @@ export function invalidate_inner_signals(fn) {
  * @param {V} value
  */
 export function mutate(source, value) {
-	set_signal_value(
+	set(
 		source,
 		untrack(() => get(source))
 	);
@@ -1595,7 +1596,7 @@ export function bubble_event($$props, event) {
  */
 export function increment(signal) {
 	const value = get(signal);
-	set_signal_value(signal, value + 1);
+	set(signal, value + 1);
 	return value;
 }
 
@@ -1615,7 +1616,7 @@ export function increment_store(store, store_value) {
  */
 export function decrement(signal) {
 	const value = get(signal);
-	set_signal_value(signal, value - 1);
+	set(signal, value - 1);
 	return value;
 }
 
@@ -1635,7 +1636,7 @@ export function decrement_store(store, store_value) {
  */
 export function increment_pre(signal) {
 	const value = get(signal) + 1;
-	set_signal_value(signal, value);
+	set(signal, value);
 	return value;
 }
 
@@ -1656,7 +1657,7 @@ export function increment_pre_store(store, store_value) {
  */
 export function decrement_pre(signal) {
 	const value = get(signal) - 1;
-	set_signal_value(signal, value);
+	set(signal, value);
 	return value;
 }
 
@@ -1801,6 +1802,7 @@ export function log(get_values) {
 		pre_effect(() => {
 			const values = get_values();
 			deep_read(values);
+			// eslint-disable-next-line no-console
 			console.log(...values);
 		});
 	}
@@ -1815,6 +1817,7 @@ export function log_table(get_values) {
 		pre_effect(() => {
 			const values = get_values();
 			deep_read(values);
+			// eslint-disable-next-line no-console
 			console.table(...values);
 		});
 	}
@@ -1829,7 +1832,9 @@ export function log_break(get_values) {
 		pre_effect(() => {
 			const values = get_values();
 			deep_read(values);
+			// eslint-disable-next-line no-console
 			console.log(...values);
+			// eslint-disable-next-line no-debugger
 			debugger;
 		});
 	}
@@ -1846,6 +1851,7 @@ export function log_trace(get_values) {
 			try {
 				const values = get_values();
 				deep_read(values);
+				// eslint-disable-next-line no-console
 				console.log(...values);
 			} finally {
 				is_tracing_signals = false;
