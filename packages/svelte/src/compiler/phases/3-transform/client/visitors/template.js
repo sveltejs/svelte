@@ -2279,12 +2279,6 @@ export const template_visitors = {
 				  )
 				: b.literal(null);
 
-		if (context.state.options.dev && key_function.type !== 'Literal') {
-			context.state.init.push(
-				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-			);
-		}
-
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
 			// original index name in the template, therefore create another binding
@@ -2292,6 +2286,12 @@ export const template_visitors = {
 		}
 
 		if ((each_type & EACH_KEYED) !== 0) {
+			if (context.state.options.dev && key_function.type !== 'Literal') {
+				context.state.init.push(
+					b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
+				);
+			}
+
 			context.state.after_update.push(
 				b.stmt(
 					b.call(
