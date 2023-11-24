@@ -52,13 +52,6 @@ export class SvelteComponent<
 	Slots extends Record<string, any> = any
 > {
 	[prop: string]: any;
-
-	/**
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	constructor(props: Props);
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
