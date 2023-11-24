@@ -208,8 +208,18 @@ export const javascript_visitors_runes = {
 				// TODO
 				continue;
 			}
-
 			const args = /** @type {import('estree').CallExpression} */ (declarator.init).arguments;
+
+			if (rune === '$effect.root') {
+				const serialized_args = /** @type {import('estree').Expression[]} */ (
+					args.map((arg) => visit(arg))
+				);
+				declarations.push(
+					b.declarator(declarator.id, b.call('$.user_root_effect', ...serialized_args))
+				);
+				continue;
+			}
+
 			const value =
 				args.length === 0
 					? b.id('undefined')
@@ -292,11 +302,18 @@ export const javascript_visitors_runes = {
 
 		context.next();
 	},
-	CallExpression(node, { state, next }) {
+	CallExpression(node, { state, next, visit }) {
 		const rune = get_rune(node, state.scope);
 
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
+		}
+
+		if (rune === '$effect.root') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.user_root_effect', ...args);
 		}
 
 		next();

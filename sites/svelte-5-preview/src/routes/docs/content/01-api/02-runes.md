@@ -186,6 +186,46 @@ The `$effect.active` rune is an advanced feature that tells you whether or not t
 
 This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 
+## `$effect.root`
+
+The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for
+nested effects that you want to manually control. This rune also allows for creation of effects outside of the component initialisation phase.
+
+> `$effect.root` can only be used in variable declaration initializer, this is to ensure the return signature (the cleanup function) is always used.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	const cleanup = $effect.root(() => {
+		$effect(() => {
+			console.log(count);
+		});
+
+		return () => {
+			console.log('effect root cleanup');
+		};
+	});
+</script>
+```
+
+If the `$effect.root` was created within within another active effect (such as during component initialisation) then it might
+be desirable to know when that active effect gets disposed and cleaned up. `$effect.root` takes an optional second arugment,
+which is a function callback for when this happens in case. This allows you to cleanup the effect root too if needed.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	const cleanup = $effect.root(() => {
+		// ...
+	}. () => {
+		console.log('parent effect is cleaned up');
+		cleanup();
+	});
+</script>
+```
+
 ## `$props`
 
 To declare component props, use the `$props` rune:

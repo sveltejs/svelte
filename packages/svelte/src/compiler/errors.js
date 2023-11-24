@@ -176,6 +176,8 @@ const runes = {
 	'invalid-state-location': () =>
 		`$state() can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
+	'invalid-effect-root-location': () =>
+		`$effect.root() can only be used as a variable declaration initializer`,
 	/**
 	 * @param {boolean} is_binding
 	 * @param {boolean} show_details

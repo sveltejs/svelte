@@ -1186,6 +1186,21 @@ export function user_effect(init) {
 
 /**
  * @param {() => void | (() => void)} init
+ * @param {() => void} [on_parent_cleanup]
+ * @returns {() => void}
+ */
+export function user_root_effect(init, on_parent_cleanup) {
+	const effect = managed_render_effect(init);
+	if (current_effect !== null && typeof on_parent_cleanup === 'function') {
+		push_destroy_fn(current_effect, on_parent_cleanup);
+	}
+	return () => {
+		destroy_signal(effect);
+	};
+}
+
+/**
+ * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
 export function effect(init) {
