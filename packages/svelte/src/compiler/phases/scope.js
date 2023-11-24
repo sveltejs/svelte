@@ -495,10 +495,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			if (node.index) {
+				const is_keyed =
+					node.key &&
+					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
 				scope.declare(
 					b.id(node.index),
-					// TODO see logic in EachBlock in dom.ts
-					node.key ? 'derived' : 'normal',
+					is_keyed ? 'derived' : 'normal',
 					'const'
 				);
 			}
