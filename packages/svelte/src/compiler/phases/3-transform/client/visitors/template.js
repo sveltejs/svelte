@@ -2491,7 +2491,7 @@ export const template_visitors = {
 		next();
 	},
 	BindDirective(node, context) {
-		const { state, path } = context;
+		const { state, path, visit } = context;
 
 		/** @type {import('estree').Expression[]} */
 		const properties = [];
@@ -2621,10 +2621,18 @@ export const template_visitors = {
 					break;
 				}
 
-				case 'this':
-					call_expr = b.call(`$.bind_this`, state.node, setter, node.expression);
+				case 'this': {
+					const expression = node.expression;
+					call_expr = b.call(
+						`$.bind_this`,
+						state.node,
+						setter,
+						expression.type === 'Identifier'
+							? expression
+							: /** @type {import('estree').Expression} */ (visit(expression))
+					);
 					break;
-
+				}
 				case 'textContent':
 				case 'innerHTML':
 				case 'innerText':
