@@ -498,11 +498,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(
-					b.id(node.index),
-					is_keyed ? 'derived' : 'normal',
-					'const'
-				);
+				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
 			}
 			if (node.key) visit(node.key, { scope });
 
