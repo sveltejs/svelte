@@ -4,7 +4,8 @@ import {
 	SvelteComponent,
 	type ComponentEvents,
 	type ComponentProps,
-	type ComponentType
+	type ComponentType,
+	mount
 } from 'svelte';
 
 // --------------------------------------------------------------------------- legacy: classes
@@ -103,7 +104,22 @@ const newComponentEvents2: ComponentEvents<NewComponent> = {
 	event: new KeyboardEvent('click')
 };
 
-const instance = createRoot(newComponent, {
+mount(NewComponent, {
+	target: null as any as Document | Element | ShadowRoot | Text | Comment,
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	},
+	events: {
+		event: new MouseEvent('click')
+	},
+	immutable: true,
+	intro: false,
+	recover: false
+});
+
+const instance = createRoot(NewComponent, {
 	target: null as any as Document | Element | ShadowRoot | Text | Comment,
 	props: {
 		prop: 'foo',
