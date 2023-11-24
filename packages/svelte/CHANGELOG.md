@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.13
+
+### Patch Changes
+
+- fix: apply keyed validation only for keyed each ([#9641](https://github.com/sveltejs/svelte/pull/9641))
+
+- fix: omit this bind this arg if we know it's not a signal ([#9635](https://github.com/sveltejs/svelte/pull/9635))
+
+- fix: improve each block index handling ([#9644](https://github.com/sveltejs/svelte/pull/9644))
+
 ## 5.0.0-next.12
 
 ### Patch Changes
