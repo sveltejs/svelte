@@ -15,11 +15,11 @@ class LegacyComponent extends SvelteComponent<
 	{ slot: { slotProps: boolean } }
 > {}
 
-// @ts-expect-error
 const legacyComponent = new LegacyComponent({
 	target: null as any as Document | Element | ShadowRoot,
 	props: {
 		prop: 'foo',
+		// @ts-expect-error
 		x: ''
 	}
 });
@@ -56,14 +56,20 @@ class NewComponent extends SvelteComponent<
 	anExport: string = '';
 }
 
-// @ts-expect-error
 new NewComponent({
-	prop: 'foo',
-	x: ''
+	target: null as any,
+	props: {
+		prop: 'foo',
+		// @ts-expect-error
+		x: ''
+	}
 });
 
 const newComponent: NewComponent = new NewComponent({
-	prop: 'foo'
+	target: null as any,
+	props: {
+		prop: 'foo'
+	}
 });
 newComponent.$$events_def.event;
 // @ts-expect-error
@@ -123,11 +129,11 @@ instance.anExport === 1;
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
-// @ts-expect-error
 new AsLegacyComponent({
 	target: null as any,
 	props: {
 		prop: '',
+		// @ts-expect-error
 		x: ''
 	}
 });
