@@ -569,7 +569,7 @@ const javascript_visitors_runes = {
 
 		for (const declarator of node.declarations) {
 			const rune = get_rune(declarator.init, state.scope);
-			if (!rune || rune === '$effect.active') {
+			if (!rune || rune === '$effect.active' || rune.startsWith('$log')) {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -631,16 +631,22 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 		if (rune === '$log' || rune === '$log.break' || rune === '$log.trace') {
-			const args = /** @type {import('estree').Expression[]} */ (
-				node.arguments.map((arg) => visit(arg))
-			);
-			return b.call('console.log', ...args);
+			if (state.options.dev) {
+				const args = /** @type {import('estree').Expression[]} */ (
+					node.arguments.map((arg) => visit(arg))
+				);
+				return b.call('console.log', ...args);
+			}
+			return b.unary('void', b.literal(0))
 		}
 		if (rune === '$log.table') {
-			const args = /** @type {import('estree').Expression[]} */ (
-				node.arguments.map((arg) => visit(arg))
-			);
-			return b.call('console.table', ...args);
+			if (state.options.dev) {
+				const args = /** @type {import('estree').Expression[]} */ (
+					node.arguments.map((arg) => visit(arg))
+				);
+				return b.call('console.table', ...args);
+			}
+			return b.unary('void', b.literal(0))
 		}
 
 		next();
