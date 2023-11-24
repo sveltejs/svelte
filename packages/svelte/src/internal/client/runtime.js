@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { unwrap } from './render.js';
-import { is_array } from './utils.js';
+import { get_descriptors, is_array } from './utils.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -69,8 +69,9 @@ let current_skip_consumer = false;
 // Handle collecting all signals which are read during a specific time frame
 let is_signals_recorded = false;
 let captured_signals = new Set();
+// Handle trace logging
+let is_tracing_signals = false;
 // Handle rendering tree blocks and anchors
-
 /** @type {null | import('./types.js').Block} */
 export let current_block = null;
 // Handling runtime component context
@@ -145,10 +146,26 @@ function default_equals(a, b) {
  * @template V
  * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
- * @returns {import('./types.js').SourceSignal<V>}
+ * @returns {import('./types.js').SourceSignal<V> | import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug}
  */
 function create_source_signal(flags, value) {
-	const source = {
+	if (DEV) {
+		return {
+			// consumers
+			c: null,
+			// equals
+			e: null,
+			// flags
+			f: flags,
+			// value
+			v: value,
+			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+			x: null,
+			// debug: this is for DEV only
+			d: null
+		};
+	}
+	return {
 		// consumers
 		c: null,
 		// equals
@@ -160,7 +177,6 @@ function create_source_signal(flags, value) {
 		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 		x: null
 	};
-	return source;
 }
 
 /**
@@ -688,7 +704,7 @@ export function store_get(store, store_name, stores) {
 /**
  * @template V
  * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('./types.js').SourceSignal<V>} source
  */
 function connect_store_to_signal(store, source) {
 	if (store == null) {
@@ -790,16 +806,47 @@ export function get(signal) {
 	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
 		update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
 	}
+	if (DEV && is_tracing_signals && (flags & SOURCE) !== 0) {
+		const debug_source =
+			/** @type {import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug} */ (
+				signal
+			);
+		if (debug_source.d !== null) {
+			console.log('$log.trace: ' + debug_source.d);
+			queueMicrotask(() => {
+				debug_source.d = null;
+			});
+		}
+	}
 	return signal.v;
 }
 
 /**
  * @template V
- * @param {import('./types.js').Signal<V>} signal
+ * @param {import('./types.js').SourceSignal<V>} signal
  * @param {V} value
  * @returns {V}
  */
 export function set(signal, value) {
+	if (DEV) {
+		let stack_debug = null;
+		try {
+			const error = new Error();
+			stack_debug = error.stack
+				?.split('\n')
+				?.at(2)
+				?.replace(/\s+at\s+/, '');
+		} catch {
+			// Do nothing
+		}
+		if (stack_debug) {
+			const debug_source =
+				/** @type {import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug} */ (
+					signal
+				);
+			debug_source.d = stack_debug;
+		}
+	}
 	set_signal_value(signal, value);
 	return value;
 }
@@ -1714,5 +1761,95 @@ export function pop(accessors) {
 		}
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
+	}
+}
+
+/**
+ * @param {any} value
+ * @returns {void}
+ */
+function deep_read(value) {
+	if (typeof value === 'object' && value !== null) {
+		for (let key in value) {
+			deep_read(value[key]);
+		}
+		const proto = Object.getPrototypeOf(value);
+		if (
+			proto !== Object.prototype &&
+			proto !== Array.prototype &&
+			proto !== Map.prototype &&
+			proto !== Set.prototype &&
+			proto !== Date.prototype
+		) {
+			const descriptors = get_descriptors(proto);
+			for (let key in descriptors) {
+				const get = descriptors[key].get;
+				if (get) {
+					get.call(value);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @returns {void}
+ */
+export function log(get_values) {
+	if (DEV) {
+		pre_effect(() => {
+			const values = get_values();
+			deep_read(values);
+			console.log(...values);
+		});
+	}
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @returns {void}
+ */
+export function log_table(get_values) {
+	if (DEV) {
+		pre_effect(() => {
+			const values = get_values();
+			deep_read(values);
+			console.table(...values);
+		});
+	}
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @returns {void}
+ */
+export function log_break(get_values) {
+	if (DEV) {
+		pre_effect(() => {
+			const values = get_values();
+			deep_read(values);
+			console.log(...values);
+			debugger;
+		});
+	}
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @returns {void}
+ */
+export function log_trace(get_values) {
+	if (DEV) {
+		pre_effect(() => {
+			is_tracing_signals = true;
+			try {
+				const values = get_values();
+				deep_read(values);
+				console.log(...values);
+			} finally {
+				is_tracing_signals = false;
+			}
+		});
 	}
 }

@@ -292,11 +292,35 @@ export const javascript_visitors_runes = {
 
 		context.next();
 	},
-	CallExpression(node, { state, next }) {
+	CallExpression(node, { state, next, visit }) {
 		const rune = get_rune(node, state.scope);
 
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
+		}
+		if (rune === '$log') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.log', b.thunk(b.array(args)));
+		}
+		if (rune === '$log.trace') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.log_trace', b.thunk(b.array(args)));
+		}
+		if (rune === '$log.break') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.log_break', b.thunk(b.array(args)));
+		}
+		if (rune === '$log.table') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.log_table', b.thunk(b.array(args)));
 		}
 
 		next();

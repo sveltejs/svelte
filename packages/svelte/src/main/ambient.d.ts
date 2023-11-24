@@ -102,3 +102,53 @@ declare namespace $effect {
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props<T>(): T;
+
+/**
+ * Deeply tracks and `console.log`s any values passed to the rune. Example:
+ *
+ * ```ts
+ * $log(someValue, someOtherValue)
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$log
+ */
+declare function $log(): void;
+
+declare namespace $log {
+	/**
+	 * Deeply tracks and `console.log`s any values passed to the rune and pauses execution with
+	 * a debugger break point.
+	 *
+	 * ```ts
+	 * $log.break(someValue, someOtherValue)
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$log-break
+	 */
+	function break_fn(): void;
+
+	export { break_fn as break };
+
+	/**
+	 * Deeply tracks and `console.log`s any values passed to the rune and also traces the call-sites
+	 * where state gets mutated. Example:
+	 *
+	 * ```ts
+	 * $log.trace(someValue, someOtherValue)
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$log-trace
+	 */
+	export function trace(): void;
+
+	/**
+	 * Deeply tracks and `console.table`s any values passed to the rune. Example:
+	 *
+	 * ```ts
+	 * $log.table(someDataCollection)
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$log-table
+	 */
+	export function table(): void;
+}

@@ -80,6 +80,11 @@ export type SourceSignal<V = unknown> = {
 	v: V;
 };
 
+export type SourceSignalDebug = {
+	/** debug: This is DEV only */
+	d: null | string;
+};
+
 export type ComputationSignal<V = unknown> = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;

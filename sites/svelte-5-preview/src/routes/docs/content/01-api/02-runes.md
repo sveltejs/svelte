@@ -243,3 +243,65 @@ export default {
 	}
 };
 ```
+
+## `$log`
+
+The `$log` rune is roughly equivalent to `console.log`, with the exception that when anything passed to the
+rune changes, the latest values will be logged out. `$log` tracks reactive state deeply, meaning that mutating
+something from with an object or array using fine-grain reactivity will be tracked.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$log({ count }); // will console.log when count changes
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```
+
+> `$log` only works during development.
+
+## `$log.break`
+
+This works just like `$log`, except runtime execution will be paused via a `debugger` statement.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$log.break({ count });
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```
+
+## `$log.break`
+
+This works just like `$log`, but triggers `console.table` instead of `console.log`.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$log.table({ count });
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```
+
+## `$log.trace`
+
+This works just like `$log`, but in addition to logging the values, it will also trace
+any mutations to fine-grain reactive state and log the sourcecode location to help find
+the cause for something changing.
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$log.trace({ count });
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```

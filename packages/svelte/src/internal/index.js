@@ -36,7 +36,11 @@ export {
 	pop,
 	push,
 	reactive_import,
-	effect_active
+	effect_active,
+	log,
+	log_trace,
+	log_break,
+	log_table
 } from './client/runtime.js';
 
 export * from './client/validate.js';

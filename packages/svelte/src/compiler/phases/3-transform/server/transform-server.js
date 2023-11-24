@@ -624,11 +624,23 @@ const javascript_visitors_runes = {
 		}
 		context.next();
 	},
-	CallExpression(node, { state, next }) {
+	CallExpression(node, { state, next, visit }) {
 		const rune = get_rune(node, state.scope);
 
 		if (rune === '$effect.active') {
 			return b.literal(false);
+		}
+		if (rune === '$log' || rune === '$log.break' || rune === '$log.trace') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('console.log', ...args);
+		}
+		if (rune === '$log.table') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('console.table', ...args);
 		}
 
 		next();
