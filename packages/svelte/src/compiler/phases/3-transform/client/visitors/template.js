@@ -899,7 +899,10 @@ function serialize_inline_component(node, component_name, context) {
 	if (bind_this !== null) {
 		const prev = fn;
 		const assignment = b.assignment('=', bind_this, b.id('$$value'));
-		const bind_this_id = bind_this;
+		const bind_this_id = /** @type {import('estree').Expression} */ (
+			// if expression is not an identifier, we know it can't be a signal
+			bind_this.type === 'Identifier' ? bind_this : undefined
+		);
 		fn = (node_id) =>
 			b.call(
 				'$.bind_this',
@@ -2621,18 +2624,17 @@ export const template_visitors = {
 					break;
 				}
 
-				case 'this': {
-					const expression = node.expression;
+				case 'this':
 					call_expr = b.call(
 						`$.bind_this`,
 						state.node,
 						setter,
-						expression.type === 'Identifier'
-							? expression
-							: /** @type {import('estree').Expression} */ (visit(expression))
+						/** @type {import('estree').Expression} */ (
+							// if expression is not an identifier, we know it can't be a signal
+							node.expression.type === 'Identifier' ? node.expression : undefined
+						)
 					);
 					break;
-				}
 				case 'textContent':
 				case 'innerHTML':
 				case 'innerText':
