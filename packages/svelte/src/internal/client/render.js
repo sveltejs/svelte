@@ -28,7 +28,9 @@ import {
 	EACH_ITEM_REACTIVE,
 	PassiveDelegatedEvents,
 	DelegatedEvents,
-	AttributeAliases
+	AttributeAliases,
+	namespace_svg,
+	namespace_html
 } from '../../constants.js';
 import {
 	create_fragment_from_html,
@@ -1543,10 +1545,10 @@ function swap_block_dom(block, from, to) {
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
  * @param {null | ((element: Element, anchor: Node) => void)} render_fn
- * @param {any} is_svg
+ * @param {string} namespace
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
+export function element(anchor_node, tag_fn, render_fn, namespace) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;
@@ -1570,11 +1572,13 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
+			const ns = namespace ?? tag === 'svg' ? namespace_svg : null;
+			console.log(anchor_node);
 			const next_element = tag
 				? current_hydration_fragment !== null
 					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
-					: is_svg
-					? document.createElementNS('http://www.w3.org/2000/svg', tag)
+					: ns
+					? document.createElementNS(ns, tag)
 					: document.createElement(tag)
 				: null;
 			const prev_element = element;
@@ -2327,7 +2331,7 @@ export function cssProps(anchor, is_html, props, component) {
 			tag = document.createElement('div');
 			tag.style.display = 'contents';
 		} else {
-			tag = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			tag = document.createElementNS(namespace_svg, 'g');
 		}
 		insert(tag, null, anchor);
 		component_anchor = empty();
@@ -2821,7 +2825,7 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			/** @type {Element & ElementCSSInlineStyle} */ (node),
 			prev,
 			attrs,
-			node.namespaceURI !== 'http://www.w3.org/2000/svg',
+			node.namespaceURI !== namespace_svg,
 			css_hash
 		);
 	}

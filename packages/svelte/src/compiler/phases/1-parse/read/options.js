@@ -1,3 +1,4 @@
+import { namespace_svg } from '../../../../constants.js';
 import { error } from '../../../errors.js';
 
 const regex_valid_tag_name = /^[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z0-9-]+$/;
@@ -156,7 +157,7 @@ export default function read_options(node) {
 					error(attribute, 'invalid-svelte-option-namespace');
 				}
 
-				if (value === 'http://www.w3.org/2000/svg') {
+				if (value === namespace_svg) {
 					component_options.namespace = 'svg';
 				} else if (value === 'html' || value === 'svg' || value === 'foreign') {
 					component_options.namespace = value;
