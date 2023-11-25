@@ -1,4 +1,4 @@
-// index.svelte (Svelte v5.0.0-next.13)
+// index.svelte (Svelte VERSION)
 // Note: compiler output will change before 5.0 is released!
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
