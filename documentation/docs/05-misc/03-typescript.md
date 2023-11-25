@@ -177,11 +177,9 @@ You cannot use TypeScript in your template's markup. For example, the following 
 	let count = 10;
 </script>
 
-<!-- ❌ Does not work -->
-<h1>Count as string: {count as string}!</h1>
+<h1>Count as string: {count as string}!</h1> <!-- ❌ Does not work -->
 {#if count > 4}
-	<!-- ❌ Does not work -->
-	{@const countString: string = count}
+	{@const countString: string = count} <!-- ❌ Does not work -->
 	{countString}
 {/if}
 ```
