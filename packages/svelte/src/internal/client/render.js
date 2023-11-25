@@ -1571,7 +1571,6 @@ export function element(anchor_node, tag_fn, render_fn, namespace) {
 	const render_effect_signal = render_effect(
 		() => {
 			const ns = namespace ?? tag === 'svg' ? namespace_svg : null;
-			console.log(anchor_node);
 			const next_element = tag
 				? current_hydration_fragment !== null
 					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
