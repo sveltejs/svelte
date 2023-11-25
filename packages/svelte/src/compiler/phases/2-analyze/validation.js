@@ -524,8 +524,6 @@ function validate_call_expression(node, scope, path) {
 		if (node.arguments.length < 1 || node.arguments.length > 2) {
 			error(node, 'invalid-rune-args-length', '$effect.root', [1, 2]);
 		}
-		if (parent.type === 'VariableDeclarator') return;
-		error(node, 'invalid-effect-root-location');
 	}
 }
 

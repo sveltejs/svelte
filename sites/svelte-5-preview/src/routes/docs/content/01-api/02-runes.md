@@ -191,8 +191,6 @@ This allows you to (for example) add things like subscriptions without causing m
 The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for
 nested effects that you want to manually control. This rune also allows for creation of effects outside of the component initialisation phase.
 
-> `$effect.root` can only be used in variable declaration initializer, this is to ensure the return signature (the cleanup function) is always used.
-
 ```svelte
 <script>
 	let count = $state(0);
