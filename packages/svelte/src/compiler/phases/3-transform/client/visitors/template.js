@@ -2134,9 +2134,7 @@ export const template_visitors = {
 					inner.length === 0
 						? /** @type {any} */ (undefined)
 						: b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-					namespace === 'http://www.w3.org/2000/svg'
-						? b.literal(true)
-						: /** @type {any} */ (undefined)
+					namespace ? b.literal(namespace) : /** @type {any} */ (undefined)
 				)
 			)
 		);
