@@ -84,21 +84,8 @@ function read_at_rule(parser) {
 	/** @type {import('#compiler').Css.Block | null} */
 	let block = null;
 
+	// eg: `@media (max-width: 600px) { ... }`
 	if (parser.match('{')) {
-		// // if the parser could easily distinguish between rules and declarations, this wouldn't be necessary.
-		// // but this approach is much simpler. in future, when we support CSS nesting, the parser _will_ need
-		// // to be able to distinguish between them, but since we'll also need other changes to support that
-		// // this remains a TODO
-		// const contains_declarations = [
-		// 	'color-profile',
-		// 	'counter-style',
-		// 	'font-face',
-		// 	'font-palette-values',
-		// 	'page',
-		// 	'property'
-		// ].includes(name);
-
-		// eg: `@media (max-width: 600px) { ... }`
 		block = read_block(parser);
 	} else {
 		// eg: `@import 'foo';`
