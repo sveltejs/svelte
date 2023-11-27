@@ -218,7 +218,7 @@ export function analyze_module(ast, options) {
 	for (const [, scope] of scopes) {
 		for (const [name, binding] of scope.declarations) {
 			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+				warn(warnings, binding.node, [], 'state-not-mutated', name);
 			}
 		}
 	}
@@ -377,7 +377,7 @@ export function analyze_component(root, options) {
 		for (const [, scope] of instance.scopes) {
 			for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+					warn(warnings, binding.node, [], 'state-not-mutated', name);
 				}
 			}
 		}
