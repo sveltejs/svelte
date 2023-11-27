@@ -38,7 +38,7 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, false, parent);
+	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
 
 	return { ast, scope, scopes };
 }
@@ -191,7 +191,7 @@ function get_delegated_event(node, context) {
  * @returns {import('../types.js').Analysis}
  */
 export function analyze_module(ast, options) {
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, false, null);
+	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
@@ -242,7 +242,7 @@ export function analyze_component(root, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, true, instance.scope);
+	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
 
 	/** @type {import('../types.js').Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -416,9 +416,24 @@ export function analyze_component(root, options) {
 
 	// warn on any nonstate declarations that are a) mutated and b) referenced in the template
 	for (const scope of [module.scope, instance.scope]) {
-		for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'normal' && binding.mutated && binding.referenced_in_template) {
-				warn(warnings, binding.node, [], 'non-state-reference', name);
+		outer: for (const [name, binding] of scope.declarations) {
+			if (binding.kind === 'normal' && binding.mutated) {
+				for (const { path } of binding.references) {
+					if (path[0].type !== 'Fragment') continue;
+					for (let i = 1; i < path.length; i += 1) {
+						const type = path[i].type;
+						if (
+							type === 'FunctionDeclaration' ||
+							type === 'FunctionExpression' ||
+							type === 'ArrowFunctionExpression'
+						) {
+							continue;
+						}
+					}
+
+					warn(warnings, binding.node, [], 'non-state-reference', name);
+					break outer;
+				}
 			}
 		}
 	}

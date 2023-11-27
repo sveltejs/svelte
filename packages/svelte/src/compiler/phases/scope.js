@@ -169,9 +169,8 @@ export class Scope {
 	/**
 	 * @param {import('estree').Identifier} node
 	 * @param {import('#compiler').SvelteNode[]} path
-	 * @param {boolean} is_template
 	 */
-	reference(node, path, is_template) {
+	reference(node, path) {
 		let references = this.references.get(node.name);
 		if (!references) this.references.set(node.name, (references = []));
 
@@ -179,10 +178,9 @@ export class Scope {
 
 		const binding = this.declarations.get(node.name);
 		if (binding) {
-			if (is_template) binding.referenced_in_template = true;
 			binding.references.push({ node, path });
 		} else if (this.#parent) {
-			this.#parent.reference(node, path, is_template);
+			this.#parent.reference(node, path);
 		} else {
 			// no binding was found, and this is the top level scope,
 			// which means this is a global
@@ -217,11 +215,10 @@ export class ScopeRoot {
  * @param {import('#compiler').SvelteNode} ast
  * @param {ScopeRoot} root
  * @param {boolean} allow_reactive_declarations
- * @param {boolean} is_template
  * @param {Scope | null} parent
  */
-export function create_scopes(ast, root, allow_reactive_declarations, is_template, parent) {
-	/** @typedef {{ scope: Scope, is_template: boolean }} State */
+export function create_scopes(ast, root, allow_reactive_declarations, parent) {
+	/** @typedef {{ scope: Scope }} State */
 
 	/**
 	 * A map of node->associated scope. A node appearing in this map does not necessarily mean that it created a scope
@@ -232,9 +229,9 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 	scopes.set(ast, scope);
 
 	/** @type {State} */
-	const state = { scope, is_template };
+	const state = { scope };
 
-	/** @type {[Scope, { node: import('estree').Identifier; path: import('#compiler').SvelteNode[]; is_template: boolean }][]} */
+	/** @type {[Scope, { node: import('estree').Identifier; path: import('#compiler').SvelteNode[] }][]} */
 	const references = [];
 
 	/** @type {[Scope, import('estree').Pattern | import('estree').MemberExpression][]} */
@@ -265,7 +262,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 		const scope = state.scope.child(true);
 		scopes.set(node, scope);
 
-		next({ ...state, scope });
+		next({ scope });
 	};
 
 	/**
@@ -274,7 +271,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 	const SvelteFragment = (node, { state, next }) => {
 		const scope = analyze_let_directives(node, state.scope);
 		scopes.set(node, scope);
-		next({ ...state, scope });
+		next({ scope });
 	};
 
 	/**
@@ -320,10 +317,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 		Identifier(node, { path, state }) {
 			const parent = path.at(-1);
 			if (parent && is_reference(node, /** @type {import('estree').Node} */ (parent))) {
-				references.push([
-					state.scope,
-					{ node, path: path.slice(), is_template: state.is_template }
-				]);
+				references.push([state.scope, { node, path: path.slice() }]);
 			}
 		},
 
@@ -346,7 +340,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 				}
 			}
 
-			next({ ...state, scope });
+			next({ scope });
 		},
 
 		SvelteFragment,
@@ -354,7 +348,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 		RegularElement: SvelteFragment,
 
 		Component(node, { state, visit, path }) {
-			state.scope.reference(b.id(node.name), path, false);
+			state.scope.reference(b.id(node.name), path);
 
 			// let:x from the default slot is a weird one:
 			// Its scope only applies to children that are not slots themselves.
@@ -378,7 +372,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 				} else if (child.type === 'SnippetBlock') {
 					visit(child);
 				} else {
-					visit(child, { ...state, scope });
+					visit(child, { scope });
 				}
 			}
 		},
@@ -412,7 +406,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 			if (node.id) scope.declare(node.id, 'normal', 'function');
 
 			add_params(scope, node.params);
-			next({ scope, is_template: false });
+			next({ scope });
 		},
 
 		FunctionDeclaration(node, { state, next }) {
@@ -422,7 +416,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
-			next({ scope, is_template: false });
+			next({ scope });
 		},
 
 		ArrowFunctionExpression(node, { state, next }) {
@@ -430,7 +424,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 			scopes.set(node, scope);
 
 			add_params(scope, node.params);
-			next({ scope, is_template: false });
+			next({ scope });
 		},
 
 		ForStatement: create_block_scope,
@@ -475,7 +469,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 					state.scope.declare(id, 'normal', 'let');
 				}
 
-				next({ ...state, scope });
+				next({ scope });
 			} else {
 				next();
 			}
@@ -513,13 +507,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
 				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
 			}
-			if (node.key) visit(node.key, { ...state, scope });
+			if (node.key) visit(node.key, { scope });
 
 			// children
 			for (const child of node.body.nodes) {
-				visit(child, { ...state, scope });
+				visit(child, { scope });
 			}
-			if (node.fallback) visit(node.fallback, { ...state, scope });
+			if (node.fallback) visit(node.fallback, { scope });
 
 			// Check if inner scope shadows something from outer scope.
 			// This is necessary because we need access to the array expression of the each block
@@ -586,13 +580,13 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 				}
 			}
 
-			context.next({ ...state, scope: child_scope });
+			context.next({ scope: child_scope });
 		},
 
 		Fragment: (node, context) => {
 			const scope = context.state.scope.child(node.transparent);
 			scopes.set(node, scope);
-			context.next({ ...state, scope });
+			context.next({ scope });
 		},
 
 		BindDirective(node, context) {
@@ -629,8 +623,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, is_templat
 
 	// we do this after the fact, so that we don't need to worry
 	// about encountering references before their declarations
-	for (const [scope, { node, path, is_template }] of references) {
-		scope.reference(node, path, is_template);
+	for (const [scope, { node, path }] of references) {
+		scope.reference(node, path);
 	}
 
 	for (const [scope, node] of updates) {

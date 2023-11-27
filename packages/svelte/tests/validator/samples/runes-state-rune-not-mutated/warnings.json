@@ -1,6 +1,6 @@
 [
 	{
-		"code": "state-rune-not-mutated",
+		"code": "state-not-mutated",
 		"end": {
 			"column": 11,
 			"line": 3
