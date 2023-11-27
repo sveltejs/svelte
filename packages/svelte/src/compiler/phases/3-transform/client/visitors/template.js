@@ -1598,37 +1598,8 @@ function serialize_template_literal(values, visit, state) {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;
 			}
-			let expression = visit(node.expression);
-			if (node.expression.type === 'Identifier') {
-				const name = node.expression.name;
-				const binding = scope.get(name);
-				// When we combine expressions as part of a single template element, we might
-				// be referencing variables that can be mutated, but are not actually state.
-				// In order to prevent this undesired behavior, we need ensure we cache the
-				// latest value we have of that variable before we process the template, enforcing
-				// the value remains static through the lifetime of the template.
-				if (binding !== null && binding.kind === 'normal' && binding.mutated) {
-					let has_already_cached = false;
-					// Check if we already create a const of this expression
-					for (let node of state.init) {
-						if (
-							node.type === 'VariableDeclaration' &&
-							node.declarations[0].id.type === 'Identifier' &&
-							node.declarations[0].id.name === name + '_const'
-						) {
-							has_already_cached = true;
-							expression = b.id(name + '_const');
-							break;
-						}
-					}
-					if (!has_already_cached) {
-						const tmp_id = scope.generate(name + '_const');
-						state.init.push(b.const(tmp_id, expression));
-						expression = b.id(tmp_id);
-					}
-				}
-			}
-			expressions.push(b.call('$.stringify', expression));
+
+			expressions.push(b.call('$.stringify', visit(node.expression)));
 			quasis.push(b.quasi('', i + 1 === values.length));
 		}
 	}
