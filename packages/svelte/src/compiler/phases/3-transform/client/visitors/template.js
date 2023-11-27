@@ -899,7 +899,10 @@ function serialize_inline_component(node, component_name, context) {
 	if (bind_this !== null) {
 		const prev = fn;
 		const assignment = b.assignment('=', bind_this, b.id('$$value'));
-		const bind_this_id = bind_this;
+		const bind_this_id = /** @type {import('estree').Expression} */ (
+			// if expression is not an identifier, we know it can't be a signal
+			bind_this.type === 'Identifier' ? bind_this : undefined
+		);
 		fn = (node_id) =>
 			b.call(
 				'$.bind_this',
@@ -1650,19 +1653,20 @@ export const template_visitors = {
 		);
 	},
 	ConstTag(node, { state, visit }) {
+		const declaration = node.declaration.declarations[0];
 		// TODO we can almost certainly share some code with $derived(...)
-		if (node.expression.left.type === 'Identifier') {
+		if (declaration.id.type === 'Identifier') {
 			state.init.push(
 				b.const(
-					node.expression.left,
+					declaration.id,
 					b.call(
 						'$.derived',
-						b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression.right)))
+						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
 			);
 		} else {
-			const identifiers = extract_identifiers(node.expression.left);
+			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
 
 			// Make all identifiers that are declared within the following computed regular
@@ -1678,8 +1682,8 @@ export const template_visitors = {
 				[],
 				b.block([
 					b.const(
-						/** @type {import('estree').Pattern} */ (visit(node.expression.left)),
-						/** @type {import('estree').Expression} */ (visit(node.expression.right))
+						/** @type {import('estree').Pattern} */ (visit(declaration.id)),
+						/** @type {import('estree').Expression} */ (visit(declaration.init))
 					),
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				])
@@ -1731,18 +1735,20 @@ export const template_visitors = {
 		if (node.argument) {
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
 		}
-		const snippet_function = /** @type {import('estree').Expression} */ (
+
+		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
 		);
-		const init = b.call(
-			context.state.options.dev ? b.call('$.validate_snippet', snippet_function) : snippet_function,
-			...args
-		);
+		if (context.state.options.dev) {
+			snippet_function = b.call('$.validate_snippet', snippet_function);
+		}
 
 		if (is_reactive) {
-			context.state.init.push(b.stmt(b.call('$.snippet_effect', b.thunk(init))));
+			context.state.init.push(
+				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+			);
 		} else {
-			context.state.init.push(b.stmt(init));
+			context.state.init.push(b.stmt(b.call(snippet_function, ...args)));
 		}
 	},
 	AnimateDirective(node, { state, visit }) {
@@ -2279,12 +2285,6 @@ export const template_visitors = {
 				  )
 				: b.literal(null);
 
-		if (context.state.options.dev && key_function.type !== 'Literal') {
-			context.state.init.push(
-				b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
-			);
-		}
-
 		if (node.index && each_node_meta.contains_group_binding) {
 			// We needed to create a unique identifier for the index above, but we want to use the
 			// original index name in the template, therefore create another binding
@@ -2292,6 +2292,12 @@ export const template_visitors = {
 		}
 
 		if ((each_type & EACH_KEYED) !== 0) {
+			if (context.state.options.dev && key_function.type !== 'Literal') {
+				context.state.init.push(
+					b.stmt(b.call('$.validate_each_keys', b.thunk(collection), key_function))
+				);
+			}
+
 			context.state.after_update.push(
 				b.stmt(
 					b.call(
@@ -2491,7 +2497,7 @@ export const template_visitors = {
 		next();
 	},
 	BindDirective(node, context) {
-		const { state, path } = context;
+		const { state, path, visit } = context;
 
 		/** @type {import('estree').Expression[]} */
 		const properties = [];
@@ -2622,9 +2628,16 @@ export const template_visitors = {
 				}
 
 				case 'this':
-					call_expr = b.call(`$.bind_this`, state.node, setter, node.expression);
+					call_expr = b.call(
+						`$.bind_this`,
+						state.node,
+						setter,
+						/** @type {import('estree').Expression} */ (
+							// if expression is not an identifier, we know it can't be a signal
+							node.expression.type === 'Identifier' ? node.expression : undefined
+						)
+					);
 					break;
-
 				case 'textContent':
 				case 'innerHTML':
 				case 'innerText':

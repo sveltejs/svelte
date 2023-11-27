@@ -81,8 +81,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       esrap:
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^1.2.1
+        version: 1.2.1
       is-reference:
         specifier: ^3.0.1
         version: 3.0.2
@@ -137,10 +137,6 @@ importers:
         version: 0.2.9
 
   playgrounds/demo:
-    dependencies:
-      svelte:
-        specifier: workspace:*
-        version: link:../../packages/svelte
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^2.5.1
@@ -151,6 +147,9 @@ importers:
       nodemon:
         specifier: ^3.0.1
         version: 3.0.1
+      svelte:
+        specifier: workspace:*
+        version: link:../../packages/svelte
       vite:
         specifier: ^4.4.9
         version: 4.5.0(@types/node@18.18.9)
@@ -261,8 +260,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.2
       esrap:
-        specifier: ^1.2.0
-        version: 1.2.0
+        specifier: ^1.2.1
+        version: 1.2.1
       publint:
         specifier: ^0.2.0
         version: 0.2.5
@@ -4056,8 +4055,8 @@ packages:
       estraverse: 5.3.0
     dev: true
 
-  /esrap@1.2.0:
-    resolution: {integrity: sha512-ZWd00MnkN45Hcj+nIV5FPiZk6Nx7RDUL8G0KGp1cg1xSKXOEac0IhMQdsrGswXB1O0fMzH+MXq288Lt0Abpg/Q==}
+  /esrap@1.2.1:
+    resolution: {integrity: sha512-dhkcOLfN/aDdMFI1iwPEcy/XqAZzGNfgfEJjZozy2tia6u0dQoZyXzkRshHTckuNsM+c0CYQndY+uRFe3N+AIQ==}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@types/estree': 1.0.5

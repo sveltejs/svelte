@@ -2,8 +2,8 @@ import read_context from '../read/context.js';
 import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
-import { parse_expression_at } from '../acorn.js';
 import { walk } from 'zimmerframe';
+import { parse } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -532,21 +532,54 @@ function special(parser) {
 		// {@const a = b}
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const CONST_LENGTH = 'const '.length;
+		parser.index = parser.index - CONST_LENGTH;
 
-		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
+		let end_index = parser.index;
+		/** @type {import('estree').VariableDeclaration | undefined} */
+		let declaration = undefined;
+
+		const dummy_spaces = parser.template.substring(0, parser.index).replace(/[^\n]/g, ' ');
+		while (true) {
+			end_index = parser.template.indexOf('}', end_index + 1);
+			if (end_index === -1) break;
+			try {
+				const node = parse(
+					dummy_spaces + parser.template.substring(parser.index, end_index),
+					parser.ts
+				).body[0];
+				if (node?.type === 'VariableDeclaration') {
+					declaration = node;
+					break;
+				}
+			} catch (e) {
+				continue;
+			}
+		}
+
+		if (
+			declaration === undefined ||
+			declaration.declarations.length !== 1 ||
+			declaration.declarations[0].init === undefined
+		) {
 			error(start, 'invalid-const');
 		}
 
-		parser.allow_whitespace();
+		parser.index = end_index;
 		parser.eat('}', true);
+
+		const id = declaration.declarations[0].id;
+		if (id.type === 'Identifier') {
+			// Tidy up some stuff left behind by acorn-typescript
+			id.end = (id.start ?? 0) + id.name.length;
+		}
 
 		parser.append(
 			/** @type {import('#compiler').ConstTag} */ ({
 				type: 'ConstTag',
 				start,
 				end: parser.index,
-				expression
+				declaration
 			})
 		);
 	}

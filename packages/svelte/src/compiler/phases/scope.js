@@ -175,13 +175,13 @@ export class Scope {
 
 		references.push({ node, path });
 
-		const declaration = this.declarations.get(node.name);
-		if (declaration) {
-			declaration.references.push({ node, path });
+		const binding = this.declarations.get(node.name);
+		if (binding) {
+			binding.references.push({ node, path });
 		} else if (this.#parent) {
 			this.#parent.reference(node, path);
 		} else {
-			// no declaration was found, and this is the top level scope,
+			// no binding was found, and this is the top level scope,
 			// which means this is a global
 			this.root.conflicts.add(node.name);
 		}
@@ -437,7 +437,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			next();
 		},
 
-		VariableDeclaration(node, { state, next }) {
+		VariableDeclaration(node, { state, path, next }) {
+			const is_parent_const_tag = path.at(-1)?.type === 'ConstTag';
 			for (const declarator of node.declarations) {
 				/** @type {import('#compiler').Binding[]} */
 				const bindings = [];
@@ -445,7 +446,12 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				state.scope.declarators.set(declarator, bindings);
 
 				for (const id of extract_identifiers(declarator.id)) {
-					const binding = state.scope.declare(id, 'normal', node.kind, declarator.init);
+					const binding = state.scope.declare(
+						id,
+						is_parent_const_tag ? 'derived' : 'normal',
+						node.kind,
+						declarator.init
+					);
 					bindings.push(binding);
 				}
 			}
@@ -495,12 +501,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			if (node.index) {
-				scope.declare(
-					b.id(node.index),
-					// TODO see logic in EachBlock in dom.ts
-					node.key ? 'derived' : 'normal',
-					'const'
-				);
+				const is_keyed =
+					node.key &&
+					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
+				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -595,7 +599,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		},
 
 		ConstTag(node, { state, next }) {
-			for (const identifier of extract_identifiers(node.expression.left)) {
+			const declaration = node.declaration.declarations[0];
+			for (const identifier of extract_identifiers(declaration.id)) {
 				state.scope.declare(
 					/** @type {import('estree').Identifier} */ (identifier),
 					'derived',
