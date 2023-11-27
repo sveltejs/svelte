@@ -213,7 +213,7 @@
 					label: '$effect.pre',
 					type: 'keyword',
 					boost: 6
-				});
+				}),
 				{ label: '$effect.active', type: 'keyword', boost: 5 },
 				{ label: '$log', type: 'keyword', boost: 4 },
 				{ label: '$log.break', type: 'keyword', boost: 3 },
