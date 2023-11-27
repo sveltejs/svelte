@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-chore: improve <svelte:element> generated code
+chore: improve `<svelte:element>` generated code
