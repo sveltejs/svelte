@@ -267,9 +267,9 @@ export default {
 
 ## `$log`
 
-The `$log` rune is roughly equivalent to `console.log`, with the exception that when anything passed to the
-rune changes, the latest values will be logged out. `$log` tracks reactive state deeply, meaning that mutating
-something from with an object or array using fine-grain reactivity will be tracked.
+The `$log` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever the
+arguments change. `$log` tracks reactive state deeply, meaning that updating something inside an object
+or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will update the logs.
 
 ```svelte
 <script>
