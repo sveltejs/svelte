@@ -813,7 +813,7 @@ export function get(signal) {
 			);
 		if (debug_source.d !== null) {
 			// eslint-disable-next-line no-console
-			console.log('$log.trace: ' + debug_source.d);
+			console.log(debug_source.d);
 			queueMicrotask(() => {
 				debug_source.d = null;
 			});
@@ -832,10 +832,18 @@ function attach_trace(signal) {
 		let stack_debug = null;
 		try {
 			const error = new Error();
-			stack_debug = error.stack
-				?.split('\n')
-				?.at(3)
-				?.replace(/\s+at\s+/, '');
+			// Browser-sniffing: Chromium-based browsers have the "Error: .." line as part of the stack trace.
+			if (error.stack?.startsWith(`Error`)) {
+				// Chromium-based browsers don't do source mapping based on whether an Error object is handed to them,
+				// they purely do pattern matching on the stack trace string. This leads us to unfortunately needing to
+				// have "Error" as part of the name even if it's not really one.
+				error.stack = `Error: ($log.trace)\n${error.stack?.split('\n')?.at(3)}`;
+			} else {
+				// For once, Safari and Firefox do it better
+				error.name = '$log.trace';
+				error.stack = error.stack?.split('\n')?.at(2);
+			}
+			stack_debug = error;
 		} catch {
 			// Do nothing
 		}
