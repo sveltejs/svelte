@@ -1862,9 +1862,17 @@ export function log_table(get_values) {
  */
 export function log_break(get_values) {
 	if (DEV) {
+		let initial = true;
+
 		pre_effect(() => {
 			const values = get_values();
 			deep_read(values);
+
+			if (initial) {
+				initial = false;
+				return;
+			}
+
 			// eslint-disable-next-line no-console
 			console.log(...values);
 			// eslint-disable-next-line no-debugger
@@ -1879,11 +1887,19 @@ export function log_break(get_values) {
  */
 export function log_trace(get_values) {
 	if (DEV) {
+		let initial = true;
+
 		pre_effect(() => {
 			is_tracing_signals = true;
 			try {
 				const values = get_values();
 				deep_read(values);
+
+				if (initial) {
+					initial = false;
+					return;
+				}
+
 				// eslint-disable-next-line no-console
 				console.log(...values);
 			} finally {
