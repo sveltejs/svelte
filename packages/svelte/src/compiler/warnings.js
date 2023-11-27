@@ -23,7 +23,10 @@ const runes = {
 		`Referencing a local variable with a $ prefix will create a store subscription. Please rename ${name} to avoid the ambiguity.`,
 	/** @param {string} name */
 	'state-rune-not-mutated': (name) =>
-		`${name} is declared with $state(...) but is never updated. Did you mean to create a function that changes its value?`
+		`${name} is declared with $state(...) but is never updated. Did you mean to create a function that changes its value?`,
+	/** @param {string} name */
+	'non-state-reference': (name) =>
+		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`
 };
 
 /** @satisfies {Warnings} */

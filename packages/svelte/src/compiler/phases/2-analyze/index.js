@@ -38,7 +38,7 @@ function js(script, root, allow_reactive_declarations, parent) {
 		body: []
 	};
 
-	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, parent);
+	const { scope, scopes } = create_scopes(ast, root, allow_reactive_declarations, false, parent);
 
 	return { ast, scope, scopes };
 }
@@ -191,7 +191,7 @@ function get_delegated_event(node, context) {
  * @returns {import('../types.js').Analysis}
  */
 export function analyze_module(ast, options) {
-	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, null);
+	const { scope, scopes } = create_scopes(ast, new ScopeRoot(), false, false, null);
 
 	for (const [name, references] of scope.references) {
 		if (name[0] !== '$' || ReservedKeywords.includes(name)) continue;
@@ -242,7 +242,7 @@ export function analyze_component(root, options) {
 	const module = js(root.module, scope_root, false, null);
 	const instance = js(root.instance, scope_root, true, module.scope);
 
-	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, instance.scope);
+	const { scope, scopes } = create_scopes(root.fragment, scope_root, false, true, instance.scope);
 
 	/** @type {import('../types.js').Template} */
 	const template = { ast: root.fragment, scope, scopes };
@@ -412,6 +412,15 @@ export function analyze_component(root, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	// warn on any nonstate declarations that are a) mutated and b) referenced in the template
+	for (const scope of [module.scope, instance.scope]) {
+		for (const [name, binding] of scope.declarations) {
+			if (binding.kind === 'normal' && binding.mutated && binding.referenced_in_template) {
+				warn(warnings, binding.node, [], 'non-state-reference', name);
+			}
+		}
 	}
 
 	analysis.stylesheet.validate(analysis);
