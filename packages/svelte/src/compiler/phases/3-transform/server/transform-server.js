@@ -637,7 +637,7 @@ const javascript_visitors_runes = {
 				);
 				return b.call('console.log', ...args);
 			}
-			return b.unary('void', b.literal(0))
+			return b.unary('void', b.literal(0));
 		}
 		if (rune === '$log.table') {
 			if (state.options.dev) {
@@ -646,7 +646,7 @@ const javascript_visitors_runes = {
 				);
 				return b.call('console.table', ...args);
 			}
-			return b.unary('void', b.literal(0))
+			return b.unary('void', b.literal(0));
 		}
 
 		next();

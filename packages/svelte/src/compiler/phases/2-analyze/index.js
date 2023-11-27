@@ -854,6 +854,12 @@ const common_visitors = {
 	Identifier(node, context) {
 		const parent = /** @type {import('estree').Node} */ (context.path.at(-1));
 		if (!is_reference(node, parent)) return;
+		if (parent.type === 'CallExpression') {
+			const rune = get_rune(parent, context.state.scope);
+			if (rune?.startsWith('$log')) {
+				return;
+			}
+		}
 		const binding = context.state.scope.get(node.name);
 
 		// if no binding, means some global variable
