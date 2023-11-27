@@ -521,8 +521,8 @@ function validate_call_expression(node, scope, path) {
 	}
 
 	if (rune === '$effect.root') {
-		if (node.arguments.length < 1 || node.arguments.length > 2) {
-			error(node, 'invalid-rune-args-length', '$effect.root', [1, 2]);
+		if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', '$effect.root', [1]);
 		}
 	}
 }

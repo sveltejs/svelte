@@ -13,10 +13,12 @@
 			return () => {
 				log.push('cleanup 2')	;
 			}
-		}, () => {
+		});
+
+		return () => {
 			log.push('cleanup 1');
 			nested_cleanup();
-		});
+		}
 	});
 </script>
 

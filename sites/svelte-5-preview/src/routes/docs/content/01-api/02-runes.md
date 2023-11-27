@@ -207,23 +207,6 @@ nested effects that you want to manually control. This rune also allows for crea
 </script>
 ```
 
-If the `$effect.root` was created within within another active effect (such as during component initialisation) then it might
-be desirable to know when that active effect gets disposed and cleaned up. `$effect.root` takes an optional second arugment,
-which is a function callback for when this happens in case. This allows you to cleanup the effect root too if needed.
-
-```svelte
-<script>
-	let count = $state(0);
-
-	const cleanup = $effect.root(() => {
-		// ...
-	}, () => {
-		console.log('parent effect is cleaned up');
-		cleanup();
-	});
-</script>
-```
-
 ## `$props`
 
 To declare component props, use the `$props` rune:

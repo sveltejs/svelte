@@ -117,7 +117,7 @@ declare namespace $effect {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-root
 	 */
-	export function root(fn: () => void | (() => void), fn2?: () => void): () => void;
+	export function root(fn: () => void | (() => void)): () => void;
 }
 
 /**
