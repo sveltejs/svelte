@@ -1542,7 +1542,7 @@ function swap_block_dom(block, from, to) {
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
- * @param {null | ((element: Element, anchor: Node) => void)} render_fn
+ * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
  * @param {any} is_svg
  * @returns {void}
  */
@@ -1582,7 +1582,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 				block.d = null;
 			}
 			element = next_element;
-			if (element !== null && render_fn !== null) {
+			if (element !== null && render_fn !== undefined) {
 				let anchor;
 				if (current_hydration_fragment !== null) {
 					// Use the existing ssr comment as the anchor so that the inner open and close

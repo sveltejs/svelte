@@ -347,6 +347,15 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  * @returns {boolean}
  */
 function serialize_dynamic_element_spread_attributes(attributes, context, element_id) {
+	if (attributes.length === 0) {
+		if (context.state.analysis.stylesheet.id) {
+			context.state.init.push(
+				b.stmt(b.call('$.class_name', element_id, b.literal(context.state.analysis.stylesheet.id)))
+			);
+		}
+		return false;
+	}
+
 	let is_reactive = false;
 
 	/** @type {import('estree').Expression[]} */
@@ -2104,7 +2113,9 @@ export const template_visitors = {
 					'$.element',
 					context.state.node,
 					get_tag,
-					b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
+					inner.length === 0
+						? /** @type {any} */ (undefined)
+						: b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
 					namespace === 'http://www.w3.org/2000/svg'
 						? b.literal(true)
 						: /** @type {any} */ (undefined)
