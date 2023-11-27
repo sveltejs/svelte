@@ -3182,8 +3182,9 @@ export function snippet_effect(get_snippet, node, args) {
 		const snippet = get_snippet();
 		untrack(() => snippet(node, args));
 		return () => {
-			if (block.d !== null) {
-				remove(block.d);
+			const d = (is_array(block.d) ? block.d[0] : block.d) ?? null;
+			if (d !== null) {
+				remove(d);
 			}
 		};
 	}, block);
