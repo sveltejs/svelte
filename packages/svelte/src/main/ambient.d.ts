@@ -157,8 +157,7 @@ declare namespace $log {
 	export { break_fn as break };
 
 	/**
-	 * Deeply tracks and `console.log`s any values passed to the rune and also traces the call-sites
-	 * where state gets mutated. Example:
+	 * Logs the arguments whenever they change, along with the line of code that initiated the change. Example:
 	 *
 	 * ```ts
 	 * $log.trace(someValue, someOtherValue)
