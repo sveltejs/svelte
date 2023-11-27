@@ -276,7 +276,7 @@ This works just like `$log`, except runtime execution will be paused via a `debu
 <button onclick={() => count++}>Increment</button>
 ```
 
-## `$log.break`
+## `$log.table`
 
 This works just like `$log`, but triggers `console.table` instead of `console.log`.
 
