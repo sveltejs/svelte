@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: ignore href attributes when hydrating
+feat: ignore `src`, `srcset`, and `href` attributes when hydrating

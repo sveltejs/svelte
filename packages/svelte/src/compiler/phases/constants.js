@@ -77,6 +77,7 @@ export const Runes = [
 	'$effect',
 	'$effect.pre',
 	'$effect.active',
+	'$effect.root',
 	'$log',
 	'$log.break',
 	'$log.trace',

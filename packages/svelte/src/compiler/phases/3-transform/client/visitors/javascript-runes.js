@@ -135,7 +135,12 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune.startsWith('$log')) {
+			if (
+				!rune ||
+				rune === '$effect.active' ||
+				rune === '$effect.root' ||
+				rune.startsWith('$log')
+			) {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -208,7 +213,6 @@ export const javascript_visitors_runes = {
 				// TODO
 				continue;
 			}
-
 			const args = /** @type {import('estree').CallExpression} */ (declarator.init).arguments;
 			const value =
 				args.length === 0
@@ -334,6 +338,13 @@ export const javascript_visitors_runes = {
 				return b.call('$.log_table', b.thunk(b.array(args)));
 			}
 			return b.unary('void', b.literal(0));
+		}
+
+		if (rune === '$effect.root') {
+			const args = /** @type {import('estree').Expression[]} */ (
+				node.arguments.map((arg) => visit(arg))
+			);
+			return b.call('$.user_root_effect', ...args);
 		}
 
 		next();

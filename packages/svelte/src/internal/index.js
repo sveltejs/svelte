@@ -37,6 +37,7 @@ export {
 	push,
 	reactive_import,
 	effect_active,
+	user_root_effect,
 	log,
 	log_trace,
 	log_break,
