@@ -321,6 +321,16 @@ function block_might_apply_to_node(block, node) {
 			return NO_MATCH;
 		}
 
+		if (
+			block.nested &&
+			block.selectors.length === 1 &&
+			block.combinator !== null
+		) {
+			// nested selector with combinator, eg: `.foo { + .bar { ... } }`
+			// TODO: How to handle this?
+			return UNKNOWN_SELECTOR;
+		}
+
 		if (selector.type === 'PseudoClassSelector' || selector.type === 'PseudoElementSelector') {
 			continue;
 		}
@@ -831,14 +841,17 @@ class Block {
 /**
  * Groups selectors by combinator into blocks
  * @param {import('#compiler').Css.Selector} selector
- * */
+ */
 function group_selectors(selector) {
 	let block = new Block(null);
 	const blocks = [block];
 
 	for (const child of selector.children) {
 		if (child.type === 'Combinator') {
-			if (block.nested && !block.combinator) {
+			// If we start with a combinator, that means
+			// we're dealing with a nested selector
+			if(block.selectors.length === 0 && !block.combinator) {
+				block.nested = true;
 				block.combinator = child;
 			} else {
 				block = new Block(child);

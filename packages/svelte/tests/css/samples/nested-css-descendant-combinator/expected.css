@@ -1,0 +1,9 @@
+button.svelte-xyz {
+    color: red;
+
+    .hello.svelte-xyz {
+        color: pink;
+    }
+
+    color: black;
+}

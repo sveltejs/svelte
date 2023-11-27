@@ -395,14 +395,21 @@ function read_declaration(parser) {
  * @returns {import('#compiler').Css.Declaration | import('#compiler').Css.Rule}
  */
 function read_declaration_or_rule(parser) {
-	// We will only allow css nesting using & selector for now
+	// We need to know if this is a rule or a declaration
+	// so we'll attempt to read an identifier first
+	// if we can't, we'll assume it's a rule
+	// This needs to change when we support type (element) selectors
 	// due to complexities with https://bugs.chromium.org/p/chromium/issues/detail?id=1427259
-	// as most browsers as of 17/11/2023 do not support nesting without & selector
-	if (parser.match('&')) {
-		return read_rule(parser, true)
-	} else {
-		return read_declaration(parser);
+	const start = parser.index;
+	const is_ident = !!parser.read(REGEX_VALID_IDENTIFIER_CHAR);
+
+	parser.index = start;
+
+	if (!is_ident) {
+		return read_rule(parser, true);
 	}
+
+	return read_declaration(parser);
 }
 
 /**

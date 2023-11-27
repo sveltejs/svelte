@@ -2,7 +2,9 @@
 
 <style>
 	div {
-		@apply --funky-div;
+		/* DISABLED THIS FOR CSS NESTING */
+		/* @apply --funky-div; */
+		color: red;
 	}
 
 	div {
