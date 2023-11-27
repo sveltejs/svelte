@@ -2551,7 +2551,7 @@ let src_url_equal_anchor;
  * @param {string} url
  * @returns {boolean}
  */
-export function src_url_equal(element_src, url) {
+function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
