@@ -47,7 +47,7 @@ pnpm build
 To watch for changes and continually rebuild the package (this is useful if you're using [`pnpm link`](https://pnpm.io/cli/link) to test out changes in a project locally):
 
 ```bash
-pnpm dev
+pnpm watch
 ```
 
 The compiler is written in JavaScript and uses [JSDoc](https://jsdoc.app/index.html) comments for type-checking.
@@ -58,10 +58,10 @@ The compiler is written in JavaScript and uses [JSDoc](https://jsdoc.app/index.h
 pnpm test
 ```
 
-To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
+### Running Type-Check
 
 ```bash
-pnpm test -- -g transition
+pnpm check
 ```
 
 ### svelte.dev

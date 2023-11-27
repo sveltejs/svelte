@@ -77,7 +77,7 @@ Small pull requests are much easier to review and more likely to get merged.
 1. Ensure you have [pnpm](https://pnpm.io/installation) installed
 1. After cloning the repository, run `pnpm install`. You can do this in the root directory or in the `svelte` project
 1. Move into the `svelte` directory with `cd packages/svelte`
-1. To compile in watch mode, run `pnpm dev`
+1. To compile in watch mode, run `pnpm watch`
 
 ### Creating a branch
 
