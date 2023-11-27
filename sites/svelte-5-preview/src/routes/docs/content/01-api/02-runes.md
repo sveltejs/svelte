@@ -217,7 +217,7 @@ which is a function callback for when this happens in case. This allows you to c
 
 	const cleanup = $effect.root(() => {
 		// ...
-	}. () => {
+	}, () => {
 		console.log('parent effect is cleaned up');
 		cleanup();
 	});
