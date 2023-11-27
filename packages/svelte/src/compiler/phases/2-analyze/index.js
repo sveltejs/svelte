@@ -432,7 +432,7 @@ export function analyze_component(root, options) {
 					}
 
 					warn(warnings, binding.node, [], 'non-state-reference', name);
-					break outer;
+					continue outer;
 				}
 			}
 		}
