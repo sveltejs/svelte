@@ -2918,7 +2918,7 @@ export function unwrap(value) {
  * @param {{
  * 		target: Node;
  * 		props?: Props;
- *      events?: Events;
+ * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
  * 		immutable?: boolean;
