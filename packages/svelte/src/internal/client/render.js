@@ -3170,13 +3170,18 @@ export function sanitize_slots(props) {
 }
 
 /**
- * @param {() => void} create_snippet
+ * @param {() => Function} get_snippet
+ * @param {Node} node
+ * @param {() => any} args
  * @returns {void}
  */
-export function snippet_effect(create_snippet) {
+export function snippet_effect(get_snippet, node, args) {
 	const block = create_snippet_block();
 	render_effect(() => {
-		create_snippet();
+		// Only rerender when the snippet function itself changes,
+		// not when an eagerly-read prop inside the snippet function changes
+		const snippet = get_snippet();
+		untrack(() => snippet(node, args));
 		return () => {
 			if (block.d !== null) {
 				remove(block.d);

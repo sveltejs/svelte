@@ -1734,18 +1734,20 @@ export const template_visitors = {
 		if (node.argument) {
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
 		}
-		const snippet_function = /** @type {import('estree').Expression} */ (
+
+		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
 		);
-		const init = b.call(
-			context.state.options.dev ? b.call('$.validate_snippet', snippet_function) : snippet_function,
-			...args
-		);
+		if (context.state.options.dev) {
+			snippet_function = b.call('$.validate_snippet', snippet_function);
+		}
 
 		if (is_reactive) {
-			context.state.init.push(b.stmt(b.call('$.snippet_effect', b.thunk(init))));
+			context.state.init.push(
+				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+			);
 		} else {
-			context.state.init.push(b.stmt(init));
+			context.state.init.push(b.stmt(b.call(snippet_function, ...args)));
 		}
 	},
 	AnimateDirective(node, { state, visit }) {
