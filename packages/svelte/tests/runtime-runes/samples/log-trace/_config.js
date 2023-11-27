@@ -24,17 +24,17 @@ export default test({
 		console.log = original_log;
 	},
 	async test({ assert, target }) {
+		assert.deepEqual(log, []);
+
 		const [b1, b2] = target.querySelectorAll('button');
 		b1.click();
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(log[0], 0);
-		assert.deepEqual(
-			log[1].stack.startsWith('ExpectedError: $log.trace') &&
-				log[1].stack.includes('HTMLButtonElement.on_click'),
-			true
+		assert.ok(
+			log[0].stack.startsWith('ExpectedError: $log.trace') &&
+				log[0].stack.includes('HTMLButtonElement.on_click')
 		);
-		assert.deepEqual(log[2], 1);
+		assert.deepEqual(log[1], 1);
 	}
 });
