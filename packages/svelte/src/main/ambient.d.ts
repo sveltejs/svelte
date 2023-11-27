@@ -132,7 +132,7 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Deeply tracks and `console.log`s any values passed to the rune. Example:
+ * Logs the arguments whenever they, or the properties they contain, change. Example:
  *
  * ```ts
  * $log(someValue, someOtherValue)
