@@ -268,7 +268,6 @@ export interface Binding {
 	initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
-	referenced_in_template: boolean;
 	mutated: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */

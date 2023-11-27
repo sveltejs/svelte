@@ -91,7 +91,6 @@ export class Scope {
 		const binding = {
 			node,
 			references: [],
-			referenced_in_template: false,
 			legacy_dependencies: [],
 			initial,
 			mutated: false,
