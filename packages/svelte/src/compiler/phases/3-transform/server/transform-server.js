@@ -5,7 +5,6 @@ import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
 	ContentEditableBindings,
-	DOMBooleanAttributes,
 	VoidElements,
 	WhitespaceInsensitiveAttributes
 } from '../../constants.js';
@@ -15,11 +14,12 @@ import {
 	escape_html,
 	infer_namespace
 } from '../utils.js';
-import { create_attribute, is_element_node } from '../../nodes.js';
+import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
 import { error } from '../../../errors.js';
 import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
 import { remove_types } from '../typescript.js';
+import { DOMBooleanAttributes } from '../../../../constants.js';
 
 /**
  * @param {string} value
@@ -471,6 +471,25 @@ function serialize_set_binding(node, context, fallback) {
 	return fallback();
 }
 
+/**
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
+ * @param {import('#compiler').Attribute} attribute
+ * @param {{ state: { metadata: { namespace: import('#compiler').Namespace }}}} context
+ */
+function get_attribute_name(element, attribute, context) {
+	let name = attribute.name;
+	if (
+		element.type === 'RegularElement' &&
+		!element.metadata.svg &&
+		context.state.metadata.namespace !== 'foreign'
+	) {
+		name = name.toLowerCase();
+		// don't lookup boolean aliases here, the server runtime function does only
+		// check for the lowercase variants of boolean attributes
+	}
+	return name;
+}
+
 /** @type {import('./types').Visitors} */
 const global_visitors = {
 	Identifier(node, { path, state }) {
@@ -550,7 +569,7 @@ const javascript_visitors_runes = {
 
 		for (const declarator of node.declarations) {
 			const rune = get_rune(declarator.init, state.scope);
-			if (!rune) {
+			if (!rune || rune === '$effect.active') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -604,6 +623,15 @@ const javascript_visitors_runes = {
 			}
 		}
 		context.next();
+	},
+	CallExpression(node, { state, next }) {
+		const rune = get_rune(node, state.scope);
+
+		if (rune === '$effect.active') {
+			return b.literal(false);
+		}
+
+		next();
 	}
 };
 
@@ -681,12 +709,14 @@ function serialize_attribute_value(
 
 /**
  *
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('#compiler').StyleDirective[]} style_directives
  * @param {import('#compiler').ClassDirective[]} class_directives
  * @param {import('./types').ComponentContext} context
  */
 function serialize_element_spread_attributes(
+	element,
 	attributes,
 	style_directives,
 	class_directives,
@@ -697,7 +727,7 @@ function serialize_element_spread_attributes(
 
 	for (const attribute of attributes) {
 		if (attribute.type === 'Attribute') {
-			const name = attribute.name.toLowerCase();
+			const name = get_attribute_name(element, attribute, context);
 			const value = serialize_attribute_value(
 				attribute.value,
 				context,
@@ -709,8 +739,18 @@ function serialize_element_spread_attributes(
 		}
 	}
 
+	const lowercase_attributes =
+		element.type !== 'RegularElement' || element.metadata.svg || is_custom_element_node(element)
+			? b.false
+			: b.true;
+	const is_svg = element.type === 'RegularElement' && element.metadata.svg ? b.true : b.false;
 	/** @type {import('estree').Expression[]} */
-	const args = [b.array(values), b.literal(context.state.analysis.stylesheet.id)];
+	const args = [
+		b.array(values),
+		lowercase_attributes,
+		is_svg,
+		b.literal(context.state.analysis.stylesheet.id)
+	];
 
 	if (style_directives.length > 0 || class_directives.length > 0) {
 		const styles = style_directives.map((directive) =>
@@ -1040,8 +1080,9 @@ const template_visitors = {
 		state.template.push(t_expression(id));
 	},
 	ConstTag(node, { state, visit }) {
-		const pattern = /** @type {import('estree').Pattern} */ (visit(node.expression.left));
-		const init = /** @type {import('estree').Expression} */ (visit(node.expression.right));
+		const declaration = node.declaration.declarations[0];
+		const pattern = /** @type {import('estree').Pattern} */ (visit(declaration.id));
+		const init = /** @type {import('estree').Expression} */ (visit(declaration.init));
 		state.init.push(b.declaration('const', pattern, init));
 	},
 	DebugTag(node, { state, visit }) {
@@ -1579,7 +1620,9 @@ const template_visitors = {
 				b.stmt(b.call('$.head', b.id('$$payload'), b.arrow([b.id('$$payload')], b.block(body))))
 			)
 		);
-	}
+	},
+	// @ts-ignore: need to extract this out somehow
+	CallExpression: javascript_visitors_runes.CallExpression
 };
 
 /**
@@ -1749,11 +1792,17 @@ function serialize_element_attributes(node, context) {
 	context.state.init.push(...lets);
 
 	if (has_spread) {
-		serialize_element_spread_attributes(attributes, style_directives, class_directives, context);
+		serialize_element_spread_attributes(
+			node,
+			attributes,
+			style_directives,
+			class_directives,
+			context
+		);
 	} else {
 		for (const attribute of /** @type {import('#compiler').Attribute[]} */ (attributes)) {
 			if (attribute.value === true || is_text_attribute(attribute)) {
-				const name = attribute.name.toLowerCase();
+				const name = get_attribute_name(node, attribute, context);
 				const literal_value = /** @type {import('estree').Literal} */ (
 					serialize_attribute_value(
 						attribute.value,
@@ -1775,7 +1824,7 @@ function serialize_element_attributes(node, context) {
 				continue;
 			}
 
-			const name = attribute.name.toLowerCase();
+			const name = get_attribute_name(node, attribute, context);
 			const is_boolean = DOMBooleanAttributes.includes(name);
 			const value = serialize_attribute_value(
 				attribute.value,

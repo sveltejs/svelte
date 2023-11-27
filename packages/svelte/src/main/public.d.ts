@@ -18,6 +18,14 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
+// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
+type PropsWithChildren<Props, Slots> = Props &
+	(Props extends { children?: any }
+		? {}
+		: Slots extends { default: any }
+		? { children?: Snippet }
+		: {});
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
@@ -52,25 +60,18 @@ export class SvelteComponent<
 	Slots extends Record<string, any> = any
 > {
 	[prop: string]: any;
-
-	/**
-	 * For type checking capabilities only.
-	 * Does not exist at runtime.
-	 * ### DO NOT USE!
-	 */
-	constructor(props: Props);
 	/**
 	 * @deprecated This constructor only exists when using the `asClassComponent` compatibility helper, which
 	 * is a stop-gap solution. Migrate towards using `mount` or `createRoot` instead. See
 	 * https://svelte-5-preview.vercel.app/docs/breaking-changes#components-are-no-longer-classes for more info.
 	 */
-	constructor(options: ComponentConstructorOptions<Props>);
+	constructor(options: ComponentConstructorOptions<PropsWithChildren<Props, Slots>>);
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
 	 * ### DO NOT USE!
 	 * */
-	$$prop_def: Props;
+	$$prop_def: PropsWithChildren<Props, Slots>;
 	/**
 	 * For type checking capabilities only.
 	 * Does not exist at runtime.
@@ -184,6 +185,21 @@ export type ComponentType<Comp extends SvelteComponent> = (new (
 	/** The custom element version of the component. Only present if compiled with the `customElement` compiler option */
 	element?: typeof HTMLElement;
 };
+
+declare const SnippetReturn: unique symbol;
+
+/**
+ * The type of a `#snippet` block. You can use it to (for example) express that your component expects a snippet of a certain type:
+ * ```ts
+ * let { banner } = $props<{ banner: Snippet<{ text: string }> }>();
+ * ```
+ * You can only call a snippet through the `{@render ...}` tag.
+ */
+export interface Snippet<T = void> {
+	(arg: T): typeof SnippetReturn & {
+		_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+	};
+}
 
 interface DispatchOptions {
 	cancelable?: boolean;

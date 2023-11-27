@@ -3,9 +3,6 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-var Button_default = $.template(` `, true);
-var frag = $.template(`<!>`, true);
-
 export default function Function_prop_no_getter($$anchor, $$props) {
 	$.push($$props, true);
 
@@ -16,7 +13,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	}
 
 	/* Init */
-	var fragment = $.open_frag($$anchor, true, frag);
+	var fragment = $.comment($$anchor);
 	var node = $.child_frag(fragment);
 
 	Button(node, {
@@ -24,12 +21,11 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 		onmouseup,
 		children: ($$anchor, $$slotProps) => {
 			/* Init */
-			var fragment_1 = $.open_frag($$anchor, true, Button_default);
-			var text = $.child_frag(fragment_1);
+			var node_1 = $.space($$anchor);
 
 			/* Update */
-			$.text_effect(text, () => `clicks: ${$.stringify($.get(count))}`);
-			$.close_frag($$anchor, fragment_1);
+			$.text_effect(node_1, () => `clicks: ${$.stringify($.get(count))}`);
+			$.close($$anchor, node_1);
 		}
 	});
 

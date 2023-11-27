@@ -1144,6 +1144,13 @@ function internal_create_effect(type, init, sync, block, schedule) {
 }
 
 /**
+ * @returns {boolean}
+ */
+export function effect_active() {
+	return current_effect ? (current_effect.f & MANAGED) === 0 : false;
+}
+
+/**
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
@@ -1523,7 +1530,7 @@ export function bubble_event($$props, event) {
 	const events = /** @type {Record<string, Function[] | Function>} */ (unwrap($$props).$$events)?.[
 		event.type
 	];
-	const callbacks = is_array(events) ? events.slice() : [events];
+	const callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
 	let fn;
 	for (fn of callbacks) {
 		// Preserve "this" context

@@ -51,11 +51,11 @@ Derived state is declared with the `$derived` rune:
 ```diff
 <script>
 	let count = $state(0);
-+	let double = $derived(count * 2);
++	let doubled = $derived(count * 2);
 </script>
 
 <button on:click={() => count++}>
-	{double}
+	{doubled}
 </button>
 
 +<p>{count} doubled is {doubled}</p>
@@ -92,13 +92,13 @@ To run code whenever specific values change, or when a component is mounted to t
 ```diff
 <script>
 	let count = $state(0);
-	let double = $derived(count * 2);
+	let doubled = $derived(count * 2);
 
 +	$effect(() => {
 +		// runs when the component is mounted, and again
-+		// whenever `count` or `double` change,
++		// whenever `count` or `doubled` change,
 +		// after the DOM has been updated
-+		console.log({ count, double });
++		console.log({ count, doubled });
 +
 +		return () => {
 +			// if a callback is provided, it will run
@@ -110,7 +110,7 @@ To run code whenever specific values change, or when a component is mounted to t
 </script>
 
 <button on:click={() => count++}>
-	{double}
+	{doubled}
 </button>
 
 <p>{count} doubled is {doubled}</p>
@@ -158,7 +158,7 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 </script>
 
 <div bind:this={div}>
-	{#each message as message}
+	{#each messages as message}
 		<p>{message}</p>
 	{/each}
 </div>
@@ -167,6 +167,24 @@ In rare cases, you may need to run code _before_ the DOM updates. For this we ca
 ### What this replaces
 
 Previously, you would have used `beforeUpdate`, which — like `afterUpdate` — is deprecated in Svelte 5.
+
+## `$effect.active`
+
+The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template ([demo](/#H4sIAAAAAAAAE3XP0QrCMAwF0F-JRXAD595rLfgdzodRUyl0bVgzQcb-3VYFQfExl5tDMgvrPCYhT7MI_YBCiiOR2Aq-UxnSDT1jnlOcRlMSlczoiHUXOjYxpOhx5-O12rgAJg4UAwaGhDyR3Gxhjdai4V1v2N2wqus9tC3Y3ifMQjbehaqq4aBhLtEv_Or893icCsdLve-Caj8nBkU67zMO5HtGCfM3sKiWNKhV0zwVaBqd3x3ixVmHFyFLuJyXB-moOe8pAQAA)):
+
+```svelte
+<script>
+	console.log('in component setup:', $effect.active()); // false
+
+	$effect(() => {
+		console.log('in effect:', $effect.active()); // true
+	});
+</script>
+
+<p>in template: {$effect.active()}</p> <!-- true -->
+```
+
+This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
 
 ## `$props`
 

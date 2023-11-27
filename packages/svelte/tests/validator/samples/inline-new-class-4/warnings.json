@@ -1,0 +1,14 @@
+[
+	{
+		"code": "avoid-inline-class",
+		"message": "Avoid 'new class' — instead, declare the class at the top level scope",
+		"start": {
+			"column": 12,
+			"line": 3
+		},
+		"end": {
+			"column": 3,
+			"line": 5
+		}
+	}
+]

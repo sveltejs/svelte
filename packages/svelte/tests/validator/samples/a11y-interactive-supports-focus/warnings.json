@@ -233,7 +233,7 @@
 			"column": 44,
 			"line": 29
 		},
-		"message": "A11y: on:mouseout must be accompanied by on:blur",
+		"message": "A11y: 'mouseout' event must be accompanied by 'blur' event",
 		"start": {
 			"column": 0,
 			"line": 29
@@ -257,7 +257,7 @@
 			"column": 48,
 			"line": 30
 		},
-		"message": "A11y: on:mouseover must be accompanied by on:focus",
+		"message": "A11y: 'mouseover' event must be accompanied by 'focus' event",
 		"start": {
 			"column": 0,
 			"line": 30

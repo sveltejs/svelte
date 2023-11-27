@@ -68,6 +68,28 @@ declare namespace $effect {
 	 * @param fn The function to execute
 	 */
 	export function pre(fn: () => void | (() => void)): void;
+
+	/**
+	 * The `$effect.active` rune is an advanced feature that tells you whether or not the code is running inside an effect or inside your template.
+	 *
+	 * Example:
+	 * ```svelte
+	 * <script>
+	 *   console.log('in component setup:', $effect.active()); // false
+	 *
+	 *   $effect(() => {
+	 *     console.log('in effect:', $effect.active()); // true
+	 *   });
+	 * </script>
+	 *
+	 * <p>in template: {$effect.active()}</p> <!-- true -->
+	 * ```
+	 *
+	 * This allows you to (for example) add things like subscriptions without causing memory leaks, by putting them in child effects.
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-active
+	 */
+	export function active(): boolean;
 }
 
 /**

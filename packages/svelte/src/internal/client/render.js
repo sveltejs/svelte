@@ -27,7 +27,8 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_ITEM_REACTIVE,
 	PassiveDelegatedEvents,
-	DelegatedEvents
+	DelegatedEvents,
+	AttributeAliases
 } from '../../constants.js';
 import {
 	create_fragment_from_html,
@@ -60,7 +61,8 @@ import {
 	push,
 	current_component_context,
 	pop,
-	schedule_task
+	schedule_task,
+	managed_render_effect
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -133,7 +135,7 @@ export function svg_replace(node) {
  * @param {boolean} is_fragment
  * @param {boolean} use_clone_node
  * @param {null | Text | Comment | Element} anchor
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
@@ -156,7 +158,7 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -167,12 +169,31 @@ export function open(anchor, use_clone_node, template_element_fn) {
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function open_frag(anchor, use_clone_node, template_element_fn) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
+}
+
+const space_template = template(' ', false);
+const comment_template = template('<!>', true);
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	return open(anchor, true, space_template);
+}
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function comment(anchor) {
+	return open_frag(anchor, true, comment_template);
 }
 
 /**
@@ -444,20 +465,22 @@ export function class_toggle(dom, class_name, value) {
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
+ * @param {boolean} [mounting]
  */
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	if (select.multiple) {
 		return select_options(select, value);
 	}
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		const option_value = get_option_value(option);
 		if (option_value === value) {
 			option.selected = true;
 			return;
 		}
 	}
-	select.value = '';
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 /**
@@ -466,8 +489,7 @@ export function select_option(select, value) {
  * @param {V} value
  */
 function select_options(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		// @ts-ignore
 		option.selected = ~value.indexOf(get_option_value(option));
 	}
@@ -897,20 +919,10 @@ export function selected(dom) {
 			}
 			select = select.parentNode;
 		}
-		if (select != null) {
-			// @ts-ignore
-			const select_value = select.__value;
-			// @ts-ignore
-			const option_value = dom.__value;
-			const selected = select_value === option_value;
-			dom.selected = selected;
-			dom.value = option_value;
-			// Handle the edge case of new options being added to a select when its state is "nothing selected"
-			// and keeping the selection state in sync (the DOM auto-selects the first option on insert)
-			// @ts-ignore
-			if (select.__value === null) {
-				/** @type {HTMLSelectElement} */ (select).value = '';
-			}
+		// @ts-ignore
+		if (select != null && dom.__value === select.__value) {
+			// never set to false, since this causes browser to select default option
+			dom.selected = true;
 		}
 	});
 }
@@ -949,7 +961,7 @@ export function bind_value(dom, get_value, update) {
  * @returns {void}
  */
 export function bind_select_value(dom, get_value, update) {
-	let mounted = false;
+	let mounting = true;
 	dom.addEventListener('change', () => {
 		/** @type {unknown} */
 		let value;
@@ -964,40 +976,19 @@ export function bind_select_value(dom, get_value, update) {
 	});
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
-		const value = get_value();
-		if (value == null && !mounted) {
+		let value = get_value();
+		select_option(dom, value, mounting);
+		if (mounting && value === undefined) {
 			/** @type {HTMLOptionElement | null} */
-			let selected_option = value === undefined ? dom.querySelector(':checked') : null;
-			if (selected_option === null) {
-				dom.value = '';
-				// @ts-ignore
-				dom.__value = null;
+			let selected_option = dom.querySelector(':checked');
+			if (selected_option !== null) {
+				value = get_option_value(selected_option);
+				update(value);
 			}
-			const options = dom.querySelectorAll('option');
-			for (const option of options) {
-				if (get_option_value(option) === value || option.hasAttribute('selected')) {
-					if (option.disabled) {
-						option.value = '';
-					}
-					option.selected = true;
-					selected_option = option;
-					break;
-				}
-			}
-			if (selected_option != null) {
-				const non_null_value = get_option_value(selected_option);
-				update(non_null_value);
-				if (selected_option.hasAttribute('selected')) {
-					selected_option.removeAttribute('selected');
-					selected_option.selected = true;
-				}
-			}
-		} else {
-			select_option(dom, value);
-			// @ts-ignore
-			dom.__value = value;
 		}
-		mounted = true;
+		// @ts-ignore
+		dom.__value = value;
+		mounting = false;
 	});
 }
 
@@ -1235,14 +1226,21 @@ export function bind_prop(props, prop, value) {
 /**
  * @param {Element} element_or_component
  * @param {(value: unknown) => void} update
+ * @param {import('./types.js').MaybeSignal} binding
  * @returns {void}
  */
-export function bind_this(element_or_component, update) {
+export function bind_this(element_or_component, update, binding) {
 	untrack(() => {
 		update(element_or_component);
 		render_effect(() => () => {
-			untrack(() => {
-				update(null);
+			// Defer to the next tick so that all updates can be reconciled first.
+			// This solves the case where one variable is shared across multiple this-bindings.
+			render_effect(() => {
+				untrack(() => {
+					if (!is_signal(binding) || binding.v === element_or_component) {
+						update(null);
+					}
+				});
 			});
 		});
 	});
@@ -2534,6 +2532,7 @@ export function attr(dom, attribute, value) {
 			// (we can't just compare the strings as they can be different between client and server but result in the
 			// same url, so we would need to create hidden anchor elements to compare them)
 			attribute !== 'src' &&
+			attribute !== 'href' &&
 			attribute !== 'srcset')
 	) {
 		if (value === null) {
@@ -2552,7 +2551,7 @@ let src_url_equal_anchor;
  * @param {string} url
  * @returns {boolean}
  */
-export function src_url_equal(element_src, url) {
+function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
@@ -2568,13 +2567,13 @@ function split_srcset(srcset) {
 }
 
 /**
- * @param {HTMLSourceElement | HTMLImageElement} element_srcset
+ * @param {HTMLSourceElement | HTMLImageElement} element
  * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
-export function srcset_url_equal(element_srcset, srcset) {
-	const element_urls = split_srcset(element_srcset.srcset);
-	const urls = split_srcset(srcset || '');
+export function srcset_url_equal(element, srcset) {
+	const element_urls = split_srcset(element.srcset);
+	const urls = split_srcset(srcset ?? '');
 
 	return (
 		urls.length === element_urls.length &&
@@ -2597,22 +2596,20 @@ export function srcset_url_equal(element_srcset, srcset) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (current_hydration_fragment !== null && (attribute === 'src' || attribute === 'srcset')) {
-		if (
-			(attribute === 'src' && !src_url_equal(dom.getAttribute('src') || '', value || '')) ||
-			(attribute === 'srcset' &&
-				!srcset_url_equal(/** @type {HTMLImageElement | HTMLSourceElement} */ (dom), value || ''))
-		) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'Detected a src/srcset attribute value change during hydration. This will not be repaired during hydration, ' +
-					'the src/srcset value that came from the server will be used. Related element:',
-				dom,
-				' Differing value:',
-				value
-			);
-		}
-	}
+	if (!current_hydration_fragment) return;
+	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
+
+	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
+	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
+
+	// eslint-disable-next-line no-console
+	console.error(
+		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
+			`the ${attribute} value that came from the server will be used. Related element:`,
+		dom,
+		' Differing value:',
+		value
+	);
 }
 
 /**
@@ -2705,10 +2702,11 @@ function get_setters(element) {
  * @param {Element & ElementCSSInlineStyle} dom
  * @param {Record<string, unknown> | null} prev
  * @param {Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
  * @param {string} css_hash
  * @returns {Record<string, unknown>}
  */
-export function spread_attributes(dom, prev, attrs, css_hash) {
+export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_hash) {
 	const next = Object.assign({}, ...attrs);
 	const has_hash = css_hash.length !== 0;
 	for (const key in prev) {
@@ -2727,13 +2725,13 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 		let value = next[key];
 		if (value === prev?.[key]) continue;
 
-		const prefix = key.slice(0, 2);
+		const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 		if (prefix === '$$') continue;
 
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
 			const opts = {};
-			let event_name = key.slice(2).toLowerCase();
+			let event_name = key.slice(2);
 			const delegated = DelegatedEvents.includes(event_name);
 
 			if (
@@ -2765,25 +2763,33 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
 			dom.value = dom[key] = dom.__value = value;
-		} else if (setters.includes(key)) {
-			if (DEV) {
-				check_src_in_dev_hydration(dom, key, value);
-			}
-			if (
-				current_hydration_fragment === null ||
-				//  @ts-ignore see attr method for an explanation of src/srcset
-				(dom[key] !== value && key !== 'src' && key !== 'srcset')
-			) {
-				// @ts-ignore
-				dom[key] = value;
-			}
-		} else if (typeof value !== 'function') {
-			if (has_hash && key === 'class') {
-				if (value) value += ' ';
-				value += css_hash;
+		} else {
+			let name = key;
+			if (lowercase_attributes) {
+				name = name.toLowerCase();
+				name = AttributeAliases[name] || name;
 			}
 
-			attr(dom, key, value);
+			if (setters.includes(name)) {
+				if (DEV) {
+					check_src_in_dev_hydration(dom, name, value);
+				}
+				if (
+					current_hydration_fragment === null ||
+					//  @ts-ignore see attr method for an explanation of src/srcset
+					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
+				) {
+					// @ts-ignore
+					dom[name] = value;
+				}
+			} else if (typeof value !== 'function') {
+				if (has_hash && name === 'class') {
+					if (value) value += ' ';
+					value += css_hash;
+				}
+
+				attr(dom, name, value);
+			}
 		}
 	}
 	return next;
@@ -2814,6 +2820,7 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			/** @type {Element & ElementCSSInlineStyle} */ (node),
 			prev,
 			attrs,
+			node.namespaceURI !== 'http://www.w3.org/2000/svg',
 			css_hash
 		);
 	}
@@ -2907,7 +2914,7 @@ export function unwrap(value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -3026,7 +3033,7 @@ export function createRoot(component, options) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {typeof import('../../main/public.js').SvelteComponent<Props, Events>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
@@ -3162,13 +3169,18 @@ export function sanitize_slots(props) {
 }
 
 /**
- * @param {() => void} create_snippet
+ * @param {() => Function} get_snippet
+ * @param {Node} node
+ * @param {() => any} args
  * @returns {void}
  */
-export function snippet_effect(create_snippet) {
+export function snippet_effect(get_snippet, node, args) {
 	const block = create_snippet_block();
 	render_effect(() => {
-		create_snippet();
+		// Only rerender when the snippet function itself changes,
+		// not when an eagerly-read prop inside the snippet function changes
+		const snippet = get_snippet();
+		untrack(() => snippet(node, args));
 		return () => {
 			if (block.d !== null) {
 				remove(block.d);

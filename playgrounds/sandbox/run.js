@@ -34,21 +34,10 @@ for (const generate of ['client', 'server']) {
 		const input = `${cwd}/input/${file}`;
 		const source = fs.readFileSync(input, 'utf-8');
 
-		const compiled = compile(source, {
-			filename: input,
-			generate,
-			runes: argv.runes
-		});
-
 		const output_js = `${cwd}/output/${generate}/${file}.js`;
 		const output_css = `${cwd}/output/${generate}/${file}.css`;
 
 		mkdirp(path.dirname(output_js));
-
-		fs.writeFileSync(output_js, compiled.js.code);
-		if (compiled.css) {
-			fs.writeFileSync(output_css, compiled.css.code);
-		}
 
 		if (generate === 'client') {
 			const ast = parse(source, {
@@ -56,6 +45,17 @@ for (const generate of ['client', 'server']) {
 			});
 
 			fs.writeFileSync(`${cwd}/output/${file}.json`, JSON.stringify(ast, null, '\t'));
+		}
+
+		const compiled = compile(source, {
+			filename: input,
+			generate,
+			runes: argv.runes
+		});
+
+		fs.writeFileSync(output_js, compiled.js.code);
+		if (compiled.css) {
+			fs.writeFileSync(output_css, compiled.css.code);
 		}
 	}
 

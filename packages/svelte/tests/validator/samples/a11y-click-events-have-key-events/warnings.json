@@ -1,7 +1,7 @@
 [
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 13,
 			"column": 0
@@ -13,7 +13,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 15,
 			"column": 0
@@ -25,7 +25,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 18,
 			"column": 0
@@ -37,7 +37,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 20,
 			"column": 0
@@ -49,7 +49,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 22,
 			"column": 0
@@ -61,7 +61,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 24,
 			"column": 0
@@ -73,7 +73,7 @@
 	},
 	{
 		"code": "a11y-click-events-have-key-events",
-		"message": "A11y: visible, non-interactive elements with an on:click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
 		"start": {
 			"line": 26,
 			"column": 0
@@ -81,6 +81,18 @@
 		"end": {
 			"line": 26,
 			"column": 26
+		}
+	},
+	{
+		"code": "a11y-click-events-have-key-events",
+		"message": "A11y: visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as <button type=\"button\"> or <a> might be more appropriate. See https://svelte.dev/docs/accessibility-warnings#a11y-click-events-have-key-events for more details.",
+		"start": {
+			"line": 28,
+			"column": 0
+		},
+		"end": {
+			"line": 28,
+			"column": 25
 		}
 	}
 ]

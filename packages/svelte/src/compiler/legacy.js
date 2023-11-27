@@ -209,6 +209,33 @@ export function convert(source, ast) {
 				};
 			},
 			// @ts-ignore
+			ConstTag(node) {
+				if (
+					/** @type {import('./types/legacy-nodes.js').LegacyConstTag} */ (node).expression !==
+					undefined
+				) {
+					return node;
+				}
+
+				const modern_node = /** @type {import('#compiler').ConstTag} */ (node);
+				const { id: left } = { ...modern_node.declaration.declarations[0] };
+				// @ts-ignore
+				delete left.typeAnnotation;
+				return {
+					type: 'ConstTag',
+					start: modern_node.start,
+					end: node.end,
+					expression: {
+						type: 'AssignmentExpression',
+						start: (modern_node.declaration.start ?? 0) + 'const '.length,
+						end: modern_node.declaration.end ?? 0,
+						operator: '=',
+						left,
+						right: modern_node.declaration.declarations[0].init
+					}
+				};
+			},
+			// @ts-ignore
 			KeyBlock(node, { visit }) {
 				remove_surrounding_whitespace_nodes(node.fragment.nodes);
 				return {

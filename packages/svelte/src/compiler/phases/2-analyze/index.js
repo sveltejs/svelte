@@ -5,7 +5,6 @@ import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
 	extract_paths,
-	get_callee_name,
 	is_event_attribute,
 	is_text_attribute,
 	object
@@ -175,7 +174,7 @@ function get_delegated_event(node, context) {
 			// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
 			((!context.state.analysis.runes && binding.kind === 'each') ||
 				// or any normal not reactive bindings that are mutated.
-				(binding.kind === 'normal' && context.state.analysis.runes) ||
+				binding.kind === 'normal' ||
 				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
 				(binding.kind === 'state' && binding.declaration_kind === 'import')) &&
 			binding.mutated
@@ -201,21 +200,25 @@ export function analyze_module(ast, options) {
 		}
 	}
 
+	/** @type {import('../types').RawWarning[]} */
+	const warnings = [];
+
+	const analysis = {
+		warnings
+	};
+
 	walk(
 		/** @type {import('estree').Node} */ (ast),
-		{ scope },
+		{ scope, analysis },
 		// @ts-expect-error TODO clean this mess up
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
-
-	/** @type {import('../types').RawWarning[]} */
-	const warnings = [];
 
 	// If we are in runes mode, then check for possible misuses of state runes
 	for (const [, scope] of scopes) {
 		for (const [name, binding] of scope.declarations) {
 			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+				warn(warnings, binding.node, [], 'state-not-mutated', name);
 			}
 		}
 	}
@@ -264,11 +267,7 @@ export function analyze_component(root, options) {
 			!Runes.includes(name) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
-				!Runes.includes(
-					/** @type {string} */ (
-						get_callee_name(/** @type {import('estree').Expression} */ (declaration.initial))
-					)
-				) &&
+				get_rune(declaration.initial, instance.scope) === null &&
 				// allow `import { derived } from 'svelte/store'` in the same file as `const x = $derived(..)` because one is not a subscription to the other
 				!(
 					name === '$derived' &&
@@ -280,7 +279,11 @@ export function analyze_component(root, options) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					error(references[0].node, 'illegal-global', name);
 				} else if (declaration !== null && Runes.includes(name)) {
-					warn(warnings, declaration.node, [], 'store-with-rune-name', store_name);
+					for (const { node, path } of references) {
+						if (path.at(-1)?.type === 'CallExpression') {
+							warn(warnings, node, [], 'store-with-rune-name', store_name);
+						}
+					}
 				}
 			}
 
@@ -298,6 +301,8 @@ export function analyze_component(root, options) {
 
 			const binding = instance.scope.declare(b.id(name), 'store_sub', 'synthetic');
 			binding.references = references;
+			instance.scope.references.set(name, references);
+			module.scope.references.delete(name);
 		}
 	}
 
@@ -372,7 +377,7 @@ export function analyze_component(root, options) {
 		for (const [, scope] of instance.scopes) {
 			for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+					warn(warnings, binding.node, [], 'state-not-mutated', name);
 				}
 			}
 		}
@@ -407,6 +412,30 @@ export function analyze_component(root, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	// warn on any nonstate declarations that are a) mutated and b) referenced in the template
+	for (const scope of [module.scope, instance.scope]) {
+		outer: for (const [name, binding] of scope.declarations) {
+			if (binding.kind === 'normal' && binding.mutated) {
+				for (const { path } of binding.references) {
+					if (path[0].type !== 'Fragment') continue;
+					for (let i = 1; i < path.length; i += 1) {
+						const type = path[i].type;
+						if (
+							type === 'FunctionDeclaration' ||
+							type === 'FunctionExpression' ||
+							type === 'ArrowFunctionExpression'
+						) {
+							continue;
+						}
+					}
+
+					warn(warnings, binding.node, [], 'non-state-reference', name);
+					continue outer;
+				}
+			}
+		}
 	}
 
 	analysis.stylesheet.validate(analysis);
@@ -608,7 +637,7 @@ const legacy_scope_tweaker = {
 	}
 };
 
-/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope }>} */
+/** @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, { scope: Scope, analysis: { warnings: import('../types').RawWarning[] } }>} */
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;

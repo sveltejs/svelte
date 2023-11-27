@@ -135,7 +135,7 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = declarator.init;
 			const rune = get_rune(init, state.scope);
-			if (!rune) {
+			if (!rune || rune === '$effect.active') {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -291,5 +291,14 @@ export const javascript_visitors_runes = {
 		}
 
 		context.next();
+	},
+	CallExpression(node, { state, next }) {
+		const rune = get_rune(node, state.scope);
+
+		if (rune === '$effect.active') {
+			return b.call('$.effect_active');
+		}
+
+		next();
 	}
 };
