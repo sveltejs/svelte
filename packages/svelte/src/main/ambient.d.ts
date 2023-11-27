@@ -132,7 +132,7 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Deeply tracks and `console.log`s any values passed to the rune. Example:
+ * Logs the arguments whenever they, or the properties they contain, change. Example:
  *
  * ```ts
  * $log(someValue, someOtherValue)
@@ -144,8 +144,7 @@ declare function $log(): void;
 
 declare namespace $log {
 	/**
-	 * Deeply tracks and `console.log`s any values passed to the rune and pauses execution with
-	 * a debugger break point.
+	 * Pauses execution with a `debugger` break point whenever the arguments, or the properties they contain, change. Example:
 	 *
 	 * ```ts
 	 * $log.break(someValue, someOtherValue)
@@ -158,8 +157,7 @@ declare namespace $log {
 	export { break_fn as break };
 
 	/**
-	 * Deeply tracks and `console.log`s any values passed to the rune and also traces the call-sites
-	 * where state gets mutated. Example:
+	 * Logs the arguments whenever they change, along with the line of code that initiated the change. Example:
 	 *
 	 * ```ts
 	 * $log.trace(someValue, someOtherValue)
