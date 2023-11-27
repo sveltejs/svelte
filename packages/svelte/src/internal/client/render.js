@@ -2532,6 +2532,7 @@ export function attr(dom, attribute, value) {
 			// (we can't just compare the strings as they can be different between client and server but result in the
 			// same url, so we would need to create hidden anchor elements to compare them)
 			attribute !== 'src' &&
+			attribute !== 'href' &&
 			attribute !== 'srcset')
 	) {
 		if (value === null) {
@@ -2550,7 +2551,7 @@ let src_url_equal_anchor;
  * @param {string} url
  * @returns {boolean}
  */
-export function src_url_equal(element_src, url) {
+function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
 	if (!src_url_equal_anchor) {
 		src_url_equal_anchor = document.createElement('a');
@@ -2566,13 +2567,13 @@ function split_srcset(srcset) {
 }
 
 /**
- * @param {HTMLSourceElement | HTMLImageElement} element_srcset
+ * @param {HTMLSourceElement | HTMLImageElement} element
  * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
-export function srcset_url_equal(element_srcset, srcset) {
-	const element_urls = split_srcset(element_srcset.srcset);
-	const urls = split_srcset(srcset || '');
+export function srcset_url_equal(element, srcset) {
+	const element_urls = split_srcset(element.srcset);
+	const urls = split_srcset(srcset ?? '');
 
 	return (
 		urls.length === element_urls.length &&
@@ -2595,22 +2596,20 @@ export function srcset_url_equal(element_srcset, srcset) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (current_hydration_fragment !== null && (attribute === 'src' || attribute === 'srcset')) {
-		if (
-			(attribute === 'src' && !src_url_equal(dom.getAttribute('src') || '', value || '')) ||
-			(attribute === 'srcset' &&
-				!srcset_url_equal(/** @type {HTMLImageElement | HTMLSourceElement} */ (dom), value || ''))
-		) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'Detected a src/srcset attribute value change during hydration. This will not be repaired during hydration, ' +
-					'the src/srcset value that came from the server will be used. Related element:',
-				dom,
-				' Differing value:',
-				value
-			);
-		}
-	}
+	if (!current_hydration_fragment) return;
+	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
+
+	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
+	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
+
+	// eslint-disable-next-line no-console
+	console.error(
+		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
+			`the ${attribute} value that came from the server will be used. Related element:`,
+		dom,
+		' Differing value:',
+		value
+	);
 }
 
 /**
@@ -2778,7 +2777,7 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 				if (
 					current_hydration_fragment === null ||
 					//  @ts-ignore see attr method for an explanation of src/srcset
-					(dom[name] !== value && name !== 'src' && name !== 'srcset')
+					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
 				) {
 					// @ts-ignore
 					dom[name] = value;
