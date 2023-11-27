@@ -659,6 +659,14 @@ const runes_scope_js_tweaker = {
 
 /** @type {import('./types').Visitors} */
 const runes_scope_tweaker = {
+	CallExpression(node, { state, next }) {
+		const rune = get_rune(node, state.scope);
+
+		// `$log(foo)` should not trigger the `static-state-reference` warning
+		if (rune?.startsWith('$log')) {
+			next({ ...state, function_depth: state.function_depth + 1 });
+		}
+	},
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
 		if (get_rune(node.init, state.scope) === null) return;
