@@ -175,13 +175,13 @@ export class Scope {
 
 		references.push({ node, path });
 
-		const declaration = this.declarations.get(node.name);
-		if (declaration) {
-			declaration.references.push({ node, path });
+		const binding = this.declarations.get(node.name);
+		if (binding) {
+			binding.references.push({ node, path });
 		} else if (this.#parent) {
 			this.#parent.reference(node, path);
 		} else {
-			// no declaration was found, and this is the top level scope,
+			// no binding was found, and this is the top level scope,
 			// which means this is a global
 			this.root.conflicts.add(node.name);
 		}

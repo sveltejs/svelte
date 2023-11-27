@@ -218,7 +218,7 @@ export function analyze_module(ast, options) {
 	for (const [, scope] of scopes) {
 		for (const [name, binding] of scope.declarations) {
 			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+				warn(warnings, binding.node, [], 'state-not-mutated', name);
 			}
 		}
 	}
@@ -377,7 +377,7 @@ export function analyze_component(root, options) {
 		for (const [, scope] of instance.scopes) {
 			for (const [name, binding] of scope.declarations) {
 				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-rune-not-mutated', name);
+					warn(warnings, binding.node, [], 'state-not-mutated', name);
 				}
 			}
 		}
@@ -412,6 +412,30 @@ export function analyze_component(root, options) {
 		}
 
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
+	}
+
+	// warn on any nonstate declarations that are a) mutated and b) referenced in the template
+	for (const scope of [module.scope, instance.scope]) {
+		outer: for (const [name, binding] of scope.declarations) {
+			if (binding.kind === 'normal' && binding.mutated) {
+				for (const { path } of binding.references) {
+					if (path[0].type !== 'Fragment') continue;
+					for (let i = 1; i < path.length; i += 1) {
+						const type = path[i].type;
+						if (
+							type === 'FunctionDeclaration' ||
+							type === 'FunctionExpression' ||
+							type === 'ArrowFunctionExpression'
+						) {
+							continue;
+						}
+					}
+
+					warn(warnings, binding.node, [], 'non-state-reference', name);
+					continue outer;
+				}
+			}
+		}
 	}
 
 	analysis.stylesheet.validate(analysis);
