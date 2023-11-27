@@ -9,7 +9,7 @@ import {
 } from '../patterns.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
-import { is_text_attribute } from '../../utils/ast.js';
+import { is_event_attribute, is_text_attribute } from '../../utils/ast.js';
 import { ContentEditableBindings } from '../constants.js';
 import { walk } from 'zimmerframe';
 
@@ -704,10 +704,14 @@ function check_element(node, state, path) {
 		} else if (attribute.type === 'OnDirective') {
 			handlers.add(attribute.name);
 		} else if (attribute.type === 'Attribute') {
-			attributes.push(attribute);
-			attribute_map.set(attribute.name, attribute);
-			if (attribute.name === 'contenteditable') {
-				has_contenteditable_attr = true;
+			if (is_event_attribute(attribute)) {
+				handlers.add(attribute.name.slice(2));
+			} else {
+				attributes.push(attribute);
+				attribute_map.set(attribute.name, attribute);
+				if (attribute.name === 'contenteditable') {
+					has_contenteditable_attr = true;
+				}
 			}
 		} else if (
 			attribute.type === 'BindDirective' &&
