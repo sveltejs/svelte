@@ -837,7 +837,7 @@ function attach_trace(signal) {
 				// Chromium-based browsers don't do source mapping based on whether an Error object is handed to them,
 				// they purely do pattern matching on the stack trace string. This leads us to unfortunately needing to
 				// have "Error" as part of the name even if it's not really one.
-				error.stack = `ExpectedError: ($log.trace)\n${error.stack?.split('\n')?.at(3)}`;
+				error.stack = `ExpectedError: $log.trace\n${error.stack?.split('\n')?.at(3)}`;
 			} else {
 				// For once, Safari and Firefox do it better
 				error.name = '$log.trace';
