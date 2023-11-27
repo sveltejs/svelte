@@ -313,9 +313,8 @@ This works just like `$log`, but triggers `console.table` instead of `console.lo
 
 ## `$log.trace`
 
-This works just like `$log`, but in addition to logging the values, it will also trace
-any mutations to fine-grain reactive state and log the sourcecode location to help find
-the cause for something changing.
+This works just like `$log`, but in addition to logging the values themselves it will pinpoint the
+line of code that triggered the update.
 
 ```svelte
 <script>
