@@ -172,7 +172,7 @@ export default class Selector {
 	validate_invalid_combinator_without_selector(analysis) {
 		for (let i = 0; i < this.blocks.length; i++) {
 			const block = this.blocks[i];
-			if (block.selectors.length === 0) {
+			if (block.selectors.length === 0 && !block.nested) {
 				error(this.node, 'invalid-css-selector');
 			}
 		}

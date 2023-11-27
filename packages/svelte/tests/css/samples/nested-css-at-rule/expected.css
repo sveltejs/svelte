@@ -1,0 +1,12 @@
+button.svelte-xyz {
+    color: red;
+
+    @media (max-width: 500px) {
+        color: blue;
+        .xyz.svelte-xyz {
+            color: yellow;
+        }
+    }
+
+    color: black;
+}

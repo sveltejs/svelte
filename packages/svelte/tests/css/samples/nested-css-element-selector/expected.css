@@ -1,0 +1,7 @@
+div.svelte-xyz {
+    color: red;
+
+    button.svelte-xyz {
+        color: yellow;
+    }
+}

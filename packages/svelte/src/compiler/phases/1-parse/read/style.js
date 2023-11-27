@@ -10,6 +10,7 @@ const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
+const REGEX_SEMICOLON_OR_OPEN_BRACE_OR_CLOSE_BRACE = /[;{}]/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
 const REGEX_HTML_COMMENT_CLOSE = /-->/;
@@ -84,36 +85,23 @@ function read_at_rule(parser) {
 	let block = null;
 
 	if (parser.match('{')) {
-		// if the parser could easily distinguish between rules and declarations, this wouldn't be necessary.
-		// but this approach is much simpler. in future, when we support CSS nesting, the parser _will_ need
-		// to be able to distinguish between them, but since we'll also need other changes to support that
-		// this remains a TODO
-		const contains_declarations = [
-			'color-profile',
-			'counter-style',
-			'font-face',
-			'font-palette-values',
-			'page',
-			'property'
-		].includes(name);
+		// // if the parser could easily distinguish between rules and declarations, this wouldn't be necessary.
+		// // but this approach is much simpler. in future, when we support CSS nesting, the parser _will_ need
+		// // to be able to distinguish between them, but since we'll also need other changes to support that
+		// // this remains a TODO
+		// const contains_declarations = [
+		// 	'color-profile',
+		// 	'counter-style',
+		// 	'font-face',
+		// 	'font-palette-values',
+		// 	'page',
+		// 	'property'
+		// ].includes(name);
 
-		if (contains_declarations) {
-			block = read_block(parser);
-		} else {
-			const start = parser.index;
-
-			parser.eat('{', true);
-			const children = read_body(parser, '}');
-			parser.eat('}', true);
-
-			block = {
-				type: 'Block',
-				start,
-				end: parser.index,
-				children
-			};
-		}
+		// eg: `@media (max-width: 600px) { ... }`
+		block = read_block(parser);
 	} else {
+		// eg: `@import 'foo';`
 		parser.eat(';', true);
 	}
 
@@ -129,15 +117,14 @@ function read_at_rule(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {boolean} nested Whether this rule is nested inside another rule
  * @returns {import('#compiler').Css.Rule}
  */
-function read_rule(parser, nested = false) {
+function read_rule(parser) {
 	const start = parser.index;
 
 	return {
 		type: 'Rule',
-		prelude: read_selector_list(parser, nested),
+		prelude: read_selector_list(parser),
 		block: read_block(parser),
 		start,
 		end: parser.index
@@ -146,17 +133,16 @@ function read_rule(parser, nested = false) {
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {boolean} nested Whether this selector list is nested inside another rule
  * @returns {import('#compiler').Css.SelectorList}
  */
-function read_selector_list(parser, nested) {
+function read_selector_list(parser) {
 	/** @type {import('#compiler').Css.Selector[]} */
 	const children = [];
 
 	const start = parser.index;
 
 	while (parser.index < parser.template.length) {
-		children.push(read_selector(parser, nested));
+		children.push(read_selector(parser));
 
 		const end = parser.index;
 
@@ -180,10 +166,9 @@ function read_selector_list(parser, nested) {
 
 /**
  * @param {import('../index.js').Parser} parser
- * @param {boolean} nested Whether this selector is nested inside another rule
  * @returns {import('#compiler').Css.Selector}
  */
-function read_selector(parser, nested) {
+function read_selector(parser) {
 	const list_start = parser.index;
 
 	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator | import('#compiler').Css.NestingSelector>} */
@@ -192,7 +177,7 @@ function read_selector(parser, nested) {
 	while (parser.index < parser.template.length) {
 		const start = parser.index;
 
-		if (nested && parser.eat('&')){
+		if (parser.eat('&')){
 			children.push({
 				type: 'NestedSelector',
 				name: '&',
@@ -338,7 +323,7 @@ function read_block(parser) {
 
 	parser.eat('{', true);
 
-	/** @type {Array<import('#compiler').Css.Declaration | import('#compiler').Css.Rule>} */
+	/** @type {Array<import('#compiler').Css.Declaration | import('#compiler').Css.Rule | import('#compiler').Css.Atrule>} */
 	const children = [];
 
 	while (parser.index < parser.template.length) {
@@ -347,7 +332,7 @@ function read_block(parser) {
 		if (parser.match('}')) {
 			break;
 		} else {
-			children.push(read_declaration_or_rule(parser));
+			children.push(read_block_item(parser));
 		}
 	}
 
@@ -391,24 +376,28 @@ function read_declaration(parser) {
 }
 
 /**
+ * Reads a declaration, rule or at-rule
+ *
  * @param {import('../index.js').Parser} parser
- * @returns {import('#compiler').Css.Declaration | import('#compiler').Css.Rule}
+ * @returns {import('#compiler').Css.Declaration | import('#compiler').Css.Rule | import('#compiler').Css.Atrule}
  */
-function read_declaration_or_rule(parser) {
-	// We need to know if this is a rule or a declaration
-	// so we'll attempt to read an identifier first
-	// if we can't, we'll assume it's a rule
-	// This needs to change when we support type (element) selectors
-	// due to complexities with https://bugs.chromium.org/p/chromium/issues/detail?id=1427259
-	const start = parser.index;
-	const is_ident = !!parser.read(REGEX_VALID_IDENTIFIER_CHAR);
-
-	parser.index = start;
-
-	if (!is_ident) {
-		return read_rule(parser, true);
+function read_block_item(parser) {
+	if (parser.match('@')) {
+		return read_at_rule(parser);
 	}
 
+	const start = parser.index;
+	parser.read_until(REGEX_SEMICOLON_OR_OPEN_BRACE_OR_CLOSE_BRACE);
+
+	// if we've run into a '{', it's a rule, otherwise we ran into
+	// a ';' or '}' so it's a declaration
+	if (parser.match('{')) {
+		// Rewind to the start of the rule
+		parser.index = start;
+		return read_rule(parser);
+	}
+	// Rewind to the start of the declaration
+	parser.index = start;
 	return read_declaration(parser);
 }
 
