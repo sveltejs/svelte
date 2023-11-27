@@ -1080,8 +1080,9 @@ const template_visitors = {
 		state.template.push(t_expression(id));
 	},
 	ConstTag(node, { state, visit }) {
-		const pattern = /** @type {import('estree').Pattern} */ (visit(node.expression.left));
-		const init = /** @type {import('estree').Expression} */ (visit(node.expression.right));
+		const declaration = node.declaration.declarations[0];
+		const pattern = /** @type {import('estree').Pattern} */ (visit(declaration.id));
+		const init = /** @type {import('estree').Expression} */ (visit(declaration.init));
 		state.init.push(b.declaration('const', pattern, init));
 	},
 	DebugTag(node, { state, visit }) {

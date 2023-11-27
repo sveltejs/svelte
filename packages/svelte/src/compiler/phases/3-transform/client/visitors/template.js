@@ -1653,19 +1653,20 @@ export const template_visitors = {
 		);
 	},
 	ConstTag(node, { state, visit }) {
+		const declaration = node.declaration.declarations[0];
 		// TODO we can almost certainly share some code with $derived(...)
-		if (node.expression.left.type === 'Identifier') {
+		if (declaration.id.type === 'Identifier') {
 			state.init.push(
 				b.const(
-					node.expression.left,
+					declaration.id,
 					b.call(
 						'$.derived',
-						b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression.right)))
+						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
 			);
 		} else {
-			const identifiers = extract_identifiers(node.expression.left);
+			const identifiers = extract_identifiers(declaration.id);
 			const tmp = b.id(state.scope.generate('computed_const'));
 
 			// Make all identifiers that are declared within the following computed regular
@@ -1681,8 +1682,8 @@ export const template_visitors = {
 				[],
 				b.block([
 					b.const(
-						/** @type {import('estree').Pattern} */ (visit(node.expression.left)),
-						/** @type {import('estree').Expression} */ (visit(node.expression.right))
+						/** @type {import('estree').Pattern} */ (visit(declaration.id)),
+						/** @type {import('estree').Expression} */ (visit(declaration.init))
 					),
 					b.return(b.object(identifiers.map((node) => b.prop('init', node, node))))
 				])
