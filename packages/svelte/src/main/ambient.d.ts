@@ -90,6 +90,34 @@ declare namespace $effect {
 	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-active
 	 */
 	export function active(): boolean;
+
+	/**
+	 * The `$effect.root` rune is an advanced feature that creates a non-tracked scope that doesn't auto-cleanup. This is useful for
+	 * nested effects that you want to manually control. This rune also allows for creation of effects outside of the component
+	 * initialisation phase.
+	 *
+	 * Example:
+	 * ```svelte
+	 * <script>
+	 *   let count = $state(0);
+	 *
+	 *   const cleanup = $effect.root(() => {
+	 *	    $effect(() => {
+	 *				console.log(count);
+	 *			})
+	 *
+	 *      return () => {
+	 *        console.log('effect root cleanup');
+	 * 			}
+	 *   });
+	 * </script>
+	 *
+	 * <button onclick={() => cleanup()}>cleanup</button>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$effect-root
+	 */
+	export function root(fn: () => void | (() => void)): () => void;
 }
 
 /**

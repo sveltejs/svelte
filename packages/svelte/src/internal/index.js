@@ -36,7 +36,8 @@ export {
 	pop,
 	push,
 	reactive_import,
-	effect_active
+	effect_active,
+	user_root_effect
 } from './client/runtime.js';
 
 export * from './client/validate.js';

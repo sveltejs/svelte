@@ -1186,6 +1186,17 @@ export function user_effect(init) {
 
 /**
  * @param {() => void | (() => void)} init
+ * @returns {() => void}
+ */
+export function user_root_effect(init) {
+	const effect = managed_render_effect(init);
+	return () => {
+		destroy_signal(effect);
+	};
+}
+
+/**
+ * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
 export function effect(init) {

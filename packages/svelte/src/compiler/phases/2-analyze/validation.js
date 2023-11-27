@@ -519,6 +519,12 @@ function validate_call_expression(node, scope, path) {
 			error(node, 'invalid-rune-args-length', '$effect.active', [0]);
 		}
 	}
+
+	if (rune === '$effect.root') {
+		if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', '$effect.root', [1]);
+		}
+	}
 }
 
 /**
