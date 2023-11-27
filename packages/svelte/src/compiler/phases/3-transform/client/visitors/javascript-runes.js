@@ -302,49 +302,25 @@ export const javascript_visitors_runes = {
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
 		}
-		if (rune === '$log') {
-			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
-
-				return b.call('$.log', b.thunk(b.array(args)));
-			}
-			return b.unary('void', b.literal(0));
-		}
-		if (rune === '$log.trace') {
-			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
-				return b.call('$.log_trace', b.thunk(b.array(args)));
-			}
-			return b.unary('void', b.literal(0));
-		}
-		if (rune === '$log.break') {
-			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
-				return b.call('$.log_break', b.thunk(b.array(args)));
-			}
-			return b.unary('void', b.literal(0));
-		}
-		if (rune === '$log.table') {
-			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
-				return b.call('$.log_table', b.thunk(b.array(args)));
-			}
-			return b.unary('void', b.literal(0));
-		}
 
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
 				node.arguments.map((arg) => visit(arg))
 			);
 			return b.call('$.user_root_effect', ...args);
+		}
+
+		if (rune?.startsWith('$log')) {
+			if (state.options.dev) {
+				const args = /** @type {import('estree').Expression[]} */ (
+					node.arguments.map((arg) => visit(arg))
+				);
+
+				const callee = rune === '$log' ? '$.log' : `$.log_${rune.slice(5)}`;
+				return b.call(callee, b.thunk(b.array(args)));
+			}
+
+			return b.unary('void', b.literal(0));
 		}
 
 		next();
