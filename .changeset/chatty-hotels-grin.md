@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: adds $log rune
+feat: add $log rune

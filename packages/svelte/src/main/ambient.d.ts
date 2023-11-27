@@ -168,7 +168,7 @@ declare namespace $log {
 	export function trace(): void;
 
 	/**
-	 * Deeply tracks and `console.table`s any values passed to the rune. Example:
+	 * Logs the arguments with `console.table` whenever they change. Example:
 	 *
 	 * ```ts
 	 * $log.table(someDataCollection)
