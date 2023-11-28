@@ -5,10 +5,10 @@ import * as assert from '../../utils/assert.js';
 import {
 	extract_identifiers,
 	extract_paths,
-	get_call_expression,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_ts_expression
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -661,8 +661,8 @@ const runes_scope_js_tweaker = {
 /** @type {import('./types').Visitors} */
 const runes_scope_tweaker = {
 	VariableDeclarator(node, { state }) {
-		const init = get_call_expression(node);
-		if (init === null) return;
+		const init = unwrap_ts_expression(node.init);
+		if (!init || init.type !== 'CallExpression') return;
 		if (get_rune(init, state.scope) === null) return;
 
 		const callee = init.callee;

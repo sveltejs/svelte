@@ -267,23 +267,6 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 }
 
 /**
- * If the init of the declarator is a call expression, returns it.
- *
- * @param {import('estree').VariableDeclarator} node
- */
-export function get_call_expression(node) {
-	let init = node.init;
-	if (init) {
-		init = unwrap_ts_expression(init);
-		if (init.type === 'CallExpression') {
-			return init;
-		}
-	}
-
-	return null;
-}
-
-/**
  * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
  * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
  *
