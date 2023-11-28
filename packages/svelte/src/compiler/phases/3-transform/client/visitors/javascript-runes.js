@@ -3,6 +3,7 @@ import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { create_state_declarators, get_props_method } from '../utils.js';
+import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -133,7 +134,7 @@ export const javascript_visitors_runes = {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const init = declarator.init;
+			const init = unwrap_ts_expression(declarator.init);
 			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active' || rune === '$effect.root') {
 				if (init != null && is_hoistable_function(init)) {
@@ -208,7 +209,8 @@ export const javascript_visitors_runes = {
 				// TODO
 				continue;
 			}
-			const args = /** @type {import('estree').CallExpression} */ (declarator.init).arguments;
+
+			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 			const value =
 				args.length === 0
 					? b.id('undefined')

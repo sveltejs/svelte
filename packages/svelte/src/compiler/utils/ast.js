@@ -265,3 +265,56 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
 
 	return assignments;
 }
+
+/**
+ * If the init of the declarator is a call expression, returns it.
+ *
+ * @param {import('estree').VariableDeclarator} node
+ */
+export function get_call_expression(node) {
+	let init = node.init;
+	if (init) {
+		init = unwrap_ts_expression(init);
+		if (init.type === 'CallExpression') {
+			return init;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
+ * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
+ *
+ * @template {import('#compiler').SvelteNode | undefined | null} T
+ * @param {T} node
+ * @returns {T}
+ */
+export function unwrap_ts_expression(node) {
+	if (!node) {
+		return node;
+	}
+
+	// @ts-expect-error these types don't exist on the base estree types
+	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
+		// @ts-expect-error
+		return node.expression;
+	}
+
+	return node;
+}
+
+/**
+ * @template {import('#compiler').SvelteNode} T
+ * @param {T[]} path
+ * @param {number} at
+ */
+export function get_parent(path, at) {
+	let node = path.at(at);
+	// @ts-expect-error
+	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
+		return /** @type {T} */ (path.at(at < 0 ? at - 1 : at + 1));
+	}
+	return /** @type {T} */ (node);
+}
