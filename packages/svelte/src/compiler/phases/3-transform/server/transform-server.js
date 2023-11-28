@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	unwrap_ts_expression
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -568,7 +573,8 @@ const javascript_visitors_runes = {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
-			const rune = get_rune(declarator.init, state.scope);
+			const init = unwrap_ts_expression(declarator.init);
+			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
@@ -579,7 +585,7 @@ const javascript_visitors_runes = {
 				continue;
 			}
 
-			const args = /** @type {import('estree').CallExpression} */ (declarator.init).arguments;
+			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 			const value =
 				args.length === 0
 					? b.id('undefined')
