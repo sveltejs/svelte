@@ -887,9 +887,9 @@ export function mutate(source, update) {
  * @template V
  */
 export function mutate_store(store, get_value, update) {
-	var updated = update(untrack(get_value));
-	// mutation could result in a new store being tracked, therefore call get_value again
-	store.set(untrack(get_value));
+	const value = untrack(get_value);
+	var updated = update(value);
+	store.set(value);
 	return updated;
 }
 
