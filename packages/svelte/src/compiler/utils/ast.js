@@ -306,6 +306,9 @@ export function unwrap_ts_expression(node) {
 }
 
 /**
+ * Like `path.at(x)`, but skips over `TSNonNullExpression` and `TSAsExpression` nodes and eases assertions a bit
+ * by removing the `| undefined` from the resulting type.
+ *
  * @template {import('#compiler').SvelteNode} T
  * @param {T[]} path
  * @param {number} at
