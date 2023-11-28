@@ -1831,14 +1831,12 @@ function deep_read(value) {
  * @returns {void}
  */
 export function log(get_values) {
-	if (DEV) {
-		pre_effect(() => {
-			const values = get_values();
-			deep_read(values);
-			// eslint-disable-next-line no-console
-			console.log(...values);
-		});
-	}
+	pre_effect(() => {
+		const values = get_values();
+		deep_read(values);
+		// eslint-disable-next-line no-console
+		console.log(...values);
+	});
 }
 
 /**
@@ -1846,14 +1844,12 @@ export function log(get_values) {
  * @returns {void}
  */
 export function log_table(get_values) {
-	if (DEV) {
-		pre_effect(() => {
-			const values = get_values();
-			deep_read(values);
-			// eslint-disable-next-line no-console
-			console.table(...values);
-		});
-	}
+	pre_effect(() => {
+		const values = get_values();
+		deep_read(values);
+		// eslint-disable-next-line no-console
+		console.table(...values);
+	});
 }
 
 /**
@@ -1862,10 +1858,31 @@ export function log_table(get_values) {
  * @returns {void}
  */
 export function log_break(get_values, break_fn) {
-	if (DEV) {
-		let initial = true;
+	let initial = true;
 
-		pre_effect(() => {
+	pre_effect(() => {
+		const values = get_values();
+		deep_read(values);
+
+		if (initial) {
+			initial = false;
+			return;
+		}
+
+		break_fn(...values);
+	});
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @returns {void}
+ */
+export function log_trace(get_values) {
+	let initial = true;
+
+	pre_effect(() => {
+		is_tracing_signals = true;
+		try {
 			const values = get_values();
 			deep_read(values);
 
@@ -1874,35 +1891,10 @@ export function log_break(get_values, break_fn) {
 				return;
 			}
 
-			break_fn(...values);
-		});
-	}
-}
-
-/**
- * @param {() => import('./types.js').MaybeSignal<>[]} get_values
- * @returns {void}
- */
-export function log_trace(get_values) {
-	if (DEV) {
-		let initial = true;
-
-		pre_effect(() => {
-			is_tracing_signals = true;
-			try {
-				const values = get_values();
-				deep_read(values);
-
-				if (initial) {
-					initial = false;
-					return;
-				}
-
-				// eslint-disable-next-line no-console
-				console.log(...values);
-			} finally {
-				is_tracing_signals = false;
-			}
-		});
-	}
+			// eslint-disable-next-line no-console
+			console.log(...values);
+		} finally {
+			is_tracing_signals = false;
+		}
+	});
 }
