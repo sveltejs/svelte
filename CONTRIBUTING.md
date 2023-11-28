@@ -113,6 +113,8 @@ Test samples are kept in `/test/xxx/samples` folder.
    pnpm test validator -- -t a11y-alt-text
    ```
 
+   (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)
+
 ##### Updating `.expected` files
 
 1. Tests suites like `snapshot` and `parser` assert that the generated output matches the existing snapshot.
