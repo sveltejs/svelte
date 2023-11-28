@@ -56,3 +56,5 @@ export {
 } from './client/operations.js';
 
 export { raf } from './client/timing.js';
+
+export { magic } from './client/magic.js';
