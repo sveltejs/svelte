@@ -27,6 +27,8 @@ function object(value) {
 	const sources = new Map();
 	let version = source(0);
 
+	const is_array = Array.isArray(value);
+
 	return new Proxy(value, {
 		get(target, prop, receiver) {
 			let s = sources.get(prop);
@@ -49,6 +51,13 @@ function object(value) {
 		set(target, prop, value) {
 			const s = sources.get(prop);
 			if (s) set(s, magic(value));
+
+			if (is_array && prop === 'length') {
+				for (let i = value; i < target.length; i += 1) {
+					const s = sources.get(i + '');
+					if (s) set(s, undefined);
+				}
+			}
 
 			if (!(prop in target)) increment(version);
 			target[prop] = value;
