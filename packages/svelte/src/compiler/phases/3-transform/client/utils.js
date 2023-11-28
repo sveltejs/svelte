@@ -205,27 +205,31 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call('$.set', b.id(left_name), value);
 			}
 		} else {
+			const left = /** @type {import('estree').MemberExpression} */ (visit(node.left));
+			// When reading the object that's mutated we need to untrack that read in order
+			// to avoid infinite loops. $.mutate(_store) does that by accepting a callback
+			// function it hands the value to. For this, we need to adjust the code to
+			// reference that passed value instead of reading the object again.
+			let id = left;
+			while (id.type === 'MemberExpression') {
+				if (id.object.type !== 'MemberExpression') {
+					id.object = b.id('$$to_mutate');
+					break;
+				} else {
+					id = id.object;
+				}
+			}
+			const update = b.arrow([b.id('$$to_mutate')], b.assignment(node.operator, left, value));
+
 			if (is_store) {
 				return b.call(
 					'$.mutate_store',
 					serialize_get_binding(b.id(left_name), state),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					),
-					b.call('$' + left_name)
+					b.id('$' + left_name),
+					update
 				);
 			} else {
-				return b.call(
-					'$.mutate',
-					b.id(left_name),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					)
-				);
+				return b.call('$.mutate', b.id(left_name), update);
 			}
 		}
 	};

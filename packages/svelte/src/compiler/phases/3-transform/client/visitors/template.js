@@ -206,13 +206,7 @@ function collect_transitive_dependencies(binding, seen = new Set()) {
  * @param {import('../types.js').ComponentContext} context
  */
 function setup_select_synchronization(value_binding, context) {
-	let bound = value_binding.expression;
-	while (bound.type === 'MemberExpression') {
-		bound = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
-			bound.object
-		);
-	}
-
+	const bound = /** @type {import('estree').Identifier} */ (object(value_binding.expression));
 	/** @type {string[]} */
 	const names = [];
 

@@ -1,5 +1,5 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
+import { extract_identifiers, is_text_attribute, object } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
@@ -248,12 +248,8 @@ export const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		let left = node.expression;
-		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
-		}
-
-		if (left.type !== 'Identifier') {
+		const left = object(node.expression);
+		if (left === null) {
 			error(node, 'invalid-binding-expression');
 		}
 

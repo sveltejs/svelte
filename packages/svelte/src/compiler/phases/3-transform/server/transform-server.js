@@ -1,6 +1,11 @@
 import { walk } from 'zimmerframe';
 import { set_scope, get_rune } from '../../scope.js';
-import { extract_identifiers, extract_paths, is_event_attribute } from '../../../utils/ast.js';
+import {
+	extract_identifiers,
+	extract_paths,
+	is_event_attribute,
+	object
+} from '../../../utils/ast.js';
 import * as b from '../../../utils/builders.js';
 import is_reference from 'is-reference';
 import {
@@ -417,14 +422,8 @@ function serialize_set_binding(node, context, fallback) {
 		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
 	}
 
-	let left = node.left;
-
-	while (left.type === 'MemberExpression') {
-		// @ts-expect-error
-		left = left.object;
-	}
-
-	if (left.type !== 'Identifier') {
+	const left = object(node.left);
+	if (left === null) {
 		return fallback();
 	}
 

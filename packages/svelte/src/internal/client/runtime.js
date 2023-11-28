@@ -862,7 +862,7 @@ export function invalidate_inner_signals(fn) {
 	}
 	let signal;
 	for (signal of captured_signals) {
-		mutate(signal, null /* doesnt matter */);
+		mutate(signal, () => {} /* doesnt matter */);
 	}
 	return captured_signals;
 }
@@ -870,26 +870,27 @@ export function invalidate_inner_signals(fn) {
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} source
- * @param {V} value
+ * @param {(v: V) => any} update
  */
-export function mutate(source, value) {
-	set_signal_value(
-		source,
-		untrack(() => get(source))
-	);
-	return value;
+export function mutate(source, update) {
+	var value = untrack(() => get(source));
+	var updated = update(value);
+	set_signal_value(source, value);
+	return updated;
 }
 
 /**
  * Updates a store with a new value.
  * @param {import('./types.js').Store<V>} store  the store to update
- * @param {any} expression  the expression that mutates the store
- * @param {V} new_value  the new store value
+ * @param {() => V} get_value  function to retrieve the current store value
+ * @param {(v: V) => any} update  the expression that mutates the store
  * @template V
  */
-export function mutate_store(store, expression, new_value) {
-	store.set(new_value);
-	return expression;
+export function mutate_store(store, get_value, update) {
+	var updated = update(untrack(get_value));
+	// mutation could result in a new store being tracked, therefore call get_value again
+	store.set(untrack(get_value));
+	return updated;
 }
 
 /**
