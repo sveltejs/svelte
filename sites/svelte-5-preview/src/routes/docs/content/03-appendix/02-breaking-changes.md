@@ -20,6 +20,8 @@ export default app;
 
 `createRoot` returns an object with a `$set` and `$destroy` method on it. It does not come with an `$on` method you may know from the class component API. Instead, pass them via the `events` property on the options argument. If you don't need to interact with the component instance after creating it, you can use `mount` instead, which saves some bytes.
 
+> Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
+
 As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API after instantiating. If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
 
 ### Server API changes
