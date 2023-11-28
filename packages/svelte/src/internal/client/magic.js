@@ -1,5 +1,7 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
 
+const symbol = Symbol('magic');
+
 /**
  * @template T
  * @param {T} value
@@ -7,10 +9,6 @@ import { effect_active, get, set, increment, source } from './runtime.js';
  */
 export function magic(value) {
 	if (value && typeof value === 'object') {
-		if (Array.isArray(value)) {
-			// TODO
-		}
-
 		return object(value);
 	}
 
@@ -23,6 +21,8 @@ export function magic(value) {
  * @returns {T}
  */
 function object(value) {
+	if (symbol in value) return value;
+
 	/** @type {Map<string | symbol, any>} */
 	const sources = new Map();
 	let version = source(0);
@@ -36,7 +36,7 @@ function object(value) {
 				sources.set(prop, s);
 			}
 
-			let value = s ? get(s) : target[prop];
+			const value = s ? get(s) : target[prop];
 
 			if (typeof value === 'function') {
 				return (...args) => {
@@ -64,6 +64,8 @@ function object(value) {
 			return delete target[prop];
 		},
 		has(target, prop) {
+			if (prop === symbol) return true;
+
 			get(version);
 			return Reflect.has(target, prop);
 		},
