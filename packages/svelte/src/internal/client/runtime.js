@@ -1800,12 +1800,14 @@ export function pop(accessors) {
 
 /**
  * @param {any} value
+ * @param {Set<any>} visited
  * @returns {void}
  */
-function deep_read(value) {
-	if (typeof value === 'object' && value !== null) {
+function deep_read(value, visited = new Set()) {
+	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		visited.add(value);
 		for (let key in value) {
-			deep_read(value[key]);
+			deep_read(value[key], visited);
 		}
 		const proto = Object.getPrototypeOf(value);
 		if (
