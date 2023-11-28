@@ -64,6 +64,10 @@ export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEve
 // ----------------------------------------------------------------------
 
 export interface DOMAttributes<T extends EventTarget> {
+	// Implicit children prop every element has
+	// Add this here so that libraries doing `$props<HTMLButtonAttributes>()` don't need a separate interface
+	children?: import('svelte').Snippet<any>;
+
 	// Clipboard Events
 	'on:copy'?: ClipboardEventHandler<T> | undefined | null;
 	oncopy?: ClipboardEventHandler<T> | undefined | null;
