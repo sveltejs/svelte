@@ -2215,8 +2215,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			}
+			const length = array.length;
 			if (fallback_fn !== null) {
-				if (array.length === 0) {
+				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
 						create_fallback_effect();
 					}
