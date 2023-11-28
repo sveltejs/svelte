@@ -22,47 +22,7 @@ You may view [our roadmap](https://svelte.dev/roadmap) if you'd like to see what
 
 ## Contributing
 
-Please see the [Contributing Guide](CONTRIBUTING.md) and [svelte package](packages/svelte) for contributing to Svelte.
-
-### Development
-
-Pull requests are encouraged and always welcome. [Pick an issue](https://github.com/sveltejs/svelte/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc) and help us out!
-
-To install and work on Svelte locally:
-
-```bash
-git clone https://github.com/sveltejs/svelte.git
-cd svelte
-pnpm install
-```
-
-> Do not use Yarn to install the dependencies, as the specific package versions in `pnpm-lock.json` are used to build and test Svelte.
-
-To build the compiler and all the other modules included in the package:
-
-```bash
-pnpm build
-```
-
-To watch for changes and continually rebuild the package (this is useful if you're using [`pnpm link`](https://pnpm.io/cli/link) to test out changes in a project locally):
-
-```bash
-pnpm dev
-```
-
-The compiler is written in JavaScript and uses [JSDoc](https://jsdoc.app/index.html) comments for type-checking.
-
-### Running Tests
-
-```bash
-pnpm test
-```
-
-To filter tests, use `-g` (aka `--grep`). For example, to only run tests involving transitions:
-
-```bash
-pnpm test -- -g transition
-```
+Please see the [Contributing Guide](CONTRIBUTING.md) and the [`svelte`](packages/svelte) package for information on contributing to Svelte.
 
 ### svelte.dev
 

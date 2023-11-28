@@ -91,7 +91,7 @@
   ],
   "scripts": {
     "build": "rollup -c && node scripts/build.js && node scripts/check-treeshakeability.js",
-    "watch": "rollup -cw",
+    "dev": "rollup -cw",
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
