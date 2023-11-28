@@ -9,16 +9,22 @@ While Svelte 5 is a complete rewrite, we have done our best to ensure that most 
 In Svelte 3 and 4, components are classes. In Svelte 5 they are functions and should be instantiated differently. If you need to manually instantiate components, you should use `mount` or `createRoot` (imported from `svelte`) instead. If you see this error using SvelteKit, try updating to the latest version of SvelteKit first, which adds support for Svelte 5. If you're using Svelte without SvelteKit, you'll likely have a `main.js` file (or similar) which you need to adjust:
 
 ```diff
-+ import { mount } from 'svelte';
++ import { createRoot } from 'svelte';
 import App from './App.svelte'
 
 - const app = new App({ target: document.getElementById("app") });
-+ const app = mount(App, { target: document.getElementById("app") });
++ const app = createRoot(App, { target: document.getElementById("app") });
 
 export default app;
 ```
 
+`createRoot` returns an object with a `$set` and `$destroy` method on it. It does not come with an `$on` method you may know from the class component API. Instead, pass them via the `events` property on the options argument. If you don't need to interact with the component instance after creating it, you can use `mount` instead, which saves some bytes.
+
+> Note that using `events` is discouraged — instead, [use callbacks](https://svelte-5-preview.vercel.app/docs/event-handlers)
+
 As a stop-gap-solution, you can also use `createClassComponent` or `asClassComponent` (imported from `svelte/legacy`) instead to keep the same API after instantiating. If this component is not under your control, you can use the `legacy.componentApi` compiler option for auto-applied backwards compatibility (note that this adds a bit of overhead to each component).
+
+### Server API changes
 
 Similarly, components no longer have a `render` method when compiled for server side rendering. Instead, pass the function to `render` from `svelte/server`:
 
@@ -31,6 +37,10 @@ import App from './App.svelte';
 ```
 
 `render` also no longer returns CSS; it should be served separately from a CSS file.
+
+### bind:this changes
+
+Because components are no longer classes, using `bind:this` no longer returns a class instance with `$set`, `$on` and `$destroy` methods on it. It only returns the instance exports (`export function/const`) and, if you're using the `accessors` option, a getter/setter-pair for each property.
 
 ## Whitespace handling changed
 
