@@ -1858,9 +1858,10 @@ export function log_table(get_values) {
 
 /**
  * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @param {(...value: any) => void} break_fn
  * @returns {void}
  */
-export function log_break(get_values) {
+export function log_break(get_values, break_fn) {
 	if (DEV) {
 		let initial = true;
 
@@ -1873,10 +1874,7 @@ export function log_break(get_values) {
 				return;
 			}
 
-			// eslint-disable-next-line no-console
-			console.log(...values);
-			// eslint-disable-next-line no-debugger
-			debugger;
+			break_fn(...values);
 		});
 	}
 }

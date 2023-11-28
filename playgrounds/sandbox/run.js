@@ -48,6 +48,7 @@ for (const generate of ['client', 'server']) {
 		}
 
 		const compiled = compile(source, {
+			dev: true,
 			filename: input,
 			generate,
 			runes: argv.runes

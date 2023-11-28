@@ -316,6 +316,16 @@ export const javascript_visitors_runes = {
 					node.arguments.map((arg) => visit(arg))
 				);
 
+				if (rune === '$log.break') {
+					return b.call(
+						'$.log_break',
+						b.thunk(b.array(args)),
+						b.arrow(
+							[b.rest(b.id('values'))],
+							b.block([b.stmt(b.call('console.log', b.spread(b.id('values')))), b.debugger])
+						)
+					);
+				}
 				const callee = rune === '$log' ? '$.log' : `$.log_${rune.slice(5)}`;
 				return b.call(callee, b.thunk(b.array(args)));
 			}
