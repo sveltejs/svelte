@@ -107,10 +107,10 @@ Test samples are kept in `/test/xxx/samples` folder.
    pnpm test validator
    ```
 
-1. To run an individual test _within_ a test suite, use `FILTER=<test-name> pnpm test <suite-name>`, for example:
+1. To run an individual test _within_ a test suite, use `pnpm test <suite-name> -- -t <test-name>`, for example:
 
    ```bash
-   FILTER=a11y-alt-text pnpm test validator
+   pnpm test validator -- -t a11y-alt-text
    ```
 
 ##### Updating `.expected` files
