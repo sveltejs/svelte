@@ -887,7 +887,7 @@ export function mutate(source, update) {
  * @template V
  */
 export function mutate_store(store, get_value, update) {
-	const value = untrack(get_value);
+	var value = untrack(get_value);
 	var updated = update(value);
 	store.set(value);
 	return updated;
