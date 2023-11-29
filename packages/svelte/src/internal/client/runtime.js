@@ -1794,28 +1794,22 @@ function deep_read(value, visited = new Set()) {
 }
 
 /**
- * @param {() => import('./types.js').MaybeSignal<>[]} get_values
+ * @param {() => import('./types.js').MaybeSignal<>} get_value
+ * @param {Function} inspect
  * @returns {void}
  */
-export function inspect(get_values) {
+export function inspect(get_value, inspect = console.log) {
 	let initial = true;
 
 	pre_effect(() => {
 		const fn = () => {
-			const values = get_values();
-
-			if (typeof values.at(-1) === 'function') {
-				const inspect = /** @type {Function} */ (values[values.length - 1]);
-				inspect(!initial, ...values.slice(0, -1));
-			} else {
-				// eslint-disable-next-line no-console
-				console.log(...values);
-			}
+			const value = get_value();
+			inspect(value, initial ? 'init' : 'update');
 		};
 
 		inspect_fn = fn;
-		const values = get_values();
-		deep_read(values);
+		const value = get_value();
+		deep_read(value);
 		inspect_fn = null;
 
 		const signals = inspect_captured_signals.slice();

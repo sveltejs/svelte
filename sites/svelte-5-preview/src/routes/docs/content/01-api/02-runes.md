@@ -243,8 +243,8 @@ Note that you can still use `export const` and `export function` to expose thing
 
 ## `$inspect`
 
-The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever the
-arguments change. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
+The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever its
+argument changes. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
 or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire.
 
 ```svelte
@@ -259,15 +259,15 @@ or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cau
 <input bind:value={message} />
 ```
 
-If the last argument is a function, it will be invoked instead of `console.log`. The first argument is `changed` —
-`false` when it initially runs, `true` thereafter — followed by the current values:
+If a callback is also provided, it will be invoked instead of `console.log`. The first argument to the callback
+is the current value. The second is either `"init"` or `"update"`.
 
 ```svelte
 <script>
 	let count = $state(0);
 
-	$inspect(count, (changed, count) => {
-		if (changed) {
+	$inspect(count, (count, type) => {
+		if (type === 'update') {
 			// or `console.trace`, or whatever you want. This makes it
 			// easy to find what caused the state to update
 			debugger;

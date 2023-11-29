@@ -521,13 +521,19 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$effect.active') {
 		if (node.arguments.length !== 0) {
-			error(node, 'invalid-rune-args-length', '$effect.active', [0]);
+			error(node, 'invalid-rune-args-length', rune, [0]);
 		}
 	}
 
 	if (rune === '$effect.root') {
 		if (node.arguments.length !== 1) {
-			error(node, 'invalid-rune-args-length', '$effect.root', [1]);
+			error(node, 'invalid-rune-args-length', rune, [1]);
+		}
+	}
+
+	if (rune === '$inspect') {
+		if (node.arguments.length < 1 || node.arguments.length > 2) {
+			error(node, 'invalid-rune-args-length', rune, [1, 2]);
 		}
 	}
 }

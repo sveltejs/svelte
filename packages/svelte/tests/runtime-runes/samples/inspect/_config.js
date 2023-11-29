@@ -29,6 +29,6 @@ export default test({
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(log, [0, 1]);
+		assert.deepEqual(log, [0, 'init', 1, 'update']);
 	}
 });

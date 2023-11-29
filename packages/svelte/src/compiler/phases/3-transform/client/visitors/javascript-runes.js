@@ -309,11 +309,12 @@ export const javascript_visitors_runes = {
 
 		if (rune === '$inspect') {
 			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
+				const arg = /** @type {import('estree').Expression} */ (visit(node.arguments[0]));
+				const fn =
+					node.arguments[1] &&
+					/** @type {import('estree').Expression} */ (visit(node.arguments[1]));
 
-				return b.call('$.inspect', b.thunk(b.array(args)));
+				return b.call('$.inspect', b.thunk(arg), fn);
 			}
 
 			return b.unary('void', b.literal(0));

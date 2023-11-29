@@ -2,8 +2,8 @@
 	let x = $state(0);
 	let y = $state(0);
 
-	$inspect(x, (changed, x) => {
-		if (changed) console.log(new Error(), x);
+	$inspect(x, (x, type) => {
+		if (type === 'update') console.log(new Error(), x);
 	});
 </script>
 
