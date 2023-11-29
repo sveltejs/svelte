@@ -1045,12 +1045,12 @@ export function set_signal_value(signal, value) {
 				});
 			}
 		}
-	}
 
-	// @ts-expect-error
-	if (DEV && signal.inspect) {
 		// @ts-expect-error
-		for (const fn of signal.inspect) fn();
+		if (DEV && signal.inspect) {
+			// @ts-expect-error
+			for (const fn of signal.inspect) fn();
+		}
 	}
 }
 
