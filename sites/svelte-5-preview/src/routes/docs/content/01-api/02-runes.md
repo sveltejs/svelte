@@ -278,6 +278,12 @@ is the current value. The second is either `"init"` or `"update"`.
 <button onclick={() => count++}>Increment</button>
 ```
 
+A convenient way to find the origin of some change is to pass `console.trace` as the second argument:
+
+```js
+$inspect(stuff, console.trace);
+```
+
 > `$inspect` only works during development.
 
 ## How to opt in
