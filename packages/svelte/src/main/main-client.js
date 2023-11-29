@@ -262,5 +262,5 @@ export {
 	tick,
 	untrack,
 	onDestroy,
-	magic
+	proxy
 } from '../internal/index.js';

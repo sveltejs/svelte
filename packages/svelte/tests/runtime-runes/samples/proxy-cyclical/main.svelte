@@ -1,7 +1,7 @@
 <script>
-	import { magic } from 'svelte';
+	import { proxy } from 'svelte';
 
-	const ping = magic({});
+	const ping = proxy({});
 	ping.pong = { ping, pang: 'hello!' };
 </script>
 

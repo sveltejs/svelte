@@ -13,7 +13,7 @@ import {
 	EACH_IS_PROXIED,
 	EACH_ITEM_REACTIVE
 } from '../../constants.js';
-import { STATE_SYMBOL } from './magic.js';
+import { STATE_SYMBOL } from './proxy.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;

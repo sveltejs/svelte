@@ -1,7 +1,7 @@
 <script>
-	import { magic } from 'svelte';
+	import { proxy } from 'svelte';
 
-	const object = magic({ count: 0 });
+	const object = proxy({ count: 0 });
 </script>
 
 <button onclick={() => object.count += 1}>

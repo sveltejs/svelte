@@ -1,6 +1,6 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
 
-/** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types').SourceSignal<any>>; v: import('./types').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
 export const STATE_SYMBOL = Symbol();
@@ -15,7 +15,7 @@ const get_prototype_of = Object.getPrototypeOf;
  * @param {T} value
  * @returns {T}
  */
-export function magic(value) {
+export function proxy(value) {
 	return wrap(value, null);
 }
 

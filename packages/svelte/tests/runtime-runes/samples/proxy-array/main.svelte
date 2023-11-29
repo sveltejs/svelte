@@ -1,7 +1,7 @@
 <script>
-	import { magic } from 'svelte';
+	import { proxy } from 'svelte';
 
-	const array = magic([1, 2, 3]);
+	const array = proxy([1, 2, 3]);
 	const sum = $derived(array.reduce((a, b) => a + b, 0));
 </script>
 

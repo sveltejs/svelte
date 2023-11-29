@@ -1,11 +1,11 @@
 <script>
-	import { magic } from 'svelte';
+	import { proxy } from 'svelte';
 
-	const inner = magic({
+	const inner = proxy({
 		count: 0
 	})
 
-	const object = magic({
+	const object = proxy({
 		outer: {
 			inner
 		}

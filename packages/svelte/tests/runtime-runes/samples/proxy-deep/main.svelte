@@ -1,7 +1,7 @@
 <script>
-	import { magic } from 'svelte';
+	import { proxy } from 'svelte';
 
-	const object = magic({
+	const object = proxy({
 		foo: {
 			bar: {
 				baz: 1
