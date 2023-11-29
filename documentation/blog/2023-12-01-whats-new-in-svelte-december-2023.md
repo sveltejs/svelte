@@ -30,6 +30,7 @@ For all the release notes going forward, check out [the CHANGELOG on main](https
 - The new `$effect.root` rune creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control (**5.0.0-next.14**, **Docs**, [#9638](https://github.com/sveltejs/svelte/pull/9638))
 - The latest version of language tools adds best-effort fallback typings to `$props()` rune (**extensions-108.1.0**)
 - Language tools better supports the `@render` tag by using the `Snippet` type (**extensions-108.0.0**)
+- The Svelte ESLint plugin has been updated to support the Svelte 5 preview ([v2.36.0-next.2](https://github.com/sveltejs/eslint-plugin-svelte/releases/tag/v2.36.0-next.2))
 
 For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
@@ -75,12 +76,15 @@ _To Read_
 - [Hands-On Experience: How to Build an eCommerce Store with SvelteKit?](https://crystallize.com/blog/building-ecommerce-with-sveltekit) by Bård Farstad
 - [Productive Dark Mode with SvelteKit, PostCSS, and TailwindCSS (Behind the Screen)](https://www.sveltevietnam.dev/en/blog/20231110-behind-the-screen-dark-mode-with-sveltekit-tailwindcss-and-postcss) by Quang Phan
 - [Setting up OAuth with Auth.js in a SvelteKit Project](https://mainmatter.com/blog/2023/11/23/setting-up-oauth-with-auth-js-and-sveltekit/) by Andrey Mikhaylov
+- [SvelteKit 🤝 Storybook](https://mainmatter.com/blog/2023/11/28/sveltekit-storybook/) by Paolo Ricciuti
+- [Integrate Storybook in Svelte: Doing it the Svelte-way](https://mainmatter.com/blog/2023/09/18/integrate-storybook-in-svelte-doing-it-the-svelte-way/) by Óscar Domínguez Celada
 - [Drizzle ORM with Sveltekit](https://medium.com/@anasmohammed361/drizzle-orm-with-sveltekit-8aecbc8cc39d) and [Sveltekit — Streaming SSR](https://medium.com/@anasmohammed361/sveltekit-streaming-ssr-40ce666daffa) by Mohammed Anas
 - [Svelte & WordPress Full Stack Course](https://www.udemy.com/course/svelte-wordpress-full-stack/) by Artneo Web Design on udemy
 - [Add a loading indicator to a Form Action in SvelteKit](https://snippets.khromov.se/add-a-loading-indicator-to-a-form-action-in-sveltekit/) by Useful Snippets (Stanislav Khromov)
 
 **Libraries, Tools & Components**
 
+- [sveltekit-view-transition](https://github.com/paoloricciuti/sveltekit-view-transition) provides a simplified `view-transition-api` for Sveltekit
 - [T18S](https://t18s.sigrist.dev/) aims to provide the best internationalization experience for SvelteKit, delivering typesafety, performance, and ease of use
 - [Svelte Flow](https://svelteflow.dev/) is a customizable Svelte component for building node-based editors and interactive diagrams
 - [Super Sitemap](https://github.com/jasongitmail/super-sitemap) is a SvelteKit sitemap focused on ease of use and making it impossible to forget to add your paths
