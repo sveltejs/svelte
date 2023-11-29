@@ -188,9 +188,7 @@ export function reconcile_indexed_array(
 	var active_transitions = each_block.s;
 
 	if (is_proxied_array) {
-		if ((flags & EACH_ITEM_REACTIVE) !== 0) {
-			flags ^= EACH_ITEM_REACTIVE;
-		}
+		flags &= ~EACH_ITEM_REACTIVE;
 		flags |= EACH_IS_PROXIED;
 	}
 
@@ -295,9 +293,7 @@ export function reconcile_tracked_array(
 	var active_transitions = each_block.s;
 
 	if (is_proxied_array) {
-		if ((flags & EACH_ITEM_REACTIVE) !== 0) {
-			flags ^= EACH_ITEM_REACTIVE;
-		}
+		flags &= ~EACH_ITEM_REACTIVE;
 		flags |= EACH_IS_PROXIED;
 	}
 
