@@ -136,12 +136,7 @@ export const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = unwrap_ts_expression(declarator.init);
 			const rune = get_rune(init, state.scope);
-			if (
-				!rune ||
-				rune === '$effect.active' ||
-				rune === '$effect.root' ||
-				rune.startsWith('$log')
-			) {
+			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
@@ -312,24 +307,13 @@ export const javascript_visitors_runes = {
 			return b.call('$.user_root_effect', ...args);
 		}
 
-		if (rune?.startsWith('$log')) {
+		if (rune === '$inspect') {
 			if (state.options.dev) {
 				const args = /** @type {import('estree').Expression[]} */ (
 					node.arguments.map((arg) => visit(arg))
 				);
 
-				if (rune === '$log.break') {
-					return b.call(
-						'$.log_break',
-						b.thunk(b.array(args)),
-						b.arrow(
-							[b.rest(b.id('values'))],
-							b.block([b.stmt(b.call('console.log', b.spread(b.id('values')))), b.debugger])
-						)
-					);
-				}
-				const callee = rune === '$log' ? '$.log' : `$.log_${rune.slice(5)}`;
-				return b.call(callee, b.thunk(b.array(args)));
+				return b.call('$.inspect', b.thunk(b.array(args)));
 			}
 
 			return b.unary('void', b.literal(0));

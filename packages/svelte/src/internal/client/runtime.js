@@ -825,46 +825,10 @@ export function get(signal) {
 /**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
- * @returns {void}
- */
-function attach_trace(signal) {
-	if (DEV && (signal.f & SOURCE) !== 0) {
-		let stack_debug = null;
-		try {
-			const error = new Error();
-			// Browser-sniffing: Chromium-based browsers have the "Error: .." line as part of the stack trace.
-			if (error.stack?.startsWith(`Error`)) {
-				// Chromium-based browsers don't do source mapping based on whether an Error object is handed to them,
-				// they purely do pattern matching on the stack trace string. This leads us to unfortunately needing to
-				// have "Error" as part of the name even if it's not really one.
-				error.stack = `ExpectedError: $log.trace\n${error.stack?.split('\n')?.at(3)}`;
-			} else {
-				// For once, Safari and Firefox do it better
-				error.name = '$log.trace';
-				error.stack = error.stack?.split('\n')?.at(2);
-			}
-			stack_debug = error;
-		} catch {
-			// Do nothing
-		}
-		if (stack_debug) {
-			const debug_source =
-				/** @type {import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug} */ (
-					signal
-				);
-			debug_source.d = stack_debug;
-		}
-	}
-}
-
-/**
- * @template V
- * @param {import('./types.js').Signal<V>} signal
  * @param {V} value
  * @returns {V}
  */
 export function set(signal, value) {
-	attach_trace(signal);
 	set_signal_value(signal, value);
 	return value;
 }
@@ -938,7 +902,6 @@ export function invalidate_inner_signals(fn) {
  * @param {V} value
  */
 export function mutate(source, value) {
-	attach_trace(source);
 	set_signal_value(
 		source,
 		untrack(() => get(source))
@@ -1625,7 +1588,6 @@ export function bubble_event($$props, event) {
  */
 export function increment(signal) {
 	const value = get(signal);
-	attach_trace(signal);
 	set_signal_value(signal, value + 1);
 	return value;
 }
@@ -1646,7 +1608,6 @@ export function increment_store(store, store_value) {
  */
 export function decrement(signal) {
 	const value = get(signal);
-	attach_trace(signal);
 	set_signal_value(signal, value - 1);
 	return value;
 }
@@ -1667,7 +1628,6 @@ export function decrement_store(store, store_value) {
  */
 export function increment_pre(signal) {
 	const value = get(signal) + 1;
-	attach_trace(signal);
 	set_signal_value(signal, value);
 	return value;
 }
@@ -1689,7 +1649,6 @@ export function increment_pre_store(store, store_value) {
  */
 export function decrement_pre(signal) {
 	const value = get(signal) - 1;
-	attach_trace(signal);
 	set_signal_value(signal, value);
 	return value;
 }
@@ -1832,71 +1791,11 @@ function deep_read(value, visited = new Set()) {
  * @param {() => import('./types.js').MaybeSignal<>[]} get_values
  * @returns {void}
  */
-export function log(get_values) {
+export function inspect(get_values) {
 	pre_effect(() => {
 		const values = get_values();
 		deep_read(values);
 		// eslint-disable-next-line no-console
 		console.log(...values);
-	});
-}
-
-/**
- * @param {() => import('./types.js').MaybeSignal<>[]} get_values
- * @returns {void}
- */
-export function log_table(get_values) {
-	pre_effect(() => {
-		const values = get_values();
-		deep_read(values);
-		// eslint-disable-next-line no-console
-		console.table(...values);
-	});
-}
-
-/**
- * @param {() => import('./types.js').MaybeSignal<>[]} get_values
- * @param {(...value: any) => void} break_fn
- * @returns {void}
- */
-export function log_break(get_values, break_fn) {
-	let initial = true;
-
-	pre_effect(() => {
-		const values = get_values();
-		deep_read(values);
-
-		if (initial) {
-			initial = false;
-			return;
-		}
-
-		break_fn(...values);
-	});
-}
-
-/**
- * @param {() => import('./types.js').MaybeSignal<>[]} get_values
- * @returns {void}
- */
-export function log_trace(get_values) {
-	let initial = true;
-
-	pre_effect(() => {
-		is_tracing_signals = true;
-		try {
-			const values = get_values();
-			deep_read(values);
-
-			if (initial) {
-				initial = false;
-				return;
-			}
-
-			// eslint-disable-next-line no-console
-			console.log(...values);
-		} finally {
-			is_tracing_signals = false;
-		}
 	});
 }

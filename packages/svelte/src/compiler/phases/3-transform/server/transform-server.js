@@ -575,7 +575,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = unwrap_ts_expression(declarator.init);
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active' || rune.startsWith('$log')) {
+			if (!rune || rune === '$effect.active' || rune === '$inspect') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -637,15 +637,13 @@ const javascript_visitors_runes = {
 			return b.literal(false);
 		}
 
-		if (rune?.startsWith('$log')) {
-			if ((rune === '$log' || rune === '$log.table') && state.options.dev) {
-				const callee = rune === '$log' ? 'console.log' : 'console.table';
-
+		if (rune === '$inspect') {
+			if (state.options.dev) {
 				const args = /** @type {import('estree').Expression[]} */ (
 					node.arguments.map((arg) => visit(arg))
 				);
 
-				return b.call(callee, ...args);
+				return b.call('console.log', ...args);
 			}
 
 			return b.unary('void', b.literal(0));

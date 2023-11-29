@@ -672,6 +672,7 @@ export function set_scope(scopes) {
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
  * @param {import('estree').Node | null | undefined} node
  * @param {Scope} scope
+ * @returns {Runes[number] | null}
  */
 export function get_rune(node, scope) {
 	if (!node) return null;
@@ -691,10 +692,10 @@ export function get_rune(node, scope) {
 	if (n.type !== 'Identifier') return null;
 
 	joined = n.name + joined;
-	if (!Runes.includes(joined)) return null;
+	if (!Runes.includes(/** @type {any} */ (joined))) return null;
 
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return joined;
+	return /** @type {Runes[number] | null} */ (joined);
 }

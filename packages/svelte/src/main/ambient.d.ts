@@ -135,46 +135,9 @@ declare function $props<T>(): T;
  * Logs the arguments whenever they, or the properties they contain, change. Example:
  *
  * ```ts
- * $log(someValue, someOtherValue)
+ * $inspect(someValue, someOtherValue)
  * ```
  *
- * https://svelte-5-preview.vercel.app/docs/runes#$log
+ * https://svelte-5-preview.vercel.app/docs/runes#$inspect
  */
-declare function $log(): void;
-
-declare namespace $log {
-	/**
-	 * Pauses execution with a `debugger` break point whenever the arguments, or the properties they contain, change. Example:
-	 *
-	 * ```ts
-	 * $log.break(someValue, someOtherValue)
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$log-break
-	 */
-	function break_fn(): void;
-
-	export { break_fn as break };
-
-	/**
-	 * Logs the arguments whenever they change, along with the line of code that initiated the change. Example:
-	 *
-	 * ```ts
-	 * $log.trace(someValue, someOtherValue)
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$log-trace
-	 */
-	export function trace(): void;
-
-	/**
-	 * Logs the arguments with `console.table` whenever they change. Example:
-	 *
-	 * ```ts
-	 * $log.table(someDataCollection)
-	 * ```
-	 *
-	 * https://svelte-5-preview.vercel.app/docs/runes#$log-table
-	 */
-	export function table(): void;
-}
+declare function $inspect(): void;

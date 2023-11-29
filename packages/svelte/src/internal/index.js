@@ -38,10 +38,7 @@ export {
 	reactive_import,
 	effect_active,
 	user_root_effect,
-	log,
-	log_trace,
-	log_break,
-	log_table
+	inspect
 } from './client/runtime.js';
 
 export * from './client/validate.js';
