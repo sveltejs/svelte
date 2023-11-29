@@ -5,6 +5,19 @@ import * as assert from '../../../../utils/assert.js';
 import { create_state_declarators, get_props_method } from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
+/** @param {import('estree').Expression} node */
+function should_proxy(node) {
+	if (
+		node.type === 'Literal' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression'
+	) {
+		return false;
+	}
+
+	return true;
+}
+
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
 	ClassBody(node, { state, visit }) {
@@ -84,7 +97,7 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', b.call('$.proxy', init))
+								? b.call('$.source', should_proxy(init) ? b.call('$.proxy', init) : init)
 								: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
@@ -219,7 +232,12 @@ export const javascript_visitors_runes = {
 
 			if (declarator.id.type === 'Identifier') {
 				const callee = rune === '$state' ? '$.source' : '$.derived';
-				const arg = rune === '$state' ? b.call('$.proxy', value) : b.thunk(value);
+				const arg =
+					rune === '$state'
+						? should_proxy(value)
+							? b.call('$.proxy', value)
+							: value
+						: b.thunk(value);
 				declarations.push(b.declarator(declarator.id, b.call(callee, arg, opts)));
 				continue;
 			}
