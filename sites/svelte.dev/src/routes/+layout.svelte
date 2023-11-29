@@ -35,7 +35,6 @@
 	<Shell
 		nav_visible={$page.url.pathname !== '/repl/embed'}
 		bind:snapshot={shell_snapshot}
-		banner_bottom_height="42px"
 	>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
@@ -72,10 +71,6 @@
 		</Nav>
 
 		<slot />
-
-		<div slot="banner-bottom" class="banner-bottom">
-			<a href="https://www.sveltesummit.com/2023/fall" class="banner-bottom">Join us at Svelte Summit on Nov 11</a>
-		</div>
 	</Shell>
 </div>
 
@@ -91,13 +86,5 @@
 	:global(html, body) {
 		height: 100%;
 		width: 100%;
-	}
-
-	.banner-bottom {
-		text-align: center;
-		background: var(--sk-theme-1-variant);
-		color: white;
-		text-decoration: underline;
-		padding: 8px;
 	}
 </style>
