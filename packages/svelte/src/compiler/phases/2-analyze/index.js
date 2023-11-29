@@ -215,15 +215,6 @@ export function analyze_module(ast, options) {
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
 
-	// If we are in runes mode, then check for possible misuses of state runes
-	for (const [, scope] of scopes) {
-		for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-not-mutated', name);
-			}
-		}
-	}
-
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
@@ -375,15 +366,6 @@ export function analyze_component(root, options) {
 				state,
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
-		}
-
-		// If we are in runes mode, then check for possible misuses of state runes
-		for (const [, scope] of instance.scopes) {
-			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-not-mutated', name);
-				}
-			}
 		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
