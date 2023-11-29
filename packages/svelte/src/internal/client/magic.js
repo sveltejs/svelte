@@ -1,17 +1,17 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
 
-/** @typedef {{ p: MagicObject | null; s: Map<string | symbol, import('./types').SourceSignal<any>>; v: import('./types').SourceSignal<number>; a: boolean }} Magic */
-/** @typedef {Record<string | symbol, any> & { [MAGIC_SYMBOL]: Magic }} MagicObject */
+/** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types').SourceSignal<any>>; v: import('./types').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
-export const MAGIC_SYMBOL = Symbol();
-export const MAGIC_EACH_SYMBOL = Symbol();
+export const STATE_SYMBOL = Symbol();
+export const STATE_EACH_SYMBOL = Symbol();
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
 const get_prototype_of = Object.getPrototypeOf;
 
 /**
- * @template {MagicObject} T
+ * @template {StateObject} T
  * @param {T} value
  * @returns {T}
  */
@@ -20,33 +20,51 @@ export function magic(value) {
 }
 
 /**
- * @template {MagicObject} T
- * @template {MagicObject} P
+ * @template {StateObject} T
+ * @template {StateObject} P
  * @param {T} value
  * @param {P | null} parent
  * @returns {T}
  */
 function wrap(value, parent) {
-	if (value && typeof value === 'object') {
+	if (value && typeof value === 'object' && !(STATE_SYMBOL in value)) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
-			return proxy(value, parent);
+			// @ts-expect-error
+			value[STATE_SYMBOL] = init(value, parent);
+
+			// @ts-expect-error not sure how to fix this
+			return new Proxy(value, handler);
 		}
 	}
 
 	return value;
 }
 
-/** @type {ProxyHandler<MagicObject>} */
+/**
+ * @param {StateObject} value
+ * @param {StateObject | null} parent
+ * @returns {Metadata}
+ */
+function init(value, parent) {
+	return {
+		p: parent,
+		s: new Map(),
+		v: source(0),
+		a: Array.isArray(value)
+	};
+}
+
+/** @type {ProxyHandler<StateObject>} */
 const handler = {
 	get(target, prop, receiver) {
-		if (prop === MAGIC_EACH_SYMBOL) {
+		if (prop === STATE_EACH_SYMBOL) {
 			return parent;
 		}
 
-		const metadata = target[MAGIC_SYMBOL];
+		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
 		// if we're reading a property in a reactive context, create a source,
@@ -59,7 +77,7 @@ const handler = {
 		return s !== undefined ? get(s) : target[prop];
 	},
 	set(target, prop, value) {
-		const metadata = target[MAGIC_SYMBOL];
+		const metadata = target[STATE_SYMBOL];
 
 		const s = metadata.s.get(prop);
 		if (s !== undefined) set(s, wrap(value, target));
@@ -78,7 +96,7 @@ const handler = {
 		return true;
 	},
 	deleteProperty(target, prop) {
-		const metadata = target[MAGIC_SYMBOL];
+		const metadata = target[STATE_SYMBOL];
 
 		const s = metadata.s.get(prop);
 		if (s !== undefined) set(s, undefined);
@@ -88,48 +106,17 @@ const handler = {
 		return delete target[prop];
 	},
 	has(target, prop) {
-		if (prop === MAGIC_SYMBOL) return true;
+		if (prop === STATE_SYMBOL) return true;
 
-		const metadata = target[MAGIC_SYMBOL];
+		const metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);
 		return Reflect.has(target, prop);
 	},
 	ownKeys(target) {
-		const metadata = target[MAGIC_SYMBOL];
+		const metadata = target[STATE_SYMBOL];
 
 		get(metadata.v);
 		return Reflect.ownKeys(target);
 	}
 };
-
-/**
- * @template {MagicObject} T
- * @template {MagicObject} P
- * @param {T} value
- * @param {P | null} parent
- * @returns {T}
- */
-function proxy(value, parent) {
-	if (MAGIC_SYMBOL in value) return value;
-
-	// @ts-expect-error
-	value[MAGIC_SYMBOL] = init(value, parent);
-
-	// @ts-expect-error not sure how to fix this
-	return new Proxy(value, handler);
-}
-
-/**
- * @param {MagicObject} value
- * @param {MagicObject | null} parent
- * @returns {Magic}
- */
-function init(value, parent) {
-	return {
-		p: parent,
-		s: new Map(),
-		v: source(0),
-		a: Array.isArray(value)
-	};
-}

@@ -13,7 +13,7 @@ import {
 	EACH_IS_PROXIED,
 	EACH_ITEM_REACTIVE
 } from '../../constants.js';
-import { MAGIC_SYMBOL } from './magic.js';
+import { STATE_SYMBOL } from './magic.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -183,7 +183,7 @@ export function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
-	var is_proxied_array = MAGIC_SYMBOL in array;
+	var is_proxied_array = STATE_SYMBOL in array;
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
 
@@ -289,7 +289,7 @@ export function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = MAGIC_SYMBOL in array;
+	var is_proxied_array = STATE_SYMBOL in array;
 	var active_transitions = each_block.s;
 
 	if (is_proxied_array) {
