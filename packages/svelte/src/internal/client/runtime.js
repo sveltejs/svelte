@@ -1808,6 +1808,7 @@ export function inspect(get_values) {
 				const inspect = /** @type {Function} */ (values[values.length - 1]);
 				inspect(!initial, ...values.slice(0, -1));
 			} else {
+				// eslint-disable-next-line no-console
 				console.log(...values);
 			}
 		};
