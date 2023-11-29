@@ -198,7 +198,7 @@ export function comment(anchor) {
 /**
  * @param {Element | Text} dom
  * @param {boolean} is_fragment
- * @param {null | ((Text | Comment | Element) & {$$fragment: undefined | Node[]})} anchor
+ * @param {null | Text | Comment | Element} anchor
  * @returns {void}
  */
 function close_template(dom, is_fragment, anchor) {
@@ -221,7 +221,7 @@ function close_template(dom, is_fragment, anchor) {
 }
 
 /**
- * @param {null | ((Text | Comment | Element) & {$$fragment: undefined | Node[]})} anchor
+ * @param {null | Text | Comment | Element} anchor
  * @param {Element | Text} dom
  * @returns {void}
  */
@@ -230,7 +230,7 @@ export function close(anchor, dom) {
 }
 
 /**
- * @param {null | ((Text | Comment | Element) & {$$fragment: undefined | Node[]})} anchor
+ * @param {null | Text | Comment | Element} anchor
  * @param {Element | Text} dom
  * @returns {void}
  */
