@@ -82,7 +82,7 @@ export type SourceSignal<V = unknown> = {
 
 export type SourceSignalDebug = {
 	/** debug: This is DEV only */
-	d: null | Error;
+	d: Set<Function>;
 };
 
 export type ComputationSignal<V = unknown> = {

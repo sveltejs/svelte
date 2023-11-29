@@ -69,8 +69,13 @@ let current_skip_consumer = false;
 // Handle collecting all signals which are read during a specific time frame
 let is_signals_recorded = false;
 let captured_signals = new Set();
-// Handle trace logging
-let is_tracing_signals = false;
+
+/** @type {Function | null} */
+let inspect_fn = null;
+
+/** @type {Array<import('./types.js').SourceSignal & import('./types.js').SourceSignalDebug>} */
+let inspect_captured_signals = [];
+
 // Handle rendering tree blocks and anchors
 /** @type {null | import('./types.js').Block} */
 export let current_block = null;
@@ -162,7 +167,7 @@ function create_source_signal(flags, value) {
 			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 			x: null,
 			// debug: this is for DEV only
-			d: null
+			d: new Set()
 		};
 	}
 	return {
@@ -772,6 +777,14 @@ export function exposable(fn) {
  * @returns {V}
  */
 export function get(signal) {
+	// @ts-expect-error
+	if (DEV && signal.d && inspect_fn) {
+		// @ts-expect-error
+		signal.d.add(inspect_fn);
+		// @ts-expect-error
+		inspect_captured_signals.push(signal);
+	}
+
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
@@ -805,19 +818,6 @@ export function get(signal) {
 
 	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
 		update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
-	}
-	if (DEV && is_tracing_signals && (flags & SOURCE) !== 0) {
-		const debug_source =
-			/** @type {import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug} */ (
-				signal
-			);
-		if (debug_source.d !== null) {
-			// eslint-disable-next-line no-console
-			console.log(debug_source.d);
-			queueMicrotask(() => {
-				debug_source.d = null;
-			});
-		}
 	}
 	return signal.v;
 }
@@ -990,6 +990,12 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
  * @returns {void}
  */
 export function set_signal_value(signal, value) {
+	// @ts-expect-error
+	if (DEV && signal.d) {
+		// @ts-expect-error
+		for (const fn of signal.d) fn();
+	}
+
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
@@ -1792,10 +1798,35 @@ function deep_read(value, visited = new Set()) {
  * @returns {void}
  */
 export function inspect(get_values) {
+	let initial = true;
+
 	pre_effect(() => {
+		const fn = () => {
+			if (typeof values.at(-1) === 'function') {
+				const inspect = /** @type {Function} */ (values[values.length - 1]);
+				inspect(!initial, ...values.slice(0, -1));
+			} else {
+				console.log(...values);
+			}
+		};
+
+		inspect_fn = fn;
 		const values = get_values();
 		deep_read(values);
-		// eslint-disable-next-line no-console
-		console.log(...values);
+		inspect_fn = null;
+
+		const signals = inspect_captured_signals.slice();
+		inspect_captured_signals = [];
+
+		if (initial) {
+			fn();
+			initial = false;
+		}
+
+		return () => {
+			for (const s of signals) {
+				s.d.delete(fn);
+			}
+		};
 	});
 }
