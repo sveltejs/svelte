@@ -1,6 +1,6 @@
 ---
 title: "What's new in Svelte: December 2023"
-description: 'Svelte 5.0 announced at Svelte Summit Fall 2023'
+description: 'Svelte 5 preview announced at Svelte Summit Fall 2023'
 author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
@@ -21,7 +21,7 @@ Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and 
 
 ## What's new in Svelte, SvelteKit & Language Tools
 
-[Svelte 5.0](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`.
+[Svelte 5 preview](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`.
 
 For all the release notes going forward, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md). For the highlights, take a look below!
 
@@ -29,7 +29,7 @@ For all the release notes going forward, check out [the CHANGELOG on main](https
 - The new `$effect.active` rune returns a boolean to indicate if an effect is active. This lets you set up subscriptions when a value is read (in an effect, or in the template) but also read values without creating subscriptions (**5.0.0-next.10**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#effect-active), [#9591](https://github.com/sveltejs/svelte/pull/9591))
 - The new `$effect.root` rune creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control (**5.0.0-next.14**, **Docs**, [#9638](https://github.com/sveltejs/svelte/pull/9638))
 - The latest version of language tools adds best-effort fallback typings to `$props()` rune (**extensions-108.1.0**)
-- Language tools better support the `@render` tag by using the `Snippet` type (**extensions-108.0.0**)
+- Language tools better supports the `@render` tag by using the `Snippet` type (**extensions-108.0.0**)
 
 For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
