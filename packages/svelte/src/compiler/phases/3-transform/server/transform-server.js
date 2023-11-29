@@ -1113,11 +1113,17 @@ const template_visitors = {
 		);
 	},
 	RenderTag(node, context) {
-		const snippet_function = context.state.options.dev
+		const state = context.state;
+		const [anchor, anchor_id] = serialize_anchor(state);
+
+		state.init.push(anchor);
+		state.template.push(t_expression(anchor_id));
+
+		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', node.expression)
 			: node.expression;
 		if (node.argument) {
-			context.state.template.push(
+			state.template.push(
 				t_statement(
 					b.stmt(
 						b.call(
@@ -1129,8 +1135,10 @@ const template_visitors = {
 				)
 			);
 		} else {
-			context.state.template.push(t_statement(b.stmt(b.call(snippet_function, b.id('$$payload')))));
+			state.template.push(t_statement(b.stmt(b.call(snippet_function, b.id('$$payload')))));
 		}
+
+		state.template.push(t_expression(anchor_id));
 	},
 	ClassDirective(node) {
 		error(node, 'INTERNAL', 'Node should have been handled elsewhere');
@@ -1423,8 +1431,6 @@ const template_visitors = {
 		state.template.push(t_expression(id));
 	},
 	SnippetBlock(node, context) {
-		const [dec, id] = serialize_anchor(context.state);
-
 		// TODO hoist where possible
 		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$payload')];
@@ -1432,18 +1438,11 @@ const template_visitors = {
 			args.push(node.context);
 		}
 
-		const out = b.member_id('$$payload.out');
-
 		context.state.init.push(
 			b.function_declaration(
 				node.expression,
 				args,
-				b.block([
-					dec,
-					b.stmt(b.assignment('+=', out, id)),
-					.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body,
-					b.stmt(b.assignment('+=', out, id))
-				])
+				b.block(/** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body)
 			)
 		);
 		if (context.state.options.dev) {
