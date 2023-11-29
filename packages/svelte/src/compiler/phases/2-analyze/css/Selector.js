@@ -321,13 +321,8 @@ function block_might_apply_to_node(block, node) {
 			return NO_MATCH;
 		}
 
-		if (
-			block.nested &&
-			block.selectors.length === 1 &&
-			block.combinator !== null
-		) {
-			// nested selector with combinator, eg: `.foo { + .bar { ... } }`
-			// TODO: How to handle this?
+		if (block.nested) {
+			// TODO: How to handle knowing whether a nested selector was used?
 			return UNKNOWN_SELECTOR;
 		}
 
