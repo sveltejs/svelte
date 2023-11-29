@@ -71,8 +71,8 @@ export function hydrate_block_anchor(anchor_node, is_controlled) {
 			}
 			set_current_hydration_fragment(fragment);
 		} else {
-			const firstChild = /** @type {Element | null} */ (target_node.firstChild);
-			set_current_hydration_fragment(firstChild === null ? [] : [firstChild]);
+			const first_child = /** @type {Element | null} */ (target_node.firstChild);
+			set_current_hydration_fragment(first_child === null ? [] : [first_child]);
 		}
 	}
 }
