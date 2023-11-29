@@ -279,6 +279,7 @@ is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4s
 A convenient way to find the origin of some change is to pass `console.trace` as the second argument:
 
 ```js
+// @errors: 2304
 $inspect(stuff, console.trace);
 ```
 
