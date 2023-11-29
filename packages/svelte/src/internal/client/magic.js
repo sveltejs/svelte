@@ -40,7 +40,9 @@ const handler = {
 		const metadata = target[MAGIC_SYMBOL];
 		let s = metadata.s.get(prop);
 
-		if (s === undefined && effect_active()) {
+		// if we're reading a property in a reactive context, create a source,
+		// but only if it's an own property and not a prototype property
+		if (s === undefined && effect_active() && (!(prop in target) || Object.hasOwn(target, prop))) {
 			s = source(wrap(target[prop], receiver));
 			metadata.s.set(prop, s);
 		}
