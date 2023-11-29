@@ -1,20 +1,20 @@
 <script>
-	let works1 = $state([{ text: 'foo' }]);
+	let a = $state([{ text: 'foo' }]);
+
+	let b = $state([{ text: 'foo' }]);
 
 	let text = $state('foo');
-	let works2 = $state([{ get text() { return text }, set text(v) { text = v }}]);
-	
-	let doesntwork = $state([{ text: 'foo' }]);
+	let c = $state([{ get text() { return text.toUpperCase() }, set text(v) { text = v }}]);
 </script>
 
-{#each works1 as item, i}
-	<button on:click={() => works1[i].text = 'bar'}>{item.text}</button>
+{#each a as item, i}
+	<button on:click={() => a[i].text = 'bar'}>{item.text}</button>
 {/each}
 
-{#each works2 as item}
+{#each b as item}
 	<button on:click={() => item.text = 'bar'}>{item.text}</button>
 {/each}
 
-{#each doesntwork as item}
+{#each c as item}
 	<button on:click={() => item.text = 'bar'}>{item.text}</button>
 {/each}
