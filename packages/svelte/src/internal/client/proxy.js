@@ -1,4 +1,5 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
+import { get_descriptor } from './utils.js';
 
 /** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
@@ -69,7 +70,11 @@ const handler = {
 
 		// if we're reading a property in a reactive context, create a source,
 		// but only if it's an own property and not a prototype property
-		if (s === undefined && effect_active() && (!(prop in target) || Object.hasOwn(target, prop))) {
+		if (
+			s === undefined &&
+			effect_active() &&
+			(!(prop in target) || get_descriptor(target, prop)?.writable)
+		) {
 			s = source(wrap(target[prop], receiver));
 			metadata.s.set(prop, s);
 		}
