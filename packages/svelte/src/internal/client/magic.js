@@ -45,15 +45,7 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
-		const value = s !== undefined ? get(s) : target[prop];
-
-		if (typeof value === 'function') {
-			// @ts-ignore
-			return (...args) => {
-				return value.apply(receiver, args);
-			};
-		}
-		return value;
+		return s !== undefined ? get(s) : target[prop];
 	},
 	set(target, prop, value) {
 		const metadata = target[MAGIC_SYMBOL];
