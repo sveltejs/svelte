@@ -378,3 +378,17 @@ export function create_state_declarators(declarator, scope, value) {
 		})
 	];
 }
+
+/** @param {import('estree').Expression} node */
+export function should_proxy(node) {
+	if (
+		!node ||
+		node.type === 'Literal' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression'
+	) {
+		return false;
+	}
+
+	return true;
+}
