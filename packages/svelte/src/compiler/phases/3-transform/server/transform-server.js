@@ -1442,7 +1442,7 @@ const template_visitors = {
 			b.function_declaration(
 				node.expression,
 				args,
-				b.block(/** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body)
+				/** @type {import('estree').BlockStatement} */ (context.visit(node.body))
 			)
 		);
 		if (context.state.options.dev) {
