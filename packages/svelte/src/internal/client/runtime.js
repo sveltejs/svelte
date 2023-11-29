@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { unwrap } from './render.js';
-import { is_array } from './utils.js';
+import { get_descriptors, is_array } from './utils.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -69,8 +69,14 @@ let current_skip_consumer = false;
 // Handle collecting all signals which are read during a specific time frame
 let is_signals_recorded = false;
 let captured_signals = new Set();
-// Handle rendering tree blocks and anchors
 
+/** @type {Function | null} */
+let inspect_fn = null;
+
+/** @type {Array<import('./types.js').SourceSignal & import('./types.js').SourceSignalDebug>} */
+let inspect_captured_signals = [];
+
+// Handle rendering tree blocks and anchors
 /** @type {null | import('./types.js').Block} */
 export let current_block = null;
 // Handling runtime component context
@@ -145,10 +151,26 @@ function default_equals(a, b) {
  * @template V
  * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
- * @returns {import('./types.js').SourceSignal<V>}
+ * @returns {import('./types.js').SourceSignal<V> | import('./types.js').SourceSignal<V> & import('./types.js').SourceSignalDebug}
  */
 function create_source_signal(flags, value) {
-	const source = {
+	if (DEV) {
+		return {
+			// consumers
+			c: null,
+			// equals
+			e: null,
+			// flags
+			f: flags,
+			// value
+			v: value,
+			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+			x: null,
+			// this is for DEV only
+			inspect: new Set()
+		};
+	}
+	return {
 		// consumers
 		c: null,
 		// equals
@@ -160,7 +182,6 @@ function create_source_signal(flags, value) {
 		// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 		x: null
 	};
-	return source;
 }
 
 /**
@@ -688,7 +709,7 @@ export function store_get(store, store_name, stores) {
 /**
  * @template V
  * @param {import('./types.js').Store<V> | null | undefined} store
- * @param {import('./types.js').Signal<V>} source
+ * @param {import('./types.js').SourceSignal<V>} source
  */
 function connect_store_to_signal(store, source) {
 	if (store == null) {
@@ -756,6 +777,14 @@ export function exposable(fn) {
  * @returns {V}
  */
 export function get(signal) {
+	// @ts-expect-error
+	if (DEV && signal.inspect && inspect_fn) {
+		// @ts-expect-error
+		signal.inspect.add(inspect_fn);
+		// @ts-expect-error
+		inspect_captured_signals.push(signal);
+	}
+
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
@@ -811,7 +840,7 @@ export function set(signal, value) {
  * @returns {void}
  */
 export function set_sync(signal, value) {
-	flushSync(() => set_signal_value(signal, value));
+	flushSync(() => set(signal, value));
 }
 
 /**
@@ -1015,6 +1044,12 @@ export function set_signal_value(signal, value) {
 					run_all(update_callbacks.a);
 				});
 			}
+		}
+
+		// @ts-expect-error
+		if (DEV && signal.inspect) {
+			// @ts-expect-error
+			for (const fn of signal.inspect) fn();
 		}
 	}
 }
@@ -1726,4 +1761,70 @@ export function pop(accessors) {
 		current_component_context = context_stack_item.p;
 		context_stack_item.m = true;
 	}
+}
+
+/**
+ * @param {any} value
+ * @param {Set<any>} visited
+ * @returns {void}
+ */
+function deep_read(value, visited = new Set()) {
+	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		visited.add(value);
+		for (let key in value) {
+			deep_read(value[key], visited);
+		}
+		const proto = Object.getPrototypeOf(value);
+		if (
+			proto !== Object.prototype &&
+			proto !== Array.prototype &&
+			proto !== Map.prototype &&
+			proto !== Set.prototype &&
+			proto !== Date.prototype
+		) {
+			const descriptors = get_descriptors(proto);
+			for (let key in descriptors) {
+				const get = descriptors[key].get;
+				if (get) {
+					get.call(value);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * @param {() => import('./types.js').MaybeSignal<>} get_value
+ * @param {Function} inspect
+ * @returns {void}
+ */
+// eslint-disable-next-line no-console
+export function inspect(get_value, inspect = console.log) {
+	let initial = true;
+
+	pre_effect(() => {
+		const fn = () => {
+			const value = get_value();
+			inspect(value, initial ? 'init' : 'update');
+		};
+
+		inspect_fn = fn;
+		const value = get_value();
+		deep_read(value);
+		inspect_fn = null;
+
+		const signals = inspect_captured_signals.slice();
+		inspect_captured_signals = [];
+
+		if (initial) {
+			fn();
+			initial = false;
+		}
+
+		return () => {
+			for (const s of signals) {
+				s.inspect.delete(fn);
+			}
+		};
+	});
 }

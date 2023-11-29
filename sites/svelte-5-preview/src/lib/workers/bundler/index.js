@@ -182,7 +182,7 @@ async function resolve_from_pkg(pkg, subpath, uid, pkg_url_base) {
 			const [resolved] =
 				resolve.exports(pkg, subpath, {
 					browser: true,
-					conditions: ['svelte', 'production']
+					conditions: ['svelte', 'development']
 				}) ?? [];
 
 			return resolved;

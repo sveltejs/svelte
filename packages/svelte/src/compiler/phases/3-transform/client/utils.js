@@ -288,7 +288,8 @@ function get_hoistable_params(node, context) {
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
 			} else {
-				params.push(binding.node);
+				// create a copy to remove start/end tags which would mess up source maps
+				params.push(b.id(binding.node.name));
 			}
 		}
 	}

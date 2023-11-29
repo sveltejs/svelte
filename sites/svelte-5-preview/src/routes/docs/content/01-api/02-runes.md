@@ -241,6 +241,50 @@ let { a, b, c, ...everythingElse } = $props<MyProps>();
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
 
+## `$inspect`
+
+The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever its
+argument changes. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
+or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire. ([Demo:](/#H4sIAAAAAAAAE0WQ0W6DMAxFf8WKKhXUquyZAtIe9w1lEjS4ENU4EXFaTRH_Plq69fH6nutrOaqLIfQqP0XF7YgqV5_Oqb2SH_cQ_oYkuGhvw6Qfk8LryTipaq6FUEDbwAIlbLy0gslHevxzRvS-7fHtbQckstsnsTAbw96hliSuS_b_iTk9QpbB3RAtFntLeCDbw31AhuYJN2AnaF6BBvTQco81F9n7PC7OQcQyWNZk9LWMSQpltZbtdnP1xXrCEVmKbCWXVGHYBYGz4S6_tRSwjK-SGbJqecRoO3Mx2KlcpoDz9_wLBx9LikMBAAA=))
+
+```svelte
+<script>
+	let count = $state(0);
+	let message = $state('hello');
+
+	$inspect({ count, message }); // will console.log when `count` or `message` change
+</script>
+
+<button onclick={() => count++}>Increment</button>
+<input bind:value={message} />
+```
+
+If a callback is also provided, it will be invoked instead of `console.log`. The first argument to the callback
+is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4sIAAAAAAAAE0VP24qDMBD9lSEUqlTqPlsj7ON-w1qojWM3rE5CMmkpkn_fxFL26XBuw5lVTHpGL5rvVdCwoGjEp7WiEvy0mfg7zoyJexOcykrrldOWu556npFBmUAMEnaeB8biozwlJ3k7Td6i4mILVPDGfLgE2cGaUz3rCYqsgZQS9sGO6cq-fLs9j3gNtxu6E9Q1GAcXZcibGY_sBoWXKmuPn1S6o4OnCfAYiF_lmCHmQW39v5raa2A2BIbUrNWvXIttz7bvcIjdFymHCxK39SvZpf8XM-pJ4ygadgHjOf4B8TXIiDoBAAA=)
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$inspect(count, (count, type) => {
+		if (type === 'update') {
+			debugger; // or `console.trace`, or whatever you want
+		}
+	});
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```
+
+A convenient way to find the origin of some change is to pass `console.trace` as the second argument:
+
+```js
+// @errors: 2304
+$inspect(stuff, console.trace);
+```
+
+> `$inspect` only works during development.
+
 ## How to opt in
 
 Current Svelte code will continue to work without any adjustments. Components using the Svelte 4 syntax can use components using runes and vice versa.

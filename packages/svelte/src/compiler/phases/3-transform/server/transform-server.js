@@ -575,7 +575,7 @@ const javascript_visitors_runes = {
 		for (const declarator of node.declarations) {
 			const init = unwrap_ts_expression(declarator.init);
 			const rune = get_rune(init, state.scope);
-			if (!rune || rune === '$effect.active') {
+			if (!rune || rune === '$effect.active' || rune === '$inspect') {
 				declarations.push(/** @type {import('estree').VariableDeclarator} */ (visit(declarator)));
 				continue;
 			}
@@ -630,11 +630,23 @@ const javascript_visitors_runes = {
 		}
 		context.next();
 	},
-	CallExpression(node, { state, next }) {
+	CallExpression(node, { state, next, visit }) {
 		const rune = get_rune(node, state.scope);
 
 		if (rune === '$effect.active') {
 			return b.literal(false);
+		}
+
+		if (rune === '$inspect') {
+			if (state.options.dev) {
+				const args = /** @type {import('estree').Expression[]} */ (
+					node.arguments.map((arg) => visit(arg))
+				);
+
+				return b.call('console.log', ...args);
+			}
+
+			return b.unary('void', b.literal(0));
 		}
 
 		next();

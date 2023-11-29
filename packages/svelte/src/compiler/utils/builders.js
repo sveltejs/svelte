@@ -72,7 +72,7 @@ export function labeled(name, body) {
 
 /**
  * @param {string | import('estree').Expression} callee
- * @param {...import('estree').Expression} args
+ * @param {...(import('estree').Expression | import('estree').SpreadElement)} args
  * @returns {import('estree').CallExpression}
  */
 export function call(callee, ...args) {

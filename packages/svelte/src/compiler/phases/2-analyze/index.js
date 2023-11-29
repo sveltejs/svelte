@@ -265,7 +265,7 @@ export function analyze_component(root, options) {
 		// is referencing a rune and not a global store.
 		if (
 			options.runes === false ||
-			!Runes.includes(name) ||
+			!Runes.includes(/** @type {any} */ (name)) ||
 			(declaration !== null &&
 				// const state = $state(0) is valid
 				get_rune(declaration.initial, instance.scope) === null &&
@@ -279,7 +279,7 @@ export function analyze_component(root, options) {
 			if (options.runes !== false) {
 				if (declaration === null && /[a-z]/.test(store_name[0])) {
 					error(references[0].node, 'illegal-global', name);
-				} else if (declaration !== null && Runes.includes(name)) {
+				} else if (declaration !== null && Runes.includes(/** @type {any} */ (name))) {
 					for (const { node, path } of references) {
 						if (path.at(-1)?.type === 'CallExpression') {
 							warn(warnings, node, [], 'store-with-rune-name', store_name);
@@ -326,7 +326,10 @@ export function analyze_component(root, options) {
 			get_css_hash: options.cssHash
 		}),
 		runes:
-			options.runes ?? Array.from(module.scope.references).some(([name]) => Runes.includes(name)),
+			options.runes ??
+			Array.from(module.scope.references).some(([name]) =>
+				Runes.includes(/** @type {any} */ (name))
+			),
 		exports: [],
 		uses_props: false,
 		uses_rest_props: false,
@@ -660,6 +663,14 @@ const runes_scope_js_tweaker = {
 
 /** @type {import('./types').Visitors} */
 const runes_scope_tweaker = {
+	CallExpression(node, { state, next }) {
+		const rune = get_rune(node, state.scope);
+
+		// `$inspect(foo)` should not trigger the `static-state-reference` warning
+		if (rune === '$inspect') {
+			next({ ...state, function_depth: state.function_depth + 1 });
+		}
+	},
 	VariableDeclarator(node, { state }) {
 		const init = unwrap_ts_expression(node.init);
 		if (!init || init.type !== 'CallExpression') return;
@@ -880,6 +891,7 @@ const common_visitors = {
 	Identifier(node, context) {
 		const parent = /** @type {import('estree').Node} */ (context.path.at(-1));
 		if (!is_reference(node, parent)) return;
+
 		const binding = context.state.scope.get(node.name);
 
 		// if no binding, means some global variable

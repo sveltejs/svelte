@@ -130,3 +130,14 @@ declare namespace $effect {
  * https://svelte-5-preview.vercel.app/docs/runes#$props
  */
 declare function $props<T>(): T;
+
+/**
+ * Logs the arguments whenever they, or the properties they contain, change. Example:
+ *
+ * ```ts
+ * $inspect(someValue, someOtherValue)
+ * ```
+ *
+ * https://svelte-5-preview.vercel.app/docs/runes#$inspect
+ */
+declare function $inspect(): void;
