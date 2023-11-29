@@ -81,8 +81,8 @@ export type SourceSignal<V = unknown> = {
 };
 
 export type SourceSignalDebug = {
-	/** debug: This is DEV only */
-	d: Set<Function>;
+	/** This is DEV only */
+	inspect: Set<Function>;
 };
 
 export type ComputationSignal<V = unknown> = {

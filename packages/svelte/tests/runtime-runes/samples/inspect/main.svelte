@@ -2,7 +2,7 @@
 	let x = $state(0);
 	let y = $state(0);
 
-	$log.table(x);
+	$inspect(x);
 </script>
 
 <button on:click={() => x++}>{x}</button>

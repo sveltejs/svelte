@@ -2,7 +2,9 @@
 	let x = $state(0);
 	let y = $state(0);
 
-	$log(x);
+	$inspect(x, (changed, x) => {
+		if (changed) console.log(new Error(), x);
+	});
 </script>
 
 <button on:click={() => x++}>{x}</button>

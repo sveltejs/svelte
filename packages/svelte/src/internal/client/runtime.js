@@ -166,8 +166,8 @@ function create_source_signal(flags, value) {
 			v: value,
 			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
 			x: null,
-			// debug: this is for DEV only
-			d: new Set()
+			// this is for DEV only
+			inspect: new Set()
 		};
 	}
 	return {
@@ -778,9 +778,9 @@ export function exposable(fn) {
  */
 export function get(signal) {
 	// @ts-expect-error
-	if (DEV && signal.d && inspect_fn) {
+	if (DEV && signal.inspect && inspect_fn) {
 		// @ts-expect-error
-		signal.d.add(inspect_fn);
+		signal.inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -990,12 +990,6 @@ function mark_signal_consumers(signal, to_status, force_schedule) {
  * @returns {void}
  */
 export function set_signal_value(signal, value) {
-	// @ts-expect-error
-	if (DEV && signal.d) {
-		// @ts-expect-error
-		for (const fn of signal.d) fn();
-	}
-
 	if (
 		!current_untracking &&
 		!ignore_mutation_validation &&
@@ -1051,6 +1045,12 @@ export function set_signal_value(signal, value) {
 				});
 			}
 		}
+	}
+
+	// @ts-expect-error
+	if (DEV && signal.inspect) {
+		// @ts-expect-error
+		for (const fn of signal.inspect) fn();
 	}
 }
 
@@ -1802,6 +1802,8 @@ export function inspect(get_values) {
 
 	pre_effect(() => {
 		const fn = () => {
+			const values = get_values();
+
 			if (typeof values.at(-1) === 'function') {
 				const inspect = /** @type {Function} */ (values[values.length - 1]);
 				inspect(!initial, ...values.slice(0, -1));
@@ -1825,7 +1827,7 @@ export function inspect(get_values) {
 
 		return () => {
 			for (const s of signals) {
-				s.d.delete(fn);
+				s.inspect.delete(fn);
 			}
 		};
 	});

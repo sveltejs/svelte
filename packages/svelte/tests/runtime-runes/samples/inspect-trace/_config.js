@@ -32,8 +32,7 @@ export default test({
 		await Promise.resolve();
 
 		assert.ok(
-			log[0].stack.startsWith('ExpectedError: $log.trace') &&
-				log[0].stack.includes('HTMLButtonElement.on_click')
+			log[0].stack.startsWith('Error:') && log[0].stack.includes('HTMLButtonElement.on_click')
 		);
 		assert.deepEqual(log[1], 1);
 	}
