@@ -84,7 +84,7 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', init)
+								? b.call('$.source', b.call('$.proxy', init))
 								: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
@@ -219,7 +219,7 @@ export const javascript_visitors_runes = {
 
 			if (declarator.id.type === 'Identifier') {
 				const callee = rune === '$state' ? '$.source' : '$.derived';
-				const arg = rune === '$state' ? value : b.thunk(value);
+				const arg = rune === '$state' ? b.call('$.proxy', value) : b.thunk(value);
 				declarations.push(b.declarator(declarator.id, b.call(callee, arg, opts)));
 				continue;
 			}
