@@ -1,7 +1,5 @@
 <script>
-	import { proxy } from 'svelte';
-
-	const object = proxy({ count: 0 });
+	const object = $state({ count: 0 });
 </script>
 
 <button onclick={() => object.count += 1}>

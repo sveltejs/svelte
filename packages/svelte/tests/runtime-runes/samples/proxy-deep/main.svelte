@@ -1,7 +1,5 @@
 <script>
-	import { proxy } from 'svelte';
-
-	const object = proxy({
+	const object = $state({
 		foo: {
 			bar: {
 				baz: 1

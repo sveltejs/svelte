@@ -1,7 +1,5 @@
 <script>
-	import { proxy } from 'svelte';
-
-	const ping = proxy({});
+	const ping = $state({});
 	ping.pong = { ping, pang: 'hello!' };
 </script>
 

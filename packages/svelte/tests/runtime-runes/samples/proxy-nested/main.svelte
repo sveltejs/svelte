@@ -1,11 +1,9 @@
 <script>
-	import { proxy } from 'svelte';
-
-	const inner = proxy({
+	const inner = $state({
 		count: 0
 	})
 
-	const object = proxy({
+	const object = $state({
 		outer: {
 			inner
 		}

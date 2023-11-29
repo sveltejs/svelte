@@ -1,7 +1,5 @@
 <script>
-	import { proxy } from 'svelte';
-
-	const array = proxy([1, 2, 3]);
+	const array = $state([1, 2, 3]);
 	const sum = $derived(array.reduce((a, b) => a + b, 0));
 </script>
 
