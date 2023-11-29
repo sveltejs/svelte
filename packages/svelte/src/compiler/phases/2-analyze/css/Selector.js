@@ -323,6 +323,7 @@ function block_might_apply_to_node(block, node) {
 
 		if (block.nested) {
 			// TODO: How to handle knowing whether a nested selector was used?
+			// For now, we'll just assume it was used to prevent encapsulation with (unused)
 			return UNKNOWN_SELECTOR;
 		}
 
