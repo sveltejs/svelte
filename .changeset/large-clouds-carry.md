@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add $log rune
+feat: $inspect rune
