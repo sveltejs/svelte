@@ -1,5 +1,10 @@
 import { error } from '../../errors.js';
-import { extract_identifiers, is_text_attribute } from '../../utils/ast.js';
+import {
+	extract_identifiers,
+	get_parent,
+	is_text_attribute,
+	unwrap_ts_expression
+} from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
@@ -491,7 +496,7 @@ function validate_call_expression(node, scope, path) {
 	const rune = get_rune(node, scope);
 	if (rune === null) return;
 
-	const parent = /** @type {import('#compiler').SvelteNode} */ (path.at(-1));
+	const parent = /** @type {import('#compiler').SvelteNode} */ (get_parent(path, -1));
 
 	if (rune === '$props') {
 		if (parent.type === 'VariableDeclarator') return;
@@ -703,7 +708,7 @@ export const validation_runes = merge(validation, a11y_validators, {
 		next({ ...state });
 	},
 	VariableDeclarator(node, { state }) {
-		const init = node.init;
+		const init = unwrap_ts_expression(node.init);
 		const rune = get_rune(init, state.scope);
 
 		if (rune === null) return;

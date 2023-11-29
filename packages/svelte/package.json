@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.14",
+  "version": "5.0.0-next.15",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -91,7 +91,7 @@
   ],
   "scripts": {
     "build": "rollup -c && node scripts/build.js && node scripts/check-treeshakeability.js",
-    "watch": "rollup -cw",
+    "dev": "rollup -cw",
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",

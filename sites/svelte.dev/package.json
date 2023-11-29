@@ -13,8 +13,8 @@
     "start": "node build",
     "check": "node scripts/update.js && pnpm generate && svelte-kit sync && svelte-check",
     "check:watch": "svelte-kit sync && svelte-check --watch",
-    "format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=. --write",
-    "check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
+    "format": "prettier --check . --write",
+    "check:format": "prettier --check ."
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",
@@ -41,8 +41,8 @@
     "lightningcss": "^1.21.8",
     "magic-string": "^0.30.3",
     "marked": "^9.0.0",
-    "prettier": "^3.0.3",
-    "prettier-plugin-svelte": "^3.0.3",
+    "prettier": "^3.1.0",
+    "prettier-plugin-svelte": "^3.1.2",
     "sass": "^1.67.0",
     "satori": "^0.10.4",
     "satori-html": "^0.3.2",

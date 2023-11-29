@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.15
+
+### Patch Changes
+
+- fix: add children to element typings ([#9679](https://github.com/sveltejs/svelte/pull/9679))
+
+- fix: handle ts expressions when dealing with runes ([#9681](https://github.com/sveltejs/svelte/pull/9681))
+
 ## 5.0.0-next.14
 
 ### Patch Changes
