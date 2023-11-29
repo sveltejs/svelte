@@ -100,7 +100,7 @@ Test samples are kept in `/test/xxx/samples` folder.
 > PREREQUISITE: Install chromium via playwright by running `pnpm playwright install chromium`
 
 1. To run test, run `pnpm test`.
-1. To run test for a specific feature, you can use the `-t` (aka `--testNamePattern `) option. For example, to only run test involving transitions, run `pnpm test -- -t transistion`.
+1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `pnpm test -- -g transition`.
 
 ##### Running solo test
 
