@@ -241,6 +241,45 @@ let { a, b, c, ...everythingElse } = $props<MyProps>();
 
 Note that you can still use `export const` and `export function` to expose things to users of your component (if they're using `bind:this`, for example).
 
+## `$inspect`
+
+The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever the
+arguments change. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
+or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire.
+
+```svelte
+<script>
+	let count = $state(0);
+	let message = $state(0);
+
+	$inspect({ count, message }); // will console.log when `count` or `message` change
+</script>
+
+<button onclick={() => count++}>Increment</button>
+<input bind:value={message} />
+```
+
+If the last argument is a function, it will be invoked instead of `console.log`. The first argument is `changed` —
+`false` when it initially runs, `true` thereafter — followed by the current values:
+
+```svelte
+<script>
+	let count = $state(0);
+
+	$inspect(count, (changed, count) => {
+		if (changed) {
+			// or `console.trace`, or whatever you want. This makes it
+			// easy to find what caused the state to update
+			debugger;
+		}
+	});
+</script>
+
+<button onclick={() => count++}>Increment</button>
+```
+
+> `$inspect` only works during development.
+
 ## How to opt in
 
 Current Svelte code will continue to work without any adjustments. Components using the Svelte 4 syntax can use components using runes and vice versa.
@@ -263,65 +302,4 @@ export default {
 		runes: true
 	}
 };
-```
-
-## `$log`
-
-The `$log` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever the
-arguments change. `$log` tracks reactive state deeply, meaning that updating something inside an object
-or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will update the logs.
-
-```svelte
-<script>
-	let count = $state(0);
-
-	$log({ count }); // will console.log when count changes
-</script>
-
-<button onclick={() => count++}>Increment</button>
-```
-
-> `$log` only works during development.
-
-## `$log.break`
-
-This works just like `$log`, except runtime execution will be paused via a `debugger` statement.
-
-```svelte
-<script>
-	let count = $state(0);
-
-	$log.break({ count });
-</script>
-
-<button onclick={() => count++}>Increment</button>
-```
-
-## `$log.table`
-
-This works just like `$log`, but triggers `console.table` instead of `console.log`.
-
-```svelte
-<script>
-	let count = $state(0);
-
-	$log.table({ count });
-</script>
-
-<button onclick={() => count++}>Increment</button>
-```
-
-## `$log.trace`
-
-This works just like `$log`, but in addition to logging the values themselves it will pinpoint the
-line of code that triggered the update.
-
-```svelte
-<script>
-	let count = $state(0);
-
-	$log.trace({ count });
-</script>
-
-<button onclick={() => count++}>Increment</button>
 ```

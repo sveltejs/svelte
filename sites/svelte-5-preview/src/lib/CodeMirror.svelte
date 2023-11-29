@@ -215,10 +215,7 @@
 					boost: 6
 				}),
 				{ label: '$effect.active', type: 'keyword', boost: 5 },
-				{ label: '$log', type: 'keyword', boost: 4 },
-				{ label: '$log.break', type: 'keyword', boost: 3 },
-				{ label: '$log.trace', type: 'keyword', boost: 2 },
-				{ label: '$log.table', type: 'keyword', boost: 1 }
+				{ label: '$inspect', type: 'keyword', boost: 4 }
 			]
 		};
 	}
