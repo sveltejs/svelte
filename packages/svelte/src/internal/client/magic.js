@@ -6,6 +6,10 @@ import { effect_active, get, set, increment, source } from './runtime.js';
 export const MAGIC_SYMBOL = Symbol();
 export const MAGIC_EACH_SYMBOL = Symbol();
 
+const object_prototype = Object.prototype;
+const array_prototype = Array.prototype;
+const get_prototype_of = Object.getPrototypeOf;
+
 /**
  * @template {MagicObject} T
  * @param {T} value
@@ -24,7 +28,12 @@ export function magic(value) {
  */
 function wrap(value, parent) {
 	if (value && typeof value === 'object') {
-		return proxy(value, parent);
+		const prototype = get_prototype_of(value);
+
+		// TODO handle Map and Set as well
+		if (prototype === object_prototype || prototype === array_prototype) {
+			return proxy(value, parent);
+		}
 	}
 
 	return value;
