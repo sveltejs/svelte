@@ -68,12 +68,11 @@ export function hydrate_block_anchor(anchor_node, is_controlled) {
 			let fragment = target_node.$$fragment;
 			if (fragment === undefined) {
 				fragment = get_hydration_fragment(target_node);
-				// @ts-ignore remove to prevent memory leaks
-				target_node.$$fragment = undefined;
 			}
 			set_current_hydration_fragment(fragment);
 		} else {
-			set_current_hydration_fragment([/** @type {Element} */ (target_node.firstChild)]);
+			const firstChild = /** @type {Element | null} */ (target_node.firstChild);
+			set_current_hydration_fragment(firstChild === null ? [] : [firstChild]);
 		}
 	}
 }
