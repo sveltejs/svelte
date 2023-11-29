@@ -1798,6 +1798,7 @@ function deep_read(value, visited = new Set()) {
  * @param {Function} inspect
  * @returns {void}
  */
+// eslint-disable-next-line no-console
 export function inspect(get_value, inspect = console.log) {
 	let initial = true;
 
