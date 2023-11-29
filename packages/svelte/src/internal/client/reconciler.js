@@ -7,7 +7,13 @@ import {
 } from './hydration.js';
 import { is_array } from './utils.js';
 import { each_item_block, destroy_each_item_block, update_each_item_block } from './render.js';
-import { EACH_INDEX_REACTIVE, EACH_IS_ANIMATED, EACH_ITEM_REACTIVE } from '../../constants.js';
+import {
+	EACH_INDEX_REACTIVE,
+	EACH_IS_ANIMATED,
+	EACH_IS_PROXIED,
+	EACH_ITEM_REACTIVE
+} from '../../constants.js';
+import { MAGIC_SYMBOL } from './magic.js';
 
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
@@ -177,8 +183,16 @@ export function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
+	var is_proxied_array = MAGIC_SYMBOL in array;
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
+
+	if (is_proxied_array) {
+		if ((flags & EACH_ITEM_REACTIVE) !== 0) {
+			flags ^= EACH_ITEM_REACTIVE;
+		}
+		flags |= EACH_IS_PROXIED;
+	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -220,7 +234,7 @@ export function reconcile_indexed_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
 				);
-				block = each_item_block(item, null, index, render_fn, flags);
+				block = each_item_block(array, item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 			}
 		} else {
@@ -228,7 +242,7 @@ export function reconcile_indexed_array(
 				if (index >= a) {
 					// Add block
 					item = array[index];
-					block = each_item_block(item, null, index, render_fn, flags);
+					block = each_item_block(array, item, null, index, render_fn, flags);
 					b_blocks[index] = block;
 					insert_each_item_block(block, dom, is_controlled, null);
 				} else if (index >= b) {
@@ -277,7 +291,15 @@ export function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
+	var is_proxied_array = MAGIC_SYMBOL in array;
 	var active_transitions = each_block.s;
+
+	if (is_proxied_array) {
+		if ((flags & EACH_ITEM_REACTIVE) !== 0) {
+			flags ^= EACH_ITEM_REACTIVE;
+		}
+		flags |= EACH_IS_PROXIED;
+	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -327,7 +349,7 @@ export function reconcile_tracked_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
 				);
-				block = each_item_block(item, key, idx, render_fn, flags);
+				block = each_item_block(array, item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 			}
 		} else if (a === 0) {
@@ -336,7 +358,7 @@ export function reconcile_tracked_array(
 				idx = b_end - --b;
 				item = array[idx];
 				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(item, key, idx, render_fn, flags);
+				block = each_item_block(array, item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
@@ -384,7 +406,7 @@ export function reconcile_tracked_array(
 				while (b_end >= start) {
 					item = array[b_end];
 					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(item, key, b_end, render_fn, flags);
+					block = each_item_block(array, item, key, b_end, render_fn, flags);
 					b_blocks[b_end--] = block;
 					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 				}
@@ -446,7 +468,7 @@ export function reconcile_tracked_array(
 					item = array[b_end];
 					if (should_create) {
 						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(item, key, b_end, render_fn, flags);
+						block = each_item_block(array, item, key, b_end, render_fn, flags);
 					} else {
 						block = b_blocks[b_end];
 						if (!is_animated && should_update_block) {

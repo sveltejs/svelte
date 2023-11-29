@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { unwrap } from './render.js';
 import { get_descriptors, is_array } from './utils.js';
 
 export const SOURCE = 1;
@@ -24,6 +23,7 @@ const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
 export const UNINITIALIZED = Symbol();
+export const LAZY_PROPERTY = Symbol();
 
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
@@ -1385,6 +1385,20 @@ export function is_signal(val) {
 }
 
 /**
+ * @template O
+ * @template P
+ * @param {any} val
+ * @returns {val is import('./types.js').LazyProperty<O, P>}
+ */
+export function is_lazy_property(val) {
+	return (
+		typeof val === 'object' &&
+		val !== null &&
+		/** @type {import('./types.js').LazyProperty<O, P>} */ (val).t === LAZY_PROPERTY
+	);
+}
+
+/**
  * @template V
  * @param {unknown} val
  * @returns {val is import('./types.js').Store<V>}
@@ -1859,4 +1873,36 @@ export function inspect(get_value, inspect = console.log) {
 			}
 		};
 	});
+}
+
+/**
+ * @template O
+ * @template P
+ * @param {O} o
+ * @param {P} p
+ * @returns {import('./types.js').LazyProperty<O, P>}
+ */
+export function lazy_property(o, p) {
+	return {
+		o,
+		p,
+		t: LAZY_PROPERTY
+	};
+}
+
+/**
+ * @template V
+ * @param {V} value
+ * @returns {import('./types.js').UnwrappedSignal<V>}
+ */
+export function unwrap(value) {
+	if (is_signal(value)) {
+		// @ts-ignore
+		return get(value);
+	}
+	if (is_lazy_property(value)) {
+		return value.o[value.p];
+	}
+	// @ts-ignore
+	return value;
 }

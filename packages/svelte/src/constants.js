@@ -3,6 +3,7 @@ export const EACH_INDEX_REACTIVE = 1 << 1;
 export const EACH_KEYED = 1 << 2;
 export const EACH_IS_CONTROLLED = 1 << 3;
 export const EACH_IS_ANIMATED = 1 << 4;
+export const EACH_IS_PROXIED = 1 << 5;
 
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [

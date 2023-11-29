@@ -38,7 +38,8 @@ export {
 	reactive_import,
 	effect_active,
 	user_root_effect,
-	inspect
+	inspect,
+	unwrap
 } from './client/runtime.js';
 
 export * from './client/validate.js';

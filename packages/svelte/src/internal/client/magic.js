@@ -1,6 +1,7 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
 
-const symbol = Symbol('magic');
+export const MAGIC_SYMBOL = Symbol();
+export const MAGIC_EACH_SYMBOL = Symbol();
 
 /**
  * @template T
@@ -9,7 +10,21 @@ const symbol = Symbol('magic');
  */
 export function magic(value) {
 	if (value && typeof value === 'object') {
-		return object(value);
+		return wrap(value, null);
+	}
+
+	return value;
+}
+
+/**
+ * @template T
+ * @param {T} value
+ * @param {T | null} parent
+ * @returns {T}
+ */
+function wrap(value, parent) {
+	if (value && typeof value === 'object') {
+		return object(value, parent);
 	}
 
 	return value;
@@ -17,11 +32,13 @@ export function magic(value) {
 
 /**
  * @template {Record<string | symbol, any>} T
+ * @template P
  * @param {T} value
+ * @param {P | null} parent
  * @returns {T}
  */
-function object(value) {
-	if (symbol in value) return value;
+function object(value, parent) {
+	if (MAGIC_SYMBOL in value) return value;
 
 	/** @type {Map<string | symbol, any>} */
 	const sources = new Map();
@@ -31,49 +48,53 @@ function object(value) {
 
 	return new Proxy(value, {
 		get(target, prop, receiver) {
+			if (prop === MAGIC_EACH_SYMBOL) {
+				return parent;
+			}
 			let s = sources.get(prop);
 
-			if (effect_active() && !s) {
-				s = source(magic(target[prop]));
+			if (s === undefined && effect_active()) {
+				s = source(wrap(target[prop], receiver));
 				sources.set(prop, s);
 			}
 
-			const value = s ? get(s) : target[prop];
+			const value = s !== undefined ? get(s) : target[prop];
 
 			if (typeof value === 'function') {
+				// @ts-ignore
 				return (...args) => {
 					return value.apply(receiver, args);
 				};
 			}
-
 			return value;
 		},
 		set(target, prop, value) {
 			const s = sources.get(prop);
-			if (s) set(s, magic(value));
+			if (s !== undefined) set(s, wrap(value, target));
 
 			if (is_array && prop === 'length') {
 				for (let i = value; i < target.length; i += 1) {
 					const s = sources.get(i + '');
-					if (s) set(s, undefined);
+					if (s !== undefined) set(s, undefined);
 				}
 			}
 
 			if (!(prop in target)) increment(version);
+			// @ts-ignore
 			target[prop] = value;
 
 			return true;
 		},
 		deleteProperty(target, prop) {
 			const s = sources.get(prop);
-			if (s) set(s, undefined);
+			if (s !== undefined) set(s, undefined);
 
 			if (prop in target) increment(version);
 
 			return delete target[prop];
 		},
 		has(target, prop) {
-			if (prop === symbol) return true;
+			if (prop === MAGIC_SYMBOL) return true;
 
 			get(version);
 			return Reflect.has(target, prop);

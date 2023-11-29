@@ -28,7 +28,8 @@ import {
 	EACH_ITEM_REACTIVE,
 	PassiveDelegatedEvents,
 	DelegatedEvents,
-	AttributeAliases
+	AttributeAliases,
+	EACH_IS_PROXIED
 } from '../../constants.js';
 import {
 	create_fragment_from_html,
@@ -61,7 +62,9 @@ import {
 	push,
 	current_component_context,
 	pop,
-	schedule_task
+	schedule_task,
+	unwrap,
+	lazy_property
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -2101,6 +2104,7 @@ export function destroy_each_item_block(
 
 /**
  * @template V
+ * @param {V[]} array
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
@@ -2108,8 +2112,13 @@ export function destroy_each_item_block(
  * @param {number} flags
  * @returns {import('./types.js').EachItemBlock}
  */
-export function each_item_block(item, key, index, render_fn, flags) {
-	const item_value = (flags & EACH_ITEM_REACTIVE) === 0 ? item : source(item);
+export function each_item_block(array, item, key, index, render_fn, flags) {
+	const item_value =
+		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
+			? lazy_property(array, index)
+			: (flags & EACH_ITEM_REACTIVE) === 0
+			? item
+			: source(item);
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 	const effect = render_effect(
@@ -2889,20 +2898,6 @@ export function spread_props(props) {
 		}
 	}
 	return merged_props;
-}
-
-/**
- * @template V
- * @param {V} value
- * @returns {import('./types.js').UnwrappedSignal<V>}
- */
-export function unwrap(value) {
-	if (is_signal(value)) {
-		// @ts-ignore
-		return get(value);
-	}
-	// @ts-ignore
-	return value;
 }
 
 /**

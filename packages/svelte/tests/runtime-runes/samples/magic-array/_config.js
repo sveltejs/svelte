@@ -1,8 +1,7 @@
+import { flushSync } from 'svelte';
 import { test } from '../../test';
 
 export default test({
-	skip: true, // TODO `array.reverse()` doesn't trigger each block update
-
 	html: `
 		<button>1 + 2 + 3 = 6</button>
 		<button>clear</button>
@@ -31,7 +30,10 @@ export default test({
 			`
 		);
 
-		await reverse?.click();
+		flushSync(() => {
+			reverse?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -46,7 +48,10 @@ export default test({
 			`
 		);
 
-		await clear?.click();
+		flushSync(() => {
+			clear?.click();
+		});
+
 		assert.htmlEqual(
 			target.innerHTML,
 			`
@@ -54,7 +59,7 @@ export default test({
 				<button>clear</button>
 				<button>reverse</button>
 				<span>4</span>
-				<strong>array[1]: undefined</strong>
+				<strong>array[1]:</strong>
 			`
 		);
 	}
