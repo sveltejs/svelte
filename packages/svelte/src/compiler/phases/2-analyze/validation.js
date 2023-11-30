@@ -8,7 +8,7 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
-import { EventModifiers, SVGElements } from '../constants.js';
+import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
 import {
 	regex_illegal_attribute_character,
@@ -417,6 +417,17 @@ export const validation = {
 						node.name,
 						`non-<svg> elements. Use 'clientWidth' for <svg> instead`
 					);
+				}
+
+				if (ContentEditableBindings.includes(node.name)) {
+					const contenteditable = /** @type {import('#compiler').Attribute} */ (
+						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
+					);
+					if (!contenteditable) {
+						error(node, 'missing-contenteditable-attribute');
+					} else if (!is_text_attribute(contenteditable)) {
+						error(contenteditable, 'dynamic-contenteditable-attribute');
+					}
 				}
 			} else {
 				const match = fuzzymatch(node.name, Object.keys(binding_properties));

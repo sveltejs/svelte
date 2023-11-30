@@ -281,7 +281,11 @@ const bindings = {
 	'invalid-type-attribute': () =>
 		`'type' attribute must be a static text value if input uses two-way binding`,
 	'invalid-multiple-attribute': () =>
-		`'multiple' attribute must be static if select uses two-way binding`
+		`'multiple' attribute must be static if select uses two-way binding`,
+	'missing-contenteditable-attribute': () =>
+		`'contenteditable' attribute is required for textContent, innerHTML and innerText two-way bindings`,
+	'dynamic-contenteditable-attribute': () =>
+		`'contenteditable' attribute cannot be dynamic if element uses two-way binding`
 };
 
 /** @satisfies {Errors} */
