@@ -67,7 +67,7 @@ export function serialize_get_binding(node, state) {
 
 	if (
 		binding.kind === 'prop' &&
-		!binding.mutated &&
+		!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
 		!binding.initial &&
 		!state.analysis.accessors
 	) {
@@ -364,7 +364,11 @@ export function get_props_method(binding, state, name, default_value) {
 		// Use $.prop_source in the following cases:
 		// - accessors/mutated: needs to be able to set the prop value from within
 		// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
-		binding.mutated || binding.initial || state.analysis.accessors ? '$.prop_source' : '$.prop',
+		(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+			binding.initial ||
+			state.analysis.accessors
+			? '$.prop_source'
+			: '$.prop',
 		...args
 	);
 }
