@@ -44,17 +44,22 @@ function validate_component(node, context) {
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
 function validate_element(node, context) {
+	let has_animate_directive = false;
+
 	for (const attribute of node.attributes) {
-		if (
-			attribute.type === 'Attribute' &&
-			attribute.name === 'is' &&
-			context.state.options.namespace !== 'foreign'
-		) {
-			warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
-		}
-		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-			/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
-			validate_slot_attribute(context, attribute);
+		if (attribute.type === 'Attribute') {
+			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
+				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
+			} else if (attribute.name === 'slot') {
+				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
+				validate_slot_attribute(context, attribute);
+			}
+		} else if (attribute.type === 'AnimateDirective') {
+			if (has_animate_directive) {
+				error(attribute, 'duplicate-animation');
+			} else {
+				has_animate_directive = true;
+			}
 		}
 	}
 }

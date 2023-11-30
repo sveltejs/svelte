@@ -224,7 +224,8 @@ const attributes = {
 	'empty-attribute-shorthand': () => `Attribute shorthand cannot be empty`,
 	'duplicate-attribute': () => `Attributes need to be unique`,
 	'invalid-event-attribute-value': () =>
-		`Event attribute must be a JavaScript expression, not a string`
+		`Event attribute must be a JavaScript expression, not a string`,
+	'duplicate-animation': () => `An element can only have one 'animate' directive`
 };
 
 /** @satisfies {Errors} */
@@ -445,10 +446,6 @@ const errors = {
 	// 	code: 'css-invalid-selector',
 	// 	message: `Invalid selector "${selector}"`
 	// }),
-	// duplicate_animation: {
-	// 	code: 'duplicate-animation',
-	// 	message: "An element can only have one 'animate' directive"
-	// },
 	// invalid_animation_immediate: {
 	// 	code: 'invalid-animation',
 	// 	message:
