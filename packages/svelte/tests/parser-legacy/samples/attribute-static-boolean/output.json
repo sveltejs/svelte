@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 30,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 30,
-				"type": "Element",
 				"name": "textarea",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 10,
 						"end": 18,
-						"type": "Attribute",
 						"name": "readonly",
 						"value": true
 					}

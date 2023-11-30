@@ -219,7 +219,8 @@ export function analyze_module(ast, options) {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
 		warnings,
-		accessors: false
+		accessors: false,
+		runes: true
 	};
 }
 

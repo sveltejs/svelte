@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 41,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 41,
-				"type": "Element",
 				"name": "a",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 3,
 						"end": 30,
-						"type": "Attribute",
 						"name": "href",
 						"value": [
 							{
@@ -28,9 +28,9 @@
 				],
 				"children": [
 					{
+						"type": "Text",
 						"start": 31,
 						"end": 37,
-						"type": "Text",
 						"raw": "Google",
 						"data": "Google"
 					}

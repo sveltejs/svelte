@@ -152,7 +152,11 @@ export function serialize_set_binding(node, context, fallback) {
 		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
 			if (context.state.private_state.has(left.property.name) && !state.in_constructor) {
 				const value = get_assignment_value(node, context);
-				return b.call('$.set', left, value);
+				return b.call(
+					'$.set',
+					left,
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		}
 		// @ts-expect-error
@@ -202,7 +206,11 @@ export function serialize_set_binding(node, context, fallback) {
 			if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
 			} else {
-				return b.call('$.set', b.id(left_name), value);
+				return b.call(
+					'$.set',
+					b.id(left_name),
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		} else {
 			if (is_store) {
@@ -385,7 +393,8 @@ export function should_proxy(node) {
 		!node ||
 		node.type === 'Literal' ||
 		node.type === 'ArrowFunctionExpression' ||
-		node.type === 'FunctionExpression'
+		node.type === 'FunctionExpression' ||
+		(node.type === 'Identifier' && node.name === 'undefined')
 	) {
 		return false;
 	}

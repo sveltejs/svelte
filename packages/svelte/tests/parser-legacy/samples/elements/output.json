@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 15,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 15,
-				"type": "Element",
 				"name": "!doctype",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 10,
 						"end": 14,
-						"type": "Attribute",
 						"name": "html",
 						"value": true
 					}

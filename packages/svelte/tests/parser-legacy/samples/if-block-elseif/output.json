@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 89,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "IfBlock",
 				"start": 0,
 				"end": 89,
-				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
 					"start": 5,
@@ -59,16 +59,16 @@
 				},
 				"children": [
 					{
+						"type": "Element",
 						"start": 14,
 						"end": 41,
-						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
+								"type": "Text",
 								"start": 17,
 								"end": 37,
-								"type": "Text",
 								"raw": "x is greater than 10",
 								"data": "x is greater than 10"
 							}
@@ -76,15 +76,14 @@
 					}
 				],
 				"else": {
+					"type": "ElseBlock",
 					"start": 58,
 					"end": 84,
-					"type": "ElseBlock",
 					"children": [
 						{
+							"type": "IfBlock",
 							"start": 58,
 							"end": 89,
-							"type": "IfBlock",
-							"elseif": true,
 							"expression": {
 								"type": "BinaryExpression",
 								"start": 52,
@@ -136,22 +135,23 @@
 							},
 							"children": [
 								{
+									"type": "Element",
 									"start": 60,
 									"end": 83,
-									"type": "Element",
 									"name": "p",
 									"attributes": [],
 									"children": [
 										{
+											"type": "Text",
 											"start": 63,
 											"end": 79,
-											"type": "Text",
 											"raw": "x is less than 5",
 											"data": "x is less than 5"
 										}
 									]
 								}
-							]
+							],
+							"elseif": true
 						}
 					]
 				}

@@ -1,27 +1,27 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 42,
-		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 42,
 				"type": "Head",
 				"name": "svelte:head",
+				"start": 0,
+				"end": 42,
 				"attributes": [],
 				"children": [
 					{
+						"type": "Element",
 						"start": 13,
 						"end": 28,
-						"type": "Element",
 						"name": "style",
 						"attributes": [],
 						"children": [
 							{
+								"type": "Text",
 								"start": 20,
 								"end": 20,
-								"type": "Text",
 								"data": ""
 							}
 						]

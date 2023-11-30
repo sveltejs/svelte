@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 38,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 38,
-				"type": "Element",
 				"name": "button",
 				"attributes": [
 					{
@@ -36,9 +36,9 @@
 				],
 				"children": [
 					{
+						"type": "Text",
 						"start": 24,
 						"end": 29,
-						"type": "Text",
 						"raw": "Click",
 						"data": "Click"
 					}

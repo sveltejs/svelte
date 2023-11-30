@@ -100,7 +100,8 @@ export class Scope {
 			is_called: false,
 			prop_alias: null,
 			expression: null,
-			mutation: null
+			mutation: null,
+			reassigned: false
 		};
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);

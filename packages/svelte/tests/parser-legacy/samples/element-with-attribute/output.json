@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 49,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 24,
-				"type": "Element",
 				"name": "span",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 6,
 						"end": 16,
-						"type": "Attribute",
 						"name": "attr",
 						"value": [
 							{
@@ -29,22 +29,22 @@
 				"children": []
 			},
 			{
+				"type": "Text",
 				"start": 24,
 				"end": 25,
-				"type": "Text",
 				"raw": "\n",
 				"data": "\n"
 			},
 			{
+				"type": "Element",
 				"start": 25,
 				"end": 49,
-				"type": "Element",
 				"name": "span",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 31,
 						"end": 41,
-						"type": "Attribute",
 						"name": "attr",
 						"value": [
 							{
