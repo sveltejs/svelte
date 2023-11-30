@@ -8,7 +8,7 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
-import { SVGElements } from '../constants.js';
+import { EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
 import {
 	regex_illegal_attribute_character,
@@ -33,6 +33,13 @@ function validate_component(node, context) {
 			attribute.type !== 'BindDirective'
 		) {
 			error(attribute, 'invalid-component-directive');
+		}
+
+		if (
+			attribute.type === 'OnDirective' &&
+			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
+		) {
+			error(attribute, 'invalid-event-modifier');
 		}
 	}
 
@@ -83,6 +90,27 @@ function validate_element(node, context) {
 				error(attribute, 'duplicate-animation');
 			} else {
 				has_animate_directive = true;
+			}
+		} else if (attribute.type === 'OnDirective') {
+			let has_passive_modifier = false;
+			let conflicting_passive_modifier = '';
+			for (const modifier of attribute.modifiers) {
+				if (!EventModifiers.includes(modifier)) {
+					error(attribute, 'invalid-event-modifier', EventModifiers);
+				}
+				if (modifier === 'passive') {
+					has_passive_modifier = true;
+				} else if (modifier === 'nonpassive' || modifier === 'preventDefault') {
+					conflicting_passive_modifier = modifier;
+				}
+				if (has_passive_modifier && conflicting_passive_modifier) {
+					error(
+						attribute,
+						'invalid-event-modifier-combination',
+						'passive',
+						conflicting_passive_modifier
+					);
+				}
 			}
 		}
 	}

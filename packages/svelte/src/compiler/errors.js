@@ -234,7 +234,18 @@ const attributes = {
 			: type === 'each-key'
 			? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
 			: `An element that uses the animate directive must be the sole child of a keyed each block`,
-	'duplicate-animation': () => `An element can only have one 'animate' directive`
+	'duplicate-animation': () => `An element can only have one 'animate' directive`,
+	/** @param {string[] | undefined} [modifiers] */
+	'invalid-event-modifier': (modifiers) =>
+		modifiers
+			? `Valid event modifiers are ${modifiers.slice(0, -1).join(', ')} or ${modifiers.slice(-1)}`
+			: `Event modifiers other than 'once' can only be used on DOM elements`,
+	/**
+	 * @param {string} modifier1
+	 * @param {string} modifier2
+	 */
+	'invalid-event-modifier-combination': (modifier1, modifier2) =>
+		`The '${modifier1}' and '${modifier2}' modifiers cannot be used together`
 };
 
 /** @satisfies {Errors} */
@@ -313,25 +324,6 @@ const errors = {
 	// dynamic_contenteditable_attribute: {
 	// 	code: 'dynamic-contenteditable-attribute',
 	// 	message: "'contenteditable' attribute cannot be dynamic if element uses two-way binding"
-	// },
-	// invalid_event_modifier_combination: /**
-	//  * @param {string} modifier1
-	//  * @param {string} modifier2
-	//  */ (modifier1, modifier2) => ({
-	// 	code: 'invalid-event-modifier',
-	// 	message: `The '${modifier1}' and '${modifier2}' modifiers cannot be used together`
-	// }),
-	// invalid_event_modifier_legacy: /** @param {string} modifier */ (modifier) => ({
-	// 	code: 'invalid-event-modifier',
-	// 	message: `The '${modifier}' modifier cannot be used in legacy mode`
-	// }),
-	// invalid_event_modifier: /** @param {string} valid */ (valid) => ({
-	// 	code: 'invalid-event-modifier',
-	// 	message: `Valid event modifiers are ${valid}`
-	// }),
-	// invalid_event_modifier_component: {
-	// 	code: 'invalid-event-modifier',
-	// 	message: "Event modifiers other than 'once' can only be used on DOM elements"
 	// },
 	// textarea_duplicate_value: {
 	// 	code: 'textarea-duplicate-value',
