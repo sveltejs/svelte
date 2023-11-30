@@ -1,7 +1,7 @@
 [
 	{
-		"code": "css-invalid-selector",
-		"message": "Invalid selector \"> span\"",
+		"code": "invalid-css-selector",
+		"message": "Invalid selector",
 		"start": { "line": 10, "column": 1 },
 		"end": { "line": 10, "column": 7 }
 	}
