@@ -202,13 +202,21 @@ const performance = {
 };
 
 /** @satisfies {Warnings} */
+const components = {
+	/** @param {string} name */
+	'component-name-lowercase': (name) =>
+		`<${name}> will be treated as an HTML element unless it begins with a capital letter`
+};
+
+/** @satisfies {Warnings} */
 const warnings = {
 	...css,
 	...attributes,
 	...runes,
 	...a11y,
 	...performance,
-	...state
+	...state,
+	...components
 };
 
 /** @typedef {typeof warnings} AllWarnings */

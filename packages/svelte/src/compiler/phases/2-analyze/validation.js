@@ -439,6 +439,21 @@ export const validation = {
 			}
 		}
 
+		const binding = context.state.scope.get(node.name);
+		if (
+			binding !== null &&
+			binding.declaration_kind === 'import' &&
+			binding.references.length === 0
+		) {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'component-name-lowercase',
+				node.name
+			);
+		}
+
 		validate_element(node, context);
 
 		if (context.state.parent_element) {
