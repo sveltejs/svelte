@@ -213,8 +213,6 @@ function close_template(dom, is_fragment, anchor) {
 	if (anchor !== null) {
 		if (current_hydration_fragment === null) {
 			insert(current, null, anchor);
-		} else {
-			cleanup_hyration_node(anchor);
 		}
 	}
 	block.d = current;
@@ -1344,20 +1342,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 	} else {
 		slot_fn(anchor_node, slot_props);
 	}
-	cleanup_hyration_node(anchor_node);
-}
-
-/**
- *
- * @param {Element | Comment} node
- */
-function cleanup_hyration_node(node) {
-	// Let's ensure we don't leak the hydration fragment
-	// @ts-expect-error internal field
-	if (node.$$fragment) {
-		// @ts-expect-error internal field
-		node.$$fragment = undefined;
-	}
 }
 
 /**
@@ -1489,7 +1473,6 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 		destroy_signal(alternate_effect);
 	});
 	block.e = if_effect;
-	cleanup_hyration_node(anchor_node);
 }
 export { if_block as if };
 
@@ -1633,7 +1616,6 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 		}
 		destroy_signal(render_effect_signal);
 	});
-	cleanup_hyration_node(anchor_node);
 	block.e = element_effect;
 }
 
@@ -1751,7 +1733,6 @@ export function component(anchor_node, component_fn, render_fn) {
 			render = render.p;
 		}
 	});
-	cleanup_hyration_node(anchor_node);
 	block.e = component_effect;
 }
 
@@ -1919,7 +1900,6 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			render = render.p;
 		}
 	});
-	cleanup_hyration_node(anchor_node);
 	block.e = await_effect;
 }
 export { await_block as await };
@@ -2036,7 +2016,6 @@ export function key(anchor_node, key, render_fn) {
 			render = render.p;
 		}
 	});
-	cleanup_hyration_node(anchor_node);
 	block.e = key_effect;
 }
 
@@ -2292,7 +2271,6 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
-	cleanup_hyration_node(anchor_node);
 	block.e = each;
 }
 

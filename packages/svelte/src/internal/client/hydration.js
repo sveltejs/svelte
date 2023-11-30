@@ -1,5 +1,7 @@
 // Handle hydration
 
+import { schedule_task } from './runtime';
+
 /** @type {null | Array<Text | Comment | Element>} */
 export let current_hydration_fragment = null;
 
@@ -68,6 +70,11 @@ export function hydrate_block_anchor(anchor_node, is_controlled) {
 			let fragment = target_node.$$fragment;
 			if (fragment === undefined) {
 				fragment = get_hydration_fragment(target_node);
+			} else {
+				schedule_task(() => {
+					// @ts-expect-error clean up memory
+					target_node.$$fragment = undefined;
+				});
 			}
 			set_current_hydration_fragment(fragment);
 		} else {
