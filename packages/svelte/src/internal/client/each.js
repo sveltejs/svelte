@@ -748,7 +748,7 @@ function each_item_block(array, item, key, index, render_fn, flags) {
 			: each_item_not_reactive
 			? item
 			: source(item);
-	const index_value = each_item_not_reactive ? index : source(index);
+	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 	const effect = render_effect(
 		/** @param {import('./types.js').EachItemBlock} block */
