@@ -1130,7 +1130,7 @@ export function derived(init, equals) {
 	);
 	signal.i = init;
 	signal.x = current_component_context;
-	signal.e = get_equals_method(equals);
+	signal.e = equals || default_equals;
 	if (!is_unowned) {
 		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
 	}

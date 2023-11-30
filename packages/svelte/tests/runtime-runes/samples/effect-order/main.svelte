@@ -3,7 +3,7 @@
 
 	let myList = $state([{ name: 'one' ,age: 4 }, {name: 'two', age: 5}]);
 
-	let myDerived = $derived(myList)
+	let myDerived = $derived([...myList])
 
 	$effect(() => {
 		myList
@@ -11,7 +11,7 @@
 	})
 
 	$effect(() => {
-		myDerived		
+		myDerived
 		log.push('B')
 	})
 </script>
