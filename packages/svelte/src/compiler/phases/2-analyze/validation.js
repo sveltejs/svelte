@@ -10,7 +10,11 @@ import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
 import { SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
-import { regex_not_whitespace, regex_only_whitespaces } from '../patterns.js';
+import {
+	regex_illegal_attribute_character,
+	regex_not_whitespace,
+	regex_only_whitespaces
+} from '../patterns.js';
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
@@ -47,6 +51,13 @@ function validate_element(node, context) {
 	let has_animate_directive = false;
 
 	for (const attribute of node.attributes) {
+		if (
+			attribute.type !== 'SpreadAttribute' &&
+			regex_illegal_attribute_character.test(attribute.name)
+		) {
+			error(attribute, 'invalid-attribute-name', attribute.name);
+		}
+
 		if (attribute.type === 'Attribute') {
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
 				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');

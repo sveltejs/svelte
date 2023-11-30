@@ -225,6 +225,8 @@ const attributes = {
 	'duplicate-attribute': () => `Attributes need to be unique`,
 	'invalid-event-attribute-value': () =>
 		`Event attribute must be a JavaScript expression, not a string`,
+	/** @param {string} name */
+	'invalid-attribute-name': (name) => `'${name}' is not a valid attribute name`,
 	/** @param {'no-each' | 'each-key' | 'child'} type */
 	'invalid-animation': (type) =>
 		type === 'no-each'
@@ -336,10 +338,6 @@ const errors = {
 	// 	message:
 	// 		'A <textarea> can have either a value attribute or (equivalently) child content, but not both'
 	// },
-	// illegal_attribute: /** @param {string} name */ (name) => ({
-	// 	code: 'illegal-attribute',
-	// 	message: `'${name}' is not a valid attribute name`
-	// }),
 	// invalid_attribute_head: {
 	// 	code: 'invalid-attribute',
 	// 	message: '<svelte:head> should not have any attributes or directives'
