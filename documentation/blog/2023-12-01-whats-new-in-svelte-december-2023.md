@@ -5,7 +5,7 @@ author: Dani Sandoval
 authorURL: https://dreamindani.com
 ---
 
-Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and the launch of the beta version of Svelte 5.0! Individual videos for each talk can be found in [this playlist](https://www.youtube.com/watch?v=RT0aemVpvVE&list=PL8bMgX1kyZTh_wu-CruPkxk6sMbXXluJK), but the whole talk can be found [here](https://www.youtube.com/watch?v=pTgIx-ucMsY) (timestamps below):
+Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and the launches from the core team of new Svelte Dev Tools, image optimization, and a preview version of Svelte 5.0! The whole talk can be found [here](https://www.youtube.com/watch?v=pTgIx-ucMsY) (timestamps below):
 - [0:00](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=0s) Hype music!
 - [18:20](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=1100s) Exploring Svelte DevTools - Ignatius B (4 minutes)
 - [25:27](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=1527s) How does SvelteKit fare as a SPA Framework - Henry Lie (25 minutes)
