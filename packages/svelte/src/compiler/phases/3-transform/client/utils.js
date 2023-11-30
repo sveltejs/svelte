@@ -366,7 +366,10 @@ export function create_state_declarators(declarator, scope, value, runes) {
 	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
 	if (declarator.id.type === 'Identifier') {
 		return [
-			b.declarator(declarator.id, runes ? b.call('$.source', value) : b.call('$.source', value))
+			b.declarator(
+				declarator.id,
+				runes ? b.call('$.source', value, b.id('$.equals')) : b.call('$.source', value)
+			)
 		];
 	}
 
