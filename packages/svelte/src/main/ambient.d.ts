@@ -132,12 +132,23 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Logs the arguments whenever they, or the properties they contain, change. Example:
+ * Inspects a value whenever it, or the properties it contains, change. Example:
  *
  * ```ts
- * $inspect(someValue, someOtherValue)
+ * $inspect({ someValue, someOtherValue })
+ * ```
+ *
+ * If a second argument is provided, it will be called with the value and the event type
+ * (`'init'` or `'update'`), otherwise the value will be logged to the console.
+ *
+ * ```ts
+ * $inspect(x, console.trace);
+ * $inspect(y, (y) => { debugger; });
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$inspect
  */
-declare function $inspect(): void;
+declare function $inspect<T>(
+	value: T,
+	callback?: (value: T, type: 'init' | 'update') => void
+): void;
