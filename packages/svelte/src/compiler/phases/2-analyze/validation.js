@@ -51,14 +51,11 @@ function validate_element(node, context) {
 	let has_animate_directive = false;
 
 	for (const attribute of node.attributes) {
-		if (
-			attribute.type !== 'SpreadAttribute' &&
-			regex_illegal_attribute_character.test(attribute.name)
-		) {
-			error(attribute, 'invalid-attribute-name', attribute.name);
-		}
-
 		if (attribute.type === 'Attribute') {
+			if (regex_illegal_attribute_character.test(attribute.name)) {
+				error(attribute, 'invalid-attribute-name', attribute.name);
+			}
+
 			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
 				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
 			} else if (attribute.name === 'slot') {

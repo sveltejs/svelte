@@ -170,6 +170,7 @@ export class Scope {
 	 * @param {import('#compiler').SvelteNode[]} path
 	 */
 	reference(node, path) {
+		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 		if (!references) this.references.set(node.name, (references = []));
 
