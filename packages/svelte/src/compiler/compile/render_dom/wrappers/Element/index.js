@@ -1312,9 +1312,19 @@ function to_html(wrappers, block, literal, state, can_use_raw_text) {
 					// The value attribute of <textarea> renders as content.
 					return;
 				}
-				state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
-				to_html_for_attr_value(attr, block, literal, state);
-				state.quasi.value.raw += '"';
+
+				if (attr instanceof SpreadAttributeWrapper) {
+					literal.quasis.push(state.quasi);
+					literal.expressions.push(x`@stringify_spread(${attr.node.expression.manipulate(block)})`);
+					state.quasi = {
+						type: 'TemplateElement',
+						value: { raw: '' }
+					};
+				} else {
+					state.quasi.value.raw += ` ${fix_attribute_casing(attr.node.name)}="`;
+					to_html_for_attr_value(attr, block, literal, state);
+					state.quasi.value.raw += '"';
+				}
 			});
 			if (!wrapper.void) {
 				state.quasi.value.raw += '>';

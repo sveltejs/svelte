@@ -189,7 +189,7 @@ export default app;`
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-controls">
-	<input bind:value={name} on:focus={(e) => e.target.select()} use:enter={(e) => e.target.blur()} />
+	<input bind:value={name} on:focus={(e) => e.target.select()} use:enter={(e) => /** @type {HTMLInputElement} */ (e.target).blur()} />
 
 	<div class="buttons">
 		<button class="icon" on:click={() => (zen_mode = !zen_mode)} title="fullscreen editor">

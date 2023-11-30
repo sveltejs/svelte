@@ -21,18 +21,15 @@ export async function test({ assert, css, js }) {
 	const sourcefile = 'input.svelte';
 	[
 		// TODO: get line and col num from input.svelte rather than hardcoding here
-		[css, '--keep-me', 13, 2],
-		// TODO: these should be 7, 2 and 10, 2
-		// we use locate_1 which means lines are 1-indexed and cols are 0-indexed
-		// each tab is 1 col
-		[css, '--done-replace-once', 6, 4],
-		[css, '--done-replace-twice', 9, 4]
-	].forEach(([where, content, line, column]) => {
+		[css, '--keep-me', null, 13, 2],
+		[css, '--done-replace-once', '--replace-me-once', 7, 2],
+		[css, '--done-replace-twice', '--replace-me-twice', 10, 2]
+	].forEach(([where, content, name, line, column]) => {
 		assert.deepEqual(
 			where.mapConsumer.originalPositionFor(where.locate_1(content)),
 			{
 				source: sourcefile,
-				name: null,
+				name,
 				line,
 				column
 			},

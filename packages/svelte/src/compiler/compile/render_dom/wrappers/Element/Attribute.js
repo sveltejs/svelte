@@ -103,8 +103,8 @@ export default class AttributeWrapper extends BaseAttributeWrapper {
 				this.parent.has_dynamic_value = true;
 			}
 		}
-		if (this.parent.node.namespace == namespaces.foreign) {
-			// leave attribute case alone for elements in the "foreign" namespace
+		if (this.parent.node.namespace == namespaces.foreign || this.parent.node.name.includes('-')) {
+			// leave attribute case alone for elements in the "foreign" namespace and for custom elements
 			this.name = this.node.name;
 			this.metadata = this.get_metadata();
 			this.is_indirectly_bound_value = false;

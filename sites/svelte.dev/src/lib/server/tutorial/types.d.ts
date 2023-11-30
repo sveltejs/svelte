@@ -1,4 +1,4 @@
-export type TutorialData = {
+export interface TutorialDatum {
 	title: string;
 	slug: string;
 	tutorials: {
@@ -6,10 +6,18 @@ export type TutorialData = {
 		slug: string;
 		dir: string;
 		content: string;
-		initial: { name: string; type: string; content: string }[];
-		complete: { name: string; type: string; content: string }[];
+		initial: CompletionState[];
+		complete: CompletionState[];
 	}[];
-}[];
+}
+
+export interface CompletionState {
+	name: string;
+	type: string;
+	content: string;
+}
+
+export type TutorialData = TutorialDatum[];
 
 export interface Tutorial {
 	title: string;

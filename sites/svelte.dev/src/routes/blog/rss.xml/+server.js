@@ -4,12 +4,15 @@ export const prerender = true;
 
 const months = ',Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
 
+/** @param {string} str */
 function formatPubdate(str) {
 	const [y, m, d] = str.split('-');
 	return `${d} ${months[+m]} ${y} 12:00 +0000`;
 }
 
+/** @param {string} html */
 function escapeHTML(html) {
+	/** @type {{ [key: string]: string }} */
 	const chars = {
 		'"': 'quot',
 		"'": '#39',

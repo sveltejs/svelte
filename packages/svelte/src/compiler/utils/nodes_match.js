@@ -1,4 +1,4 @@
-export function nodes_match(a, b) {
+export function nodes_match(a, b, ignoreKeys = []) {
 	if (!!a !== !!b) return false;
 	if (Array.isArray(a) !== Array.isArray(b)) return false;
 
@@ -8,8 +8,12 @@ export function nodes_match(a, b) {
 			return a.every((child, i) => nodes_match(child, b[i]));
 		}
 
-		const a_keys = Object.keys(a).sort();
-		const b_keys = Object.keys(b).sort();
+		const a_keys = Object.keys(a)
+			.sort()
+			.filter((key) => !ignoreKeys.includes(key));
+		const b_keys = Object.keys(b)
+			.sort()
+			.filter((key) => !ignoreKeys.includes(key));
 
 		if (a_keys.length !== b_keys.length) return false;
 

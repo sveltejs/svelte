@@ -72,7 +72,7 @@ Sometimes actions emit custom events and apply custom attributes to the element 
 	}
 </script>
 
-<div use:foo={{ prop: 'someValue' }} on:emit={handleEmit} />
+<div on:emit={handleEmit} use:foo={{ prop: 'someValue' }} />
 ```
 
 ## Types

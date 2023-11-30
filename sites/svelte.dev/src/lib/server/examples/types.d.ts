@@ -1,4 +1,4 @@
-export type ExamplesData = {
+export interface ExamplesDatum {
 	title: string;
 	slug: string;
 	examples: {
@@ -10,7 +10,9 @@ export type ExamplesData = {
 			name: string;
 		}[];
 	}[];
-}[];
+}
+
+export type ExamplesData = ExamplesDatum[];
 
 export interface Example {
 	title: string;

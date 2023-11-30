@@ -480,7 +480,10 @@ export function set_custom_element_data_map(node, data_map) {
 /**
  * @returns {void} */
 export function set_custom_element_data(node, prop, value) {
-	if (prop in node) {
+	const lower = prop.toLowerCase(); // for backwards compatibility with existing behavior we do lowercase first
+	if (lower in node) {
+		node[lower] = typeof node[lower] === 'boolean' && value === '' ? true : value;
+	} else if (prop in node) {
 		node[prop] = typeof node[prop] === 'boolean' && value === '' ? true : value;
 	} else {
 		attr(node, prop, value);
@@ -804,6 +807,9 @@ export function claim_html_tag(nodes, is_svg) {
 	detach(html_tag_nodes[0]);
 	detach(html_tag_nodes[html_tag_nodes.length - 1]);
 	const claimed_nodes = html_tag_nodes.slice(1, html_tag_nodes.length - 1);
+	if (claimed_nodes.length === 0) {
+		return new HtmlTagHydration(is_svg);
+	}
 	for (const n of claimed_nodes) {
 		n.claim_order = nodes.claim_info.total_claimed;
 		nodes.claim_info.total_claimed += 1;
@@ -1172,6 +1178,36 @@ export function attribute_to_object(attributes) {
 		result[attribute.name] = attribute.value;
 	}
 	return result;
+}
+
+const escaped = {
+	'"': '&quot;',
+	'&': '&amp;',
+	'<': '&lt;'
+};
+
+const regex_attribute_characters_to_escape = /["&<]/g;
+
+/**
+ * Note that the attribute itself should be surrounded in double quotes
+ * @param {any} attribute
+ */
+function escape_attribute(attribute) {
+	return String(attribute).replace(regex_attribute_characters_to_escape, (match) => escaped[match]);
+}
+
+/**
+ * @param {Record<string, string>} attributes
+ */
+export function stringify_spread(attributes) {
+	let str = ' ';
+	for (const key in attributes) {
+		if (attributes[key] != null) {
+			str += `${key}="${escape_attribute(attributes[key])}" `;
+		}
+	}
+
+	return str;
 }
 
 /**

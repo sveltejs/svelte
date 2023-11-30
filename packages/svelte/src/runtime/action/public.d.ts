@@ -50,7 +50,7 @@ export interface ActionReturn<
  *   // ...
  * }
  * ```
- * `Action<HTMLDivElement>` and `Action<HTMLDiveElement, undefined>` both signal that the action accepts no parameters.
+ * `Action<HTMLDivElement>` and `Action<HTMLDivElement, undefined>` both signal that the action accepts no parameters.
  *
  * You can return an object with methods `update` and `destroy` from the function and type which additional attributes and events it has.
  * See interface `ActionReturn` for more details.
