@@ -892,6 +892,11 @@ const common_visitors = {
 		const parent = /** @type {import('estree').Node} */ (context.path.at(-1));
 		if (!is_reference(node, parent)) return;
 
+		if (node.name === '$$slots') {
+			context.state.analysis.uses_slots = true;
+			return;
+		}
+
 		const binding = context.state.scope.get(node.name);
 
 		// if no binding, means some global variable
