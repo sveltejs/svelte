@@ -61,8 +61,7 @@ import {
 	push,
 	current_component_context,
 	pop,
-	schedule_task,
-	managed_render_effect
+	schedule_task
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -211,8 +210,10 @@ function close_template(dom, is_fragment, anchor) {
 			? dom
 			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
-	if (anchor !== null && current_hydration_fragment === null) {
-		insert(current, null, anchor);
+	if (anchor !== null) {
+		if (current_hydration_fragment === null) {
+			insert(current, null, anchor);
+		}
 	}
 	block.d = current;
 }
@@ -1396,9 +1397,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				} else if (current_hydration_fragment !== null) {
 					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 					if (
-						(!comment_text &&
-							// Can happen when a svelte:element that is turned into a void element has an if block inside
-							current_hydration_fragment[0] !== null) ||
+						!comment_text ||
 						(comment_text === 'ssr:if:true' && !result) ||
 						(comment_text === 'ssr:if:false' && result)
 					) {
