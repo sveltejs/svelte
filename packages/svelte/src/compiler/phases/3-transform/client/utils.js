@@ -360,11 +360,14 @@ export function get_props_method(binding, state, name, default_value) {
  * @param {import('estree').VariableDeclarator} declarator
  * @param {import('../../scope').Scope} scope
  * @param {import('estree').Expression} value
+ * @param {boolean} runes
  */
-export function create_state_declarators(declarator, scope, value) {
+export function create_state_declarators(declarator, scope, value, runes) {
 	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.source', value))];
+		return [
+			b.declarator(declarator.id, runes ? b.call('$.source', value) : b.call('$.source', value))
+		];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -374,7 +377,14 @@ export function create_state_declarators(declarator, scope, value) {
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(path.node, binding?.kind === 'state' ? b.call('$.source', value) : value);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state'
+					? runes
+						? b.call('$.source', value, b.id('$.equals'))
+						: b.call('$.source', value)
+					: value
+			);
 		})
 	];
 }

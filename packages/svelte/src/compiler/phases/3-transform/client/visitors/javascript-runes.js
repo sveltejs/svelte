@@ -247,7 +247,7 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			declarations.push(...create_state_declarators(declarator, state.scope, value));
+			declarations.push(...create_state_declarators(declarator, state.scope, value, true));
 		}
 
 		if (declarations.length === 0) {

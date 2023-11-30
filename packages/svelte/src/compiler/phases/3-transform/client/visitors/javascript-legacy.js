@@ -86,7 +86,8 @@ export const javascript_visitors_legacy = {
 				...create_state_declarators(
 					declarator,
 					state.scope,
-					/** @type {import('estree').Expression} */ (declarator.init && visit(declarator.init))
+					/** @type {import('estree').Expression} */ (declarator.init && visit(declarator.init)),
+					false
 				)
 			);
 		}

@@ -149,6 +149,8 @@ function default_equals(a, b) {
 	return a === b;
 }
 
+export { default_equals as equals };
+
 /**
  * @template V
  * @param {import('./types.js').SignalFlags} flags
