@@ -19,9 +19,9 @@ Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and 
 - [3:18:25](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=11905s) Accessibility tips with Svelte solutions - Enrico Sacchetti (25 minutes)
 - [3:49:11](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=13751s) svelte@next - Rich Harris (18 minutes)
 
-## What's new in Svelte
+## What's new in Svelte (5.0 Preview!)
 
-[Svelte 5 preview](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`.
+[Svelte 5 preview](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`. All the changes below are from the preview's branch:
 
 - TypeScript is now supported natively via acorn-typescript (**5.0.0-next.9**, [#9482](https://github.com/sveltejs/svelte/pull/9482))
 - The new `$effect.active` rune returns a boolean to indicate if an effect is active. This lets you set up subscriptions when a value is read (in an effect, or in the template) but also read values without creating subscriptions (**5.0.0-next.10**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#effect-active), [#9591](https://github.com/sveltejs/svelte/pull/9591))
