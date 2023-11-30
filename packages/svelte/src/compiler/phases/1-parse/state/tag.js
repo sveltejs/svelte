@@ -530,22 +530,21 @@ function special(parser) {
 
 	if (parser.eat('const')) {
 		// {@const a = b}
+		const start_index = parser.index - 5;
 		parser.require_whitespace();
-
-		const CONST_LENGTH = 'const '.length;
-		parser.index = parser.index - CONST_LENGTH;
 
 		let end_index = parser.index;
 		/** @type {import('estree').VariableDeclaration | undefined} */
 		let declaration = undefined;
 
-		const dummy_spaces = parser.template.substring(0, parser.index).replace(/[^\n]/g, ' ');
+		// Can't use parse_expression_at here, so we try to parse until we find the correct range
+		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
 		while (true) {
 			end_index = parser.template.indexOf('}', end_index + 1);
 			if (end_index === -1) break;
 			try {
 				const node = parse(
-					dummy_spaces + parser.template.substring(parser.index, end_index),
+					dummy_spaces + parser.template.substring(start_index, end_index),
 					parser.ts
 				).body[0];
 				if (node?.type === 'VariableDeclaration') {
@@ -567,12 +566,6 @@ function special(parser) {
 
 		parser.index = end_index;
 		parser.eat('}', true);
-
-		const id = declaration.declarations[0].id;
-		if (id.type === 'Identifier') {
-			// Tidy up some stuff left behind by acorn-typescript
-			id.end = (id.start ?? 0) + id.name.length;
-		}
 
 		parser.append(
 			/** @type {import('#compiler').ConstTag} */ ({
