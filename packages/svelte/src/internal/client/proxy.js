@@ -1,4 +1,4 @@
-import { effect_active, get, set, increment, source } from './runtime.js';
+import { effect_active, get, set, increment, source, updating_derived } from './runtime.js';
 import { get_descriptor, is_array } from './utils.js';
 
 /** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
@@ -73,7 +73,7 @@ const handler = {
 		// but only if it's an own property and not a prototype property
 		if (
 			s === undefined &&
-			effect_active() &&
+			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
 			s = source(wrap(target[prop], receiver));

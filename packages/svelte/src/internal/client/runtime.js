@@ -87,6 +87,8 @@ export let current_block = null;
 export let current_component_context = null;
 export let is_ssr = false;
 
+export let updating_derived = false;
+
 /**
  * @param {boolean} ssr
  * @returns {void}
@@ -661,7 +663,10 @@ export async function tick() {
  * @returns {void}
  */
 function update_derived(signal, force_schedule) {
+	const previous_updating_derived = updating_derived;
+	updating_derived = true;
 	const value = execute_signal_fn(signal);
+	updating_derived = previous_updating_derived;
 	const status =
 		current_skip_consumer || (current_effect === null && (signal.f & UNOWNED) !== 0)
 			? DIRTY
