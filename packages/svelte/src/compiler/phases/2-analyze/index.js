@@ -1106,7 +1106,8 @@ function determine_element_spread_and_delegatable(node) {
 			has_spread = true;
 		} else if (
 			!has_action_or_bind &&
-			(attribute.type === 'BindDirective' || attribute.type === 'UseDirective')
+			((attribute.type === 'BindDirective' && attribute.name !== 'this') ||
+				attribute.type === 'UseDirective')
 		) {
 			has_action_or_bind = true;
 		}
