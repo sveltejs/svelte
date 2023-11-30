@@ -69,9 +69,18 @@
 
 		<slot />
 
-		<Banner arrow slot="banner-bottom" id="svelte-5-runes">
-			<a href="/blog/runes">Introducing the upcoming Svelte 5 API: Runes</a>
-		</Banner>
+		{#each data.banner as { content, href, id, start, arrow, end }}
+			<Banner
+				slot="banner-bottom"
+				{id}
+				start={new Date(start)}
+				end={end ? new Date(end) : undefined}
+				{arrow}
+				{href}
+			>
+				{content}
+			</Banner>
+		{/each}
 	</Shell>
 </div>
 

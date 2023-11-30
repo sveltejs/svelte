@@ -1,9 +1,13 @@
 export const load = async ({ url, fetch }) => {
 	const nav_list = await fetch('/nav.json').then((r) => r.json());
 
+	/** @type {import('./banner.json/+server.js').BannerData} */
+	const banner = await fetch('/banner.json').then((r) => r.json());
+
 	return {
 		nav_title: get_nav_title(url),
-		nav_links: nav_list
+		nav_links: nav_list,
+		banner
 	};
 };
 
