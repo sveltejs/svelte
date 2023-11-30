@@ -28,7 +28,7 @@ export function proxy(value) {
  * @returns {T}
  */
 function wrap(value, parent) {
-	if (value && typeof value === 'object' && !(STATE_SYMBOL in value)) {
+	if (typeof value === 'object' && value != null && !(STATE_SYMBOL in value)) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
