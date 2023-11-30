@@ -177,7 +177,7 @@ function get_delegated_event(node, context) {
 				// or any normal not reactive bindings that are mutated.
 				binding.kind === 'normal' ||
 				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-				(binding.kind === 'state' && binding.declaration_kind === 'import')) &&
+				binding.kind === 'legacy_reactive_import') &&
 			binding.mutated
 		) {
 			return non_hoistable;
@@ -532,7 +532,7 @@ const legacy_scope_tweaker = {
 						(state.reactive_statement || state.ast_type === 'template') &&
 						parent.type === 'MemberExpression'
 					) {
-						binding.kind = 'state';
+						binding.kind = 'legacy_reactive_import';
 					}
 				} else if (
 					binding.mutated &&

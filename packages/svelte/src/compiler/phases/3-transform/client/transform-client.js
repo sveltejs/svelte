@@ -159,7 +159,7 @@ export function client_component(source, analysis, options) {
 	// Very very dirty way of making import statements reactive in legacy mode if needed
 	if (!analysis.runes) {
 		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+			if (binding.kind === 'legacy_reactive_import') {
 				instance.body.unshift(
 					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
 				);

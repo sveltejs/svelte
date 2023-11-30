@@ -74,7 +74,7 @@ export function serialize_get_binding(node, state) {
 		return b.call(node);
 	}
 
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call('$$_import_' + node.name);
 	}
 
@@ -175,7 +175,7 @@ export function serialize_set_binding(node, context, fallback) {
 		return binding.mutation(node, context);
 	}
 
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call(
 			'$$_import_' + binding.node.name,
 			b.assignment(
