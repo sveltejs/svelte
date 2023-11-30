@@ -19,20 +19,33 @@ Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and 
 - [3:18:25](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=11905s) Accessibility tips with Svelte solutions - Enrico Sacchetti (25 minutes)
 - [3:49:11](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=13751s) svelte@next - Rich Harris (18 minutes)
 
-## What's new in Svelte, SvelteKit & Language Tools
+## What's new in Svelte
 
 [Svelte 5 preview](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`.
 
-For all the release notes going forward, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md). For the highlights, take a look below!
-
 - TypeScript is now supported natively via acorn-typescript (**5.0.0-next.9**, [#9482](https://github.com/sveltejs/svelte/pull/9482))
 - The new `$effect.active` rune returns a boolean to indicate if an effect is active. This lets you set up subscriptions when a value is read (in an effect, or in the template) but also read values without creating subscriptions (**5.0.0-next.10**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#effect-active), [#9591](https://github.com/sveltejs/svelte/pull/9591))
-- The new `$effect.root` rune creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control (**5.0.0-next.14**, **Docs**, [#9638](https://github.com/sveltejs/svelte/pull/9638))
+- The new `$effect.root` rune creates a non-tracked scope that doesn't auto-cleanup. This is useful for nested effects that you want to manually control (**5.0.0-next.14**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#effect-root), [#9638](https://github.com/sveltejs/svelte/pull/9638))
+
+For all the release notes going forward, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md). For the highlights, take a look below!
+
+
+## What's new in SvelteKit
+
+- Creating a new SvelteKit project will now ask if you want to try the Svelte 5 beta ([#11026](https://github.com/sveltejs/kit/pull/11026))
+- Prettier 3 and `prettier-plugin-svelte` 3 are now the default versions when creating new SvelteKit projects ([#10410](https://github.com/sveltejs/kit/pull/10410))
+- nodejs20.x is now supported via the Vercel adapter ([#11067](https://github.com/sveltejs/kit/pull/11067))
+- `@sveltejs/enhanced-img` makes serving different sizes of images easy, thanks to pre-processing (**1.27.5**, [Docs](https://kit.svelte.dev/docs/images#sveltejs-enhanced-img), [#10788](https://github.com/sveltejs/kit/pull/10788))
+
+For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
+
+
+## What's new in Language Tools
+
 - The latest version of language tools adds best-effort fallback typings to `$props()` rune (**extensions-108.1.0**)
 - Language tools better supports the `@render` tag by using the `Snippet` type (**extensions-108.0.0**)
 - The Svelte ESLint plugin has been updated to support the Svelte 5 preview ([v2.36.0-next.2](https://github.com/sveltejs/eslint-plugin-svelte/releases/tag/v2.36.0-next.2))
 
-For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
 ---
 
