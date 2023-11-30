@@ -225,6 +225,13 @@ const attributes = {
 	'duplicate-attribute': () => `Attributes need to be unique`,
 	'invalid-event-attribute-value': () =>
 		`Event attribute must be a JavaScript expression, not a string`,
+	/** @param {'no-each' | 'each-key' | 'child'} type */
+	'invalid-animation': (type) =>
+		type === 'no-each'
+			? `An element that uses the animate directive must be the immediate child of a keyed each block`
+			: type === 'each-key'
+			? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
+			: `An element that uses the animate directive must be the sole child of a keyed each block`,
 	'duplicate-animation': () => `An element can only have one 'animate' directive`
 };
 
@@ -341,10 +348,6 @@ const errors = {
 	// 	code: 'invalid-action',
 	// 	message: 'Actions can only be applied to DOM elements, not components'
 	// },
-	// invalid_animation: {
-	// 	code: 'invalid-animation',
-	// 	message: 'Animations can only be applied to DOM elements, not components'
-	// },
 	// invalid_class: {
 	// 	code: 'invalid-class',
 	// 	message: 'Classes can only be applied to DOM elements, not components'
@@ -446,25 +449,6 @@ const errors = {
 	// 	code: 'css-invalid-selector',
 	// 	message: `Invalid selector "${selector}"`
 	// }),
-	// invalid_animation_immediate: {
-	// 	code: 'invalid-animation',
-	// 	message:
-	// 		'An element that uses the animate directive must be the immediate child of a keyed each block'
-	// },
-	// invalid_animation_key: {
-	// 	code: 'invalid-animation',
-	// 	message:
-	// 		'An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?'
-	// },
-	// invalid_animation_sole: {
-	// 	code: 'invalid-animation',
-	// 	message:
-	// 		'An element that uses the animate directive must be the sole child of a keyed each block'
-	// },
-	// invalid_animation_dynamic_element: {
-	// 	code: 'invalid-animation',
-	// 	message: '<svelte:element> cannot have a animate directive'
-	// },
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:

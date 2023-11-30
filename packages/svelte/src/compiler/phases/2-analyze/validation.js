@@ -55,6 +55,22 @@ function validate_element(node, context) {
 				validate_slot_attribute(context, attribute);
 			}
 		} else if (attribute.type === 'AnimateDirective') {
+			const parent = context.path.at(-2);
+			if (parent?.type !== 'EachBlock') {
+				error(attribute, 'invalid-animation', 'no-each');
+			} else if (!parent.key) {
+				error(attribute, 'invalid-animation', 'each-key');
+			} else if (
+				parent.body.nodes.filter(
+					(n) =>
+						n.type !== 'Comment' &&
+						n.type !== 'ConstTag' &&
+						(n.type !== 'Text' || n.data.trim() !== '')
+				).length > 1
+			) {
+				error(attribute, 'invalid-animation', 'child');
+			}
+
 			if (has_animate_directive) {
 				error(attribute, 'duplicate-animation');
 			} else {
