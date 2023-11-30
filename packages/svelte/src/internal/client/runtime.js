@@ -1121,11 +1121,10 @@ export function destroy_signal(signal) {
 /**
  * @template V
  * @param {() => V} init
- * @param {import('./types.js').EqualsFunctions} [equals]
  * @returns {import('./types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived(init, equals) {
+export function derived(init) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
 	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
@@ -1133,7 +1132,7 @@ export function derived(init, equals) {
 	);
 	signal.i = init;
 	signal.x = current_component_context;
-	signal.e = get_equals_method(equals);
+	signal.e = default_equals;
 	if (!is_unowned) {
 		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
 	}
