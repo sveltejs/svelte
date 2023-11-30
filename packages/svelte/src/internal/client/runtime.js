@@ -54,6 +54,8 @@ export let current_effect = null;
 /** @type {null | import('./types.js').Signal[]} */
 let current_dependencies = null;
 let current_dependencies_index = 0;
+/** @type {null | import('./types.js').Signal[]} */
+let current_untracked_writes = null;
 // Handling capturing of signals from object property getters
 let current_should_capture_signal = false;
 /** If `true`, `get`ting the signal should not register it as a dependency */
@@ -282,6 +284,7 @@ function execute_signal_fn(signal) {
 	const init = signal.i;
 	const previous_dependencies = current_dependencies;
 	const previous_dependencies_index = current_dependencies_index;
+	const previous_untracked_writes = current_untracked_writes;
 	const previous_consumer = current_consumer;
 	const previous_block = current_block;
 	const previous_component_context = current_component_context;
@@ -290,6 +293,7 @@ function execute_signal_fn(signal) {
 	const previous_untracking = current_untracking;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
+	current_untracked_writes = null;
 	current_consumer = signal;
 	current_block = signal.b;
 	current_component_context = signal.x;
@@ -347,6 +351,7 @@ function execute_signal_fn(signal) {
 	} finally {
 		current_dependencies = previous_dependencies;
 		current_dependencies_index = previous_dependencies_index;
+		current_untracked_writes = previous_untracked_writes;
 		current_consumer = previous_consumer;
 		current_block = previous_block;
 		current_component_context = previous_component_context;
@@ -469,6 +474,19 @@ export function execute_effect(signal) {
 	}
 }
 
+function infinite_loop_guard() {
+	if (flush_count > 100) {
+		throw new Error(
+			'ERR_SVELTE_TOO_MANY_UPDATES' +
+				(DEV
+					? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
+					  'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
+					: '')
+		);
+	}
+	flush_count++;
+}
+
 /**
  * @param {Array<import('./types.js').EffectSignal>} effects
  * @returns {void}
@@ -476,16 +494,7 @@ export function execute_effect(signal) {
 function flush_queued_effects(effects) {
 	const length = effects.length;
 	if (length > 0) {
-		if (flush_count > 100) {
-			throw new Error(
-				'ERR_SVELTE_TOO_MANY_UPDATES' +
-					(DEV
-						? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
-						  'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
-						: '')
-			);
-		}
-		flush_count++;
+		infinite_loop_guard();
 		let i;
 		for (i = 0; i < length; i++) {
 			const signal = effects[i];
@@ -606,13 +615,13 @@ export function flushSync(fn) {
 	const previous_queued_pre_and_render_effects = current_queued_pre_and_render_effects;
 	const previous_queued_effects = current_queued_effects;
 	try {
+		infinite_loop_guard();
 		/** @type {import('./types.js').EffectSignal[]} */
 		const pre_and_render_effects = [];
 
 		/** @type {import('./types.js').EffectSignal[]} */
 		const effects = [];
 		current_scheduler_mode = FLUSH_SYNC;
-		flush_count = 0;
 		current_queued_pre_and_render_effects = pre_and_render_effects;
 		current_queued_effects = effects;
 		flush_queued_effects(previous_queued_pre_and_render_effects);
@@ -626,6 +635,7 @@ export function flushSync(fn) {
 		if (is_task_queued) {
 			process_task();
 		}
+		flush_count = 0;
 	} finally {
 		current_scheduler_mode = previous_scheduler_mode;
 		current_queued_pre_and_render_effects = previous_queued_pre_and_render_effects;
@@ -813,6 +823,15 @@ export function get(signal) {
 			current_dependencies = [signal];
 		} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
 			current_dependencies.push(signal);
+		}
+		if (
+			current_untracked_writes !== null &&
+			current_effect !== null &&
+			(current_effect.f & CLEAN) !== 0 &&
+			current_untracked_writes.includes(signal)
+		) {
+			set_signal_status(current_effect, DIRTY);
+			schedule_effect(current_effect, false);
 		}
 	}
 
@@ -1024,12 +1043,18 @@ export function set_signal_value(signal, value) {
 			is_runes(component_context) &&
 			current_effect !== null &&
 			current_effect.c === null &&
-			(current_effect.f & CLEAN) !== 0 &&
-			current_dependencies !== null &&
-			current_dependencies.includes(signal)
+			(current_effect.f & CLEAN) !== 0
 		) {
-			set_signal_status(current_effect, DIRTY);
-			schedule_effect(current_effect, false);
+			if (current_dependencies !== null && current_dependencies.includes(signal)) {
+				set_signal_status(current_effect, DIRTY);
+				schedule_effect(current_effect, false);
+			} else {
+				if (current_untracked_writes === null) {
+					current_untracked_writes = [signal];
+				} else {
+					current_untracked_writes.push(signal);
+				}
+			}
 		}
 		mark_signal_consumers(signal, DIRTY, true);
 		// If we have afterUpdates locally on the component, but we're within a render effect
