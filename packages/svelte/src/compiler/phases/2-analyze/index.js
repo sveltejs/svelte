@@ -220,7 +220,8 @@ export function analyze_module(ast, options) {
 		name: options.filename || 'module',
 		warnings,
 		accessors: false,
-		runes: true
+		runes: true,
+		immutable: true
 	};
 }
 
@@ -301,6 +302,10 @@ export function analyze_component(root, options) {
 
 	const component_name = get_component_name(options.filename ?? 'Component');
 
+	const runes =
+		options.runes ??
+		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {import('../types.js').ComponentAnalysis} */
 	const analysis = {
@@ -317,11 +322,8 @@ export function analyze_component(root, options) {
 			component_name,
 			get_css_hash: options.cssHash
 		}),
-		runes:
-			options.runes ??
-			Array.from(module.scope.references).some(([name]) =>
-				Runes.includes(/** @type {any} */ (name))
-			),
+		runes,
+		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
 		uses_rest_props: false,

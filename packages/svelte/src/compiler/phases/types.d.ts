@@ -47,6 +47,7 @@ export interface Analysis {
 	name: string; // TODO should this be filename? it's used in `compileModule` as well as `compile`
 	warnings: RawWarning[];
 	runes: boolean;
+	immutable: boolean;
 
 	// TODO figure out if we can move this to ComponentAnalysis
 	accessors: boolean;
