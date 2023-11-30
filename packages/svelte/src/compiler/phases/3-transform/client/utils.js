@@ -99,7 +99,7 @@ export function serialize_get_binding(node, state) {
  * @returns {import('estree').Expression}
  */
 export function serialize_set_binding(node, context, fallback) {
-	const { state, visit, path } = context;
+	const { state, visit } = context;
 
 	if (
 		node.left.type === 'ArrayPattern' ||
@@ -224,7 +224,7 @@ export function serialize_set_binding(node, context, fallback) {
 					),
 					b.call('$' + left_name)
 				);
-			} else {
+			} else if (!state.analysis.runes) {
 				return b.call(
 					'$.mutate',
 					b.id(left_name),
@@ -233,6 +233,12 @@ export function serialize_set_binding(node, context, fallback) {
 						/** @type {import('estree').Pattern} */ (visit(node.left)),
 						value
 					)
+				);
+			} else {
+				return b.assignment(
+					node.operator,
+					/** @type {import('estree').Pattern} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right))
 				);
 			}
 		}
