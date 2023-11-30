@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow let directive on <svelte:self>
+fix: allow let directive on `<svelte:self>`
