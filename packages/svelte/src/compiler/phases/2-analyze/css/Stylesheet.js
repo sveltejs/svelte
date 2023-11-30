@@ -72,7 +72,7 @@ class Rule {
 	constructor(node, stylesheet, parent) {
 		this.node = node;
 		this.parent = parent;
-		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet));
+		this.selectors = node.prelude.children.map((node) => new Selector(node, stylesheet, parent?.node.type === "Rule"));
 
 		this.nested_rules = node.block.children
 			.filter((node) => node.type === 'Rule')

@@ -35,11 +35,15 @@ export default class Selector {
 	/** @type {boolean} */
 	used;
 
+	/** @type {boolean} */
+	nested;
+
 	/**
 	 * @param {import('#compiler').Css.Selector} node
 	 * @param {import('./Stylesheet.js').default} stylesheet
+	 * @param {boolean} nested
 	 */
-	constructor(node, stylesheet) {
+	constructor(node, stylesheet, nested) {
 		this.node = node;
 		this.stylesheet = stylesheet;
 		this.blocks = group_selectors(node);
@@ -53,6 +57,7 @@ export default class Selector {
 		const host_only = this.blocks.length === 1 && this.blocks[0].host;
 		const root_only = this.blocks.length === 1 && this.blocks[0].root;
 		this.used = this.local_blocks.length === 0 || host_only || root_only;
+		this.nested = nested;
 	}
 
 	/** @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node */
@@ -99,6 +104,7 @@ export default class Selector {
 			let i = block.selectors.length;
 			while (i--) {
 				const selector = block.selectors[i];
+
 				if (selector.type === 'PseudoElementSelector' || selector.type === 'PseudoClassSelector') {
 					if (!block.root && !block.host && !block.nested) {
 						if (i === 0) code.prependRight(selector.start, attr);
@@ -120,7 +126,7 @@ export default class Selector {
 			if (block.should_encapsulate) {
 				encapsulate_block(
 					block,
-					index === this.blocks.length - 1 + (block.nested ? 1 : 0)
+					index === this.blocks.length - 1 + (this.nested ? 1 : 0)
 						? attr.repeat(amount_class_specificity_to_increase + 1)
 						: attr
 				);

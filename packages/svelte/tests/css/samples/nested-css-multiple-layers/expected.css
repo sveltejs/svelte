@@ -1,0 +1,13 @@
+a.svelte-xyz {
+    color: red;
+    b.svelte-xyz {
+        color: yellow;
+        c.svelte-xyz {
+            color: green;
+        }
+    }
+
+    b.svelte-xyz c.svelte-xyz {
+        color: blue;
+    }
+}
