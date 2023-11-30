@@ -1,6 +1,6 @@
 // Handle hydration
 
-import { schedule_task } from './runtime';
+import { schedule_task } from './runtime.js';
 
 /** @type {null | Array<Text | Comment | Element>} */
 export let current_hydration_fragment = null;
