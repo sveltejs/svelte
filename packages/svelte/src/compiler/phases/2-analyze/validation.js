@@ -502,9 +502,7 @@ export const validation = {
 			}
 		}
 	},
-	SlotElement(node, context) {
-		let is_named_slot = false;
-
+	SlotElement(node) {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
@@ -514,22 +512,11 @@ export const validation = {
 					const slot_name = attribute.value[0].data;
 					if (slot_name === 'default') {
 						error(attribute, 'invalid-slot-name', true);
-					} else if (context.state.slots.has(slot_name)) {
-						error(attribute, 'duplicate-slot-declaration', `'${slot_name}'`);
 					}
-					context.state.slots.add(slot_name);
-					is_named_slot = true;
 				}
 			} else if (attribute.type !== 'SpreadAttribute') {
 				error(attribute, 'invalid-slot-element-attribute');
 			}
-		}
-
-		if (!is_named_slot) {
-			if (context.state.slots.has('default')) {
-				error(node, 'duplicate-slot-declaration', 'default');
-			}
-			context.state.slots.add('default');
 		}
 	},
 	Component: validate_component,

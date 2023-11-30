@@ -262,9 +262,7 @@ const slots = {
 	/** @param {string} name @param {string} component */
 	'duplicate-slot-name': (name, component) => `Duplicate slot name '${name}' in <${component}>`,
 	'invalid-default-slot-content': () =>
-		`Found default slot content alongside an explicit slot="default"`,
-	/** @param {string} name */
-	'duplicate-slot-declaration': (name) => `duplicate ${name} <slot> element`
+		`Found default slot content alongside an explicit slot="default"`
 };
 
 /** @satisfies {Errors} */
