@@ -323,7 +323,7 @@ export const validation = {
 					);
 				}
 
-				if (parent.name === 'input') {
+				if (parent.name === 'input' && node.name !== 'this') {
 					const type = /** @type {import('#compiler').Attribute | undefined} */ (
 						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'type')
 					);
