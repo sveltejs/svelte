@@ -1430,6 +1430,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 		.i;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
+	let did_update_to_defined = !should_set_default_value;
 
 	let mount = true;
 	sync_effect(() => {
@@ -1445,8 +1446,13 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 			return;
 		}
 
-		if (not_equal(immutable, propagating_value, source_signal.v)) {
+		if (
+			// Ensure that updates from undefined to undefined are ignored
+			(did_update_to_defined || propagating_value !== undefined) &&
+			not_equal(immutable, propagating_value, source_signal.v)
+		) {
 			ignore_next2 = true;
+			did_update_to_defined = true;
 			// TODO figure out why we need it this way and the explain in a comment;
 			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
 			untrack(() => set_signal_value(source_signal, propagating_value));
@@ -1469,6 +1475,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 
 			if (not_equal(immutable, propagating_value, possible_signal.v)) {
 				ignore_next1 = true;
+				did_update_to_defined = true;
 				untrack(() => update_bound_prop(propagating_value));
 			}
 		});
