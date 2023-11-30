@@ -11,7 +11,6 @@ import {
 } from './operations.js';
 import {
 	create_root_block,
-	create_each_item_block,
 	create_if_block,
 	create_key_block,
 	create_await_block,
@@ -20,15 +19,7 @@ import {
 	create_dynamic_component_block,
 	create_snippet_block
 } from './block.js';
-import {
-	EACH_KEYED,
-	EACH_INDEX_REACTIVE,
-	EACH_ITEM_REACTIVE,
-	PassiveDelegatedEvents,
-	DelegatedEvents,
-	AttributeAliases,
-	EACH_IS_PROXIED
-} from '../../constants.js';
+import { PassiveDelegatedEvents, DelegatedEvents, AttributeAliases } from '../../constants.js';
 import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
 import {
 	render_effect,
@@ -46,16 +37,13 @@ import {
 	expose,
 	safe_not_equal,
 	current_block,
-	set_signal_value,
 	source,
 	managed_effect,
 	safe_equal,
 	push,
 	current_component_context,
 	pop,
-	schedule_task,
-	unwrap,
-	lazy_property
+	unwrap
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -2011,118 +1999,6 @@ export function key(anchor_node, key, render_fn) {
 		}
 	});
 	block.e = key_effect;
-}
-
-/**
- * @param {import('./types.js').Block} block
- * @returns {Text | Element | Comment}
- */
-function get_first_element(block) {
-	const current = block.d;
-	if (is_array(current)) {
-		for (let i = 0; i < current.length; i++) {
-			const node = current[i];
-			if (node.nodeType !== 8) {
-				return node;
-			}
-		}
-	}
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
- * @param {import('./types.js').EachItemBlock} block
- * @param {any} item
- * @param {number} index
- * @param {number} type
- * @returns {void}
- */
-export function update_each_item_block(block, item, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block.v, item);
-	}
-	const transitions = block.s;
-	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
-	// Handle each item animations
-	if (transitions !== null && (type & EACH_KEYED) !== 0) {
-		let prev_index = block.i;
-		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
-		}
-		const items = block.p.v;
-		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-			const from_dom = /** @type {Element} */ (get_first_element(block));
-			const from = from_dom.getBoundingClientRect();
-			schedule_task(() => {
-				trigger_transitions(transitions, 'key', from);
-			});
-		}
-	}
-	if (index_is_reactive) {
-		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
-	} else {
-		block.i = index;
-	}
-}
-
-/**
- * @param {import('./types.js').EachItemBlock} block
- * @param {null | Array<import('./types.js').Block>} transition_block
- * @param {boolean} apply_transitions
- * @param {any} controlled
- * @returns {void}
- */
-export function destroy_each_item_block(
-	block,
-	transition_block,
-	apply_transitions,
-	controlled = false
-) {
-	const transitions = block.s;
-	if (apply_transitions && transitions !== null) {
-		trigger_transitions(transitions, 'out');
-		if (transition_block !== null) {
-			transition_block.push(block);
-		}
-	} else {
-		const dom = block.d;
-		if (!controlled && dom !== null) {
-			remove(dom);
-		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
-	}
-}
-
-/**
- * @template V
- * @param {V[]} array
- * @param {V} item
- * @param {unknown} key
- * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
- * @param {number} flags
- * @returns {import('./types.js').EachItemBlock}
- */
-export function each_item_block(array, item, key, index, render_fn, flags) {
-	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
-	const item_value =
-		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
-			? lazy_property(array, index)
-			: each_item_not_reactive
-			? item
-			: source(item);
-	const index_value = each_item_not_reactive ? index : source(index);
-	const block = create_each_item_block(item_value, index_value, key);
-	const effect = render_effect(
-		/** @param {import('./types.js').EachItemBlock} block */
-		(block) => {
-			render_fn(null, block.v, block.i);
-		},
-		block,
-		true
-	);
-	block.e = effect;
-	return block;
 }
 
 /**

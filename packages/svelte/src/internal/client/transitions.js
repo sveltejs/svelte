@@ -9,8 +9,9 @@ import {
 	KEY_BLOCK,
 	ROOT_BLOCK
 } from './block.js';
+import { destroy_each_item_block } from './each.js';
 import { append_child } from './operations.js';
-import { destroy_each_item_block, empty } from './render.js';
+import { empty } from './render.js';
 import {
 	current_block,
 	current_effect,

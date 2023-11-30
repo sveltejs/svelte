@@ -3,9 +3,10 @@ import {
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_IS_PROXIED,
-	EACH_ITEM_REACTIVE
+	EACH_ITEM_REACTIVE,
+	EACH_KEYED
 } from '../../constants.js';
-import { create_each_block } from './block.js';
+import { create_each_block, create_each_item_block } from './block.js';
 import {
 	current_hydration_fragment,
 	get_hydration_fragment,
@@ -15,13 +16,17 @@ import {
 import { clear_text_content, map_get, map_set } from './operations.js';
 import { STATE_SYMBOL } from './proxy.js';
 import { insert, remove } from './reconciler.js';
+import { empty } from './render.js';
 import {
-	destroy_each_item_block,
-	each_item_block,
-	empty,
-	update_each_item_block
-} from './render.js';
-import { destroy_signal, execute_effect, push_destroy_fn, render_effect } from './runtime.js';
+	destroy_signal,
+	execute_effect,
+	lazy_property,
+	push_destroy_fn,
+	render_effect,
+	schedule_task,
+	set_signal_value,
+	source
+} from './runtime.js';
 import { trigger_transitions } from './transitions.js';
 import { is_array } from './utils.js';
 
@@ -643,4 +648,116 @@ function destroy_active_transition_blocks(active_transitions) {
 		}
 		active_transitions.length = 0;
 	}
+}
+
+/**
+ * @param {import('./types.js').Block} block
+ * @returns {Text | Element | Comment}
+ */
+function get_first_element(block) {
+	const current = block.d;
+	if (is_array(current)) {
+		for (let i = 0; i < current.length; i++) {
+			const node = current[i];
+			if (node.nodeType !== 8) {
+				return node;
+			}
+		}
+	}
+	return /** @type {Text | Element | Comment} */ (current);
+}
+
+/**
+ * @param {import('./types.js').EachItemBlock} block
+ * @param {any} item
+ * @param {number} index
+ * @param {number} type
+ * @returns {void}
+ */
+function update_each_item_block(block, item, index, type) {
+	if ((type & EACH_ITEM_REACTIVE) !== 0) {
+		set_signal_value(block.v, item);
+	}
+	const transitions = block.s;
+	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
+	// Handle each item animations
+	if (transitions !== null && (type & EACH_KEYED) !== 0) {
+		let prev_index = block.i;
+		if (index_is_reactive) {
+			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
+		}
+		const items = block.p.v;
+		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
+			const from_dom = /** @type {Element} */ (get_first_element(block));
+			const from = from_dom.getBoundingClientRect();
+			schedule_task(() => {
+				trigger_transitions(transitions, 'key', from);
+			});
+		}
+	}
+	if (index_is_reactive) {
+		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
+	} else {
+		block.i = index;
+	}
+}
+
+/**
+ * @param {import('./types.js').EachItemBlock} block
+ * @param {null | Array<import('./types.js').Block>} transition_block
+ * @param {boolean} apply_transitions
+ * @param {any} controlled
+ * @returns {void}
+ */
+export function destroy_each_item_block(
+	block,
+	transition_block,
+	apply_transitions,
+	controlled = false
+) {
+	const transitions = block.s;
+	if (apply_transitions && transitions !== null) {
+		trigger_transitions(transitions, 'out');
+		if (transition_block !== null) {
+			transition_block.push(block);
+		}
+	} else {
+		const dom = block.d;
+		if (!controlled && dom !== null) {
+			remove(dom);
+		}
+		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
+	}
+}
+
+/**
+ * @template V
+ * @param {V[]} array
+ * @param {V} item
+ * @param {unknown} key
+ * @param {number} index
+ * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {number} flags
+ * @returns {import('./types.js').EachItemBlock}
+ */
+function each_item_block(array, item, key, index, render_fn, flags) {
+	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
+	const item_value =
+		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
+			? lazy_property(array, index)
+			: each_item_not_reactive
+			? item
+			: source(item);
+	const index_value = each_item_not_reactive ? index : source(index);
+	const block = create_each_item_block(item_value, index_value, key);
+	const effect = render_effect(
+		/** @param {import('./types.js').EachItemBlock} block */
+		(block) => {
+			render_fn(null, block.v, block.i);
+		},
+		block,
+		true
+	);
+	block.e = effect;
+	return block;
 }

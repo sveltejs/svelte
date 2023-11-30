@@ -1,7 +1,6 @@
 import { append_child } from './operations.js';
 import { current_hydration_fragment, hydrate_block_anchor } from './hydration.js';
 import { is_array } from './utils.js';
-import { destroy_each_item_block } from './render.js';
 
 /** @param {string} html */
 export function create_fragment_from_html(html) {
