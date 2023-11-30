@@ -1,9 +1,14 @@
 [
 	{
+		"code": "duplicate-slot-declaration",
 		"message": "duplicate default <slot> element",
 		"start": {
 			"line": 2,
 			"column": 0
+		},
+		"end": {
+			"line": 2,
+			"column": 13
 		}
 	}
 ]

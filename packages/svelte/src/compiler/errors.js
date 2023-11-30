@@ -252,13 +252,19 @@ const attributes = {
 const slots = {
 	'invalid-slot-element-attribute': () => `<slot> can only receive attributes, not directives`,
 	'invalid-slot-attribute': () => `slot attribute must be a static value`,
-	'invalid-slot-name': () => `slot attribute must be a static value`,
+	/** @param {boolean} is_default */
+	'invalid-slot-name': (is_default) =>
+		is_default
+			? `default is a reserved word — it cannot be used as a slot name`
+			: `slot attribute must be a static value`,
 	'invalid-slot-placement': () =>
 		`Element with a slot='...' attribute must be a child of a component or a descendant of a custom element`,
-	'duplicate-slot-name': /** @param {string} name @param {string} component */ (name, component) =>
-		`Duplicate slot name '${name}' in <${component}>`,
+	/** @param {string} name @param {string} component */
+	'duplicate-slot-name': (name, component) => `Duplicate slot name '${name}' in <${component}>`,
 	'invalid-default-slot-content': () =>
-		`Found default slot content alongside an explicit slot="default"`
+		`Found default slot content alongside an explicit slot="default"`,
+	/** @param {string} name */
+	'duplicate-slot-declaration': (name) => `duplicate ${name} <slot> element`
 };
 
 /** @satisfies {Errors} */
@@ -357,10 +363,6 @@ const errors = {
 	// dynamic_slot_name: {
 	// 	code: 'dynamic-slot-name',
 	// 	message: '<slot> name cannot be dynamic'
-	// },
-	// invalid_slot_name: {
-	// 	code: 'invalid-slot-name',
-	// 	message: 'default is a reserved word — it cannot be used as a slot name'
 	// },
 	// invalid_slot_attribute_value_missing: {
 	// 	code: 'invalid-slot-attribute',
