@@ -373,6 +373,19 @@ export const validation = {
 			}
 		}
 	},
+	LetDirective(node, context) {
+		const parent = context.path.at(-1);
+		if (
+			parent === undefined ||
+			(parent.type !== 'Component' &&
+				parent.type !== 'RegularElement' &&
+				parent.type !== 'SvelteSelf' &&
+				parent.type !== 'SvelteFragment')
+		) {
+			// TODO this should probably be a proper error, not an `INTERNAL` one
+			error(node, 'INTERNAL', 'let directive at invalid position');
+		}
+	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {

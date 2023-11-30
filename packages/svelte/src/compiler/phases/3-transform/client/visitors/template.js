@@ -2757,19 +2757,9 @@ export const template_visitors = {
 			serialize_event_attribute(node, context);
 		}
 	},
-	LetDirective(node, { state, path }) {
+	LetDirective(node, { state }) {
 		// let:x        -->  const x = $.derived(() => $.unwrap($$slotProps).x);
 		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $.unwrap($$slotProps).x; return { y, z }));
-		const parent = path.at(-1);
-		if (
-			parent === undefined ||
-			(parent.type !== 'Component' &&
-				parent.type !== 'RegularElement' &&
-				parent.type !== 'SvelteFragment')
-		) {
-			error(node, 'INTERNAL', 'let directive at invalid position');
-		}
-
 		if (node.expression && node.expression.type !== 'Identifier') {
 			const name = state.scope.generate(node.name);
 			const bindings = state.scope.get_bindings(node);
