@@ -649,7 +649,19 @@ export const validation_runes_js = {
  * @param {boolean} is_binding
  */
 function validate_no_const_assignment(node, argument, scope, is_binding) {
-	if (argument.type === 'Identifier') {
+	if (argument.type === 'ArrayPattern') {
+		for (const element of argument.elements) {
+			if (element) {
+				validate_no_const_assignment(node, element, scope, is_binding);
+			}
+		}
+	} else if (argument.type === 'ObjectPattern') {
+		for (const element of argument.properties) {
+			if (element.type === 'Property') {
+				validate_no_const_assignment(node, element.value, scope, is_binding);
+			}
+		}
+	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
 			error(
