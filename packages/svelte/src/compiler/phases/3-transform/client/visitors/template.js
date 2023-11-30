@@ -1382,13 +1382,17 @@ function process_children(nodes, parent, { visit, state }) {
 
 	/**
 	 * @param {Sequence} sequence
+	 * @param {boolean} in_fragment
 	 */
-	function flush_sequence(sequence) {
+	function flush_sequence(sequence, in_fragment) {
 		if (sequence.length === 1) {
 			const node = sequence[0];
 
-			if (node.type === 'Text') {
+			if ((in_fragment && node.type === 'ExpressionTag') || node.type === 'Text') {
 				expression = b.call('$.sibling', expression);
+			}
+
+			if (node.type === 'Text') {
 				state.template.push(node.raw);
 				return;
 			}
@@ -1475,7 +1479,7 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence);
+				flush_sequence(sequence, true);
 				sequence = [];
 			}
 
@@ -1519,7 +1523,7 @@ function process_children(nodes, parent, { visit, state }) {
 	}
 
 	if (sequence.length > 0) {
-		flush_sequence(sequence);
+		flush_sequence(sequence, false);
 	}
 }
 

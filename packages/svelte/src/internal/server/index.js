@@ -151,6 +151,17 @@ export function escape(value, is_attr = false) {
 }
 
 /**
+ * @template V
+ * @param {V} value
+ * @returns {string}
+ */
+export function escape_text(value) {
+	const escaped = escape(value);
+	// If the value is empty, then ensure we put a space so that it creates a text node on the client
+	return escaped === '' ? ' ' : escaped;
+}
+
+/**
  * @param {Payload} payload
  * @param {(head_payload: Payload['head']) => void} fn
  * @returns {void}
