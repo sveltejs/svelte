@@ -216,7 +216,7 @@ const elements = {
 
 /** @satisfies {Errors} */
 const components = {
-	'invalid-component-directive': () => `Directive is not valid on components`
+	'invalid-component-directive': () => `This type of directive is not valid on components`
 };
 
 /** @satisfies {Errors} */
@@ -490,10 +490,6 @@ const errors = {
 	// 	code: 'cyclical-const-tags',
 	// 	message: `Cyclical dependency detected: ${cycle.join(' → ')}`
 	// }),
-	// invalid_component_style_directive: {
-	// 	code: 'invalid-component-style-directive',
-	// 	message: 'Style directives cannot be used on components'
-	// },
 	// invalid_var_declaration: {
 	// 	code: 'invalid_var_declaration',
 	// 	message: '"var" scope should not extend outside the reactive block'

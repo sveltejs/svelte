@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-action",
-		"message": "Actions can only be applied to DOM elements, not components",
+		"code": "invalid-component-directive",
+		"message": "This type of directive is not valid on components",
 		"start": {
 			"line": 7,
 			"column": 8
