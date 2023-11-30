@@ -10,6 +10,7 @@ export const STATE_EACH_SYMBOL = Symbol();
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
 const get_prototype_of = Object.getPrototypeOf;
+const is_frozen = Object.isFrozen;
 
 /**
  * @template {StateObject} T
@@ -28,7 +29,7 @@ export function proxy(value) {
  * @returns {T}
  */
 function wrap(value, parent) {
-	if (typeof value === 'object' && value != null && !(STATE_SYMBOL in value)) {
+	if (typeof value === 'object' && value != null && !is_frozen(value) && !(STATE_SYMBOL in value)) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
