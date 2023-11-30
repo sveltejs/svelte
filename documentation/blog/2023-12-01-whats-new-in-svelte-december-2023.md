@@ -35,7 +35,7 @@ For all the release notes going forward, check out [the CHANGELOG on main](https
 - Creating a new SvelteKit project will now ask if you want to try the Svelte 5 beta ([#11026](https://github.com/sveltejs/kit/pull/11026))
 - Prettier 3 and `prettier-plugin-svelte` 3 are now the default versions when creating new SvelteKit projects ([#10410](https://github.com/sveltejs/kit/pull/10410))
 - nodejs20.x is now supported via the Vercel adapter ([#11067](https://github.com/sveltejs/kit/pull/11067))
-- `@sveltejs/enhanced-img` makes serving different sizes of images easy, thanks to pre-processing (**1.27.5**, [Docs](https://kit.svelte.dev/docs/images#sveltejs-enhanced-img), [#10788](https://github.com/sveltejs/kit/pull/10788))
+- `@sveltejs/enhanced-img` makes serving different sizes of images easy, thanks to pre-processing ([Docs](https://kit.svelte.dev/docs/images#sveltejs-enhanced-img), [#10788](https://github.com/sveltejs/kit/pull/10788))
 
 For a complete list of bug fixes and performance updates, check out the [SvelteKit CHANGELOG](https://github.com/sveltejs/kit/blob/master/packages/kit/CHANGELOG.md). You can also find adapter-specific CHANGELOGs in each of [the `adapter` directories](https://github.com/sveltejs/kit/tree/master/packages).
 
