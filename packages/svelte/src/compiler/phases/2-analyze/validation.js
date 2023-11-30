@@ -430,6 +430,23 @@ export const validation = {
 			}
 		}
 	},
+	ConstTag(node, context) {
+		const parent = context.path.at(-1);
+		const grand_parent = context.path.at(-2);
+		if (
+			parent?.type !== 'Fragment' ||
+			(grand_parent?.type !== 'IfBlock' &&
+				grand_parent?.type !== 'SvelteFragment' &&
+				grand_parent?.type !== 'Component' &&
+				grand_parent?.type !== 'SvelteComponent' &&
+				grand_parent?.type !== 'EachBlock' &&
+				grand_parent?.type !== 'AwaitBlock' &&
+				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
+					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
+		) {
+			error(node, 'invalid-const-placement');
+		}
+	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {

@@ -289,7 +289,9 @@ const bindings = {
 /** @satisfies {Errors} */
 const variables = {
 	'illegal-global': /** @param {string} name */ (name) =>
-		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`
+		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
+	/** @param {string} name */
+	'duplicate-declaration': (name) => `'${name}' has already been declared`
 };
 
 /** @satisfies {Errors} */
@@ -307,6 +309,12 @@ const compiler_options = {
 };
 
 /** @satisfies {Errors} */
+const const_tag = {
+	'invalid-const-placement': () =>
+		`{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
+};
+
+/** @satisfies {Errors} */
 const errors = {
 	...internal,
 	...parse,
@@ -320,7 +328,8 @@ const errors = {
 	...bindings,
 	...variables,
 	...compiler_options,
-	...legacy_reactivity
+	...legacy_reactivity,
+	...const_tag
 
 	// missing_contenteditable_attribute: {
 	// 	code: 'missing-contenteditable-attribute',
@@ -446,19 +455,6 @@ const errors = {
 	// 	message:
 	// 		'Can only bind to an identifier (e.g. `foo`) or a member expression (e.g. `foo.bar` or `foo[baz]`)'
 	// },
-	// invalid_const_placement: {
-	// 	code: 'invalid-const-placement',
-	// 	message:
-	// 		'{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>'
-	// },
-	// invalid_const_declaration: /** @param {string} name */ (name) => ({
-	// 	code: 'invalid-const-declaration',
-	// 	message: `'${name}' has already been declared`
-	// }),
-	// invalid_const_update: /** @param {string} name */ (name) => ({
-	// 	code: 'invalid-const-update',
-	// 	message: `'${name}' is declared using {@const ...} and is read-only`
-	// }),
 	// cyclical_const_tags: /** @param {string[]} cycle */ (cycle) => ({
 	// 	code: 'cyclical-const-tags',
 	// 	message: `Cyclical dependency detected: ${cycle.join(' → ')}`
