@@ -2104,13 +2104,14 @@ export function destroy_each_item_block(
  * @returns {import('./types.js').EachItemBlock}
  */
 export function each_item_block(array, item, key, index, render_fn, flags) {
+	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 	const item_value =
 		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
 			? lazy_property(array, index)
-			: (flags & EACH_ITEM_REACTIVE) === 0
+			: each_item_not_reactive
 			? item
 			: source(item);
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+	const index_value = each_item_not_reactive ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 	const effect = render_effect(
 		/** @param {import('./types.js').EachItemBlock} block */

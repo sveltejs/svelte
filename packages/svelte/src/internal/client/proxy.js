@@ -1,5 +1,5 @@
 import { effect_active, get, set, increment, source } from './runtime.js';
-import { get_descriptor } from './utils.js';
+import { get_descriptor, is_array } from './utils.js';
 
 /** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
@@ -54,7 +54,7 @@ function init(value, parent) {
 		p: parent,
 		s: new Map(),
 		v: source(0),
-		a: Array.isArray(value)
+		a: is_array(value)
 	};
 }
 
