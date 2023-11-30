@@ -1142,25 +1142,20 @@ export function derived(init) {
 /**
  * @template V
  * @param {V} initial_value
- * @param {import('./types.js').EqualsFunctions<V>} [equals]
  * @returns {import('./types.js').SourceSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(initial_value, equals) {
+export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
 	source.x = current_component_context;
-	source.e = get_equals_method(equals);
+	source.e = get_equals_method();
 	return source;
 }
 
 /**
- * @param {import('./types.js').EqualsFunctions} [equals]
  * @returns {import('./types.js').EqualsFunctions}
  */
-function get_equals_method(equals) {
-	if (equals !== undefined) {
-		return equals;
-	}
+function get_equals_method() {
 	const context = current_component_context;
 	if (context && !context.i) {
 		return safe_equal;

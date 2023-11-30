@@ -2606,7 +2606,6 @@ export function spread_props(props) {
  * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		immutable?: boolean;
  * 		recover?: false;
  * 	}} options
  * @returns {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }}
@@ -2624,15 +2623,8 @@ export function createRoot(component, options) {
 	 * @param {any} value
 	 */
 	function add_prop(name, value) {
-		const prop = source(
-			value,
-			options.immutable
-				? /**
-				   * @param {any} a
-				   * @param {any} b
-				   */ (a, b) => a === b
-				: safe_equal
-		);
+		const prop = source(value);
+		prop.e = safe_equal; // TODO should this be default_equal?
 		_sources[name] = prop;
 		define_property(_props, name, {
 			get() {
@@ -2666,11 +2658,10 @@ export function createRoot(component, options) {
 			return _props[property];
 		}
 	});
-	const props_source = source(
-		props_proxy,
-		// We're resetting the same proxy instance for updates, therefore bypass equality checks
-		() => false
-	);
+	const props_source = source(props_proxy);
+
+	// We're resetting the same proxy instance for updates, therefore bypass equality checks
+	props_source.e = safe_equal;
 
 	let [accessors, $destroy] = mount(component, {
 		...options,
