@@ -147,7 +147,7 @@ export function set_current_component_context(context_stack_item) {
  * @param {unknown} b
  * @returns {boolean}
  */
-function default_equals(a, b) {
+export function default_equals(a, b) {
 	return a === b;
 }
 

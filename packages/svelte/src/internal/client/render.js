@@ -43,7 +43,8 @@ import {
 	push,
 	current_component_context,
 	pop,
-	unwrap
+	unwrap,
+	default_equals
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -2624,7 +2625,7 @@ export function createRoot(component, options) {
 	 */
 	function add_prop(name, value) {
 		const prop = source(value);
-		prop.e = safe_equal; // TODO should this be default_equal?
+		prop.e = default_equals; // TODO should this be safe_equals?
 		_sources[name] = prop;
 		define_property(_props, name, {
 			get() {
