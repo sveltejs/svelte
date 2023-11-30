@@ -215,11 +215,16 @@ export const javascript_visitors_runes = {
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
-			const opts = args[1] && /** @type {import('estree').Expression} */ (visit(args[1]));
+			let opts = args[1] && /** @type {import('estree').Expression} */ (visit(args[1]));
 
 			if (declarator.id.type === 'Identifier') {
 				const callee = rune === '$state' ? '$.source' : '$.derived';
-				const arg = rune === '$state' ? value : b.thunk(value);
+				/** @type {import('estree').Expression} */
+				let arg = b.thunk(value);
+				if (rune === '$state') {
+					arg = value;
+					opts = b.id('$.equals')
+				}
 				declarations.push(b.declarator(declarator.id, b.call(callee, arg, opts)));
 				continue;
 			}
