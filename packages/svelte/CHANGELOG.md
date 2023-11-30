@@ -1,5 +1,11 @@
 # svelte
 
+## 4.2.8
+
+### Patch Changes
+
+- fix: port over props that were set prior to initialization ([#9701](https://github.com/sveltejs/svelte/pull/9701))
+
 ## 4.2.7
 
 ### Patch Changes
