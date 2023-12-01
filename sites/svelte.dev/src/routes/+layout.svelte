@@ -78,7 +78,7 @@
 				{arrow}
 				{href}
 			>
-				{content}
+				{@html content}
 			</Banner>
 		{/each}
 	</Shell>
