@@ -55,7 +55,7 @@ function init(value) {
 
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
-	get(target, prop) {
+	get(target, prop, receiver) {
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -70,7 +70,7 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
-		const value = s !== undefined ? get(s) : target[prop];
+		const value = s !== undefined ? get(s) : Reflect.get(target, prop, receiver);
 		return value === UNINITIALIZED ? undefined : value;
 	},
 	set(target, prop, value) {
