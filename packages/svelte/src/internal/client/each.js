@@ -83,6 +83,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				}
 			});
 		};
+
 	const create_fallback_effect = () => {
 		/** @type {import('./types.js').Render} */
 		const fallback = {
@@ -115,6 +116,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		fallback.e = effect;
 		current_fallback = fallback;
 	};
+
 	const each = render_effect(
 		() => {
 			/** @type {V[]} */
@@ -153,6 +155,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		block,
 		false
 	);
+
 	render = render_effect(
 		/** @param {import('./types.js').EachBlock} block */
 		(block) => {
@@ -164,6 +167,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		block,
 		true
 	);
+
 	push_destroy_fn(each, () => {
 		const flags = block.f;
 		const anchor_node = block.a;
@@ -184,6 +188,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
+
 	block.e = each;
 }
 
@@ -254,9 +259,11 @@ function reconcile_indexed_array(
 	/** @type {Array<import('./types.js').EachItemBlock>} */
 	var b_blocks;
 	var block;
+
 	if (active_transitions.length !== 0) {
 		destroy_active_transition_blocks(active_transitions);
 	}
+
 	if (b === 0) {
 		b_blocks = [];
 		// Remove old blocks
@@ -308,6 +315,7 @@ function reconcile_indexed_array(
 			}
 		}
 	}
+
 	each_block.v = b_blocks;
 }
 // Reconcile arrays by the equality of the elements in the array. This algorithm
@@ -357,9 +365,11 @@ function reconcile_tracked_array(
 	/** @type {Array<import('./types.js').EachItemBlock>} */
 	var b_blocks;
 	var block;
+
 	if (active_transitions.length !== 0) {
 		destroy_active_transition_blocks(active_transitions);
 	}
+
 	if (b === 0) {
 		b_blocks = [];
 		// Remove old blocks
@@ -532,11 +542,12 @@ function reconcile_tracked_array(
 			}
 		}
 	}
+
 	each_block.v = b_blocks;
 }
-// Longest Increased Subsequence algorithm.
 
 /**
+ * Longest Increased Subsequence algorithm
  * @param {Int32Array} a
  * @returns {void}
  */
@@ -558,22 +569,28 @@ function mark_lis(a) {
 
 	/** @type {number} */
 	var hi;
+
 	// Skip -1 values at the start of the input array `a`.
 	for (; a[i] === NEW_BLOCK; ++i) {
 		/**/
 	}
+
 	index[0] = i++;
+
 	for (; i < length; ++i) {
 		k = a[i];
+
 		if (k !== NEW_BLOCK) {
 			// Ignore -1 values.
 			j = index[index_length];
+
 			if (a[j] < k) {
 				parent[i] = j;
 				index[++index_length] = i;
 			} else {
 				lo = 0;
 				hi = index_length;
+
 				while (lo < hi) {
 					j = (lo + hi) >> 1;
 					if (a[index[j]] < k) {
@@ -582,6 +599,7 @@ function mark_lis(a) {
 						hi = j;
 					}
 				}
+
 				if (k < a[index[lo]]) {
 					if (lo > 0) {
 						parent[i] = index[lo - 1];
@@ -591,8 +609,10 @@ function mark_lis(a) {
 			}
 		}
 	}
+
 	// Mutate input array `a` and assign -2 value to all nodes that are part of LIS.
 	j = index[index_length];
+
 	while (index_length-- >= 0) {
 		a[j] = LIS_BLOCK;
 		j = parent[j];
@@ -608,6 +628,7 @@ function mark_lis(a) {
  */
 function insert_each_item_block(block, dom, is_controlled, sibling) {
 	var current = /** @type {import('./types.js').TemplateNode} */ (block.d);
+
 	if (sibling === null) {
 		if (is_controlled) {
 			return insert(current, /** @type {Element} */ (dom), null);
@@ -615,6 +636,7 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
 			return insert(current, /** @type {Element} */ (dom.parentNode), dom);
 		}
 	}
+
 	return insert(current, null, sibling);
 }
 
@@ -624,9 +646,11 @@ function insert_each_item_block(block, dom, is_controlled, sibling) {
  */
 function get_first_child(block) {
 	var current = block.d;
+
 	if (is_array(current)) {
 		return /** @type {Text | Element | Comment} */ (current[0]);
 	}
+
 	return /** @type {Text | Element | Comment} */ (current);
 }
 
@@ -636,10 +660,12 @@ function get_first_child(block) {
  */
 function destroy_active_transition_blocks(active_transitions) {
 	var length = active_transitions.length;
+
 	if (length > 0) {
 		var i = 0;
 		var block;
 		var transition;
+
 		for (; i < length; i++) {
 			block = active_transitions[i];
 			transition = block.r;
@@ -648,6 +674,7 @@ function destroy_active_transition_blocks(active_transitions) {
 				destroy_each_item_block(block, null, false);
 			}
 		}
+
 		active_transitions.length = 0;
 	}
 }
@@ -658,6 +685,7 @@ function destroy_active_transition_blocks(active_transitions) {
  */
 function get_first_element(block) {
 	const current = block.d;
+
 	if (is_array(current)) {
 		for (let i = 0; i < current.length; i++) {
 			const node = current[i];
@@ -666,6 +694,7 @@ function get_first_element(block) {
 			}
 		}
 	}
+
 	return /** @type {Text | Element | Comment} */ (current);
 }
 
@@ -718,6 +747,7 @@ export function destroy_each_item_block(
 	controlled = false
 ) {
 	const transitions = block.s;
+
 	if (apply_transitions && transitions !== null) {
 		trigger_transitions(transitions, 'out');
 		if (transition_block !== null) {
@@ -744,6 +774,7 @@ export function destroy_each_item_block(
  */
 function each_item_block(array, item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
+
 	const item_value =
 		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
 			? lazy_property(array, index)
@@ -752,8 +783,10 @@ function each_item_block(array, item, key, index, render_fn, flags) {
 			: (flags & EACH_IS_IMMUTABLE) === 0
 			? mutable_source(item)
 			: source(item);
+
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
+
 	const effect = render_effect(
 		/** @param {import('./types.js').EachItemBlock} block */
 		(block) => {
@@ -762,6 +795,7 @@ function each_item_block(array, item, key, index, render_fn, flags) {
 		block,
 		true
 	);
+
 	block.e = effect;
 	return block;
 }
