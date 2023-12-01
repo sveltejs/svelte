@@ -213,7 +213,9 @@ const elements = {
 	 * @param {string} node
 	 * @param {string} parent
 	 */
-	'invalid-node-placement': (node, parent) => `${node} is invalid inside <${parent}>`
+	'invalid-node-placement': (node, parent) => `${node} is invalid inside <${parent}>`,
+	'title-illegal-attribute': () => '<title> cannot have attributes',
+	'title-invalid-content': () => '<title> can only contain text and {tags}'
 };
 
 /** @satisfies {Errors} */
@@ -381,10 +383,6 @@ const errors = {
 	// invalid_slot_attribute_value_missing: {
 	// 	code: 'invalid-slot-attribute',
 	// 	message: 'slot attribute value is missing'
-	// },
-	// illegal_attribute_title: {
-	// 	code: 'illegal-attribute',
-	// 	message: '<title> cannot have attributes'
 	// },
 	// illegal_structure_title: {
 	// 	code: 'illegal-structure',

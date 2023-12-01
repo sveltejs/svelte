@@ -1,6 +1,6 @@
 [
 	{
-		"code": "illegal-attribute",
+		"code": "title-illegal-attribute",
 		"message": "<title> cannot have attributes",
 		"start": {
 			"line": 2,

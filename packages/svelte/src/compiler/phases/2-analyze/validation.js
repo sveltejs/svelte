@@ -553,6 +553,17 @@ export const validation = {
 			}
 		}
 	},
+	TitleElement(node) {
+		const attribute = node.attributes[0];
+		if (attribute) {
+			error(attribute, 'title-illegal-attribute');
+		}
+
+		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
+		if (child) {
+			error(child, 'title-invalid-content');
+		}
+	},
 	ExpressionTag(node, context) {
 		if (!node.parent) return;
 		if (context.state.parent_element) {
