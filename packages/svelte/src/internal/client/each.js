@@ -15,7 +15,6 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { clear_text_content, map_get, map_set } from './operations.js';
-import { STATE_SYMBOL } from './proxy.js';
 import { insert, remove } from './reconciler.js';
 import { empty } from './render.js';
 import {
@@ -274,14 +273,8 @@ function reconcile_indexed_array(
 	flags,
 	apply_transitions
 ) {
-	var is_proxied_array = STATE_SYMBOL in array;
 	var a_blocks = each_block.v;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-		flags |= EACH_IS_PROXIED;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -345,7 +338,7 @@ function reconcile_indexed_array(
 					item = array[index];
 					block = a_blocks[index];
 					b_blocks[index] = block;
-					update_each_item_block(block, item, index, flags);
+					update_each_item_block(block, index, flags);
 				}
 			}
 		}
@@ -385,13 +378,7 @@ function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = STATE_SYMBOL in array;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-		flags |= EACH_IS_PROXIED;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -469,7 +456,7 @@ function reconcile_tracked_array(
 				while (a_blocks[a_end].k === key) {
 					block = a_blocks[a_end--];
 					item = array[b_end];
-					update_each_item_block(block, item, b_end, flags);
+					update_each_item_block(block, b_end, flags);
 					sibling = get_first_child(block);
 					b_blocks[b_end] = block;
 					if (start > --b_end || start > a_end) {
@@ -483,7 +470,7 @@ function reconcile_tracked_array(
 				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
 					item = array[start];
 					block = a_blocks[start];
-					update_each_item_block(block, item, start, flags);
+					update_each_item_block(block, start, flags);
 					b_blocks[start] = block;
 					++start;
 					key = is_computed_key ? keys[start] : array[start];
@@ -544,7 +531,7 @@ function reconcile_tracked_array(
 						a = sources[i];
 						if (pos === MOVED_BLOCK && a !== LIS_BLOCK) {
 							block = b_blocks[b_end];
-							update_each_item_block(block, item, b_end, flags);
+							update_each_item_block(block, b_end, flags);
 						}
 					}
 				}
@@ -561,7 +548,7 @@ function reconcile_tracked_array(
 					} else {
 						block = b_blocks[b_end];
 						if (!is_animated) {
-							update_each_item_block(block, item, b_end, flags);
+							update_each_item_block(block, b_end, flags);
 						}
 					}
 					if (should_create || (pos === MOVED_BLOCK && a !== LIS_BLOCK)) {
@@ -732,23 +719,21 @@ function get_first_element(block) {
 
 /**
  * @param {import('./types.js').EachItemBlock} block
- * @param {any} item
  * @param {number} index
  * @param {number} type
  * @returns {void}
  */
-function update_each_item_block(block, item, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block.v, item);
-	}
+function update_each_item_block(block, index, type) {
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
+
 	// Handle each item animations
 	if (transitions !== null && (type & EACH_KEYED) !== 0) {
 		let prev_index = block.i;
 		if (index_is_reactive) {
 			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
 		}
+
 		const items = block.p.v;
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
 			const from_dom = /** @type {Element} */ (get_first_element(block));
