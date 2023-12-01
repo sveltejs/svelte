@@ -3,7 +3,6 @@ import {
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
 	EACH_IS_IMMUTABLE,
-	EACH_IS_PROXIED,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../constants.js';
@@ -21,6 +20,7 @@ import { empty } from './render.js';
 import {
 	destroy_signal,
 	execute_effect,
+	is_lazy_property,
 	lazy_property,
 	mutable_source,
 	push_destroy_fn,
@@ -35,6 +35,8 @@ import { is_array } from './utils.js';
 const NEW_BLOCK = -1;
 const MOVED_BLOCK = 99999999;
 const LIS_BLOCK = -2;
+
+function no_op() {}
 
 /**
  * @template V
@@ -128,6 +130,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				: Array.from(maybe_array);
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
+			} else if ((flags & EACH_KEYED) === 0) {
+				array.map(no_op);
 			}
 			const length = array.length;
 			if (fallback_fn !== null) {
@@ -245,7 +249,6 @@ function reconcile_indexed_array(
 
 	if (is_proxied_array) {
 		flags &= ~EACH_ITEM_REACTIVE;
-		flags |= EACH_IS_PROXIED;
 	}
 
 	/** @type {number | void} */
@@ -282,7 +285,7 @@ function reconcile_indexed_array(
 			var hydrating_node = current_hydration_fragment[0];
 			for (; index < length; index++) {
 				// Hydrate block
-				item = array[index];
+				item = is_proxied_array ? lazy_property(array, index) : array[index];
 				var fragment = /** @type {Array<Text | Comment | Element>} */ (
 					get_hydration_fragment(hydrating_node)
 				);
@@ -290,15 +293,15 @@ function reconcile_indexed_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
 				);
-				block = each_item_block(array, item, null, index, render_fn, flags);
+				block = each_item_block(item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 			}
 		} else {
 			for (; index < length; index++) {
 				if (index >= a) {
 					// Add block
-					item = array[index];
-					block = each_item_block(array, item, null, index, render_fn, flags);
+					item = is_proxied_array ? lazy_property(array, index) : array[index];
+					block = each_item_block(item, null, index, render_fn, flags);
 					b_blocks[index] = block;
 					insert_each_item_block(block, dom, is_controlled, null);
 				} else if (index >= b) {
@@ -353,7 +356,6 @@ function reconcile_tracked_array(
 
 	if (is_proxied_array) {
 		flags &= ~EACH_ITEM_REACTIVE;
-		flags |= EACH_IS_PROXIED;
 	}
 
 	/** @type {number | void} */
@@ -406,7 +408,7 @@ function reconcile_tracked_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
 				);
-				block = each_item_block(array, item, key, idx, render_fn, flags);
+				block = each_item_block(item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 			}
 		} else if (a === 0) {
@@ -415,7 +417,7 @@ function reconcile_tracked_array(
 				idx = b_end - --b;
 				item = array[idx];
 				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(array, item, key, idx, render_fn, flags);
+				block = each_item_block(item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
@@ -463,7 +465,7 @@ function reconcile_tracked_array(
 				while (b_end >= start) {
 					item = array[b_end];
 					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(array, item, key, b_end, render_fn, flags);
+					block = each_item_block(item, key, b_end, render_fn, flags);
 					b_blocks[b_end--] = block;
 					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 				}
@@ -525,7 +527,7 @@ function reconcile_tracked_array(
 					item = array[b_end];
 					if (should_create) {
 						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(array, item, key, b_end, render_fn, flags);
+						block = each_item_block(item, key, b_end, render_fn, flags);
 					} else {
 						block = b_blocks[b_end];
 						if (!is_animated && should_update_block) {
@@ -708,6 +710,8 @@ function get_first_element(block) {
 function update_each_item_block(block, item, index, type) {
 	if ((type & EACH_ITEM_REACTIVE) !== 0) {
 		set_signal_value(block.v, item);
+	} else if (is_lazy_property(block.v)) {
+		block.v.o[block.v.p] = item;
 	}
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
@@ -764,25 +768,23 @@ export function destroy_each_item_block(
 
 /**
  * @template V
- * @param {V[]} array
- * @param {V} item
+ * @template O
+ * @template P
+ * @param {V | import('./types.js').LazyProperty<O, P>} item
  * @param {unknown} key
  * @param {number} index
  * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('./types.js').EachItemBlock}
  */
-function each_item_block(array, item, key, index, render_fn, flags) {
+function each_item_block(item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
-	const item_value =
-		(flags & EACH_IS_PROXIED) !== 0 && (flags & EACH_KEYED) === 0
-			? lazy_property(array, index)
-			: each_item_not_reactive
-			? item
-			: (flags & EACH_IS_IMMUTABLE) === 0
-			? mutable_source(item)
-			: source(item);
+	const item_value = each_item_not_reactive
+		? item
+		: (flags & EACH_IS_IMMUTABLE) === 0
+		? mutable_source(item)
+		: source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

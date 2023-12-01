@@ -39,12 +39,10 @@ import {
 	current_block,
 	source,
 	managed_effect,
-	safe_equal,
 	push,
 	current_component_context,
 	pop,
 	unwrap,
-	default_equals,
 	mutable_source
 } from './runtime.js';
 import {
