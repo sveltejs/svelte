@@ -261,14 +261,7 @@ export function client_component(source, analysis, options) {
 	}
 
 	const component_block = b.block([
-		b.stmt(
-			b.call(
-				'$.push',
-				b.id('$$props'),
-				b.literal(analysis.runes),
-				...(options.immutable ? [b.literal(true)] : [])
-			)
-		),
+		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,

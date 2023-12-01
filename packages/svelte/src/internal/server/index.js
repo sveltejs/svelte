@@ -115,10 +115,9 @@ export function render(component, options) {
 
 /**
  * @param {boolean} runes
- * @param {boolean} [immutable]
  */
-export function push(runes, immutable) {
-	$.push({}, runes, immutable);
+export function push(runes) {
+	$.push({}, runes);
 }
 
 export function pop() {

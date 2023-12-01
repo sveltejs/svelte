@@ -2104,7 +2104,7 @@ export function server_component(analysis, options) {
 	}
 
 	const component_block = b.block([
-		b.stmt(b.call('$.push', b.literal(analysis.runes), ...(options.immutable ? [b.true] : []))),
+		b.stmt(b.call('$.push', b.literal(analysis.runes))),
 		.../** @type {import('estree').Statement[]} */ (instance.body),
 		.../** @type {import('estree').Statement[]} */ (template.body),
 		b.stmt(b.call('$.pop'))

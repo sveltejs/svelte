@@ -47,8 +47,6 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** immutable */
-	i: boolean;
 	/** runes */
 	r: boolean;
 	/** update_callbacks */

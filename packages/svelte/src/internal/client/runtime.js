@@ -110,8 +110,6 @@ export function create_component_context(props) {
 		c: null,
 		// effects
 		e: null,
-		// immutable
-		i: false,
 		// mounted
 		m: false,
 		// parent
@@ -1164,17 +1162,6 @@ export function mutable_source(initial_value) {
 }
 
 /**
- * @returns {import('./types.js').EqualsFunctions}
- */
-function get_equals_method() {
-	const context = current_component_context;
-	if (context && !context.i) {
-		return safe_equal;
-	}
-	return default_equals;
-}
-
-/**
  * Use `untrack` to prevent something from being treated as an `$effect`/`$derived` dependency.
  *
  * https://svelte-5-preview.vercel.app/docs/functions#untrack
@@ -1785,13 +1772,11 @@ export function onDestroy(fn) {
 /**
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
  * @param {any} runes
- * @param {any} immutable
  * @returns {void}
  */
-export function push(props, runes = false, immutable = false) {
+export function push(props, runes = false) {
 	const context_stack_item = create_component_context(props);
 	context_stack_item.r = runes;
-	context_stack_item.i = immutable;
 	current_component_context = context_stack_item;
 }
 
