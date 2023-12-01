@@ -225,7 +225,7 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
  * @param {boolean} apply_transitions
  * @returns {void}
  */
-export function reconcile_indexed_array(
+function reconcile_indexed_array(
 	array,
 	each_block,
 	dom,
@@ -328,7 +328,7 @@ export function reconcile_indexed_array(
  * @param {Array<string> | null} keys
  * @returns {void}
  */
-export function reconcile_tracked_array(
+function reconcile_tracked_array(
 	array,
 	each_block,
 	dom,
