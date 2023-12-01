@@ -20,6 +20,7 @@ export const GET = async () => {
 				arrow: true,
 				content: 'Svelte Advent 2023 is over. See you next year!',
 				href: 'https://advent.sveltesociety.dev/'
+				// scope: ['svelte.dev, kit.svelte.dev'] // Dont show on learn.svelte.dev by not adding it to the array
 			}
 		])
 	);
