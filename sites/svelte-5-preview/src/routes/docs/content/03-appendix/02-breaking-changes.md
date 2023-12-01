@@ -86,6 +86,10 @@ Previously Svelte would always insert the CSS hash last. This is no longer guara
 
 Various error and warning codes have been renamed slightly.
 
+### Reduced number of namespaces
+
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
+
 ### beforeUpdate change
 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
