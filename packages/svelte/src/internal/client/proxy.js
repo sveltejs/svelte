@@ -109,7 +109,7 @@ const handler = {
 		const metadata = target[STATE_SYMBOL];
 		const has = Reflect.has(target, prop);
 		let s = metadata.s.get(prop);
-		if (!has || s !== undefined || get_descriptor(target, prop)?.writable) {
+		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
 			if (s === undefined) {
 				s = source(has ? proxy(target[prop]) : UNINITIALIZED);
 				metadata.s.set(prop, s);
