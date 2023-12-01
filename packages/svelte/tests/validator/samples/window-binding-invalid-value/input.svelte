@@ -1,1 +1,0 @@
-<svelte:window bind:innerWidth={foo.bar.baz}/>
