@@ -1,4 +1,12 @@
-import { effect_active, get, set, increment, source, updating_derived } from './runtime.js';
+import {
+	effect_active,
+	get,
+	set,
+	increment,
+	source,
+	updating_derived,
+	UNINITIALIZED
+} from './runtime.js';
 import { get_descriptor, is_array } from './utils.js';
 
 /** @typedef {{ s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
@@ -47,7 +55,7 @@ function init(value) {
 
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
-	get(target, prop, receiver) {
+	get(target, prop) {
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -62,7 +70,8 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
-		return s !== undefined ? get(s) : target[prop];
+		const value = s !== undefined ? get(s) : target[prop];
+		return value === UNINITIALIZED ? undefined : value;
 	},
 	set(target, prop, value) {
 		const metadata = target[STATE_SYMBOL];
@@ -73,7 +82,7 @@ const handler = {
 		if (metadata.a && prop === 'length') {
 			for (let i = value; i < target.length; i += 1) {
 				const s = metadata.s.get(i + '');
-				if (s !== undefined) set(s, undefined);
+				if (s !== undefined) set(s, UNINITIALIZED);
 			}
 		}
 
@@ -87,19 +96,23 @@ const handler = {
 		const metadata = target[STATE_SYMBOL];
 
 		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, undefined);
+		if (s !== undefined) set(s, UNINITIALIZED);
 
 		if (prop in target) increment(metadata.v);
 
 		return delete target[prop];
 	},
 	has(target, prop) {
-		if (prop === STATE_SYMBOL) return true;
-
 		const metadata = target[STATE_SYMBOL];
-
-		get(metadata.v);
-		return Reflect.has(target, prop);
+		const has = Reflect.has(target, prop);
+		let s = metadata.s.get(prop);
+		if (s === undefined) {
+			s = source(has ? target[prop] : UNINITIALIZED);
+			increment(metadata.v);
+			metadata.s.set(prop, s);
+		}
+		const value = get(s);
+		return value === UNINITIALIZED ? false : has;
 	},
 	ownKeys(target) {
 		const metadata = target[STATE_SYMBOL];
