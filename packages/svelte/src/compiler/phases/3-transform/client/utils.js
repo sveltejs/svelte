@@ -347,7 +347,7 @@ export function serialize_hoistable_params(node, context) {
  */
 export function get_props_method(binding, state, name, default_value) {
 	/** @type {import('estree').Expression[]} */
-	const args = [b.id('$$props'), b.literal(name)];
+	const args = [b.id('$$props'), b.literal(name), b.literal(state.analysis.immutable)];
 
 	if (default_value) {
 		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
@@ -382,7 +382,7 @@ export function get_props_method(binding, state, name, default_value) {
 export function create_state_declarators(declarator, scope, value) {
 	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.source', value))];
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -392,7 +392,10 @@ export function create_state_declarators(declarator, scope, value) {
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(path.node, binding?.kind === 'state' ? b.call('$.source', value) : value);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+			);
 		})
 	];
 }

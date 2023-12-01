@@ -44,7 +44,8 @@ import {
 	current_component_context,
 	pop,
 	unwrap,
-	default_equals
+	default_equals,
+	mutable_source
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -2625,7 +2626,6 @@ export function createRoot(component, options) {
 	 */
 	function add_prop(name, value) {
 		const prop = source(value);
-		prop.e = default_equals; // TODO should this be safe_equals?
 		_sources[name] = prop;
 		define_property(_props, name, {
 			get() {
@@ -2659,10 +2659,9 @@ export function createRoot(component, options) {
 			return _props[property];
 		}
 	});
-	const props_source = source(props_proxy);
 
 	// We're resetting the same proxy instance for updates, therefore bypass equality checks
-	props_source.e = safe_equal;
+	const props_source = mutable_source(props_proxy);
 
 	let [accessors, $destroy] = mount(component, {
 		...options,

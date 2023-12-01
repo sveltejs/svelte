@@ -7,6 +7,7 @@ export {
 	expose,
 	exposable,
 	source,
+	mutable_source,
 	derived,
 	prop,
 	prop_source,

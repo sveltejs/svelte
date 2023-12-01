@@ -2,6 +2,7 @@ import {
 	EACH_INDEX_REACTIVE,
 	EACH_IS_ANIMATED,
 	EACH_IS_CONTROLLED,
+	EACH_IS_IMMUTABLE,
 	EACH_IS_PROXIED,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
@@ -21,6 +22,7 @@ import {
 	destroy_signal,
 	execute_effect,
 	lazy_property,
+	mutable_source,
 	push_destroy_fn,
 	render_effect,
 	schedule_task,
@@ -747,6 +749,8 @@ function each_item_block(array, item, key, index, render_fn, flags) {
 			? lazy_property(array, index)
 			: each_item_not_reactive
 			? item
+			: (flags & EACH_IS_IMMUTABLE) === 0
+			? mutable_source(item)
 			: source(item);
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

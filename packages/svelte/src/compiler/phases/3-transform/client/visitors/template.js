@@ -27,6 +27,7 @@ import {
 	DOMBooleanAttributes,
 	EACH_INDEX_REACTIVE,
 	EACH_IS_CONTROLLED,
+	EACH_IS_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
 	EACH_KEYED
 } from '../../../../../constants.js';
@@ -2117,14 +2118,13 @@ export const template_visitors = {
 		// array or use nested reactivity through runes.
 		// TODO this feels a bit "hidden performance boost"-style, investigate if there's a way
 		// to make this apply in more cases
-		/** @type {number} */
-		let each_type;
+		let each_type = 0;
 
 		if (
 			node.key &&
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
-			each_type = EACH_KEYED;
+			each_type |= EACH_KEYED;
 			if (
 				node.key.type === 'Identifier' &&
 				node.context.type === 'Identifier' &&
@@ -2141,10 +2141,15 @@ export const template_visitors = {
 				each_type |= EACH_INDEX_REACTIVE;
 			}
 		} else {
-			each_type = EACH_ITEM_REACTIVE;
+			each_type |= EACH_ITEM_REACTIVE;
 		}
+
 		if (each_node_meta.is_controlled) {
 			each_type |= EACH_IS_CONTROLLED;
+		}
+
+		if (context.state.analysis.immutable) {
+			each_type |= EACH_IS_IMMUTABLE;
 		}
 
 		// Find the parent each blocks which contain the arrays to invalidate

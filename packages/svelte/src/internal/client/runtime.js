@@ -163,7 +163,7 @@ function create_source_signal(flags, value) {
 			// consumers
 			c: null,
 			// equals
-			e: null,
+			e: default_equals,
 			// flags
 			f: flags,
 			// value
@@ -178,7 +178,7 @@ function create_source_signal(flags, value) {
 		// consumers
 		c: null,
 		// equals
-		e: null,
+		e: default_equals,
 		// flags
 		f: flags,
 		// value
@@ -698,7 +698,7 @@ export function store_get(store, store_name, stores) {
 		entry = {
 			store: null,
 			last_value: null,
-			value: source(UNINITIALIZED),
+			value: mutable_source(UNINITIALIZED),
 			unsubscribe: EMPTY_FUNC
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
@@ -1148,8 +1148,19 @@ export function derived(init) {
 export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
 	source.x = current_component_context;
-	source.e = get_equals_method();
 	return source;
+}
+
+/**
+ * @template V
+ * @param {V} initial_value
+ * @returns {import('./types.js').SourceSignal<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function mutable_source(initial_value) {
+	const s = source(initial_value);
+	s.e = safe_equal;
+	return s;
 }
 
 /**
@@ -1424,11 +1435,12 @@ export function is_store(val) {
  * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
+ * @param {boolean} immutable
  * @param {V | (() => V)} [default_value]
  * @param {boolean} [call_default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, default_value, call_default_value) {
+export function prop_source(props_obj, key, immutable, default_value, call_default_value) {
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
 		expose(() => props[key])
@@ -1440,8 +1452,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 	if (
 		is_signal(possible_signal) &&
 		possible_signal.v === value &&
-		update_bound_prop === undefined &&
-		get_equals_method() === possible_signal.e
+		update_bound_prop === undefined
 	) {
 		if (should_set_default_value) {
 			set(
@@ -1459,13 +1470,11 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 			call_default_value ? default_value() : default_value;
 	}
 
-	const source_signal = source(value);
+	const source_signal = immutable ? source(value) : mutable_source(value);
 
 	// Synchronize prop changes with source signal.
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
-	const immutable = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-		.i;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
 	let did_update_to_defined = !should_set_default_value;
