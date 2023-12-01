@@ -56,6 +56,8 @@ function validate_component(node, context) {
  */
 function validate_element(node, context) {
 	let has_animate_directive = false;
+	let has_in_transition = false;
+	let has_out_transition = false;
 
 	for (const attribute of node.attributes) {
 		if (attribute.type === 'Attribute') {
@@ -91,6 +93,20 @@ function validate_element(node, context) {
 			} else {
 				has_animate_directive = true;
 			}
+		} else if (attribute.type === 'TransitionDirective') {
+			if ((attribute.outro && has_out_transition) || (attribute.intro && has_in_transition)) {
+				/** @param {boolean} _in @param {boolean} _out */
+				const type = (_in, _out) => (_in && _out ? 'transition' : _in ? 'in' : 'out');
+				error(
+					attribute,
+					'duplicate-transition',
+					type(has_in_transition, has_out_transition),
+					type(attribute.intro, attribute.outro)
+				);
+			}
+
+			has_in_transition = has_in_transition || attribute.intro;
+			has_out_transition = has_out_transition || attribute.outro;
 		} else if (attribute.type === 'OnDirective') {
 			let has_passive_modifier = false;
 			let conflicting_passive_modifier = '';
@@ -459,10 +475,6 @@ export const validation = {
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
 			error(node, 'invalid-const-placement');
-		}
-	},
-	DebugTag(node, context) {
-		if (node.identifiers) {
 		}
 	},
 	RegularElement(node, context) {

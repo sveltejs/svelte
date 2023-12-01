@@ -249,7 +249,23 @@ const attributes = {
 	 * @param {string} modifier2
 	 */
 	'invalid-event-modifier-combination': (modifier1, modifier2) =>
-		`The '${modifier1}' and '${modifier2}' modifiers cannot be used together`
+		`The '${modifier1}' and '${modifier2}' modifiers cannot be used together`,
+	/**
+	 * @param {string} directive1
+	 * @param {string} directive2
+	 */
+	'duplicate-transition': (directive1, directive2) => {
+		/** @param {string} _directive */
+		function describe(_directive) {
+			return _directive === 'transition' ? "a 'transition'" : `an '${_directive}'`;
+		}
+
+		return directive1 === directive2
+			? `An element can only have one '${directive1}' directive`
+			: `An element cannot have both ${describe(directive1)} directive and ${describe(
+					directive2
+			  )} directive`;
+	}
 };
 
 /** @satisfies {Errors} */
