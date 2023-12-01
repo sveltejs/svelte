@@ -19,6 +19,10 @@ Svelte Summit Fall 2023 was epic! Featuring talks from across the ecosystem and 
 - [3:18:25](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=11905s) Accessibility tips with Svelte solutions - Enrico Sacchetti (25 minutes)
 - [3:49:11](https://www.youtube.com/watch?v=pTgIx-ucMsY&t=13751s) svelte@next - Rich Harris (18 minutes)
 
+Today is also the first day of [Advent of Svelte](https://advent.sveltesociety.dev/): A Svelte challenge for each day of December. Join the festivities and participate in a daily frontend challenge using Svelte!
+
+Now let's dive into the updates...
+
 ## What's new in Svelte (5.0 Preview!)
 
 [Svelte 5 preview](https://svelte-5-preview.vercel.app/docs/introduction) is now available at [svelte@next](https://www.npmjs.com/package/svelte?activeTab=versions) while Svelte 4's current version (`@latest`) is `4.2.7`. All the changes below are from the preview's branch:
@@ -66,7 +70,7 @@ For a complete list of bug fixes and performance updates, check out the [SvelteK
 **Learning Resources**
 
 _Featuring Svelte Contributors and Ambassadors_
-- [View Transitions in SvelteKit and beyond with Geoff Rich](https://www.svelteradio.com/episodes/view-transitions-in-sveltekit-and-beyond-with-geoff-rich) by Svelte Radio
+- [View Transitions in SvelteKit and beyond with Geoff Rich](https://www.svelteradio.com/episodes/view-transitions-in-sveltekit-and-beyond-with-geoff-rich) and [Melting UIs with Thomas G. Lopes](https://www.svelteradio.com/episodes/melting-uis-with-thomas-g-lopes) by Svelte Radio
 - [Making The Best Svelte SVG Animation Library](https://www.youtube.com/watch?v=_jWnyJRKOvU), [How To Publish Your JavaScript Code To Npm With SvelteKit](https://www.youtube.com/watch?v=Xvq8rCl1lIM), and [What's New In Svelte 5? (Runes, Events, Snippets)](https://www.youtube.com/watch?v=gGwnF-lxS_Q) by Joy of Code
 - Svelte Society Talks
   - [Svelte Society - San Diego November 2023](https://www.youtube.com/watch?v=Gh4ESdKP3yQ)
