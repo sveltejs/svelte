@@ -78,7 +78,7 @@ export function validate_each_keys(collection, key_fn) {
 		: Array.from(maybe_array);
 	const length = array.length;
 	for (let i = 0; i < length; i++) {
-		const key = key_fn(array[i]);
+		const key = key_fn(() => array[i]);
 		if (keys.has(key)) {
 			throw new Error(
 				`Cannot have duplicate keys in a keyed each: Keys at index ${keys.get(

@@ -21,11 +21,13 @@ import { empty } from './render.js';
 import {
 	destroy_signal,
 	execute_effect,
+	get,
 	lazy_property,
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
 	schedule_task,
+	set,
 	set_signal_value,
 	source
 } from './runtime.js';
@@ -41,8 +43,8 @@ const LIS_BLOCK = -2;
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((get_item: (index: number) => V) => string)} key_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
  * @returns {void}
@@ -55,6 +57,15 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	let current_fallback = null;
 	hydrate_block_anchor(anchor_node, is_controlled);
 
+	/** @type {import('./types.js').SourceSignal<V[]>} */
+	const array_source = (flags & EACH_IS_IMMUTABLE) === 0 ? mutable_source([]) : source([]);
+
+	/** @param {number} index */
+	const get_item = (index) => {
+		const array = get(array_source);
+		return array[index];
+	};
+
 	/** @type {V[]} */
 	let array;
 
@@ -63,6 +74,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 
 	/** @type {null | import('./types.js').EffectSignal} */
 	let render = null;
+
 	block.r =
 		/** @param {import('./types.js').Transition} transition */
 		(transition) => {
@@ -126,9 +138,12 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				: maybe_array == null
 				? []
 				: Array.from(maybe_array);
+
 			if (key_fn !== null) {
-				keys = array.map(key_fn);
+				keys = array.map((item) => key_fn(() => item));
 			}
+			set(array_source, array);
+
 			const length = array.length;
 			if (fallback_fn !== null) {
 				if (length === 0) {
@@ -162,7 +177,17 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			const flags = block.f;
 			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
 			const anchor_node = block.a;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
+			reconcile_fn(
+				get_item,
+				array,
+				block,
+				anchor_node,
+				is_controlled,
+				render_fn,
+				flags,
+				true,
+				keys
+			);
 		},
 		block,
 		true
@@ -185,7 +210,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			fallback = fallback.p;
 		}
 		// Clear the array
-		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
+		reconcile_fn(get_item, [], block, anchor_node, is_controlled, render_fn, flags, false, keys);
 		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
 	});
 
@@ -197,13 +222,21 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {null | ((get_item: (index: number) => V) => string)} key_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
 export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
+	each(
+		anchor_node,
+		collection,
+		flags | EACH_INDEX_REACTIVE, // TODO is this correct? it should probably just be in the generated code
+		key_fn,
+		render_fn,
+		fallback_fn,
+		reconcile_tracked_array
+	);
 }
 
 /**
@@ -211,7 +244,7 @@ export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fa
  * @param {Element | Comment} anchor_node
  * @param {() => V[]} collection
  * @param {number} flags
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
  * @param {null | ((anchor: Node) => void)} fallback_fn
  * @returns {void}
  */
@@ -221,16 +254,18 @@ export function each_indexed(anchor_node, collection, flags, render_fn, fallback
 
 /**
  * @template V
+ * @param {(index: number) => V} get_item
  * @param {Array<V>} array
  * @param {import('./types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: number | import('./types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @returns {void}
  */
 function reconcile_indexed_array(
+	get_item,
 	array,
 	each_block,
 	dom,
@@ -290,7 +325,7 @@ function reconcile_indexed_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ (/** @type {Node} */ (fragment.at(-1)).nextSibling).nextSibling
 				);
-				block = each_item_block(array, item, null, index, render_fn, flags);
+				block = each_item_block(get_item, array, item, null, index, render_fn, flags);
 				b_blocks[index] = block;
 			}
 		} else {
@@ -298,7 +333,7 @@ function reconcile_indexed_array(
 				if (index >= a) {
 					// Add block
 					item = array[index];
-					block = each_item_block(array, item, null, index, render_fn, flags);
+					block = each_item_block(get_item, array, item, null, index, render_fn, flags);
 					b_blocks[index] = block;
 					insert_each_item_block(block, dom, is_controlled, null);
 				} else if (index >= b) {
@@ -318,25 +353,27 @@ function reconcile_indexed_array(
 
 	each_block.v = b_blocks;
 }
-// Reconcile arrays by the equality of the elements in the array. This algorithm
-// is based on Ivi's reconcilation logic:
-//
-// https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
-//
 
 /**
+ * Reconcile arrays by the equality of the elements in the array. This algorithm
+ * is based on Ivi's reconcilation logic:
+ *
+ * https://github.com/localvoid/ivi/blob/9f1bd0918f487da5b131941228604763c5d8ef56/packages/ivi/src/client/core.ts#L968
+ *
  * @template V
+ * @param {(index: number) => V} get_item
  * @param {Array<V>} array
  * @param {import('./types.js').EachBlock} each_block
  * @param {Element | Comment | Text} dom
  * @param {boolean} is_controlled
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: number | import('./types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @param {boolean} apply_transitions
  * @param {Array<string> | null} keys
  * @returns {void}
  */
 function reconcile_tracked_array(
+	get_item,
 	array,
 	each_block,
 	dom,
@@ -406,7 +443,7 @@ function reconcile_tracked_array(
 				hydrating_node = /** @type {Node} */ (
 					/** @type {Node} */ ((fragment.at(-1) || hydrating_node).nextSibling).nextSibling
 				);
-				block = each_item_block(array, item, key, idx, render_fn, flags);
+				block = each_item_block(get_item, array, item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 			}
 		} else if (a === 0) {
@@ -415,12 +452,11 @@ function reconcile_tracked_array(
 				idx = b_end - --b;
 				item = array[idx];
 				key = is_computed_key ? keys[idx] : item;
-				block = each_item_block(array, item, key, idx, render_fn, flags);
+				block = each_item_block(get_item, array, item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -433,9 +469,7 @@ function reconcile_tracked_array(
 				while (a_blocks[a_end].k === key) {
 					block = a_blocks[a_end--];
 					item = array[b_end];
-					if (should_update_block) {
-						update_each_item_block(block, item, b_end, flags);
-					}
+					update_each_item_block(block, item, b_end, flags);
 					sibling = get_first_child(block);
 					b_blocks[b_end] = block;
 					if (start > --b_end || start > a_end) {
@@ -449,9 +483,7 @@ function reconcile_tracked_array(
 				while (start <= a_end && start <= b_end && a_blocks[start].k === key) {
 					item = array[start];
 					block = a_blocks[start];
-					if (should_update_block) {
-						update_each_item_block(block, item, start, flags);
-					}
+					update_each_item_block(block, item, start, flags);
 					b_blocks[start] = block;
 					++start;
 					key = is_computed_key ? keys[start] : array[start];
@@ -463,7 +495,7 @@ function reconcile_tracked_array(
 				while (b_end >= start) {
 					item = array[b_end];
 					key = is_computed_key ? keys[b_end] : item;
-					block = each_item_block(array, item, key, b_end, render_fn, flags);
+					block = each_item_block(get_item, array, item, key, b_end, render_fn, flags);
 					b_blocks[b_end--] = block;
 					sibling = insert_each_item_block(block, dom, is_controlled, sibling);
 				}
@@ -525,10 +557,10 @@ function reconcile_tracked_array(
 					item = array[b_end];
 					if (should_create) {
 						key = is_computed_key ? keys[b_end] : item;
-						block = each_item_block(array, item, key, b_end, render_fn, flags);
+						block = each_item_block(get_item, array, item, key, b_end, render_fn, flags);
 					} else {
 						block = b_blocks[b_end];
-						if (!is_animated && should_update_block) {
+						if (!is_animated) {
 							update_each_item_block(block, item, b_end, flags);
 						}
 					}
@@ -726,6 +758,7 @@ function update_each_item_block(block, item, index, type) {
 			});
 		}
 	}
+
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
 	} else {
@@ -764,15 +797,16 @@ export function destroy_each_item_block(
 
 /**
  * @template V
+ * @param {(index: number) => V} get_item
  * @param {V[]} array
  * @param {V} item
  * @param {unknown} key
  * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
+ * @param {(anchor: null, get_item: (index: number) => V, index: number | import('./types.js').Signal<number>) => void} render_fn
  * @param {number} flags
  * @returns {import('./types.js').EachItemBlock}
  */
-function each_item_block(array, item, key, index, render_fn, flags) {
+function each_item_block(get_item, array, item, key, index, render_fn, flags) {
 	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
 
 	const item_value =
@@ -784,13 +818,23 @@ function each_item_block(array, item, key, index, render_fn, flags) {
 			? mutable_source(item)
 			: source(item);
 
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+	const reactive_index = (flags & EACH_INDEX_REACTIVE) !== 0;
+	const index_value = reactive_index ? source(index) : index;
 	const block = create_each_item_block(item_value, index_value, key);
+
+	// TODO can we get rid of this closure?
+	const get_value = () => {
+		return get_item(
+			reactive_index
+				? get(/** @type {import('./types.js').SourceSignal<number>} */ (block.i))
+				: /** @type {number} */ (block.i)
+		);
+	};
 
 	const effect = render_effect(
 		/** @param {import('./types.js').EachItemBlock} block */
 		(block) => {
-			render_fn(null, block.v, block.i);
+			render_fn(null, get_value, block.i);
 		},
 		block,
 		true

@@ -2211,7 +2211,7 @@ export const template_visitors = {
 				: b.id(node.index);
 		const item = b.id(each_node_meta.item_name);
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
-		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		binding.expression = each_item_is_reactive ? b.call(item) : item;
 
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
@@ -2225,7 +2225,7 @@ export const template_visitors = {
 				)
 			);
 		} else {
-			const unwrapped = binding.expression;
+			const unwrapped = item;
 			const paths = extract_paths(node.context);
 
 			for (const path of paths) {
@@ -2250,7 +2250,7 @@ export const template_visitors = {
 
 				binding.expression = b.call(name);
 				binding.mutation = create_mutation(
-					/** @type {import('estree').Pattern} */ (path.update_expression(unwrapped))
+					/** @type {import('estree').Pattern} */ (path.update_expression(b.call(unwrapped)))
 				);
 			}
 		}

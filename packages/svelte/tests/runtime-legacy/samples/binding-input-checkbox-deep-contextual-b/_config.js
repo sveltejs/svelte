@@ -45,8 +45,8 @@ export default test({
 		`
 		);
 
-		inputs[2].checked = true;
-		await inputs[2].dispatchEvent(event);
+		inputs[1].checked = true;
+		await inputs[1].dispatchEvent(event);
 
 		await component.clear();
 
