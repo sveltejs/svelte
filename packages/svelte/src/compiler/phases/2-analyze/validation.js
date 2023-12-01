@@ -510,6 +510,11 @@ export const validation = {
 		});
 	},
 	SvelteFragment(node, context) {
+		const parent = context.path.at(-2);
+		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
+			error(node, 'invalid-svelte-fragment-placement');
+		}
+
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'slot') {

@@ -135,6 +135,8 @@ const special_elements = {
 	'invalid-svelte-fragment-attribute': () =>
 		`<svelte:fragment> can only have a slot attribute and (optionally) a let: directive`,
 	'invalid-svelte-fragment-slot': () => `<svelte:fragment> slot attribute must have a static value`,
+	'invalid-svelte-fragment-placement': () =>
+		`<svelte:fragment> must be the direct child of a component`,
 	/** @param {string} name */
 	'invalid-svelte-element-placement': (name) =>
 		`<${name}> tags cannot be inside elements or blocks`,
@@ -379,10 +381,6 @@ const errors = {
 	// invalid_slot_attribute_value_missing: {
 	// 	code: 'invalid-slot-attribute',
 	// 	message: 'slot attribute value is missing'
-	// },
-	// invalid_slotted_content_fragment: {
-	// 	code: 'invalid-slotted-content',
-	// 	message: '<svelte:fragment> must be a child of a component'
 	// },
 	// illegal_attribute_title: {
 	// 	code: 'illegal-attribute',
