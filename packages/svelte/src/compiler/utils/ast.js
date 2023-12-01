@@ -304,3 +304,36 @@ export function get_parent(path, at) {
 	}
 	return /** @type {T} */ (node);
 }
+
+/**
+ * Returns `true` if the expression is an identifier, a literal, a function expression,
+ * or a logical expression that only contains simple expressions. Used to determine whether
+ * something needs to be treated as though accessing it could have side-effects (i.e.
+ * reading signals prematurely)
+ * @param {import('estree').Expression} node
+ * @returns {boolean}
+ */
+export function is_simple_expression(node) {
+	if (
+		node.type === 'Literal' ||
+		node.type === 'Identifier' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression'
+	) {
+		return true;
+	}
+
+	if (node.type === 'ConditionalExpression') {
+		return (
+			is_simple_expression(node.test) &&
+			is_simple_expression(node.consequent) &&
+			is_simple_expression(node.alternate)
+		);
+	}
+
+	if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
+		return is_simple_expression(node.left) && is_simple_expression(node.right);
+	}
+
+	return false;
+}

@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 
 /**
@@ -353,9 +353,9 @@ export function get_props_method(binding, state, name, default_value) {
 	// - accessors/mutated: needs to be able to set the prop value from within
 	// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
 	const needs_source =
-		(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
 		default_value ||
-		state.analysis.accessors;
+		state.analysis.accessors ||
+		(state.analysis.immutable ? binding.reassigned : binding.mutated);
 
 	if (needs_source) {
 		args.push(b.literal(state.analysis.immutable));
@@ -363,12 +363,20 @@ export function get_props_method(binding, state, name, default_value) {
 
 	if (default_value) {
 		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
-		if (default_value.type !== 'Literal' && default_value.type !== 'Identifier') {
-			args.push(b.thunk(default_value));
-			args.push(b.true);
-		} else {
+		if (is_simple_expression(default_value)) {
 			args.push(default_value);
-			args.push(b.false);
+		} else {
+			if (
+				default_value.type === 'CallExpression' &&
+				default_value.callee.type === 'Identifier' &&
+				default_value.arguments.length === 0
+			) {
+				args.push(default_value.callee);
+			} else {
+				args.push(b.thunk(default_value));
+			}
+
+			args.push(b.true);
 		}
 	}
 

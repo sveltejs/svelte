@@ -1520,7 +1520,6 @@ export function prop_source(props_obj, key, immutable, default_value, call_defau
 
 /**
  * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
  * @returns {any}
