@@ -2717,7 +2717,6 @@ export function createRoot(component, options) {
  * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		immutable?: boolean;
  * 		recover?: false;
  * 	}} options
  * @returns {[Exports, () => void]}
