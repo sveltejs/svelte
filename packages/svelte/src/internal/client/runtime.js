@@ -191,9 +191,36 @@ function create_source_signal(flags, value) {
  * @param {import('./types.js').SignalFlags} flags
  * @param {V} value
  * @param {import('./types.js').Block | null} block
- * @returns {import('./types.js').ComputationSignal<V>}
+ * @returns {import('./types.js').ComputationSignal<V> | import('./types.js').ComputationSignal<V> & import('./types.js').SourceSignalDebug}
  */
 function create_computation_signal(flags, value, block) {
+	if (DEV) {
+		return {
+			// block
+			b: block,
+			// consumers
+			c: null,
+			// destroy
+			d: null,
+			// equals
+			e: null,
+			// flags
+			f: flags,
+			// init
+			i: null,
+			// references
+			r: null,
+			// value
+			v: value,
+			// context: We can remove this if we get rid of beforeUpdate/afterUpdate
+			x: null,
+			// destroy
+			y: null,
+			// this is for DEV only
+			inspect: new Set()
+		};
+	}
+
 	return {
 		// block
 		b: block,
@@ -671,6 +698,12 @@ function update_derived(signal, force_schedule) {
 	if (!equals(value, signal.v)) {
 		signal.v = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
+
+		// @ts-expect-error
+		if (DEV && signal.inspect && force_schedule) {
+			// @ts-expect-error
+			for (const fn of signal.inspect) fn();
+		}
 	}
 }
 
@@ -836,7 +869,15 @@ export function get(signal) {
 	}
 
 	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
-		update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+		if (DEV) {
+			// we want to avoid tracking indirect dependencies
+			const previous_inspect_fn = inspect_fn;
+			inspect_fn = null;
+			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			inspect_fn = previous_inspect_fn;
+		} else {
+			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+		}
 	}
 	return signal.v;
 }
