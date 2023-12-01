@@ -107,7 +107,7 @@ const handler = {
 		const has = Reflect.has(target, prop);
 		let s = metadata.s.get(prop);
 		if (s === undefined) {
-			s = source(has ? target[prop] : UNINITIALIZED);
+			s = source(has ? proxy(target[prop]) : UNINITIALIZED);
 			increment(metadata.v);
 			metadata.s.set(prop, s);
 		}
