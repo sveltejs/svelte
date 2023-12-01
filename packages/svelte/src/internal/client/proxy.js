@@ -48,7 +48,7 @@ function init(value) {
 
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
-	get(target, prop, receiver) {
+	get(target, prop) {
 		if (prop === STATE_EACH_SYMBOL) {
 			return parent;
 		}
