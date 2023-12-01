@@ -579,6 +579,15 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		if (parent && parent.type === 'ConstTag') return;
 		validate_assignment(node, node.left, state);
 	},
+	LabeledStatement(node, { path, state }) {
+		if (
+			node.label.name === '$' &&
+			(state.ast_type !== 'instance' ||
+				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
+		) {
+			warn(state.analysis.warnings, node, path, 'no-reactive-declaration');
+		}
+	},
 	UpdateExpression(node, { state }) {
 		validate_assignment(node, node.argument, state);
 	}

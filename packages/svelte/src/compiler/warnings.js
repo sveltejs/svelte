@@ -208,6 +208,11 @@ const components = {
 		`<${name}> will be treated as an HTML element unless it begins with a capital letter`
 };
 
+const legacy = {
+	'no-reactive-declaration': () =>
+		`Reactive declarations only exist at the top level of the instance script`
+};
+
 /** @satisfies {Warnings} */
 const warnings = {
 	...css,
@@ -216,7 +221,8 @@ const warnings = {
 	...a11y,
 	...performance,
 	...state,
-	...components
+	...components,
+	...legacy
 };
 
 /** @typedef {typeof warnings} AllWarnings */
