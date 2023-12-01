@@ -103,16 +103,23 @@ const handler = {
 		return delete target[prop];
 	},
 	has(target, prop) {
+		if (prop === STATE_SYMBOL) {
+			return true;
+		}
 		const metadata = target[STATE_SYMBOL];
 		const has = Reflect.has(target, prop);
 		let s = metadata.s.get(prop);
-		if (s === undefined) {
-			s = source(has ? proxy(target[prop]) : UNINITIALIZED);
-			increment(metadata.v);
-			metadata.s.set(prop, s);
+		if (!has || s !== undefined || get_descriptor(target, prop)?.writable) {
+			if (s === undefined) {
+				s = source(has ? proxy(target[prop]) : UNINITIALIZED);
+				metadata.s.set(prop, s);
+			}
+			const value = get(s);
+			if (value === UNINITIALIZED) {
+				return false;
+			}
 		}
-		const value = get(s);
-		return value === UNINITIALIZED ? false : has;
+		return has;
 	},
 	ownKeys(target) {
 		const metadata = target[STATE_SYMBOL];
