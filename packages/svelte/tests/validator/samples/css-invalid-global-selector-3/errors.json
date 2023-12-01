@@ -1,7 +1,7 @@
 [
 	{
-		"code": "css-invalid-global-selector",
-		"message": ":global(...) must contain a single selector",
+		"code": "invalid-css-global-selector",
+		"message": ":global(...) must contain exactly one selector",
 		"start": {
 			"line": 5,
 			"column": 5

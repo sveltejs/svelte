@@ -17,7 +17,6 @@ const whitelist_attribute_selector = new Map([
 	['details', new Set(['open'])],
 	['dialog', new Set(['open'])]
 ]);
-const regex_is_single_css_selector = /[^\\],(?!([^([]+[^\\]|[^([\\])[)\]])/;
 
 export default class Selector {
 	/** @type {import('#compiler').Css.Selector} */
@@ -157,11 +156,10 @@ export default class Selector {
 				if (
 					selector.type === 'PseudoClassSelector' &&
 					selector.name === 'global' &&
-					selector.args !== null
+					selector.args !== null &&
+					selector.args.children.length > 1
 				) {
-					if (regex_is_single_css_selector.test(selector.args)) {
-						error(selector, 'invalid-css-global-selector');
-					}
+					error(selector, 'invalid-css-global-selector');
 				}
 			}
 		}
@@ -179,11 +177,14 @@ export default class Selector {
 
 	validate_global_compound_selector() {
 		for (const block of this.blocks) {
-			for (const selector of block.selectors) {
+			for (let i = 0; i < block.selectors.length; i++) {
+				const selector = block.selectors[i];
 				if (
 					selector.type === 'PseudoClassSelector' &&
 					selector.name === 'global' &&
-					block.selectors.length !== 1
+					block.selectors.length !== 1 &&
+					(i === block.selectors.length - 1 ||
+						block.selectors.slice(i + 1).some((s) => s.type !== 'PseudoElementSelector'))
 				) {
 					error(selector, 'invalid-css-global-selector-list');
 				}

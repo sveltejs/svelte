@@ -435,10 +435,6 @@ const errors = {
 	// 	code: 'illegal-variable-declaration',
 	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
 	// },
-	// css_invalid_global: {
-	// 	code: 'css-invalid-global',
-	// 	message: ':global(...) can be at the start or end of a selector sequence, but not in the middle'
-	// },
 	// css_invalid_global_selector: {
 	// 	code: 'css-invalid-global-selector',
 	// 	message: ':global(...) must contain a single selector'
