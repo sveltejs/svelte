@@ -1,11 +1,10 @@
 import { effect_active, get, set, increment, source, updating_derived } from './runtime.js';
 import { get_descriptor, is_array } from './utils.js';
 
-/** @typedef {{ p: StateObject | null; s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {{ s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
 export const STATE_SYMBOL = Symbol();
-export const STATE_EACH_SYMBOL = Symbol();
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
@@ -14,28 +13,18 @@ const is_frozen = Object.isFrozen;
 
 /**
  * @template {StateObject} T
+ * @template {StateObject} P
  * @param {T} value
  * @returns {T}
  */
 export function proxy(value) {
-	return wrap(value, null);
-}
-
-/**
- * @template {StateObject} T
- * @template {StateObject} P
- * @param {T} value
- * @param {P | null} parent
- * @returns {T}
- */
-function wrap(value, parent) {
 	if (typeof value === 'object' && value != null && !is_frozen(value) && !(STATE_SYMBOL in value)) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
 			// @ts-expect-error
-			value[STATE_SYMBOL] = init(value, parent);
+			value[STATE_SYMBOL] = init(value);
 
 			// @ts-expect-error not sure how to fix this
 			return new Proxy(value, handler);
@@ -47,12 +36,10 @@ function wrap(value, parent) {
 
 /**
  * @param {StateObject} value
- * @param {StateObject | null} parent
  * @returns {Metadata}
  */
-function init(value, parent) {
+function init(value) {
 	return {
-		p: parent,
 		s: new Map(),
 		v: source(0),
 		a: is_array(value)
@@ -62,10 +49,6 @@ function init(value, parent) {
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
 	get(target, prop, receiver) {
-		if (prop === STATE_EACH_SYMBOL) {
-			return parent;
-		}
-
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -76,7 +59,7 @@ const handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			s = source(wrap(target[prop], receiver));
+			s = source(proxy(target[prop]));
 			metadata.s.set(prop, s);
 		}
 
@@ -86,7 +69,7 @@ const handler = {
 		const metadata = target[STATE_SYMBOL];
 
 		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, wrap(value, target));
+		if (s !== undefined) set(s, proxy(value));
 
 		if (metadata.a && prop === 'length') {
 			for (let i = value; i < target.length; i += 1) {
