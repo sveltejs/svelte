@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.17
+
+### Patch Changes
+
+- fix: improve `$inspect` type definition ([#9731](https://github.com/sveltejs/svelte/pull/9731))
+
+- fix: correctly inspect derived values ([#9731](https://github.com/sveltejs/svelte/pull/9731))
+
 ## 5.0.0-next.16
 
 ### Patch Changes
