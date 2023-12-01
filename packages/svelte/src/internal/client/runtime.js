@@ -1526,10 +1526,7 @@ export function prop_source(props_obj, key, immutable, default_value, call_defau
  * @returns {any}
  */
 export function prop(props_obj, key) {
-	return () => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-		return /** @type {V} */ (props[key]);
-	};
+	return is_signal(props_obj) ? () => get(props_obj)[key] : () => props_obj[key];
 }
 
 /**
