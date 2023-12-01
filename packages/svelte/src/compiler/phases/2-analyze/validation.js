@@ -441,6 +441,9 @@ export const validation = {
 			}
 		}
 	},
+	ExportDefaultDeclaration(node) {
+		error(node, 'default-export');
+	},
 	ConstTag(node, context) {
 		const parent = context.path.at(-1);
 		const grand_parent = context.path.at(-2);
@@ -456,6 +459,10 @@ export const validation = {
 					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
 		) {
 			error(node, 'invalid-const-placement');
+		}
+	},
+	DebugTag(node, context) {
+		if (node.identifiers) {
 		}
 	},
 	RegularElement(node, context) {

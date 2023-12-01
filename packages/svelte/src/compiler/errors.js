@@ -293,7 +293,8 @@ const variables = {
 	'illegal-global': /** @param {string} name */ (name) =>
 		`${name} is an illegal variable name. To reference a global variable called ${name}, use globalThis.${name}`,
 	/** @param {string} name */
-	'duplicate-declaration': (name) => `'${name}' has already been declared`
+	'duplicate-declaration': (name) => `'${name}' has already been declared`,
+	'default-export': () => `A component cannot have a default export`
 };
 
 /** @satisfies {Errors} */
