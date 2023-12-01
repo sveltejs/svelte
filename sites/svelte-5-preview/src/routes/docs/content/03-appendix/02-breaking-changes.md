@@ -82,6 +82,10 @@ Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
 
+### Renames of various error/warning codes
+
+Various error and warning codes have been renamed slightly.
+
 ### beforeUpdate change
 
 `beforeUpdate` no longer runs twice on initial render if it modifies a variable referenced in the template.
