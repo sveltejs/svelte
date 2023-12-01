@@ -13,7 +13,6 @@ const is_frozen = Object.isFrozen;
 
 /**
  * @template {StateObject} T
- * @template {StateObject} P
  * @param {T} value
  * @returns {T}
  */
