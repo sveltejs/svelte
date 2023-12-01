@@ -347,7 +347,19 @@ export function serialize_hoistable_params(node, context) {
  */
 export function get_props_method(binding, state, name, default_value) {
 	/** @type {import('estree').Expression[]} */
-	const args = [b.id('$$props'), b.literal(name), b.literal(state.analysis.immutable)];
+	const args = [b.id('$$props'), b.literal(name)];
+
+	// Use $.prop_source in the following cases:
+	// - accessors/mutated: needs to be able to set the prop value from within
+	// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
+	const needs_source =
+		(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+		default_value ||
+		state.analysis.accessors;
+
+	if (needs_source) {
+		args.push(b.literal(state.analysis.immutable));
+	}
 
 	if (default_value) {
 		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
@@ -360,17 +372,7 @@ export function get_props_method(binding, state, name, default_value) {
 		}
 	}
 
-	return b.call(
-		// Use $.prop_source in the following cases:
-		// - accessors/mutated: needs to be able to set the prop value from within
-		// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
-		(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
-			binding.initial ||
-			state.analysis.accessors
-			? '$.prop_source'
-			: '$.prop',
-		...args
-	);
+	return b.call(needs_source ? '$.prop_source' : '$.prop', ...args);
 }
 
 /**
