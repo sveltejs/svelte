@@ -5,8 +5,6 @@
 	import MachineDesktop from './svelte-machine-desktop.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
 	// @ts-ignore
 	import MachineMobile from './svelte-machine-mobile.png?w=960&format=avif;webp;png;&as=picture';
-
-	const srcset = (sources) => sources.map(({ src, w }) => `${src} ${w}w`).join(', ');
 </script>
 
 <div class="hero">
@@ -24,24 +22,12 @@
 	</div>
 
 	<picture class="machine">
-		<source
-			srcset={srcset(MachineDesktop.sources.avif)}
-			type="image/avif"
-			media="(min-width: 800px)"
-		/>
-		<source
-			srcset={srcset(MachineDesktop.sources.webp)}
-			type="image/webp"
-			media="(min-width: 800px)"
-		/>
-		<source
-			srcset={srcset(MachineDesktop.sources.png)}
-			type="image/png"
-			media="(min-width: 800px)"
-		/>
-		<source srcset={srcset(MachineMobile.sources.avif)} type="image/avif" />
-		<source srcset={srcset(MachineMobile.sources.webp)} type="image/webp" />
-		<source srcset={srcset(MachineMobile.sources.png)} type="image/png" />
+		<source srcset={MachineDesktop.sources.avif} type="image/avif" media="(min-width: 800px)" />
+		<source srcset={MachineDesktop.sources.webp} type="image/webp" media="(min-width: 800px)" />
+		<source srcset={MachineDesktop.sources.png} type="image/png" media="(min-width: 800px)" />
+		<source srcset={MachineMobile.sources.avif} type="image/avif" />
+		<source srcset={MachineMobile.sources.webp} type="image/webp" />
+		<source srcset={MachineMobile.sources.png} type="image/png" />
 		<img alt="The Svelte compiler packaging up your component code" src={MachineMobile.img.src} />
 	</picture>
 </div>
@@ -102,7 +88,9 @@
 
 	.cta:hover {
 		text-decoration: none;
-		box-shadow: 0px 0.8px 3.8px rgba(0, 0, 0, 0.115), 0px 6px 30px rgba(0, 0, 0, 0.23);
+		box-shadow:
+			0px 0.8px 3.8px rgba(0, 0, 0, 0.115),
+			0px 6px 30px rgba(0, 0, 0, 0.23);
 	}
 
 	.cta.basic {
