@@ -127,7 +127,7 @@
     "@types/estree": "^1.0.1",
     "@types/node": "^14.18.51",
     "agadoo": "^3.0.0",
-    "dts-buddy": "^0.1.14",
+    "dts-buddy": "^0.4.1",
     "esbuild": "^0.18.11",
     "eslint-plugin-lube": "^0.1.7",
     "happy-dom": "^9.20.3",
