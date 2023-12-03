@@ -74,8 +74,6 @@
 		</Nav>
 
 		<slot />
-
-		<div slot="banner-bottom" class="banner-bottom"></div>
 	</Shell>
 </div>
 
@@ -99,14 +97,6 @@
 	:global(html, body) {
 		height: 100%;
 		width: 100%;
-	}
-
-	.banner-bottom {
-		text-align: center;
-		background: var(--sk-theme-1-variant);
-		color: white;
-		text-decoration: underline;
-		padding: 8px;
 	}
 
 	:global(.text .vo a) {

@@ -73,7 +73,11 @@ Plus d'infos sur [les slots dans la documentation](/docs/special-elements#slot).
 
 ## Snapshot
 
-> Bientôt...
+Dans le milieu du stockage de l'information, un _snapshot_ représente la capture par la baie de stockage d'une "photographie" à un instant donné des données d'un volume à des fins de sauvegarde et de protection de données.
+
+Dans le cadre de Svelte Kit, un _snapshot_ permet de sauvegarder l'état éphémère du <span class='vo'>[DOM](/docs/web#dom)</span>.
+
+Plus d'infos sur [les snapshots dans la documentation](PUBLIC_KIT_SITE_URL/docs/snapshots).
 
 ## Store
 

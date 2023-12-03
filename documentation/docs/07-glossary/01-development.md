@@ -34,9 +34,14 @@ Le mot francisé est "bogue", mais il semble que personne ne s'en serve.
 
 Un _build_ est l'ensemble de fichiers produits par le <span class="vo">[bundler](/docs/web#bundler-packager)</span>. C'est le plus souvent ce qui sera utilisé pour déployer l'application en production.
 
+## Build-time
+
+Le build-time, par opposition au <span class="vo">[runtime](PUBLIC_SVELTE_SITE_URL/docs/development#runtime)</span> correspond à la phase de compilation d'un projet en un livrable qui pourra être exécuté sur la plateforme de déploiement du site ou de l'application.
+
+
 ## Buffer
 
-> Bientôt...
+Un _buffer_ (ou une mémoire tampon) est une zone de mémoire utilisée pour entreposer temporairement des données, notamment entre deux processus ou matériels ne travaillant pas au même rythme. Par extension, il s'agit également des données qui transitent entre deux appareils ou serveurs envoyés par paquet.
 
 ## Callback
 
@@ -61,7 +66,7 @@ chargeLaDonnée(afficheCoucou);
 
 ## CI
 
-> Bientôt...
+L'intégration continue est une méthode de développement de logiciel par laquelle les développeurs intègrent régulièrement leurs modifications de code à un référentiel centralisé. Au cours de l'intégration continue, des opérations de création, de test ou de déploiement peuvent être automatiquement configurés et exécutés.
 
 ## CLI
 
@@ -83,7 +88,9 @@ git branch
 
 ## Commit
 
-> Bientôt...
+Un _commit_, représente un enregistrement unitaire de code dans un projet suivi avec le logiciel git. L'ensemble des commits du projet représente l'historique de celui-ci.
+
+Un _commit_ peut également faire référence à l'action de validation d'une série de requêtes exécutées sur une base de données.
 
 ## Debugger
 
@@ -96,10 +103,6 @@ L'adjectif bout en bout (_end to end_) s'applique à un processus qui soit compl
 Il s'applique généralement aux tests _end to end_ qui permettent de tester l'ensemble de l'application (IHM et serveur) sans simuler tout ou partie du système.
 
 Dans le cadre de SvelteKit, il fait également référence au typage _end to end_, permettant de récupérer les types des données retournées par les méthodes `load()` des `layout` et des `routes` dans la variable `data` de la route correspondante.
-
-## Flag
-
-> Bientôt...
 
 ## Getter / Setter
 
@@ -154,7 +157,7 @@ Un _log_ est l'affichage d'une information lors de l'exécution d'un programme. 
 
 ## Monorepo
 
-> Bientôt...
+Un _monorepo_ est un dépôt unique contenant plusieurs projets distincts, avec des relations bien définies. Des outils permettent de les mettre en oeuvre ; ils permettent notamment de compiler l'ensemble du projet en une étape suivant les dépendances internes.
 
 ## Namespace
 
@@ -163,13 +166,18 @@ Un `_namespace_` ou "espace de noms" est un espace abstrait dans lequel on peut 
 Par exemple, on peut définir `sinus` dans un namespace `Math`, ainsi que dans un namespace `Corps`. Ainsi `Math.sinus` renvoie à la fonction mathématique sinus, tandis que `Corps.sinus` renvoie aux cavités nasales du corps humain.
 
 Dans le développement web, les `_namespaces_` sont souvent utilisés en TypeScript pour organiser les types.
+
 ## Number
 
 _Number_ est le mot anglais pour "nombre". En développement informatique, il s'agit la plupart du temps d'un type de variable représentant des nombres.
 
+# Open-source
+
+Un projet _open source_ (ou en code source ouvert), est un projet dont la licence respecte des critères précisément établis, c'est-à-dire les possibilités de libre redistribution, d'accès au code source et de création de travaux dérivés.
+
 ## Package
 
-> Bientôt...
+Un _package_ ou une librairie est un ensemble de fonctions ou composants pouvant être réutilisés dans d'autres projets. Dans le contexte de NodeJs, les librairies <span class="vo">[open-source](#open-source)</span> sont disponibles sur le registre [npm](https://www.npmjs.com/). Les librairies peuvent également être privées (hébergées sur un dépôt privé) ou inclus dansw des [monorepos](#monorepo).
 
 ## Parser
 
@@ -181,7 +189,10 @@ Une _payload_ représente la donnée utile transportée dans une communication.
 
 ## Placeholder
 
-> Bientôt...
+Un _placeholder_ (ou texte de substitution) peut désigner deux choses :
+
+* un texte ou image fictif permettant de s'imaginer un apperçu final. L'outil le plus connu pour générer du texte fictif est le Lorem Ipsum.
+* l'attribut de l'élément html `<input>` ou `<textarea>` et désigne une aide à la saisie lorsque le champs est vide.
 
 ## Plugin
 
@@ -231,7 +242,7 @@ _String_ est le mot anglais pour "chaîne de caractères". En développement inf
 
 ## Timestamp
 
-> Bientôt...
+Un _timestamp_ est un compteur de seconde utilisé en informatique pour représenter une date à partir du 1er janvier 1970. Par extension, on parle de _timestamp_ d'un objet pour désigner sa date de création.
 
 ## Thread
 
@@ -249,7 +260,7 @@ Un _tooltip_ est une info-bulle, c'est-à-dire un message qui peut s'afficher à
 
 ## Tree-shaking
 
-> Bientôt...
+Le _tree shaking_ désigne le processus par lequel un <span class="vo">[bundler](/docs/web#bundler-packager)</span> supprime du code mort (inutilisé). Pour ce faire, il repose sur les imports et exports pour détecter si les modules de code sont exportés et importés pour une utilisation entre des fichiers JavaScript.
 
 ## Warning
 
@@ -257,11 +268,11 @@ Un _warning_ est un avertissement, moins grave qu'une erreur, mais suffisamment 
 
 ## Worker
 
-> Bientôt...
+Un _worker_ désigné chez certains hébergeurs une solution de déploiement logiciel particulier.
 
 ## Workflow
 
-> Bientôt...
+Un _workflow__ est un processus automatisé configurable qui exécute une ou plusieurs tâches, tels que les Github actions ou la GitLab CI.
 
 ## Wrapper
 

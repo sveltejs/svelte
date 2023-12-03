@@ -56,6 +56,10 @@ Une stratégie CSR nécessite néanmoins d'avoir JavaScript disponible dans son 
 
 > Bientôt...
 
+## code-splitting
+
+La division du code, ou _code splitting_ est le fractionnement du code en divers bundles ou composants qui peuvent ensuite être chargés à la demande ou en parallèle.
+
 ## Cross-site
 
 > Bientôt...
@@ -293,3 +297,7 @@ Les [_web components_](https://developer.mozilla.org/fr/docs/Web/API/Web_compone
 ## XSS
 
 _XSS_ est l'acronyme de ["Cross-Site-Scripting"](https://fr.wikipedia.org/wiki/Cross-site_scripting). Il s'agit d'un type d'attaque informatique ciblant les pages d'un site web dans l'objectif de subtiliser les informations de connexion d'un utilisateur ou d'une utilisatrice via l'exécution d'un script malveillant au sein même de la page.
+
+## web worker
+
+Les _Web Workers_ sont un mécanisme grâce auquel les instructions d'un script peuvent être exécutés dans un thread en arrière-plan séparé du thread d'exécution principal d'une application web.
