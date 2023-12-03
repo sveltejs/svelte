@@ -1,7 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
+import browserslist from 'browserslist';
 import { browserslistToTargets } from 'lightningcss';
 import { readFile } from 'node:fs/promises';
-import browserslist from 'browserslist';
 
 const plugins = [raw(['.ttf']), sveltekit()];
 
