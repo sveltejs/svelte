@@ -13,8 +13,8 @@
     "start": "node build",
     "check": "node scripts/update.js && pnpm generate && svelte-kit sync && svelte-check",
     "check:watch": "svelte-kit sync && svelte-check --watch",
-    "format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=. --write",
-    "check:format": "prettier --check . --ignore-path .gitignore --plugin-search-dir=."
+    "format": "prettier --check . --write",
+    "check:format": "prettier --check ."
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.4.15",
