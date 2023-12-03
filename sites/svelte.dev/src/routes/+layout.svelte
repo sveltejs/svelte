@@ -32,10 +32,7 @@
 </svelte:head>
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
-	<Shell
-		nav_visible={$page.url.pathname !== '/repl/embed'}
-		bind:snapshot={shell_snapshot}
-	>
+	<Shell nav_visible={$page.url.pathname !== '/repl/embed'} bind:snapshot={shell_snapshot}>
 		<Nav slot="top-nav" title={data.nav_title} links={data.nav_links}>
 			<svelte:fragment slot="home-large">
 				<strong>svelte</strong>.dev
