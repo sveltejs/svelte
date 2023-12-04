@@ -166,4 +166,10 @@ const handler = {
 	}
 };
 
+if (DEV) {
+	handler.setPrototypeOf = () => {
+		throw new Error('Cannot set prototype of $state object');
+	};
+}
+
 export { readonly } from './readonly.js';
