@@ -768,9 +768,22 @@ function serialize_inline_component(node, component_name, context) {
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (attribute.metadata.dynamic) {
-				// TODO create readonly deriveds outside the getters
 				let arg = value;
+
+				const contains_call_expression =
+					Array.isArray(attribute.value) &&
+					attribute.value.some((n) => {
+						return n.type === 'ExpressionTag' && n.metadata.contains_call_expression;
+					});
+
+				if (contains_call_expression) {
+					const id = b.id(context.state.scope.generate(attribute.name));
+					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					arg = b.call('$.get', id);
+				}
+
 				if (context.state.options.dev) arg = b.call('$.readonly', arg);
+
 				push_prop(b.get(attribute.name, [b.return(arg)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
@@ -2765,19 +2778,9 @@ export const template_visitors = {
 			serialize_event_attribute(node, context);
 		}
 	},
-	LetDirective(node, { state, path }) {
+	LetDirective(node, { state }) {
 		// let:x        -->  const x = $.derived(() => $.unwrap($$slotProps).x);
 		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $.unwrap($$slotProps).x; return { y, z }));
-		const parent = path.at(-1);
-		if (
-			parent === undefined ||
-			(parent.type !== 'Component' &&
-				parent.type !== 'RegularElement' &&
-				parent.type !== 'SvelteFragment')
-		) {
-			error(node, 'INTERNAL', 'let directive at invalid position');
-		}
-
 		if (node.expression && node.expression.type !== 'Identifier') {
 			const name = state.scope.generate(node.name);
 			const bindings = state.scope.get_bindings(node);

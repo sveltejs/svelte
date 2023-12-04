@@ -1,7 +1,7 @@
 [
 	{
-		"message": "$: has no effect outside of the top-level",
-		"code": "non-top-level-reactive-declaration",
+		"message": "Reactive declarations only exist at the top level of the instance script",
+		"code": "no-reactive-declaration",
 		"start": { "line": 6, "column": 2 },
 		"end": { "line": 6, "column": 22 }
 	}

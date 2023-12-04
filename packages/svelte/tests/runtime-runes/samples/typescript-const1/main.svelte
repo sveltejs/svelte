@@ -4,5 +4,7 @@
 
 {#each boxes as box}
 	{@const area: number = box.width * box.height}
+	{@const name: string = "{}"}
 	<p>{box.width} * {box.height} = {area}</p>
+	<p>{name}</p>
 {/each}

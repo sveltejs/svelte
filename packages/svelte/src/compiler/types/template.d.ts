@@ -132,7 +132,7 @@ export interface Comment extends BaseNode {
 export interface ConstTag extends BaseNode {
 	type: 'ConstTag';
 	declaration: VariableDeclaration & {
-		declarations: [VariableDeclarator & { id: Identifier; init: Expression }];
+		declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
 	};
 }
 

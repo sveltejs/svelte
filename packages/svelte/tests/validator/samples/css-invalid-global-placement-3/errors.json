@@ -1,6 +1,6 @@
 [
 	{
-		"code": "css-invalid-global",
+		"code": "invalid-css-global-placement",
 		"message": ":global(...) can be at the start or end of a selector sequence, but not in the middle",
 		"start": {
 			"line": 5,

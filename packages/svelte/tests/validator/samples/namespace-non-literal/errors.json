@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-namespace-attribute",
-		"message": "The 'namespace' attribute must be a string literal representing a valid namespace",
+		"code": "invalid-svelte-option-namespace",
+		"message": "Unsupported <svelte:option> value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\".",
 		"start": {
 			"line": 1,
 			"column": 16

@@ -104,14 +104,15 @@ export const javascript_visitors_legacy = {
 		if (context.path.length > 1) return;
 		if (node.label.name !== '$') return;
 		const state = context.state;
-
-		// TODO bail out if we're in module context
-
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself
-		const { dependencies } = /** @type {import('#compiler').ReactiveStatement} */ (
+		const reactive_stmt = /** @type {import('#compiler').ReactiveStatement} */ (
 			state.analysis.reactive_statements.get(node)
 		);
+
+		if (!reactive_stmt) return; // not the instance context
+
+		const { dependencies } = reactive_stmt;
 
 		let serialized_body = /** @type {import('estree').Statement} */ (context.visit(node.body));
 

@@ -14,6 +14,8 @@
      in other words a number. Relatedly, people should not do this. It is stupid. -->
 <div use:directive.b.c-d />
 <div transition:directive.b.c-d />
-<div animate:directive.b.c-d />
+{#each [] as i (i)}
+	<div animate:directive.b.c-d />
+{/each}
 <div in:directive.b.c-d />
 <div out:directive.b.c-d />

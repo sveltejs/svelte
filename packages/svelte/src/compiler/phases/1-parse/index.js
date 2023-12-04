@@ -156,7 +156,13 @@ export class Parser {
 
 	/** @param {string} str */
 	match(str) {
-		return this.template.slice(this.index, this.index + str.length) === str;
+		const length = str.length;
+		if (length === 1) {
+			// more performant than slicing
+			return this.template[this.index] === str;
+		}
+
+		return this.template.slice(this.index, this.index + length) === str;
 	}
 
 	/**

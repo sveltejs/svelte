@@ -1,7 +1,7 @@
 [
 	{
 		"code": "invalid-slot-attribute",
-		"message": "slot attribute cannot have a dynamic value",
+		"message": "slot attribute must be a static value",
 		"start": {
 			"line": 6,
 			"column": 9

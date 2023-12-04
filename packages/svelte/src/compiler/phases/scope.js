@@ -87,6 +87,11 @@ export class Scope {
 			}
 		}
 
+		if (this.declarations.has(node.name)) {
+			// This also errors on var/function types, but that's arguably a good thing
+			error(node, 'duplicate-declaration', node.name);
+		}
+
 		/** @type {import('#compiler').Binding} */
 		const binding = {
 			node,
@@ -171,6 +176,7 @@ export class Scope {
 	 * @param {import('#compiler').SvelteNode[]} path
 	 */
 	reference(node, path) {
+		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 		if (!references) this.references.set(node.name, (references = []));
 
@@ -597,18 +603,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				)
 			]);
 			context.next();
-		},
-
-		ConstTag(node, { state, next }) {
-			const declaration = node.declaration.declarations[0];
-			for (const identifier of extract_identifiers(declaration.id)) {
-				state.scope.declare(
-					/** @type {import('estree').Identifier} */ (identifier),
-					'derived',
-					'const'
-				);
-			}
-			next();
 		}
 
 		// TODO others

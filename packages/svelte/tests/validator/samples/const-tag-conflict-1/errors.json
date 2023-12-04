@@ -1,8 +1,8 @@
 [
 	{
-		"code": "invalid-const-declaration",
+		"code": "duplicate-declaration",
 		"message": "'a' has already been declared",
-		"start": { "line": 7, "column": 2 },
-		"end": { "line": 7, "column": 19 }
+		"start": { "line": 7, "column": 10 },
+		"end": { "line": 7, "column": 11 }
 	}
 ]

@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-binding",
-		"message": "Cannot bind to a variable declared with {@const ...}",
+		"code": "invalid-const-assignment",
+		"message": "Invalid binding to const variable ($derived values, let: directives, :then/:catch variables and @const declarations count as const)",
 		"start": { "line": 7, "column": 9 },
 		"end": { "line": 7, "column": 23 }
 	}

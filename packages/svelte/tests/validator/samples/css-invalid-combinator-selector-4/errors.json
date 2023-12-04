@@ -1,8 +1,8 @@
 [
 	{
-		"code": "css-invalid-selector",
-		"message": "Invalid selector \"p >\"",
+		"code": "invalid-css-selector",
+		"message": "Invalid selector",
 		"start": { "line": 4, "column": 1 },
-		"end": { "line": 4, "column": 4 }
+		"end": { "line": 4, "column": 5 }
 	}
 ]

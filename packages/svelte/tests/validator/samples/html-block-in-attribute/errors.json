@@ -1,7 +1,7 @@
 [
 	{
 		"code": "invalid-tag-placement",
-		"message": "{@html} tag cannot be in attribute value",
+		"message": "{@html ...} tag cannot be in attribute value",
 		"start": { "line": 1, "column": 12 },
 		"end": { "line": 1, "column": 12 }
 	}

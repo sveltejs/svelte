@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-logic-block-placement",
-		"message": "{#each} logic block cannot be inside <textarea>",
+		"code": "invalid-block-placement",
+		"message": "{#each ...} block cannot be inside <textarea>",
 		"start": { "line": 2, "column": 1 },
 		"end": { "line": 2, "column": 1 }
 	}

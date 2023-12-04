@@ -20,3 +20,4 @@ export const regex_special_chars = /[\d+`!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/;
 
 export const regex_starts_with_vowel = /^[aeiou]/;
 export const regex_heading_tags = /^h[1-6]$/;
+export const regex_illegal_attribute_character = /(^[0-9-.])|[\^$@%&#?!|()[\]{}^*+~;]/;
