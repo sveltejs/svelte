@@ -40,6 +40,26 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
+Objects and arrays [are made reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+
+```svelte
+<script>
+	let numbers = $state([1, 2, 3]);
+</script>
+
+<button onclick={() => numbers.push(numbers.length + 1)}>
+	push
+</button>
+
+<button onclick={() => numbers.pop()}> pop </button>
+
+<p>
+	{numbers.join(' + ') || 0}
+	=
+	{numbers.reduce((a, b) => a + b, 0)}
+</p>
+```
+
 ### What this replaces
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
@@ -234,6 +254,8 @@ type MyProps = any;
 // ---cut---
 let { a, b, c, ...everythingElse } = $props<MyProps>();
 ```
+
+Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
 
 ### What this replaces
 
