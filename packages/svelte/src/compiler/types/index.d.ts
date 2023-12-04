@@ -237,6 +237,7 @@ export type DeclarationKind =
 	| 'function'
 	| 'import'
 	| 'param'
+	| 'rest_param'
 	| 'synthetic';
 
 export interface Binding {
