@@ -184,3 +184,15 @@ export const SVGElements = [
 	'view',
 	'vkern'
 ];
+
+export const EventModifiers = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'capture',
+	'once',
+	'passive',
+	'nonpassive',
+	'self',
+	'trusted'
+];

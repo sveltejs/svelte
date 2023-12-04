@@ -1,7 +1,7 @@
 [
 	{
-		"code": "illegal-attribute",
-		"message": "<title> cannot have attributes",
+		"code": "illegal-title-attribute",
+		"message": "<title> cannot have attributes nor directives",
 		"start": {
 			"line": 2,
 			"column": 8

@@ -1,7 +1,7 @@
 [
 	{
-		"message": "$: has no effect in a module script",
-		"code": "module-script-reactive-declaration",
+		"message": "Reactive declarations only exist at the top level of the instance script",
+		"code": "no-reactive-declaration",
 		"start": { "line": 4, "column": 1 },
 		"end": { "line": 4, "column": 23 }
 	}

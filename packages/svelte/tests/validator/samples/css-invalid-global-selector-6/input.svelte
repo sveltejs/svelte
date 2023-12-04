@@ -1,8 +1,8 @@
 <style>
-	:global(.h1\,h2\,h3).foo {
+	:global(.h1\,h2\,h3)::foo {
 		color: red;
 	}
-	:global(h1, h2, h3).foo {
+	:global(h1, h2, h3)::foo {
 		color: red;
 	}
 </style>

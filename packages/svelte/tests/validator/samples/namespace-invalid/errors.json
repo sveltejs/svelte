@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-namespace-property",
-		"message": "Invalid namespace 'http://www.w3.org/1999/svg' (did you mean 'http://www.w3.org/2000/svg'?)",
+		"code": "invalid-svelte-option-namespace",
+		"message": "Unsupported <svelte:option> value for \"namespace\". Valid values are \"html\", \"svg\" or \"foreign\".",
 		"start": {
 			"line": 1,
 			"column": 16

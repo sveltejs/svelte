@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-script",
-		"message": "A component can only have one instance-level <script> element",
+		"code": "duplicate-script-element",
+		"message": "A component can have a single top-level <script> element and/or a single top-level <script context=\"module\"> element",
 		"start": {
 			"line": 5,
 			"column": 0

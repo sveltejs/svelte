@@ -8,9 +8,13 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { binding_properties } from '../bindings.js';
-import { SVGElements } from '../constants.js';
+import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
-import { regex_not_whitespace, regex_only_whitespaces } from '../patterns.js';
+import {
+	regex_illegal_attribute_character,
+	regex_not_whitespace,
+	regex_only_whitespaces
+} from '../patterns.js';
 import { Scope, get_rune } from '../scope.js';
 import { merge } from '../visitors.js';
 import { a11y_validators } from './a11y.js';
@@ -30,6 +34,13 @@ function validate_component(node, context) {
 		) {
 			error(attribute, 'invalid-component-directive');
 		}
+
+		if (
+			attribute.type === 'OnDirective' &&
+			(attribute.modifiers.length > 1 || attribute.modifiers.some((m) => m !== 'once'))
+		) {
+			error(attribute, 'invalid-event-modifier');
+		}
 	}
 
 	context.next({
@@ -44,17 +55,79 @@ function validate_component(node, context) {
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, import('./types.js').AnalysisState>} context
  */
 function validate_element(node, context) {
+	let has_animate_directive = false;
+	let has_in_transition = false;
+	let has_out_transition = false;
+
 	for (const attribute of node.attributes) {
-		if (
-			attribute.type === 'Attribute' &&
-			attribute.name === 'is' &&
-			context.state.options.namespace !== 'foreign'
-		) {
-			warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
-		}
-		if (attribute.type === 'Attribute' && attribute.name === 'slot') {
-			/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
-			validate_slot_attribute(context, attribute);
+		if (attribute.type === 'Attribute') {
+			if (regex_illegal_attribute_character.test(attribute.name)) {
+				error(attribute, 'invalid-attribute-name', attribute.name);
+			}
+
+			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
+				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
+			} else if (attribute.name === 'slot') {
+				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
+				validate_slot_attribute(context, attribute);
+			}
+		} else if (attribute.type === 'AnimateDirective') {
+			const parent = context.path.at(-2);
+			if (parent?.type !== 'EachBlock') {
+				error(attribute, 'invalid-animation', 'no-each');
+			} else if (!parent.key) {
+				error(attribute, 'invalid-animation', 'each-key');
+			} else if (
+				parent.body.nodes.filter(
+					(n) =>
+						n.type !== 'Comment' &&
+						n.type !== 'ConstTag' &&
+						(n.type !== 'Text' || n.data.trim() !== '')
+				).length > 1
+			) {
+				error(attribute, 'invalid-animation', 'child');
+			}
+
+			if (has_animate_directive) {
+				error(attribute, 'duplicate-animation');
+			} else {
+				has_animate_directive = true;
+			}
+		} else if (attribute.type === 'TransitionDirective') {
+			if ((attribute.outro && has_out_transition) || (attribute.intro && has_in_transition)) {
+				/** @param {boolean} _in @param {boolean} _out */
+				const type = (_in, _out) => (_in && _out ? 'transition' : _in ? 'in' : 'out');
+				error(
+					attribute,
+					'duplicate-transition',
+					type(has_in_transition, has_out_transition),
+					type(attribute.intro, attribute.outro)
+				);
+			}
+
+			has_in_transition = has_in_transition || attribute.intro;
+			has_out_transition = has_out_transition || attribute.outro;
+		} else if (attribute.type === 'OnDirective') {
+			let has_passive_modifier = false;
+			let conflicting_passive_modifier = '';
+			for (const modifier of attribute.modifiers) {
+				if (!EventModifiers.includes(modifier)) {
+					error(attribute, 'invalid-event-modifier', EventModifiers);
+				}
+				if (modifier === 'passive') {
+					has_passive_modifier = true;
+				} else if (modifier === 'nonpassive' || modifier === 'preventDefault') {
+					conflicting_passive_modifier = modifier;
+				}
+				if (has_passive_modifier && conflicting_passive_modifier) {
+					error(
+						attribute,
+						'invalid-event-modifier-combination',
+						'passive',
+						conflicting_passive_modifier
+					);
+				}
+			}
 		}
 	}
 }
@@ -361,6 +434,17 @@ export const validation = {
 						`non-<svg> elements. Use 'clientWidth' for <svg> instead`
 					);
 				}
+
+				if (ContentEditableBindings.includes(node.name)) {
+					const contenteditable = /** @type {import('#compiler').Attribute} */ (
+						parent.attributes.find((a) => a.type === 'Attribute' && a.name === 'contenteditable')
+					);
+					if (!contenteditable) {
+						error(node, 'missing-contenteditable-attribute');
+					} else if (!is_text_attribute(contenteditable)) {
+						error(contenteditable, 'dynamic-contenteditable-attribute');
+					}
+				}
 			} else {
 				const match = fuzzymatch(node.name, Object.keys(binding_properties));
 				if (match) {
@@ -373,6 +457,40 @@ export const validation = {
 			}
 		}
 	},
+	ExportDefaultDeclaration(node) {
+		error(node, 'default-export');
+	},
+	ConstTag(node, context) {
+		const parent = context.path.at(-1);
+		const grand_parent = context.path.at(-2);
+		if (
+			parent?.type !== 'Fragment' ||
+			(grand_parent?.type !== 'IfBlock' &&
+				grand_parent?.type !== 'SvelteFragment' &&
+				grand_parent?.type !== 'Component' &&
+				grand_parent?.type !== 'SvelteComponent' &&
+				grand_parent?.type !== 'EachBlock' &&
+				grand_parent?.type !== 'AwaitBlock' &&
+				((grand_parent?.type !== 'RegularElement' && grand_parent?.type !== 'SvelteElement') ||
+					!grand_parent.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')))
+		) {
+			error(node, 'invalid-const-placement');
+		}
+	},
+	LetDirective(node, context) {
+		const parent = context.path.at(-1);
+		if (
+			parent === undefined ||
+			(parent.type !== 'Component' &&
+				parent.type !== 'RegularElement' &&
+				parent.type !== 'SvelteElement' &&
+				parent.type !== 'SvelteComponent' &&
+				parent.type !== 'SvelteSelf' &&
+				parent.type !== 'SvelteFragment')
+		) {
+			error(node, 'invalid-let-directive-placement');
+		}
+	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
@@ -380,6 +498,21 @@ export const validation = {
 					error(node, 'invalid-textarea-content');
 				}
 			}
+		}
+
+		const binding = context.state.scope.get(node.name);
+		if (
+			binding !== null &&
+			binding.declaration_kind === 'import' &&
+			binding.references.length === 0
+		) {
+			warn(
+				context.state.analysis.warnings,
+				node,
+				context.path,
+				'component-name-lowercase',
+				node.name
+			);
 		}
 
 		validate_element(node, context);
@@ -395,6 +528,12 @@ export const validation = {
 			parent_element: node.name
 		});
 	},
+	SvelteHead(node) {
+		const attribute = node.attributes[0];
+		if (attribute) {
+			error(attribute, 'illegal-svelte-head-attribute');
+		}
+	},
 	SvelteElement(node, context) {
 		validate_element(node, context);
 		context.next({
@@ -403,6 +542,11 @@ export const validation = {
 		});
 	},
 	SvelteFragment(node, context) {
+		const parent = context.path.at(-2);
+		if (parent?.type !== 'Component' && parent?.type !== 'SvelteComponent') {
+			error(node, 'invalid-svelte-fragment-placement');
+		}
+
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'slot') {
@@ -418,7 +562,11 @@ export const validation = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'name') {
 					if (!is_text_attribute(attribute)) {
-						error(attribute, 'invalid-slot-name');
+						error(attribute, 'invalid-slot-name', false);
+					}
+					const slot_name = attribute.value[0].data;
+					if (slot_name === 'default') {
+						error(attribute, 'invalid-slot-name', true);
 					}
 				}
 			} else if (attribute.type !== 'SpreadAttribute') {
@@ -435,6 +583,17 @@ export const validation = {
 			if (!is_tag_valid_with_parent('#text', context.state.parent_element)) {
 				error(node, 'invalid-node-placement', 'Text node', context.state.parent_element);
 			}
+		}
+	},
+	TitleElement(node) {
+		const attribute = node.attributes[0];
+		if (attribute) {
+			error(attribute, 'illegal-title-attribute');
+		}
+
+		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
+		if (child) {
+			error(child, 'invalid-title-content');
 		}
 	},
 	ExpressionTag(node, context) {
@@ -467,6 +626,15 @@ export const validation_legacy = merge(validation, a11y_validators, {
 		const parent = path.at(-1);
 		if (parent && parent.type === 'ConstTag') return;
 		validate_assignment(node, node.left, state);
+	},
+	LabeledStatement(node, { path, state }) {
+		if (
+			node.label.name === '$' &&
+			(state.ast_type !== 'instance' ||
+				/** @type {import('#compiler').SvelteNode} */ (path.at(-1)).type !== 'Program')
+		) {
+			warn(state.analysis.warnings, node, path, 'no-reactive-declaration');
+		}
 	},
 	UpdateExpression(node, { state }) {
 		validate_assignment(node, node.argument, state);
@@ -628,7 +796,19 @@ export const validation_runes_js = {
  * @param {boolean} is_binding
  */
 function validate_no_const_assignment(node, argument, scope, is_binding) {
-	if (argument.type === 'Identifier') {
+	if (argument.type === 'ArrayPattern') {
+		for (const element of argument.elements) {
+			if (element) {
+				validate_no_const_assignment(node, element, scope, is_binding);
+			}
+		}
+	} else if (argument.type === 'ObjectPattern') {
+		for (const element of argument.properties) {
+			if (element.type === 'Property') {
+				validate_no_const_assignment(node, element.value, scope, is_binding);
+			}
+		}
+	} else if (argument.type === 'Identifier') {
 		const binding = scope.get(argument.name);
 		if (binding?.declaration_kind === 'const' && binding.kind !== 'each') {
 			error(

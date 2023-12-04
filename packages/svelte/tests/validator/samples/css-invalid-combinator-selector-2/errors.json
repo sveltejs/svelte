@@ -1,7 +1,7 @@
 [
 	{
-		"code": "css-invalid-selector",
-		"message": "Invalid selector \"+ p\"",
+		"code": "invalid-css-selector",
+		"message": "Invalid selector",
 		"start": { "line": 8, "column": 1 },
 		"end": { "line": 8, "column": 4 }
 	}

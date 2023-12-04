@@ -74,9 +74,21 @@ Content inside component tags becomes a [snippet prop](/docs/snippets) called `c
 
 Assignments to destructured parts of a `@const` declaration are no longer allowed. It was an oversight that this was ever allowed.
 
+### Stricter CSS `:global` selector validation
+
+Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+
 ### CSS hash position no longer deterministic
 
 Previously Svelte would always insert the CSS hash last. This is no longer guaranteed in Svelte 5. This is only breaking if you [have very weird css selectors](https://stackoverflow.com/questions/15670631/does-the-order-of-classes-listed-on-an-item-affect-the-css).
+
+### Renames of various error/warning codes
+
+Various error and warning codes have been renamed slightly.
+
+### Reduced number of namespaces
+
+The number of valid namespaces you can pass to the compiler option `namespace` has been reduced to `html` (the default), `svg` and `foreign`.
 
 ### beforeUpdate change
 

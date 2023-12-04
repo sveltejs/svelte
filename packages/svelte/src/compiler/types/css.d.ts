@@ -59,7 +59,7 @@ export interface PseudoElementSelector extends BaseNode {
 export interface PseudoClassSelector extends BaseNode {
 	type: 'PseudoClassSelector';
 	name: string;
-	args: string | null;
+	args: SelectorList | null;
 }
 
 export interface Percentage extends BaseNode {
