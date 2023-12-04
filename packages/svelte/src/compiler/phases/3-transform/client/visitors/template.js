@@ -769,7 +769,9 @@ function serialize_inline_component(node, component_name, context) {
 
 			if (attribute.metadata.dynamic) {
 				// TODO create readonly deriveds outside the getters
-				push_prop(b.get(attribute.name, [b.return(b.call('$.readonly', value))]));
+				let arg = value;
+				if (context.state.options.dev) arg = b.call('$.readonly', arg);
+				push_prop(b.get(attribute.name, [b.return(arg)]));
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
