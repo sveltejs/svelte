@@ -1495,17 +1495,7 @@ const template_visitors = {
 		state.template.push(t_statement(call));
 		state.template.push(t_expression(id));
 	},
-	LetDirective(node, { state, path }) {
-		const parent = path.at(-1);
-		if (
-			parent === undefined ||
-			(parent.type !== 'Component' &&
-				parent.type !== 'RegularElement' &&
-				parent.type !== 'SvelteFragment')
-		) {
-			error(node, 'INTERNAL', 'let directive at invalid position');
-		}
-
+	LetDirective(node, { state }) {
 		if (node.expression && node.expression.type !== 'Identifier') {
 			const name = state.scope.generate(node.name);
 			const bindings = state.scope.get_bindings(node);

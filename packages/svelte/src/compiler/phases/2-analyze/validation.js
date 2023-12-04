@@ -477,6 +477,20 @@ export const validation = {
 			error(node, 'invalid-const-placement');
 		}
 	},
+	LetDirective(node, context) {
+		const parent = context.path.at(-1);
+		if (
+			parent === undefined ||
+			(parent.type !== 'Component' &&
+				parent.type !== 'RegularElement' &&
+				parent.type !== 'SvelteElement' &&
+				parent.type !== 'SvelteComponent' &&
+				parent.type !== 'SvelteSelf' &&
+				parent.type !== 'SvelteFragment')
+		) {
+			error(node, 'invalid-let-directive-placement');
+		}
+	},
 	RegularElement(node, context) {
 		if (node.name === 'textarea' && node.fragment.nodes.length > 0) {
 			for (const attribute of node.attributes) {
@@ -513,6 +527,12 @@ export const validation = {
 			...context.state,
 			parent_element: node.name
 		});
+	},
+	SvelteHead(node) {
+		const attribute = node.attributes[0];
+		if (attribute) {
+			error(attribute, 'illegal-svelte-head-attribute');
+		}
 	},
 	SvelteElement(node, context) {
 		validate_element(node, context);
@@ -568,12 +588,12 @@ export const validation = {
 	TitleElement(node) {
 		const attribute = node.attributes[0];
 		if (attribute) {
-			error(attribute, 'title-illegal-attribute');
+			error(attribute, 'illegal-title-attribute');
 		}
 
 		const child = node.fragment.nodes.find((n) => n.type !== 'Text' && n.type !== 'ExpressionTag');
 		if (child) {
-			error(child, 'title-invalid-content');
+			error(child, 'invalid-title-content');
 		}
 	},
 	ExpressionTag(node, context) {

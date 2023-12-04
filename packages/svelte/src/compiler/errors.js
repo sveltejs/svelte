@@ -132,6 +132,7 @@ const special_elements = {
 	'invalid-customElement-shadow-attribute': () => '"shadow" must be either "open" or "none"',
 	'unknown-svelte-option-attribute': /** @param {string} name */ (name) =>
 		`<svelte:options> unknown attribute '${name}'`,
+	'illegal-svelte-head-attribute': () => '<svelte:head> cannot have attributes nor directives',
 	'invalid-svelte-fragment-attribute': () =>
 		`<svelte:fragment> can only have a slot attribute and (optionally) a let: directive`,
 	'invalid-svelte-fragment-slot': () => `<svelte:fragment> slot attribute must have a static value`,
@@ -214,8 +215,8 @@ const elements = {
 	 * @param {string} parent
 	 */
 	'invalid-node-placement': (node, parent) => `${node} is invalid inside <${parent}>`,
-	'title-illegal-attribute': () => '<title> cannot have attributes',
-	'title-invalid-content': () => '<title> can only contain text and {tags}'
+	'illegal-title-attribute': () => '<title> cannot have attributes nor directives',
+	'invalid-title-content': () => '<title> can only contain text and {tags}'
 };
 
 /** @satisfies {Errors} */
@@ -265,7 +266,8 @@ const attributes = {
 			: `An element cannot have both ${describe(directive1)} directive and ${describe(
 					directive2
 			  )} directive`;
-	}
+	},
+	'invalid-let-directive-placement': () => 'let directive at invalid position'
 };
 
 /** @satisfies {Errors} */
