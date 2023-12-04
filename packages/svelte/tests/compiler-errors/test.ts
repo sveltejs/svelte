@@ -12,6 +12,10 @@ interface CompilerErrorTest extends BaseTest {
 }
 
 const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
+	if (!fs.existsSync(`${cwd}/main.svelte`) && !fs.existsSync(`${cwd}/main.svelte.js`)) {
+		throw new Error('Expected main.svelte or main.svelte.js');
+	}
+
 	if (fs.existsSync(`${cwd}/main.svelte`)) {
 		let caught_error = false;
 
