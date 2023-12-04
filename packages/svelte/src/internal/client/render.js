@@ -3028,7 +3028,7 @@ export function createRoot(component, options) {
 /**
  * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
  *
- * If you need to interact with the component after mounting, use `create` instead.
+ * If you need to interact with the component after mounting, use `createRoot` instead.
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
