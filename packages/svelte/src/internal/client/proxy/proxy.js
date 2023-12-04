@@ -6,13 +6,14 @@ import {
 	source,
 	updating_derived,
 	UNINITIALIZED
-} from './runtime.js';
-import { get_descriptor, is_array } from './utils.js';
+} from '../runtime.js';
+import { define_property, get_descriptor, is_array } from '../utils.js';
+import { READONLY_SYMBOL } from './readonly.js';
 
-/** @typedef {{ s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
-export const STATE_SYMBOL = Symbol();
+export const STATE_SYMBOL = Symbol('$state');
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
@@ -30,8 +31,7 @@ export function proxy(value) {
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
-			// @ts-expect-error
-			value[STATE_SYMBOL] = init(value);
+			define_property(value, STATE_SYMBOL, { value: init(value), writable: false });
 
 			// @ts-expect-error not sure how to fix this
 			return new Proxy(value, handler);
@@ -55,7 +55,31 @@ function init(value) {
 
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
+	defineProperty(target, prop, descriptor) {
+		if (descriptor.value) {
+			const metadata = target[STATE_SYMBOL];
+
+			const s = metadata.s.get(prop);
+			if (s !== undefined) set(s, proxy(descriptor.value));
+		}
+
+		return Reflect.defineProperty(target, prop, descriptor);
+	},
+
+	deleteProperty(target, prop) {
+		const metadata = target[STATE_SYMBOL];
+
+		const s = metadata.s.get(prop);
+		if (s !== undefined) set(s, UNINITIALIZED);
+
+		if (prop in target) increment(metadata.v);
+
+		return delete target[prop];
+	},
+
 	get(target, prop, receiver) {
+		if (prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
+
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -73,7 +97,48 @@ const handler = {
 		const value = s !== undefined ? get(s) : Reflect.get(target, prop, receiver);
 		return value === UNINITIALIZED ? undefined : value;
 	},
+
+	getOwnPropertyDescriptor(target, prop) {
+		const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+		if (descriptor && 'value' in descriptor) {
+			const metadata = target[STATE_SYMBOL];
+			const s = metadata.s.get(prop);
+
+			if (s) {
+				descriptor.value = get(s);
+			}
+		}
+
+		return descriptor;
+	},
+
+	has(target, prop) {
+		if (prop === STATE_SYMBOL) {
+			return true;
+		}
+		const metadata = target[STATE_SYMBOL];
+		const has = Reflect.has(target, prop);
+
+		let s = metadata.s.get(prop);
+		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
+			if (s === undefined) {
+				s = source(has ? proxy(target[prop]) : UNINITIALIZED);
+				metadata.s.set(prop, s);
+			}
+			const value = get(s);
+			if (value === UNINITIALIZED) {
+				return false;
+			}
+		}
+		return has;
+	},
+
 	set(target, prop, value) {
+		if (prop === READONLY_SYMBOL) {
+			target[READONLY_SYMBOL] = value;
+			return true;
+		}
+
 		const metadata = target[STATE_SYMBOL];
 
 		const s = metadata.s.get(prop);
@@ -92,35 +157,7 @@ const handler = {
 
 		return true;
 	},
-	deleteProperty(target, prop) {
-		const metadata = target[STATE_SYMBOL];
 
-		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, UNINITIALIZED);
-
-		if (prop in target) increment(metadata.v);
-
-		return delete target[prop];
-	},
-	has(target, prop) {
-		if (prop === STATE_SYMBOL) {
-			return true;
-		}
-		const metadata = target[STATE_SYMBOL];
-		const has = Reflect.has(target, prop);
-		let s = metadata.s.get(prop);
-		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
-			if (s === undefined) {
-				s = source(has ? proxy(target[prop]) : UNINITIALIZED);
-				metadata.s.set(prop, s);
-			}
-			const value = get(s);
-			if (value === UNINITIALIZED) {
-				return false;
-			}
-		}
-		return has;
-	},
 	ownKeys(target) {
 		const metadata = target[STATE_SYMBOL];
 
@@ -128,3 +165,5 @@ const handler = {
 		return Reflect.ownKeys(target);
 	}
 };
+
+export { readonly } from './readonly.js';
