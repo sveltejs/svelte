@@ -211,21 +211,28 @@ export const javascript_visitors_runes = {
 			}
 
 			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-			const value =
+			let value =
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
-			const opts = args[1] && /** @type {import('estree').Expression} */ (visit(args[1]));
 
 			if (declarator.id.type === 'Identifier') {
-				const callee = rune === '$state' ? '$.source' : '$.derived';
-				const arg =
-					rune === '$state'
-						? should_proxy(value)
-							? b.call('$.proxy', value)
-							: value
-						: b.thunk(value);
-				declarations.push(b.declarator(declarator.id, b.call(callee, arg, opts)));
+				if (rune === '$state') {
+					const binding = /** @type {import('#compiler').Binding} */ (
+						state.scope.get(declarator.id.name)
+					);
+					if (should_proxy(value)) {
+						value = b.call('$.proxy', value);
+					}
+
+					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
+						value = b.call('$.source', value);
+					}
+				} else {
+					value = b.call('$.derived', b.thunk(value));
+				}
+
+				declarations.push(b.declarator(declarator.id, value));
 				continue;
 			}
 

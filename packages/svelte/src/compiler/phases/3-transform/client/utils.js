@@ -79,7 +79,8 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		binding.kind === 'state' ||
+		(binding.kind === 'state' &&
+			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'prop' ||
 		binding.kind === 'rest_prop' ||

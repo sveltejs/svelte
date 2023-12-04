@@ -9,8 +9,8 @@ export default function Main($$anchor, $$props) {
 	$.push($$props, true);
 
 	// needs to be a snapshot test because jsdom does auto-correct the attribute casing
-	let x = $.source('test');
-	let y = $.source(() => 'test');
+	let x = 'test';
+	let y = () => 'test';
 	/* Init */
 	var fragment = $.open_frag($$anchor, false, frag);
 	var node = $.child_frag(fragment);
@@ -21,24 +21,24 @@ export default function Main($$anchor, $$props) {
 	var custom_element_1 = $.sibling($.sibling(svg_1));
 
 	/* Update */
-	$.attr_effect(div, "foobar", () => $.get(y)());
-	$.attr_effect(svg_1, "viewBox", () => $.get(y)());
-	$.set_custom_element_data_effect(custom_element_1, "fooBar", () => $.get(y)());
+	$.attr_effect(div, "foobar", () => y());
+	$.attr_effect(svg_1, "viewBox", () => y());
+	$.set_custom_element_data_effect(custom_element_1, "fooBar", () => y());
 
 	var node_foobar;
 	var svg_viewBox;
 	var custom_element_fooBar;
 
 	$.render_effect(() => {
-		if (node_foobar !== (node_foobar = $.get(x))) {
+		if (node_foobar !== (node_foobar = x)) {
 			$.attr(node, "foobar", node_foobar);
 		}
 
-		if (svg_viewBox !== (svg_viewBox = $.get(x))) {
+		if (svg_viewBox !== (svg_viewBox = x)) {
 			$.attr(svg, "viewBox", svg_viewBox);
 		}
 
-		if (custom_element_fooBar !== (custom_element_fooBar = $.get(x))) {
+		if (custom_element_fooBar !== (custom_element_fooBar = x)) {
 			$.set_custom_element_data(custom_element, "fooBar", custom_element_fooBar);
 		}
 	});
