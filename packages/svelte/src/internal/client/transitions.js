@@ -313,8 +313,7 @@ function create_transition(dom, init, direction, effect) {
 			animation = dom.animate(keyframes, {
 				duration,
 				endDelay: delay,
-				delay,
-				fill: 'both'
+				delay
 			});
 		}
 		animation.pause();
