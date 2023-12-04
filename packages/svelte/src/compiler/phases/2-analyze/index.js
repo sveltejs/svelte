@@ -168,6 +168,10 @@ function get_delegated_event(node, context) {
 
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
+		// We can't hoist functions that contain the arguments keyword
+		if (reference === 'arguments') {
+			return non_hoistable;
+		}
 		const binding = scope.get(reference);
 
 		if (
