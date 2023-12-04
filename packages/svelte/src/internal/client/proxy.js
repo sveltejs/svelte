@@ -7,7 +7,7 @@ import {
 	updating_derived,
 	UNINITIALIZED
 } from './runtime.js';
-import { get_descriptor, is_array } from './utils.js';
+import { get_descriptor } from './utils.js';
 
 /** @typedef {{ s: Map<any, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean, b: Record<string | symbol, Function> }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
