@@ -24,7 +24,7 @@ const internal = {
 const parse = {
 	/** @param {string} name */
 	'unclosed-element': (name) => `<${name}> was left open`,
-	'unclosed-block': () => `block was left open`,
+	'unclosed-block': () => `Block was left open`,
 	'unexpected-block-close': () => `Unexpected block closing tag`,
 	'unexpected-eof': () => `Unexpected end of input`,
 	/** @param {string} message */

@@ -77,8 +77,10 @@ export class Parser {
 			const current = this.current();
 
 			if (current.type === 'RegularElement') {
+				current.end = current.start + 1;
 				error(current, 'unclosed-element', current.name);
 			} else {
+				current.end = current.start + 1;
 				error(current, 'unclosed-block');
 			}
 		}

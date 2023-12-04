@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import { assert, expect } from 'vitest';
 import { compile, compileModule, type CompileError } from 'svelte/compiler';
 import { suite, type BaseTest } from '../suite';
+import { read_file } from '../helpers.js';
 
 interface CompilerErrorTest extends BaseTest {
 	error: {
@@ -20,7 +21,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 		let caught_error = false;
 
 		try {
-			compile(fs.readFileSync(`${cwd}/main.svelte`, 'utf-8'), {
+			compile(read_file(`${cwd}/main.svelte`), {
 				generate: 'client'
 			});
 		} catch (e) {
@@ -45,7 +46,7 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 		let caught_error = false;
 
 		try {
-			compileModule(fs.readFileSync(`${cwd}/main.svelte.js`, 'utf-8'), {
+			compileModule(read_file(`${cwd}/main.svelte.js`), {
 				generate: 'client'
 			});
 		} catch (e) {

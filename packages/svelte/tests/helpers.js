@@ -20,11 +20,18 @@ export function try_load_json(file) {
  */
 export function try_read_file(file) {
 	try {
-		return fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n');
+		return read_file(file);
 	} catch (err) {
 		if (/** @type {any} */ (err).code !== 'ENOENT') throw err;
 		return null;
 	}
+}
+
+/**
+ * @param {string} file
+ */
+export function read_file(file) {
+	return fs.readFileSync(file, 'utf-8').replace(/\r\n/g, '\n');
 }
 
 export function create_deferred() {

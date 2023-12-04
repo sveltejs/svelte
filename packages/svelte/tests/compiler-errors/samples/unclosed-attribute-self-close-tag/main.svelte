@@ -1,1 +1,1 @@
-<Component test={{a: 1} />
+<Component test={ />
