@@ -67,10 +67,6 @@ function init(is_array) {
 	};
 }
 
-const set_size = /** @type {Function} */ (
-	/** @type {PropertyDescriptor} */ (get_descriptor(set_prototype, 'size')).get
-);
-
 /**
  * @template T
  * @type {Record<string | symbol, (this: StateSet<T>, ...args: any) => any>}
@@ -138,14 +134,6 @@ const set_methods = {
 		}
 
 		return get(s);
-	},
-
-	get size() {
-		// @ts-expect-error
-		const metadata = /** @type {Metadata} */ (this[STATE_SYMBOL]);
-
-		get(metadata.v);
-		return set_size.call(this);
 	}
 };
 
