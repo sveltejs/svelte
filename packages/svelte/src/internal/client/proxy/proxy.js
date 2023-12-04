@@ -1,3 +1,4 @@
+import { DEV } from 'esm-env';
 import {
 	effect_active,
 	get,
