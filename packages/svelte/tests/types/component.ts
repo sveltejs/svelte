@@ -142,6 +142,21 @@ instance.$set({});
 instance.$destroy();
 instance.anExport === 1;
 
+function dynamic<
+	T extends typeof SvelteComponent,
+	Props = ComponentProps<T>
+>(component: T, props: Props) {
+	mount(component, {
+		target: null as any as Document | Element | ShadowRoot | Text | Comment,
+		props
+	});
+
+	createRoot(component, {
+		target: null as any as Document | Element | ShadowRoot | Text | Comment,
+		props
+	});
+}
+
 // --------------------------------------------------------------------------- interop
 
 const AsLegacyComponent = asClassComponent(newComponent);
