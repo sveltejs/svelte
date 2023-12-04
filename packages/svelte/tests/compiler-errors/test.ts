@@ -41,11 +41,11 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 		}
 	}
 
-	if (fs.existsSync(`${cwd}/main.js`)) {
+	if (fs.existsSync(`${cwd}/main.svelte.js`)) {
 		let caught_error = false;
 
 		try {
-			compileModule(fs.readFileSync(`${cwd}/main.js`, 'utf-8'), {
+			compileModule(fs.readFileSync(`${cwd}/main.svelte.js`, 'utf-8'), {
 				generate: 'client'
 			});
 		} catch (e) {
