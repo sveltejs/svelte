@@ -255,7 +255,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	function add_params(scope, params) {
 		for (const param of params) {
 			for (const node of extract_identifiers(param)) {
-				scope.declare(node, 'normal', 'param');
+				scope.declare(node, 'normal', param.type === 'RestElement' ? 'rest_param' : 'param');
 			}
 		}
 	}
