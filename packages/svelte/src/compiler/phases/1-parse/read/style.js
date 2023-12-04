@@ -1,7 +1,6 @@
 import { error } from '../../../errors.js';
 
 const REGEX_MATCHER = /^[~^$*|]?=/;
-const REGEX_CLOSING_PAREN = /(?<!\\)\)/; // \) is a way of escaping a closing paren, so we need to exclude it
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
 const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
 const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
@@ -161,7 +160,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 
 		parser.allow_whitespace();
 
-		if (parser.match('{') || (inside_pseudo_class && parser.match(')'))) {
+		if (inside_pseudo_class ? parser.match(')') : parser.match('{')) {
 			return {
 				type: 'SelectorList',
 				start,
@@ -310,7 +309,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 		const index = parser.index;
 		parser.allow_whitespace();
 
-		if (parser.match('{') || parser.match(',') || (inside_pseudo_class && parser.match(')'))) {
+		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			parser.index = index;
 
 			return {
