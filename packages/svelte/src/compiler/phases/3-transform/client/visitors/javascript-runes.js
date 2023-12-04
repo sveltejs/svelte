@@ -2,7 +2,7 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { create_state_declarators, get_props_method } from '../utils.js';
+import { create_state_declarators, get_props_method, should_proxy } from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
@@ -84,7 +84,7 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', init)
+								? b.call('$.source', should_proxy(init) ? b.call('$.proxy', init) : init)
 								: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
@@ -211,16 +211,28 @@ export const javascript_visitors_runes = {
 			}
 
 			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-			const value =
+			let value =
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
-			const opts = args[1] && /** @type {import('estree').Expression} */ (visit(args[1]));
 
 			if (declarator.id.type === 'Identifier') {
-				const callee = rune === '$state' ? '$.source' : '$.derived';
-				const arg = rune === '$state' ? value : b.thunk(value);
-				declarations.push(b.declarator(declarator.id, b.call(callee, arg, opts)));
+				if (rune === '$state') {
+					const binding = /** @type {import('#compiler').Binding} */ (
+						state.scope.get(declarator.id.name)
+					);
+					if (should_proxy(value)) {
+						value = b.call('$.proxy', value);
+					}
+
+					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
+						value = b.call('$.source', value);
+					}
+				} else {
+					value = b.call('$.derived', b.thunk(value));
+				}
+
+				declarations.push(b.declarator(declarator.id, value));
 				continue;
 			}
 

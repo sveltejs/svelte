@@ -159,7 +159,7 @@ export function client_component(source, analysis, options) {
 	// Very very dirty way of making import statements reactive in legacy mode if needed
 	if (!analysis.runes) {
 		for (const [name, binding] of analysis.module.scope.declarations) {
-			if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+			if (binding.kind === 'legacy_reactive_import') {
 				instance.body.unshift(
 					b.var('$$_import_' + name, b.call('$.reactive_import', b.thunk(b.id(name))))
 				);
@@ -175,7 +175,7 @@ export function client_component(source, analysis, options) {
 
 	for (const [name, binding] of analysis.instance.scope.declarations) {
 		if (binding.kind === 'legacy_reactive') {
-			legacy_reactive_declarations.push(b.const(name, b.call('$.source')));
+			legacy_reactive_declarations.push(b.const(name, b.call('$.mutable_source')));
 		}
 		if (binding.kind === 'store_sub') {
 			if (store_setup.length === 0) {
@@ -240,11 +240,12 @@ export function client_component(source, analysis, options) {
 
 	const properties = analysis.exports.map(({ name, alias }) => {
 		const binding = analysis.instance.scope.get(name);
+		const is_source =
+			binding?.kind === 'state' && (!state.analysis.immutable || binding.reassigned);
+
 		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.
 		// Should we for code size reasons make it an init in runes mode and/or non-dev mode?
-		return b.get(alias ?? name, [
-			b.return(binding?.kind === 'state' ? b.call('$.get', b.id(name)) : b.id(name))
-		]);
+		return b.get(alias ?? name, [b.return(is_source ? b.call('$.get', b.id(name)) : b.id(name))]);
 	});
 
 	if (analysis.accessors) {
@@ -261,14 +262,7 @@ export function client_component(source, analysis, options) {
 	}
 
 	const component_block = b.block([
-		b.stmt(
-			b.call(
-				'$.push',
-				b.id('$$props'),
-				b.literal(analysis.runes),
-				...(options.immutable ? [b.literal(true)] : [])
-			)
-		),
+		b.stmt(b.call('$.push', b.id('$$props'), b.literal(analysis.runes))),
 		...store_setup,
 		...legacy_reactive_declarations,
 		...group_binding_declarations,

@@ -8,6 +8,6 @@ export default test({
 	async test({ assert, target, component }) {
 		await Promise.resolve();
 		await Promise.resolve();
-		assert.deepEqual(component.log, ['a1: ', {}, 'b1: ', {}]);
+		assert.deepEqual(component.log, ['a1: ', true, 'b1: ', true]);
 	}
 });

@@ -7,6 +7,7 @@ export {
 	expose,
 	exposable,
 	source,
+	mutable_source,
 	derived,
 	prop,
 	prop_source,
@@ -38,12 +39,15 @@ export {
 	reactive_import,
 	effect_active,
 	user_root_effect,
-	inspect
+	inspect,
+	unwrap
 } from './client/runtime.js';
 
-export * from './client/validate.js';
-
+export * from './client/each.js';
 export * from './client/render.js';
+export * from './client/validate.js';
+export { raf } from './client/timing.js';
+export { proxy, readonly } from './client/proxy/proxy.js';
 
 export { create_custom_element } from './client/custom-element.js';
 
@@ -54,5 +58,3 @@ export {
 	$window as window,
 	$document as document
 } from './client/operations.js';
-
-export { raf } from './client/timing.js';

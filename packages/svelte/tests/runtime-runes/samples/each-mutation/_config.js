@@ -4,7 +4,7 @@ export default test({
 	html: `
 	<button>foo</button>
 	<button>foo</button>
-	<button>foo</button>
+	<button>FOO</button>
 	`,
 
 	async test({ assert, target }) {
@@ -25,7 +25,7 @@ export default test({
 			`
 	<button>bar</button>
 	<button>bar</button>
-	<button>foo</button>
+	<button>BAR</button>
 	`
 		);
 	}

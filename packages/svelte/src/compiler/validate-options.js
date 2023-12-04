@@ -72,7 +72,10 @@ export const validate_component_options =
 
 			discloseVersion: boolean(true),
 
-			immutable: boolean(false),
+			immutable: deprecate(
+				'The immutable option has been deprecated. It has no effect in runes mode.',
+				boolean(false)
+			),
 
 			legacy: object({
 				componentApi: boolean(false)
@@ -163,6 +166,18 @@ function warn_removed(message) {
 	return (input) => {
 		if (input !== undefined) warn(message);
 		return /** @type {any} */ (undefined);
+	};
+}
+
+/**
+ * @param {string} message
+ * @param {Validator} validator
+ * @returns {Validator}
+ */
+function deprecate(message, validator) {
+	return (input, keypath) => {
+		if (input !== undefined) warn(message);
+		return validator(input, keypath);
 	};
 }
 

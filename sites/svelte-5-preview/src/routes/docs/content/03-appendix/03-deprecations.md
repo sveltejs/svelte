@@ -39,3 +39,7 @@ These functions run indiscriminately when _anything_ changes. By using `$effect.
 ```
 
 Note that using `$effect` and `$effect.pre` will put you in [runes mode](/docs/runes) — be sure to update your props and state accordingly.
+
+## `immutable`
+
+The `immutable` compiler option is deprecated. Use runes mode instead, where all state is immutable (which means that assigning to `object.property` won't cause updates for anything that is observing `object` itself, or a different property of it).

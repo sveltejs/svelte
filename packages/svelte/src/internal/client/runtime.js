@@ -1,7 +1,6 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { unwrap } from './render.js';
 import { get_descriptors, is_array } from './utils.js';
 
 export const SOURCE = 1;
@@ -24,6 +23,7 @@ const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
 export const UNINITIALIZED = Symbol();
+export const LAZY_PROPERTY = Symbol();
 
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
@@ -87,6 +87,8 @@ export let current_block = null;
 export let current_component_context = null;
 export let is_ssr = false;
 
+export let updating_derived = false;
+
 /**
  * @param {boolean} ssr
  * @returns {void}
@@ -108,8 +110,6 @@ export function create_component_context(props) {
 		c: null,
 		// effects
 		e: null,
-		// immutable
-		i: false,
 		// mounted
 		m: false,
 		// parent
@@ -145,7 +145,7 @@ export function set_current_component_context(context_stack_item) {
  * @param {unknown} b
  * @returns {boolean}
  */
-function default_equals(a, b) {
+export function default_equals(a, b) {
 	return a === b;
 }
 
@@ -161,7 +161,7 @@ function create_source_signal(flags, value) {
 			// consumers
 			c: null,
 			// equals
-			e: null,
+			e: default_equals,
 			// flags
 			f: flags,
 			// value
@@ -176,7 +176,7 @@ function create_source_signal(flags, value) {
 		// consumers
 		c: null,
 		// equals
-		e: null,
+		e: default_equals,
 		// flags
 		f: flags,
 		// value
@@ -688,7 +688,10 @@ export async function tick() {
  * @returns {void}
  */
 function update_derived(signal, force_schedule) {
+	const previous_updating_derived = updating_derived;
+	updating_derived = true;
 	const value = execute_signal_fn(signal);
+	updating_derived = previous_updating_derived;
 	const status =
 		current_skip_consumer || (current_effect === null && (signal.f & UNOWNED) !== 0)
 			? DIRTY
@@ -726,7 +729,7 @@ export function store_get(store, store_name, stores) {
 		entry = {
 			store: null,
 			last_value: null,
-			value: source(UNINITIALIZED),
+			value: mutable_source(UNINITIALIZED),
 			unsubscribe: EMPTY_FUNC
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
@@ -1157,11 +1160,10 @@ export function destroy_signal(signal) {
 /**
  * @template V
  * @param {() => V} init
- * @param {import('./types.js').EqualsFunctions} [equals]
  * @returns {import('./types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived(init, equals) {
+export function derived(init) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
 	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
@@ -1169,7 +1171,7 @@ export function derived(init, equals) {
 	);
 	signal.i = init;
 	signal.x = current_component_context;
-	signal.e = get_equals_method(equals);
+	signal.e = default_equals;
 	if (!is_unowned) {
 		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
 	}
@@ -1179,30 +1181,25 @@ export function derived(init, equals) {
 /**
  * @template V
  * @param {V} initial_value
- * @param {import('./types.js').EqualsFunctions<V>} [equals]
  * @returns {import('./types.js').SourceSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(initial_value, equals) {
+export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
 	source.x = current_component_context;
-	source.e = get_equals_method(equals);
 	return source;
 }
 
 /**
- * @param {import('./types.js').EqualsFunctions} [equals]
- * @returns {import('./types.js').EqualsFunctions}
+ * @template V
+ * @param {V} initial_value
+ * @returns {import('./types.js').SourceSignal<V>}
  */
-function get_equals_method(equals) {
-	if (equals !== undefined) {
-		return equals;
-	}
-	const context = current_component_context;
-	if (context && !context.i) {
-		return safe_equal;
-	}
-	return default_equals;
+/*#__NO_SIDE_EFFECTS__*/
+export function mutable_source(initial_value) {
+	const s = source(initial_value);
+	s.e = safe_equal;
+	return s;
 }
 
 /**
@@ -1426,6 +1423,20 @@ export function is_signal(val) {
 }
 
 /**
+ * @template O
+ * @template P
+ * @param {any} val
+ * @returns {val is import('./types.js').LazyProperty<O, P>}
+ */
+export function is_lazy_property(val) {
+	return (
+		typeof val === 'object' &&
+		val !== null &&
+		/** @type {import('./types.js').LazyProperty<O, P>} */ (val).t === LAZY_PROPERTY
+	);
+}
+
+/**
  * @template V
  * @param {unknown} val
  * @returns {val is import('./types.js').Store<V>}
@@ -1452,11 +1463,12 @@ export function is_store(val) {
  * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
+ * @param {boolean} immutable
  * @param {V | (() => V)} [default_value]
  * @param {boolean} [call_default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, default_value, call_default_value) {
+export function prop_source(props_obj, key, immutable, default_value, call_default_value) {
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
 		expose(() => props[key])
@@ -1468,8 +1480,7 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 	if (
 		is_signal(possible_signal) &&
 		possible_signal.v === value &&
-		update_bound_prop === undefined &&
-		get_equals_method() === possible_signal.e
+		update_bound_prop === undefined
 	) {
 		if (should_set_default_value) {
 			set(
@@ -1487,13 +1498,11 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 			call_default_value ? default_value() : default_value;
 	}
 
-	const source_signal = source(value);
+	const source_signal = immutable ? source(value) : mutable_source(value);
 
 	// Synchronize prop changes with source signal.
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
-	const immutable = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-		.i;
 	let ignore_next1 = false;
 	let ignore_next2 = false;
 	let did_update_to_defined = !should_set_default_value;
@@ -1552,16 +1561,12 @@ export function prop_source(props_obj, key, default_value, call_default_value) {
 
 /**
  * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
  * @returns {any}
  */
 export function prop(props_obj, key) {
-	return () => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-		return /** @type {V} */ (props[key]);
-	};
+	return is_signal(props_obj) ? () => get(props_obj)[key] : () => props_obj[key];
 }
 
 /**
@@ -1804,13 +1809,11 @@ export function onDestroy(fn) {
 /**
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
  * @param {any} runes
- * @param {any} immutable
  * @returns {void}
  */
-export function push(props, runes = false, immutable = false) {
+export function push(props, runes = false) {
 	const context_stack_item = create_component_context(props);
 	context_stack_item.r = runes;
-	context_stack_item.i = immutable;
 	current_component_context = context_stack_item;
 }
 
@@ -1900,4 +1903,36 @@ export function inspect(get_value, inspect = console.log) {
 			}
 		};
 	});
+}
+
+/**
+ * @template O
+ * @template P
+ * @param {O} o
+ * @param {P} p
+ * @returns {import('./types.js').LazyProperty<O, P>}
+ */
+export function lazy_property(o, p) {
+	return {
+		o,
+		p,
+		t: LAZY_PROPERTY
+	};
+}
+
+/**
+ * @template V
+ * @param {V} value
+ * @returns {import('./types.js').UnwrappedSignal<V>}
+ */
+export function unwrap(value) {
+	if (is_signal(value)) {
+		// @ts-ignore
+		return get(value);
+	}
+	if (is_lazy_property(value)) {
+		return value.o[value.p];
+	}
+	// @ts-ignore
+	return value;
 }

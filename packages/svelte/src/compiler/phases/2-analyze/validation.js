@@ -649,8 +649,14 @@ export const validation_legacy = merge(validation, a11y_validators, {
  */
 function validate_export(node, scope, name) {
 	const binding = scope.get(name);
-	if (binding && (binding.kind === 'derived' || binding.kind === 'state')) {
-		error(node, 'invalid-rune-export', `$${binding.kind}`);
+	if (!binding) return;
+
+	if (binding.kind === 'derived') {
+		error(node, 'invalid-derived-export');
+	}
+
+	if (binding.kind === 'state' && binding.reassigned) {
+		error(node, 'invalid-state-export');
 	}
 }
 

@@ -112,10 +112,7 @@ describe('signals', () => {
 		const A = $.source(0);
 		const B = $.source(0);
 		const C = $.derived(() => ($.get(A) % 2) + ($.get(B) % 2));
-		const D = $.derived(
-			() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)),
-			(l: number[], r: number[]) => l.length === r.length && l.every((v, i) => v === r[i])
-		);
+		const D = $.derived(() => numbers.map((i) => i + ($.get(A) % 2) - ($.get(B) % 2)));
 		const E = $.derived(() => hard($.get(C) + $.get(A) + $.get(D)[0]!, 'E'));
 		const F = $.derived(() => hard($.get(D)[0]! && $.get(B), 'F'));
 		const G = $.derived(() => $.get(C) + ($.get(C) || $.get(E) % 2) + $.get(D)[0]! + $.get(F));
