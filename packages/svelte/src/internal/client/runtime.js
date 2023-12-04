@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { get_descriptors, is_array } from './utils.js';
+import { get_descriptor, get_descriptors, is_array } from './utils.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1470,88 +1470,82 @@ export function is_store(val) {
  */
 export function prop_source(props_obj, key, immutable, default_value, call_default_value) {
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
-		expose(() => props[key])
-	);
-	const update_bound_prop = Object.getOwnPropertyDescriptor(props, key)?.set;
-	let value = props[key];
-	const should_set_default_value = value === undefined && default_value !== undefined;
+	const desc = get_descriptor(props, key);
+	const setter = desc && desc.set;
 
-	if (
-		is_signal(possible_signal) &&
-		possible_signal.v === value &&
-		update_bound_prop === undefined
-	) {
-		if (should_set_default_value) {
-			set(
-				possible_signal,
-				// @ts-expect-error would need a cumbersome method overload to type this
-				call_default_value ? default_value() : default_value
-			);
+	let value = props[key];
+	let was_defined = value !== undefined;
+
+	/** @type {import('./types.js').SourceSignal | undefined} */
+	let exposed = undefined;
+
+	if (setter !== undefined) {
+		if (default_value !== undefined) {
+			// TODO consolidate all these random runtime errors
+			throw new Error('Cannot use fallback values with bind:');
 		}
-		return possible_signal;
+
+		exposed = expose(() => props[key]);
 	}
 
-	if (should_set_default_value) {
-		value =
-			// @ts-expect-error would need a cumbersome method overload to type this
-			call_default_value ? default_value() : default_value;
+	if (!was_defined && default_value !== undefined) {
+		value = call_default_value ? /** @type {() => V} */ (default_value)() : default_value;
 	}
 
 	const source_signal = immutable ? source(value) : mutable_source(value);
 
-	// Synchronize prop changes with source signal.
-	// Needs special equality checking because the prop in the
-	// parent could be changed through `foo.bar = 'new value'`.
-	let ignore_next1 = false;
-	let ignore_next2 = false;
-	let did_update_to_defined = !should_set_default_value;
+	let updating = false;
+	let initial = true;
 
-	let mount = true;
+	// sync parent to child
 	sync_effect(() => {
 		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-		// Before if to ensure signal dependency is registered
-		const propagating_value = props[key];
-		if (mount) {
-			mount = false;
-			return;
-		}
-		if (ignore_next1) {
-			ignore_next1 = false;
+		const value = props[key];
+
+		// console.log('ptc', { key, value, initial, updating });
+
+		if (initial) {
+			initial = false;
 			return;
 		}
 
-		if (
-			// Ensure that updates from undefined to undefined are ignored
-			(did_update_to_defined || propagating_value !== undefined) &&
-			not_equal(immutable, propagating_value, source_signal.v)
-		) {
-			ignore_next2 = true;
-			did_update_to_defined = true;
-			// TODO figure out why we need it this way and the explain in a comment;
-			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
-			untrack(() => set_signal_value(source_signal, propagating_value));
+		if (updating) return;
+		updating = true;
+
+		if (value !== undefined) {
+			was_defined = true;
 		}
+
+		if (was_defined) {
+			set(source_signal, value);
+		}
+
+		updating = false;
 	});
 
-	if (is_signal(possible_signal) && update_bound_prop !== undefined) {
-		let ignore_first = !should_set_default_value;
+	// sync child to parent
+	// TODO get rid of the props signal, so we can just write these as `$$props.foo = ...`
+	// instead of mucking about with effects (we can probably delete sync_effect)
+	if (setter) {
+		let initial = true;
+
 		sync_effect(() => {
-			// Before if to ensure signal dependency is registered
-			const propagating_value = get(source_signal);
-			if (ignore_first) {
-				ignore_first = false;
-				return;
-			}
-			if (ignore_next2) {
-				ignore_next2 = false;
+			const value = get(source_signal);
+
+			// console.log('ctp', { key, value, initial });
+
+			if (initial) {
+				initial = false;
 				return;
 			}
 
-			if (not_equal(immutable, propagating_value, possible_signal.v)) {
-				ignore_next1 = true;
-				did_update_to_defined = true;
-				untrack(() => update_bound_prop(propagating_value));
+			if (updating) return;
+
+			setter(value);
+
+			// legacy
+			if (exposed) {
+				set(exposed, exposed.v);
 			}
 		});
 	}

@@ -1,7 +1,7 @@
 <script>
 	export let options = [];
-	export let value = "";
-	export let label = "";
+	export let value;
+	export let label;
 </script>
 
 <select bind:value {...$$restProps}>

@@ -795,31 +795,51 @@ function serialize_inline_component(node, component_name, context) {
 				push_prop(
 					b.get(attribute.name, [
 						b.return(
-							b.call(
-								'$.exposable',
-								b.thunk(
-									/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
-								)
-							)
+							context.state.analysis.immutable
+								? /** @type {import('estree').Expression} */ (context.visit(attribute.expression))
+								: b.call(
+										'$.exposable',
+										b.thunk(
+											/** @type {import('estree').Expression} */ (
+												context.visit(attribute.expression)
+											)
+										)
+								  )
 						)
 					])
 				);
-				// If the binding is just a reference to a top level state variable
-				// we don't need a setter as the inner component can write to the signal directly
-				const binding =
-					attribute.expression.type !== 'Identifier'
-						? null
-						: context.state.scope.get(attribute.expression.name);
-				if (
-					binding === null ||
-					(binding.kind !== 'state' && binding.kind !== 'prop' && binding.kind !== 'rest_prop')
-				) {
+
+				if (attribute.expression.type === 'Identifier') {
 					const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
 					push_prop(
 						b.set(attribute.name, [
 							b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
 						])
 					);
+				} else {
+					if (context.state.analysis.immutable) {
+						const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
+						push_prop(
+							b.set(attribute.name, [
+								b.stmt(
+									b.assignment(
+										'=',
+										/** @type {import('estree').MemberExpression} */ (
+											context.visit(attribute.expression)
+										),
+										b.id('$$value')
+									)
+								)
+							])
+						);
+					} else {
+						const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
+						push_prop(
+							b.set(attribute.name, [
+								b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
+							])
+						);
+					}
 				}
 			}
 		}

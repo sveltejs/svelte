@@ -12,5 +12,7 @@ export default test({
 		await btn?.click();
 
 		assert.htmlEqual(target.innerHTML, `<button>1</button><span>1</span>`);
-	}
+	},
+
+	error: `Cannot use fallback values with bind:`
 });

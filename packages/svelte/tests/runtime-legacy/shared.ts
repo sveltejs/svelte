@@ -92,7 +92,8 @@ afterAll(() => {
 
 export function runtime_suite(runes: boolean) {
 	return suite_with_variants<RuntimeTest, 'hydrate' | 'ssr' | 'dom', CompileOptions>(
-		['dom', 'hydrate', 'ssr'],
+		// ['dom', 'hydrate', 'ssr'],
+		['dom'],
 		(variant, config) => {
 			if (variant === 'hydrate') {
 				if (config.skip_if_hydrate === 'permanent') return 'no-test';

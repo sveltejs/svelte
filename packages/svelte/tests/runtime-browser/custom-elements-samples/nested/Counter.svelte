@@ -3,7 +3,7 @@
 <script>
 	import { getContext } from "svelte";
 
-	export let count = 0;
+	export let count;
 
 	const context = getContext("context");
 </script>

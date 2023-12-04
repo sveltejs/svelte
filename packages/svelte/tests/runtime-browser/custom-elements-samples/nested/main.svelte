@@ -4,7 +4,7 @@
 	import { setContext } from "svelte";
 	import Counter from "./Counter.svelte";
 
-	export let count;
+	export let count = 0;
 	export let counter;
 
 	setContext("context", "works");

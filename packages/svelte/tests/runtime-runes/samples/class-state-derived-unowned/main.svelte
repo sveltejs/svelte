@@ -1,11 +1,11 @@
 <script context="module">
-		class SomeLogic {
-			someValue = $state(0);
-			isAboveThree = $derived(this.someValue > 3);
-			trigger() {
-				this.someValue++;
-			}
+	class SomeLogic {
+		someValue = $state(0);
+		isAboveThree = $derived(this.someValue > 3);
+		trigger() {
+			this.someValue++;
 		}
+	}
 
 	const someLogic = new SomeLogic();
 </script>
