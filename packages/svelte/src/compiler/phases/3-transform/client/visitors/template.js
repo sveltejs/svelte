@@ -767,7 +767,18 @@ function serialize_inline_component(node, component_name, context) {
 			const [, value] = serialize_attribute_value(attribute.value, context);
 
 			if (attribute.metadata.dynamic) {
-				push_prop(b.get(attribute.name, [b.return(value)]));
+				const contains_call_expression =
+					Array.isArray(attribute.value) &&
+					attribute.value.some((n) => {
+						return n.type === 'ExpressionTag' && n.metadata.contains_call_expression;
+					});
+				if (contains_call_expression) {
+					const id = b.id(context.state.scope.generate(attribute.name));
+					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					push_prop(b.get(attribute.name, [b.return(b.call('$.get', id))]));
+				} else {
+					push_prop(b.get(attribute.name, [b.return(value)]));
+				}
 			} else {
 				push_prop(b.init(attribute.name, value));
 			}
