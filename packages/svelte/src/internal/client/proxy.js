@@ -9,13 +9,20 @@ import {
 } from './runtime.js';
 import { get_descriptor, is_array } from './utils.js';
 
-/** @typedef {{ s: Map<string | symbol, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {{ s: Map<any, import('./types.js').SourceSignal<any>>; v: import('./types.js').SourceSignal<number>; a: boolean, b: Record<string | symbol, Function> }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
+/**
+ * @template T
+ * @typedef {Set<T> & { [STATE_SYMBOL]: Metadata }} StateSet
+ */
 
 export const STATE_SYMBOL = Symbol();
+export const STATE_SYMBOL_SET = Symbol();
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
+const set_prototype = Set.prototype;
+
 const get_prototype_of = Object.getPrototypeOf;
 const is_frozen = Object.isFrozen;
 
@@ -29,12 +36,18 @@ export function proxy(value) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
-		if (prototype === object_prototype || prototype === array_prototype) {
+		if (
+			prototype === object_prototype ||
+			prototype === array_prototype ||
+			prototype === set_prototype
+		) {
 			// @ts-expect-error
-			value[STATE_SYMBOL] = init(value);
+			value[STATE_SYMBOL] = init(prototype === array_prototype);
+
+			const h = prototype === set_prototype ? set_handler : handler;
 
 			// @ts-expect-error not sure how to fix this
-			return new Proxy(value, handler);
+			return new Proxy(value, h);
 		}
 	}
 
@@ -42,16 +55,121 @@ export function proxy(value) {
 }
 
 /**
- * @param {StateObject} value
+ * @param {boolean} is_array
  * @returns {Metadata}
  */
-function init(value) {
+function init(is_array) {
 	return {
 		s: new Map(),
 		v: source(0),
-		a: is_array(value)
+		a: is_array,
+		b: {}
 	};
 }
+
+const set_size = /** @type {Function} */ (
+	/** @type {PropertyDescriptor} */ (get_descriptor(set_prototype, 'size')).get
+);
+
+/**
+ * @template T
+ * @type {Record<string | symbol, (this: StateSet<T>, ...args: any) => any>}
+ */
+const set_methods = {
+	/** @type {(this: StateSet<T>) => Iterable<T>} this */
+	[Symbol.iterator]() {
+		const metadata = this[STATE_SYMBOL];
+		get(metadata.v);
+		return set_prototype[Symbol.iterator].call(this);
+	},
+
+	/** @type {(this: StateSet<T>, value: T) => void} value */
+	add(value) {
+		const metadata = this[STATE_SYMBOL];
+		set_prototype.add.call(this, value);
+
+		let s = metadata.s.get(/** @type {any} */ (value));
+		if (s === undefined) {
+			s = source(true);
+			metadata.s.set(/** @type {any} */ (value), source(true));
+		} else {
+			set(s, true);
+		}
+
+		increment(metadata.v);
+	},
+
+	clear() {
+		const metadata = this[STATE_SYMBOL];
+		set_prototype.clear.call(this);
+
+		for (const key of metadata.s.keys()) {
+			let s = /** @type {import('./types.js').SourceSignal} */ (metadata.s.get(key));
+			set(s, false);
+		}
+
+		increment(metadata.v);
+	},
+
+	/** @param {T} value */
+	delete(value) {
+		const metadata = this[STATE_SYMBOL];
+		set_prototype.delete.call(this, value);
+
+		let s = metadata.s.get(value);
+		if (s === undefined) {
+			s = source(true);
+			metadata.s.set(value, source(false));
+		} else {
+			set(s, false);
+		}
+
+		increment(metadata.v);
+	},
+
+	/** @param {T} value */
+	has(value) {
+		const metadata = this[STATE_SYMBOL];
+
+		let s = metadata.s.get(value);
+		if (s === undefined) {
+			s = source(set_prototype.has.call(this, value));
+			metadata.s.set(value, s);
+		}
+
+		return get(s);
+	},
+
+	get size() {
+		// @ts-expect-error
+		const metadata = /** @type {Metadata} */ (this[STATE_SYMBOL]);
+
+		get(metadata.v);
+		return set_size.call(this);
+	}
+};
+
+/**
+ * @template T
+ * @type {ProxyHandler<StateSet<T>>}
+ */
+const set_handler = {
+	get(target, prop, receiver) {
+		const metadata = target[STATE_SYMBOL];
+
+		if (prop === 'size') {
+			get(metadata.v);
+			return Reflect.get(target, prop, target);
+		}
+
+		const method = set_methods[prop];
+		if (method) {
+			return (metadata.b[prop] ??= method.bind(target));
+		}
+
+		return Reflect.get(target, prop, receiver);
+	}
+};
 
 /** @type {ProxyHandler<StateObject>} */
 const handler = {
