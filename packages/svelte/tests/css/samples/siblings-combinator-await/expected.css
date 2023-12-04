@@ -1,0 +1,12 @@
+	.a.svelte-xyz + .b.svelte-xyz { color: green; }
+	.a.svelte-xyz + .c.svelte-xyz { color: green; }
+	.a.svelte-xyz + .d.svelte-xyz { color: green; }
+	.b.svelte-xyz + .e.svelte-xyz { color: green; }
+	.c.svelte-xyz + .e.svelte-xyz { color: green; }
+	.d.svelte-xyz + .e.svelte-xyz { color: green; }
+
+	/* no match */
+	/* (unused) .a + .e { color: green; }*/
+	/* (unused) .b + .c { color: green; }*/
+	/* (unused) .c + .d { color: green; }*/
+	/* (unused) .b + .d { color: green; }*/

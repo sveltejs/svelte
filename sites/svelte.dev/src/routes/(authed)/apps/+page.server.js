@@ -9,7 +9,8 @@ export async function load({ url, parent }) {
 	const { user } = await parent();
 
 	if (user) {
-		const offset = url.searchParams.get('offset') ? parseInt(url.searchParams.get('offset')) : 0;
+		const offset_param = url.searchParams.get('offset');
+		const offset = offset_param ? parseInt(offset_param) : 0;
 		const search = url.searchParams.get('search');
 
 		({ gists, next } = await gist.list(user, { offset, search }));

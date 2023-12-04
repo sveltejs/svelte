@@ -140,22 +140,24 @@ declare namespace svelteHTML {
 
 Then make sure that `d.ts` file is referenced in your `tsconfig.json`. If it reads something like `"include": ["src/**/*"]` and your `d.ts` file is inside `src`, it should work. You may need to reload for the changes to take effect.
 
-Since Svelte version 4.2 / `svelte-check` version 3.5 / VS Code extension version 107.10.0 you can also declare the typings by augmenting the the `svelte/elements` module like this:
+Since Svelte version 4.2 / `svelte-check` version 3.5 / VS Code extension version 107.10.0 you can also declare the typings by augmenting the `svelte/elements` module like this:
 
 ```ts
 /// file: additional-svelte-typings.d.ts
-import { HTMLButtonAttributes } from 'svelte/elements'
+import { HTMLButtonAttributes } from 'svelte/elements';
 
 declare module 'svelte/elements' {
-    export interface SvelteHTMLElements {
-        'custom-button': HTMLButtonAttributes;
-    }
+	export interface SvelteHTMLElements {
+		'custom-button': HTMLButtonAttributes;
+	}
 
 	// allows for more granular control over what element to add the typings to
-    export interface HTMLButtonAttributes {
-        'veryexperimentalattribute'?: string;
-    }
+	export interface HTMLButtonAttributes {
+		veryexperimentalattribute?: string;
+	}
 }
+
+export {}; // ensure this is not an ambient module, else types will be overridden instead of augmented
 ```
 
 ## Experimental advanced typings

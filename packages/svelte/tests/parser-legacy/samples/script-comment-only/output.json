@@ -1,0 +1,55 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 45,
+		"end": 56,
+		"children": [
+			{
+				"type": "Text",
+				"start": 43,
+				"end": 45,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 45,
+				"end": 56,
+				"name": "div",
+				"attributes": [],
+				"children": []
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 43,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 8,
+			"end": 34,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [],
+			"sourceType": "module",
+			"trailingComments": [
+				{
+					"type": "Line",
+					"value": " TODO write some code",
+					"start": 10,
+					"end": 33
+				}
+			]
+		}
+	}
+}

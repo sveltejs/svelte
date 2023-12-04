@@ -46,9 +46,8 @@ export async function GET({ params }) {
 			.map((example) => example.slug)
 	);
 
-	if (examples.has(params.id)) {
-		const example = get_example(examples_data, params.id);
-
+	const example = get_example(examples_data, params.id);
+	if (example) {
 		return json({
 			id: params.id,
 			name: example.title,

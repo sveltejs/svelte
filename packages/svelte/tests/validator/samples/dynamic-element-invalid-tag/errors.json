@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-svelte-element-definition",
+		"message": "Invalid element definition — must be an {expression}",
+		"start": {
+			"line": 2,
+			"column": 17
+		},
+		"end": {
+			"line": 2,
+			"column": 17
+		}
+	}
+]

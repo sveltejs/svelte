@@ -1,1 +1,0 @@
-@layer base, special;@layer special{div.svelte-xyz{color:rebeccapurple}}@layer base{div.svelte-xyz{color:green}}

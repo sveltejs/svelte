@@ -1,1 +1,0 @@
-<div in:foo>...</div>

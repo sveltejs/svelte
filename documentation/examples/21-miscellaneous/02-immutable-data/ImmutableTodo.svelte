@@ -23,8 +23,8 @@
 <style>
 	button {
 		cursor: pointer;
-		border:none;
-		background:none;
-		font-size:14px;
+		border: none;
+		background: none;
+		font-size: 14px;
 	}
 </style>

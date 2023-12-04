@@ -1,0 +1,6 @@
+	.d.svelte-xyz + .e.svelte-xyz { color: green; }
+
+	/* no match */
+	/* (unused) .a + .b { color: green; }*/
+	/* (unused) .b + .c { color: green; }*/
+	/* (unused) .c + .f { color: green; }*/

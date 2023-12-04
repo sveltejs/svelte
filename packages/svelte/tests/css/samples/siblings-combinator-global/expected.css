@@ -1,0 +1,9 @@
+  input + div.svelte-xyz { color: red; }
+  input ~ div.svelte-xyz { color: red; }
+  input + h1.svelte-xyz { color: red; }
+  input ~ h1.svelte-xyz { color: red; }
+  input + p.svelte-xyz { color: red; }
+  input ~ p.svelte-xyz { color: red; }
+
+  /* (unused) input + span { color: red; }*/
+  /* (unused) input ~ span { color: red; }*/

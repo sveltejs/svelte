@@ -1,0 +1,174 @@
+{
+	"css": null,
+	"js": [],
+	"start": 29,
+	"end": 101,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Text",
+				"start": 27,
+				"end": 29,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "SnippetBlock",
+				"start": 29,
+				"end": 81,
+				"expression": {
+					"type": "Identifier",
+					"start": 39,
+					"end": 42,
+					"name": "foo"
+				},
+				"context": {
+					"type": "Identifier",
+					"name": "msg",
+					"start": 43,
+					"end": 54,
+					"typeAnnotation": {
+						"type": "TSStringKeyword",
+						"start": 48,
+						"end": 54,
+						"loc": {
+							"start": {
+								"line": 1,
+								"column": 48
+							},
+							"end": {
+								"line": 1,
+								"column": 54
+							}
+						}
+					}
+				},
+				"body": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 56,
+							"end": 58,
+							"raw": "\n\t",
+							"data": "\n\t"
+						},
+						{
+							"type": "RegularElement",
+							"start": 58,
+							"end": 70,
+							"name": "p",
+							"attributes": [],
+							"fragment": {
+								"type": "Fragment",
+								"nodes": [
+									{
+										"type": "ExpressionTag",
+										"start": 61,
+										"end": 66,
+										"expression": {
+											"type": "Identifier",
+											"start": 62,
+											"end": 65,
+											"loc": {
+												"start": {
+													"line": 4,
+													"column": 5
+												},
+												"end": {
+													"line": 4,
+													"column": 8
+												}
+											},
+											"name": "msg"
+										}
+									}
+								],
+								"transparent": true
+							}
+						},
+						{
+							"type": "Text",
+							"start": 70,
+							"end": 71,
+							"raw": "\n",
+							"data": "\n"
+						}
+					],
+					"transparent": false
+				}
+			},
+			{
+				"type": "Text",
+				"start": 81,
+				"end": 83,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "RenderTag",
+				"start": 83,
+				"end": 101,
+				"expression": {
+					"type": "Identifier",
+					"start": 92,
+					"end": 95,
+					"loc": {
+						"start": {
+							"line": 7,
+							"column": 9
+						},
+						"end": {
+							"line": 7,
+							"column": 12
+						}
+					},
+					"name": "foo"
+				},
+				"argument": {
+					"type": "Identifier",
+					"start": 96,
+					"end": 99,
+					"loc": {
+						"start": {
+							"line": 7,
+							"column": 13
+						},
+						"end": {
+							"line": 7,
+							"column": 16
+						}
+					},
+					"name": "msg"
+				}
+			}
+		],
+		"transparent": false
+	},
+	"options": null,
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 27,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 18,
+			"end": 18,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 1,
+					"column": 18
+				}
+			},
+			"body": [],
+			"sourceType": "module"
+		}
+	}
+}

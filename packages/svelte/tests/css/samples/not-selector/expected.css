@@ -1,0 +1,3 @@
+	.svelte-xyz:not(.foo) {
+		color: red;
+	}

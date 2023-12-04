@@ -1,0 +1,7 @@
+  main.svelte-xyz button.svelte-xyz.svelte-xyz {
+    background-color: red;
+  }
+
+  main.svelte-xyz div.svelte-xyz > button.svelte-xyz {
+    background-color: blue;
+  }

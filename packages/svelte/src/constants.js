@@ -1,0 +1,79 @@
+export const EACH_ITEM_REACTIVE = 1;
+export const EACH_INDEX_REACTIVE = 1 << 1;
+export const EACH_KEYED = 1 << 2;
+export const EACH_IS_CONTROLLED = 1 << 3;
+export const EACH_IS_ANIMATED = 1 << 4;
+
+/** List of Element events that will be delegated */
+export const DelegatedEvents = [
+	'beforeinput',
+	'click',
+	'dblclick',
+	'contextmenu',
+	'focusin',
+	'focusout',
+	// 'input', This conflicts with bind:input
+	'keydown',
+	'keyup',
+	'mousedown',
+	'mousemove',
+	'mouseout',
+	'mouseover',
+	'mouseup',
+	'pointerdown',
+	'pointermove',
+	'pointerout',
+	'pointerover',
+	'pointerup',
+	'touchend',
+	'touchmove',
+	'touchstart'
+];
+
+/** List of Element events that will be delegated and are passive */
+export const PassiveDelegatedEvents = ['touchstart', 'touchmove', 'touchend'];
+
+/**
+ * @type {Record<string, string>}
+ * List of attribute names that should be aliased to their property names
+ * because they behave differently between setting them as an attribute and
+ * setting them as a property.
+ */
+export const AttributeAliases = {
+	// no `class: 'className'` because we handle that separately
+	formnovalidate: 'formNoValidate',
+	ismap: 'isMap',
+	nomodule: 'noModule',
+	playsinline: 'playsInline',
+	readonly: 'readOnly'
+};
+
+/**
+ * Attributes that are boolean, i.e. they are present or not present.
+ */
+export const DOMBooleanAttributes = [
+	'allowfullscreen',
+	'async',
+	'autofocus',
+	'autoplay',
+	'checked',
+	'controls',
+	'default',
+	'disabled',
+	'formnovalidate',
+	'hidden',
+	'indeterminate',
+	'ismap',
+	'loop',
+	'multiple',
+	'muted',
+	'nomodule',
+	'novalidate',
+	'open',
+	'playsinline',
+	'readonly',
+	'required',
+	'reversed',
+	'seamless',
+	'selected'
+];

@@ -5,14 +5,17 @@ title: Logic blocks
 ## {#if ...}
 
 ```svelte
+<!--- copy: false  --->
 {#if expression}...{/if}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#if expression}...{:else if expression}...{/if}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#if expression}...{:else}...{/if}
 ```
 
@@ -41,22 +44,27 @@ Additional conditions can be added with `{:else if expression}`, optionally endi
 ## {#each ...}
 
 ```svelte
+<!--- copy: false  --->
 {#each expression as name}...{/each}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#each expression as name, index}...{/each}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#each expression as name (key)}...{/each}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#each expression as name, index (key)}...{/each}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#each expression as name}...{:else}...{/each}
 ```
 
@@ -125,29 +133,35 @@ Since Svelte 4 it is possible to iterate over iterables like `Map` or `Set`. Ite
 ## {#await ...}
 
 ```svelte
+<!--- copy: false  --->
 {#await expression}...{:then name}...{:catch name}...{/await}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#await expression}...{:then name}...{/await}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#await expression then name}...{/await}
 ```
 
 ```svelte
+<!--- copy: false  --->
 {#await expression catch name}...{/await}
 ```
 
-Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected. In SSR mode, only the pending state will be rendered on the server.
+Await blocks allow you to branch on the three possible states of a Promise — pending, fulfilled or rejected.
+In SSR mode, only the pending branch will be rendered on the server.
+If the provided expression is not a Promise only the fulfilled branch will be rendered, including in SSR mode.
 
 ```svelte
 {#await promise}
 	<!-- promise is pending -->
 	<p>waiting for the promise to resolve...</p>
 {:then value}
-	<!-- promise was fulfilled -->
+	<!-- promise was fulfilled or not a Promise -->
 	<p>The value is {value}</p>
 {:catch error}
 	<!-- promise was rejected -->
@@ -186,6 +200,7 @@ Similarly, if you only want to show the error state, you can omit the `then` blo
 ## {#key ...}
 
 ```svelte
+<!--- copy: false  --->
 {#key expression}...{/key}
 ```
 

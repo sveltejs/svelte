@@ -1,0 +1,8 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/dist
+/src/routes/status/results.json
+.env
+.env.*

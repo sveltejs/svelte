@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-const-assignment",
+		"message": "Invalid assignment to const variable",
+		"start": {
+			"line": 16,
+			"column": 2
+		},
+		"end": {
+			"line": 16,
+			"column": 18
+		}
+	}
+]

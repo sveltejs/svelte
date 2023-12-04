@@ -43,7 +43,7 @@ The maintainers meet on the final Saturday of each month. While these meetings a
 
 ### Prioritization
 
-We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFC, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active ones repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
+We do our best to review PRs and RFCs as they are sent, but it is difficult to keep up. We welcome help in reviewing PRs, RFCs, and issues. If an item aligns with the current priority on our [roadmap](https://svelte.dev/roadmap), it is more likely to be reviewed quickly. PRs to the most important and active ones repositories get reviewed more quickly while PRs to smaller inactive repos may sit for a bit before we periodically come by and review the pending PRs in a batch.
 
 ## Bugs
 
@@ -74,14 +74,15 @@ Small pull requests are much easier to review and more likely to get merged.
 
 ### Installation
 
-1. Ensure you have [pnpm](https://pnpm.io/installation) installed
-1. After cloning the repository, run `pnpm install`. You can do this in the root directory or in the `svelte` project
-1. Move into the `svelte` directory with `cd packages/svelte`
-1. To compile in watch mode, run `pnpm dev`
+Ensure you have [pnpm](https://pnpm.io/installation) installed. After cloning the repository, run `pnpm install`.
+
+### Developing
+
+To build the UMD version of `svelte/compiler` (this is only necessary for CommonJS consumers, or in-browser use), run `pnpm build` inside `packages/svelte`. To rebuild whenever source files change, run `pnpm dev`.
 
 ### Creating a branch
 
-Fork [the repository](https://github.com/sveltejs/svelte) and create your branch from `master`. If you've never sent a GitHub pull request before, you can learn how from [this free video series](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
+Fork [the repository](https://github.com/sveltejs/svelte) and create your branch from `main`. If you've never sent a GitHub pull request before, you can learn how from [this free video series](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
 
 ### Testing
 
@@ -100,18 +101,28 @@ Test samples are kept in `/test/xxx/samples` folder.
 > PREREQUISITE: Install chromium via playwright by running `pnpm playwright install chromium`
 
 1. To run test, run `pnpm test`.
-1. To run test for a specific feature, you can use the `-g` (aka `--grep`) option. For example, to only run test involving transitions, run `pnpm test -- -g transition`.
+1. To run a particular test suite, use `pnpm test <suite-name>`, for example:
 
-##### Running solo test
+   ```bash
+   pnpm test validator
+   ```
 
-1. To run only one test, rename the test sample folder to end with `.solo`. For example, to run the `test/js/samples/action` only, rename it to `test/js/samples/action.solo`.
-1. To run only one test suite, rename the test suite folder to end with `.solo`. For example, to run the `test/js` test suite only, rename it to `test/js.solo`.
-1. Remember to rename the test folder back. The CI will fail if there's a solo test.
+1. To filter tests _within_ a test suite, use `pnpm test <suite-name> -- -t <test-name>`, for example:
+
+   ```bash
+   pnpm test validator -- -t a11y-alt-text
+   ```
+
+   (You can also do `FILTER=<test-name> pnpm test <suite-name>` which removes other tests rather than simply skipping them — this will result in faster and more compact test results, but it's non-idiomatic. Choose your fighter.)
 
 ##### Updating `.expected` files
 
-1. Tests suites like `css`, `js`, `server-side-rendering` asserts that the generated output has to match the content in the `.expected` file. For example, in the `js` test suites, the generated js code is compared against the content in `expected.js`.
-1. To update the content of the `.expected` file, run the test with `--update` flag. (`pnpm test --update`)
+1. Tests suites like `snapshot` and `parser` assert that the generated output matches the existing snapshot.
+1. To update these snapshots, run `UPDATE_SNAPSHOTS=true pnpm test`.
+
+### Typechecking
+
+To typecheck the codebase, run `pnpm check` inside `packages/svelte`. To typecheck in watch mode, run `pnpm check:watch`.
 
 ### Style guide
 
@@ -130,7 +141,7 @@ Please make sure the following is done when submitting a pull request:
 1. Make sure your code lints (`pnpm lint`).
 1. Make sure your tests pass (`pnpm test`).
 
-All pull requests should be opened against the `master` branch. Make sure the PR does only one thing, otherwise please split it.
+All pull requests should be opened against the `main` branch. Make sure the PR does only one thing, otherwise please split it.
 
 #### Breaking changes
 
@@ -147,7 +158,7 @@ When adding a new breaking change, follow this template in your pull request:
 
 ## License
 
-By contributing to Svelte, you agree that your contributions will be licensed under its [MIT license](https://github.com/sveltejs/svelte/blob/master/LICENSE).
+By contributing to Svelte, you agree that your contributions will be licensed under its [MIT license](https://github.com/sveltejs/svelte/blob/master/LICENSE.md).
 
 ## Questions
 

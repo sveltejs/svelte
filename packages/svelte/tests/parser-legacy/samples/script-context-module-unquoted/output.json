@@ -1,0 +1,178 @@
+{
+	"html": {
+		"start": 62,
+		"end": 60,
+		"type": "Fragment",
+		"children": [
+			{
+				"start": 60,
+				"end": 62,
+				"type": "Text",
+				"raw": "\n\n",
+				"data": "\n\n"
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 62,
+		"end": 86,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 70,
+			"end": 77,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 7,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "ExpressionStatement",
+					"start": 72,
+					"end": 76,
+					"loc": {
+						"start": {
+							"line": 6,
+							"column": 1
+						},
+						"end": {
+							"line": 6,
+							"column": 5
+						}
+					},
+					"expression": {
+						"type": "Identifier",
+						"start": 72,
+						"end": 75,
+						"loc": {
+							"start": {
+								"line": 6,
+								"column": 1
+							},
+							"end": {
+								"line": 6,
+								"column": 4
+							}
+						},
+						"name": "foo"
+					}
+				}
+			],
+			"sourceType": "module"
+		}
+	},
+	"module": {
+		"type": "Script",
+		"start": 0,
+		"end": 60,
+		"context": "module",
+		"content": {
+			"type": "Program",
+			"start": 23,
+			"end": 51,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "ExportNamedDeclaration",
+					"start": 25,
+					"end": 50,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 26
+						}
+					},
+					"declaration": {
+						"type": "VariableDeclaration",
+						"start": 32,
+						"end": 50,
+						"loc": {
+							"start": {
+								"line": 2,
+								"column": 8
+							},
+							"end": {
+								"line": 2,
+								"column": 26
+							}
+						},
+						"declarations": [
+							{
+								"type": "VariableDeclarator",
+								"start": 38,
+								"end": 49,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 14
+									},
+									"end": {
+										"line": 2,
+										"column": 25
+									}
+								},
+								"id": {
+									"type": "Identifier",
+									"start": 38,
+									"end": 41,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 14
+										},
+										"end": {
+											"line": 2,
+											"column": 17
+										}
+									},
+									"name": "foo"
+								},
+								"init": {
+									"type": "Literal",
+									"start": 44,
+									"end": 49,
+									"loc": {
+										"start": {
+											"line": 2,
+											"column": 20
+										},
+										"end": {
+											"line": 2,
+											"column": 25
+										}
+									},
+									"value": "bar",
+									"raw": "'bar'"
+								}
+							}
+						],
+						"kind": "const"
+					},
+					"specifiers": [],
+					"source": null
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

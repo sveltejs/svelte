@@ -70,6 +70,7 @@ export interface PreprocessorGroup {
 
 /**
  * Utility type to extract the type of a preprocessor from a preprocessor group
+ * @deprecated Create this utility type yourself instead
  */
 export interface SveltePreprocessor<
 	PreprocessorType extends keyof PreprocessorGroup,

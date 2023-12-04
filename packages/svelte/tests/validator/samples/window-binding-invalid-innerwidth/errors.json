@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-binding",
+		"message": "'innerwidth' is not a valid binding (did you mean 'innerWidth'?)",
+		"start": {
+			"line": 5,
+			"column": 15
+		},
+		"end": {
+			"line": 5,
+			"column": 34
+		}
+	}
+]

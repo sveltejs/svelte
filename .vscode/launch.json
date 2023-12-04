@@ -14,8 +14,14 @@
 			"name": "Playground: Server",
 			"outputCapture": "std",
 			"program": "start.js",
-			"cwd": "${workspaceFolder}/packages/playground",
+			"cwd": "${workspaceFolder}/playgrounds/demo",
 			"cascadeTerminateToConfigurations": ["Playground: Browser"]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run sandbox",
+			"program": "${workspaceFolder}/playgrounds/sandbox/run.js"
 		}
 	],
 	"compounds": [

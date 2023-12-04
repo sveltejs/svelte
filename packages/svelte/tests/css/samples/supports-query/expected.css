@@ -1,0 +1,5 @@
+	@supports (display: grid) {
+		.maybe-grid.svelte-xyz {
+			display: grid;
+		}
+	}

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "expected-token",
+		"message": "Expected token =",
+		"start": {
+			"line": 5,
+			"column": 9
+		},
+		"end": {
+			"line": 5,
+			"column": 9
+		}
+	}
+]

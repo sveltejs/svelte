@@ -65,7 +65,7 @@
 <style>
 	.examples-container {
 		position: relative;
-		height: calc(100vh - var(--sk-nav-height));
+		height: calc(100vh - var(--sk-nav-height) - var(--sk-banner-bottom-height));
 		overflow: hidden;
 		padding: 0 0 42px 0;
 		box-sizing: border-box;

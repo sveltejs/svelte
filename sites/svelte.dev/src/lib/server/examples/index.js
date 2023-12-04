@@ -25,6 +25,7 @@ export async function get_examples_data(base = CONTENT_BASE_PATHS.EXAMPLES) {
 	const examples = [];
 
 	for (const subdir of await readdir(base)) {
+		/** @type {import('./types').ExamplesDatum} */
 		const section = {
 			title: '', // Initialise with empty
 			slug: subdir.split('-').slice(1).join('-'),
@@ -51,13 +52,24 @@ export async function get_examples_data(base = CONTENT_BASE_PATHS.EXAMPLES) {
 				await readFile(`${example_base_dir}/meta.json`, 'utf-8')
 			).title;
 
+			/**
+			 * @type {Array<{
+			 *   name: string;
+			 *   type: string;
+			 *   content: string;
+			 * }>}
+			 */
 			const files = [];
 			for (const file of (await readdir(example_base_dir)).filter(
 				(file) => !file.endsWith('meta.json')
 			)) {
+				const type = file.split('.').at(-1);
+				if (!type) {
+					throw new Error(`Could not determine type from ${file}`);
+				}
 				files.push({
 					name: file,
-					type: file.split('.').at(-1),
+					type,
 					content: await readFile(`${example_base_dir}/${file}`, 'utf-8')
 				});
 			}

@@ -76,7 +76,7 @@ export async function get_docs_data(base = CONTENT_BASE_PATHS.DOCS) {
 				slug: page_slug,
 				content: page_content,
 				category: category_title,
-				sections: get_sections(page_content),
+				sections: await get_sections(page_content),
 				path: `${app_base}/docs/${page_slug}`,
 				file: `${category_dir}/${filename}`
 			});
@@ -99,19 +99,24 @@ export function get_docs_list(docs_data) {
 	}));
 }
 
-const titled = (str) =>
+/** @param {string} str */
+const titled = async (str) =>
 	removeMarkdown(
-		escape(markedTransform(str, { paragraph: (txt) => txt }))
+		escape(await markedTransform(str, { paragraph: (txt) => txt }))
 			.replace(/<\/?code>/g, '')
 			.replace(/&#39;/g, "'")
 			.replace(/&quot;/g, '"')
 			.replace(/&lt;/g, '<')
 			.replace(/&gt;/g, '>')
+			.replace(/&amp;/, '&')
 			.replace(/<(\/)?(em|b|strong|code)>/g, '')
 	);
 
-/** @param {string} markdown */
-function get_sections(markdown) {
+/**
+ * @param {string} markdown
+ * @returns {Promise<import('./types').Section[]>}
+ */
+export async function get_sections(markdown) {
 	const lines = markdown.split('\n');
 	const root = /** @type {import('./types').Section} */ ({
 		title: 'Root',
@@ -122,11 +127,11 @@ function get_sections(markdown) {
 	});
 	let currentNodes = [root];
 
-	lines.forEach((line) => {
+	for (const line of lines) {
 		const match = line.match(/^(#{2,4})\s(.*)/);
 		if (match) {
 			const level = match[1].length - 2;
-			const text = titled(match[2]);
+			const text = await titled(match[2]);
 			const slug = normalizeSlugify(text);
 
 			// Prepare new node
@@ -140,7 +145,9 @@ function get_sections(markdown) {
 			};
 
 			// Add the new node to the tree
-			currentNodes[level].sections.push(newNode);
+			const sections = currentNodes[level].sections;
+			if (!sections) throw new Error(`Could not find section ${level}`);
+			sections.push(newNode);
 
 			// Prepare for potential children of the new node
 			currentNodes = currentNodes.slice(0, level + 1);
@@ -149,7 +156,7 @@ function get_sections(markdown) {
 			// Add non-heading line to the text of the current section
 			currentNodes[currentNodes.length - 1].text += line + '\n';
 		}
-	});
+	}
 
-	return root.sections;
+	return /** @type {import('./types').Section[]} */ (root.sections);
 }

@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-css-global-selector",
+		"message": ":global(...) must contain exactly one selector",
+		"start": {
+			"line": 2,
+			"column": 5
+		},
+		"end": {
+			"line": 2,
+			"column": 24
+		}
+	}
+]

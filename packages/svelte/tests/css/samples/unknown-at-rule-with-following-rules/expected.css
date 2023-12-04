@@ -1,0 +1,7 @@
+	div.svelte-xyz {
+		@apply --funky-div;
+	}
+
+	/* (empty) div.svelte-xyz {
+
+	}*/

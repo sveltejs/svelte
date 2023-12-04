@@ -1,0 +1,14 @@
+[
+	{
+		"code": "illegal-global",
+		"message": "$ is an illegal variable name. To reference a global variable called $, use globalThis.$",
+		"start": {
+			"line": 2,
+			"column": 1
+		},
+		"end": {
+			"line": 2,
+			"column": 2
+		}
+	}
+]

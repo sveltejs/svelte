@@ -1,0 +1,6 @@
+	.match.svelte-xyz > .svelte-xyz ~ .svelte-xyz {
+		margin-left: 4px;
+	}
+	/* (unused) .not-match > * ~ * {
+		margin-left: 4px;
+	}*/

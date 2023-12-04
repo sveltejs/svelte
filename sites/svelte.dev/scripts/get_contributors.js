@@ -65,7 +65,9 @@ try {
 	await sprite
 		.quality(80)
 		.writeAsync(
-			new URL(`../src/routes/_components/Supporters/contributors.jpg`, import.meta.url).pathname
+			fileURLToPath(
+				new URL(`../src/routes/_components/Supporters/contributors.jpg`, import.meta.url)
+			)
 		);
 
 	const str = `[\n\t${authors.map((a) => `'${a.login}'`).join(',\n\t')}\n]`;

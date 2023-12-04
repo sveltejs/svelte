@@ -34,7 +34,7 @@
 	.posts {
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 1em;
-		min-height: calc(100vh - var(--sk-nav-height));
+		min-height: calc(100vh - var(--sk-nav-height) - var(--sk-banner-bottom-height));
 		padding: var(--sk-page-padding-top) var(--sk-page-padding-side) 6rem var(--sk-page-padding-side);
 		max-width: var(--sk-page-main-width);
 		margin: 0 auto;

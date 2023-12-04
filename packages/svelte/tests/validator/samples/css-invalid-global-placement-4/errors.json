@@ -1,0 +1,14 @@
+[
+	{
+		"code": "invalid-css-global-selector-list",
+		"message": ":global(...) cannot be used to modify a selector, or be modified by another selector",
+		"start": {
+			"line": 2,
+			"column": 5
+		},
+		"end": {
+			"line": 2,
+			"column": 17
+		}
+	}
+]

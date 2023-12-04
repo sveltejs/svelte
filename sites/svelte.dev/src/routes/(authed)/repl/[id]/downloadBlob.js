@@ -1,3 +1,7 @@
+/**
+ * @param {Blob} blob
+ * @param {string} filename
+ */
 export default (blob, filename) => {
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement('a');
