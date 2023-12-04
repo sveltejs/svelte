@@ -2453,7 +2453,7 @@ export const template_visitors = {
 			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
 		}
 
-		context.state.init.push(b.function_declaration(node.expression, args, body));
+		context.state.init.push(b.const(node.expression, b.arrow(args, body)));
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 		}
