@@ -19,7 +19,7 @@ const is_frozen = Object.isFrozen;
  * @returns {Proxy<U> | U}
  */
 export function readonly(value) {
-	const proxy = value[READONLY_SYMBOL];
+	const proxy = value && value[READONLY_SYMBOL];
 	if (proxy) return proxy;
 
 	if (
