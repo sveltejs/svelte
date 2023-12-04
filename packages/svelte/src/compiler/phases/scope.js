@@ -375,7 +375,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(child, state.scope);
 					visit(child);
 				} else if (child.type === 'SnippetBlock') {
-					visit(child);
+					visit(child, { scope });
 				} else {
 					visit(child, { scope });
 				}
