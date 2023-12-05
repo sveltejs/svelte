@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit';
 
+// This server route is used by all Svelte sites to load info about which banner to show.
+// site-kit contains components/helpers to make fetching+displaying them easier.
 export const GET = async () => {
 	return json(
 		/** @satisfies {Awaited<ReturnType<typeof import('@sveltejs/site-kit/components').fetchBanner>>} */ ([
