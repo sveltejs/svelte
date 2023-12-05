@@ -1,6 +1,7 @@
 <script>
 	import { Icon } from '@sveltejs/site-kit/components';
 	import SvelteLogotype from './svelte-logotype.svg';
+
 	// @ts-ignore
 	import MachineDesktop from './svelte-machine-desktop.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
 	// @ts-ignore
