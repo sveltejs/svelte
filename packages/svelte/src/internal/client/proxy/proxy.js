@@ -54,7 +54,7 @@ export function proxy(value) {
  * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
  * @returns {Record<string | symbol, any>}
  */
-export function unwrap(value, already_unwrapped = new Map()) {
+function unwrap(value, already_unwrapped = new Map()) {
 	if (typeof value === 'object' && value != null && !is_frozen(value) && STATE_SYMBOL in value) {
 		const unwrapped = already_unwrapped.get(value);
 		if (unwrapped !== undefined) {
