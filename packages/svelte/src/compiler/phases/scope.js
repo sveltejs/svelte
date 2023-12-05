@@ -73,7 +73,13 @@ export class Scope {
 			error(node, 'invalid-dollar-binding');
 		}
 
-		if (node.name.startsWith('$') && declaration_kind !== 'synthetic' && this.function_depth <= 1) {
+		if (
+			node.name.startsWith('$') &&
+			declaration_kind !== 'synthetic' &&
+			declaration_kind !== 'param' &&
+			declaration_kind !== 'rest_param' &&
+			this.function_depth <= 1
+		) {
 			error(node, 'invalid-dollar-prefix');
 		}
 
