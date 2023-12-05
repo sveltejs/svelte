@@ -6,6 +6,7 @@ const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today,
 const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
+const REGEX_NTH_OF = /^(even|odd|(-?[0-9]?n?(\s*\+\s*[0-9]+)?))(\s+of\s+)?/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
@@ -234,6 +235,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 			if (parser.eat('(')) {
 				args = read_selector_list(parser, true);
 				parser.eat(')', true);
+			} else if (name === 'global') {
+				error(parser.index, 'invalid-css-global-selector');
 			}
 
 			children.push({
@@ -288,6 +291,13 @@ function read_selector(parser, inside_pseudo_class = false) {
 			children.push({
 				type: 'Percentage',
 				value: /** @type {string} */ (parser.read(REGEX_PERCENTAGE)),
+				start,
+				end: parser.index
+			});
+		} else if (parser.match_regex(REGEX_NTH_OF)) {
+			children.push({
+				type: 'Nth',
+				value: /** @type {string} */ (parser.read(REGEX_NTH_OF)),
 				start,
 				end: parser.index
 			});

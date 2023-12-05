@@ -67,6 +67,11 @@ export interface Percentage extends BaseNode {
 	value: string;
 }
 
+export interface Nth extends BaseNode {
+	type: 'Nth';
+	value: string;
+}
+
 export type SimpleSelector =
 	| TypeSelector
 	| IdSelector
@@ -74,7 +79,8 @@ export type SimpleSelector =
 	| AttributeSelector
 	| PseudoElementSelector
 	| PseudoClassSelector
-	| Percentage;
+	| Percentage
+	| Nth;
 
 export interface Combinator extends BaseNode {
 	type: 'Combinator';
