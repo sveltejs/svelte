@@ -39,17 +39,15 @@ const parse = {
 	'invalid-script-context': () =>
 		`If the context attribute is supplied, its value must be "module"`,
 	'invalid-elseif': () => `'elseif' should be 'else if'`,
-	/**
-	 * @param {string} child
-	 * @param {string} parent
-	 */
-	'invalid-block-parent': (child, parent) =>
-		`Expected to close ${parent} before seeing ${child} block`,
+	'invalid-continuing-block-placement': () =>
+		`{:...} block is invalid at this position (did you forget to close the preceeding element or block?)`,
 	/**
 	 * @param {string} child
 	 * @param {string} parent
 	 */
 	'invalid-block-missing-parent': (child, parent) => `${child} block must be a child of ${parent}`,
+	/** @param {string} name */
+	'duplicate-block-part': (name) => `${name} cannot appear more than once within a block`,
 	'expected-block-type': () => `Expected 'if', 'each', 'await', 'key' or 'snippet'`,
 	'expected-identifier': () => `Expected an identifier`,
 	'invalid-debug': () => `{@debug ...} arguments must be identifiers, not arbitrary expressions`,

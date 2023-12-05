@@ -2,8 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-then-placement',
-		message: 'Expected to close <li> tag before seeing {:then} block',
-		position: [26, 26]
+		code: 'invalid-continuing-block-placement',
+		message:
+			'{:...} block is invalid at this position (did you forget to close the preceeding element or block?)',
+		position: [21, 21]
 	}
 });
