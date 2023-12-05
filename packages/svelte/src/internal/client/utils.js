@@ -2,6 +2,9 @@
 // to de-opt (this occurs often when using popular extensions).
 export var is_array = Array.isArray;
 export var array_from = Array.from;
+export var object_keys = Object.keys;
+export var object_entries = Object.entries;
+export var object_assign = Object.assign;
 export var define_property = Object.defineProperty;
 export var get_descriptor = Object.getOwnPropertyDescriptor;
 export var get_descriptors = Object.getOwnPropertyDescriptors;

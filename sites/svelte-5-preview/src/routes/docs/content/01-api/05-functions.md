@@ -22,3 +22,22 @@ To prevent something from being treated as an `$effect`/`$derived` dependency, u
 	});
 </script>
 ```
+
+## `unstate`
+
+To remove reactivity from objects and arrays created with `$state`, use `unstate`:
+
+```svelte
+<script>
+	import { unstate } from 'svelte';
+
+	let counter = $state({ count: 0 });
+
+	$effect(() => {
+		// Will log { count: 0 }
+		console.log(unstate(counter));
+	});
+</script>
+```
+
+This is handy when you want to pass some state to an external library or API that doesn't expect a reactive object – such as `structuredClone`.
