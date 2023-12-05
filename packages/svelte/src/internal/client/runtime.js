@@ -1875,3 +1875,22 @@ export function unwrap(value) {
 	// @ts-ignore
 	return value;
 }
+
+if (DEV) {
+	/** @param {string} rune */
+	function throw_rune_error(rune) {
+		if (!(rune in globalThis)) {
+			// @ts-ignore
+			globalThis[rune] = () => {
+				// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
+				throw new Error(`${rune} is only available inside .svelte and .svelte.js/ts files`);
+			};
+		}
+	}
+
+	throw_rune_error('$state');
+	throw_rune_error('$effect');
+	throw_rune_error('$derived');
+	throw_rune_error('$inspect');
+	throw_rune_error('$props');
+}
