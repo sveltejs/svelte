@@ -11,7 +11,7 @@ export const default_files = [
 				}
 			</script>
 
-			<button on:click={increment}>
+			<button onclick={increment}>
 				clicks: {count}
 			</button>
 		`

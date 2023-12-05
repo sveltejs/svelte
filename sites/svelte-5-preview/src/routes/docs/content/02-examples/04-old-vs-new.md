@@ -27,7 +27,8 @@ The `$state`, `$derived` and `$effect` runes replace magic `let` declarations, `
 +	});
 </script>
 
-<button on:click={() => count++}>
+-<button on:click={() => count++}>
++<button onclick={() => count++}>
 	{count} / {double}
 </button>
 ```
@@ -56,8 +57,10 @@ In runes mode, dependencies are tracked at _run time_. `sum` will be recalculate
 	}
 </script>
 
-<button on:click={() => a++}>a++</button>
-<button on:click={() => b++}>b++</button>
+-<button on:click={() => a++}>a++</button>
+-<button on:click={() => b++}>b++</button>
++<button onclick={() => a++}>a++</button>
++<button onclick={() => b++}>b++</button>
 <p>{a} + {b} = {sum}</p>
 ```
 
@@ -88,8 +91,10 @@ In non-runes mode, we 'hide' the dependency from the compiler by excluding it fr
 	}
 </script>
 
-<button on:click={() => a++}>a++</button>
-<button on:click={() => b++}>b++</button>
+-<button on:click={() => a++}>a++</button>
+-<button on:click={() => b++}>b++</button>
++<button onclick={() => a++}>a++</button>
++<button onclick={() => b++}>b++</button>
 <p>{a} + {b} = {sum}</p>
 ```
 
@@ -130,7 +135,7 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 `beforeUpdate`, and its equally troublesome counterpart `afterUpdate`, will be deprecated in Svelte 5.
 
 - [Before](/#H4sIAAAAAAAAE31WXa_bNgz9K6yL1QmWOLlrC-w6H8MeBgwY9tY9NfdBtmlbiywZkpyPBfnvo2zLcZK28AWuRPGI5OGhkEuQc4EmiL9eAskqDOLg97oOZoE9125jDigs0t6oRqfOsjap5rXd7uTO8qpW2sIFEsyVxn_qjFmcAcstar-xPN3DFXKtKgi768IVgQku0ELj3Lgs_kZjWIEGNpAzYXDlHWyJFZI1zJjeh4O5uvl_DY8oUkVeVoFuJKYls-_CGYS25Aboj0EtWNqel0wWoBoLTGZgmdgDS9zW4Uz4NsrswPHoyutN4xInkylstnBxdmIhh8m7xzqmoNE2Wq46n1RJQzEbq4g-JQSl7e-HDx-GdaTy3KD9E3lRWvj5Zu9QX1QN20dj7zyHz8s-1S6lW7Cpz3RnXTcm04hIlfdFuO8p2mQ5-3a06cqjrn559bF_2NHOnRZ5I1PLlXQNyQT-hedMHeUEDyjtdMxsa4n2eIbNhlTwhyRthaOKOmYtniwF6pwt0wXa6MBEg0OibZec27gz_dk3UrZ6hB2LLYoiv521Yd8Gt-foTrfhiCDP0lC9VUUhcDLU49Xe_9943cNvEArHfAjxeBTovvXiNpFynfEDpIIZs9kFbg52QbeNHWZzebz32s7xHco3nJAJl1nshmhz8dYOQJDyZetnbb2gTWe-vEeWlrfpZMavr56ldb29eNt6UXvgwgFbp_WC0tl2RK25rGk6lYz3nUI2lzvBXGHhPZPGWmKUXFNBKqdaW259wl_aHbiqoVIZdpE60Nax6IOujT0LbFFxIVTCxCRR2XloUcYNvSbnGHKBp763jHoj59xiZWJI0Wm0P_m3MSS985xkasn-cFq20xTDy3J5KFcjgUTD69BHdcHIjz431z28IqlxGcPSfdFnrGDZn6gD6lyo45zyHAD-btczf-98nhQxHEvKfeUtOVkSejD3q-9X7JbzjGtsdUxlKdFU8qGsT78uaw848syWMXz85Waq2Gnem4mAn3prweq4q6Y3JEpnqMmnPoFRgmd3ySW0LLRqSKlwYHriCvJvUs2yjMaaoA-XzTXLeGMe45zmhv_XAno3Mj0xF7USuqNvnE9H343QHlq-eAgxpbTPNR9yzUkgLjwSR0NK4wKoxy-jDg-9vy8sUSToakzW-9fX13Em9Q8T6Z26uZhBN36XUYo5q7ggLXBZoub2Ofv7g6GCZfTxe034NCjiudXj7Omla0eTfo7QBPOcYxbE7qG-vl3_B1G-_i_JCAAA)
-- [After](/#H4sIAAAAAAAAE31WXa-jNhD9K7PsdknUQJLurtRLPqo-VKrU1327uQ8GBnBjbGSb5KZR_nvHgMlXtyIS9njO-MyZGZRzUHCBJkhez4FkNQZJ8HvTBLPAnhq3MQcUFmlvVKszZ1mbTPPGbndyZ3ndKG3hDJZne7hAoVUNYY8JV-RBPgIt2AprhA18MpZZnIQ50_twuvLHNRrDSjRXj9fwiCJTBLIKdCsxq5j9EM4gtBU3QD8GjWBZd14xWYJqLTCZg2ViDyx1W4cz4dv0hsiB49FRHkyfsCgws3GjcTKZwmYLZ2feWc9o1W8zJQ2Fb62i5JUQRNRHgs-fx3WsisKg_RN5WVn4-WrvUd9VA9tH4-AcwbfFQIpkLWByvWzqSe2sk3kyjUlOec_XPU-3TRaz_75tuvKoi19e3OvipSpamVmupJM2F_gXnnJ1lBM8oLQjHceys8R7PMFms4HwD2lRhzeEe-EsvluSrHe2TJdo4wMTLY48XKwPzm0KGm2r5ajFtRYU4TWOY7-ddWHfxhDP0QkQhnf5PWRnVVkKnIx8fZsOb5dR16nwG4TCCRdCMphWQ7z1_DoOcp3zA2SCGbPZBa5jd0G_TRxmc36Me-mG6A7l60XIlMs8ce2-OXtrDyBItdz6qVjPadObzx-RZdV1nJjx64tXad1sz962njceOHfAzmk9JzrbXqg1lw3NkZLJvu-AzfmuIS4w955pay0pSq6ZoCalXDttPeHv3Q5c1lCrHPubetDWqegvXRt7EtihklKolIlJqvLTWKKcG5r7UwKFwPehtoxqIyNusTYJZOh6cDj5uzXUWqeI2tCS_eG06oYhgeVicahWNw0Sj8M93OouIz963FgO8JpajcsEFu6Jv2ENi-FEHVAXQh0j4jkCfGxXMx83itIygWNF3FfeUpAlpU_bfvXjjN0yyrnGro8pLSXaWj6k9fXXReMBR57bKoEvv1xNNXuPBjMJ8NNgLVmT9NkMhlTpHDX5NO9glOD5HbmUlqVWLXUqHJieuIT8J6Vhec4lZbN8CBZplvPWPN7zHhn-TwcY3Mj0pFzctdCdfLd8evmugg7QaukhpJTSnmsxci2oQdz1SBqNlG4ToBovbyo81v4-sVRRQ9e3Yn18eXm5ZdL8L5HBqZ-LGfTjd76hWLCaC-oFLivU3D6zvz8YM1jEX35UhK9jRzyX-pY9fem60aT_AjTBvOCYB4nVLV7eLv8CKAV_uEYIAAA=)
+- [After](/#H4sIAAAAAAAAE31WXa-jNhD9K7PsdknUQJLurtRLPqo-VKrU1327uQ8GBnBjbGSb5KZR_nvHgMlXtyIS9njO-MyZGZRzUHCBJkhez4FkNQZJ8HvTBLPAnhq3MQcUFmlvVKszZ1mbTPPGbndyZ3ndKG3hDJZne7hAoVUNYY8JV-RBPgIt2AprhA18MpZZnIQ50_twuvLHNRrDSjRXj9fwiCJTBLIKdCsxq5j9EM4gtBU3QD8GjWBZd14xWYJqLTCZg2ViDyx1W4cz4dv0hsiB49FRHkyfsCgws3GjcTKZwmYLZ2feWc9o1W8zJQ2Fb62i5JUQRNRHgs-fx3WsisKg_RN5WVn4-WrvUd9VA9tH4-AcwbfFQIpkLWByvWzqSe2sk3kyjUlOec_XPU-3TRaz_75tuvKoi19e3OvipSpamVmupJM2F_gXnnJ1lBM8oLQjHceys8R7PMFms4HwD2lRhzeEe-EsvluSrHe2TJdo4wMTLY48XKwPzm0KGm2r5ajFtRYU4TWOY7-ddWHfxhDP0QkQhnf5PWRnVVkKnIx8fZsOb5dR16nwG4TCCRdCMphWQ7z1_DoOcp3zA2SCGbPZBa5jd0G_TRxmc36Me-mG6A7l60XIlMs8ce2-OXtrDyBItdz6qVjPadObzx-RZdV1nJjx64tXad1sz962njceOHfAzmk9JzrbXqg1lw3NkZL7vgE257t-uMDcO6attSSokpmgFqVMO2U93e_dDlzOUKsc-3t6zNZp6K9cG3sS2KGSUqiUiUmq8tNYoJwbmvpTAoXA96GyjCojI26xNglk6DpwOPm7NdRYp4ia0JL94bTqRiGB5WJxqFY37RGPoz3c6i4jP3rcUA7wmhqNywQW7om_YQ2L4UQdUBdCHSPiOQJ8bFcxHzeK0jKBY0XcV95SkCWlD9t-9eOM3TLKucauiyktJdpaPqT19ddF4wFHntsqgS-_XE01e48GMwnw02AtWZP02QyGVOkcNfk072CU4PkduZSWpVYt9SkcmJ64hPwHpWF5ziVls3wIFmmW89Y83vMeGf5PBxjcyPSkXNy10J18t3x6-a6CDtBq6SGklNKeazFyLahB3PVIGo2UbhOgGi9vKjzW_j6xVFFD17difXx5ebll0vwvkcGpn4sZ9MN3vqFYsJoL6gUuK9TcPrO_PxgzWMRfflSEr2NHPJf6lj1957rRpH8CNMG84JgHidUtXt4u_wK21LXERAgAAA==)
 
 ```diff
 <script>
@@ -183,9 +188,11 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 		{/each}
 	</div>
 
-	<input on:keydown={handleKeydown} />
+-	<input on:keydown={handleKeydown} />
++	<input onkeydown={handleKeydown} />
 
-	<button on:click={toggle}>
+-	<button on:click={toggle}>
++	<button onclick={toggle}>
 		Toggle dark mode
 	</button>
 </div>
