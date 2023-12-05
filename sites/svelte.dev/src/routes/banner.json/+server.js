@@ -18,7 +18,7 @@ export const GET = async () => {
 			{
 				id: 'advent2023-finished',
 				start: new Date('25 Dec, 2023 00:00:00 UTC'),
-				end: new Date('15 Jan, 2024 23:59:59 UTC'),
+				end: new Date('1 Jan, 2024 00:00:00 UTC'),
 				arrow: true,
 				content: 'Svelte Advent 2023 is over. See you next year!',
 				href: 'https://advent.sveltesociety.dev/'
