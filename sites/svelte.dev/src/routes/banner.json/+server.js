@@ -16,7 +16,7 @@ export const GET = async () => {
 
 			// This one skips the blog post and just changes the link
 			{
-				id: 'after-runes',
+				id: 'advent2023-finished',
 				start: new Date('25 Dec, 2023 00:00:00 UTC'),
 				end: new Date('15 Jan, 2024 23:59:59 UTC'),
 				arrow: true,
