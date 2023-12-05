@@ -139,22 +139,33 @@ const handler = {
 			target[READONLY_SYMBOL] = value;
 			return true;
 		}
-
 		const metadata = target[STATE_SYMBOL];
-
 		const s = metadata.s.get(prop);
 		if (s !== undefined) set(s, proxy(value));
+		const is_array = metadata.a;
+		const not_has = !(prop in target);
 
-		if (metadata.a && prop === 'length') {
+		if (is_array && prop === 'length') {
 			for (let i = value; i < target.length; i += 1) {
 				const s = metadata.s.get(i + '');
 				if (s !== undefined) set(s, UNINITIALIZED);
 			}
 		}
-
-		if (!(prop in target)) increment(metadata.v);
+		if (not_has) {
+			increment(metadata.v);
+		}
 		// @ts-ignore
 		target[prop] = value;
+
+		// If we have mutated an array directly, we might need to
+		// signal that length has also changed too.
+		if (is_array && not_has) {
+			const ls = metadata.s.get('length');
+			const length = target.length;
+			if (ls !== undefined && ls.v !== length) {
+				set(ls, length);
+			}
+		}
 
 		return true;
 	},
