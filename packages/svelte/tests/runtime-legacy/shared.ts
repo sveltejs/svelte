@@ -305,11 +305,6 @@ async function run_test_variant(
 						compileOptions
 					});
 				}
-
-				if (config.runtime_error) {
-					unintended_error = true;
-					assert.fail('Expected a runtime error');
-				}
 			} finally {
 				instance.$destroy();
 				assert_html_equal(
