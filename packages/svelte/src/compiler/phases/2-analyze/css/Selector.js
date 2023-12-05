@@ -306,7 +306,7 @@ function block_might_apply_to_node(block, node) {
 	while (i--) {
 		const selector = block.selectors[i];
 
-		if (selector.type === 'Percentage') continue;
+		if (selector.type === 'Percentage' || selector.type === 'Nth') continue;
 
 		const name = selector.name.replace(regex_backslash_and_following_character, '$1');
 
