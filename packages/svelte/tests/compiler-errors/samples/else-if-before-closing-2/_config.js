@@ -2,8 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-elseif-placement',
-		message: 'Expected to close <p> tag before seeing {:else if ...} block',
-		position: [25, 25]
+		code: 'invalid-continuing-block-placement',
+		message:
+			'{:...} block is invalid at this position (did you forget to close the preceeding element or block?)',
+		position: [17, 17]
 	}
 });

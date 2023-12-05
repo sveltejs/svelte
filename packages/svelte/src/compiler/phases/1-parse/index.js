@@ -77,8 +77,10 @@ export class Parser {
 			const current = this.current();
 
 			if (current.type === 'RegularElement') {
+				current.end = current.start + 1;
 				error(current, 'unclosed-element', current.name);
 			} else {
+				current.end = current.start + 1;
 				error(current, 'unclosed-block');
 			}
 		}
@@ -145,7 +147,7 @@ export class Parser {
 
 		if (required) {
 			if (this.index === this.template.length) {
-				error(this.index, 'unexpected-eof');
+				error(this.index, 'unexpected-eof', str);
 			} else {
 				error(this.index, 'expected-token', str);
 			}

@@ -65,11 +65,23 @@ function validate_element(node, context) {
 				error(attribute, 'invalid-attribute-name', attribute.name);
 			}
 
-			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
-				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
-			} else if (attribute.name === 'slot') {
+			if (attribute.name.startsWith('on') && attribute.name.length > 2) {
+				if (
+					attribute.value === true ||
+					is_text_attribute(attribute) ||
+					attribute.value.length > 1
+				) {
+					error(attribute, 'invalid-event-attribute-value');
+				}
+			}
+
+			if (attribute.name === 'slot') {
 				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | import('#compiler').Component | import('#compiler').SvelteComponent | import('#compiler').SvelteSelf | undefined} */
 				validate_slot_attribute(context, attribute);
+			}
+
+			if (attribute.name === 'is' && context.state.options.namespace !== 'foreign') {
+				warn(context.state.analysis.warnings, attribute, context.path, 'avoid-is');
 			}
 		} else if (attribute.type === 'AnimateDirective') {
 			const parent = context.path.at(-2);
@@ -316,13 +328,6 @@ function is_tag_valid_with_parent(tag, parent_tag) {
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
 export const validation = {
-	Attribute(node) {
-		if (node.name.startsWith('on') && node.name.length > 2) {
-			if (node.value === true || is_text_attribute(node) || node.value.length > 1) {
-				error(node, 'invalid-event-attribute-value');
-			}
-		}
-	},
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 

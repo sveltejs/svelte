@@ -1,7 +1,8 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { get_descriptors, is_array } from './utils.js';
+import { get_descriptor, get_descriptors, is_array } from './utils.js';
+import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE } from '../../constants.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -30,8 +31,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
-// Used for exposing signals
-let is_signal_exposed = false;
+
 // Handle effect queues
 
 /** @type {import('./types.js').EffectSignal[]} */
@@ -63,8 +63,6 @@ export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
 
-/** @type {null | import('./types.js').Signal} */
-let current_captured_signal = null;
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the consumer.
 let current_skip_consumer = false;
@@ -801,23 +799,6 @@ export function unsubscribe_on_destroy(stores) {
 }
 
 /**
- * Wraps a function and marks execution context so that the last signal read from can be captured
- * using the `expose` function.
- * @template V
- * @param {() => V} fn
- * @returns {V}
- */
-export function exposable(fn) {
-	const previous_is_signal_exposed = is_signal_exposed;
-	try {
-		is_signal_exposed = true;
-		return fn();
-	} finally {
-		is_signal_exposed = previous_is_signal_exposed;
-	}
-}
-
-/**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @returns {V}
@@ -834,10 +815,6 @@ export function get(signal) {
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
-	}
-
-	if (is_signal_exposed && current_should_capture_signal) {
-		current_captured_signal = signal;
 	}
 
 	if (is_signals_recorded) {
@@ -904,31 +881,6 @@ export function set(signal, value) {
  */
 export function set_sync(signal, value) {
 	flushSync(() => set(signal, value));
-}
-
-/**
- * Invokes a function and captures the last signal that is read during the invocation
- * if that signal is read within the `exposable` function context.
- * If a signal is captured, it returns the signal instead of the read value.
- * @template V
- * @param {() => V} possible_signal_fn
- * @returns {any}
- */
-export function expose(possible_signal_fn) {
-	const previous_captured_signal = current_captured_signal;
-	const previous_should_capture_signal = current_should_capture_signal;
-	current_captured_signal = null;
-	current_should_capture_signal = true;
-	try {
-		const value = possible_signal_fn();
-		if (current_captured_signal === null) {
-			return value;
-		}
-		return current_captured_signal;
-	} finally {
-		current_captured_signal = previous_captured_signal;
-		current_should_capture_signal = previous_should_capture_signal;
-	}
 }
 
 /**
@@ -1463,34 +1415,18 @@ export function is_store(val) {
  * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
- * @param {boolean} immutable
+ * @param {number} flags
  * @param {V | (() => V)} [default_value]
- * @param {boolean} [call_default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, immutable, default_value, call_default_value) {
+export function prop_source(props_obj, key, flags, default_value) {
+	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
+	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
-		expose(() => props[key])
-	);
-	const update_bound_prop = Object.getOwnPropertyDescriptor(props, key)?.set;
+	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
 	const should_set_default_value = value === undefined && default_value !== undefined;
-
-	if (
-		is_signal(possible_signal) &&
-		possible_signal.v === value &&
-		update_bound_prop === undefined
-	) {
-		if (should_set_default_value) {
-			set(
-				possible_signal,
-				// @ts-expect-error would need a cumbersome method overload to type this
-				call_default_value ? default_value() : default_value
-			);
-		}
-		return possible_signal;
-	}
 
 	if (should_set_default_value) {
 		value =
@@ -1534,7 +1470,7 @@ export function prop_source(props_obj, key, immutable, default_value, call_defau
 		}
 	});
 
-	if (is_signal(possible_signal) && update_bound_prop !== undefined) {
+	if (update_bound_prop !== undefined) {
 		let ignore_first = !should_set_default_value;
 		sync_effect(() => {
 			// Before if to ensure signal dependency is registered
@@ -1548,11 +1484,9 @@ export function prop_source(props_obj, key, immutable, default_value, call_defau
 				return;
 			}
 
-			if (not_equal(immutable, propagating_value, possible_signal.v)) {
-				ignore_next1 = true;
-				did_update_to_defined = true;
-				untrack(() => update_bound_prop(propagating_value));
-			}
+			ignore_next1 = true;
+			did_update_to_defined = true;
+			untrack(() => update_bound_prop(propagating_value));
 		});
 	}
 

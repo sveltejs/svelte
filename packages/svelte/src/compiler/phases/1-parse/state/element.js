@@ -202,11 +202,13 @@ export default function tag(parser) {
 
 	let attribute;
 	while ((attribute = read(parser))) {
-		if (
-			(attribute.type === 'Attribute' || attribute.type === 'BindDirective') &&
-			unique_names.includes(attribute.name)
-		) {
-			error(attribute.start, 'duplicate-attribute');
+		if (attribute.type === 'Attribute' || attribute.type === 'BindDirective') {
+			if (unique_names.includes(attribute.name)) {
+				error(attribute.start, 'duplicate-attribute');
+				// <svelte:element bind:this this=..> is allowed
+			} else if (attribute.name !== 'this') {
+				unique_names.push(attribute.name);
+			}
 		}
 
 		element.attributes.push(attribute);
@@ -635,13 +637,14 @@ function read_attribute_value(parser) {
 			'in attribute value'
 		);
 	} catch (/** @type {any} e */ e) {
-		if (e.code === 'parse-error') {
+		if (e.code === 'js-parse-error') {
 			// if the attribute value didn't close + self-closing tag
 			// eg: `<Component test={{a:1} />`
 			// acorn may throw a `Unterminated regular expression` because of `/>`
-			if (parser.template.slice(e.pos - 1, e.pos + 1) === '/>') {
-				parser.index = e.pos;
-				error(e.pos, 'unclosed-attribute-value', quote_mark || '}');
+			const pos = e.position?.[0];
+			if (pos !== undefined && parser.template.slice(pos - 1, pos + 1) === '/>') {
+				parser.index = pos;
+				error(pos, 'unclosed-attribute-value', quote_mark || '}');
 			}
 		}
 		throw e;

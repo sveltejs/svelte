@@ -24,9 +24,11 @@ const internal = {
 const parse = {
 	/** @param {string} name */
 	'unclosed-element': (name) => `<${name}> was left open`,
-	'unclosed-block': () => `block was left open`,
+	'unclosed-block': () => `Block was left open`,
 	'unexpected-block-close': () => `Unexpected block closing tag`,
-	'unexpected-eof': () => `Unexpected end of input`,
+	/** @param {string} [expected]  */
+	'unexpected-eof': (expected) =>
+		`Unexpected end of input` + (expected ? ` (expected ${expected})` : ''),
 	/** @param {string} message */
 	'js-parse-error': (message) => message,
 	/** @param {string} token */
@@ -39,17 +41,15 @@ const parse = {
 	'invalid-script-context': () =>
 		`If the context attribute is supplied, its value must be "module"`,
 	'invalid-elseif': () => `'elseif' should be 'else if'`,
-	/**
-	 * @param {string} child
-	 * @param {string} parent
-	 */
-	'invalid-block-parent': (child, parent) =>
-		`Expected to close ${parent} before seeing ${child} block`,
+	'invalid-continuing-block-placement': () =>
+		`{:...} block is invalid at this position (did you forget to close the preceeding element or block?)`,
 	/**
 	 * @param {string} child
 	 * @param {string} parent
 	 */
 	'invalid-block-missing-parent': (child, parent) => `${child} block must be a child of ${parent}`,
+	/** @param {string} name */
+	'duplicate-block-part': (name) => `${name} cannot appear more than once within a block`,
 	'expected-block-type': () => `Expected 'if', 'each', 'await', 'key' or 'snippet'`,
 	'expected-identifier': () => `Expected an identifier`,
 	'invalid-debug': () => `{@debug ...} arguments must be identifiers, not arbitrary expressions`,
@@ -98,12 +98,9 @@ const css = {
 	'invalid-css-empty-declaration': () => `Declaration cannot be empty`,
 	'invalid-css-global-placement': () =>
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
-
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
-
 	'invalid-css-global-selector-list': () =>
 		`:global(...) cannot be used to modify a selector, or be modified by another selector`,
-
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
 };
