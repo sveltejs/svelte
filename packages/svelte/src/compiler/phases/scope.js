@@ -4,7 +4,7 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
-import { Runes } from './constants.js';
+import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -133,7 +133,8 @@ export class Scope {
 		while (
 			this.references.has(name) ||
 			this.declarations.has(name) ||
-			this.root.conflicts.has(name)
+			this.root.conflicts.has(name) ||
+			JsKeywords.includes(name)
 		) {
 			name = `${preferred_name}_${n++}`;
 		}
