@@ -235,5 +235,4 @@ export const JsKeywords = [
 	'instanceof',
 	'return',
 	'this'
-]
-
+];
