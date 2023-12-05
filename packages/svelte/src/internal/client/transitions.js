@@ -177,9 +177,12 @@ class TickAnimation {
 	}
 
 	cancel() {
-		const t = this.#reversed ? 1 : 0;
 		active_tick_animations.delete(this);
-		this.#tick_fn(t, 1 - t);
+		const current = this.#current / this.#duration;
+		if (current > 0 && current < 1) {
+			const t = this.#reversed ? 1 : 0;
+			this.#tick_fn(t, 1 - t);
+		}
 	}
 
 	finish() {
@@ -322,7 +325,7 @@ function create_transition(dom, init, direction, effect) {
 
 		animation.onfinish = () => {
 			const is_outro = curr_direction === 'out';
-			/** @type {Animation | TickAnimation} */ (animation).pause();
+			/** @type {Animation | TickAnimation} */ (animation).cancel();
 			if (is_outro) {
 				run_all(subs);
 				subs = [];
