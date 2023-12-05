@@ -45,26 +45,28 @@ This is handy when you want to pass some state to an external library or API tha
 For classes that might contain `$state`, the `UNSTATE_SYMBOL` can be imported and applied as a class method to enable deep unwrapped of reactive state
 through class components:
 
-```js
-import { unstate, UNSTATE_SYMBOL } from 'svelte';
+```svelte
+<script>
+	import { unstate, UNSTATE_SYMBOL } from 'svelte';
 
-class Collection {
-	#items = $state([]);
+	class Collection {
+		#items = $state([]);
 
-	add(item) {
-		this.#items.push(item);
+		add(item) {
+			this.#items.push(item);
+		}
+
+		[UNSTATE_SYMBOL]() {
+			return { items: unstate(this.#items) };
+		}
 	}
 
-	[UNSTATE_SYMBOL]() {
-		return { items: unstate(this.#items) };
-	}
-}
+	const collection = new Collection();
+	collection.add('Hello world');
 
-const collection = new Collection();
-collection.add('Hello world');
-
-// Will log { items: ['Hello world'] }
-console.log(unstate(collection));
+	// Will log { items: ['Hello world'] }
+	console.log(unstate(collection));
+</script>
 ```
 
 > Note that `unstate` will return a new object from the input when removing reactivity. If the object passed isn't reactive, it will be returned as is.
