@@ -109,7 +109,7 @@ export const javascript_visitors_runes = {
 									'set',
 									definition.key,
 									[value],
-									[b.stmt(b.call('$.set', b.call('$.proxy', member), value))]
+									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
 								)
 							);
 						}
