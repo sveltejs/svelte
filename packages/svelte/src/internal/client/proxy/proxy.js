@@ -21,7 +21,6 @@ import { READONLY_SYMBOL } from './readonly.js';
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
 export const STATE_SYMBOL = Symbol('$state');
-export const UNSTATE_SYMBOL = Symbol('unstate');
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;
@@ -56,43 +55,35 @@ export function proxy(value) {
  * @returns {Record<string | symbol, any>}
  */
 function unwrap(value, already_unwrapped = new Map()) {
-	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+	if (typeof value === 'object' && value != null && !is_frozen(value) && STATE_SYMBOL in value) {
 		const unwrapped = already_unwrapped.get(value);
 		if (unwrapped !== undefined) {
 			return unwrapped;
 		}
-		if (STATE_SYMBOL in value) {
-			if (is_array(value)) {
-				/** @type {Record<string | symbol, any>} */
-				const array = [];
-				already_unwrapped.set(value, array);
-				for (const element of value) {
-					array.push(unwrap(element, already_unwrapped));
-				}
-				return array;
-			} else {
-				/** @type {Record<string | symbol, any>} */
-				const obj = {};
-				const keys = object_keys(value);
-				const descriptors = get_descriptors(value);
-				already_unwrapped.set(value, obj);
-				for (const key of keys) {
-					if (descriptors[key].get) {
-						define_property(obj, key, descriptors[key]);
-					} else {
-						/** @type {T} */
-						const property = value[key];
-						obj[key] = unwrap(property, already_unwrapped);
-					}
-				}
-				return obj;
+		if (is_array(value)) {
+			/** @type {Record<string | symbol, any>} */
+			const array = [];
+			already_unwrapped.set(value, array);
+			for (const element of value) {
+				array.push(unwrap(element, already_unwrapped));
 			}
-		}
-		const unstate_fn = /** @type {undefined | ((this: StateObject) => T)} */ (
-			value[UNSTATE_SYMBOL]
-		);
-		if (typeof unstate_fn === 'function') {
-			return unstate_fn.call(value);
+			return array;
+		} else {
+			/** @type {Record<string | symbol, any>} */
+			const obj = {};
+			const keys = object_keys(value);
+			const descriptors = get_descriptors(value);
+			already_unwrapped.set(value, obj);
+			for (const key of keys) {
+				if (descriptors[key].get) {
+					define_property(obj, key, descriptors[key]);
+				} else {
+					/** @type {T} */
+					const property = value[key];
+					obj[key] = unwrap(property, already_unwrapped);
+				}
+			}
+			return obj;
 		}
 	}
 	return value;
