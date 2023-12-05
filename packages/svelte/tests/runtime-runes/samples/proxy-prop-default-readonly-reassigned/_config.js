@@ -9,10 +9,11 @@ export default test({
 
 	async test({ assert, target }) {
 		const btn = target.querySelector('button');
+
 		await btn?.click();
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 1</button>`);
 
-		assert.htmlEqual(target.innerHTML, `<button>clicks: 0</button>`);
-	},
-
-	runtime_error: 'Props cannot be mutated, unless used with `bind:`'
+		await btn?.click();
+		assert.htmlEqual(target.innerHTML, `<button>clicks: 2</button>`);
+	}
 });
