@@ -41,3 +41,5 @@ To remove reactivity from objects and arrays created with `$state`, use `unstate
 ```
 
 This is handy when you want to pass some state to an external library or API that doesn't expect a reactive object – such as `structuredClone`.
+
+> Note that `unstate` will return a new object from the input when removing reactivity. If the object passed isn't reactive, it will be returned as is.
