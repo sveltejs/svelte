@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { rollup } from 'rollup';
 import virtual from '@rollup/plugin-virtual';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
@@ -27,6 +28,9 @@ for (const key in pkg.exports) {
 			plugins: [
 				virtual({
 					__entry__: `import ${JSON.stringify(resolved)}`
+				}),
+				nodeResolve({
+					exportConditions: ['production', 'import', 'browser', 'default']
 				})
 			],
 			onwarn: (warning, handle) => {
@@ -40,15 +44,8 @@ for (const key in pkg.exports) {
 			throw new Error('errr what');
 		}
 
-		const code = output[0].code
-			.replace(/import\s+([^'"]+from\s+)?(['"])[^'"]+\2\s*;?/, '')
-			.replace(/\r\n/g, '\n')
-			.trim();
-		if (
-			code !== '' &&
-			// See runtime.js code
-			!(code.startsWith('if (DEV) {') && code.endsWith("throw_rune_error('$props');\n}"))
-		) {
+		const code = output[0].code;
+		if (code.trim()) {
 			// eslint-disable-next-line no-console
 			console.error(code);
 			// eslint-disable-next-line no-console
