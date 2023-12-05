@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unclosed-comment',
-		message: 'comment was left open, expected -->',
+		code: 'unexpected-eof',
+		message: 'Unexpected end of input (expected -->)',
 		position: [24, 24]
 	}
 });

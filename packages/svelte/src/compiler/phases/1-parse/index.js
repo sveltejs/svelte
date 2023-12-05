@@ -147,7 +147,7 @@ export class Parser {
 
 		if (required) {
 			if (this.index === this.template.length) {
-				error(this.index, 'unexpected-eof');
+				error(this.index, 'unexpected-eof', str);
 			} else {
 				error(this.index, 'expected-token', str);
 			}

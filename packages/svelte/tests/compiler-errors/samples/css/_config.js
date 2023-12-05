@@ -3,7 +3,7 @@ import { test } from '../../test';
 export default test({
 	error: {
 		code: 'invalid-css-identifier',
-		message: '"{" is expected',
-		position: [24, 24]
+		message: 'Expected a valid CSS identifier',
+		position: [25, 25]
 	}
 });

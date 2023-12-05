@@ -235,6 +235,8 @@ function read_selector(parser, inside_pseudo_class = false) {
 			if (parser.eat('(')) {
 				args = read_selector_list(parser, true);
 				parser.eat(')', true);
+			} else if (name === 'global') {
+				error(parser.index, 'invalid-css-global-selector');
 			}
 
 			children.push({

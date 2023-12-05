@@ -26,7 +26,9 @@ const parse = {
 	'unclosed-element': (name) => `<${name}> was left open`,
 	'unclosed-block': () => `Block was left open`,
 	'unexpected-block-close': () => `Unexpected block closing tag`,
-	'unexpected-eof': () => `Unexpected end of input`,
+	/** @param {string} [expected]  */
+	'unexpected-eof': (expected) =>
+		`Unexpected end of input` + (expected ? ` (expected ${expected})` : ''),
 	/** @param {string} message */
 	'js-parse-error': (message) => message,
 	/** @param {string} token */
@@ -96,12 +98,9 @@ const css = {
 	'invalid-css-empty-declaration': () => `Declaration cannot be empty`,
 	'invalid-css-global-placement': () =>
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
-
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
-
 	'invalid-css-global-selector-list': () =>
 		`:global(...) cannot be used to modify a selector, or be modified by another selector`,
-
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
 };
