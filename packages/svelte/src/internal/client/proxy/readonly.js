@@ -44,7 +44,7 @@ export function readonly(value) {
 
 /** @returns {never} */
 const readonly_error = () => {
-	throw new Error(`Props are read-only, unless used with \`bind:\``);
+	throw new Error(`Props cannot be mutated, unless used with \`bind:\``);
 };
 
 /** @type {ProxyHandler<StateObject<any>>} */

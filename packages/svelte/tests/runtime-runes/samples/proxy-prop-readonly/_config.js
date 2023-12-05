@@ -14,5 +14,5 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 0</button>`);
 	},
 
-	runtime_error: 'Props are read-only, unless used with `bind:`'
+	runtime_error: 'Props cannot be mutated, unless used with `bind:`'
 });
