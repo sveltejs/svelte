@@ -795,32 +795,17 @@ function serialize_inline_component(node, component_name, context) {
 				push_prop(
 					b.get(attribute.name, [
 						b.return(
-							b.call(
-								'$.exposable',
-								b.thunk(
-									/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
-								)
-							)
+							/** @type {import('estree').Expression} */ (context.visit(attribute.expression))
 						)
 					])
 				);
-				// If the binding is just a reference to a top level state variable
-				// we don't need a setter as the inner component can write to the signal directly
-				const binding =
-					attribute.expression.type !== 'Identifier'
-						? null
-						: context.state.scope.get(attribute.expression.name);
-				if (
-					binding === null ||
-					(binding.kind !== 'state' && binding.kind !== 'prop' && binding.kind !== 'rest_prop')
-				) {
-					const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
-					push_prop(
-						b.set(attribute.name, [
-							b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
-						])
-					);
-				}
+
+				const assignment = b.assignment('=', attribute.expression, b.id('$$value'));
+				push_prop(
+					b.set(attribute.name, [
+						b.stmt(serialize_set_binding(assignment, context, () => context.visit(assignment)))
+					])
+				);
 			}
 		}
 	}

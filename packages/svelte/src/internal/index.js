@@ -4,8 +4,6 @@ export {
 	set,
 	set_sync,
 	invalidate_inner_signals,
-	expose,
-	exposable,
 	source,
 	mutable_source,
 	derived,
