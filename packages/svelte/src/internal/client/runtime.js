@@ -3,6 +3,7 @@ import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
+import { readonly } from './proxy/readonly.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1437,6 +1438,10 @@ export function prop_source(props_obj, key, flags, default_value) {
 		value =
 			// @ts-expect-error would need a cumbersome method overload to type this
 			call_default_value ? default_value() : default_value;
+
+		if (DEV && immutable) {
+			value = readonly(/** @type {any} */ (value));
+		}
 	}
 
 	const source_signal = immutable ? source(value) : mutable_source(value);
