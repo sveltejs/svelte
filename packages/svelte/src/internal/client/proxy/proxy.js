@@ -6,7 +6,8 @@ import {
 	increment,
 	source,
 	updating_derived,
-	UNINITIALIZED
+	UNINITIALIZED,
+	mutable_source
 } from '../runtime.js';
 import {
 	define_property,
@@ -17,7 +18,7 @@ import {
 } from '../utils.js';
 import { READONLY_SYMBOL } from './readonly.js';
 
-/** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean }} Metadata */
+/** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean, i: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
 export const STATE_SYMBOL = Symbol('$state');
@@ -32,13 +33,13 @@ const is_frozen = Object.isFrozen;
  * @param {T} value
  * @returns {T}
  */
-export function proxy(value) {
+export function proxy(value, immutable = true) {
 	if (typeof value === 'object' && value != null && !is_frozen(value) && !(STATE_SYMBOL in value)) {
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
-			define_property(value, STATE_SYMBOL, { value: init(value), writable: false });
+			define_property(value, STATE_SYMBOL, { value: init(value, immutable), writable: false });
 
 			// @ts-expect-error not sure how to fix this
 			return new Proxy(value, handler);
@@ -100,13 +101,15 @@ export function unstate(value) {
 
 /**
  * @param {StateObject} value
+ * @param {boolean} immutable
  * @returns {Metadata}
  */
-function init(value) {
+function init(value, immutable) {
 	return {
 		s: new Map(),
 		v: source(0),
-		a: is_array(value)
+		a: is_array(value),
+		i: immutable
 	};
 }
 
@@ -117,7 +120,7 @@ const handler = {
 			const metadata = target[STATE_SYMBOL];
 
 			const s = metadata.s.get(prop);
-			if (s !== undefined) set(s, proxy(descriptor.value));
+			if (s !== undefined) set(s, proxy(descriptor.value, metadata.i));
 		}
 
 		return Reflect.defineProperty(target, prop, descriptor);
@@ -147,7 +150,7 @@ const handler = {
 			(effect_active() || updating_derived) &&
 			(!(prop in target) || get_descriptor(target, prop)?.writable)
 		) {
-			s = source(proxy(target[prop]));
+			s = (metadata.i ? source : mutable_source)(proxy(target[prop], metadata.i));
 			metadata.s.set(prop, s);
 		}
 
@@ -179,7 +182,9 @@ const handler = {
 		let s = metadata.s.get(prop);
 		if (s !== undefined || (effect_active() && (!has || get_descriptor(target, prop)?.writable))) {
 			if (s === undefined) {
-				s = source(has ? proxy(target[prop]) : UNINITIALIZED);
+				s = (metadata.i ? source : mutable_source)(
+					has ? proxy(target[prop], metadata.i) : UNINITIALIZED
+				);
 				metadata.s.set(prop, s);
 			}
 			const value = get(s);
@@ -197,7 +202,7 @@ const handler = {
 		}
 		const metadata = target[STATE_SYMBOL];
 		const s = metadata.s.get(prop);
-		if (s !== undefined) set(s, proxy(value));
+		if (s !== undefined) set(s, proxy(value, metadata.i));
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 

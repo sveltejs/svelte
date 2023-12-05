@@ -62,6 +62,7 @@ import {
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
+import { STATE_SYMBOL, proxy } from './proxy/proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -2539,17 +2540,21 @@ export function rest_props(props_signal, rest) {
 	return derived(() => {
 		var props = unwrap(props_signal);
 
+		const metadata = props[STATE_SYMBOL];
+		if (metadata) get(metadata.v);
+
 		/** @type {Record<string, unknown>} */
 		var rest_props = {};
 
-		for (var key in props) {
+		for (const key in props) {
 			if (rest.includes(key)) continue;
 
-			const { get, value, enumerable } = /** @type {PropertyDescriptor} */ (
-				get_descriptor(props, key)
-			);
+			const { enumerable } = /** @type {PropertyDescriptor} */ (get_descriptor(props, key));
 
-			define_property(rest_props, key, get ? { get, enumerable } : { value, enumerable });
+			define_property(rest_props, key, {
+				get: () => props[key],
+				enumerable
+			});
 		}
 
 		return rest_props;
@@ -2616,73 +2621,14 @@ export function spread_props(props) {
  * @returns {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }}
  */
 export function createRoot(component, options) {
-	// The following definitions aren't duplicative. We need _sources to update single props and
-	// _props in case the component uses $$props / $$restProps / const { x, ...rest } = $props().
-	/** @type {any} */
-	const _props = {};
-	/** @type {any} */
-	const _sources = {};
+	const props = proxy(/** @type {any} */ (options.props) || {}, false);
 
-	/**
-	 * @param {string} name
-	 * @param {any} value
-	 */
-	function add_prop(name, value) {
-		const prop = source(value);
-		_sources[name] = prop;
-		define_property(_props, name, {
-			get() {
-				return get(prop);
-			},
-			enumerable: true
-		});
-	}
-
-	for (const prop in options.props || {}) {
-		add_prop(
-			prop,
-			// @ts-expect-error TS doesn't understand this properly
-			options.props[prop]
-		);
-	}
-
-	// The proxy ensures that we can add new signals on the fly when a prop signal is accessed from within the component
-	// but no corresponding prop value was set from the outside. The whole things becomes a _propsSignal
-	// so that adding new props is reflected in the component if it uses $$props or $$restProps.
-	const props_proxy = new Proxy(_props, {
-		/**
-		 * @param {any} target
-		 * @param {any} property
-		 */
-		get: (target, property) => {
-			if (typeof property !== 'string') return target[property];
-			if (!(property in _sources)) {
-				add_prop(property, undefined);
-			}
-			return _props[property];
-		}
-	});
-
-	// We're resetting the same proxy instance for updates, therefore bypass equality checks
-	const props_source = mutable_source(props_proxy);
-
-	let [accessors, $destroy] = mount(component, {
-		...options,
-		// @ts-expect-error We hide the "the props object could be a signal" fact from the public typings
-		props: props_source
-	});
+	let [accessors, $destroy] = mount(component, { ...options, props });
 
 	const result =
 		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
-			$set: (props) => {
-				for (const [prop, value] of object_entries(props)) {
-					if (prop in _sources) {
-						set(_sources[prop], value);
-					} else {
-						add_prop(prop, value);
-						set(props_source, props_proxy);
-					}
-				}
+			$set: (next) => {
+				object_assign(props, next);
 			},
 			$destroy
 		});

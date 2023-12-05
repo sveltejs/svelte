@@ -4,6 +4,7 @@ import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
+import { STATE_SYMBOL } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1425,6 +1426,10 @@ export function prop_source(props_obj, key, flags, default_value) {
 	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	const runes = (flags & PROPS_IS_RUNES) !== 0;
 
+	if (is_signal(props_obj)) {
+		// throw new Error('nope');
+	}
+
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
@@ -1457,6 +1462,10 @@ export function prop_source(props_obj, key, flags, default_value) {
 	let mount = true;
 	sync_effect(() => {
 		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
+
+		const metadata = props[STATE_SYMBOL];
+		if (metadata) get(metadata.v);
+
 		// Before if to ensure signal dependency is registered
 		const propagating_value = props[key];
 		if (mount) {
