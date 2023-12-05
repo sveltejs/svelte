@@ -1,7 +1,11 @@
 import * as b from '../../../utils/builders.js';
 import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
-import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE } from '../../../../constants.js';
+import {
+	PROPS_CALL_DEFAULT_VALUE,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES
+} from '../../../../constants.js';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -367,6 +371,10 @@ export function get_props_method(binding, state, name, default_value) {
 
 		if (state.analysis.immutable) {
 			flags |= PROPS_IS_IMMUTABLE;
+		}
+
+		if (state.analysis.runes) {
+			flags |= PROPS_IS_RUNES;
 		}
 
 		if (default_value) {
