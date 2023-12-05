@@ -10,7 +10,6 @@ export default test({
 		readonly:
 		readonlyWithDefault: 1
 		binding:
-		bindingWithDefault: 1
 	</p>
 	<button>set bindings to 5</button>
 	<button>set bindings to undefined</button>
@@ -20,27 +19,24 @@ export default test({
 		readonly: 0
 		readonlyWithDefault: 0
 		binding: 0
-		bindingWithDefault: 0
 	</p>
 	<button>set bindings to 5</button>
 	<button>set bindings to undefined</button>
-	
+
 	<p>bindings undefined:</p>
 	<p>
 		readonly:
 		readonlyWithDefault: 1
 		binding:
-		bindingWithDefault: 1
 	</p>
 	<button>set bindings to 5</button>
 	<button>set bindings to undefined</button>
-	
+
 	<p>bindings defined:</p>
 	<p>
 		readonly: 0
 		readonlyWithDefault: 0
 		binding: 0
-		bindingWithDefault: 0
 	</p>
 	<button>set bindings to 5</button>
 	<button>set bindings to undefined</button>
@@ -50,19 +46,13 @@ export default test({
 		readonly_undefined:
 		readonlyWithDefault_undefined:
 		binding_undefined:
-		bindingWithDefault_undefined:
 		readonly_defined: 0
 		readonlyWithDefault_defined: 0
 		binding_defined: 0
-		bindingWithDefault_defined: 0
 		bind_readonly_undefined:
-		bind_readonlyWithDefault_undefined: 1
 		bind_binding_undefined:
-		bind_bindingWithDefault_undefined: 1
 		bind_readonly_defined: 0
-		bind_readonlyWithDefault_defined: 0
 		bind_binding_defined: 0
-		bind_bindingWithDefault_defined: 0
 	</p>
 
 	<button>set everything to 10</button>
@@ -93,64 +83,54 @@ export default test({
 			`
 			<p>props undefined:</p>
 			<p>
-				readonly: 
+				readonly:
 				readonlyWithDefault: 1
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>props defined:</p>
 			<p>
 				readonly: 0
 				readonlyWithDefault: 0
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings undefined:</p>
 			<p>
 				readonly:
 				readonlyWithDefault: 1
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings defined:</p>
 			<p>
 				readonly: 0
 				readonlyWithDefault: 0
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>
 				Main:
 				readonly_undefined:
 				readonlyWithDefault_undefined:
 				binding_undefined:
-				bindingWithDefault_undefined:
 				readonly_defined: 0
 				readonlyWithDefault_defined: 0
 				binding_defined: 0
-				bindingWithDefault_defined: 0
 				bind_readonly_undefined:
-				bind_readonlyWithDefault_undefined: 1
 				bind_binding_undefined:
-				bind_bindingWithDefault_undefined:
 				bind_readonly_defined: 0
-				bind_readonlyWithDefault_defined: 0
 				bind_binding_defined:
-				bind_bindingWithDefault_defined:
 			</p>
-		
+
 			<button>set everything to 10</button>
 			<button>set everything to undefined</button>
 		`
@@ -169,61 +149,51 @@ export default test({
 				readonly:
 				readonlyWithDefault: 1
 				binding: 5
-				bindingWithDefault: 5
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>props defined:</p>
 			<p>
 				readonly: 0
 				readonlyWithDefault: 0
 				binding: 5
-				bindingWithDefault: 5
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings undefined:</p>
 			<p>
 				readonly:
 				readonlyWithDefault: 1
 				binding: 5
-				bindingWithDefault: 5
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings defined:</p>
 			<p>
 				readonly: 0
 				readonlyWithDefault: 0
 				binding: 5
-				bindingWithDefault: 5
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>
 				Main:
 				readonly_undefined:
 				readonlyWithDefault_undefined:
 				binding_undefined:
-				bindingWithDefault_undefined:
 				readonly_defined: 0
 				readonlyWithDefault_defined: 0
 				binding_defined: 0
-				bindingWithDefault_defined: 0
 				bind_readonly_undefined:
-				bind_readonlyWithDefault_undefined: 1
 				bind_binding_undefined: 5
-				bind_bindingWithDefault_undefined: 5
 				bind_readonly_defined: 0
-				bind_readonlyWithDefault_defined: 0
 				bind_binding_defined: 5
-				bind_bindingWithDefault_defined: 5
 			</p>
-		
+
 			<button>set everything to 10</button>
 			<button>set everything to undefined</button>
 		`
@@ -239,61 +209,51 @@ export default test({
 				readonly: 10
 				readonlyWithDefault: 10
 				binding: 10
-				bindingWithDefault: 10
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>props defined:</p>
 			<p>
 				readonly: 10
 				readonlyWithDefault: 10
 				binding: 10
-				bindingWithDefault: 10
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings undefined:</p>
 			<p>
 				readonly: 10
 				readonlyWithDefault: 10
 				binding: 10
-				bindingWithDefault: 10
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings defined:</p>
 			<p>
 				readonly: 10
 				readonlyWithDefault: 10
 				binding: 10
-				bindingWithDefault: 10
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>
 				Main:
 				readonly_undefined: 10
 				readonlyWithDefault_undefined: 10
 				binding_undefined: 10
-				bindingWithDefault_undefined: 10
 				readonly_defined: 10
 				readonlyWithDefault_defined: 10
 				binding_defined: 10
-				bindingWithDefault_defined: 10
 				bind_readonly_undefined: 10
-				bind_readonlyWithDefault_undefined: 10
 				bind_binding_undefined: 10
-				bind_bindingWithDefault_undefined: 10
 				bind_readonly_defined: 10
-				bind_readonlyWithDefault_defined: 10
 				bind_binding_defined: 10
-				bind_bindingWithDefault_defined: 10
 			</p>
-		
+
 			<button>set everything to 10</button>
 			<button>set everything to undefined</button>
 		`
@@ -309,61 +269,51 @@ export default test({
 				readonly:
 				readonlyWithDefault:
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>props defined:</p>
 			<p>
 				readonly:
 				readonlyWithDefault:
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings undefined:</p>
 			<p>
 				readonly:
 				readonlyWithDefault:
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-			
+
 			<p>bindings defined:</p>
 			<p>
 				readonly:
 				readonlyWithDefault:
 				binding:
-				bindingWithDefault:
 			</p>
 			<button>set bindings to 5</button>
 			<button>set bindings to undefined</button>
-		
+
 			<p>
 				Main:
 				readonly_undefined:
 				readonlyWithDefault_undefined:
 				binding_undefined:
-				bindingWithDefault_undefined:
 				readonly_defined:
 				readonlyWithDefault_defined:
 				binding_defined:
-				bindingWithDefault_defined:
 				bind_readonly_undefined:
-				bind_readonlyWithDefault_undefined:
 				bind_binding_undefined:
-				bind_bindingWithDefault_undefined:
 				bind_readonly_defined:
-				bind_readonlyWithDefault_defined:
 				bind_binding_defined:
-				bind_bindingWithDefault_defined:
 			</p>
-		
+
 			<button>set everything to 10</button>
 			<button>set everything to undefined</button>
 		`

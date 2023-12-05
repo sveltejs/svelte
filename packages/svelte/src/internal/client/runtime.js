@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
-import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE } from '../../constants.js';
+import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1427,6 +1427,11 @@ export function prop_source(props_obj, key, flags, default_value) {
 	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
 	const should_set_default_value = value === undefined && default_value !== undefined;
+
+	if (update_bound_prop && default_value !== undefined && (flags & PROPS_IS_RUNES) !== 0) {
+		// TODO consolidate all these random runtime errors
+		throw new Error('Cannot use fallback values with bind:');
+	}
 
 	if (should_set_default_value) {
 		value =
