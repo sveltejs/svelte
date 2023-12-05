@@ -262,5 +262,6 @@ export {
 	tick,
 	untrack,
 	unstate,
-	onDestroy
+	onDestroy,
+	UNSTATE_SYMBOL
 } from '../internal/index.js';
