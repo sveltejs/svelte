@@ -188,8 +188,8 @@ importers:
         specifier: ^1.27.6
         version: 1.27.6(svelte@packages+svelte)(vite@4.5.0)
       '@sveltejs/site-kit':
-        specifier: 6.0.0-next.52
-        version: 6.0.0-next.52(@sveltejs/kit@1.27.6)(svelte@packages+svelte)
+        specifier: 6.0.0-next.53
+        version: 6.0.0-next.53(@sveltejs/kit@1.27.6)(svelte@packages+svelte)
       '@types/cookie':
         specifier: ^0.6.0
         version: 0.6.0
@@ -1835,8 +1835,8 @@ packages:
       svelte-local-storage-store: 0.4.0(svelte@packages+svelte)
     dev: false
 
-  /@sveltejs/site-kit@6.0.0-next.52(@sveltejs/kit@1.27.6)(svelte@packages+svelte):
-    resolution: {integrity: sha512-r/VoVllvrr9So9LcYT7XRXDK38Q6Fx062gosuTkDztENBw+qGp3hMq1vg9qSomJastmavRzze1cjJnQFgacWMw==}
+  /@sveltejs/site-kit@6.0.0-next.53(@sveltejs/kit@1.27.6)(svelte@packages+svelte):
+    resolution: {integrity: sha512-TWfM9YqfWfK0NIVLORWDMN9hGSbtPZf80ktnLK2tyn8uRlbnhDAPd6YufdvS4VA3vmwAJGY68GyqOIuqD7JJMg==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.0
       svelte: ^4.0.0
@@ -1844,7 +1844,7 @@ packages:
       '@sveltejs/kit': 1.27.6(svelte@packages+svelte)(vite@4.5.0)
       esm-env: 1.0.0
       svelte: link:packages/svelte
-      svelte-local-storage-store: 0.6.0(svelte@packages+svelte)
+      svelte-local-storage-store: 0.6.4(svelte@packages+svelte)
     dev: true
 
   /@sveltejs/vite-plugin-svelte-inspector@1.0.4(@sveltejs/vite-plugin-svelte@2.5.3)(svelte@packages+svelte)(vite@4.5.0):
@@ -5961,11 +5961,11 @@ packages:
       svelte: link:packages/svelte
     dev: false
 
-  /svelte-local-storage-store@0.6.0(svelte@packages+svelte):
-    resolution: {integrity: sha512-UbCY/yT/YUadU5IX/gZkoRQnA+ebFZHKKQjlJvfWHnBj3CPe9sNn8ndxYz/xy4LUzGjuBLq8+wH5RYK54ba3wA==}
+  /svelte-local-storage-store@0.6.4(svelte@packages+svelte):
+    resolution: {integrity: sha512-45WoY2vSGPQM1sIQJ9jTkPPj20hYeqm+af6mUGRFSPP5WglZf36YYoZqwmZZ8Dt/2SU8lem+BTA8/Z/8TkqNLg==}
     engines: {node: '>=0.14'}
     peerDependencies:
-      svelte: ^3.48.0 || ^4.0.0
+      svelte: ^3.48.0 || >4.0.0
     dependencies:
       svelte: link:packages/svelte
     dev: true
