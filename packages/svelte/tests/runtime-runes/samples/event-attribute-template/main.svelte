@@ -1,5 +1,5 @@
 <script>
-	const {log = []} = $props();
+	import { log } from './log.js';
 
 	function send() {
 		log.push("onclick")

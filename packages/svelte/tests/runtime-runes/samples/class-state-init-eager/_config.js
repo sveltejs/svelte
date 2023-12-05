@@ -1,9 +1,14 @@
 import { test } from '../../test';
+import { log } from './log.js';
 
 export default test({
 	html: `<button>0</button>`,
 
-	async test({ assert, target, component }) {
+	before_test() {
+		log.length = 0;
+	},
+
+	async test({ assert, target }) {
 		const btn = target.querySelector('button');
 
 		await btn?.click();
@@ -12,6 +17,6 @@ export default test({
 		await btn?.click();
 		assert.htmlEqual(target.innerHTML, `<button>2</button>`);
 
-		assert.deepEqual(component.log, [100]);
+		assert.deepEqual(log, [100]);
 	}
 });
