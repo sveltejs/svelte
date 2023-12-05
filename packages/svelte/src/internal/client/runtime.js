@@ -2,6 +2,7 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptors, is_array } from './utils.js';
+import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE } from '../../constants.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1463,12 +1464,14 @@ export function is_store(val) {
  * @template V
  * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
  * @param {string} key
- * @param {boolean} immutable
+ * @param {number} flags
  * @param {V | (() => V)} [default_value]
- * @param {boolean} [call_default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, immutable, default_value, call_default_value) {
+export function prop_source(props_obj, key, flags, default_value) {
+	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
+	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
 		expose(() => props[key])

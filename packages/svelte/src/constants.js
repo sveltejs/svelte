@@ -5,6 +5,9 @@ export const EACH_IS_CONTROLLED = 1 << 3;
 export const EACH_IS_ANIMATED = 1 << 4;
 export const EACH_IS_IMMUTABLE = 1 << 6;
 
+export const PROPS_IS_IMMUTABLE = 1;
+export const PROPS_CALL_DEFAULT_VALUE = 1 << 1;
+
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
 	'beforeinput',

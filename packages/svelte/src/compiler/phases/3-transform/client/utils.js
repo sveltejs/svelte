@@ -1,6 +1,7 @@
 import * as b from '../../../utils/builders.js';
 import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
+import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE } from '../../../../constants.js';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -359,29 +360,43 @@ export function get_props_method(binding, state, name, default_value) {
 		(state.analysis.immutable ? binding.reassigned : binding.mutated);
 
 	if (needs_source) {
-		args.push(b.literal(state.analysis.immutable));
-	}
+		let flags = 0;
 
-	if (default_value) {
-		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
-		if (is_simple_expression(default_value)) {
-			args.push(default_value);
-		} else {
-			if (
-				default_value.type === 'CallExpression' &&
-				default_value.callee.type === 'Identifier' &&
-				default_value.arguments.length === 0
-			) {
-				args.push(default_value.callee);
-			} else {
-				args.push(b.thunk(default_value));
-			}
+		/** @type {import('estree').Expression | undefined} */
+		let arg;
 
-			args.push(b.true);
+		if (state.analysis.immutable) {
+			flags |= PROPS_IS_IMMUTABLE;
 		}
+
+		if (default_value) {
+			// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
+			if (is_simple_expression(default_value)) {
+				arg = default_value;
+			} else {
+				if (
+					default_value.type === 'CallExpression' &&
+					default_value.callee.type === 'Identifier' &&
+					default_value.arguments.length === 0
+				) {
+					arg = default_value.callee;
+				} else {
+					arg = b.thunk(default_value);
+				}
+
+				flags |= PROPS_CALL_DEFAULT_VALUE;
+			}
+		}
+
+		if (flags || arg) {
+			args.push(b.literal(flags));
+			if (arg) args.push(arg);
+		}
+
+		return b.call('$.prop_source', ...args);
 	}
 
-	return b.call(needs_source ? '$.prop_source' : '$.prop', ...args);
+	return b.call('$.prop', ...args);
 }
 
 /**
