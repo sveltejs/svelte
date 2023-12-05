@@ -34,7 +34,6 @@ import {
 	untrack,
 	effect,
 	flushSync,
-	expose,
 	safe_not_equal,
 	current_block,
 	source,
@@ -1193,10 +1192,7 @@ export function bind_prop(props, prop, value) {
 	/** @param {V | null} value */
 	const update = (value) => {
 		const current_props = unwrap(props);
-		const signal = expose(() => current_props[prop]);
-		if (is_signal(signal)) {
-			set(signal, value);
-		} else if (Object.getOwnPropertyDescriptor(current_props, prop)?.set !== undefined) {
+		if (get_descriptor(current_props, prop)?.set !== undefined) {
 			current_props[prop] = value;
 		}
 	};
