@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.18
+
+### Patch Changes
+
+- feat: proxied staet ([#9739](https://github.com/sveltejs/svelte/pull/9739))
+
+- chore: more validation errors ([#9723](https://github.com/sveltejs/svelte/pull/9723))
+
+- fix: allow duplicate snippet declaration names ([#9759](https://github.com/sveltejs/svelte/pull/9759))
+
+- fix: ensure computed props are cached with derived ([#9757](https://github.com/sveltejs/svelte/pull/9757))
+
+- fix: ensure event handlers containing arguments are not hoisted ([#9758](https://github.com/sveltejs/svelte/pull/9758))
+
 ## 5.0.0-next.17
 
 ### Patch Changes

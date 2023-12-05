@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 22,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 22,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
+						"type": "Spread",
 						"start": 5,
 						"end": 15,
-						"type": "Spread",
 						"expression": {
 							"type": "Identifier",
 							"start": 9,

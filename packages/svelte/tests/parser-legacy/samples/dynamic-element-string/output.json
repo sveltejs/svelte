@@ -1,30 +1,31 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 101,
-		"type": "Fragment",
 		"children": [
 			{
-				"start": 0,
-				"end": 44,
 				"type": "Element",
 				"name": "svelte:element",
+				"start": 0,
+				"end": 44,
+				"tag": "div",
 				"attributes": [],
-				"children": [],
-				"tag": "div"
+				"children": []
 			},
 			{
 				"type": "Text",
 				"start": 44,
 				"end": 45,
-				"data": "\n",
-				"raw": "\n"
+				"raw": "\n",
+				"data": "\n"
 			},
 			{
-				"start": 45,
-				"end": 101,
 				"type": "Element",
 				"name": "svelte:element",
+				"start": 45,
+				"end": 101,
+				"tag": "div",
 				"attributes": [
 					{
 						"type": "Attribute",
@@ -33,17 +34,16 @@
 						"name": "class",
 						"value": [
 							{
-								"type": "Text",
 								"start": 79,
 								"end": 82,
-								"data": "foo",
-								"raw": "foo"
+								"type": "Text",
+								"raw": "foo",
+								"data": "foo"
 							}
 						]
 					}
 				],
-				"children": [],
-				"tag": "div"
+				"children": []
 			}
 		]
 	}

@@ -168,17 +168,23 @@ function get_delegated_event(node, context) {
 
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
+		// Bail-out if the arguments keyword is used
+		if (reference === 'arguments') {
+			return non_hoistable;
+		}
 		const binding = scope.get(reference);
 
 		if (
 			binding !== null &&
-			// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
-			((!context.state.analysis.runes && binding.kind === 'each') ||
-				// or any normal not reactive bindings that are mutated.
-				binding.kind === 'normal' ||
-				// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-				(binding.kind === 'state' && binding.declaration_kind === 'import')) &&
-			binding.mutated
+			// Bail-out if the the binding is a rest param
+			(binding.declaration_kind === 'rest_param' ||
+				// Bail-out if we reference anything from the EachBlock (for now) that mutates in non-runes mode,
+				(((!context.state.analysis.runes && binding.kind === 'each') ||
+					// or any normal not reactive bindings that are mutated.
+					binding.kind === 'normal' ||
+					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
+					binding.kind === 'legacy_reactive_import') &&
+					binding.mutated))
 		) {
 			return non_hoistable;
 		}
@@ -215,20 +221,13 @@ export function analyze_module(ast, options) {
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
 
-	// If we are in runes mode, then check for possible misuses of state runes
-	for (const [, scope] of scopes) {
-		for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-not-mutated', name);
-			}
-		}
-	}
-
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
 		warnings,
-		accessors: false
+		accessors: false,
+		runes: true,
+		immutable: true
 	};
 }
 
@@ -309,6 +308,10 @@ export function analyze_component(root, options) {
 
 	const component_name = get_component_name(options.filename ?? 'Component');
 
+	const runes =
+		options.runes ??
+		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {import('../types.js').ComponentAnalysis} */
 	const analysis = {
@@ -325,11 +328,8 @@ export function analyze_component(root, options) {
 			component_name,
 			get_css_hash: options.cssHash
 		}),
-		runes:
-			options.runes ??
-			Array.from(module.scope.references).some(([name]) =>
-				Runes.includes(/** @type {any} */ (name))
-			),
+		runes,
+		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
 		uses_rest_props: false,
@@ -375,15 +375,6 @@ export function analyze_component(root, options) {
 				state,
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
-		}
-
-		// If we are in runes mode, then check for possible misuses of state runes
-		for (const [, scope] of instance.scopes) {
-			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-not-mutated', name);
-				}
-			}
 		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
@@ -547,7 +538,7 @@ const legacy_scope_tweaker = {
 						(state.reactive_statement || state.ast_type === 'template') &&
 						parent.type === 'MemberExpression'
 					) {
-						binding.kind = 'state';
+						binding.kind = 'legacy_reactive_import';
 					}
 				} else if (
 					binding.mutated &&

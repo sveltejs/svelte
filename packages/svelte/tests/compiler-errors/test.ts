@@ -56,6 +56,10 @@ const { test, run } = suite<CompilerErrorTest>((config, cwd) => {
 
 			expect(error.code).toMatch(config.error.code);
 			expect(error.message).toMatch(config.error.message);
+
+			if (config.error.position) {
+				expect(error.position).toEqual(config.error.position);
+			}
 		}
 
 		if (!caught_error) {

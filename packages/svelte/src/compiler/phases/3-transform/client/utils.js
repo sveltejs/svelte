@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 
 /**
@@ -67,19 +67,20 @@ export function serialize_get_binding(node, state) {
 
 	if (
 		binding.kind === 'prop' &&
-		!binding.mutated &&
+		!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
 		!binding.initial &&
 		!state.analysis.accessors
 	) {
 		return b.call(node);
 	}
 
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call('$$_import_' + node.name);
 	}
 
 	if (
-		binding.kind === 'state' ||
+		(binding.kind === 'state' &&
+			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'prop' ||
 		binding.kind === 'rest_prop' ||
@@ -99,7 +100,7 @@ export function serialize_get_binding(node, state) {
  * @returns {import('estree').Expression}
  */
 export function serialize_set_binding(node, context, fallback) {
-	const { state, visit, path } = context;
+	const { state, visit } = context;
 
 	if (
 		node.left.type === 'ArrayPattern' ||
@@ -152,7 +153,11 @@ export function serialize_set_binding(node, context, fallback) {
 		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
 			if (context.state.private_state.has(left.property.name) && !state.in_constructor) {
 				const value = get_assignment_value(node, context);
-				return b.call('$.set', left, value);
+				return b.call(
+					'$.set',
+					left,
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		}
 		// @ts-expect-error
@@ -171,7 +176,7 @@ export function serialize_set_binding(node, context, fallback) {
 		return binding.mutation(node, context);
 	}
 
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call(
 			'$$_import_' + binding.node.name,
 			b.assignment(
@@ -202,7 +207,11 @@ export function serialize_set_binding(node, context, fallback) {
 			if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
 			} else {
-				return b.call('$.set', b.id(left_name), value);
+				return b.call(
+					'$.set',
+					b.id(left_name),
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		} else {
 			if (is_store) {
@@ -216,7 +225,7 @@ export function serialize_set_binding(node, context, fallback) {
 					),
 					b.call('$' + left_name)
 				);
-			} else {
+			} else if (!state.analysis.runes) {
 				return b.call(
 					'$.mutate',
 					b.id(left_name),
@@ -225,6 +234,12 @@ export function serialize_set_binding(node, context, fallback) {
 						/** @type {import('estree').Pattern} */ (visit(node.left)),
 						value
 					)
+				);
+			} else {
+				return b.assignment(
+					node.operator,
+					/** @type {import('estree').Pattern} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right))
 				);
 			}
 		}
@@ -335,24 +350,38 @@ export function get_props_method(binding, state, name, default_value) {
 	/** @type {import('estree').Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
+	// Use $.prop_source in the following cases:
+	// - accessors/mutated: needs to be able to set the prop value from within
+	// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
+	const needs_source =
+		default_value ||
+		state.analysis.accessors ||
+		(state.analysis.immutable ? binding.reassigned : binding.mutated);
+
+	if (needs_source) {
+		args.push(b.literal(state.analysis.immutable));
+	}
+
 	if (default_value) {
 		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
-		if (default_value.type !== 'Literal' && default_value.type !== 'Identifier') {
-			args.push(b.thunk(default_value));
-			args.push(b.true);
-		} else {
+		if (is_simple_expression(default_value)) {
 			args.push(default_value);
-			args.push(b.false);
+		} else {
+			if (
+				default_value.type === 'CallExpression' &&
+				default_value.callee.type === 'Identifier' &&
+				default_value.arguments.length === 0
+			) {
+				args.push(default_value.callee);
+			} else {
+				args.push(b.thunk(default_value));
+			}
+
+			args.push(b.true);
 		}
 	}
 
-	return b.call(
-		// Use $.prop_source in the following cases:
-		// - accessors/mutated: needs to be able to set the prop value from within
-		// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
-		binding.mutated || binding.initial || state.analysis.accessors ? '$.prop_source' : '$.prop',
-		...args
-	);
+	return b.call(needs_source ? '$.prop_source' : '$.prop', ...args);
 }
 
 /**
@@ -364,7 +393,7 @@ export function get_props_method(binding, state, name, default_value) {
 export function create_state_declarators(declarator, scope, value) {
 	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.source', value))];
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -374,7 +403,25 @@ export function create_state_declarators(declarator, scope, value) {
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(path.node, binding?.kind === 'state' ? b.call('$.source', value) : value);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+			);
 		})
 	];
+}
+
+/** @param {import('estree').Expression} node */
+export function should_proxy(node) {
+	if (
+		!node ||
+		node.type === 'Literal' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression' ||
+		(node.type === 'Identifier' && node.name === 'undefined')
+	) {
+		return false;
+	}
+
+	return true;
 }

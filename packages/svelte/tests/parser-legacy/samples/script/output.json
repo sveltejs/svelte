@@ -1,34 +1,34 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 41,
 		"end": 63,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Text",
 				"start": 39,
 				"end": 41,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "Element",
 				"start": 41,
 				"end": 63,
-				"type": "Element",
 				"name": "h1",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Text",
 						"start": 45,
 						"end": 51,
-						"type": "Text",
 						"raw": "Hello ",
 						"data": "Hello "
 					},
 					{
+						"type": "MustacheTag",
 						"start": 51,
 						"end": 57,
-						"type": "MustacheTag",
 						"expression": {
 							"type": "Identifier",
 							"start": 52,
@@ -47,9 +47,9 @@
 						}
 					},
 					{
+						"type": "Text",
 						"start": 57,
 						"end": 58,
-						"type": "Text",
 						"raw": "!",
 						"data": "!"
 					}

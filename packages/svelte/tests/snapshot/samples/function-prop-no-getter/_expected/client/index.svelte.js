@@ -9,7 +9,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	let count = $.source(0);
 
 	function onmouseup() {
-		$.set(count, $.get(count) + 2);
+		$.set(count, $.proxy($.get(count) + 2));
 	}
 
 	/* Init */
@@ -17,7 +17,7 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	var node = $.child_frag(fragment);
 
 	Button(node, {
-		onmousedown: () => $.set(count, $.get(count) + 1),
+		onmousedown: () => $.set(count, $.proxy($.get(count) + 1)),
 		onmouseup,
 		children: ($$anchor, $$slotProps) => {
 			/* Init */

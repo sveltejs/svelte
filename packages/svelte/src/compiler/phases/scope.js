@@ -105,7 +105,8 @@ export class Scope {
 			is_called: false,
 			prop_alias: null,
 			expression: null,
-			mutation: null
+			mutation: null,
+			reassigned: false
 		};
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
@@ -255,7 +256,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	function add_params(scope, params) {
 		for (const param of params) {
 			for (const node of extract_identifiers(param)) {
-				scope.declare(node, 'normal', 'param');
+				scope.declare(node, 'normal', param.type === 'RestElement' ? 'rest_param' : 'param');
 			}
 		}
 	}
@@ -375,7 +376,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					scopes.set(child, state.scope);
 					visit(child);
 				} else if (child.type === 'SnippetBlock') {
-					visit(child);
+					visit(child, { scope });
 				} else {
 					visit(child, { scope });
 				}
@@ -632,7 +633,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		} else {
 			extract_identifiers(node).forEach((identifier) => {
 				const binding = scope.get(identifier.name);
-				if (binding) binding.mutated = true;
+				if (binding) {
+					binding.mutated = true;
+					binding.reassigned = true;
+				}
 			});
 		}
 	}

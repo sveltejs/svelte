@@ -237,6 +237,7 @@ export type DeclarationKind =
 	| 'function'
 	| 'import'
 	| 'param'
+	| 'rest_param'
 	| 'synthetic';
 
 export interface Binding {
@@ -250,6 +251,7 @@ export interface Binding {
 	 * - `each`: An each block context variable
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
+	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
@@ -259,7 +261,8 @@ export interface Binding {
 		| 'derived'
 		| 'each'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'legacy_reactive_import';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
@@ -269,6 +272,7 @@ export interface Binding {
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
+	reassigned: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];

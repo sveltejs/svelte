@@ -68,7 +68,6 @@ class Svelte4Component {
 			target: options.target,
 			props: { ...options.props, $$events: this.#events },
 			context: options.context,
-			immutable: options.immutable,
 			intro: options.intro,
 			recover: options.recover
 		});
