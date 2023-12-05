@@ -1,5 +1,31 @@
 # svelte
 
+## 5.0.0-next.19
+
+### Patch Changes
+
+- feat: add unstate utility function ([#9776](https://github.com/sveltejs/svelte/pull/9776))
+
+- fix: ensure proxied array length is updated ([#9782](https://github.com/sveltejs/svelte/pull/9782))
+
+- chore: fix compiler errors test suite ([#9754](https://github.com/sveltejs/svelte/pull/9754))
+
+- fix: ensure transitions properly cancel on completion ([#9778](https://github.com/sveltejs/svelte/pull/9778))
+
+- feat: make fallback prop values readonly ([#9789](https://github.com/sveltejs/svelte/pull/9789))
+
+- fix: tweak invalid dollar prefix rules around function args ([#9792](https://github.com/sveltejs/svelte/pull/9792))
+
+- fix: ensure generated code does not use keywords as variable names ([#9790](https://github.com/sveltejs/svelte/pull/9790))
+
+- feat: disallow fallback values with bindings in runes mode ([#9784](https://github.com/sveltejs/svelte/pull/9784))
+
+- fix: apply event attribute validation to elements only ([#9772](https://github.com/sveltejs/svelte/pull/9772))
+
+- fix: handle css nth-selector syntax ([#9754](https://github.com/sveltejs/svelte/pull/9754))
+
+- feat: throw descriptive error for using runes globals outside of Svelte-compiled files ([#9773](https://github.com/sveltejs/svelte/pull/9773))
+
 ## 5.0.0-next.18
 
 ### Patch Changes
