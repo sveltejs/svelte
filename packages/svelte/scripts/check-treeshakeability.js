@@ -44,16 +44,17 @@ for (const key in pkg.exports) {
 			throw new Error('errr what');
 		}
 
-		const code = output[0].code;
-		if (code.trim()) {
+		const code = output[0].code.trim();
+
+		if (code === '') {
+			// eslint-disable-next-line no-console
+			console.error(`✅ ${subpackage} (${type})`);
+		} else {
 			// eslint-disable-next-line no-console
 			console.error(code);
 			// eslint-disable-next-line no-console
 			console.error(`❌ ${subpackage} (${type})`);
 			failed = true;
-		} else {
-			// eslint-disable-next-line no-console
-			console.error(`✅ ${subpackage} (${type})`);
 		}
 	}
 }
