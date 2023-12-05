@@ -40,8 +40,15 @@ for (const key in pkg.exports) {
 			throw new Error('errr what');
 		}
 
-		const code = output[0].code.replace(/import\s+([^'"]+from\s+)?(['"])[^'"]+\2\s*;?/, '');
-		if (code.trim()) {
+		const code = output[0].code
+			.replace(/import\s+([^'"]+from\s+)?(['"])[^'"]+\2\s*;?/, '')
+			.replace(/\r\n/g, '\n')
+			.trim();
+		if (
+			code !== '' &&
+			// See runtime.js code
+			!(code.startsWith('if (DEV) {') && code.endsWith("throw_rune_error('$props');\n}"))
+		) {
 			// eslint-disable-next-line no-console
 			console.error(code);
 			// eslint-disable-next-line no-console
