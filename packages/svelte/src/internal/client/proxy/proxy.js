@@ -8,7 +8,13 @@ import {
 	updating_derived,
 	UNINITIALIZED
 } from '../runtime.js';
-import { define_property, get_descriptor, is_array } from '../utils.js';
+import {
+	define_property,
+	get_descriptor,
+	get_descriptors,
+	is_array,
+	object_keys
+} from '../utils.js';
 import { READONLY_SYMBOL } from './readonly.js';
 
 /** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean }} Metadata */
@@ -40,6 +46,56 @@ export function proxy(value) {
 	}
 
 	return value;
+}
+
+/**
+ * @template {StateObject} T
+ * @param {T} value
+ * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
+ * @returns {Record<string | symbol, any>}
+ */
+function unwrap(value, already_unwrapped = new Map()) {
+	if (typeof value === 'object' && value != null && !is_frozen(value) && STATE_SYMBOL in value) {
+		const unwrapped = already_unwrapped.get(value);
+		if (unwrapped !== undefined) {
+			return unwrapped;
+		}
+		if (is_array(value)) {
+			/** @type {Record<string | symbol, any>} */
+			const array = [];
+			already_unwrapped.set(value, array);
+			for (const element of value) {
+				array.push(unwrap(element, already_unwrapped));
+			}
+			return array;
+		} else {
+			/** @type {Record<string | symbol, any>} */
+			const obj = {};
+			const keys = object_keys(value);
+			const descriptors = get_descriptors(value);
+			already_unwrapped.set(value, obj);
+			for (const key of keys) {
+				if (descriptors[key].get) {
+					define_property(obj, key, descriptors[key]);
+				} else {
+					/** @type {T} */
+					const property = value[key];
+					obj[key] = unwrap(property, already_unwrapped);
+				}
+			}
+			return obj;
+		}
+	}
+	return value;
+}
+
+/**
+ * @template {StateObject} T
+ * @param {T} value
+ * @returns {Record<string | symbol, any>}
+ */
+export function unstate(value) {
+	return unwrap(value);
 }
 
 /**

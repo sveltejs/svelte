@@ -105,7 +105,12 @@ export const javascript_visitors_runes = {
 							// set foo(value) { this.#foo = value; }
 							const value = b.id('value');
 							body.push(
-								b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
+								b.method(
+									'set',
+									definition.key,
+									[value],
+									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
+								)
 							);
 						}
 

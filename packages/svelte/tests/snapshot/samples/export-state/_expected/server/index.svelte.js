@@ -2,4 +2,3 @@
 import * as $ from "svelte/internal/server";
 
 export const object = { ok: true };
-
