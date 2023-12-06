@@ -1,7 +1,7 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { create_state_declarators, get_props_method, serialize_get_binding } from '../utils.js';
+import { create_state_declarators, get_prop_source, serialize_get_binding } from '../utils.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_legacy = {
@@ -55,7 +55,7 @@ export const javascript_visitors_legacy = {
 							b.declarator(
 								path.node,
 								binding.kind === 'prop'
-									? get_props_method(binding, state, binding.prop_alias ?? name, value)
+									? get_prop_source(state, binding.prop_alias ?? name, value)
 									: value
 							)
 						);
@@ -75,8 +75,7 @@ export const javascript_visitors_legacy = {
 					declarations.push(
 						b.declarator(
 							declarator.id,
-							get_props_method(
-								binding,
+							get_prop_source(
 								state,
 								binding.prop_alias ?? declarator.id.name,
 								declarator.init &&

@@ -2,7 +2,7 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { create_state_declarators, get_props_method, should_proxy } from '../utils.js';
+import { create_state_declarators, get_prop_source, should_proxy } from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
@@ -185,7 +185,7 @@ export const javascript_visitors_runes = {
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
-							declarations.push(b.declarator(id, get_props_method(binding, state, name, initial)));
+							declarations.push(b.declarator(id, get_prop_source(state, name, initial)));
 						}
 					} else {
 						// RestElement
