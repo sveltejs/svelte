@@ -1432,6 +1432,8 @@ export function prop(props, key, flags, initial) {
 		}
 
 		value = /** @type {V} */ (initial);
+
+		if (setter) setter(value);
 	}
 
 	var getter = () => {
