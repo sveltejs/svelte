@@ -27,7 +27,6 @@ import {
 	get,
 	is_signal,
 	push_destroy_fn,
-	set,
 	execute_effect,
 	UNINITIALIZED,
 	derived,
@@ -36,13 +35,11 @@ import {
 	flushSync,
 	safe_not_equal,
 	current_block,
-	source,
 	managed_effect,
 	push,
 	current_component_context,
 	pop,
-	unwrap,
-	mutable_source
+	unwrap
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -57,12 +54,11 @@ import {
 	get_descriptors,
 	is_array,
 	object_assign,
-	object_entries,
 	object_keys
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { STATE_SYMBOL, proxy } from './proxy/proxy.js';
+import { observe, proxy } from './proxy/proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -2540,8 +2536,7 @@ export function rest_props(props_signal, rest) {
 	return derived(() => {
 		var props = unwrap(props_signal);
 
-		const metadata = props[STATE_SYMBOL];
-		if (metadata) get(metadata.v);
+		observe(props);
 
 		/** @type {Record<string, unknown>} */
 		var rest_props = {};

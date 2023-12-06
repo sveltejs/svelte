@@ -239,6 +239,12 @@ const handler = {
 	}
 };
 
+/** @param {any} object */
+export function observe(object) {
+	const metadata = object[STATE_SYMBOL];
+	if (metadata) get(metadata.v);
+}
+
 if (DEV) {
 	handler.setPrototypeOf = () => {
 		throw new Error('Cannot set prototype of $state object');
