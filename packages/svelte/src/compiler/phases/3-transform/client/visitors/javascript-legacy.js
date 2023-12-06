@@ -54,7 +54,7 @@ export const javascript_visitors_legacy = {
 						declarations.push(
 							b.declarator(
 								path.node,
-								binding.kind === 'prop' || binding.kind === 'rest_prop'
+								binding.kind === 'prop'
 									? get_props_method(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
