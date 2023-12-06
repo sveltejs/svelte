@@ -65,18 +65,20 @@ export function serialize_get_binding(node, state) {
 		return binding.expression;
 	}
 
-	if (binding.kind === 'prop' && binding.node.name === '$$props') {
-		// Special case for $$props which only exists in the old world
-		return node;
-	}
+	if (binding.kind === 'prop') {
+		if (binding.node.name === '$$props') {
+			// Special case for $$props which only exists in the old world
+			// TODO this probably shouldn't have a 'prop' binding kind
+			return node;
+		}
 
-	if (
-		binding.kind === 'prop' &&
-		!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
-		!binding.initial &&
-		!state.analysis.accessors
-	) {
-		return b.call(node);
+		if (
+			!state.analysis.accessors &&
+			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
+			!binding.initial
+		) {
+			return b.member(b.id('$$props'), node);
+		}
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {
@@ -343,67 +345,53 @@ export function serialize_hoistable_params(node, context) {
 }
 
 /**
- *
- * @param {import('#compiler').Binding} binding
  * @param {import('./types').ComponentClientTransformState} state
  * @param {string} name
- * @param {import('estree').Expression | null} [default_value]
+ * @param {import('estree').Expression | null} [initial]
  * @returns
  */
-export function get_props_method(binding, state, name, default_value) {
+export function get_prop_source(state, name, initial) {
 	/** @type {import('estree').Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
-	// Use $.prop_source in the following cases:
-	// - accessors/mutated: needs to be able to set the prop value from within
-	// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
-	const needs_source =
-		default_value ||
-		state.analysis.accessors ||
-		(state.analysis.immutable ? binding.reassigned : binding.mutated);
+	let flags = 0;
 
-	if (needs_source) {
-		let flags = 0;
-
-		/** @type {import('estree').Expression | undefined} */
-		let arg;
-
-		if (state.analysis.immutable) {
-			flags |= PROPS_IS_IMMUTABLE;
-		}
-
-		if (state.analysis.runes) {
-			flags |= PROPS_IS_RUNES;
-		}
-
-		if (default_value) {
-			// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
-			if (is_simple_expression(default_value)) {
-				arg = default_value;
-			} else {
-				if (
-					default_value.type === 'CallExpression' &&
-					default_value.callee.type === 'Identifier' &&
-					default_value.arguments.length === 0
-				) {
-					arg = default_value.callee;
-				} else {
-					arg = b.thunk(default_value);
-				}
-
-				flags |= PROPS_CALL_DEFAULT_VALUE;
-			}
-		}
-
-		if (flags || arg) {
-			args.push(b.literal(flags));
-			if (arg) args.push(arg);
-		}
-
-		return b.call('$.prop_source', ...args);
+	if (state.analysis.immutable) {
+		flags |= PROPS_IS_IMMUTABLE;
 	}
 
-	return b.call('$.prop', ...args);
+	if (state.analysis.runes) {
+		flags |= PROPS_IS_RUNES;
+	}
+
+	/** @type {import('estree').Expression | undefined} */
+	let arg;
+
+	if (initial) {
+		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
+		if (is_simple_expression(initial)) {
+			arg = initial;
+		} else {
+			if (
+				initial.type === 'CallExpression' &&
+				initial.callee.type === 'Identifier' &&
+				initial.arguments.length === 0
+			) {
+				arg = initial.callee;
+			} else {
+				arg = b.thunk(initial);
+			}
+
+			flags |= PROPS_CALL_DEFAULT_VALUE;
+		}
+	}
+
+	if (flags || arg) {
+		args.push(b.literal(flags));
+		if (arg) args.push(arg);
+	}
+
+	return b.call('$.prop_source', ...args);
 }
 
 /**

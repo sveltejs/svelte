@@ -7,7 +7,6 @@ export {
 	source,
 	mutable_source,
 	derived,
-	prop,
 	prop_source,
 	user_effect,
 	render_effect,

@@ -1491,17 +1491,6 @@ export function prop_source(props, key, flags, default_value) {
 }
 
 /**
- * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @param {Record<string, unknown>} props
- * @param {string} key
- * @returns {any}
- */
-export function prop(props, key) {
-	// TODO skip this, and rewrite as `$$props.foo`
-	return () => props[key];
-}
-
-/**
  * @param {boolean} immutable
  * @param {unknown} a
  * @param {unknown} b
