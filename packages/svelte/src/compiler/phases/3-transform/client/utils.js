@@ -68,7 +68,7 @@ export function serialize_get_binding(node, state) {
 	if (binding.kind === 'prop') {
 		if (binding.node.name === '$$props') {
 			// Special case for $$props which only exists in the old world
-			// TODO this probably should have a 'prop' binding kind
+			// TODO this probably shouldn't have a 'prop' binding kind
 			return node;
 		}
 
