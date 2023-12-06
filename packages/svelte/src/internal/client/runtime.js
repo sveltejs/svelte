@@ -4,6 +4,7 @@ import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
+import { observe } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -94,32 +95,6 @@ export let updating_derived = false;
  */
 export function set_is_ssr(ssr) {
 	is_ssr = ssr;
-}
-
-/**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
- * @returns {import('./types.js').ComponentContext}
- */
-export function create_component_context(props) {
-	const parent = current_component_context;
-	return {
-		// accessors
-		a: null,
-		// context
-		c: null,
-		// effects
-		e: null,
-		// mounted
-		m: false,
-		// parent
-		p: parent,
-		// props
-		s: props,
-		// runes
-		r: false,
-		// update_callbacks
-		u: null
-	};
 }
 
 /**
@@ -1414,18 +1389,17 @@ export function is_store(val) {
  *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
  *	 from within the component itself, call the setter of the parent which will propagate the value change back
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {Record<string, unknown>} props
  * @param {string} key
  * @param {number} flags
  * @param {V | (() => V)} [default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, flags, default_value) {
+export function prop_source(props, key, flags, default_value) {
 	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
 	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	const runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
 	const should_set_default_value = value === undefined && default_value !== undefined;
@@ -1456,7 +1430,8 @@ export function prop_source(props_obj, key, flags, default_value) {
 
 	let mount = true;
 	sync_effect(() => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
+		observe(props);
+
 		// Before if to ensure signal dependency is registered
 		const propagating_value = props[key];
 		if (mount) {
@@ -1506,12 +1481,13 @@ export function prop_source(props_obj, key, flags, default_value) {
 
 /**
  * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {Record<string, unknown>} props
  * @param {string} key
  * @returns {any}
  */
-export function prop(props_obj, key) {
-	return is_signal(props_obj) ? () => get(props_obj)[key] : () => props_obj[key];
+export function prop(props, key) {
+	// TODO skip this, and rewrite as `$$props.foo`
+	return () => props[key];
 }
 
 /**
@@ -1591,23 +1567,18 @@ function get_parent_context(component_context) {
 
 /**
  * @this {any}
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} $$props
+ * @param {Record<string, unknown>} $$props
  * @param {Event} event
  * @returns {void}
  */
 export function bubble_event($$props, event) {
-	const events = /** @type {Record<string, Function[] | Function>} */ (unwrap($$props).$$events)?.[
+	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
 		event.type
 	];
-	const callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	let fn;
-	for (fn of callbacks) {
+	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
+	for (var fn of callbacks) {
 		// Preserve "this" context
-		if (is_signal(fn)) {
-			get(fn).call(this, event);
-		} else {
-			fn.call(this, event);
-		}
+		fn.call(this, event);
 	}
 }
 
@@ -1752,14 +1723,29 @@ export function onDestroy(fn) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @param {any} runes
  * @returns {void}
  */
 export function push(props, runes = false) {
-	const context_stack_item = create_component_context(props);
-	context_stack_item.r = runes;
-	current_component_context = context_stack_item;
+	current_component_context = {
+		// accessors
+		a: null,
+		// context
+		c: null,
+		// effects
+		e: null,
+		// mounted
+		m: false,
+		// parent
+		p: current_component_context,
+		// props
+		s: props,
+		// runes
+		r: runes,
+		// update_callbacks
+		u: null
+	};
 }
 
 /**
@@ -1815,7 +1801,7 @@ function deep_read(value, visited = new Set()) {
 }
 
 /**
- * @param {() => import('./types.js').MaybeSignal<>} get_value
+ * @param {() => any} get_value
  * @param {Function} inspect
  * @returns {void}
  */
