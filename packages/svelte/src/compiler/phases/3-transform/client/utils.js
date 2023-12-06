@@ -396,7 +396,7 @@ export function get_prop_source(binding, state, name, initial) {
 		if (arg) args.push(arg);
 	}
 
-	return b.call('$.prop_source', ...args);
+	return b.call('$.prop', ...args);
 }
 
 /**

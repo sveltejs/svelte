@@ -1411,7 +1411,7 @@ export function is_store(val) {
  * @param {V | (() => V)} [initial]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props, key, flags, initial) {
+export function prop(props, key, flags, initial) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
 
