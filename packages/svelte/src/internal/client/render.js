@@ -1185,11 +1185,12 @@ export function bind_property(property, event_name, type, dom, get_value, update
 		}
 	});
 }
+
 /**
  * Makes an `export`ed (non-prop) variable available on the `$$props` object
  * so that consumers can do `bind:x` on the component.
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @param {string} prop
  * @param {V} value
  * @returns {void}
@@ -1197,9 +1198,8 @@ export function bind_property(property, event_name, type, dom, get_value, update
 export function bind_prop(props, prop, value) {
 	/** @param {V | null} value */
 	const update = (value) => {
-		const current_props = unwrap(props);
-		if (get_descriptor(current_props, prop)?.set !== undefined) {
-			current_props[prop] = value;
+		if (get_descriptor(props, prop)?.set !== undefined) {
+			props[prop] = value;
 		}
 	};
 	update(value);
