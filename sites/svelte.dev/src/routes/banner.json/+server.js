@@ -1,14 +1,15 @@
 import { json } from '@sveltejs/kit';
+import { defineBanner } from '@sveltejs/site-kit/components';
 
 // This server route is used by all Svelte sites to load info about which banner to show.
 // site-kit contains components/helpers to make fetching+displaying them easier.
 export const GET = async () => {
 	return json(
-		/** @satisfies {Awaited<ReturnType<typeof import('@sveltejs/site-kit/components').fetchBanner>>} */ ([
+		defineBanner([
 			{
 				id: 'advent2023',
 				start: new Date('1 Dec, 2023 00:00:00 UTC'),
-				end: new Date('24 Dec, 2024 23:59:59 UTC'),
+				end: new Date('24 Dec, 2023 23:59:59 UTC'),
 				arrow: true,
 				content: 'Svelte Advent 2023 is here!',
 				href: 'https://advent.sveltesociety.dev/'
