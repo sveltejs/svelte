@@ -2,7 +2,7 @@
 	"css": {
 		"type": "Style",
 		"start": 0,
-		"end": 467,
+		"end": 586,
 		"attributes": [],
 		"children": [
 			{
@@ -471,32 +471,162 @@
 				},
 				"start": 408,
 				"end": 458
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 463,
+					"end": 492,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 463,
+							"end": 492,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 463,
+									"end": 465
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "nth-child",
+									"args": {
+										"type": "SelectorList",
+										"start": 476,
+										"end": 491,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 476,
+												"end": 491,
+												"children": [
+													{
+														"type": "Nth",
+														"value": "\n        n\n    ",
+														"start": 476,
+														"end": 491
+													}
+												]
+											}
+										]
+									},
+									"start": 465,
+									"end": 492
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 493,
+					"end": 525,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 503,
+							"end": 518,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 463,
+				"end": 525
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 530,
+					"end": 544,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 530,
+							"end": 544,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 530,
+									"end": 532
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "global",
+									"args": {
+										"type": "SelectorList",
+										"start": 540,
+										"end": 543,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 540,
+												"end": 543,
+												"children": [
+													{
+														"type": "TypeSelector",
+														"name": "nav",
+														"start": 540,
+														"end": 543
+													}
+												]
+											}
+										]
+									},
+									"start": 532,
+									"end": 544
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 545,
+					"end": 577,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 555,
+							"end": 570,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 530,
+				"end": 577
 			}
 		],
 		"content": {
 			"start": 7,
-			"end": 459,
-			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n"
+			"end": 578,
+			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n    h1:nth-child(\n        n\n    ) {\n        background: red;\n    }\n    h1:global(nav) {\n        background: red;\n    }\n"
 		}
 	},
 	"js": [],
-	"start": 469,
-	"end": 484,
+	"start": 588,
+	"end": 600,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
 			{
 				"type": "Text",
-				"start": 467,
-				"end": 469,
+				"start": 586,
+				"end": 588,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "RegularElement",
-				"start": 469,
-				"end": 484,
+				"start": 588,
+				"end": 600,
 				"name": "h1",
 				"attributes": [],
 				"fragment": {
@@ -504,10 +634,10 @@
 					"nodes": [
 						{
 							"type": "Text",
-							"start": 473,
-							"end": 479,
-							"raw": "Broken",
-							"data": "Broken"
+							"start": 592,
+							"end": 595,
+							"raw": "Foo",
+							"data": "Foo"
 						}
 					],
 					"transparent": true

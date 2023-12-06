@@ -21,6 +21,14 @@
     h1:nth-child(odd) {
         background: red;
     }
+    h1:nth-child(
+        n
+    ) {
+        background: red;
+    }
+    h1:global(nav) {
+        background: red;
+    }
 </style>
 
-<h1>Broken</h1>
+<h1>Foo</h1>
