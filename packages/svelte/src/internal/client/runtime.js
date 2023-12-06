@@ -98,7 +98,7 @@ export function set_is_ssr(ssr) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @returns {import('./types.js').ComponentContext}
  */
 export function create_component_context(props) {

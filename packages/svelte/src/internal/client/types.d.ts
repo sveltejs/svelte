@@ -36,7 +36,7 @@ export type Store<V> = {
 
 export type ComponentContext = {
 	/** props */
-	s: MaybeSignal<Record<string, unknown>>;
+	s: Record<string, unknown>;
 	/** accessors */
 	a: Record<string, any> | null;
 	/** effectgs */
