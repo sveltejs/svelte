@@ -2,11 +2,11 @@
 title: Old vs new
 ---
 
-This page intends to give a broad overview of how code written using runes looks compared to code not using them. You will see that for most simple tasks that only involve a single component it will actually not look much different. For more complex logic, runes simplify things.
+This page intends to give a broad overview of how code written using the new APIs looks compared to code not using them. You will see that for most simple tasks that only involve a single component it will actually not look much different. For more complex logic, they simplify things.
 
 ## Counter
 
-The `$state`, `$derived` and `$effect` runes replace magic `let` declarations, `$: x = ...` and `$: { ... }`.
+The `$state`, `$derived` and `$effect` runes replace magic `let` declarations, `$: x = ...` and `$: { ... }`. Event handlers can be written as event attributes now, which in practise means just removing the colon.
 
 - [Before](/#H4sIAAAAAAAAE0VP0Q6CMAz8lbqYAGqC-jiBxH_wTXzQUWRxbgQ6E7Ps34VN40vbu8u1V8daqXBk_OyYvj6RcXbse7Zh9O5nML5QEU54NHYQM1OMYpA9VbWuSSGBMFYTlLA9zMySQ2PsTeHERGUF-6B8VRdmki2kUa9gt81-dE1XhQOlyckY6OS9WyRZdJOf21SK_B9AFzdLZDQYzYWS4lG6NIOyiqfXax9SuoA85OBitrAlOqvptadpZCuxYZwGi_7iP__ps0sVAQAA)
 - [After](/#H4sIAAAAAAAAE0VPzW7CMAx-FRMhkQ4k2I6lrbR32I3uUBJnRAtJlThIKMq7jzSgHSzr-_FnOzGlDQbWnhKz0xVZyz7nme0Y3ecCwg0N4QMHF70oTBeE1zMNox3JIIFw0RL0sA40EfJDc3wp0sWzwSJJ9PqGklfvG3xUU6k1KoWCOG-gHyAtNGkFT-8A74fmRY80GfTEN1_OwUX_XFabZxDl0nJB3f7_QNudI5Gz4GwrjBa_fap7lvDtNi9fpAVl2EOqJ-eSUieHx-tXJ7XSKFlLPmL-zn8TVUg5NQEAAA==)
@@ -197,3 +197,99 @@ With runes, we can use `$effect.pre`, which behaves the same as `$effect` but ru
 	</button>
 </div>
 ```
+
+## Forwarding events
+
+Because [event handlers](event-handlers) are just regular attributes now, the "forwarding events" concept is replaced with just passing callback props. Before, you would have to mark every event that you want to forward separately. You can still do this with event attributes...
+
+```diff
+<script>
++	let { onclick, onkeydown, ...attributes } = $props();
+</script>
+
+<button
+-	{...$$props}
++	{...attributes}
+-	on:click
+-	on:keydown
++	{onclick}
++	{onkeydown}
+>a button</button>
+```
+
+...but in practise what you probably _really_ want to do in these situations is forward _all_ events. This wasn't possible before, but it is now:
+
+```diff
+<script>
++	let { ...props } = $props();
+</script>
+
+<button
+-	{...$$props}
+-	on:click
+-	on:keydown
++	{...props}
+>a button</button>
+```
+
+- [Before](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACn1Py2rDMBD8lWUJOIEg3xXb0P5G1YMjr4morBXSuhCM_z1xlLaXktMys8xrwdF5yqg_Fgz9RKjxLUY8olzjBvI3eaE7zjwnuzFNtslF6Uww4qbISeB9FuEAY-IJKlUXqIq0OpnQ1H-a0JT3Js9y9dQatOw5aUg0GNx4Dtp6Z7_aZX-AtoPeU5J99eBoALkQnB8m1WE1oe7u9SYe3OhoQC1ppvX4u6akvRxUvGBRSu12MXHMK_xU6PpnVFOX-0_Y53oDgvtVGEYBAAA=)
+- [After](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACo1PQWrEMAz8ihCFJLA492wSaL9R95A6CjV1bGMrhcX4793Eu9tDe-hJmpFGmkm4aEMRu9eEdloJO3z2Hk_IF7-D-EWG6Yqj24LamT6qoD2P0krWq3eB4WVjdhaW4FaoRFugKNLqLG3f_mhsX8a7PPLF0CBROeNCB4FmiTvvrDJafQ6pbmAYYTIUuK4OjmbgD4L340bVZGnb8epudbNeNM3Ycdgonx5hyrP_5jHEkEAI4YPzETIM8HS0dfMrRrEA6b6dx-lmq29L_cPYW_4GVdmFa3EBAAA=)
+
+## Passing UI content to a component
+
+Previously, you would pass UI content into components using slots. Svelte 5 provides a better mechanism for this, [snippets](snippets). In the simple case of passing something to the default slot, nothing has changed for the consumer:
+
+```svelte
+<!-- same with both slots and snippets -->
+<script>
+	import Button from './Button.svelte';
+</script>
+
+<Button>click me</Button>
+```
+
+Inside `Button.svelte`, use `@render` instead of the `<slot>` tag. The default content is passed as the `children` prop:
+
+```diff
+<script>
++	let { children } = $props();
+</script>
+
+<button>
+-	<slot />
++	{@render children()}
+</button>
+```
+
+When passing props back up to the consumer, snippets make things easier to reason about, removing the need to deal with the confusing semantics of the `let:`-directive:
+
+```diff
+<!-- provider -->
+<script>
++	let { children } = $props();
+</script>
+
+<button>
+-	<slot prop="some value" />
++	{@render children("some value")}
+</button>
+```
+
+```diff
+<!-- consumer -->
+<script>
+	import Button from './Button.svelte';
+</script>
+
+- <Button let:prop>click {prop}</Button>
++ <Button>
++ 	{#snippet children(prop)}
++ 		click {prop}
++ 	{/snippet}
++ </Button>
+```
+
+Combined with event attributes, this reduces the number of concepts to learn — everything related to the component boundary can now be expressed through props.
+
+- [Before](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACn2PzYrCQBCEX6XpSxTE3GeTgPoYzh5i0sHB-WOmIywh776ZjCgieOsqqvrrnnBQmiKK84S2NYQCD97jDvnPJxHvpJkWHd0YuuRUsQvKcyOtZGW8CwzHkdlZGIIzUOzLLPe5WvxIW5Wvjq0eaWdFp1V3q6fNFuoGWk2BN8UpedQDXwkua7LYzqCJhQ_Or1TJaxGm5MxpfV7ZLGca16tBUY-Cw0jz7vlVjnx97PJ-2MqqonYMCVTLJWoI7q0eSSKUTSLnzjJ-sn_nfxmfF-FdAQAA)
+- [After](https://svelte-5-preview.vercel.app/#H4sIAAAAAAAACo2PzW6DMBCEX2XlVgIkBHcKUdo-RumBwqJYNbZlL5Eqy-9e_9DkkEtv3vHMzn6OrVygZd2HY3LakHXsVWtWM_rRcbBXFIRhtmo3c1R6Oxuu6TTKkfimlSF424mUhNWoDYqmzWOTo8XLKPv2npH94VZyFnz-HlxZwXCCSaChsniPGi5AF4SvZCwqn7rck5VcaySYL1wsBmWpjdKVj58jpWXgopQU1x52H_tz5ylwbGrhK8eFdWR29PUNO1v-Sy7CHe52SQ1N08RqCx4GeE7PsnpAz0Tg_twH2TmsWNDcwcZQuiFcJ7HjyKqEkLMh8Ajx6X8BPkQdmscBAAA=)
