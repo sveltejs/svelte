@@ -1302,6 +1302,20 @@ export function pre_effect(init) {
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
+export function invalidate_effect(init) {
+	return internal_create_effect(
+		PRE_EFFECT,
+		init,
+		true,
+		current_block,
+		true
+	);
+}
+
+/**
+ * @param {() => void | (() => void)} init
+ * @returns {import('./types.js').EffectSignal}
+ */
 function sync_effect(init) {
 	return internal_create_effect(SYNC_EFFECT, init, true, current_block, true);
 }
