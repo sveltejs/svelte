@@ -37,7 +37,7 @@ const is_frozen = Object.isFrozen;
 export function proxy(value, immutable = true) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		if (STATE_SYMBOL in value) {
-			return value[STATE_SYMBOL].p;
+			return /** @type {T} */ (value[STATE_SYMBOL].p);
 		}
 
 		const prototype = get_prototype_of(value);
