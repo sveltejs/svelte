@@ -1593,23 +1593,18 @@ function get_parent_context(component_context) {
 
 /**
  * @this {any}
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} $$props
+ * @param {Record<string, unknown>} $$props
  * @param {Event} event
  * @returns {void}
  */
 export function bubble_event($$props, event) {
-	const events = /** @type {Record<string, Function[] | Function>} */ (unwrap($$props).$$events)?.[
+	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
 		event.type
 	];
-	const callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	let fn;
-	for (fn of callbacks) {
+	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
+	for (var fn of callbacks) {
 		// Preserve "this" context
-		if (is_signal(fn)) {
-			get(fn).call(this, event);
-		} else {
-			fn.call(this, event);
-		}
+		fn.call(this, event);
 	}
 }
 
