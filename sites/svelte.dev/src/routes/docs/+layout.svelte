@@ -74,8 +74,7 @@
 			position: fixed;
 			left: 0;
 			top: var(--sk-nav-height);
-			overflow-x: hidden;
-			overflow-y: auto;
+			overflow: hidden;
 		}
 
 		.toc-container::before {
