@@ -1801,7 +1801,7 @@ function deep_read(value, visited = new Set()) {
 }
 
 /**
- * @param {() => import('./types.js').MaybeSignal<>} get_value
+ * @param {() => any} get_value
  * @param {Function} inspect
  * @returns {void}
  */
