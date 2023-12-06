@@ -4,7 +4,7 @@ import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
-import { observe } from './proxy/proxy.js';
+import { observe, proxy } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1426,7 +1426,7 @@ export function prop_source(props, key, flags, default_value) {
 			call_default_value ? default_value() : default_value;
 
 		if (DEV && runes) {
-			value = readonly(/** @type {any} */ (value));
+			value = readonly(proxy(/** @type {any} */ (value)));
 		}
 	}
 
