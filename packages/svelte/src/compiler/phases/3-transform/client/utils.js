@@ -73,9 +73,8 @@ export function serialize_get_binding(node, state) {
 		}
 
 		if (
-			state.analysis.runes &&
 			!state.analysis.accessors &&
-			!binding.reassigned &&
+			!(state.analysis.runes ? binding.reassigned : binding.mutated) &&
 			!binding.initial
 		) {
 			return b.member(b.id('$$props'), node);
