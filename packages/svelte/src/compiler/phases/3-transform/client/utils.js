@@ -88,7 +88,6 @@ export function serialize_get_binding(node, state) {
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'prop' ||
-		binding.kind === 'rest_prop' ||
 		binding.kind === 'legacy_reactive'
 	) {
 		return b.call('$.get', node);

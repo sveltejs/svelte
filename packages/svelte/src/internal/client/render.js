@@ -2528,71 +2528,93 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 }
 
 /**
- * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props_signal
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ */
+const rest_props_handler = {
+	get(target, key) {
+		if (target.exclude.includes(key)) return;
+		return target.props[key];
+	},
+	getOwnPropertyDescriptor(target, key) {
+		if (target.exclude.includes(key)) return;
+		if (key in target.props) {
+			return {
+				enumerable: true,
+				configurable: true,
+				value: target.props[key]
+			};
+		}
+	},
+	has(target, key) {
+		if (target.exclude.includes(key)) return false;
+		return key in target.props;
+	},
+	ownKeys(target) {
+		/** @type {Array<string | symbol>} */
+		const keys = [];
+
+		for (let key in target.props) {
+			if (!target.exclude.includes(key)) keys.push(key);
+		}
+
+		return keys;
+	}
+};
+
+/**
+ * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props_signal, rest) {
-	return derived(() => {
-		var props = unwrap(props_signal);
-
-		observe(props);
-
-		/** @type {Record<string, unknown>} */
-		var rest_props = {};
-
-		for (const key in props) {
-			if (rest.includes(key)) continue;
-
-			const { enumerable } = /** @type {PropertyDescriptor} */ (get_descriptor(props, key));
-
-			define_property(rest_props, key, {
-				get: () => props[key],
-				enumerable
-			});
-		}
-
-		return rest_props;
-	});
+export function rest_props(props, rest) {
+	return new Proxy({ props, exclude: rest }, rest_props_handler);
 }
 
 /**
- * @param {Record<string, unknown>[] | (() => Record<string, unknown>[])} props
- * @returns {any}
+ * @template {Record<string | symbol, unknown>} T
+ * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
  */
-export function spread_props(props) {
-	if (typeof props === 'function') {
-		return derived(() => {
-			return spread_props(props());
-		});
-	}
+const spread_props_handler = {
+	get(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (typeof p === 'function') p = p();
+			if (key in p) return p[key];
+		}
+	},
+	getOwnPropertyDescriptor() {
+		return { enumerable: true, configurable: true };
+	},
+	has(target, key) {
+		for (let p of target.props) {
+			if (typeof p === 'function') p = p();
+			if (key in p) return true;
+		}
 
-	/** @type {Record<string, unknown>} */
-	const merged_props = {};
-	let key;
-	for (let i = 0; i < props.length; i++) {
-		const obj = props[i];
-		for (key in obj) {
-			const desc = /** @type {PropertyDescriptor} */ (get_descriptor(obj, key));
-			const getter = desc.get;
-			if (getter !== undefined) {
-				define_property(merged_props, key, {
-					enumerable: true,
-					configurable: true,
-					get: getter
-				});
-			} else if (desc.get !== undefined) {
-				merged_props[key] = obj[key];
-			} else {
-				define_property(merged_props, key, {
-					enumerable: true,
-					configurable: true,
-					value: obj[key]
-				});
+		return false;
+	},
+	ownKeys(target) {
+		/** @type {Array<string | symbol>} */
+		const keys = [];
+
+		for (let p of target.props) {
+			if (typeof p === 'function') p = p();
+			for (const key in p) {
+				if (!keys.includes(key)) keys.push(key);
 			}
 		}
+
+		return keys;
 	}
-	return merged_props;
+};
+
+/**
+ * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
+ * @returns {any}
+ */
+export function spread_props(...props) {
+	return new Proxy({ props }, spread_props_handler);
 }
 
 /**

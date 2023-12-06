@@ -895,7 +895,7 @@ function serialize_inline_component(node, component_name, context) {
 			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0]) || [])
 			: b.call(
 					'$.spread_props',
-					b.thunk(b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))))
+					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : b.thunk(p)))
 			  );
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>
@@ -2854,7 +2854,9 @@ export const template_visitors = {
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
-				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+				spreads.push(
+					b.thunk(/** @type {import('estree').Expression} */ (context.visit(attribute)))
+				);
 			} else if (attribute.type === 'Attribute') {
 				const [, value] = serialize_attribute_value(attribute.value, context);
 				if (attribute.name === 'name') {
@@ -2873,7 +2875,7 @@ export const template_visitors = {
 		const props_expression =
 			spreads.length === 0
 				? b.object(props)
-				: b.call('$.spread_props', b.thunk(b.array([b.object(props), ...spreads])));
+				: b.call('$.spread_props', b.object(props), ...spreads);
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
