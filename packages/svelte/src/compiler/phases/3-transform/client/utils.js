@@ -65,18 +65,29 @@ export function serialize_get_binding(node, state) {
 		return binding.expression;
 	}
 
-	if (binding.kind === 'prop' && binding.node.name === '$$props') {
-		// Special case for $$props which only exists in the old world
-		return node;
-	}
+	if (binding.kind === 'prop') {
+		if (binding.node.name === '$$props') {
+			// Special case for $$props which only exists in the old world
+			// TODO this probably should have a 'prop' binding kind
+			return node;
+		}
 
-	if (
-		binding.kind === 'prop' &&
-		!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
-		!binding.initial &&
-		!state.analysis.accessors
-	) {
-		return b.call(node);
+		if (
+			state.analysis.runes &&
+			!state.analysis.accessors &&
+			!binding.reassigned &&
+			!binding.initial
+		) {
+			return b.member(b.id('$$props'), node);
+		}
+
+		if (
+			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
+			!binding.initial &&
+			!state.analysis.accessors
+		) {
+			return b.call(node);
+		}
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {

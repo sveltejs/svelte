@@ -165,36 +165,27 @@ export const javascript_visitors_runes = {
 
 				for (const property of declarator.id.properties) {
 					if (property.type === 'Property') {
-						assert.ok(property.key.type === 'Identifier' || property.key.type === 'Literal');
-						let name;
-						if (property.key.type === 'Identifier') {
-							name = property.key.name;
-						} else if (property.key.type === 'Literal') {
-							name = /** @type {string} */ (property.key.value).toString();
-						} else {
-							throw new Error('unreachable');
-						}
+						const key = /** @type {import('estree').Identifier | import('estree').Literal} */ (
+							property.key
+						);
+						const name = key.type === 'Identifier' ? key.name : /** @type {string} */ (key.value);
 
 						seen.push(name);
 
-						if (property.value.type === 'Identifier') {
-							const binding = /** @type {import('#compiler').Binding} */ (
-								state.scope.get(property.value.name)
-							);
-							declarations.push(
-								b.declarator(property.value, get_props_method(binding, state, name))
-							);
-						} else if (property.value.type === 'AssignmentPattern') {
-							assert.equal(property.value.left.type, 'Identifier');
-							const binding = /** @type {import('#compiler').Binding} */ (
-								state.scope.get(property.value.left.name)
-							);
-							declarations.push(
-								b.declarator(
-									property.value.left,
-									get_props_method(binding, state, name, property.value.right)
-								)
-							);
+						let id = property.value;
+						let initial = undefined;
+
+						if (property.value.type === 'AssignmentPattern') {
+							id = property.value.left;
+							initial = property.value.right;
+						}
+
+						assert.equal(id.type, 'Identifier');
+
+						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
+
+						if (binding.reassigned || state.analysis.accessors || initial) {
+							declarations.push(b.declarator(id, get_props_method(binding, state, name, initial)));
 						}
 					} else {
 						// RestElement
