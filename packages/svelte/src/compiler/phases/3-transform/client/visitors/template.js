@@ -2777,8 +2777,8 @@ export const template_visitors = {
 		}
 	},
 	LetDirective(node, { state }) {
-		// let:x        -->  const x = $.derived(() => $.unwrap($$slotProps).x);
-		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $.unwrap($$slotProps).x; return { y, z }));
+		// let:x        -->  const x = $.derived(() => $$slotProps.x);
+		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $$slotProps.x; return { y, z }));
 		if (node.expression && node.expression.type !== 'Identifier') {
 			const name = state.scope.generate(node.name);
 			const bindings = state.scope.get_bindings(node);
@@ -2800,7 +2800,7 @@ export const template_visitors = {
 									  b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
 									  b.array_pattern(node.expression.elements),
-								b.member(b.call('$.unwrap', b.id('$$slotProps')), b.id(node.name))
+								b.member(b.id('$$slotProps'), b.id(node.name))
 							),
 							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
 						])
@@ -2811,10 +2811,7 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call(
-					'$.derived',
-					b.thunk(b.member(b.call('$.unwrap', b.id('$$slotProps')), b.id(node.name)))
-				)
+				b.call('$.derived', b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 			);
 		}
 	},
