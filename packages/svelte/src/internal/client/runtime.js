@@ -16,7 +16,6 @@ export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const PRE_EFFECT = 1 << 3;
 export const RENDER_EFFECT = 1 << 4;
-export const SYNC_EFFECT = 1 << 5;
 const MANAGED = 1 << 6;
 const UNOWNED = 1 << 7;
 export const CLEAN = 1 << 8;
@@ -25,7 +24,7 @@ export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT | SYNC_EFFECT;
+const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -541,7 +540,7 @@ function process_microtask() {
  */
 export function schedule_effect(signal, sync) {
 	const flags = signal.f;
-	if (sync || (flags & SYNC_EFFECT) !== 0) {
+	if (sync) {
 		execute_effect(signal);
 		set_signal_status(signal, CLEAN);
 	} else {
@@ -1287,14 +1286,6 @@ export function pre_effect(init) {
  */
 export function invalidate_effect(init) {
 	return internal_create_effect(PRE_EFFECT, init, true, current_block, true);
-}
-
-/**
- * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
- */
-function sync_effect(init) {
-	return internal_create_effect(SYNC_EFFECT, init, true, current_block, true);
 }
 
 /**
