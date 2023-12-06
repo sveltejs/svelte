@@ -1196,16 +1196,14 @@ export function bind_property(property, event_name, type, dom, get_value, update
  * @returns {void}
  */
 export function bind_prop(props, prop, value) {
-	/** @param {V | null} value */
-	const update = (value) => {
-		if (get_descriptor(props, prop)?.set !== undefined) {
-			props[prop] = value;
-		}
-	};
-	update(value);
-	render_effect(() => () => {
-		update(null);
-	});
+	const desc = get_descriptor(props, prop);
+
+	if (desc && desc.set) {
+		props[prop] = value;
+		render_effect(() => () => {
+			props[prop] = null;
+		});
+	}
 }
 
 /**
