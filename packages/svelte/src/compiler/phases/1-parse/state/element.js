@@ -456,6 +456,7 @@ function read_attribute(parser) {
 				expression,
 				parent: null,
 				metadata: {
+					contains_call_expression: false,
 					dynamic: false
 				}
 			};

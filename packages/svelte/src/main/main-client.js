@@ -5,13 +5,10 @@ import {
 	is_ssr,
 	managed_effect,
 	untrack,
-	is_signal,
-	get,
 	user_effect,
 	flush_local_render_effects
 } from '../internal/client/runtime.js';
 import { is_array } from '../internal/client/utils.js';
-import { unwrap } from '../internal/index.js';
 
 /**
  * The `onMount` function schedules a callback to run as soon as the component has been mounted to the DOM.
@@ -139,10 +136,9 @@ export function createEventDispatcher() {
 	}
 
 	return (type, detail, options) => {
-		const $$events = /** @type {Record<string, Function | Function[]>} */ (
-			unwrap(component_context.s).$$events
-		);
-		const events = $$events?.[/** @type {any} */ (type)];
+		const events = /** @type {Record<string, Function | Function[]>} */ (
+			component_context.s.$$events
+		)?.[/** @type {any} */ (type)];
 
 		if (events) {
 			const callbacks = is_array(events) ? events.slice() : [events];
@@ -150,11 +146,7 @@ export function createEventDispatcher() {
 			// in a server (non-DOM) environment?
 			const event = create_custom_event(/** @type {string} */ (type), detail, options);
 			for (const fn of callbacks) {
-				if (is_signal(fn)) {
-					get(fn).call(component_context.a, event);
-				} else {
-					fn.call(component_context.a, event);
-				}
+				fn.call(component_context.a, event);
 			}
 			return !event.defaultPrevented;
 		}

@@ -7,7 +7,7 @@ export const global_visitors = {
 	Identifier(node, { path, state }) {
 		if (is_reference(node, /** @type {import('estree').Node} */ (path.at(-1)))) {
 			if (node.name === '$$props') {
-				return b.call('$.get', b.id('$$sanitized_props'));
+				return b.id('$$sanitized_props');
 			}
 			return serialize_get_binding(node, state);
 		}
