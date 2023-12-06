@@ -4,7 +4,6 @@ import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
-import { observe } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1430,8 +1429,6 @@ export function prop_source(props, key, flags, default_value) {
 
 	let mount = true;
 	sync_effect(() => {
-		observe(props);
-
 		// Before if to ensure signal dependency is registered
 		const propagating_value = props[key];
 		if (mount) {
