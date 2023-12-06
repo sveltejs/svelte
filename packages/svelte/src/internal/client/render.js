@@ -224,7 +224,7 @@ export function close_frag(anchor, dom) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function trusted(fn) {
@@ -232,13 +232,13 @@ export function trusted(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		if (event.isTrusted) {
 			// @ts-ignore
-			unwrap(fn).apply(this, args);
+			fn.apply(this, args);
 		}
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function self(fn) {
@@ -247,13 +247,13 @@ export function self(fn) {
 		// @ts-ignore
 		if (event.target === this) {
 			// @ts-ignore
-			unwrap(fn).apply(this, args);
+			fn.apply(this, args);
 		}
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function stopPropagation(fn) {
@@ -261,12 +261,12 @@ export function stopPropagation(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.stopPropagation();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function once(fn) {
@@ -277,12 +277,12 @@ export function once(fn) {
 		}
 		ran = true;
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function stopImmediatePropagation(fn) {
@@ -290,12 +290,12 @@ export function stopImmediatePropagation(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.stopImmediatePropagation();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function preventDefault(fn) {
@@ -303,7 +303,7 @@ export function preventDefault(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.preventDefault();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
