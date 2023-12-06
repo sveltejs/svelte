@@ -20,7 +20,7 @@
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@supabase/supabase-js": "^2.39.0",
     "@sveltejs/repl": "0.6.0",
-    "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "@sveltejs/vite-plugin-svelte": "2",
     "cookie": "^0.6.0",
     "devalue": "^4.3.2",
     "do-not-zip": "^1.0.0",
