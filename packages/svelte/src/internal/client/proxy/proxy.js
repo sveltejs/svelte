@@ -31,6 +31,7 @@ const is_frozen = Object.isFrozen;
 /**
  * @template {StateObject} T
  * @param {T} value
+ * @param {boolean} [immutable]
  * @returns {T}
  */
 export function proxy(value, immutable = true) {
