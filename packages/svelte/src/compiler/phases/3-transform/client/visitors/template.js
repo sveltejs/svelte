@@ -2895,8 +2895,8 @@ export const template_visitors = {
 				  );
 
 		const expression = is_default
-			? b.member(b.call('$.unwrap', b.id('$$props')), b.id('children'))
-			: b.member(b.member(b.call('$.unwrap', b.id('$$props')), b.id('$$slots')), name, true, true);
+			? b.member(b.id('$$props'), b.id('children'))
+			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
 		context.state.init.push(b.stmt(slot));

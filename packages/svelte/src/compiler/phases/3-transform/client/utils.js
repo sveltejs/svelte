@@ -67,7 +67,7 @@ export function serialize_get_binding(node, state) {
 
 	if (binding.kind === 'prop' && binding.node.name === '$$props') {
 		// Special case for $$props which only exists in the old world
-		return b.call('$.unwrap', node);
+		return node;
 	}
 
 	if (
