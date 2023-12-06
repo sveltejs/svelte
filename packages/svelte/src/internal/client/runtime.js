@@ -863,28 +863,28 @@ export function set_sync(signal, value) {
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn
- * @returns {Set<import('./types.js').Signal>}
  */
 export function invalidate_inner_signals(fn) {
-	const previous_is_signals_recorded = is_signals_recorded;
-	const previous_captured_signals = captured_signals;
+	var previous_is_signals_recorded = is_signals_recorded;
+	var previous_captured_signals = captured_signals;
 	is_signals_recorded = true;
 	captured_signals = new Set();
+	var captured = captured_signals;
+	var signal;
 	try {
 		untrack(fn);
 	} finally {
 		is_signals_recorded = previous_is_signals_recorded;
-		let signal;
-		for (signal of captured_signals) {
-			previous_captured_signals.add(signal);
+		if (is_signals_recorded) {
+			for (signal of captured_signals) {
+				previous_captured_signals.add(signal);
+			}
 		}
 		captured_signals = previous_captured_signals;
 	}
-	let signal;
-	for (signal of captured_signals) {
+	for (signal of captured) {
 		mutate(signal, null /* doesnt matter */);
 	}
-	return captured_signals;
 }
 
 /**
