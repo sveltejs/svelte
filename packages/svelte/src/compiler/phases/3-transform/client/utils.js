@@ -74,18 +74,10 @@ export function serialize_get_binding(node, state) {
 
 		if (
 			!state.analysis.accessors &&
-			!(state.analysis.runes ? binding.reassigned : binding.mutated) &&
+			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
 			!binding.initial
 		) {
 			return b.member(b.id('$$props'), node);
-		}
-
-		if (
-			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
-			!binding.initial &&
-			!state.analysis.accessors
-		) {
-			return b.call(node);
 		}
 	}
 
