@@ -108,8 +108,11 @@ export const javascript_visitors_legacy = {
 		};
 	},
 	LabeledStatement(node, context) {
-		if (context.path.length > 1) return;
-		if (node.label.name !== '$') return;
+		if (context.path.length > 1 || node.label.name !== '$') {
+			context.next();
+			return;
+		}
+
 		const state = context.state;
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself
