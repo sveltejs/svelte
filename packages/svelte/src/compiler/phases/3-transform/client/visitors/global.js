@@ -45,6 +45,7 @@ export const global_visitors = {
 			const binding = state.scope.get(argument.name);
 			const is_store = binding?.kind === 'store_sub';
 			const name = is_store ? argument.name.slice(1) : argument.name;
+
 			// use runtime functions for smaller output
 			if (
 				binding?.kind === 'state' ||
@@ -55,16 +56,17 @@ export const global_visitors = {
 			) {
 				let fn = node.operator === '++' ? '$.increment' : '$.decrement';
 				if (node.prefix) fn += '_pre';
+				if (binding.kind === 'prop') fn += '_prop';
 
 				if (is_store) {
 					fn += '_store';
 					return b.call(fn, serialize_get_binding(b.id(name), state), b.call('$' + name));
-				} else {
-					return b.call(fn, b.id(name));
 				}
-			} else {
-				return next();
+
+				return b.call(fn, b.id(name));
 			}
+
+			return next();
 		} else if (
 			argument.type === 'MemberExpression' &&
 			argument.object.type === 'ThisExpression' &&

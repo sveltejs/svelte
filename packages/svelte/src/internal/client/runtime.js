@@ -1556,6 +1556,16 @@ export function increment(signal) {
 }
 
 /**
+ * @param {((value?: number) => number)} fn
+ * @returns {number}
+ */
+export function increment_prop(fn) {
+	const value = fn();
+	fn(value + 1);
+	return value;
+}
+
+/**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
@@ -1572,6 +1582,16 @@ export function increment_store(store, store_value) {
 export function decrement(signal) {
 	const value = get(signal);
 	set_signal_value(signal, value - 1);
+	return value;
+}
+
+/**
+ * @param {((value?: number) => number)} fn
+ * @returns {number}
+ */
+export function decrement_prop(fn) {
+	const value = fn();
+	fn(value - 1);
 	return value;
 }
 
@@ -1596,6 +1616,16 @@ export function increment_pre(signal) {
 }
 
 /**
+ * @param {((value?: number) => number)} fn
+ * @returns {number}
+ */
+export function increment_pre_prop(fn) {
+	const value = fn() + 1;
+	fn(value);
+	return value;
+}
+
+/**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
  * @returns {number}
@@ -1613,6 +1643,16 @@ export function increment_pre_store(store, store_value) {
 export function decrement_pre(signal) {
 	const value = get(signal) - 1;
 	set_signal_value(signal, value);
+	return value;
+}
+
+/**
+ * @param {((value?: number) => number)} fn
+ * @returns {number}
+ */
+export function decrement_pre_prop(fn) {
+	const value = fn() - 1;
+	fn(value);
 	return value;
 }
 
