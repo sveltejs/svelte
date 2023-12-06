@@ -377,10 +377,7 @@ export function class_name(dom, value) {
  * @returns {void}
  */
 export function text_effect(dom, value) {
-	render_effect(() => {
-		const string = value();
-		text(dom, string);
-	});
+	render_effect(() => text(dom, value()));
 }
 
 /**
