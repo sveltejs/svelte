@@ -67,7 +67,7 @@ export function serialize_get_binding(node, state) {
 
 	if (binding.kind === 'prop' && binding.node.name === '$$props') {
 		// Special case for $$props which only exists in the old world
-		return b.call('$.unwrap', node);
+		return node;
 	}
 
 	if (
@@ -88,7 +88,6 @@ export function serialize_get_binding(node, state) {
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'prop' ||
-		binding.kind === 'rest_prop' ||
 		binding.kind === 'legacy_reactive'
 	) {
 		return b.call('$.get', node);

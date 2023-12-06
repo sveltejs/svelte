@@ -756,7 +756,20 @@ function serialize_inline_component(node, component_name, context) {
 			}
 			events[attribute.name].push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			const expression = /** @type {import('estree').Expression} */ (context.visit(attribute));
+			if (attribute.metadata.dynamic) {
+				let value = expression;
+
+				if (attribute.metadata.contains_call_expression) {
+					const id = b.id(context.state.scope.generate('spread_element'));
+					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					value = b.call('$.get', id);
+				}
+
+				props_and_spreads.push(b.thunk(value));
+			} else {
+				props_and_spreads.push(expression);
+			}
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
@@ -895,7 +908,7 @@ function serialize_inline_component(node, component_name, context) {
 			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0]) || [])
 			: b.call(
 					'$.spread_props',
-					b.thunk(b.array(props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))))
+					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 			  );
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>
@@ -2764,8 +2777,8 @@ export const template_visitors = {
 		}
 	},
 	LetDirective(node, { state }) {
-		// let:x        -->  const x = $.derived(() => $.unwrap($$slotProps).x);
-		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $.unwrap($$slotProps).x; return { y, z }));
+		// let:x        -->  const x = $.derived(() => $$slotProps.x);
+		// let:x={{y, z}}  -->  const derived_x = $.derived(() => { const { y, z } = $$slotProps.x; return { y, z }));
 		if (node.expression && node.expression.type !== 'Identifier') {
 			const name = state.scope.generate(node.name);
 			const bindings = state.scope.get_bindings(node);
@@ -2787,7 +2800,7 @@ export const template_visitors = {
 									  b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
 									  b.array_pattern(node.expression.elements),
-								b.member(b.call('$.unwrap', b.id('$$slotProps')), b.id(node.name))
+								b.member(b.id('$$slotProps'), b.id(node.name))
 							),
 							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
 						])
@@ -2798,10 +2811,7 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call(
-					'$.derived',
-					b.thunk(b.member(b.call('$.unwrap', b.id('$$slotProps')), b.id(node.name)))
-				)
+				b.call('$.derived', b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
 			);
 		}
 	},
@@ -2854,7 +2864,9 @@ export const template_visitors = {
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'SpreadAttribute') {
-				spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+				spreads.push(
+					b.thunk(/** @type {import('estree').Expression} */ (context.visit(attribute)))
+				);
 			} else if (attribute.type === 'Attribute') {
 				const [, value] = serialize_attribute_value(attribute.value, context);
 				if (attribute.name === 'name') {
@@ -2873,7 +2885,7 @@ export const template_visitors = {
 		const props_expression =
 			spreads.length === 0
 				? b.object(props)
-				: b.call('$.spread_props', b.thunk(b.array([b.object(props), ...spreads])));
+				: b.call('$.spread_props', b.object(props), ...spreads);
 		const fallback =
 			node.fragment.nodes.length === 0
 				? b.literal(null)
@@ -2883,8 +2895,8 @@ export const template_visitors = {
 				  );
 
 		const expression = is_default
-			? b.member(b.call('$.unwrap', b.id('$$props')), b.id('children'))
-			: b.member(b.member(b.call('$.unwrap', b.id('$$props')), b.id('$$slots')), name, true, true);
+			? b.member(b.id('$$props'), b.id('children'))
+			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
 		context.state.init.push(b.stmt(slot));
