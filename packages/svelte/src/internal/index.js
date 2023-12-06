@@ -12,6 +12,7 @@ export {
 	user_effect,
 	render_effect,
 	pre_effect,
+	invalidate_effect,
 	flushSync,
 	bubble_event,
 	safe_equal,

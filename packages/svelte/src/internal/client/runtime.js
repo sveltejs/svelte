@@ -1274,6 +1274,17 @@ export function pre_effect(init) {
 }
 
 /**
+ * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
+ * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
+ *
+ * @param {() => void | (() => void)} init
+ * @returns {import('./types.js').EffectSignal}
+ */
+export function invalidate_effect(init) {
+	return internal_create_effect(PRE_EFFECT, init, true, current_block, true);
+}
+
+/**
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
