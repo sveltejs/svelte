@@ -51,6 +51,7 @@ import {
 	get_descriptor,
 	get_descriptors,
 	is_array,
+	is_function,
 	object_assign,
 	object_keys
 } from './utils.js';
@@ -2524,6 +2525,8 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 }
 
 /**
+ * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
+ * Is passed the full `$$props` object and excludes the named props.
  * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
  */
 const rest_props_handler = {
@@ -2567,6 +2570,9 @@ export function rest_props(props, rest) {
 }
 
 /**
+ * The proxy handler for spread props. Handles the incoming array of props
+ * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
+ * them so that the whole thing is passed to the component as the `$$props` argument.
  * @template {Record<string | symbol, unknown>} T
  * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
  */
@@ -2575,7 +2581,7 @@ const spread_props_handler = {
 		let i = target.props.length;
 		while (i--) {
 			let p = target.props[i];
-			if (typeof p === 'function') p = p();
+			if (is_function(p)) p = p();
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
@@ -2584,7 +2590,7 @@ const spread_props_handler = {
 	},
 	has(target, key) {
 		for (let p of target.props) {
-			if (typeof p === 'function') p = p();
+			if (is_function(p)) p = p();
 			if (key in p) return true;
 		}
 
@@ -2595,7 +2601,7 @@ const spread_props_handler = {
 		const keys = [];
 
 		for (let p of target.props) {
-			if (typeof p === 'function') p = p();
+			if (is_function(p)) p = p();
 			for (const key in p) {
 				if (!keys.includes(key)) keys.push(key);
 			}
