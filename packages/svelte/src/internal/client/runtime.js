@@ -98,32 +98,6 @@ export function set_is_ssr(ssr) {
 }
 
 /**
- * @param {Record<string, unknown>} props
- * @returns {import('./types.js').ComponentContext}
- */
-export function create_component_context(props) {
-	const parent = current_component_context;
-	return {
-		// accessors
-		a: null,
-		// context
-		c: null,
-		// effects
-		e: null,
-		// mounted
-		m: false,
-		// parent
-		p: parent,
-		// props
-		s: props,
-		// runes
-		r: false,
-		// update_callbacks
-		u: null
-	};
-}
-
-/**
  * @param {null | import('./types.js').ComponentContext} context
  * @returns {boolean}
  */
@@ -1749,14 +1723,29 @@ export function onDestroy(fn) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @param {any} runes
  * @returns {void}
  */
 export function push(props, runes = false) {
-	const context_stack_item = create_component_context(props);
-	context_stack_item.r = runes;
-	current_component_context = context_stack_item;
+	current_component_context = {
+		// accessors
+		a: null,
+		// context
+		c: null,
+		// effects
+		e: null,
+		// mounted
+		m: false,
+		// parent
+		p: current_component_context,
+		// props
+		s: props,
+		// runes
+		r: runes,
+		// update_callbacks
+		u: null
+	};
 }
 
 /**
