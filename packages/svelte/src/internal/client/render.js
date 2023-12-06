@@ -1726,7 +1726,7 @@ export function component(anchor_node, component_fn, render_fn) {
 /**
  * @template V
  * @param {Comment} anchor_node
- * @param {import('./types.js').Signal<Promise<V>> | Promise<V> | (() => Promise<V>)} input
+ * @param {(() => Promise<V>)} input
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: V) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
@@ -1834,7 +1834,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		() => {
 			const token = {};
 			latest_token = token;
-			const promise = is_signal(input) ? get(input) : typeof input === 'function' ? input() : input;
+			const promise = input();
 			if (is_promise(promise)) {
 				promise.then(
 					/** @param {V} v */
