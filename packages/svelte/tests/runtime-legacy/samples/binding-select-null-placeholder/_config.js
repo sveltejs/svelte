@@ -26,7 +26,7 @@ export default test({
 		assert.equal(options[0].value, '');
 		assert.equal(select.checkValidity(), false);
 
-		component.foo = items[0];
+		component.foo = component.items[0];
 
 		assert.equal(options[0].selected, false);
 		assert.equal(options[1].selected, true);

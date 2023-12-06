@@ -1,6 +1,6 @@
 import { test } from '../../test';
 
-const items = [{}, {}];
+const items = [{ id: 'a' }, { id: 'b' }];
 
 export default test({
 	get props() {
@@ -13,7 +13,7 @@ export default test({
 		assert.equal(options[0].selected, true);
 		assert.equal(options[1].selected, false);
 
-		component.foo = items[1];
+		component.foo = component.items[1];
 
 		assert.equal(options[0].selected, false);
 		assert.equal(options[1].selected, true);
