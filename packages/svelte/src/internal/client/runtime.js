@@ -2,7 +2,7 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
-import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
+import { PROPS_IS_LAZY_INITIAL, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
 
 export const SOURCE = 1;
@@ -1391,46 +1391,44 @@ export function is_store(val) {
  * @param {Record<string, unknown>} props
  * @param {string} key
  * @param {number} flags
- * @param {V | (() => V)} [default_value]
+ * @param {V | (() => V)} [initial]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props, key, flags, default_value) {
-	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
-	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
-	const runes = (flags & PROPS_IS_RUNES) !== 0;
+export function prop_source(props, key, flags, initial) {
+	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+	var runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	const update_bound_prop = get_descriptor(props, key)?.set;
-	let value = props[key];
-	const should_set_default_value = value === undefined && default_value !== undefined;
-
-	if (update_bound_prop && runes && default_value !== undefined) {
+	var setter = get_descriptor(props, key)?.set;
+	if (DEV && setter && runes && initial !== undefined) {
 		// TODO consolidate all these random runtime errors
 		throw new Error('Cannot use fallback values with bind:');
 	}
 
+	var value = props[key];
+	var should_set_default_value = value === undefined && initial !== undefined;
+
 	if (should_set_default_value) {
-		value =
-			// @ts-expect-error would need a cumbersome method overload to type this
-			call_default_value ? default_value() : default_value;
+		// @ts-expect-error would need a cumbersome method overload to type this
+		value = (flags & PROPS_IS_LAZY_INITIAL) !== 0 ? initial() : initial;
 
 		if (DEV && runes) {
 			value = readonly(/** @type {any} */ (value));
 		}
 	}
 
-	const source_signal = immutable ? source(value) : mutable_source(value);
+	var source_signal = immutable ? source(value) : mutable_source(value);
 
 	// Synchronize prop changes with source signal.
 	// Needs special equality checking because the prop in the
 	// parent could be changed through `foo.bar = 'new value'`.
-	let ignore_next1 = false;
-	let ignore_next2 = false;
-	let did_update_to_defined = !should_set_default_value;
+	var ignore_next1 = false;
+	var ignore_next2 = false;
+	var did_update_to_defined = !should_set_default_value;
 
-	let mount = true;
+	var mount = true;
 	sync_effect(() => {
 		// Before if to ensure signal dependency is registered
-		const propagating_value = props[key];
+		var propagating_value = props[key];
 		if (mount) {
 			mount = false;
 			return;
@@ -1453,8 +1451,8 @@ export function prop_source(props, key, flags, default_value) {
 		}
 	});
 
-	if (update_bound_prop !== undefined) {
-		let ignore_first = !should_set_default_value;
+	if (setter !== undefined) {
+		var ignore_first = did_update_to_defined;
 		sync_effect(() => {
 			// Before if to ensure signal dependency is registered
 			const propagating_value = get(source_signal);
@@ -1469,7 +1467,7 @@ export function prop_source(props, key, flags, default_value) {
 
 			ignore_next1 = true;
 			did_update_to_defined = true;
-			untrack(() => update_bound_prop(propagating_value));
+			untrack(() => /** @type {Function} */ (setter)(propagating_value));
 		});
 	}
 

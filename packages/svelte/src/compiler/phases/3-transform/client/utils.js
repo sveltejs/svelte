@@ -2,7 +2,7 @@ import * as b from '../../../utils/builders.js';
 import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
-	PROPS_CALL_DEFAULT_VALUE,
+	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
 	PROPS_IS_RUNES
 } from '../../../../constants.js';
@@ -390,7 +390,7 @@ export function get_prop_source(state, name, initial) {
 				arg = b.thunk(initial);
 			}
 
-			flags |= PROPS_CALL_DEFAULT_VALUE;
+			flags |= PROPS_IS_LAZY_INITIAL;
 		}
 	}
 
