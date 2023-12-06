@@ -8,6 +8,9 @@ export default test({
 		b1.click();
 		await Promise.resolve();
 
-		assert.htmlEqual(target.innerHTML, 'a\n<select></select>b\n<select></select><button>change</button');
+		assert.htmlEqual(
+			target.innerHTML,
+			'a\n<select></select>b\n<select></select><button>change</button'
+		);
 	}
 });
