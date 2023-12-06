@@ -2661,7 +2661,7 @@ export function createRoot(component, options) {
 			/** @param {any} value */
 			set(value) {
 				// @ts-expect-error TS doesn't know key exists on accessor
-				accessors[key] = value;
+				flushSync(() => (accessors[key] = value));
 			},
 			enumerable: true
 		});

@@ -1409,7 +1409,7 @@ export function is_store(val) {
  * @param {string} key
  * @param {number} flags
  * @param {V | (() => V)} [initial]
- * @returns {import('./types.js').Signal<V> | (() => V)}
+ * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
 export function prop(props, key, flags, initial) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
@@ -1422,101 +1422,53 @@ export function prop(props, key, flags, initial) {
 	}
 
 	var value = /** @type {V} */ (props[key]);
-	var should_set_default_value = value === undefined && initial !== undefined;
 
-	if (should_set_default_value) {
+	if (value === undefined && initial !== undefined) {
 		// @ts-expect-error would need a cumbersome method overload to type this
-		value = (flags & PROPS_IS_LAZY_INITIAL) !== 0 ? initial() : initial;
+		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
 		if (DEV && runes) {
-			value = readonly(proxy(/** @type {any} */ (value)));
+			initial = readonly(proxy(/** @type {any} */ (initial)));
 		}
+
+		value = /** @type {V} */ (initial);
 	}
 
+	var getter = () => {
+		var value = /** @type {V} */ (props[key]);
+		if (value !== undefined) initial = undefined;
+		return value === undefined ? /** @type {V} */ (initial) : value;
+	};
+
 	if ((flags & PROPS_IS_UPDATED) === 0) {
-		return () => {
-			var value = /** @type {V} */ (props[key]);
-			if (value !== undefined) initial = undefined;
-			return value === undefined ? /** @type {V} */ (initial) : value;
+		return getter;
+	}
+
+	if (setter) {
+		return function (/** @type {V} */ value) {
+			if (arguments.length === 1) {
+				/** @type {Function} */ (setter)(value);
+				return value;
+			} else {
+				return getter();
+			}
 		};
 	}
 
 	var source_signal = immutable ? source(value) : mutable_source(value);
 
-	// Synchronize prop changes with source signal.
-	// Needs special equality checking because the prop in the
-	// parent could be changed through `foo.bar = 'new value'`.
-	var ignore_next1 = false;
-	var ignore_next2 = false;
-	var did_update_to_defined = !should_set_default_value;
-
-	var mount = true;
-	sync_effect(() => {
-		// Before if to ensure signal dependency is registered
-		var propagating_value = props[key];
-		if (mount) {
-			mount = false;
-			return;
-		}
-		if (ignore_next1) {
-			ignore_next1 = false;
-			return;
-		}
-
-		if (
-			// Ensure that updates from undefined to undefined are ignored
-			(did_update_to_defined || propagating_value !== undefined) &&
-			not_equal(immutable, propagating_value, source_signal.v)
-		) {
-			ignore_next2 = true;
-			did_update_to_defined = true;
-			// TODO figure out why we need it this way and the explain in a comment;
-			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
-			untrack(() => set_signal_value(source_signal, propagating_value));
-		}
+	pre_effect(() => {
+		set(source_signal, getter());
 	});
 
-	if (setter !== undefined) {
-		var ignore_first = did_update_to_defined;
-		sync_effect(() => {
-			// Before if to ensure signal dependency is registered
-			const propagating_value = get(source_signal);
-			if (ignore_first) {
-				ignore_first = false;
-				return;
-			}
-			if (ignore_next2) {
-				ignore_next2 = false;
-				return;
-			}
-
-			ignore_next1 = true;
-			did_update_to_defined = true;
-			untrack(() => /** @type {Function} */ (setter)(propagating_value));
-		});
-	}
-
-	return /** @type {import('./types.js').Signal<V>} */ (source_signal);
-}
-
-/**
- * @param {boolean} immutable
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function not_equal(immutable, a, b) {
-	return immutable ? immutable_not_equal(a, b) : safe_not_equal(a, b);
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function immutable_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a ? b == b : a !== b;
+	return function (/** @type {V} */ value, mutation = false) {
+		if (arguments.length > 0) {
+			(mutation ? mutate : set)(source_signal, value);
+			return value;
+		} else {
+			return get(source_signal);
+		}
+	};
 }
 
 /**

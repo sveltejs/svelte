@@ -74,11 +74,14 @@ export function serialize_get_binding(node, state) {
 		}
 
 		if (
-			!state.analysis.accessors &&
-			!(state.analysis.immutable ? binding.reassigned : binding.mutated)
+			state.analysis.accessors ||
+			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+			binding.initial
 		) {
-			return binding.initial ? b.call(node) : b.member(b.id('$$props'), node);
+			return b.call(node);
 		}
+
+		return b.member(b.id('$$props'), node);
 	}
 
 	if (binding.kind === 'legacy_reactive_import') {
@@ -89,7 +92,6 @@ export function serialize_get_binding(node, state) {
 		(binding.kind === 'state' &&
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
-		binding.kind === 'prop' ||
 		binding.kind === 'legacy_reactive'
 	) {
 		return b.call('$.get', node);
@@ -208,9 +210,12 @@ export function serialize_set_binding(node, context, fallback) {
 	}
 
 	const value = get_assignment_value(node, context);
+
 	const serialize = () => {
 		if (left === node.left) {
-			if (is_store) {
+			if (binding.kind === 'prop') {
+				return b.call(left, value);
+			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
 			} else {
 				return b.call(
@@ -232,15 +237,27 @@ export function serialize_set_binding(node, context, fallback) {
 					b.call('$' + left_name)
 				);
 			} else if (!state.analysis.runes) {
-				return b.call(
-					'$.mutate',
-					b.id(left_name),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					)
-				);
+				if (binding.kind === 'prop') {
+					return b.call(
+						left,
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.literal(true)
+					);
+				} else {
+					return b.call(
+						'$.mutate',
+						b.id(left_name),
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						)
+					);
+				}
 			} else {
 				return b.assignment(
 					node.operator,
@@ -365,7 +382,10 @@ export function get_prop_source(binding, state, name, initial) {
 		flags |= PROPS_IS_RUNES;
 	}
 
-	if (state.analysis.immutable ? binding.reassigned : binding.mutated) {
+	if (
+		state.analysis.accessors ||
+		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+	) {
 		flags |= PROPS_IS_UPDATED;
 	}
 
