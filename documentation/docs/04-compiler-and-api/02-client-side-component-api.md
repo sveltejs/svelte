@@ -152,6 +152,7 @@ A function is returned that will remove the event listener when called.
 
 ```ts
 /// file: index.js
+// @errors: 7006
 // @filename: ambient.d.ts
 import { SvelteComponent, ComponentConstructorOptions } from 'svelte';
 
