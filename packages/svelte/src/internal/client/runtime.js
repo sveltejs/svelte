@@ -1415,22 +1415,17 @@ export function is_store(val) {
  *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
  *	 from within the component itself, call the setter of the parent which will propagate the value change back
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {Record<string, unknown>} props
  * @param {string} key
  * @param {number} flags
  * @param {V | (() => V)} [default_value]
  * @returns {import('./types.js').Signal<V> | (() => V)}
  */
-export function prop_source(props_obj, key, flags, default_value) {
+export function prop_source(props, key, flags, default_value) {
 	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
 	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	const runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	if (is_signal(props_obj)) {
-		// throw new Error('nope');
-	}
-
-	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
 	const should_set_default_value = value === undefined && default_value !== undefined;
@@ -1461,9 +1456,7 @@ export function prop_source(props_obj, key, flags, default_value) {
 
 	let mount = true;
 	sync_effect(() => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-
-		observe(props_obj);
+		observe(props);
 
 		// Before if to ensure signal dependency is registered
 		const propagating_value = props[key];
@@ -1514,12 +1507,13 @@ export function prop_source(props_obj, key, flags, default_value) {
 
 /**
  * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {Record<string, unknown>} props
  * @param {string} key
  * @returns {any}
  */
-export function prop(props_obj, key) {
-	return is_signal(props_obj) ? () => get(props_obj)[key] : () => props_obj[key];
+export function prop(props, key) {
+	// TODO skip this, and rewrite as `$$props.foo`
+	return () => props[key];
 }
 
 /**
