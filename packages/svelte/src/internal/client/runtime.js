@@ -4,6 +4,7 @@ import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
 import { PROPS_IS_LAZY_INITIAL, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
+import { proxy } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -862,28 +863,28 @@ export function set_sync(signal, value) {
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn
- * @returns {Set<import('./types.js').Signal>}
  */
 export function invalidate_inner_signals(fn) {
-	const previous_is_signals_recorded = is_signals_recorded;
-	const previous_captured_signals = captured_signals;
+	var previous_is_signals_recorded = is_signals_recorded;
+	var previous_captured_signals = captured_signals;
 	is_signals_recorded = true;
 	captured_signals = new Set();
+	var captured = captured_signals;
+	var signal;
 	try {
 		untrack(fn);
 	} finally {
 		is_signals_recorded = previous_is_signals_recorded;
-		let signal;
-		for (signal of captured_signals) {
-			previous_captured_signals.add(signal);
+		if (is_signals_recorded) {
+			for (signal of captured_signals) {
+				previous_captured_signals.add(signal);
+			}
 		}
 		captured_signals = previous_captured_signals;
 	}
-	let signal;
-	for (signal of captured_signals) {
+	for (signal of captured) {
 		mutate(signal, null /* doesnt matter */);
 	}
-	return captured_signals;
 }
 
 /**
@@ -1273,6 +1274,17 @@ export function pre_effect(init) {
 }
 
 /**
+ * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
+ * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
+ *
+ * @param {() => void | (() => void)} init
+ * @returns {import('./types.js').EffectSignal}
+ */
+export function invalidate_effect(init) {
+	return internal_create_effect(PRE_EFFECT, init, true, current_block, true);
+}
+
+/**
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
@@ -1412,7 +1424,7 @@ export function prop_source(props, key, flags, initial) {
 		value = (flags & PROPS_IS_LAZY_INITIAL) !== 0 ? initial() : initial;
 
 		if (DEV && runes) {
-			value = readonly(/** @type {any} */ (value));
+			value = readonly(proxy(/** @type {any} */ (value)));
 		}
 	}
 

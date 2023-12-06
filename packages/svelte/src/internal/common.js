@@ -10,11 +10,7 @@ export const EMPTY_FUNC = () => {};
  * @returns {value is PromiseLike<T>}
  */
 export function is_promise(value) {
-	return (
-		!!value &&
-		(typeof value === 'object' || typeof value === 'function') &&
-		typeof (/** @type {any} */ (value).then) === 'function'
-	);
+	return typeof value?.then === 'function';
 }
 
 /** @param {Array<() => void>} arr */

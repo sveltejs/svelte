@@ -16,12 +16,12 @@ import {
 	is_array,
 	object_keys
 } from '../utils.js';
-import { READONLY_SYMBOL } from './readonly.js';
 
 /** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean, i: boolean }} Metadata */
 /** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
 
 export const STATE_SYMBOL = Symbol('$state');
+export const READONLY_SYMBOL = Symbol('readonly');
 
 const object_prototype = Object.prototype;
 const array_prototype = Array.prototype;

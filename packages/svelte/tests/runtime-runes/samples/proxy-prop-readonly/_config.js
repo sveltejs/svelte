@@ -14,5 +14,6 @@ export default test({
 		assert.htmlEqual(target.innerHTML, `<button>clicks: 0</button>`);
 	},
 
-	runtime_error: 'Props cannot be mutated, unless used with `bind:`'
+	runtime_error:
+		'Props cannot be mutated, unless used with `bind:`. Use `bind:prop-in-question={..}` to make `count` settable. Fallback values can never be mutated.'
 });
