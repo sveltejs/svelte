@@ -756,7 +756,20 @@ function serialize_inline_component(node, component_name, context) {
 			}
 			events[attribute.name].push(handler);
 		} else if (attribute.type === 'SpreadAttribute') {
-			props_and_spreads.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
+			const expression = /** @type {import('estree').Expression} */ (context.visit(attribute));
+			if (attribute.metadata.dynamic) {
+				let value = expression;
+
+				if (attribute.metadata.contains_call_expression) {
+					const id = b.id(context.state.scope.generate('spread_element'));
+					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
+					value = b.call('$.get', id);
+				}
+
+				props_and_spreads.push(b.thunk(value));
+			} else {
+				props_and_spreads.push(expression);
+			}
 		} else if (attribute.type === 'Attribute') {
 			if (attribute.name.startsWith('--')) {
 				custom_css_props.push(
@@ -895,7 +908,7 @@ function serialize_inline_component(node, component_name, context) {
 			? b.object(/** @type {import('estree').Property[]} */ (props_and_spreads[0]) || [])
 			: b.call(
 					'$.spread_props',
-					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : b.thunk(p)))
+					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
 			  );
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>

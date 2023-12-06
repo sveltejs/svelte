@@ -434,6 +434,7 @@ export interface SpreadAttribute extends BaseNode {
 	type: 'SpreadAttribute';
 	expression: Expression;
 	metadata: {
+		contains_call_expression: boolean;
 		dynamic: boolean;
 	};
 }

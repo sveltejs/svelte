@@ -2580,7 +2580,7 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (typeof p === 'function') p = p();
-			if (key in p) return p[key];
+			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
 	getOwnPropertyDescriptor() {
