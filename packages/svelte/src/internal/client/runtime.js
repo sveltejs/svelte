@@ -870,19 +870,18 @@ export function invalidate_inner_signals(fn) {
 	is_signals_recorded = true;
 	captured_signals = new Set();
 	var captured = captured_signals;
+	var signal;
 	try {
 		untrack(fn);
 	} finally {
 		is_signals_recorded = previous_is_signals_recorded;
 		if (is_signals_recorded) {
-			var signal;
 			for (signal of captured_signals) {
 				previous_captured_signals.add(signal);
 			}
 		}
 		captured_signals = previous_captured_signals;
 	}
-	var signal;
 	for (signal of captured) {
 		mutate(signal, null /* doesnt matter */);
 	}
