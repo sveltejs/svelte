@@ -55,7 +55,7 @@ export const javascript_visitors_legacy = {
 							b.declarator(
 								path.node,
 								binding.kind === 'prop'
-									? get_prop_source(state, binding.prop_alias ?? name, value)
+									? get_prop_source(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
 						);
@@ -76,6 +76,7 @@ export const javascript_visitors_legacy = {
 						b.declarator(
 							declarator.id,
 							get_prop_source(
+								binding,
 								state,
 								binding.prop_alias ?? declarator.id.name,
 								declarator.init &&

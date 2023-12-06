@@ -2,7 +2,12 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
-import { PROPS_IS_LAZY_INITIAL, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
+import {
+	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
+} from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
 import { proxy } from './proxy/proxy.js';
 
@@ -1416,7 +1421,7 @@ export function prop_source(props, key, flags, initial) {
 		throw new Error('Cannot use fallback values with bind:');
 	}
 
-	var value = props[key];
+	var value = /** @type {V} */ (props[key]);
 	var should_set_default_value = value === undefined && initial !== undefined;
 
 	if (should_set_default_value) {
@@ -1426,6 +1431,14 @@ export function prop_source(props, key, flags, initial) {
 		if (DEV && runes) {
 			value = readonly(proxy(/** @type {any} */ (value)));
 		}
+	}
+
+	if ((flags & PROPS_IS_UPDATED) === 0) {
+		return () => {
+			var value = /** @type {V} */ (props[key]);
+			if (value !== undefined) initial = undefined;
+			return value === undefined ? /** @type {V} */ (initial) : value;
+		};
 	}
 
 	var source_signal = immutable ? source(value) : mutable_source(value);

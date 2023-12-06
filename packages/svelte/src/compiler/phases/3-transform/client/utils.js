@@ -4,7 +4,8 @@ import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
-	PROPS_IS_RUNES
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
 } from '../../../../constants.js';
 
 /**
@@ -74,10 +75,9 @@ export function serialize_get_binding(node, state) {
 
 		if (
 			!state.analysis.accessors &&
-			!(state.analysis.immutable ? binding.reassigned : binding.mutated) &&
-			!binding.initial
+			!(state.analysis.immutable ? binding.reassigned : binding.mutated)
 		) {
-			return b.member(b.id('$$props'), node);
+			return binding.initial ? b.call(node) : b.member(b.id('$$props'), node);
 		}
 	}
 
@@ -345,12 +345,13 @@ export function serialize_hoistable_params(node, context) {
 }
 
 /**
+ * @param {import('#compiler').Binding} binding
  * @param {import('./types').ComponentClientTransformState} state
  * @param {string} name
  * @param {import('estree').Expression | null} [initial]
  * @returns
  */
-export function get_prop_source(state, name, initial) {
+export function get_prop_source(binding, state, name, initial) {
 	/** @type {import('estree').Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
@@ -362,6 +363,10 @@ export function get_prop_source(state, name, initial) {
 
 	if (state.analysis.runes) {
 		flags |= PROPS_IS_RUNES;
+	}
+
+	if (state.analysis.immutable ? binding.reassigned : binding.mutated) {
+		flags |= PROPS_IS_UPDATED;
 	}
 
 	/** @type {import('estree').Expression | undefined} */
