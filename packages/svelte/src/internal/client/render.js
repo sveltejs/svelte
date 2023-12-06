@@ -2798,11 +2798,10 @@ export function access_props(props) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, any>>} props
+ * @param {Record<string, any>} props
  * @returns {Record<string, any>}
  */
 export function sanitize_slots(props) {
-	props = unwrap(props);
 	const sanitized = { ...props.$$slots };
 	if (props.children) sanitized.default = props.children;
 	return sanitized;
