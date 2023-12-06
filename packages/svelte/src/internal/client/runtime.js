@@ -1426,10 +1426,6 @@ export function prop_source(props_obj, key, flags, default_value) {
 	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	const runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	if (is_signal(props_obj)) {
-		// throw new Error('nope');
-	}
-
 	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
 	const update_bound_prop = get_descriptor(props, key)?.set;
 	let value = props[key];
