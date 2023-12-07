@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.22
+
+### Patch Changes
+
+- fix: handle event hoisting props referencing ([#9846](https://github.com/sveltejs/svelte/pull/9846))
+
+- fix: support dynamic transition functions ([#9844](https://github.com/sveltejs/svelte/pull/9844))
+
+- fix: ensure action function returns object ([#9848](https://github.com/sveltejs/svelte/pull/9848))
+
 ## 5.0.0-next.21
 
 ### Patch Changes
