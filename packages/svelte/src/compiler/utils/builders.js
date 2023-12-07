@@ -370,9 +370,18 @@ export function template(elements, expressions) {
 
 /**
  * @param {import('estree').Expression | import('estree').BlockStatement} expression
- * @returns {import('estree').ArrowFunctionExpression}
+ * @returns {import('estree').Expression}
  */
 export function thunk(expression) {
+	if (
+		expression.type === 'CallExpression' &&
+		expression.callee.type !== 'Super' &&
+		expression.callee.type !== 'MemberExpression' &&
+		expression.arguments.length === 0
+	) {
+		return expression.callee;
+	}
+
 	return arrow([], expression);
 }
 

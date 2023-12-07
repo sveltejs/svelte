@@ -23,12 +23,12 @@ export default test({
 	after_test() {
 		console.log = original_log;
 	},
-	async test({ assert, target, component }) {
+	async test({ assert, target }) {
 		const [b1, b2] = target.querySelectorAll('button');
 		b1.click();
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(log, [0, 'init', 1, 'update']);
+		assert.deepEqual(log, ['init', 0, 'update', 1]);
 	}
 });

@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unclosed-script',
-		message: '<script> must have a closing tag',
+		code: 'unexpected-eof',
+		message: 'Unexpected end of input',
 		position: [32, 32]
 	}
 });

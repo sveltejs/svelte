@@ -40,6 +40,26 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
+Objects and arrays [are made reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+
+```svelte
+<script>
+	let numbers = $state([1, 2, 3]);
+</script>
+
+<button onclick={() => numbers.push(numbers.length + 1)}>
+	push
+</button>
+
+<button onclick={() => numbers.pop()}> pop </button>
+
+<p>
+	{numbers.join(' + ') || 0}
+	=
+	{numbers.reduce((a, b) => a + b, 0)}
+</p>
+```
+
 ### What this replaces
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
@@ -235,6 +255,8 @@ type MyProps = any;
 let { a, b, c, ...everythingElse } = $props<MyProps>();
 ```
 
+Props cannot be mutated, unless the parent component uses `bind:`. During development, attempts to mutate props will result in an error.
+
 ### What this replaces
 
 `$props` replaces the `export let` and `export { x as y }` syntax for declaring props. It also replaces `$$props` and `$$restProps`, and the little-known `interface $$Props {...}` construct.
@@ -245,28 +267,27 @@ Note that you can still use `export const` and `export function` to expose thing
 
 The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever its
 argument changes. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
-or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire. ([Demo:](/#H4sIAAAAAAAAE0WQ0W6DMAxFf8WKKhXUquyZAtIe9w1lEjS4ENU4EXFaTRH_Plq69fH6nutrOaqLIfQqP0XF7YgqV5_Oqb2SH_cQ_oYkuGhvw6Qfk8LryTipaq6FUEDbwAIlbLy0gslHevxzRvS-7fHtbQckstsnsTAbw96hliSuS_b_iTk9QpbB3RAtFntLeCDbw31AhuYJN2AnaF6BBvTQco81F9n7PC7OQcQyWNZk9LWMSQpltZbtdnP1xXrCEVmKbCWXVGHYBYGz4S6_tRSwjK-SGbJqecRoO3Mx2KlcpoDz9_wLBx9LikMBAAA=))
+or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire. ([Demo:](/#H4sIAAAAAAAACkWQ0YqDQAxFfyUMhSotdZ-tCvu431AXtGOqQ2NmmMm0LOK_r7Utfby5JzeXTOpiCIPKT5PidkSVq2_n1F7Jn3uIcEMSXHSw0evHpAjaGydVzbUQCmgbWaCETZBWMPlKj29nxBDaHj_edkAiu12JhdkYDg61JGvE_s2nR8gyuBuiJZuDJTyQ7eE-IEOzog1YD80Lb0APLfdYc5F9qnFxjiKWwbImo6_llKRQVs-2u91c_bD2OCJLkT3JZasw7KLA2XCX31qKWE6vIzNk1fKE0XbmYrBTufiI8-_8D2cUWBA_AQAA))
 
 ```svelte
 <script>
 	let count = $state(0);
 	let message = $state('hello');
 
-	$inspect({ count, message }); // will console.log when `count` or `message` change
+	$inspect(count, message); // will console.log when `count` or `message` change
 </script>
 
 <button onclick={() => count++}>Increment</button>
 <input bind:value={message} />
 ```
 
-If a callback is also provided, it will be invoked instead of `console.log`. The first argument to the callback
-is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4sIAAAAAAAAE0VP24qDMBD9lSEUqlTqPlsj7ON-w1qojWM3rE5CMmkpkn_fxFL26XBuw5lVTHpGL5rvVdCwoGjEp7WiEvy0mfg7zoyJexOcykrrldOWu556npFBmUAMEnaeB8biozwlJ3k7Td6i4mILVPDGfLgE2cGaUz3rCYqsgZQS9sGO6cq-fLs9j3gNtxu6E9Q1GAcXZcibGY_sBoWXKmuPn1S6o4OnCfAYiF_lmCHmQW39v5raa2A2BIbUrNWvXIttz7bvcIjdFymHCxK39SvZpf8XM-pJ4ygadgHjOf4B8TXIiDoBAAA=)
+`$inspect` returns a property `with`, which you can invoke with a callback, which will then be invoked instead of `console.log`. The first argument to the callback is either `"init"` or `"update"`, all following arguments are the values passed to `$inspect`. [Demo:](/#H4sIAAAAAAAACkVQ24qDMBD9lSEUqlTqPlsj7ON-w7pQG8c2VCchmVSK-O-bKMs-DefKYRYx6BG9qL4XQd2EohKf1opC8Nsm4F84MkbsTXAqMbVXTltuWmp5RAZlAjFIOHjuGLOP_BKVqB00eYuKs82Qn2fNjyxLtcWeyUE2sCRry3qATQIpJRyD7WPVMf9TW-7xFu53dBcoSzAOrsqQNyOe2XUKr0Xi5kcMvdDB2wSYO-I9vKazplV1-T-d6ltgNgSG1KjVUy7ZtmdbdjqtzRcphxMS1-XubOITJtPrQWMvKnYB15_1F7KKadA_AQAA)
 
 ```svelte
 <script>
 	let count = $state(0);
 
-	$inspect(count, (count, type) => {
+	$inspect(count).with((type, count) => {
 		if (type === 'update') {
 			debugger; // or `console.trace`, or whatever you want
 		}
@@ -276,11 +297,11 @@ is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4s
 <button onclick={() => count++}>Increment</button>
 ```
 
-A convenient way to find the origin of some change is to pass `console.trace` as the second argument:
+A convenient way to find the origin of some change is to pass `console.trace` to `with`:
 
 ```js
 // @errors: 2304
-$inspect(stuff, console.trace);
+$inspect(stuff).with(console.trace);
 ```
 
 > `$inspect` only works during development.

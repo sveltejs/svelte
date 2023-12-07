@@ -4,28 +4,25 @@ export {
 	set,
 	set_sync,
 	invalidate_inner_signals,
-	expose,
-	exposable,
 	source,
+	mutable_source,
 	derived,
 	prop,
-	prop_source,
 	user_effect,
 	render_effect,
 	pre_effect,
+	invalidate_effect,
 	flushSync,
 	bubble_event,
 	safe_equal,
 	tick,
 	untrack,
-	increment,
-	increment_store,
-	decrement,
-	decrement_store,
-	increment_pre,
-	increment_pre_store,
-	decrement_pre,
-	decrement_pre_store,
+	update,
+	update_prop,
+	update_store,
+	update_pre,
+	update_pre_prop,
+	update_pre_store,
 	mutate,
 	mutate_store,
 	value_or_fallback,
@@ -38,12 +35,15 @@ export {
 	reactive_import,
 	effect_active,
 	user_root_effect,
-	inspect
+	inspect,
+	unwrap
 } from './client/runtime.js';
 
-export * from './client/validate.js';
-
+export * from './client/each.js';
 export * from './client/render.js';
+export * from './client/validate.js';
+export { raf } from './client/timing.js';
+export { proxy, readonly, unstate } from './client/proxy/proxy.js';
 
 export { create_custom_element } from './client/custom-element.js';
 
@@ -54,5 +54,3 @@ export {
 	$window as window,
 	$document as document
 } from './client/operations.js';
-
-export { raf } from './client/timing.js';

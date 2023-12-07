@@ -1,15 +1,21 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { unwrap } from './render.js';
-import { get_descriptors, is_array } from './utils.js';
+import { get_descriptor, get_descriptors, is_array } from './utils.js';
+import {
+	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
+} from '../../constants.js';
+import { readonly } from './proxy/readonly.js';
+import { proxy, unstate } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const PRE_EFFECT = 1 << 3;
 export const RENDER_EFFECT = 1 << 4;
-export const SYNC_EFFECT = 1 << 5;
 const MANAGED = 1 << 6;
 const UNOWNED = 1 << 7;
 export const CLEAN = 1 << 8;
@@ -18,20 +24,20 @@ export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT | SYNC_EFFECT;
+const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
 
 export const UNINITIALIZED = Symbol();
+export const LAZY_PROPERTY = Symbol();
 
 // Used for controlling the flush of effects.
 let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
-// Used for exposing signals
-let is_signal_exposed = false;
+
 // Handle effect queues
 
 /** @type {import('./types.js').EffectSignal[]} */
@@ -63,8 +69,6 @@ export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
 
-/** @type {null | import('./types.js').Signal} */
-let current_captured_signal = null;
 // If we are working with a get() chain that has no active container,
 // to prevent memory leaks, we skip adding the consumer.
 let current_skip_consumer = false;
@@ -87,40 +91,14 @@ export let current_block = null;
 export let current_component_context = null;
 export let is_ssr = false;
 
+export let updating_derived = false;
+
 /**
  * @param {boolean} ssr
  * @returns {void}
  */
 export function set_is_ssr(ssr) {
 	is_ssr = ssr;
-}
-
-/**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
- * @returns {import('./types.js').ComponentContext}
- */
-export function create_component_context(props) {
-	const parent = current_component_context;
-	return {
-		// accessors
-		a: null,
-		// context
-		c: null,
-		// effects
-		e: null,
-		// immutable
-		i: false,
-		// mounted
-		m: false,
-		// parent
-		p: parent,
-		// props
-		s: props,
-		// runes
-		r: false,
-		// update_callbacks
-		u: null
-	};
 }
 
 /**
@@ -145,7 +123,7 @@ export function set_current_component_context(context_stack_item) {
  * @param {unknown} b
  * @returns {boolean}
  */
-function default_equals(a, b) {
+export function default_equals(a, b) {
 	return a === b;
 }
 
@@ -161,7 +139,7 @@ function create_source_signal(flags, value) {
 			// consumers
 			c: null,
 			// equals
-			e: null,
+			e: default_equals,
 			// flags
 			f: flags,
 			// value
@@ -176,7 +154,7 @@ function create_source_signal(flags, value) {
 		// consumers
 		c: null,
 		// equals
-		e: null,
+		e: default_equals,
 		// flags
 		f: flags,
 		// value
@@ -404,16 +382,20 @@ function remove_consumer(signal, start_index, remove_unowned) {
 			let consumers_length = 0;
 			if (consumers !== null) {
 				consumers_length = consumers.length - 1;
-				if (consumers_length === 0) {
-					dependency.c = null;
-				} else {
-					const index = consumers.indexOf(signal);
-					// Swap with last element and then remove.
-					consumers[index] = consumers[consumers_length];
-					consumers.pop();
+				const index = consumers.indexOf(signal);
+				if (index !== -1) {
+					if (consumers_length === 0) {
+						dependency.c = null;
+					} else {
+						// Swap with last element and then remove.
+						consumers[index] = consumers[consumers_length];
+						consumers.pop();
+					}
 				}
 			}
 			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+				// If the signal is unowned then we need to make sure to change it to dirty.
+				set_signal_status(dependency, DIRTY);
 				remove_consumer(
 					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
 					0,
@@ -562,7 +544,7 @@ function process_microtask() {
  */
 export function schedule_effect(signal, sync) {
 	const flags = signal.f;
-	if (sync || (flags & SYNC_EFFECT) !== 0) {
+	if (sync) {
 		execute_effect(signal);
 		set_signal_status(signal, CLEAN);
 	} else {
@@ -688,7 +670,10 @@ export async function tick() {
  * @returns {void}
  */
 function update_derived(signal, force_schedule) {
+	const previous_updating_derived = updating_derived;
+	updating_derived = true;
 	const value = execute_signal_fn(signal);
+	updating_derived = previous_updating_derived;
 	const status =
 		current_skip_consumer || (current_effect === null && (signal.f & UNOWNED) !== 0)
 			? DIRTY
@@ -726,7 +711,7 @@ export function store_get(store, store_name, stores) {
 		entry = {
 			store: null,
 			last_value: null,
-			value: source(UNINITIALIZED),
+			value: mutable_source(UNINITIALIZED),
 			unsubscribe: EMPTY_FUNC
 		};
 		// TODO: can we remove this code? it was refactored out when we split up source/comptued signals
@@ -798,23 +783,6 @@ export function unsubscribe_on_destroy(stores) {
 }
 
 /**
- * Wraps a function and marks execution context so that the last signal read from can be captured
- * using the `expose` function.
- * @template V
- * @param {() => V} fn
- * @returns {V}
- */
-export function exposable(fn) {
-	const previous_is_signal_exposed = is_signal_exposed;
-	try {
-		is_signal_exposed = true;
-		return fn();
-	} finally {
-		is_signal_exposed = previous_is_signal_exposed;
-	}
-}
-
-/**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @returns {V}
@@ -831,10 +799,6 @@ export function get(signal) {
 	const flags = signal.f;
 	if ((flags & DESTROYED) !== 0) {
 		return signal.v;
-	}
-
-	if (is_signal_exposed && current_should_capture_signal) {
-		current_captured_signal = signal;
 	}
 
 	if (is_signals_recorded) {
@@ -904,56 +868,31 @@ export function set_sync(signal, value) {
 }
 
 /**
- * Invokes a function and captures the last signal that is read during the invocation
- * if that signal is read within the `exposable` function context.
- * If a signal is captured, it returns the signal instead of the read value.
- * @template V
- * @param {() => V} possible_signal_fn
- * @returns {any}
- */
-export function expose(possible_signal_fn) {
-	const previous_captured_signal = current_captured_signal;
-	const previous_should_capture_signal = current_should_capture_signal;
-	current_captured_signal = null;
-	current_should_capture_signal = true;
-	try {
-		const value = possible_signal_fn();
-		if (current_captured_signal === null) {
-			return value;
-		}
-		return current_captured_signal;
-	} finally {
-		current_captured_signal = previous_captured_signal;
-		current_should_capture_signal = previous_should_capture_signal;
-	}
-}
-
-/**
  * Invokes a function and captures all signals that are read during the invocation,
  * then invalidates them.
  * @param {() => any} fn
- * @returns {Set<import('./types.js').Signal>}
  */
 export function invalidate_inner_signals(fn) {
-	const previous_is_signals_recorded = is_signals_recorded;
-	const previous_captured_signals = captured_signals;
+	var previous_is_signals_recorded = is_signals_recorded;
+	var previous_captured_signals = captured_signals;
 	is_signals_recorded = true;
 	captured_signals = new Set();
+	var captured = captured_signals;
+	var signal;
 	try {
 		untrack(fn);
 	} finally {
 		is_signals_recorded = previous_is_signals_recorded;
-		let signal;
-		for (signal of captured_signals) {
-			previous_captured_signals.add(signal);
+		if (is_signals_recorded) {
+			for (signal of captured_signals) {
+				previous_captured_signals.add(signal);
+			}
 		}
 		captured_signals = previous_captured_signals;
 	}
-	let signal;
-	for (signal of captured_signals) {
+	for (signal of captured) {
 		mutate(signal, null /* doesnt matter */);
 	}
-	return captured_signals;
 }
 
 /**
@@ -1157,11 +1096,10 @@ export function destroy_signal(signal) {
 /**
  * @template V
  * @param {() => V} init
- * @param {import('./types.js').EqualsFunctions} [equals]
  * @returns {import('./types.js').ComputationSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function derived(init, equals) {
+export function derived(init) {
 	const is_unowned = current_effect === null;
 	const flags = is_unowned ? DERIVED | UNOWNED : DERIVED;
 	const signal = /** @type {import('./types.js').ComputationSignal<V>} */ (
@@ -1169,7 +1107,7 @@ export function derived(init, equals) {
 	);
 	signal.i = init;
 	signal.x = current_component_context;
-	signal.e = get_equals_method(equals);
+	signal.e = default_equals;
 	if (!is_unowned) {
 		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
 	}
@@ -1179,30 +1117,25 @@ export function derived(init, equals) {
 /**
  * @template V
  * @param {V} initial_value
- * @param {import('./types.js').EqualsFunctions<V>} [equals]
  * @returns {import('./types.js').SourceSignal<V>}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function source(initial_value, equals) {
+export function source(initial_value) {
 	const source = create_source_signal(SOURCE | CLEAN, initial_value);
 	source.x = current_component_context;
-	source.e = get_equals_method(equals);
 	return source;
 }
 
 /**
- * @param {import('./types.js').EqualsFunctions} [equals]
- * @returns {import('./types.js').EqualsFunctions}
+ * @template V
+ * @param {V} initial_value
+ * @returns {import('./types.js').SourceSignal<V>}
  */
-function get_equals_method(equals) {
-	if (equals !== undefined) {
-		return equals;
-	}
-	const context = current_component_context;
-	if (context && !context.i) {
-		return safe_equal;
-	}
-	return default_equals;
+/*#__NO_SIDE_EFFECTS__*/
+export function mutable_source(initial_value) {
+	const s = source(initial_value);
+	s.e = safe_equal;
+	return s;
 }
 
 /**
@@ -1349,11 +1282,14 @@ export function pre_effect(init) {
 }
 
 /**
+ * This effect is used to ensure binding are kept in sync. We use a pre effect to ensure we run before the
+ * bindings which are in later effects. However, we don't use a pre_effect directly as we don't want to flush anything.
+ *
  * @param {() => void | (() => void)} init
  * @returns {import('./types.js').EffectSignal}
  */
-function sync_effect(init) {
-	return internal_create_effect(SYNC_EFFECT, init, true, current_block, true);
+export function invalidate_effect(init) {
+	return internal_create_effect(PRE_EFFECT, init, true, current_block, true);
 }
 
 /**
@@ -1426,6 +1362,20 @@ export function is_signal(val) {
 }
 
 /**
+ * @template O
+ * @template P
+ * @param {any} val
+ * @returns {val is import('./types.js').LazyProperty<O, P>}
+ */
+export function is_lazy_property(val) {
+	return (
+		typeof val === 'object' &&
+		val !== null &&
+		/** @type {import('./types.js').LazyProperty<O, P>} */ (val).t === LAZY_PROPERTY
+	);
+}
+
+/**
  * @template V
  * @param {unknown} val
  * @returns {val is import('./types.js').Store<V>}
@@ -1440,148 +1390,114 @@ export function is_store(val) {
 
 /**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
- * It is used whenever the compiler sees that the component writes to the prop.
- *
- * - If the parent passes down a prop without binding, like `<Component prop={value} />`, then create a signal
- *   that updates whenever the value is updated from the parent or from within the component itself
- * - If the parent passes down a prop with a binding, like `<Component bind:prop={value} />`, then
- *   - if the thing that is passed along is the original signal (not a property on it), and the equality functions
- *	 are equal, then just use that signal, no need to create an intermediate one
- *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
- *	 from within the component itself, call the setter of the parent which will propagate the value change back
+ * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
+ * @param {Record<string, unknown>} props
  * @param {string} key
- * @param {V | (() => V)} [default_value]
- * @param {boolean} [call_default_value]
- * @returns {import('./types.js').Signal<V> | (() => V)}
+ * @param {number} flags
+ * @param {V | (() => V)} [initial]
+ * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
-export function prop_source(props_obj, key, default_value, call_default_value) {
-	const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-	const possible_signal = /** @type {import('./types.js').MaybeSignal<V>} */ (
-		expose(() => props[key])
-	);
-	const update_bound_prop = Object.getOwnPropertyDescriptor(props, key)?.set;
-	let value = props[key];
-	const should_set_default_value = value === undefined && default_value !== undefined;
+export function prop(props, key, flags, initial) {
+	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+	var runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	if (
-		is_signal(possible_signal) &&
-		possible_signal.v === value &&
-		update_bound_prop === undefined &&
-		get_equals_method() === possible_signal.e
-	) {
-		if (should_set_default_value) {
-			set(
-				possible_signal,
-				// @ts-expect-error would need a cumbersome method overload to type this
-				call_default_value ? default_value() : default_value
-			);
-		}
-		return possible_signal;
+	var setter = get_descriptor(props, key)?.set;
+	if (DEV && setter && runes && initial !== undefined) {
+		// TODO consolidate all these random runtime errors
+		throw new Error('Cannot use fallback values with bind:');
 	}
 
-	if (should_set_default_value) {
-		value =
-			// @ts-expect-error would need a cumbersome method overload to type this
-			call_default_value ? default_value() : default_value;
+	var prop_value = /** @type {V} */ (props[key]);
+
+	if (prop_value === undefined && initial !== undefined) {
+		// @ts-expect-error would need a cumbersome method overload to type this
+		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
+
+		if (DEV && runes) {
+			initial = readonly(proxy(/** @type {any} */ (initial)));
+		}
+
+		prop_value = /** @type {V} */ (initial);
+
+		if (setter) setter(prop_value);
 	}
 
-	const source_signal = source(value);
+	var getter = () => {
+		var value = /** @type {V} */ (props[key]);
+		if (value !== undefined) initial = undefined;
+		return value === undefined ? /** @type {V} */ (initial) : value;
+	};
 
-	// Synchronize prop changes with source signal.
-	// Needs special equality checking because the prop in the
-	// parent could be changed through `foo.bar = 'new value'`.
-	const immutable = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-		.i;
-	let ignore_next1 = false;
-	let ignore_next2 = false;
-	let did_update_to_defined = !should_set_default_value;
+	// easy mode — prop is never written to
+	if ((flags & PROPS_IS_UPDATED) === 0) {
+		return getter;
+	}
 
-	let mount = true;
-	sync_effect(() => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-		// Before if to ensure signal dependency is registered
-		const propagating_value = props[key];
-		if (mount) {
-			mount = false;
-			return;
-		}
-		if (ignore_next1) {
-			ignore_next1 = false;
-			return;
+	// intermediate mode — prop is written to, but the parent component had
+	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	if (setter) {
+		return function (/** @type {V} */ value) {
+			if (arguments.length === 1) {
+				/** @type {Function} */ (setter)(value);
+				return value;
+			} else {
+				return getter();
+			}
+		};
+	}
+
+	// hard mode. this is where it gets ugly — the value in the child should
+	// synchronize with the parent, but it should also be possible to temporarily
+	// set the value to something else locally.
+	var from_child = false;
+	var was_from_child = false;
+
+	// The derived returns the current value. The underlying mutable
+	// source is written to from various places to persist this value.
+	var inner_current_value = mutable_source(prop_value);
+	var current_value = derived(() => {
+		var parent_value = getter();
+		var child_value = get(inner_current_value);
+
+		if (from_child) {
+			from_child = false;
+			was_from_child = true;
+			return child_value;
 		}
 
-		if (
-			// Ensure that updates from undefined to undefined are ignored
-			(did_update_to_defined || propagating_value !== undefined) &&
-			not_equal(immutable, propagating_value, source_signal.v)
-		) {
-			ignore_next2 = true;
-			did_update_to_defined = true;
-			// TODO figure out why we need it this way and the explain in a comment;
-			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
-			untrack(() => set_signal_value(source_signal, propagating_value));
-		}
+		was_from_child = false;
+		return (inner_current_value.v = parent_value);
 	});
 
-	if (is_signal(possible_signal) && update_bound_prop !== undefined) {
-		let ignore_first = !should_set_default_value;
-		sync_effect(() => {
-			// Before if to ensure signal dependency is registered
-			const propagating_value = get(source_signal);
-			if (ignore_first) {
-				ignore_first = false;
-				return;
-			}
-			if (ignore_next2) {
-				ignore_next2 = false;
-				return;
+	if (!immutable) current_value.e = safe_equal;
+
+	return function (/** @type {V} */ value, mutation = false) {
+		var current = get(current_value);
+
+		// legacy nonsense — need to ensure the source is invalidated when necessary
+		if (is_signals_recorded) {
+			// set this so that we don't reset to the parent value if `d`
+			// is invalidated because of `invalidate_inner_signals` (rather
+			// than because the parent or child value changed)
+			from_child = was_from_child;
+			// invoke getters so that signals are picked up by `invalidate_inner_signals`
+			getter();
+			get(inner_current_value);
+		}
+
+		if (arguments.length > 0) {
+			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
+				from_child = true;
+				set(inner_current_value, mutation ? current : value);
+				get(current_value); // force a synchronisation immediately
 			}
 
-			if (not_equal(immutable, propagating_value, possible_signal.v)) {
-				ignore_next1 = true;
-				did_update_to_defined = true;
-				untrack(() => update_bound_prop(propagating_value));
-			}
-		});
-	}
+			return value;
+		}
 
-	return /** @type {import('./types.js').Signal<V>} */ (source_signal);
-}
-
-/**
- * If the prop is readonly and has no fallback value, we can use this function, else we need to use `prop_source`.
- * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props_obj
- * @param {string} key
- * @returns {any}
- */
-export function prop(props_obj, key) {
-	return () => {
-		const props = is_signal(props_obj) ? get(props_obj) : props_obj;
-		return /** @type {V} */ (props[key]);
+		return current;
 	};
-}
-
-/**
- * @param {boolean} immutable
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function not_equal(immutable, a, b) {
-	return immutable ? immutable_not_equal(a, b) : safe_not_equal(a, b);
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function immutable_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a ? b == b : a !== b;
 }
 
 /**
@@ -1641,104 +1557,84 @@ function get_parent_context(component_context) {
 
 /**
  * @this {any}
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} $$props
+ * @param {Record<string, unknown>} $$props
  * @param {Event} event
  * @returns {void}
  */
 export function bubble_event($$props, event) {
-	const events = /** @type {Record<string, Function[] | Function>} */ (unwrap($$props).$$events)?.[
+	var events = /** @type {Record<string, Function[] | Function>} */ ($$props.$$events)?.[
 		event.type
 	];
-	const callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
-	let fn;
-	for (fn of callbacks) {
+	var callbacks = is_array(events) ? events.slice() : events == null ? [] : [events];
+	for (var fn of callbacks) {
 		// Preserve "this" context
-		if (is_signal(fn)) {
-			get(fn).call(this, event);
-		} else {
-			fn.call(this, event);
-		}
+		fn.call(this, event);
 	}
 }
 
 /**
  * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment(signal) {
+export function update(signal, d = 1) {
 	const value = get(signal);
-	set_signal_value(signal, value + 1);
+	set_signal_value(signal, value + d);
+	return value;
+}
+
+/**
+ * @param {((value?: number) => number)} fn
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_prop(fn, d = 1) {
+	const value = fn();
+	fn(value + d);
 	return value;
 }
 
 /**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment_store(store, store_value) {
-	store.set(store_value + 1);
+export function update_store(store, store_value, d = 1) {
+	store.set(store_value + d);
 	return store_value;
 }
 
 /**
  * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function decrement(signal) {
-	const value = get(signal);
-	set_signal_value(signal, value - 1);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @returns {number}
- */
-export function decrement_store(store, store_value) {
-	store.set(store_value - 1);
-	return store_value;
-}
-
-/**
- * @param {import('./types.js').Signal<number>} signal
- * @returns {number}
- */
-export function increment_pre(signal) {
-	const value = get(signal) + 1;
+export function update_pre(signal, d = 1) {
+	const value = get(signal) + d;
 	set_signal_value(signal, value);
 	return value;
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
+ * @param {((value?: number) => number)} fn
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment_pre_store(store, store_value) {
-	const value = store_value + 1;
-	store.set(value);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Signal<number>} signal
- * @returns {number}
- */
-export function decrement_pre(signal) {
-	const value = get(signal) - 1;
-	set_signal_value(signal, value);
+export function update_pre_prop(fn, d = 1) {
+	const value = fn() + d;
+	fn(value);
 	return value;
 }
 
 /**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function decrement_pre_store(store, store_value) {
-	const value = store_value - 1;
+export function update_pre_store(store, store_value, d = 1) {
+	const value = store_value + d;
 	store.set(value);
 	return value;
 }
@@ -1802,16 +1698,29 @@ export function onDestroy(fn) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @param {any} runes
- * @param {any} immutable
  * @returns {void}
  */
-export function push(props, runes = false, immutable = false) {
-	const context_stack_item = create_component_context(props);
-	context_stack_item.r = runes;
-	context_stack_item.i = immutable;
-	current_component_context = context_stack_item;
+export function push(props, runes = false) {
+	current_component_context = {
+		// accessors
+		a: null,
+		// context
+		c: null,
+		// effects
+		e: null,
+		// mounted
+		m: false,
+		// parent
+		p: current_component_context,
+		// props
+		s: props,
+		// runes
+		r: runes,
+		// update_callbacks
+		u: null
+	};
 }
 
 /**
@@ -1866,10 +1775,12 @@ function deep_read(value, visited = new Set()) {
 	}
 }
 
+// TODO remove in a few versions, before 5.0 at the latest
+let warned_inspect_changed = false;
+
 /**
- * @param {() => import('./types.js').MaybeSignal<>} get_value
- * @param {Function} inspect
- * @returns {void}
+ * @param {() => any[]} get_value
+ * @param {Function} [inspect]
  */
 // eslint-disable-next-line no-console
 export function inspect(get_value, inspect = console.log) {
@@ -1877,8 +1788,15 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value();
-			inspect(value, initial ? 'init' : 'update');
+			const value = get_value().map(unstate);
+			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'$inspect() API has changed. See https://svelte-5-preview.vercel.app/docs/runes#$inspect for more information.'
+				);
+				warned_inspect_changed = true;
+			}
+			inspect(initial ? 'init' : 'update', ...value);
 		};
 
 		inspect_fn = fn;
@@ -1900,4 +1818,55 @@ export function inspect(get_value, inspect = console.log) {
 			}
 		};
 	});
+}
+
+/**
+ * @template O
+ * @template P
+ * @param {O} o
+ * @param {P} p
+ * @returns {import('./types.js').LazyProperty<O, P>}
+ */
+export function lazy_property(o, p) {
+	return {
+		o,
+		p,
+		t: LAZY_PROPERTY
+	};
+}
+
+/**
+ * @template V
+ * @param {V} value
+ * @returns {import('./types.js').UnwrappedSignal<V>}
+ */
+export function unwrap(value) {
+	if (is_signal(value)) {
+		// @ts-ignore
+		return get(value);
+	}
+	if (is_lazy_property(value)) {
+		return value.o[value.p];
+	}
+	// @ts-ignore
+	return value;
+}
+
+if (DEV) {
+	/** @param {string} rune */
+	function throw_rune_error(rune) {
+		if (!(rune in globalThis)) {
+			// @ts-ignore
+			globalThis[rune] = () => {
+				// TODO if people start adjusting the "this can contain runes" config through v-p-s more, adjust this message
+				throw new Error(`${rune} is only available inside .svelte and .svelte.js/ts files`);
+			};
+		}
+	}
+
+	throw_rune_error('$state');
+	throw_rune_error('$effect');
+	throw_rune_error('$derived');
+	throw_rune_error('$inspect');
+	throw_rune_error('$props');
 }

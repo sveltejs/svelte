@@ -1,7 +1,7 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { create_state_declarators, get_props_method, serialize_get_binding } from '../utils.js';
+import { create_state_declarators, get_prop_source, serialize_get_binding } from '../utils.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_legacy = {
@@ -54,8 +54,8 @@ export const javascript_visitors_legacy = {
 						declarations.push(
 							b.declarator(
 								path.node,
-								binding.kind === 'prop' || binding.kind === 'rest_prop'
-									? get_props_method(binding, state, binding.prop_alias ?? name, value)
+								binding.kind === 'prop'
+									? get_prop_source(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
 						);
@@ -67,17 +67,24 @@ export const javascript_visitors_legacy = {
 					state.scope.get(declarator.id.name)
 				);
 
-				declarations.push(
-					b.declarator(
-						declarator.id,
-						get_props_method(
-							binding,
-							state,
-							binding.prop_alias ?? declarator.id.name,
-							declarator.init && /** @type {import('estree').Expression} */ (visit(declarator.init))
+				if (
+					state.analysis.accessors ||
+					(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+					declarator.init
+				) {
+					declarations.push(
+						b.declarator(
+							declarator.id,
+							get_prop_source(
+								binding,
+								state,
+								binding.prop_alias ?? declarator.id.name,
+								declarator.init &&
+									/** @type {import('estree').Expression} */ (visit(declarator.init))
+							)
 						)
-					)
-				);
+					);
+				}
 
 				continue;
 			}
@@ -101,8 +108,11 @@ export const javascript_visitors_legacy = {
 		};
 	},
 	LabeledStatement(node, context) {
-		if (context.path.length > 1) return;
-		if (node.label.name !== '$') return;
+		if (context.path.length > 1 || node.label.name !== '$') {
+			context.next();
+			return;
+		}
+
 		const state = context.state;
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself

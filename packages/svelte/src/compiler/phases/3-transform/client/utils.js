@@ -1,6 +1,12 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
+import {
+	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
+} from '../../../../constants.js';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -60,29 +66,32 @@ export function serialize_get_binding(node, state) {
 		return binding.expression;
 	}
 
-	if (binding.kind === 'prop' && binding.node.name === '$$props') {
-		// Special case for $$props which only exists in the old world
-		return b.call('$.unwrap', node);
+	if (binding.kind === 'prop') {
+		if (binding.node.name === '$$props') {
+			// Special case for $$props which only exists in the old world
+			// TODO this probably shouldn't have a 'prop' binding kind
+			return node;
+		}
+
+		if (
+			state.analysis.accessors ||
+			(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+			binding.initial
+		) {
+			return b.call(node);
+		}
+
+		return b.member(b.id('$$props'), node);
 	}
 
-	if (
-		binding.kind === 'prop' &&
-		!binding.mutated &&
-		!binding.initial &&
-		!state.analysis.accessors
-	) {
-		return b.call(node);
-	}
-
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call('$$_import_' + node.name);
 	}
 
 	if (
-		binding.kind === 'state' ||
+		(binding.kind === 'state' &&
+			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
-		binding.kind === 'prop' ||
-		binding.kind === 'rest_prop' ||
 		binding.kind === 'legacy_reactive'
 	) {
 		return b.call('$.get', node);
@@ -99,7 +108,7 @@ export function serialize_get_binding(node, state) {
  * @returns {import('estree').Expression}
  */
 export function serialize_set_binding(node, context, fallback) {
-	const { state, visit, path } = context;
+	const { state, visit } = context;
 
 	if (
 		node.left.type === 'ArrayPattern' ||
@@ -152,7 +161,11 @@ export function serialize_set_binding(node, context, fallback) {
 		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
 			if (context.state.private_state.has(left.property.name) && !state.in_constructor) {
 				const value = get_assignment_value(node, context);
-				return b.call('$.set', left, value);
+				return b.call(
+					'$.set',
+					left,
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		}
 		// @ts-expect-error
@@ -171,7 +184,7 @@ export function serialize_set_binding(node, context, fallback) {
 		return binding.mutation(node, context);
 	}
 
-	if (binding.kind === 'state' && binding.declaration_kind === 'import') {
+	if (binding.kind === 'legacy_reactive_import') {
 		return b.call(
 			'$$_import_' + binding.node.name,
 			b.assignment(
@@ -197,12 +210,19 @@ export function serialize_set_binding(node, context, fallback) {
 	}
 
 	const value = get_assignment_value(node, context);
+
 	const serialize = () => {
 		if (left === node.left) {
-			if (is_store) {
+			if (binding.kind === 'prop') {
+				return b.call(left, value);
+			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
 			} else {
-				return b.call('$.set', b.id(left_name), value);
+				return b.call(
+					'$.set',
+					b.id(left_name),
+					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+				);
 			}
 		} else {
 			if (is_store) {
@@ -216,15 +236,33 @@ export function serialize_set_binding(node, context, fallback) {
 					),
 					b.call('$' + left_name)
 				);
+			} else if (!state.analysis.runes) {
+				if (binding.kind === 'prop') {
+					return b.call(
+						left,
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						),
+						b.literal(true)
+					);
+				} else {
+					return b.call(
+						'$.mutate',
+						b.id(left_name),
+						b.assignment(
+							node.operator,
+							/** @type {import('estree').Pattern} */ (visit(node.left)),
+							value
+						)
+					);
+				}
 			} else {
-				return b.call(
-					'$.mutate',
-					b.id(left_name),
-					b.assignment(
-						node.operator,
-						/** @type {import('estree').Pattern} */ (visit(node.left)),
-						value
-					)
+				return b.assignment(
+					node.operator,
+					/** @type {import('estree').Pattern} */ (visit(node.left)),
+					/** @type {import('estree').Expression} */ (visit(node.right))
 				);
 			}
 		}
@@ -278,6 +316,7 @@ function get_hoistable_params(node, context) {
 
 	/** @type {import('estree').Pattern[]} */
 	const params = [];
+	let added_props = false;
 
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
@@ -287,6 +326,19 @@ function get_hoistable_params(node, context) {
 				// We need both the subscription for getting the value and the store for updating
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
+			} else if (
+				// If we are referencing a simple $$props value, then we need to reference the object property instead
+				binding.kind === 'prop' &&
+				!binding.reassigned &&
+				binding.initial === null &&
+				!context.state.analysis.accessors &&
+				context.state.analysis.runes
+			) {
+				// Handle $$props.something use-cases
+				if (!added_props) {
+					added_props = true;
+					params.push(b.id('$$props'));
+				}
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				params.push(b.id(binding.node.name));
@@ -324,35 +376,61 @@ export function serialize_hoistable_params(node, context) {
 }
 
 /**
- *
  * @param {import('#compiler').Binding} binding
  * @param {import('./types').ComponentClientTransformState} state
  * @param {string} name
- * @param {import('estree').Expression | null} [default_value]
+ * @param {import('estree').Expression | null} [initial]
  * @returns
  */
-export function get_props_method(binding, state, name, default_value) {
+export function get_prop_source(binding, state, name, initial) {
 	/** @type {import('estree').Expression[]} */
 	const args = [b.id('$$props'), b.literal(name)];
 
-	if (default_value) {
+	let flags = 0;
+
+	if (state.analysis.immutable) {
+		flags |= PROPS_IS_IMMUTABLE;
+	}
+
+	if (state.analysis.runes) {
+		flags |= PROPS_IS_RUNES;
+	}
+
+	if (
+		state.analysis.accessors ||
+		(state.analysis.immutable ? binding.reassigned : binding.mutated)
+	) {
+		flags |= PROPS_IS_UPDATED;
+	}
+
+	/** @type {import('estree').Expression | undefined} */
+	let arg;
+
+	if (initial) {
 		// To avoid eagerly evaluating the right-hand-side, we wrap it in a thunk if necessary
-		if (default_value.type !== 'Literal' && default_value.type !== 'Identifier') {
-			args.push(b.thunk(default_value));
-			args.push(b.true);
+		if (is_simple_expression(initial)) {
+			arg = initial;
 		} else {
-			args.push(default_value);
-			args.push(b.false);
+			if (
+				initial.type === 'CallExpression' &&
+				initial.callee.type === 'Identifier' &&
+				initial.arguments.length === 0
+			) {
+				arg = initial.callee;
+			} else {
+				arg = b.thunk(initial);
+			}
+
+			flags |= PROPS_IS_LAZY_INITIAL;
 		}
 	}
 
-	return b.call(
-		// Use $.prop_source in the following cases:
-		// - accessors/mutated: needs to be able to set the prop value from within
-		// - default value: we set the fallback value only initially, and it's not possible to know this timing in $.prop
-		binding.mutated || binding.initial || state.analysis.accessors ? '$.prop_source' : '$.prop',
-		...args
-	);
+	if (flags || arg) {
+		args.push(b.literal(flags));
+		if (arg) args.push(arg);
+	}
+
+	return b.call('$.prop', ...args);
 }
 
 /**
@@ -364,7 +442,7 @@ export function get_props_method(binding, state, name, default_value) {
 export function create_state_declarators(declarator, scope, value) {
 	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
 	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.source', value))];
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
 	}
 
 	const tmp = scope.generate('tmp');
@@ -374,7 +452,25 @@ export function create_state_declarators(declarator, scope, value) {
 		...paths.map((path) => {
 			const value = path.expression?.(b.id(tmp));
 			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(path.node, binding?.kind === 'state' ? b.call('$.source', value) : value);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+			);
 		})
 	];
+}
+
+/** @param {import('estree').Expression} node */
+export function should_proxy(node) {
+	if (
+		!node ||
+		node.type === 'Literal' ||
+		node.type === 'ArrowFunctionExpression' ||
+		node.type === 'FunctionExpression' ||
+		(node.type === 'Identifier' && node.name === 'undefined')
+	) {
+		return false;
+	}
+
+	return true;
 }

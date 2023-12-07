@@ -1,19 +1,19 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 18,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 18,
-				"type": "Element",
 				"name": "input",
 				"attributes": [
 					{
+						"type": "Attribute",
 						"start": 7,
 						"end": 15,
-						"type": "Attribute",
 						"name": "foo",
 						"value": [
 							{
@@ -24,9 +24,9 @@
 								"data": "a"
 							},
 							{
+								"type": "MustacheTag",
 								"start": 12,
 								"end": 15,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Literal",
 									"start": 13,

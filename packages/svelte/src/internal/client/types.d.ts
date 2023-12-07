@@ -10,7 +10,7 @@ import {
 	DYNAMIC_ELEMENT_BLOCK,
 	SNIPPET_BLOCK
 } from './block.js';
-import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT } from './runtime.js';
+import { DERIVED, EFFECT, RENDER_EFFECT, SOURCE, PRE_EFFECT, LAZY_PROPERTY } from './runtime.js';
 
 // Put all internal types in this file. Once we convert to JSDoc, we can make this a d.ts file
 
@@ -36,7 +36,7 @@ export type Store<V> = {
 
 export type ComponentContext = {
 	/** props */
-	s: MaybeSignal<Record<string, unknown>>;
+	s: Record<string, unknown>;
 	/** accessors */
 	a: Record<string, any> | null;
 	/** effectgs */
@@ -47,8 +47,6 @@ export type ComponentContext = {
 	p: null | ComponentContext;
 	/** context */
 	c: null | Map<unknown, unknown>;
-	/** immutable */
-	i: boolean;
 	/** runes */
 	r: boolean;
 	/** update_callbacks */
@@ -115,6 +113,12 @@ export type EffectSignal = ComputationSignal<null | (() => void)>;
 export type MaybeSignal<T = unknown> = T | Signal<T>;
 
 export type UnwrappedSignal<T> = T extends Signal<infer U> ? U : T;
+
+export type LazyProperty<O, P> = {
+	o: O;
+	p: P;
+	t: typeof LAZY_PROPERTY;
+};
 
 export type EqualsFunctions<T = any> = (a: T, v: T) => boolean;
 
@@ -281,6 +285,15 @@ export type EachBlock = {
 };
 
 export type EachItemBlock = {
+	/** transition */
+	a:
+		| null
+		| ((
+				block: EachItemBlock,
+				transitions: Set<Transition>,
+				index: number,
+				index_is_reactive: boolean
+		  ) => void);
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */

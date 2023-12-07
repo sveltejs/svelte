@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 18,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Comment",
 				"start": 0,
 				"end": 18,
-				"type": "Comment",
 				"data": " a comment ",
 				"ignores": []
 			}

@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unclosed-script',
-		message: '<script> must have a closing tag',
+		code: 'unclosed-element',
+		message: '<script> was left open',
 		position: [32, 32]
 	}
 });

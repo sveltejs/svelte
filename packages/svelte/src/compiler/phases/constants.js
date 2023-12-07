@@ -78,7 +78,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.pre',
 	'$effect.active',
 	'$effect.root',
-	'$inspect'
+	'$inspect',
+	'$inspect().with'
 ]);
 
 /**
@@ -195,4 +196,44 @@ export const EventModifiers = [
 	'nonpassive',
 	'self',
 	'trusted'
+];
+
+export const JsKeywords = [
+	'class',
+	'break',
+	'const',
+	'let',
+	'var',
+	'continue',
+	'if',
+	'for',
+	'while',
+	'do',
+	'new',
+	'static',
+	'true',
+	'false',
+	'void',
+	'with',
+	'yield',
+	'await',
+	'typeof',
+	'throw',
+	'throws',
+	'null',
+	'delete',
+	'default',
+	'catch',
+	'debugger',
+	'case',
+	'arguments',
+	'else',
+	'extends',
+	'export',
+	'import',
+	'extends',
+	'switch',
+	'instanceof',
+	'return',
+	'this'
 ];

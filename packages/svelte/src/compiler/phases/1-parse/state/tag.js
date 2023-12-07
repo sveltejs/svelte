@@ -315,7 +315,7 @@ function next(parser) {
 	const block = parser.current(); // TODO type should not be TemplateNode, that's much too broad
 
 	if (block.type === 'IfBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else} or {:else if}');
 		if (parser.eat('if')) error(start, 'invalid-elseif');
 
 		parser.allow_whitespace();
@@ -359,7 +359,7 @@ function next(parser) {
 	}
 
 	if (block.type === 'EachBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else}');
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -375,7 +375,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				error(start, 'TODO', 'duplicate then');
+				error(start, 'duplicate-block-part', '{:then}');
 			}
 
 			if (!parser.eat('}')) {
@@ -394,7 +394,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				error(start, 'TODO', 'duplicate catch');
+				error(start, 'duplicate-block-part', '{:catch}');
 			}
 
 			if (!parser.eat('}')) {
@@ -413,6 +413,8 @@ function next(parser) {
 
 		error(start, 'expected-token', '{:then ...} or {:catch ...}');
 	}
+
+	error(start, 'invalid-continuing-block-placement');
 }
 
 /** @param {import('../index.js').Parser} parser */

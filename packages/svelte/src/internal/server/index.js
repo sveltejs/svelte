@@ -115,10 +115,9 @@ export function render(component, options) {
 
 /**
  * @param {boolean} runes
- * @param {boolean} [immutable]
  */
-export function push(runes, immutable) {
-	$.push({}, runes, immutable);
+export function push(runes) {
+	$.push({}, runes);
 }
 
 export function pop() {
@@ -552,4 +551,13 @@ export function loop_guard(timeout) {
 			throw new Error('Infinite loop detected');
 		}
 	};
+}
+
+/**
+ * @param {any[]} args
+ * @param {Function} [inspect]
+ */
+// eslint-disable-next-line no-console
+export function inspect(args, inspect = console.log) {
+	inspect('init', ...args);
 }

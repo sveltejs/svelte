@@ -173,6 +173,11 @@ async function run_test_variant(
 		window.document.head.innerHTML = styles ? `<style>${styles}</style>` : '';
 		window.document.body.innerHTML = '<main></main>';
 
+		window.addEventListener('error', (e) => {
+			unhandled_rejection = e.error;
+			e.preventDefault();
+		});
+
 		let mod = await import(`${cwd}/_output/client/main.svelte.js`);
 
 		const target = window.document.querySelector('main') as HTMLElement;
@@ -299,6 +304,11 @@ async function run_test_variant(
 						raf,
 						compileOptions
 					});
+				}
+
+				if (config.runtime_error && !unhandled_rejection) {
+					unintended_error = true;
+					assert.fail('Expected a runtime error');
 				}
 			} finally {
 				instance.$destroy();

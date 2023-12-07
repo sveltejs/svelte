@@ -183,7 +183,7 @@ function get_delegated_event(node, context) {
 					// or any normal not reactive bindings that are mutated.
 					binding.kind === 'normal' ||
 					// or any reactive imports (those are rewritten) (can only happen in legacy mode)
-					(binding.kind === 'state' && binding.declaration_kind === 'import')) &&
+					binding.kind === 'legacy_reactive_import') &&
 					binding.mutated))
 		) {
 			return non_hoistable;
@@ -221,20 +221,13 @@ export function analyze_module(ast, options) {
 		merge(set_scope(scopes), validation_runes_js, runes_scope_js_tweaker)
 	);
 
-	// If we are in runes mode, then check for possible misuses of state runes
-	for (const [, scope] of scopes) {
-		for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'state' && !binding.mutated) {
-				warn(warnings, binding.node, [], 'state-not-mutated', name);
-			}
-		}
-	}
-
 	return {
 		module: { ast, scope, scopes },
 		name: options.filename || 'module',
 		warnings,
-		accessors: false
+		accessors: false,
+		runes: true,
+		immutable: true
 	};
 }
 
@@ -315,6 +308,10 @@ export function analyze_component(root, options) {
 
 	const component_name = get_component_name(options.filename ?? 'Component');
 
+	const runes =
+		options.runes ??
+		Array.from(module.scope.references).some(([name]) => Runes.includes(/** @type {any} */ (name)));
+
 	// TODO remove all the ?? stuff, we don't need it now that we're validating the config
 	/** @type {import('../types.js').ComponentAnalysis} */
 	const analysis = {
@@ -331,11 +328,8 @@ export function analyze_component(root, options) {
 			component_name,
 			get_css_hash: options.cssHash
 		}),
-		runes:
-			options.runes ??
-			Array.from(module.scope.references).some(([name]) =>
-				Runes.includes(/** @type {any} */ (name))
-			),
+		runes,
+		immutable: runes || options.immutable,
 		exports: [],
 		uses_props: false,
 		uses_rest_props: false,
@@ -382,15 +376,6 @@ export function analyze_component(root, options) {
 				merge(set_scope(scopes), validation_runes, runes_scope_tweaker, common_visitors)
 			);
 		}
-
-		// If we are in runes mode, then check for possible misuses of state runes
-		for (const [, scope] of instance.scopes) {
-			for (const [name, binding] of scope.declarations) {
-				if (binding.kind === 'state' && !binding.mutated) {
-					warn(warnings, binding.node, [], 'state-not-mutated', name);
-				}
-			}
-		}
 	} else {
 		instance.scope.declare(b.id('$$props'), 'prop', 'synthetic');
 		instance.scope.declare(b.id('$$restProps'), 'rest_prop', 'synthetic');
@@ -424,10 +409,10 @@ export function analyze_component(root, options) {
 		analysis.reactive_statements = order_reactive_statements(analysis.reactive_statements);
 	}
 
-	// warn on any nonstate declarations that are a) mutated and b) referenced in the template
+	// warn on any nonstate declarations that are a) reassigned and b) referenced in the template
 	for (const scope of [module.scope, instance.scope]) {
 		outer: for (const [name, binding] of scope.declarations) {
-			if (binding.kind === 'normal' && binding.mutated) {
+			if (binding.kind === 'normal' && binding.reassigned) {
 				for (const { path } of binding.references) {
 					if (path[0].type !== 'Fragment') continue;
 					for (let i = 1; i < path.length; i += 1) {
@@ -553,7 +538,7 @@ const legacy_scope_tweaker = {
 						(state.reactive_statement || state.ast_type === 'template') &&
 						parent.type === 'MemberExpression'
 					) {
-						binding.kind = 'state';
+						binding.kind = 'legacy_reactive_import';
 					}
 				} else if (
 					binding.mutated &&
@@ -921,7 +906,10 @@ const common_visitors = {
 		}
 	},
 	CallExpression(node, context) {
-		if (context.state.expression?.type === 'ExpressionTag' && !is_known_safe_call(node, context)) {
+		if (
+			context.state.expression?.type === 'ExpressionTag' ||
+			(context.state.expression?.type === 'SpreadAttribute' && !is_known_safe_call(node, context))
+		) {
 			context.state.expression.metadata.contains_call_expression = true;
 		}
 

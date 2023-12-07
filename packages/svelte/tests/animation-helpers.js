@@ -102,16 +102,18 @@ class Animation {
 	}
 
 	finish() {
+		this.onfinish();
 		this.currentTime = this.#reversed ? 0 : this.#duration;
 		if (this.#reversed) {
 			raf.animations.delete(this);
 		}
-		this.onfinish();
 	}
 
 	cancel() {
-		this._applyKeyFrame(this.#reversed ? this.#keyframes.length - 1 : 0);
-		raf.animations.delete(this);
+		this.#paused = true;
+		if (this.currentTime > 0 && this.currentTime < this.#duration) {
+			this._applyKeyFrame(this.#reversed ? this.#keyframes.length - 1 : 0);
+		}
 	}
 
 	pause() {

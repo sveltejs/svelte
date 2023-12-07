@@ -1,8 +1,8 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": null,
 		"end": null,
-		"type": "Fragment",
 		"children": []
 	},
 	"instance": {
