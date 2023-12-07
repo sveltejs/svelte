@@ -1386,15 +1386,7 @@ export function is_store(val) {
 
 /**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
- * It is used whenever the compiler sees that the component writes to the prop.
- *
- * - If the parent passes down a prop without binding, like `<Component prop={value} />`, then create a signal
- *   that updates whenever the value is updated from the parent or from within the component itself
- * - If the parent passes down a prop with a binding, like `<Component bind:prop={value} />`, then
- *   - if the thing that is passed along is the original signal (not a property on it), and the equality functions
- *	 are equal, then just use that signal, no need to create an intermediate one
- *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
- *	 from within the component itself, call the setter of the parent which will propagate the value change back
+ * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
  * @param {Record<string, unknown>} props
  * @param {string} key
@@ -1412,9 +1404,9 @@ export function prop(props, key, flags, initial) {
 		throw new Error('Cannot use fallback values with bind:');
 	}
 
-	var value = /** @type {V} */ (props[key]);
+	var prop_value = /** @type {V} */ (props[key]);
 
-	if (value === undefined && initial !== undefined) {
+	if (prop_value === undefined && initial !== undefined) {
 		// @ts-expect-error would need a cumbersome method overload to type this
 		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
@@ -1422,9 +1414,9 @@ export function prop(props, key, flags, initial) {
 			initial = readonly(proxy(/** @type {any} */ (initial)));
 		}
 
-		value = /** @type {V} */ (initial);
+		prop_value = /** @type {V} */ (initial);
 
-		if (setter) setter(value);
+		if (setter) setter(prop_value);
 	}
 
 	var getter = () => {
@@ -1453,15 +1445,16 @@ export function prop(props, key, flags, initial) {
 
 	// hard mode. this is where it gets ugly — the value in the child should
 	// synchronize with the parent, but it should also be possible to temporarily
-	// set the value to something else locally. to make this work, we need to
-	// do a little dance.
+	// set the value to something else locally.
 	var from_child = false;
 	var was_from_child = false;
 
-	var s = mutable_source(value);
-	var d = derived(() => {
+	// The derived returns the current value. The underlying mutable
+	// source is written to from various places to persist this value.
+	var inner_current_value = mutable_source(prop_value);
+	var current_value = derived(() => {
 		var parent_value = getter();
-		var child_value = get(s);
+		var child_value = get(inner_current_value);
 
 		if (from_child) {
 			from_child = false;
@@ -1470,13 +1463,13 @@ export function prop(props, key, flags, initial) {
 		}
 
 		was_from_child = false;
-		return (s.v = parent_value);
+		return (inner_current_value.v = parent_value);
 	});
 
-	if (!immutable) d.e = safe_equal;
+	if (!immutable) current_value.e = safe_equal;
 
 	return function (/** @type {V} */ value, mutation = false) {
-		var current = get(d);
+		var current = get(current_value);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		if (is_signals_recorded) {
@@ -1484,16 +1477,16 @@ export function prop(props, key, flags, initial) {
 			// is invalidated because of `invalidate_inner_signals` (rather
 			// than because the parent or child value changed)
 			from_child = was_from_child;
-
+			// invoke getters so that signals are picked up by `invalidate_inner_signals`
 			getter();
-			get(s);
+			get(inner_current_value);
 		}
 
 		if (arguments.length > 0) {
 			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
 				from_child = true;
-				set(s, mutation ? current : value);
-				get(d); // force a synchronisation immediately
+				set(inner_current_value, mutation ? current : value);
+				get(current_value); // force a synchronisation immediately
 			}
 
 			return value;
