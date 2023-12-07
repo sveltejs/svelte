@@ -149,7 +149,7 @@ const handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
+		if (DEV && prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
 
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
@@ -207,7 +207,7 @@ const handler = {
 	},
 
 	set(target, prop, value) {
-		if (prop === READONLY_SYMBOL) {
+		if (DEV && prop === READONLY_SYMBOL) {
 			target[READONLY_SYMBOL] = value;
 			return true;
 		}
