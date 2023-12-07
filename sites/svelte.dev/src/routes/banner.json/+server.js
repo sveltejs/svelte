@@ -11,7 +11,10 @@ export const GET = async () => {
 				start: new Date('1 Dec, 2023 00:00:00 UTC'),
 				end: new Date('24 Dec, 2023 23:59:59 UTC'),
 				arrow: true,
-				content: 'Svelte Advent 2023 is here!',
+				content: {
+					lg: 'Advent of Svelte 2023 is here!',
+					sm: 'Advent of Svelte'
+				},
 				href: 'https://advent.sveltesociety.dev/'
 			},
 
@@ -21,7 +24,10 @@ export const GET = async () => {
 				start: new Date('25 Dec, 2023 00:00:00 UTC'),
 				end: new Date('1 Jan, 2024 00:00:00 UTC'),
 				arrow: true,
-				content: 'Svelte Advent 2023 is over. See you next year!',
+				content: {
+					lg: 'Advent of Svelte 2023 is over. See you next year!',
+					sm: 'Advent of Svelte 2023 is over!'
+				},
 				href: 'https://advent.sveltesociety.dev/'
 				// scope: ['svelte.dev, kit.svelte.dev'] // Dont show on learn.svelte.dev by not adding it to the array
 			}
