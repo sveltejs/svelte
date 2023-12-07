@@ -1,5 +1,5 @@
 <script>
-	let { log} = $props();
+	import { log } from './log.js';
 
 	let x = $state(0);
 	let y = $state(0);

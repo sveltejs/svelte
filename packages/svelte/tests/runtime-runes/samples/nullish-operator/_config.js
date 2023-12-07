@@ -1,13 +1,14 @@
 import { test } from '../../test';
+import { log } from './log.js';
 
 export default test({
-	get props() {
-		return { log: [] };
+	before_test() {
+		log.length = 0;
 	},
 
-	async test({ assert, target, component }) {
+	async test({ assert }) {
 		await Promise.resolve();
 		await Promise.resolve();
-		assert.deepEqual(component.log, ['a1: ', true, 'b1: ', true]);
+		assert.deepEqual(log, ['a1: ', true, 'b1: ', true]);
 	}
 });
