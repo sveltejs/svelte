@@ -30,7 +30,7 @@
     "@resvg/resvg-js": "^2.6.0",
     "@sveltejs/adapter-vercel": "^3.1.0",
     "@sveltejs/kit": "^1.27.6",
-    "@sveltejs/site-kit": "6.0.0-next.56",
+    "@sveltejs/site-kit": "6.0.0-next.57",
     "@types/cookie": "^0.6.0",
     "@types/node": "^20.10.2",
     "browserslist": "^4.22.1",
