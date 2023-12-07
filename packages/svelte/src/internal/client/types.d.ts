@@ -285,6 +285,15 @@ export type EachBlock = {
 };
 
 export type EachItemBlock = {
+	/** transition */
+	a:
+		| null
+		| ((
+				block: EachItemBlock,
+				transitions: Set<Transition>,
+				index: number,
+				index_is_reactive: boolean
+		  ) => void);
 	/** dom */
 	d: null | TemplateNode | Array<TemplateNode>;
 	/** effect */

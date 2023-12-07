@@ -9,7 +9,7 @@ import {
 	KEY_BLOCK,
 	ROOT_BLOCK
 } from './block.js';
-import { destroy_each_item_block } from './each.js';
+import { destroy_each_item_block, get_first_element } from './each.js';
 import { append_child } from './operations.js';
 import { empty } from './render.js';
 import {
@@ -21,6 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
+	schedule_task,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -432,6 +433,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			if (transition_block.t === EACH_ITEM_BLOCK) {
 				// Lazily apply the each block transition
 				transition_block.r = each_item_transition;
+				transition_block.a = each_item_animate;
 				transition_block = transition_block.p;
 			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
 				can_show_intro_on_mount = false;
@@ -645,4 +647,32 @@ function each_item_transition(transition) {
 		}
 	});
 	transitions.add(transition);
+}
+
+/**
+ *
+ * @param {import('./types.js').EachItemBlock} block
+ * @param {Set<import('./types.js').Transition>} transitions
+ * @param {number} index
+ * @param {boolean} index_is_reactive
+ */
+function each_item_animate(block, transitions, index, index_is_reactive) {
+	let prev_index = block.i;
+	if (index_is_reactive) {
+		prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
+	}
+	const items = block.p.v;
+	if (prev_index !== index && /** @type {number} */ (index) < items.length) {
+		const from_dom = /** @type {Element} */ (get_first_element(block));
+		const from = from_dom.getBoundingClientRect();
+		// Cancel any existing key transitions
+		for (const transition of transitions) {
+			if (transition.r === 'key') {
+				transition.c();
+			}
+		}
+		schedule_task(() => {
+			trigger_transitions(transitions, 'key', from);
+		});
+	}
 }

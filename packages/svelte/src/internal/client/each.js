@@ -686,7 +686,7 @@ function destroy_active_transition_blocks(active_transitions) {
  * @param {import('./types.js').Block} block
  * @returns {Text | Element | Comment}
  */
-function get_first_element(block) {
+export function get_first_element(block) {
 	const current = block.d;
 
 	if (is_array(current)) {
@@ -717,25 +717,9 @@ function update_each_item_block(block, item, index, type) {
 	const transitions = block.s;
 	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
 	// Handle each item animations
-	if (transitions !== null && (type & EACH_KEYED) !== 0) {
-		let prev_index = block.i;
-		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
-		}
-		const items = block.p.v;
-		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-			const from_dom = /** @type {Element} */ (get_first_element(block));
-			const from = from_dom.getBoundingClientRect();
-			// Cancel any existing key transitions
-			for (const transition of transitions) {
-				if (transition.r === 'key') {
-					transition.c();
-				}
-			}
-			schedule_task(() => {
-				trigger_transitions(transitions, 'key', from);
-			});
-		}
+	const each_animation = block.a;
+	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
+		each_animation(block, transitions, index, index_is_reactive);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
