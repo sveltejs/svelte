@@ -227,36 +227,35 @@ function setup_select_synchronization(value_binding, context) {
 		}
 	}
 
-	const to_invalidate = context.state.analysis.runes
-		? b.empty
-		: b.stmt(
-				b.call(
-					'$.invalidate_inner_signals',
-					b.thunk(
-						b.block(
-							names.map((name) => {
-								const serialized = serialize_get_binding(b.id(name), context.state);
-								return b.stmt(serialized);
-							})
-						)
-					)
-				)
-		  );
-	context.state.init.push(
-		b.stmt(
-			b.call(
-				'$.invalidate_effect',
-				b.thunk(
-					b.block([
-						b.stmt(
-							/** @type {import('estree').Expression} */ (context.visit(value_binding.expression))
-						),
-						to_invalidate
-					])
+	if (!context.state.analysis.runes) {
+		const invalidator = b.call(
+			'$.invalidate_inner_signals',
+			b.thunk(
+				b.block(
+					names.map((name) => {
+						const serialized = serialize_get_binding(b.id(name), context.state);
+						return b.stmt(serialized);
+					})
 				)
 			)
-		)
-	);
+		);
+
+		context.state.init.push(
+			b.stmt(
+				b.call(
+					'$.invalidate_effect',
+					b.thunk(
+						b.block([
+							b.stmt(
+								/** @type {import('estree').Expression} */ (context.visit(value_binding.expression))
+							),
+							b.stmt(invalidator)
+						])
+					)
+				)
+			)
+		);
+	}
 }
 
 /**
