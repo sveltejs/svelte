@@ -1767,7 +1767,9 @@ export const template_visitors = {
 				b.call(
 					'$.animate',
 					state.node,
-					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
+					b.thunk(
+						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
+					),
 					expression
 				)
 			)
@@ -1791,7 +1793,9 @@ export const template_visitors = {
 				b.call(
 					type,
 					state.node,
-					/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name))),
+					b.thunk(
+						/** @type {import('estree').Expression} */ (visit(parse_directive_name(node.name)))
+					),
 					expression,
 					node.modifiers.includes('global') ? b.true : b.false
 				)
