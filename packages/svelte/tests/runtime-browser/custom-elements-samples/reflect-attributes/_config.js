@@ -25,7 +25,6 @@ export default test({
 		button.click();
 		await tick();
 		await tick();
-		await tick();
 
 		assert.equal(getComputedStyle(div).color, 'rgb(0, 0, 0)');
 		assert.equal(getComputedStyle(inner_div).color, 'rgb(0, 0, 0)');
