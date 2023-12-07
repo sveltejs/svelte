@@ -1449,6 +1449,7 @@ export function prop(props, key, flags, initial) {
 	}
 
 	var setting_from_child = false;
+	var last_set_from_child = false;
 	var s = mutable_source(value);
 	var d = derived(() => {
 		const from_parent = getter();
@@ -1456,9 +1457,11 @@ export function prop(props, key, flags, initial) {
 
 		if (setting_from_child) {
 			setting_from_child = false;
+			last_set_from_child = true;
 			return from_child;
 		}
 
+		last_set_from_child = false;
 		return (s.v = from_parent);
 	});
 
@@ -1468,13 +1471,17 @@ export function prop(props, key, flags, initial) {
 		const current = get(d);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
-		if (is_signals_recorded) get(s);
+		if (is_signals_recorded) {
+			setting_from_child = last_set_from_child;
+			getter();
+			get(s);
+		}
 
 		if (arguments.length > 0) {
-			if (mutation || (immutable ? value !== current : !safe_equal(value, current))) {
+			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
 				setting_from_child = true;
 				set(s, mutation ? current : value);
-				get(d);
+				get(d); // force a synchronisation immediately
 			}
 			return value;
 		}
