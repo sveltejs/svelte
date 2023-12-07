@@ -327,6 +327,7 @@ function get_hoistable_params(node, context) {
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
 			} else if (
+				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				binding.kind === 'prop' &&
 				!binding.reassigned &&
 				binding.initial === null &&
