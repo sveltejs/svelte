@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.21
+
+### Patch Changes
+
+- chore: refactor props handling ([#9826](https://github.com/sveltejs/svelte/pull/9826))
+
+- fix: improve each key animations ([#9842](https://github.com/sveltejs/svelte/pull/9842))
+
+- chore: avoid creating thunk for call expressions when appropriate ([#9841](https://github.com/sveltejs/svelte/pull/9841))
+
+- fix: improve signal consumer removal logic ([#9837](https://github.com/sveltejs/svelte/pull/9837))
+
+- fix: ensure computed props are wrapped in derived ([#9835](https://github.com/sveltejs/svelte/pull/9835))
+
+- fix: better handle unowned derived signals ([#9832](https://github.com/sveltejs/svelte/pull/9832))
+
+- fix: improve each block with animate ([#9839](https://github.com/sveltejs/svelte/pull/9839))
+
+- breaking: change `$inspect` API ([#9838](https://github.com/sveltejs/svelte/pull/9838))
+
 ## 5.0.0-next.20
 
 ### Patch Changes
