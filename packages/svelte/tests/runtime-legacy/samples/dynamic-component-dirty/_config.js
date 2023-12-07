@@ -1,7 +1,7 @@
 import { test } from '../../test';
 
 /** @type {string[]} */
-const calls = [];
+let calls = [];
 
 export default test({
 	get props() {
@@ -9,7 +9,7 @@ export default test({
 	},
 
 	before_test() {
-		calls.length = 0;
+		calls = [];
 	},
 
 	async test({ assert, component, target, window }) {

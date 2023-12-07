@@ -256,7 +256,7 @@ export function client_component(source, analysis, options) {
 
 			properties.push(
 				b.get(key, [b.return(b.call(b.id(name)))]),
-				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value')))])
+				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
 			);
 		}
 	}
