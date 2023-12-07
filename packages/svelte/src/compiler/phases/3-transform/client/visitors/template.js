@@ -782,13 +782,20 @@ function serialize_inline_component(node, component_name, context) {
 			if (attribute.metadata.dynamic) {
 				let arg = value;
 
-				const contains_call_expression =
+				// When we have a non-simple computation, anything other than an Identifier or Member expression,
+				// then there's a good chance it needs to be memoized to avoid over-firing when read within the
+				// child component.
+				const should_wrap_in_derived =
 					Array.isArray(attribute.value) &&
 					attribute.value.some((n) => {
-						return n.type === 'ExpressionTag' && n.metadata.contains_call_expression;
+						return (
+							n.type === 'ExpressionTag' &&
+							n.expression.type !== 'Identifier' &&
+							n.expression.type !== 'MemberExpression'
+						);
 					});
 
-				if (contains_call_expression) {
+				if (should_wrap_in_derived) {
 					const id = b.id(context.state.scope.generate(attribute.name));
 					context.state.init.push(b.var(id, b.call('$.derived', b.thunk(value))));
 					arg = b.call('$.get', id);
