@@ -5,7 +5,6 @@
 	import { Nav, Separator } from '@sveltejs/site-kit/nav';
 	import { Search, SearchBox } from '@sveltejs/site-kit/search';
 	import '@sveltejs/site-kit/styles/index.css';
-	import opensearch from '../opensearch.xml?url';
 
 	export let data;
 
@@ -30,13 +29,6 @@
 		<meta name="twitter:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
 		<meta name="og:image" content="https://svelte.dev/images/twitter-thumbnail.jpg" />
 	{/if}
-
-	<link
-		rel="search"
-		type="application/opensearchdescription+xml"
-		href={opensearch}
-		title="Svelte"
-	/>
 </svelte:head>
 
 <div style:display={$page.url.pathname !== '/docs' ? 'contents' : 'none'}>
