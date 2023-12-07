@@ -316,6 +316,7 @@ function get_hoistable_params(node, context) {
 
 	/** @type {import('estree').Pattern[]} */
 	const params = [];
+	let added_props = false;
 
 	for (const [reference] of scope.references) {
 		const binding = scope.get(reference);
@@ -325,6 +326,19 @@ function get_hoistable_params(node, context) {
 				// We need both the subscription for getting the value and the store for updating
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
+			} else if (
+				// If we are referencing a simple $$props value, then we need to reference the object property instead
+				binding.kind === 'prop' &&
+				!binding.reassigned &&
+				binding.initial === null &&
+				!context.state.analysis.accessors &&
+				context.state.analysis.runes
+			) {
+				// Handle $$props.something use-cases
+				if (!added_props) {
+					added_props = true;
+					params.push(b.id('$$props'));
+				}
 			} else {
 				// create a copy to remove start/end tags which would mess up source maps
 				params.push(b.id(binding.node.name));
