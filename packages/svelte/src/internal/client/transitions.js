@@ -411,13 +411,13 @@ function is_transition_block(block) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined> | import('./types.js').AnimateFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined> | import('./types.js').AnimateFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props_fn
  * @param {'in' | 'out' | 'both' | 'key'} direction
  * @param {boolean} global
  * @returns {void}
  */
-export function bind_transition(dom, transition_fn, props_fn, direction, global) {
+export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 	const block = current_block;
 	const props = props_fn === null ? {} : props_fn();
@@ -458,6 +458,11 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 	let transition;
 
 	effect(() => {
+		if (transition !== undefined) {
+			// Destroy any existing transitions first
+			transition.x();
+		}
+		const transition_fn = get_transition_fn();
 		/** @param {DOMRect} [from] */
 		const init = (from) =>
 			untrack(() =>
