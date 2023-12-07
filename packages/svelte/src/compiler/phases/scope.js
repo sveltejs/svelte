@@ -699,6 +699,11 @@ export function get_rune(node, scope) {
 		n = n.object;
 	}
 
+	if (n.type === 'CallExpression' && n.callee.type === 'Identifier') {
+		joined = '()' + joined;
+		n = n.callee;
+	}
+
 	if (n.type !== 'Identifier') return null;
 
 	joined = n.name + joined;

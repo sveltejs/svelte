@@ -9,7 +9,7 @@ import {
 	PROPS_IS_UPDATED
 } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
-import { proxy } from './proxy/proxy.js';
+import { proxy, unstate } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1775,10 +1775,12 @@ function deep_read(value, visited = new Set()) {
 	}
 }
 
+// TODO remove in a few versions, before 5.0 at the latest
+let warned_inspect_changed = false;
+
 /**
- * @param {() => any} get_value
- * @param {Function} inspect
- * @returns {void}
+ * @param {() => any[]} get_value
+ * @param {Function} [inspect]
  */
 // eslint-disable-next-line no-console
 export function inspect(get_value, inspect = console.log) {
@@ -1786,8 +1788,15 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value();
-			inspect(value, initial ? 'init' : 'update');
+			const value = get_value().map(unstate);
+			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'$inspect() API has changed. See https://svelte-5-preview.vercel.app/docs/runes#$inspect for more information.'
+				);
+				warned_inspect_changed = true;
+			}
+			inspect(initial ? 'init' : 'update', ...value);
 		};
 
 		inspect_fn = fn;

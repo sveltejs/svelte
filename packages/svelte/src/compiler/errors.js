@@ -190,7 +190,7 @@ const runes = {
 	'invalid-derived-binding': () => `Invalid binding to derived state`,
 	/**
 	 * @param {string} rune
-	 * @param {number[]} args
+	 * @param {Array<number | string>} args
 	 */
 	'invalid-rune-args-length': (rune, args) =>
 		`${rune} can only be called with ${list(args, 'or')} ${

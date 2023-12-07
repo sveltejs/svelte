@@ -78,7 +78,8 @@ export const Runes = /** @type {const} */ ([
 	'$effect.pre',
 	'$effect.active',
 	'$effect.root',
-	'$inspect'
+	'$inspect',
+	'$inspect().with'
 ]);
 
 /**

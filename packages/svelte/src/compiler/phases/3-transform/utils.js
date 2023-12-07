@@ -271,3 +271,35 @@ export function determine_element_namespace(node, namespace, path) {
 
 	return namespace;
 }
+
+/**
+ * @template {import('./types.js').TransformState} T
+ * @param {import('estree').CallExpression} node
+ * @param {import('zimmerframe').Context<any, T>} context
+ */
+export function transform_inspect_rune(node, context) {
+	const { state, visit } = context;
+	const as_fn = state.options.generate === 'client';
+
+	if (!state.options.dev) return b.unary('void', b.literal(0));
+
+	if (node.callee.type === 'MemberExpression') {
+		const raw_inspect_args = /** @type {import('estree').CallExpression} */ (node.callee.object)
+			.arguments;
+		const inspect_args =
+			/** @type {Array<import('estree').Expression>} */
+			(raw_inspect_args.map((arg) => visit(arg)));
+		const with_arg = /** @type {import('estree').Expression} */ (visit(node.arguments[0]));
+
+		return b.call(
+			'$.inspect',
+			as_fn ? b.thunk(b.array(inspect_args)) : b.array(inspect_args),
+			with_arg
+		);
+	} else {
+		const arg = node.arguments.map(
+			(arg) => /** @type {import('estree').Expression} */ (visit(arg))
+		);
+		return b.call('$.inspect', as_fn ? b.thunk(b.array(arg)) : b.array(arg));
+	}
+}

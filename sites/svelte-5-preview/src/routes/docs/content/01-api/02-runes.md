@@ -267,28 +267,27 @@ Note that you can still use `export const` and `export function` to expose thing
 
 The `$inspect` rune is roughly equivalent to `console.log`, with the exception that it will re-run whenever its
 argument changes. `$inspect` tracks reactive state deeply, meaning that updating something inside an object
-or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire. ([Demo:](/#H4sIAAAAAAAAE0WQ0W6DMAxFf8WKKhXUquyZAtIe9w1lEjS4ENU4EXFaTRH_Plq69fH6nutrOaqLIfQqP0XF7YgqV5_Oqb2SH_cQ_oYkuGhvw6Qfk8LryTipaq6FUEDbwAIlbLy0gslHevxzRvS-7fHtbQckstsnsTAbw96hliSuS_b_iTk9QpbB3RAtFntLeCDbw31AhuYJN2AnaF6BBvTQco81F9n7PC7OQcQyWNZk9LWMSQpltZbtdnP1xXrCEVmKbCWXVGHYBYGz4S6_tRSwjK-SGbJqecRoO3Mx2KlcpoDz9_wLBx9LikMBAAA=))
+or array using [fine-grained reactivity](/docs/fine-grained-reactivity) will cause it to re-fire. ([Demo:](/#H4sIAAAAAAAACkWQ0YqDQAxFfyUMhSotdZ-tCvu431AXtGOqQ2NmmMm0LOK_r7Utfby5JzeXTOpiCIPKT5PidkSVq2_n1F7Jn3uIcEMSXHSw0evHpAjaGydVzbUQCmgbWaCETZBWMPlKj29nxBDaHj_edkAiu12JhdkYDg61JGvE_s2nR8gyuBuiJZuDJTyQ7eE-IEOzog1YD80Lb0APLfdYc5F9qnFxjiKWwbImo6_llKRQVs-2u91c_bD2OCJLkT3JZasw7KLA2XCX31qKWE6vIzNk1fKE0XbmYrBTufiI8-_8D2cUWBA_AQAA))
 
 ```svelte
 <script>
 	let count = $state(0);
 	let message = $state('hello');
 
-	$inspect({ count, message }); // will console.log when `count` or `message` change
+	$inspect(count, message); // will console.log when `count` or `message` change
 </script>
 
 <button onclick={() => count++}>Increment</button>
 <input bind:value={message} />
 ```
 
-If a callback is also provided, it will be invoked instead of `console.log`. The first argument to the callback
-is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4sIAAAAAAAAE0VP24qDMBD9lSEUqlTqPlsj7ON-w1qojWM3rE5CMmkpkn_fxFL26XBuw5lVTHpGL5rvVdCwoGjEp7WiEvy0mfg7zoyJexOcykrrldOWu556npFBmUAMEnaeB8biozwlJ3k7Td6i4mILVPDGfLgE2cGaUz3rCYqsgZQS9sGO6cq-fLs9j3gNtxu6E9Q1GAcXZcibGY_sBoWXKmuPn1S6o4OnCfAYiF_lmCHmQW39v5raa2A2BIbUrNWvXIttz7bvcIjdFymHCxK39SvZpf8XM-pJ4ygadgHjOf4B8TXIiDoBAAA=)
+`$inspect` returns property `with`, whech you can invoke with a callback. If a callback is also provided, it will be invoked instead of `console.log`. The first argument to the callback is either `"init"` or `"update"`, all following arguments are the values passed to `$inspect`. [Demo:](/#H4sIAAAAAAAACkVQ24qDMBD9lSEUqlTqPlsj7ON-w7pQG8c2VCchmVSK-O-bKMs-DefKYRYx6BG9qL4XQd2EohKf1opC8Nsm4F84MkbsTXAqMbVXTltuWmp5RAZlAjFIOHjuGLOP_BKVqB00eYuKs82Qn2fNjyxLtcWeyUE2sCRry3qATQIpJRyD7WPVMf9TW-7xFu53dBcoSzAOrsqQNyOe2XUKr0Xi5kcMvdDB2wSYO-I9vKazplV1-T-d6ltgNgSG1KjVUy7ZtmdbdjqtzRcphxMS1-XubOITJtPrQWMvKnYB15_1F7KKadA_AQAA)
 
 ```svelte
 <script>
 	let count = $state(0);
 
-	$inspect(count, (count, type) => {
+	$inspect(count).with((type, count) => {
 		if (type === 'update') {
 			debugger; // or `console.trace`, or whatever you want
 		}
@@ -298,11 +297,11 @@ is the current value. The second is either `"init"` or `"update"`. [Demo:](/#H4s
 <button onclick={() => count++}>Increment</button>
 ```
 
-A convenient way to find the origin of some change is to pass `console.trace` as the second argument:
+A convenient way to find the origin of some change is to pass `console.trace` to `with`:
 
 ```js
 // @errors: 2304
-$inspect(stuff, console.trace);
+$inspect(stuff).with(console.trace);
 ```
 
 > `$inspect` only works during development.
