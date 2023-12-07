@@ -185,7 +185,7 @@ export const javascript_visitors_runes = {
 						const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
 
 						if (binding.reassigned || state.analysis.accessors || initial) {
-							declarations.push(b.declarator(id, get_prop_source(state, name, initial)));
+							declarations.push(b.declarator(id, get_prop_source(binding, state, name, initial)));
 						}
 					} else {
 						// RestElement

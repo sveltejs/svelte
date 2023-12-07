@@ -1,24 +1,17 @@
 import { test } from '../../test';
-
-/**
- * @type {any[]}
- */
-let order = [];
-let n = 0;
+import { log } from './log.js';
 
 export default test({
 	get props() {
-		return {
-			order,
-			n
-		};
+		return { n: 0 };
 	},
+
 	before_test() {
-		order.length = 0;
-		n = 0;
+		log.length = 0;
 	},
-	async test({ assert, compileOptions, component }) {
-		assert.deepEqual(order, [
+
+	async test({ assert, component }) {
+		assert.deepEqual(log, [
 			'parent: $effect.pre 0',
 			'parent: nested $effect.pre 0',
 			'parent: render 0',
@@ -37,11 +30,11 @@ export default test({
 			'parent: $effect 0'
 		]);
 
-		order.length = 0;
+		log.length = 0;
 
 		component.n += 1;
 
-		assert.deepEqual(order, [
+		assert.deepEqual(log, [
 			'parent: $effect.pre 1',
 			'parent: nested $effect.pre 1',
 			'parent: render 1',

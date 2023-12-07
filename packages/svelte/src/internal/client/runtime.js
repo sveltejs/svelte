@@ -2,16 +2,20 @@ import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
 import { get_descriptor, get_descriptors, is_array } from './utils.js';
-import { PROPS_CALL_DEFAULT_VALUE, PROPS_IS_IMMUTABLE, PROPS_IS_RUNES } from '../../constants.js';
+import {
+	PROPS_IS_LAZY_INITIAL,
+	PROPS_IS_IMMUTABLE,
+	PROPS_IS_RUNES,
+	PROPS_IS_UPDATED
+} from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
-import { observe, proxy } from './proxy/proxy.js';
+import { proxy } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
 export const EFFECT = 1 << 2;
 export const PRE_EFFECT = 1 << 3;
 export const RENDER_EFFECT = 1 << 4;
-export const SYNC_EFFECT = 1 << 5;
 const MANAGED = 1 << 6;
 const UNOWNED = 1 << 7;
 export const CLEAN = 1 << 8;
@@ -20,7 +24,7 @@ export const MAYBE_DIRTY = 1 << 10;
 export const INERT = 1 << 11;
 export const DESTROYED = 1 << 12;
 
-const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT | SYNC_EFFECT;
+const IS_EFFECT = EFFECT | PRE_EFFECT | RENDER_EFFECT;
 
 const FLUSH_MICROTASK = 0;
 const FLUSH_SYNC = 1;
@@ -536,7 +540,7 @@ function process_microtask() {
  */
 export function schedule_effect(signal, sync) {
 	const flags = signal.f;
-	if (sync || (flags & SYNC_EFFECT) !== 0) {
+	if (sync) {
 		execute_effect(signal);
 		set_signal_status(signal, CLEAN);
 	} else {
@@ -1285,14 +1289,6 @@ export function invalidate_effect(init) {
 }
 
 /**
- * @param {() => void | (() => void)} init
- * @returns {import('./types.js').EffectSignal}
- */
-function sync_effect(init) {
-	return internal_create_effect(SYNC_EFFECT, init, true, current_block, true);
-}
-
-/**
  * @template {import('./types.js').Block} B
  * @param {(block: B) => void | (() => void)} init
  * @param {any} block
@@ -1390,124 +1386,114 @@ export function is_store(val) {
 
 /**
  * This function is responsible for synchronizing a possibly bound prop with the inner component state.
- * It is used whenever the compiler sees that the component writes to the prop.
- *
- * - If the parent passes down a prop without binding, like `<Component prop={value} />`, then create a signal
- *   that updates whenever the value is updated from the parent or from within the component itself
- * - If the parent passes down a prop with a binding, like `<Component bind:prop={value} />`, then
- *   - if the thing that is passed along is the original signal (not a property on it), and the equality functions
- *	 are equal, then just use that signal, no need to create an intermediate one
- *   - otherwise create a signal that updates whenever the value is updated from the parent, and when it's updated
- *	 from within the component itself, call the setter of the parent which will propagate the value change back
+ * It is used whenever the compiler sees that the component writes to the prop, or when it has a default prop_value.
  * @template V
  * @param {Record<string, unknown>} props
  * @param {string} key
  * @param {number} flags
- * @param {V | (() => V)} [default_value]
- * @returns {import('./types.js').Signal<V> | (() => V)}
+ * @param {V | (() => V)} [initial]
+ * @returns {(() => V | ((arg: V) => V) | ((arg: V, mutation: boolean) => V))}
  */
-export function prop_source(props, key, flags, default_value) {
-	const call_default_value = (flags & PROPS_CALL_DEFAULT_VALUE) !== 0;
-	const immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
-	const runes = (flags & PROPS_IS_RUNES) !== 0;
+export function prop(props, key, flags, initial) {
+	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
+	var runes = (flags & PROPS_IS_RUNES) !== 0;
 
-	const update_bound_prop = get_descriptor(props, key)?.set;
-	let value = props[key];
-	const should_set_default_value = value === undefined && default_value !== undefined;
-
-	if (update_bound_prop && runes && default_value !== undefined) {
+	var setter = get_descriptor(props, key)?.set;
+	if (DEV && setter && runes && initial !== undefined) {
 		// TODO consolidate all these random runtime errors
 		throw new Error('Cannot use fallback values with bind:');
 	}
 
-	if (should_set_default_value) {
-		value =
-			// @ts-expect-error would need a cumbersome method overload to type this
-			call_default_value ? default_value() : default_value;
+	var prop_value = /** @type {V} */ (props[key]);
+
+	if (prop_value === undefined && initial !== undefined) {
+		// @ts-expect-error would need a cumbersome method overload to type this
+		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
 		if (DEV && runes) {
-			value = readonly(proxy(/** @type {any} */ (value)));
+			initial = readonly(proxy(/** @type {any} */ (initial)));
 		}
+
+		prop_value = /** @type {V} */ (initial);
+
+		if (setter) setter(prop_value);
 	}
 
-	const source_signal = immutable ? source(value) : mutable_source(value);
+	var getter = () => {
+		var value = /** @type {V} */ (props[key]);
+		if (value !== undefined) initial = undefined;
+		return value === undefined ? /** @type {V} */ (initial) : value;
+	};
 
-	// Synchronize prop changes with source signal.
-	// Needs special equality checking because the prop in the
-	// parent could be changed through `foo.bar = 'new value'`.
-	let ignore_next1 = false;
-	let ignore_next2 = false;
-	let did_update_to_defined = !should_set_default_value;
+	// easy mode — prop is never written to
+	if ((flags & PROPS_IS_UPDATED) === 0) {
+		return getter;
+	}
 
-	let mount = true;
-	sync_effect(() => {
-		observe(props);
+	// intermediate mode — prop is written to, but the parent component had
+	// `bind:foo` which means we can just call `$$props.foo = value` directly
+	if (setter) {
+		return function (/** @type {V} */ value) {
+			if (arguments.length === 1) {
+				/** @type {Function} */ (setter)(value);
+				return value;
+			} else {
+				return getter();
+			}
+		};
+	}
 
-		// Before if to ensure signal dependency is registered
-		const propagating_value = props[key];
-		if (mount) {
-			mount = false;
-			return;
+	// hard mode. this is where it gets ugly — the value in the child should
+	// synchronize with the parent, but it should also be possible to temporarily
+	// set the value to something else locally.
+	var from_child = false;
+	var was_from_child = false;
+
+	// The derived returns the current value. The underlying mutable
+	// source is written to from various places to persist this value.
+	var inner_current_value = mutable_source(prop_value);
+	var current_value = derived(() => {
+		var parent_value = getter();
+		var child_value = get(inner_current_value);
+
+		if (from_child) {
+			from_child = false;
+			was_from_child = true;
+			return child_value;
 		}
-		if (ignore_next1) {
-			ignore_next1 = false;
-			return;
-		}
 
-		if (
-			// Ensure that updates from undefined to undefined are ignored
-			(did_update_to_defined || propagating_value !== undefined) &&
-			not_equal(immutable, propagating_value, source_signal.v)
-		) {
-			ignore_next2 = true;
-			did_update_to_defined = true;
-			// TODO figure out why we need it this way and the explain in a comment;
-			// some tests fail is we just do set_signal_value(source_signal, propagating_value)
-			untrack(() => set_signal_value(source_signal, propagating_value));
-		}
+		was_from_child = false;
+		return (inner_current_value.v = parent_value);
 	});
 
-	if (update_bound_prop !== undefined) {
-		let ignore_first = !should_set_default_value;
-		sync_effect(() => {
-			// Before if to ensure signal dependency is registered
-			const propagating_value = get(source_signal);
-			if (ignore_first) {
-				ignore_first = false;
-				return;
+	if (!immutable) current_value.e = safe_equal;
+
+	return function (/** @type {V} */ value, mutation = false) {
+		var current = get(current_value);
+
+		// legacy nonsense — need to ensure the source is invalidated when necessary
+		if (is_signals_recorded) {
+			// set this so that we don't reset to the parent value if `d`
+			// is invalidated because of `invalidate_inner_signals` (rather
+			// than because the parent or child value changed)
+			from_child = was_from_child;
+			// invoke getters so that signals are picked up by `invalidate_inner_signals`
+			getter();
+			get(inner_current_value);
+		}
+
+		if (arguments.length > 0) {
+			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
+				from_child = true;
+				set(inner_current_value, mutation ? current : value);
+				get(current_value); // force a synchronisation immediately
 			}
-			if (ignore_next2) {
-				ignore_next2 = false;
-				return;
-			}
 
-			ignore_next1 = true;
-			did_update_to_defined = true;
-			untrack(() => update_bound_prop(propagating_value));
-		});
-	}
+			return value;
+		}
 
-	return /** @type {import('./types.js').Signal<V>} */ (source_signal);
-}
-
-/**
- * @param {boolean} immutable
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function not_equal(immutable, a, b) {
-	return immutable ? immutable_not_equal(a, b) : safe_not_equal(a, b);
-}
-
-/**
- * @param {unknown} a
- * @param {unknown} b
- * @returns {boolean}
- */
-function immutable_not_equal(a, b) {
-	// eslint-disable-next-line eqeqeq
-	return a != a ? b == b : a !== b;
+		return current;
+	};
 }
 
 /**
@@ -1584,82 +1570,67 @@ export function bubble_event($$props, event) {
 
 /**
  * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment(signal) {
+export function update(signal, d = 1) {
 	const value = get(signal);
-	set_signal_value(signal, value + 1);
+	set_signal_value(signal, value + d);
+	return value;
+}
+
+/**
+ * @param {((value?: number) => number)} fn
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_prop(fn, d = 1) {
+	const value = fn();
+	fn(value + d);
 	return value;
 }
 
 /**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment_store(store, store_value) {
-	store.set(store_value + 1);
+export function update_store(store, store_value, d = 1) {
+	store.set(store_value + d);
 	return store_value;
 }
 
 /**
  * @param {import('./types.js').Signal<number>} signal
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function decrement(signal) {
-	const value = get(signal);
-	set_signal_value(signal, value - 1);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
- * @returns {number}
- */
-export function decrement_store(store, store_value) {
-	store.set(store_value - 1);
-	return store_value;
-}
-
-/**
- * @param {import('./types.js').Signal<number>} signal
- * @returns {number}
- */
-export function increment_pre(signal) {
-	const value = get(signal) + 1;
+export function update_pre(signal, d = 1) {
+	const value = get(signal) + d;
 	set_signal_value(signal, value);
 	return value;
 }
 
 /**
- * @param {import('./types.js').Store<number>} store
- * @param {number} store_value
+ * @param {((value?: number) => number)} fn
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function increment_pre_store(store, store_value) {
-	const value = store_value + 1;
-	store.set(value);
-	return value;
-}
-
-/**
- * @param {import('./types.js').Signal<number>} signal
- * @returns {number}
- */
-export function decrement_pre(signal) {
-	const value = get(signal) - 1;
-	set_signal_value(signal, value);
+export function update_pre_prop(fn, d = 1) {
+	const value = fn() + d;
+	fn(value);
 	return value;
 }
 
 /**
  * @param {import('./types.js').Store<number>} store
  * @param {number} store_value
+ * @param {1 | -1} [d]
  * @returns {number}
  */
-export function decrement_pre_store(store, store_value) {
-	const value = store_value - 1;
+export function update_pre_store(store, store_value, d = 1) {
+	const value = store_value + d;
 	store.set(value);
 	return value;
 }

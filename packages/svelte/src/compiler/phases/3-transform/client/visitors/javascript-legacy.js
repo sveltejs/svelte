@@ -55,7 +55,7 @@ export const javascript_visitors_legacy = {
 							b.declarator(
 								path.node,
 								binding.kind === 'prop'
-									? get_prop_source(state, binding.prop_alias ?? name, value)
+									? get_prop_source(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
 						);
@@ -76,6 +76,7 @@ export const javascript_visitors_legacy = {
 						b.declarator(
 							declarator.id,
 							get_prop_source(
+								binding,
 								state,
 								binding.prop_alias ?? declarator.id.name,
 								declarator.init &&
@@ -107,8 +108,11 @@ export const javascript_visitors_legacy = {
 		};
 	},
 	LabeledStatement(node, context) {
-		if (context.path.length > 1) return;
-		if (node.label.name !== '$') return;
+		if (context.path.length > 1 || node.label.name !== '$') {
+			context.next();
+			return;
+		}
+
 		const state = context.state;
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself

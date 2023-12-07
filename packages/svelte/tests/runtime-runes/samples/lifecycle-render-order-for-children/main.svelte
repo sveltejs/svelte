@@ -1,26 +1,27 @@
 <script>
 	import Item from './Item.svelte';
+	import { log } from './log.js';
 
-	let { n = 0, order } = $props();
+	let { n = 0 } = $props();
 
 	function logRender () {
-		order.push(`parent: render ${n}`);
+		log.push(`parent: render ${n}`);
 		return 'parent';
 	}
 
 	$effect.pre(() => {
-		order.push(`parent: $effect.pre ${n}`);
+		log.push(`parent: $effect.pre ${n}`);
 	});
 
 	$effect(() => {
-		order.push(`parent: $effect ${n}`);
+		log.push(`parent: $effect ${n}`);
 	});
 </script>
 
 {logRender()}
 <ul>
 	{#each [1,2,3] as index}
-		<Item {index} {n} {order} />
+		<Item {index} {n} />
 	{/each}
 </ul>
 

@@ -1,16 +1,17 @@
 import { test } from '../../test';
+import { log } from './log.js';
 
 export default test({
-	get props() {
-		return { log: [] };
+	before_test() {
+		log.length = 0;
 	},
 
-	async test({ assert, target, component }) {
+	async test({ assert, target }) {
 		const [b1, b2] = target.querySelectorAll('button');
 		b1.click();
 		b2.click();
 		await Promise.resolve();
 
-		assert.deepEqual(component.log, [0, 1]);
+		assert.deepEqual(log, [0, 1]);
 	}
 });
