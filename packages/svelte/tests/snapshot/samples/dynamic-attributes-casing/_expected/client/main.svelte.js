@@ -21,9 +21,9 @@ export default function Main($$anchor, $$props) {
 	var custom_element_1 = $.sibling($.sibling(svg_1));
 
 	/* Update */
-	$.attr_effect(div, "foobar", () => y());
-	$.attr_effect(svg_1, "viewBox", () => y());
-	$.set_custom_element_data_effect(custom_element_1, "fooBar", () => y());
+	$.attr_effect(div, "foobar", y);
+	$.attr_effect(svg_1, "viewBox", y);
+	$.set_custom_element_data_effect(custom_element_1, "fooBar", y);
 
 	var node_foobar;
 	var svg_viewBox;
