@@ -1448,19 +1448,38 @@ export function prop(props, key, flags, initial) {
 		};
 	}
 
-	var source_signal = immutable ? source(value) : mutable_source(value);
+	var setting_from_child = false;
+	var s = mutable_source(value);
+	var d = derived(() => {
+		const from_parent = getter();
+		const from_child = get(s);
 
-	pre_effect(() => {
-		set(source_signal, getter());
+		if (setting_from_child) {
+			setting_from_child = false;
+			return from_child;
+		}
+
+		return (s.v = from_parent);
 	});
 
+	if (!immutable) d.e = safe_equal;
+
 	return function (/** @type {V} */ value, mutation = false) {
+		const current = get(d);
+
+		// legacy nonsense — need to ensure the source is invalidated when necessary
+		if (is_signals_recorded) get(s);
+
 		if (arguments.length > 0) {
-			(mutation ? mutate : set)(source_signal, value);
+			if (mutation || (immutable ? value !== current : !safe_equal(value, current))) {
+				setting_from_child = true;
+				set(s, mutation ? current : value);
+				get(d);
+			}
 			return value;
-		} else {
-			return get(source_signal);
 		}
+
+		return current;
 	};
 }
 
