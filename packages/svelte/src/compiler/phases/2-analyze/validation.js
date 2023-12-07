@@ -349,6 +349,7 @@ export const validation = {
 			if (
 				!binding ||
 				(binding.kind !== 'state' &&
+					binding.kind !== 'raw_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
@@ -660,7 +661,7 @@ function validate_export(node, scope, name) {
 		error(node, 'invalid-derived-export');
 	}
 
-	if (binding.kind === 'state' && binding.reassigned) {
+	if ((binding.kind === 'state' || binding.kind === 'raw_state') && binding.reassigned) {
 		error(node, 'invalid-state-export');
 	}
 }
@@ -834,7 +835,9 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 				is_binding,
 				// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
 				// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-				binding.kind !== 'state' && (binding.kind !== 'normal' || !binding.initial)
+				binding.kind !== 'state' &&
+					binding.kind !== 'raw_state' &&
+					(binding.kind !== 'normal' || !binding.initial)
 			);
 		}
 	}

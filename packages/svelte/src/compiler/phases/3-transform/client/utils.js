@@ -92,7 +92,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		(binding.kind === 'state' &&
+		((binding.kind === 'state' || binding.kind === 'raw_state') &&
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'legacy_reactive'
@@ -232,6 +232,7 @@ export function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
+		binding.kind !== 'raw_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -249,12 +250,14 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
-			} else {
+			} else if (binding.kind === 'state') {
 				return b.call(
 					'$.set',
 					b.id(left_name),
 					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
 				);
+			} else {
+				return b.call('$.set', b.id(left_name), value);
 			}
 		} else {
 			if (is_store) {

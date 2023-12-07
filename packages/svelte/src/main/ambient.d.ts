@@ -17,6 +17,23 @@ declare module '*.svelte' {
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
+declare namespace $state {
+	/**
+	 * Declares reactive state without applying reactivity to nested properties.
+	 *
+	 * Example:
+	 * ```ts
+	 * let count = $state.raw(0);
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state-raw
+	 *
+	 * @param initial The initial value
+	 */
+	export function $raw<T>(initial: T): T;
+	export function $raw<T>(): T | undefined;
+}
+
 /**
  * Declares derived state, i.e. one that depends on other state variables.
  * The expression inside `$derived(...)` should be free of side-effects.

@@ -29,10 +29,10 @@ export const javascript_visitors_runes = {
 
 				if (definition.value?.type === 'CallExpression') {
 					const rune = get_rune(definition.value, state.scope);
-					if (rune === '$state' || rune === '$derived') {
+					if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
 						/** @type {import('../types.js').StateField} */
 						const field = {
-							kind: rune === '$state' ? 'state' : 'derived',
+							kind: rune === '$state' ? 'state' : rune === '$state.raw' ? 'raw_state' : 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -85,6 +85,8 @@ export const javascript_visitors_runes = {
 						value =
 							field.kind === 'state'
 								? b.call('$.source', should_proxy(init) ? b.call('$.proxy', init) : init)
+								: field.kind === 'raw_state'
+								? b.call('$.source', init)
 								: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
@@ -111,6 +113,14 @@ export const javascript_visitors_runes = {
 									[value],
 									[b.stmt(b.call('$.set', member, b.call('$.proxy', value)))]
 								)
+							);
+						}
+
+						if (field.kind === 'raw_state') {
+							// set foo(value) { this.#foo = value; }
+							const value = b.id('value');
+							body.push(
+								b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
 							);
 						}
 
@@ -222,6 +232,13 @@ export const javascript_visitors_runes = {
 					}
 
 					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
+						value = b.call('$.source', value);
+					}
+				} else if (rune === '$state.raw') {
+					const binding = /** @type {import('#compiler').Binding} */ (
+						state.scope.get(declarator.id.name)
+					);
+					if (binding.reassigned) {
 						value = b.call('$.source', value);
 					}
 				} else {
