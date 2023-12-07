@@ -1,17 +1,19 @@
 <script>
-	let { index, n, order } = $props();
+	import { log } from './log.js';
+
+	let { index, n } = $props();
 
 	function logRender () {
-		order.push(`${index}: render ${n}`);
+		log.push(`${index}: render ${n}`);
 		return index;
 	}
 
 	$effect.pre(() => {
-		order.push(`${index}: $effect.pre ${n}`);
+		log.push(`${index}: $effect.pre ${n}`);
 	});
 
 	$effect(() => {
-		order.push(`${index}: $effect ${n}`);
+		log.push(`${index}: $effect ${n}`);
 	});
 </script>
 

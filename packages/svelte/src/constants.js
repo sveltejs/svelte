@@ -7,7 +7,8 @@ export const EACH_IS_IMMUTABLE = 1 << 6;
 
 export const PROPS_IS_IMMUTABLE = 1;
 export const PROPS_IS_RUNES = 1 << 1;
-export const PROPS_CALL_DEFAULT_VALUE = 1 << 2;
+export const PROPS_IS_UPDATED = 1 << 2;
+export const PROPS_IS_LAZY_INITIAL = 1 << 3;
 
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [

@@ -16,5 +16,5 @@
 	export let updates = [];
 	$: updates = [...updates, value];
 </script>
-  
+
 <div>child: {value?.foo} | updates: {updates.length}</div>

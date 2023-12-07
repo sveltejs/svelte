@@ -71,7 +71,7 @@ export default test({
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, false);
 
-		component.selected = values[2];
+		component.selected = component.values[2];
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, false);
 		assert.equal(inputs[2].checked, true);

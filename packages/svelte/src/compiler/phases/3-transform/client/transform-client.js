@@ -255,8 +255,8 @@ export function client_component(source, analysis, options) {
 			const key = binding.prop_alias ?? name;
 
 			properties.push(
-				b.get(key, [b.return(b.call('$.get', b.id(name)))]),
-				b.set(key, [b.stmt(b.call('$.set_sync', b.id(name), b.id('$$value')))])
+				b.get(key, [b.return(b.call(b.id(name)))]),
+				b.set(key, [b.stmt(b.call(b.id(name), b.id('$$value'))), b.stmt(b.call('$.flushSync'))])
 			);
 		}
 	}
