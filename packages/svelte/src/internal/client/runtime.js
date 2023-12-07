@@ -1786,6 +1786,7 @@ export function inspect(get_value, inspect = console.log) {
 		const fn = () => {
 			const value = get_value().map(unstate);
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
+				// eslint-disable-next-line no-console
 				console.warn(
 					'$inspect() API has changed. See https://svelte-5-preview.vercel.app/docs/runes#$inspect for more information.'
 				);
