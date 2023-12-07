@@ -1433,10 +1433,13 @@ export function prop(props, key, flags, initial) {
 		return value === undefined ? /** @type {V} */ (initial) : value;
 	};
 
+	// easy mode — prop is never written to
 	if ((flags & PROPS_IS_UPDATED) === 0) {
 		return getter;
 	}
 
+	// intermediate mode — prop is written to, but the parent component had
+	// `bind:foo` which means we can just call `$$props.foo = value` directly
 	if (setter) {
 		return function (/** @type {V} */ value) {
 			if (arguments.length === 1) {
@@ -1448,41 +1451,51 @@ export function prop(props, key, flags, initial) {
 		};
 	}
 
-	var setting_from_child = false;
-	var last_set_from_child = false;
+	// hard mode. this is where it gets ugly — the value in the child should
+	// synchronize with the parent, but it should also be possible to temporarily
+	// set the value to something else locally. to make this work, we need to
+	// do a little dance.
+	var from_child = false;
+	var was_from_child = false;
+
 	var s = mutable_source(value);
 	var d = derived(() => {
-		const from_parent = getter();
-		const from_child = get(s);
+		var parent_value = getter();
+		var child_value = get(s);
 
-		if (setting_from_child) {
-			setting_from_child = false;
-			last_set_from_child = true;
-			return from_child;
+		if (from_child) {
+			from_child = false;
+			was_from_child = true;
+			return child_value;
 		}
 
-		last_set_from_child = false;
-		return (s.v = from_parent);
+		was_from_child = false;
+		return (s.v = parent_value);
 	});
 
 	if (!immutable) d.e = safe_equal;
 
 	return function (/** @type {V} */ value, mutation = false) {
-		const current = get(d);
+		var current = get(d);
 
 		// legacy nonsense — need to ensure the source is invalidated when necessary
 		if (is_signals_recorded) {
-			setting_from_child = last_set_from_child;
+			// set this so that we don't reset to the parent value if `d`
+			// is invalidated because of `invalidate_inner_signals` (rather
+			// than because the parent or child value changed)
+			from_child = was_from_child;
+
 			getter();
 			get(s);
 		}
 
 		if (arguments.length > 0) {
 			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
-				setting_from_child = true;
+				from_child = true;
 				set(s, mutation ? current : value);
 				get(d); // force a synchronisation immediately
 			}
+
 			return value;
 		}
 
