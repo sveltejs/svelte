@@ -382,13 +382,15 @@ function remove_consumer(signal, start_index, remove_unowned) {
 			let consumers_length = 0;
 			if (consumers !== null) {
 				consumers_length = consumers.length - 1;
-				if (consumers_length === 0) {
-					dependency.c = null;
-				} else {
-					const index = consumers.indexOf(signal);
-					// Swap with last element and then remove.
-					consumers[index] = consumers[consumers_length];
-					consumers.pop();
+				const index = consumers.indexOf(signal);
+				if (index !== -1) {
+					if (consumers_length === 0) {
+						dependency.c = null;
+					} else {
+						// Swap with last element and then remove.
+						consumers[index] = consumers[consumers_length];
+						consumers.pop();
+					}
 				}
 			}
 			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
