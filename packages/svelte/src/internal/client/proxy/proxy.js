@@ -3,7 +3,7 @@ import {
 	effect_active,
 	get,
 	set,
-	increment,
+	update,
 	source,
 	updating_derived,
 	UNINITIALIZED,
@@ -143,7 +143,7 @@ const handler = {
 		const s = metadata.s.get(prop);
 		if (s !== undefined) set(s, UNINITIALIZED);
 
-		if (prop in target) increment(metadata.v);
+		if (prop in target) update(metadata.v);
 
 		return delete target[prop];
 	},
@@ -224,7 +224,7 @@ const handler = {
 			}
 		}
 		if (not_has) {
-			increment(metadata.v);
+			update(metadata.v);
 		}
 		// @ts-ignore
 		target[prop] = value;

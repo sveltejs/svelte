@@ -54,16 +54,25 @@ export const global_visitors = {
 				binding?.kind === 'prop' ||
 				is_store
 			) {
-				let fn = node.operator === '++' ? '$.increment' : '$.decrement';
+				/** @type {import('estree').Expression[]} */
+				const args = [];
+
+				let fn = '$.update';
 				if (node.prefix) fn += '_pre';
-				if (binding.kind === 'prop') fn += '_prop';
 
 				if (is_store) {
 					fn += '_store';
-					return b.call(fn, serialize_get_binding(b.id(name), state), b.call('$' + name));
+					args.push(serialize_get_binding(b.id(name), state), b.call('$' + name));
+				} else {
+					if (binding.kind === 'prop') fn += '_prop';
+					args.push(b.id(name));
 				}
 
-				return b.call(fn, b.id(name));
+				if (node.operator === '--') {
+					args.push(b.literal(-1));
+				}
+
+				return b.call(fn, ...args);
 			}
 
 			return next();
