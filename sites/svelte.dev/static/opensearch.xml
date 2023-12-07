@@ -1,0 +1,10 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+    xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+    <ShortName>Svelte</ShortName>
+    <Description>Search Svelte</Description>
+    <InputEncoding>UTF-8</InputEncoding>
+    <Image width="128" height="128" type="image/png">https://svelte.dev/favicon.png</Image>
+    <Url type="text/html" method="get"
+        template="https://svelte.dev/search?q={searchTerms}" />
+    <moz:SearchForm>https://svelte.dev/search</moz:SearchForm>
+</OpenSearchDescription>
