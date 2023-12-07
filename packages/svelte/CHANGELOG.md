@@ -1,5 +1,25 @@
 # svelte
 
+## 5.0.0-next.20
+
+### Patch Changes
+
+- fix: better readonly checks for proxies ([#9808](https://github.com/sveltejs/svelte/pull/9808))
+
+- fix: prevent infinite loops stemming from invalidation method ([#9811](https://github.com/sveltejs/svelte/pull/9811))
+
+- fix: improve non state referenced warning ([#9809](https://github.com/sveltejs/svelte/pull/9809))
+
+- fix: reuse existing proxy when object has multiple references ([#9821](https://github.com/sveltejs/svelte/pull/9821))
+
+- fix: improve consistency issues around binding invalidation ([#9810](https://github.com/sveltejs/svelte/pull/9810))
+
+- fix: tweak css nth regex ([#9806](https://github.com/sveltejs/svelte/pull/9806))
+
+- fix: adjust children snippet default type ([`dcdd64548`](https://github.com/sveltejs/svelte/commit/dcdd645480ab412eb563632e70801f4d61c1d787))
+
+- fix: correctly apply scope on component children ([#9824](https://github.com/sveltejs/svelte/pull/9824))
+
 ## 5.0.0-next.19
 
 ### Patch Changes
