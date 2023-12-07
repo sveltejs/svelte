@@ -2148,7 +2148,7 @@ export function action(dom, action, value_fn) {
 			const value = value_fn();
 			untrack(() => {
 				if (payload === undefined) {
-					payload = action(dom, value);
+					payload = action(dom, value) || {};
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
