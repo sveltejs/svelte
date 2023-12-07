@@ -376,7 +376,9 @@ function create_transition(dom, init, direction, effect) {
 		},
 		// cancel
 		c() {
-			/** @type {Animation | TickAnimation} */ (animation).cancel();
+			if (animation !== null) {
+				/** @type {Animation | TickAnimation} */ (animation).cancel();
+			}
 			cancelled = true;
 		},
 		// cleanup

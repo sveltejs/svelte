@@ -512,7 +512,7 @@ function reconcile_tracked_array(
 					while (i-- > 0) {
 						b_end = i + start;
 						a = sources[i];
-						if (pos === MOVED_BLOCK && a !== LIS_BLOCK) {
+						if (pos === MOVED_BLOCK) {
 							block = b_blocks[b_end];
 							item = array[b_end];
 							update_each_item_block(block, item, b_end, flags);
@@ -726,6 +726,12 @@ function update_each_item_block(block, item, index, type) {
 		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
 			const from_dom = /** @type {Element} */ (get_first_element(block));
 			const from = from_dom.getBoundingClientRect();
+			// Cancel any existing key transitions
+			for (const transition of transitions) {
+				if (transition.r === 'key') {
+					transition.c();
+				}
+			}
 			schedule_task(() => {
 				trigger_transitions(transitions, 'key', from);
 			});
