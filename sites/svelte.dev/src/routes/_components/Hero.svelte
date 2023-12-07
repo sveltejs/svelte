@@ -23,9 +23,27 @@
 	</div>
 
 	<picture class="machine">
-		<source srcset={MachineDesktop.sources.avif} width="3795" height="993" type="image/avif" media="(min-width: 800px)" />
-		<source srcset={MachineDesktop.sources.webp} width="3795" height="993" type="image/webp" media="(min-width: 800px)" />
-		<source srcset={MachineDesktop.sources.png} width="3795" height="993" type="image/png" media="(min-width: 800px)" />
+		<source
+			srcset={MachineDesktop.sources.avif}
+			width="3795"
+			height="993"
+			type="image/avif"
+			media="(min-width: 800px)"
+		/>
+		<source
+			srcset={MachineDesktop.sources.webp}
+			width="3795"
+			height="993"
+			type="image/webp"
+			media="(min-width: 800px)"
+		/>
+		<source
+			srcset={MachineDesktop.sources.png}
+			width="3795"
+			height="993"
+			type="image/png"
+			media="(min-width: 800px)"
+		/>
 		<source srcset={MachineMobile.sources.avif} width="2208" height="936" type="image/avif" />
 		<source srcset={MachineMobile.sources.webp} width="2208" height="936" type="image/webp" />
 		<source srcset={MachineMobile.sources.png} width="2208" height="936" type="image/png" />
@@ -44,6 +62,8 @@
 	.machine img {
 		position: absolute;
 		pointer-events: none;
+		width: 100%;
+		height: auto;
 	}
 
 	.hero-content {
