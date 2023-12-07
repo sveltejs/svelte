@@ -514,6 +514,7 @@ function reconcile_tracked_array(
 						a = sources[i];
 						if (pos === MOVED_BLOCK && a !== LIS_BLOCK) {
 							block = b_blocks[b_end];
+							item = array[b_end];
 							update_each_item_block(block, item, b_end, flags);
 						}
 					}
