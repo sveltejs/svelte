@@ -392,6 +392,8 @@ function remove_consumer(signal, start_index, remove_unowned) {
 				}
 			}
 			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+				// If the signal is unowned then we need to make sure to change it to dirty.
+				set_signal_status(dependency, DIRTY);
 				remove_consumer(
 					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
 					0,
