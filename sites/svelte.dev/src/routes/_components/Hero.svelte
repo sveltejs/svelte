@@ -1,6 +1,7 @@
 <script>
 	import { Icon } from '@sveltejs/site-kit/components';
 	import SvelteLogotype from './svelte-logotype.svg';
+
 	// @ts-ignore
 	import MachineDesktop from './svelte-machine-desktop.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
 	// @ts-ignore
@@ -22,12 +23,12 @@
 	</div>
 
 	<picture class="machine">
-		<source srcset={MachineDesktop.sources.avif} type="image/avif" media="(min-width: 800px)" />
-		<source srcset={MachineDesktop.sources.webp} type="image/webp" media="(min-width: 800px)" />
-		<source srcset={MachineDesktop.sources.png} type="image/png" media="(min-width: 800px)" />
-		<source srcset={MachineMobile.sources.avif} type="image/avif" />
-		<source srcset={MachineMobile.sources.webp} type="image/webp" />
-		<source srcset={MachineMobile.sources.png} type="image/png" />
+		<source srcset={MachineDesktop.sources.avif} width="3795" height="993" type="image/avif" media="(min-width: 800px)" />
+		<source srcset={MachineDesktop.sources.webp} width="3795" height="993" type="image/webp" media="(min-width: 800px)" />
+		<source srcset={MachineDesktop.sources.png} width="3795" height="993" type="image/png" media="(min-width: 800px)" />
+		<source srcset={MachineMobile.sources.avif} width="2208" height="936" type="image/avif" />
+		<source srcset={MachineMobile.sources.webp} width="2208" height="936" type="image/webp" />
+		<source srcset={MachineMobile.sources.png} width="2208" height="936" type="image/png" />
 		<img alt="The Svelte compiler packaging up your component code" src={MachineMobile.img.src} />
 	</picture>
 </div>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="theme-default typo-default">
 	<head>
 		<meta charset="utf-8" />
@@ -23,15 +23,12 @@
 			.ts-version {
 				display: none;
 			}
-
 			.prefers-ts .js-version {
 				display: none;
 			}
-
 			.prefers-ts .ts-version {
 				display: block;
 			}
-
 			.no-js .ts-toggle {
 				display: none;
 			}
@@ -39,7 +36,6 @@
 
 		%sveltekit.head%
 	</head>
-
 	<body data-sveltekit-preload-code="hover">
 		<script>
 			const themeValue = JSON.parse(localStorage.getItem('svelte:theme'))?.current;

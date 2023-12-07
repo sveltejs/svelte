@@ -1,9 +1,13 @@
+import { fetchBanner } from '@sveltejs/site-kit/components';
+
 export const load = async ({ url, fetch }) => {
-	const nav_list = await fetch('/nav.json').then((r) => r.json());
+	const nav_links = fetch('/nav.json').then((r) => r.json());
+	const banner = fetchBanner('svelte.dev', fetch);
 
 	return {
 		nav_title: get_nav_title(url),
-		nav_links: nav_list
+		nav_links,
+		banner
 	};
 };
 

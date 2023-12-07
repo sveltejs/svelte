@@ -28,6 +28,23 @@ If you don't need or want all the features SvelteKit has to offer, you can scaff
 
 ```ts
 /// file: svelte.config.js
+// @filename: ambient.d.ts
+declare module '@sveltejs/vite-plugin-svelte' {
+	import { ResolvedConfig } from 'vite';
+	import { InlineConfig } from 'vite/dist/node/config';
+
+	export interface VitePreprocessOptions {
+		script?: boolean;
+		style?: boolean | InlineConfig | ResolvedConfig;
+	}
+
+	export function vitePreprocess(
+		options?: VitePreprocessOptions
+	): import('svelte/compiler').PreprocessorGroup;
+}
+
+// @filename: index.ts
+// ---cut---
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const config = {

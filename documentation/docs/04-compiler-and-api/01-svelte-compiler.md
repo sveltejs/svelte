@@ -136,6 +136,27 @@ declare global {
 
 export {};
 
+// @filename: sass.d.ts
+declare module 'sass' {
+	export function render(
+		options: {
+			file: string;
+			data: string;
+			includePaths: string[];
+		},
+		callback: (err: Error, result: Result) => void
+	): Result;
+
+	export interface Result {
+		css: {
+			toString(): string;
+		};
+		stats: {
+			includedFiles: string[];
+		};
+	}
+}
+
 // @filename: main.ts
 // @errors: 2322 2345 2339
 /// <reference types="@types/node" />
