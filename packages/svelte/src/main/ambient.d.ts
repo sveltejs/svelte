@@ -132,23 +132,23 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Inspects a value whenever it, or the properties it contains, change. Example:
+ * Inspects one or more values whenever they, or the properties they contain, change. Example:
  *
  * ```ts
- * $inspect({ someValue, someOtherValue })
+ * $inspect(someValue, someOtherValue)
  * ```
  *
- * If a second argument is provided, it will be called with the value and the event type
- * (`'init'` or `'update'`), otherwise the value will be logged to the console.
+ * `$inspect` returns a `with` function, which you can invoke with a callback function that
+ * will be called with the value and the event type (`'init'` or `'update'`) on every change.
+ * By default, the values will be logged to the console.
  *
  * ```ts
- * $inspect(x, console.trace);
- * $inspect(y, (y) => { debugger; });
+ * $inspect(x).with(console.trace);
+ * $inspect(x, y).with(() => { debugger; });
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$inspect
  */
-declare function $inspect<T>(
-	value: T,
-	callback?: (value: T, type: 'init' | 'update') => void
-): void;
+declare function $inspect<T extends any[]>(
+	...values: T
+): { with: (type: 'init' | 'update', ...values: T) => void };

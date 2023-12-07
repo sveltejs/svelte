@@ -1,5 +1,5 @@
 import { get_rune } from '../../../scope.js';
-import { is_hoistable_function } from '../../utils.js';
+import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import { create_state_declarators, get_prop_source, should_proxy } from '../utils.js';
@@ -301,8 +301,8 @@ export const javascript_visitors_runes = {
 
 		context.next();
 	},
-	CallExpression(node, { state, next, visit }) {
-		const rune = get_rune(node, state.scope);
+	CallExpression(node, context) {
+		const rune = get_rune(node, context.state.scope);
 
 		if (rune === '$effect.active') {
 			return b.call('$.effect_active');
@@ -310,24 +310,15 @@ export const javascript_visitors_runes = {
 
 		if (rune === '$effect.root') {
 			const args = /** @type {import('estree').Expression[]} */ (
-				node.arguments.map((arg) => visit(arg))
+				node.arguments.map((arg) => context.visit(arg))
 			);
 			return b.call('$.user_root_effect', ...args);
 		}
 
-		if (rune === '$inspect') {
-			if (state.options.dev) {
-				const arg = /** @type {import('estree').Expression} */ (visit(node.arguments[0]));
-				const fn =
-					node.arguments[1] &&
-					/** @type {import('estree').Expression} */ (visit(node.arguments[1]));
-
-				return b.call('$.inspect', b.thunk(arg), fn);
-			}
-
-			return b.unary('void', b.literal(0));
+		if (rune === '$inspect' || rune === '$inspect().with') {
+			return transform_inspect_rune(node, context);
 		}
 
-		next();
+		context.next();
 	}
 };

@@ -26,6 +26,6 @@ export default test({
 		button?.click();
 		await Promise.resolve();
 
-		assert.deepEqual(log, ['X', 'init', 'XX', 'update', 'XXX', 'update']);
+		assert.deepEqual(log, ['init', 'X', 'update', 'XX', 'update', 'XXX']);
 	}
 });

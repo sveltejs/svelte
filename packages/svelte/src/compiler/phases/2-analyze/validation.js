@@ -711,8 +711,14 @@ function validate_call_expression(node, scope, path) {
 	}
 
 	if (rune === '$inspect') {
-		if (node.arguments.length < 1 || node.arguments.length > 2) {
-			error(node, 'invalid-rune-args-length', rune, [1, 2]);
+		if (node.arguments.length < 1) {
+			error(node, 'invalid-rune-args-length', rune, [1, 'more']);
+		}
+	}
+
+	if (rune === '$inspect().with') {
+		if (node.arguments.length !== 1) {
+			error(node, 'invalid-rune-args-length', rune, [1]);
 		}
 	}
 }

@@ -552,3 +552,12 @@ export function loop_guard(timeout) {
 		}
 	};
 }
+
+/**
+ * @param {any[]} args
+ * @param {Function} [inspect]
+ */
+// eslint-disable-next-line no-console
+export function inspect(args, inspect = console.log) {
+	inspect('init', ...args);
+}

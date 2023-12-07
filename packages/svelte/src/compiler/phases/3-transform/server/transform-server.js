@@ -17,7 +17,8 @@ import {
 	clean_nodes,
 	determine_element_namespace,
 	escape_html,
-	infer_namespace
+	infer_namespace,
+	transform_inspect_rune
 } from '../utils.js';
 import { create_attribute, is_custom_element_node, is_element_node } from '../../nodes.js';
 import { error } from '../../../errors.js';
@@ -630,26 +631,18 @@ const javascript_visitors_runes = {
 		}
 		context.next();
 	},
-	CallExpression(node, { state, next, visit }) {
-		const rune = get_rune(node, state.scope);
+	CallExpression(node, context) {
+		const rune = get_rune(node, context.state.scope);
 
 		if (rune === '$effect.active') {
 			return b.literal(false);
 		}
 
-		if (rune === '$inspect') {
-			if (state.options.dev) {
-				const args = /** @type {import('estree').Expression[]} */ (
-					node.arguments.map((arg) => visit(arg))
-				);
-
-				return b.call('console.log', ...args);
-			}
-
-			return b.unary('void', b.literal(0));
+		if (rune === '$inspect' || rune === '$inspect().with') {
+			return transform_inspect_rune(node, context);
 		}
 
-		next();
+		context.next();
 	}
 };
 
