@@ -370,7 +370,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			const scope = analyze_let_directives(node, state.scope);
-			scopes.set(node, scope);
 
 			for (const child of node.fragment.nodes) {
 				if (
@@ -382,9 +381,15 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					// <div slot="..."> inherits the scope above the component, because slots are hella weird
 					scopes.set(child, state.scope);
 					visit(child);
-				} else if (child.type === 'SnippetBlock') {
-					visit(child, { scope });
 				} else {
+					if (child.type === 'ExpressionTag') {
+						// expression tag is a special case — we don't visit it directly, but via process_children,
+						// so we need to set the scope on the expression rather than the tag itself
+						scopes.set(child.expression, scope);
+					} else {
+						scopes.set(child, scope);
+					}
+
 					visit(child, { scope });
 				}
 			}
