@@ -49,4 +49,4 @@ jobs:
         with:
           node-version: 16
           cache: pnpm
-      - run: 'pnpm i && pnpm check && pnpm lint'
+      - run: pnpm i && pnpm check && pnpm lint && pnpm build && [ "`git status --porcelain=v1`" == "" ] # ensures that commited types are up-to-date
