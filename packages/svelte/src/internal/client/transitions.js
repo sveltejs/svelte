@@ -458,7 +458,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 		/** @param {DOMRect} [from] */
 		const init = (from) =>
 			untrack(() => {
-	            const props = props_fn === null ? {} : props_fn();
+				const props = props_fn === null ? {} : props_fn();
 				return direction === 'key'
 					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
@@ -469,7 +469,7 @@ export function bind_transition(dom, transition_fn, props_fn, direction, global)
 					: /** @type {import('./types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
 							direction
 					  });
-            });
+			});
 
 		transition = create_transition(dom, init, direction, transition_effect);
 		const is_intro = direction === 'in';
