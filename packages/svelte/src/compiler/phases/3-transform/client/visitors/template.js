@@ -2138,7 +2138,7 @@ export const template_visitors = {
 
 		// The runtime needs to know what kind of each block this is in order to optimize for the
 		// key === item (we avoid extra allocations). In that case, the item doesn't need to be reactive.
-		// We can guarnatee this by knowing that in order for the item of the each block to change, they
+		// We can guarantee this by knowing that in order for the item of the each block to change, they
 		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
 		// equality, we can apply a fast-path (as long as the index isn't reactive).
 		let each_type = 0;
