@@ -193,9 +193,7 @@ export default class Selector {
 	}
 
 	get_amount_class_specificity_increased() {
-		return this.blocks
-			.filter((block) => block.should_encapsulate)
-			.length;
+		return this.blocks.filter((block) => block.should_encapsulate).length;
 	}
 }
 
