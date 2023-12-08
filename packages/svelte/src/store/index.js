@@ -126,7 +126,7 @@ function run_all(fns) {
  * @template {import('./private').Stores} S
  * @template T
  * @param {S} stores
- * @param {Function} fn
+ * @param {(stores: import('./private').StoresValue<S>, set: (t: T) => void, update: import('./public').Updater<T>) => T} fn
  * @param {T} [initial_value]
  * @returns {import('./public').Readable<T>}
  */
