@@ -23,7 +23,17 @@ declare namespace $state {
 	 *
 	 * Example:
 	 * ```ts
-	 * let count = $state.raw(0);
+	 * <script>
+	 *   let items = $state.raw([0]);
+	 *
+	 *   const addItem = () => {
+	 *     items = [...items, items.length];
+	 *   };
+	 * </script>
+	 *
+	 * <button on:click={addItem}>
+	 *   {items.join(', ')}
+	 * </button>
 	 * ```
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$state-raw
