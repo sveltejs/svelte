@@ -2137,11 +2137,10 @@ export const template_visitors = {
 		}
 
 		// The runtime needs to know what kind of each block this is in order to optimize for the
-		// immutable + key==entry case. In that case, the item doesn't need to be reactive, because
-		// the array as a whole is immutable, so if something changes, it either has to recreate the
-		// array or use nested reactivity through runes.
-		// TODO this feels a bit "hidden performance boost"-style, investigate if there's a way
-		// to make this apply in more cases
+		// key === item (we avoid extra allocations). In that case, the item doesn't need to be reactive.
+		// We can guarantee this by knowing that in order for the item of the each block to change, they
+		// would need to mutate the key/item directly in the array. Given that in runes mode we use ===
+		// equality, we can apply a fast-path (as long as the index isn't reactive).
 		let each_type = 0;
 
 		if (
@@ -2149,20 +2148,21 @@ export const template_visitors = {
 			(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index)
 		) {
 			each_type |= EACH_KEYED;
-			if (
-				node.key.type === 'Identifier' &&
-				node.context.type === 'Identifier' &&
-				node.context.name === node.key.name &&
-				context.state.options.immutable
-			) {
-				// Fast-path
-				each_item_is_reactive = false;
-			} else {
-				each_type |= EACH_ITEM_REACTIVE;
-			}
 			// If there's a destructuring, then we likely need the generated $$index
 			if (node.index || node.context.type !== 'Identifier') {
 				each_type |= EACH_INDEX_REACTIVE;
+			}
+			if (
+				context.state.analysis.runes &&
+				node.key.type === 'Identifier' &&
+				node.context.type === 'Identifier' &&
+				node.context.name === node.key.name &&
+				(each_type & EACH_INDEX_REACTIVE) === 0
+			) {
+				// Fast-path for when the key === item
+				each_item_is_reactive = false;
+			} else {
+				each_type |= EACH_ITEM_REACTIVE;
 			}
 		} else {
 			each_type |= EACH_ITEM_REACTIVE;
@@ -2289,7 +2289,7 @@ export const template_visitors = {
 			  )
 			: b.literal(null);
 		const key_function =
-			node.key && (each_type & 1) /* EACH_ITEM_REACTIVE */ !== 0
+			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
 				? b.arrow(
 						[node.context.type === 'Identifier' ? node.context : b.id('$$item')],
 						b.block(
