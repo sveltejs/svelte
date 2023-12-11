@@ -157,15 +157,44 @@ export function serialize_set_binding(node, context, fallback) {
 
 	let left = node.left;
 
+	// Handle class private/public state assignment cases
 	while (left.type === 'MemberExpression') {
-		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
-			if (context.state.private_state.has(left.property.name) && !state.in_constructor) {
-				const value = get_assignment_value(node, context);
+		if (
+			left.object.type === 'ThisExpression' &&
+			left.property.type === 'PrivateIdentifier' &&
+			context.state.private_state.has(left.property.name)
+		) {
+			const value = get_assignment_value(node, context);
+			if (state.in_constructor) {
+				// See if we should wrap value in $.proxy
+				if (context.state.analysis.runes && should_proxy(value)) {
+					const assignment = fallback();
+					if (assignment.type === 'AssignmentExpression') {
+						assignment.right = b.call('$.proxy', value);
+						return assignment;
+					}
+				}
+			} else {
 				return b.call(
 					'$.set',
 					left,
 					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
 				);
+			}
+		} else if (
+			left.object.type === 'ThisExpression' &&
+			left.property.type === 'Identifier' &&
+			context.state.public_state.has(left.property.name) &&
+			state.in_constructor
+		) {
+			const value = get_assignment_value(node, context);
+			// See if we should wrap value in $.proxy
+			if (context.state.analysis.runes && should_proxy(value)) {
+				const assignment = fallback();
+				if (assignment.type === 'AssignmentExpression') {
+					assignment.right = b.call('$.proxy', value);
+					return assignment;
+				}
 			}
 		}
 		// @ts-expect-error
