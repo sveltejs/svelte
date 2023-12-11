@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add `gamepadconnected` and `gamepaddisconnected` events
+fix: add `gamepadconnected` and `gamepaddisconnected` events
