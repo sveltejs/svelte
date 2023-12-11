@@ -53,6 +53,7 @@ export type KeyboardEventHandler<T extends EventTarget> = EventHandler<KeyboardE
 export type MouseEventHandler<T extends EventTarget> = EventHandler<MouseEvent, T>;
 export type TouchEventHandler<T extends EventTarget> = EventHandler<TouchEvent, T>;
 export type PointerEventHandler<T extends EventTarget> = EventHandler<PointerEvent, T>;
+export type GamepadEventHandler<T extends EventTarget> = EventHandler<GamepadEvent, T>;
 export type UIEventHandler<T extends EventTarget> = EventHandler<UIEvent, T>;
 export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, T>;
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
@@ -169,6 +170,10 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:pointerover'?: PointerEventHandler<T> | undefined | null;
 	'on:pointerup'?: PointerEventHandler<T> | undefined | null;
 	'on:lostpointercapture'?: PointerEventHandler<T> | undefined | null;
+
+	// Gamepad Events
+	'on:gamepadconnected'?: GamepadEventHandler<T> | undefined | null;
+	'on:gamepaddisconnected'?: GamepadEventHandler<T> | undefined | null;
 
 	// UI Events
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
@@ -1454,7 +1459,7 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	z?: number | string | undefined | null;
 	zoomAndPan?: string | undefined | null;
 
- 	// allow any data- attribute
+	// allow any data- attribute
 	[key: `data-${string}`]: any;
 }
 
