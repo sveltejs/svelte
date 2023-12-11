@@ -2236,6 +2236,12 @@ export const template_visitors = {
 		const item = b.id(each_node_meta.item_name);
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
 		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		if (node.index) {
+			const index_binding = /** @type {import('#compiler').Binding} */ (
+				context.state.scope.get(node.index)
+			);
+			index_binding.expression = each_item_is_reactive ? b.call('$.unwrap', index) : index;
+		}
 
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
@@ -2291,7 +2297,7 @@ export const template_visitors = {
 		const key_function =
 			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
 				? b.arrow(
-						[node.context.type === 'Identifier' ? node.context : b.id('$$item')],
+						[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 						b.block(
 							declarations.concat(
 								b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
