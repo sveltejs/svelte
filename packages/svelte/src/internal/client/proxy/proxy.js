@@ -149,9 +149,6 @@ const handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (prop === 'splice') {
-			debugger;
-		}
 		if (DEV && prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
 
 		const metadata = target[STATE_SYMBOL];
