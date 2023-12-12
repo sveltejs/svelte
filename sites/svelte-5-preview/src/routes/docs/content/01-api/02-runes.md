@@ -64,15 +64,15 @@ Objects and arrays [are made reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21
 
 In non-runes mode, a `let` declaration is treated as reactive state if it is updated at some point. Unlike `$state(...)`, which works anywhere in your app, `let` only behaves this way at the top level of a component.
 
-## `$state.raw`
+## `$state.readonly`
 
-Similar to `$state`, `$state.raw` is also declared and can be used in many of the same ways (including on classes). However, reactivity is _not_ applied deeply to properties of any objects or arrays used with `$state.raw`. So if you intend to use objects as state and you want to mutate their properties and have reactivity work by default, it's recommended you use `$state` instead.
+Similar to `$state`, `$state.readonly` is also declared and can be used in many of the same ways (including on classes). However, the properties of any object and arrays are treated as read-only, and cannot be mutated. So if you intend to use objects as state and you want to mutate their properties and have reactivity work by default, it's recommended you use `$state` instead.
 
-For the cases where you don't want Svelte's reactivity to apply deeply to state, and for those who might want to have more control over their data structures, you might find `$state.raw` useful. Furthermore, `$state.raw` is ideal for those who want to work with data using immutable patterns rather than mutable patterns.
+For the cases where you don't want Svelte's reactivity to apply deeply to state, and for those who might want to have more control over their data structures, you might find `$state.readonly` useful. Furthermore, `$state.readonly` is ideal for those who want to work with data using immutable patterns rather than mutable patterns.
 
 ```svelte
 <script>
-	let items = $state.raw([0]);
+	let items = $state.readonly([0]);
 
 	const addItem = () => {
 		items = [...items, items.length];
@@ -83,6 +83,8 @@ For the cases where you don't want Svelte's reactivity to apply deeply to state,
 	{items.join(', ')}
 </button>
 ```
+
+> Plain objects and arrays passed to `$state.readonly` will be shallowly frozen using `Object.freeze()`.
 
 ## `$derived`
 

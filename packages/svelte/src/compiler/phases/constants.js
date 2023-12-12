@@ -72,7 +72,7 @@ export const ElementBindings = [
 
 export const Runes = /** @type {const} */ ([
 	'$state',
-	'$state.raw',
+	'$state.readonly',
 	'$props',
 	'$derived',
 	'$effect',

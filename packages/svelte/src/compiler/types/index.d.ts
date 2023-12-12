@@ -258,7 +258,7 @@ export interface Binding {
 		| 'prop'
 		| 'rest_prop'
 		| 'state'
-		| 'raw_state'
+		| 'readonly_state'
 		| 'derived'
 		| 'each'
 		| 'store_sub'

@@ -1227,7 +1227,7 @@ function serialize_event_handler(node, { state, visit }) {
 			if (
 				binding !== null &&
 				(binding.kind === 'state' ||
-					binding.kind === 'raw_state' ||
+					binding.kind === 'readonly_state' ||
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
 					binding.kind === 'prop' ||

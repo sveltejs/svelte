@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add $state.raw rune
+feat: add $state.readonly rune

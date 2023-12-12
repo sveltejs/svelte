@@ -19,12 +19,12 @@ declare function $state<T>(): T | undefined;
 
 declare namespace $state {
 	/**
-	 * Declares reactive state without applying reactivity to nested properties.
+	 * Declares reactive read-only state.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *   let items = $state.raw([0]);
+	 *   let items = $state.readonly([0]);
 	 *
 	 *   const addItem = () => {
 	 *     items = [...items, items.length];
@@ -40,8 +40,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function $raw<T>(initial: T): T;
-	export function $raw<T>(): T | undefined;
+	export function readonly<T>(initial: T): T;
+	export function readonly<T>(): T | undefined;
 }
 
 /**

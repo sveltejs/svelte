@@ -585,7 +585,7 @@ const legacy_scope_tweaker = {
 				);
 				if (
 					binding.kind === 'state' ||
-					binding.kind === 'raw_state' ||
+					binding.kind === 'readonly_state' ||
 					(binding.kind === 'normal' && binding.declaration_kind === 'let')
 				) {
 					binding.kind = 'prop';
@@ -643,12 +643,13 @@ const runes_scope_js_tweaker = {
 		const callee = node.init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.raw' && rune !== '$derived') return;
+		if (rune !== '$state' && rune !== '$state.readonly' && rune !== '$derived') return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
 			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
-			binding.kind = rune === '$state' ? 'state' : rune === '$state.raw' ? 'raw_state' : 'derived';
+			binding.kind =
+				rune === '$state' ? 'state' : rune === '$state.readonly' ? 'readonly_state' : 'derived';
 		}
 	}
 };
@@ -672,7 +673,7 @@ const runes_scope_tweaker = {
 		const callee = init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.raw' && rune !== '$derived' && rune !== '$props')
+		if (rune !== '$state' && rune !== '$state.readonly' && rune !== '$derived' && rune !== '$props')
 			return;
 
 		for (const path of extract_paths(node.id)) {
@@ -681,8 +682,8 @@ const runes_scope_tweaker = {
 			binding.kind =
 				rune === '$state'
 					? 'state'
-					: rune === '$state.raw'
-					? 'raw_state'
+					: rune === '$state.readonly'
+					? 'readonly_state'
 					: rune === '$derived'
 					? 'derived'
 					: path.is_rest
@@ -902,7 +903,9 @@ const common_visitors = {
 
 			if (
 				node !== binding.node &&
-				(binding.kind === 'state' || binding.kind === 'raw_state' || binding.kind === 'derived') &&
+				(binding.kind === 'state' ||
+					binding.kind === 'readonly_state' ||
+					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
 				warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');

@@ -1,8 +1,8 @@
 <script>
 	import { log } from './log.js';
 
-	let x = $state.raw(0);
-	let y = $state.raw(0);
+	let x = $state.readonly(0);
+	let y = $state.readonly(0);
 
 	$effect(() => {
 		log.push(x);

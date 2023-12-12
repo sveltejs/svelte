@@ -2,7 +2,7 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { create_state_declarators, get_prop_source, should_proxy } from '../utils.js';
+import { create_state_declarators, get_prop_source, should_proxy_or_freeze } from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
@@ -29,10 +29,15 @@ export const javascript_visitors_runes = {
 
 				if (definition.value?.type === 'CallExpression') {
 					const rune = get_rune(definition.value, state.scope);
-					if (rune === '$state' || rune === '$state.raw' || rune === '$derived') {
+					if (rune === '$state' || rune === '$state.readonly' || rune === '$derived') {
 						/** @type {import('../types.js').StateField} */
 						const field = {
-							kind: rune === '$state' ? 'state' : rune === '$state.raw' ? 'raw_state' : 'derived',
+							kind:
+								rune === '$state'
+									? 'state'
+									: rune === '$state.readonly'
+									? 'readonly_state'
+									: 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -84,9 +89,9 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', should_proxy(init) ? b.call('$.proxy', init) : init)
-								: field.kind === 'raw_state'
-								? b.call('$.source', init)
+								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.proxy', init) : init)
+								: field.kind === 'readonly_state'
+								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init)
 								: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
@@ -116,11 +121,16 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if (field.kind === 'raw_state') {
+						if (field.kind === 'readonly_state') {
 							// set foo(value) { this.#foo = value; }
 							const value = b.id('value');
 							body.push(
-								b.method('set', definition.key, [value], [b.stmt(b.call('$.set', member, value))])
+								b.method(
+									'set',
+									definition.key,
+									[value],
+									[b.stmt(b.call('$.set', member, b.call('$.freeze', value)))]
+								)
 							);
 						}
 
@@ -227,17 +237,21 @@ export const javascript_visitors_runes = {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						state.scope.get(declarator.id.name)
 					);
-					if (should_proxy(value)) {
+					if (should_proxy_or_freeze(value)) {
 						value = b.call('$.proxy', value);
 					}
 
 					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
 						value = b.call('$.source', value);
 					}
-				} else if (rune === '$state.raw') {
+				} else if (rune === '$state.readonly') {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						state.scope.get(declarator.id.name)
 					);
+					if (should_proxy_or_freeze(value)) {
+						value = b.call('$.freeze', value);
+					}
+
 					if (binding.reassigned) {
 						value = b.call('$.source', value);
 					}

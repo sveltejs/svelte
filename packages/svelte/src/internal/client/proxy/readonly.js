@@ -1,12 +1,10 @@
-import { define_property } from '../utils.js';
+import { define_property, is_frozen } from '../utils.js';
 import { READONLY_SYMBOL, STATE_SYMBOL } from './proxy.js';
 
 /**
  * @template {Record<string | symbol, any>} T
  * @typedef {T & { [READONLY_SYMBOL]: Proxy<T> }} StateObject
  */
-
-const is_frozen = Object.isFrozen;
 
 /**
  * Expects a value that was wrapped with `proxy` and makes it readonly.
