@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.23
+
+### Patch Changes
+
+- feat: add `gamepadconnected` and `gamepaddisconnected` events ([#9861](https://github.com/sveltejs/svelte/pull/9861))
+
+- fix: improve unstate type definition ([#9895](https://github.com/sveltejs/svelte/pull/9895))
+
+- fix: correctly reflect readonly proxy marker ([#9893](https://github.com/sveltejs/svelte/pull/9893))
+
+- chore: improve each block fast-path heuristic ([#9855](https://github.com/sveltejs/svelte/pull/9855))
+
+- fix: improve html tag svg behaviour ([#9894](https://github.com/sveltejs/svelte/pull/9894))
+
+- fix: ensure class constructor values are proxied ([#9888](https://github.com/sveltejs/svelte/pull/9888))
+
+- fix: improve each block index handling ([#9889](https://github.com/sveltejs/svelte/pull/9889))
+
 ## 5.0.0-next.22
 
 ### Patch Changes
