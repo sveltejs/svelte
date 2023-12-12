@@ -2477,7 +2477,14 @@ export const template_visitors = {
 			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
 		}
 
-		context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		const path = context.path;
+		// If we're top-level, then we can create a function for the snippet so that it can be referenced
+		// in the props declaration (default value pattern).
+		if (path.length === 1 && path[0].type === 'Fragment') {
+			context.state.init.push(b.function_declaration(node.expression, args, body));
+		} else {
+			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		}
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 		}
