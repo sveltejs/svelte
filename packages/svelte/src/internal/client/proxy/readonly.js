@@ -42,7 +42,7 @@ export function readonly(value) {
  */
 const readonly_error = (_, prop) => {
 	throw new Error(
-		`Non-bound props cannot be mutated — use \`bind:<prop>={...}\` to make \`${prop}\` settable. Fallback values can never be mutated.`
+		`Non-bound props cannot be mutated — to make the \`${prop}\` settable, ensure the object it is used within is bound as a prop \`bind:<prop>={...}\`. Fallback values can never be mutated.`
 	);
 };
 

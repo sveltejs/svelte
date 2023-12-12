@@ -15,5 +15,5 @@ export default test({
 	},
 
 	runtime_error:
-		'Non-bound props cannot be mutated — use `bind:<prop>={...}` to make `count` settable. Fallback values can never be mutated.'
+		'Non-bound props cannot be mutated — to make the `count` settable, ensure the object it is used within is bound as a prop `bind:<prop>={...}`. Fallback values can never be mutated.'
 });
