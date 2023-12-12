@@ -149,8 +149,9 @@ const handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (DEV && prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
-
+		if (DEV && prop === READONLY_SYMBOL) {
+			return Reflect.get(target, READONLY_SYMBOL);
+		}
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -184,6 +185,9 @@ const handler = {
 	},
 
 	has(target, prop) {
+		if (DEV && prop === READONLY_SYMBOL) {
+			return Reflect.has(target, READONLY_SYMBOL);
+		}
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}
