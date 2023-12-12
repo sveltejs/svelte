@@ -84,7 +84,7 @@ For the cases where you don't want Svelte's reactivity to apply deeply to state,
 </button>
 ```
 
-> Plain objects and arrays passed to `$state.readonly` will be shallowly frozen using `Object.freeze()`.
+> Objects and arrays passed to `$state.readonly` will be shallowly frozen using `Object.freeze()`.
 
 ## `$derived`
 
