@@ -81,6 +81,9 @@ export function serialize_get_binding(node, state) {
 			return b.call(node);
 		}
 
+		if (binding.prop_alias) {
+			return b.member(b.id('$$props'), b.id(binding.prop_alias));
+		}
 		return b.member(b.id('$$props'), node);
 	}
 
