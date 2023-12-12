@@ -102,10 +102,10 @@ function unwrap(value, already_unwrapped = new Map()) {
 /**
  * @template T
  * @param {T} value
- * @returns {T}
+ * @returns {Record<string | symbol, any>}
  */
 export function unstate(value) {
-	return /** @type {T} */ (unwrap(/** @type {StateObject} */ (value)));
+	return unwrap(/** @type {StateObject} */ (value));
 }
 
 /**
