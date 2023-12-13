@@ -7,7 +7,8 @@ import {
 	source,
 	updating_derived,
 	UNINITIALIZED,
-	mutable_source
+	mutable_source,
+	batch_inspect
 } from '../runtime.js';
 import {
 	define_property,
@@ -166,8 +167,17 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
-		const value = s !== undefined ? get(s) : Reflect.get(target, prop, receiver);
-		return value === UNINITIALIZED ? undefined : value;
+		if (s !== undefined) {
+			const value = get(s);
+			return value === UNINITIALIZED ? undefined : value;
+		}
+
+		if (DEV) {
+			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
+				return batch_inspect(target, prop, receiver);
+			}
+		}
+		return Reflect.get(target, prop, receiver);
 	},
 
 	getOwnPropertyDescriptor(target, prop) {
