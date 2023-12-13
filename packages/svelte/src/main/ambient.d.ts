@@ -40,8 +40,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function readonly<T>(initial: T): T;
-	export function readonly<T>(): T | undefined;
+	export function readonly<T>(initial: T): Readonly<T>;
+	export function readonly<T>(): Readonly<T> | undefined;
 }
 
 /**
