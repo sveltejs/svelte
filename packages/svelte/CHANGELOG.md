@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.24
+
+### Patch Changes
+
+- fix: improve props aliasing ([#9900](https://github.com/sveltejs/svelte/pull/9900))
+
+- feat: add support for `{@const}` inside snippet block ([#9904](https://github.com/sveltejs/svelte/pull/9904))
+
+- fix: improve attribute directive reactivity detection ([#9907](https://github.com/sveltejs/svelte/pull/9907))
+
+- fix: improve $inspect batching ([#9902](https://github.com/sveltejs/svelte/pull/9902))
+
+- chore: improve readonly prop messaging ([#9901](https://github.com/sveltejs/svelte/pull/9901))
+
+- fix: better support for top-level snippet declarations ([#9898](https://github.com/sveltejs/svelte/pull/9898))
+
 ## 5.0.0-next.23
 
 ### Patch Changes
