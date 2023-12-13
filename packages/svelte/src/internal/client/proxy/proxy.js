@@ -167,17 +167,17 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
+		if (s !== undefined) {
+			const value = get(s);
+			return value === UNINITIALIZED ? undefined : value;
+		}
+
 		if (DEV) {
-			if (s !== undefined) {
-				const value = get(s);
-				return value === UNINITIALIZED ? undefined : value;
-			}
 			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
 				return batch_inspect(target, prop, receiver);
 			}
 		}
-		const value = s !== undefined ? get(s) : Reflect.get(target, prop, receiver);
-		return value === UNINITIALIZED ? undefined : value;
+		return Reflect.get(target, prop, receiver)
 	},
 
 	getOwnPropertyDescriptor(target, prop) {
