@@ -169,7 +169,8 @@ const handler = {
 
 		if (DEV) {
 			if (s !== undefined) {
-				return get(s);
+				const value = get(s);
+				return value === UNINITIALIZED ? undefined : value;
 			}
 			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
 				return batch_inspect(target, prop, receiver);

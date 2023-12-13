@@ -40,7 +40,6 @@ let is_task_queued = false;
 // Used for $inspect
 export let is_batching_effect = false;
 
-
 // Handle effect queues
 
 /** @type {import('./types.js').EffectSignal[]} */
