@@ -177,7 +177,7 @@ const handler = {
 				return batch_inspect(target, prop, receiver);
 			}
 		}
-		return Reflect.get(target, prop, receiver)
+		return Reflect.get(target, prop, receiver);
 	},
 
 	getOwnPropertyDescriptor(target, prop) {
