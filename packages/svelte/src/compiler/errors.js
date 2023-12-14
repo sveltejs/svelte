@@ -333,7 +333,7 @@ const compiler_options = {
 /** @satisfies {Errors} */
 const const_tag = {
 	'invalid-const-placement': () =>
-		`{@const} must be the immediate child of {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
+		`{@const} must be the immediate child of {#snippet}, {#if}, {:else if}, {:else}, {#each}, {:then}, {:catch}, <svelte:fragment> or <Component>`
 };
 
 /** @satisfies {Errors} */

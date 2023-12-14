@@ -119,6 +119,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		current_fallback = fallback;
 	};
 
+	/** @param {import('./types.js').EachBlock} block */
+	const clear_each = (block) => {
+		const flags = block.f;
+		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+		const anchor_node = block.a;
+		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
+	};
+
 	const each = render_effect(
 		() => {
 			/** @type {V[]} */
@@ -137,7 +145,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (fallback_fn !== null) {
 				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
+						clear_each(block);
 						create_fallback_effect();
+						return;
 					}
 				} else if (block.v.length === 0 && current_fallback !== null) {
 					const fallback = current_fallback;
@@ -160,17 +170,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		false
 	);
 
-	render = render_effect(
-		/** @param {import('./types.js').EachBlock} block */
-		(block) => {
-			const flags = block.f;
-			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-			const anchor_node = block.a;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-		},
-		block,
-		true
-	);
+	render = render_effect(clear_each, block, true);
 
 	push_destroy_fn(each, () => {
 		const flags = block.f;
@@ -744,17 +744,27 @@ export function destroy_each_item_block(
 	const transitions = block.s;
 
 	if (apply_transitions && transitions !== null) {
-		trigger_transitions(transitions, 'out');
-		if (transition_block !== null) {
-			transition_block.push(block);
+		// We might have pending key transitions, if so remove them first
+		for (let other of transitions) {
+			if (other.r === 'key') {
+				transitions.delete(other);
+			}
 		}
-	} else {
-		const dom = block.d;
-		if (!controlled && dom !== null) {
-			remove(dom);
+		if (transitions.size === 0) {
+			block.s = null;
+		} else {
+			trigger_transitions(transitions, 'out');
+			if (transition_block !== null) {
+				transition_block.push(block);
+			}
+			return;
 		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 	}
+	const dom = block.d;
+	if (!controlled && dom !== null) {
+		remove(dom);
+	}
+	destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 }
 
 /**
