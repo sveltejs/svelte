@@ -177,8 +177,9 @@ export function clean_nodes(
 			node.data = node.data.replace(regex_whitespaces_strict, ' ');
 			node.raw = node.raw.replace(regex_whitespaces_strict, ' ');
 			if (
-				(last_text === null || !regex_ends_with_whitespaces.test(last_text.data)) &&
-				(!can_remove_entirely || node.data !== ' ')
+				(last_text === null && !can_remove_entirely) ||
+				node.data !== ' ' ||
+				node.data.charCodeAt(0) === 160 // non-breaking space
 			) {
 				trimmed.push(node);
 			}
