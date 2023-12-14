@@ -90,12 +90,9 @@ declare module 'svelte' {
 	/**
 	 * Base class for Svelte components. Used when dev=false.
 	 *
-	 *
+	 * 
 	 */
-	class SvelteComponent_1<
-		Props extends Record<string, any> = any,
-		Events extends Record<string, any> = any
-	> {
+	class SvelteComponent_1<Props extends Record<string, any> = any, Events extends Record<string, any> = any> {
 		/**
 		 * ### PRIVATE API
 		 *
@@ -110,14 +107,11 @@ declare module 'svelte' {
 		 *
 		 * */
 		$$set: any;
-
+		
 		$destroy(): void;
-
-		$on<K extends Extract<keyof Events, string>>(
-			type: K,
-			callback: ((e: Events[K]) => void) | null | undefined
-		): () => void;
-
+		
+		$on<K extends Extract<keyof Events, string>>(type: K, callback: ((e: Events[K]) => void) | null | undefined): () => void;
+		
 		$set(props: Partial<Props>): void;
 	}
 	/**
@@ -143,15 +137,10 @@ declare module 'svelte' {
 	 * </script>
 	 * <MyComponent foo={'bar'} />
 	 * ```
-	 *
+	 * 
 	 */
-	export class SvelteComponent<
-		Props extends Record<string, any> = any,
-		Events extends Record<string, any> = any,
-		Slots extends Record<string, any> = any
-	> extends SvelteComponent_1<Props, Events> {
-		[prop: string]: any;
-
+	export class SvelteComponent<Props extends Record<string, any> = any, Events extends Record<string, any> = any, Slots extends Record<string, any> = any> extends SvelteComponent_1<Props, Events> { [prop: string]: any;
+		
 		constructor(options: ComponentConstructorOptions<Props>);
 		/**
 		 * For type checking capabilities only.
@@ -174,20 +163,17 @@ declare module 'svelte' {
 		 *
 		 * */
 		$$slot_def: Slots;
-
+		
 		$capture_state(): void;
-
+		
 		$inject_state(): void;
 	}
 	/**
 	 * @deprecated Use `SvelteComponent` instead. See PR for more information: https://github.com/sveltejs/svelte/pull/8512
-	 *
+	 * 
 	 */
-	export class SvelteComponentTyped<
-		Props extends Record<string, any> = any,
-		Events extends Record<string, any> = any,
-		Slots extends Record<string, any> = any
-	> extends SvelteComponent<Props, Events, Slots> {}
+	export class SvelteComponentTyped<Props extends Record<string, any> = any, Events extends Record<string, any> = any, Slots extends Record<string, any> = any> extends SvelteComponent<Props, Events, Slots> {
+	}
 	/**
 	 * Schedules a callback to run immediately before the component is updated after any state change.
 	 *
@@ -207,9 +193,7 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#onmount
 	 * */
-	export function onMount<T>(
-		fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)
-	): void;
+	export function onMount<T>(fn: () => NotFunction<T> | Promise<NotFunction<T>> | (() => any)): void;
 	/**
 	 * Schedules a callback to run immediately after the component has been updated.
 	 *
@@ -248,9 +232,7 @@ declare module 'svelte' {
 	 *
 	 * https://svelte.dev/docs/svelte#createeventdispatcher
 	 * */
-	export function createEventDispatcher<
-		EventMap extends Record<string, any> = any
-	>(): EventDispatcher<EventMap>;
+	export function createEventDispatcher<EventMap extends Record<string, any> = any>(): EventDispatcher<EventMap>;
 	/**
 	 * Associates an arbitrary `context` object with the current component and the specified `key`
 	 * and returns that object. The context is then available to children of the component
@@ -789,15 +771,9 @@ declare module 'svelte/compiler' {
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
 	 * */
-	export function preprocess(
-		source: string,
-		preprocessor: PreprocessorGroup | PreprocessorGroup[],
-		options?:
-			| {
-					filename?: string | undefined;
-			  }
-			| undefined
-	): Promise<Processed>;
+	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
+		filename?: string | undefined;
+	} | undefined): Promise<Processed>;
 	/**
 	 * The current version, as set in package.json.
 	 *
@@ -1416,17 +1392,10 @@ declare module 'svelte/animate' {
 	 *
 	 * https://svelte.dev/docs/svelte-animate#flip
 	 * */
-	export function flip(
-		node: Element,
-		{
-			from,
-			to
-		}: {
-			from: DOMRect;
-			to: DOMRect;
-		},
-		params?: FlipParams
-	): AnimationConfig;
+	export function flip(node: Element, { from, to }: {
+		from: DOMRect;
+		to: DOMRect;
+	}, params?: FlipParams): AnimationConfig;
 }
 
 declare module 'svelte/easing' {
@@ -1613,10 +1582,7 @@ declare module 'svelte/motion' {
 	 *
 	 * https://svelte.dev/docs/svelte-motion#tweened
 	 * */
-	export function tweened<T>(
-		value?: T | undefined,
-		defaults?: TweenedOptions<T> | undefined
-	): Tweened<T>;
+	export function tweened<T>(value?: T | undefined, defaults?: TweenedOptions<T> | undefined): Tweened<T>;
 }
 
 declare module 'svelte/store' {
@@ -1671,7 +1637,10 @@ declare module 'svelte/store' {
 	type Invalidator<T> = (value?: T) => void;
 
 	/** One or more `Readable`s. */
-	type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+	type Stores =
+		| Readable<any>
+		| [Readable<any>, ...Array<Readable<any>>]
+		| Array<Readable<any>>;
 
 	/** One or more values from `Readable` stores. */
 	type StoresValues<T> = T extends Readable<infer U>
@@ -1683,34 +1652,28 @@ declare module 'svelte/store' {
 	 * https://svelte.dev/docs/svelte-store#readable
 	 * @param value initial value
 	 * */
-	export function readable<T>(
-		value?: T | undefined,
-		start?: StartStopNotifier<T> | undefined
-	): Readable<T>;
+	export function readable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Readable<T>;
 	/**
 	 * Create a `Writable` store that allows both updating and reading by subscription.
 	 *
 	 * https://svelte.dev/docs/svelte-store#writable
 	 * @param value initial value
 	 * */
-	export function writable<T>(
-		value?: T | undefined,
-		start?: StartStopNotifier<T> | undefined
-	): Writable<T>;
-	export function derived<S extends Stores, T>(
-		stores: S,
-		fn: (
-			values: StoresValues<S>,
-			set: (value: T) => void,
-			update: (fn: Updater<T>) => void
-		) => Unsubscriber | void,
-		initial_value?: T | undefined
-	): Readable<T>;
-	export function derived<S extends Stores, T>(
-		stores: S,
-		fn: (values: StoresValues<S>) => T,
-		initial_value?: T | undefined
-	): Readable<T>;
+	export function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
@@ -1792,85 +1755,52 @@ declare module 'svelte/transition' {
 	 *
 	 * https://svelte.dev/docs/svelte-transition#blur
 	 * */
-	export function blur(
-		node: Element,
-		{ delay, duration, easing, amount, opacity }?: BlurParams | undefined
-	): TransitionConfig;
+	export function blur(node: Element, { delay, duration, easing, amount, opacity }?: BlurParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity of an element from 0 to the current opacity for `in` transitions and from the current opacity to 0 for `out` transitions.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#fade
 	 * */
-	export function fade(
-		node: Element,
-		{ delay, duration, easing }?: FadeParams | undefined
-	): TransitionConfig;
+	export function fade(node: Element, { delay, duration, easing }?: FadeParams | undefined): TransitionConfig;
 	/**
 	 * Animates the x and y positions and the opacity of an element. `in` transitions animate from the provided values, passed as parameters to the element's default values. `out` transitions animate from the element's default values to the provided values.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#fly
 	 * */
-	export function fly(
-		node: Element,
-		{ delay, duration, easing, x, y, opacity }?: FlyParams | undefined
-	): TransitionConfig;
+	export function fly(node: Element, { delay, duration, easing, x, y, opacity }?: FlyParams | undefined): TransitionConfig;
 	/**
 	 * Slides an element in and out.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#slide
 	 * */
-	export function slide(
-		node: Element,
-		{ delay, duration, easing, axis }?: SlideParams | undefined
-	): TransitionConfig;
+	export function slide(node: Element, { delay, duration, easing, axis }?: SlideParams | undefined): TransitionConfig;
 	/**
 	 * Animates the opacity and scale of an element. `in` transitions animate from an element's current (default) values to the provided values, passed as parameters. `out` transitions animate from the provided values to an element's default values.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#scale
 	 * */
-	export function scale(
-		node: Element,
-		{ delay, duration, easing, start, opacity }?: ScaleParams | undefined
-	): TransitionConfig;
+	export function scale(node: Element, { delay, duration, easing, start, opacity }?: ScaleParams | undefined): TransitionConfig;
 	/**
 	 * Animates the stroke of an SVG element, like a snake in a tube. `in` transitions begin with the path invisible and draw the path to the screen over time. `out` transitions start in a visible state and gradually erase the path. `draw` only works with elements that have a `getTotalLength` method, like `<path>` and `<polyline>`.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#draw
 	 * */
-	export function draw(
-		node: SVGElement & {
-			getTotalLength(): number;
-		},
-		{ delay, speed, duration, easing }?: DrawParams | undefined
-	): TransitionConfig;
+	export function draw(node: SVGElement & {
+		getTotalLength(): number;
+	}, { delay, speed, duration, easing }?: DrawParams | undefined): TransitionConfig;
 	/**
 	 * The `crossfade` function creates a pair of [transitions](/docs#template-syntax-element-directives-transition-fn) called `send` and `receive`. When an element is 'sent', it looks for a corresponding element being 'received', and generates a transition that transforms the element to its counterpart's position and fades it out. When an element is 'received', the reverse happens. If there is no counterpart, the `fallback` transition is used.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#crossfade
 	 * */
-	export function crossfade({
-		fallback,
-		...defaults
-	}: CrossfadeParams & {
-		fallback?:
-			| ((node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig)
-			| undefined;
-	}): [
-		(
-			node: any,
-			params: CrossfadeParams & {
-				key: any;
-			}
-		) => () => TransitionConfig,
-		(
-			node: any,
-			params: CrossfadeParams & {
-				key: any;
-			}
-		) => () => TransitionConfig
-	];
-}
-declare module '*.svelte' {
+	export function crossfade({ fallback, ...defaults }: CrossfadeParams & {
+		fallback?: ((node: Element, params: CrossfadeParams, intro: boolean) => TransitionConfig) | undefined;
+	}): [(node: any, params: CrossfadeParams & {
+		key: any;
+	}) => () => TransitionConfig, (node: any, params: CrossfadeParams & {
+		key: any;
+	}) => () => TransitionConfig];
+}declare module '*.svelte' {
 	export { SvelteComponent as default } from 'svelte';
 }
 

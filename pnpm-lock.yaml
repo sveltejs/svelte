@@ -106,8 +106,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.4.1
-        version: 0.4.1(typescript@5.3.2)
+        specifier: ^0.4.3
+        version: 0.4.3(typescript@5.3.2)
       esbuild:
         specifier: ^0.18.11
         version: 0.18.20
@@ -3097,8 +3097,8 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.4.1(typescript@5.3.2):
-    resolution: {integrity: sha512-woiEULfkFVVIjenirf5mHY2vTTw9Ey3XmN1mYC9SrCxNlyU6NZFZ8e4L2LpaIuKoMKqU2Pqn+GoHnVyRBqhfVg==}
+  /dts-buddy@0.4.3(typescript@5.3.2):
+    resolution: {integrity: sha512-vytwDCQAj8rqYPbGsrjiOCRv3O2ipwyUwSc5/II1MpS/Eq6KNZNkGU1djOA31nL7jh7092W/nwbwZHCKedf8Vw==}
     hasBin: true
     peerDependencies:
       typescript: '>=5.0.4 <5.4'
