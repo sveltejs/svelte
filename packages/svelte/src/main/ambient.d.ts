@@ -19,12 +19,12 @@ declare function $state<T>(): T | undefined;
 
 declare namespace $state {
 	/**
-	 * Declares reactive read-only state.
+	 * Declares reactive read-only state that is shallowly immutable.
 	 *
 	 * Example:
 	 * ```ts
 	 * <script>
-	 *   let items = $state.readonly([0]);
+	 *   let items = $state.frozen([0]);
 	 *
 	 *   const addItem = () => {
 	 *     items = [...items, items.length];
@@ -40,8 +40,8 @@ declare namespace $state {
 	 *
 	 * @param initial The initial value
 	 */
-	export function readonly<T>(initial: T): Readonly<T>;
-	export function readonly<T>(): Readonly<T> | undefined;
+	export function frozen<T>(initial: T): Readonly<T>;
+	export function frozen<T>(): Readonly<T> | undefined;
 }
 
 /**

@@ -92,7 +92,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		((binding.kind === 'state' || binding.kind === 'readonly_state') &&
+		((binding.kind === 'state' || binding.kind === 'frozen_state') &&
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'legacy_reactive'
@@ -172,7 +172,7 @@ export function serialize_set_binding(node, context, fallback) {
 						const assignment = fallback();
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
-								private_state.kind === 'readonly_state'
+								private_state.kind === 'frozen_state'
 									? b.call('$.freeze', value)
 									: b.call('$.proxy', value);
 							return assignment;
@@ -183,7 +183,7 @@ export function serialize_set_binding(node, context, fallback) {
 						'$.set',
 						left,
 						context.state.analysis.runes && should_proxy_or_freeze(value)
-							? private_state.kind === 'readonly_state'
+							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
 								: b.call('$.proxy', value)
 							: value
@@ -206,7 +206,7 @@ export function serialize_set_binding(node, context, fallback) {
 				const assignment = fallback();
 				if (assignment.type === 'AssignmentExpression') {
 					assignment.right =
-						public_state.kind === 'readonly_state'
+						public_state.kind === 'frozen_state'
 							? b.call('$.freeze', value)
 							: b.call('$.proxy', value);
 					return assignment;
@@ -245,7 +245,7 @@ export function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
-		binding.kind !== 'readonly_state' &&
+		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -271,7 +271,7 @@ export function serialize_set_binding(node, context, fallback) {
 						? b.call('$.proxy', value)
 						: value
 				);
-			} else if (binding.kind === 'readonly_state') {
+			} else if (binding.kind === 'frozen_state') {
 				return b.call(
 					'$.set',
 					b.id(left_name),

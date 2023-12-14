@@ -29,15 +29,11 @@ export const javascript_visitors_runes = {
 
 				if (definition.value?.type === 'CallExpression') {
 					const rune = get_rune(definition.value, state.scope);
-					if (rune === '$state' || rune === '$state.readonly' || rune === '$derived') {
+					if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
 						/** @type {import('../types.js').StateField} */
 						const field = {
 							kind:
-								rune === '$state'
-									? 'state'
-									: rune === '$state.readonly'
-									? 'readonly_state'
-									: 'derived',
+								rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -90,7 +86,7 @@ export const javascript_visitors_runes = {
 						value =
 							field.kind === 'state'
 								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.proxy', init) : init)
-								: field.kind === 'readonly_state'
+								: field.kind === 'frozen_state'
 								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init)
 								: b.call('$.derived', b.thunk(init));
 					} else {
@@ -121,7 +117,7 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if (field.kind === 'readonly_state') {
+						if (field.kind === 'frozen_state') {
 							// set foo(value) { this.#foo = value; }
 							const value = b.id('value');
 							body.push(
@@ -244,7 +240,7 @@ export const javascript_visitors_runes = {
 					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
 						value = b.call('$.source', value);
 					}
-				} else if (rune === '$state.readonly') {
+				} else if (rune === '$state.frozen') {
 					const binding = /** @type {import('#compiler').Binding} */ (
 						state.scope.get(declarator.id.name)
 					);

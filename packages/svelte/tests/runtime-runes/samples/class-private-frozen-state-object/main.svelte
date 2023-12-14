@@ -2,7 +2,7 @@
 	import { log } from './log.js';
 
 	class Counter {
-		#count = $state.readonly();
+		#count = $state.frozen();
 
 		constructor(initial_count) {
 			this.#count = { a: initial_count };

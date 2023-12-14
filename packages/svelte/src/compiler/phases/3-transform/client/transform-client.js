@@ -233,7 +233,7 @@ export function client_component(source, analysis, options) {
 				'$.bind_prop',
 				b.id('$$props'),
 				b.literal(alias ?? name),
-				binding?.kind === 'state' || binding?.kind === 'readonly_state'
+				binding?.kind === 'state' || binding?.kind === 'frozen_state'
 					? b.call('$.get', b.id(name))
 					: b.id(name)
 			)
@@ -243,7 +243,7 @@ export function client_component(source, analysis, options) {
 	const properties = analysis.exports.map(({ name, alias }) => {
 		const binding = analysis.instance.scope.get(name);
 		const is_source =
-			(binding?.kind === 'state' || binding?.kind === 'readonly_state') &&
+			(binding?.kind === 'state' || binding?.kind === 'frozen_state') &&
 			(!state.analysis.immutable || binding.reassigned);
 
 		// TODO This is always a getter because the `renamed-instance-exports` test wants it that way.

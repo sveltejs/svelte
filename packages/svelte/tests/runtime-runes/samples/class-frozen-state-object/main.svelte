@@ -2,7 +2,7 @@
 	import { log } from './log.js';
 
 	class Counter {
-		count = $state.readonly({ a: 0 });
+		count = $state.frozen({ a: 0 });
 	}
 	const counter = new Counter();
 </script>

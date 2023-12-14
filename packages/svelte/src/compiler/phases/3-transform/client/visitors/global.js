@@ -49,7 +49,7 @@ export const global_visitors = {
 			// use runtime functions for smaller output
 			if (
 				binding?.kind === 'state' ||
-				binding?.kind === 'readonly_state' ||
+				binding?.kind === 'frozen_state' ||
 				binding?.kind === 'each' ||
 				binding?.kind === 'legacy_reactive' ||
 				binding?.kind === 'prop' ||
