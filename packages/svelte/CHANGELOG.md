@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.25
+
+### Patch Changes
+
+- fix: improve whitespace handling ([#9912](https://github.com/sveltejs/svelte/pull/9912))
+
+- fix: improve each block fallback handling ([#9914](https://github.com/sveltejs/svelte/pull/9914))
+
+- fix: cleanup each block animations on destroy ([#9917](https://github.com/sveltejs/svelte/pull/9917))
+
 ## 5.0.0-next.24
 
 ### Patch Changes
