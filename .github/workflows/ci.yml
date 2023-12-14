@@ -49,4 +49,4 @@ jobs:
         with:
           node-version: 16
           cache: pnpm
-      - run: pnpm i && pnpm check && pnpm lint && pnpm build && [ "`git status --porcelain=v1`" == "" ] # ensures that commited types are up-to-date
+      - run: pnpm i && pnpm check && pnpm lint && pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please run prepublishOnly locally and commit the changes after you have reviewed them"; git diff; exit 1); }
