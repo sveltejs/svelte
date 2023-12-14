@@ -744,17 +744,27 @@ export function destroy_each_item_block(
 	const transitions = block.s;
 
 	if (apply_transitions && transitions !== null) {
-		trigger_transitions(transitions, 'out');
-		if (transition_block !== null) {
-			transition_block.push(block);
+		// We might have pending key transitions, if so remove them first
+		for (let other of transitions) {
+			if (other.r === 'key') {
+				transitions.delete(other);
+			}
 		}
-	} else {
-		const dom = block.d;
-		if (!controlled && dom !== null) {
-			remove(dom);
+		if (transitions.size === 0) {
+			block.s = null;
+		} else {
+			trigger_transitions(transitions, 'out');
+			if (transition_block !== null) {
+				transition_block.push(block);
+			}
+			return;
 		}
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 	}
+	const dom = block.d;
+	if (!controlled && dom !== null) {
+		remove(dom);
+	}
+	destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 }
 
 /**
