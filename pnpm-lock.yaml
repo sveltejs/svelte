@@ -121,8 +121,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5
       dts-buddy:
-        specifier: ^0.4.0
-        version: 0.4.0(typescript@5.2.2)
+        specifier: ^0.4.3
+        version: 0.4.3(typescript@5.2.2)
       esbuild:
         specifier: ^0.19.2
         version: 0.19.5
@@ -3646,11 +3646,11 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /dts-buddy@0.4.0(typescript@5.2.2):
-    resolution: {integrity: sha512-L8sHp1mmpufZhz/+HLIA40hJG6T937rsWhEIED2W2QMbGSpdg1G5pc2EK1WLKvmd1DvGZ0Qs8uoeSUaqK5mqkw==}
+  /dts-buddy@0.4.3(typescript@5.2.2):
+    resolution: {integrity: sha512-vytwDCQAj8rqYPbGsrjiOCRv3O2ipwyUwSc5/II1MpS/Eq6KNZNkGU1djOA31nL7jh7092W/nwbwZHCKedf8Vw==}
     hasBin: true
     peerDependencies:
-      typescript: '>=5.0.4 <5.3'
+      typescript: '>=5.0.4 <5.4'
     dependencies:
       '@jridgewell/source-map': 0.3.5
       '@jridgewell/sourcemap-codec': 1.4.15
