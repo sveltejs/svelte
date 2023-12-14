@@ -84,7 +84,7 @@ For the cases where you don't want Svelte's reactivity to apply deeply to state,
 </button>
 ```
 
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want them to be frozen, then you should pass in a clone of those objects
+> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want them to be frozen, then you should pass in a clone of the object or array you want to use.
 
 ## `$derived`
 
