@@ -1,5 +1,49 @@
 # svelte
 
+## 5.0.0-next.25
+
+### Patch Changes
+
+- fix: improve whitespace handling ([#9912](https://github.com/sveltejs/svelte/pull/9912))
+
+- fix: improve each block fallback handling ([#9914](https://github.com/sveltejs/svelte/pull/9914))
+
+- fix: cleanup each block animations on destroy ([#9917](https://github.com/sveltejs/svelte/pull/9917))
+
+## 5.0.0-next.24
+
+### Patch Changes
+
+- fix: improve props aliasing ([#9900](https://github.com/sveltejs/svelte/pull/9900))
+
+- feat: add support for `{@const}` inside snippet block ([#9904](https://github.com/sveltejs/svelte/pull/9904))
+
+- fix: improve attribute directive reactivity detection ([#9907](https://github.com/sveltejs/svelte/pull/9907))
+
+- fix: improve $inspect batching ([#9902](https://github.com/sveltejs/svelte/pull/9902))
+
+- chore: improve readonly prop messaging ([#9901](https://github.com/sveltejs/svelte/pull/9901))
+
+- fix: better support for top-level snippet declarations ([#9898](https://github.com/sveltejs/svelte/pull/9898))
+
+## 5.0.0-next.23
+
+### Patch Changes
+
+- feat: add `gamepadconnected` and `gamepaddisconnected` events ([#9861](https://github.com/sveltejs/svelte/pull/9861))
+
+- fix: improve unstate type definition ([#9895](https://github.com/sveltejs/svelte/pull/9895))
+
+- fix: correctly reflect readonly proxy marker ([#9893](https://github.com/sveltejs/svelte/pull/9893))
+
+- chore: improve each block fast-path heuristic ([#9855](https://github.com/sveltejs/svelte/pull/9855))
+
+- fix: improve html tag svg behaviour ([#9894](https://github.com/sveltejs/svelte/pull/9894))
+
+- fix: ensure class constructor values are proxied ([#9888](https://github.com/sveltejs/svelte/pull/9888))
+
+- fix: improve each block index handling ([#9889](https://github.com/sveltejs/svelte/pull/9889))
+
 ## 5.0.0-next.22
 
 ### Patch Changes

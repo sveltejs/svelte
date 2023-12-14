@@ -37,6 +37,8 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
+// Used for $inspect
+export let is_batching_effect = false;
 
 // Handle effect queues
 
@@ -62,8 +64,8 @@ let current_dependencies = null;
 let current_dependencies_index = 0;
 /** @type {null | import('./types.js').Signal[]} */
 let current_untracked_writes = null;
-// Handling capturing of signals from object property getters
-let current_should_capture_signal = false;
+/** @type {null | import('./types.js').Signal} */
+let last_inspected_signal = null;
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
@@ -108,6 +110,29 @@ export function set_is_ssr(ssr) {
 function is_runes(context) {
 	const component_context = context || current_component_context;
 	return component_context !== null && component_context.r;
+}
+
+/**
+ * @param {import("./proxy/proxy.js").StateObject} target
+ * @param {string | symbol} prop
+ * @param {any} receiver
+ */
+export function batch_inspect(target, prop, receiver) {
+	const value = Reflect.get(target, prop, receiver);
+	return function () {
+		const previously_batching_effect = is_batching_effect;
+		is_batching_effect = true;
+		try {
+			return Reflect.apply(value, receiver, arguments);
+		} finally {
+			is_batching_effect = previously_batching_effect;
+			if (last_inspected_signal !== null) {
+				// @ts-expect-error
+				for (const fn of last_inspected_signal.inspect) fn();
+				last_inspected_signal = null;
+			}
+		}
+	};
 }
 
 /**
@@ -1053,8 +1078,12 @@ export function set_signal_value(signal, value) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
-			// @ts-expect-error
-			for (const fn of signal.inspect) fn();
+			if (is_batching_effect) {
+				last_inspected_signal = signal;
+			} else {
+				// @ts-expect-error
+				for (const fn of signal.inspect) fn();
+			}
 		}
 	}
 }

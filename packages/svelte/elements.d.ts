@@ -53,6 +53,7 @@ export type KeyboardEventHandler<T extends EventTarget> = EventHandler<KeyboardE
 export type MouseEventHandler<T extends EventTarget> = EventHandler<MouseEvent, T>;
 export type TouchEventHandler<T extends EventTarget> = EventHandler<TouchEvent, T>;
 export type PointerEventHandler<T extends EventTarget> = EventHandler<PointerEvent, T>;
+export type GamepadEventHandler<T extends EventTarget> = EventHandler<GamepadEvent, T>;
 export type UIEventHandler<T extends EventTarget> = EventHandler<UIEvent, T>;
 export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, T>;
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
@@ -335,6 +336,12 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:lostpointercapture'?: PointerEventHandler<T> | undefined | null;
 	onlostpointercapture?: PointerEventHandler<T> | undefined | null;
 	onlostpointercapturecapture?: PointerEventHandler<T> | undefined | null;
+
+	// Gamepad Events
+	'on:gamepadconnected'?: GamepadEventHandler<T> | undefined | null;
+	ongamepadconnected?: GamepadEventHandler<T> | undefined | null;
+	'on:gamepaddisconnected'?: GamepadEventHandler<T> | undefined | null;
+	ongamepaddisconnected?: GamepadEventHandler<T> | undefined | null;
 
 	// UI Events
 	'on:scroll'?: UIEventHandler<T> | undefined | null;

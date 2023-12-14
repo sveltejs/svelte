@@ -7,7 +7,8 @@ import {
 	source,
 	updating_derived,
 	UNINITIALIZED,
-	mutable_source
+	mutable_source,
+	batch_inspect
 } from '../runtime.js';
 import {
 	define_property,
@@ -100,12 +101,12 @@ function unwrap(value, already_unwrapped = new Map()) {
 }
 
 /**
- * @template {StateObject} T
+ * @template T
  * @param {T} value
- * @returns {Record<string | symbol, any>}
+ * @returns {T}
  */
 export function unstate(value) {
-	return unwrap(value);
+	return /** @type {T} */ (unwrap(/** @type {StateObject} */ (value)));
 }
 
 /**
@@ -149,8 +150,9 @@ const handler = {
 	},
 
 	get(target, prop, receiver) {
-		if (DEV && prop === READONLY_SYMBOL) return target[READONLY_SYMBOL];
-
+		if (DEV && prop === READONLY_SYMBOL) {
+			return Reflect.get(target, READONLY_SYMBOL);
+		}
 		const metadata = target[STATE_SYMBOL];
 		let s = metadata.s.get(prop);
 
@@ -165,8 +167,17 @@ const handler = {
 			metadata.s.set(prop, s);
 		}
 
-		const value = s !== undefined ? get(s) : Reflect.get(target, prop, receiver);
-		return value === UNINITIALIZED ? undefined : value;
+		if (s !== undefined) {
+			const value = get(s);
+			return value === UNINITIALIZED ? undefined : value;
+		}
+
+		if (DEV) {
+			if (typeof target[prop] === 'function' && prop !== Symbol.iterator) {
+				return batch_inspect(target, prop, receiver);
+			}
+		}
+		return Reflect.get(target, prop, receiver);
 	},
 
 	getOwnPropertyDescriptor(target, prop) {
@@ -184,6 +195,9 @@ const handler = {
 	},
 
 	has(target, prop) {
+		if (DEV && prop === READONLY_SYMBOL) {
+			return Reflect.has(target, READONLY_SYMBOL);
+		}
 		if (prop === STATE_SYMBOL) {
 			return true;
 		}

@@ -63,32 +63,48 @@ function get_attribute_name(element, attribute, context) {
  * @param {boolean} is_attributes_reactive
  */
 function serialize_style_directives(style_directives, element_id, context, is_attributes_reactive) {
-	if (style_directives.length > 0) {
-		const values = style_directives.map((directive) => {
-			let value =
-				directive.value === true
-					? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
-					: serialize_attribute_value(directive.value, context)[1];
-			return b.stmt(
-				b.call(
-					'$.style',
-					element_id,
-					b.literal(directive.name),
-					value,
-					/** @type {import('estree').Expression} */ (
-						directive.modifiers.includes('important') ? b.true : undefined
-					)
-				)
-			);
-		});
+	const state = context.state;
 
-		if (
-			is_attributes_reactive ||
-			style_directives.some((directive) => directive.metadata.dynamic)
-		) {
-			context.state.update.push(...values.map((v) => ({ grouped: v })));
+	for (const directive of style_directives) {
+		let value =
+			directive.value === true
+				? serialize_get_binding({ name: directive.name, type: 'Identifier' }, context.state)
+				: serialize_attribute_value(directive.value, context)[1];
+		const grouped = b.stmt(
+			b.call(
+				'$.style',
+				element_id,
+				b.literal(directive.name),
+				value,
+				/** @type {import('estree').Expression} */ (
+					directive.modifiers.includes('important') ? b.true : undefined
+				)
+			)
+		);
+		const singular = b.stmt(
+			b.call(
+				'$.style_effect',
+				element_id,
+				b.literal(directive.name),
+				b.arrow([], value),
+				/** @type {import('estree').Expression} */ (
+					directive.modifiers.includes('important') ? b.true : undefined
+				)
+			)
+		);
+
+		const contains_call_expression =
+			Array.isArray(directive.value) &&
+			directive.value.some(
+				(v) => v.type === 'ExpressionTag' && v.metadata.contains_call_expression
+			);
+
+		if (!is_attributes_reactive && contains_call_expression) {
+			state.update_effects.push(singular);
+		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+			state.update.push({ grouped, singular });
 		} else {
-			context.state.init.push(...values);
+			state.init.push(grouped);
 		}
 	}
 }
@@ -123,21 +139,21 @@ function parse_directive_name(name) {
  * @param {boolean} is_attributes_reactive
  */
 function serialize_class_directives(class_directives, element_id, context, is_attributes_reactive) {
-	if (class_directives.length > 0) {
-		const values = class_directives.map((directive) => {
-			const value = /** @type {import('estree').Expression} */ (
-				context.visit(directive.expression)
-			);
-			return b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
-		});
+	const state = context.state;
+	for (const directive of class_directives) {
+		const value = /** @type {import('estree').Expression} */ (context.visit(directive.expression));
+		const grouped = b.stmt(b.call('$.class_toggle', element_id, b.literal(directive.name), value));
+		const singular = b.stmt(
+			b.call('$.class_toggle_effect', element_id, b.literal(directive.name), b.arrow([], value))
+		);
+		const contains_call_expression = directive.expression.type === 'CallExpression';
 
-		if (
-			is_attributes_reactive ||
-			class_directives.some((directive) => directive.metadata.dynamic)
-		) {
-			context.state.update.push(...values.map((v) => ({ grouped: v })));
+		if (!is_attributes_reactive && contains_call_expression) {
+			state.update_effects.push(singular);
+		} else if (is_attributes_reactive || directive.metadata.dynamic || contains_call_expression) {
+			state.update.push({ grouped, singular });
 		} else {
-			context.state.init.push(...values);
+			state.init.push(grouped);
 		}
 	}
 }
@@ -295,7 +311,9 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||= attribute.metadata.dynamic;
+		is_reactive ||=
+			attribute.metadata.dynamic ||
+			(attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression);
 	}
 
 	const lowercase_attributes =
@@ -2236,6 +2254,12 @@ export const template_visitors = {
 		const item = b.id(each_node_meta.item_name);
 		const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(item.name));
 		binding.expression = each_item_is_reactive ? b.call('$.unwrap', item) : item;
+		if (node.index) {
+			const index_binding = /** @type {import('#compiler').Binding} */ (
+				context.state.scope.get(node.index)
+			);
+			index_binding.expression = each_item_is_reactive ? b.call('$.unwrap', index) : index;
+		}
 
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
@@ -2291,7 +2315,7 @@ export const template_visitors = {
 		const key_function =
 			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
 				? b.arrow(
-						[node.context.type === 'Identifier' ? node.context : b.id('$$item')],
+						[node.context.type === 'Identifier' ? node.context : b.id('$$item'), index],
 						b.block(
 							declarations.concat(
 								b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
@@ -2471,7 +2495,14 @@ export const template_visitors = {
 			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
 		}
 
-		context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		const path = context.path;
+		// If we're top-level, then we can create a function for the snippet so that it can be referenced
+		// in the props declaration (default value pattern).
+		if (path.length === 1 && path[0].type === 'Fragment') {
+			context.state.init.push(b.function_declaration(node.expression, args, body));
+		} else {
+			context.state.init.push(b.const(node.expression, b.arrow(args, body)));
+		}
 		if (context.state.options.dev) {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 		}
