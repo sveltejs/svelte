@@ -68,7 +68,7 @@ In non-runes mode, a `let` declaration is treated as reactive state if it is upd
 
 Similar to `$state`, `$state.frozen` is also declared and can be used in many of the same ways (including on classes). However, the properties of any object and arrays are treated as read-only, and cannot be mutated. So if you intend to use objects as state and you want to mutate their properties and have reactivity work by default, it's recommended you use `$state` instead.
 
-For the cases where you don't want Svelte's reactivity to apply deeply to state, and for those who might want to have more control over their data structures, you might find `$state` useful. Furthermore, `$state.frozen` is ideal for those who want to work with data using immutable patterns rather than mutable patterns.
+For the cases where you don't want Svelte's reactivity to apply deeply to state, and for those who might want to have more control over their data structures, you might find `$state.frozen` useful. Furthermore, `$state.frozen` is ideal for those who want to work with data using immutable patterns rather than mutable patterns.
 
 ```svelte
 <script>
