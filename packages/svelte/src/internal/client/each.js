@@ -119,6 +119,14 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		current_fallback = fallback;
 	};
 
+	/** @param {import('./types.js').EachBlock} block */
+	const clear_each = (block) => {
+		const flags = block.f;
+		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+		const anchor_node = block.a;
+		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
+	};
+
 	const each = render_effect(
 		() => {
 			/** @type {V[]} */
@@ -137,7 +145,9 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			if (fallback_fn !== null) {
 				if (length === 0) {
 					if (block.v.length !== 0 || render === null) {
+						clear_each(block);
 						create_fallback_effect();
+						return;
 					}
 				} else if (block.v.length === 0 && current_fallback !== null) {
 					const fallback = current_fallback;
@@ -160,17 +170,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 		false
 	);
 
-	render = render_effect(
-		/** @param {import('./types.js').EachBlock} block */
-		(block) => {
-			const flags = block.f;
-			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-			const anchor_node = block.a;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-		},
-		block,
-		true
-	);
+	render = render_effect(clear_each, block, true);
 
 	push_destroy_fn(each, () => {
 		const flags = block.f;
