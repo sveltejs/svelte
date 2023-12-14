@@ -377,6 +377,7 @@ declare module 'svelte' {
 	 * https://svelte.dev/docs/svelte#ondestroy
 	 * */
 	export function onDestroy(fn: () => any): void;
+	export function unstate<T>(value: T): T;
 }
 
 declare module 'svelte/action' {
@@ -483,7 +484,9 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { ArrayExpression, AssignmentExpression, Expression, Identifier, MemberExpression, ObjectExpression, Pattern, ClassDeclaration, FunctionDeclaration, ImportDeclaration, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program } from 'estree';
+	import type { Location } from 'locate-character';
+	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
 	/**
 	 * `compile` converts your `.svelte` source code into a JavaScript module that exports a component
@@ -492,14 +495,14 @@ declare module 'svelte/compiler' {
 	 * @param source The component source code
 	 * @param options The compiler options
 	 * */
-	export function compile(source: string, options: any): any;
+	export function compile(source: string, options: CompileOptions): CompileResult;
 	/**
 	 * `compileModule` takes your JavaScript source code containing runes, and turns it into a JavaScript module.
 	 *
 	 * https://svelte.dev/docs/svelte-compiler#svelte-compile
 	 * @param source The component source code
 	 * */
-	export function compileModule(source: string, options: any): any;
+	export function compileModule(source: string, options: ModuleCompileOptions): CompileResult;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
@@ -511,243 +514,199 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
 		modern?: boolean | undefined;
-	} | undefined): any | LegacySvelteNode;
+	} | undefined): SvelteNode | LegacySvelteNode;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
 	function walk(): never;
-	interface BaseNode {
-		type: string;
-		start: number;
-		end: number;
+	/** The return value of `compile` from `svelte/compiler` */
+	interface CompileResult {
+		/** The compiled JavaScript */
+		js: {
+			/** The generated code */
+			code: string;
+			/** A source map */
+			map: SourceMap;
+		};
+		/** The compiled CSS */
+		css: null | {
+			/** The generated code */
+			code: string;
+			/** A source map */
+			map: SourceMap;
+		};
+		/**
+		 * An array of warning objects that were generated during compilation. Each warning has several properties:
+		 * - `code` is a string identifying the category of warning
+		 * - `message` describes the issue in human-readable terms
+		 * - `start` and `end`, if the warning relates to a specific location, are objects with `line`, `column` and `character` properties
+		 */
+		warnings: Warning[];
+		/**
+		 * Metadata about the compiled component
+		 */
+		metadata: {
+			/**
+			 * Whether the file was compiled in runes mode, either because of an explicit option or inferred from usage.
+			 * For `compileModule`, this is always `true`
+			 */
+			runes: boolean;
+		};
 	}
 
-	interface BaseElement extends BaseNode {
-		name: string;
-		attributes: Array<LegacyAttributeLike>;
-		children: Array<LegacyElementLike>;
-	}
-
-	interface LegacyAction extends BaseNode {
-		type: 'Action';
-		/** The 'x' in `use:x` */
-		name: string;
-		/** The 'y' in `use:x={y}` */
-		expression: null | Expression;
-	}
-
-	interface LegacyAnimation extends BaseNode {
-		type: 'Animation';
-		/** The 'x' in `animate:x` */
-		name: string;
-		/** The y in `animate:x={y}` */
-		expression: null | Expression;
-	}
-
-	interface LegacyBinding extends BaseNode {
-		type: 'Binding';
-		/** The 'x' in `bind:x` */
-		name: string;
-		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression;
-	}
-
-	interface LegacyBody extends BaseElement {
-		type: 'Body';
-		name: 'svelte:body';
-	}
-
-	interface LegacyAttribute extends BaseNode {
-		type: 'Attribute';
-		name: string;
-		value: true | Array<Text | LegacyMustacheTag | LegacyAttributeShorthand>;
-	}
-
-	interface LegacyAttributeShorthand extends BaseNode {
-		type: 'AttributeShorthand';
-		expression: Expression;
-	}
-
-	interface LegacyLet extends BaseNode {
-		type: 'Let';
-		/** The 'x' in `let:x` */
-		name: string;
-		/** The 'y' in `let:x={y}` */
-		expression: null | Identifier | ArrayExpression | ObjectExpression;
-	}
-
-	interface LegacyCatchBlock extends BaseNode {
-		type: 'CatchBlock';
-		children: LegacySvelteNode[];
-		skip: boolean;
-	}
-
-	interface LegacyClass extends BaseNode {
-		type: 'Class';
-		/** The 'x' in `class:x` */
-		name: 'class';
-		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
-		expression: Expression;
-	}
-
-	interface LegacyDocument extends BaseElement {
-		type: 'Document';
-	}
-
-	interface LegacyElement {
-		type: 'Element';
-	}
-
-	interface LegacyEventHandler extends BaseNode {
-		type: 'EventHandler';
-		/** The 'x' in `on:x` */
-		name: string;
-		/** The 'y' in `on:x={y}` */
-		expression: null | Expression;
-		modifiers: string[];
-	}
-
-	interface LegacyHead extends BaseElement {
-		type: 'Head';
-	}
-
-	interface LegacyInlineComponent extends BaseElement {
-		type: 'InlineComponent';
-		/** Set if this is a `<svelte:component>` */
-		expression?: Expression;
-	}
-
-	interface LegacyMustacheTag extends BaseNode {
-		type: 'MustacheTag';
-		expression: Expression;
-	}
-
-	interface LegacyOptions {
-		type: 'Options';
-		name: 'svelte:options';
-		attributes: Array<any>;
-	}
-
-	interface LegacyPendingBlock extends BaseNode {
-		type: 'PendingBlock';
-		children: LegacySvelteNode[];
-		skip: boolean;
-	}
-
-	interface LegacyRawMustacheTag extends BaseNode {
-		type: 'RawMustacheTag';
-		expression: Expression;
-	}
-
-	interface LegacySpread extends BaseNode {
-		type: 'Spread';
-		expression: Expression;
-	}
-
-	interface LegacySlot extends BaseElement {
-		type: 'Slot';
-	}
-
-	interface LegacySlotTemplate extends BaseElement {
-		type: 'SlotTemplate';
-	}
-
-	interface LegacyThenBlock extends BaseNode {
-		type: 'ThenBlock';
-		children: LegacySvelteNode[];
-		skip: boolean;
-	}
-
-	interface LegacyTitle extends BaseElement {
-		type: 'Title';
-		name: 'title';
-	}
-
-	interface LegacyConstTag extends BaseNode {
-		type: 'ConstTag';
-		expression: AssignmentExpression;
-	}
-
-	interface LegacyTransition extends BaseNode {
-		type: 'Transition';
-		/** The 'x' in `transition:x` */
-		name: string;
-		/** The 'y' in `transition:x={y}` */
-		expression: null | Expression;
-		modifiers: Array<'local' | 'global'>;
-		/** True if this is a `transition:` or `in:` directive */
-		intro: boolean;
-		/** True if this is a `transition:` or `out:` directive */
-		outro: boolean;
-	}
-
-	interface LegacyWindow extends BaseElement {
-		type: 'Window';
-	}
-
-	type LegacyDirective =
-		| LegacyAnimation
-		| LegacyBinding
-		| LegacyClass
-		| LegacyLet
-		| LegacyEventHandler
-		| StyleDirective
-		| LegacyTransition
-		| LegacyAction;
-
-	type LegacyAttributeLike = LegacyAttribute | LegacySpread | LegacyDirective;
-
-	type LegacyElementLike =
-		| LegacyBody
-		| LegacyCatchBlock
-		| LegacyDocument
-		| LegacyElement
-		| LegacyHead
-		| LegacyInlineComponent
-		| LegacyMustacheTag
-		| LegacyOptions
-		| LegacyPendingBlock
-		| LegacyRawMustacheTag
-		| LegacySlot
-		| LegacySlotTemplate
-		| LegacyThenBlock
-		| LegacyTitle
-		| LegacyWindow;
-
-	type LegacySvelteNode =
-		| LegacyConstTag
-		| LegacyElementLike
-		| LegacyAttributeLike
-		| LegacyAttributeShorthand
-		| Text;
-	/**
-	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
-	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
-	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
-	 * */
-	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
-		filename?: string | undefined;
-	} | undefined): Promise<Processed>;
-	export class CompileError extends Error {
-		
-		constructor(code: string, message: string, position: [number, number] | undefined);
-		
-		filename: any;
-		
-		position: any;
-		
-		start: any;
-		
-		end: any;
+	interface Warning {
+		start?: Location;
+		end?: Location;
+		// TODO there was pos: number in Svelte 4 - do we want to add it back?
 		code: string;
+		message: string;
+		filename?: string;
 	}
-	/**
-	 * The current version, as set in package.json.
-	 *
-	 * https://svelte.dev/docs/svelte-compiler#svelte-version
-	 * */
-	export const VERSION: string;
+
+	interface CompileError_1 extends Error {
+		code: string;
+		filename?: string;
+		position?: [number, number];
+		start?: Location;
+		end?: Location;
+	}
+
+	type CssHashGetter = (args: {
+		name: string;
+		filename: string | undefined;
+		css: string;
+		hash: (input: string) => string;
+	}) => string;
+
+	interface CompileOptions extends ModuleCompileOptions {
+		/**
+		 * Sets the name of the resulting JavaScript class (though the compiler will rename it if it would otherwise conflict with other variables in scope).
+		 * If unspecified, will be inferred from `filename`
+		 */
+		name?: string;
+		/**
+		 * If `true`, tells the compiler to generate a custom element constructor instead of a regular Svelte component.
+		 *
+		 * @default false
+		 */
+		customElement?: boolean;
+		/**
+		 * If `true`, getters and setters will be created for the component's props. If `false`, they will only be created for readonly exported values (i.e. those declared with `const`, `class` and `function`). If compiling with `customElement: true` this option defaults to `true`.
+		 *
+		 * @default false
+		 */
+		accessors?: boolean;
+		/**
+		 * The namespace of the element; e.g., `"html"`, `"svg"`, `"foreign"`.
+		 *
+		 * @default 'html'
+		 */
+		namespace?: Namespace;
+		/**
+		 * If `true`, tells the compiler that you promise not to mutate any objects.
+		 * This allows it to be less conservative about checking whether values have changed.
+		 *
+		 * @default false
+		 */
+		immutable?: boolean;
+		/**
+		 * - `'injected'`: styles will be included in the JavaScript class and injected at runtime for the components actually rendered.
+		 * - `'external'`: the CSS will be returned in the `css` field of the compilation result. Most Svelte bundler plugins will set this to `'external'` and use the CSS that is statically generated for better performance, as it will result in smaller JavaScript bundles and the output can be served as cacheable `.css` files.
+		 * This is always `'injected'` when compiling with `customElement` mode.
+		 */
+		css?: 'injected' | 'external';
+		/**
+		 * A function that takes a `{ hash, css, name, filename }` argument and returns the string that is used as a classname for scoped CSS.
+		 * It defaults to returning `svelte-${hash(css)}`.
+		 *
+		 * @default undefined
+		 */
+		cssHash?: CssHashGetter;
+		/**
+		 * If `true`, your HTML comments will be preserved during server-side rendering. By default, they are stripped out.
+		 *
+		 * @default false
+		 */
+		preserveComments?: boolean;
+		/**
+		 *  If `true`, whitespace inside and between elements is kept as you typed it, rather than removed or collapsed to a single space where possible.
+		 *
+		 * @default false
+		 */
+		preserveWhitespace?: boolean;
+		/**
+		 * Set to `true` to force the compiler into runes mode, even if there are no indications of runes usage.
+		 * Set to `false` to force the compiler into ignoring runes, even if there are indications of runes usage.
+		 * Set to `undefined` (the default) to infer runes mode from the component code.
+		 * Is always `true` for JS/TS modules compiled with Svelte.
+		 * Will be `true` by default in Svelte 6.
+		 * @default undefined
+		 */
+		runes?: boolean | undefined;
+		/**
+		 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+		 *
+		 * @default true
+		 */
+		discloseVersion?: boolean;
+		/**
+		 * @deprecated Use these only as a temporary solution before migrating your code
+		 */
+		legacy?: {
+			/**
+			 * Applies a transformation so that the default export of Svelte files can still be instantiated the same way as in Svelte 4 —
+			 * as a class when compiling for the browser (as though using `createClassComponent(MyComponent, {...})` from `svelte/legacy`)
+			 * or as an object with a `.render(...)` method when compiling for the server
+			 * @default false
+			 */
+			componentApi?: boolean;
+		};
+		/**
+		 * An initial sourcemap that will be merged into the final output sourcemap.
+		 * This is usually the preprocessor sourcemap.
+		 *
+		 * @default null
+		 */
+		sourcemap?: object | string;
+		/**
+		 * Used for your JavaScript sourcemap.
+		 *
+		 * @default null
+		 */
+		outputFilename?: string;
+		/**
+		 * Used for your CSS sourcemap.
+		 *
+		 * @default null
+		 */
+		cssOutputFilename?: string;
+
+		// Other Svelte 4 compiler options:
+		// enableSourcemap?: EnableSourcemap; // TODO bring back? https://github.com/sveltejs/svelte/pull/6835
+		// legacy?: boolean; // TODO compiler error noting the new purpose?
+	}
+
+	interface ModuleCompileOptions {
+		/**
+		 * If `true`, causes extra code to be added that will perform runtime checks and provide debugging information during development.
+		 *
+		 * @default false
+		 */
+		dev?: boolean;
+		/**
+		 * If `"client"`, Svelte emits code designed to run in the browser.
+		 * If `"server"`, Svelte emits code suitable for server-side rendering.
+		 * If `false`, nothing is generated. Useful for tooling that is only interested in warnings.
+		 *
+		 * @default 'client'
+		 */
+		generate?: 'client' | 'server' | false;
+		/**
+		 * Used for debugging hints and sourcemaps. Your bundler plugin will set it automatically.
+		 */
+		filename?: string;
+	}
+
 	type DeclarationKind =
 		| 'var'
 		| 'let'
@@ -800,6 +759,739 @@ declare module 'svelte/compiler' {
 		expression: Expression | null;
 		/** If this is set, all mutations should use this expression */
 		mutation: ((assignment: AssignmentExpression, context: Context<any, any>) => Expression) | null;
+	}
+	interface BaseNode_1 {
+		type: string;
+		start: number;
+		end: number;
+	}
+
+	interface BaseElement_1 extends BaseNode_1 {
+		name: string;
+		attributes: Array<LegacyAttributeLike>;
+		children: Array<LegacyElementLike>;
+	}
+
+	interface LegacyAction extends BaseNode_1 {
+		type: 'Action';
+		/** The 'x' in `use:x` */
+		name: string;
+		/** The 'y' in `use:x={y}` */
+		expression: null | Expression;
+	}
+
+	interface LegacyAnimation extends BaseNode_1 {
+		type: 'Animation';
+		/** The 'x' in `animate:x` */
+		name: string;
+		/** The y in `animate:x={y}` */
+		expression: null | Expression;
+	}
+
+	interface LegacyBinding extends BaseNode_1 {
+		type: 'Binding';
+		/** The 'x' in `bind:x` */
+		name: string;
+		/** The y in `bind:x={y}` */
+		expression: Identifier | MemberExpression;
+	}
+
+	interface LegacyBody extends BaseElement_1 {
+		type: 'Body';
+		name: 'svelte:body';
+	}
+
+	interface LegacyAttribute extends BaseNode_1 {
+		type: 'Attribute';
+		name: string;
+		value: true | Array<Text | LegacyMustacheTag | LegacyAttributeShorthand>;
+	}
+
+	interface LegacyAttributeShorthand extends BaseNode_1 {
+		type: 'AttributeShorthand';
+		expression: Expression;
+	}
+
+	interface LegacyLet extends BaseNode_1 {
+		type: 'Let';
+		/** The 'x' in `let:x` */
+		name: string;
+		/** The 'y' in `let:x={y}` */
+		expression: null | Identifier | ArrayExpression | ObjectExpression;
+	}
+
+	interface LegacyCatchBlock extends BaseNode_1 {
+		type: 'CatchBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyClass extends BaseNode_1 {
+		type: 'Class';
+		/** The 'x' in `class:x` */
+		name: 'class';
+		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
+		expression: Expression;
+	}
+
+	interface LegacyDocument extends BaseElement_1 {
+		type: 'Document';
+	}
+
+	interface LegacyElement {
+		type: 'Element';
+	}
+
+	interface LegacyEventHandler extends BaseNode_1 {
+		type: 'EventHandler';
+		/** The 'x' in `on:x` */
+		name: string;
+		/** The 'y' in `on:x={y}` */
+		expression: null | Expression;
+		modifiers: string[];
+	}
+
+	interface LegacyHead extends BaseElement_1 {
+		type: 'Head';
+	}
+
+	interface LegacyInlineComponent extends BaseElement_1 {
+		type: 'InlineComponent';
+		/** Set if this is a `<svelte:component>` */
+		expression?: Expression;
+	}
+
+	interface LegacyMustacheTag extends BaseNode_1 {
+		type: 'MustacheTag';
+		expression: Expression;
+	}
+
+	interface LegacyOptions {
+		type: 'Options';
+		name: 'svelte:options';
+		attributes: Array<any>;
+	}
+
+	interface LegacyPendingBlock extends BaseNode_1 {
+		type: 'PendingBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyRawMustacheTag extends BaseNode_1 {
+		type: 'RawMustacheTag';
+		expression: Expression;
+	}
+
+	interface LegacySpread extends BaseNode_1 {
+		type: 'Spread';
+		expression: Expression;
+	}
+
+	interface LegacySlot extends BaseElement_1 {
+		type: 'Slot';
+	}
+
+	interface LegacySlotTemplate extends BaseElement_1 {
+		type: 'SlotTemplate';
+	}
+
+	interface LegacyThenBlock extends BaseNode_1 {
+		type: 'ThenBlock';
+		children: LegacySvelteNode[];
+		skip: boolean;
+	}
+
+	interface LegacyTitle extends BaseElement_1 {
+		type: 'Title';
+		name: 'title';
+	}
+
+	interface LegacyConstTag extends BaseNode_1 {
+		type: 'ConstTag';
+		expression: AssignmentExpression;
+	}
+
+	interface LegacyTransition extends BaseNode_1 {
+		type: 'Transition';
+		/** The 'x' in `transition:x` */
+		name: string;
+		/** The 'y' in `transition:x={y}` */
+		expression: null | Expression;
+		modifiers: Array<'local' | 'global'>;
+		/** True if this is a `transition:` or `in:` directive */
+		intro: boolean;
+		/** True if this is a `transition:` or `out:` directive */
+		outro: boolean;
+	}
+
+	interface LegacyWindow extends BaseElement_1 {
+		type: 'Window';
+	}
+
+	type LegacyDirective =
+		| LegacyAnimation
+		| LegacyBinding
+		| LegacyClass
+		| LegacyLet
+		| LegacyEventHandler
+		| StyleDirective
+		| LegacyTransition
+		| LegacyAction;
+
+	type LegacyAttributeLike = LegacyAttribute | LegacySpread | LegacyDirective;
+
+	type LegacyElementLike =
+		| LegacyBody
+		| LegacyCatchBlock
+		| LegacyDocument
+		| LegacyElement
+		| LegacyHead
+		| LegacyInlineComponent
+		| LegacyMustacheTag
+		| LegacyOptions
+		| LegacyPendingBlock
+		| LegacyRawMustacheTag
+		| LegacySlot
+		| LegacySlotTemplate
+		| LegacyThenBlock
+		| LegacyTitle
+		| LegacyWindow;
+
+	type LegacySvelteNode =
+		| LegacyConstTag
+		| LegacyElementLike
+		| LegacyAttributeLike
+		| LegacyAttributeShorthand
+		| Text;
+	/**
+	 * The preprocess function provides convenient hooks for arbitrarily transforming component source code.
+	 * For example, it can be used to convert a <style lang="sass"> block into vanilla CSS.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-preprocess
+	 * */
+	export function preprocess(source: string, preprocessor: PreprocessorGroup | PreprocessorGroup[], options?: {
+		filename?: string | undefined;
+	} | undefined): Promise<Processed>;
+	export class CompileError extends Error {
+		
+		constructor(code: string, message: string, position: [number, number] | undefined);
+		
+		filename: CompileError_1['filename'];
+		
+		position: CompileError_1['position'];
+		
+		start: CompileError_1['start'];
+		
+		end: CompileError_1['end'];
+		code: string;
+	}
+	/**
+	 * The current version, as set in package.json.
+	 *
+	 * https://svelte.dev/docs/svelte-compiler#svelte-version
+	 * */
+	export const VERSION: string;
+	class Scope {
+		
+		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
+		
+		root: ScopeRoot;
+		/**
+		 * A map of every identifier declared by this scope, and all the
+		 * identifiers that reference it
+		 * */
+		declarations: Map<string, Binding>;
+		/**
+		 * A map of declarators to the bindings they declare
+		 * */
+		declarators: Map<import('estree').VariableDeclarator | LetDirective, Binding[]>;
+		/**
+		 * A set of all the names referenced with this scope
+		 * — useful for generating unique names
+		 * */
+		references: Map<string, {
+			node: import('estree').Identifier;
+			path: SvelteNode[];
+		}[]>;
+		/**
+		 * The scope depth allows us to determine if a state variable is referenced in its own scope,
+		 * which is usually an error. Block statements do not increase this value
+		 */
+		function_depth: number;
+		
+		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration): Binding;
+		child(porous?: boolean): Scope;
+		
+		generate(preferred_name: string): string;
+		
+		get(name: string): Binding | null;
+		
+		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
+		
+		owner(name: string): Scope | null;
+		
+		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
+		#private;
+	}
+	class ScopeRoot {
+		
+		conflicts: Set<string>;
+		
+		unique(preferred_name: string): import("estree").Identifier;
+	}
+	interface BaseNode {
+		type: string;
+		start: number;
+		end: number;
+		/** This is set during parsing on elements/components/expressions/text (but not attributes etc) */
+		parent: SvelteNode | null;
+	}
+
+	interface Fragment {
+		type: 'Fragment';
+		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
+		/**
+		 * Fragments declare their own scopes. A transparent fragment is one whose scope
+		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
+		 * and should therefore delegate to parent scopes when generating unique identifiers
+		 */
+		transparent: boolean;
+	}
+
+	/**
+	 * - `html`    — the default, for e.g. `<div>` or `<span>`
+	 * - `svg`     — for e.g. `<svg>` or `<g>`
+	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
+	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
+	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
+	 */
+	type Namespace = 'html' | 'svg' | 'foreign';
+
+	interface Root extends BaseNode {
+		type: 'Root';
+		/**
+		 * Inline options provided by `<svelte:options>` — these override options passed to `compile(...)`
+		 */
+		options: SvelteOptions | null;
+		fragment: Fragment;
+		/** The parsed `<style>` element, if exists */
+		css: Style | null;
+		/** The parsed `<script>` element, if exists */
+		instance: Script | null;
+		/** The parsed `<script context="module">` element, if exists */
+		module: Script | null;
+	}
+
+	interface SvelteOptions {
+		// start/end info (needed for Prettier, when someone wants to keep the options where they are)
+		start: number;
+		end: number;
+		// options
+		runes?: boolean;
+		immutable?: boolean;
+		accessors?: boolean;
+		preserveWhitespace?: boolean;
+		namespace?: Namespace;
+		customElement?: {
+			tag: string;
+			shadow?: 'open' | 'none';
+			props?: Record<
+				string,
+				{
+					attribute?: string;
+					reflect?: boolean;
+					type?: 'Array' | 'Boolean' | 'Number' | 'Object' | 'String';
+				}
+			>;
+			/**
+			 * Is of type
+			 * ```ts
+			 * (ceClass: new () => HTMLElement) => new () => HTMLElement
+			 * ```
+			 */
+			extend?: ArrowFunctionExpression | Identifier;
+		};
+	}
+
+	/** Static text */
+	interface Text extends BaseNode {
+		type: 'Text';
+		/** Text with decoded HTML entities */
+		data: string;
+		/** The original text, with undecoded HTML entities */
+		raw: string;
+	}
+
+	/** A (possibly reactive) template expression — `{...}` */
+	interface ExpressionTag extends BaseNode {
+		type: 'ExpressionTag';
+		expression: Expression;
+		metadata: {
+			contains_call_expression: boolean;
+			/**
+			 * Whether or not the expression contains any dynamic references —
+			 * determines whether it will be updated in a render effect or not
+			 */
+			dynamic: boolean;
+		};
+	}
+
+	/** A (possibly reactive) HTML template expression — `{@html ...}` */
+	interface HtmlTag extends BaseNode {
+		type: 'HtmlTag';
+		expression: Expression;
+	}
+
+	/** An HTML comment */
+	// TODO rename to disambiguate
+	interface Comment extends BaseNode {
+		type: 'Comment';
+		/** the contents of the comment */
+		data: string;
+		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
+		ignores: string[];
+	}
+
+	/** A `{@const ...}` tag */
+	interface ConstTag extends BaseNode {
+		type: 'ConstTag';
+		declaration: VariableDeclaration & {
+			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
+		};
+	}
+
+	/** A `{@debug ...}` tag */
+	interface DebugTag extends BaseNode {
+		type: 'DebugTag';
+		identifiers: Identifier[];
+	}
+
+	/** A `{@render foo(...)} tag */
+	interface RenderTag extends BaseNode {
+		type: 'RenderTag';
+		expression: Identifier;
+		argument: null | Expression;
+	}
+
+	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
+
+	/** An `animate:` directive */
+	interface AnimateDirective extends BaseNode {
+		type: 'AnimateDirective';
+		/** The 'x' in `animate:x` */
+		name: string;
+		/** The y in `animate:x={y}` */
+		expression: null | Expression;
+	}
+
+	/** A `bind:` directive */
+	interface BindDirective extends BaseNode {
+		type: 'BindDirective';
+		/** The 'x' in `bind:x` */
+		name: string;
+		/** The y in `bind:x={y}` */
+		expression: Identifier | MemberExpression;
+		metadata: {
+			binding_group_name: Identifier;
+			parent_each_blocks: EachBlock[];
+		};
+	}
+
+	/** A `class:` directive */
+	interface ClassDirective extends BaseNode {
+		type: 'ClassDirective';
+		/** The 'x' in `class:x` */
+		name: 'class';
+		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
+		expression: Expression;
+		metadata: {
+			dynamic: false;
+		};
+	}
+
+	/** A `let:` directive */
+	interface LetDirective extends BaseNode {
+		type: 'LetDirective';
+		/** The 'x' in `let:x` */
+		name: string;
+		/** The 'y' in `let:x={y}` */
+		expression: null | Identifier | ArrayExpression | ObjectExpression;
+	}
+
+	/** An `on:` directive */
+	interface OnDirective extends BaseNode {
+		type: 'OnDirective';
+		/** The 'x' in `on:x` */
+		name: string;
+		/** The 'y' in `on:x={y}` */
+		expression: null | Expression;
+		modifiers: string[]; // TODO specify
+		metadata: {
+			delegated: null | DelegatedEvent;
+		};
+	}
+
+	type DelegatedEvent =
+		| {
+				type: 'hoistable';
+				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
+		  }
+		| { type: 'non-hoistable' };
+
+	/** A `style:` directive */
+	interface StyleDirective extends BaseNode {
+		type: 'StyleDirective';
+		/** The 'x' in `style:x` */
+		name: string;
+		/** The 'y' in `style:x={y}` */
+		value: true | Array<ExpressionTag | Text>;
+		modifiers: Array<'important'>;
+		metadata: {
+			dynamic: boolean;
+		};
+	}
+
+	// TODO have separate in/out/transition directives
+	/** A `transition:`, `in:` or `out:` directive */
+	interface TransitionDirective extends BaseNode {
+		type: 'TransitionDirective';
+		/** The 'x' in `transition:x` */
+		name: string;
+		/** The 'y' in `transition:x={y}` */
+		expression: null | Expression;
+		modifiers: Array<'local' | 'global'>;
+		/** True if this is a `transition:` or `in:` directive */
+		intro: boolean;
+		/** True if this is a `transition:` or `out:` directive */
+		outro: boolean;
+	}
+
+	/** A `use:` directive */
+	interface UseDirective extends BaseNode {
+		type: 'UseDirective';
+		/** The 'x' in `use:x` */
+		name: string;
+		/** The 'y' in `use:x={y}` */
+		expression: null | Expression;
+	}
+
+	type Directive =
+		| AnimateDirective
+		| BindDirective
+		| ClassDirective
+		| LetDirective
+		| OnDirective
+		| StyleDirective
+		| TransitionDirective
+		| UseDirective;
+
+	interface BaseElement extends BaseNode {
+		name: string;
+		attributes: Array<Attribute | SpreadAttribute | Directive>;
+		fragment: Fragment;
+	}
+
+	interface Component extends BaseElement {
+		type: 'Component';
+	}
+
+	interface TitleElement extends BaseElement {
+		type: 'TitleElement';
+		name: 'title';
+	}
+
+	interface SlotElement extends BaseElement {
+		type: 'SlotElement';
+		name: 'slot';
+	}
+
+	interface RegularElement extends BaseElement {
+		type: 'RegularElement';
+		metadata: {
+			/** `true` if this is an svg element */
+			svg: boolean;
+			/** `true` if contains a SpreadAttribute */
+			has_spread: boolean;
+			/**
+			 * `true` if events on this element can theoretically be delegated. This doesn't necessarily mean that
+			 * a specific event will be delegated, as there are other factors which affect the final outcome.
+			 * `null` only until it was determined whether this element can be delegated or not.
+			 */
+			can_delegate_events: boolean | null;
+		};
+	}
+
+	interface SvelteBody extends BaseElement {
+		type: 'SvelteBody';
+		name: 'svelte:body';
+	}
+
+	interface SvelteComponent extends BaseElement {
+		type: 'SvelteComponent';
+		name: 'svelte:component';
+		expression: Expression;
+	}
+
+	interface SvelteDocument extends BaseElement {
+		type: 'SvelteDocument';
+		name: 'svelte:document';
+	}
+
+	interface SvelteElement extends BaseElement {
+		type: 'SvelteElement';
+		name: 'svelte:element';
+		tag: Expression;
+	}
+
+	interface SvelteFragment extends BaseElement {
+		type: 'SvelteFragment';
+		name: 'svelte:fragment';
+	}
+
+	interface SvelteHead extends BaseElement {
+		type: 'SvelteHead';
+		name: 'svelte:head';
+	}
+
+	/** This is only an intermediate representation while parsing, it doesn't exist in the final AST */
+	interface SvelteOptionsRaw extends BaseElement {
+		type: 'SvelteOptions';
+		name: 'svelte:options';
+	}
+
+	interface SvelteSelf extends BaseElement {
+		type: 'SvelteSelf';
+		name: 'svelte:self';
+	}
+
+	interface SvelteWindow extends BaseElement {
+		type: 'SvelteWindow';
+		name: 'svelte:window';
+	}
+
+	type ElementLike =
+		| Component
+		| TitleElement
+		| SlotElement
+		| RegularElement
+		| SvelteBody
+		| SvelteComponent
+		| SvelteDocument
+		| SvelteElement
+		| SvelteFragment
+		| SvelteHead
+		| SvelteOptionsRaw
+		| SvelteSelf
+		| SvelteWindow;
+
+	/** An `{#each ...}` block */
+	interface EachBlock extends BaseNode {
+		type: 'EachBlock';
+		expression: Expression;
+		context: Pattern;
+		body: Fragment;
+		fallback?: Fragment;
+		index?: string;
+		key?: Expression;
+		metadata: {
+			contains_group_binding: boolean;
+			/** Set if something in the array expression is shadowed within the each block */
+			array_name: Identifier | null;
+			index: Identifier;
+			item_name: string;
+			/** List of bindings that are referenced within the expression */
+			references: Binding[];
+			is_controlled: boolean;
+		};
+	}
+
+	/** An `{#if ...}` block */
+	interface IfBlock extends BaseNode {
+		type: 'IfBlock';
+		elseif: boolean;
+		test: Expression;
+		consequent: Fragment;
+		alternate: Fragment | null;
+	}
+
+	/** An `{#await ...}` block */
+	interface AwaitBlock extends BaseNode {
+		type: 'AwaitBlock';
+		expression: Expression;
+		// TODO can/should we move these inside the ThenBlock and CatchBlock?
+		/** The resolved value inside the `then` block */
+		value: Pattern | null;
+		/** The rejection reason inside the `catch` block */
+		error: Pattern | null;
+		pending: Fragment | null;
+		then: Fragment | null;
+		catch: Fragment | null;
+	}
+
+	interface KeyBlock extends BaseNode {
+		type: 'KeyBlock';
+		expression: Expression;
+		fragment: Fragment;
+	}
+
+	interface SnippetBlock extends BaseNode {
+		type: 'SnippetBlock';
+		expression: Identifier;
+		context: null | Pattern;
+		body: Fragment;
+	}
+
+	type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
+
+	interface Attribute extends BaseNode {
+		type: 'Attribute';
+		name: string;
+		value: true | Array<Text | ExpressionTag>;
+		metadata: {
+			dynamic: boolean;
+			/** May be set if this is an event attribute */
+			delegated: null | DelegatedEvent;
+		};
+	}
+
+	interface SpreadAttribute extends BaseNode {
+		type: 'SpreadAttribute';
+		expression: Expression;
+		metadata: {
+			contains_call_expression: boolean;
+			dynamic: boolean;
+		};
+	}
+
+	type TemplateNode =
+		| Root
+		| Text
+		| Tag
+		| ElementLike
+		| Attribute
+		| SpreadAttribute
+		| Directive
+		| Comment
+		| Block;
+
+	type SvelteNode = Node | TemplateNode | Fragment;
+
+	interface Script extends BaseNode {
+		type: 'Script';
+		context: string;
+		content: Program;
+	}
+
+	interface Style extends BaseNode {
+		type: 'Style';
+		attributes: any[]; // TODO
+		children: any[]; // TODO add CSS node types
+		content: {
+			start: number;
+			end: number;
+			styles: string;
+		};
 	}
 	/**
 	 * The result of a preprocessor run. If the preprocessor does not return a result, it is assumed that the code is unchanged.
@@ -869,506 +1561,6 @@ declare module 'svelte/compiler' {
 		markup?: MarkupPreprocessor;
 		style?: Preprocessor;
 		script?: Preprocessor;
-	}
-	class Scope {
-		
-		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
-		root: ScopeRoot;
-		/**
-		 * A map of every identifier declared by this scope, and all the
-		 * identifiers that reference it
-		 * */
-		declarations: Map<string, any>;
-		/**
-		 * A map of declarators to the bindings they declare
-		 * */
-		declarators: Map<import('estree').VariableDeclarator | any, any[]>;
-		/**
-		 * A set of all the names referenced with this scope
-		 * — useful for generating unique names
-		 * */
-		references: Map<string, {
-			node: import('estree').Identifier;
-			path: any[];
-		}[]>;
-		/**
-		 * The scope depth allows us to determine if a state variable is referenced in its own scope,
-		 * which is usually an error. Block statements do not increase this value
-		 */
-		function_depth: number;
-		
-		declare(node: import('estree').Identifier, kind: any, declaration_kind: any, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration): any;
-		child(porous?: boolean): Scope;
-		
-		generate(preferred_name: string): string;
-		
-		get(name: string): any | null;
-		
-		get_bindings(node: import('estree').VariableDeclarator | any): any[];
-		
-		owner(name: string): Scope | null;
-		
-		reference(node: import('estree').Identifier, path: any[]): void;
-		#private;
-	}
-	class ScopeRoot {
-		
-		conflicts: Set<string>;
-		
-		unique(preferred_name: string): import("estree").Identifier;
-	}
-	interface BaseNode_1 {
-		type: string;
-		start: number;
-		end: number;
-		/** This is set during parsing on elements/components/expressions/text (but not attributes etc) */
-		parent: SvelteNode | null;
-	}
-
-	interface Fragment {
-		type: 'Fragment';
-		nodes: Array<Text | Tag | ElementLike | Block | Comment>;
-		/**
-		 * Fragments declare their own scopes. A transparent fragment is one whose scope
-		 * is not represented by a scope in the resulting JavaScript (e.g. an element scope),
-		 * and should therefore delegate to parent scopes when generating unique identifiers
-		 */
-		transparent: boolean;
-	}
-
-	/**
-	 * - `html`    — the default, for e.g. `<div>` or `<span>`
-	 * - `svg`     — for e.g. `<svg>` or `<g>`
-	 * - `foreign` — for other compilation targets than the web, e.g. Svelte Native.
-	 *               Disallows bindings other than bind:this, disables a11y checks, disables any special attribute handling
-	 *               (also see https://github.com/sveltejs/svelte/pull/5652)
-	 */
-	type Namespace = 'html' | 'svg' | 'foreign';
-
-	interface Root extends BaseNode_1 {
-		type: 'Root';
-		/**
-		 * Inline options provided by `<svelte:options>` — these override options passed to `compile(...)`
-		 */
-		options: SvelteOptions | null;
-		fragment: Fragment;
-		/** The parsed `<style>` element, if exists */
-		css: Style | null;
-		/** The parsed `<script>` element, if exists */
-		instance: Script | null;
-		/** The parsed `<script context="module">` element, if exists */
-		module: Script | null;
-	}
-
-	interface SvelteOptions {
-		// start/end info (needed for Prettier, when someone wants to keep the options where they are)
-		start: number;
-		end: number;
-		// options
-		runes?: boolean;
-		immutable?: boolean;
-		accessors?: boolean;
-		preserveWhitespace?: boolean;
-		namespace?: Namespace;
-		customElement?: {
-			tag: string;
-			shadow?: 'open' | 'none';
-			props?: Record<
-				string,
-				{
-					attribute?: string;
-					reflect?: boolean;
-					type?: 'Array' | 'Boolean' | 'Number' | 'Object' | 'String';
-				}
-			>;
-			/**
-			 * Is of type
-			 * ```ts
-			 * (ceClass: new () => HTMLElement) => new () => HTMLElement
-			 * ```
-			 */
-			extend?: ArrowFunctionExpression | Identifier;
-		};
-	}
-
-	/** Static text */
-	interface Text extends BaseNode_1 {
-		type: 'Text';
-		/** Text with decoded HTML entities */
-		data: string;
-		/** The original text, with undecoded HTML entities */
-		raw: string;
-	}
-
-	/** A (possibly reactive) template expression — `{...}` */
-	interface ExpressionTag extends BaseNode_1 {
-		type: 'ExpressionTag';
-		expression: Expression;
-		metadata: {
-			contains_call_expression: boolean;
-			/**
-			 * Whether or not the expression contains any dynamic references —
-			 * determines whether it will be updated in a render effect or not
-			 */
-			dynamic: boolean;
-		};
-	}
-
-	/** A (possibly reactive) HTML template expression — `{@html ...}` */
-	interface HtmlTag extends BaseNode_1 {
-		type: 'HtmlTag';
-		expression: Expression;
-	}
-
-	/** An HTML comment */
-	// TODO rename to disambiguate
-	interface Comment extends BaseNode_1 {
-		type: 'Comment';
-		/** the contents of the comment */
-		data: string;
-		/** any svelte-ignore directives — <!-- svelte-ignore a b c --> would result in ['a', 'b', 'c'] */
-		ignores: string[];
-	}
-
-	/** A `{@const ...}` tag */
-	interface ConstTag extends BaseNode_1 {
-		type: 'ConstTag';
-		declaration: VariableDeclaration & {
-			declarations: [VariableDeclarator & { id: Pattern; init: Expression }];
-		};
-	}
-
-	/** A `{@debug ...}` tag */
-	interface DebugTag extends BaseNode_1 {
-		type: 'DebugTag';
-		identifiers: Identifier[];
-	}
-
-	/** A `{@render foo(...)} tag */
-	interface RenderTag extends BaseNode_1 {
-		type: 'RenderTag';
-		expression: Identifier;
-		argument: null | Expression;
-	}
-
-	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
-
-	/** An `animate:` directive */
-	interface AnimateDirective extends BaseNode_1 {
-		type: 'AnimateDirective';
-		/** The 'x' in `animate:x` */
-		name: string;
-		/** The y in `animate:x={y}` */
-		expression: null | Expression;
-	}
-
-	/** A `bind:` directive */
-	interface BindDirective extends BaseNode_1 {
-		type: 'BindDirective';
-		/** The 'x' in `bind:x` */
-		name: string;
-		/** The y in `bind:x={y}` */
-		expression: Identifier | MemberExpression;
-		metadata: {
-			binding_group_name: Identifier;
-			parent_each_blocks: EachBlock[];
-		};
-	}
-
-	/** A `class:` directive */
-	interface ClassDirective extends BaseNode_1 {
-		type: 'ClassDirective';
-		/** The 'x' in `class:x` */
-		name: 'class';
-		/** The 'y' in `class:x={y}`, or the `x` in `class:x` */
-		expression: Expression;
-		metadata: {
-			dynamic: false;
-		};
-	}
-
-	/** A `let:` directive */
-	interface LetDirective extends BaseNode_1 {
-		type: 'LetDirective';
-		/** The 'x' in `let:x` */
-		name: string;
-		/** The 'y' in `let:x={y}` */
-		expression: null | Identifier | ArrayExpression | ObjectExpression;
-	}
-
-	/** An `on:` directive */
-	interface OnDirective extends BaseNode_1 {
-		type: 'OnDirective';
-		/** The 'x' in `on:x` */
-		name: string;
-		/** The 'y' in `on:x={y}` */
-		expression: null | Expression;
-		modifiers: string[]; // TODO specify
-		metadata: {
-			delegated: null | DelegatedEvent;
-		};
-	}
-
-	type DelegatedEvent =
-		| {
-				type: 'hoistable';
-				function: ArrowFunctionExpression | FunctionExpression | FunctionDeclaration;
-		  }
-		| { type: 'non-hoistable' };
-
-	/** A `style:` directive */
-	interface StyleDirective extends BaseNode_1 {
-		type: 'StyleDirective';
-		/** The 'x' in `style:x` */
-		name: string;
-		/** The 'y' in `style:x={y}` */
-		value: true | Array<ExpressionTag | Text>;
-		modifiers: Array<'important'>;
-		metadata: {
-			dynamic: boolean;
-		};
-	}
-
-	// TODO have separate in/out/transition directives
-	/** A `transition:`, `in:` or `out:` directive */
-	interface TransitionDirective extends BaseNode_1 {
-		type: 'TransitionDirective';
-		/** The 'x' in `transition:x` */
-		name: string;
-		/** The 'y' in `transition:x={y}` */
-		expression: null | Expression;
-		modifiers: Array<'local' | 'global'>;
-		/** True if this is a `transition:` or `in:` directive */
-		intro: boolean;
-		/** True if this is a `transition:` or `out:` directive */
-		outro: boolean;
-	}
-
-	/** A `use:` directive */
-	interface UseDirective extends BaseNode_1 {
-		type: 'UseDirective';
-		/** The 'x' in `use:x` */
-		name: string;
-		/** The 'y' in `use:x={y}` */
-		expression: null | Expression;
-	}
-
-	type Directive =
-		| AnimateDirective
-		| BindDirective
-		| ClassDirective
-		| LetDirective
-		| OnDirective
-		| StyleDirective
-		| TransitionDirective
-		| UseDirective;
-
-	interface BaseElement_1 extends BaseNode_1 {
-		name: string;
-		attributes: Array<Attribute | SpreadAttribute | Directive>;
-		fragment: Fragment;
-	}
-
-	interface Component extends BaseElement_1 {
-		type: 'Component';
-	}
-
-	interface TitleElement extends BaseElement_1 {
-		type: 'TitleElement';
-		name: 'title';
-	}
-
-	interface SlotElement extends BaseElement_1 {
-		type: 'SlotElement';
-		name: 'slot';
-	}
-
-	interface RegularElement extends BaseElement_1 {
-		type: 'RegularElement';
-		metadata: {
-			/** `true` if this is an svg element */
-			svg: boolean;
-			/** `true` if contains a SpreadAttribute */
-			has_spread: boolean;
-			/**
-			 * `true` if events on this element can theoretically be delegated. This doesn't necessarily mean that
-			 * a specific event will be delegated, as there are other factors which affect the final outcome.
-			 * `null` only until it was determined whether this element can be delegated or not.
-			 */
-			can_delegate_events: boolean | null;
-		};
-	}
-
-	interface SvelteBody extends BaseElement_1 {
-		type: 'SvelteBody';
-		name: 'svelte:body';
-	}
-
-	interface SvelteComponent extends BaseElement_1 {
-		type: 'SvelteComponent';
-		name: 'svelte:component';
-		expression: Expression;
-	}
-
-	interface SvelteDocument extends BaseElement_1 {
-		type: 'SvelteDocument';
-		name: 'svelte:document';
-	}
-
-	interface SvelteElement extends BaseElement_1 {
-		type: 'SvelteElement';
-		name: 'svelte:element';
-		tag: Expression;
-	}
-
-	interface SvelteFragment extends BaseElement_1 {
-		type: 'SvelteFragment';
-		name: 'svelte:fragment';
-	}
-
-	interface SvelteHead extends BaseElement_1 {
-		type: 'SvelteHead';
-		name: 'svelte:head';
-	}
-
-	/** This is only an intermediate representation while parsing, it doesn't exist in the final AST */
-	interface SvelteOptionsRaw extends BaseElement_1 {
-		type: 'SvelteOptions';
-		name: 'svelte:options';
-	}
-
-	interface SvelteSelf extends BaseElement_1 {
-		type: 'SvelteSelf';
-		name: 'svelte:self';
-	}
-
-	interface SvelteWindow extends BaseElement_1 {
-		type: 'SvelteWindow';
-		name: 'svelte:window';
-	}
-
-	type ElementLike =
-		| Component
-		| TitleElement
-		| SlotElement
-		| RegularElement
-		| SvelteBody
-		| SvelteComponent
-		| SvelteDocument
-		| SvelteElement
-		| SvelteFragment
-		| SvelteHead
-		| SvelteOptionsRaw
-		| SvelteSelf
-		| SvelteWindow;
-
-	/** An `{#each ...}` block */
-	interface EachBlock extends BaseNode_1 {
-		type: 'EachBlock';
-		expression: Expression;
-		context: Pattern;
-		body: Fragment;
-		fallback?: Fragment;
-		index?: string;
-		key?: Expression;
-		metadata: {
-			contains_group_binding: boolean;
-			/** Set if something in the array expression is shadowed within the each block */
-			array_name: Identifier | null;
-			index: Identifier;
-			item_name: string;
-			/** List of bindings that are referenced within the expression */
-			references: Binding[];
-			is_controlled: boolean;
-		};
-	}
-
-	/** An `{#if ...}` block */
-	interface IfBlock extends BaseNode_1 {
-		type: 'IfBlock';
-		elseif: boolean;
-		test: Expression;
-		consequent: Fragment;
-		alternate: Fragment | null;
-	}
-
-	/** An `{#await ...}` block */
-	interface AwaitBlock extends BaseNode_1 {
-		type: 'AwaitBlock';
-		expression: Expression;
-		// TODO can/should we move these inside the ThenBlock and CatchBlock?
-		/** The resolved value inside the `then` block */
-		value: Pattern | null;
-		/** The rejection reason inside the `catch` block */
-		error: Pattern | null;
-		pending: Fragment | null;
-		then: Fragment | null;
-		catch: Fragment | null;
-	}
-
-	interface KeyBlock extends BaseNode_1 {
-		type: 'KeyBlock';
-		expression: Expression;
-		fragment: Fragment;
-	}
-
-	interface SnippetBlock extends BaseNode_1 {
-		type: 'SnippetBlock';
-		expression: Identifier;
-		context: null | Pattern;
-		body: Fragment;
-	}
-
-	type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
-
-	interface Attribute extends BaseNode_1 {
-		type: 'Attribute';
-		name: string;
-		value: true | Array<Text | ExpressionTag>;
-		metadata: {
-			dynamic: boolean;
-			/** May be set if this is an event attribute */
-			delegated: null | DelegatedEvent;
-		};
-	}
-
-	interface SpreadAttribute extends BaseNode_1 {
-		type: 'SpreadAttribute';
-		expression: Expression;
-		metadata: {
-			dynamic: boolean;
-		};
-	}
-
-	type TemplateNode =
-		| Root
-		| Text
-		| Tag
-		| ElementLike
-		| Attribute
-		| SpreadAttribute
-		| Directive
-		| Comment
-		| Block;
-
-	type SvelteNode = Node | TemplateNode | Fragment;
-
-	interface Script extends BaseNode_1 {
-		type: 'Script';
-		context: string;
-		content: Program;
-	}
-
-	interface Style extends BaseNode_1 {
-		type: 'Style';
-		attributes: any[]; // TODO
-		children: any[]; // TODO add CSS node types
-		content: {
-			start: number;
-			end: number;
-			styles: string;
-		};
 	}
 }
 
@@ -2326,25 +2518,25 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Inspects a value whenever it, or the properties it contains, change. Example:
+ * Inspects one or more values whenever they, or the properties they contain, change. Example:
  *
  * ```ts
- * $inspect({ someValue, someOtherValue })
+ * $inspect(someValue, someOtherValue)
  * ```
  *
- * If a second argument is provided, it will be called with the value and the event type
- * (`'init'` or `'update'`), otherwise the value will be logged to the console.
+ * `$inspect` returns a `with` function, which you can invoke with a callback function that
+ * will be called with the value and the event type (`'init'` or `'update'`) on every change.
+ * By default, the values will be logged to the console.
  *
  * ```ts
- * $inspect(x, console.trace);
- * $inspect(y, (y) => { debugger; });
+ * $inspect(x).with(console.trace);
+ * $inspect(x, y).with(() => { debugger; });
  * ```
  *
  * https://svelte-5-preview.vercel.app/docs/runes#$inspect
  */
-declare function $inspect<T>(
-	value: T,
-	callback?: (value: T, type: 'init' | 'update') => void
-): void;
+declare function $inspect<T extends any[]>(
+	...values: T
+): { with: (type: 'init' | 'update', ...values: T) => void };
 
 //# sourceMappingURL=index.d.ts.map
