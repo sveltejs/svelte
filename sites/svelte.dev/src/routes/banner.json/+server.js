@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { defineBanner } from '@sveltejs/site-kit/components';
 
+export const prerender = true;
+
 // This server route is used by all Svelte sites to load info about which banner to show.
 // site-kit contains components/helpers to make fetching+displaying them easier.
 export const GET = async () => {
