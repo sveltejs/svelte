@@ -1,3 +1,4 @@
+import { run_all } from '../common.js';
 import { current_hydration_fragment, get_hydration_fragment } from './hydration.js';
 import { get_descriptor } from './utils.js';
 
@@ -83,6 +84,24 @@ export function init_operations() {
 	text_prototype.__nodeValue = ' ';
 	// @ts-expect-error
 	element_prototype.__className = '';
+
+	// @ts-expect-error
+	HTMLInputElement.prototype.__binds = undefined;
+	// @ts-expect-error
+	HTMLSelectElement.prototype.__binds = undefined;
+	// @ts-expect-error
+	HTMLTextAreaElement.prototype.__binds = undefined;
+
+	// On form's reset, invoke bindings on elements
+	document.body.addEventListener('reset', (evt)=> {
+		requestAnimationFrame(() => {
+			if (evt.defaultPrevented) return;
+			for (const e of (/**@type {HTMLFormElement} */(evt.target)).elements) {
+				// @ts-expect-error
+				if (e.__binds) run_all(e.__binds);
+			}
+		});
+	});
 
 	first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
 		// @ts-ignore

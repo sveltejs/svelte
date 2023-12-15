@@ -65,6 +65,19 @@ const all_registerd_events = new Set();
 /** @type {Set<(events: Array<string>) => void>} */
 const root_event_handles = new Set();
 
+/**
+ * Add the function on the __binds attribute of the element
+ * This allow to handle form's reset correctly
+ * @param {Element} dom
+ * @param {(this:Element)=>void} fn 
+ */
+function binds(dom, fn) {
+	// @ts-ignore
+	(dom.__binds ||= [])
+		.push(fn);
+	return fn;
+}
+
 /** @returns {Text} */
 export function empty() {
 	return document.createTextNode('');
@@ -918,7 +931,7 @@ export function selected(dom) {
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
-	dom.addEventListener('input', () => {
+	dom.addEventListener('input', binds(dom, () => {
 		// @ts-ignore
 		let value = dom.value;
 		// @ts-ignore
@@ -927,7 +940,7 @@ export function bind_value(dom, get_value, update) {
 			value = value === '' ? null : +value;
 		}
 		update(value);
-	});
+	}));
 	render_effect(() => {
 		const value = get_value();
 		const coerced_value = value == null ? null : value + '';
@@ -946,7 +959,7 @@ export function bind_value(dom, get_value, update) {
  */
 export function bind_select_value(dom, get_value, update) {
 	let mounting = true;
-	dom.addEventListener('change', () => {
+	dom.addEventListener('change', binds(dom, () => {
 		/** @type {unknown} */
 		let value;
 		if (dom.multiple) {
@@ -957,7 +970,7 @@ export function bind_select_value(dom, get_value, update) {
 			value = selected_option && get_option_value(selected_option);
 		}
 		update(value);
-	});
+	}));
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
 		let value = get_value();
@@ -1048,14 +1061,14 @@ export function bind_group(group, group_index, dom, get_value, update) {
 		}
 	}
 	binding_group.push(dom);
-	dom.addEventListener('change', () => {
+	dom.addEventListener('change', binds(dom, () => {
 		// @ts-ignore
 		let value = dom.__value;
 		if (is_checkbox) {
 			value = get_binding_group_value(binding_group, value, dom.checked);
 		}
 		update(value);
-	});
+	}));
 	render_effect(() => {
 		let value = get_value();
 		if (is_checkbox) {
@@ -1084,10 +1097,10 @@ export function bind_group(group, group_index, dom, get_value, update) {
  * @returns {void}
  */
 export function bind_checked(dom, get_value, update) {
-	dom.addEventListener('change', () => {
+	dom.addEventListener('change', binds(dom, () => {
 		const value = dom.checked;
 		update(value);
-	});
+	}));
 	// eslint-disable-next-line eqeqeq
 	if (get_value() == undefined) {
 		update(false);
