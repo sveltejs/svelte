@@ -363,8 +363,7 @@ function get_hoistable_params(node, context) {
 				binding.kind === 'prop' &&
 				!binding.reassigned &&
 				binding.initial === null &&
-				!context.state.analysis.accessors &&
-				context.state.analysis.runes
+				!context.state.analysis.accessors
 			) {
 				// Handle $$props.something use-cases
 				if (!added_props) {

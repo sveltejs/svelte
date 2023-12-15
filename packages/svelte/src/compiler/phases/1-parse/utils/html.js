@@ -121,6 +121,16 @@ function validate_code(code) {
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 
+const interactive_elements = new Set([
+	'a',
+	'button',
+	'iframe',
+	'embed',
+	'input',
+	'select',
+	'textarea'
+]);
+
 /** @type {Record<string, Set<string>>} */
 const disallowed_contents = {
 	li: new Set(['li']),
@@ -142,6 +152,10 @@ const disallowed_contents = {
 	td: new Set(['td', 'th', 'tr']),
 	th: new Set(['td', 'th', 'tr'])
 };
+
+for (const interactive_element of interactive_elements) {
+	disallowed_contents[interactive_element] = interactive_elements;
+}
 
 // can this be a child of the parent element, or does it implicitly
 // close it, like `<li>one<li>two`?
