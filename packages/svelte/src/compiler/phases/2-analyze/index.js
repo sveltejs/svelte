@@ -166,6 +166,7 @@ function get_delegated_event(node, context) {
 		return non_hoistable;
 	}
 
+	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
 		// Bail-out if the arguments keyword is used
@@ -173,6 +174,15 @@ function get_delegated_event(node, context) {
 			return non_hoistable;
 		}
 		const binding = scope.get(reference);
+
+		// If we have multiple references to the same store using $ prefix, bail out.
+		if (
+			binding !== null &&
+			binding.kind === 'store_sub' &&
+			visited_references.has(reference.slice(1))
+		) {
+			return non_hoistable;
+		}
 
 		if (
 			binding !== null &&
@@ -188,6 +198,7 @@ function get_delegated_event(node, context) {
 		) {
 			return non_hoistable;
 		}
+		visited_references.add(reference);
 	}
 	return { type: 'hoistable', function: target_function };
 }
