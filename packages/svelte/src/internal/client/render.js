@@ -69,7 +69,7 @@ const root_event_handles = new Set();
  * Add the function on the __bind attribute of the element
  * This allow to handle form's reset correctly
  * @param {Element} dom
- * @param {()=>void} fn 
+ * @param {()=>void} fn
  */
 function binds(dom, fn) {
 	// @ts-ignore
@@ -78,7 +78,10 @@ function binds(dom, fn) {
 		// @ts-ignore
 		const prev = dom.__bind;
 		// @ts-ignore
-		dom.__bind = () => { prev(); fn(); }
+		dom.__bind = () => {
+			prev();
+			fn();
+		};
 	} else {
 		// @ts-ignore
 		dom.__bind = fn;
@@ -939,16 +942,19 @@ export function selected(dom) {
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
-	dom.addEventListener('input', binds(dom, () => {
-		// @ts-ignore
-		let value = dom.value;
-		// @ts-ignore
-		const type = dom.type;
-		if (type === 'number' || type === 'range') {
-			value = value === '' ? null : +value;
-		}
-		update(value);
-	}));
+	dom.addEventListener(
+		'input',
+		binds(dom, () => {
+			// @ts-ignore
+			let value = dom.value;
+			// @ts-ignore
+			const type = dom.type;
+			if (type === 'number' || type === 'range') {
+				value = value === '' ? null : +value;
+			}
+			update(value);
+		})
+	);
 	render_effect(() => {
 		const value = get_value();
 		const coerced_value = value == null ? null : value + '';
@@ -967,18 +973,21 @@ export function bind_value(dom, get_value, update) {
  */
 export function bind_select_value(dom, get_value, update) {
 	let mounting = true;
-	dom.addEventListener('change', binds(dom, () => {
-		/** @type {unknown} */
-		let value;
-		if (dom.multiple) {
-			value = [].map.call(dom.querySelectorAll(':checked'), get_option_value);
-		} else {
-			/** @type {HTMLOptionElement | null} */
-			const selected_option = dom.querySelector(':checked');
-			value = selected_option && get_option_value(selected_option);
-		}
-		update(value);
-	}));
+	dom.addEventListener(
+		'change',
+		binds(dom, () => {
+			/** @type {unknown} */
+			let value;
+			if (dom.multiple) {
+				value = [].map.call(dom.querySelectorAll(':checked'), get_option_value);
+			} else {
+				/** @type {HTMLOptionElement | null} */
+				const selected_option = dom.querySelector(':checked');
+				value = selected_option && get_option_value(selected_option);
+			}
+			update(value);
+		})
+	);
 	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
 	effect(() => {
 		let value = get_value();
@@ -1069,23 +1078,27 @@ export function bind_group(group, group_index, dom, get_value, update) {
 		}
 	}
 	binding_group.push(dom);
-	dom.addEventListener('change', binds(dom, () => {
-		// @ts-ignore
-		let value = dom.__value;
-		if (is_checkbox) {
-			value = get_binding_group_value(binding_group, value, dom.checked);
-		} else if (!dom.checked) {
-			value = null;
-			if (dom.form && dom.name) {
-				const item = dom.form.elements.namedItem(dom.name);
-				if (item) {
-					// @ts-ignore
-					value = item.value;
+	dom.addEventListener(
+		'change',
+		binds(dom, () => {
+			// @ts-ignore
+			let value = dom.__value;
+			if (is_checkbox) {
+				value = get_binding_group_value(binding_group, value, dom.checked);
+			} else if (!dom.checked) {
+				// on form reset, we need to check selected item
+				value = null;
+				if (dom.form && dom.name) {
+					const item = dom.form.elements.namedItem(dom.name);
+					if (item) {
+						// @ts-ignore
+						value = item.value;
+					}
 				}
 			}
-		}
-		update(value);
-	}));
+			update(value);
+		})
+	);
 	render_effect(() => {
 		let value = get_value();
 		if (is_checkbox) {
@@ -1114,10 +1127,13 @@ export function bind_group(group, group_index, dom, get_value, update) {
  * @returns {void}
  */
 export function bind_checked(dom, get_value, update) {
-	dom.addEventListener('change', binds(dom, () => {
-		const value = dom.checked;
-		update(value);
-	}));
+	dom.addEventListener(
+		'change',
+		binds(dom, () => {
+			const value = dom.checked;
+			update(value);
+		})
+	);
 	// eslint-disable-next-line eqeqeq
 	if (get_value() == undefined) {
 		update(false);

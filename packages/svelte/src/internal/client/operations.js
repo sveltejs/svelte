@@ -92,10 +92,10 @@ export function init_operations() {
 	HTMLTextAreaElement.prototype.__bind = undefined;
 
 	// On form's reset, invoke bindings on elements
-	document.body.addEventListener('reset', (evt)=> {
+	document.body.addEventListener('reset', (evt) => {
 		requestAnimationFrame(() => {
 			if (!evt.defaultPrevented) {
-				for (const e of (/**@type {HTMLFormElement} */(evt.target)).elements) {
+				for (const e of /**@type {HTMLFormElement} */ (evt.target).elements) {
 					// @ts-expect-error
 					e.__bind && e.__bind();
 				}
