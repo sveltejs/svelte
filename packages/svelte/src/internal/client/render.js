@@ -66,15 +66,23 @@ const all_registerd_events = new Set();
 const root_event_handles = new Set();
 
 /**
- * Add the function on the __binds attribute of the element
+ * Add the function on the __bind attribute of the element
  * This allow to handle form's reset correctly
  * @param {Element} dom
- * @param {(this:Element)=>void} fn 
+ * @param {()=>void} fn 
  */
 function binds(dom, fn) {
 	// @ts-ignore
-	(dom.__binds ||= [])
-		.push(fn);
+	if (dom.__bind) {
+		// special case for checkbox that can have multiple bind (group & checked for example)
+		// @ts-ignore
+		const prev = dom.__bind;
+		// @ts-ignore
+		dom.__bind = () => { prev(); fn(); }
+	} else {
+		// @ts-ignore
+		dom.__bind = fn;
+	}
 	return fn;
 }
 
@@ -1066,6 +1074,15 @@ export function bind_group(group, group_index, dom, get_value, update) {
 		let value = dom.__value;
 		if (is_checkbox) {
 			value = get_binding_group_value(binding_group, value, dom.checked);
+		} else if (!dom.checked) {
+			value = null;
+			if (dom.form && dom.name) {
+				const item = dom.form.elements.namedItem(dom.name);
+				if (item) {
+					// @ts-ignore
+					value = item.value;
+				}
+			}
 		}
 		update(value);
 	}));
