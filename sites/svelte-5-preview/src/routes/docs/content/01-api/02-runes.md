@@ -138,7 +138,7 @@ To run code whenever specific values change, or when a component is mounted to t
 
 ### What this replaces
 
-The portions of `$: {}` that are triggering side-effects can be replaced with `$effect` while being careful to migrate value computations to `$derived`. There are some important differences:
+The portions of `$: {}` that are triggering side-effects can be replaced with `$effect` while being careful to migrate updates of reactive variables to use `$derived`. There are some important differences:
 
 - Effects only run in the browser, not during server-side rendering
 - They run after the DOM has been updated, whereas `$:` statements run immediately _before_
