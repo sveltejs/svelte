@@ -87,7 +87,7 @@ As with `$state`, you can mark class fields as `$derived`.
 
 ### What this replaces
 
-If the value of a reactive variable is being computed it should be replaced with `$derived` whether it took the form of `$: double = count * 2` or `$: { double = count * 2; }` There are some important differences to be aware of:
+If the value of a reactive variable is being computed it should be replaced with `$derived` whether it previously took the form of `$: double = count * 2` or `$: { double = count * 2; }` There are some important differences to be aware of:
 
 - With the `$derived` rune, the value of `double` is always current (for example if you update `count` then immediately `console.log(double)`). With `$:` declarations, values are not updated until right before Svelte updates the DOM
 - In non-runes mode, Svelte determines the dependencies of `double` by statically analysing the `count * 2` expression. If you refactor it...
