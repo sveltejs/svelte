@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.26
+
+### Patch Changes
+
+- fix: better handle array property deletion reactivity ([#9921](https://github.com/sveltejs/svelte/pull/9921))
+
+- fix: improve event delegation handler hoisting ([#9929](https://github.com/sveltejs/svelte/pull/9929))
+
 ## 5.0.0-next.25
 
 ### Patch Changes
