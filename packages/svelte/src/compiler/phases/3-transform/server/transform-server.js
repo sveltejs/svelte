@@ -252,8 +252,7 @@ function create_block(parent, nodes, context, anchor) {
 		context.path,
 		namespace,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		true
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0 && !anchor) {
@@ -1189,8 +1188,7 @@ const template_visitors = {
 			inner_context.path,
 			metadata.namespace,
 			state.preserve_whitespace,
-			state.options.preserveComments,
-			true
+			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {

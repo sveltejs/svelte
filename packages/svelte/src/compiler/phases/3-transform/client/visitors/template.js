@@ -1014,8 +1014,7 @@ function create_block(parent, name, nodes, context) {
 		context.path,
 		namespace,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		false
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0) {
@@ -1821,6 +1820,11 @@ export const template_visitors = {
 		);
 	},
 	RegularElement(node, context) {
+		if (node.name === 'noscript') {
+			context.state.template.push('<!>');
+			return;
+		}
+
 		const metadata = context.state.metadata;
 		const child_metadata = {
 			...context.state.metadata,
@@ -2012,8 +2016,7 @@ export const template_visitors = {
 			context.path,
 			child_metadata.namespace,
 			state.preserve_whitespace,
-			state.options.preserveComments,
-			false
+			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {
