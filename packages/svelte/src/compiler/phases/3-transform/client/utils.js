@@ -142,15 +142,16 @@ export function serialize_set_binding(node, context, fallback) {
 		}
 
 		return b.call(
-			b.thunk(
+			b.arrow(
+				[b.id(tmp_id)],
 				b.block([
-					b.const(tmp_id, /** @type {import('estree').Expression} */ (visit(node.right))),
 					b.stmt(b.sequence(assignments)),
 					// return because it could be used in a nested expression where the value is needed.
 					// example: { foo: ({ bar } = { bar: 1 })}
 					b.return(b.id(tmp_id))
 				])
-			)
+			),
+			/** @type {import('estree').Expression} */ (visit(node.right)),
 		);
 	}
 
