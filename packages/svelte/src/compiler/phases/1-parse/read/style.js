@@ -6,7 +6,7 @@ const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today,
 const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
-const REGEX_NTH_OF = /^\s*(even|odd|(-?[0-9]?n?(\s*\+\s*[0-9]+)?))(\s*(?=[,)])|\s+of\s+)/;
+const REGEX_NTH_OF = /^\s*(even|odd|(-?[0-9]*n?(\s*\+\s*[0-9]+)?))(\s*(?=[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
