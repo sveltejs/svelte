@@ -187,7 +187,10 @@ function process_children(nodes, parent, { visit, state }) {
 			const node = sequence[i];
 			if (node.type === 'Text' || node.type === 'Comment') {
 				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-				last.value.raw += node.type === 'Comment' ? `<!--${node.data}-->` : sanitize_template_string(escape_html(node.data));
+				last.value.raw +=
+					node.type === 'Comment'
+						? `<!--${node.data}-->`
+						: sanitize_template_string(escape_html(node.data));
 			} else if (node.type === 'Anchor') {
 				expressions.push(node.id);
 				quasis.push(b.quasi('', i + 1 === sequence.length));
