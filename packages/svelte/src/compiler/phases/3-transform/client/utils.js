@@ -151,7 +151,7 @@ export function serialize_set_binding(node, context, fallback) {
 					b.return(b.id(tmp_id))
 				])
 			),
-			/** @type {import('estree').Expression} */ (visit(node.right)),
+			/** @type {import('estree').Expression} */ (visit(node.right))
 		);
 	}
 
