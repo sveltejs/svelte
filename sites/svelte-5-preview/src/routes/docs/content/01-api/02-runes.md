@@ -144,7 +144,7 @@ The portions of `$: {}` that are triggering side-effects can be replaced with `$
 - They run after the DOM has been updated, whereas `$:` statements run immediately _before_
 - You can return a cleanup function that will be called whenever the effect refires
 
-Additionally, you may prefer to use effects in some places where you previously used `onMount` and `afterUpdate` (the latter of which will be deprecated in Svelte 5). There are some differences between these APIs as `$effect` should not be used to compute reactive values and will be triggered each time a referenced reactive variable changes changes (unless using `$untrack`).
+Additionally, you may prefer to use effects in some places where you previously used `onMount` and `afterUpdate` (the latter of which will be deprecated in Svelte 5). There are some differences between these APIs as `$effect` should not be used to compute reactive values and will be triggered each time a referenced reactive variable changes (unless using `untrack`).
 
 ## `$effect.pre`
 
