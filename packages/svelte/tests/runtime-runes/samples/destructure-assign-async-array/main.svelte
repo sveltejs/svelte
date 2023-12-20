@@ -3,7 +3,7 @@
 	let email = $state("tom@mail.com");
 	let number = $state(555);
 
-	export const fetch_user = () => {
+	const fetch_user = () => {
 		return new Promise((resolve) => {
 			setTimeout(() => {
 				resolve([{name: "jerry", email: "jerry@mail.com"}, 777])
