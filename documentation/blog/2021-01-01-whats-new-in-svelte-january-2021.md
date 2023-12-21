@@ -57,7 +57,7 @@ As cautioned in _[What's the deal with SvelteKit?](https://svelte.dev/blog/whats
 - [svelte-slimscroll](https://github.com/MelihAltintas/svelte-slimscroll) is a action for Svelte.js, which can transforms any div into a scrollable area with a nice scrollbar.
 - [Svelte Zoomable](https://svelte.dev/repl/58dfe87756ee4db897c281b52fdef7b7?version=3.31.0) is a custom transition with a nice zoom effect
 
-**Have a component you'd like to share?** Check out the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Have a component you'd like to share?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 **Learning Resources**
 
