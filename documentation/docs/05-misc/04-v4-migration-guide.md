@@ -19,7 +19,7 @@ If you're a library author, consider whether to only support Svelte 4 or if it's
 
 Bundlers must now specify the `browser` condition when building a frontend bundle for the browser. SvelteKit and Vite will handle this automatically for you. If you're using any others, you may observe lifecycle callbacks such as `onMount` not get called and you'll need to update the module resolution configuration.
 - For Rollup this is done within the `@rollup/plugin-node-resolve` plugin by setting `browser: true` in its options. See the [`rollup-plugin-svelte`](https://github.com/sveltejs/rollup-plugin-svelte/#usage) documentation for more details
-- For wepback this is done by adding `"browser"` to the `conditionNames` array. You may also have to update your `alias` config, if you have set it. See the [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) documentation for more details
+- For webpack this is done by adding `"browser"` to the `conditionNames` array. You may also have to update your `alias` config, if you have set it. See the [`svelte-loader`](https://github.com/sveltejs/svelte-loader#usage) documentation for more details
 
 ([#8516](https://github.com/sveltejs/svelte/issues/8516))
 
