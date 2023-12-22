@@ -10,11 +10,11 @@ First, you'll need to integrate Svelte with a build tool. We recommend using [Sv
 npm create svelte@latest myapp
 ```
 
-There are also a number of [community-maintained integrations](https://sveltesociety.dev/tools).
+There are also a number of [community-maintained integrations](https://sveltesociety.dev/packages#bundler-plugins).
 
 Don't worry if you're relatively new to web development and haven't used these tools before. We've prepared a simple step-by-step guide, [Svelte for new developers](/blog/svelte-for-new-developers), which walks you through the process.
 
-You'll also want to configure your text editor. There are [plugins](https://sveltesociety.dev/tools#editor-support) for many popular editors as well as an official [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+You'll also want to configure your text editor. There are [plugins](https://sveltesociety.dev/resources#editor-support) for many popular editors as well as an official [VS Code extension](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
 
 <!--
 NOTE: Removed until we have better place for setting-up-your-editor guide. See https://github.com/sveltejs/svelte/pull/7310#issuecomment-1049923609
