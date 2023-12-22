@@ -107,7 +107,7 @@ If the value of a reactive variable is being computed it should be replaced with
 
 ## `$effect`
 
-To run code whenever specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
+To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
 
 ```diff
 <script>
