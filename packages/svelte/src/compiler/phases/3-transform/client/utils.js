@@ -104,11 +104,20 @@ export function serialize_get_binding(node, state) {
 }
 
 /**
- * @param {import('estree').Expression} expression
+ * @param {import('estree').Expression | import('estree').Pattern} expression
  * @returns {boolean}
  */
 function is_async(expression) {
 	switch (expression.type) {
+		case 'ArrayPattern':  {
+			for (const element of expression.elements) {
+				if (element && is_async(element)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
 		case 'ArrayExpression': {
 			for (const element of expression.elements) {
 				if (!element) {
@@ -129,6 +138,10 @@ function is_async(expression) {
 		case 'ArrowFunctionExpression':
 		case 'FunctionExpression': {
 			return expression.async ?? false;
+		}
+		case 'AssignmentPattern':
+		case 'AssignmentExpression': {
+			return is_async(expression.left) || is_async(expression.right);
 		}
 		case 'AwaitExpression': {
 			return true;
@@ -201,22 +214,21 @@ function is_async(expression) {
 		case 'MetaProperty': {
 			return false;
 		}
+		case 'ObjectPattern':
 		case 'ObjectExpression': {
 			for (const property of expression.properties) {
 				if (property.type === 'SpreadElement') {
 					if (is_async(property.argument)) {
 						return true;
 					}
-				} else {
+				} else if (property.type === 'Property') {
 					const key_is_async =
 						property.key.type === 'PrivateIdentifier' ? false : is_async(property.key);
 					if (key_is_async) {
 						return true;
 					}
 
-					const value_is_async = is_async(
-						/** @type {import('estree').Expression} */ (property.value)
-					);
+					const value_is_async = is_async(property.value);
 					if (value_is_async) {
 						return true;
 					}
@@ -224,6 +236,9 @@ function is_async(expression) {
 			}
 
 			return false;
+		}
+		case 'RestElement': {
+			return is_async(expression.argument);
 		}
 		case 'SequenceExpression': {
 			for (const subexpression of expression.expressions) {
