@@ -104,6 +104,154 @@ export function serialize_get_binding(node, state) {
 }
 
 /**
+ * @param {import('estree').Expression} expression
+ * @returns {boolean}
+ */
+function is_async(expression) {
+	switch (expression.type) {
+		case 'ArrayExpression': {
+			for (const element of expression.elements) {
+				if (!element) {
+					continue;
+				} else if (element.type === 'SpreadElement') {
+					if (is_async(element.argument)) {
+						return true;
+					}
+				} else {
+					if (is_async(element)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}	
+		case 'ArrowFunctionExpression':
+		case 'FunctionExpression': {
+			return expression.async ?? false;
+		}
+		case 'AwaitExpression': {
+			return true;
+		}
+		case 'BinaryExpression': {
+			return is_async(expression.left) || is_async(expression.right);
+		}
+		case 'CallExpression':
+		case 'NewExpression': {
+			const callee_is_async = expression.callee.type === 'Super' ? false : is_async(expression.callee);
+			if (callee_is_async) {
+				return true;
+			}
+
+			for (const element of expression.arguments) {
+				if (element.type === 'SpreadElement') {
+					if (is_async(element.argument)) {
+						return true;
+					}
+				} else {
+					if (is_async(element)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+		case 'ChainExpression': {
+			return is_async(expression.expression);
+		}
+		case 'ClassExpression': {
+			return false;
+		}
+		case 'ConditionalExpression': {
+			return is_async(expression.test) || is_async(expression.alternate) || is_async(expression.consequent);
+		}
+		case 'Identifier': {
+			return false;
+		}
+		case 'Literal': {
+			return false;
+		}
+		case 'ImportExpression': {
+			return is_async(expression.source);
+		}
+		case 'LogicalExpression': {
+			return is_async(expression.left) || is_async(expression.right);
+		}
+		case 'MemberExpression': {
+			const object_is_async = expression.object.type === 'Super' ? false : is_async(expression.object);
+			if (object_is_async) {
+				return true;
+			}
+
+			const property_is_async = expression.property.type === 'PrivateIdentifier' ? false : is_async(expression.property);
+			if (property_is_async) {
+				return true;
+			}
+
+			return false;
+		}
+		case 'MetaProperty': {
+			return false;
+		}
+		case 'ObjectExpression': {
+			for (const property of expression.properties) {
+				if (property.type === 'SpreadElement') {
+					if (is_async(property.argument)) {
+						return true;
+					}
+				} else {
+					const key_is_async = property.key.type === 'PrivateIdentifier' ? false : is_async(property.key);
+					if (key_is_async) {
+						return true;
+					}
+
+					const value_is_async = is_async(/** @type {import('estree').Expression} */ (property.value));
+					if (value_is_async) {
+						return true;
+					}
+				}
+			}
+
+			return false
+		}
+		case 'SequenceExpression': {
+			for (const subexpression of expression.expressions) {
+				if (is_async(subexpression)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		case 'TaggedTemplateExpression': {
+			return is_async(expression.tag) || is_async(expression.quasi);
+		}
+		case 'TemplateLiteral': {
+			for (const subexpression of expression.expressions) {
+				if (is_async(subexpression)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		case 'ThisExpression': {
+			return false;
+		}
+		case 'UnaryExpression': {
+			return is_async(expression.argument);
+		}
+		case 'UpdateExpression': {
+			return is_async(expression.argument);
+		}
+		case 'YieldExpression': {
+			return expression.argument ? is_async(expression.argument) : false;
+		}
+		default:
+			return false;
+	}
+}
+
+/**
  * @template {import('./types').ClientTransformState} State
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
@@ -141,18 +289,29 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
-		return b.call(
-			b.arrow(
-				[b.id(tmp_id)],
-				b.block([
-					b.stmt(b.sequence(assignments)),
-					// return because it could be used in a nested expression where the value is needed.
-					// example: { foo: ({ bar } = { bar: 1 })}
-					b.return(b.id(tmp_id))
-				])
-			),
-			/** @type {import('estree').Expression} */ (visit(node.right))
+		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
+		const iife_is_async = is_async(rhs_expression) || assignments.some((assignment) => is_async(assignment));
+		
+		let iife = b.arrow(
+			[],
+			b.block([
+				b.const(tmp_id, rhs_expression),
+				b.stmt(b.sequence(assignments)),
+				// return because it could be used in a nested expression where the value is needed.
+				// example: { foo: ({ bar } = { bar: 1 })}
+				b.return(b.id(tmp_id))
+			])
 		);
+		if (iife_is_async) {
+			iife = b.async(iife);
+		}
+
+		let iife_call = /** @type {import('estree').Expression} */ (b.call(iife));
+		if (iife_is_async) {
+			iife_call = b.await(iife_call);
+		}
+		
+		return iife_call;
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
