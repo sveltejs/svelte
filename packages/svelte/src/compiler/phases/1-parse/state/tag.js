@@ -274,7 +274,12 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const context = parser.match(')') ? null : read_context(parser);
+		const elements = [];
+		while (!parser.match(')')) {
+			elements.push(read_context(parser));
+			parser.eat(',');
+			parser.allow_whitespace();
+		}
 
 		parser.allow_whitespace();
 		parser.eat(')', true);
@@ -294,7 +299,10 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context,
+				context: {
+					type: 'ArrayPattern',
+					elements
+				},
 				body: create_fragment()
 			})
 		);
