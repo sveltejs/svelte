@@ -125,7 +125,7 @@ function is_async(expression) {
 			}
 
 			return false;
-		}	
+		}
 		case 'ArrowFunctionExpression':
 		case 'FunctionExpression': {
 			return expression.async ?? false;
@@ -138,7 +138,8 @@ function is_async(expression) {
 		}
 		case 'CallExpression':
 		case 'NewExpression': {
-			const callee_is_async = expression.callee.type === 'Super' ? false : is_async(expression.callee);
+			const callee_is_async =
+				expression.callee.type === 'Super' ? false : is_async(expression.callee);
 			if (callee_is_async) {
 				return true;
 			}
@@ -164,7 +165,11 @@ function is_async(expression) {
 			return false;
 		}
 		case 'ConditionalExpression': {
-			return is_async(expression.test) || is_async(expression.alternate) || is_async(expression.consequent);
+			return (
+				is_async(expression.test) ||
+				is_async(expression.alternate) ||
+				is_async(expression.consequent)
+			);
 		}
 		case 'Identifier': {
 			return false;
@@ -179,12 +184,14 @@ function is_async(expression) {
 			return is_async(expression.left) || is_async(expression.right);
 		}
 		case 'MemberExpression': {
-			const object_is_async = expression.object.type === 'Super' ? false : is_async(expression.object);
+			const object_is_async =
+				expression.object.type === 'Super' ? false : is_async(expression.object);
 			if (object_is_async) {
 				return true;
 			}
 
-			const property_is_async = expression.property.type === 'PrivateIdentifier' ? false : is_async(expression.property);
+			const property_is_async =
+				expression.property.type === 'PrivateIdentifier' ? false : is_async(expression.property);
 			if (property_is_async) {
 				return true;
 			}
@@ -201,19 +208,22 @@ function is_async(expression) {
 						return true;
 					}
 				} else {
-					const key_is_async = property.key.type === 'PrivateIdentifier' ? false : is_async(property.key);
+					const key_is_async =
+						property.key.type === 'PrivateIdentifier' ? false : is_async(property.key);
 					if (key_is_async) {
 						return true;
 					}
 
-					const value_is_async = is_async(/** @type {import('estree').Expression} */ (property.value));
+					const value_is_async = is_async(
+						/** @type {import('estree').Expression} */ (property.value)
+					);
 					if (value_is_async) {
 						return true;
 					}
 				}
 			}
 
-			return false
+			return false;
 		}
 		case 'SequenceExpression': {
 			for (const subexpression of expression.expressions) {
@@ -290,8 +300,9 @@ export function serialize_set_binding(node, context, fallback) {
 		}
 
 		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
-		const iife_is_async = is_async(rhs_expression) || assignments.some((assignment) => is_async(assignment));
-		
+		const iife_is_async =
+			is_async(rhs_expression) || assignments.some((assignment) => is_async(assignment));
+
 		let iife = b.arrow(
 			[],
 			b.block([
@@ -310,7 +321,7 @@ export function serialize_set_binding(node, context, fallback) {
 		if (iife_is_async) {
 			iife_call = b.await(iife_call);
 		}
-		
+
 		return iife_call;
 	}
 
