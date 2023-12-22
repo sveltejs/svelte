@@ -100,11 +100,11 @@
 <div role="textbox" />
 <div role="treeitem" aria-selected={true} />
 <summary role="listitem" />
+<div role="application" />
 
 <!-- HTML elements attributed with a non-interactive role -->
 <div role="alert" />
 <div role="alertdialog" />
-<div role="application" />
 <div role="article" />
 <div role="banner" />
 <div role="cell" />
