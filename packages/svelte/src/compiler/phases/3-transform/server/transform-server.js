@@ -1127,14 +1127,16 @@ const template_visitors = {
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', node.expression)
 			: node.expression;
-		if (node.argument) {
+		if (node.arguments.length > 0) {
 			state.template.push(
 				t_statement(
 					b.stmt(
 						b.call(
 							snippet_function,
 							b.id('$$payload'),
-							/** @type {import('estree').Expression} */ (context.visit(node.argument))
+							...node.arguments.map(
+								(arg) => /** @type {import('estree').Expression} */ (context.visit(arg))
+							)
 						)
 					)
 				)
