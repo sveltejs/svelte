@@ -21,6 +21,9 @@ export default test({
 	<p>0</p>
 	<p>0</p>
 	<p>0</p>
+	<p>0</p>
+	<p>0</p>
+	<p>0</p>
   	`,
 
 	async test({ assert, target, window }) {
@@ -53,6 +56,9 @@ export default test({
 				<p>16</p>
 				<p>17</p>
 				<p>18</p>
+				<p>19</p>
+				<p>20</p>
+				<p>21</p>
  	     	`
 		);
 	}

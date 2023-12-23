@@ -17,6 +17,9 @@
     let p = $state(0);
     let q = $state(0);
     let r = $state(0);
+    let s = $state(0);
+    let t = $state(0);
+    let u = $state(0);
 
     const update = async () => {
         [a, b] = [1, await Promise.resolve(2)];
@@ -35,9 +38,10 @@
         [n] = [-(await Promise.resolve(-14))];
         [o] = [(console.log(15), await Promise.resolve(15))];
         ({ anotherprop: p = await Promise.resolve(16) } = obj);
-        let val;
-        ({ val = (async (x) => await x)(Promise.resolve(17)), q = await val } = []);
-        ({ val = (async function (x) { return await x; })(Promise.resolve(18)), r = await val } = []);
+        let val1, val2;
+        ({ val1 = (async function (x) { return await x; })(Promise.resolve(18)), r = await val1 }
+            = ({ val2 = (async (x) => await x)(Promise.resolve(17)), q = await val2 } = []));
+        ({ u = 21 } = ({ t = await Promise.resolve(20) } = ([s] = [await Promise.resolve(19)])));
     }
 </script>
 
@@ -60,3 +64,6 @@
 <p>{p}</p>
 <p>{q}</p>
 <p>{r}</p>
+<p>{s}</p>
+<p>{t}</p>
+<p>{u}</p>
