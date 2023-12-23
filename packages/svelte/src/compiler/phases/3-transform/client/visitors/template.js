@@ -1755,9 +1755,9 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		if (node.argument) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
-		}
+		node.arguments.forEach((arg) =>
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))))
+		);
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
