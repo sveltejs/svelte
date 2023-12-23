@@ -444,6 +444,20 @@ export function class_toggle(dom, class_name, value) {
 		dom.classList.remove(class_name);
 	}
 }
+
+/**
+ * @param {Element} dom
+ * @param {string} class_name
+ * @param {() => boolean} value
+ * @returns {void}
+ */
+export function class_toggle_effect(dom, class_name, value) {
+	render_effect(() => {
+		const string = value();
+		class_toggle(dom, class_name, string);
+	});
+}
+
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
@@ -2359,11 +2373,29 @@ export function set_custom_element_data(node, prop, value) {
  * @param {boolean} [important]
  */
 export function style(dom, key, value, important) {
+	const style = dom.style;
+	const prev_value = style.getPropertyValue(key);
 	if (value == null) {
-		dom.style.removeProperty(key);
-	} else {
-		dom.style.setProperty(key, value, important ? 'important' : '');
+		if (prev_value !== '') {
+			style.removeProperty(key);
+		}
+	} else if (prev_value !== value) {
+		style.setProperty(key, value, important ? 'important' : '');
 	}
+}
+
+/**
+ * @param {HTMLElement} dom
+ * @param {string} key
+ * @param {() => string} value
+ * @param {boolean} [important]
+ * @returns {void}
+ */
+export function style_effect(dom, key, value, important) {
+	render_effect(() => {
+		const string = value();
+		style(dom, key, string, important);
+	});
 }
 
 /**
