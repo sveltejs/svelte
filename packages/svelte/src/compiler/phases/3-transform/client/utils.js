@@ -109,7 +109,7 @@ export function serialize_get_binding(node, state) {
  */
 function is_async(expression) {
 	switch (expression.type) {
-		case 'ArrayPattern':  {
+		case 'ArrayPattern': {
 			for (const element of expression.elements) {
 				if (element && is_async(element)) {
 					return true;
@@ -137,7 +137,7 @@ function is_async(expression) {
 		}
 		case 'ArrowFunctionExpression':
 		case 'FunctionExpression': {
-			return expression.async ?? false;
+			return false;
 		}
 		case 'AssignmentPattern':
 		case 'AssignmentExpression': {
