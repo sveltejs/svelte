@@ -109,73 +109,52 @@ export function serialize_get_binding(node, state) {
  */
 function is_async(expression) {
 	switch (expression.type) {
-		case 'ArrayPattern': {
-			for (const element of expression.elements) {
-				if (element && is_async(element)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-		case 'ArrayExpression': {
-			for (const element of expression.elements) {
-				if (!element) {
-					continue;
-				} else if (element.type === 'SpreadElement') {
-					if (is_async(element.argument)) {
-						return true;
-					}
-				} else {
-					if (is_async(element)) {
-						return true;
-					}
-				}
-			}
-
-			return false;
-		}
-		case 'ArrowFunctionExpression':
-		case 'FunctionExpression': {
-			return false;
-		}
-		case 'AssignmentPattern':
-		case 'AssignmentExpression': {
-			return is_async(expression.left) || is_async(expression.right);
-		}
 		case 'AwaitExpression': {
 			return true;
 		}
-		case 'BinaryExpression': {
+		case 'ArrowFunctionExpression':
+		case 'ClassExpression':
+		case 'FunctionExpression':
+		case 'Identifier':
+		case 'Literal':
+		case 'MetaProperty':
+		case 'ThisExpression': {
+			return false;
+		}
+		case 'ArrayPattern': {
+			return expression.elements.some((element) => element && is_async(element));
+		}
+		case 'ArrayExpression': {
+			return expression.elements.some((element) => {
+				if (!element) {
+					return false;
+				} else if (element.type === 'SpreadElement') {
+					return is_async(element.argument);
+				} else {
+					return is_async(element);
+				}
+			});
+		}
+		case 'AssignmentPattern':
+		case 'AssignmentExpression':
+		case 'BinaryExpression':
+		case 'LogicalExpression': {
 			return is_async(expression.left) || is_async(expression.right);
 		}
 		case 'CallExpression':
 		case 'NewExpression': {
-			const callee_is_async =
-				expression.callee.type === 'Super' ? false : is_async(expression.callee);
-			if (callee_is_async) {
-				return true;
-			}
-
-			for (const element of expression.arguments) {
+			return (
+				expression.callee.type !== 'Super' && is_async(expression.callee)
+			) || expression.arguments.some((element) => {
 				if (element.type === 'SpreadElement') {
-					if (is_async(element.argument)) {
-						return true;
-					}
+					return is_async(element.argument);
 				} else {
-					if (is_async(element)) {
-						return true;
-					}
+					return is_async(element);
 				}
-			}
-
-			return false;
+			});
 		}
 		case 'ChainExpression': {
 			return is_async(expression.expression);
-		}
-		case 'ClassExpression': {
-			return false;
 		}
 		case 'ConditionalExpression': {
 			return (
@@ -184,87 +163,39 @@ function is_async(expression) {
 				is_async(expression.consequent)
 			);
 		}
-		case 'Identifier': {
-			return false;
-		}
-		case 'Literal': {
-			return false;
-		}
 		case 'ImportExpression': {
 			return is_async(expression.source);
 		}
-		case 'LogicalExpression': {
-			return is_async(expression.left) || is_async(expression.right);
-		}
 		case 'MemberExpression': {
-			const object_is_async =
-				expression.object.type === 'Super' ? false : is_async(expression.object);
-			if (object_is_async) {
-				return true;
-			}
-
-			const property_is_async =
-				expression.property.type === 'PrivateIdentifier' ? false : is_async(expression.property);
-			if (property_is_async) {
-				return true;
-			}
-
-			return false;
-		}
-		case 'MetaProperty': {
-			return false;
+			return (
+				expression.object.type !== 'Super' && is_async(expression.object)
+			) || (
+				expression.property.type !== 'PrivateIdentifier' && is_async(expression.property)
+			);
 		}
 		case 'ObjectPattern':
 		case 'ObjectExpression': {
-			for (const property of expression.properties) {
+        	return expression.properties.some((property) => {
 				if (property.type === 'SpreadElement') {
-					if (is_async(property.argument)) {
-						return true;
-					}
+					return is_async(property.argument);
 				} else if (property.type === 'Property') {
-					const key_is_async =
-						property.key.type === 'PrivateIdentifier' ? false : is_async(property.key);
-					if (key_is_async) {
-						return true;
-					}
-
-					const value_is_async = is_async(property.value);
-					if (value_is_async) {
-						return true;
-					}
+					return (
+						property.key.type !== 'PrivateIdentifier' && is_async(property.key)
+					) || is_async(property.value);
 				}
-			}
-
-			return false;
+			});
 		}
 		case 'RestElement': {
 			return is_async(expression.argument);
 		}
-		case 'SequenceExpression': {
-			for (const subexpression of expression.expressions) {
-				if (is_async(subexpression)) {
-					return true;
-				}
-			}
-			return false;
+		case 'SequenceExpression':
+		case 'TemplateLiteral': {
+        	return expression.expressions.some((subexpression) => is_async(subexpression));
 		}
 		case 'TaggedTemplateExpression': {
 			return is_async(expression.tag) || is_async(expression.quasi);
 		}
-		case 'TemplateLiteral': {
-			for (const subexpression of expression.expressions) {
-				if (is_async(subexpression)) {
-					return true;
-				}
-			}
-			return false;
-		}
-		case 'ThisExpression': {
-			return false;
-		}
-		case 'UnaryExpression': {
-			return is_async(expression.argument);
-		}
+		case 'UnaryExpression':
 		case 'UpdateExpression': {
 			return is_async(expression.argument);
 		}
