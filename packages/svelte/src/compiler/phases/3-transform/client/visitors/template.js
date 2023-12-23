@@ -2450,7 +2450,7 @@ export const template_visitors = {
 
 		node.context.elements.forEach((element, i) => {
 			if (!element) return;
-			const id = element.type === 'Identifier' ? element : b.id(`$$context${i}`);
+			const id = element.type === 'Identifier' ? element : b.id(`$$arg${i}`);
 			args.push(id);
 
 			if (element.type === 'Identifier') {
