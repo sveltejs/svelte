@@ -274,7 +274,12 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const context = parser.match(')') ? null : read_context(parser);
+		const elements = [];
+		while (!parser.match(')')) {
+			elements.push(read_context(parser));
+			parser.eat(',');
+			parser.allow_whitespace();
+		}
 
 		parser.allow_whitespace();
 		parser.eat(')', true);
@@ -294,7 +299,10 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context,
+				context: {
+					type: 'ArrayPattern',
+					elements
+				},
 				body: create_fragment()
 			})
 		);
@@ -589,10 +597,6 @@ function special(parser) {
 			error(expression, 'TODO', 'expected an identifier followed by (...)');
 		}
 
-		if (expression.arguments.length > 1) {
-			error(expression.arguments[1], 'TODO', 'expected at most one argument');
-		}
-
 		parser.allow_whitespace();
 		parser.eat('}', true);
 
@@ -602,7 +606,7 @@ function special(parser) {
 				start,
 				end: parser.index,
 				expression: expression.callee,
-				argument: expression.arguments[0] ?? null
+				arguments: expression.arguments
 			})
 		);
 	}

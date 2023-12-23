@@ -1755,9 +1755,9 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		if (node.argument) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
-		}
+		node.arguments.forEach((arg) =>
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))))
+		);
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
@@ -2445,21 +2445,21 @@ export const template_visitors = {
 		/** @type {import('estree').BlockStatement} */
 		let body;
 
-		if (node.context) {
-			const id = node.context.type === 'Identifier' ? node.context : b.id('$$context');
+		/** @type {import('estree').Statement[]} */
+		const declarations = [];
+
+		node.context.elements.forEach((element, i) => {
+			if (!element) return;
+			const id = element.type === 'Identifier' ? element : b.id(`$$context${i}`);
 			args.push(id);
 
-			/** @type {import('estree').Statement[]} */
-			const declarations = [];
-
-			// some of this is duplicated with EachBlock — TODO dedupe?
-			if (node.context.type === 'Identifier') {
+			if (element.type === 'Identifier') {
 				const binding = /** @type {import('#compiler').Binding} */ (
 					context.state.scope.get(id.name)
 				);
 				binding.expression = b.call(id);
 			} else {
-				const paths = extract_paths(node.context);
+				const paths = extract_paths(element);
 
 				for (const path of paths) {
 					const name = /** @type {import('estree').Identifier} */ (path.node).name;
@@ -2471,7 +2471,7 @@ export const template_visitors = {
 							path.node,
 							b.thunk(
 								/** @type {import('estree').Expression} */ (
-									context.visit(path.expression?.(b.call('$$context')))
+									context.visit(path.expression?.(b.call(`$$arg${i}`)))
 								)
 							)
 						)
@@ -2486,14 +2486,12 @@ export const template_visitors = {
 					binding.expression = b.call(name);
 				}
 			}
+		});
 
-			body = b.block([
-				...declarations,
-				.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
-			]);
-		} else {
-			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
-		}
+		body = b.block([
+			...declarations,
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
+		]);
 
 		const path = context.path;
 		// If we're top-level, then we can create a function for the snippet so that it can be referenced
