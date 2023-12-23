@@ -148,7 +148,7 @@ export interface DebugTag extends BaseNode {
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
 	expression: Identifier;
-	argument: (Expression | SpreadElement)[];
+	arguments: (Expression | SpreadElement)[];
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
