@@ -144,14 +144,15 @@ function is_async(expression) {
 		case 'CallExpression':
 		case 'NewExpression': {
 			return (
-				expression.callee.type !== 'Super' && is_async(expression.callee)
-			) || expression.arguments.some((element) => {
-				if (element.type === 'SpreadElement') {
-					return is_async(element.argument);
-				} else {
-					return is_async(element);
-				}
-			});
+				(expression.callee.type !== 'Super' && is_async(expression.callee)) ||
+				expression.arguments.some((element) => {
+					if (element.type === 'SpreadElement') {
+						return is_async(element.argument);
+					} else {
+						return is_async(element);
+					}
+				})
+			);
 		}
 		case 'ChainExpression': {
 			return is_async(expression.expression);
@@ -168,20 +169,20 @@ function is_async(expression) {
 		}
 		case 'MemberExpression': {
 			return (
-				expression.object.type !== 'Super' && is_async(expression.object)
-			) || (
-				expression.property.type !== 'PrivateIdentifier' && is_async(expression.property)
+				(expression.object.type !== 'Super' && is_async(expression.object)) ||
+				(expression.property.type !== 'PrivateIdentifier' && is_async(expression.property))
 			);
 		}
 		case 'ObjectPattern':
 		case 'ObjectExpression': {
-        	return expression.properties.some((property) => {
+			return expression.properties.some((property) => {
 				if (property.type === 'SpreadElement') {
 					return is_async(property.argument);
 				} else if (property.type === 'Property') {
 					return (
-						property.key.type !== 'PrivateIdentifier' && is_async(property.key)
-					) || is_async(property.value);
+						(property.key.type !== 'PrivateIdentifier' && is_async(property.key)) ||
+						is_async(property.value)
+					);
 				}
 			});
 		}
@@ -190,7 +191,7 @@ function is_async(expression) {
 		}
 		case 'SequenceExpression':
 		case 'TemplateLiteral': {
-        	return expression.expressions.some((subexpression) => is_async(subexpression));
+			return expression.expressions.some((subexpression) => is_async(subexpression));
 		}
 		case 'TaggedTemplateExpression': {
 			return is_async(expression.tag) || is_async(expression.quasi);
