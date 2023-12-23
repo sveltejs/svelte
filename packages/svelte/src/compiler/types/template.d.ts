@@ -2,6 +2,7 @@ import type { Binding } from '#compiler';
 import type {
 	ArrayExpression,
 	ArrowFunctionExpression,
+	ArrayPattern,
 	VariableDeclaration,
 	VariableDeclarator,
 	Expression,
@@ -413,7 +414,7 @@ export interface KeyBlock extends BaseNode {
 export interface SnippetBlock extends BaseNode {
 	type: 'SnippetBlock';
 	expression: Identifier;
-	context: null | Pattern;
+	context: ArrayPattern;
 	body: Fragment;
 }
 
