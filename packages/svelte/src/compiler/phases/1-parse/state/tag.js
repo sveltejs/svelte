@@ -298,7 +298,8 @@ function open(parser) {
 			throw new Error();
 		}
 
-		parser.eat(raw_snippet_declaration);
+		// slice the `{#` off the beginning since it's already been eaten
+		parser.eat(raw_snippet_declaration.slice(2), true);
 
 		const block = parser.append(
 			/** @type {Omit<import('#compiler').SnippetBlock, 'parent'>} */

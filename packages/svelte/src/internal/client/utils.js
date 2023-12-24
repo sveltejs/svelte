@@ -16,3 +16,18 @@ export var get_descriptors = Object.getOwnPropertyDescriptors;
 export function is_function(thing) {
 	return typeof thing === 'function';
 }
+
+/**
+ * TODO: Do the types matter on this? If so, can we improve them so that
+ * `shallow_thunk(['one', 2])` returns a tuple type instead of a union?
+ * @template {unknown} T
+ * @param {Iterable<T>} iterable
+ * @returns {(() => T)[]}
+ */
+function shallow_thunk(iterable) {
+	const thunks = [];
+	for (const item of iterable) {
+		thunks.push(() => item);
+	}
+	return thunks;
+}

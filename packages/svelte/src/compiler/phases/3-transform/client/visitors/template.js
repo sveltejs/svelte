@@ -1755,9 +1755,17 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		node.arguments.forEach((arg) =>
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))))
-		);
+		node.arguments.forEach((arg) => {
+			if (arg.type === 'SpreadElement') {
+				// this is a spread operation, meaning we need to thunkify all of its members
+				args.push(
+					/** @type {import('estree').Expression} */ (
+						context.visit(b.spread(b.call('$.shallow_thunk', arg.argument)))
+					)
+				);
+			}
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
+		});
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)

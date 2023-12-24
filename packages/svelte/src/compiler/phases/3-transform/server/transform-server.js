@@ -1127,18 +1127,13 @@ const template_visitors = {
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', node.expression)
 			: node.expression;
+
+		const snippet_args = node.arguments.map((arg) => {
+			return /** @type {import('estree').Expression} */ (context.visit(arg));
+		});
+
 		state.template.push(
-			t_statement(
-				b.stmt(
-					b.call(
-						snippet_function,
-						b.id('$$payload'),
-						...node.arguments.map(
-							(arg) => /** @type {import('estree').Expression} */ (context.visit(arg))
-						)
-					)
-				)
-			)
+			t_statement(b.stmt(b.call(snippet_function, b.id('$$payload'), ...snippet_args)))
 		);
 
 		state.template.push(t_expression(anchor_id));
