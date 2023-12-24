@@ -12,7 +12,6 @@
 		"verbatimModuleSyntax": true,
 		"types": ["node"],
 		"strict": true,
-		"allowJs": true,
 		"checkJs": true,
 		"paths": {
 			"acorn-typescript": ["./src/compiler/phases/1-parse/ambient.d.ts"],
