@@ -2440,6 +2440,7 @@ export const template_visitors = {
 	},
 	SnippetBlock(node, context) {
 		// TODO hoist where possible
+		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$anchor')];
 
 		/** @type {import('estree').BlockStatement} */
@@ -2448,18 +2449,38 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
 
-		node.context.elements.forEach((element, i) => {
-			if (!element) return;
-			const id = element.type === 'Identifier' ? element : b.id(`$$arg${i}`);
-			args.push(id);
-
-			if (element.type === 'Identifier') {
-				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(id.name)
-				);
-				binding.expression = b.call(id);
+		node.context.elements.forEach((argument, i) => {
+			if (!argument) return;
+			// If the argument is itself an identifier (`foo`) or is a simple rest identifier (`...foo`)
+			// we don't have to do anything fancy -- just push it onto the args array and make sure its
+			// binding expression is a call of itself.
+			/** @type {import('estree').Identifier | undefined} */
+			let identifier;
+			/** @type {import('estree').Identifier | import('estree').RestElement | string} */
+			let arg;
+			if (argument.type === 'Identifier') {
+				identifier = argument;
+				arg = argument;
+			} else if (argument.type === 'RestElement' && argument.argument.type === 'Identifier') {
+				identifier = argument.argument;
+				arg = argument;
+			} else if (argument.type === 'RestElement') {
+				arg = b.rest(b.id(`$$arg${i}`));
 			} else {
-				const paths = extract_paths(element);
+				arg = b.id(`$$arg${i}`);
+			}
+			args.push(arg);
+
+			if (identifier) {
+				const binding = /** @type {import('#compiler').Binding} */ (
+					context.state.scope.get(identifier.name)
+				);
+				binding.expression = b.call(identifier);
+			} else {
+				// If, on the other hand, it isn't an identifier, it's a destructuring expression, which could be
+				// a rest destructure (eg. `...[foo, bar, { baz }, ...rest]`, which, absurdly, is all valid syntax).
+				// In this case, we need to follow the destructuring expression to figure out what variables are being extracted.
+				const paths = extract_paths(argument.type === 'RestElement' ? argument.argument : argument);
 
 				for (const path of paths) {
 					const name = /** @type {import('estree').Identifier} */ (path.node).name;
