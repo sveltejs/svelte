@@ -1757,7 +1757,8 @@ export const template_visitors = {
 		const args = [context.state.node];
 		node.arguments.forEach((arg) => {
 			if (arg.type === 'SpreadElement') {
-				// this is a spread operation, meaning we need to thunkify all of its members
+				// this is a spread operation, meaning we need to thunkify all of its members, which we can't
+				// do until runtime
 				args.push(
 					/** @type {import('estree').Expression} */ (
 						context.visit(b.spread(b.call('$.shallow_thunk', arg.argument)))

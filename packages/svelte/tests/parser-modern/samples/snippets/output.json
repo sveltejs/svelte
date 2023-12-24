@@ -22,6 +22,16 @@
 					"type": "Identifier",
 					"start": 39,
 					"end": 42,
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 10
+						},
+						"end": {
+							"line": 3,
+							"column": 13
+						}
+					},
 					"name": "foo"
 				},
 				"context": {
@@ -29,21 +39,46 @@
 					"elements": [
 						{
 							"type": "Identifier",
-							"name": "msg",
 							"start": 43,
-							"end": 54,
+							"end": 25,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 14
+								},
+								"end": {
+									"line": 3,
+									"column": 25
+								}
+							},
+							"name": "msg",
 							"typeAnnotation": {
-								"type": "TSStringKeyword",
-								"start": 48,
+								"type": "TSTypeAnnotation",
+								"start": 46,
 								"end": 54,
 								"loc": {
 									"start": {
-										"line": 1,
-										"column": 48
+										"line": 3,
+										"column": 17
 									},
 									"end": {
-										"line": 1,
-										"column": 54
+										"line": 3,
+										"column": 25
+									}
+								},
+								"typeAnnotation": {
+									"type": "TSStringKeyword",
+									"start": 48,
+									"end": 54,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 19
+										},
+										"end": {
+											"line": 3,
+											"column": 25
+										}
 									}
 								}
 							}
