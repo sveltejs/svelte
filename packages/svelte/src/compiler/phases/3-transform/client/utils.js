@@ -107,7 +107,7 @@ export function serialize_get_binding(node, state) {
  * @param {import('estree').Expression | import('estree').Pattern} expression
  * @returns {boolean}
  */
-function is_async(expression) {
+function is_expression_async(expression) {
 	switch (expression.type) {
 		case 'AwaitExpression': {
 			return true;
@@ -122,16 +122,16 @@ function is_async(expression) {
 			return false;
 		}
 		case 'ArrayPattern': {
-			return expression.elements.some((element) => element && is_async(element));
+			return expression.elements.some((element) => element && is_expression_async(element));
 		}
 		case 'ArrayExpression': {
 			return expression.elements.some((element) => {
 				if (!element) {
 					return false;
 				} else if (element.type === 'SpreadElement') {
-					return is_async(element.argument);
+					return is_expression_async(element.argument);
 				} else {
-					return is_async(element);
+					return is_expression_async(element);
 				}
 			});
 		}
@@ -139,69 +139,70 @@ function is_async(expression) {
 		case 'AssignmentExpression':
 		case 'BinaryExpression':
 		case 'LogicalExpression': {
-			return is_async(expression.left) || is_async(expression.right);
+			return is_expression_async(expression.left) || is_expression_async(expression.right);
 		}
 		case 'CallExpression':
 		case 'NewExpression': {
 			return (
-				(expression.callee.type !== 'Super' && is_async(expression.callee)) ||
+				(expression.callee.type !== 'Super' && is_expression_async(expression.callee)) ||
 				expression.arguments.some((element) => {
 					if (element.type === 'SpreadElement') {
-						return is_async(element.argument);
+						return is_expression_async(element.argument);
 					} else {
-						return is_async(element);
+						return is_expression_async(element);
 					}
 				})
 			);
 		}
 		case 'ChainExpression': {
-			return is_async(expression.expression);
+			return is_expression_async(expression.expression);
 		}
 		case 'ConditionalExpression': {
 			return (
-				is_async(expression.test) ||
-				is_async(expression.alternate) ||
-				is_async(expression.consequent)
+				is_expression_async(expression.test) ||
+				is_expression_async(expression.alternate) ||
+				is_expression_async(expression.consequent)
 			);
 		}
 		case 'ImportExpression': {
-			return is_async(expression.source);
+			return is_expression_async(expression.source);
 		}
 		case 'MemberExpression': {
 			return (
-				(expression.object.type !== 'Super' && is_async(expression.object)) ||
-				(expression.property.type !== 'PrivateIdentifier' && is_async(expression.property))
+				(expression.object.type !== 'Super' && is_expression_async(expression.object)) ||
+				(expression.property.type !== 'PrivateIdentifier' &&
+					is_expression_async(expression.property))
 			);
 		}
 		case 'ObjectPattern':
 		case 'ObjectExpression': {
 			return expression.properties.some((property) => {
 				if (property.type === 'SpreadElement') {
-					return is_async(property.argument);
+					return is_expression_async(property.argument);
 				} else if (property.type === 'Property') {
 					return (
-						(property.key.type !== 'PrivateIdentifier' && is_async(property.key)) ||
-						is_async(property.value)
+						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
+						is_expression_async(property.value)
 					);
 				}
 			});
 		}
 		case 'RestElement': {
-			return is_async(expression.argument);
+			return is_expression_async(expression.argument);
 		}
 		case 'SequenceExpression':
 		case 'TemplateLiteral': {
-			return expression.expressions.some((subexpression) => is_async(subexpression));
+			return expression.expressions.some((subexpression) => is_expression_async(subexpression));
 		}
 		case 'TaggedTemplateExpression': {
-			return is_async(expression.tag) || is_async(expression.quasi);
+			return is_expression_async(expression.tag) || is_expression_async(expression.quasi);
 		}
 		case 'UnaryExpression':
 		case 'UpdateExpression': {
-			return is_async(expression.argument);
+			return is_expression_async(expression.argument);
 		}
 		case 'YieldExpression': {
-			return expression.argument ? is_async(expression.argument) : false;
+			return expression.argument ? is_expression_async(expression.argument) : false;
 		}
 		default:
 			return false;
@@ -248,7 +249,8 @@ export function serialize_set_binding(node, context, fallback) {
 
 		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
 		const iife_is_async =
-			is_async(rhs_expression) || assignments.some((assignment) => is_async(assignment));
+			is_expression_async(rhs_expression) ||
+			assignments.some((assignment) => is_expression_async(assignment));
 
 		let iife = b.arrow(
 			[],
