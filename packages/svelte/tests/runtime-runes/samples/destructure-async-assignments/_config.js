@@ -30,7 +30,7 @@ export default test({
 		const btn = target.querySelector('button');
 		const clickEvent = new window.Event('click', { bubbles: true });
 		await btn?.dispatchEvent(clickEvent);
-		for (let i = 1; i < 100; i += 1) {
+		for (let i = 1; i <= 38; i += 1) {
 			await Promise.resolve();
 		}
 
