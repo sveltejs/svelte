@@ -2474,19 +2474,27 @@ export const template_visitors = {
 					declarations.push(
 						b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
 					);
+
+					// we need to eagerly evaluate the expression in order to hit any
+					// 'Cannot access x before initialization' errors
+					if (context.state.options.dev) {
+						declarations.push(b.stmt(b.call(argument.argument.name)));
+					}
 					return;
 				}
 
 				const new_arg_alias = `$$proxied_arg${i}`;
 				declarations.push(b.let(new_arg_alias, b.call('$.proxy_rest_array', b.id(arg_alias))));
+				// we need to eagerly evaluate the expression in order to hit any
+				// 'Cannot access x before initialization' errors
+				if (context.state.options.dev) {
+					declarations.push(b.stmt(b.call(new_arg_alias)));
+				}
 				arg_alias = new_arg_alias;
 			} else {
 				args.push(b.id(arg_alias));
 			}
 
-			// If, on the other hand, it's a destructuring expression, which could be
-			// a rest destructure (eg. `...[foo, bar, { baz }, ...rest]`, which, absurdly, is all valid syntax),
-			// we need to follow the destructuring expression to figure out what variables are being extracted.
 			const paths = extract_paths(argument.type === 'RestElement' ? argument.argument : argument);
 
 			for (const path of paths) {
