@@ -2460,18 +2460,13 @@ export const template_visitors = {
 
 		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
-			// If the argument is itself an identifier (`foo`) or is a simple rest identifier (`...foo`)
-			// we don't have to do anything fancy -- just push it onto the args array and make sure its
-			// binding expression is a call of itself.
+			const arg_alias = `$$arg${i}`;
 			/** @type {import('estree').Identifier | undefined} */
 			let identifier;
 			/** @type {import('estree').Identifier | import('estree').RestElement | string} */
 			let arg;
 			if (argument.type === 'Identifier') {
 				identifier = argument;
-				arg = argument;
-			} else if (argument.type === 'RestElement' && argument.argument.type === 'Identifier') {
-				identifier = argument.argument;
 				arg = argument;
 			} else if (argument.type === 'RestElement') {
 				arg = b.rest(b.id(`$$arg${i}`));
@@ -2485,36 +2480,46 @@ export const template_visitors = {
 					context.state.scope.get(identifier.name)
 				);
 				binding.expression = b.call(identifier);
-			} else {
-				// If, on the other hand, it isn't an identifier, it's a destructuring expression, which could be
-				// a rest destructure (eg. `...[foo, bar, { baz }, ...rest]`, which, absurdly, is all valid syntax).
-				// In this case, we need to follow the destructuring expression to figure out what variables are being extracted.
-				const paths = extract_paths(argument.type === 'RestElement' ? argument.argument : argument);
+				return;
+			}
 
-				for (const path of paths) {
-					const name = /** @type {import('estree').Identifier} */ (path.node).name;
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(name)
-					);
-					declarations.push(
-						b.let(
-							path.node,
-							b.thunk(
-								/** @type {import('estree').Expression} */ (
-									context.visit(path.expression?.(b.call(`$$arg${i}`)))
-								)
+			if (argument.type === 'RestElement' && argument.argument.type === 'Identifier') {
+				// this is a "simple" rest argument (not destructured), so we just need to thunkify it
+				const binding = /** @type {import('#compiler').Binding} */ (
+					context.state.scope.get(argument.argument.name)
+				);
+				binding.expression = b.call(argument.argument.name);
+				// TODO: where does `context.visit` go here? does it matter? i don't understand what it's for :thinkies:
+				declarations.push(b.let(argument.argument.name, b.thunk(b.id(`$$arg${i}`))));
+				return;
+			}
+
+			// If, on the other hand, it's a destructuring expression, which could be
+			// a rest destructure (eg. `...[foo, bar, { baz }, ...rest]`, which, absurdly, is all valid syntax),
+			// we need to follow the destructuring expression to figure out what variables are being extracted.
+			const paths = extract_paths(argument.type === 'RestElement' ? argument.argument : argument);
+
+			for (const path of paths) {
+				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				declarations.push(
+					b.let(
+						path.node,
+						b.thunk(
+							/** @type {import('estree').Expression} */ (
+								context.visit(path.expression?.(b.call(`$$arg${i}`)))
 							)
 						)
-					);
+					)
+				);
 
-					// we need to eagerly evaluate the expression in order to hit any
-					// 'Cannot access x before initialization' errors
-					if (context.state.options.dev) {
-						declarations.push(b.stmt(b.call(name)));
-					}
-
-					binding.expression = b.call(name);
+				// we need to eagerly evaluate the expression in order to hit any
+				// 'Cannot access x before initialization' errors
+				if (context.state.options.dev) {
+					declarations.push(b.stmt(b.call(name)));
 				}
+
+				binding.expression = b.call(name);
 			}
 		});
 
