@@ -1912,7 +1912,7 @@ export function freeze(value) {
 		if (STATE_SYMBOL in value) {
 			return object_freeze(unstate(value));
 		}
-		// If the value isn't already read-only then just use that
+		// If the value is already read-only then just use that
 		if (DEV && READONLY_SYMBOL in value) {
 			return value;
 		}
