@@ -2455,46 +2455,33 @@ export const template_visitors = {
 
 		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
-			let arg_alias = `$$arg${i}`;
-			/** @type {import('estree').Identifier | undefined} */
-			let identifier;
-			/** @type {import('estree').Identifier | import('estree').RestElement | string} */
-			let arg;
+
 			if (argument.type === 'Identifier') {
-				identifier = argument;
-				arg = argument;
-			} else if (argument.type === 'RestElement') {
-				arg = b.rest(b.id(`$$arg${i}`));
-			} else {
-				arg = b.id(`$$arg${i}`);
-			}
-			args.push(arg);
-
-			if (identifier) {
+				args.push(argument);
 				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(identifier.name)
+					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.call(identifier);
+				binding.expression = b.call(argument);
 				return;
 			}
 
-			if (argument.type === 'RestElement' && argument.argument.type === 'Identifier') {
-				// this is a "simple" rest argument (not destructured), so we just need to proxy it
-				// const binding = /** @type {import('#compiler').Binding} */ (
-				// 	context.state.scope.get(argument.argument.name)
-				// );
-				// binding.expression = b.call(argument.argument.name);
-				// TODO: where does `context.visit` go here? does it matter? i don't understand what it's for :thinkies:
-				declarations.push(
-					b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
-				);
-				return;
-			}
+			let arg_alias = `$$arg${i}`;
 
 			if (argument.type === 'RestElement') {
+				args.push(b.rest(b.id(arg_alias)));
+
+				if (argument.argument.type === 'Identifier') {
+					declarations.push(
+						b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
+					);
+					return;
+				}
+
 				const new_arg_alias = `$$proxied_arg${i}`;
 				declarations.push(b.let(new_arg_alias, b.call('$.proxy_rest_array', b.id(arg_alias))));
 				arg_alias = new_arg_alias;
+			} else {
+				args.push(b.id(arg_alias));
 			}
 
 			// If, on the other hand, it's a destructuring expression, which could be
