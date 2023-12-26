@@ -40,24 +40,26 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made reactive](/#H4sIAAAAAAAAE42QwWrDMBBEf2URhUhUNEl7c21DviPOwZY3jVpZEtIqUBz9e-UUt9BTj7M784bdmZ21wciq48xsPyGr2MF7Jhl9-kXEKxrCoqNLQS2TOqqgPbWd7cgggU3TgCFCAw-RekJ-3Et4lvByEq-drbe_dlsPichZcFYZrT6amQto2pXw5FO88FUYtG90gUfYi3zvWrYL75vxL57zfA07_zfr23k1vjtt-aZ0bQTcbrDL5ZifZcAxKeS8lzDc8X0xDhJ2ItdbX1jlOZMb9VnjyCoKCfMpfwG975NFVwEAAA==):
+Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAA5WOzWrDMBCEX2VZCpGJcJL25tqGPkeUg382jVJbEtaqUBy9e1GcUii-9LTM7Ow3O-NZD-SxOM5ompGwwDfnUCJ_uST8Jw1MKNHbMHXJKX03ace1MooHYrDtFSp48twwiTm5ig15pr6Ah1RswtjS5As4HiQ8S3g5LZuYRsxelSl3v1xTtoHZGrCmG3T3Uc0ig6pOVfmCzh_A3AV_ESv-QOadL7CFQxbvr6ZgalnI_22xTvxwrPuLcfW8cnO12ogNbGGTwe0G-wgVrOUm6kNHQjQS2nt_A1toJeyzWO5crQxKHG2vz5p6LHgKFE_xG-j7P7S3AQAA):
 
 ```svelte
 <script>
-	let numbers = $state([1, 2, 3]);
+	let obj = $state({
+		nested: {
+			numbers: [1, 2, 3]
+		}
+	});
 </script>
 
-<button onclick={() => numbers.push(numbers.length + 1)}>
+<button onclick={() => obj.nested.numbers.push(obj.nested.numbers.length + 1)}>
 	push
 </button>
 
-<button onclick={() => numbers.pop()}> pop </button>
+<button onclick={() => obj.nested.numbers.pop()}>
+	pop
+</button>
 
-<p>
-	{numbers.join(' + ') || 0}
-	=
-	{numbers.reduce((a, b) => a + b, 0)}
-</p>
+<p>{obj.nested.numbers.join(' + ') || 0} = {obj.nested.numbers.reduce((a, b) => a + b, 0)}</p>
 ```
 
 ### What this replaces
