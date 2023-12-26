@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-feat: add $state.frozen rune
+feat: add `$state.frozen` rune
