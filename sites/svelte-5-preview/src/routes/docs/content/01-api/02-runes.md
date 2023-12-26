@@ -66,25 +66,32 @@ In non-runes mode, a `let` declaration is treated as reactive state if it is upd
 
 ## `$state.frozen`
 
-Similar to `$state`, `$state.frozen` is also declared and can be used in many of the same ways (including on classes). However, the properties of any object and arrays are treated as read-only, and cannot be mutated. So if you intend to use objects as state and you want to mutate their properties and have reactivity work by default, it's recommended you use `$state` instead.
+State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether:
 
-For the cases where you don't want Svelte's reactivity to apply deeply to state, and for those who might want to have more control over their data structures, you might find `$state.frozen` useful. Furthermore, `$state.frozen` is ideal for those who want to work with data using immutable patterns rather than mutable patterns.
-
-```svelte
+```diff
 <script>
-	let items = $state.frozen([0]);
-
-	const addItem = () => {
-		items = [...items, items.length];
-	};
+-	let numbers = $state([1, 2, 3]);
++	let numbers = $state.frozen([1, 2, 3]);
 </script>
 
-<button on:click={addItem}>
-	{items.join(', ')}
+-<button onclick={() => numbers.push(numbers.length + 1)}>
++<button onclick={() => numbers = [...numbers, numbers.length + 1]}>
+	push
 </button>
+
+-<button onclick={() => numbers.pop()}> pop </button>
++<button onclick={() => numbers = numbers.slice(0, -1)}> pop </button>
+
+<p>
+	{numbers.join(' + ') || 0}
+	=
+	{numbers.reduce((a, b) => a + b, 0)}
+</p>
 ```
 
-> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want them to be frozen, then you should pass in a clone of the object or array you want to use.
+This can improve performance with large arrays and objects that you weren't planning to mutate anyway, since it avoids the cost of making them reactive. Note that frozen state can _contain_ reactive state (for example, a frozen array of reactive objects).
+
+> Objects and arrays passed to `$state.frozen` will be shallowly frozen using `Object.freeze()`. If you don't want this, pass in a clone of the object or array instead.
 
 ## `$derived`
 
