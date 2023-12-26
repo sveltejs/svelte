@@ -1902,7 +1902,6 @@ if (DEV) {
 
 /**
  * Expects a value that was wrapped with `freeze` and makes it frozen.
- *
  * @template {import('./proxy/proxy.js').StateObject} T
  * @param {T} value
  * @returns {Readonly<Record<string | symbol, any>>}
