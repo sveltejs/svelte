@@ -1899,3 +1899,37 @@ if (DEV) {
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
 }
+
+/**
+ * @template {Iterable<unknown>} T
+ * @param {T} iterable
+ * @returns {{ [P in keyof T]: () => T[P] }}
+ */
+export function shallow_thunk(iterable) {
+	const thunks = [];
+	for (const item of iterable) {
+		thunks.push(() => item);
+	}
+	// @ts-expect-error -- for obvious reasons
+	return thunks;
+}
+
+/**
+ * @template {unknown[]} T
+ * @param {T} items
+ * @returns {T}
+ */
+export function proxy_rest_array(items) {
+	return new Proxy(items, {
+		get(target, property) {
+			// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
+			if (typeof property === 'symbol') return target[property];
+			if (!isNaN(parseInt(property))) {
+				// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
+				return target[property]();
+			}
+			// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
+			return target[property];
+		}
+	});
+}

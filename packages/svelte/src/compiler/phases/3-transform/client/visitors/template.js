@@ -1758,6 +1758,7 @@ export const template_visitors = {
 						context.visit(b.spread(b.call('$.shallow_thunk', arg.argument)))
 					)
 				);
+				return;
 			}
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
 		});
@@ -2454,7 +2455,7 @@ export const template_visitors = {
 
 		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
-			const arg_alias = `$$arg${i}`;
+			let arg_alias = `$$arg${i}`;
 			/** @type {import('estree').Identifier | undefined} */
 			let identifier;
 			/** @type {import('estree').Identifier | import('estree').RestElement | string} */
@@ -2478,14 +2479,22 @@ export const template_visitors = {
 			}
 
 			if (argument.type === 'RestElement' && argument.argument.type === 'Identifier') {
-				// this is a "simple" rest argument (not destructured), so we just need to thunkify it
-				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(argument.argument.name)
-				);
-				binding.expression = b.call(argument.argument.name);
+				// this is a "simple" rest argument (not destructured), so we just need to proxy it
+				// const binding = /** @type {import('#compiler').Binding} */ (
+				// 	context.state.scope.get(argument.argument.name)
+				// );
+				// binding.expression = b.call(argument.argument.name);
 				// TODO: where does `context.visit` go here? does it matter? i don't understand what it's for :thinkies:
-				declarations.push(b.let(argument.argument.name, b.thunk(b.id(`$$arg${i}`))));
+				declarations.push(
+					b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
+				);
 				return;
+			}
+
+			if (argument.type === 'RestElement') {
+				const new_arg_alias = `$$proxied_arg${i}`;
+				declarations.push(b.let(new_arg_alias, b.call('$.proxy_rest_array', b.id(arg_alias))));
+				arg_alias = new_arg_alias;
 			}
 
 			// If, on the other hand, it's a destructuring expression, which could be
@@ -2501,7 +2510,11 @@ export const template_visitors = {
 						path.node,
 						b.thunk(
 							/** @type {import('estree').Expression} */ (
-								context.visit(path.expression?.(b.call(`$$arg${i}`)))
+								context.visit(
+									path.expression?.(
+										argument.type === 'RestElement' ? b.id(arg_alias) : b.call(arg_alias)
+									)
+								)
 							)
 						)
 					)

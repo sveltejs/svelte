@@ -36,7 +36,9 @@ export {
 	effect_active,
 	user_root_effect,
 	inspect,
-	unwrap
+	unwrap,
+	proxy_rest_array,
+	shallow_thunk
 } from './client/runtime.js';
 
 export * from './client/each.js';
