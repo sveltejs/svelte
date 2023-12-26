@@ -40,7 +40,7 @@ class Todo {
 
 > In this example, the compiler transforms `done` and `text` into `get`/`set` methods on the class prototype referencing private fields
 
-Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAA5WOzWrDMBCEX2VZCpGJcJL25tqGPkeUg382jVJbEtaqUBy9e1GcUii-9LTM7Ow3O-NZD-SxOM5ompGwwDfnUCJ_uST8Jw1MKNHbMHXJKX03ace1MooHYrDtFSp48twwiTm5ig15pr6Ah1RswtjS5As4HiQ8S3g5LZuYRsxelSl3v1xTtoHZGrCmG3T3Uc0ig6pOVfmCzh_A3AV_ESv-QOadL7CFQxbvr6ZgalnI_22xTvxwrPuLcfW8cnO12ogNbGGTwe0G-wgVrOUm6kNHQjQS2nt_A1toJeyzWO5crQxKHG2vz5p6LHgKFE_xG-j7P7S3AQAA):
+Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAA22P3W6DMAyFX8WKJjWoEW23OwZIe46mFwTcNQySiJhJE827TyGV9iOuLJ9jn89e2FUP6FlxXphpRmQFe3OOCUZfLjb-EwdCJpi389RGpfTtpB3V0kgakMCqHip48tQQ8iWqkgx6wq6ARyvJzKPCyRdwPgl4FvBySU6IJWSv0pSHn1xTqpnImmha0w66_agWnkFVpy2r-jwh8kdw7mZ_4xv6gOadbrCHUxakWffjaOQlxm8e_IXBFsc6noWUY93_GLcay8Zeb7XhO9jDLoP7HY4BKtiam7CbW-TpT94IUOslDexBiaQeY4nflAdXM8FG2-mrxo4VNM0YLuEb3K_i5NQBAAA=):
 
 ```svelte
 <script>
@@ -51,7 +51,10 @@ Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAA5WOzWrDMBCEX2VZCpGJ
 	});
 </script>
 
-<button onclick={() => obj.nested.numbers.push(obj.nested.numbers.length + 1)}>
+<button
+	onclick={() =>
+		obj.nested.numbers.push(obj.nested.numbers.length + 1)}
+>
 	push
 </button>
 
@@ -59,7 +62,12 @@ Objects and arrays [are made deeply reactive](/#H4sIAAAAAAAAA5WOzWrDMBCEX2VZCpGJ
 	pop
 </button>
 
-<p>{obj.nested.numbers.join(' + ') || 0} = {obj.nested.numbers.reduce((a, b) => a + b, 0)}</p>
+<p>
+	{obj.nested.numbers.join(' + ') || 0} = {obj.nested.numbers.reduce(
+		(a, b) => a + b,
+		0
+	)}
+</p>
 ```
 
 ### What this replaces
