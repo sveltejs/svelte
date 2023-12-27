@@ -1080,6 +1080,18 @@ const common_visitors = {
 	},
 	SvelteElement(node, { state }) {
 		state.analysis.elements.push(node);
+
+		const isSvgElement =
+			(node.tag.type === 'Identifier' && node.tag.name && SVGElements.includes(node.tag.name)) ||
+			(node.tag.type === 'Literal' &&
+				node.tag.value &&
+				SVGElements.includes(node.tag.value.toString()));
+		const isParentSvgElement =
+			node.parent &&
+			(node.parent.type === 'SvelteElement' || node.parent.type === 'RegularElement') &&
+			node.parent.metadata.svg;
+
+		node.metadata.svg = (isSvgElement || isParentSvgElement) ?? false;
 	}
 };
 

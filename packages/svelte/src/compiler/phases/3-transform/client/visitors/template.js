@@ -29,7 +29,8 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED
+	EACH_KEYED,
+	namespace_svg
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
@@ -2070,12 +2071,11 @@ export const template_visitors = {
 			}
 		};
 
+		namespace = node.metadata.svg ? namespace_svg : null;
+
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				attributes.push(attribute);
-				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
-					namespace = attribute.value[0].data;
-				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
 			} else if (attribute.type === 'ClassDirective') {
@@ -2131,10 +2131,10 @@ export const template_visitors = {
 					'$.element',
 					context.state.node,
 					get_tag,
+					b.literal(namespace),
 					inner.length === 0
 						? /** @type {any} */ (undefined)
-						: b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-					namespace ? b.literal(namespace) : /** @type {any} */ (undefined)
+						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
 				)
 			)
 		);

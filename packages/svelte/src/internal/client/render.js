@@ -26,10 +26,7 @@ import {
 	namespace_svg,
 	namespace_html
 } from '../../constants.js';
-import {
-	create_fragment_from_html,
-	insert,
-	reconcile_html, remove } from './reconciler.js';
+import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
 import {
 	render_effect,
 	destroy_signal,
@@ -1542,11 +1539,11 @@ function swap_block_dom(block, from, to) {
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
+ * @param {null | string} namespace
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
- * @param {string} namespace
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, render_fn, namespace) {
+export function element(anchor_node, tag_fn, namespace, render_fn) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;

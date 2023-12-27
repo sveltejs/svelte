@@ -317,6 +317,10 @@ export interface SvelteElement extends BaseElement {
 	type: 'SvelteElement';
 	name: 'svelte:element';
 	tag: Expression;
+	metadata: {
+		/** `true` if this is an svg element */
+		svg: boolean;
+	};
 }
 
 export interface SvelteFragment extends BaseElement {
