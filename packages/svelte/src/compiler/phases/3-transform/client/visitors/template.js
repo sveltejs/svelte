@@ -33,6 +33,7 @@ import {
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
+import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1637,7 +1638,7 @@ function serialize_template_literal(values, visit, state) {
 		const node = values[i];
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-			last.value.raw += node.data;
+			last.value.raw += sanitize_template_string(node.data);
 		} else {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;

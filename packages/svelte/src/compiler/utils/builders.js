@@ -1,4 +1,5 @@
 import { regex_is_valid_identifier } from '../phases/patterns.js';
+import { sanitize_template_string } from './sanitize_template_string.js';
 
 /**
  * @param {Array<import('estree').Expression | import('estree').SpreadElement | null>} elements
@@ -314,7 +315,7 @@ export function prop_def(key, value, computed = false, is_static = false) {
  * @returns {import('estree').TemplateElement}
  */
 export function quasi(cooked, tail = false) {
-	const raw = cooked.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+	const raw = sanitize_template_string(cooked);
 	return { type: 'TemplateElement', value: { raw, cooked }, tail };
 }
 
