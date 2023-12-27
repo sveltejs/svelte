@@ -132,7 +132,7 @@
 
 ### Patch Changes
 
-- feat: proxied staet ([#9739](https://github.com/sveltejs/svelte/pull/9739))
+- feat: proxied state ([#9739](https://github.com/sveltejs/svelte/pull/9739))
 
 - chore: more validation errors ([#9723](https://github.com/sveltejs/svelte/pull/9723))
 
