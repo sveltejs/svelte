@@ -151,12 +151,30 @@ export const javascript_visitors_runes = {
 
 		return { ...node, body };
 	},
-	VariableDeclaration(node, { state, visit }) {
+	VariableDeclaration(node, { path, state, visit }) {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
 			const init = unwrap_ts_expression(declarator.init);
 			const rune = get_rune(init, state.scope);
+
+			if (!rune && init != null && declarator.id.type === 'Identifier') {
+				const is_top_level = path.at(-1)?.type === 'Program';
+				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
+				// TODO: allow object expressions that are not passed to functions or components as props
+				// and expressions as long as they do not reference non-hoistable variables
+				if (
+					is_top_level &&
+					binding &&
+					!binding.mutated &&
+					!binding.reassigned &&
+					binding?.initial?.type === 'Literal'
+				) {
+					state.hoisted.push(b.declaration('const', declarator.id, init));
+					continue;
+				}
+			}
+
 			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
