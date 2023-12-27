@@ -193,7 +193,7 @@ export const javascript_visitors_runes = {
 
 						if (property.value.type === 'AssignmentPattern') {
 							id = property.value.left;
-							initial = /** @type {import('estree').Expression} */ (visit(property.value.right);
+							initial = /** @type {import('estree').Expression} */ (visit(property.value.right));
 						}
 
 						assert.equal(id.type, 'Identifier');
