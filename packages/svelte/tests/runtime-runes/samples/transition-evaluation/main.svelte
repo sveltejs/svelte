@@ -2,7 +2,7 @@
 	const { visible = true, foo = 1 } = $props();
 
 	function bar(node, params) {
-        node.foo = params;
+		node.foo = params;
 		return () => ({});
 	}
 </script>
