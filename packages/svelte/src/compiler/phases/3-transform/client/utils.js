@@ -82,7 +82,8 @@ export function serialize_get_binding(node, state) {
 		}
 
 		if (binding.prop_alias) {
-			return b.member(b.id('$$props'), b.id(binding.prop_alias));
+			const key = b.key(binding.prop_alias);
+			return b.member(b.id('$$props'), key, key.type === 'Literal');
 		}
 		return b.member(b.id('$$props'), node);
 	}
