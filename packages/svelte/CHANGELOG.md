@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.27
+
+### Patch Changes
+
+- A transition's parameters are now evaluated when the transition is initialized. ([#9836](https://github.com/sveltejs/svelte/pull/9836))
+
+- feat: add `$state.frozen` rune ([#9851](https://github.com/sveltejs/svelte/pull/9851))
+
+- Fix issue with assigning prop values as defaults of other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
+
+- Fix interopability between backticks and templates ([#9973](https://github.com/sveltejs/svelte/pull/9973))
+
+- fix: support hydrating around `<noscript>` ([#9953](https://github.com/sveltejs/svelte/pull/9953))
+
 ## 5.0.0-next.26
 
 ### Patch Changes
