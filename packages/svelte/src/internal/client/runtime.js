@@ -1,7 +1,7 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { get_descriptor, get_descriptors, is_array } from './utils.js';
+import { get_descriptor, get_descriptors, is_array, is_frozen, object_freeze } from './utils.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -9,7 +9,7 @@ import {
 	PROPS_IS_UPDATED
 } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
-import { proxy, unstate } from './proxy/proxy.js';
+import { READONLY_SYMBOL, STATE_SYMBOL, proxy, unstate } from './proxy/proxy.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1898,4 +1898,26 @@ if (DEV) {
 	throw_rune_error('$derived');
 	throw_rune_error('$inspect');
 	throw_rune_error('$props');
+}
+
+/**
+ * Expects a value that was wrapped with `freeze` and makes it frozen.
+ * @template {import('./proxy/proxy.js').StateObject} T
+ * @param {T} value
+ * @returns {Readonly<Record<string | symbol, any>>}
+ */
+export function freeze(value) {
+	if (typeof value === 'object' && value != null && !is_frozen(value)) {
+		// If the object is already proxified, then unstate the value
+		if (STATE_SYMBOL in value) {
+			return object_freeze(unstate(value));
+		}
+		// If the value is already read-only then just use that
+		if (DEV && READONLY_SYMBOL in value) {
+			return value;
+		}
+		// Otherwise freeze the object
+		object_freeze(value);
+	}
+	return value;
 }

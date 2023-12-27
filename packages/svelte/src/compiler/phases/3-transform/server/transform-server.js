@@ -446,6 +446,7 @@ function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
+		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -558,7 +559,7 @@ const javascript_visitors_runes = {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
 
-			if (rune === '$state' || rune === '$derived') {
+			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
 				return {
 					...node,
 					value:
