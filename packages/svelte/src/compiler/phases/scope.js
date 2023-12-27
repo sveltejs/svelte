@@ -712,5 +712,5 @@ export function get_rune(node, scope) {
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return /** @type {Runes[number] | null} */ (joined);
+	return /** @type {typeof Runes[number] | null} */ (joined);
 }
