@@ -195,6 +195,9 @@ export const javascript_visitors_runes = {
 							id = property.value.left;
 							initial = property.value.right;
 						}
+						initial = initial
+							? /** @type {import('estree').Expression} */ (visit(initial))
+							: undefined;
 
 						assert.equal(id.type, 'Identifier');
 
