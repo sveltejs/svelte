@@ -66,7 +66,7 @@ In non-runes mode, a `let` declaration is treated as reactive state if it is upd
 
 ## `$state.frozen`
 
-State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether:
+State declared with `$state.frozen` cannot be mutated; it can only be _reassigned_. In other words, rather than assigning to a property of an object, or using an array method like `push`, replace the object or array altogether if you'd like to update it:
 
 ```diff
 <script>
