@@ -4,15 +4,15 @@
 
 ### Patch Changes
 
-- A transition's parameters are now evaluated when the transition is initialized. ([#9836](https://github.com/sveltejs/svelte/pull/9836))
+- fix: evaluate transition parameters when the transition runs ([#9836](https://github.com/sveltejs/svelte/pull/9836))
 
 - feat: add `$state.frozen` rune ([#9851](https://github.com/sveltejs/svelte/pull/9851))
 
-- Fix issue with assigning prop values as defaults of other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
+- fix: correctly transform prop fallback values that use other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
 
-- Fix interopability between backticks and templates ([#9973](https://github.com/sveltejs/svelte/pull/9973))
+- fix: escape template literal characters in text sequences ([#9973](https://github.com/sveltejs/svelte/pull/9973))
 
-- fix: support hydrating around `<noscript>` ([#9953](https://github.com/sveltejs/svelte/pull/9953))
+- fix: inject comment in place of `<noscript>` in client output ([#9953](https://github.com/sveltejs/svelte/pull/9953))
 
 ## 5.0.0-next.26
 
