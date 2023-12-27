@@ -1755,7 +1755,7 @@ export const template_visitors = {
 				// do until runtime
 				args.push(
 					/** @type {import('estree').Expression} */ (
-						context.visit(b.spread(b.call('$.shallow_thunk', arg.argument)))
+						context.visit(b.spread(b.call('$.thunkspread', arg.argument)))
 					)
 				);
 				return;

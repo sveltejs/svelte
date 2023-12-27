@@ -1905,7 +1905,7 @@ if (DEV) {
  * @param {T} iterable
  * @returns {{ [P in keyof T]: () => T[P] }}
  */
-export function shallow_thunk(iterable) {
+export function thunkspread(iterable) {
 	const thunks = [];
 	for (const item of iterable) {
 		thunks.push(() => item);
