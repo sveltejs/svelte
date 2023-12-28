@@ -164,7 +164,6 @@ export const javascript_visitors_runes = {
 			const rune = get_rune(init, state.scope);
 
 			if (!rune && init != null && declarator.id.type === 'Identifier') {
-				const is_top_level = path.at(-1)?.type === 'Program';
 				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
 				if (is_hoistable_declaration(binding, path)) {
 					state.hoisted.push(b.declaration('const', declarator.id, init));
