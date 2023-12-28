@@ -77,10 +77,18 @@ export function client_component(source, analysis, options) {
 			return a;
 		},
 		get template() {
-			/** @type {any[]} */
-			const a = [];
-			a.push = () =>
-				error(null, 'INTERNAL', 'template.push should not be called outside create_block');
+			const a = {
+				quasi: [],
+				expressions: []
+			};
+			a.quasi.push = () =>
+				error(null, 'INTERNAL', 'template.quasi.push should not be called outside create_block');
+			a.expressions.push = () =>
+				error(
+					null,
+					'INTERNAL',
+					'template.expressions.push should not be called outside create_block'
+				);
 			return a;
 		},
 		legacy_reactive_statements: new Map(),
