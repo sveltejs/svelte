@@ -1926,7 +1926,7 @@ export function proxy_rest_array(items) {
 			if (typeof property === 'symbol') return target[property];
 			if (!isNaN(parseInt(property))) {
 				// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
-				return target[property]();
+				return target[property]?.();
 			}
 			// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
 			return target[property];
