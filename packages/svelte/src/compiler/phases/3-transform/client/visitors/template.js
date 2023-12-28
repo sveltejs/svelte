@@ -501,6 +501,8 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	}
 
 	let grouped_value = value;
+	/** @type {import('estree').Expression | null} */
+	let constant_expression = grouped_value;
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.auto_focus', node_id, value)));
@@ -509,6 +511,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	if (name === 'class') {
 		grouped_value = b.call('$.to_class', value);
+		constant_expression = null;
 	}
 
 	/**
@@ -587,9 +590,13 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		);
 		return true;
 	} else {
-		push_template_quasi(context.state, ` ${name}="`);
-		push_template_expression(context.state, grouped_value);
-		push_template_quasi(context.state, `"`);
+		if (!is_in_hoistable || DOMBooleanAttributes.includes(name)) {
+			state.init.push(assign(grouped_value).grouped);
+		} else if (constant_expression) {
+			push_template_quasi(context.state, ` ${name}="`);
+			push_template_expression(context.state, grouped_value);
+			push_template_quasi(context.state, `"`);
+		}
 		return false;
 	}
 }
