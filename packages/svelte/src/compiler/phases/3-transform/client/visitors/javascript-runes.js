@@ -156,21 +156,22 @@ export const javascript_visitors_runes = {
 
 		return { ...node, body };
 	},
-	VariableDeclaration(node, { path, state, visit }) {
+	VariableDeclaration(node, { state, visit }) {
 		const declarations = [];
 
 		for (const declarator of node.declarations) {
 			const init = unwrap_ts_expression(declarator.init);
-			const rune = get_rune(init, state.scope);
 
-			if (!rune && init != null && declarator.id.type === 'Identifier') {
+			if (init != null && declarator.id.type === 'Identifier') {
 				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
-				if (is_hoistable_declaration(binding, path)) {
+				if (is_hoistable_declaration(binding, declarator.id.name)) {
+					state.scope.root.unique;
 					state.hoisted.push(b.declaration('const', declarator.id, init));
 					continue;
 				}
 			}
 
+			const rune = get_rune(init, state.scope);
 			if (!rune || rune === '$effect.active' || rune === '$effect.root' || rune === '$inspect') {
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);

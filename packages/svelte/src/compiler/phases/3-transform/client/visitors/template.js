@@ -501,8 +501,6 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 	}
 
 	let grouped_value = value;
-	/** @type {import('estree').Expression | null} */
-	let constant_expression = grouped_value;
 
 	if (name === 'autofocus') {
 		state.init.push(b.stmt(b.call('$.auto_focus', node_id, value)));
@@ -511,7 +509,6 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 
 	if (name === 'class') {
 		grouped_value = b.call('$.to_class', value);
-		constant_expression = null;
 	}
 
 	/**
@@ -567,18 +564,19 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	};
 
-	let is_in_hoistable = false;
+	let hoistable = false;
 	if (Array.isArray(attribute.value)) {
 		for (let value of attribute.value) {
 			if (value.type === 'ExpressionTag' && value.expression.type === 'Identifier') {
 				const binding = context.state.scope
 					.owner(value.expression.name)
 					?.declarations.get(value.expression.name);
-				is_in_hoistable ||= is_hoistable_declaration(binding, context.path);
+				hoistable ||= is_hoistable_declaration(binding, value.expression.name);
 			}
 		}
 	}
-	if (attribute.metadata.dynamic && !is_in_hoistable) {
+
+	if (attribute.metadata.dynamic && !hoistable) {
 		const id = state.scope.generate(`${node_id.name}_${name}`);
 		serialize_update_assignment(
 			state,
@@ -590,12 +588,12 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		);
 		return true;
 	} else {
-		if (!is_in_hoistable || DOMBooleanAttributes.includes(name)) {
-			state.init.push(assign(grouped_value).grouped);
-		} else if (constant_expression) {
+		if (hoistable) {
 			push_template_quasi(context.state, ` ${name}="`);
 			push_template_expression(context.state, grouped_value);
 			push_template_quasi(context.state, `"`);
+		} else {
+			state.init.push(assign(grouped_value).grouped);
 		}
 		return false;
 	}

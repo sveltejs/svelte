@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, unwrap_ts_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -7,6 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
+import { get_rune } from '../../scope';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -535,18 +536,19 @@ export function should_proxy_or_freeze(node) {
 
 /**
  * @param {import('#compiler').Binding | undefined} binding
- * @param {import('#compiler').SvelteNode[]} path
+ * @param {string} name
  * @returns {boolean}
  */
-export function is_hoistable_declaration(binding, path) {
-	const is_top_level = path.at(-1)?.type === 'Program';
+export function is_hoistable_declaration(binding, name) {
 	// TODO: allow object expressions that are not passed to functions or components as props
 	// and expressions as long as they do not reference non-hoistable variables
 	return (
-		is_top_level &&
 		!!binding &&
+		binding.kind === 'normal' &&
+		binding.scope.is_top_level &&
 		!binding.mutated &&
 		!binding.reassigned &&
-		binding?.initial?.type === 'Literal'
+		binding.initial?.type === 'Literal' &&
+		!binding.scope.declared_in_outer_scope(name)
 	);
 }

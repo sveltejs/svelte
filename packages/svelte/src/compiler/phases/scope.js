@@ -4,11 +4,18 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
-import { JsKeywords, Runes } from './constants.js';
+import { GlobalBindings, JsKeywords, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
 	root;
+
+	/**
+	 * Whether this is a top-level script scope.
+	 * I.e. `<script>`, `<script context=module>`, or `.svelte.js`.
+	 * @type {boolean}
+	 */
+	is_top_level;
 
 	/**
 	 * The immediate parent scope
@@ -49,16 +56,17 @@ export class Scope {
 	function_depth = 0;
 
 	/**
-	 *
 	 * @param {ScopeRoot} root
 	 * @param {Scope | null} parent
 	 * @param {boolean} porous
+	 * @param {boolean} is_top_level
 	 */
-	constructor(root, parent, porous) {
+	constructor(root, parent, porous, is_top_level) {
 		this.root = root;
 		this.#parent = parent;
 		this.#porous = porous;
 		this.function_depth = parent ? parent.function_depth + (porous ? 0 : 1) : 0;
+		this.is_top_level = is_top_level;
 	}
 
 	/**
@@ -119,8 +127,23 @@ export class Scope {
 		return binding;
 	}
 
+	/**
+	 * @param {string} name
+	 * @returns {boolean}
+	 */
+	declared_in_outer_scope(name) {
+		let outer = this.#parent;
+		while (outer !== null) {
+			if (outer.references.has(name) || outer.declarations.has(name)) {
+				return true;
+			}
+			outer = outer.#parent;
+		}
+		return GlobalBindings.has(name) || JsKeywords.includes(name);
+	}
+
 	child(porous = false) {
-		return new Scope(this.root, this, porous);
+		return new Scope(this.root, this, porous, false);
 	}
 
 	/**
@@ -238,7 +261,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	 * @type {Map<import('#compiler').SvelteNode, Scope>}
 	 */
 	const scopes = new Map();
-	const scope = new Scope(root, parent, false);
+	const scope = new Scope(root, parent, false, ast.type === 'Program');
 	scopes.set(ast, scope);
 
 	/** @type {State} */

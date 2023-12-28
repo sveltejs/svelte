@@ -1,7 +1,12 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { create_state_declarators, get_prop_source, serialize_get_binding } from '../utils.js';
+import {
+	create_state_declarators,
+	get_prop_source,
+	is_hoistable_declaration,
+	serialize_get_binding
+} from '../utils.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_legacy = {
@@ -18,6 +23,19 @@ export const javascript_visitors_legacy = {
 
 			if (!has_state && !has_props) {
 				const init = declarator.init;
+
+				if (init != null && declarator.id.type === 'Identifier') {
+					const binding = state.scope
+						.owner(declarator.id.name)
+						?.declarations.get(declarator.id.name);
+
+					if (is_hoistable_declaration(binding, declarator.id.name)) {
+						state.scope.root.unique;
+						state.hoisted.push(b.declaration('const', declarator.id, init));
+						continue;
+					}
+				}
+
 				if (init != null && is_hoistable_function(init)) {
 					const hoistable_function = visit(init);
 					state.hoisted.push(
