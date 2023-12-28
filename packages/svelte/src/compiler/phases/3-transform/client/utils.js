@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression, unwrap_ts_expression } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -7,7 +7,6 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
-import { get_rune } from '../../scope';
 
 /**
  * @template {import('./types').ClientTransformState} State
