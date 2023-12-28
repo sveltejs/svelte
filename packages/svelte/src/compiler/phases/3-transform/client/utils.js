@@ -532,3 +532,21 @@ export function should_proxy_or_freeze(node) {
 
 	return true;
 }
+
+/**
+ * @param {import('#compiler').Binding | undefined} binding
+ * @param {import('#compiler').SvelteNode[]} path
+ * @returns {boolean}
+ */
+export function is_hoistable_declaration(binding, path) {
+	const is_top_level = path.at(-1)?.type === 'Program';
+	// TODO: allow object expressions that are not passed to functions or components as props
+	// and expressions as long as they do not reference non-hoistable variables
+	return (
+		is_top_level &&
+		!!binding &&
+		!binding.mutated &&
+		!binding.reassigned &&
+		binding?.initial?.type === 'Literal'
+	);
+}

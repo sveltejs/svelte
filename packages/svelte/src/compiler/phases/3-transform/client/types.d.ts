@@ -3,7 +3,8 @@ import type {
 	Statement,
 	LabeledStatement,
 	Identifier,
-	PrivateIdentifier
+	PrivateIdentifier,
+	Expression
 } from 'estree';
 import type { Namespace, SvelteNode, ValidatedCompileOptions } from '#compiler';
 import type { TransformState } from '../types.js';
@@ -45,7 +46,10 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	/** Stuff that happens after the render effect (bindings, actions) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
-	readonly template: string[];
+	readonly template: {
+		quasi: string[];
+		expressions: Expression[];
+	};
 	readonly metadata: {
 		namespace: Namespace;
 		/** `true` if the HTML template needs to be instantiated with `importNode` */

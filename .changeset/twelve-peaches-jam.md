@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-perf: hoist variables which are not mutated or reassigned
+perf: hoist primitives which are not mutated or reassigned and inline into template attributes

@@ -2,7 +2,12 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { create_state_declarators, get_prop_source, should_proxy_or_freeze } from '../utils.js';
+import {
+	create_state_declarators,
+	get_prop_source,
+	is_hoistable_declaration,
+	should_proxy_or_freeze
+} from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
@@ -161,15 +166,7 @@ export const javascript_visitors_runes = {
 			if (!rune && init != null && declarator.id.type === 'Identifier') {
 				const is_top_level = path.at(-1)?.type === 'Program';
 				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
-				// TODO: allow object expressions that are not passed to functions or components as props
-				// and expressions as long as they do not reference non-hoistable variables
-				if (
-					is_top_level &&
-					binding &&
-					!binding.mutated &&
-					!binding.reassigned &&
-					binding?.initial?.type === 'Literal'
-				) {
+				if (is_hoistable_declaration(binding, path)) {
 					state.hoisted.push(b.declaration('const', declarator.id, init));
 					continue;
 				}

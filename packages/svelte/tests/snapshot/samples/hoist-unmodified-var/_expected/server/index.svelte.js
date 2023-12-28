@@ -5,8 +5,8 @@ import * as $ from "svelte/internal/server";
 export default function Hoist_unmodified_var($$payload, $$props) {
 	$.push(true);
 
-	let count = 0;
+	let boolean = false;
 
-	$$payload.out += `<p>${$.escape_text(count)}</p>`;
+	$$payload.out += `<p${$.attr("contenteditable", boolean, false)}>hello world</p>`;
 	$.pop();
 }

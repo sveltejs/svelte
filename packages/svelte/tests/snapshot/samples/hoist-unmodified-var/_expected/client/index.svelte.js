@@ -3,17 +3,15 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-const count = 0;
-var frag = $.template(`<p> </p>`);
+const boolean = false;
+var frag = $.template(`<p contenteditable="${boolean}">hello world</p>`);
 
 export default function Hoist_unmodified_var($$anchor, $$props) {
 	$.push($$props, true);
 
 	/* Init */
 	var p = $.open($$anchor, true, frag);
-	var text = $.child(p);
 
-	text.nodeValue = $.stringify(count);
 	$.close($$anchor, p);
 	$.pop();
 }

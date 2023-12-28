@@ -19,6 +19,7 @@ import { error } from '../../../../errors.js';
 import {
 	function_visitor,
 	get_assignment_value,
+	is_hoistable_declaration,
 	serialize_get_binding,
 	serialize_set_binding
 } from '../utils.js';
@@ -34,6 +35,33 @@ import {
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
 import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
+
+/**
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {string} quasi_to_add
+ * @returns
+ */
+function push_template_quasi(state, quasi_to_add) {
+	const { quasi } = state.template;
+	if (quasi.length === 0) {
+		quasi.push(quasi_to_add);
+		return;
+	}
+	quasi[quasi.length - 1] = quasi[quasi.length - 1].concat(quasi_to_add);
+}
+
+/**
+ * @param {import('../types.js').ComponentClientTransformState} state
+ * @param {import('estree').Expression} expression_to_add
+ */
+function push_template_expression(state, expression_to_add) {
+	const { expressions, quasi } = state.template;
+	if (quasi.length === 0) {
+		quasi.push('');
+	}
+	expressions.push(expression_to_add);
+	quasi.push('');
+}
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -536,7 +564,18 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	};
 
-	if (attribute.metadata.dynamic) {
+	let is_in_hoistable = false;
+	if (Array.isArray(attribute.value)) {
+		for (let value of attribute.value) {
+			if (value.type === 'ExpressionTag' && value.expression.type === 'Identifier') {
+				const binding = context.state.scope
+					.owner(value.expression.name)
+					?.declarations.get(value.expression.name);
+				is_in_hoistable ||= is_hoistable_declaration(binding, context.path);
+			}
+		}
+	}
+	if (attribute.metadata.dynamic && !is_in_hoistable) {
 		const id = state.scope.generate(`${node_id.name}_${name}`);
 		serialize_update_assignment(
 			state,
@@ -548,7 +587,9 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		);
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		push_template_quasi(context.state, ` ${name}="`);
+		push_template_expression(context.state, grouped_value);
+		push_template_quasi(context.state, `"`);
 		return false;
 	}
 }
@@ -1042,7 +1083,10 @@ function create_block(parent, name, nodes, context) {
 		update: [],
 		update_effects: [],
 		after_update: [],
-		template: [],
+		template: {
+			quasi: [],
+			expressions: []
+		},
 		metadata: {
 			template_needs_import_node: false,
 			namespace,
@@ -1067,7 +1111,16 @@ function create_block(parent, name, nodes, context) {
 		const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
 
 		context.state.hoisted.push(
-			b.var(template_name, b.call(callee, b.template([b.quasi(state.template.join(''), true)], [])))
+			b.var(
+				template_name,
+				b.call(
+					callee,
+					b.template(
+						state.template.quasi.map((quasi) => b.quasi(quasi, true)),
+						state.template.expressions
+					)
+				)
+			)
 		);
 
 		body.push(
@@ -1095,10 +1148,10 @@ function create_block(parent, name, nodes, context) {
 			state
 		});
 
-		const template = state.template[0];
+		const quasi = state.template.quasi[0];
 
-		if (state.template.length === 1 && (template === ' ' || template === '<!>')) {
-			if (template === ' ') {
+		if (state.template.quasi.length === 1 && (quasi === ' ' || quasi === '<!>')) {
+			if (quasi === ' ') {
 				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
 				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
 			} else {
@@ -1115,7 +1168,14 @@ function create_block(parent, name, nodes, context) {
 			state.hoisted.push(
 				b.var(
 					template_name,
-					b.call(callee, b.template([b.quasi(state.template.join(''), true)], []), b.true)
+					b.call(
+						callee,
+						b.template(
+							state.template.quasi.map((quasi) => b.quasi(quasi, true)),
+							state.template.expressions
+						),
+						b.true
+					)
 				)
 			);
 
@@ -1433,11 +1493,11 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			if (node.type === 'Text') {
-				state.template.push(node.raw);
+				push_template_quasi(state, node.raw);
 				return;
 			}
 
-			state.template.push(' ');
+			push_template_quasi(state, ' ');
 
 			const text_id = get_node_id(expression, state, 'text');
 			const singular = b.stmt(
@@ -1479,7 +1539,7 @@ function process_children(nodes, parent, { visit, state }) {
 			return;
 		}
 
-		state.template.push(' ');
+		push_template_quasi(state, ' ');
 
 		const text_id = get_node_id(expression, state, 'text');
 		const contains_call_expression = sequence.some(
@@ -1659,10 +1719,10 @@ export const template_visitors = {
 	},
 	Comment(node, context) {
 		// We'll only get here if comments are not filtered out, which they are unless preserveComments is true
-		context.state.template.push(`<!--${node.data}-->`);
+		push_template_quasi(context.state, `<!--${node.data}-->`);
 	},
 	HtmlTag(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
 		context.state.init.push(
@@ -1750,7 +1810,7 @@ export const template_visitors = {
 		);
 	},
 	RenderTag(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 		const binding = context.state.scope.get(node.expression.name);
 		const is_reactive = binding?.kind !== 'normal' || node.expression.type !== 'Identifier';
 
@@ -1823,7 +1883,7 @@ export const template_visitors = {
 	},
 	RegularElement(node, context) {
 		if (node.name === 'noscript') {
-			context.state.template.push('<!>');
+			push_template_quasi(context.state, '<!>');
 			return;
 		}
 
@@ -1833,7 +1893,7 @@ export const template_visitors = {
 			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
 		};
 
-		context.state.template.push(`<${node.name}`);
+		push_template_quasi(context.state, `<${node.name}`);
 
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
@@ -1974,7 +2034,8 @@ export const template_visitors = {
 					if (name !== 'class' || literal_value) {
 						// TODO namespace=foreign probably doesn't want to do template stuff at all and instead use programmatic methods
 						// to create the elements it needs.
-						context.state.template.push(
+						push_template_quasi(
+							context.state,
 							` ${attribute.name}${
 								DOMBooleanAttributes.includes(name) && literal_value === true
 									? ''
@@ -1997,7 +2058,7 @@ export const template_visitors = {
 		serialize_class_directives(class_directives, node_id, context, is_attributes_reactive);
 		serialize_style_directives(style_directives, node_id, context, is_attributes_reactive);
 
-		context.state.template.push('>');
+		push_template_quasi(context.state, '>');
 
 		/** @type {import('../types').ComponentClientTransformState} */
 		const state = {
@@ -2037,11 +2098,11 @@ export const template_visitors = {
 		);
 
 		if (!VoidElements.includes(node.name)) {
-			context.state.template.push(`</${node.name}>`);
+			push_template_quasi(context.state, `</${node.name}>`);
 		}
 	},
 	SvelteElement(node, context) {
-		context.state.template.push(`<!>`);
+		push_template_quasi(context.state, `<!>`);
 
 		/** @type {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} */
 		const attributes = [];
@@ -2152,7 +2213,7 @@ export const template_visitors = {
 		let each_item_is_reactive = true;
 
 		if (!each_node_meta.is_controlled) {
-			context.state.template.push('<!>');
+			push_template_quasi(context.state, '<!>');
 		}
 
 		if (each_node_meta.array_name !== null) {
@@ -2371,7 +2432,7 @@ export const template_visitors = {
 		}
 	},
 	IfBlock(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		const consequent = /** @type {import('estree').BlockStatement} */ (
 			context.visit(node.consequent)
@@ -2395,7 +2456,7 @@ export const template_visitors = {
 		);
 	},
 	AwaitBlock(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		context.state.after_update.push(
 			b.stmt(
@@ -2436,7 +2497,7 @@ export const template_visitors = {
 		);
 	},
 	KeyBlock(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 		const key = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		const body = /** @type {import('estree').Expression} */ (context.visit(node.fragment));
 		context.state.after_update.push(
@@ -2767,7 +2828,7 @@ export const template_visitors = {
 		}
 	},
 	Component(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		const binding = context.state.scope.get(
 			node.name.includes('.') ? node.name.slice(0, node.name.indexOf('.')) : node.name
@@ -2795,12 +2856,12 @@ export const template_visitors = {
 		context.state.after_update.push(component);
 	},
 	SvelteSelf(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 		const component = serialize_inline_component(node, context.state.analysis.name, context);
 		context.state.after_update.push(component);
 	},
 	SvelteComponent(node, context) {
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		let component = serialize_inline_component(node, '$$component', context);
 		if (context.state.options.dev) {
@@ -2895,7 +2956,7 @@ export const template_visitors = {
 	},
 	SlotElement(node, context) {
 		// <slot {a}>fallback</slot>  -->   $.slot($$slots.default, { get a() { .. } }, () => ...fallback);
-		context.state.template.push('<!>');
+		push_template_quasi(context.state, '<!>');
 
 		/** @type {import('estree').Property[]} */
 		const props = [];

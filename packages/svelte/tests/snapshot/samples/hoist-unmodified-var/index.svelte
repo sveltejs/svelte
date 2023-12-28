@@ -1,7 +1,7 @@
 <svelte:options runes={true} />
 
 <script>
-	let count = 0;
+	let boolean = false;
 </script>
 
-<p>{count}</p>
+<p contenteditable={boolean}>hello world</p>
