@@ -77,7 +77,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [svelte-ionic-starter](https://github.com/Zettexe/svelte-ionic-starter) a project template for Svelte + Ionic + CapacitorJS apps with live reload and iOS/Android build targets
 - [demo-sveltekit-sanity](https://github.com/stephane-vanraes/demo-sveltekit-sanity/) is a starter kit for SvelteKit and Sanity, an open source React CMS
 
-Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates/) for more templates, adders and adapters from across the Svelte ecosystem.
+Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates) for more templates, adders and adapters from across the Svelte ecosystem.
 
 ## See you next month!
 

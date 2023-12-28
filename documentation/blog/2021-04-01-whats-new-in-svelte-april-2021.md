@@ -53,7 +53,7 @@ Want to learn more about how to get started, what's different compared to Sapper
 - [sveltekit-tailwindcss-external-api](https://github.com/acidlake/sveltekit-tailwindcss-external-api) is everything you need to build a Svelte project with TailwindCSS and an external API, powered by create-svelte.
 - [Sapper Netlify](https://www.npmjs.com/package/sapper-netlify) is a Sapper project that can run on a Netlify function.
 
-**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates/)
+**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates)
 
 **Learning Resources**
 

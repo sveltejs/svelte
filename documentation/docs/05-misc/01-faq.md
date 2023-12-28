@@ -65,7 +65,7 @@ There will be a blog post about this eventually, but in the meantime, check out 
 
 ## Is there a UI component library?
 
-There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/packages#design-system) on the Svelte Society website.
+There are several UI component libraries as well as standalone components. Find them under the [design systems section of the components page](https://sveltesociety.dev/packages?tag=design-system) on the Svelte Society website.
 
 ## How do I test Svelte apps?
 
@@ -100,7 +100,7 @@ If you need hash-based routing on the client side, check out [svelte-spa-router]
 
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 
-You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/packages#routers).
+You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/packages?tag=routers).
 
 ## Can I tell Svelte not to remove my unused styles?
 
