@@ -82,7 +82,8 @@ export function serialize_get_binding(node, state) {
 		}
 
 		if (binding.prop_alias) {
-			return b.member(b.id('$$props'), b.id(binding.prop_alias));
+			const key = b.key(binding.prop_alias);
+			return b.member(b.id('$$props'), key, key.type === 'Literal');
 		}
 		return b.member(b.id('$$props'), node);
 	}
@@ -92,7 +93,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		(binding.kind === 'state' &&
+		((binding.kind === 'state' || binding.kind === 'frozen_state') &&
 			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'legacy_reactive'
@@ -162,40 +163,53 @@ export function serialize_set_binding(node, context, fallback) {
 
 	// Handle class private/public state assignment cases
 	while (left.type === 'MemberExpression') {
-		if (
-			left.object.type === 'ThisExpression' &&
-			left.property.type === 'PrivateIdentifier' &&
-			context.state.private_state.has(left.property.name)
-		) {
+		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
+			const private_state = context.state.private_state.get(left.property.name);
 			const value = get_assignment_value(node, context);
-			if (state.in_constructor) {
-				// See if we should wrap value in $.proxy
-				if (context.state.analysis.runes && should_proxy(value)) {
-					const assignment = fallback();
-					if (assignment.type === 'AssignmentExpression') {
-						assignment.right = b.call('$.proxy', value);
-						return assignment;
+			if (private_state !== undefined) {
+				if (state.in_constructor) {
+					// See if we should wrap value in $.proxy
+					if (context.state.analysis.runes && should_proxy_or_freeze(value)) {
+						const assignment = fallback();
+						if (assignment.type === 'AssignmentExpression') {
+							assignment.right =
+								private_state.kind === 'frozen_state'
+									? b.call('$.freeze', value)
+									: b.call('$.proxy', value);
+							return assignment;
+						}
 					}
+				} else {
+					return b.call(
+						'$.set',
+						left,
+						context.state.analysis.runes && should_proxy_or_freeze(value)
+							? private_state.kind === 'frozen_state'
+								? b.call('$.freeze', value)
+								: b.call('$.proxy', value)
+							: value
+					);
 				}
-			} else {
-				return b.call(
-					'$.set',
-					left,
-					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
-				);
 			}
 		} else if (
 			left.object.type === 'ThisExpression' &&
 			left.property.type === 'Identifier' &&
-			context.state.public_state.has(left.property.name) &&
 			state.in_constructor
 		) {
+			const public_state = context.state.public_state.get(left.property.name);
 			const value = get_assignment_value(node, context);
 			// See if we should wrap value in $.proxy
-			if (context.state.analysis.runes && should_proxy(value)) {
+			if (
+				context.state.analysis.runes &&
+				public_state !== undefined &&
+				should_proxy_or_freeze(value)
+			) {
 				const assignment = fallback();
 				if (assignment.type === 'AssignmentExpression') {
-					assignment.right = b.call('$.proxy', value);
+					assignment.right =
+						public_state.kind === 'frozen_state'
+							? b.call('$.freeze', value)
+							: b.call('$.proxy', value);
 					return assignment;
 				}
 			}
@@ -232,6 +246,7 @@ export function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
+		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -249,12 +264,24 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(left, value);
 			} else if (is_store) {
 				return b.call('$.store_set', serialize_get_binding(b.id(left_name), state), value);
-			} else {
+			} else if (binding.kind === 'state') {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy(value) ? b.call('$.proxy', value) : value
+					context.state.analysis.runes && should_proxy_or_freeze(value)
+						? b.call('$.proxy', value)
+						: value
 				);
+			} else if (binding.kind === 'frozen_state') {
+				return b.call(
+					'$.set',
+					b.id(left_name),
+					context.state.analysis.runes && should_proxy_or_freeze(value)
+						? b.call('$.freeze', value)
+						: value
+				);
+			} else {
+				return b.call('$.set', b.id(left_name), value);
 			}
 		} else {
 			if (is_store) {
@@ -492,7 +519,7 @@ export function create_state_declarators(declarator, scope, value) {
 }
 
 /** @param {import('estree').Expression} node */
-export function should_proxy(node) {
+export function should_proxy_or_freeze(node) {
 	if (
 		!node ||
 		node.type === 'Literal' ||

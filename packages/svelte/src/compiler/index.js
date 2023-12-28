@@ -6,6 +6,7 @@ import { getLocator } from 'locate-character';
 import { walk } from 'zimmerframe';
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import { convert } from './legacy.js';
+import { CompileError } from './errors.js';
 export { default as preprocess } from './preprocess/index.js';
 
 /**
@@ -30,12 +31,8 @@ export function compile(source, options) {
 		const result = transform_component(analysis, source, combined_options);
 		return result;
 	} catch (e) {
-		if (/** @type {any} */ (e).name === 'CompileError') {
-			handle_compile_error(
-				/** @type {import('#compiler').CompileError} */ (e),
-				options.filename,
-				source
-			);
+		if (e instanceof CompileError) {
+			handle_compile_error(e, options.filename, source);
 		}
 
 		throw e;
@@ -56,12 +53,8 @@ export function compileModule(source, options) {
 		const analysis = analyze_module(parse_acorn(source, false), validated);
 		return transform_module(analysis, source, validated);
 	} catch (e) {
-		if (/** @type {any} */ (e).name === 'CompileError') {
-			handle_compile_error(
-				/** @type {import('#compiler').CompileError} */ (e),
-				options.filename,
-				source
-			);
+		if (e instanceof CompileError) {
+			handle_compile_error(e, options.filename, source);
 		}
 
 		throw e;
@@ -106,12 +99,8 @@ export function parse(source, options = {}) {
 	try {
 		ast = _parse(source);
 	} catch (e) {
-		if (/** @type {any} */ (e).name === 'CompileError') {
-			handle_compile_error(
-				/** @type {import('#compiler').CompileError} */ (e),
-				options.filename,
-				source
-			);
+		if (e instanceof CompileError) {
+			handle_compile_error(e, options.filename, source);
 		}
 
 		throw e;

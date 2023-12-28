@@ -38,7 +38,8 @@ export {
 	inspect,
 	unwrap,
 	proxy_rest_array,
-	thunkspread
+	thunkspread,
+	freeze
 } from './client/runtime.js';
 
 export * from './client/each.js';

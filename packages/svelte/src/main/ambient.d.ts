@@ -17,6 +17,33 @@ declare module '*.svelte' {
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
+declare namespace $state {
+	/**
+	 * Declares reactive read-only state that is shallowly immutable.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let items = $state.frozen([0]);
+	 *
+	 *   const addItem = () => {
+	 *     items = [...items, items.length];
+	 *   };
+	 * </script>
+	 *
+	 * <button on:click={addItem}>
+	 *   {items.join(', ')}
+	 * </button>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state-raw
+	 *
+	 * @param initial The initial value
+	 */
+	export function frozen<T>(initial: T): Readonly<T>;
+	export function frozen<T>(): Readonly<T> | undefined;
+}
+
 /**
  * Declares derived state, i.e. one that depends on other state variables.
  * The expression inside `$derived(...)` should be free of side-effects.

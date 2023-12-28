@@ -59,7 +59,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 }
 
 export interface StateField {
-	kind: 'state' | 'derived';
+	kind: 'state' | 'frozen_state' | 'derived';
 	id: PrivateIdentifier;
 }
 
