@@ -165,7 +165,6 @@ export const javascript_visitors_runes = {
 			if (init != null && declarator.id.type === 'Identifier') {
 				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
 				if (is_hoistable_declaration(binding, declarator.id.name)) {
-					state.scope.root.unique;
 					state.hoisted.push(b.declaration('const', declarator.id, init));
 					continue;
 				}

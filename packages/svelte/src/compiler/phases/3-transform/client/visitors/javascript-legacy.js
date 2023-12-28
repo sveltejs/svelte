@@ -30,7 +30,6 @@ export const javascript_visitors_legacy = {
 						?.declarations.get(declarator.id.name);
 
 					if (is_hoistable_declaration(binding, declarator.id.name)) {
-						state.scope.root.unique;
 						state.hoisted.push(b.declaration('const', declarator.id, init));
 						continue;
 					}
