@@ -2,11 +2,13 @@
 // Note: compiler output will change before 5.0 is released!
 import * as $ from "svelte/internal/server";
 
+const autocapitalize = 'words';
+
 export default function Hoist_unmodified_var($$payload, $$props) {
 	$.push(true);
 
 	let boolean = false;
 
-	$$payload.out += `<p${$.attr("contenteditable", boolean, false)}>hello world</p>`;
+	$$payload.out += `<p${$.attr("autocapitalize", autocapitalize, false)}${$.attr("contenteditable", boolean, false)}>hello world</p>`;
 	$.pop();
 }

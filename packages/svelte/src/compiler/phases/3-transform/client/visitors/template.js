@@ -17,7 +17,7 @@ import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import { error } from '../../../../errors.js';
 import {
-	can_hoist_declaration,
+	can_inline_variable,
 	function_visitor,
 	get_assignment_value,
 	serialize_get_binding,
@@ -571,9 +571,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 				const binding = context.state.scope
 					.owner(value.expression.name)
 					?.declarations.get(value.expression.name);
-				// TODO: use can_inline_variable instead
-				// and insert template strings after module variables
-				can_inline ||= can_hoist_declaration(binding, value.expression.name);
+				can_inline ||= can_inline_variable(binding, value.expression.name);
 			}
 		}
 	}
@@ -1696,7 +1694,6 @@ function serialize_template_literal(values, visit, state) {
 
 	/** @type {import('estree').Expression[]} */
 	const expressions = [];
-	const scope = state.scope;
 	let contains_call_expression = false;
 	quasis.push(b.quasi(''));
 

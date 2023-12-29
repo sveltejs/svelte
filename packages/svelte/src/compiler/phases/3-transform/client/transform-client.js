@@ -346,8 +346,8 @@ export function client_component(source, analysis, options) {
 	}
 
 	const body = [
-		...state.hoisted,
 		...module.body,
+		...state.hoisted,
 		b.export_default(
 			b.function_declaration(
 				b.id(analysis.name),
