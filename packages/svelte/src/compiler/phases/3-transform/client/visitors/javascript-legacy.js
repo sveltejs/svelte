@@ -2,9 +2,9 @@ import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
 import {
+	can_hoist_declaration,
 	create_state_declarators,
 	get_prop_source,
-	is_hoistable_declaration,
 	serialize_get_binding
 } from '../utils.js';
 
@@ -29,7 +29,7 @@ export const javascript_visitors_legacy = {
 						.owner(declarator.id.name)
 						?.declarations.get(declarator.id.name);
 
-					if (is_hoistable_declaration(binding, declarator.id.name)) {
+					if (can_hoist_declaration(binding, declarator.id.name)) {
 						state.hoisted.push(b.declaration('const', declarator.id, init));
 						continue;
 					}

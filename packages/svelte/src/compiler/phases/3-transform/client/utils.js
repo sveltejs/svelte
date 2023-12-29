@@ -535,11 +535,12 @@ export function should_proxy_or_freeze(node) {
 }
 
 /**
+ * Whether a variable can be referenced directly from template string.
  * @param {import('#compiler').Binding | undefined} binding
  * @param {string} name
  * @returns {boolean}
  */
-export function is_hoistable_declaration(binding, name) {
+export function can_inline_variable(binding, name) {
 	// TODO: allow object expressions that are not passed to functions or components as props
 	// and expressions as long as they do not reference non-hoistable variables
 	return (
@@ -549,8 +550,18 @@ export function is_hoistable_declaration(binding, name) {
 		!binding.mutated &&
 		!binding.reassigned &&
 		binding.initial?.type === 'Literal' &&
-		binding.scope.has_parent() && // i.e. not when context="module"
 		!binding.scope.declared_in_outer_scope(name) &&
 		!GlobalBindings.has(name)
+	);
+}
+
+/**
+ * @param {import('#compiler').Binding | undefined} binding
+ * @param {string} name
+ * @returns {boolean}
+ */
+export function can_hoist_declaration(binding, name) {
+	return (
+		can_inline_variable(binding, name) && !!binding && binding.scope.has_parent() // i.e. not when context="module"
 	);
 }

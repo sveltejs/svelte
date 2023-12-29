@@ -17,9 +17,9 @@ import { is_custom_element_node, is_element_node } from '../../../nodes.js';
 import * as b from '../../../../utils/builders.js';
 import { error } from '../../../../errors.js';
 import {
+	can_hoist_declaration,
 	function_visitor,
 	get_assignment_value,
-	is_hoistable_declaration,
 	serialize_get_binding,
 	serialize_set_binding
 } from '../utils.js';
@@ -564,19 +564,21 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	};
 
-	let hoistable = false;
+	let can_inline = false;
 	if (Array.isArray(attribute.value)) {
 		for (let value of attribute.value) {
 			if (value.type === 'ExpressionTag' && value.expression.type === 'Identifier') {
 				const binding = context.state.scope
 					.owner(value.expression.name)
 					?.declarations.get(value.expression.name);
-				hoistable ||= is_hoistable_declaration(binding, value.expression.name);
+				// TODO: use can_inline_variable instead
+				// and insert template strings after module variables
+				can_inline ||= can_hoist_declaration(binding, value.expression.name);
 			}
 		}
 	}
 
-	if (attribute.metadata.dynamic && !hoistable) {
+	if (attribute.metadata.dynamic && !can_inline) {
 		const id = state.scope.generate(`${node_id.name}_${name}`);
 		serialize_update_assignment(
 			state,
@@ -588,7 +590,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		);
 		return true;
 	} else {
-		if (hoistable) {
+		if (can_inline) {
 			push_template_quasi(context.state, ` ${name}="`);
 			push_template_expression(context.state, grouped_value);
 			push_template_quasi(context.state, `"`);

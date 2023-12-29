@@ -3,9 +3,9 @@ import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
 import {
+	can_hoist_declaration,
 	create_state_declarators,
 	get_prop_source,
-	is_hoistable_declaration,
 	should_proxy_or_freeze
 } from '../utils.js';
 import { unwrap_ts_expression } from '../../../../utils/ast.js';
@@ -164,7 +164,7 @@ export const javascript_visitors_runes = {
 
 			if (init != null && declarator.id.type === 'Identifier') {
 				const binding = state.scope.owner(declarator.id.name)?.declarations.get(declarator.id.name);
-				if (is_hoistable_declaration(binding, declarator.id.name)) {
+				if (can_hoist_declaration(binding, declarator.id.name)) {
 					state.hoisted.push(b.declaration('const', declarator.id, init));
 					continue;
 				}
