@@ -29,6 +29,18 @@
     h1:global(nav) {
         background: red;
     }
+		h1:nth-of-type(10n+1){
+        background: red;
+    }
+		h1:nth-of-type(-2n+3){
+        background: red;
+    }
+		h1:nth-of-type(+12){
+        background: red;
+    }
+		h1:nth-of-type(+3n){
+        background: red;
+    }
 </style>
 
 <h1>Foo</h1>
