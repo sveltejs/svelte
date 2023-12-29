@@ -222,7 +222,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
 					only_svg = false;
 					break;
 				}
-			} else if (node.type !== 'Text' || node.data.trim() !== '') {
+			} else if (node.type === 'Text' && node.data.trim() !== '') {
 				only_svg = false;
 			}
 		}
