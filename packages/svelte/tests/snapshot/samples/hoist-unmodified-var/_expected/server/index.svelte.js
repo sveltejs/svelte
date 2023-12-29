@@ -9,6 +9,6 @@ export default function Hoist_unmodified_var($$payload, $$props) {
 
 	let boolean = false;
 
-	$$payload.out += `<p${$.attr("autocapitalize", autocapitalize, false)}${$.attr("contenteditable", boolean, false)}>hello world</p>`;
+	$$payload.out += `<p${$.attr("autocapitalize", autocapitalize, false)}${$.attr("contenteditable", boolean, false)}>boolean is ${$.escape(boolean)} and autocapitalize is $${$.escape(autocapitalize)}</p>`;
 	$.pop();
 }
