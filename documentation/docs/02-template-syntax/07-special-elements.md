@@ -2,6 +2,8 @@
 title: Special elements
 ---
 
+Svelte provides a variety of built-in elements. These are not part of the DOM, but are instead handled by the compiler, and ease the process of working with higher level DOM elements easier, alongside providing instructions to the compiler.
+
 ## `<slot>`
 
 ```svelte

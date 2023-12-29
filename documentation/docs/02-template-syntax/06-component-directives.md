@@ -2,6 +2,8 @@
 title: Component directives
 ---
 
+Directives supported on invoking components. These allow listening to events, binding to props, and more.
+
 ## on:_eventname_
 
 ```svelte

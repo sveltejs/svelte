@@ -2,6 +2,8 @@
 title: Logic blocks
 ---
 
+HTML doesn't have a way of expressing logic, like conditionals and loops. Svelte does. It uses special tags `{#if}`, `{#each}` and `{#await}` to add logic to your markup.
+
 ## {#if ...}
 
 ```svelte

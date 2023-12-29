@@ -2,6 +2,8 @@
 title: 'Client-side component API'
 ---
 
+Svelte provides a client-side API for interacting with components. This allows you to create components programmatically, and to access their properties and methods.
+
 ## Creating a component
 
 ```ts

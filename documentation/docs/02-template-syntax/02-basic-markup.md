@@ -2,6 +2,8 @@
 title: Basic markup
 ---
 
+Basics of svelte's template syntax. These are smallest building blocks of [svelte components](./svelte-components).
+
 ## Tags
 
 A lowercase tag, like `<div>`, denotes a regular HTML element. A capitalised tag, such as `<Widget>` or `<Namespace.Widget>`, indicates a _component_.

@@ -2,6 +2,8 @@
 title: Special tags
 ---
 
+These are special tags to add logic to your markup, inline.
+
 ## {@html ...}
 
 ```svelte
