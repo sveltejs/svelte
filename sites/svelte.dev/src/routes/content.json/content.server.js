@@ -48,6 +48,14 @@ export async function content() {
 		const intro = sections?.shift()?.trim();
 		const rank = +metadata.rank;
 
+		// Push the main page into it
+		blocks.push({
+			breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
+			href: get_href([slug]),
+			content: await plaintext(intro),
+			rank
+		});
+
 		if (intro) {
 			blocks.push({
 				breadcrumbs: [...breadcrumbs, removeMarkdown(metadata.title ?? '')],
