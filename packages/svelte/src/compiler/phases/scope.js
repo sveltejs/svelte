@@ -4,7 +4,7 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
-import { GlobalBindings, JsKeywords, Runes } from './constants.js';
+import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -127,6 +127,11 @@ export class Scope {
 		return binding;
 	}
 
+	/** @returns {boolean} */
+	has_parent() {
+		return this.#parent !== null;
+	}
+
 	/**
 	 * @param {string} name
 	 * @returns {boolean}
@@ -139,7 +144,7 @@ export class Scope {
 			}
 			outer = outer.#parent;
 		}
-		return GlobalBindings.has(name) || JsKeywords.includes(name);
+		return false;
 	}
 
 	child(porous = false) {

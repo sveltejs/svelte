@@ -7,6 +7,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../../../constants.js';
+import { GlobalBindings } from '../../constants.js';
 
 /**
  * @template {import('./types').ClientTransformState} State
@@ -548,6 +549,8 @@ export function is_hoistable_declaration(binding, name) {
 		!binding.mutated &&
 		!binding.reassigned &&
 		binding.initial?.type === 'Literal' &&
-		!binding.scope.declared_in_outer_scope(name)
+		binding.scope.has_parent() && // i.e. not when context="module"
+		!binding.scope.declared_in_outer_scope(name) &&
+		!GlobalBindings.has(name)
 	);
 }
