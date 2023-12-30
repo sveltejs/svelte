@@ -1,4 +1,5 @@
-Atención
+#Atención
+
 Está a punto de abrir una issue sobre el proyecto de traducción de la documentación de Svelte al español.
 
 Este proyecto está dedicado únicamente a la traducción, por lo que solo se aceptarán issues cuya finalidad sea añadir o modificar traducciones, o cualquier herramienta asociada.
