@@ -13,6 +13,8 @@ Let's jump in...
 
 ## What's new in SvelteKit (2.0 and more!)
 
+With its 2.0 release, SvelteKit is now more capable than ever. Be sure to check out the docs links in each update for more info on how to use each feature as well as the new [Performance](https://kit.svelte.dev/docs/performance) page - which explains how SvelteKit works to make your applications as performant as possible.
+
 - `resolvePath` has been replaced by `resolveRoute` in `$app/paths`. Use it to populate a route ID with params to resolve a pathname (**1.29.0**, [Docs](https://kit.svelte.dev/docs/modules#app-paths-resolveroute), [#11261](https://github.com/sveltejs/kit/pull/11261))
 - `response.arrayBuffer()` will now be inlined during SSR (**1.30.0**, [Docs](https://kit.svelte.dev/docs/load#making-fetch-requests), [#10535](https://github.com/sveltejs/kit/pull/10535))
 - [SvelteKit 2.0.0](https://github.com/sveltejs/kit/blob/main/packages/kit/CHANGELOG.md#200) adds:
@@ -36,6 +38,7 @@ With [Svelte 5 in preview](https://svelte-5-preview.vercel.app/docs/introduction
 - The new `unstate` function allows you to remove reactivity from objects and arrays created with `$state` (**5.0.0-next.19**, [Docs](https://svelte-5-preview.vercel.app/docs/functions#unstate), [#9776](https://github.com/sveltejs/svelte/pull/9776))
 - GamepadEventHandlers for window.addEventListener (`gamepadconnected` and `gamepaddisconnected`) have been added (**5.0.0-next.23**, [Docs](https://developer.mozilla.org/en-US/docs/Web/API/GamepadEvent), [#9861](https://github.com/sveltejs/svelte/pull/9861))
 - `{@const}` can now be used inside snippet blocks (**5.0.0-next.24**, [#9904](https://github.com/sveltejs/svelte/pull/9904))
+- The new `$state.frozen` rune lets you access a read-only version of `$state` that cannot be mutated. This is useful if you want to work with data using immutable patterns rather than mutable patterns (**5.0.0-next.27**, [Docs](https://svelte-5-preview.vercel.app/docs/runes#state-frozen), [#9851](https://github.com/sveltejs/svelte/pull/9851))
 
 For all the release notes going forward, check out [the CHANGELOG on main](https://github.com/sveltejs/svelte/blob/main/packages/svelte/CHANGELOG.md).
 
