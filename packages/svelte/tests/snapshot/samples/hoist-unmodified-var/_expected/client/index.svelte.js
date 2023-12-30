@@ -16,7 +16,7 @@ export default function Hoist_unmodified_var($$anchor, $$props) {
 	var p = $.open($$anchor, true, frag);
 	var text = $.child(p);
 
-	text.nodeValue = `boolean is ${$.stringify(boolean)} and autocapitalize is $${$.stringify(autocapitalize)}`;
+	text.nodeValue = `boolean is ${$.stringify(boolean)} and autocapitalize is ${$.stringify(autocapitalize)}`;
 	$.close($$anchor, p);
 	$.pop();
 }
