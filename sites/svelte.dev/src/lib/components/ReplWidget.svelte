@@ -80,7 +80,7 @@
 	$: svelteUrl =
 		browser && version === 'local'
 			? `${location.origin}/repl/local`
-			: `https://unpkg.com/svelte@${version}`;
+			: `https://esm.run/svelte@${version}`;
 </script>
 
 {#if browser}
