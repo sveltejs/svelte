@@ -1,4 +1,4 @@
-#Atención
+# Atención
 
 Está a punto de abrir una issue sobre el proyecto de traducción de la documentación de Svelte al español.
 
