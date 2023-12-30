@@ -225,14 +225,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
 					only_svg = false;
 					break;
 				}
-			} else if (
-				(node.type === 'Text' && node.data.trim() !== '') ||
-				(node.type === 'ExpressionTag' &&
-					node.expression.type === 'Literal' &&
-					typeof node.expression.value === 'string' &&
-					node.expression.value.trim()) ||
-				node.type === 'HtmlTag'
-			) {
+			} else if (node.type !== 'ConstTag' && (node.type !== 'Text' || node.data.trim() !== '')) {
 				only_svg = false;
 			}
 		}
