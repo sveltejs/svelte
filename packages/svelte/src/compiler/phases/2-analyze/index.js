@@ -1078,20 +1078,31 @@ const common_visitors = {
 
 		context.state.analysis.elements.push(node);
 	},
-	SvelteElement(node, { state }) {
-		state.analysis.elements.push(node);
+	SvelteElement(node, context) {
+		context.state.analysis.elements.push(node);
 
-		const isSvgElement =
+		const is_svg_element =
 			(node.tag.type === 'Identifier' && node.tag.name && SVGElements.includes(node.tag.name)) ||
 			(node.tag.type === 'Literal' &&
 				node.tag.value &&
 				SVGElements.includes(node.tag.value.toString()));
-		const isParentSvgElement =
-			node.parent &&
-			(node.parent.type === 'SvelteElement' || node.parent.type === 'RegularElement') &&
-			node.parent.metadata.svg;
 
-		node.metadata.svg = (isSvgElement || isParentSvgElement) ?? false;
+		const metadata = node.metadata;
+		metadata.svg = !!is_svg_element;
+
+		if (metadata.svg) {
+			return;
+		}
+
+		for (const ancestor of context.path) {
+			if (ancestor.type === 'RegularElement' || ancestor.type === 'SvelteElement') {
+				metadata.svg = ancestor.metadata.svg;
+
+				if (metadata.svg) {
+					break;
+				}
+			}
+		}
 	}
 };
 
