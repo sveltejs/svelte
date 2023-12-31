@@ -727,6 +727,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
+	popover?: 'auto' | 'manual' | '' | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -873,6 +874,8 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	name?: string | undefined | null;
 	type?: 'submit' | 'reset' | 'button' | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	popovertarget?: string | undefined | null;
+	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
