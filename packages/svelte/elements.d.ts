@@ -145,11 +145,6 @@ export interface DOMAttributes<T extends EventTarget> {
 	ontoggle?: ToggleEventHandler<T> | undefined | null;
 	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
 
-	// Detail Events
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
-	ontoggle?: EventHandler<Event, T> | undefined | null;
-	ontogglecapture?: EventHandler<Event, T> | undefined | null;
-
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
 	onkeydown?: KeyboardEventHandler<T> | undefined | null;
@@ -909,6 +904,10 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 	open?: boolean | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
+
+	'on:toggle'?: EventHandler<Event, T> | undefined | null;
+	ontoggle?: EventHandler<Event, T> | undefined | null;
+	ontogglecapture?: EventHandler<Event, T> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
