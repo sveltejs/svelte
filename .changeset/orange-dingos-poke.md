@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: add `popover`, `popovertarget` and `popovertargetaction` attribute types
+fix: add types for popover attributes and events 
