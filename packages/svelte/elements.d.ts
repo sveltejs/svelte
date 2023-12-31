@@ -59,6 +59,7 @@ export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, 
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
+export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
 //
 // DOM Attributes
@@ -135,6 +136,14 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:error'?: EventHandler | undefined | null; // also a Media Event
 	onerror?: EventHandler | undefined | null; // also a Media Event
 	onerrorcapture?: EventHandler | undefined | null; // also a Media Event
+
+	// Popover Events
+	'on:beforetoggle'?: ToggleEventHandler<T> | undefined | null;
+	beforetoggle?: ToggleEventHandler<T> | undefined | null;
+	beforetogglecapture?: ToggleEventHandler<T> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
+	ontoggle?: ToggleEventHandler<T> | undefined | null;
+	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
 
 	// Detail Events
 	'on:toggle'?: EventHandler<Event, T> | undefined | null;
