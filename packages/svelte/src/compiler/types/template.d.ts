@@ -422,6 +422,11 @@ export type Block = EachBlock | IfBlock | AwaitBlock | KeyBlock | SnippetBlock;
 export interface Attribute extends BaseNode {
 	type: 'Attribute';
 	name: string;
+	/**
+	 * The attribute may be omitted when false.
+	 * String values are represented by an array since it may be a combination of text and expression
+	 * values such as `style="color: {color} !import"`.
+	 */
 	value: true | Array<Text | ExpressionTag>;
 	metadata: {
 		dynamic: boolean;

@@ -564,14 +564,20 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	};
 
-	let can_inline = false;
+	let has_expression_tag = false;
+	let can_inline = true;
 	if (Array.isArray(attribute.value)) {
 		for (let value of attribute.value) {
-			if (value.type === 'ExpressionTag' && value.expression.type === 'Identifier') {
-				const binding = context.state.scope
-					.owner(value.expression.name)
-					?.declarations.get(value.expression.name);
-				can_inline ||= can_inline_variable(binding, value.expression.name);
+			if (value.type === 'ExpressionTag') {
+				if (value.expression.type === 'Identifier') {
+					const binding = context.state.scope
+						.owner(value.expression.name)
+						?.declarations.get(value.expression.name);
+					can_inline &&= can_inline_variable(binding, value.expression.name);
+				} else {
+					can_inline = false;
+				}
+				has_expression_tag = true;
 			}
 		}
 	}
@@ -588,7 +594,7 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		);
 		return true;
 	} else {
-		if (can_inline) {
+		if (has_expression_tag && can_inline) {
 			push_template_quasi(context.state, ` ${name}="`);
 			push_template_expression(context.state, grouped_value);
 			push_template_quasi(context.state, `"`);
