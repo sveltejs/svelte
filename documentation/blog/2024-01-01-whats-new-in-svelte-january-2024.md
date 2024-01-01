@@ -54,7 +54,7 @@ For all the release notes going forward, check out [the CHANGELOG on main](https
 - [calcium](https://github.com/ethanlynn/calcium) is a browser extension for devs with fuzzy-find on browser tabs, bookmarks, history
 and common developer docs
 - [hintable](https://github.com/willuhmjs/hintable) is an exciting word guessing game
-- [domain.io](https://domian.io/) retrieves a list of the most likely misspellings for your domain, their availability, and an easy way to register them
+- [domian.io](https://domian.io/) retrieves a list of the most likely misspellings for your domain, their availability, and an easy way to register them
 - [Story Scroller](https://svelte.dev/repl/6182be0c3ada4a15b5046f7d0d031727?version=4.2.8) is a REPL showcasing how Svelte can be used to make a scrollable cards list
 - [The Atlas of Sustainable Development Goals 2023](https://datatopics.worldbank.org/sdgatlas?lang=en) presents interactive storytelling and data visualizations about the 17 Sustainable Development Goals.
 - [Lingotrack](https://lingotrack.com/) is a social platform for you as a language learner to track your progress and find engaging new media
