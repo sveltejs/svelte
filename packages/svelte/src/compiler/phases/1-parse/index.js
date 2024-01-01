@@ -51,10 +51,9 @@ export class Parser {
 
 		const lang_matches = this.template.matchAll(regex_lang_attribute);
 
-		for(const match of lang_matches)
-		{
-			if(match[0]?.[1] === 's') // ensure it starts with '<s' to match script tags
-			{
+		for (const match of lang_matches) {
+			if (match[0]?.[1] === 's') {
+				// ensure it starts with '<s' to match script tags
 				this.ts = match[2] === 'ts';
 				break;
 			}
