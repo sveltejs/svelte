@@ -49,15 +49,14 @@ export class Parser {
 
 		this.template = template.trimRight();
 
-		const lang_matches = this.template.matchAll(regex_lang_attribute);
+		let match_lang;
 
-		for (const match of lang_matches) {
-			if (match[0]?.[1] === 's') {
-				// ensure it starts with '<s' to match script tags
-				this.ts = match[2] === 'ts';
-				break;
-			}
-		}
+		do match_lang = regex_lang_attribute.exec(template);
+		while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
+
+		regex_lang_attribute.lastIndex = 0; // need to reset index to pass tests — otherwise do not use global regex
+
+		this.ts = match_lang?.[2] === 'ts';
 
 		this.root = {
 			css: null,
