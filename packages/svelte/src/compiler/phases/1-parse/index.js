@@ -54,7 +54,7 @@ export class Parser {
 		do match_lang = regex_lang_attribute.exec(template);
 		while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
 
-		regex_lang_attribute.lastIndex = 0; // need to reset index to pass tests — otherwise do not use global regex
+		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
 
 		this.ts = match_lang?.[2] === 'ts';
 
