@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: improve matching of script tag
+fix: improve script `lang` attribute matching
