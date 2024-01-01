@@ -53,9 +53,9 @@ export class Parser {
 
 		for(const match of lang_matches)
 		{
-			if(!match[0]?.startsWith('<!--'))
+			if(match[0]?.[1] === 's') // ensure it starts with '<s' to match script tags
 			{
-				this.ts = match?.[2] === 'ts';
+				this.ts = match[2] === 'ts';
 				break;
 			}
 		}
