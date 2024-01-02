@@ -350,9 +350,16 @@ function execute_signal_fn(signal) {
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
-				for (i = current_dependencies_index; i < dependencies.length; i++) {
+				const dep_length = dependencies.length;
+				// If we have more than 16 elements in the array then use a Set for faster performance
+				// TODO: evaluate if we should always just use a Set or not here?
+				const current_dependencies_set = dep_length > 16 ? new Set(current_dependencies) : null;
+				for (i = current_dependencies_index; i < dep_length; i++) {
 					const dependency = dependencies[i];
-					if (!current_dependencies.includes(dependency)) {
+					if (
+						(current_dependencies_set !== null && !current_dependencies_set.has(dependency)) ||
+						!current_dependencies.includes(dependency)
+					) {
 						remove_consumer(signal, dependency, false);
 					}
 				}
