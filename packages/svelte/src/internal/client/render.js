@@ -1280,6 +1280,10 @@ function handle_event_propagation(root_element, event) {
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
+		if (at_idx !== -1 && root_element === document) {
+			// This is the fallback document listener but the event was already handled -> ignore
+			return;
+		}
 		if (at_idx < path.indexOf(root_element)) {
 			path_idx = at_idx;
 		}
@@ -2778,6 +2782,7 @@ export function mount(component, options) {
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
 	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -2785,9 +2790,23 @@ export function mount(component, options) {
 			const event_name = events[i];
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
 				container.addEventListener(
 					event_name,
 					bound_event_listener,
+					PassiveDelegatedEvents.includes(event_name)
+						? {
+								passive: true
+						  }
+						: undefined
+				);
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(
+					event_name,
+					bound_document_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
