@@ -630,7 +630,7 @@ export interface HTMLAnchorAttributes extends HTMLAttributes<HTMLAnchorElement> 
 	'sapper:prefetch'?: true | undefined | null;
 }
 
-export type HTMLAudioAttributes = HTMLMediaAttributes<HTMLAudioElement>;
+export interface HTMLAudioAttributes extends HTMLMediaAttributes<HTMLAudioElement> {}
 
 export interface HTMLAreaAttributes extends HTMLAttributes<HTMLAreaElement> {
 	alt?: string | undefined | null;
@@ -693,7 +693,7 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 
 	'bind:open'?: boolean | undefined | null;
 
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
+	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
