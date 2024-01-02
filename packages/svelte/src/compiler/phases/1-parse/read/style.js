@@ -227,6 +227,12 @@ function read_selector(parser, inside_pseudo_class = false) {
 				start,
 				end: parser.index
 			});
+			// We read the inner selectors of a pseudo element to ensure it parses correctly,
+			// but we don't do anything with the result.
+			if (parser.eat('(')) {
+				read_selector_list(parser, true);
+				parser.eat(')', true);
+			}
 		} else if (parser.eat(':')) {
 			const name = read_identifier(parser);
 

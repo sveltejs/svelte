@@ -184,7 +184,9 @@ export default class Selector {
 					selector.name === 'global' &&
 					block.selectors.length !== 1 &&
 					(i === block.selectors.length - 1 ||
-						block.selectors.slice(i + 1).some((s) => s.type !== 'PseudoElementSelector'))
+						block.selectors
+							.slice(i + 1)
+							.some((s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'))
 				) {
 					error(selector, 'invalid-css-global-selector-list');
 				}
