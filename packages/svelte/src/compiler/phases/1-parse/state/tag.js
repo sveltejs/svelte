@@ -295,7 +295,7 @@ function open(parser) {
 
 		// TODO: handle error
 		if (!snippet_expression.id) {
-			throw new Error();
+			error(snippet_expression, 'TODO', 'expected a snippet name');
 		}
 
 		// slice the `{#` off the beginning since it's already been eaten
