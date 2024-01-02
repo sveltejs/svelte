@@ -9,8 +9,6 @@ export const prerender = 'auto';
 
 const UUID_REGEX = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/;
 
-/** @type {Set<string>} */
-let examples;
 
 /** @param {import('$lib/server/examples/types').ExamplesData[number]['examples'][number]['files'][number][]} files  */
 function munge(files) {
@@ -38,13 +36,6 @@ export async function GET({ params }) {
 	// Currently, these pages(that are in examples/) are prerendered. To avoid making any FS requests,
 	// We prerender examples pages during build time. That means, when something like `/repl/hello-world.json`
 	// is accessed, this function won't be run at all, as it will be served from the filesystem
-
-	examples = new Set(
-		get_examples_list(examples_data)
-			.map((category) => category.examples)
-			.flat()
-			.map((example) => example.slug)
-	);
 
 	const example = get_example(examples_data, params.id);
 	if (example) {
