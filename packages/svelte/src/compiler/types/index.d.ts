@@ -269,7 +269,13 @@ export interface Binding {
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 */
-	initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock;
+	initial:
+		| null
+		| Expression
+		| FunctionDeclaration
+		| ClassDeclaration
+		| ImportDeclaration
+		| EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
