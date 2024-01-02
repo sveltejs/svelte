@@ -59,6 +59,7 @@ export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, 
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
+export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
 //
 // DOM Attributes
@@ -94,8 +95,9 @@ export interface DOMAttributes<T extends EventTarget> {
 	'on:load'?: EventHandler | undefined | null;
 	'on:error'?: EventHandler | undefined | null; // also a Media Event
 
-	// Detail Events
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
+	// Popover Events
+	'on:beforetoggle'?: ToggleEventHandler<T> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
@@ -517,6 +519,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
+	popover?: 'auto' | 'manual' | '' | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -584,9 +587,9 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	'bind:innerText'?: string | undefined | null;
 
 	readonly 'bind:contentRect'?: DOMRectReadOnly | undefined | null;
-	readonly 'bind:contentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:borderBoxSize'?: Array<ResizeObserverSize> | undefined | null;
-	readonly 'bind:devicePixelContentBoxSize'?: Array<ResizeObserverSize> | undefined | null;
+	readonly 'bind:contentBoxSize'?: ResizeObserverSize[] | undefined | null;
+	readonly 'bind:borderBoxSize'?: ResizeObserverSize[] | undefined | null;
+	readonly 'bind:devicePixelContentBoxSize'?: ResizeObserverSize[] | undefined | null;
 
 	// SvelteKit
 	'data-sveltekit-keepfocus'?: true | '' | 'off' | undefined | null;
@@ -663,6 +666,8 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	name?: string | undefined | null;
 	type?: 'submit' | 'reset' | 'button' | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	popovertarget?: string | undefined | null;
+	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -687,6 +692,8 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 	open?: boolean | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
+
+	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
