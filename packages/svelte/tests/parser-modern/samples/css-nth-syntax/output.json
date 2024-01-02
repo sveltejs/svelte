@@ -2,7 +2,7 @@
 	"css": {
 		"type": "Style",
 		"start": 0,
-		"end": 586,
+		"end": 806,
 		"attributes": [],
 		"children": [
 			{
@@ -601,32 +601,292 @@
 				},
 				"start": 530,
 				"end": 577
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 580,
+					"end": 601,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 580,
+							"end": 601,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 580,
+									"end": 582
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "nth-of-type",
+									"args": {
+										"type": "SelectorList",
+										"start": 595,
+										"end": 600,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 595,
+												"end": 600,
+												"children": [
+													{
+														"type": "Nth",
+														"value": "10n+1",
+														"start": 595,
+														"end": 600
+													}
+												]
+											}
+										]
+									},
+									"start": 582,
+									"end": 601
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 601,
+					"end": 633,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 611,
+							"end": 626,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 580,
+				"end": 633
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 636,
+					"end": 657,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 636,
+							"end": 657,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 636,
+									"end": 638
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "nth-of-type",
+									"args": {
+										"type": "SelectorList",
+										"start": 651,
+										"end": 656,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 651,
+												"end": 656,
+												"children": [
+													{
+														"type": "Nth",
+														"value": "-2n+3",
+														"start": 651,
+														"end": 656
+													}
+												]
+											}
+										]
+									},
+									"start": 638,
+									"end": 657
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 657,
+					"end": 689,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 667,
+							"end": 682,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 636,
+				"end": 689
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 692,
+					"end": 711,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 692,
+							"end": 711,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 692,
+									"end": 694
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "nth-of-type",
+									"args": {
+										"type": "SelectorList",
+										"start": 707,
+										"end": 710,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 707,
+												"end": 710,
+												"children": [
+													{
+														"type": "Nth",
+														"value": "+12",
+														"start": 707,
+														"end": 710
+													}
+												]
+											}
+										]
+									},
+									"start": 694,
+									"end": 711
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 711,
+					"end": 743,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 721,
+							"end": 736,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 692,
+				"end": 743
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 746,
+					"end": 765,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 746,
+							"end": 765,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "h1",
+									"start": 746,
+									"end": 748
+								},
+								{
+									"type": "PseudoClassSelector",
+									"name": "nth-of-type",
+									"args": {
+										"type": "SelectorList",
+										"start": 761,
+										"end": 764,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 761,
+												"end": 764,
+												"children": [
+													{
+														"type": "Nth",
+														"value": "+3n",
+														"start": 761,
+														"end": 764
+													}
+												]
+											}
+										]
+									},
+									"start": 748,
+									"end": 765
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 765,
+					"end": 797,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 775,
+							"end": 790,
+							"property": "background",
+							"value": "red"
+						}
+					]
+				},
+				"start": 746,
+				"end": 797
 			}
 		],
 		"content": {
 			"start": 7,
-			"end": 578,
-			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n    h1:nth-child(\n        n\n    ) {\n        background: red;\n    }\n    h1:global(nav) {\n        background: red;\n    }\n"
+			"end": 798,
+			"styles": "\n    /* test that all these are parsed correctly */\n\th1:nth-of-type(2n+1){\n        background: red;\n    }\n    h1:nth-child(-n + 3 of li.important) {\n        background: red;\n    }\n    h1:nth-child(1) {\n        background: red;\n    }\n    h1:nth-child(p) {\n        background: red;\n    }\n    h1:nth-child(n+7) {\n        background: red;\n    }\n    h1:nth-child(even) {\n        background: red;\n    }\n    h1:nth-child(odd) {\n        background: red;\n    }\n    h1:nth-child(\n        n\n    ) {\n        background: red;\n    }\n    h1:global(nav) {\n        background: red;\n    }\n\t\th1:nth-of-type(10n+1){\n        background: red;\n    }\n\t\th1:nth-of-type(-2n+3){\n        background: red;\n    }\n\t\th1:nth-of-type(+12){\n        background: red;\n    }\n\t\th1:nth-of-type(+3n){\n        background: red;\n    }\n"
 		}
 	},
 	"js": [],
-	"start": 588,
-	"end": 600,
+	"start": 808,
+	"end": 820,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
 		"nodes": [
 			{
 				"type": "Text",
-				"start": 586,
-				"end": 588,
+				"start": 806,
+				"end": 808,
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
 				"type": "RegularElement",
-				"start": 588,
-				"end": 600,
+				"start": 808,
+				"end": 820,
 				"name": "h1",
 				"attributes": [],
 				"fragment": {
@@ -634,8 +894,8 @@
 					"nodes": [
 						{
 							"type": "Text",
-							"start": 592,
-							"end": 595,
+							"start": 812,
+							"end": 815,
 							"raw": "Foo",
 							"data": "Foo"
 						}
