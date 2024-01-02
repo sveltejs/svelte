@@ -564,24 +564,9 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 	};
 
-	let has_expression_tag = false;
-	let can_inline = true;
-	if (Array.isArray(attribute.value)) {
-		for (let value of attribute.value) {
-			if (value.type === 'ExpressionTag') {
-				if (value.expression.type === 'Identifier') {
-					const binding = context.state.scope
-						.owner(value.expression.name)
-						?.declarations.get(value.expression.name);
-					can_inline &&= can_inline_variable(binding, value.expression.name);
-				} else {
-					can_inline = false;
-				}
-				has_expression_tag = true;
-			}
-		}
-	}
-
+	const { has_expression_tag, can_inline } = Array.isArray(attribute.value)
+		? can_inline_all_nodes(attribute.value, context.state)
+		: { has_expression_tag: false, can_inline: true };
 	if (attribute.metadata.dynamic && !can_inline) {
 		const id = state.scope.generate(`${node_id.name}_${name}`);
 		serialize_update_assignment(
@@ -603,6 +588,29 @@ function serialize_element_attribute_update_assignment(element, node_id, attribu
 		}
 		return false;
 	}
+}
+
+/**
+ * @param {(import('#compiler').Text | import('#compiler').ExpressionTag)[]} nodes
+ * @param {import('../types.js').ComponentClientTransformState} state
+ */
+function can_inline_all_nodes(nodes, state) {
+	let can_inline = true;
+	let has_expression_tag = false;
+	for (let value of nodes) {
+		if (value.type === 'ExpressionTag') {
+			if (value.expression.type === 'Identifier') {
+				const binding = state.scope
+					.owner(value.expression.name)
+					?.declarations.get(value.expression.name);
+				can_inline &&= can_inline_variable(binding, value.expression.name);
+			} else {
+				can_inline = false;
+			}
+			has_expression_tag = true;
+		}
+	}
+	return { can_inline, has_expression_tag };
 }
 
 /**
@@ -1577,7 +1585,19 @@ function process_children(nodes, parent, { visit, state }) {
 				grouped: b.stmt(b.call('$.text', text_id, assignment))
 			});
 		} else {
-			state.init.push(init);
+			// TODO: uncomment this
+			// const { can_inline } = can_inline_all_nodes(sequence, state);
+			const can_inline = false;
+			if (can_inline) {
+				for (let i = 0; i < assignment.quasis.length; i++) {
+					push_template_quasi(state, assignment.quasis[i].value.raw);
+					if (i <= assignment.expressions.length - 1) {
+						push_template_expression(state, assignment.expressions[i]);
+					}
+				}
+			} else {
+				state.init.push(init);
+			}
 		}
 
 		expression = b.call('$.sibling', text_id);
@@ -1703,6 +1723,7 @@ function serialize_template_literal(values, visit, state) {
 	let contains_call_expression = false;
 	quasis.push(b.quasi(''));
 
+	let can_inline = true;
 	for (let i = 0; i < values.length; i++) {
 		const node = values[i];
 		if (node.type === 'Text') {
