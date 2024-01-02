@@ -139,8 +139,8 @@ export interface DOMAttributes<T extends EventTarget> {
 
 	// Popover Events
 	'on:beforetoggle'?: ToggleEventHandler<T> | undefined | null;
-	beforetoggle?: ToggleEventHandler<T> | undefined | null;
-	beforetogglecapture?: ToggleEventHandler<T> | undefined | null;
+	onbeforetoggle?: ToggleEventHandler<T> | undefined | null;
+	onbeforetogglecapture?: ToggleEventHandler<T> | undefined | null;
 	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
 	ontoggle?: ToggleEventHandler<T> | undefined | null;
 	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
@@ -905,9 +905,9 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 
 	'bind:open'?: boolean | undefined | null;
 
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
-	ontoggle?: EventHandler<Event, T> | undefined | null;
-	ontogglecapture?: EventHandler<Event, T> | undefined | null;
+	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontoggle?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontogglecapture?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
