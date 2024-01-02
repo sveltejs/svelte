@@ -1,4 +1,5 @@
-/types
+/types/*.map
+/types/compiler
 /compiler.cjs
 
 /action.d.ts
