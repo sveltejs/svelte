@@ -219,28 +219,22 @@ function read_selector(parser, inside_pseudo_class = false) {
 				start,
 				end: parser.index
 			});
-		} else if (parser.eat('::')) {
-			children.push({
-				type: 'PseudoElementSelector',
-				name: read_identifier(parser),
-				start,
-				end: parser.index
-			});
 		} else if (parser.eat(':')) {
+			const psuedo_element = parser.eat(':');
+
 			const name = read_identifier(parser);
 
-			/** @type {null | import('#compiler').Css.SelectorList} */
 			let args = null;
 
 			if (parser.eat('(')) {
 				args = read_selector_list(parser, true);
 				parser.eat(')', true);
-			} else if (name === 'global') {
+			} else if (!psuedo_element && name === 'global') {
 				error(parser.index, 'invalid-css-global-selector');
 			}
 
 			children.push({
-				type: 'PseudoClassSelector',
+				type: psuedo_element ? 'PseudoElementSelector' : 'PseudoClassSelector',
 				name,
 				args,
 				start,

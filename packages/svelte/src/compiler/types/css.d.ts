@@ -54,6 +54,7 @@ export interface AttributeSelector extends BaseNode {
 export interface PseudoElementSelector extends BaseNode {
 	type: 'PseudoElementSelector';
 	name: string;
+	args: SelectorList | null;
 }
 
 export interface PseudoClassSelector extends BaseNode {
