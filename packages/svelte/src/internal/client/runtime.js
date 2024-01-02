@@ -349,6 +349,15 @@ function execute_signal_fn(signal) {
 
 		if (current_dependencies !== null) {
 			let i;
+			if (dependencies !== null) {
+				for (i = current_dependencies_index; i < dependencies.length; i++) {
+					const dependency = dependencies[i];
+					if (!current_dependencies.includes(dependency)) {
+						remove_consumer(signal, dependency, false);
+					}
+				}
+			}
+
 			if (dependencies !== null && current_dependencies_index > 0) {
 				dependencies.length = current_dependencies_index + current_dependencies.length;
 				for (i = 0; i < current_dependencies.length; i++) {
@@ -373,7 +382,7 @@ function execute_signal_fn(signal) {
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumer(signal, current_dependencies_index, false);
+			remove_consumers(signal, current_dependencies_index, false);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -392,40 +401,51 @@ function execute_signal_fn(signal) {
 /**
  * @template V
  * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Signal<V>} dependency
+ * @param {boolean} remove_unowned
+ * @returns {void}
+ */
+function remove_consumer(signal, dependency, remove_unowned) {
+	const consumers = dependency.c;
+	let consumers_length = 0;
+	if (consumers !== null) {
+		consumers_length = consumers.length - 1;
+		const index = consumers.indexOf(signal);
+		if (index !== -1) {
+			if (consumers_length === 0) {
+				dependency.c = null;
+			} else {
+				// Swap with last element and then remove.
+				consumers[index] = consumers[consumers_length];
+				consumers.pop();
+			}
+		}
+	}
+	if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+		// If the signal is unowned then we need to make sure to change it to dirty.
+		set_signal_status(dependency, DIRTY);
+		remove_consumers(
+			/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
+			0,
+			true
+		);
+	}
+}
+
+/**
+ * @template V
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {number} start_index
  * @param {boolean} remove_unowned
  * @returns {void}
  */
-function remove_consumer(signal, start_index, remove_unowned) {
+function remove_consumers(signal, start_index, remove_unowned) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			const consumers = dependency.c;
-			let consumers_length = 0;
-			if (consumers !== null) {
-				consumers_length = consumers.length - 1;
-				const index = consumers.indexOf(signal);
-				if (index !== -1) {
-					if (consumers_length === 0) {
-						dependency.c = null;
-					} else {
-						// Swap with last element and then remove.
-						consumers[index] = consumers[consumers_length];
-						consumers.pop();
-					}
-				}
-			}
-			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
-				// If the signal is unowned then we need to make sure to change it to dirty.
-				set_signal_status(dependency, DIRTY);
-				remove_consumer(
-					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
-					0,
-					true
-				);
-			}
+			remove_consumer(signal, dependency, remove_unowned);
 		}
 	}
 }
@@ -445,7 +465,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
-				remove_consumer(reference, 0, true);
+				remove_consumers(reference, 0, true);
 				reference.d = null;
 			}
 		}
@@ -1103,7 +1123,7 @@ export function destroy_signal(signal) {
 	const destroy = signal.y;
 	const flags = signal.f;
 	destroy_references(signal);
-	remove_consumer(signal, 0, true);
+	remove_consumers(signal, 0, true);
 	signal.i =
 		signal.r =
 		signal.y =
