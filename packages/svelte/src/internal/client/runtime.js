@@ -349,8 +349,6 @@ function execute_signal_fn(signal) {
 
 		if (current_dependencies !== null) {
 			let i;
-			remove_consumer(signal, current_dependencies_index, false);
-
 			if (dependencies !== null && current_dependencies_index > 0) {
 				dependencies.length = current_dependencies_index + current_dependencies.length;
 				for (i = 0; i < current_dependencies.length; i++) {
@@ -365,11 +363,12 @@ function execute_signal_fn(signal) {
 			if (!current_skip_consumer) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
+					const consumers = dependency.c;
 
-					if (dependency.c === null) {
+					if (consumers === null) {
 						dependency.c = [signal];
-					} else {
-						dependency.c.push(signal);
+					} else if (consumers[consumers.length - 1] !== signal) {
+						consumers.push(signal);
 					}
 				}
 			}
@@ -841,10 +840,16 @@ export function get(signal) {
 			!(unowned && current_effect !== null)
 		) {
 			current_dependencies_index++;
-		} else if (current_dependencies === null) {
-			current_dependencies = [signal];
-		} else {
-			current_dependencies.push(signal);
+		} else if (
+			dependencies === null ||
+			current_dependencies_index === 0 ||
+			dependencies[current_dependencies_index - 1] !== signal
+		) {
+			if (current_dependencies === null) {
+				current_dependencies = [signal];
+			} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
+				current_dependencies.push(signal);
+			}
 		}
 		if (
 			current_untracked_writes !== null &&
