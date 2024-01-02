@@ -18,8 +18,7 @@
   <text x="0" y="26">not A</text>
 {/if}
 
-</svg>
-
 {#each arr as item, idx}
   <text x={idx * 10} y={42}>{item}</text>
 {/each}
+</svg>

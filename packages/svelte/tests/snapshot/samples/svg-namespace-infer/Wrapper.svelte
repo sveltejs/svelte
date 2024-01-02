@@ -2,6 +2,8 @@
   let { a, arr } = $props();
 </script>
 
+<text x="0" y=14>outside blocks</text>
+
 {#if a}
   {@const tag = "test"}
   <text x="0" y="26">A {tag}</text>
