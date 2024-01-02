@@ -64,7 +64,7 @@ let current_dependencies = null;
 let current_dependencies_index = 0;
 /** @type {null | import('./types.js').Signal[]} */
 let current_untracked_writes = null;
-/** @type {null | import('./types.js').Signal} */
+/** @type {null | import('./types.js').SignalDebug} */
 let last_inspected_signal = null;
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
@@ -81,7 +81,7 @@ let captured_signals = new Set();
 /** @type {Function | null} */
 let inspect_fn = null;
 
-/** @type {Array<import('./types.js').SourceSignal & import('./types.js').SourceSignalDebug>} */
+/** @type {Array<import('./types.js').SignalDebug>} */
 let inspect_captured_signals = [];
 
 // Handle rendering tree blocks and anchors
@@ -127,7 +127,6 @@ export function batch_inspect(target, prop, receiver) {
 		} finally {
 			is_batching_effect = previously_batching_effect;
 			if (last_inspected_signal !== null) {
-				// @ts-expect-error
 				for (const fn of last_inspected_signal.inspect) fn();
 				last_inspected_signal = null;
 			}
@@ -737,8 +736,7 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			// @ts-expect-error
-			for (const fn of signal.inspect) fn();
+			for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 		}
 	}
 }
@@ -841,8 +839,7 @@ export function unsubscribe_on_destroy(stores) {
 export function get(signal) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
-		// @ts-expect-error
-		signal.inspect.add(inspect_fn);
+		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -1111,10 +1108,9 @@ export function set_signal_value(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				last_inspected_signal = signal;
+				last_inspected_signal = /** @type {import('./types.js').SignalDebug} */ (signal);
 			} else {
-				// @ts-expect-error
-				for (const fn of signal.inspect) fn();
+				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 			}
 		}
 	}
@@ -1836,6 +1832,37 @@ function deep_read(value, visited = new Set()) {
 	}
 }
 
+/**
+ * Like `unstate`, but recursively traverses into normal arrays/objects to find potential states in them.
+ * @param {any} value
+ * @param {Map<any, any>} visited
+ * @returns {any}
+ */
+function deep_unstate(value, visited = new Map()) {
+	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		const unstated = unstate(value);
+		if (unstated !== value) {
+			visited.set(value, unstated);
+			return unstated;
+		}
+
+		let contains_unstated = false;
+		/** @type {any} */
+		const nested_unstated = Array.isArray(value) ? [] : {};
+		for (let key in value) {
+			const result = deep_unstate(value[key], visited);
+			nested_unstated[key] = result;
+			if (result !== value[key]) {
+				contains_unstated = true;
+			}
+		}
+
+		visited.set(value, contains_unstated ? nested_unstated : value);
+	}
+
+	return visited.get(value) ?? value;
+}
+
 // TODO remove in a few versions, before 5.0 at the latest
 let warned_inspect_changed = false;
 
@@ -1849,7 +1876,7 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value().map(unstate);
+			const value = get_value().map((v) => deep_unstate(v));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
 				// eslint-disable-next-line no-console
 				console.warn(

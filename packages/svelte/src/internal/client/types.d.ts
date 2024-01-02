@@ -108,6 +108,8 @@ export type ComputationSignal<V = unknown> = {
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
 
+export type SignalDebug<V = unknown> = SourceSignalDebug & Signal<V>;
+
 export type EffectSignal = ComputationSignal<null | (() => void)>;
 
 export type MaybeSignal<T = unknown> = T | Signal<T>;
