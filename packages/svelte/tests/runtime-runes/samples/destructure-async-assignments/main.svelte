@@ -20,6 +20,19 @@
     let s = $state(0);
     let t = $state(0);
     let u = $state(0);
+    let v = $state(0);
+    let w = $state(0);
+    let x = $state(0);
+    let y = $state(0);
+    let z = $state(0);
+
+    const get_vwx = () => {
+        return Promise.resolve({ v: 22, rest: [23, 24] });
+    }
+
+    const get_y = () => {
+        return Promise.resolve([24, 25]);
+    }
 
     const update = async () => {
         [a, b] = [1, await Promise.resolve(2)];
@@ -42,6 +55,8 @@
         ({ val1 = (async function (x) { return await x; })(Promise.resolve(18)), r = await val1 }
             = ({ val2 = (async (x) => await x)(Promise.resolve(17)), q = await val2 } = []));
         ({ u = 21 } = ({ t = await Promise.resolve(20) } = ([s] = [await Promise.resolve(19)])));
+        ({ v, rest: [w] } = await get_vwx());
+        [x, y, ...{ z = 26 }] = await get_y();
     }
 </script>
 
@@ -67,3 +82,8 @@
 <p>{s}</p>
 <p>{t}</p>
 <p>{u}</p>
+<p>{v}</p>
+<p>{w}</p>
+<p>{x}</p>
+<p>{y}</p>
+<p>{z}</p>
