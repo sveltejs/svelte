@@ -166,6 +166,7 @@ function get_delegated_event(node, context) {
 		return non_hoistable;
 	}
 
+	const visited_references = new Set();
 	const scope = target_function.metadata.scope;
 	for (const [reference] of scope.references) {
 		// Bail-out if the arguments keyword is used
@@ -173,6 +174,15 @@ function get_delegated_event(node, context) {
 			return non_hoistable;
 		}
 		const binding = scope.get(reference);
+
+		// If we have multiple references to the same store using $ prefix, bail out.
+		if (
+			binding !== null &&
+			binding.kind === 'store_sub' &&
+			visited_references.has(reference.slice(1))
+		) {
+			return non_hoistable;
+		}
 
 		if (
 			binding !== null &&
@@ -188,6 +198,7 @@ function get_delegated_event(node, context) {
 		) {
 			return non_hoistable;
 		}
+		visited_references.add(reference);
 	}
 	return { type: 'hoistable', function: target_function };
 }
@@ -585,6 +596,7 @@ const legacy_scope_tweaker = {
 				);
 				if (
 					binding.kind === 'state' ||
+					binding.kind === 'frozen_state' ||
 					(binding.kind === 'normal' && binding.declaration_kind === 'let')
 				) {
 					binding.kind = 'prop';
@@ -636,18 +648,19 @@ const legacy_scope_tweaker = {
 const runes_scope_js_tweaker = {
 	VariableDeclarator(node, { state }) {
 		if (node.init?.type !== 'CallExpression') return;
-		if (get_rune(node.init, state.scope) === null) return;
+		const rune = get_rune(node.init, state.scope);
+		if (rune === null) return;
 
 		const callee = node.init.callee;
-		if (callee.type !== 'Identifier') return;
+		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		const name = callee.name;
-		if (name !== '$state' && name !== '$derived') return;
+		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived') return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
 			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
-			binding.kind = name === '$state' ? 'state' : 'derived';
+			binding.kind =
+				rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived';
 		}
 	}
 };
@@ -665,28 +678,31 @@ const runes_scope_tweaker = {
 	VariableDeclarator(node, { state }) {
 		const init = unwrap_ts_expression(node.init);
 		if (!init || init.type !== 'CallExpression') return;
-		if (get_rune(init, state.scope) === null) return;
+		const rune = get_rune(init, state.scope);
+		if (rune === null) return;
 
 		const callee = init.callee;
-		if (callee.type !== 'Identifier') return;
+		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		const name = callee.name;
-		if (name !== '$state' && name !== '$derived' && name !== '$props') return;
+		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived' && rune !== '$props')
+			return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
 			const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(path.node.name));
 			binding.kind =
-				name === '$state'
+				rune === '$state'
 					? 'state'
-					: name === '$derived'
+					: rune === '$state.frozen'
+					? 'frozen_state'
+					: rune === '$derived'
 					? 'derived'
 					: path.is_rest
 					? 'rest_prop'
 					: 'prop';
 		}
 
-		if (name === '$props') {
+		if (rune === '$props') {
 			for (const property of /** @type {import('estree').ObjectPattern} */ (node.id).properties) {
 				if (property.type !== 'Property') continue;
 
@@ -898,7 +914,9 @@ const common_visitors = {
 
 			if (
 				node !== binding.node &&
-				(binding.kind === 'state' || binding.kind === 'derived') &&
+				(binding.kind === 'state' ||
+					binding.kind === 'frozen_state' ||
+					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
 			) {
 				warn(context.state.analysis.warnings, node, context.path, 'static-state-reference');

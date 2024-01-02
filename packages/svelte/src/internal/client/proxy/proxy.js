@@ -140,13 +140,28 @@ const handler = {
 
 	deleteProperty(target, prop) {
 		const metadata = target[STATE_SYMBOL];
-
 		const s = metadata.s.get(prop);
+		const is_array = metadata.a;
+		const boolean = delete target[prop];
+
+		// If we have mutated an array directly, and the deletion
+		// was successful we will also need to update the length
+		// before updating the field or the version. This is to
+		// ensure any effects observing length can execute before
+		// effects that listen to the fields – otherwise they will
+		// operate an an index that no longer exists.
+		if (is_array && boolean) {
+			const ls = metadata.s.get('length');
+			const length = target.length - 1;
+			if (ls !== undefined && ls.v !== length) {
+				set(ls, length);
+			}
+		}
 		if (s !== undefined) set(s, UNINITIALIZED);
 
 		if (prop in target) update(metadata.v);
 
-		return delete target[prop];
+		return boolean;
 	},
 
 	get(target, prop, receiver) {

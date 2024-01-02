@@ -1,5 +1,27 @@
 # svelte
 
+## 5.0.0-next.27
+
+### Patch Changes
+
+- fix: evaluate transition parameters when the transition runs ([#9836](https://github.com/sveltejs/svelte/pull/9836))
+
+- feat: add `$state.frozen` rune ([#9851](https://github.com/sveltejs/svelte/pull/9851))
+
+- fix: correctly transform prop fallback values that use other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
+
+- fix: escape template literal characters in text sequences ([#9973](https://github.com/sveltejs/svelte/pull/9973))
+
+- fix: inject comment in place of `<noscript>` in client output ([#9953](https://github.com/sveltejs/svelte/pull/9953))
+
+## 5.0.0-next.26
+
+### Patch Changes
+
+- fix: better handle array property deletion reactivity ([#9921](https://github.com/sveltejs/svelte/pull/9921))
+
+- fix: improve event delegation handler hoisting ([#9929](https://github.com/sveltejs/svelte/pull/9929))
+
 ## 5.0.0-next.25
 
 ### Patch Changes
@@ -124,7 +146,7 @@
 
 ### Patch Changes
 
-- feat: proxied staet ([#9739](https://github.com/sveltejs/svelte/pull/9739))
+- feat: proxied state ([#9739](https://github.com/sveltejs/svelte/pull/9739))
 
 - chore: more validation errors ([#9723](https://github.com/sveltejs/svelte/pull/9723))
 

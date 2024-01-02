@@ -33,6 +33,7 @@ import {
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
+import { sanitize_template_string } from '../../../../utils/sanitize_template_string.js';
 
 /**
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} element
@@ -1014,8 +1015,7 @@ function create_block(parent, name, nodes, context) {
 		context.path,
 		namespace,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		false
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0) {
@@ -1245,6 +1245,7 @@ function serialize_event_handler(node, { state, visit }) {
 			if (
 				binding !== null &&
 				(binding.kind === 'state' ||
+					binding.kind === 'frozen_state' ||
 					binding.kind === 'legacy_reactive' ||
 					binding.kind === 'derived' ||
 					binding.kind === 'prop' ||
@@ -1636,7 +1637,7 @@ function serialize_template_literal(values, visit, state) {
 		const node = values[i];
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-			last.value.raw += node.data;
+			last.value.raw += sanitize_template_string(node.data);
 		} else {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;
@@ -1821,6 +1822,11 @@ export const template_visitors = {
 		);
 	},
 	RegularElement(node, context) {
+		if (node.name === 'noscript') {
+			context.state.template.push('<!>');
+			return;
+		}
+
 		const metadata = context.state.metadata;
 		const child_metadata = {
 			...context.state.metadata,
@@ -2012,8 +2018,7 @@ export const template_visitors = {
 			context.path,
 			child_metadata.namespace,
 			state.preserve_whitespace,
-			state.options.preserveComments,
-			false
+			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {

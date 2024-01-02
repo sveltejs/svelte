@@ -26,6 +26,7 @@ import { binding_properties } from '../../bindings.js';
 import { regex_starts_with_newline, regex_whitespaces_strict } from '../../patterns.js';
 import { remove_types } from '../typescript.js';
 import { DOMBooleanAttributes } from '../../../../constants.js';
+import { sanitize_template_string } from '../../../utils/sanitize_template_string.js';
 
 /**
  * @param {string} value
@@ -118,14 +119,6 @@ function serialize_template(template, out = b.id('out')) {
 }
 
 /**
- * @param {string} str
- * @returns {string}
- */
-function sanitize_template_string(str) {
-	return str.replace(/(`|\${|\\)/g, '\\$1');
-}
-
-/**
  * Processes an array of template nodes, joining sibling text/expression nodes and
  * recursing into child nodes.
  * @param {Array<import('#compiler').SvelteNode | import('./types').Anchor>} nodes
@@ -194,7 +187,10 @@ function process_children(nodes, parent, { visit, state }) {
 			const node = sequence[i];
 			if (node.type === 'Text' || node.type === 'Comment') {
 				let last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
-				last.value.raw += node.type === 'Comment' ? `<!--${node.data}-->` : escape_html(node.data);
+				last.value.raw +=
+					node.type === 'Comment'
+						? `<!--${node.data}-->`
+						: sanitize_template_string(escape_html(node.data));
 			} else if (node.type === 'Anchor') {
 				expressions.push(node.id);
 				quasis.push(b.quasi('', i + 1 === sequence.length));
@@ -252,8 +248,7 @@ function create_block(parent, nodes, context, anchor) {
 		context.path,
 		namespace,
 		context.state.preserve_whitespace,
-		context.state.options.preserveComments,
-		true
+		context.state.options.preserveComments
 	);
 
 	if (hoisted.length === 0 && trimmed.length === 0 && !anchor) {
@@ -446,6 +441,7 @@ function serialize_set_binding(node, context, fallback) {
 
 	if (
 		binding.kind !== 'state' &&
+		binding.kind !== 'frozen_state' &&
 		binding.kind !== 'prop' &&
 		binding.kind !== 'each' &&
 		binding.kind !== 'legacy_reactive' &&
@@ -558,7 +554,7 @@ const javascript_visitors_runes = {
 		if (node.value != null && node.value.type === 'CallExpression') {
 			const rune = get_rune(node.value, state.scope);
 
-			if (rune === '$state' || rune === '$derived') {
+			if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
 				return {
 					...node,
 					value:
@@ -1189,8 +1185,7 @@ const template_visitors = {
 			inner_context.path,
 			metadata.namespace,
 			state.preserve_whitespace,
-			state.options.preserveComments,
-			true
+			state.options.preserveComments
 		);
 
 		for (const node of hoisted) {
