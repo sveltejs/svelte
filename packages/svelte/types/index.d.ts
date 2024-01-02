@@ -995,9 +995,14 @@ declare module 'svelte/compiler' {
 	export const VERSION: string;
 	class Scope {
 		
-		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
+		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean, is_top_level: boolean);
 		
 		root: ScopeRoot;
+		/**
+		 * Whether this is a top-level script scope.
+		 * I.e. `<script>`, `<script context=module>`, or `.svelte.js`.
+		 * */
+		is_top_level: boolean;
 		/**
 		 * A map of every identifier declared by this scope, and all the
 		 * identifiers that reference it
@@ -1022,6 +1027,10 @@ declare module 'svelte/compiler' {
 		function_depth: number;
 		
 		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration): Binding;
+		
+		has_parent(): boolean;
+		
+		declared_in_outer_scope(name: string): boolean;
 		child(porous?: boolean): Scope;
 		
 		generate(preferred_name: string): string;
@@ -1448,6 +1457,11 @@ declare module 'svelte/compiler' {
 	interface Attribute extends BaseNode {
 		type: 'Attribute';
 		name: string;
+		/**
+		 * The attribute may be omitted when false.
+		 * String values are represented by an array since it may be a combination of text and expression
+		 * values such as `style="color: {color} !import"`.
+		 */
 		value: true | Array<Text | ExpressionTag>;
 		metadata: {
 			dynamic: boolean;
