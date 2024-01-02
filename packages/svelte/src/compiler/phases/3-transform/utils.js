@@ -209,10 +209,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
 			parent_node.type === 'Component' ||
 			parent_node.type === 'SvelteComponent' ||
 			parent_node.type === 'SvelteFragment' ||
-			parent_node.type === 'SnippetBlock' ||
-			parent_node.type === 'IfBlock' ||
-			parent_node.type === 'EachBlock' ||
-			parent_node.type === 'AwaitBlock')
+			parent_node.type === 'SnippetBlock')
 	) {
 		// Heuristic: Keep current namespace, unless we find a regular element,
 		// in which case we always want html, or we only find svg nodes,
@@ -225,7 +222,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
 					only_svg = false;
 					break;
 				}
-			} else if (node.type !== 'ConstTag' && (node.type !== 'Text' || node.data.trim() !== '')) {
+			} else if (node.type !== 'Text' || node.data.trim() !== '') {
 				only_svg = false;
 			}
 		}
