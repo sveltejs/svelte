@@ -290,7 +290,7 @@ function open(parser) {
 
 		// TODO: handle error
 		if (snippet_expression.type !== 'FunctionExpression') {
-			throw new Error();
+			error(snippet_expression, 'TODO', 'expected a function expression');
 		}
 
 		// TODO: handle error
