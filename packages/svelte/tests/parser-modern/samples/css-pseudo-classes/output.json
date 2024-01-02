@@ -1,0 +1,246 @@
+{
+	"css": {
+		"type": "Style",
+		"start": 0,
+		"end": 313,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 60,
+					"end": 86,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 60,
+							"end": 86,
+							"children": [
+								{
+									"type": "PseudoElementSelector",
+									"name": "view-transition-old",
+									"start": 60,
+									"end": 81
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 88,
+					"end": 109,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 92,
+							"end": 102,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 60,
+				"end": 109
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 111,
+					"end": 146,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 111,
+							"end": 146,
+							"children": [
+								{
+									"type": "PseudoClassSelector",
+									"name": "global",
+									"args": {
+										"type": "SelectorList",
+										"start": 119,
+										"end": 145,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 119,
+												"end": 145,
+												"children": [
+													{
+														"type": "PseudoElementSelector",
+														"name": "view-transition-old",
+														"start": 119,
+														"end": 140
+													}
+												]
+											}
+										]
+									},
+									"start": 111,
+									"end": 146
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 148,
+					"end": 169,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 152,
+							"end": 162,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 111,
+				"end": 169
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 171,
+					"end": 199,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 171,
+							"end": 199,
+							"children": [
+								{
+									"type": "PseudoElementSelector",
+									"name": "highlight",
+									"start": 171,
+									"end": 182
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 200,
+					"end": 218,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 204,
+							"end": 214,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 171,
+				"end": 218
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 220,
+					"end": 245,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 220,
+							"end": 245,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "custom-element",
+									"start": 220,
+									"end": 234
+								},
+								{
+									"type": "PseudoElementSelector",
+									"name": "part",
+									"start": 234,
+									"end": 240
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 246,
+					"end": 264,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 250,
+							"end": 260,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 220,
+				"end": 264
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 266,
+					"end": 285,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 266,
+							"end": 285,
+							"children": [
+								{
+									"type": "PseudoElementSelector",
+									"name": "slotted",
+									"start": 266,
+									"end": 275
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 286,
+					"end": 304,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 290,
+							"end": 300,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 266,
+				"end": 304
+			}
+		],
+		"content": {
+			"start": 7,
+			"end": 305,
+			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n"
+		}
+	},
+	"js": [],
+	"start": null,
+	"end": null,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [],
+		"transparent": false
+	},
+	"options": null
+}
