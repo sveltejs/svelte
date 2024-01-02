@@ -746,7 +746,7 @@ declare module 'svelte/compiler' {
 		 * What the value was initialized with.
 		 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 		 */
-		initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
+		initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration | EachBlock;
 		is_called: boolean;
 		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
@@ -975,15 +975,15 @@ declare module 'svelte/compiler' {
 		filename?: string | undefined;
 	} | undefined): Promise<Processed>;
 	export class CompileError extends Error {
-		
+
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
+
 		filename: CompileError_1['filename'];
-		
+
 		position: CompileError_1['position'];
-		
+
 		start: CompileError_1['start'];
-		
+
 		end: CompileError_1['end'];
 		code: string;
 	}
@@ -994,9 +994,9 @@ declare module 'svelte/compiler' {
 	 * */
 	export const VERSION: string;
 	class Scope {
-		
+
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
+
 		root: ScopeRoot;
 		/**
 		 * A map of every identifier declared by this scope, and all the
@@ -1020,25 +1020,25 @@ declare module 'svelte/compiler' {
 		 * which is usually an error. Block statements do not increase this value
 		 */
 		function_depth: number;
-		
+
 		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration): Binding;
 		child(porous?: boolean): Scope;
-		
+
 		generate(preferred_name: string): string;
-		
+
 		get(name: string): Binding | null;
-		
+
 		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
-		
+
 		owner(name: string): Scope | null;
-		
+
 		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
-		
+
 		conflicts: Set<string>;
-		
+
 		unique(preferred_name: string): import("estree").Identifier;
 	}
 	interface BaseNode {
