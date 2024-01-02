@@ -90,11 +90,12 @@
     "templating"
   ],
   "scripts": {
-    "build": "rollup -c && node scripts/build.js && node scripts/check-treeshakeability.js",
+    "build": "rollup -c && pnpm generate:types && node scripts/check-treeshakeability.js",
     "dev": "rollup -cw",
     "check": "tsc && cd ./tests/types && tsc",
     "check:watch": "tsc --watch",
     "generate:version": "node ./scripts/generate-version.js",
+    "generate:types": "node ./scripts/generate-types.js",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {

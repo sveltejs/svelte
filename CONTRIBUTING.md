@@ -133,6 +133,10 @@ To typecheck the codebase, run `pnpm check` inside `packages/svelte`. To typeche
 - `snake_case` for internal variable names and methods.
 - `camelCase` for public variable names and methods.
 
+### Generating types
+
+Types are auto-generated from the source, but the result is checked in to ensure no accidental changes slip through. Run `pnpm generate:types` to regenerate the types.
+
 ### Sending your pull request
 
 Please make sure the following is done when submitting a pull request:
@@ -141,7 +145,7 @@ Please make sure the following is done when submitting a pull request:
 1. Make sure your code lints (`pnpm lint`).
 1. Make sure your tests pass (`pnpm test`).
 
-All pull requests should be opened against the `main` branch. Make sure the PR does only one thing, otherwise please split it.
+All pull requests should be opened against the `main` branch. Make sure the PR does only one thing, otherwise please split it. If this change should contribute to a version bump, run `npx changeset` at the root of the repository after a code change and select the appropriate packages.
 
 #### Breaking changes
 
