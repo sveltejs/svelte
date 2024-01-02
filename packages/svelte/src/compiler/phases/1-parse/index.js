@@ -11,7 +11,7 @@ import read_options from './read/options.js';
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 const regex_lang_attribute =
-	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/;
+	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
 
 export class Parser {
 	/**
@@ -49,7 +49,14 @@ export class Parser {
 
 		this.template = template.trimRight();
 
-		this.ts = regex_lang_attribute.exec(template)?.[2] === 'ts';
+		let match_lang;
+
+		do match_lang = regex_lang_attribute.exec(template);
+		while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
+
+		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
+
+		this.ts = match_lang?.[2] === 'ts';
 
 		this.root = {
 			css: null,

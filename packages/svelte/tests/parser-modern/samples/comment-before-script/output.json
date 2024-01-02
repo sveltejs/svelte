@@ -1,0 +1,132 @@
+{
+	"css": null,
+	"js": [],
+	"start": 0,
+	"end": 27,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [
+			{
+				"type": "Comment",
+				"start": 0,
+				"end": 27,
+				"data": "should not error out",
+				"ignores": []
+			},
+			{
+				"type": "Text",
+				"start": 27,
+				"end": 28,
+				"raw": "\n",
+				"data": "\n"
+			}
+		],
+		"transparent": false
+	},
+	"options": null,
+	"instance": {
+		"type": "Script",
+		"start": 28,
+		"end": 76,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 46,
+			"end": 67,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 4,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 48,
+					"end": 66,
+					"loc": {
+						"start": {
+							"line": 3,
+							"column": 1
+						},
+						"end": {
+							"line": 3,
+							"column": 19
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 52,
+							"end": 65,
+							"loc": {
+								"start": {
+									"line": 3,
+									"column": 5
+								},
+								"end": {
+									"line": 3,
+									"column": 18
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 52,
+								"end": 18,
+								"loc": {
+									"start": {
+										"line": 3,
+										"column": 5
+									},
+									"end": {
+										"line": 3,
+										"column": 18
+									}
+								},
+								"name": "count",
+								"typeAnnotation": {
+									"type": "TSTypeAnnotation",
+									"start": 57,
+									"end": 65,
+									"loc": {
+										"start": {
+											"line": 3,
+											"column": 10
+										},
+										"end": {
+											"line": 3,
+											"column": 18
+										}
+									},
+									"typeAnnotation": {
+										"type": "TSNumberKeyword",
+										"start": 59,
+										"end": 65,
+										"loc": {
+											"start": {
+												"line": 3,
+												"column": 12
+											},
+											"end": {
+												"line": 3,
+												"column": 18
+											}
+										}
+									}
+								}
+							},
+							"init": null
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}
