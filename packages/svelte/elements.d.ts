@@ -59,6 +59,7 @@ export type WheelEventHandler<T extends EventTarget> = EventHandler<WheelEvent, 
 export type AnimationEventHandler<T extends EventTarget> = EventHandler<AnimationEvent, T>;
 export type TransitionEventHandler<T extends EventTarget> = EventHandler<TransitionEvent, T>;
 export type MessageEventHandler<T extends EventTarget> = EventHandler<MessageEvent, T>;
+export type ToggleEventHandler<T extends EventTarget> = EventHandler<ToggleEvent, T>;
 
 //
 // DOM Attributes
@@ -136,10 +137,13 @@ export interface DOMAttributes<T extends EventTarget> {
 	onerror?: EventHandler | undefined | null; // also a Media Event
 	onerrorcapture?: EventHandler | undefined | null; // also a Media Event
 
-	// Detail Events
-	'on:toggle'?: EventHandler<Event, T> | undefined | null;
-	ontoggle?: EventHandler<Event, T> | undefined | null;
-	ontogglecapture?: EventHandler<Event, T> | undefined | null;
+	// Popover Events
+	'on:beforetoggle'?: ToggleEventHandler<T> | undefined | null;
+	onbeforetoggle?: ToggleEventHandler<T> | undefined | null;
+	onbeforetogglecapture?: ToggleEventHandler<T> | undefined | null;
+	'on:toggle'?: ToggleEventHandler<T> | undefined | null;
+	ontoggle?: ToggleEventHandler<T> | undefined | null;
+	ontogglecapture?: ToggleEventHandler<T> | undefined | null;
 
 	// Keyboard Events
 	'on:keydown'?: KeyboardEventHandler<T> | undefined | null;
@@ -727,6 +731,7 @@ export interface HTMLAttributes<T extends EventTarget> extends AriaAttributes, D
 	title?: string | undefined | null;
 	translate?: 'yes' | 'no' | '' | undefined | null;
 	inert?: boolean | undefined | null;
+	popover?: 'auto' | 'manual' | '' | undefined | null;
 
 	// Unknown
 	radiogroup?: string | undefined | null; // <command>, <menuitem>
@@ -873,6 +878,8 @@ export interface HTMLButtonAttributes extends HTMLAttributes<HTMLButtonElement> 
 	name?: string | undefined | null;
 	type?: 'submit' | 'reset' | 'button' | undefined | null;
 	value?: string | string[] | number | undefined | null;
+	popovertarget?: string | undefined | null;
+	popovertargetaction?: 'toggle' | 'show' | 'hide' | undefined | null;
 }
 
 export interface HTMLCanvasAttributes extends HTMLAttributes<HTMLCanvasElement> {
@@ -897,6 +904,10 @@ export interface HTMLDetailsAttributes extends HTMLAttributes<HTMLDetailsElement
 	open?: boolean | undefined | null;
 
 	'bind:open'?: boolean | undefined | null;
+
+	'on:toggle'?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontoggle?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
+	ontogglecapture?: EventHandler<Event, HTMLDetailsElement> | undefined | null;
 }
 
 export interface HTMLDelAttributes extends HTMLAttributes<HTMLModElement> {
