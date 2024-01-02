@@ -56,7 +56,7 @@ This month, we saw lots of contributions to SvelteKit and its docs. The language
 - [svelte-entity-store](https://www.npmjs.com/package/svelte-entity-store) is to provide a simple, generic solution for storing collections of entity objects.
 - [svelte-animation-store](https://github.com/joshnuss/svelte-animation-store) is a store that is based on Svelte's tweened store, that lets you pause, continue, reset, replay, reverse or adjust speed of a tween.
 
-**Want to contribute a component?** Submit a [Component](https://sveltesociety.dev/components) to the Svelte Society site by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Want to contribute a component?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 ## See you next month!
 
