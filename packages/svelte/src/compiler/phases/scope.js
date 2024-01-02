@@ -65,7 +65,7 @@ export class Scope {
 	 * @param {import('estree').Identifier} node
 	 * @param {import('#compiler').Binding['kind']} kind
 	 * @param {import('#compiler').DeclarationKind} declaration_kind
-	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration} initial
+	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | import('../types/template.js').EachBlock} initial
 	 * @returns {import('#compiler').Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -523,7 +523,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
+				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -680,7 +680,7 @@ export function set_scope(scopes) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {import('estree').Node | null | undefined} node
+ * @param {import('estree').Node | import('../types/template.js').EachBlock | null | undefined} node
  * @param {Scope} scope
  * @returns {Runes[number] | null}
  */
