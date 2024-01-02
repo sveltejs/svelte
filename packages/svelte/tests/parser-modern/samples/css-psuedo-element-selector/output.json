@@ -1,0 +1,91 @@
+{
+	"css": {
+		"type": "Style",
+		"start": 0,
+		"end": 165,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 9,
+					"end": 38,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 9,
+							"end": 38,
+							"children": [
+								{
+									"type": "PseudoClassSelector",
+									"name": "root",
+									"args": null,
+									"start": 9,
+									"end": 14
+								},
+								{
+									"type": "PseudoElementSelector",
+									"name": "view-transition-old",
+									"args": {
+										"type": "SelectorList",
+										"start": 36,
+										"end": 37,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 36,
+												"end": 37,
+												"children": [
+													{
+														"type": "TypeSelector",
+														"name": "*",
+														"start": 36,
+														"end": 37
+													}
+												]
+											}
+										]
+									},
+									"start": 14,
+									"end": 38
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 39,
+					"end": 156,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 42,
+							"end": 153,
+							"property": "animation",
+							"value": "90ms cubic-bezier(0.4, 0, 1, 1) both fade-out, 300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left"
+						}
+					]
+				},
+				"start": 9,
+				"end": 156
+			}
+		],
+		"content": {
+			"start": 7,
+			"end": 157,
+			"styles": "\n\t:root::view-transition-old(*) {\n\tanimation: 90ms cubic-bezier(0.4, 0, 1, 1) both fade-out, 300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;\n}\n"
+		}
+	},
+	"js": [],
+	"start": null,
+	"end": null,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [],
+		"transparent": false
+	},
+	"options": null
+}
