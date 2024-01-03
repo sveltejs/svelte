@@ -8,7 +8,7 @@ Si aún no eres una de esas personas, es posible que prefieras visitar el [tutor
 
 ## Comenzar un nuevo proyecto
 
-We recommend using [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team:
+Recomendamos utilizar [SvelteKit](https://kit.svelte-es.dev/), el marco de aplicación oficial del equipo de Svelte:
 
 ```
 npm create svelte@latest myapp
