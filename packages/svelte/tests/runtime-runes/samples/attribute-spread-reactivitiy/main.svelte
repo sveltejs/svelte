@@ -27,4 +27,3 @@
 <svelte:element this={tag} {...props}></svelte:element>
 
 <button on:click={() => value = 'blue'}>toggle</button>
-
