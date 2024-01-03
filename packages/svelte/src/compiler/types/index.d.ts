@@ -11,7 +11,7 @@ import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
-import type { Namespace, SvelteNode } from './template.js';
+import type { EachBlock, Namespace, SvelteNode } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -269,7 +269,13 @@ export interface Binding {
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 */
-	initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
+	initial:
+		| null
+		| Expression
+		| FunctionDeclaration
+		| ClassDeclaration
+		| ImportDeclaration
+		| EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;

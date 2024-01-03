@@ -746,7 +746,13 @@ declare module 'svelte/compiler' {
 		 * What the value was initialized with.
 		 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 		 */
-		initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
+		initial:
+			| null
+			| Expression
+			| FunctionDeclaration
+			| ClassDeclaration
+			| ImportDeclaration
+			| EachBlock;
 		is_called: boolean;
 		references: { node: Identifier; path: SvelteNode[] }[];
 		mutated: boolean;
@@ -1026,7 +1032,7 @@ declare module 'svelte/compiler' {
 		 */
 		function_depth: number;
 		
-		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration): Binding;
+		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
 		
 		has_parent(): boolean;
 		

@@ -2,7 +2,7 @@
   "name": "svelte",
   "description": "Cybernetically enhanced web apps",
   "license": "MIT",
-  "version": "5.0.0-next.27",
+  "version": "5.0.0-next.28",
   "type": "module",
   "types": "./types/index.d.ts",
   "engines": {
@@ -117,7 +117,7 @@
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "acorn": "^8.10.0",
-    "acorn-typescript": "^1.4.11",
+    "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.0",
     "axobject-query": "^4.0.0",
     "esm-env": "^1.0.0",

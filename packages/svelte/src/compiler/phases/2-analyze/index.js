@@ -183,6 +183,10 @@ function get_delegated_event(node, context) {
 		) {
 			return non_hoistable;
 		}
+		// If we referebnce the index within an each block, then bail-out.
+		if (binding !== null && binding.initial?.type === 'EachBlock') {
+			return non_hoistable;
+		}
 
 		if (
 			binding !== null &&
