@@ -1,14 +1,14 @@
 ---
-title: Introduction
+title: Introducción
 ---
 
-Welcome to the Svelte reference documentation! This is intended as a resource for people who already have some familiarity with Svelte and want to learn more about using it.
+¡Bienvenido a la documentación de referencia de Svelte! Esto está pensado como un recurso para personas que ya tienen cierta familiaridad con Svelte y desean aprender más sobre cómo utilizarlo.
 
-If that's not you (yet), you may prefer to visit the [interactive tutorial](https://learn.svelte.dev) or the [examples](/examples) before consulting this reference. You can try Svelte online using the [REPL](/repl). Alternatively, if you'd like a more fully-featured environment, you can try Svelte on [StackBlitz](https://sveltekit.new).
+Si aún no eres una de esas personas, es posible que prefieras visitar el [tutorial interactivo](https://learn.svelte-es.dev) o los [ejemplos](/examples) antes de consultar esta referencia. Puedes probar Svelte en línea utilizando el [REPL](/repl). Alternativamente, si deseas un entorno más completo, puedes probar Svelte en [StackBlitz](https://sveltekit.new).
 
-## Start a new project
+## Comenzar un nuevo proyecto
 
-We recommend using [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team:
+Recomendamos utilizar [SvelteKit](https://kit.svelte-es.dev/), el marco de aplicación oficial del equipo de Svelte:
 
 ```
 npm create svelte@latest myapp
