@@ -6,7 +6,7 @@ title: Introducción
 
 Si aún no eres una de esas personas, es posible que prefieras visitar el [tutorial interactivo](https://learn.svelte-es.dev) o los [ejemplos](/examples) antes de consultar esta referencia. Puedes probar Svelte en línea utilizando el [REPL](/repl). Alternativamente, si deseas un entorno más completo, puedes probar Svelte en [StackBlitz](https://sveltekit.new).
 
-## Start a new project
+## Comenzar un nuevo proyecto
 
 We recommend using [SvelteKit](https://kit.svelte.dev/), the official application framework from the Svelte team:
 
