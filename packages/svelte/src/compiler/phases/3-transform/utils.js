@@ -83,7 +83,6 @@ export function is_hoistable_function(node) {
  * @param {import('#compiler').Namespace} namespace
  * @param {boolean} preserve_whitespace
  * @param {boolean} preserve_comments
- * @param {boolean} preserve_noscript
  */
 export function clean_nodes(
 	parent,
@@ -91,8 +90,7 @@ export function clean_nodes(
 	path,
 	namespace = 'html',
 	preserve_whitespace,
-	preserve_comments,
-	preserve_noscript
+	preserve_comments
 ) {
 	/** @type {import('#compiler').SvelteNode[]} */
 	const hoisted = [];
@@ -102,10 +100,6 @@ export function clean_nodes(
 
 	for (const node of nodes) {
 		if (node.type === 'Comment' && !preserve_comments) {
-			continue;
-		}
-
-		if (node.type === 'RegularElement' && node.name === 'noscript' && !preserve_noscript) {
 			continue;
 		}
 

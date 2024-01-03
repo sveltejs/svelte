@@ -50,4 +50,11 @@ jobs:
         with:
           node-version: 18
           cache: pnpm
-      - run: 'pnpm i && pnpm check && pnpm lint'
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: type check
+        run: pnpm check
+      - name: lint
+        run: pnpm lint
+      - name: build and check generated types
+        run: pnpm build && { [ "`git status --porcelain=v1`" == "" ] || (echo "Generated types have changed — please regenerate types locally and commit the changes after you have reviewed them"; git diff; exit 1); }

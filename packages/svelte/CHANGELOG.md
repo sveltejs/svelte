@@ -1,5 +1,43 @@
 # svelte
 
+## 5.0.0-next.28
+
+### Patch Changes
+
+- fix: deeply unstate objects passed to inspect ([#10056](https://github.com/sveltejs/svelte/pull/10056))
+
+- fix: handle delegated events of elements moved outside the container ([#10060](https://github.com/sveltejs/svelte/pull/10060))
+
+- fix: improve script `lang` attribute detection ([#10046](https://github.com/sveltejs/svelte/pull/10046))
+
+- fix: improve pseudo class parsing ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: add types for popover attributes and events ([#10041](https://github.com/sveltejs/svelte/pull/10041))
+
+- fix: skip generating $.proxy() calls for unary and binary expressions ([#9979](https://github.com/sveltejs/svelte/pull/9979))
+
+- fix: allow pseudo classes after `:global(..)` ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: bail-out event handler referencing each index ([#10063](https://github.com/sveltejs/svelte/pull/10063))
+
+- fix: parse `:nth-of-type(xn+y)` correctly ([#9970](https://github.com/sveltejs/svelte/pull/9970))
+
+- fix: ensure if block is executed in correct order ([#10053](https://github.com/sveltejs/svelte/pull/10053))
+
+## 5.0.0-next.27
+
+### Patch Changes
+
+- fix: evaluate transition parameters when the transition runs ([#9836](https://github.com/sveltejs/svelte/pull/9836))
+
+- feat: add `$state.frozen` rune ([#9851](https://github.com/sveltejs/svelte/pull/9851))
+
+- fix: correctly transform prop fallback values that use other props ([#9985](https://github.com/sveltejs/svelte/pull/9985))
+
+- fix: escape template literal characters in text sequences ([#9973](https://github.com/sveltejs/svelte/pull/9973))
+
+- fix: inject comment in place of `<noscript>` in client output ([#9953](https://github.com/sveltejs/svelte/pull/9953))
+
 ## 5.0.0-next.26
 
 ### Patch Changes
@@ -132,7 +170,7 @@
 
 ### Patch Changes
 
-- feat: proxied staet ([#9739](https://github.com/sveltejs/svelte/pull/9739))
+- feat: proxied state ([#9739](https://github.com/sveltejs/svelte/pull/9739))
 
 - chore: more validation errors ([#9723](https://github.com/sveltejs/svelte/pull/9723))
 
