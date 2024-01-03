@@ -314,7 +314,8 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 
 		is_reactive ||=
 			attribute.metadata.dynamic ||
-			(attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression);
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			attribute.type === 'SpreadAttribute';
 	}
 
 	const lowercase_attributes =
@@ -388,7 +389,10 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||= attribute.metadata.dynamic;
+		is_reactive ||=
+			attribute.metadata.dynamic ||
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			attribute.type === 'SpreadAttribute';
 	}
 
 	if (is_reactive) {
