@@ -20,7 +20,7 @@
 
 <Blurb --background="var(--sk-back-1)">
 	<div slot="one">
-		<h2>compiled</h2>
+		<h2>compilado</h2>
 		<p>
 			Svelte shifts as much work as possible out of the browser and into your build step. No more
 			manual optimisations — just faster, more efficient apps.
@@ -28,7 +28,7 @@
 	</div>
 
 	<div slot="two">
-		<h2>compact</h2>
+		<h2>compacto</h2>
 		<p>
 			Write breathtakingly concise components using languages you already know — HTML, CSS and
 			JavaScript. Oh, and your application bundles will be tiny as well.
@@ -36,7 +36,7 @@
 	</div>
 
 	<div slot="three">
-		<h2>complete</h2>
+		<h2>completo</h2>
 		<p>
 			Built-in scoped styling, state management, motion primitives, form bindings and more — don't
 			waste time trawling npm for the bare essentials. It's all here.
