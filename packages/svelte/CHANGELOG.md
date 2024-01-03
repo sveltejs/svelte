@@ -1,5 +1,29 @@
 # svelte
 
+## 5.0.0-next.28
+
+### Patch Changes
+
+- fix: deeply unstate objects passed to inspect ([#10056](https://github.com/sveltejs/svelte/pull/10056))
+
+- fix: handle delegated events of elements moved outside the container ([#10060](https://github.com/sveltejs/svelte/pull/10060))
+
+- fix: improve script `lang` attribute detection ([#10046](https://github.com/sveltejs/svelte/pull/10046))
+
+- fix: improve pseudo class parsing ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: add types for popover attributes and events ([#10041](https://github.com/sveltejs/svelte/pull/10041))
+
+- fix: skip generating $.proxy() calls for unary and binary expressions ([#9979](https://github.com/sveltejs/svelte/pull/9979))
+
+- fix: allow pseudo classes after `:global(..)` ([#10055](https://github.com/sveltejs/svelte/pull/10055))
+
+- fix: bail-out event handler referencing each index ([#10063](https://github.com/sveltejs/svelte/pull/10063))
+
+- fix: parse `:nth-of-type(xn+y)` correctly ([#9970](https://github.com/sveltejs/svelte/pull/9970))
+
+- fix: ensure if block is executed in correct order ([#10053](https://github.com/sveltejs/svelte/pull/10053))
+
 ## 5.0.0-next.27
 
 ### Patch Changes
