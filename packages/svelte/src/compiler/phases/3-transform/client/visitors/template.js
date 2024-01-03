@@ -289,7 +289,7 @@ function setup_select_synchronization(value_binding, context) {
  * 	value = $.spread_attributes(element, value, [...])
  * });
  * ```
- * Returns the id of the spread_attribute variable if spread is deemed reactive, `null` otherwise.
+ * Returns the id of the spread_attribute variable if spread isn't isolated, `null` otherwise.
  * @param {Array<import('#compiler').Attribute | import('#compiler').SpreadAttribute>} attributes
  * @param {import('../types.js').ComponentContext} context
  * @param {import('#compiler').RegularElement} element
@@ -297,7 +297,7 @@ function setup_select_synchronization(value_binding, context) {
  * @returns {string | null}
  */
 function serialize_element_spread_attributes(attributes, context, element, element_id) {
-	let is_reactive = false;
+	let needs_isolation = false;
 
 	/** @type {import('estree').Expression[]} */
 	const values = [];
@@ -312,18 +312,32 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||=
-			attribute.metadata.dynamic ||
-			(attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression);
+		needs_isolation ||=
+			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
 	const lowercase_attributes =
 		element.metadata.svg || is_custom_element_node(element) ? b.false : b.true;
 
-	if (is_reactive) {
+	const isolated = b.stmt(
+		b.call(
+			'$.spread_attributes_effect',
+			element_id,
+			b.thunk(b.array(values)),
+			lowercase_attributes,
+			b.literal(context.state.analysis.stylesheet.id)
+		)
+	);
+
+	// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+	if (needs_isolation) {
+		context.state.update_effects.push(isolated);
+		return null;
+	} else {
 		const id = context.state.scope.generate('spread_attributes');
-		context.state.init.push(b.let(id, undefined));
+		context.state.init.push(b.let(id));
 		context.state.update.push({
+			singular: isolated,
 			grouped: b.stmt(
 				b.assignment(
 					'=',
@@ -340,20 +354,6 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
 			)
 		});
 		return id;
-	} else {
-		context.state.init.push(
-			b.stmt(
-				b.call(
-					'$.spread_attributes',
-					element_id,
-					b.literal(null),
-					b.array(values),
-					lowercase_attributes,
-					b.literal(context.state.analysis.stylesheet.id)
-				)
-			)
-		);
-		return null;
 	}
 }
 
@@ -365,7 +365,7 @@ function serialize_element_spread_attributes(attributes, context, element, eleme
  * @param {import('estree').Identifier} element_id
  * @returns {boolean}
  */
-function serialize_dynamic_element_spread_attributes(attributes, context, element_id) {
+function serialize_dynamic_element_attributes(attributes, context, element_id) {
 	if (attributes.length === 0) {
 		if (context.state.analysis.stylesheet.id) {
 			context.state.init.push(
@@ -375,6 +375,7 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 		return false;
 	}
 
+	let needs_isolation = false;
 	let is_reactive = false;
 
 	/** @type {import('estree').Expression[]} */
@@ -388,13 +389,31 @@ function serialize_dynamic_element_spread_attributes(attributes, context, elemen
 			values.push(/** @type {import('estree').Expression} */ (context.visit(attribute)));
 		}
 
-		is_reactive ||= attribute.metadata.dynamic;
+		is_reactive ||=
+			attribute.metadata.dynamic ||
+			// objects could contain reactive getters -> play it safe and always assume spread attributes are reactive
+			attribute.type === 'SpreadAttribute';
+		needs_isolation ||=
+			attribute.type === 'SpreadAttribute' && attribute.metadata.contains_call_expression;
 	}
 
-	if (is_reactive) {
+	const isolated = b.stmt(
+		b.call(
+			'$.spread_dynamic_element_attributes_effect',
+			element_id,
+			b.thunk(b.array(values)),
+			b.literal(context.state.analysis.stylesheet.id)
+		)
+	);
+
+	if (needs_isolation) {
+		context.state.update_effects.push(isolated);
+		return false;
+	} else if (is_reactive) {
 		const id = context.state.scope.generate('spread_attributes');
 		context.state.init.push(b.let(id));
 		context.state.update.push({
+			singular: isolated,
 			grouped: b.stmt(
 				b.assignment(
 					'=',
@@ -2101,7 +2120,7 @@ export const template_visitors = {
 		// Always use spread because we don't know whether the element is a custom element or not,
 		// therefore we need to do the "how to set an attribute" logic at runtime.
 		const is_attributes_reactive =
-			serialize_dynamic_element_spread_attributes(attributes, inner_context, element_id) !== null;
+			serialize_dynamic_element_attributes(attributes, inner_context, element_id) !== null;
 
 		// class/style directives must be applied last since they could override class/style attributes
 		serialize_class_directives(class_directives, element_id, inner_context, is_attributes_reactive);
