@@ -248,12 +248,28 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
+		/** Potential optimization: find nearest function boundary and if it is not async, the assignment can't be async */
+		const closest_function_boundary =
+			/** @type {import('estree').BaseFunction | undefined} */
+			(
+				context.path.findLast(
+					(node) =>
+						node.type === 'FunctionDeclaration' ||
+						node.type === 'FunctionExpression' ||
+						node.type === 'ArrowFunctionExpression'
+				)
+			);
+		const closest_function_boundary_not_async =
+			closest_function_boundary === undefined || closest_function_boundary.async !== true;
+
 		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
+
 		const iife_is_async =
+			!closest_function_boundary_not_async ||
 			is_expression_async(rhs_expression) ||
 			assignments.some((assignment) => is_expression_async(assignment));
 
-		let iife = b.arrow(
+		const iife = b.arrow(
 			[],
 			b.block([
 				b.const(tmp_id, rhs_expression),
@@ -263,16 +279,12 @@ export function serialize_set_binding(node, context, fallback) {
 				b.return(b.id(tmp_id))
 			])
 		);
-		if (iife_is_async) {
-			iife = b.async(iife);
-		}
 
-		let iife_call = /** @type {import('estree').Expression} */ (b.call(iife));
 		if (iife_is_async) {
-			iife_call = b.await(iife_call);
+			return b.await(b.call(b.async(iife)));
+		} else {
+			return b.call(iife);
 		}
-
-		return iife_call;
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
