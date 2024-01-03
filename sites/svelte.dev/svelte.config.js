@@ -6,7 +6,8 @@ export default {
 	kit: {
 		adapter: adapter({ runtime: 'edge' }),
 		prerender: {
-			concurrency: 10
+			concurrency: 10,
+			handleMissingId: 'ignore'
 		}
 	},
 
