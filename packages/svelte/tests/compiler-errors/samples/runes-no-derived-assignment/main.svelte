@@ -1,5 +1,5 @@
 <script>
 	const a = $state(0);
-	const b = $derived({ a });
-	b.a += 1;
+	let b = $derived(a);
+	b = 1;
 </script>

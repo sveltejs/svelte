@@ -854,19 +854,19 @@ function validate_assignment(node, argument, state) {
 
 	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
+	if (left.type === 'Identifier') {
+		const binding = state.scope.get(left.name);
+		if (binding?.kind === 'derived') {
+			error(node, 'invalid-derived-assignment');
+		}
+	}
+
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
 	while (left.type === 'MemberExpression') {
 		property = left.property;
 		left = left.object;
-	}
-
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
-		}
 	}
 
 	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {
