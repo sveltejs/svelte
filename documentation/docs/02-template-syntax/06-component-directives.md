@@ -37,7 +37,7 @@ As with DOM events, if the `on:` directive is used without a value, the event wi
 <SomeComponent on:hello on:click />
 ```
 
-> Components can only listen to events forwarded by their direct child components or elements.
+> Components can only listen to events forwarded or emitted by their direct child components or elements.
 
 ## --style-props
 
