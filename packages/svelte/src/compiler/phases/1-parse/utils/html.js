@@ -121,14 +121,7 @@ function validate_code(code) {
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 
-const interactive_elements = new Set([
-	'a',
-	'button',
-	'iframe',
-	'embed',
-	'select',
-	'textarea'
-]);
+const interactive_elements = new Set(['a', 'button', 'iframe', 'embed', 'select', 'textarea']);
 
 /** @type {Record<string, Set<string>>} */
 const disallowed_contents = {
