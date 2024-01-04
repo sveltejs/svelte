@@ -495,7 +495,7 @@
 									"name": "nth-child",
 									"args": {
 										"type": "SelectorList",
-										"start": 476,
+										"start": 485,
 										"end": 486,
 										"children": [
 											{

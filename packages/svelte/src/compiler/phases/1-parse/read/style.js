@@ -153,9 +153,9 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 	/** @type {import('#compiler').Css.Selector[]} */
 	const children = [];
 
-	const start = parser.index;
-
 	parser.allow_whitespace();
+
+	const start = parser.index;
 
 	while (parser.index < parser.template.length) {
 		children.push(read_selector(parser, inside_pseudo_class));

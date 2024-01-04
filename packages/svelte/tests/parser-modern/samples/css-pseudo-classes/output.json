@@ -243,7 +243,7 @@
 									"name": "is",
 									"args": {
 										"type": "SelectorList",
-										"start": 310,
+										"start": 313,
 										"end": 329,
 										"children": [
 											{
