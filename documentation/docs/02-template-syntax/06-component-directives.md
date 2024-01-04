@@ -28,14 +28,16 @@ Components can emit events using [`createEventDispatcher`](/docs/svelte#createev
 Listening for component events looks the same as listening for DOM events:
 
 ```svelte
-<SomeComponent on:whatever={handler} />
+<SomeComponent on:hello={helloHandler} on:click={clickHandler} />
 ```
 
 As with DOM events, if the `on:` directive is used without a value, the event will be forwarded, meaning that a consumer can listen for it.
 
 ```svelte
-<SomeComponent on:whatever />
+<SomeComponent on:hello on:click />
 ```
+
+> Components can only listen to events forwarded by their direct child components or elements.
 
 ## --style-props
 
