@@ -11,3 +11,10 @@
 
 	const marker = new mapbox.Marker().setLngLat([lon, lat]).setPopup(popup).addTo(map);
 </script>
+
+<style>
+	:global(.mapboxgl-popup-content) {
+		color: hsl(0, 0%, 13%);
+		color-scheme: none;
+	}
+</style>
