@@ -290,7 +290,7 @@ function read_selector(parser, inside_pseudo_class = false) {
 			// nth of matcher must come before combinator matcher to prevent collision else the '+' in '+2n-1' would be parsed as a combinator
 			children.push({
 				type: 'Nth',
-				value: /** @type {string} */ (parser.read(REGEX_NTH_OF)),
+				value: /** @type {string} */ (parser.read(REGEX_NTH_OF)?.trimEnd()), // in case it ends with 'of'
 				start,
 				end: parser.index
 			});
