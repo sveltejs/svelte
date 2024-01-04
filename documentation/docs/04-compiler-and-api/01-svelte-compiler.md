@@ -74,7 +74,7 @@ const ast = parse(source, { filename: 'App.svelte' });
 
 > EXPORT_SNIPPET: svelte/compiler#preprocess
 
-A number of [official and community-maintained preprocessing plugins](https://sveltesociety.dev/packages?tag=preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
+A number of [official and community-maintained preprocessing plugins](https://sveltesociety.dev/packages?category=preprocessors) are available to allow you to use Svelte with tools like TypeScript, PostCSS, SCSS, and Less.
 
 You can write your own preprocessor using the `svelte.preprocess` API.
 
