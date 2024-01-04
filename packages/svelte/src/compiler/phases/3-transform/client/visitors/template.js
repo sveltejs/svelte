@@ -1531,6 +1531,7 @@ function process_children(nodes, parent, { visit, state }) {
 		expression = b.call('$.sibling', text_id);
 	}
 
+	let is_fragment = false;
 	for (let i = 0; i < nodes.length; i += 1) {
 		const node = nodes[i];
 
@@ -1538,7 +1539,12 @@ function process_children(nodes, parent, { visit, state }) {
 			sequence.push(node);
 		} else {
 			if (sequence.length > 0) {
-				flush_sequence(sequence, true);
+				flush_sequence(sequence, is_fragment);
+				// Ensure we move to the next sibling for the case where we move reference within a fragment
+				if (!is_fragment && sequence.length === 1 && sequence[0].type === 'ExpressionTag') {
+					expression = b.call('$.sibling', expression);
+					is_fragment = true;
+				}
 				sequence = [];
 			}
 
