@@ -100,7 +100,7 @@ If you need hash-based routing on the client side, check out [svelte-spa-router]
 
 [Routify](https://routify.dev) is another filesystem-based router, similar to SvelteKit's router. Version 3 supports Svelte's native SSR.
 
-You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/packages?tag=routers).
+You can see a [community-maintained list of routers on sveltesociety.dev](https://sveltesociety.dev/packages?category=routers).
 
 ## Can I tell Svelte not to remove my unused styles?
 
