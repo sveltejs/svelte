@@ -126,7 +126,6 @@ const interactive_elements = new Set([
 	'button',
 	'iframe',
 	'embed',
-	'input',
 	'select',
 	'textarea'
 ]);
