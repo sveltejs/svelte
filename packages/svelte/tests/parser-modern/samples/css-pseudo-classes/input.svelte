@@ -15,8 +15,8 @@
 	::slotted(.content) {
 		color: red;
 	}
-	:is(
-		button,
+	:is( /*button*/
+		button, /*p after h1*/
 		h1 + p
 		){
 		color: red;

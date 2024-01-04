@@ -103,7 +103,7 @@
 												"children": [
 													{
 														"type": "Nth",
-														"value": "-n + 3 of",
+														"value": "-n + 3 of ",
 														"start": 130,
 														"end": 140
 													},

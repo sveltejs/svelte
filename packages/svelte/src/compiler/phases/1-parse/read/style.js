@@ -153,7 +153,7 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 	/** @type {import('#compiler').Css.Selector[]} */
 	const children = [];
 
-	parser.allow_whitespace();
+	allow_comment_or_whitespace(parser);
 
 	const start = parser.index;
 
@@ -288,9 +288,10 @@ function read_selector(parser, inside_pseudo_class = false) {
 			});
 		} else if (inside_pseudo_class && parser.match_regex(REGEX_NTH_OF)) {
 			// nth of matcher must come before combinator matcher to prevent collision else the '+' in '+2n-1' would be parsed as a combinator
+
 			children.push({
 				type: 'Nth',
-				value: /** @type {string} */ (parser.read(REGEX_NTH_OF)?.trimEnd()), // in case it ends with 'of'
+				value: /**@type {string} */ (parser.read(REGEX_NTH_OF)),
 				start,
 				end: parser.index
 			});

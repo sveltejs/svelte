@@ -2,7 +2,7 @@
 	"css": {
 		"type": "Style",
 		"start": 0,
-		"end": 360,
+		"end": 386,
 		"attributes": [],
 		"children": [
 			{
@@ -231,63 +231,63 @@
 				"prelude": {
 					"type": "SelectorList",
 					"start": 306,
-					"end": 333,
+					"end": 359,
 					"children": [
 						{
 							"type": "Selector",
 							"start": 306,
-							"end": 333,
+							"end": 359,
 							"children": [
 								{
 									"type": "PseudoClassSelector",
 									"name": "is",
 									"args": {
 										"type": "SelectorList",
-										"start": 313,
-										"end": 329,
+										"start": 324,
+										"end": 355,
 										"children": [
 											{
 												"type": "Selector",
-												"start": 313,
-												"end": 319,
+												"start": 324,
+												"end": 330,
 												"children": [
 													{
 														"type": "TypeSelector",
 														"name": "button",
-														"start": 313,
-														"end": 319
+														"start": 324,
+														"end": 330
 													}
 												]
 											},
 											{
 												"type": "Selector",
-												"start": 323,
-												"end": 329,
+												"start": 349,
+												"end": 355,
 												"children": [
 													{
 														"type": "TypeSelector",
 														"name": "h1",
-														"start": 323,
-														"end": 325
+														"start": 349,
+														"end": 351
 													},
 													{
 														"type": "Combinator",
 														"name": "+",
-														"start": 326,
-														"end": 327
+														"start": 352,
+														"end": 353
 													},
 													{
 														"type": "TypeSelector",
 														"name": "p",
-														"start": 328,
-														"end": 329
+														"start": 354,
+														"end": 355
 													}
 												]
 											}
 										]
 									},
 									"start": 306,
-									"end": 333
+									"end": 359
 								}
 							]
 						}
@@ -295,26 +295,26 @@
 				},
 				"block": {
 					"type": "Block",
-					"start": 333,
-					"end": 351,
+					"start": 359,
+					"end": 377,
 					"children": [
 						{
 							"type": "Declaration",
-							"start": 337,
-							"end": 347,
+							"start": 363,
+							"end": 373,
 							"property": "color",
 							"value": "red"
 						}
 					]
 				},
 				"start": 306,
-				"end": 351
+				"end": 377
 			}
 		],
 		"content": {
 			"start": 7,
-			"end": 352,
-			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n\t:is(\n\t\tbutton,\n\t\th1 + p\n\t\t){\n\t\tcolor: red;\n\t}\n"
+			"end": 378,
+			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n\t:is( /*button*/\n\t\tbutton, /*p after h1*/\n\t\th1 + p\n\t\t){\n\t\tcolor: red;\n\t}\n"
 		}
 	},
 	"js": [],
