@@ -106,7 +106,7 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       dts-buddy:
-        specifier: ^0.4.1
+        specifier: ^0.4.3
         version: 0.4.3(typescript@5.3.3)
       esbuild:
         specifier: ^0.18.11

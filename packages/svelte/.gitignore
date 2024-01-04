@@ -6,13 +6,13 @@
 /test/runtime/shards
 _actual*.*
 _output
-/types
+/types/compiler
 
-action.d.ts
-animate.d.ts
-compiler.d.ts
-easing.d.ts
-index.d.ts
-motion.d.ts
-store.d.ts
-transition.d.ts
+/action.d.ts
+/animate.d.ts
+/compiler.d.ts
+/easing.d.ts
+/index.d.ts
+/motion.d.ts
+/store.d.ts
+/transition.d.ts
