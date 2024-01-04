@@ -49,7 +49,7 @@ Last week, Svelte Summit blew us away with a mountain of content! [Check out the
 - [Sveltekit-JUI](https://github.com/Wolfr/sveltekit-jui) is a kit of UI components to be used in conjunction with Svelte and Svelte Kit.
 - [EZGesture](https://github.com/mhmd-22/ezgesture#integrating-with-other-frameworks) makes it easy to add gestures functionality with simple native DOM events
 
-**Want to contribute your own component?** Submit a [Component](https://sveltesociety.dev/components) to the Svelte Society site by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Want to contribute your own component?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 **Starters**
 

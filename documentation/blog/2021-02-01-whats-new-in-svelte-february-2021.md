@@ -71,7 +71,7 @@ New changes to the Svelte Society website include [a new cheat sheet](https://sv
 - [svelte-windicss-preprocess](https://github.com/voorjaar/svelte-windicss-preprocess) is a Svelte preprocessor to compile tailwindcss at build time based on windicss compiler
 - [MitzaCoder/svelte-boilerplate](https://github.com/MitzaCoder/svelte-boilerplate) features configurations for TypeScript, TailwindCSS, IE11 compatibility (with Babel) and lazy loaded modules.
 
-**Want to share your Svelte Component with the world?** Head over to the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Want to share your Svelte Component with the world?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 **Learning Resources**
 
