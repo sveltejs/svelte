@@ -15,4 +15,10 @@
 	::slotted(.content) {
 		color: red;
 	}
+	:is(
+		button,
+		h1 + p
+		){
+		color: red;
+	}
 </style>

@@ -7,7 +7,7 @@ const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
 const REGEX_NTH_OF =
-	/^\s*(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))(\s*(?=[,)])|\s+of\s+)/;
+	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
 const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
@@ -154,6 +154,8 @@ function read_selector_list(parser, inside_pseudo_class = false) {
 	const children = [];
 
 	const start = parser.index;
+
+	parser.allow_whitespace();
 
 	while (parser.index < parser.template.length) {
 		children.push(read_selector(parser, inside_pseudo_class));
