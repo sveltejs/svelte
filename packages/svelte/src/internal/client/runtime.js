@@ -1458,16 +1458,15 @@ export function is_store(val) {
 export function prop(props, key, flags, initial) {
 	var immutable = (flags & PROPS_IS_IMMUTABLE) !== 0;
 	var runes = (flags & PROPS_IS_RUNES) !== 0;
-
-	var setter = get_descriptor(props, key)?.set;
-	if (DEV && setter && runes && initial !== undefined) {
-		// TODO consolidate all these random runtime errors
-		throw new Error('Cannot use fallback values with bind:');
-	}
-
 	var prop_value = /** @type {V} */ (props[key]);
+	var setter = get_descriptor(props, key)?.set;
 
 	if (prop_value === undefined && initial !== undefined) {
+		if (DEV && setter && runes) {
+			// TODO consolidate all these random runtime errors
+			throw new Error('Cannot use fallback values with bind:');
+		}
+
 		// @ts-expect-error would need a cumbersome method overload to type this
 		if ((flags & PROPS_IS_LAZY_INITIAL) !== 0) initial = initial();
 
