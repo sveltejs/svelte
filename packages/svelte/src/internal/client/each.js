@@ -351,12 +351,7 @@ function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
