@@ -196,8 +196,11 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	export interface Snippet<T = void> {
-		(arg: T): typeof SnippetReturn & {
+	export interface Snippet<T extends unknown[] = []> {
+		(
+			this: void,
+			...args: T
+		): typeof SnippetReturn & {
 			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 		};
 	}
@@ -321,7 +324,7 @@ declare module 'svelte' {
 		new (options: ComponentConstructorOptions<Props & (Props extends {
 			children?: any;
 		} ? {} : {} | {
-			children?: Snippet<void> | undefined;
+			children?: Snippet<[]> | undefined;
 		})>): SvelteComponent<Props, Events, any>;
 	}, options: {
 		target: Node;
@@ -344,7 +347,7 @@ declare module 'svelte' {
 		new (options: ComponentConstructorOptions<Props & (Props extends {
 			children?: any;
 		} ? {} : {} | {
-			children?: Snippet<void> | undefined;
+			children?: Snippet<[]> | undefined;
 		})>): SvelteComponent<Props, Events, any>;
 	}, options: {
 		target: Node;
@@ -484,7 +487,7 @@ declare module 'svelte/animate' {
 }
 
 declare module 'svelte/compiler' {
-	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program } from 'estree';
+	import type { AssignmentExpression, ClassDeclaration, Expression, FunctionDeclaration, Identifier, ImportDeclaration, ArrayExpression, MemberExpression, ObjectExpression, Pattern, ArrowFunctionExpression, ArrayPattern, VariableDeclaration, VariableDeclarator, FunctionExpression, Node, Program, SpreadElement } from 'estree';
 	import type { Location } from 'locate-character';
 	import type { SourceMap } from 'magic-string';
 	import type { Context } from 'zimmerframe';
@@ -1178,7 +1181,7 @@ declare module 'svelte/compiler' {
 	interface RenderTag extends BaseNode {
 		type: 'RenderTag';
 		expression: Identifier;
-		argument: null | Expression;
+		arguments: (Expression | SpreadElement)[];
 	}
 
 	type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;
@@ -1445,7 +1448,7 @@ declare module 'svelte/compiler' {
 	interface SnippetBlock extends BaseNode {
 		type: 'SnippetBlock';
 		expression: Identifier;
-		context: null | Pattern;
+		context: ArrayPattern;
 		body: Fragment;
 	}
 
@@ -1722,7 +1725,7 @@ declare module 'svelte/legacy' {
 		} ? {} : Slots extends {
 			default: any;
 		} ? {
-			children?: Snippet<void> | undefined;
+			children?: Snippet<[]> | undefined;
 		} : {})>): SvelteComponent<Props, Events, Slots>;
 	} & Exports;
 	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
@@ -1848,8 +1851,11 @@ declare module 'svelte/legacy' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	interface Snippet<T = void> {
-		(arg: T): typeof SnippetReturn & {
+	interface Snippet<T extends unknown[] = []> {
+		(
+			this: void,
+			...args: T
+		): typeof SnippetReturn & {
 			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 		};
 	}
