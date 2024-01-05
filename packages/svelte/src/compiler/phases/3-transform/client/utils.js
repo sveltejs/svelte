@@ -525,6 +525,8 @@ export function should_proxy_or_freeze(node) {
 		node.type === 'Literal' ||
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
+		node.type === 'UnaryExpression' ||
+		node.type === 'BinaryExpression' ||
 		(node.type === 'Identifier' && node.name === 'undefined')
 	) {
 		return false;

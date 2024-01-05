@@ -2,7 +2,7 @@ import * as acorn from 'acorn';
 import { walk } from 'zimmerframe';
 import { tsPlugin } from 'acorn-typescript';
 
-const ParserWithTS = acorn.Parser.extend(tsPlugin());
+const ParserWithTS = acorn.Parser.extend(tsPlugin({ allowSatisfies: true }));
 
 /**
  * @param {string} source

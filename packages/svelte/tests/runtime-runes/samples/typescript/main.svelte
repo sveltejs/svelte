@@ -10,6 +10,9 @@
 	import { type Bar, type Baz } from './types';
 
 	let count = $state(0);
+	const person = {
+		message: 'goodbye'
+	} satisfies Goodbye;
 </script>
 
 <button
