@@ -2486,7 +2486,6 @@ export const template_visitors = {
 		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
 
-			console.log(argument);
 			const call = argument.type === 'AssignmentPattern' ? b.maybe_call : b.call;
 
 			if (argument.type === 'Identifier') {
