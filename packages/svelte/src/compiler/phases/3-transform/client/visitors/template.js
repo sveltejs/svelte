@@ -2486,12 +2486,15 @@ export const template_visitors = {
 		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
 
+			console.log(argument);
+			const call = argument.type === 'AssignmentPattern' ? b.maybe_call : b.call;
+
 			if (argument.type === 'Identifier') {
 				args.push(argument);
 				const binding = /** @type {import('#compiler').Binding} */ (
 					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.call(argument);
+				binding.expression = call(argument);
 				return;
 			}
 
@@ -2526,7 +2529,7 @@ export const template_visitors = {
 							/** @type {import('estree').Expression} */ (
 								context.visit(
 									path.expression?.(
-										argument.type === 'RestElement' ? b.id(arg_alias) : b.call(arg_alias)
+										argument.type === 'RestElement' ? b.id(arg_alias) : call(arg_alias)
 									)
 								)
 							)
