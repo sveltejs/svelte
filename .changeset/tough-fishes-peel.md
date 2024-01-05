@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: allow boolean shorthand for HTML `popover` property
+fix: allow boolean shorthand for the HTML `popover` property
