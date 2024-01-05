@@ -1586,6 +1586,8 @@ function process_children(nodes, parent, { visit, state }) {
 			});
 		} else {
 			// TODO: uncomment this
+			// it causes a test to fail. need to understand if it's a valid test or if it should be adjusted or deleted
+			// see https://github.com/sveltejs/svelte/issues/6832 for more context on that test
 			// const { can_inline } = can_inline_all_nodes(sequence, state);
 			const can_inline = false;
 			if (can_inline) {
