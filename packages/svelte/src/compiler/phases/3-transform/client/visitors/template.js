@@ -39,7 +39,6 @@ import { sanitize_template_string } from '../../../../utils/sanitize_template_st
 /**
  * @param {import('../types.js').ComponentClientTransformState} state
  * @param {string} quasi_to_add
- * @returns
  */
 function push_template_quasi(state, quasi_to_add) {
 	const { quasi } = state.template;
@@ -1176,30 +1175,25 @@ function create_block(parent, name, nodes, context) {
 			state
 		});
 
-		const quasi = state.template.quasi[0];
-
-		if (state.template.quasi.length === 1 && (quasi === ' ' || quasi === '<!>')) {
-			if (quasi === ' ') {
-				body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-				close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
-			} else {
-				body.push(
-					b.var(id, b.call('$.comment', b.id('$$anchor'))),
-					b.var(node_id, b.call('$.child_frag', id)),
-					...state.init
-				);
-				close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
-			}
+		const quasis = state.template.quasi;
+		if (quasis.length === 1 && quasis[0] === ' ') {
+			body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
+		} else if (quasis.length === 1 && quasis[0] === '<!>') {
+			body.push(
+				b.var(id, b.call('$.comment', b.id('$$anchor'))),
+				b.var(node_id, b.call('$.child_frag', id)),
+				...state.init
+			);
+			close = b.stmt(b.call('$.close_frag', b.id('$$anchor'), id));
 		} else {
-			const callee = namespace === 'svg' ? '$.svg_template' : '$.template';
-
 			state.hoisted.push(
 				b.var(
 					template_name,
 					b.call(
-						callee,
+						namespace === 'svg' ? '$.svg_template' : '$.template',
 						b.template(
-							state.template.quasi.map((quasi) => b.quasi(quasi, true)),
+							quasis.map((quasi) => b.quasi(quasi, true)),
 							state.template.expressions
 						),
 						b.true
