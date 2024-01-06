@@ -8,7 +8,7 @@ const d = 'd';
 import * as $ from "svelte/internal";
 
 const boolean = false;
-var frag = $.template(`<p autocapitalize="${`w${$.stringify(o)}r${$.stringify(d)}s`}" contenteditable="${boolean}"> </p>`);
+var frag = $.template(`<p autocapitalize="${`w${$.stringify(o)}r${$.stringify(d)}s`}" contenteditable="${boolean}">boolean is ${$.stringify(boolean)} and autocapitalize is w${$.stringify(o)}r${$.stringify(d)}s</p>`);
 
 export default function Hoist_unmodified_var($$anchor, $$props) {
 	$.push($$props, true);
@@ -24,7 +24,6 @@ export default function Hoist_unmodified_var($$anchor, $$props) {
 
 	var text = $.child(p);
 
-	text.nodeValue = `boolean is ${$.stringify(boolean)} and autocapitalize is w${$.stringify(o)}r${$.stringify(d)}s`;
 	$.close($$anchor, p);
 	$.pop();
 }

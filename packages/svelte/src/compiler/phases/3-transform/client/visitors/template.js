@@ -1558,8 +1558,6 @@ function process_children(nodes, parent, { visit, state }) {
 			return;
 		}
 
-		push_template_quasi(state, ' ');
-
 		const text_id = get_node_id(expression, state, 'text');
 		const contains_call_expression = sequence.some(
 			(n) => n.type === 'ExpressionTag' && n.metadata.contains_call_expression
@@ -1575,21 +1573,19 @@ function process_children(nodes, parent, { visit, state }) {
 		);
 
 		if (contains_call_expression && !within_bound_contenteditable) {
+			push_template_quasi(state, ' ');
 			state.update_effects.push(singular);
 		} else if (
 			sequence.some((node) => node.type === 'ExpressionTag' && node.metadata.dynamic) &&
 			!within_bound_contenteditable
 		) {
+			push_template_quasi(state, ' ');
 			state.update.push({
 				singular,
 				grouped: b.stmt(b.call('$.text', text_id, assignment))
 			});
 		} else {
-			// TODO: uncomment this
-			// it causes a test to fail. need to understand if it's a valid test or if it should be adjusted or deleted
-			// see https://github.com/sveltejs/svelte/issues/6832 for more context on that test
-			// const { can_inline } = can_inline_all_nodes(sequence, state);
-			const can_inline = false;
+			const { can_inline } = can_inline_all_nodes(sequence, state);
 			if (can_inline) {
 				for (let i = 0; i < assignment.quasis.length; i++) {
 					push_template_quasi(state, assignment.quasis[i].value.raw);
@@ -1598,6 +1594,7 @@ function process_children(nodes, parent, { visit, state }) {
 					}
 				}
 			} else {
+				push_template_quasi(state, ' ');
 				state.init.push(init);
 			}
 		}
