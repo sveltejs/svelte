@@ -430,7 +430,13 @@ export function serialize_hoistable_params(node, context) {
 	}
 
 	params.push(...hoistable_params);
-	return params;
+
+  const seen = new Set();
+  for (const param of params) {
+    seen.add(param.name);
+  }
+  const uniqueParams = params.filter(param => !seen.has(param.name));
+	return uniqueParams;
 }
 
 /**
