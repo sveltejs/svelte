@@ -2491,7 +2491,10 @@ export const template_visitors = {
 				const binding = /** @type {import('#compiler').Binding} */ (
 					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.maybe_call(argument);
+				// we can't use `b.maybe_call` because it can result in invalid javascript if
+				// this expression appears on the left side of an assignment somewhere. For example:
+				// `$.maybe_call(myArg).value = 1` is valid JavaScript, but `$.myArg?.().value = 1` is not
+				binding.expression = b.call('$.maybe_call', argument);
 				return;
 			}
 
@@ -2526,7 +2529,9 @@ export const template_visitors = {
 							/** @type {import('estree').Expression} */ (
 								context.visit(
 									path.expression?.(
-										argument.type === 'RestElement' ? b.id(arg_alias) : b.maybe_call(arg_alias)
+										argument.type === 'RestElement'
+											? b.id(arg_alias)
+											: b.call('$.maybe_call', b.id(arg_alias))
 									)
 								)
 							)

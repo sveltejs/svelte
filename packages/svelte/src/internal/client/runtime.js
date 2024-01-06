@@ -1994,6 +1994,18 @@ export function proxy_rest_array(items) {
 }
 
 /**
+ * @template {Function | undefined} T
+ * @param {T} fn
+ * @returns {ReturnType<T> | undefined}
+ */
+export function maybe_call(fn) {
+	if (fn === undefined) {
+		return undefined;
+	}
+	return fn();
+}
+
+/**
  * Expects a value that was wrapped with `freeze` and makes it frozen.
  * @template {import('./proxy/proxy.js').StateObject} T
  * @param {T} value

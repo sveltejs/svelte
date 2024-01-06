@@ -39,6 +39,7 @@ export {
 	unwrap,
 	proxy_rest_array,
 	thunkspread,
+	maybe_call,
 	freeze
 } from './client/runtime.js';
 
