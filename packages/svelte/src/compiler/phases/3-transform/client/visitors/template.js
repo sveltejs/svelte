@@ -644,7 +644,10 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 		};
 	};
 
-	if (attribute.metadata.dynamic) {
+	const { has_expression_tag, can_inline } = Array.isArray(attribute.value)
+		? can_inline_all_nodes(attribute.value, context.state)
+		: { has_expression_tag: false, can_inline: true };
+	if (attribute.metadata.dynamic && !can_inline) {
 		const id = state.scope.generate(`${node_id.name}_${name}`);
 		// TODO should this use the if condition? what if someone mutates the value passed to the ce?
 		serialize_update_assignment(
@@ -657,7 +660,13 @@ function serialize_custom_element_attribute_update_assignment(node_id, attribute
 		);
 		return true;
 	} else {
-		state.init.push(assign(grouped_value).grouped);
+		if (has_expression_tag && can_inline) {
+			push_template_quasi(context.state, ` ${name}="`);
+			push_template_expression(context.state, grouped_value);
+			push_template_quasi(context.state, `"`);
+		} else {
+			state.init.push(assign(grouped_value).grouped);
+		}
 		return false;
 	}
 }
