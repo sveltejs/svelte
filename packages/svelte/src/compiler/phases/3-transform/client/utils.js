@@ -543,22 +543,7 @@ export function should_proxy_or_freeze(node) {
  * @returns {boolean}
  */
 export function can_inline_variable(binding, name) {
-	return (
-		!!binding &&
-		binding.kind === 'normal' &&
-		binding.scope.is_top_level &&
-		// TODO: allow object expressions that are not passed to functions or components as props
-		// and expressions as long as they do not reference non-hoistable variables
-		binding.initial?.type === 'Literal' &&
-		// Checking that it's not mutated or reassigned is a bit simplistic
-		// If it's not state and thus not reactive, we could hoist the variable and mutation
-		// E.g. if you have `let x = 0; x++` you could hoist both statements
-		!binding.mutated &&
-		!binding.reassigned &&
-		// Avoid conflicts. It would be nice to rename the variable, but keeping it simple for now
-		!binding.scope.declared_in_outer_scope(name) &&
-		!GlobalBindings.has(name)
-	);
+	return can_hoist_declaration(binding, name) || (!!binding && !binding.scope.has_parent());
 }
 
 /**
@@ -568,6 +553,21 @@ export function can_inline_variable(binding, name) {
  */
 export function can_hoist_declaration(binding, name) {
 	return (
-		can_inline_variable(binding, name) && !!binding && binding.scope.has_parent() // i.e. not when context="module"
+		!!binding &&
+		binding.kind === 'normal' &&
+		binding.scope.is_top_level &&
+		// For now we just allow primitives for simplicity. We could allow object expressions that are
+		// not passed to functions or components as props and expressions as long as they do not
+		// reference functions, constructors, non-hoistable variables, etc.
+		binding.initial?.type === 'Literal' &&
+		// Checking that it's not mutated or reassigned is a bit simplistic
+		// If it's not state and thus not reactive, we could hoist the variable and mutation
+		// E.g. if you have `let x = 0; x++` you could hoist both statements
+		!binding.mutated &&
+		!binding.reassigned &&
+		// Avoid conflicts. It would be nice to rename the variable, but keeping it simple for now
+		!binding.scope.declared_in_outer_scope(name) &&
+		!GlobalBindings.has(name)
+		&& binding.scope.has_parent() // i.e. not when context="module"
 	);
 }

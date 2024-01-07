@@ -4,11 +4,12 @@ import "svelte/internal/disclose-version";
 
 const o = 'o';
 const d = 'd';
+const url = new URL('foobar.png', 'https://www.example.com/').href;
 
 import * as $ from "svelte/internal";
 
 const boolean = false;
-var frag = $.template(`<p autocapitalize="${`w${$.stringify(o)}r${$.stringify(d)}s`}" contenteditable="${boolean}">boolean is ${$.stringify(boolean)} and autocapitalize is w${$.stringify(o)}r${$.stringify(d)}s</p>`);
+var frag = $.template(`<p autocapitalize="${`w${$.stringify(o)}r${$.stringify(d)}s`}" contenteditable="${boolean}">boolean is ${$.stringify(boolean)} and autocapitalize is w${$.stringify(o)}r${$.stringify(d)}s</p> <img src="${url}" alt="example">`, true);
 
 export default function Hoist_unmodified_var($$anchor, $$props) {
 	$.push($$props, true);
@@ -18,12 +19,14 @@ export default function Hoist_unmodified_var($$anchor, $$props) {
 	value += 'd';
 
 	/* Init */
-	var p = $.open($$anchor, true, frag);
+	var fragment = $.open_frag($$anchor, true, frag);
+	var node = $.child_frag(fragment);
 
-	$.attr(p, "itemid", `w${$.stringify(o)}r${$.stringify(value)}s`);
+	$.attr(node, "itemid", `w${$.stringify(o)}r${$.stringify(value)}s`);
 
-	var text = $.child(p);
+	var text = $.child(node);
+	var img = $.sibling($.sibling(node));
 
-	$.close($$anchor, p);
+	$.close_frag($$anchor, fragment);
 	$.pop();
 }
