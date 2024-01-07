@@ -3,7 +3,7 @@ import { source, set, get } from './runtime.js';
 
 /**
  * @template {any[]} ComponentArgs
- * @template {Record<string, any> | undefined} ComponentReturn
+ * @template {Record<string | symbol, any> | undefined} ComponentReturn
  * @template {(...args: ComponentArgs) => ComponentReturn} Component
  *
  * @param {{
@@ -20,8 +20,7 @@ export function hmr(hot_data, component) {
 
 		// @ts-ignore
 		hot_data.proxy = function (target, ...args) {
-			/** @type {ComponentReturn} */
-			let current_accessors;
+			const accessors = source(/** @type {ComponentReturn} */ ({}));
 
 			key(
 				target,
@@ -29,7 +28,8 @@ export function hmr(hot_data, component) {
 				($$anchor) => {
 					const current_component = get(component_signal);
 					// @ts-ignore
-					current_accessors = current_component($$anchor, ...args);
+					const new_accessors = current_component($$anchor, ...args);
+					set(accessors, new_accessors);
 				}
 			);
 
@@ -37,14 +37,11 @@ export function hmr(hot_data, component) {
 				{},
 				{
 					get(_, p) {
-						// we actually want to crash if no accessors, because no HMR code would crash
-						// @ts-ignore
-						return current_accessors[p];
+						return get(accessors)?.[p];
 					},
 					set(_, p, value) {
-						// we actually want to crash if no accessors, because no HMR code would crash
-						// @ts-ignore
-						current_accessors[p] = value;
+						// @ts-ignore (we actually want to crash on undefined, like non HMR code would do)
+						get(accessors)[p] = value;
 						return true;
 					}
 				}
