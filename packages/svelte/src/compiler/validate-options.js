@@ -106,6 +106,8 @@ export const validate_component_options =
 				return input;
 			}),
 
+			hmr: boolean(false),
+
 			hydratable: warn_removed(
 				'The hydratable option has been removed. Svelte components are always hydratable now.'
 			),

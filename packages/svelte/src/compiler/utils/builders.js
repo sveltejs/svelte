@@ -554,6 +554,20 @@ export function imports(parts, source) {
 }
 
 /**
+ * @return {import('estree').MemberExpression}
+ */
+export function import_meta_hot() {
+	return member(
+		{
+			type: 'MetaProperty',
+			meta: id('import'),
+			property: id('meta')
+		},
+		id('hot')
+	);
+}
+
+/**
  * @param {import('estree').Expression | null} argument
  * @returns {import('estree').ReturnStatement}
  */
