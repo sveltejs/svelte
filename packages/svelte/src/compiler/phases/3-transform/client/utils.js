@@ -552,17 +552,17 @@ export function can_inline_variable(binding, name) {
  * @returns {boolean}
  */
 export function can_hoist_declaration(binding, name) {
+	// We cannot hoist functions or constructors because they could be non-deterministic
+	// (i.e. `Math.random()`) or have side-effects (e.g. `increment()`). We also cannot hoist
+	// anything that references a non-hoistable variable.
 	return (
 		!!binding &&
 		binding.kind === 'normal' &&
 		binding.scope.is_top_level &&
 		binding.scope.has_parent() && // i.e. not when context="module"
-		// For now we just allow primitives for simplicity. We could allow object expressions that are
-		// not passed to functions or components as props and expressions as long as they do not
-		// reference functions, constructors, non-hoistable variables, etc.
+		// For now we just allow primitives for simplicity
 		binding.initial?.type === 'Literal' &&
-		// Checking that it's not mutated or reassigned is a bit simplistic
-		// If it's not state and thus not reactive, we could hoist the variable and mutation
+		// For now, we just check that it's not mutated or reassigned for simplicity
 		// E.g. if you have `let x = 0; x++` you could hoist both statements
 		!binding.mutated &&
 		!binding.reassigned &&
