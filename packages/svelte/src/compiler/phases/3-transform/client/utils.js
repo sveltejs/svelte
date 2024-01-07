@@ -556,6 +556,7 @@ export function can_hoist_declaration(binding, name) {
 		!!binding &&
 		binding.kind === 'normal' &&
 		binding.scope.is_top_level &&
+		binding.scope.has_parent() && // i.e. not when context="module"
 		// For now we just allow primitives for simplicity. We could allow object expressions that are
 		// not passed to functions or components as props and expressions as long as they do not
 		// reference functions, constructors, non-hoistable variables, etc.
@@ -568,6 +569,5 @@ export function can_hoist_declaration(binding, name) {
 		// Avoid conflicts. It would be nice to rename the variable, but keeping it simple for now
 		!binding.scope.declared_in_outer_scope(name) &&
 		!GlobalBindings.has(name)
-		&& binding.scope.has_parent() // i.e. not when context="module"
 	);
 }
