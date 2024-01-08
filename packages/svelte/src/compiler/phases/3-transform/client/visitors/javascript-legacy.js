@@ -1,11 +1,7 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import {
-	can_hoist_declaration,
-	get_prop_source,
-	serialize_get_binding
-} from '../utils.js';
+import { can_hoist_declaration, get_prop_source, serialize_get_binding } from '../utils.js';
 
 /**
  * Creates the output for a state declaration.
