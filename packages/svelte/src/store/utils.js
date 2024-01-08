@@ -8,7 +8,7 @@ import { EMPTY_FUNC } from '../internal/common.js';
  * @returns {() => void}
  */
 export function subscribe_to_store(store, run, invalidate) {
-	if (store == null) {
+	if (!store) {
 		// @ts-expect-error
 		run(undefined);
 
