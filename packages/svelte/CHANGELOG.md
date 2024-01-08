@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.30
+
+### Patch Changes
+
+- fix: allow transition undefined payload ([#10117](https://github.com/sveltejs/svelte/pull/10117))
+
+- fix: apply key animations on proxied arrays ([#10113](https://github.com/sveltejs/svelte/pull/10113))
+
+- fix: improve internal signal dependency checking logic ([#10111](https://github.com/sveltejs/svelte/pull/10111))
+
+- fix: correctly call exported state ([#10114](https://github.com/sveltejs/svelte/pull/10114))
+
+- fix: take into account setters when spreading and binding ([#10091](https://github.com/sveltejs/svelte/pull/10091))
+
+- fix: transform `{@render ...}` expression ([#10116](https://github.com/sveltejs/svelte/pull/10116))
+
 ## 5.0.0-next.29
 
 ### Patch Changes
