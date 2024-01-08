@@ -349,15 +349,21 @@ function execute_signal_fn(signal) {
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
-				const dep_length = dependencies.length;
+				// Include any dependencies up until the current_dependencies_index.
+				const full_dependencies =
+					current_dependencies_index === 0
+						? dependencies
+						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
+				const dep_length = full_dependencies.length;
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
-				const current_dependencies_set = dep_length > 16 ? new Set(current_dependencies) : null;
+				const current_dependencies_set = dep_length > 16 ? new Set(full_dependencies) : null;
+
 				for (i = current_dependencies_index; i < dep_length; i++) {
-					const dependency = dependencies[i];
+					const dependency = full_dependencies[i];
 					if (
 						(current_dependencies_set !== null && !current_dependencies_set.has(dependency)) ||
-						!current_dependencies.includes(dependency)
+						!full_dependencies.includes(dependency)
 					) {
 						remove_consumer(signal, dependency, false);
 					}
