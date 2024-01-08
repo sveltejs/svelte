@@ -1,7 +1,8 @@
-import { key, comment } from './render.js';
+import { key } from './render.js';
 import { source, set, get } from './runtime.js';
 import { current_hydration_fragment } from './hydration.js';
 import { child_frag } from './operations.js';
+import { proxy } from './proxy/proxy.js';
 
 function find_surrounding_ssr_commments() {
 	if (!current_hydration_fragment?.[0]) return null;
@@ -61,8 +62,6 @@ export function hmr(hot_data, new_component) {
 
 		// @ts-ignore
 		hot_data.proxy = function ($$anchor, ...args) {
-			let accessors = /** @type {ComponentReturn} */ ({});
-
 			// During hydration the root component will receive a null $$anchor. The
 			// following is a hack to get our `key` a node to render to, all while
 			// avoiding it to "consume" the SSR marker.
@@ -77,29 +76,36 @@ export function hmr(hot_data, new_component) {
 				}
 			}
 
+			const accessors_proxy = proxy(/** @type {import('./proxy/proxy.js').StateObject} */ ({}));
+			/** @type {Set<string>} */
+			const accessors_keys = new Set();
+
 			key(
 				$$anchor,
 				() => get(component_signal),
 				($$anchor) => {
 					const component = get(component_signal);
 					// @ts-ignore
-					accessors = component($$anchor, ...args);
-				}
-			);
+					const new_accessors = component($$anchor, ...args);
 
-			return new Proxy(
-				{},
-				{
-					get(_, p) {
-						return accessors?.[p];
-					},
-					set(_, p, value) {
-						// @ts-ignore (we actually want to crash on undefined, like non HMR code would do)
-						accessors[p] = value;
-						return true;
+					const removed_keys = new Set(accessors_keys);
+
+					if (new_accessors) {
+						for (const [key, value] of Object.entries(new_accessors)) {
+							accessors_proxy[key] = value;
+							accessors_keys.add(key);
+							removed_keys.delete(key);
+						}
+					}
+
+					for (const key of removed_keys) {
+						accessors_keys.delete(key);
+						accessors_proxy[key] = undefined;
 					}
 				}
 			);
+
+			return accessors_proxy;
 		};
 	}
 
