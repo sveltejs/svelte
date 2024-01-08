@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-fix: apply key animations on proxed arrays
+fix: apply key animations on proxied arrays
