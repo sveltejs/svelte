@@ -21,7 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_task,
+	schedule_microtask,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -279,6 +279,9 @@ function create_transition(dom, init, direction, effect) {
 			// @ts-ignore
 			payload = payload({ direction: curr_direction });
 		}
+		if (payload == null) {
+			return;
+		}
 		const duration = payload.duration ?? 300;
 		const delay = payload.delay ?? 0;
 		const css_fn = payload.css;
@@ -354,11 +357,15 @@ function create_transition(dom, init, direction, effect) {
 				cancelled = false;
 				create_animation();
 			}
-			dispatch_event(dom, 'introstart');
-			if (needs_reverse) {
-				/** @type {Animation | TickAnimation} */ (animation).reverse();
+			if (animation === null) {
+				transition.x();
+			} else {
+				dispatch_event(dom, 'introstart');
+				if (needs_reverse) {
+					/** @type {Animation | TickAnimation} */ (animation).reverse();
+				}
+				/** @type {Animation | TickAnimation} */ (animation).play();
 			}
-			/** @type {Animation | TickAnimation} */ (animation).play();
 		},
 		// out
 		o() {
@@ -368,11 +375,15 @@ function create_transition(dom, init, direction, effect) {
 				cancelled = false;
 				create_animation();
 			}
-			dispatch_event(dom, 'outrostart');
-			if (needs_reverse) {
-				/** @type {Animation | TickAnimation} */ (animation).reverse();
+			if (animation === null) {
+				transition.x();
 			} else {
-				/** @type {Animation | TickAnimation} */ (animation).play();
+				dispatch_event(dom, 'outrostart');
+				if (needs_reverse) {
+					/** @type {Animation | TickAnimation} */ (animation).reverse();
+				} else {
+					/** @type {Animation | TickAnimation} */ (animation).play();
+				}
 			}
 		},
 		// cancel
@@ -671,7 +682,7 @@ function each_item_animate(block, transitions, index, index_is_reactive) {
 				transition.c();
 			}
 		}
-		schedule_task(() => {
+		schedule_microtask(() => {
 			trigger_transitions(transitions, 'key', from);
 		});
 	}
