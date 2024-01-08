@@ -248,26 +248,11 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
-		/** Potential optimization: find nearest function boundary and if it is not async, the assignment can't be async */
-		const closest_function_boundary =
-			/** @type {import('estree').BaseFunction | undefined} */
-			(
-				context.path.findLast(
-					(node) =>
-						node.type === 'FunctionDeclaration' ||
-						node.type === 'FunctionExpression' ||
-						node.type === 'ArrowFunctionExpression'
-				)
-			);
-		const closest_function_boundary_is_async =
-			closest_function_boundary !== undefined && closest_function_boundary.async === true;
-
 		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
 
 		const iife_is_async =
-			closest_function_boundary_is_async &&
-			(is_expression_async(rhs_expression) ||
-				assignments.some((assignment) => is_expression_async(assignment)));
+			is_expression_async(rhs_expression) ||
+			assignments.some((assignment) => is_expression_async(assignment));
 
 		const iife = b.arrow(
 			[],
