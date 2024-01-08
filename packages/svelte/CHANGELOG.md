@@ -1,5 +1,23 @@
 # svelte
 
+## 5.0.0-next.29
+
+### Patch Changes
+
+- fix: improve text node output ([#10081](https://github.com/sveltejs/svelte/pull/10081))
+
+- fix: improve style parser whitespace handling ([#10077](https://github.com/sveltejs/svelte/pull/10077))
+
+- fix: allow input elements within button elements ([#10083](https://github.com/sveltejs/svelte/pull/10083))
+
+- fix: support TypeScript's `satisfies` operator ([#10068](https://github.com/sveltejs/svelte/pull/10068))
+
+- fix: provide `unstate` in server environment ([`877ff1ee7`](https://github.com/sveltejs/svelte/commit/877ff1ee7d637e2248145d975748e1012a977396))
+
+- fix: improve key block reactivity detection ([#10092](https://github.com/sveltejs/svelte/pull/10092))
+
+- fix: always treat spread attributes as reactive and separate them if needed ([#10071](https://github.com/sveltejs/svelte/pull/10071))
+
 ## 5.0.0-next.28
 
 ### Patch Changes

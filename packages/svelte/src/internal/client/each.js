@@ -351,12 +351,7 @@ function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -422,7 +417,9 @@ function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+			var should_update_block =
+				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -505,7 +502,6 @@ function reconcile_tracked_array(
 					mark_lis(sources);
 				}
 				// If keys are animated, we need to do updates before actual moves
-				var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 				var should_create;
 				if (is_animated) {
 					var i = b_length;

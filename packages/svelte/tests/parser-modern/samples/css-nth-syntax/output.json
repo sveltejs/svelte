@@ -495,19 +495,19 @@
 									"name": "nth-child",
 									"args": {
 										"type": "SelectorList",
-										"start": 476,
-										"end": 491,
+										"start": 485,
+										"end": 486,
 										"children": [
 											{
 												"type": "Selector",
-												"start": 476,
-												"end": 491,
+												"start": 485,
+												"end": 486,
 												"children": [
 													{
 														"type": "Nth",
-														"value": "\n        n\n    ",
-														"start": 476,
-														"end": 491
+														"value": "n",
+														"start": 485,
+														"end": 486
 													}
 												]
 											}

@@ -2,7 +2,7 @@
 	"css": {
 		"type": "Style",
 		"start": 0,
-		"end": 313,
+		"end": 386,
 		"attributes": [],
 		"children": [
 			{
@@ -225,12 +225,96 @@
 				},
 				"start": 266,
 				"end": 304
+			},
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 306,
+					"end": 359,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 306,
+							"end": 359,
+							"children": [
+								{
+									"type": "PseudoClassSelector",
+									"name": "is",
+									"args": {
+										"type": "SelectorList",
+										"start": 324,
+										"end": 355,
+										"children": [
+											{
+												"type": "Selector",
+												"start": 324,
+												"end": 330,
+												"children": [
+													{
+														"type": "TypeSelector",
+														"name": "button",
+														"start": 324,
+														"end": 330
+													}
+												]
+											},
+											{
+												"type": "Selector",
+												"start": 349,
+												"end": 355,
+												"children": [
+													{
+														"type": "TypeSelector",
+														"name": "h1",
+														"start": 349,
+														"end": 351
+													},
+													{
+														"type": "Combinator",
+														"name": "+",
+														"start": 352,
+														"end": 353
+													},
+													{
+														"type": "TypeSelector",
+														"name": "p",
+														"start": 354,
+														"end": 355
+													}
+												]
+											}
+										]
+									},
+									"start": 306,
+									"end": 359
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 359,
+					"end": 377,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 363,
+							"end": 373,
+							"property": "color",
+							"value": "red"
+						}
+					]
+				},
+				"start": 306,
+				"end": 377
 			}
 		],
 		"content": {
 			"start": 7,
-			"end": 305,
-			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n"
+			"end": 378,
+			"styles": "\n    /* test that all these are parsed correctly */\n\t::view-transition-old(x-y)  {\n\t\tcolor: red;\n    }\n\t:global(::view-transition-old(x-y))  {\n\t\tcolor: red;\n    }\n\t::highlight(rainbow-color-1) {\n\t\tcolor: red;\n\t}\n\tcustom-element::part(foo) {\n\t\tcolor: red;\n\t}\n\t::slotted(.content) {\n\t\tcolor: red;\n\t}\n\t:is( /*button*/\n\t\tbutton, /*p after h1*/\n\t\th1 + p\n\t\t){\n\t\tcolor: red;\n\t}\n"
 		}
 	},
 	"js": [],
