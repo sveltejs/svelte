@@ -33,7 +33,7 @@ export default test({
 
 		assert.htmlEqual(
 			target.innerHTML,
-			`<p>test costs $1</p><p>test 2 costs $2000</p><p>test costs $1</p><p>test 2 costs $2000</p><button>add</button><button>change</button><button>reload</button>`
+			`<p>test costs $1</p><p>test 2 costs $2</p><p>test costs $1</p><p>test 2 costs $2</p><button>add</button><button>change</button><button>reload</button>`
 		);
 	}
 });
