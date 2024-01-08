@@ -279,6 +279,9 @@ function create_transition(dom, init, direction, effect) {
 			// @ts-ignore
 			payload = payload({ direction: curr_direction });
 		}
+		if (payload == null) {
+			return;
+		}
 		const duration = payload.duration ?? 300;
 		const delay = payload.delay ?? 0;
 		const css_fn = payload.css;
@@ -485,12 +488,16 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
 
 		if (show_intro) {
-			transition.p = transition.i();
+			transition.p = transition.i() || null;
 		}
 
 		const effect = managed_pre_effect(() => {
 			destroy_signal(effect);
 			dom.inert = false;
+
+			if (transition.p === null) {
+				return;
+			}
 
 			if (show_intro) {
 				transition.in();
@@ -671,7 +678,7 @@ function each_item_animate(block, transitions, index, index_is_reactive) {
 				transition.c();
 			}
 		}
-		schedule_task(() => {
+		queueMicrotask(() => {
 			trigger_transitions(transitions, 'key', from);
 		});
 	}
