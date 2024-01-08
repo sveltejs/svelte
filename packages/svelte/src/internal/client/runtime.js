@@ -456,10 +456,14 @@ function remove_consumer(signal, dependency, remove_unowned) {
 function remove_consumers(signal, start_index, remove_unowned) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
+		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			remove_consumer(signal, dependency, remove_unowned);
+			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
+				remove_consumer(signal, dependency, remove_unowned);
+			}
 		}
 	}
 }
