@@ -2,8 +2,8 @@ import { get_rune } from '../../../scope.js';
 import { is_hoistable_function, transform_inspect_rune } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import * as assert from '../../../../utils/assert.js';
-import { create_state_declarators, get_prop_source, should_proxy_or_freeze } from '../utils.js';
-import { unwrap_ts_expression } from '../../../../utils/ast.js';
+import { get_prop_source, is_state_source, should_proxy_or_freeze } from '../utils.js';
+import { extract_paths, unwrap_ts_expression } from '../../../../utils/ast.js';
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_runes = {
@@ -223,66 +223,79 @@ export const javascript_visitors_runes = {
 			}
 
 			const args = /** @type {import('estree').CallExpression} */ (init).arguments;
-			let value =
+			const value =
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
 
-			if (declarator.id.type === 'Identifier') {
-				if (rune === '$state') {
-					const binding = /** @type {import('#compiler').Binding} */ (
-						state.scope.get(declarator.id.name)
-					);
+			if (rune === '$state' || rune === '$state.frozen') {
+				/**
+				 * @param {import('estree').Identifier} id
+				 * @param {import('estree').Expression} value
+				 */
+				const create_state_declarator = (id, value) => {
+					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
 					if (should_proxy_or_freeze(value)) {
-						value = b.call('$.proxy', value);
+						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
 					}
-
-					if (!state.analysis.immutable || state.analysis.accessors || binding.reassigned) {
+					if (is_state_source(binding, state)) {
 						value = b.call('$.source', value);
 					}
-				} else if (rune === '$state.frozen') {
-					const binding = /** @type {import('#compiler').Binding} */ (
-						state.scope.get(declarator.id.name)
-					);
-					if (should_proxy_or_freeze(value)) {
-						value = b.call('$.freeze', value);
-					}
+					return value;
+				};
 
-					if (binding.reassigned) {
-						value = b.call('$.source', value);
-					}
+				if (declarator.id.type === 'Identifier') {
+					declarations.push(
+						b.declarator(declarator.id, create_state_declarator(declarator.id, value))
+					);
 				} else {
-					value = b.call('$.derived', b.thunk(value));
+					const tmp = state.scope.generate('tmp');
+					const paths = extract_paths(declarator.id);
+					declarations.push(
+						b.declarator(b.id(tmp), value),
+						...paths.map((path) => {
+							const value = path.expression?.(b.id(tmp));
+							const binding = state.scope.get(
+								/** @type {import('estree').Identifier} */ (path.node).name
+							);
+							return b.declarator(
+								path.node,
+								binding?.kind === 'state' || binding?.kind === 'frozen_state'
+									? create_state_declarator(binding.node, value)
+									: value
+							);
+						})
+					);
 				}
-
-				declarations.push(b.declarator(declarator.id, value));
 				continue;
 			}
 
 			if (rune === '$derived') {
-				const bindings = state.scope.get_bindings(declarator);
-				const id = state.scope.generate('derived_value');
-				declarations.push(
-					b.declarator(
-						b.id(id),
-						b.call(
-							'$.derived',
-							b.thunk(
-								b.block([
-									b.let(declarator.id, value),
-									b.return(b.array(bindings.map((binding) => binding.node)))
-								])
+				if (declarator.id.type === 'Identifier') {
+					declarations.push(b.declarator(declarator.id, b.call('$.derived', b.thunk(value))));
+				} else {
+					const bindings = state.scope.get_bindings(declarator);
+					const id = state.scope.generate('derived_value');
+					declarations.push(
+						b.declarator(
+							b.id(id),
+							b.call(
+								'$.derived',
+								b.thunk(
+									b.block([
+										b.let(declarator.id, value),
+										b.return(b.array(bindings.map((binding) => binding.node)))
+									])
+								)
 							)
 						)
-					)
-				);
-				for (let i = 0; i < bindings.length; i++) {
-					bindings[i].expression = b.member(b.call('$.get', b.id(id)), b.literal(i), true);
+					);
+					for (let i = 0; i < bindings.length; i++) {
+						bindings[i].expression = b.member(b.call('$.get', b.id(id)), b.literal(i), true);
+					}
 				}
 				continue;
 			}
-
-			declarations.push(...create_state_declarators(declarator, state.scope, value));
 		}
 
 		if (declarations.length === 0) {
