@@ -424,6 +424,7 @@ function is_transition_block(block) {
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 	const block = current_block;
+	const is_key_animation = direction === 'key';
 
 	let can_show_intro_on_mount = true;
 	let can_apply_lazy_transitions = false;
@@ -471,7 +472,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const init = (from) =>
 			untrack(() => {
 				const props = props_fn === null ? {} : props_fn();
-				return direction === 'key'
+				return is_key_animation
 					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
@@ -495,7 +496,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			destroy_signal(effect);
 			dom.inert = false;
 
-			if (transition.p === null) {
+			if (transition.p === null && !is_key_animation) {
 				return;
 			}
 
