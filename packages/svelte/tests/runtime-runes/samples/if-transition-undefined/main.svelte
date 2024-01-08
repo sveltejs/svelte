@@ -5,7 +5,6 @@
 	let animate = $state(false);
 
 	function maybe(node, animate) {
-		console.log('maybe - animate?', animate);
 		if (animate) return fade(node);
 	}
 </script>

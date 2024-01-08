@@ -50,6 +50,8 @@ let current_queued_effects = [];
 
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
+/** @type {Array<() => void>} */
+let current_queued_microtasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -579,6 +581,11 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
+	if (current_queued_microtasks.length > 0) {
+		const tasks = current_queued_microtasks.slice();
+		current_queued_microtasks = [];
+		run_all(tasks);
+	}
 	if (flush_count > 101) {
 		return;
 	}
@@ -635,6 +642,18 @@ export function schedule_task(fn) {
 		setTimeout(process_task, 0);
 	}
 	current_queued_tasks.push(fn);
+}
+
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+export function schedule_microtask(fn) {
+	if (!is_micro_task_queued) {
+		is_micro_task_queued = true;
+		queueMicrotask(process_microtask);
+	}
+	current_queued_microtasks.push(fn);
 }
 
 /**
@@ -696,6 +715,9 @@ export function flushSync(fn) {
 		}
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
+		}
+		if (is_micro_task_queued) {
+			process_microtask();
 		}
 		if (is_task_queued) {
 			process_task();

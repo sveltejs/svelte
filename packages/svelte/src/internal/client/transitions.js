@@ -21,7 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_task,
+	schedule_microtask,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -357,11 +357,15 @@ function create_transition(dom, init, direction, effect) {
 				cancelled = false;
 				create_animation();
 			}
-			dispatch_event(dom, 'introstart');
-			if (needs_reverse) {
-				/** @type {Animation | TickAnimation} */ (animation).reverse();
+			if (animation === null) {
+				transition.x();
+			} else {
+				dispatch_event(dom, 'introstart');
+				if (needs_reverse) {
+					/** @type {Animation | TickAnimation} */ (animation).reverse();
+				}
+				/** @type {Animation | TickAnimation} */ (animation).play();
 			}
-			/** @type {Animation | TickAnimation} */ (animation).play();
 		},
 		// out
 		o() {
@@ -371,11 +375,15 @@ function create_transition(dom, init, direction, effect) {
 				cancelled = false;
 				create_animation();
 			}
-			dispatch_event(dom, 'outrostart');
-			if (needs_reverse) {
-				/** @type {Animation | TickAnimation} */ (animation).reverse();
+			if (animation === null) {
+				transition.x();
 			} else {
-				/** @type {Animation | TickAnimation} */ (animation).play();
+				dispatch_event(dom, 'outrostart');
+				if (needs_reverse) {
+					/** @type {Animation | TickAnimation} */ (animation).reverse();
+				} else {
+					/** @type {Animation | TickAnimation} */ (animation).play();
+				}
 			}
 		},
 		// cancel
@@ -424,7 +432,6 @@ function is_transition_block(block) {
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 	const block = current_block;
-	const is_key_animation = direction === 'key';
 
 	let can_show_intro_on_mount = true;
 	let can_apply_lazy_transitions = false;
@@ -472,7 +479,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const init = (from) =>
 			untrack(() => {
 				const props = props_fn === null ? {} : props_fn();
-				return is_key_animation
+				return direction === 'key'
 					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
@@ -489,16 +496,12 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
 
 		if (show_intro) {
-			transition.p = transition.i() || null;
+			transition.p = transition.i();
 		}
 
 		const effect = managed_pre_effect(() => {
 			destroy_signal(effect);
 			dom.inert = false;
-
-			if (transition.p === null && !is_key_animation) {
-				return;
-			}
 
 			if (show_intro) {
 				transition.in();
@@ -679,7 +682,7 @@ function each_item_animate(block, transitions, index, index_is_reactive) {
 				transition.c();
 			}
 		}
-		queueMicrotask(() => {
+		schedule_microtask(() => {
 			trigger_transitions(transitions, 'key', from);
 		});
 	}
