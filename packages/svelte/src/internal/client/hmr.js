@@ -56,16 +56,24 @@ export function hmr(hot_data, new_component) {
 	if (hot_data.proxy) {
 		set(hot_data.component_signal, new_component);
 	} else {
-		const component_signal = source(new_component);
-
-		hot_data.component_signal = component_signal;
+		hot_data.component_signal = source(new_component);
 
 		// @ts-ignore
 		hot_data.proxy = function ($$anchor, ...args) {
+			const accessors_proxy = proxy(/** @type {import('./proxy/proxy.js').StateObject} */ ({}));
+			/** @type {Set<string>} */
+			const accessors_keys = new Set();
+
 			// During hydration the root component will receive a null $$anchor. The
 			// following is a hack to get our `key` a node to render to, all while
 			// avoiding it to "consume" the SSR marker.
+			//
 			// TODO better get the eyes of someone with understanding of hydration on this
+			//
+			// If this failes, we get an ugly hydration failure message, but HMR should
+			// still work after that... Maybe we can show a more specific error message than
+			// the generic hydration failure one (that could be misleading in this case).
+			//
 			if (!$$anchor && current_hydration_fragment?.[0]) {
 				const ssr0 = find_surrounding_ssr_commments();
 				if (ssr0) {
@@ -76,15 +84,11 @@ export function hmr(hot_data, new_component) {
 				}
 			}
 
-			const accessors_proxy = proxy(/** @type {import('./proxy/proxy.js').StateObject} */ ({}));
-			/** @type {Set<string>} */
-			const accessors_keys = new Set();
-
 			key(
 				$$anchor,
-				() => get(component_signal),
+				() => get(hot_data.component_signal),
 				($$anchor) => {
-					const component = get(component_signal);
+					const component = get(hot_data.component_signal);
 					// @ts-ignore
 					const new_accessors = component($$anchor, ...args);
 
