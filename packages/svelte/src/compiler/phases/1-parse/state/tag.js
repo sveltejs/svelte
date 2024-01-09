@@ -266,14 +266,10 @@ function open(parser) {
 	}
 
 	if (parser.match('snippet')) {
-		const snippet_declaraion_end = find_matching_bracket(
-			parser.template,
-			parser.index,
-			parser.template[start]
-		);
+		const snippet_declaraion_end = find_matching_bracket(parser.template, parser.index, '{');
 
 		if (!snippet_declaraion_end) {
-			error(parser.current(), 'TODO', 'Expected a closing curly bracket');
+			error(start, 'TODO', 'Expected a closing curly bracket');
 		}
 
 		// we'll eat this later, so save it
@@ -551,36 +547,24 @@ function special(parser) {
 		return;
 	}
 
-	if (parser.eat('const')) {
+	if (parser.match('const')) {
 		// {@const a = b}
-		const start_index = parser.index - 5;
-		parser.require_whitespace();
+		const start_index = parser.index;
 
-		let end_index = parser.index;
-		/** @type {import('estree').VariableDeclaration | undefined} */
-		let declaration = undefined;
-
-		// Can't use parse_expression_at here, so we try to parse until we find the correct range
-		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
-		while (true) {
-			end_index = parser.template.indexOf('}', end_index + 1);
-			if (end_index === -1) break;
-			try {
-				const node = parse(
-					dummy_spaces + parser.template.substring(start_index, end_index),
-					parser.ts
-				).body[0];
-				if (node?.type === 'VariableDeclaration') {
-					declaration = node;
-					break;
-				}
-			} catch (e) {
-				continue;
-			}
+		let end_index = find_matching_bracket(parser.template, start_index, '{');
+		if (!end_index) {
+			error(start, 'invalid-const');
 		}
+
+		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
+		let declaration = parse(
+			dummy_spaces + parser.template.substring(start_index, end_index),
+			parser.ts
+		).body[0];
 
 		if (
 			declaration === undefined ||
+			declaration.type !== 'VariableDeclaration' ||
 			declaration.declarations.length !== 1 ||
 			declaration.declarations[0].init === undefined
 		) {
