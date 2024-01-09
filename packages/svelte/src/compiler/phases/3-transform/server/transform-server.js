@@ -1428,9 +1428,9 @@ const template_visitors = {
 		// TODO hoist where possible
 		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$payload')];
-		node.context.elements.forEach((arg) => {
+		for (const arg of node.context.elements) {
 			if (arg) args.push(arg);
-		});
+		}
 
 		context.state.init.push(
 			b.function_declaration(
