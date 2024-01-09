@@ -45,6 +45,23 @@ export function assignment(operator, left, right) {
 }
 
 /**
+ * @template T
+ * @param {T & import('estree').BaseFunction} func
+ * @returns {T & import('estree').BaseFunction}
+ */
+export function async(func) {
+	return { ...func, async: true };
+}
+
+/**
+ * @param {import('estree').Expression} argument
+ * @returns {import('estree').AwaitExpression}
+ */
+export function await_builder(argument) {
+	return { type: 'AwaitExpression', argument };
+}
+
+/**
  * @param {import('estree').BinaryOperator} operator
  * @param {import('estree').Expression} left
  * @param {import('estree').Expression} right
@@ -573,6 +590,7 @@ export function throw_error(str) {
 }
 
 export {
+	await_builder as await,
 	new_builder as new,
 	let_builder as let,
 	const_builder as const,

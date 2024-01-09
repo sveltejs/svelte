@@ -1280,6 +1280,10 @@ function handle_event_propagation(root_element, event) {
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
+		if (at_idx !== -1 && root_element === document) {
+			// This is the fallback document listener but the event was already handled -> ignore
+			return;
+		}
 		if (at_idx < path.indexOf(root_element)) {
 			path_idx = at_idx;
 		}
@@ -2425,9 +2429,25 @@ function get_setters(element) {
 }
 
 /**
+ * Like `spread_attributes` but self-contained
+ * @param {Element & ElementCSSInlineStyle} dom
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {string} css_hash
+ */
+export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
+	});
+}
+
+/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string, unknown> | null} prev
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
@@ -2524,18 +2544,30 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 
 /**
  * @param {Element} node
- * @param {Record<string, unknown> | null} prev
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {string} css_hash
+ */
+export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
+	});
+}
+
+/**
+ * @param {Element} node
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
  */
 export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	if (node.tagName.includes('-')) {
 		const next = object_assign({}, ...attrs);
-		if (prev !== null) {
-			for (const key in prev) {
-				if (!(key in next)) {
-					next[key] = null;
-				}
+		for (const key in prev) {
+			if (!(key in next)) {
+				next[key] = null;
 			}
 		}
 		for (const key in next) {
@@ -2614,8 +2646,13 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
-	getOwnPropertyDescriptor() {
-		return { enumerable: true, configurable: true };
+	getOwnPropertyDescriptor(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+		}
 	},
 	has(target, key) {
 		for (let p of target.props) {
@@ -2778,6 +2815,7 @@ export function mount(component, options) {
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
 	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -2785,9 +2823,23 @@ export function mount(component, options) {
 			const event_name = events[i];
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
 				container.addEventListener(
 					event_name,
 					bound_event_listener,
+					PassiveDelegatedEvents.includes(event_name)
+						? {
+								passive: true
+						  }
+						: undefined
+				);
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(
+					event_name,
+					bound_document_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true

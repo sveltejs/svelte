@@ -50,6 +50,8 @@ let current_queued_effects = [];
 
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
+/** @type {Array<() => void>} */
+let current_queued_microtasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -64,7 +66,7 @@ let current_dependencies = null;
 let current_dependencies_index = 0;
 /** @type {null | import('./types.js').Signal[]} */
 let current_untracked_writes = null;
-/** @type {null | import('./types.js').Signal} */
+/** @type {null | import('./types.js').SignalDebug} */
 let last_inspected_signal = null;
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
@@ -81,7 +83,7 @@ let captured_signals = new Set();
 /** @type {Function | null} */
 let inspect_fn = null;
 
-/** @type {Array<import('./types.js').SourceSignal & import('./types.js').SourceSignalDebug>} */
+/** @type {Array<import('./types.js').SignalDebug>} */
 let inspect_captured_signals = [];
 
 // Handle rendering tree blocks and anchors
@@ -127,7 +129,6 @@ export function batch_inspect(target, prop, receiver) {
 		} finally {
 			is_batching_effect = previously_batching_effect;
 			if (last_inspected_signal !== null) {
-				// @ts-expect-error
 				for (const fn of last_inspected_signal.inspect) fn();
 				last_inspected_signal = null;
 			}
@@ -349,7 +350,27 @@ function execute_signal_fn(signal) {
 
 		if (current_dependencies !== null) {
 			let i;
-			remove_consumer(signal, current_dependencies_index, false);
+			if (dependencies !== null) {
+				// Include any dependencies up until the current_dependencies_index.
+				const full_dependencies =
+					current_dependencies_index === 0
+						? dependencies
+						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
+				const dep_length = full_dependencies.length;
+				// If we have more than 16 elements in the array then use a Set for faster performance
+				// TODO: evaluate if we should always just use a Set or not here?
+				const current_dependencies_set = dep_length > 16 ? new Set(full_dependencies) : null;
+
+				for (i = current_dependencies_index; i < dep_length; i++) {
+					const dependency = full_dependencies[i];
+					if (
+						(current_dependencies_set !== null && !current_dependencies_set.has(dependency)) ||
+						!full_dependencies.includes(dependency)
+					) {
+						remove_consumer(signal, dependency, false);
+					}
+				}
+			}
 
 			if (dependencies !== null && current_dependencies_index > 0) {
 				dependencies.length = current_dependencies_index + current_dependencies.length;
@@ -365,16 +386,17 @@ function execute_signal_fn(signal) {
 			if (!current_skip_consumer) {
 				for (i = current_dependencies_index; i < dependencies.length; i++) {
 					const dependency = dependencies[i];
+					const consumers = dependency.c;
 
-					if (dependency.c === null) {
+					if (consumers === null) {
 						dependency.c = [signal];
-					} else {
-						dependency.c.push(signal);
+					} else if (consumers[consumers.length - 1] !== signal) {
+						consumers.push(signal);
 					}
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumer(signal, current_dependencies_index, false);
+			remove_consumers(signal, current_dependencies_index, false);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -393,39 +415,54 @@ function execute_signal_fn(signal) {
 /**
  * @template V
  * @param {import('./types.js').ComputationSignal<V>} signal
+ * @param {import('./types.js').Signal<V>} dependency
+ * @param {boolean} remove_unowned
+ * @returns {void}
+ */
+function remove_consumer(signal, dependency, remove_unowned) {
+	const consumers = dependency.c;
+	let consumers_length = 0;
+	if (consumers !== null) {
+		consumers_length = consumers.length - 1;
+		const index = consumers.indexOf(signal);
+		if (index !== -1) {
+			if (consumers_length === 0) {
+				dependency.c = null;
+			} else {
+				// Swap with last element and then remove.
+				consumers[index] = consumers[consumers_length];
+				consumers.pop();
+			}
+		}
+	}
+	if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+		// If the signal is unowned then we need to make sure to change it to dirty.
+		set_signal_status(dependency, DIRTY);
+		remove_consumers(
+			/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
+			0,
+			true
+		);
+	}
+}
+
+/**
+ * @template V
+ * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {number} start_index
  * @param {boolean} remove_unowned
  * @returns {void}
  */
-function remove_consumer(signal, start_index, remove_unowned) {
+function remove_consumers(signal, start_index, remove_unowned) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
+		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			const consumers = dependency.c;
-			let consumers_length = 0;
-			if (consumers !== null) {
-				consumers_length = consumers.length - 1;
-				const index = consumers.indexOf(signal);
-				if (index !== -1) {
-					if (consumers_length === 0) {
-						dependency.c = null;
-					} else {
-						// Swap with last element and then remove.
-						consumers[index] = consumers[consumers_length];
-						consumers.pop();
-					}
-				}
-			}
-			if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
-				// If the signal is unowned then we need to make sure to change it to dirty.
-				set_signal_status(dependency, DIRTY);
-				remove_consumer(
-					/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
-					0,
-					true
-				);
+			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
+				remove_consumer(signal, dependency, remove_unowned);
 			}
 		}
 	}
@@ -446,7 +483,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
-				remove_consumer(reference, 0, true);
+				remove_consumers(reference, 0, true);
 				reference.d = null;
 			}
 		}
@@ -548,6 +585,11 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
+	if (current_queued_microtasks.length > 0) {
+		const tasks = current_queued_microtasks.slice();
+		current_queued_microtasks = [];
+		run_all(tasks);
+	}
 	if (flush_count > 101) {
 		return;
 	}
@@ -604,6 +646,18 @@ export function schedule_task(fn) {
 		setTimeout(process_task, 0);
 	}
 	current_queued_tasks.push(fn);
+}
+
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+export function schedule_microtask(fn) {
+	if (!is_micro_task_queued) {
+		is_micro_task_queued = true;
+		queueMicrotask(process_microtask);
+	}
+	current_queued_microtasks.push(fn);
 }
 
 /**
@@ -666,6 +720,9 @@ export function flushSync(fn) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
+		if (is_micro_task_queued) {
+			process_microtask();
+		}
 		if (is_task_queued) {
 			process_task();
 		}
@@ -711,8 +768,7 @@ function update_derived(signal, force_schedule) {
 
 		// @ts-expect-error
 		if (DEV && signal.inspect && force_schedule) {
-			// @ts-expect-error
-			for (const fn of signal.inspect) fn();
+			for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 		}
 	}
 }
@@ -815,8 +871,7 @@ export function unsubscribe_on_destroy(stores) {
 export function get(signal) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
-		// @ts-expect-error
-		signal.inspect.add(inspect_fn);
+		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
 		// @ts-expect-error
 		inspect_captured_signals.push(signal);
 	}
@@ -841,10 +896,16 @@ export function get(signal) {
 			!(unowned && current_effect !== null)
 		) {
 			current_dependencies_index++;
-		} else if (current_dependencies === null) {
-			current_dependencies = [signal];
-		} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
-			current_dependencies.push(signal);
+		} else if (
+			dependencies === null ||
+			current_dependencies_index === 0 ||
+			dependencies[current_dependencies_index - 1] !== signal
+		) {
+			if (current_dependencies === null) {
+				current_dependencies = [signal];
+			} else if (signal !== current_dependencies[current_dependencies.length - 1]) {
+				current_dependencies.push(signal);
+			}
 		}
 		if (
 			current_untracked_writes !== null &&
@@ -1079,10 +1140,9 @@ export function set_signal_value(signal, value) {
 		// @ts-expect-error
 		if (DEV && signal.inspect) {
 			if (is_batching_effect) {
-				last_inspected_signal = signal;
+				last_inspected_signal = /** @type {import('./types.js').SignalDebug} */ (signal);
 			} else {
-				// @ts-expect-error
-				for (const fn of signal.inspect) fn();
+				for (const fn of /** @type {import('./types.js').SignalDebug} */ (signal).inspect) fn();
 			}
 		}
 	}
@@ -1098,7 +1158,7 @@ export function destroy_signal(signal) {
 	const destroy = signal.y;
 	const flags = signal.f;
 	destroy_references(signal);
-	remove_consumer(signal, 0, true);
+	remove_consumers(signal, 0, true);
 	signal.i =
 		signal.r =
 		signal.y =
@@ -1804,6 +1864,37 @@ function deep_read(value, visited = new Set()) {
 	}
 }
 
+/**
+ * Like `unstate`, but recursively traverses into normal arrays/objects to find potential states in them.
+ * @param {any} value
+ * @param {Map<any, any>} visited
+ * @returns {any}
+ */
+function deep_unstate(value, visited = new Map()) {
+	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		const unstated = unstate(value);
+		if (unstated !== value) {
+			visited.set(value, unstated);
+			return unstated;
+		}
+
+		let contains_unstated = false;
+		/** @type {any} */
+		const nested_unstated = Array.isArray(value) ? [] : {};
+		for (let key in value) {
+			const result = deep_unstate(value[key], visited);
+			nested_unstated[key] = result;
+			if (result !== value[key]) {
+				contains_unstated = true;
+			}
+		}
+
+		visited.set(value, contains_unstated ? nested_unstated : value);
+	}
+
+	return visited.get(value) ?? value;
+}
+
 // TODO remove in a few versions, before 5.0 at the latest
 let warned_inspect_changed = false;
 
@@ -1817,7 +1908,7 @@ export function inspect(get_value, inspect = console.log) {
 
 	pre_effect(() => {
 		const fn = () => {
-			const value = get_value().map(unstate);
+			const value = get_value().map((v) => deep_unstate(v));
 			if (value.length === 2 && typeof value[1] === 'function' && !warned_inspect_changed) {
 				// eslint-disable-next-line no-console
 				console.warn(
