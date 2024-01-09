@@ -21,7 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_microtask,
+	schedule_raf_task,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -646,7 +646,8 @@ function each_item_transition(transition) {
 			transitions.delete(transition);
 			if (transition.r !== 'key') {
 				for (let other of transitions) {
-					if (other.r === 'key' || other.r === 'in') {
+					const type = other.r;
+					if (type === 'key' || type === 'in') {
 						transitions.delete(other);
 					}
 				}
@@ -664,26 +665,18 @@ function each_item_transition(transition) {
  *
  * @param {import('./types.js').EachItemBlock} block
  * @param {Set<import('./types.js').Transition>} transitions
- * @param {number} index
- * @param {boolean} index_is_reactive
  */
-function each_item_animate(block, transitions, index, index_is_reactive) {
-	let prev_index = block.i;
-	if (index_is_reactive) {
-		prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
-	}
-	const items = block.p.v;
-	if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-		const from_dom = /** @type {Element} */ (get_first_element(block));
-		const from = from_dom.getBoundingClientRect();
-		// Cancel any existing key transitions
-		for (const transition of transitions) {
-			if (transition.r === 'key') {
-				transition.c();
-			}
+function each_item_animate(block, transitions) {
+	const from_dom = /** @type {Element} */ (get_first_element(block));
+	const from = from_dom.getBoundingClientRect();
+	// Cancel any existing key transitions
+	for (const transition of transitions) {
+		const type = transition.r;
+		if (type === 'key') {
+			transition.c();
 		}
-		schedule_microtask(() => {
-			trigger_transitions(transitions, 'key', from);
-		});
 	}
+	schedule_raf_task(() => {
+		trigger_transitions(transitions, 'key', from);
+	});
 }

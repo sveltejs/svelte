@@ -25,7 +25,6 @@ import {
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
-	schedule_task,
 	set_signal_value,
 	source
 } from './runtime.js';
@@ -486,6 +485,17 @@ function reconcile_tracked_array(
 					key = is_computed_key ? keys[a] : item;
 					map_set(item_index, key, a);
 				}
+				// If keys are animated, we need to do updates before actual moves
+				if (is_animated) {
+					for (b = start; b <= a_end; ++b) {
+						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+						if (a !== undefined) {
+							item = array[a];
+							block = a_blocks[b];
+							update_each_item_block(block, item, a, flags);
+						}
+					}
+				}
 				for (b = start; b <= a_end; ++b) {
 					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
@@ -501,22 +511,9 @@ function reconcile_tracked_array(
 				if (pos === MOVED_BLOCK) {
 					mark_lis(sources);
 				}
-				// If keys are animated, we need to do updates before actual moves
-				var should_create;
-				if (is_animated) {
-					var i = b_length;
-					while (i-- > 0) {
-						b_end = i + start;
-						a = sources[i];
-						if (pos === MOVED_BLOCK) {
-							block = b_blocks[b_end];
-							item = array[b_end];
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-				}
 				var last_block;
 				var last_sibling;
+				var should_create;
 				while (b_length-- > 0) {
 					b_end = b_length + start;
 					a = sources[b_length];
@@ -715,7 +712,7 @@ function update_each_item_block(block, item, index, type) {
 	// Handle each item animations
 	const each_animation = block.a;
 	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions, index, index_is_reactive);
+		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
