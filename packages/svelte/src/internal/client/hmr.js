@@ -60,7 +60,7 @@ function find_surrounding_ssr_commments() {
 function create_proxy_component(new_component) {
 	const component_signal = source(new_component);
 
-	let component_name = '';
+	let component_name = new_component.name;
 
 	/**
 	 * @type {HotData["set_component"]}
@@ -122,17 +122,17 @@ function create_proxy_component(new_component) {
 			}
 		);
 
-		try {
-			Object.defineProperty(proxy_component, 'name', {
-				get() {
-					return component_name;
-				}
-			});
-		} catch (err) {
-			console.warn("[Svelte HMR] Failed to proxy component function's name", err);
-		}
-
 		return accessors_proxy;
+	}
+
+	try {
+		Object.defineProperty(proxy_component, 'name', {
+			get() {
+				return component_name;
+			}
+		});
+	} catch (err) {
+		console.warn("[Svelte HMR] Failed to proxy component function's name", err);
 	}
 
 	return { proxy_component, set_component };
