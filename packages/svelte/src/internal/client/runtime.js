@@ -10,6 +10,7 @@ import {
 } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
 import { READONLY_SYMBOL, STATE_SYMBOL, proxy, unstate } from './proxy/proxy.js';
+import { EACH_BLOCK, IF_BLOCK } from './block.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -50,6 +51,8 @@ let current_queued_effects = [];
 
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
+/** @type {Array<() => void>} */
+let current_queued_microtasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -349,15 +352,21 @@ function execute_signal_fn(signal) {
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
-				const dep_length = dependencies.length;
+				// Include any dependencies up until the current_dependencies_index.
+				const full_dependencies =
+					current_dependencies_index === 0
+						? dependencies
+						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
+				const dep_length = full_dependencies.length;
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
-				const current_dependencies_set = dep_length > 16 ? new Set(current_dependencies) : null;
+				const current_dependencies_set = dep_length > 16 ? new Set(full_dependencies) : null;
+
 				for (i = current_dependencies_index; i < dep_length; i++) {
-					const dependency = dependencies[i];
+					const dependency = full_dependencies[i];
 					if (
 						(current_dependencies_set !== null && !current_dependencies_set.has(dependency)) ||
-						!current_dependencies.includes(dependency)
+						!full_dependencies.includes(dependency)
 					) {
 						remove_consumer(signal, dependency, false);
 					}
@@ -448,10 +457,14 @@ function remove_consumer(signal, dependency, remove_unowned) {
 function remove_consumers(signal, start_index, remove_unowned) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
+		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
 		let i;
 		for (i = start_index; i < dependencies.length; i++) {
 			const dependency = dependencies[i];
-			remove_consumer(signal, dependency, remove_unowned);
+			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
+			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
+				remove_consumer(signal, dependency, remove_unowned);
+			}
 		}
 	}
 }
@@ -573,6 +586,11 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
+	if (current_queued_microtasks.length > 0) {
+		const tasks = current_queued_microtasks.slice();
+		current_queued_microtasks = [];
+		run_all(tasks);
+	}
 	if (flush_count > 101) {
 		return;
 	}
@@ -629,6 +647,18 @@ export function schedule_task(fn) {
 		setTimeout(process_task, 0);
 	}
 	current_queued_tasks.push(fn);
+}
+
+/**
+ * @param {() => void} fn
+ * @returns {void}
+ */
+export function schedule_microtask(fn) {
+	if (!is_micro_task_queued) {
+		is_micro_task_queued = true;
+		queueMicrotask(process_microtask);
+	}
+	current_queued_microtasks.push(fn);
 }
 
 /**
@@ -690,6 +720,9 @@ export function flushSync(fn) {
 		}
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
+		}
+		if (is_micro_task_queued) {
+			process_microtask();
 		}
 		if (is_task_queued) {
 			process_task();
@@ -986,6 +1019,28 @@ export function mark_subtree_inert(signal, inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
 			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
+		}
+		// Nested if block effects
+		const block = signal.b;
+		if (block !== null) {
+			const type = block.t;
+			if (type === IF_BLOCK) {
+				const consequent_effect = block.ce;
+				if (consequent_effect !== null) {
+					mark_subtree_inert(consequent_effect, inert);
+				}
+				const alternate_effect = block.ae;
+				if (alternate_effect !== null) {
+					mark_subtree_inert(alternate_effect, inert);
+				}
+			} else if (type === EACH_BLOCK) {
+				const items = block.v;
+				for (let { e: each_item_effect } of items) {
+					if (each_item_effect !== null) {
+						mark_subtree_inert(each_item_effect, inert);
+					}
+				}
+			}
 		}
 	}
 	const references = signal.r;

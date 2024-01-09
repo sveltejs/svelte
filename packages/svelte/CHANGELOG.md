@@ -1,5 +1,39 @@
 # svelte
 
+## 5.0.0-next.30
+
+### Patch Changes
+
+- fix: allow transition undefined payload ([#10117](https://github.com/sveltejs/svelte/pull/10117))
+
+- fix: apply key animations on proxied arrays ([#10113](https://github.com/sveltejs/svelte/pull/10113))
+
+- fix: improve internal signal dependency checking logic ([#10111](https://github.com/sveltejs/svelte/pull/10111))
+
+- fix: correctly call exported state ([#10114](https://github.com/sveltejs/svelte/pull/10114))
+
+- fix: take into account setters when spreading and binding ([#10091](https://github.com/sveltejs/svelte/pull/10091))
+
+- fix: transform `{@render ...}` expression ([#10116](https://github.com/sveltejs/svelte/pull/10116))
+
+## 5.0.0-next.29
+
+### Patch Changes
+
+- fix: improve text node output ([#10081](https://github.com/sveltejs/svelte/pull/10081))
+
+- fix: improve style parser whitespace handling ([#10077](https://github.com/sveltejs/svelte/pull/10077))
+
+- fix: allow input elements within button elements ([#10083](https://github.com/sveltejs/svelte/pull/10083))
+
+- fix: support TypeScript's `satisfies` operator ([#10068](https://github.com/sveltejs/svelte/pull/10068))
+
+- fix: provide `unstate` in server environment ([`877ff1ee7`](https://github.com/sveltejs/svelte/commit/877ff1ee7d637e2248145d975748e1012a977396))
+
+- fix: improve key block reactivity detection ([#10092](https://github.com/sveltejs/svelte/pull/10092))
+
+- fix: always treat spread attributes as reactive and separate them if needed ([#10071](https://github.com/sveltejs/svelte/pull/10071))
+
 ## 5.0.0-next.28
 
 ### Patch Changes
