@@ -49,7 +49,7 @@ export function remove(current) {
 		var node;
 		for (; i < current.length; i++) {
 			node = current[i];
-			if (i === 0) {
+			if (!i) {
 				first_node = node;
 			}
 			if (node.isConnected) {

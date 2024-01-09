@@ -50,7 +50,7 @@ function no_op() {}
  * @returns {void}
  */
 function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+	const is_controlled = !!(flags & EACH_IS_CONTROLLED);
 	const block = create_each_block(flags, anchor_node);
 
 	/** @type {null | import('./types.js').Render} */
@@ -73,15 +73,13 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (fallback.e) {
-						if (fallback.d) {
-							remove(fallback.d);
-							fallback.d = null;
-						}
-						destroy_signal(fallback.e);
-						fallback.e = null;
+				if (!transitions.size && fallback.e) {
+					if (fallback.d) {
+						remove(fallback.d);
+						fallback.d = null;
 					}
+					destroy_signal(fallback.e);
+					fallback.e = null;
 				}
 			});
 		};
@@ -103,7 +101,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 					block.d = null;
 				}
 				let anchor = block.a;
-				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
+				const is_controlled = !!(block.f & EACH_IS_CONTROLLED);
 				if (is_controlled) {
 					anchor = empty();
 					block.a.appendChild(anchor);
@@ -122,7 +120,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	/** @param {import('./types.js').EachBlock} block */
 	const clear_each = (block) => {
 		const flags = block.f;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+		const is_controlled = !!(flags & EACH_IS_CONTROLLED);
 		const anchor_node = block.a;
 		reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
 	};
@@ -138,21 +136,21 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				: Array.from(maybe_array);
 			if (key_fn) {
 				keys = array.map(key_fn);
-			} else if ((flags & EACH_KEYED) === 0) {
+			} else if (!(flags & EACH_KEYED)) {
 				array.map(no_op);
 			}
 			const length = array.length;
 			if (fallback_fn) {
-				if (length === 0) {
-					if (block.v.length !== 0 || !render) {
+				if (!length) {
+					if (block.v.length || !render) {
 						clear_each(block);
 						create_fallback_effect();
 						return;
 					}
-				} else if (block.v.length === 0 && current_fallback) {
+				} else if (!block.v.length && current_fallback) {
 					const fallback = current_fallback;
 					const transitions = fallback.s;
-					if (transitions.size === 0) {
+					if (!transitions.size) {
 						if (fallback.d) {
 							remove(fallback.d);
 							fallback.d = null;
@@ -175,7 +173,7 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 	push_destroy_fn(each, () => {
 		const flags = block.f;
 		const anchor_node = block.a;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
+		const is_controlled = !!(flags & EACH_IS_CONTROLLED);
 		let fallback = current_fallback;
 		while (fallback) {
 			const dom = fallback.d;
@@ -263,14 +261,14 @@ function reconcile_indexed_array(
 	var b_blocks;
 	var block;
 
-	if (active_transitions.length !== 0) {
+	if (active_transitions.length) {
 		destroy_active_transition_blocks(active_transitions);
 	}
 
-	if (b === 0) {
+	if (!b) {
 		b_blocks = [];
 		// Remove old blocks
-		if (is_controlled && a !== 0) {
+		if (is_controlled && a) {
 			clear_text_content(dom);
 		}
 		while (index < length) {
@@ -363,14 +361,14 @@ function reconcile_tracked_array(
 	var b_blocks;
 	var block;
 
-	if (active_transitions.length !== 0) {
+	if (active_transitions.length) {
 		destroy_active_transition_blocks(active_transitions);
 	}
 
-	if (b === 0) {
+	if (!b) {
 		b_blocks = [];
 		// Remove old blocks
-		if (is_controlled && a !== 0) {
+		if (is_controlled && a) {
 			clear_text_content(dom);
 		}
 		while (a > 0) {
@@ -406,7 +404,7 @@ function reconcile_tracked_array(
 				block = each_item_block(item, key, idx, render_fn, flags);
 				b_blocks[idx] = block;
 			}
-		} else if (a === 0) {
+		} else if (!a) {
 			// Create new blocks
 			while (b > 0) {
 				idx = b_end - --b;
@@ -417,9 +415,8 @@ function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-			var should_update_block =
-				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
+			var is_animated = !!(flags & EACH_IS_ANIMATED);
+			var should_update_block = flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE) || is_animated;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -705,16 +702,16 @@ export function get_first_element(block) {
  * @returns {void}
  */
 function update_each_item_block(block, item, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
+	if (type & EACH_ITEM_REACTIVE) {
 		set_signal_value(block.v, item);
 	} else if (is_lazy_property(block.v)) {
 		block.v.o[block.v.p] = item;
 	}
 	const transitions = block.s;
-	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
+	const index_is_reactive = !!(type & EACH_INDEX_REACTIVE);
 	// Handle each item animations
 	const each_animation = block.a;
-	if (transitions && (type & EACH_KEYED) !== 0 && each_animation) {
+	if (transitions && type & EACH_KEYED && each_animation) {
 		each_animation(block, transitions, index, index_is_reactive);
 	}
 	if (index_is_reactive) {
@@ -746,7 +743,7 @@ export function destroy_each_item_block(
 				transitions.delete(other);
 			}
 		}
-		if (transitions.size === 0) {
+		if (!transitions.size) {
 			block.s = null;
 		} else {
 			trigger_transitions(transitions, 'out');
@@ -775,15 +772,15 @@ export function destroy_each_item_block(
  * @returns {import('./types.js').EachItemBlock}
  */
 function each_item_block(item, key, index, render_fn, flags) {
-	const each_item_not_reactive = (flags & EACH_ITEM_REACTIVE) === 0;
+	const each_item_not_reactive = !(flags & EACH_ITEM_REACTIVE);
 
 	const item_value = each_item_not_reactive
 		? item
-		: (flags & EACH_IS_IMMUTABLE) === 0
+		: !(flags & EACH_IS_IMMUTABLE)
 		? mutable_source(item)
 		: source(item);
 
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
+	const index_value = !(flags & EACH_INDEX_REACTIVE) ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);
 
 	const effect = render_effect(

@@ -13,7 +13,7 @@ function run_tasks(now) {
 			task.f();
 		}
 	});
-	if (tasks.size !== 0) raf.tick(run_tasks);
+	if (tasks.size) raf.tick(run_tasks);
 }
 
 /**
@@ -33,7 +33,7 @@ export function clear_loops() {
 export function loop(callback) {
 	/** @type {import('./private.js').TaskEntry} */
 	let task;
-	if (tasks.size === 0) raf.tick(run_tasks);
+	if (!tasks.size) raf.tick(run_tasks);
 	return {
 		promise: new Promise((fulfill) => {
 			tasks.add((task = { c: callback, f: fulfill }));

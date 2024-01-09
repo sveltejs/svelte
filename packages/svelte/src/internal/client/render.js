@@ -831,7 +831,7 @@ class ResizeObserverSingleton {
 		return () => {
 			const listeners = this.#listeners.get(element);
 			listeners.delete(listener);
-			if (listeners.size === 0) {
+			if (!listeners.size) {
 				this.#listeners.delete(element);
 				/** @type {ResizeObserver} */ (this.#observer).unobserve(element);
 			}
@@ -1368,23 +1368,23 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 					const consequent_transitions = block.c;
 					const alternate_transitions = block.a;
 					if (result) {
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
+						if (alternate_transitions === null || !alternate_transitions.size) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'out');
 						}
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
+						if (consequent_transitions === null || !consequent_transitions.size) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'in');
 						}
 					} else {
-						if (consequent_transitions === null || consequent_transitions.size === 0) {
+						if (consequent_transitions === null || !consequent_transitions.size) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'out');
 						}
-						if (alternate_transitions === null || alternate_transitions.size === 0) {
+						if (alternate_transitions === null || !alternate_transitions.size) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'in');
@@ -1643,15 +1643,13 @@ export function component(anchor_node, component_fn, render_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (render.e) {
-						if (render.d) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
+				if (!transitions.size && render.e) {
+					if (render.d) {
+						remove(render.d);
+						render.d = null;
 					}
+					destroy_signal(render.e);
+					render.e = null;
 				}
 			});
 		};
@@ -1690,7 +1688,7 @@ export function component(anchor_node, component_fn, render_fn) {
 			return;
 		}
 		const transitions = render.s;
-		if (transitions.size === 0) {
+		if (!transitions.size) {
 			if (render.d) {
 				remove(render.d);
 				render.d = null;
@@ -1769,15 +1767,13 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				if (transitions.size === 0) {
-					if (render.e) {
-						if (render.d) {
-							remove(render.d);
-							render.d = null;
-						}
-						destroy_signal(render.e);
-						render.e = null;
+				if (!transitions.size && render.e) {
+					if (render.d) {
+						remove(render.d);
+						render.d = null;
 					}
+					destroy_signal(render.e);
+					render.e = null;
 				}
 			});
 		};
@@ -1825,7 +1821,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			return;
 		}
 		const transitions = render.s;
-		if (transitions.size === 0) {
+		if (!transitions.size) {
 			if (render.d) {
 				remove(render.d);
 				render.d = null;
@@ -1929,7 +1925,7 @@ export function key(anchor_node, key, render_fn) {
 			transitions.add(transition);
 			transition.f(() => {
 				transitions.delete(transition);
-				if (transitions.size === 0) {
+				if (!transitions.size) {
 					if (render.e) {
 						if (render.d) {
 							remove(render.d);
@@ -1969,7 +1965,7 @@ export function key(anchor_node, key, render_fn) {
 			return;
 		}
 		const transitions = render.s;
-		if (transitions.size === 0) {
+		if (!transitions.size) {
 			if (render.d) {
 				remove(render.d);
 				render.d = null;
@@ -2456,7 +2452,7 @@ export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_h
  */
 export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_hash) {
 	const next = object_assign({}, ...attrs);
-	const has_hash = css_hash.length !== 0;
+	const has_hash = css_hash.length;
 	for (const key in prev) {
 		if (!(key in next)) {
 			next[key] = null;
