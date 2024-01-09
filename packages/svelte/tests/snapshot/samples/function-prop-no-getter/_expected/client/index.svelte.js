@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-export default function Function_prop_no_getter($$anchor, $$props) {
+function Function_prop_no_getter($$anchor, $$props) {
 	$.push($$props, true);
 
 	let count = $.source(0);
@@ -34,3 +34,5 @@ export default function Function_prop_no_getter($$anchor, $$props) {
 	$.close_frag($$anchor, fragment);
 	$.pop();
 }
+
+export default Function_prop_no_getter;
