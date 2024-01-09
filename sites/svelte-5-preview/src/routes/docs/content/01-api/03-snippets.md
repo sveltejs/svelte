@@ -58,7 +58,7 @@ Snippets, and _render tags_, are a way to create reusable chunks of markup insid
 {/each}
 ```
 
-A snippet can have at most one parameter. You can destructure it, just like a function argument ([demo](/#H4sIAAAAAAAAE5VTYW-bMBD9KyeiKYlEY4jWfSAk2n5H6QcXDmwVbMs2SzuL_z6DTRqp2rQJ2Ycfd_ced2eXtLxHkxRPLhF0wKRIfiiVpIl9V_PB_MTeoj8bOep6RkpTa67spRKV7dECH2iHBs7wNCOVdcFU1ui6gC2zVpmCEMVrMw4HxaSVhnzLMnLMsm26Ol95Y1kBHr9BDHnHbAHHO6ymynIpfF7LuAncwKgBCj0Xrx_5mMb2jh3f6KB6PNRy2AaXKf1fuY__KPfxj3KlQGikL5aQdpUxm-dTJUryUVdRsvwSqEviX2fIbYzgSvmCt7wbNe4ceMUpRIoUFkkpBBkw7ZfMZXC-BLKSDx3Q3p5djJrA-SR-X4K9DdHT6u-jo-flFlKSO3ThIDcSR6LIKUhGWrN1QGhs16LLbXgbjoe5U1PkozCfzu7uy2WtpfuuUTSo1_9ffPZrJKGLoyuwNxjBv0Q4wmdSR2aFi9jS2Pc-FIrlEKeilcI-GP4LfVtxOM1gyO1XSLp6vtD6tdNyFE0BV8YtngKuaNNw0RWQx_jKDlR33M9E5h-PQhZxfxEt6gIaLdWDYbSR191RvcFXv_LMb7p7obssXZ5Dvt_f9HgzdzZKibOZZ9mXmHkdTTpaefqsd4OIay4_hksd_I0fZMNbjk1SWD3i9Dz9BpdEPu8sBAAA)):
+A snippet behaves pretty much like a regular function declaration: It can have multiple parameters, those parameters can be destructured, and they can have default values. You can also use `...rest` params. ([demo](/#H4sIAAAAAAAAE2WO0YrCQAxFfyXGhVoo9L3Wot9hF6xt1IHpTJikggzz78tI2YX1MTecc2_Em7Ek2JwjumEmbPDEjBXqi_MhT7JKWKH4JYw5aWUMhrXrXa-WFCLMJDLcCQ5wMVoIOK8gHu6BBgX1IETw8ssFEhzgi4Nn2ZX73rX1n8rFrTjDTAoPstbv8pjqQ_3hLFPe0XL3piBmLG0grmDatDV3vYv1ak_vrmMgN1FYq4rBmpGKrPr_ufpr8buiTFjh7CdzMzRho2Gh9J1-AFhYxBNCAQAA)):
 
 ```svelte
 {#snippet figure({ src, caption, width, height })}
@@ -225,4 +225,40 @@ They continue to work, however, and you can mix and match snippets and slots in 
 
 ## Typing snippets
 
-Right now, it's not possible to add types for snippets and their parameters. This is something we hope to address before we ship Svelte 5.
+You can import the `Snippet` type from `'svelte'`:
+
+```svelte
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+	let { header } = $props<{ header: Snippet }>();
+</script>
+```
+
+The `Snippet` type is generic. Here's how you'd type various cases:
+
+```ts
+type SnippetWithNoArgs = Snippet
+type SnippetWithOneArg = Snippet<[argOne: number]>
+type SnippetWithMultipleArgs = Snippet<[argOne: number, argTwo: string]>
+type SnippetWithAnyNumberOfArgs = Snippet<number[]>
+```
+
+And here are the snippet declarations matching those cases (note: this example uses TypeScript):
+
+```svelte
+{#snippet withNoArgs()}
+	<!-- -->
+{/snippet}
+
+{#snippet withOneArg(argOne: number)}
+	<!-- -->
+{/snippet}
+
+{#snippet withMultipleArgs(argOne: number, argTwo: string)}
+	<!-- -->
+{/snippet}
+
+{#snippet withAnyNumberOfArgs(...rest: number[])}
+	<!-- -->
+{/snippet}
+```
