@@ -428,7 +428,7 @@ export function analyze_component(root, options) {
 	for (const scope of [module.scope, instance.scope]) {
 		outer: for (const [name, binding] of scope.declarations) {
 			if (binding.kind === 'normal' && binding.reassigned) {
-				for (const { path } of binding.references) {
+				inner: for (const { path } of binding.references) {
 					if (path[0].type !== 'Fragment') continue;
 					for (let i = 1; i < path.length; i += 1) {
 						const type = path[i].type;
@@ -437,7 +437,7 @@ export function analyze_component(root, options) {
 							type === 'FunctionExpression' ||
 							type === 'ArrowFunctionExpression'
 						) {
-							continue;
+							continue inner;
 						}
 					}
 
@@ -500,7 +500,15 @@ const legacy_scope_tweaker = {
 			node.body.type === 'ExpressionStatement' &&
 			node.body.expression.type === 'AssignmentExpression'
 		) {
-			for (const id of extract_identifiers(node.body.expression.left)) {
+			let ids = extract_identifiers(node.body.expression.left);
+			if (node.body.expression.left.type === 'MemberExpression') {
+				const id = object(node.body.expression.left);
+				if (id !== null) {
+					ids = [id];
+				}
+			}
+
+			for (const id of ids) {
 				const binding = state.scope.get(id.name);
 				if (binding?.kind === 'legacy_reactive') {
 					// TODO does this include `let double; $: double = x * 2`?
@@ -511,8 +519,15 @@ const legacy_scope_tweaker = {
 	},
 	AssignmentExpression(node, { state, next }) {
 		if (state.reactive_statement && node.operator === '=') {
-			for (const id of extract_identifiers(node.left)) {
-				state.reactive_statement.assignments.add(id);
+			if (node.left.type === 'MemberExpression') {
+				const id = object(node.left);
+				if (id !== null) {
+					state.reactive_statement.assignments.add(id);
+				}
+			} else {
+				for (const id of extract_identifiers(node.left)) {
+					state.reactive_statement.assignments.add(id);
+				}
 			}
 		}
 

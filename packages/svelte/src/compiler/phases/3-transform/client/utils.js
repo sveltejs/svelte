@@ -116,6 +116,103 @@ export function serialize_get_binding(node, state) {
 }
 
 /**
+ * @param {import('estree').Expression | import('estree').Pattern} expression
+ * @returns {boolean}
+ */
+function is_expression_async(expression) {
+	switch (expression.type) {
+		case 'AwaitExpression': {
+			return true;
+		}
+		case 'ArrayPattern': {
+			return expression.elements.some((element) => element && is_expression_async(element));
+		}
+		case 'ArrayExpression': {
+			return expression.elements.some((element) => {
+				if (!element) {
+					return false;
+				} else if (element.type === 'SpreadElement') {
+					return is_expression_async(element.argument);
+				} else {
+					return is_expression_async(element);
+				}
+			});
+		}
+		case 'AssignmentPattern':
+		case 'AssignmentExpression':
+		case 'BinaryExpression':
+		case 'LogicalExpression': {
+			return is_expression_async(expression.left) || is_expression_async(expression.right);
+		}
+		case 'CallExpression':
+		case 'NewExpression': {
+			return (
+				(expression.callee.type !== 'Super' && is_expression_async(expression.callee)) ||
+				expression.arguments.some((element) => {
+					if (element.type === 'SpreadElement') {
+						return is_expression_async(element.argument);
+					} else {
+						return is_expression_async(element);
+					}
+				})
+			);
+		}
+		case 'ChainExpression': {
+			return is_expression_async(expression.expression);
+		}
+		case 'ConditionalExpression': {
+			return (
+				is_expression_async(expression.test) ||
+				is_expression_async(expression.alternate) ||
+				is_expression_async(expression.consequent)
+			);
+		}
+		case 'ImportExpression': {
+			return is_expression_async(expression.source);
+		}
+		case 'MemberExpression': {
+			return (
+				(expression.object.type !== 'Super' && is_expression_async(expression.object)) ||
+				(expression.property.type !== 'PrivateIdentifier' &&
+					is_expression_async(expression.property))
+			);
+		}
+		case 'ObjectPattern':
+		case 'ObjectExpression': {
+			return expression.properties.some((property) => {
+				if (property.type === 'SpreadElement') {
+					return is_expression_async(property.argument);
+				} else if (property.type === 'Property') {
+					return (
+						(property.key.type !== 'PrivateIdentifier' && is_expression_async(property.key)) ||
+						is_expression_async(property.value)
+					);
+				}
+			});
+		}
+		case 'RestElement': {
+			return is_expression_async(expression.argument);
+		}
+		case 'SequenceExpression':
+		case 'TemplateLiteral': {
+			return expression.expressions.some((subexpression) => is_expression_async(subexpression));
+		}
+		case 'TaggedTemplateExpression': {
+			return is_expression_async(expression.tag) || is_expression_async(expression.quasi);
+		}
+		case 'UnaryExpression':
+		case 'UpdateExpression': {
+			return is_expression_async(expression.argument);
+		}
+		case 'YieldExpression': {
+			return expression.argument ? is_expression_async(expression.argument) : false;
+		}
+		default:
+			return false;
+	}
+}
+
+/**
  * @template {import('./types').ClientTransformState} State
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
@@ -153,17 +250,28 @@ export function serialize_set_binding(node, context, fallback) {
 			return fallback();
 		}
 
-		return b.call(
-			b.thunk(
-				b.block([
-					b.const(tmp_id, /** @type {import('estree').Expression} */ (visit(node.right))),
-					b.stmt(b.sequence(assignments)),
-					// return because it could be used in a nested expression where the value is needed.
-					// example: { foo: ({ bar } = { bar: 1 })}
-					b.return(b.id(tmp_id))
-				])
-			)
+		const rhs_expression = /** @type {import('estree').Expression} */ (visit(node.right));
+
+		const iife_is_async =
+			is_expression_async(rhs_expression) ||
+			assignments.some((assignment) => is_expression_async(assignment));
+
+		const iife = b.arrow(
+			[],
+			b.block([
+				b.const(tmp_id, rhs_expression),
+				b.stmt(b.sequence(assignments)),
+				// return because it could be used in a nested expression where the value is needed.
+				// example: { foo: ({ bar } = { bar: 1 })}
+				b.return(b.id(tmp_id))
+			])
 		);
+
+		if (iife_is_async) {
+			return b.await(b.call(b.async(iife)));
+		} else {
+			return b.call(iife);
+		}
 	}
 
 	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {

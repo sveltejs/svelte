@@ -178,7 +178,7 @@ declare module 'svelte' {
 	 * <svelte:component this={componentOfCertainSubType} needsThisProp="hello" />
 	 * ```
 	 */
-	export type ComponentType<Comp extends SvelteComponent> = (new (
+	export type ComponentType<Comp extends SvelteComponent = SvelteComponent> = (new (
 		options: ComponentConstructorOptions<
 			Comp extends SvelteComponent<infer Props> ? Props : Record<string, any>
 		>

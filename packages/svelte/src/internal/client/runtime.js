@@ -10,6 +10,7 @@ import {
 } from '../../constants.js';
 import { readonly } from './proxy/readonly.js';
 import { READONLY_SYMBOL, STATE_SYMBOL, proxy, unstate } from './proxy/proxy.js';
+import { EACH_BLOCK, IF_BLOCK } from './block.js';
 
 export const SOURCE = 1;
 export const DERIVED = 1 << 1;
@@ -1018,6 +1019,28 @@ export function mark_subtree_inert(signal, inert) {
 		signal.f ^= INERT;
 		if (!inert && (flags & IS_EFFECT) !== 0 && (flags & CLEAN) === 0) {
 			schedule_effect(/** @type {import('./types.js').EffectSignal} */ (signal), false);
+		}
+		// Nested if block effects
+		const block = signal.b;
+		if (block !== null) {
+			const type = block.t;
+			if (type === IF_BLOCK) {
+				const consequent_effect = block.ce;
+				if (consequent_effect !== null) {
+					mark_subtree_inert(consequent_effect, inert);
+				}
+				const alternate_effect = block.ae;
+				if (alternate_effect !== null) {
+					mark_subtree_inert(alternate_effect, inert);
+				}
+			} else if (type === EACH_BLOCK) {
+				const items = block.v;
+				for (let { e: each_item_effect } of items) {
+					if (each_item_effect !== null) {
+						mark_subtree_inert(each_item_effect, inert);
+					}
+				}
+			}
 		}
 	}
 	const references = signal.r;

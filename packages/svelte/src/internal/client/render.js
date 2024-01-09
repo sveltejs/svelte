@@ -926,30 +926,48 @@ export function selected(dom) {
 }
 
 /**
- * @param {Element} dom
+ * @param {HTMLInputElement} dom
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
 	dom.addEventListener('input', () => {
-		// @ts-ignore
+		/** @type {any} */
 		let value = dom.value;
-		// @ts-ignore
-		const type = dom.type;
-		if (type === 'number' || type === 'range') {
-			value = value === '' ? null : +value;
+		if (is_numberlike_input(dom)) {
+			value = to_number(value);
 		}
 		update(value);
 	});
+
 	render_effect(() => {
 		const value = get_value();
-		const coerced_value = value == null ? null : value + '';
-		// @ts-ignore
-		dom.value = coerced_value;
 		// @ts-ignore
 		dom.__value = value;
+
+		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
+			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+			return;
+		}
+
+		dom.value = stringify(value);
 	});
+}
+
+/**
+ * @param {HTMLInputElement} dom
+ */
+function is_numberlike_input(dom) {
+	const type = dom.type;
+	return type === 'number' || type === 'range';
+}
+
+/**
+ * @param {string} value
+ */
+function to_number(value) {
+	return value === '' ? null : +value;
 }
 
 /**
