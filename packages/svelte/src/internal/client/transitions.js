@@ -372,19 +372,6 @@ function create_transition(dom, init, direction, effect) {
 			// @ts-ignore
 			const has_keyed_transition = dom.__animate;
 
-			// If we're outroing an element that has an animation, then we need to fix
-			// its position to ensure it behaves nicely without causing layout shift.
-			if (has_keyed_transition) {
-				const style = getComputedStyle(dom);
-				const position = style.position;
-
-				if (position !== 'absolute' && position !== 'fixed') {
-					const { width, height } = style;
-					dom.style.position = 'absolute';
-					dom.style.width = width;
-					dom.style.height = height;
-				}
-			}
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
 			if (animation === null || cancelled) {
@@ -399,6 +386,28 @@ function create_transition(dom, init, direction, effect) {
 					/** @type {Animation | TickAnimation} */ (animation).reverse();
 				} else {
 					/** @type {Animation | TickAnimation} */ (animation).play();
+				}
+			}
+			// If we're outroing an element that has an animation, then we need to fix
+			// its position to ensure it behaves nicely without causing layout shift.
+			if (has_keyed_transition) {
+				const style = getComputedStyle(dom);
+				const position = style.position;
+
+				if (position !== 'absolute' && position !== 'fixed') {
+					const { width, height } = style;
+					const a = dom.getBoundingClientRect();
+					dom.style.position = 'absolute';
+					dom.style.width = width;
+					dom.style.height = height;
+					const b = dom.getBoundingClientRect();
+					if (a.left !== b.left || a.top !== b.top) {
+						const style = getComputedStyle(dom);
+						const transform = style.transform === 'none' ? '' : style.transform;
+						dom.style.transform = `${transform} translate(${a.left - b.left}px, ${
+							a.top - b.top
+						}px)`;
+					}
 				}
 			}
 		},
