@@ -1,12 +1,15 @@
 <script>
-	let button = { title: '', label: '' };
-	let title = '';
-	let label = '';
-
-	title = label = '1'; // to add dependencies/generate update block
-
-	$: button.title = title;
-	$: button.label = label;
+	let array;
+	$: {
+		// test that this doesn't rerun on array change
+		array = []
+		array[0] = [false, false];
+		array[1] = [false, false];
+	}
 </script>
 
-{button.title} {button.label}
+{#each array as row, i}
+	{#each row as item, j}
+		<button on:click={() => array[i][j] = !array[i][j]}>{item}</button>
+	{/each}
+{/each}
