@@ -113,7 +113,7 @@ function count_leading_backslashes(string, search_start_index) {
 }
 
 /**
- * The function almost known as bracket_fight
+ * Finds the corresponding closing bracket taking into account strings, comments and regex
  * @param {string} template
  * @param {number} index
  * @param {string} open
