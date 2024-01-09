@@ -237,10 +237,12 @@ You can import the `Snippet` type from `'svelte'`:
 The `Snippet` type is generic. Here's how you'd type various cases:
 
 ```ts
-type SnippetWithNoArgs = Snippet
-type SnippetWithOneArg = Snippet<[argOne: number]>
-type SnippetWithMultipleArgs = Snippet<[argOne: number, argTwo: string]>
-type SnippetWithAnyNumberOfArgs = Snippet<number[]>
+type SnippetWithNoArgs = Snippet;
+type SnippetWithOneArg = Snippet<[argOne: number]>;
+type SnippetWithMultipleArgs = Snippet<
+	[argOne: number, argTwo: string]
+>;
+type SnippetWithAnyNumberOfArgs = Snippet<number[]>;
 ```
 
 And here are the snippet declarations matching those cases (note: this example uses TypeScript):
