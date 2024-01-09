@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-breaking: snippets can now take multiple arguments
+feat: snippets can now take multiple arguments
