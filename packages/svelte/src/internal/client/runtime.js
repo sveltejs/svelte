@@ -585,11 +585,6 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
-	if (current_queued_microtasks.length > 0) {
-		const tasks = current_queued_microtasks.slice();
-		current_queued_microtasks = [];
-		run_all(tasks);
-	}
 	if (flush_count > 101) {
 		return;
 	}
@@ -601,6 +596,11 @@ function process_microtask() {
 	flush_queued_effects(previous_queued_effects);
 	if (!is_micro_task_queued) {
 		flush_count = 0;
+	}
+	if (current_queued_microtasks.length > 0) {
+		const tasks = current_queued_microtasks.slice();
+		current_queued_microtasks = [];
+		run_all(tasks);
 	}
 }
 

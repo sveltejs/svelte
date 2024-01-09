@@ -672,8 +672,7 @@ function each_item_animate(block, transitions, index, index_is_reactive) {
 	if (index_is_reactive) {
 		prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
 	}
-	const items = block.p.v;
-	if (prev_index !== index && /** @type {number} */ (index) < items.length) {
+	if (prev_index !== index) {
 		const from_dom = /** @type {Element} */ (get_first_element(block));
 		const from = from_dom.getBoundingClientRect();
 		// Cancel any existing key transitions
