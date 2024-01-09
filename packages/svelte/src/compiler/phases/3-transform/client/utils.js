@@ -113,15 +113,6 @@ function is_expression_async(expression) {
 		case 'AwaitExpression': {
 			return true;
 		}
-		case 'ArrowFunctionExpression':
-		case 'ClassExpression':
-		case 'FunctionExpression':
-		case 'Identifier':
-		case 'Literal':
-		case 'MetaProperty':
-		case 'ThisExpression': {
-			return false;
-		}
 		case 'ArrayPattern': {
 			return expression.elements.some((element) => element && is_expression_async(element));
 		}

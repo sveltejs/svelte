@@ -2,4 +2,4 @@
 'svelte': patch
 ---
 
-Allow async/await in destructuring assignments
+fix: support async/await in destructuring assignments
