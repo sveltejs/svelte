@@ -371,7 +371,7 @@ function execute_signal_fn(signal) {
 				}
 			}
 
-			if (dependencies && current_dependencies_index > 0) {
+			if (dependencies && current_dependencies_index) {
 				dependencies.length = current_dependencies_index + current_dependencies.length;
 				for (i = 0; i < current_dependencies.length; i++) {
 					dependencies[current_dependencies_index + i] = current_dependencies[i];
@@ -520,7 +520,7 @@ export function execute_effect(signal) {
 	if (
 		is_runes(component_context) && // Don't rerun pre effects more than once to accomodate for "$: only runs once" behavior
 		signal.f & PRE_EFFECT &&
-		current_queued_pre_and_render_effects.length > 0
+		current_queued_pre_and_render_effects.length
 	) {
 		flush_local_pre_effects(component_context);
 	}
@@ -545,7 +545,7 @@ function infinite_loop_guard() {
  */
 function flush_queued_effects(effects) {
 	const length = effects.length;
-	if (length > 0) {
+	if (length) {
 		infinite_loop_guard();
 		let i;
 		for (i = 0; i < length; i++) {
@@ -566,7 +566,7 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
-	if (current_queued_microtasks.length > 0) {
+	if (current_queued_microtasks.length) {
 		const tasks = current_queued_microtasks.slice();
 		current_queued_microtasks = [];
 		run_all(tasks);
@@ -698,7 +698,7 @@ export function flushSync(fn) {
 		if (fn) {
 			fn();
 		}
-		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
+		if (current_queued_pre_and_render_effects.length || effects.length) {
 			flushSync();
 		}
 		if (is_micro_task_queued) {
@@ -1551,7 +1551,7 @@ export function prop(props, key, flags, initial) {
 			get(inner_current_value);
 		}
 
-		if (arguments.length > 0) {
+		if (arguments.length) {
 			if (mutation || (immutable ? value !== current : safe_not_equal(value, current))) {
 				from_child = true;
 				set(inner_current_value, mutation ? current : value);

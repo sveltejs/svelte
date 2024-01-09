@@ -371,7 +371,7 @@ function reconcile_tracked_array(
 		if (is_controlled && a) {
 			clear_text_content(dom);
 		}
-		while (a > 0) {
+		while (a) {
 			block = a_blocks[--a];
 			destroy_each_item_block(block, active_transitions, apply_transitions, is_controlled);
 		}
@@ -387,7 +387,7 @@ function reconcile_tracked_array(
 
 			/** @type {Node} */
 			var hydrating_node = current_hydration_fragment[0];
-			while (b > 0) {
+			while (b) {
 				// Hydrate block
 				idx = b_end - --b;
 				item = array[idx];
@@ -406,7 +406,7 @@ function reconcile_tracked_array(
 			}
 		} else if (!a) {
 			// Create new blocks
-			while (b > 0) {
+			while (b) {
 				idx = b_end - --b;
 				item = array[idx];
 				key = is_computed_key ? keys[idx] : item;
@@ -502,7 +502,7 @@ function reconcile_tracked_array(
 				var should_create;
 				if (is_animated) {
 					var i = b_length;
-					while (i-- > 0) {
+					while (i--) {
 						b_end = i + start;
 						a = sources[i];
 						if (pos === MOVED_BLOCK) {
@@ -514,7 +514,7 @@ function reconcile_tracked_array(
 				}
 				var last_block;
 				var last_sibling;
-				while (b_length-- > 0) {
+				while (b_length--) {
 					b_end = b_length + start;
 					a = sources[b_length];
 					should_create = a === -1;
@@ -597,7 +597,7 @@ function mark_lis(a) {
 				}
 
 				if (k < a[index[lo]]) {
-					if (lo > 0) {
+					if (lo) {
 						parent[i] = index[lo - 1];
 					}
 					index[lo] = i;
@@ -657,7 +657,7 @@ function get_first_child(block) {
 function destroy_active_transition_blocks(active_transitions) {
 	var length = active_transitions.length;
 
-	if (length > 0) {
+	if (length) {
 		var i = 0;
 		var block;
 		var transition;

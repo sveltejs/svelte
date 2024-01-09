@@ -569,7 +569,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 			mark_subtree_inert(transition.e, true);
 		}
 	}
-	if (outros.length > 0) {
+	if (outros.length) {
 		// Defer the outros to a microtask
 		const e = managed_pre_effect(() => {
 			destroy_signal(e);
