@@ -370,7 +370,7 @@ function create_transition(dom, init, direction, effect) {
 		// out
 		o() {
 			// @ts-ignore
-			const has_keyed_transition = dom.__animate === true;
+			const has_keyed_transition = dom.__animate;
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
 			if (animation === null || cancelled) {
@@ -402,11 +402,17 @@ function create_transition(dom, init, direction, effect) {
 					dom.style.height = height;
 					const b = dom.getBoundingClientRect();
 					if (a.left !== b.left || a.top !== b.top) {
+						// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
+						// because we're now using Web Animations, we can't do that as it won't work properly if the
+						// animation is also making use of the same transformations. So instead, we apply an instantaneous
+						// animation and pause it on the first frame, just applying the same behavior.
 						const style = getComputedStyle(dom);
 						const transform = style.transform === 'none' ? '' : style.transform;
-						dom.style.transform = `${transform} translate(${a.left - b.left}px, ${
-							a.top - b.top
-						}px)`;
+						const frame = {
+							transform: `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`
+						};
+						const animation = dom.animate([frame, frame], { duration: 1 });
+						animation.pause();
 					}
 				}
 			}

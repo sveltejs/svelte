@@ -735,7 +735,6 @@ export function destroy_each_item_block(
 	controlled = false
 ) {
 	const transitions = block.s;
-	const dom = block.d;
 
 	if (apply_transitions && transitions !== null) {
 		// We might have pending key transitions, if so remove them first
@@ -751,13 +750,10 @@ export function destroy_each_item_block(
 			if (transition_block !== null) {
 				transition_block.push(block);
 			}
-			if (dom !== null) {
-				// @ts-ignore
-				dom.__animate = false;
-			}
 			return;
 		}
 	}
+	const dom = block.d;
 	if (!controlled && dom !== null) {
 		remove(dom);
 	}
