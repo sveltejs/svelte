@@ -37,7 +37,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
-let is_frame_queued = false;
+let is_raf_queued = false;
 // Used for $inspect
 export let is_batching_effect = false;
 
@@ -52,7 +52,7 @@ let current_queued_effects = [];
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
 /** @type {Array<() => void>} */
-let current_queued_frames = [];
+let current_raf_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -632,11 +632,11 @@ function process_task() {
 	run_all(tasks);
 }
 
-function process_frames() {
-	is_frame_queued = false;
-	const frames = current_queued_frames.slice();
-	current_queued_frames = [];
-	run_all(frames);
+function process_raf_task() {
+	is_raf_queued = false;
+	const tasks = current_raf_tasks.slice();
+	current_raf_tasks = [];
+	run_all(tasks);
 }
 
 /**
@@ -655,12 +655,12 @@ export function schedule_task(fn) {
  * @param {() => void} fn
  * @returns {void}
  */
-export function schedule_frame(fn) {
-	if (!is_frame_queued) {
-		is_frame_queued = true;
-		requestAnimationFrame(process_frames);
+export function schedule_raf_task(fn) {
+	if (!is_raf_queued) {
+		is_raf_queued = true;
+		requestAnimationFrame(process_raf_task);
 	}
-	current_queued_frames.push(fn);
+	current_raf_tasks.push(fn);
 }
 
 /**
@@ -723,8 +723,8 @@ export function flushSync(fn) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
-		if (is_frame_queued) {
-			process_frames();
+		if (is_raf_queued) {
+			process_raf_task();
 		}
 		if (is_task_queued) {
 			process_task();

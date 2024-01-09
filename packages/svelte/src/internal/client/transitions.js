@@ -21,7 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_frame,
+	schedule_raf_task,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -684,7 +684,7 @@ function each_item_animate(block, transitions, index, index_is_reactive) {
 				transition.c();
 			}
 		}
-		schedule_frame(() => {
+		schedule_raf_task(() => {
 			trigger_transitions(transitions, 'key', from);
 		});
 	}
