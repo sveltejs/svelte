@@ -1,5 +1,5 @@
 ---
-'svelte': minor
+'svelte': patch
 ---
 
-feat: Variadic snippets
+breaking: snippets can now take multiple arguments
