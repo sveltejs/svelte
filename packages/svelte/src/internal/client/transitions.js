@@ -369,6 +369,8 @@ function create_transition(dom, init, direction, effect) {
 		},
 		// out
 		o() {
+			// @ts-ignore
+			const has_keyed_transition = dom.__animate;
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
 			if (animation === null || cancelled) {
@@ -383,6 +385,35 @@ function create_transition(dom, init, direction, effect) {
 					/** @type {Animation | TickAnimation} */ (animation).reverse();
 				} else {
 					/** @type {Animation | TickAnimation} */ (animation).play();
+				}
+			}
+			// If we're outroing an element that has an animation, then we need to fix
+			// its position to ensure it behaves nicely without causing layout shift.
+			if (has_keyed_transition) {
+				const style = getComputedStyle(dom);
+				const position = style.position;
+
+				if (position !== 'absolute' && position !== 'fixed') {
+					const { width, height } = style;
+					const a = dom.getBoundingClientRect();
+					dom.style.position = 'absolute';
+
+					dom.style.width = width;
+					dom.style.height = height;
+					const b = dom.getBoundingClientRect();
+					if (a.left !== b.left || a.top !== b.top) {
+						// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
+						// because we're now using Web Animations, we can't do that as it won't work properly if the
+						// animation is also making use of the same transformations. So instead, we apply an instantaneous
+						// animation and pause it on the first frame, just applying the same behavior.
+						const style = getComputedStyle(dom);
+						const transform = style.transform === 'none' ? '' : style.transform;
+						const frame = {
+							transform: `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`
+						};
+						const animation = dom.animate([frame, frame], { duration: 1 });
+						animation.pause();
+					}
 				}
 			}
 		},
@@ -432,9 +463,15 @@ function is_transition_block(block) {
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 	const block = current_block;
+	const is_keyed_transition = direction === 'key';
 
 	let can_show_intro_on_mount = true;
 	let can_apply_lazy_transitions = false;
+
+	if (is_keyed_transition) {
+		// @ts-ignore
+		dom.__animate = true;
+	}
 
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
@@ -479,7 +516,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const init = (from) =>
 			untrack(() => {
 				const props = props_fn === null ? {} : props_fn();
-				return direction === 'key'
+				return is_keyed_transition
 					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
