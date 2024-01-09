@@ -1775,7 +1775,7 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		node.arguments.forEach((arg) => {
+		for (const arg of node.arguments) {
 			if (arg.type === 'SpreadElement') {
 				// this is a spread operation, meaning we need to thunkify all of its members, which we can't
 				// do until runtime
@@ -1784,10 +1784,10 @@ export const template_visitors = {
 						context.visit(b.spread(b.call('$.thunkspread', arg.argument)))
 					)
 				);
-				return;
+				continue;
 			}
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
-		});
+		}
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
@@ -2483,8 +2483,10 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
 
-		node.context.elements.forEach((argument, i) => {
-			if (!argument) return;
+		for (let i = 0; i < node.context.elements.length; i++) {
+			const argument = node.context.elements[i];
+
+			if (!argument) continue;
 
 			if (argument.type === 'Identifier') {
 				args.push(argument);
@@ -2495,7 +2497,7 @@ export const template_visitors = {
 				// this expression appears on the left side of an assignment somewhere. For example:
 				// `$.maybe_call(myArg).value = 1` is valid JavaScript, but `$.myArg?.().value = 1` is not
 				binding.expression = b.call('$.maybe_call', argument);
-				return;
+				continue;
 			}
 
 			let arg_alias = `$$arg${i}`;
@@ -2507,7 +2509,7 @@ export const template_visitors = {
 					declarations.push(
 						b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
 					);
-					return;
+					continue;
 				}
 
 				const new_arg_alias = `$$proxied_arg${i}`;
@@ -2547,7 +2549,7 @@ export const template_visitors = {
 
 				binding.expression = b.call(name);
 			}
-		});
+		}
 
 		body = b.block([
 			...declarations,
