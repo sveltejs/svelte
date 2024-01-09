@@ -1120,9 +1120,10 @@ const template_visitors = {
 		state.init.push(anchor);
 		state.template.push(t_expression(anchor_id));
 
+		const expression = /** @type {import('estree').Expression} */ (context.visit(node.expression));
 		const snippet_function = state.options.dev
-			? b.call('$.validate_snippet', node.expression)
-			: node.expression;
+			? b.call('$.validate_snippet', expression)
+			: expression;
 
 		const snippet_args = node.arguments.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));

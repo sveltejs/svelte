@@ -417,7 +417,9 @@ function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+			var should_update_block =
+				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -500,7 +502,6 @@ function reconcile_tracked_array(
 					mark_lis(sources);
 				}
 				// If keys are animated, we need to do updates before actual moves
-				var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
 				var should_create;
 				if (is_animated) {
 					var i = b_length;

@@ -2646,8 +2646,13 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
-	getOwnPropertyDescriptor() {
-		return { enumerable: true, configurable: true };
+	getOwnPropertyDescriptor(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+		}
 	},
 	has(target, key) {
 		for (let p of target.props) {

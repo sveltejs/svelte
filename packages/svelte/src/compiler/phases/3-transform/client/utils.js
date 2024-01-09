@@ -46,6 +46,18 @@ export function get_assignment_value(node, { state, visit }) {
 }
 
 /**
+ * @param {import('#compiler').Binding} binding
+ * @param {import('./types').ClientTransformState} state
+ * @returns {boolean}
+ */
+export function is_state_source(binding, state) {
+	return (
+		(binding.kind === 'state' || binding.kind === 'frozen_state') &&
+		(!state.analysis.immutable || binding.reassigned || state.analysis.accessors)
+	);
+}
+
+/**
  * @param {import('estree').Identifier} node
  * @param {import('./types').ClientTransformState} state
  * @returns {import('estree').Expression}
@@ -93,8 +105,7 @@ export function serialize_get_binding(node, state) {
 	}
 
 	if (
-		((binding.kind === 'state' || binding.kind === 'frozen_state') &&
-			(!state.analysis.immutable || state.analysis.accessors || binding.reassigned)) ||
+		is_state_source(binding, state) ||
 		binding.kind === 'derived' ||
 		binding.kind === 'legacy_reactive'
 	) {
@@ -489,33 +500,6 @@ export function get_prop_source(binding, state, name, initial) {
 	}
 
 	return b.call('$.prop', ...args);
-}
-
-/**
- * Creates the output for a state declaration.
- * @param {import('estree').VariableDeclarator} declarator
- * @param {import('../../scope').Scope} scope
- * @param {import('estree').Expression} value
- */
-export function create_state_declarators(declarator, scope, value) {
-	// in the simple `let count = $state(0)` case, we rewrite `$state` as `$.source`
-	if (declarator.id.type === 'Identifier') {
-		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
-	}
-
-	const tmp = scope.generate('tmp');
-	const paths = extract_paths(declarator.id);
-	return [
-		b.declarator(b.id(tmp), value), // TODO inject declarator for opts, so we can use it below
-		...paths.map((path) => {
-			const value = path.expression?.(b.id(tmp));
-			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
-			return b.declarator(
-				path.node,
-				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
-			);
-		})
-	];
 }
 
 /** @param {import('estree').Expression} node */
