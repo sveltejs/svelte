@@ -9,8 +9,8 @@
     "node": ">=18"
   },
   "files": [
-    "!src/**/*.test.*",
     "src",
+    "!src/**/*.test.*",
     "types",
     "compiler.cjs",
     "*.d.ts",
