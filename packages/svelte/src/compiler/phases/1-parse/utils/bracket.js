@@ -37,21 +37,21 @@ export function get_bracket_close(open) {
 }
 
 /**
- * @param {number} number
- * @returns {number}
+ * @param {number} num
+ * @returns {number} Infinity if {@link num} is negative, else {@link num}.
  */
-function infinity_if_negative(number) {
-	if (number < 0) {
+function infinity_if_negative(num) {
+	if (num < 0) {
 		return Infinity;
 	}
-	return number;
+	return num;
 }
 
 /**
  * @param {string} string The string to search.
  * @param {number} search_start_index The index to start searching at.
  * @param {"'" | '"' | '`'} string_start_char The character that started this string.
- * @returns {number}
+ * @returns {number} The index of the end of this string expression, or `Infinity` if not found.
  */
 function find_string_end(string, search_start_index, string_start_char) {
 	let string_to_search;
@@ -71,7 +71,7 @@ function find_string_end(string, search_start_index, string_start_char) {
 /**
  * @param {string} string The string to search.
  * @param {number} search_start_index The index to start searching at.
- * @returns {number} Infinity if not found, else the index of the character.
+ * @returns {number} The index of the end of this regex expression, or `Infinity` if not found.
  */
 function find_regex_end(string, search_start_index) {
 	return find_unescaped_char(string, search_start_index, '/');
@@ -82,7 +82,7 @@ function find_regex_end(string, search_start_index) {
  * @param {string} string The string to search.
  * @param {number} search_start_index The index to begin the search at.
  * @param {string} char The character to search for.
- * @returns
+ * @returns {number} The index of the first unescaped instance of {@link char}, or `Infinity` if not found.
  */
 function find_unescaped_char(string, search_start_index, char) {
 	let i = search_start_index;
@@ -99,8 +99,15 @@ function find_unescaped_char(string, search_start_index, char) {
 }
 
 /**
- * @param {string} string
- * @param {number} search_start_index
+ * Count consecutive leading backslashes before {@link search_start_index}.
+ *
+ * @example
+ * ```js
+ * count_leading_backslashes('\\\\\\foo', 2); // 3 (the backslashes have to be escaped in the string literal, there are three in reality)
+ * ```
+ *
+ * @param {string} string The string to search.
+ * @param {number} search_start_index The index to begin the search at.
  */
 function count_leading_backslashes(string, search_start_index) {
 	let i = search_start_index;
@@ -113,11 +120,11 @@ function count_leading_backslashes(string, search_start_index) {
 }
 
 /**
- * Finds the corresponding closing bracket taking into account strings, comments and regex
- * @param {string} template
- * @param {number} index
- * @param {string} open
- * @returns {number | undefined}
+ * Finds the corresponding closing bracket, ignoring brackets found inside comments, strings, or regex expressions.
+ * @param {string} template The string to search.
+ * @param {number} index The index to begin the search at.
+ * @param {string} open The opening bracket (ex: `'{'` will search for `'}'`).
+ * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
 	const open_code = full_char_code_at(open, 0);
