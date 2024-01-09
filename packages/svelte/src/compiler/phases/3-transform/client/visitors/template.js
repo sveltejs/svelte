@@ -1775,7 +1775,7 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		for (const arg of node.arguments) {
+		node.arguments.forEach((arg) => {
 			if (arg.type === 'SpreadElement') {
 				// this is a spread operation, meaning we need to thunkify all of its members, which we can't
 				// do until runtime
@@ -1787,7 +1787,7 @@ export const template_visitors = {
 				return;
 			}
 			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
-		}
+		});
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
 			context.visit(node.expression)
@@ -2483,9 +2483,7 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
 
-		for (let i = 0; i < node.context.elements.length; i++) {
-			const argument = node.context.elements[i];
-
+		node.context.elements.forEach((argument, i) => {
 			if (!argument) return;
 
 			if (argument.type === 'Identifier') {
@@ -2549,7 +2547,7 @@ export const template_visitors = {
 
 				binding.expression = b.call(name);
 			}
-		}
+		});
 
 		body = b.block([
 			...declarations,
