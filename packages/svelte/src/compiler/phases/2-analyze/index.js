@@ -428,7 +428,7 @@ export function analyze_component(root, options) {
 	for (const scope of [module.scope, instance.scope]) {
 		outer: for (const [name, binding] of scope.declarations) {
 			if (binding.kind === 'normal' && binding.reassigned) {
-				for (const { path } of binding.references) {
+				inner: for (const { path } of binding.references) {
 					if (path[0].type !== 'Fragment') continue;
 					for (let i = 1; i < path.length; i += 1) {
 						const type = path[i].type;
@@ -437,7 +437,7 @@ export function analyze_component(root, options) {
 							type === 'FunctionExpression' ||
 							type === 'ArrowFunctionExpression'
 						) {
-							continue;
+							continue inner;
 						}
 					}
 
