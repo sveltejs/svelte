@@ -873,8 +873,8 @@ export function bind_resize_observer(dom, type, update) {
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
 			: type === 'borderBoxSize'
-			? resize_observer_border_box
-			: resize_observer_device_pixel_content_box;
+				? resize_observer_border_box
+				: resize_observer_device_pixel_content_box;
 	const unsub = observer.observe(dom, /** @param {any} entry */ (entry) => update(entry[type]));
 	render_effect(() => unsub);
 }
@@ -1587,8 +1587,8 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 				? current_hydration_fragment !== null
 					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
 					: is_svg
-					? document.createElementNS('http://www.w3.org/2000/svg', tag)
-					: document.createElement(tag)
+						? document.createElementNS('http://www.w3.org/2000/svg', tag)
+						: document.createElement(tag)
 				: null;
 			const prev_element = element;
 			if (prev_element !== null) {
@@ -2850,7 +2850,7 @@ export function mount(component, options) {
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
 						: undefined
 				);
 				// The document listener ensures we catch events that originate from elements that were
@@ -2861,7 +2861,7 @@ export function mount(component, options) {
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
 						: undefined
 				);
 			}

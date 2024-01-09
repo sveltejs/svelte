@@ -87,8 +87,11 @@ export const javascript_visitors_runes = {
 							field.kind === 'state'
 								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.proxy', init) : init)
 								: field.kind === 'frozen_state'
-								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init)
-								: b.call('$.derived', b.thunk(init));
+									? b.call(
+											'$.source',
+											should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init
+										)
+									: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
 						value = b.call('$.source');

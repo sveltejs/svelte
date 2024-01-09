@@ -17,7 +17,7 @@ const filter = process.env.FILTER
 			process.env.FILTER.startsWith('/')
 				? process.env.FILTER.slice(1, -1).replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 				: `^${process.env.FILTER.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`
-	  )
+		)
 	: /./;
 
 export function suite<Test extends BaseTest>(fn: (config: Test, test_dir: string) => void) {
