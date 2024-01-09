@@ -1462,9 +1462,13 @@ export function prop(props, key, flags, initial) {
 	var setter = get_descriptor(props, key)?.set;
 
 	if (prop_value === undefined && initial !== undefined) {
-		if (DEV && setter && runes) {
+		if (setter && runes) {
 			// TODO consolidate all these random runtime errors
-			throw new Error('Cannot use fallback values with bind:');
+			throw new Error(
+				'ERR_SVELTE_BINDING_FALLBACK' + DEV
+					? ': Cannot bind: to a property that contains a fallback value'
+					: ''
+			);
 		}
 
 		// @ts-expect-error would need a cumbersome method overload to type this
