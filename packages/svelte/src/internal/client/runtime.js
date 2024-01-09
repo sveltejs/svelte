@@ -1520,9 +1520,8 @@ export function prop(props, key, flags, initial) {
 		if (setter && runes) {
 			// TODO consolidate all these random runtime errors
 			throw new Error(
-				'ERR_SVELTE_BINDING_FALLBACK' + DEV
-					? ': Cannot bind: to a property that contains a fallback value'
-					: ''
+				'ERR_SVELTE_BINDING_FALLBACK' +
+					(DEV ? ': Cannot bind: to a property that contains a fallback value' : '')
 			);
 		}
 
