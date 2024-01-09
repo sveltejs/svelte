@@ -1960,16 +1960,16 @@ if (DEV) {
 }
 
 /**
- * @template {Iterable<unknown>} T
- * @param {T} iterable
- * @returns {{ [P in keyof T]: () => T[P] }}
+ * @template {unknown} TItems
+ * @template {Iterable<TItems>} TIterator
+ * @param {TIterator} iterable
+ * @returns {(() => TItems)[]}
  */
 export function thunkspread(iterable) {
 	const thunks = [];
 	for (const item of iterable) {
 		thunks.push(() => item);
 	}
-	// @ts-expect-error -- for obvious reasons
 	return thunks;
 }
 
