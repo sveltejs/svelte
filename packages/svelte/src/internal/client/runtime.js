@@ -1035,7 +1035,7 @@ export function mark_subtree_inert(signal, inert) {
 				}
 			} else if (type === EACH_BLOCK) {
 				const items = block.v;
-				for (let {e: each_item_effect} of items) {
+				for (let { e: each_item_effect } of items) {
 					if (each_item_effect !== null) {
 						mark_subtree_inert(each_item_effect, inert);
 					}
