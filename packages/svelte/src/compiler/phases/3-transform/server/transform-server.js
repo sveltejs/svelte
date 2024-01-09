@@ -705,7 +705,7 @@ function serialize_attribute_value(
 					/** @type {import('estree').Expression} */ (context.visit(node.expression))
 				)
 			);
-			if (i === attribute_value.length) {
+			if (i === attribute_value.length || attribute_value[i]?.type !== 'Text') {
 				quasis.push(b.quasi('', true));
 			}
 		}
