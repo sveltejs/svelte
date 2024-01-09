@@ -9,6 +9,7 @@
     "node": ">=18"
   },
   "files": [
+    "!src/**/*.test.*",
     "src",
     "types",
     "compiler.cjs",
