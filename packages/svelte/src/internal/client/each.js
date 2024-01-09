@@ -712,7 +712,7 @@ function update_each_item_block(block, item, index, type) {
 	// Handle each item animations
 	const each_animation = block.a;
 	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions, index, index_is_reactive);
+		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
