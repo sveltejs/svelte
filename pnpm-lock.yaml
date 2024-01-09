@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  jimp>xml2js: ^0.6.0
+
 importers:
 
   .:
