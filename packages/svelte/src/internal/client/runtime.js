@@ -37,6 +37,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
+let is_frame_queued = false;
 // Used for $inspect
 export let is_batching_effect = false;
 
@@ -51,7 +52,7 @@ let current_queued_effects = [];
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
 /** @type {Array<() => void>} */
-let current_queued_microtasks = [];
+let current_queued_frames = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -597,11 +598,6 @@ function process_microtask() {
 	if (!is_micro_task_queued) {
 		flush_count = 0;
 	}
-	if (current_queued_microtasks.length > 0) {
-		const tasks = current_queued_microtasks.slice();
-		current_queued_microtasks = [];
-		run_all(tasks);
-	}
 }
 
 /**
@@ -636,6 +632,13 @@ function process_task() {
 	run_all(tasks);
 }
 
+function process_frames() {
+	is_frame_queued = false;
+	const frames = current_queued_frames.slice();
+	current_queued_frames = [];
+	run_all(frames);
+}
+
 /**
  * @param {() => void} fn
  * @returns {void}
@@ -652,12 +655,12 @@ export function schedule_task(fn) {
  * @param {() => void} fn
  * @returns {void}
  */
-export function schedule_microtask(fn) {
-	if (!is_micro_task_queued) {
-		is_micro_task_queued = true;
-		queueMicrotask(process_microtask);
+export function schedule_frame(fn) {
+	if (!is_frame_queued) {
+		is_frame_queued = true;
+		requestAnimationFrame(process_frames);
 	}
-	current_queued_microtasks.push(fn);
+	current_queued_frames.push(fn);
 }
 
 /**
@@ -720,8 +723,8 @@ export function flushSync(fn) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
-		if (is_micro_task_queued) {
-			process_microtask();
+		if (is_frame_queued) {
+			process_frames();
 		}
 		if (is_task_queued) {
 			process_task();
