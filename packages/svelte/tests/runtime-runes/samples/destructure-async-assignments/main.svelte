@@ -34,6 +34,10 @@
         return Promise.resolve([24, 25]);
     }
 
+    const some = {
+        fn: () => {}
+    }
+
     const update = async () => {
         [a, b] = [1, await Promise.resolve(2)];
         ({ c = await Promise.resolve(3), d } = { d: 4 });
@@ -49,7 +53,7 @@
         [l = obj[await Promise.resolve("prop")] + 1] = [];
         [m] = [`${1}${await Promise.resolve("3")}`];
         [n] = [-(await Promise.resolve(-14))];
-        [o] = [(console.log(15), await Promise.resolve(15))];
+        [o] = [(some.fn(), await Promise.resolve(15))];
         ({ anotherprop: p = await Promise.resolve(16) } = obj);
         let val1, val2;
         ({ val1 = (async function (x) { return await x; })(Promise.resolve(18)), r = await val1 }
