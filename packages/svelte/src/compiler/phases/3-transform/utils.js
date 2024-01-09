@@ -211,23 +211,67 @@ export function infer_namespace(namespace, parent, nodes, path) {
 			parent_node.type === 'SvelteFragment' ||
 			parent_node.type === 'SnippetBlock')
 	) {
-		// Heuristic: Keep current namespace, unless we find a regular element,
-		// in which case we always want html, or we only find svg nodes,
-		// in which case we assume svg.
-		let only_svg = true;
-		for (const node of nodes) {
-			if (node.type === 'RegularElement') {
-				if (!node.metadata.svg) {
-					namespace = 'html';
-					only_svg = false;
-					break;
-				}
-			} else if (node.type !== 'Text' || node.data.trim() !== '') {
-				only_svg = false;
-			}
+		const new_namespace = check_nodes_for_namespace(nodes, 'keep');
+		if (new_namespace !== 'keep' && new_namespace !== 'maybe_html') {
+			namespace = new_namespace;
 		}
-		if (only_svg) {
-			namespace = 'svg';
+	}
+
+	return namespace;
+}
+
+/**
+ * Heuristic: Keep current namespace, unless we find a regular element,
+ * in which case we always want html, or we only find svg nodes,
+ * in which case we assume svg.
+ * @param {import('#compiler').SvelteNode[]} nodes
+ * @param {import('#compiler').Namespace | 'keep' | 'maybe_html'} namespace
+ */
+function check_nodes_for_namespace(nodes, namespace) {
+	for (const node of nodes) {
+		if (node.type === 'RegularElement') {
+			if (!node.metadata.svg) {
+				namespace = 'html';
+				break;
+			} else if (namespace === 'keep') {
+				namespace = 'svg';
+			}
+		} else if (
+			(node.type === 'Text' && node.data.trim() !== '') ||
+			node.type === 'HtmlTag' ||
+			node.type === 'RenderTag'
+		) {
+			namespace = 'maybe_html';
+		} else if (node.type === 'EachBlock') {
+			namespace = check_nodes_for_namespace(node.body.nodes, namespace);
+			if (namespace === 'html') break;
+			if (node.fallback) {
+				namespace = check_nodes_for_namespace(node.fallback.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'IfBlock') {
+			namespace = check_nodes_for_namespace(node.consequent.nodes, namespace);
+			if (namespace === 'html') break;
+			if (node.alternate) {
+				namespace = check_nodes_for_namespace(node.alternate.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'AwaitBlock') {
+			if (node.pending) {
+				namespace = check_nodes_for_namespace(node.pending.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+			if (node.then) {
+				namespace = check_nodes_for_namespace(node.then.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+			if (node.catch) {
+				namespace = check_nodes_for_namespace(node.catch.nodes, namespace);
+				if (namespace === 'html') break;
+			}
+		} else if (node.type === 'KeyBlock') {
+			namespace = check_nodes_for_namespace(node.fragment.nodes, namespace);
+			if (namespace === 'html') break;
 		}
 	}
 
