@@ -166,9 +166,9 @@ export function clone_node(node, deep) {
 /*#__NO_SIDE_EFFECTS__*/
 export function child(node) {
 	const child = first_child_get.call(node);
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		// Child can be null if we have an element with a single child, like `<p>{text}</p>`, where `text` is empty
-		if (child === null) {
+		if (!child) {
 			const text = document.createTextNode('');
 			node.appendChild(text);
 			return text;
@@ -186,9 +186,9 @@ export function child(node) {
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function child_frag(node) {
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		const first_node = /** @type {Node[]} */ (node)[0];
-		if (current_hydration_fragment !== null && first_node !== null) {
+		if (current_hydration_fragment && first_node) {
 			return capture_fragment_from_node(first_node);
 		}
 		return first_node;
@@ -204,7 +204,7 @@ export function child_frag(node) {
 /*#__NO_SIDE_EFFECTS__*/
 export function sibling(node) {
 	const next_sibling = next_sibling_get.call(node);
-	if (current_hydration_fragment !== null && next_sibling !== null) {
+	if (current_hydration_fragment && next_sibling) {
 		return capture_fragment_from_node(next_sibling);
 	}
 	return next_sibling;

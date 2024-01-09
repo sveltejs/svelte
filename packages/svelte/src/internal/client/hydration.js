@@ -27,7 +27,7 @@ export function get_hydration_fragment(node) {
 
 	/** @type {null | string} */
 	let target_depth = null;
-	while (current_node !== null) {
+	while (current_node) {
 		const node_type = current_node.nodeType;
 		const next_sibling = current_node.nextSibling;
 		if (node_type === 8) {
@@ -61,7 +61,7 @@ export function get_hydration_fragment(node) {
 export function hydrate_block_anchor(anchor_node, is_controlled) {
 	/** @type {Node} */
 	let target_node = anchor_node;
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		if (is_controlled) {
 			target_node = /** @type {Node} */ (target_node.firstChild);
 		}
@@ -79,7 +79,7 @@ export function hydrate_block_anchor(anchor_node, is_controlled) {
 			set_current_hydration_fragment(fragment);
 		} else {
 			const first_child = /** @type {Element | null} */ (target_node.firstChild);
-			set_current_hydration_fragment(first_child === null ? [] : [first_child]);
+			set_current_hydration_fragment(!first_child ? [] : [first_child]);
 		}
 	}
 }

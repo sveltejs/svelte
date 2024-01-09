@@ -124,14 +124,14 @@ export function svg_replace(node) {
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
-	if (current_hydration_fragment !== null) {
-		if (anchor !== null) {
+	if (current_hydration_fragment) {
+		if (anchor) {
 			hydrate_block_anchor(anchor, false);
 		}
 		// In ssr+hydration optimization mode, we might remove the template_element,
 		// so we need to is_fragment flag to properly handle hydrated content accordingly.
 		const fragment = current_hydration_fragment;
-		if (fragment !== null) {
+		if (fragment) {
 			return is_fragment ? fragment : /** @type {Element} */ (fragment[0]);
 		}
 	}
@@ -196,7 +196,7 @@ function close_template(dom, is_fragment, anchor) {
 			? dom
 			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
-	if (anchor !== null) {
+	if (anchor) {
 		if (current_hydration_fragment === null) {
 			insert(current, null, anchor);
 		}
@@ -352,7 +352,7 @@ export function class_name(dom, value) {
 	// @ts-expect-error need to add __className to patched prototype
 	const prev_class_name = dom.__className;
 	const next_class_name = to_class(value);
-	const is_hydrating = current_hydration_fragment !== null;
+	const is_hydrating = current_hydration_fragment;
 	if (is_hydrating && dom.className === next_class_name) {
 		// In case of hydration don't reset the class as it's already correct.
 		// @ts-expect-error need to add __className to patched prototype
@@ -389,7 +389,7 @@ export function text(dom, value) {
 	// @ts-expect-error need to add __value to patched prototype
 	const prev_node_value = dom.__nodeValue;
 	const next_node_value = stringify(value);
-	if (current_hydration_fragment !== null && dom.nodeValue === next_node_value) {
+	if (current_hydration_fragment && dom.nodeValue === next_node_value) {
 		// In case of hydration don't reset the nodeValue as it's already correct.
 		// @ts-expect-error need to add __nodeValue to patched prototype
 		dom.__nodeValue = next_node_value;
@@ -676,7 +676,7 @@ export function bind_playback_rate(media, get_value, update) {
  * @param {(paused: boolean) => void} update
  */
 export function bind_paused(media, get_value, update) {
-	let mounted = current_hydration_fragment !== null;
+	let mounted = !!current_hydration_fragment;
 	let paused = get_value();
 	const callback = () => {
 		if (paused !== media.paused) {
@@ -979,7 +979,7 @@ export function bind_select_value(dom, get_value, update) {
 		if (mounting && value === undefined) {
 			/** @type {HTMLOptionElement | null} */
 			let selected_option = dom.querySelector(':checked');
-			if (selected_option !== null) {
+			if (selected_option) {
 				value = get_option_value(selected_option);
 				update(value);
 			}
@@ -1050,7 +1050,7 @@ function get_binding_group_value(group, __value, checked) {
 export function bind_group(group, group_index, dom, get_value, update) {
 	const is_checkbox = dom.getAttribute('type') === 'checkbox';
 	let binding_group = group;
-	if (group_index !== null) {
+	if (group_index) {
 		for (const index of group_index) {
 			const group = binding_group;
 			// @ts-ignore
@@ -1298,7 +1298,7 @@ function handle_event_propagation(root_element, event) {
 		}
 	});
 
-	while (current_target !== null) {
+	while (current_target) {
 		/** @type {null | Element} */
 		const parent_element =
 			current_target.parentNode || /** @type {any} */ (current_target).host || null;
@@ -1332,7 +1332,7 @@ function handle_event_propagation(root_element, event) {
 export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 	hydrate_block_anchor(anchor_node);
 	if (slot_fn === undefined) {
-		if (fallback_fn !== null) {
+		if (fallback_fn) {
 			fallback_fn(anchor_node);
 		}
 	} else {
@@ -1390,7 +1390,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 							trigger_transitions(alternate_transitions, 'in');
 						}
 					}
-				} else if (current_hydration_fragment !== null) {
+				} else if (current_hydration_fragment) {
 					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 					if (
 						!comment_text ||
@@ -1415,7 +1415,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	// Managed effect
 	const consequent_effect = render_effect(
 		() => {
-			if (consequent_dom !== null) {
+			if (consequent_dom) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
@@ -1437,12 +1437,12 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	// Managed effect
 	const alternate_effect = render_effect(
 		() => {
-			if (alternate_dom !== null) {
+			if (alternate_dom) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
 			if (!block.v) {
-				if (alternate_fn !== null) {
+				if (alternate_fn) {
 					alternate_fn(anchor_node);
 				}
 				if (!has_mounted_branch) {
@@ -1459,10 +1459,10 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	block.ae = alternate_effect;
 	push_destroy_fn(if_effect, () => {
-		if (consequent_dom !== null) {
+		if (consequent_dom) {
 			remove(consequent_dom);
 		}
-		if (alternate_dom !== null) {
+		if (alternate_dom) {
 			remove(alternate_dom);
 		}
 		destroy_signal(consequent_effect);
@@ -1480,15 +1480,16 @@ export function head(render_fn) {
 	const block = create_head_block();
 	// The head function may be called after the first hydration pass and ssr comment nodes may still be present,
 	// therefore we need to skip that when we detect that we're not in hydration mode.
-	const hydration_fragment =
-		current_hydration_fragment !== null ? get_hydration_fragment(document.head.firstChild) : null;
+	const hydration_fragment = current_hydration_fragment
+		? get_hydration_fragment(document.head.firstChild)
+		: null;
 	const previous_hydration_fragment = current_hydration_fragment;
 	set_current_hydration_fragment(hydration_fragment);
 	try {
 		const head_effect = render_effect(
 			() => {
 				const current = block.d;
-				if (current !== null) {
+				if (current) {
 					remove(current);
 					block.d = null;
 				}
@@ -1504,7 +1505,7 @@ export function head(render_fn) {
 		);
 		push_destroy_fn(head_effect, () => {
 			const current = block.d;
-			if (current !== null) {
+			if (current) {
 				remove(current);
 			}
 		});
@@ -1566,20 +1567,20 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	const render_effect_signal = render_effect(
 		() => {
 			const next_element = tag
-				? current_hydration_fragment !== null
+				? current_hydration_fragment
 					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
 					: is_svg
 					? document.createElementNS('http://www.w3.org/2000/svg', tag)
 					: document.createElement(tag)
 				: null;
 			const prev_element = element;
-			if (prev_element !== null) {
+			if (prev_element) {
 				block.d = null;
 			}
 			element = next_element;
-			if (element !== null && render_fn !== undefined) {
+			if (element && render_fn !== undefined) {
 				let anchor;
-				if (current_hydration_fragment !== null) {
+				if (current_hydration_fragment) {
 					// Use the existing ssr comment as the anchor so that the inner open and close
 					// methods can pick up the existing nodes correctly
 					anchor = /** @type {Comment} */ (element.firstChild);
@@ -1589,11 +1590,11 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 				}
 				render_fn(element, anchor);
 			}
-			const has_prev_element = prev_element !== null;
+			const has_prev_element = prev_element;
 			if (has_prev_element) {
 				remove(prev_element);
 			}
-			if (element !== null) {
+			if (element) {
 				insert(element, null, anchor_node);
 				if (has_prev_element) {
 					const parent_block = block.p;
@@ -1605,7 +1606,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 		true
 	);
 	push_destroy_fn(element_effect, () => {
-		if (element !== null) {
+		if (element) {
 			remove(element);
 			block.d = null;
 			element = null;
@@ -1643,8 +1644,8 @@ export function component(anchor_node, component_fn, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
-						if (render.d !== null) {
+					if (render.e) {
+						if (render.d) {
 							remove(render.d);
 							render.d = null;
 						}
@@ -1666,7 +1667,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		const effect = render_effect(
 			() => {
 				const current = block.d;
-				if (current !== null) {
+				if (current) {
 					remove(current);
 					block.d = null;
 				}
@@ -1690,7 +1691,7 @@ export function component(anchor_node, component_fn, render_fn) {
 		}
 		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.d !== null) {
+			if (render.d) {
 				remove(render.d);
 				render.d = null;
 			}
@@ -1717,13 +1718,13 @@ export function component(anchor_node, component_fn, render_fn) {
 	);
 	push_destroy_fn(component_effect, () => {
 		let render = current_render;
-		while (render !== null) {
+		while (render) {
 			const dom = render.d;
-			if (dom !== null) {
+			if (dom) {
 				remove(dom);
 			}
 			const effect = render.e;
-			if (effect !== null) {
+			if (effect) {
 				destroy_signal(effect);
 			}
 			render = render.p;
@@ -1769,8 +1770,8 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
-						if (render.d !== null) {
+					if (render.e) {
+						if (render.d) {
 							remove(render.d);
 							render.d = null;
 						}
@@ -1794,15 +1795,15 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 					if (resolved_value === UNINITIALIZED) {
 						// pending = true
 						block.n = true;
-						if (pending_fn !== null) {
+						if (pending_fn) {
 							pending_fn(anchor_node);
 						}
-					} else if (then_fn !== null) {
+					} else if (then_fn) {
 						// pending = false
 						block.n = false;
 						then_fn(anchor_node, resolved_value);
 					}
-				} else if (catch_fn !== null) {
+				} else if (catch_fn) {
 					// pending = false
 					block.n = false;
 					catch_fn(anchor_node, error);
@@ -1825,7 +1826,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		}
 		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.d !== null) {
+			if (render.d) {
 				remove(render.d);
 				render.d = null;
 			}
@@ -1884,13 +1885,13 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 	push_destroy_fn(await_effect, () => {
 		let render = current_render;
 		latest_token = {};
-		while (render !== null) {
+		while (render) {
 			const dom = render.d;
-			if (dom !== null) {
+			if (dom) {
 				remove(dom);
 			}
 			const effect = render.e;
-			if (effect !== null) {
+			if (effect) {
 				destroy_signal(effect);
 			}
 			render = render.p;
@@ -1929,8 +1930,8 @@ export function key(anchor_node, key, render_fn) {
 			transition.f(() => {
 				transitions.delete(transition);
 				if (transitions.size === 0) {
-					if (render.e !== null) {
-						if (render.d !== null) {
+					if (render.e) {
+						if (render.d) {
 							remove(render.d);
 							render.d = null;
 						}
@@ -1969,7 +1970,7 @@ export function key(anchor_node, key, render_fn) {
 		}
 		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.d !== null) {
+			if (render.d) {
 				remove(render.d);
 				render.d = null;
 			}
@@ -2000,13 +2001,13 @@ export function key(anchor_node, key, render_fn) {
 	mounted = true;
 	push_destroy_fn(key_effect, () => {
 		let render = current_render;
-		while (render !== null) {
+		while (render) {
 			const dom = render.d;
-			if (dom !== null) {
+			if (dom) {
 				remove(dom);
 			}
 			const effect = render.e;
-			if (effect !== null) {
+			if (effect) {
 				destroy_signal(effect);
 			}
 			render = render.p;
@@ -2030,7 +2031,7 @@ export function cssProps(anchor, is_html, props, component) {
 
 	/** @type {Text | Comment} */
 	let component_anchor;
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		// Hydration: css props element is surrounded by a ssr comment ...
 		tag = /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0]);
 		// ... and the child(ren) of the css props element is also surround by a ssr comment
@@ -2196,7 +2197,7 @@ export function action(dom, action, value_fn) {
  * @returns {void}
  */
 export function remove_input_attr_defaults(dom) {
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		attr(dom, 'value', null);
 		attr(dom, 'checked', null);
 	}
@@ -2208,7 +2209,7 @@ export function remove_input_attr_defaults(dom) {
  * @returns {void}
  */
 export function remove_textarea_child(dom) {
-	if (current_hydration_fragment !== null && dom.firstChild !== null) {
+	if (current_hydration_fragment && dom.firstChild) {
 		dom.textContent = '';
 	}
 }
@@ -2643,7 +2644,7 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return p[key];
+			if (typeof p === 'object' && p && key in p) return p[key];
 		}
 	},
 	getOwnPropertyDescriptor(target, key) {
@@ -2651,7 +2652,7 @@ const spread_props_handler = {
 		while (i--) {
 			let p = target.props[i];
 			if (is_function(p)) p = p();
-			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+			if (typeof p === 'object' && p && key in p) return get_descriptor(p, key);
 		}
 	},
 	has(target, key) {
@@ -2795,7 +2796,7 @@ export function mount(component, options) {
 		);
 		block.e = effect;
 	} catch (error) {
-		if (options.recover !== false && hydration_fragment !== null) {
+		if (options.recover !== false && hydration_fragment) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'ERR_SVELTE_HYDRATION_MISMATCH' +
@@ -2860,10 +2861,10 @@ export function mount(component, options) {
 			}
 			root_event_handles.delete(event_handle);
 			const dom = block.d;
-			if (dom !== null) {
+			if (dom) {
 				remove(dom);
 			}
-			if (hydration_fragment !== null) {
+			if (hydration_fragment) {
 				remove(hydration_fragment);
 			}
 			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
@@ -2906,7 +2907,7 @@ export function snippet_effect(get_snippet, node, args) {
 		const snippet = get_snippet();
 		untrack(() => snippet(node, args));
 		return () => {
-			if (block.d !== null) {
+			if (block.d) {
 				remove(block.d);
 			}
 		};

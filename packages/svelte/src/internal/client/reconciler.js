@@ -21,18 +21,18 @@ export function insert(current, parent_element, sibling) {
 		var node;
 		for (; i < current.length; i++) {
 			node = current[i];
-			if (sibling === null) {
-				append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (node));
-			} else {
+			if (sibling) {
 				sibling.before(/** @type {Node} */ (node));
+			} else {
+				append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (node));
 			}
 		}
 		return current[0];
-	} else if (current !== null) {
-		if (sibling === null) {
-			append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (current));
-		} else {
+	} else if (current) {
+		if (sibling) {
 			sibling.before(/** @type {Node} */ (current));
+		} else {
+			append_child(/** @type {Element} */ (parent_element), /** @type {Node} */ (current));
 		}
 	}
 	return /** @type {Text | Element | Comment} */ (current);
@@ -71,7 +71,7 @@ export function remove(current) {
  */
 export function reconcile_html(dom, value, svg) {
 	hydrate_block_anchor(dom);
-	if (current_hydration_fragment !== null) {
+	if (current_hydration_fragment) {
 		return current_hydration_fragment;
 	}
 	var html = value + '';
