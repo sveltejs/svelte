@@ -2080,12 +2080,6 @@ declare module 'svelte/transition' {
 		easing?: EasingFunction;
 	}
 	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
-	export function cubic_in_out(t: number): number;
-
-	export function split_css_unit(value: number | string): [number, string];
-	/**
 	 * Animates a `blur` filter alongside an element's opacity.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#blur
