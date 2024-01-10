@@ -1012,10 +1012,11 @@ export function mutate_store(store, expression, new_value) {
 
 /**
  * @param {import('./types.js').ComputationSignal} signal
+ * @param {import('./types.js').ComputationSignal} root
  * @param {boolean} inert
  * @returns {void}
  */
-export function mark_subtree_inert(signal, inert) {
+export function mark_subtree_inert(signal, root, inert, visited_blocks = new Set()) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
 	if (is_already_inert !== inert) {
@@ -1025,22 +1026,28 @@ export function mark_subtree_inert(signal, inert) {
 		}
 		// Nested if block effects
 		const block = signal.b;
-		if (block !== null) {
+		if (block !== null && !visited_blocks.has(block)) {
+			visited_blocks.add(block);
 			const type = block.t;
 			if (type === IF_BLOCK) {
+				const condition_effect = block.e;
+				const root_block = root.b?.p;
+				if (condition_effect !== null && root_block?.t === IF_BLOCK) {
+					mark_subtree_inert(condition_effect, root, inert);
+				}
 				const consequent_effect = block.ce;
 				if (consequent_effect !== null) {
-					mark_subtree_inert(consequent_effect, inert);
+					mark_subtree_inert(consequent_effect, root, inert, visited_blocks);
 				}
 				const alternate_effect = block.ae;
 				if (alternate_effect !== null) {
-					mark_subtree_inert(alternate_effect, inert);
+					mark_subtree_inert(alternate_effect, root, inert, visited_blocks);
 				}
 			} else if (type === EACH_BLOCK) {
 				const items = block.v;
 				for (let { e: each_item_effect } of items) {
 					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert);
+						mark_subtree_inert(each_item_effect, root, inert, visited_blocks);
 					}
 				}
 			}
@@ -1050,7 +1057,7 @@ export function mark_subtree_inert(signal, inert) {
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			mark_subtree_inert(references[i], inert);
+			mark_subtree_inert(references[i], root, inert, visited_blocks);
 		}
 	}
 }
