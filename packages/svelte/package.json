@@ -106,7 +106,6 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/aria-query": "^5.0.3",
-    "@types/estree": "^1.0.5",
     "dts-buddy": "^0.4.3",
     "esbuild": "^0.19.2",
     "rollup": "^4.1.5",
@@ -116,6 +115,7 @@
   "dependencies": {
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@types/estree": "^1.0.5",
     "acorn": "^8.10.0",
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.0",
