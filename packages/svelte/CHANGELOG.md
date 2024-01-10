@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.33
+
+### Patch Changes
+
+- fix: improve ssr template code generation ([#10151](https://github.com/sveltejs/svelte/pull/10151))
+
+- fix: improve template literal expression output generation ([#10147](https://github.com/sveltejs/svelte/pull/10147))
+
 ## 5.0.0-next.32
 
 ### Patch Changes
