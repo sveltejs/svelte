@@ -1430,7 +1430,6 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 		block,
 		false
 	);
-	if_effect.foo = condition_fn;
 	// Managed effect
 	const consequent_effect = render_effect(
 		() => {
