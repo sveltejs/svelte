@@ -615,6 +615,7 @@ export function should_proxy_or_freeze(node) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
+		node.type === 'TemplateLiteral' ||
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
 		node.type === 'UnaryExpression' ||
