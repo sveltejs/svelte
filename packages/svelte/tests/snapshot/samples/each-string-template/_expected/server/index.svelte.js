@@ -14,7 +14,7 @@ export default function Each_string_template($$payload, $$props) {
 		const thing = each_array[$$index];
 		const anchor_1 = $.create_anchor($$payload);
 
-		$$payload.out += `${anchor_1}${$.escape(thing)},${$.escape(' ')}${anchor_1}`;
+		$$payload.out += `${anchor_1}${$.escape(thing)}, ${anchor_1}`;
 	}
 
 	$$payload.out += `${anchor}`;
