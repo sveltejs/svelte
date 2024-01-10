@@ -373,20 +373,6 @@ function create_transition(dom, init, direction, effect) {
 			const has_keyed_transition = dom.__animate;
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
-			if (animation === null || cancelled) {
-				cancelled = false;
-				create_animation();
-			}
-			if (animation === null) {
-				transition.x();
-			} else {
-				dispatch_event(dom, 'outrostart');
-				if (needs_reverse) {
-					/** @type {Animation | TickAnimation} */ (animation).reverse();
-				} else {
-					/** @type {Animation | TickAnimation} */ (animation).play();
-				}
-			}
 			// If we're outroing an element that has an animation, then we need to fix
 			// its position to ensure it behaves nicely without causing layout shift.
 			if (has_keyed_transition) {
@@ -414,6 +400,20 @@ function create_transition(dom, init, direction, effect) {
 						const animation = dom.animate([frame, frame], { duration: 1 });
 						animation.pause();
 					}
+				}
+			}
+			if (animation === null || cancelled) {
+				cancelled = false;
+				create_animation();
+			}
+			if (animation === null) {
+				transition.x();
+			} else {
+				dispatch_event(dom, 'outrostart');
+				if (needs_reverse) {
+					/** @type {Animation | TickAnimation} */ (animation).reverse();
+				} else {
+					/** @type {Animation | TickAnimation} */ (animation).play();
 				}
 			}
 		},
@@ -584,6 +584,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 	const outros = [];
 	for (const transition of transitions) {
 		const direction = transition.r;
+		const effect = transition.e;
 		if (target_direction === 'in') {
 			if (direction === 'in' || direction === 'both') {
 				transition.in();
@@ -591,7 +592,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				transition.c();
 			}
 			transition.d.inert = false;
-			mark_subtree_inert(transition.e, false);
+			mark_subtree_inert(effect, effect, false);
 		} else if (target_direction === 'key') {
 			if (direction === 'key') {
 				transition.p = transition.i(/** @type {DOMRect} */ (from));
@@ -603,7 +604,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				outros.push(transition.o);
 			}
 			transition.d.inert = true;
-			mark_subtree_inert(transition.e, true);
+			mark_subtree_inert(effect, effect, true);
 		}
 	}
 	if (outros.length > 0) {
