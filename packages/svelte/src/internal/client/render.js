@@ -2803,7 +2803,7 @@ export function mount(component, options) {
 					).c = options.context;
 				}
 				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {}, options.events || {});
+				accessors = component(anchor, options.props || {});
 				if (options.context) {
 					pop();
 				}

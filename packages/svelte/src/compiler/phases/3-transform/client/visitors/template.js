@@ -1663,6 +1663,11 @@ function serialize_template_literal(values, visit, state) {
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 			last.value.raw += sanitize_template_string(node.data);
+		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			if (node.expression.value != null) {
+				last.value.raw += sanitize_template_string(node.expression.value + '');
+			}
 		} else {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;
