@@ -371,8 +371,6 @@ function create_transition(dom, init, direction, effect) {
 		o() {
 			// @ts-ignore
 			const has_keyed_transition = dom.__animate;
-			const needs_reverse = direction === 'both' && curr_direction !== 'out';
-			curr_direction = 'out';
 			// If we're outroing an element that has an animation, then we need to fix
 			// its position to ensure it behaves nicely without causing layout shift.
 			if (has_keyed_transition) {
@@ -388,20 +386,32 @@ function create_transition(dom, init, direction, effect) {
 					dom.style.height = height;
 					const b = dom.getBoundingClientRect();
 					if (a.left !== b.left || a.top !== b.top) {
-						// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
-						// because we're now using Web Animations, we can't do that as it won't work properly if the
-						// animation is also making use of the same transformations. So instead, we apply an instantaneous
-						// animation and pause it on the first frame, just applying the same behavior.
-						const style = getComputedStyle(dom);
-						const transform = style.transform === 'none' ? '' : style.transform;
-						const frame = {
-							transform: `${transform} translate(${a.left - b.left}px, ${a.top - b.top}px)`
-						};
-						const animation = dom.animate([frame, frame], { duration: 1 });
-						animation.pause();
+						const translate = `translate(${a.left - b.left}px, ${a.top - b.top}px)`;
+						const existing_transform = style.transform;
+						if (existing_transform === 'none') {
+							dom.style.transform = translate;
+						} else {
+							// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
+							// because we're now using Web Animations, we can't do that as it won't work properly if the
+							// animation is also making use of the same transformations. So instead, we apply an
+							// instantaneous animation and pause it on the first frame, just applying the same behavior.
+							// We also need to take into consideration matrix transforms and how they might combine with
+							// an existing behavior that is already in progress (such as scale).
+							// > Follow the white rabbit.
+							const transform = existing_transform.startsWith('matrix(1,')
+								? translate
+								: `matrix(1,0,0,1,0,0)`;
+							const frame = {
+								transform
+							};
+							const animation = dom.animate([frame, frame], { duration: 1 });
+							animation.pause();
+						}
 					}
 				}
 			}
+			const needs_reverse = direction === 'both' && curr_direction !== 'out';
+			curr_direction = 'out';
 			if (animation === null || cancelled) {
 				cancelled = false;
 				create_animation();
