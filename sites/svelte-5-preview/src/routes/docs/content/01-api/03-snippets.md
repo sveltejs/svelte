@@ -237,6 +237,7 @@ You can import the `Snippet` type from `'svelte'`:
 The `Snippet` type is generic. Here's how you'd type various cases:
 
 ```ts
+// @errors: 2305
 import type { Snippet } from 'svelte';
 
 type SnippetWithNoArgs = Snippet;
