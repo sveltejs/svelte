@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.32
+
+### Patch Changes
+
+- fix: improve outro behavior with transitions ([#10139](https://github.com/sveltejs/svelte/pull/10139))
+
+- chore: remove internal functions from `svelte/transition` exports ([#10132](https://github.com/sveltejs/svelte/pull/10132))
+
+- fix: further animation transition improvements ([#10138](https://github.com/sveltejs/svelte/pull/10138))
+
+- fix: improve animation transition heuristics ([#10119](https://github.com/sveltejs/svelte/pull/10119))
+
 ## 5.0.0-next.31
 
 ### Patch Changes
