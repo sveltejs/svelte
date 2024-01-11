@@ -547,10 +547,10 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
 							props,
 							{}
-					  )
+						)
 					: /** @type {import('./types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
 							direction
-					  });
+						});
 			});
 
 		transition = create_transition(dom, init, direction, transition_effect);

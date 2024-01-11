@@ -23,8 +23,8 @@ type PropsWithChildren<Props, Slots> = Props &
 	(Props extends { children?: any }
 		? {}
 		: Slots extends { default: any }
-		? { children?: Snippet }
-		: {});
+			? { children?: Snippet }
+			: {});
 
 /**
  * Can be used to create strongly typed Svelte components.
@@ -213,8 +213,8 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 		...args: null extends EventMap[Type]
 			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
 

@@ -713,12 +713,12 @@ const runes_scope_tweaker = {
 				rune === '$state'
 					? 'state'
 					: rune === '$state.frozen'
-					? 'frozen_state'
-					: rune === '$derived'
-					? 'derived'
-					: path.is_rest
-					? 'rest_prop'
-					: 'prop';
+						? 'frozen_state'
+						: rune === '$derived'
+							? 'derived'
+							: path.is_rest
+								? 'rest_prop'
+								: 'prop';
 		}
 
 		if (rune === '$props') {

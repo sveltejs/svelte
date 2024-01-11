@@ -75,8 +75,8 @@ export function validate_each_keys(collection, key_fn) {
 	const array = is_array(maybe_array)
 		? maybe_array
 		: maybe_array == null
-		? []
-		: Array.from(maybe_array);
+			? []
+			: Array.from(maybe_array);
 	const length = array.length;
 	for (let i = 0; i < length; i++) {
 		const key = key_fn(array[i], i);

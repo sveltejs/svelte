@@ -553,7 +553,7 @@ function infinite_loop_guard() {
 			'ERR_SVELTE_TOO_MANY_UPDATES' +
 				(DEV
 					? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
-					  'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
+						'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
 					: '')
 		);
 	}
@@ -1117,8 +1117,8 @@ export function set_signal_value(signal, value) {
 			'ERR_SVELTE_UNSAFE_MUTATION' +
 				(DEV
 					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-					  'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-					  'to be reactive do not use the "$state" rune for that declaration.'
+						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
+						'to be reactive do not use the "$state" rune for that declaration.'
 					: '')
 		);
 	}
@@ -1629,7 +1629,7 @@ export function safe_not_equal(a, b) {
 	// eslint-disable-next-line eqeqeq
 	return a != a
 		? // eslint-disable-next-line eqeqeq
-		  b == b
+			b == b
 		: a !== b || (a !== null && typeof a === 'object') || typeof a === 'function';
 }
 

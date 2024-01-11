@@ -234,8 +234,8 @@ const attributes = {
 		type === 'no-each'
 			? `An element that uses the animate directive must be the immediate child of a keyed each block`
 			: type === 'each-key'
-			? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
-			: `An element that uses the animate directive must be the sole child of a keyed each block`,
+				? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
+				: `An element that uses the animate directive must be the sole child of a keyed each block`,
 	'duplicate-animation': () => `An element can only have one 'animate' directive`,
 	/** @param {string[] | undefined} [modifiers] */
 	'invalid-event-modifier': (modifiers) =>
@@ -262,7 +262,7 @@ const attributes = {
 			? `An element can only have one '${directive1}' directive`
 			: `An element cannot have both ${describe(directive1)} directive and ${describe(
 					directive2
-			  )} directive`;
+				)} directive`;
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position'
 };

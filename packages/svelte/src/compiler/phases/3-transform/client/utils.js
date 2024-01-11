@@ -20,11 +20,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else if (
 		node.left.type === 'MemberExpression' &&
 		node.left.object.type === 'ThisExpression' &&
@@ -35,11 +35,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					/** @type {import('estree').Expression} */ (visit(node.left)),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else {
 		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}

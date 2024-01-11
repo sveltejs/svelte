@@ -33,7 +33,7 @@ export function safe_not_equal(a, b) {
 	// eslint-disable-next-line eqeqeq
 	return a != a
 		? // eslint-disable-next-line eqeqeq
-		  b == b
+			b == b
 		: a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 

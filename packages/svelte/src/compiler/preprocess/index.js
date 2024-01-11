@@ -318,7 +318,7 @@ async function process_markup(process, source) {
 			string: processed.code,
 			map: processed.map
 				? // TODO: can we use decode_sourcemap?
-				  typeof processed.map === 'string'
+					typeof processed.map === 'string'
 					? JSON.parse(processed.map)
 					: processed.map
 				: undefined,
