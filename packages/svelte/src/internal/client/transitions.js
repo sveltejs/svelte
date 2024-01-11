@@ -31,7 +31,6 @@ const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
 
 /** @type {undefined | number} */
 let active_tick_ref = undefined;
-let skip_mount_intro = false;
 
 /**
  * @template T
@@ -496,7 +495,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				can_show_intro_on_mount = true;
 			} else if (transition_block.t === IF_BLOCK) {
 				transition_block.r = if_block_transition;
-				if (can_show_intro_on_mount && !skip_mount_intro) {
+				if (can_show_intro_on_mount) {
 					/** @type {import('./types.js').Block | null} */
 					let if_block = transition_block;
 					while (if_block.t === IF_BLOCK) {
@@ -511,14 +510,13 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				}
 			}
 			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = !skip_mount_intro && transition_block.e !== null;
+				can_show_intro_on_mount = transition_block.e !== null;
 			}
 			if (can_show_intro_on_mount || !global) {
 				can_apply_lazy_transitions = true;
 			}
 		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
-			can_show_intro_on_mount =
-				!skip_mount_intro && (transition_block.e !== null || transition_block.i);
+			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
 		}
 		transition_block = transition_block.p;
 	}
@@ -527,14 +525,11 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 	let transition;
 
 	effect(() => {
+		let already_mounted = false;
 		if (transition !== undefined) {
+			already_mounted = true;
 			// Destroy any existing transitions first
-			try {
-				skip_mount_intro = true;
-				transition.x();
-			} finally {
-				skip_mount_intro = false;
-			}
+			transition.x();
 		}
 		const transition_fn = get_transition_fn();
 		/** @param {DOMRect} [from] */
@@ -557,7 +552,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const is_intro = direction === 'in';
 		const show_intro = can_show_intro_on_mount && (is_intro || direction === 'both');
 
-		if (show_intro) {
+		if (show_intro && !already_mounted) {
 			transition.p = transition.i();
 		}
 
@@ -565,7 +560,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			destroy_signal(effect);
 			dom.inert = false;
 
-			if (show_intro) {
+			if (show_intro && !already_mounted) {
 				transition.in();
 			}
 
@@ -662,7 +657,8 @@ function if_block_transition(transition) {
 			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
 			c.delete(transition);
 			if (c.size === 0) {
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ce));
+				const consequent_effect = block.ce;
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (consequent_effect));
 			}
 		});
 	} else {
@@ -675,7 +671,8 @@ function if_block_transition(transition) {
 			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
 			a.delete(transition);
 			if (a.size === 0) {
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ae));
+				const alternate_effect = block.ae;
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (alternate_effect));
 			}
 		});
 	}
