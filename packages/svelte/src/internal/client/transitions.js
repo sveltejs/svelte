@@ -482,10 +482,10 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		// @ts-ignore
 		dom.__animate = true;
 	}
-
+	let foo = false;
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
-	while (transition_block !== null) {
+	main: while (transition_block !== null) {
 		if (is_transition_block(transition_block)) {
 			if (transition_block.t === EACH_ITEM_BLOCK) {
 				// Lazily apply the each block transition
@@ -493,22 +493,32 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				transition_block.a = each_item_animate;
 				transition_block = transition_block.p;
 			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
-				can_show_intro_on_mount = false;
+				can_show_intro_on_mount = true;
 			} else if (transition_block.t === IF_BLOCK) {
 				transition_block.r = if_block_transition;
+				if (can_show_intro_on_mount) {
+					/** @type {import('./types.js').Block | null} */
+					let if_block = transition_block;
+					while (if_block.t === IF_BLOCK) {
+						// If we have an if block parent that is currently falsy then
+						// we can show the intro on mount as long as that block is mounted
+						if (if_block.e !== null && !if_block.v) {
+							can_show_intro_on_mount = true;
+							break main;
+						}
+						if_block = if_block.p;
+					}
+				}
 			}
 			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = transition_block.e === null;
+				can_show_intro_on_mount = transition_block.e !== null;
+				foo = true;
 			}
-			if (!can_show_intro_on_mount || !global) {
+			if (can_show_intro_on_mount || !global) {
 				can_apply_lazy_transitions = true;
 			}
-		} else if (
-			!can_apply_lazy_transitions &&
-			transition_block.t === ROOT_BLOCK &&
-			(transition_block.e !== null || transition_block.i)
-		) {
-			can_show_intro_on_mount = false;
+		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
+			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
 		}
 		transition_block = transition_block.p;
 	}
@@ -540,7 +550,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 
 		transition = create_transition(dom, init, direction, transition_effect);
 		const is_intro = direction === 'in';
-		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
+		const show_intro = can_show_intro_on_mount && (is_intro || direction === 'both');
 
 		if (show_intro) {
 			transition.p = transition.i();
@@ -602,7 +612,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				transition.c();
 			}
 			transition.d.inert = false;
-			mark_subtree_inert(effect, effect, false);
+			mark_subtree_inert(effect, false);
 		} else if (target_direction === 'key') {
 			if (direction === 'key') {
 				transition.p = transition.i(/** @type {DOMRect} */ (from));
@@ -614,7 +624,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				outros.push(transition.o);
 			}
 			transition.d.inert = true;
-			mark_subtree_inert(effect, effect, true);
+			mark_subtree_inert(effect, true);
 		}
 	}
 	if (outros.length > 0) {
