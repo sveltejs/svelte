@@ -31,6 +31,7 @@ const DELAY_NEXT_TICK = Number.MIN_SAFE_INTEGER;
 
 /** @type {undefined | number} */
 let active_tick_ref = undefined;
+let skip_mount_intro = false;
 
 /**
  * @template T
@@ -482,7 +483,6 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		// @ts-ignore
 		dom.__animate = true;
 	}
-	let foo = false;
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
 	main: while (transition_block !== null) {
@@ -496,7 +496,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				can_show_intro_on_mount = true;
 			} else if (transition_block.t === IF_BLOCK) {
 				transition_block.r = if_block_transition;
-				if (can_show_intro_on_mount) {
+				if (can_show_intro_on_mount && !skip_mount_intro) {
 					/** @type {import('./types.js').Block | null} */
 					let if_block = transition_block;
 					while (if_block.t === IF_BLOCK) {
@@ -511,14 +511,14 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				}
 			}
 			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = transition_block.e !== null;
-				foo = true;
+				can_show_intro_on_mount = !skip_mount_intro && transition_block.e !== null;
 			}
 			if (can_show_intro_on_mount || !global) {
 				can_apply_lazy_transitions = true;
 			}
 		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
-			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
+			can_show_intro_on_mount =
+				!skip_mount_intro && (transition_block.e !== null || transition_block.i);
 		}
 		transition_block = transition_block.p;
 	}
@@ -529,7 +529,12 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 	effect(() => {
 		if (transition !== undefined) {
 			// Destroy any existing transitions first
-			transition.x();
+			try {
+				skip_mount_intro = true;
+				transition.x();
+			} finally {
+				skip_mount_intro = false;
+			}
 		}
 		const transition_fn = get_transition_fn();
 		/** @param {DOMRect} [from] */
