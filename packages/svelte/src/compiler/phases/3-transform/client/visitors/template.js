@@ -2501,25 +2501,9 @@ export const template_visitors = {
 			}
 
 			let arg_alias = `$$arg${i}`;
+			args.push(b.id(arg_alias));
 
-			if (argument.type === 'RestElement') {
-				args.push(b.rest(b.id(arg_alias)));
-
-				if (argument.argument.type === 'Identifier') {
-					declarations.push(
-						b.let(argument.argument.name, b.call('$.proxy_rest_array', b.id(arg_alias)))
-					);
-					continue;
-				}
-
-				const new_arg_alias = `$$proxied_arg${i}`;
-				declarations.push(b.let(new_arg_alias, b.call('$.proxy_rest_array', b.id(arg_alias))));
-				arg_alias = new_arg_alias;
-			} else {
-				args.push(b.id(arg_alias));
-			}
-
-			const paths = extract_paths(argument.type === 'RestElement' ? argument.argument : argument);
+			const paths = extract_paths(argument);
 
 			for (const path of paths) {
 				const name = /** @type {import('estree').Identifier} */ (path.node).name;
@@ -2529,13 +2513,7 @@ export const template_visitors = {
 						path.node,
 						b.thunk(
 							/** @type {import('estree').Expression} */ (
-								context.visit(
-									path.expression?.(
-										argument.type === 'RestElement'
-											? b.id(arg_alias)
-											: b.call('$.maybe_call', b.id(arg_alias))
-									)
-								)
+								context.visit(path.expression?.(b.call('$.maybe_call', b.id(arg_alias))))
 							)
 						)
 					)

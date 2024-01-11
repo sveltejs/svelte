@@ -27,8 +27,8 @@
 	let whatever_comes_after_that = derivedBox(count, 5);
 </script>
 
-{#snippet foo(n: number, ...[doubled, { tripled }, ...rest]: number[])}
-	<p>clicks: {n.value}, doubled: {doubled.value}, tripled: {tripled.value}, quadrupled: {rest[0].value}, something else: {rest[1].value}</p>
+{#snippet foo(n, doubled, { tripled }, quadrupled, whatever)}
+	<p>clicks: {n.value}, doubled: {doubled.value}, tripled: {tripled.value}, quadrupled: {quadrupled.value}, something else: {whatever.value}</p>
 {/snippet}
 
 {@render foo(...[count, doubled, {tripled}, quadrupled, whatever_comes_after_that])}

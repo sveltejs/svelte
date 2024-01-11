@@ -37,7 +37,6 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	proxy_rest_array,
 	thunkspread,
 	maybe_call,
 	freeze

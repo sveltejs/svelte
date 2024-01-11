@@ -58,7 +58,7 @@ Snippets, and _render tags_, are a way to create reusable chunks of markup insid
 {/each}
 ```
 
-A snippet behaves pretty much like a regular function declaration: It can have multiple parameters, those parameters can be destructured, and they can have default values. You can also use `...rest` params. ([demo](/#H4sIAAAAAAAAE2WO0YrCQAxFfyXGhVoo9L3Wot9hF6xt1IHpTJikggzz78tI2YX1MTecc2_Em7Ek2JwjumEmbPDEjBXqi_MhT7JKWKH4JYw5aWUMhrXrXa-WFCLMJDLcCQ5wMVoIOK8gHu6BBgX1IETw8ssFEhzgi4Nn2ZX73rX1n8rFrTjDTAoPstbv8pjqQ_3hLFPe0XL3piBmLG0grmDatDV3vYv1ak_vrmMgN1FYq4rBmpGKrPr_ufpr8buiTFjh7CdzMzRho2Gh9J1-AFhYxBNCAQAA)):
+A snippet behaves pretty much like a regular function declaration: It can have multiple parameters, those parameters can be destructured, and they can have default values. However, you cannot use `...rest` params. ([demo](/#H4sIAAAAAAAAE2WO0YrCQAxFfyXGhVoo9L3Wot9hF6xt1IHpTJikggzz78tI2YX1MTecc2_Em7Ek2JwjumEmbPDEjBXqi_MhT7JKWKH4JYw5aWUMhrXrXa-WFCLMJDLcCQ5wMVoIOK8gHu6BBgX1IETw8ssFEhzgi4Nn2ZX73rX1n8rFrTjDTAoPstbv8pjqQ_3hLFPe0XL3piBmLG0grmDatDV3vYv1ak_vrmMgN1FYq4rBmpGKrPr_ufpr8buiTFjh7CdzMzRho2Gh9J1-AFhYxBNCAQAA)):
 
 ```svelte
 {#snippet figure({ src, caption, width, height })}
@@ -244,7 +244,6 @@ type SnippetWithOneArg = Snippet<[argOne: number]>;
 type SnippetWithMultipleArgs = Snippet<
 	[argOne: number, argTwo: string]
 >;
-type SnippetWithAnyNumberOfArgs = Snippet<number[]>;
 ```
 
 And here are the snippet declarations matching those cases (note: this example uses TypeScript):
@@ -259,10 +258,6 @@ And here are the snippet declarations matching those cases (note: this example u
 {/snippet}
 
 {#snippet withMultipleArgs(argOne: number, argTwo: string)}
-	<!-- -->
-{/snippet}
-
-{#snippet withAnyNumberOfArgs(...rest: number[])}
 	<!-- -->
 {/snippet}
 ```

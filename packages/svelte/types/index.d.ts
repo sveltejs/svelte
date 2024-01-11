@@ -196,14 +196,20 @@ declare module 'svelte' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	export interface Snippet<T extends unknown[] = []> {
-		(
-			this: void,
-			...args: T
-		): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
-	}
+	export type Snippet<T extends unknown[] = []> =
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		number extends T['length']
+			? never
+			: {
+					(
+						this: void,
+						...args: T
+					): typeof SnippetReturn & {
+						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+					};
+			  };
 
 	interface DispatchOptions {
 		cancelable?: boolean;
@@ -324,7 +330,9 @@ declare module 'svelte' {
 		new (options: ComponentConstructorOptions<Props & (Props extends {
 			children?: any;
 		} ? {} : {} | {
-			children?: Snippet<[]> | undefined;
+			children?: ((this: void) => unique symbol & {
+				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
+			}) | undefined;
 		})>): SvelteComponent<Props, Events, any>;
 	}, options: {
 		target: Node;
@@ -347,7 +355,9 @@ declare module 'svelte' {
 		new (options: ComponentConstructorOptions<Props & (Props extends {
 			children?: any;
 		} ? {} : {} | {
-			children?: Snippet<[]> | undefined;
+			children?: ((this: void) => unique symbol & {
+				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
+			}) | undefined;
 		})>): SvelteComponent<Props, Events, any>;
 	}, options: {
 		target: Node;
@@ -1725,7 +1735,9 @@ declare module 'svelte/legacy' {
 		} ? {} : Slots extends {
 			default: any;
 		} ? {
-			children?: Snippet<[]> | undefined;
+			children?: ((this: void) => unique symbol & {
+				_: "functions passed to {@render ...} tags must use the `Snippet` type imported from \"svelte\"";
+			}) | undefined;
 		} : {})>): SvelteComponent<Props, Events, Slots>;
 	} & Exports;
 	// This should contain all the public interfaces (not all of them are actually importable, check current Svelte for which ones are).
@@ -1851,14 +1863,20 @@ declare module 'svelte/legacy' {
 	 * ```
 	 * You can only call a snippet through the `{@render ...}` tag.
 	 */
-	interface Snippet<T extends unknown[] = []> {
-		(
-			this: void,
-			...args: T
-		): typeof SnippetReturn & {
-			_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
-		};
-	}
+	type Snippet<T extends unknown[] = []> =
+		// this conditional allows tuples but not arrays. Arrays would indicate a
+		// rest parameter type, which is not supported. If rest parameters are added
+		// in the future, the condition can be removed.
+		number extends T['length']
+			? never
+			: {
+					(
+						this: void,
+						...args: T
+					): typeof SnippetReturn & {
+						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
+					};
+			  };
 }
 
 declare module 'svelte/motion' {

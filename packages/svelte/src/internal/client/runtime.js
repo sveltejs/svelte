@@ -2029,32 +2029,6 @@ export function thunkspread(iterable) {
 }
 
 /**
- * This is meant to proxy the `...rest` parameter to a snippet function. Basically,
- * this array will be full of functions that need to be invoked to unwrap their value.
- * We have no way of forcing that invocation in all circumstances -- for example, if
- * a user passes the rest array to a function that then accesses it via `rest[0]`, we
- * would need to transform that into `rest[0]()`. That's effectively what this proxy does.
- *
- * @template {unknown[]} T
- * @param {T} items
- * @returns {T}
- */
-export function proxy_rest_array(items) {
-	return new Proxy(items, {
-		get(target, property) {
-			// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
-			if (typeof property === 'symbol') return target[property];
-			if (!isNaN(parseInt(property))) {
-				// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
-				return target[property]?.();
-			}
-			// @ts-expect-error -- It thinks arrays can't have properties that aren't numeric
-			return target[property];
-		}
-	});
-}
-
-/**
  * @template {Function | undefined} T
  * @param {T} fn
  * @returns {ReturnType<T> | undefined}

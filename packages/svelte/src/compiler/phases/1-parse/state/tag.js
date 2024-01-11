@@ -298,6 +298,14 @@ function open(parser) {
 			error(snippet_expression, 'TODO', 'expected a snippet name');
 		}
 
+		if (snippet_expression.params.at(-1)?.type === 'RestElement') {
+			error(
+				snippet_expression,
+				'TODO',
+				'snippets do not support rest parameters; use an array instead'
+			);
+		}
+
 		// slice the `{#` off the beginning since it's already been eaten
 		parser.eat(raw_snippet_declaration.slice(2), true);
 
