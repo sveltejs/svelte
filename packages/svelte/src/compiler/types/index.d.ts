@@ -11,19 +11,12 @@ import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
-import type { EachBlock, Namespace, SvelteNode } from './template.js';
+import type { EachBlock, Namespace, Root, SvelteNode } from './template.js';
 
-/** The return value of `compile` from `svelte/compiler` */
-export interface CompileResult {
+/** The return value of `compileModule` from `svelte/compiler` */
+export interface ModuleCompileResult {
 	/** The compiled JavaScript */
 	js: {
-		/** The generated code */
-		code: string;
-		/** A source map */
-		map: SourceMap;
-	};
-	/** The compiled CSS */
-	css: null | {
 		/** The generated code */
 		code: string;
 		/** A source map */
@@ -46,6 +39,19 @@ export interface CompileResult {
 		 */
 		runes: boolean;
 	};
+}
+
+/** The return value of `compile` from `svelte/compiler` */
+export interface CompileResult extends ModuleCompileResult {
+	/** The compiled CSS */
+	css: null | {
+		/** The generated code */
+		code: string;
+		/** A source map */
+		map: SourceMap;
+	};
+	/** The AST */
+	ast: Root;
 }
 
 export interface Warning {

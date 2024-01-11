@@ -502,7 +502,7 @@ declare module 'svelte/compiler' {
 	 * https://svelte.dev/docs/svelte-compiler#svelte-compile
 	 * @param source The component source code
 	 * */
-	export function compileModule(source: string, options: ModuleCompileOptions): CompileResult;
+	export function compileModule(source: string, options: ModuleCompileOptions): ModuleCompileResult;
 	/**
 	 * The parse function parses a component, returning only its abstract syntax tree.
 	 *
@@ -519,17 +519,10 @@ declare module 'svelte/compiler' {
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
 	function walk(): never;
-	/** The return value of `compile` from `svelte/compiler` */
-	interface CompileResult {
+	/** The return value of `compileModule` from `svelte/compiler` */
+	interface ModuleCompileResult {
 		/** The compiled JavaScript */
 		js: {
-			/** The generated code */
-			code: string;
-			/** A source map */
-			map: SourceMap;
-		};
-		/** The compiled CSS */
-		css: null | {
 			/** The generated code */
 			code: string;
 			/** A source map */
@@ -552,6 +545,19 @@ declare module 'svelte/compiler' {
 			 */
 			runes: boolean;
 		};
+	}
+
+	/** The return value of `compile` from `svelte/compiler` */
+	interface CompileResult extends ModuleCompileResult {
+		/** The compiled CSS */
+		css: null | {
+			/** The generated code */
+			code: string;
+			/** A source map */
+			map: SourceMap;
+		};
+		/** The AST */
+		ast: Root;
 	}
 
 	interface Warning {
