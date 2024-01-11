@@ -2606,7 +2606,7 @@ export const template_visitors = {
 				context,
 				() => /** @type {import('estree').Expression} */ (context.visit(assignment)),
 				{
-					skip_proxy_and_freeze: true,
+					skip_proxy_and_freeze: true
 				}
 			)
 		);
