@@ -2565,6 +2565,6 @@ declare function $props<T>(): T;
  */
 declare function $inspect<T extends any[]>(
 	...values: T
-): { with: (type: 'init' | 'update', ...values: T) => void };
+): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
 //# sourceMappingURL=index.d.ts.map
