@@ -99,7 +99,11 @@ export type ComputationSignal<V = unknown> = {
 	/** The types that the signal represent, as a bitwise value */
 	f: SignalFlags;
 	/** init: The function that we invoke for effects and computeds */
-	i: null | (() => V) | (() => void | (() => void)) | ((b: Block) => void | (() => void));
+	i:
+		| null
+		| (() => V)
+		| (() => void | (() => void))
+		| ((b: Block, s: Signal) => void | (() => void));
 	/** references: Anything that a signal owns */
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */

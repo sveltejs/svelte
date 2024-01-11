@@ -342,9 +342,13 @@ function execute_signal_fn(signal) {
 	try {
 		let res;
 		if (is_render_effect) {
-			res = /** @type {(block: import('./types.js').Block) => V} */ (init)(
-				/** @type {import('./types.js').Block} */ (signal.b)
-			);
+			res =
+				/** @type {(block: import('./types.js').Block, signal: import('./types.js').Signal) => V} */ (
+					init
+				)(
+					/** @type {import('./types.js').Block} */ (signal.b),
+					/** @type {import('./types.js').Signal} */ (signal)
+				);
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}

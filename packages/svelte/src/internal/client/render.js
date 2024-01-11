@@ -1375,7 +1375,10 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let alternate_dom = null;
 	let has_mounted = false;
-	let has_mounted_branch = false;
+	/**
+	 * @type {import("./types.js").EffectSignal | null}
+	 */
+	let current_branch_effect = null;
 
 	const if_effect = render_effect(
 		() => {
@@ -1432,20 +1435,24 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	// Managed effect
 	const consequent_effect = render_effect(
-		() => {
-			if (consequent_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
+		) => {
+			const result = block.v;
+			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.v) {
+			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = consequent_effect;
+				consequent_dom = block.d;
 			}
-			consequent_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1454,22 +1461,26 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
-		() => {
-			if (alternate_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
+		) => {
+			const result = block.v;
+			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.v) {
+			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = alternate_effect;
+				alternate_dom = block.d;
 			}
-			alternate_dom = block.d;
 			block.d = null;
 		},
 		block,
