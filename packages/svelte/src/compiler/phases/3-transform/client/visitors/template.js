@@ -2604,7 +2604,10 @@ export const template_visitors = {
 			serialize_set_binding(
 				assignment,
 				context,
-				() => /** @type {import('estree').Expression} */ (context.visit(assignment))
+				() => /** @type {import('estree').Expression} */ (context.visit(assignment)),
+				{
+					skip_proxy_and_freeze: true
+				}
 			)
 		);
 
