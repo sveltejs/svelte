@@ -530,7 +530,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		if (transition !== undefined) {
 			// Destroy any existing transitions first
 			try {
-				// skip_mount_intro = true;
+				skip_mount_intro = true;
 				transition.x();
 			} finally {
 				skip_mount_intro = false;
