@@ -45,7 +45,7 @@ Want to learn more about how to get started, what's different compared to Sapper
 - [svelte-formly](https://github.com/arabdevelop/svelte-formly) generates dynamic forms for Svelte and Sapper
 - [7ty](https://www.npmjs.com/package/@jamcart/7ty) is a static site generator that uses Svelte, supports partial hydration of components, and uses file based routing resembling Sapper and 11ty.
 
-**Want to contribute your own component?** Submit a [Component](https://sveltesociety.dev/components) to the Svelte Society site by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Want to contribute your own component?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 **Starters**
 
@@ -53,7 +53,7 @@ Want to learn more about how to get started, what's different compared to Sapper
 - [sveltekit-tailwindcss-external-api](https://github.com/acidlake/sveltekit-tailwindcss-external-api) is everything you need to build a Svelte project with TailwindCSS and an external API, powered by create-svelte.
 - [Sapper Netlify](https://www.npmjs.com/package/sapper-netlify) is a Sapper project that can run on a Netlify function.
 
-**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates/)
+**Looking for a particular starter?** Check out [svelte-adders](https://github.com/svelte-add/svelte-adders) and a number of other template examples at the community site [sveltesociety.dev](https://sveltesociety.dev/templates)
 
 **Learning Resources**
 

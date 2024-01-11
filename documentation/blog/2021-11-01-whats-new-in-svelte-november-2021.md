@@ -83,6 +83,6 @@ To see all updates to Svelte and SvelteKit, check out the [Svelte](https://githu
 - [@svelte-drama/suspense](https://www.npmjs.com/package/@svelte-drama/suspense) is a Svelte component that implements the core idea of React's `<Suspense>`. Also check out [SWR for Svelte](https://www.npmjs.com/package/@svelte-drama/swr) to make refetching even easier.
 - [sveltekit-adapter-browser-extension](https://github.com/antony/sveltekit-adapter-browser-extension) is an adapter for SvelteKit which turns your app into a cross-platform browser extension
 
-Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates/) for more tools, templates, adders and adapters from across the Svelte ecosystem.
+Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates) for more tools, templates, adders and adapters from across the Svelte ecosystem.
 
 Looking for more Svelte goodness? Join us on [Reddit](https://www.reddit.com/r/sveltejs/) or [Discord](https://discord.com/invite/yy75DKs)!

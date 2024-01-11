@@ -1,6 +1,6 @@
 <script>
 	import { browser } from '$app/environment';
-	import { afterNavigate, goto } from '$app/navigation';
+	import { afterNavigate, goto, replaceState } from '$app/navigation';
 	import Repl from '@sveltejs/repl';
 	import { theme } from '@sveltejs/site-kit/stores';
 	import { onMount } from 'svelte';

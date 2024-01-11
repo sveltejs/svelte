@@ -8,14 +8,14 @@ import { error, redirect } from '@sveltejs/kit';
 export const prerender = true;
 
 export async function load({ params }) {
-	if (params.slug === 'local-transitions') throw redirect(307, '/tutorial/global-transitions');
+	if (params.slug === 'local-transitions') redirect(307, '/tutorial/global-transitions');
 
 	const tutorial_data = await get_tutorial_data();
 	const tutorials_list = get_tutorial_list(tutorial_data);
 
 	const tutorial = await get_parsed_tutorial(tutorial_data, params.slug);
 
-	if (!tutorial) throw error(404);
+	if (!tutorial) error(404);
 
 	return {
 		tutorials_list,

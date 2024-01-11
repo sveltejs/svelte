@@ -89,7 +89,7 @@ To see all updates to SvelteKit, check out the [SvelteKit changelog](https://git
 - [focus-svelte](https://github.com/chanced/focus-svelte) is a focus trap for Svelte with zero dependencies
 - [filedrop-svelte](https://github.com/chanced/filedrop-svelte) is a file dropzone action & component for Svelte
 
-Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates/) for more templates, adders and adapters from across the Svelte ecosystem.
+Check out the community site [sveltesociety.dev](https://sveltesociety.dev/templates) for more templates, adders and adapters from across the Svelte ecosystem.
 
 ## Before you go, answer the call for speakers!
 

@@ -82,7 +82,7 @@ Haven't tried the language-tools yet? Check out [Svelte Extension for VSCode](ht
 - [svelte-heroicons](https://github.com/martinse/svelte-heroicons) is a handy wrapper for the Heroicons icon library
 - [supabase-ui-svelte](https://github.com/joshnuss/supabase-ui-svelte) are UI components for Supabase authentication
 
-**Have your own Svelte Component to share?** Check out the [Components](https://sveltesociety.dev/components) page on the Svelte Society site. You can contribute by making [a PR to this file](https://github.com/svelte-society/sveltesociety.dev/blob/master/src/pages/components/components.json).
+**Have your own Svelte Component to share?** [Submit your own component](https://sveltesociety.dev/help/submitting?type=package) to the list of [packages](https://sveltesociety.dev/packages) on the Svelte Society site.
 
 **Learning Resources & Starters**
 
