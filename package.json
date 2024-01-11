@@ -42,5 +42,10 @@
     "prettier-plugin-svelte": "^3.1.2",
     "typescript": "^5.2.2",
     "vitest": "^0.34.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "jimp>xml2js": "^0.6.0"
+    }
   }
 }
