@@ -518,7 +518,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			}
 		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
 			can_show_intro_on_mount =
-				(!skip_mount_intro && transition_block.e !== null) || transition_block.i;
+				!skip_mount_intro && (transition_block.e !== null || transition_block.i);
 		}
 		transition_block = transition_block.p;
 	}
