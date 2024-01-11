@@ -266,7 +266,7 @@ function open(parser) {
 	}
 
 	if (parser.match('snippet')) {
-		const snippet_declaraion_end = find_matching_bracket(parser.template, parser.index, '{');
+		const snippet_declaration_end = find_matching_bracket(parser.template, parser.index, '{');
 
 		if (!snippet_declaraion_end) {
 			error(start, 'TODO', 'Expected a closing curly bracket');
