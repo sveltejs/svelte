@@ -33,7 +33,7 @@ function remove_surrounding_whitespace_nodes(nodes) {
  * Transform our nice modern AST into the monstrosity emitted by Svelte 4
  * @param {string} source
  * @param {import('#compiler').Root} ast
- * @returns {import('./types/legacy-nodes.js').LegacySvelteNode}
+ * @returns {import('./types/legacy-nodes.js').LegacyRoot}
  */
 export function convert(source, ast) {
 	const root =
@@ -41,7 +41,7 @@ export function convert(source, ast) {
 			ast
 		);
 
-	return /** @type {import('./types/legacy-nodes.js').LegacySvelteNode} */ (
+	return /** @type {import('./types/legacy-nodes.js').LegacyRoot} */ (
 		walk(root, null, {
 			_(node, { next }) {
 				// @ts-ignore
