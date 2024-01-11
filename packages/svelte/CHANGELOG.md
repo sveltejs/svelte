@@ -1,5 +1,21 @@
 # svelte
 
+## 5.0.0-next.34
+
+### Patch Changes
+
+- fix: make `@types/estree` a dependency ([#10150](https://github.com/sveltejs/svelte/pull/10150))
+
+- fix: improve intro transitions on dynamic mount ([#10162](https://github.com/sveltejs/svelte/pull/10162))
+
+- fix: improve code generation ([#10156](https://github.com/sveltejs/svelte/pull/10156))
+
+- fix: adjust `$inspect.with` type ([`c7cb90c91`](https://github.com/sveltejs/svelte/commit/c7cb90c91cd3553ad59126267c9bfddecbb290b4))
+
+- fix: improve how transitions are handled on mount ([#10157](https://github.com/sveltejs/svelte/pull/10157))
+
+- fix: adjust `parse` return type ([`a271878ab`](https://github.com/sveltejs/svelte/commit/a271878abe7018923839401129b18082eb2c811a))
+
 ## 5.0.0-next.33
 
 ### Patch Changes
