@@ -1034,11 +1034,11 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 					mark_subtree_inert(condition_effect, inert);
 				}
 				const consequent_effect = block.ce;
-				if (consequent_effect !== null) {
+				if (consequent_effect !== null && block.v) {
 					mark_subtree_inert(consequent_effect, inert, visited_blocks);
 				}
 				const alternate_effect = block.ae;
-				if (alternate_effect !== null) {
+				if (alternate_effect !== null && !block.v) {
 					mark_subtree_inert(alternate_effect, inert, visited_blocks);
 				}
 			} else if (type === EACH_BLOCK) {
