@@ -1241,9 +1241,6 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
-		metadata: {
-			delegated: null | DelegatedEvent;
-		};
 	}
 
 	type DelegatedEvent =
@@ -1327,12 +1324,6 @@ declare module 'svelte/compiler' {
 			svg: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
-			/**
-			 * `true` if events on this element can theoretically be delegated. This doesn't necessarily mean that
-			 * a specific event will be delegated, as there are other factors which affect the final outcome.
-			 * `null` only until it was determined whether this element can be delegated or not.
-			 */
-			can_delegate_events: boolean | null;
 		};
 	}
 
