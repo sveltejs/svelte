@@ -59,25 +59,21 @@ function get_component_name(filename) {
 }
 
 /**
- * @param {Pick<import('#compiler').OnDirective, 'expression'| 'name' | 'modifiers'> & { type: string }} node
+ * Checks if given event attribute can be delegated/hoisted and returns the corresponding info if so
+ * @param {string} event_name
+ * @param {import('estree').Expression | null} handler
  * @param {import('./types').Context} context
  * @returns {null | import('#compiler').DelegatedEvent}
  */
-function get_delegated_event(node, context) {
-	const handler = node.expression;
-	const event_name = node.name;
-
+function get_delegated_event(event_name, handler, context) {
 	// Handle delegated event handlers. Bail-out if not a delegated event.
-	if (!handler || node.modifiers.includes('capture') || !DelegatedEvents.includes(event_name)) {
+	if (!handler || !DelegatedEvents.includes(event_name)) {
 		return null;
 	}
+
 	// If we are not working with a RegularElement, then bail-out.
 	const element = context.path.at(-1);
 	if (element?.type !== 'RegularElement') {
-		return null;
-	}
-	// If element says we can't delegate because we have multiple OnDirectives of the same type, bail-out.
-	if (!element.metadata.can_delegate_events) {
 		return null;
 	}
 
@@ -87,7 +83,7 @@ function get_delegated_event(node, context) {
 	let target_function = null;
 	let binding = null;
 
-	if (node.type === 'Attribute' && element.metadata.has_spread) {
+	if (element.metadata.has_spread) {
 		// event attribute becomes part of the dynamic spread array
 		return non_hoistable;
 	}
@@ -123,8 +119,7 @@ function get_delegated_event(node, context) {
 				if (element && event_name) {
 					if (
 						element.type !== 'RegularElement' ||
-						!determine_element_spread_and_delegatable(element).metadata.can_delegate_events ||
-						(element.metadata.has_spread && node.type === 'Attribute') ||
+						determine_element_spread(element).metadata.has_spread ||
 						!DelegatedEvents.includes(event_name)
 					) {
 						return non_hoistable;
@@ -183,7 +178,8 @@ function get_delegated_event(node, context) {
 		) {
 			return non_hoistable;
 		}
-		// If we referebnce the index within an each block, then bail-out.
+
+		// If we reference the index within an each block, then bail-out.
 		if (binding !== null && binding.initial?.type === 'EachBlock') {
 			return non_hoistable;
 		}
@@ -204,6 +200,7 @@ function get_delegated_event(node, context) {
 		}
 		visited_references.add(reference);
 	}
+
 	return { type: 'hoistable', function: target_function };
 }
 
@@ -858,21 +855,9 @@ const common_visitors = {
 		});
 
 		if (is_event_attribute(node)) {
-			/** @type {string[]} */
-			const modifiers = [];
 			const expression = node.value[0].expression;
 
-			let name = node.name.slice(2);
-
-			if (is_capture_event(name)) {
-				name = name.slice(0, -7);
-				modifiers.push('capture');
-			}
-
-			const delegated_event = get_delegated_event(
-				{ type: node.type, name, expression, modifiers },
-				context
-			);
+			const delegated_event = get_delegated_event(node.name.slice(2), expression, context);
 
 			if (delegated_event !== null) {
 				if (delegated_event.type === 'hoistable') {
@@ -1032,18 +1017,6 @@ const common_visitors = {
 			)
 		};
 	},
-	OnDirective(node, context) {
-		node.metadata = { delegated: null };
-		context.next();
-		const delegated_event = get_delegated_event(node, context);
-
-		if (delegated_event !== null) {
-			if (delegated_event.type === 'hoistable') {
-				delegated_event.function.metadata.hoistable = true;
-			}
-			node.metadata.delegated = delegated_event;
-		}
-	},
 	ArrowFunctionExpression: function_visitor,
 	FunctionExpression: function_visitor,
 	FunctionDeclaration: function_visitor,
@@ -1052,7 +1025,7 @@ const common_visitors = {
 			node.metadata.svg = true;
 		}
 
-		determine_element_spread_and_delegatable(node);
+		determine_element_spread(node);
 
 		// Special case: Move the children of <textarea> into a value attribute if they are dynamic
 		if (
@@ -1110,51 +1083,15 @@ const common_visitors = {
 };
 
 /**
- * Check if events on this element can theoretically be delegated. They can if there's no
- * possibility of an OnDirective and an event attribute on the same element, and if there's
- * no OnDirectives of the same type (the latter is a bit too strict because `on:click on:click on:keyup`
- * means that `on:keyup` can be delegated but we gloss over this edge case).
  * @param {import('#compiler').RegularElement} node
  */
-function determine_element_spread_and_delegatable(node) {
-	if (typeof node.metadata.can_delegate_events === 'boolean') {
-		return node; // did this already
-	}
-
-	let events = new Map();
+function determine_element_spread(node) {
 	let has_spread = false;
-	let has_on = false;
-	let has_action_or_bind = false;
 	for (const attribute of node.attributes) {
-		if (
-			attribute.type === 'OnDirective' ||
-			(attribute.type === 'Attribute' && is_event_attribute(attribute))
-		) {
-			let event_name = attribute.name;
-			if (attribute.type === 'Attribute') {
-				event_name = get_attribute_event_name(event_name);
-			}
-			events.set(event_name, (events.get(event_name) || 0) + 1);
-			if (!has_on && attribute.type === 'OnDirective') {
-				has_on = true;
-			}
-		} else if (!has_spread && attribute.type === 'SpreadAttribute') {
+		if (!has_spread && attribute.type === 'SpreadAttribute') {
 			has_spread = true;
-		} else if (
-			!has_action_or_bind &&
-			((attribute.type === 'BindDirective' && attribute.name !== 'this') ||
-				attribute.type === 'UseDirective')
-		) {
-			has_action_or_bind = true;
 		}
 	}
-	node.metadata.can_delegate_events =
-		// Actions/bindings need the old on:-events to fire in order
-		!has_action_or_bind &&
-		// spreading events means we don't know if there's an event attribute with the same name as an on:-event
-		!(has_spread && has_on) &&
-		// multiple on:-events/event attributes with the same name
-		![...events.values()].some((count) => count > 1);
 	node.metadata.has_spread = has_spread;
 
 	return node;

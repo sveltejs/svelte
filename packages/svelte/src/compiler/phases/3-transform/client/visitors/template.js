@@ -1309,7 +1309,7 @@ function serialize_event_handler(node, { state, visit }) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {Pick<import('#compiler').OnDirective, 'name' | 'modifiers' | 'expression' | 'metadata'>} node
+ * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event(node, context) {
@@ -1318,9 +1318,9 @@ function serialize_event(node, context) {
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
 		const event_name = node.name;
-		const delegated = node.metadata.delegated;
+		const delegated = node.delegated;
 
-		if (delegated !== null) {
+		if (delegated != null) {
 			let delegated_assignment;
 
 			if (!state.events.has(event_name)) {
@@ -1415,7 +1415,7 @@ function serialize_event_attribute(node, context) {
 			name: event_name,
 			expression: node.value[0].expression,
 			modifiers,
-			metadata: node.metadata
+			delegated: node.metadata.delegated
 		},
 		context
 	);
