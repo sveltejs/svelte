@@ -108,6 +108,8 @@ export type ComputationSignal<V = unknown> = {
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
 	v: V;
+	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
+	l: number;
 };
 
 export type Signal<V = unknown> = SourceSignal<V> | ComputationSignal<V>;
