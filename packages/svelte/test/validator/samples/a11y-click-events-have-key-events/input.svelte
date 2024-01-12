@@ -3,9 +3,9 @@
 
 	let props = {};
 
-	const dynamicTypeValue = "checkbox";
-	const dynamicAriaHiddenValue = "false";
-	const dynamicRole = "button";
+	const dynamicTypeValue = 'checkbox';
+	const dynamicAriaHiddenValue = 'false';
+	const dynamicRole = 'button';
 </script>
 
 <!-- should warn -->
@@ -31,6 +31,7 @@
 <a href="http://x.y.z" on:click={noop}>foo</a>
 <button on:click={noop} />
 <select on:click={noop} />
+<summary on:click={noop} />
 
 <input type="button" on:click={noop} />
 <input type={dynamicTypeValue} on:click={noop} />

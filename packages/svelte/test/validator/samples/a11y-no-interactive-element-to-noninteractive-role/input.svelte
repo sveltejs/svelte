@@ -99,7 +99,6 @@
 <div role="tab" />
 <div role="textbox" />
 <div role="treeitem" aria-selected={true} />
-<summary role="listitem" />
 
 <!-- HTML elements attributed with a non-interactive role -->
 <div role="alert" />
@@ -144,5 +143,6 @@
 <menuitem role="listitem" />
 <option class="foo" role="listitem" />
 <select class="foo" role="listitem" />
+<summary role="listitem" />
 <textarea class="foo" role="listitem" />
 <tr role="listitem" />
