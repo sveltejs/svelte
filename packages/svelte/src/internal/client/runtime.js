@@ -653,11 +653,11 @@ export function schedule_effect(signal, sync) {
 				let i = length;
 				while (true) {
 					target_signal = current_queued_pre_and_render_effects[--i];
-					is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
 					if (target_signal.l <= target_level) {
 						if (i + 1 === length) {
 							should_append = true;
 						} else {
+							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
 							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
 								i++;
 							}
