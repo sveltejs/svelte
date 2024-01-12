@@ -319,7 +319,15 @@ export function event(event_name, dom, handler, capture, passive) {
 		capture,
 		passive
 	};
-	const target_handler = handler;
+	/**
+	 * @this {EventTarget}
+	 */
+	function target_handler(/** @type {Event} */ event) {
+		handle_event_propagation(dom, event);
+		if (!event.cancelBubble) {
+			return handler.call(this, event);
+		}
+	}
 	dom.addEventListener(event_name, target_handler, options);
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
