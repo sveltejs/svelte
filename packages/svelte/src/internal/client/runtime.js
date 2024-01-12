@@ -624,6 +624,13 @@ export function schedule_effect(signal, sync) {
 		}
 		if ((flags & EFFECT) !== 0) {
 			current_queued_effects.push(signal);
+			// Prevent any nested user effects from potentially triggering
+			// before this effect is scheduled. We know they will be destroyed
+			// so we can make them inert to avoid having to find them in the
+			// queue and remove them.
+			if ((flags & MANAGED) === 0) {
+				mark_subtree_children_inert(signal, true);
+			}
 		} else {
 			current_queued_pre_and_render_effects.push(signal);
 		}
@@ -1017,6 +1024,23 @@ export function mutate_store(store, expression, new_value) {
 /**
  * @param {import('./types.js').ComputationSignal} signal
  * @param {boolean} inert
+ * @param {Set<import('./types.js').Block>} [visited_blocks]
+ * @returns {void}
+ */
+function mark_subtree_children_inert(signal, inert, visited_blocks) {
+	const references = signal.r;
+	if (references !== null) {
+		let i;
+		for (i = 0; i < references.length; i++) {
+			mark_subtree_inert(references[i], inert, visited_blocks);
+		}
+	}
+}
+
+/**
+ * @param {import('./types.js').ComputationSignal} signal
+ * @param {boolean} inert
+ * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
  */
 export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
@@ -1055,13 +1079,7 @@ export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 			}
 		}
 	}
-	const references = signal.r;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			mark_subtree_inert(references[i], inert, visited_blocks);
-		}
-	}
+	mark_subtree_children_inert(signal, inert, visited_blocks);
 }
 
 /**
