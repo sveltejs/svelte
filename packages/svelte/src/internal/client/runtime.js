@@ -214,6 +214,8 @@ function create_computation_signal(flags, value, block) {
 			f: flags,
 			// init
 			i: null,
+			// level
+			l: 0,
 			// references
 			r: null,
 			// value
@@ -238,6 +240,8 @@ function create_computation_signal(flags, value, block) {
 		e: null,
 		// flags
 		f: flags,
+		// level
+		l: 0,
 		// init
 		i: null,
 		// references
@@ -632,7 +636,45 @@ export function schedule_effect(signal, sync) {
 				mark_subtree_children_inert(signal, true);
 			}
 		} else {
-			current_queued_pre_and_render_effects.push(signal);
+			// We need to ensure we insert the signal in the right topological order. In other words,
+			// we need to evaluate where to insert the signal based off its level and whether or not it's
+			// a pre-effect and within the same block. By checking the signals in the queue in reverse order
+			// we can find the right place quickly. TODO: maybe opt to use a linked list rather than an array
+			// for these operations.
+			const length = current_queued_pre_and_render_effects.length;
+			let should_append = length === 0;
+
+			if (!should_append) {
+				const target_level = signal.l;
+				const target_block = signal.b;
+				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
+				let target_signal;
+				let is_target_pre_effect;
+				let i = length;
+				while (true) {
+					target_signal = current_queued_pre_and_render_effects[--i];
+					if (target_signal.l <= target_level) {
+						if (i + 1 === length) {
+							should_append = true;
+						} else {
+							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
+							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
+								i++;
+							}
+							current_queued_pre_and_render_effects.splice(i, 0, signal);
+						}
+						break;
+					}
+					if (i === 0) {
+						current_queued_pre_and_render_effects.unshift(signal);
+						break;
+					}
+				}
+			}
+
+			if (should_append) {
+				current_queued_pre_and_render_effects.push(signal);
+			}
 		}
 	}
 }
@@ -1310,11 +1352,14 @@ function internal_create_effect(type, init, sync, block, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null, block);
 	signal.i = init;
 	signal.x = current_component_context;
+	if (current_effect !== null) {
+		signal.l = current_effect.l + 1;
+		if ((type & MANAGED) === 0) {
+			push_reference(current_effect, signal);
+		}
+	}
 	if (schedule) {
 		schedule_effect(signal, sync);
-	}
-	if (current_effect !== null && (type & MANAGED) === 0) {
-		push_reference(current_effect, signal);
 	}
 	return signal;
 }
