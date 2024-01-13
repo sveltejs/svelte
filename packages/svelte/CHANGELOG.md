@@ -1,5 +1,19 @@
 # svelte
 
+## 5.0.0-next.35
+
+### Patch Changes
+
+- fix: improve nested effect heuristics ([#10171](https://github.com/sveltejs/svelte/pull/10171))
+
+- fix: simplify event delegation logic, only delegate event attributes ([#10169](https://github.com/sveltejs/svelte/pull/10169))
+
+- fix: prevent transition action overfiring ([#10163](https://github.com/sveltejs/svelte/pull/10163))
+
+- fix: improve event handling compatibility with delegation ([#10168](https://github.com/sveltejs/svelte/pull/10168))
+
+- fix: ensure topological order for render effects ([#10175](https://github.com/sveltejs/svelte/pull/10175))
+
 ## 5.0.0-next.34
 
 ### Patch Changes
