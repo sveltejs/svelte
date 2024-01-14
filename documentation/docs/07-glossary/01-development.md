@@ -24,7 +24,7 @@ Svelte utilise le format _AST_ comme intermédiaire entre un composant Svelte et
 
 ## Bug
 
-Vous le savez très certainement, un _bug_ (["insecte"](https://fr.wikipedia.org/wiki/Bug_(informatique)#/media/Fichier:First_Computer_Bug,_1945.jpg) en anglais) est une erreur ou un problème qui empêche le bon fonctionnement d'un logiciel.
+Vous le savez très certainement, un _bug_ (["insecte"](<https://fr.wikipedia.org/wiki/Bug_(informatique)#/media/Fichier:First_Computer_Bug,_1945.jpg>) en anglais) est une erreur ou un problème qui empêche le bon fonctionnement d'un logiciel.
 
 Il est courant d'utiliser un _debugger_ ou "débuggueur" pour aider à la résolution de ces _bugs_.
 
@@ -38,7 +38,6 @@ Un _build_ est l'ensemble de fichiers produits par le <span class="vo">[bundler]
 
 Le build-time, par opposition au <span class="vo">[runtime](PUBLIC_SVELTE_SITE_URL/docs/development#runtime)</span> correspond à la phase de compilation d'un projet en un livrable qui pourra être exécuté sur la plateforme de déploiement du site ou de l'application.
 
-
 ## Buffer
 
 Un _buffer_ (ou une mémoire tampon) est une zone de mémoire utilisée pour entreposer temporairement des données, notamment entre deux processus ou matériels ne travaillant pas au même rythme. Par extension, il s'agit également des données qui transitent entre deux appareils ou serveurs envoyés par paquet.
@@ -50,6 +49,7 @@ Un _callback_ (ou fonction de rappel) est une fonction qui sera appelée lorsqu'
 C'est en général une fonction passée en argument à une autre fonction pour que cette dernière s'en serve lorsque nécessaire.
 
 Par exemple on peut utiliser un _callback_ pour afficher un message lorsqu'un téléchargement est terminé.
+
 ```ts
 function afficheCoucou() {
 	console.log('Coucou');
@@ -110,21 +110,22 @@ Un _getter_ est une fonction qui permet de lire une valeur.
 Un _setter_ est une fonction qui permet d'écrire une valeur.
 
 Ils vont souvent de pair, mais peuvent exister indépendamment de l'autre.
-Ils sont en général utilisés pour éviter d'exposer les propriétés internes d'un objet et permet à l'objet de faire des vérifications ou des  supplémentaires sur les valeurs.
+Ils sont en général utilisés pour éviter d'exposer les propriétés internes d'un objet et permet à l'objet de faire des vérifications ou des supplémentaires sur les valeurs.
 
 Un _setter_ pourrait être utilisé pour la propriété `nom` pour forcer la mise en majuscule
+
 ```ts
 class Personne {
 	#nom = 'Marie';
 
 	// setter
 	set nom(n: string) {
-		this.#nom = n.toUpperCase()
+		this.#nom = n.toUpperCase();
 	}
 
 	// getter
 	get nom() {
-		return this.nom
+		return this.nom;
 	}
 }
 ```
@@ -139,7 +140,7 @@ Dans le cadre de Svelte, les _hash_ sont utilisés pour générer les noms de cl
 
 ## IDE
 
-Un environnement de développement intégré (_Integrated Development Environment) est un logiciel intégrant plusieurs outils facilitant le développement informatique. Parmi les plus célèbres dans le monde web: VSCode et WebStorm.
+Un environnement de développement intégré (\_Integrated Development Environment) est un logiciel intégrant plusieurs outils facilitant le développement informatique. Parmi les plus célèbres dans le monde web: VSCode et WebStorm.
 
 ## Intellisense
 
@@ -171,7 +172,7 @@ Dans le développement web, les `_namespaces_` sont souvent utilisés en TypeScr
 
 _Number_ est le mot anglais pour "nombre". En développement informatique, il s'agit la plupart du temps d'un type de variable représentant des nombres.
 
-# Open-source
+## Open-source
 
 Un projet _open source_ (ou en code source ouvert), est un projet dont la licence respecte des critères précisément établis, c'est-à-dire les possibilités de libre redistribution, d'accès au code source et de création de travaux dérivés.
 
@@ -191,8 +192,8 @@ Une _payload_ représente la donnée utile transportée dans une communication.
 
 Un _placeholder_ (ou texte de substitution) peut désigner deux choses :
 
-* un texte ou image fictif permettant de s'imaginer un apperçu final. L'outil le plus connu pour générer du texte fictif est le Lorem Ipsum.
-* l'attribut de l'élément html `<input>` ou `<textarea>` et désigne une aide à la saisie lorsque le champs est vide.
+- un texte ou image fictif permettant de s'imaginer un apperçu final. L'outil le plus connu pour générer du texte fictif est le Lorem Ipsum.
+- l'attribut de l'élément html `<input>` ou `<textarea>` et désigne une aide à la saisie lorsque le champs est vide.
 
 ## Plugin
 
@@ -228,7 +229,7 @@ Dans le contexte du langage JavaScript, on désigne par _runtime_ les programmes
 
 ## Scope
 
-Un _scope_ définit la [portée](https://fr.wikipedia.org/wiki/Port%C3%A9e_(informatique)) ou les limites dans lesquelles une certaine chose est définie ou a de l'influence.
+Un _scope_ définit la [portée](<https://fr.wikipedia.org/wiki/Port%C3%A9e_(informatique)>) ou les limites dans lesquelles une certaine chose est définie ou a de l'influence.
 
 On parle de la portée d'une variable en JavaScript pour désigner les limites dans lesquelles celle-ci est définie. De même, on parle de la portée d'une règle CSS pour désigner les limites dans lesquelles cette règle s'applique.
 
@@ -250,7 +251,7 @@ Un _timestamp_ est un compteur de seconde utilisé en informatique pour représe
 
 ## Thread
 
-Un _thread_, ou ["fil d'exécution"](https://fr.wikipedia.org/wiki/Thread_(informatique)) est similaire dans une certaine mesure à un processus permettant l'exécution de tâches sur un microprocesseur.
+Un _thread_, ou ["fil d'exécution"](<https://fr.wikipedia.org/wiki/Thread_(informatique)>) est similaire dans une certaine mesure à un processus permettant l'exécution de tâches sur un microprocesseur.
 
 JavaScript est un langage ne pouvant historiquement s'exécuter que sur un seul _thread_, mais l'arrivée récente des [Web Workers](https://developer.mozilla.org/fr/docs/Web/API/Web_Workers_API/Using_web_workers) permet d'exécuter JavaScript sur plusieurs _threads_.
 
@@ -276,7 +277,7 @@ Un _worker_ désigné chez certains hébergeurs une solution de déploiement log
 
 ## Workflow
 
-Un _workflow__ est un processus automatisé configurable qui exécute une ou plusieurs tâches, tels que les Github actions ou la GitLab CI.
+Un \_workflow\_\_ est un processus automatisé configurable qui exécute une ou plusieurs tâches, tels que les Github actions ou la GitLab CI.
 
 ## Wrapper
 
@@ -285,21 +286,22 @@ Un _wrapper_ est une fonction qui "enveloppe" une autre fonction afin de lui app
 On peut également le voir comme une fonction qui crée et renvoie une fonction qui se sert de la fonction d'origine.
 
 Un _wrapper_ pourrait être utilisé pour aggrémenter un message d'accueil :
+
 ```ts
 // Fonction d'origine
 const bonjour = function (name: string): string {
-	return `Bonjour ${name}!`
-}
-bonjour("Jean") // "Bonjour Jean!"
+	return `Bonjour ${name}!`;
+};
+bonjour('Jean'); // "Bonjour Jean!"
 
 // Wrapper de la fonction
 function bonjourWrapper(original: (name: string) => string): (name: string) => string {
 	return function (name: string) {
-		return original(name) + " Comment vas-tu ?"
-	}
+		return original(name) + ' Comment vas-tu ?';
+	};
 }
-const nouveauBonjour = bonjourWrapper(bonjour)
-nouveauBonjour("Jean") // "Bonjour Jean! Comment vas-tu?"
+const nouveauBonjour = bonjourWrapper(bonjour);
+nouveauBonjour('Jean'); // "Bonjour Jean! Comment vas-tu?"
 ```
 
 > Par extension, un _wrapper_ désigne également un composant qui "enveloppe" une autre composant afin de lui apporter des fonctionnalités supplémentaires (style, comportement, etc.).
