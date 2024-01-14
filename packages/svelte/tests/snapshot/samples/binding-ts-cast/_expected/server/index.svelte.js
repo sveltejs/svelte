@@ -11,6 +11,11 @@ export default function Binding_ts_cast($$payload, $$props) {
 	let without_state = { foo: 2 };
 	let non_null_assertion = null;
 
-	$$payload.out += `<div>${$.escape_text(JSON.stringify({ a: with_state, b: without_state }))}</div> <input type="number"${$.attr("value", with_state.foo, false)}> <input type="number"${$.attr("value", without_state.foo, false)}> <input type="number"${$.attr("value", non_null_assertion, false)}> <button>Update</button>`;
+	$$payload.out += `<div>${$.escape_text(JSON.stringify({
+		with_state,
+		without_state,
+		non_null_assertion
+	}))}</div> <input type="number"${$.attr("value", with_state.foo, false)}> <input type="number"${$.attr("value", without_state.foo, false)}> <input type="number"${$.attr("value", non_null_assertion, false)}>`;
+
 	$.pop();
 }

@@ -3,7 +3,7 @@
 import "svelte/internal/disclose-version";
 import * as $ from "svelte/internal";
 
-var frag = $.template(`<div> </div> <input type="number"> <input type="number"> <input type="number"> <button>Update</button>`, true);
+var frag = $.template(`<div> </div> <input type="number"> <input type="number"> <input type="number">`, true);
 
 export default function Binding_ts_cast($$anchor, $$props) {
 	$.push($$props, true);
@@ -32,21 +32,16 @@ export default function Binding_ts_cast($$anchor, $$props) {
 
 	$.remove_input_attr_defaults(input_2);
 
-	var button = $.sibling($.sibling(input_2));
-
 	/* Update */
-	$.text_effect(text, () => JSON.stringify({ a: with_state, b: without_state }));
+	$.text_effect(text, () => JSON.stringify({
+		with_state,
+		without_state,
+		non_null_assertion
+	}));
+
 	$.bind_value(input, () => with_state.foo, ($$value) => with_state.foo = $$value);
 	$.bind_value(input_1, () => without_state.foo, ($$value) => without_state.foo = $$value);
 	$.bind_value(input_2, () => non_null_assertion, ($$value) => non_null_assertion = $$value);
-
-	button.__click = () => {
-		without_state.foo = 4;
-		with_state.foo = 3;
-	};
-
 	$.close_frag($$anchor, fragment);
 	$.pop();
 }
-
-$.delegate(["click"]);
