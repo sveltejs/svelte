@@ -216,6 +216,10 @@ On dit d'une entité qu'elle est _readonly_ lorsqu'on ne peut pas changer sa val
 
 Ce terme est à mettre en opposition avec <span class="vo">[writable](#writable)</span>.
 
+## Repository
+
+> Bientôt...
+
 ## Runtime
 
 Un _runtime_ est un environnement d'exécution permettant d'effectuer les opérations d'un programme informatique dans un langage donné.
