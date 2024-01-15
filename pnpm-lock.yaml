@@ -57,8 +57,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       axobject-query:
-        specifier: ^3.2.1
-        version: 3.2.1
+        specifier: ^4.0.0
+        version: 4.0.0
       code-red:
         specifier: ^1.0.3
         version: 1.0.4
@@ -2954,8 +2954,8 @@ packages:
     engines: {node: '>= 0.4'}
     dev: true
 
-  /axobject-query@3.2.1:
-    resolution: {integrity: sha512-jsyHu61e6N4Vbz/v18DHwWYKK0bSWLqn47eeDSKPB7m8tqMHF9YJ+mhIk2lVteyZrY8tnSj/jHOv4YiTCuCJgg==}
+  /axobject-query@4.0.0:
+    resolution: {integrity: sha512-+60uv1hiVFhHZeO+Lz0RYzsVHy5Wr1ayX0mwda9KPDVLNJgZ1T9Ny7VmFbLDzxsH0D87I86vgj3gFrjTJUYznw==}
     dependencies:
       dequal: 2.0.3
     dev: false
