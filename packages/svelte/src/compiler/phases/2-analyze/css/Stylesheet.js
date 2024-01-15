@@ -214,12 +214,10 @@ class Declaration {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
 			//check if there is multiple animations
-			const multiple = /** @type {string} */ (this.node.value).split(',');
+			const names = /** @type {string} */ (this.node.value).split(/[\s,]/);
 
-			for (const curr of multiple) {
-				const name = /** @type {string} */ curr.split(' ').find((name) => keyframes.has(name));
-
-				if (name) {
+			for (const name of names) {
+				if (keyframes.has(name)) {
 					const start = code.original.indexOf(
 						name,
 						code.original.indexOf(this.node.property, this.node.start)

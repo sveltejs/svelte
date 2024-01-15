@@ -10,5 +10,7 @@
 	}
 
 	.animated.svelte-xyz {
-		animation: svelte-xyz-why 2s, svelte-xyz-what 2s;
+		animation:
+			svelte-xyz-why 2s,
+			svelte-xyz-what 2s;
 	}
