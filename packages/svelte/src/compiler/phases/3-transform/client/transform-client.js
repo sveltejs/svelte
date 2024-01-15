@@ -201,7 +201,7 @@ export function client_component(source, analysis, options) {
 									b.call('$.validate_store', store_reference, b.literal(name.slice(1))),
 									store_get
 								])
-						  )
+							)
 						: b.thunk(store_get)
 				)
 			);

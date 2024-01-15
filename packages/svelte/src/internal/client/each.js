@@ -133,8 +133,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			array = is_array(maybe_array)
 				? maybe_array
 				: maybe_array == null
-				? []
-				: Array.from(maybe_array);
+					? []
+					: Array.from(maybe_array);
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
@@ -777,8 +777,8 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const item_value = each_item_not_reactive
 		? item
 		: (flags & EACH_IS_IMMUTABLE) === 0
-		? mutable_source(item)
-		: source(item);
+			? mutable_source(item)
+			: source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

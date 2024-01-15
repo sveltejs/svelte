@@ -108,7 +108,7 @@ export function convert(source, ast) {
 									// @ts-ignore
 									delete node.parent;
 								}
-						  })
+							})
 						: undefined
 				};
 			},
