@@ -20,6 +20,12 @@ export default test({
 			b2.click();
 		});
 
-		assert.deepEqual(log, ['transition 2', 'transition 1', 'transition 1']);
+		assert.deepEqual(log, ['transition 2']);
+
+		flushSync(() => {
+			b1.click();
+		});
+
+		assert.deepEqual(log, ['transition 2', 'transition 1']);
 	}
 });

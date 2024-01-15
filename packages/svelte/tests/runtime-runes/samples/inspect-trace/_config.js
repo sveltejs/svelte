@@ -31,9 +31,7 @@ export default test({
 		b2.click();
 		await Promise.resolve();
 
-		assert.ok(
-			log[0].stack.startsWith('Error:') && log[0].stack.includes('HTMLButtonElement.on_click')
-		);
+		assert.ok(log[0].stack.startsWith('Error:') && log[0].stack.includes('HTMLButtonElement.'));
 		assert.deepEqual(log[1], 1);
 	}
 });

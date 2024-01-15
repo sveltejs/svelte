@@ -25,7 +25,6 @@ import {
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
-	schedule_task,
 	set_signal_value,
 	source
 } from './runtime.js';
@@ -134,8 +133,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			array = is_array(maybe_array)
 				? maybe_array
 				: maybe_array == null
-				? []
-				: Array.from(maybe_array);
+					? []
+					: Array.from(maybe_array);
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
@@ -486,6 +485,17 @@ function reconcile_tracked_array(
 					key = is_computed_key ? keys[a] : item;
 					map_set(item_index, key, a);
 				}
+				// If keys are animated, we need to do updates before actual moves
+				if (is_animated) {
+					for (b = start; b <= a_end; ++b) {
+						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+						if (a !== undefined) {
+							item = array[a];
+							block = a_blocks[b];
+							update_each_item_block(block, item, a, flags);
+						}
+					}
+				}
 				for (b = start; b <= a_end; ++b) {
 					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
@@ -501,22 +511,9 @@ function reconcile_tracked_array(
 				if (pos === MOVED_BLOCK) {
 					mark_lis(sources);
 				}
-				// If keys are animated, we need to do updates before actual moves
-				var should_create;
-				if (is_animated) {
-					var i = b_length;
-					while (i-- > 0) {
-						b_end = i + start;
-						a = sources[i];
-						if (pos === MOVED_BLOCK) {
-							block = b_blocks[b_end];
-							item = array[b_end];
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-				}
 				var last_block;
 				var last_sibling;
+				var should_create;
 				while (b_length-- > 0) {
 					b_end = b_length + start;
 					a = sources[b_length];
@@ -715,7 +712,7 @@ function update_each_item_block(block, item, index, type) {
 	// Handle each item animations
 	const each_animation = block.a;
 	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions, index, index_is_reactive);
+		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
@@ -780,8 +777,8 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const item_value = each_item_not_reactive
 		? item
 		: (flags & EACH_IS_IMMUTABLE) === 0
-		? mutable_source(item)
-		: source(item);
+			? mutable_source(item)
+			: source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

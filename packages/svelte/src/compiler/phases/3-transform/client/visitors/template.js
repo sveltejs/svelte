@@ -655,15 +655,15 @@ function serialize_element_special_value_attribute(element, node_id, attribute, 
 					// This ensures things stay in sync with the select binding
 					// in case of updates to the option value or new values appearing
 					b.call('$.selected', node_id)
-			  ])
+				])
 			: needs_option_call
-			? b.sequence([
-					inner_assignment,
-					// This ensures a one-way street to the DOM in case it's <select {value}>
-					// and not <select bind:value>
-					b.call('$.select_option', node_id, value)
-			  ])
-			: inner_assignment
+				? b.sequence([
+						inner_assignment,
+						// This ensures a one-way street to the DOM in case it's <select {value}>
+						// and not <select bind:value>
+						b.call('$.select_option', node_id, value)
+					])
+				: inner_assignment
 	);
 
 	if (is_reactive) {
@@ -953,7 +953,7 @@ function serialize_inline_component(node, component_name, context) {
 			: b.call(
 					'$.spread_props',
 					...props_and_spreads.map((p) => (Array.isArray(p) ? b.object(p) : p))
-			  );
+				);
 	/** @param {import('estree').Identifier} node_id */
 	let fn = (node_id) =>
 		b.call(
@@ -1309,7 +1309,7 @@ function serialize_event_handler(node, { state, visit }) {
 
 /**
  * Serializes an event handler function of the `on:` directive or an attribute starting with `on`
- * @param {Pick<import('#compiler').OnDirective, 'name' | 'modifiers' | 'expression' | 'metadata'>} node
+ * @param {{name: string; modifiers: string[]; expression: import('estree').Expression | null; delegated?: import('#compiler').DelegatedEvent | null; }} node
  * @param {import('../types.js').ComponentContext} context
  */
 function serialize_event(node, context) {
@@ -1318,9 +1318,9 @@ function serialize_event(node, context) {
 	if (node.expression) {
 		let handler = serialize_event_handler(node, context);
 		const event_name = node.name;
-		const delegated = node.metadata.delegated;
+		const delegated = node.delegated;
 
-		if (delegated !== null) {
+		if (delegated != null) {
 			let delegated_assignment;
 
 			if (!state.events.has(event_name)) {
@@ -1415,7 +1415,7 @@ function serialize_event_attribute(node, context) {
 			name: event_name,
 			expression: node.value[0].expression,
 			modifiers,
-			metadata: node.metadata
+			delegated: node.metadata.delegated
 		},
 		context
 	);
@@ -1657,6 +1657,11 @@ function serialize_template_literal(values, visit, state) {
 		if (node.type === 'Text') {
 			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
 			last.value.raw += sanitize_template_string(node.data);
+		} else if (node.type === 'ExpressionTag' && node.expression.type === 'Literal') {
+			const last = /** @type {import('estree').TemplateElement} */ (quasis.at(-1));
+			if (node.expression.value != null) {
+				last.value.raw += sanitize_template_string(node.expression.value + '');
+			}
 		} else {
 			if (node.type === 'ExpressionTag' && node.metadata.contains_call_expression) {
 				contains_call_expression = true;
@@ -2344,7 +2349,7 @@ export const template_visitors = {
 			? b.arrow(
 					[b.id('$$anchor')],
 					/** @type {import('estree').BlockStatement} */ (context.visit(node.fallback))
-			  )
+				)
 			: b.literal(null);
 		const key_function =
 			node.key && ((each_type & EACH_ITEM_REACTIVE) !== 0 || context.state.options.dev)
@@ -2355,7 +2360,7 @@ export const template_visitors = {
 								b.return(/** @type {import('estree').Expression} */ (context.visit(node.key)))
 							)
 						)
-				  )
+					)
 				: b.literal(null);
 
 		if (node.index && each_node_meta.contains_group_binding) {
@@ -2417,7 +2422,7 @@ export const template_visitors = {
 						? b.arrow(
 								[b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
-						  )
+							)
 						: b.literal(null)
 				)
 			)
@@ -2436,7 +2441,7 @@ export const template_visitors = {
 						? b.arrow(
 								[b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.pending))
-						  )
+							)
 						: b.literal(null),
 					node.then
 						? b.arrow(
@@ -2444,10 +2449,10 @@ export const template_visitors = {
 									? [
 											b.id('$$anchor'),
 											/** @type {import('estree').Pattern} */ (context.visit(node.value))
-									  ]
+										]
 									: [b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.then))
-						  )
+							)
 						: b.literal(null),
 					node.catch
 						? b.arrow(
@@ -2455,10 +2460,10 @@ export const template_visitors = {
 									? [
 											b.id('$$anchor'),
 											/** @type {import('estree').Pattern} */ (context.visit(node.error))
-									  ]
+										]
 									: [b.id('$$anchor')],
 								/** @type {import('estree').BlockStatement} */ (context.visit(node.catch))
-						  )
+							)
 						: b.literal(null)
 				)
 			)
@@ -2608,7 +2613,10 @@ export const template_visitors = {
 			serialize_set_binding(
 				assignment,
 				context,
-				() => /** @type {import('estree').Expression} */ (context.visit(assignment))
+				() => /** @type {import('estree').Expression} */ (context.visit(assignment)),
+				{
+					skip_proxy_and_freeze: true
+				}
 			)
 		);
 
@@ -2877,9 +2885,9 @@ export const template_visitors = {
 								/** @type {import('estree').Expression} */ (node.expression).type ===
 									'ObjectExpression'
 									? // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									  b.object_pattern(node.expression.properties)
+										b.object_pattern(node.expression.properties)
 									: // @ts-expect-error types don't match, but it can't contain spread elements and the structure is otherwise fine
-									  b.array_pattern(node.expression.elements),
+										b.array_pattern(node.expression.elements),
 								b.member(b.id('$$slotProps'), b.id(node.name))
 							),
 							b.return(b.object(bindings.map((binding) => b.init(binding.node.name, binding.node))))
@@ -2972,7 +2980,7 @@ export const template_visitors = {
 				: b.arrow(
 						[b.id('$$anchor')],
 						b.block(create_block(node, 'fallback', node.fragment.nodes, context))
-				  );
+					);
 
 		const expression = is_default
 			? b.member(b.id('$$props'), b.id('children'))

@@ -215,8 +215,8 @@ declare module 'svelte' {
 			...args: null extends EventMap[Type]
 				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 				: undefined extends EventMap[Type]
-				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+					? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+					: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 		): boolean;
 	}
 	/**
@@ -515,7 +515,7 @@ declare module 'svelte/compiler' {
 	export function parse(source: string, options?: {
 		filename?: string | undefined;
 		modern?: boolean | undefined;
-	} | undefined): SvelteNode | LegacySvelteNode;
+	} | undefined): Root | LegacyRoot;
 	/**
 	 * @deprecated Replace this with `import { walk } from 'estree-walker'`
 	 * */
@@ -778,6 +778,13 @@ declare module 'svelte/compiler' {
 		name: string;
 		attributes: Array<LegacyAttributeLike>;
 		children: Array<LegacyElementLike>;
+	}
+
+	interface LegacyRoot extends BaseNode_1 {
+		html: LegacySvelteNode;
+		css?: any;
+		instance?: any;
+		module?: any;
 	}
 
 	interface LegacyAction extends BaseNode_1 {
@@ -1235,9 +1242,6 @@ declare module 'svelte/compiler' {
 		/** The 'y' in `on:x={y}` */
 		expression: null | Expression;
 		modifiers: string[]; // TODO specify
-		metadata: {
-			delegated: null | DelegatedEvent;
-		};
 	}
 
 	type DelegatedEvent =
@@ -1321,12 +1325,6 @@ declare module 'svelte/compiler' {
 			svg: boolean;
 			/** `true` if contains a SpreadAttribute */
 			has_spread: boolean;
-			/**
-			 * `true` if events on this element can theoretically be delegated. This doesn't necessarily mean that
-			 * a specific event will be delegated, as there are other factors which affect the final outcome.
-			 * `null` only until it was determined whether this element can be delegated or not.
-			 */
-			can_delegate_events: boolean | null;
 		};
 	}
 
@@ -2083,12 +2081,6 @@ declare module 'svelte/transition' {
 		easing?: EasingFunction;
 	}
 	/**
-	 * https://svelte.dev/docs/svelte-easing
-	 * */
-	export function cubic_in_out(t: number): number;
-
-	export function split_css_unit(value: number | string): [number, string];
-	/**
 	 * Animates a `blur` filter alongside an element's opacity.
 	 *
 	 * https://svelte.dev/docs/svelte-transition#blur
@@ -2574,6 +2566,6 @@ declare function $props<T>(): T;
  */
 declare function $inspect<T extends any[]>(
 	...values: T
-): { with: (type: 'init' | 'update', ...values: T) => void };
+): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
 
 //# sourceMappingURL=index.d.ts.map

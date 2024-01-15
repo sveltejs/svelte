@@ -20,11 +20,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					serialize_get_binding(node.left, state),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else if (
 		node.left.type === 'MemberExpression' &&
 		node.left.object.type === 'ThisExpression' &&
@@ -35,11 +35,11 @@ export function get_assignment_value(node, { state, visit }) {
 		return operator === '='
 			? /** @type {import('estree').Expression} */ (visit(node.right))
 			: // turn something like x += 1 into x = x + 1
-			  b.binary(
+				b.binary(
 					/** @type {import('estree').BinaryOperator} */ (operator.slice(0, -1)),
 					/** @type {import('estree').Expression} */ (visit(node.left)),
 					/** @type {import('estree').Expression} */ (visit(node.right))
-			  );
+				);
 	} else {
 		return /** @type {import('estree').Expression} */ (visit(node.right));
 	}
@@ -217,9 +217,10 @@ function is_expression_async(expression) {
  * @param {import('estree').AssignmentExpression} node
  * @param {import('zimmerframe').Context<import('#compiler').SvelteNode, State>} context
  * @param {() => any} fallback
+ * @param {{skip_proxy_and_freeze?: boolean}} [options]
  * @returns {import('estree').Expression}
  */
-export function serialize_set_binding(node, context, fallback) {
+export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
 	if (
@@ -242,7 +243,7 @@ export function serialize_set_binding(node, context, fallback) {
 			const value = path.expression?.(b.id(tmp_id));
 			const assignment = b.assignment('=', path.node, value);
 			original_assignments.push(assignment);
-			assignments.push(serialize_set_binding(assignment, context, () => assignment));
+			assignments.push(serialize_set_binding(assignment, context, () => assignment, options));
 		}
 
 		if (assignments.every((assignment, i) => assignment === original_assignments[i])) {
@@ -288,7 +289,11 @@ export function serialize_set_binding(node, context, fallback) {
 			if (private_state !== undefined) {
 				if (state.in_constructor) {
 					// See if we should wrap value in $.proxy
-					if (context.state.analysis.runes && should_proxy_or_freeze(value)) {
+					if (
+						context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value)
+					) {
 						const assignment = fallback();
 						if (assignment.type === 'AssignmentExpression') {
 							assignment.right =
@@ -302,7 +307,9 @@ export function serialize_set_binding(node, context, fallback) {
 					return b.call(
 						'$.set',
 						left,
-						context.state.analysis.runes && should_proxy_or_freeze(value)
+						context.state.analysis.runes &&
+							!options?.skip_proxy_and_freeze &&
+							should_proxy_or_freeze(value)
 							? private_state.kind === 'frozen_state'
 								? b.call('$.freeze', value)
 								: b.call('$.proxy', value)
@@ -321,6 +328,7 @@ export function serialize_set_binding(node, context, fallback) {
 			if (
 				context.state.analysis.runes &&
 				public_state !== undefined &&
+				!options?.skip_proxy_and_freeze &&
 				should_proxy_or_freeze(value)
 			) {
 				const assignment = fallback();
@@ -387,7 +395,9 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy_or_freeze(value)
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value)
 						? b.call('$.proxy', value)
 						: value
 				);
@@ -395,7 +405,9 @@ export function serialize_set_binding(node, context, fallback) {
 				return b.call(
 					'$.set',
 					b.id(left_name),
-					context.state.analysis.runes && should_proxy_or_freeze(value)
+					context.state.analysis.runes &&
+						!options?.skip_proxy_and_freeze &&
+						should_proxy_or_freeze(value)
 						? b.call('$.freeze', value)
 						: value
 				);
@@ -615,6 +627,7 @@ export function should_proxy_or_freeze(node) {
 	if (
 		!node ||
 		node.type === 'Literal' ||
+		node.type === 'TemplateLiteral' ||
 		node.type === 'ArrowFunctionExpression' ||
 		node.type === 'FunctionExpression' ||
 		node.type === 'UnaryExpression' ||
@@ -623,6 +636,5 @@ export function should_proxy_or_freeze(node) {
 	) {
 		return false;
 	}
-
 	return true;
 }

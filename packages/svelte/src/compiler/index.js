@@ -91,7 +91,7 @@ function handle_compile_error(error, filename, source) {
  * https://svelte.dev/docs/svelte-compiler#svelte-parse
  * @param {string} source
  * @param {{ filename?: string; modern?: boolean }} [options]
- * @returns {import('#compiler').SvelteNode | import('./types/legacy-nodes.js').LegacySvelteNode}
+ * @returns {import('#compiler').Root | import('./types/legacy-nodes.js').LegacyRoot}
  */
 export function parse(source, options = {}) {
 	/** @type {import('#compiler').Root} */
@@ -108,7 +108,7 @@ export function parse(source, options = {}) {
 
 	if (options.modern) {
 		// remove things that we don't want to treat as public API
-		return walk(/** @type {import('#compiler').SvelteNode} */ (ast), null, {
+		return walk(ast, null, {
 			_(node, { next }) {
 				// @ts-ignore
 				delete node.parent;
