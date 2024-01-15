@@ -214,8 +214,8 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 		...args: null extends EventMap[Type]
 			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
 
