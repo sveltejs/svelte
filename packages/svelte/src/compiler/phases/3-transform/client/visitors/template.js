@@ -1798,11 +1798,11 @@ export const template_visitors = {
 		}
 
 		if (is_reactive) {
-			context.state.init.push(
+			context.state.after_update.push(
 				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
 			);
 		} else {
-			context.state.init.push(b.stmt(b.call(snippet_function, ...args)));
+			context.state.after_update.push(b.stmt(b.call(snippet_function, ...args)));
 		}
 	},
 	AnimateDirective(node, { state, visit }) {
@@ -2974,7 +2974,7 @@ export const template_visitors = {
 			: b.member(b.member(b.id('$$props'), b.id('$$slots')), name, true, true);
 
 		const slot = b.call('$.slot', context.state.node, expression, props_expression, fallback);
-		context.state.init.push(b.stmt(slot));
+		context.state.after_update.push(b.stmt(slot));
 	},
 	SvelteHead(node, context) {
 		// TODO attributes?
