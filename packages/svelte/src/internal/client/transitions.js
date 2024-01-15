@@ -438,6 +438,9 @@ function create_transition(dom, init, direction, effect) {
 				if (needs_reverse) {
 					const payload = transition.p;
 					const current_animation = /** @type {Animation} */ (animation);
+					// If we are working with CSS animations, then before we call reverse, we also need to ensure
+					// that we reverse the easing logic. To do this we need to re-create the keyframes so they're
+					// in reverse with easing properly reversed too.
 					if (
 						payload !== null &&
 						payload.css !== undefined &&
