@@ -2595,16 +2595,14 @@ export const template_visitors = {
 			);
 		}
 
-		const getter = b.thunk(
-			/** @type {import('estree').Expression} */ (context.visit(node.expression))
-		);
+		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
 		const assignment = b.assignment('=', node.expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
 			serialize_set_binding(
 				assignment,
 				context,
-				() => /** @type {import('estree').Expression} */ (context.visit(assignment)),
+				() => /** @type {import('estree').Expression} */ (visit(assignment)),
 				{
 					skip_proxy_and_freeze: true
 				}
@@ -2767,9 +2765,7 @@ export const template_visitors = {
 							group_getter = b.thunk(
 								b.block([
 									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(
-										/** @type {import('estree').Expression} */ (context.visit(node.expression))
-									)
+									b.return(/** @type {import('estree').Expression} */ (visit(node.expression)))
 								])
 							);
 						}

@@ -1452,9 +1452,6 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.add_snippet_symbol', node.expression)));
 		}
 	},
-	BindDirective(node, context) {
-		// TODO
-	},
 	Component(node, context) {
 		const state = context.state;
 		const [dec, id] = serialize_anchor(state);
@@ -1694,9 +1691,19 @@ function serialize_element_attributes(node, context) {
 			if (binding?.omit_in_ssr) continue;
 
 			if (ContentEditableBindings.includes(attribute.name)) {
-				content = { escape: false, expression: attribute.expression };
+				content = {
+					escape: false,
+					expression: /** @type {import('estree').Expression} */ (
+						context.visit(attribute.expression)
+					)
+				};
 			} else if (attribute.name === 'value' && node.name === 'textarea') {
-				content = { escape: true, expression: attribute.expression };
+				content = {
+					escape: true,
+					expression: /** @type {import('estree').Expression} */ (
+						context.visit(attribute.expression)
+					)
+				};
 			} else if (attribute.name === 'group') {
 				const value_attribute = /** @type {import('#compiler').Attribute | undefined} */ (
 					node.attributes.find((attr) => attr.type === 'Attribute' && attr.name === 'value')
