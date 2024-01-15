@@ -1,8 +1,14 @@
+
 	@keyframes svelte-xyz-why {
 		from { color: red; }
 		to { color: blue; }
 	}
 
+	@keyframes svelte-xyz-what {
+		from { color: scale(1); }
+		to { color: scale(1.5); }
+	}
+
 	.animated.svelte-xyz {
-		animation: svelte-xyz-why 2s;
+		animation: svelte-xyz-why 2s, svelte-xyz-what 2s;
 	}

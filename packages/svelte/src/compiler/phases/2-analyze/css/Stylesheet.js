@@ -213,20 +213,23 @@ class Declaration {
 	transform(code, keyframes) {
 		const property = this.node.property && remove_css_prefix(this.node.property.toLowerCase());
 		if (property === 'animation' || property === 'animation-name') {
-			const name = /** @type {string} */ (this.node.value)
-				.split(' ')
-				.find((name) => keyframes.has(name));
+			//check if there is multiple animations
+			const multiple = /** @type {string} */ (this.node.value).split(',');
 
-			if (name) {
-				const start = code.original.indexOf(
-					name,
-					code.original.indexOf(this.node.property, this.node.start)
-				);
+			for (const curr of multiple) {
+				const name = /** @type {string} */ curr.split(' ').find((name) => keyframes.has(name));
 
-				const end = start + name.length;
+				if (name) {
+					const start = code.original.indexOf(
+						name,
+						code.original.indexOf(this.node.property, this.node.start)
+					);
 
-				const keyframe = /** @type {string} */ (keyframes.get(name));
-				code.update(start, end, keyframe);
+					const end = start + name.length;
+
+					const keyframe = /** @type {string} */ (keyframes.get(name));
+					code.update(start, end, keyframe);
+				}
 			}
 		}
 	}
