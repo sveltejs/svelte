@@ -396,7 +396,7 @@ function read_declaration(parser) {
 	const property = parser.read_until(REGEX_WHITESPACE_OR_COLON);
 	parser.allow_whitespace();
 	parser.eat(':');
-	parser.allow_whitespace();
+	allow_comment_or_whitespace(parser);
 
 	const value = read_declaration_value(parser);
 
@@ -423,11 +423,18 @@ function read_declaration_value(parser) {
 	let value = '';
 	let escaped = false;
 	let in_url = false;
+	let separator = false;
 
 	/** @type {null | '"' | "'"} */
 	let quote_mark = null;
 
 	while (parser.index < parser.template.length) {
+		if (separator) {
+			value += ' ';
+			allow_comment_or_whitespace(parser);
+			separator = false;
+		}
+
 		const char = parser.template[parser.index];
 
 		if (escaped) {
@@ -443,8 +450,12 @@ function read_declaration_value(parser) {
 			quote_mark = char;
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
-		} else if ((char === ';' || char === '}') && !in_url && !quote_mark) {
-			return value.trim();
+		} else if (!in_url && !quote_mark) {
+			if (char === ';' || char === '}') {
+				return value.trim();
+			} else if (char === ',') {
+				separator = true;
+			}
 		}
 
 		value += char;

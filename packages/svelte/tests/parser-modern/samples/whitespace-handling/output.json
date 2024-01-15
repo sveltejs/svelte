@@ -1,0 +1,64 @@
+{
+	"css": {
+		"type": "Style",
+		"start": 0,
+		"end": 80,
+		"attributes": [],
+		"children": [
+			{
+				"type": "Rule",
+				"prelude": {
+					"type": "SelectorList",
+					"start": 9,
+					"end": 10,
+					"children": [
+						{
+							"type": "Selector",
+							"start": 9,
+							"end": 10,
+							"children": [
+								{
+									"type": "TypeSelector",
+									"name": "p",
+									"start": 9,
+									"end": 10
+								}
+							]
+						}
+					]
+				},
+				"block": {
+					"type": "Block",
+					"start": 11,
+					"end": 71,
+					"children": [
+						{
+							"type": "Declaration",
+							"start": 15,
+							"end": 67,
+							"property": "animation",
+							"value": "why 2s, what 2s"
+						}
+					]
+				},
+				"start": 9,
+				"end": 71
+			}
+		],
+		"content": {
+			"start": 7,
+			"end": 72,
+			"styles": "\n\tp {\n\t\tanimation:/*test*/\n\t\t\twhy 2s,\n\t\t\t/*test*/\n\t\t\twhat 2s;\n\t}\n"
+		}
+	},
+	"js": [],
+	"start": null,
+	"end": null,
+	"type": "Root",
+	"fragment": {
+		"type": "Fragment",
+		"nodes": [],
+		"transparent": false
+	},
+	"options": null
+}
