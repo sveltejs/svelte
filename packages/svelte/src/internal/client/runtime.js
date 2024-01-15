@@ -1979,14 +1979,14 @@ function deep_read(value, visited = new Set()) {
  */
 function deep_unstate(value, visited = new Map()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
+		const unstated = unstate(value);
+		if (unstated !== value) {
+			visited.set(value, unstated);
+			return unstated;
+		}
 		const prototype = get_prototype_of(value);
 		// Only deeply unstate plain objects and arrays
 		if (prototype === object_prototype || prototype === array_prototype) {
-			const unstated = unstate(value);
-			if (unstated !== value) {
-				visited.set(value, unstated);
-				return unstated;
-			}
 			let contains_unstated = false;
 			/** @type {any} */
 			const nested_unstated = Array.isArray(value) ? [] : {};
@@ -1997,8 +1997,9 @@ function deep_unstate(value, visited = new Map()) {
 					contains_unstated = true;
 				}
 			}
-
 			visited.set(value, contains_unstated ? nested_unstated : value);
+		} else {
+			visited.set(value, value);
 		}
 	}
 
