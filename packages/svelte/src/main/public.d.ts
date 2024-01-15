@@ -200,7 +200,7 @@ export type Snippet<T extends unknown[] = []> =
 				): typeof SnippetReturn & {
 					_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 				};
-		  };
+			};
 
 interface DispatchOptions {
 	cancelable?: boolean;
@@ -214,8 +214,8 @@ export interface EventDispatcher<EventMap extends Record<string, any>> {
 		...args: null extends EventMap[Type]
 			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
 			: undefined extends EventMap[Type]
-			? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
-			: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
+				? [type: Type, parameter?: EventMap[Type] | null | undefined, options?: DispatchOptions]
+				: [type: Type, parameter: EventMap[Type], options?: DispatchOptions]
 	): boolean;
 }
 
