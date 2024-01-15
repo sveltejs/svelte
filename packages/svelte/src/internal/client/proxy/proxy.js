@@ -11,11 +11,15 @@ import {
 	batch_inspect
 } from '../runtime.js';
 import {
+	array_prototype,
 	define_property,
 	get_descriptor,
 	get_descriptors,
+	get_prototype_of,
 	is_array,
-	object_keys
+	is_frozen,
+	object_keys,
+	object_prototype
 } from '../utils.js';
 
 /** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean, i: boolean, p: StateObject }} Metadata */
@@ -23,12 +27,6 @@ import {
 
 export const STATE_SYMBOL = Symbol('$state');
 export const READONLY_SYMBOL = Symbol('readonly');
-
-const object_prototype = Object.prototype;
-const array_prototype = Array.prototype;
-const get_prototype_of = Object.getPrototypeOf;
-const is_frozen = Object.isFrozen;
-
 /**
  * @template {StateObject} T
  * @param {T} value

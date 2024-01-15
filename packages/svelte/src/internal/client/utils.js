@@ -10,6 +10,9 @@ export var object_freeze = Object.freeze;
 export var define_property = Object.defineProperty;
 export var get_descriptor = Object.getOwnPropertyDescriptor;
 export var get_descriptors = Object.getOwnPropertyDescriptors;
+export var object_prototype = Object.prototype;
+export var array_prototype = Array.prototype;
+export var get_prototype_of = Object.getPrototypeOf;
 
 /**
  * @param {any} thing
