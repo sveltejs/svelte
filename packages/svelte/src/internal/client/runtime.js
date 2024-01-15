@@ -1,7 +1,16 @@
 import { DEV } from 'esm-env';
 import { subscribe_to_store } from '../../store/utils.js';
 import { EMPTY_FUNC, run_all } from '../common.js';
-import { get_descriptor, get_descriptors, is_array, is_frozen, object_freeze } from './utils.js';
+import {
+	array_prototype,
+	get_descriptor,
+	get_descriptors,
+	get_prototype_of,
+	is_array,
+	is_frozen,
+	object_freeze,
+	object_prototype
+} from './utils.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
 	PROPS_IS_IMMUTABLE,
@@ -1975,19 +1984,23 @@ function deep_unstate(value, visited = new Map()) {
 			visited.set(value, unstated);
 			return unstated;
 		}
-
-		let contains_unstated = false;
-		/** @type {any} */
-		const nested_unstated = Array.isArray(value) ? [] : {};
-		for (let key in value) {
-			const result = deep_unstate(value[key], visited);
-			nested_unstated[key] = result;
-			if (result !== value[key]) {
-				contains_unstated = true;
+		const prototype = get_prototype_of(value);
+		// Only deeply unstate plain objects and arrays
+		if (prototype === object_prototype || prototype === array_prototype) {
+			let contains_unstated = false;
+			/** @type {any} */
+			const nested_unstated = Array.isArray(value) ? [] : {};
+			for (let key in value) {
+				const result = deep_unstate(value[key], visited);
+				nested_unstated[key] = result;
+				if (result !== value[key]) {
+					contains_unstated = true;
+				}
 			}
+			visited.set(value, contains_unstated ? nested_unstated : value);
+		} else {
+			visited.set(value, value);
 		}
-
-		visited.set(value, contains_unstated ? nested_unstated : value);
 	}
 
 	return visited.get(value) ?? value;
