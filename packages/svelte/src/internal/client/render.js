@@ -319,7 +319,15 @@ export function event(event_name, dom, handler, capture, passive) {
 		capture,
 		passive
 	};
-	const target_handler = handler;
+	/**
+	 * @this {EventTarget}
+	 */
+	function target_handler(/** @type {Event} */ event) {
+		handle_event_propagation(dom, event);
+		if (!event.cancelBubble) {
+			return handler.call(this, event);
+		}
+	}
 	dom.addEventListener(event_name, target_handler, options);
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -873,8 +881,8 @@ export function bind_resize_observer(dom, type, update) {
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
 			: type === 'borderBoxSize'
-			? resize_observer_border_box
-			: resize_observer_device_pixel_content_box;
+				? resize_observer_border_box
+				: resize_observer_device_pixel_content_box;
 	const unsub = observer.observe(dom, /** @param {any} entry */ (entry) => update(entry[type]));
 	render_effect(() => unsub);
 }
@@ -1375,7 +1383,10 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let alternate_dom = null;
 	let has_mounted = false;
-	let has_mounted_branch = false;
+	/**
+	 * @type {import("./types.js").EffectSignal | null}
+	 */
+	let current_branch_effect = null;
 
 	const if_effect = render_effect(
 		() => {
@@ -1432,20 +1443,24 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	// Managed effect
 	const consequent_effect = render_effect(
-		() => {
-			if (consequent_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
+		) => {
+			const result = block.v;
+			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.v) {
+			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = consequent_effect;
+				consequent_dom = block.d;
 			}
-			consequent_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1454,22 +1469,26 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
-		() => {
-			if (alternate_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
+		) => {
+			const result = block.v;
+			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.v) {
+			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = alternate_effect;
+				alternate_dom = block.d;
 			}
-			alternate_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1587,8 +1606,8 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 				? current_hydration_fragment !== null
 					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
 					: is_svg
-					? document.createElementNS('http://www.w3.org/2000/svg', tag)
-					: document.createElement(tag)
+						? document.createElementNS('http://www.w3.org/2000/svg', tag)
+						: document.createElement(tag)
 				: null;
 			const prev_element = element;
 			if (prev_element !== null) {
@@ -2803,7 +2822,7 @@ export function mount(component, options) {
 					).c = options.context;
 				}
 				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {}, options.events || {});
+				accessors = component(anchor, options.props || {});
 				if (options.context) {
 					pop();
 				}
@@ -2850,7 +2869,7 @@ export function mount(component, options) {
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
 						: undefined
 				);
 				// The document listener ensures we catch events that originate from elements that were
@@ -2861,7 +2880,7 @@ export function mount(component, options) {
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
 						: undefined
 				);
 			}

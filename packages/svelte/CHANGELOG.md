@@ -1,5 +1,55 @@
 # svelte
 
+## 5.0.0-next.35
+
+### Patch Changes
+
+- fix: improve nested effect heuristics ([#10171](https://github.com/sveltejs/svelte/pull/10171))
+
+- fix: simplify event delegation logic, only delegate event attributes ([#10169](https://github.com/sveltejs/svelte/pull/10169))
+
+- fix: prevent transition action overfiring ([#10163](https://github.com/sveltejs/svelte/pull/10163))
+
+- fix: improve event handling compatibility with delegation ([#10168](https://github.com/sveltejs/svelte/pull/10168))
+
+- fix: ensure topological order for render effects ([#10175](https://github.com/sveltejs/svelte/pull/10175))
+
+## 5.0.0-next.34
+
+### Patch Changes
+
+- fix: make `@types/estree` a dependency ([#10150](https://github.com/sveltejs/svelte/pull/10150))
+
+- fix: improve intro transitions on dynamic mount ([#10162](https://github.com/sveltejs/svelte/pull/10162))
+
+- fix: improve code generation ([#10156](https://github.com/sveltejs/svelte/pull/10156))
+
+- fix: adjust `$inspect.with` type ([`c7cb90c91`](https://github.com/sveltejs/svelte/commit/c7cb90c91cd3553ad59126267c9bfddecbb290b4))
+
+- fix: improve how transitions are handled on mount ([#10157](https://github.com/sveltejs/svelte/pull/10157))
+
+- fix: adjust `parse` return type ([`a271878ab`](https://github.com/sveltejs/svelte/commit/a271878abe7018923839401129b18082eb2c811a))
+
+## 5.0.0-next.33
+
+### Patch Changes
+
+- fix: improve ssr template code generation ([#10151](https://github.com/sveltejs/svelte/pull/10151))
+
+- fix: improve template literal expression output generation ([#10147](https://github.com/sveltejs/svelte/pull/10147))
+
+## 5.0.0-next.32
+
+### Patch Changes
+
+- fix: improve outro behavior with transitions ([#10139](https://github.com/sveltejs/svelte/pull/10139))
+
+- chore: remove internal functions from `svelte/transition` exports ([#10132](https://github.com/sveltejs/svelte/pull/10132))
+
+- fix: further animation transition improvements ([#10138](https://github.com/sveltejs/svelte/pull/10138))
+
+- fix: improve animation transition heuristics ([#10119](https://github.com/sveltejs/svelte/pull/10119))
+
 ## 5.0.0-next.31
 
 ### Patch Changes

@@ -198,7 +198,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
 	const parent_node =
 		parent.type === 'Fragment'
 			? // Messy: We know that Fragment calls create_block directly, so we can do this here
-			  path.at(-1)
+				path.at(-1)
 			: parent;
 
 	if (

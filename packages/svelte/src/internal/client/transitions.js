@@ -21,7 +21,7 @@ import {
 	managed_effect,
 	managed_pre_effect,
 	mark_subtree_inert,
-	schedule_microtask,
+	schedule_raf_task,
 	untrack
 } from './runtime.js';
 import { raf } from './timing.js';
@@ -369,6 +369,47 @@ function create_transition(dom, init, direction, effect) {
 		},
 		// out
 		o() {
+			// @ts-ignore
+			const has_keyed_transition = dom.__animate;
+			// If we're outroing an element that has an animation, then we need to fix
+			// its position to ensure it behaves nicely without causing layout shift.
+			if (has_keyed_transition) {
+				const style = getComputedStyle(dom);
+				const position = style.position;
+
+				if (position !== 'absolute' && position !== 'fixed') {
+					const { width, height } = style;
+					const a = dom.getBoundingClientRect();
+					dom.style.position = 'absolute';
+
+					dom.style.width = width;
+					dom.style.height = height;
+					const b = dom.getBoundingClientRect();
+					if (a.left !== b.left || a.top !== b.top) {
+						const translate = `translate(${a.left - b.left}px, ${a.top - b.top}px)`;
+						const existing_transform = style.transform;
+						if (existing_transform === 'none') {
+							dom.style.transform = translate;
+						} else {
+							// Previously, in the Svelte 4, we'd just apply the transform the the DOM element. However,
+							// because we're now using Web Animations, we can't do that as it won't work properly if the
+							// animation is also making use of the same transformations. So instead, we apply an
+							// instantaneous animation and pause it on the first frame, just applying the same behavior.
+							// We also need to take into consideration matrix transforms and how they might combine with
+							// an existing behavior that is already in progress (such as scale).
+							// > Follow the white rabbit.
+							const transform = existing_transform.startsWith('matrix(1,')
+								? translate
+								: `matrix(1,0,0,1,0,0)`;
+							const frame = {
+								transform
+							};
+							const animation = dom.animate([frame, frame], { duration: 1 });
+							animation.pause();
+						}
+					}
+				}
+			}
 			const needs_reverse = direction === 'both' && curr_direction !== 'out';
 			curr_direction = 'out';
 			if (animation === null || cancelled) {
@@ -432,13 +473,18 @@ function is_transition_block(block) {
 export function bind_transition(dom, get_transition_fn, props_fn, direction, global) {
 	const transition_effect = /** @type {import('./types.js').EffectSignal} */ (current_effect);
 	const block = current_block;
+	const is_keyed_transition = direction === 'key';
 
 	let can_show_intro_on_mount = true;
 	let can_apply_lazy_transitions = false;
 
+	if (is_keyed_transition) {
+		// @ts-ignore
+		dom.__animate = true;
+	}
 	/** @type {import('./types.js').Block | null} */
 	let transition_block = block;
-	while (transition_block !== null) {
+	main: while (transition_block !== null) {
 		if (is_transition_block(transition_block)) {
 			if (transition_block.t === EACH_ITEM_BLOCK) {
 				// Lazily apply the each block transition
@@ -446,22 +492,31 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 				transition_block.a = each_item_animate;
 				transition_block = transition_block.p;
 			} else if (transition_block.t === AWAIT_BLOCK && transition_block.n /* pending */) {
-				can_show_intro_on_mount = false;
+				can_show_intro_on_mount = true;
 			} else if (transition_block.t === IF_BLOCK) {
 				transition_block.r = if_block_transition;
+				if (can_show_intro_on_mount) {
+					/** @type {import('./types.js').Block | null} */
+					let if_block = transition_block;
+					while (if_block.t === IF_BLOCK) {
+						// If we have an if block parent that is currently falsy then
+						// we can show the intro on mount as long as that block is mounted
+						if (if_block.e !== null && !if_block.v) {
+							can_show_intro_on_mount = true;
+							break main;
+						}
+						if_block = if_block.p;
+					}
+				}
 			}
 			if (!can_apply_lazy_transitions && can_show_intro_on_mount) {
-				can_show_intro_on_mount = transition_block.e === null;
+				can_show_intro_on_mount = transition_block.e !== null;
 			}
-			if (!can_show_intro_on_mount || !global) {
+			if (can_show_intro_on_mount || !global) {
 				can_apply_lazy_transitions = true;
 			}
-		} else if (
-			!can_apply_lazy_transitions &&
-			transition_block.t === ROOT_BLOCK &&
-			(transition_block.e !== null || transition_block.i)
-		) {
-			can_show_intro_on_mount = false;
+		} else if (transition_block.t === ROOT_BLOCK && !can_apply_lazy_transitions) {
+			can_show_intro_on_mount = transition_block.e !== null || transition_block.i;
 		}
 		transition_block = transition_block.p;
 	}
@@ -470,7 +525,9 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 	let transition;
 
 	effect(() => {
+		let already_mounted = false;
 		if (transition !== undefined) {
+			already_mounted = true;
 			// Destroy any existing transitions first
 			transition.x();
 		}
@@ -479,23 +536,23 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 		const init = (from) =>
 			untrack(() => {
 				const props = props_fn === null ? {} : props_fn();
-				return direction === 'key'
+				return is_keyed_transition
 					? /** @type {import('./types.js').AnimateFn<any>} */ (transition_fn)(
 							dom,
 							{ from: /** @type {DOMRect} */ (from), to: dom.getBoundingClientRect() },
 							props,
 							{}
-					  )
+						)
 					: /** @type {import('./types.js').TransitionFn<any>} */ (transition_fn)(dom, props, {
 							direction
-					  });
+						});
 			});
 
 		transition = create_transition(dom, init, direction, transition_effect);
 		const is_intro = direction === 'in';
-		const show_intro = !can_show_intro_on_mount && (is_intro || direction === 'both');
+		const show_intro = can_show_intro_on_mount && (is_intro || direction === 'both');
 
-		if (show_intro) {
+		if (show_intro && !already_mounted) {
 			transition.p = transition.i();
 		}
 
@@ -503,7 +560,7 @@ export function bind_transition(dom, get_transition_fn, props_fn, direction, glo
 			destroy_signal(effect);
 			dom.inert = false;
 
-			if (show_intro) {
+			if (show_intro && !already_mounted) {
 				transition.in();
 			}
 
@@ -547,6 +604,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 	const outros = [];
 	for (const transition of transitions) {
 		const direction = transition.r;
+		const effect = transition.e;
 		if (target_direction === 'in') {
 			if (direction === 'in' || direction === 'both') {
 				transition.in();
@@ -554,7 +612,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				transition.c();
 			}
 			transition.d.inert = false;
-			mark_subtree_inert(transition.e, false);
+			mark_subtree_inert(effect, false);
 		} else if (target_direction === 'key') {
 			if (direction === 'key') {
 				transition.p = transition.i(/** @type {DOMRect} */ (from));
@@ -566,7 +624,7 @@ export function trigger_transitions(transitions, target_direction, from) {
 				outros.push(transition.o);
 			}
 			transition.d.inert = true;
-			mark_subtree_inert(transition.e, true);
+			mark_subtree_inert(effect, true);
 		}
 	}
 	if (outros.length > 0) {
@@ -599,7 +657,8 @@ function if_block_transition(transition) {
 			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
 			c.delete(transition);
 			if (c.size === 0) {
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ce));
+				const consequent_effect = block.ce;
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (consequent_effect));
 			}
 		});
 	} else {
@@ -612,7 +671,8 @@ function if_block_transition(transition) {
 			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
 			a.delete(transition);
 			if (a.size === 0) {
-				execute_effect(/** @type {import('./types.js').EffectSignal} */ (block.ae));
+				const alternate_effect = block.ae;
+				execute_effect(/** @type {import('./types.js').EffectSignal} */ (alternate_effect));
 			}
 		});
 	}
@@ -646,7 +706,8 @@ function each_item_transition(transition) {
 			transitions.delete(transition);
 			if (transition.r !== 'key') {
 				for (let other of transitions) {
-					if (other.r === 'key' || other.r === 'in') {
+					const type = other.r;
+					if (type === 'key' || type === 'in') {
 						transitions.delete(other);
 					}
 				}
@@ -664,26 +725,18 @@ function each_item_transition(transition) {
  *
  * @param {import('./types.js').EachItemBlock} block
  * @param {Set<import('./types.js').Transition>} transitions
- * @param {number} index
- * @param {boolean} index_is_reactive
  */
-function each_item_animate(block, transitions, index, index_is_reactive) {
-	let prev_index = block.i;
-	if (index_is_reactive) {
-		prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).v;
-	}
-	const items = block.p.v;
-	if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-		const from_dom = /** @type {Element} */ (get_first_element(block));
-		const from = from_dom.getBoundingClientRect();
-		// Cancel any existing key transitions
-		for (const transition of transitions) {
-			if (transition.r === 'key') {
-				transition.c();
-			}
+function each_item_animate(block, transitions) {
+	const from_dom = /** @type {Element} */ (get_first_element(block));
+	const from = from_dom.getBoundingClientRect();
+	// Cancel any existing key transitions
+	for (const transition of transitions) {
+		const type = transition.r;
+		if (type === 'key') {
+			transition.c();
 		}
-		schedule_microtask(() => {
-			trigger_transitions(transitions, 'key', from);
-		});
 	}
+	schedule_raf_task(() => {
+		trigger_transitions(transitions, 'key', from);
+	});
 }

@@ -38,6 +38,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 // Used for handling scheduling
 let is_micro_task_queued = false;
 let is_task_queued = false;
+let is_raf_queued = false;
 // Used for $inspect
 export let is_batching_effect = false;
 
@@ -52,7 +53,7 @@ let current_queued_effects = [];
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
 /** @type {Array<() => void>} */
-let current_queued_microtasks = [];
+let current_raf_tasks = [];
 let flush_count = 0;
 // Handle signal reactivity tree dependencies and consumer
 
@@ -213,6 +214,8 @@ function create_computation_signal(flags, value, block) {
 			f: flags,
 			// init
 			i: null,
+			// level
+			l: 0,
 			// references
 			r: null,
 			// value
@@ -237,6 +240,8 @@ function create_computation_signal(flags, value, block) {
 		e: null,
 		// flags
 		f: flags,
+		// level
+		l: 0,
 		// init
 		i: null,
 		// references
@@ -341,9 +346,13 @@ function execute_signal_fn(signal) {
 	try {
 		let res;
 		if (is_render_effect) {
-			res = /** @type {(block: import('./types.js').Block) => V} */ (init)(
-				/** @type {import('./types.js').Block} */ (signal.b)
-			);
+			res =
+				/** @type {(block: import('./types.js').Block, signal: import('./types.js').Signal) => V} */ (
+					init
+				)(
+					/** @type {import('./types.js').Block} */ (signal.b),
+					/** @type {import('./types.js').Signal} */ (signal)
+				);
 		} else {
 			res = /** @type {() => V} */ (init)();
 		}
@@ -552,7 +561,7 @@ function infinite_loop_guard() {
 			'ERR_SVELTE_TOO_MANY_UPDATES' +
 				(DEV
 					? ': Maximum update depth exceeded. This can happen when a reactive block or effect ' +
-					  'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
+						'repeatedly sets a new value. Svelte limits the number of nested updates to prevent infinite loops.'
 					: '')
 		);
 	}
@@ -586,11 +595,6 @@ function flush_queued_effects(effects) {
 
 function process_microtask() {
 	is_micro_task_queued = false;
-	if (current_queued_microtasks.length > 0) {
-		const tasks = current_queued_microtasks.slice();
-		current_queued_microtasks = [];
-		run_all(tasks);
-	}
 	if (flush_count > 101) {
 		return;
 	}
@@ -624,8 +628,53 @@ export function schedule_effect(signal, sync) {
 		}
 		if ((flags & EFFECT) !== 0) {
 			current_queued_effects.push(signal);
+			// Prevent any nested user effects from potentially triggering
+			// before this effect is scheduled. We know they will be destroyed
+			// so we can make them inert to avoid having to find them in the
+			// queue and remove them.
+			if ((flags & MANAGED) === 0) {
+				mark_subtree_children_inert(signal, true);
+			}
 		} else {
-			current_queued_pre_and_render_effects.push(signal);
+			// We need to ensure we insert the signal in the right topological order. In other words,
+			// we need to evaluate where to insert the signal based off its level and whether or not it's
+			// a pre-effect and within the same block. By checking the signals in the queue in reverse order
+			// we can find the right place quickly. TODO: maybe opt to use a linked list rather than an array
+			// for these operations.
+			const length = current_queued_pre_and_render_effects.length;
+			let should_append = length === 0;
+
+			if (!should_append) {
+				const target_level = signal.l;
+				const target_block = signal.b;
+				const is_pre_effect = (flags & PRE_EFFECT) !== 0;
+				let target_signal;
+				let is_target_pre_effect;
+				let i = length;
+				while (true) {
+					target_signal = current_queued_pre_and_render_effects[--i];
+					if (target_signal.l <= target_level) {
+						if (i + 1 === length) {
+							should_append = true;
+						} else {
+							is_target_pre_effect = (target_signal.f & PRE_EFFECT) !== 0;
+							if (target_signal.b !== target_block || (is_target_pre_effect && !is_pre_effect)) {
+								i++;
+							}
+							current_queued_pre_and_render_effects.splice(i, 0, signal);
+						}
+						break;
+					}
+					if (i === 0) {
+						current_queued_pre_and_render_effects.unshift(signal);
+						break;
+					}
+				}
+			}
+
+			if (should_append) {
+				current_queued_pre_and_render_effects.push(signal);
+			}
 		}
 	}
 }
@@ -634,6 +683,13 @@ function process_task() {
 	is_task_queued = false;
 	const tasks = current_queued_tasks.slice();
 	current_queued_tasks = [];
+	run_all(tasks);
+}
+
+function process_raf_task() {
+	is_raf_queued = false;
+	const tasks = current_raf_tasks.slice();
+	current_raf_tasks = [];
 	run_all(tasks);
 }
 
@@ -653,12 +709,12 @@ export function schedule_task(fn) {
  * @param {() => void} fn
  * @returns {void}
  */
-export function schedule_microtask(fn) {
-	if (!is_micro_task_queued) {
-		is_micro_task_queued = true;
-		queueMicrotask(process_microtask);
+export function schedule_raf_task(fn) {
+	if (!is_raf_queued) {
+		is_raf_queued = true;
+		requestAnimationFrame(process_raf_task);
 	}
-	current_queued_microtasks.push(fn);
+	current_raf_tasks.push(fn);
 }
 
 /**
@@ -721,8 +777,8 @@ export function flushSync(fn) {
 		if (current_queued_pre_and_render_effects.length > 0 || effects.length > 0) {
 			flushSync();
 		}
-		if (is_micro_task_queued) {
-			process_microtask();
+		if (is_raf_queued) {
+			process_raf_task();
 		}
 		if (is_task_queued) {
 			process_task();
@@ -1010,9 +1066,26 @@ export function mutate_store(store, expression, new_value) {
 /**
  * @param {import('./types.js').ComputationSignal} signal
  * @param {boolean} inert
+ * @param {Set<import('./types.js').Block>} [visited_blocks]
  * @returns {void}
  */
-export function mark_subtree_inert(signal, inert) {
+function mark_subtree_children_inert(signal, inert, visited_blocks) {
+	const references = signal.r;
+	if (references !== null) {
+		let i;
+		for (i = 0; i < references.length; i++) {
+			mark_subtree_inert(references[i], inert, visited_blocks);
+		}
+	}
+}
+
+/**
+ * @param {import('./types.js').ComputationSignal} signal
+ * @param {boolean} inert
+ * @param {Set<import('./types.js').Block>} [visited_blocks]
+ * @returns {void}
+ */
+export function mark_subtree_inert(signal, inert, visited_blocks = new Set()) {
 	const flags = signal.f;
 	const is_already_inert = (flags & INERT) !== 0;
 	if (is_already_inert !== inert) {
@@ -1022,34 +1095,33 @@ export function mark_subtree_inert(signal, inert) {
 		}
 		// Nested if block effects
 		const block = signal.b;
-		if (block !== null) {
+		if (block !== null && !visited_blocks.has(block)) {
+			visited_blocks.add(block);
 			const type = block.t;
 			if (type === IF_BLOCK) {
+				const condition_effect = block.e;
+				if (condition_effect !== null && block !== current_block) {
+					mark_subtree_inert(condition_effect, inert);
+				}
 				const consequent_effect = block.ce;
-				if (consequent_effect !== null) {
-					mark_subtree_inert(consequent_effect, inert);
+				if (consequent_effect !== null && block.v) {
+					mark_subtree_inert(consequent_effect, inert, visited_blocks);
 				}
 				const alternate_effect = block.ae;
-				if (alternate_effect !== null) {
-					mark_subtree_inert(alternate_effect, inert);
+				if (alternate_effect !== null && !block.v) {
+					mark_subtree_inert(alternate_effect, inert, visited_blocks);
 				}
 			} else if (type === EACH_BLOCK) {
 				const items = block.v;
 				for (let { e: each_item_effect } of items) {
 					if (each_item_effect !== null) {
-						mark_subtree_inert(each_item_effect, inert);
+						mark_subtree_inert(each_item_effect, inert, visited_blocks);
 					}
 				}
 			}
 		}
 	}
-	const references = signal.r;
-	if (references !== null) {
-		let i;
-		for (i = 0; i < references.length; i++) {
-			mark_subtree_inert(references[i], inert);
-		}
-	}
+	mark_subtree_children_inert(signal, inert, visited_blocks);
 }
 
 /**
@@ -1109,8 +1181,8 @@ export function set_signal_value(signal, value) {
 			'ERR_SVELTE_UNSAFE_MUTATION' +
 				(DEV
 					? ": Unsafe mutations during Svelte's render or derived phase are not permitted in runes mode. " +
-					  'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
-					  'to be reactive do not use the "$state" rune for that declaration.'
+						'This can lead to unexpected errors and possibly cause infinite loops.\n\nIf this mutation is not meant ' +
+						'to be reactive do not use the "$state" rune for that declaration.'
 					: '')
 		);
 	}
@@ -1280,11 +1352,14 @@ function internal_create_effect(type, init, sync, block, schedule) {
 	const signal = create_computation_signal(type | DIRTY, null, block);
 	signal.i = init;
 	signal.x = current_component_context;
+	if (current_effect !== null) {
+		signal.l = current_effect.l + 1;
+		if ((type & MANAGED) === 0) {
+			push_reference(current_effect, signal);
+		}
+	}
 	if (schedule) {
 		schedule_effect(signal, sync);
-	}
-	if (current_effect !== null && (type & MANAGED) === 0) {
-		push_reference(current_effect, signal);
 	}
 	return signal;
 }
@@ -1621,7 +1696,7 @@ export function safe_not_equal(a, b) {
 	// eslint-disable-next-line eqeqeq
 	return a != a
 		? // eslint-disable-next-line eqeqeq
-		  b == b
+			b == b
 		: a !== b || (a !== null && typeof a === 'object') || typeof a === 'function';
 }
 

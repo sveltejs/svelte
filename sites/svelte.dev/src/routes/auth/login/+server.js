@@ -12,7 +12,7 @@ export const GET = client_id
 				}).toString();
 
 			throw redirect(302, Location);
-	  }
+		}
 	: () =>
 			new Response(
 				`
