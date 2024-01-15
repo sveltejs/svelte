@@ -108,12 +108,12 @@ export default function tag(parser) {
 	const type = meta_tags.has(name)
 		? meta_tags.get(name)
 		: regex_capital_letter.test(name[0]) || name === 'svelte:self' || name === 'svelte:component'
-			? 'Component'
-			: name === 'title' && parent_is_head(parser.stack)
-				? 'TitleElement'
-				: name === 'slot'
-					? 'SlotElement'
-					: 'RegularElement';
+		? 'Component'
+		: name === 'title' && parent_is_head(parser.stack)
+		? 'TitleElement'
+		: name === 'slot'
+		? 'SlotElement'
+		: 'RegularElement';
 
 	/** @type {import('#compiler').ElementLike} */
 	// @ts-expect-error TODO can't figure out this error
@@ -131,7 +131,7 @@ export default function tag(parser) {
 						has_spread: false
 					},
 					parent: null
-				}
+			  }
 			: {
 					type: /** @type {import('#compiler').ElementLike['type']} */ (type),
 					start,
@@ -140,7 +140,7 @@ export default function tag(parser) {
 					attributes: [],
 					fragment: create_fragment(true),
 					parent: null
-				};
+			  };
 
 	parser.allow_whitespace();
 
