@@ -201,7 +201,7 @@ declare module 'svelte' {
 					): typeof SnippetReturn & {
 						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 					};
-			  };
+				};
 
 	interface DispatchOptions {
 		cancelable?: boolean;
@@ -319,8 +319,8 @@ declare module 'svelte' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-			? { children?: Snippet<[]> }
-			: {});
+				? { children?: Snippet<[]> }
+				: {});
 	/**
 	 * Mounts the given component to the given target and returns a handle to the component's public accessors
 	 * as well as a `$set` and `$destroy` method to update the props of the component or destroy it.
@@ -1848,7 +1848,7 @@ declare module 'svelte/legacy' {
 					): typeof SnippetReturn & {
 						_: 'functions passed to {@render ...} tags must use the `Snippet` type imported from "svelte"';
 					};
-			  };
+				};
 	// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
 	// if you're curious why this is here and not declared as an unexported type from `public.d.ts`, try putting it there
 	// and see what happens in the output `index.d.ts` -- it breaks, presumably because of a TypeScript compiler bug.
@@ -1856,8 +1856,8 @@ declare module 'svelte/legacy' {
 		(Props extends { children?: any }
 			? {}
 			: Slots extends { default: any }
-			? { children?: Snippet<[]> }
-			: {});
+				? { children?: Snippet<[]> }
+				: {});
 }
 
 declare module 'svelte/motion' {
