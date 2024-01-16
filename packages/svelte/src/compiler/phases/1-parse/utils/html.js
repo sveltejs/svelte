@@ -153,6 +153,36 @@ const disallowed_contents = {
 	th: new Set(['td', 'th', 'tr'])
 };
 
+export const disallowed_parapgraph_contents = [
+	'address',
+	'article',
+	'aside',
+	'blockquote',
+	'details',
+	'div',
+	'dl',
+	'fieldset',
+	'figcapture',
+	'figure',
+	'footer',
+	'form',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'header',
+	'hr',
+	'menu',
+	'nav',
+	'ol',
+	'pre',
+	'section',
+	'table',
+	'ul'
+];
+
 for (const interactive_element of interactive_elements) {
 	disallowed_contents[interactive_element] = interactive_elements;
 }
