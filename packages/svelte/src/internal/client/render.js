@@ -83,11 +83,11 @@ export function template(html, is_fragment) {
 		if (cached_content === undefined) {
 			const content = create_fragment_from_html(html);
 			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
-			if (DEV && cached_content instanceof Element && cached_content.innerHTML !== html) {
+			if (DEV && cached_content instanceof Element && cached_content.outerHTML !== html) {
 				throw Error(
 					'Svelte detected a mismatch when trying to generate a HTML template. This typically occurs due to the incorrect nesting of HTML elements ' +
 						'(such as a <p> element nested within a <p>, or an <a> element nested within an <a>).' +
-						`\n\nSvelte attempted to generate the HTML template:\n\n${html}\n\nHowever, the browser parsed this HTML as:\n\n${cached_content.innerHTML}`
+						`\n\nSvelte attempted to generate the HTML template:\n\n${html}\n\nHowever, the browser parsed this HTML as:\n\n${cached_content.outerHTML}`
 				);
 			}
 		}
