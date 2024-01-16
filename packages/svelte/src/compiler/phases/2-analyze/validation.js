@@ -547,7 +547,7 @@ export const validation = {
 		if (disallowed_parapgraph_contents.includes(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
-				if (parent.type === 'RegularElement' && parent.name === node.name && parent.name === 'p') {
+				if (parent.type === 'RegularElement' && parent.name === 'p') {
 					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
 				}
 			}
