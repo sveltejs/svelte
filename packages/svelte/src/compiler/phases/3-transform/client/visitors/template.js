@@ -2889,7 +2889,7 @@ export const template_visitors = {
 				b.call(
 					// in legacy mode, sources can be mutated but they're not fine-grained.
 					// Using the safe-equal derived version ensures the slot is still updated
-					state.analysis.runes ? '$derived' : '$.derived_safe_equal',
+					state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
 					b.thunk(b.member(b.id('$$slotProps'), b.id(node.name)))
 				)
 			);
