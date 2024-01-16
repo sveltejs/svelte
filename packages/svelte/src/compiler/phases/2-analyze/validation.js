@@ -7,6 +7,7 @@ import {
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
+import { interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -527,6 +528,19 @@ export const validation = {
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
 				error(node, 'invalid-node-placement', `<${node.name}>`, context.state.parent_element);
+			}
+		}
+
+		if (interactive_elements.has(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (
+					parent.type === 'RegularElement' &&
+					parent.name === node.name &&
+					interactive_elements.has(parent.name)
+				) {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
 			}
 		}
 
