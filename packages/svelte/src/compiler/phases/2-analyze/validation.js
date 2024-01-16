@@ -534,7 +534,11 @@ export const validation = {
 		if (interactive_elements.has(node.name)) {
 			const path = context.path;
 			for (let parent of path) {
-				if (parent.type === 'RegularElement' && interactive_elements.has(parent.name)) {
+				if (
+					parent.type === 'RegularElement' &&
+					parent.name === node.name &&
+					interactive_elements.has(parent.name)
+				) {
 					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
 				}
 			}
