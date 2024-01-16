@@ -1309,6 +1309,18 @@ export function derived(init) {
 
 /**
  * @template V
+ * @param {() => V} init
+ * @returns {import('./types.js').ComputationSignal<V>}
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function derived_safe_equal(init) {
+	const signal = derived(init);
+	signal.e = safe_equal;
+	return signal;
+}
+
+/**
+ * @template V
  * @param {V} initial_value
  * @returns {import('./types.js').SourceSignal<V>}
  */

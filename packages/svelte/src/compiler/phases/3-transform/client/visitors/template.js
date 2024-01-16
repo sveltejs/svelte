@@ -2886,7 +2886,12 @@ export const template_visitors = {
 			const name = node.expression === null ? node.name : node.expression.name;
 			return b.const(
 				name,
-				b.call('$.derived', b.thunk(b.member(b.id('$$slotProps'), b.id(node.name))))
+				b.call(
+					// in legacy mode, sources can be mutated but they're not fine-grained.
+					// Using the safe-equal derived version ensures the slot is still updated
+					state.analysis.runes ? '$.derived' : '$.derived_safe_equal',
+					b.thunk(b.member(b.id('$$slotProps'), b.id(node.name)))
+				)
 			);
 		}
 	},
