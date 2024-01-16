@@ -83,6 +83,13 @@ export function template(html, is_fragment) {
 		if (cached_content === undefined) {
 			const content = create_fragment_from_html(html);
 			cached_content = is_fragment ? content : /** @type {Node} */ (child(content));
+			if (DEV && cached_content instanceof Element && cached_content.innerHTML !== html) {
+				throw Error(
+					'Svelte detected a mismatch when trying to generate a HTML template. This typically occurs due to the incorrect nesting of HTML elements ' +
+						'(such as a <p> element nested within a <p>, or an <a> element nested within an <a>).' +
+						`\n\nSvelte attempted to generate the HTML template:\n\n${html}\n\nHowever, the browser parsed this HTML as:\n\n${cached_content.innerHTML}`
+				);
+			}
 		}
 		return cached_content;
 	};
@@ -135,9 +142,8 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 			return is_fragment ? fragment : /** @type {Element} */ (fragment[0]);
 		}
 	}
-	return use_clone_node
-		? clone_node(/** @type {() => Element} */ (template_element_fn)(), true)
-		: document.importNode(/** @type {() => Element} */ (template_element_fn)(), true);
+	const template = /** @type {() => Element} */ (template_element_fn)();
+	return use_clone_node ? clone_node(template, true) : document.importNode(template, true);
 }
 
 /**
