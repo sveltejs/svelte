@@ -172,7 +172,7 @@ describe('signals', () => {
 		};
 	});
 
-	test('effect with derived using new derived every time', () => {
+	test('effects correctly handle unowned derived values that do not change', () => {
 		const log: number[] = [];
 
 		let count = $.source(0);
@@ -207,7 +207,7 @@ describe('signals', () => {
 		return $.get(count) * 2;
 	});
 
-	test('effects correctly handle unowned derived values that do not change', () => {
+	test('effect with derived using new derived every time', () => {
 		const log: Array<number | string> = [];
 
 		const effect = $.user_effect(() => {
