@@ -48,6 +48,7 @@ let current_scheduler_mode = FLUSH_MICROTASK;
 let is_micro_task_queued = false;
 let is_task_queued = false;
 let is_raf_queued = false;
+let is_flushing_effect = false;
 // Used for $inspect
 export let is_batching_effect = false;
 
@@ -295,7 +296,6 @@ function is_signal_dirty(signal) {
 			let i;
 			for (i = 0; i < length; i++) {
 				const dependency = dependencies[i];
-
 				if ((dependency.f & MAYBE_DIRTY) !== 0 && !is_signal_dirty(dependency)) {
 					set_signal_status(dependency, CLEAN);
 					continue;
@@ -343,7 +343,7 @@ function execute_signal_fn(signal) {
 	current_consumer = signal;
 	current_block = signal.b;
 	current_component_context = signal.x;
-	current_skip_consumer = current_effect === null && (signal.f & UNOWNED) !== 0;
+	current_skip_consumer = !is_flushing_effect && (signal.f & UNOWNED) !== 0;
 	current_untracking = false;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
@@ -366,27 +366,28 @@ function execute_signal_fn(signal) {
 			res = /** @type {() => V} */ (init)();
 		}
 		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
-
 		if (current_dependencies !== null) {
 			let i;
 			if (dependencies !== null) {
+				const deps_length = dependencies.length;
 				// Include any dependencies up until the current_dependencies_index.
-				const full_dependencies =
+				const full_current_dependencies =
 					current_dependencies_index === 0
-						? dependencies
+						? current_dependencies
 						: dependencies.slice(0, current_dependencies_index).concat(current_dependencies);
-				const dep_length = full_dependencies.length;
+				const current_dep_length = full_current_dependencies.length;
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
-				const current_dependencies_set = dep_length > 16 ? new Set(full_dependencies) : null;
-
-				for (i = current_dependencies_index; i < dep_length; i++) {
-					const dependency = full_dependencies[i];
+				const full_current_dependencies_set =
+					current_dep_length > 16 ? new Set(full_current_dependencies) : null;
+				for (i = current_dependencies_index; i < deps_length; i++) {
+					const dependency = dependencies[i];
 					if (
-						(current_dependencies_set !== null && !current_dependencies_set.has(dependency)) ||
-						!full_dependencies.includes(dependency)
+						(full_current_dependencies_set !== null &&
+							!full_current_dependencies_set.has(dependency)) ||
+						!full_current_dependencies.includes(dependency)
 					) {
-						remove_consumer(signal, dependency, false);
+						remove_consumer(signal, dependency);
 					}
 				}
 			}
@@ -415,7 +416,7 @@ function execute_signal_fn(signal) {
 				}
 			}
 		} else if (dependencies !== null && current_dependencies_index < dependencies.length) {
-			remove_consumers(signal, current_dependencies_index, false);
+			remove_consumers(signal, current_dependencies_index);
 			dependencies.length = current_dependencies_index;
 		}
 		return res;
@@ -435,10 +436,9 @@ function execute_signal_fn(signal) {
  * @template V
  * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {import('./types.js').Signal<V>} dependency
- * @param {boolean} remove_unowned
  * @returns {void}
  */
-function remove_consumer(signal, dependency, remove_unowned) {
+function remove_consumer(signal, dependency) {
 	const consumers = dependency.c;
 	let consumers_length = 0;
 	if (consumers !== null) {
@@ -454,14 +454,10 @@ function remove_consumer(signal, dependency, remove_unowned) {
 			}
 		}
 	}
-	if (remove_unowned && consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
+	if (consumers_length === 0 && (dependency.f & UNOWNED) !== 0) {
 		// If the signal is unowned then we need to make sure to change it to dirty.
 		set_signal_status(dependency, DIRTY);
-		remove_consumers(
-			/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency),
-			0,
-			true
-		);
+		remove_consumers(/** @type {import('./types.js').ComputationSignal<V>} **/ (dependency), 0);
 	}
 }
 
@@ -469,10 +465,9 @@ function remove_consumer(signal, dependency, remove_unowned) {
  * @template V
  * @param {import('./types.js').ComputationSignal<V>} signal
  * @param {number} start_index
- * @param {boolean} remove_unowned
  * @returns {void}
  */
-function remove_consumers(signal, start_index, remove_unowned) {
+function remove_consumers(signal, start_index) {
 	const dependencies = signal.d;
 	if (dependencies !== null) {
 		const active_dependencies = start_index === 0 ? null : dependencies.slice(0, start_index);
@@ -481,7 +476,7 @@ function remove_consumers(signal, start_index, remove_unowned) {
 			const dependency = dependencies[i];
 			// Avoid removing a consumer if we know that it is active (start_index will not be 0)
 			if (active_dependencies === null || !active_dependencies.includes(dependency)) {
-				remove_consumer(signal, dependency, remove_unowned);
+				remove_consumer(signal, dependency);
 			}
 		}
 	}
@@ -502,7 +497,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
-				remove_consumers(reference, 0, true);
+				remove_consumers(reference, 0);
 				reference.d = null;
 			}
 		}
@@ -585,19 +580,26 @@ function flush_queued_effects(effects) {
 	const length = effects.length;
 	if (length > 0) {
 		infinite_loop_guard();
-		let i;
-		for (i = 0; i < length; i++) {
-			const signal = effects[i];
-			const flags = signal.f;
-			if ((flags & (DESTROYED | INERT)) === 0) {
-				if (is_signal_dirty(signal)) {
-					set_signal_status(signal, CLEAN);
-					execute_effect(signal);
-				} else if ((flags & MAYBE_DIRTY) !== 0) {
-					set_signal_status(signal, CLEAN);
+		const previously_flushing_effect = is_flushing_effect;
+		is_flushing_effect = true;
+		try {
+			let i;
+			for (i = 0; i < length; i++) {
+				const signal = effects[i];
+				const flags = signal.f;
+				if ((flags & (DESTROYED | INERT)) === 0) {
+					if (is_signal_dirty(signal)) {
+						set_signal_status(signal, CLEAN);
+						execute_effect(signal);
+					} else if ((flags & MAYBE_DIRTY) !== 0) {
+						set_signal_status(signal, CLEAN);
+					}
 				}
 			}
+		} finally {
+			is_flushing_effect = previously_flushing_effect;
 		}
+
 		effects.length = 0;
 	}
 }
@@ -822,10 +824,7 @@ function update_derived(signal, force_schedule) {
 	updating_derived = true;
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
-	const status =
-		current_skip_consumer || (current_effect === null && (signal.f & UNOWNED) !== 0)
-			? DIRTY
-			: CLEAN;
+	const status = current_skip_consumer || (signal.f & UNOWNED) !== 0 ? DIRTY : CLEAN;
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
 	if (!equals(value, signal.v)) {
@@ -1083,7 +1082,10 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			mark_subtree_inert(references[i], inert, visited_blocks);
+			const reference = references[i];
+			if ((reference.f & IS_EFFECT) !== 0) {
+				mark_subtree_inert(references[i], inert, visited_blocks);
+			}
 		}
 	}
 }
@@ -1262,7 +1264,7 @@ export function destroy_signal(signal) {
 	const destroy = signal.y;
 	const flags = signal.f;
 	destroy_references(signal);
-	remove_consumers(signal, 0, true);
+	remove_consumers(signal, 0);
 	signal.i =
 		signal.r =
 		signal.y =
