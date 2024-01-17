@@ -171,4 +171,61 @@ describe('signals', () => {
 			}
 		};
 	});
+
+	test('effects correctly handle unowned derived values that do not change', () => {
+		const log: number[] = [];
+
+		let count = $.source(0);
+		const read = () => {
+			const x = $.derived(() => ({ count: $.get(count) }));
+			return $.get(x);
+		};
+		const derivedCount = $.derived(() => read().count);
+		$.user_effect(() => {
+			log.push($.get(derivedCount));
+		});
+
+		return () => {
+			$.flushSync(() => $.set(count, 1));
+			// Ensure we're not leaking consumers
+			assert.deepEqual(count.c?.length, 1);
+			$.flushSync(() => $.set(count, 2));
+			// Ensure we're not leaking consumers
+			assert.deepEqual(count.c?.length, 1);
+			$.flushSync(() => $.set(count, 3));
+			// Ensure we're not leaking consumers
+			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(log, [0, 1, 2, 3]);
+		};
+	});
+
+	let count = $.source(0);
+	let calc = $.derived(() => {
+		if ($.get(count) >= 2) {
+			return 'limit';
+		}
+		return $.get(count) * 2;
+	});
+
+	test('effect with derived using new derived every time', () => {
+		const log: Array<number | string> = [];
+
+		const effect = $.user_effect(() => {
+			log.push($.get(calc));
+		});
+
+		return () => {
+			$.flushSync(() => $.set(count, 1));
+			$.flushSync(() => $.set(count, 2));
+			$.flushSync(() => $.set(count, 3));
+			$.flushSync(() => $.set(count, 4));
+			$.flushSync(() => $.set(count, 0));
+			// Ensure we're not leaking consumers
+			assert.deepEqual(count.c?.length, 1);
+			assert.deepEqual(log, [0, 2, 'limit', 0]);
+			$.destroy_signal(effect);
+			// Ensure we're not leaking consumers
+			assert.deepEqual(count.c, null);
+		};
+	});
 });
