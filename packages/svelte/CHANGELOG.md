@@ -1,5 +1,17 @@
 # svelte
 
+## 4.2.9
+
+### Patch Changes
+
+- fix: add types for popover attributes and events ([#10042](https://github.com/sveltejs/svelte/pull/10042))
+
+- fix: add `gamepadconnected` and `gamepaddisconnected` events ([#9864](https://github.com/sveltejs/svelte/pull/9864))
+
+- fix: make `@types/estree` a dependency ([#10149](https://github.com/sveltejs/svelte/pull/10149))
+
+- fix: bump `axobject-query` ([#10167](https://github.com/sveltejs/svelte/pull/10167))
+
 ## 4.2.8
 
 ### Patch Changes
