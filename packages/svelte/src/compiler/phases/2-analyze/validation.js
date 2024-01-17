@@ -172,31 +172,37 @@ function validate_slot_attribute(context, attribute) {
 			error(attribute, 'invalid-slot-attribute');
 		}
 
-		if (owner.type === 'Component' || owner.type === 'SvelteComponent') {
+		if (
+			owner.type === 'Component' ||
+			owner.type === 'SvelteComponent' ||
+			owner.type === 'SvelteSelf'
+		) {
 			if (owner !== context.path.at(-2)) {
 				error(attribute, 'invalid-slot-placement');
 			}
-		}
 
-		const name = attribute.value[0].data;
-		if (context.state.component_slots.has(name)) {
-			error(attribute, 'duplicate-slot-name', name, owner.name);
-		}
-		context.state.component_slots.add(name);
+			const name = attribute.value[0].data;
 
-		if (name === 'default') {
-			for (const node of owner.fragment.nodes) {
-				if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-					continue;
-				}
+			if (context.state.component_slots.has(name)) {
+				error(attribute, 'duplicate-slot-name', name, owner.name);
+			}
 
-				if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-					if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+			context.state.component_slots.add(name);
+
+			if (name === 'default') {
+				for (const node of owner.fragment.nodes) {
+					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
 						continue;
 					}
-				}
 
-				error(node, 'invalid-default-slot-content');
+					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
+						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+							continue;
+						}
+					}
+
+					error(node, 'invalid-default-slot-content');
+				}
 			}
 		}
 	} else {
