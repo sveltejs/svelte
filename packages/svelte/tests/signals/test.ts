@@ -128,6 +128,27 @@ describe('signals', () => {
 		};
 	});
 
+	test('effect with derived using new derived every time', () => {
+		const log: number[] = [];
+
+		let count = $.source(0);
+		const read = () => {
+			const x = $.derived(() => ({ count: $.get(count) }));
+			return $.get(x);
+		};
+		const derivedCount = $.derived(() => read().count);
+		$.user_effect(() => {
+			log.push($.get(derivedCount));
+		});
+
+		return () => {
+			$.flushSync(() => $.set(count, 1));
+			$.flushSync(() => $.set(count, 2));
+
+			assert.deepEqual(log, [0, 1, 2]);
+		};
+	});
+
 	test('https://perf.js.hyoo.ru/#!bench=9h2as6_u0mfnn', () => {
 		let res: number[] = [];
 

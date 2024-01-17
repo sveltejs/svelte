@@ -84,10 +84,12 @@ export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
 let ignore_mutation_validation = false;
 
-// If we are working with a get() chain that has no active container,
-// to prevent memory leaks, we skip adding the consumer.
+/**
+ * If we are working with a get() chain that has no active container,
+ * to prevent memory leaks, we skip adding the consumer.
+ */
 let current_skip_consumer = false;
-// Handle collecting all signals which are read during a specific time frame
+/** Handle collecting all signals which are read during a specific time frame  */
 let is_signals_recorded = false;
 let captured_signals = new Set();
 
@@ -343,7 +345,8 @@ function execute_signal_fn(signal) {
 	current_consumer = signal;
 	current_block = signal.b;
 	current_component_context = signal.x;
-	current_skip_consumer = current_effect === null && (signal.f & UNOWNED) !== 0;
+	current_skip_consumer =
+		current_effect === null && (signal.f & UNOWNED) !== 0 && (signal.f & DERIVED) === 0;
 	current_untracking = false;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
