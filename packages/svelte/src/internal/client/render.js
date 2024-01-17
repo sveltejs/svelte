@@ -1347,6 +1347,8 @@ function handle_event_propagation(root_element, event) {
 
 	// @ts-expect-error is used above
 	event.__root = root_element;
+	// @ts-expect-error is used above
+	current_target = root_element;
 }
 
 /**
