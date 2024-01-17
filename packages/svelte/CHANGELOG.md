@@ -1,5 +1,17 @@
 # svelte
 
+## 5.0.0-next.37
+
+### Patch Changes
+
+- fix: skip certain slot validations for custom elements ([#10207](https://github.com/sveltejs/svelte/pull/10207))
+
+- fix: add compiler error for invalid <p> contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
+
+- fix: correctly apply event.currentTarget ([#10216](https://github.com/sveltejs/svelte/pull/10216))
+
+- fix: ensure derived signals properly capture consumers ([#10213](https://github.com/sveltejs/svelte/pull/10213))
+
 ## 5.0.0-next.36
 
 ### Patch Changes
