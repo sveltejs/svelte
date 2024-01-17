@@ -1,0 +1,16 @@
+
+	div.svelte-xyz > span.svelte-xyz {
+		background-color: red;
+	}
+
+	div.svelte-xyz span.svelte-xyz {
+		letter-spacing: 10px;
+	}
+
+	div.svelte-xyz span {
+		text-decoration: underline;
+	}
+
+	p.svelte-xyz span.svelte-xyz.svelte-xyz {
+		background: black;
+	}

@@ -58,7 +58,7 @@ export default class Selector {
 	apply(node) {
 		/** @type {Array<{ node: import('#compiler').RegularElement | import('#compiler').SvelteElement; block: Block }>} */
 		const to_encapsulate = [];
-		apply_selector(this.local_blocks.slice(), node, to_encapsulate);
+		apply_selector(this.local_blocks, node, to_encapsulate);
 		if (to_encapsulate.length > 0) {
 			to_encapsulate.forEach(({ node, block }) => {
 				this.stylesheet.nodes_with_css_class.add(node);
@@ -203,9 +203,16 @@ export default class Selector {
  * @param {Block[]} blocks
  * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} node
  * @param {Array<{ node: import('#compiler').RegularElement | import('#compiler').SvelteElement; block: Block }>} to_encapsulate
+ * @param {boolean} [has_render_tag]
  * @returns {boolean}
  */
-function apply_selector(blocks, node, to_encapsulate) {
+function apply_selector(
+	blocks,
+	node,
+	to_encapsulate,
+	has_render_tag = node?.fragment.nodes.some((n) => n.type === 'RenderTag')
+) {
+	blocks = blocks.slice();
 	const block = blocks.pop();
 	if (!block) return false;
 	if (!node) {
@@ -213,10 +220,19 @@ function apply_selector(blocks, node, to_encapsulate) {
 			(block.global && blocks.every((block) => block.global)) || (block.host && blocks.length === 0)
 		);
 	}
-	const applies = block_might_apply_to_node(block, node);
+
+	let applies = block_might_apply_to_node(block, node);
 
 	if (applies === NO_MATCH) {
-		return false;
+		if (has_render_tag) {
+			// If the element contains a render tag then we assume the selector might match something inside the rendered snippet
+			// and traverse the blocks upwards to see if the present blocks match our node further upwards.
+			// We could do more static analysis and check the render tag reference to see if this snippet block continues
+			// with elements that actually match the selector, but that would be a lot of work for little gain
+			return apply_selector(blocks, node, to_encapsulate, true);
+		} else {
+			return false;
+		}
 	}
 
 	if (applies === UNKNOWN_SELECTOR) {
@@ -225,7 +241,7 @@ function apply_selector(blocks, node, to_encapsulate) {
 	}
 
 	if (block.combinator) {
-		if (block.combinator.type === 'Combinator' && block.combinator.name === ' ') {
+		if (block.combinator.name === ' ') {
 			for (const ancestor_block of blocks) {
 				if (ancestor_block.global) {
 					continue;
@@ -234,7 +250,7 @@ function apply_selector(blocks, node, to_encapsulate) {
 					to_encapsulate.push({ node, block });
 					return true;
 				}
-				/** @type {import('#compiler').RegularElement | import('#compiler').SvelteElement | null} */
+				/** @type {ReturnType<typeof get_element_parent>} */
 				let parent = node;
 				while ((parent = get_element_parent(parent))) {
 					if (block_might_apply_to_node(ancestor_block, parent) !== NO_MATCH) {
@@ -250,10 +266,27 @@ function apply_selector(blocks, node, to_encapsulate) {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
+			// The inverse of the render tag logic above: mark the node as encapsulated if it's inside a snippet block.
+			// May result in false positives just like the render tag logic for the same reasons.
+			// TODO try to get rid of .parent in favor of path in the long run
+			if (node.parent?.type === 'SnippetBlock') {
+				to_encapsulate.push({ node, block });
+				return true;
+			}
 			return false;
 		} else if (block.combinator.name === '>') {
 			const has_global_parent = blocks.every((block) => block.global);
-			if (has_global_parent || apply_selector(blocks, get_element_parent(node), to_encapsulate)) {
+			if (
+				has_global_parent ||
+				apply_selector(blocks, get_element_parent(node), to_encapsulate, has_render_tag)
+			) {
+				to_encapsulate.push({ node, block });
+				return true;
+			}
+			// The inverse of the render tag logic above: mark the node as encapsulated if it's inside a snippet block.
+			// May result in false positives just like the render tag logic for the same reasons.
+			// TODO try to get rid of .parent in favor of path in the long run
+			if (node.parent?.type === 'SnippetBlock') {
 				to_encapsulate.push({ node, block });
 				return true;
 			}
@@ -273,7 +306,7 @@ function apply_selector(blocks, node, to_encapsulate) {
 				return true;
 			}
 			for (const possible_sibling of siblings.keys()) {
-				if (apply_selector(blocks.slice(), possible_sibling, to_encapsulate)) {
+				if (apply_selector(blocks, possible_sibling, to_encapsulate, has_render_tag)) {
 					to_encapsulate.push({ node, block });
 					has_match = true;
 				}
@@ -514,9 +547,10 @@ function get_element_parent(node) {
 		// @ts-expect-error TODO figure out a more elegant solution
 		(parent = parent.parent) &&
 		parent.type !== 'RegularElement' &&
-		parent.type !== 'SvelteElement'
+		parent.type !== 'SvelteElement' &&
+		parent.type !== 'SnippetBlock'
 	);
-	return parent ?? null;
+	return parent?.type !== 'SnippetBlock' ? parent ?? null : null;
 }
 
 /**
