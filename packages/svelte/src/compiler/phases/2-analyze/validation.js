@@ -256,6 +256,7 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 				tag === 'tbody' ||
 				tag === 'tfoot' ||
 				tag === 'thead' ||
+				tag === 'tr' ||
 				tag === 'style' ||
 				tag === 'script' ||
 				tag === 'template'
