@@ -436,21 +436,21 @@ function create_transition(dom, init, direction, effect) {
 				dispatch_event(dom, 'outrostart');
 				if (needs_reverse) {
 					const payload = transition.p;
-					const current_animation = /** @type {Animation} */ (animation);
 					// If we are working with CSS animations, then before we call reverse, we also need to ensure
 					// that we reverse the easing logic. To do this we need to re-create the keyframes so they're
 					// in reverse with easing properly reversed too.
-					if (
-						payload !== null &&
-						payload.css !== undefined &&
-						current_animation.playState === 'idle'
-					) {
+					if (payload !== null && payload.css !== undefined) {
 						const duration = payload.duration ?? 300;
 						const css_fn = payload.css;
 						const easing_fn = payload.easing || linear;
 						const keyframes = create_keyframes(easing_fn, css_fn, duration, direction, true);
+						const current_animation = /** @type {Animation} */ (animation);
 						const effect = current_animation.effect;
-						if (effect !== null) {
+						if (effect != null) {
+							// If we have an existing animation, we need to pause it and create a new animation
+							// with the new frames.
+							animation.pause();
+							create_animation();
 							// @ts-ignore
 							effect.setKeyframes(keyframes);
 						}
