@@ -379,13 +379,15 @@ function execute_signal_fn(signal) {
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
 				const full_current_dependencies_set =
-					current_dep_length > 16 ? new Set(full_current_dependencies) : null;
+					current_dep_length > 16 && deps_length - current_dependencies_index > 1
+						? new Set(full_current_dependencies)
+						: null;
 				for (i = current_dependencies_index; i < deps_length; i++) {
 					const dependency = dependencies[i];
 					if (
-						(full_current_dependencies_set !== null &&
-							!full_current_dependencies_set.has(dependency)) ||
-						!full_current_dependencies.includes(dependency)
+						full_current_dependencies_set !== null
+							? !full_current_dependencies_set.has(dependency)
+							: !full_current_dependencies.includes(dependency)
 					) {
 						remove_consumer(signal, dependency);
 					}
@@ -1084,7 +1086,7 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 		for (i = 0; i < references.length; i++) {
 			const reference = references[i];
 			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(references[i], inert, visited_blocks);
+				mark_subtree_inert(reference, inert, visited_blocks);
 			}
 		}
 	}

@@ -199,6 +199,7 @@ describe('signals', () => {
 		};
 	});
 
+	// outside of test function so that they are unowned signals
 	let count = $.source(0);
 	let calc = $.derived(() => {
 		if ($.get(count) >= 2) {
@@ -207,7 +208,7 @@ describe('signals', () => {
 		return $.get(count) * 2;
 	});
 
-	test('effect with derived using new derived every time', () => {
+	test('effect with derived using unowned derived every time', () => {
 		const log: Array<number | string> = [];
 
 		const effect = $.user_effect(() => {
