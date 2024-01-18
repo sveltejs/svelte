@@ -444,15 +444,13 @@ function create_transition(dom, init, direction, effect) {
 						const css_fn = payload.css;
 						const easing_fn = payload.easing || linear;
 						const keyframes = create_keyframes(easing_fn, css_fn, duration, direction, true);
-						const current_animation = /** @type {Animation} */ (animation);
-						const effect = current_animation.effect;
-						if (effect != null) {
+						if (/** @type {Animation} */ (animation).effect != null) {
 							// If we have an existing animation, we need to pause it and create a new animation
 							// with the new frames.
 							animation.pause();
 							create_animation();
 							// @ts-ignore
-							effect.setKeyframes(keyframes);
+							animation.effect.setKeyframes(keyframes);
 						}
 					}
 					/** @type {Animation | TickAnimation} */ (animation).reverse();
