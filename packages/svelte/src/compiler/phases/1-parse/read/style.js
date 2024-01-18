@@ -9,7 +9,7 @@ const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
 const REGEX_NTH_OF =
 	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_BRACE_OR_SEMICOLON = /;(?=(?:[^']*'[^']*')*[^']*$)/;
+const REGEX_BRACE_OR_SEMICOLON = /[{;](?=(?:[^']*'[^']*')*[^']*$)/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
