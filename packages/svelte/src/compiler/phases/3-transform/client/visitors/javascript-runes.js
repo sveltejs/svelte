@@ -154,6 +154,17 @@ export const javascript_visitors_runes = {
 
 		return { ...node, body };
 	},
+	ReturnStatement(node, { state, visit, next }) {
+		const rune = get_rune(node.argument, state.scope);
+		if (rune === '$state' && node.argument?.type === 'CallExpression') {
+			const value = /** @type {import('estree').Expression} **/ (visit(node.argument.arguments[0]));
+			return {
+				...node,
+				argument: b.call('$.proxy', value)
+			};
+		}
+		next();
+	},
 	VariableDeclaration(node, { state, visit }) {
 		const declarations = [];
 

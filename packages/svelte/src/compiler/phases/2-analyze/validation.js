@@ -8,6 +8,7 @@ import {
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
 import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
+import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -717,8 +718,21 @@ function validate_call_expression(node, scope, path) {
 
 	if (rune === '$state' || rune === '$derived') {
 		if (parent.type === 'VariableDeclarator') return;
+		if (
+			parent.type === 'ReturnStatement' &&
+			node.arguments.length === 1 &&
+			node.arguments[0].type !== 'SpreadElement' &&
+			should_proxy_or_freeze(node.arguments[0])
+		)
+			return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
+	}
+
+	if (rune === '$state.frozen') {
+		if (parent.type === 'VariableDeclarator') return;
+		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
+		error(node, 'invalid-state-frozen-location');
 	}
 
 	if (rune === '$effect' || rune === '$effect.pre') {
