@@ -6,7 +6,7 @@ import * as $ from '../../src/internal/client/runtime';
  * @param fn A function that returns a function because we first need to setup all the signals
  * 			 and then execute the test in order to simulate a real component
  */
-function run_test(runes: boolean, fn: () => () => void) {
+function run_test(runes: boolean, fn: (runes: boolean) => () => void) {
 	return () => {
 		// Create a component context to test runes vs legacy mode
 		$.push({}, runes);
@@ -14,7 +14,7 @@ function run_test(runes: boolean, fn: () => () => void) {
 		let execute: any;
 		const signal = $.render_effect(
 			() => {
-				execute = fn();
+				execute = fn(runes);
 			},
 			null,
 			true,
@@ -26,7 +26,7 @@ function run_test(runes: boolean, fn: () => () => void) {
 	};
 }
 
-function test(text: string, fn: () => any) {
+function test(text: string, fn: (runes: boolean) => any) {
 	it(`${text} (legacy mode)`, run_test(false, fn));
 	it(`${text} (runes mode)`, run_test(true, fn));
 }
@@ -226,6 +226,27 @@ describe('signals', () => {
 			$.destroy_signal(effect);
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c, null);
+		};
+	});
+
+	test('schedules rerun when writing to signal before reading it', (runes) => {
+		if (!runes) return () => {};
+
+		const value = $.source({ count: 0 });
+		$.user_effect(() => {
+			$.set(value, { count: 0 });
+			$.get(value);
+		});
+
+		return () => {
+			let errored = false;
+			try {
+				$.flushSync();
+			} catch (e: any) {
+				assert.include(e.message, 'ERR_SVELTE_TOO_MANY_UPDATES');
+				errored = true;
+			}
+			assert.equal(errored, true);
 		};
 	});
 });
