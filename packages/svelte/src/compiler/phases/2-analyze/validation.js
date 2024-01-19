@@ -7,6 +7,7 @@ import {
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
+import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -171,31 +172,37 @@ function validate_slot_attribute(context, attribute) {
 			error(attribute, 'invalid-slot-attribute');
 		}
 
-		if (owner.type === 'Component' || owner.type === 'SvelteComponent') {
+		if (
+			owner.type === 'Component' ||
+			owner.type === 'SvelteComponent' ||
+			owner.type === 'SvelteSelf'
+		) {
 			if (owner !== context.path.at(-2)) {
 				error(attribute, 'invalid-slot-placement');
 			}
-		}
 
-		const name = attribute.value[0].data;
-		if (context.state.component_slots.has(name)) {
-			error(attribute, 'duplicate-slot-name', name, owner.name);
-		}
-		context.state.component_slots.add(name);
+			const name = attribute.value[0].data;
 
-		if (name === 'default') {
-			for (const node of owner.fragment.nodes) {
-				if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-					continue;
-				}
+			if (context.state.component_slots.has(name)) {
+				error(attribute, 'duplicate-slot-name', name, owner.name);
+			}
 
-				if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-					if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+			context.state.component_slots.add(name);
+
+			if (name === 'default') {
+				for (const node of owner.fragment.nodes) {
+					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
 						continue;
 					}
-				}
 
-				error(node, 'invalid-default-slot-content');
+					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
+						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+							continue;
+						}
+					}
+
+					error(node, 'invalid-default-slot-content');
+				}
 			}
 		}
 	} else {
@@ -529,6 +536,28 @@ export const validation = {
 		if (context.state.parent_element) {
 			if (!is_tag_valid_with_parent(node.name, context.state.parent_element)) {
 				error(node, 'invalid-node-placement', `<${node.name}>`, context.state.parent_element);
+			}
+		}
+
+		if (interactive_elements.has(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (
+					parent.type === 'RegularElement' &&
+					parent.name === node.name &&
+					interactive_elements.has(parent.name)
+				) {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
+		if (disallowed_parapgraph_contents.includes(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'p') {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
 			}
 		}
 

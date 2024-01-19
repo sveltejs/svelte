@@ -1,5 +1,31 @@
 # svelte
 
+## 5.0.0-next.37
+
+### Patch Changes
+
+- fix: skip certain slot validations for custom elements ([#10207](https://github.com/sveltejs/svelte/pull/10207))
+
+- fix: add compiler error for invalid <p> contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
+
+- fix: correctly apply event.currentTarget ([#10216](https://github.com/sveltejs/svelte/pull/10216))
+
+- fix: ensure derived signals properly capture consumers ([#10213](https://github.com/sveltejs/svelte/pull/10213))
+
+## 5.0.0-next.36
+
+### Patch Changes
+
+- fix: transform textarea and contenteditable binding expressions ([#10187](https://github.com/sveltejs/svelte/pull/10187))
+
+- fix: improve transition outro easing ([#10190](https://github.com/sveltejs/svelte/pull/10190))
+
+- fix: ensure unstate() only deeply applies to plain objects and arrays ([#10191](https://github.com/sveltejs/svelte/pull/10191))
+
+- fix: improve invalid nested interactive element error ([#10199](https://github.com/sveltejs/svelte/pull/10199))
+
+- fix: react to mutated slot props in legacy mode ([#10197](https://github.com/sveltejs/svelte/pull/10197))
+
 ## 5.0.0-next.35
 
 ### Patch Changes

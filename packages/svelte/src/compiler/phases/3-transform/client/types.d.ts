@@ -29,9 +29,8 @@ export interface ComponentClientTransformState extends ClientTransformState {
 	readonly hoisted: Array<Statement | ModuleDeclaration>;
 	readonly events: Set<string>;
 
-	/** Stuff that happens before the render effect */
+	/** Stuff that happens before the render effect(s) */
 	readonly init: Statement[];
-
 	/** Stuff that happens inside separate render effects (due to call expressions) */
 	readonly update_effects: Statement[];
 	/** Stuff that happens inside the render effect */
@@ -42,7 +41,7 @@ export interface ComponentClientTransformState extends ClientTransformState {
 		/** Used if condition for singular prop is false (see comment above) */
 		grouped: Statement;
 	}[];
-	/** Stuff that happens after the render effect (bindings, actions) */
+	/** Stuff that happens after the render effect (control blocks, dynamic elements, bindings, actions, etc) */
 	readonly after_update: Statement[];
 	/** The HTML template string */
 	readonly template: string[];
