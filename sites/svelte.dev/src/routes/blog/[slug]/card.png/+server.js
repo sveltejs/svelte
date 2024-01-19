@@ -17,7 +17,7 @@ const font_data = await read(OverpassRegular).arrayBuffer();
 export async function GET({ params }) {
 	const post = await get_processed_blog_post(await get_blog_data(), params.slug);
 
-	if (!post) throw error(404);
+	if (!post) error(404);
 
 	// @ts-ignore
 	const result = Card.render({ post });

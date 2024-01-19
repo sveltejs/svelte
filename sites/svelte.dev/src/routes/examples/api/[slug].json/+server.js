@@ -12,7 +12,7 @@ export const GET = ({ params }) => {
 			.map((example) => example.slug)
 	);
 
-	if (!examples.has(params.slug)) throw error(404, 'Example not found');
+	if (!examples.has(params.slug)) error(404, 'Example not found');
 
 	return json(get_example(examples_data, params.slug));
 };

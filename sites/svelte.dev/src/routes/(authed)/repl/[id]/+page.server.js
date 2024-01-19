@@ -4,7 +4,7 @@ export async function load({ fetch, params, url }) {
 	const res = await fetch(`/repl/api/${params.id}.json`);
 
 	if (!res.ok) {
-		throw error(res.status);
+		error(res.status);
 	}
 
 	const gist = await res.json();
