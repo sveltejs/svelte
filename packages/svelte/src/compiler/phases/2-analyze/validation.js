@@ -721,7 +721,7 @@ function validate_call_expression(node, scope, path) {
 		if (
 			node.arguments.length === 1 &&
 			node.arguments[0].type !== 'SpreadElement' &&
-			should_proxy_or_freeze(node.arguments[0])
+			should_proxy_or_freeze(node.arguments[0], scope)
 		) {
 			return;
 		}
