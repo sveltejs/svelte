@@ -78,7 +78,7 @@ const parse = {
 	 * @param {string} reason
 	 */
 	'invalid-closing-tag-after-autoclose': (name, reason) =>
-		`</${name}> attempted to close element that was already automatically closed by <${reason}>`,
+		`</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`,
 	'invalid-dollar-binding': () =>
 		`The $ name is reserved, and cannot be used for variables and imports`,
 	'invalid-dollar-prefix': () =>
