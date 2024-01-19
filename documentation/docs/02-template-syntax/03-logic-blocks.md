@@ -221,3 +221,11 @@ When used around components, this will cause them to be reinstantiated and reini
 	<Component />
 {/key}
 ```
+
+Multiple expressions can be used in the same key block. They are joined with commas.
+
+```svelte
+{#key value, secondValue}
+	<Component />
+{/key}
+```
