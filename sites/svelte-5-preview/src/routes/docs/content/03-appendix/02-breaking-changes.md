@@ -111,3 +111,7 @@ This is not recommended, and is no longer possible in Svelte 5, where properties
 ### `null` and `undefined` become the empty string
 
 In Svelte 4, `null` and `undefined` were printed as the corresponding string. In 99 out of 100 cases you want this to become the empty string instead, which is also what most other frameworks out there do. Therefore, in Svelte 5, `null` and `undefined` become the empty string.
+
+### `bind:files` values can only be `null`, `undefined` or `FileList`
+
+`bind:files` is now a two-way binding. As such, when setting a value, it needs to be either falsy (`null` or `undefined`) or of type `FileList`.
