@@ -871,14 +871,10 @@ function serialize_inline_component(node, component_name, context) {
 	if (Object.keys(events).length > 0) {
 		const events_expression = b.object(
 			Object.keys(events).map((name) =>
-				b.prop(
-					'init',
-					b.id(name),
-					events[name].length > 1 ? b.array(events[name]) : events[name][0]
-				)
+				b.init(name, events[name].length > 1 ? b.array(events[name]) : events[name][0])
 			)
 		);
-		push_prop(b.prop('init', b.id('$$events'), events_expression));
+		push_prop(b.init('$$events', events_expression));
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -932,19 +928,18 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default') {
 			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
+				b.init(
+					'children',
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
 		} else {
-			serialized_slots.push(b.prop('init', b.key(slot_name), slot_fn));
+			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
 	}
 
 	if (serialized_slots.length > 0) {
-		push_prop(b.prop('init', b.id('$$slots'), b.object(serialized_slots)));
+		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
 	const props_expression =
