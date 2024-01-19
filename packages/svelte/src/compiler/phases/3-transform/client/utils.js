@@ -1,5 +1,5 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression } from '../../../utils/ast.js';
+import { extract_paths, is_simple_expression, unwrap_ts_expression } from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -223,10 +223,11 @@ function is_expression_async(expression) {
 export function serialize_set_binding(node, context, fallback, options) {
 	const { state, visit } = context;
 
+	const assignee = unwrap_ts_expression(node.left);
 	if (
-		node.left.type === 'ArrayPattern' ||
-		node.left.type === 'ObjectPattern' ||
-		node.left.type === 'RestElement'
+		assignee.type === 'ArrayPattern' ||
+		assignee.type === 'ObjectPattern' ||
+		assignee.type === 'RestElement'
 	) {
 		// Turn assignment into an IIFE, so that `$.set` calls etc don't produce invalid code
 		const tmp_id = context.state.scope.generate('tmp');
@@ -237,7 +238,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 		/** @type {import('estree').Expression[]} */
 		const assignments = [];
 
-		const paths = extract_paths(node.left);
+		const paths = extract_paths(assignee);
 
 		for (const path of paths) {
 			const value = path.expression?.(b.id(tmp_id));
@@ -275,11 +276,11 @@ export function serialize_set_binding(node, context, fallback, options) {
 		}
 	}
 
-	if (node.left.type !== 'Identifier' && node.left.type !== 'MemberExpression') {
-		error(node, 'INTERNAL', `Unexpected assignment type ${node.left.type}`);
+	if (assignee.type !== 'Identifier' && assignee.type !== 'MemberExpression') {
+		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
 	}
 
-	let left = node.left;
+	let left = assignee;
 
 	// Handle class private/public state assignment cases
 	while (left.type === 'MemberExpression') {
@@ -342,7 +343,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 			}
 		}
 		// @ts-expect-error
-		left = left.object;
+		left = unwrap_ts_expression(left.object);
 	}
 
 	if (left.type !== 'Identifier') {

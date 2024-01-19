@@ -338,9 +338,11 @@ export const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		let left = node.expression;
+		const assignee = unwrap_ts_expression(node.expression);
+		let left = assignee;
+
 		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
+			left = unwrap_ts_expression(/** @type {import('estree').MemberExpression} */ (left.object));
 		}
 
 		if (left.type !== 'Identifier') {
@@ -348,7 +350,7 @@ export const validation = {
 		}
 
 		if (
-			node.expression.type === 'Identifier' &&
+			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
 			const binding = context.state.scope.get(left.name);

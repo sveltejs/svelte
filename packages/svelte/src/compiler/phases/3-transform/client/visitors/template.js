@@ -3,7 +3,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_ts_expression
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -2579,24 +2580,9 @@ export const template_visitors = {
 	},
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
-
-		/** @type {import('estree').Expression[]} */
-		const properties = [];
-
-		let expression = node.expression;
-		while (expression.type === 'MemberExpression') {
-			properties.unshift(
-				expression.computed
-					? /** @type {import('estree').Expression} */ (expression.property)
-					: b.literal(/** @type {import('estree').Identifier} */ (expression.property).name)
-			);
-			expression = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
-				expression.object
-			);
-		}
-
-		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
-		const assignment = b.assignment('=', node.expression, b.id('$$value'));
+		const expression = unwrap_ts_expression(node.expression);
+		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
+		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
 			serialize_set_binding(
@@ -2716,7 +2702,7 @@ export const template_visitors = {
 						setter,
 						/** @type {import('estree').Expression} */ (
 							// if expression is not an identifier, we know it can't be a signal
-							node.expression.type === 'Identifier' ? node.expression : undefined
+							expression.type === 'Identifier' ? expression : undefined
 						)
 					);
 					break;
@@ -2765,7 +2751,7 @@ export const template_visitors = {
 							group_getter = b.thunk(
 								b.block([
 									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(/** @type {import('estree').Expression} */ (visit(node.expression)))
+									b.return(/** @type {import('estree').Expression} */ (visit(expression)))
 								])
 							);
 						}
