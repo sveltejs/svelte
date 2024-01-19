@@ -75,6 +75,7 @@ export const Runes = /** @type {const} */ ([
 	'$state.frozen',
 	'$props',
 	'$derived',
+	'$derived.fn',
 	'$effect',
 	'$effect.pre',
 	'$effect.active',

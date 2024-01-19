@@ -670,7 +670,13 @@ const runes_scope_js_tweaker = {
 		const callee = node.init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived') return;
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.fn'
+		)
+			return;
 
 		for (const path of extract_paths(node.id)) {
 			// @ts-ignore this fails in CI for some insane reason
@@ -700,7 +706,13 @@ const runes_scope_tweaker = {
 		const callee = init.callee;
 		if (callee.type !== 'Identifier' && callee.type !== 'MemberExpression') return;
 
-		if (rune !== '$state' && rune !== '$state.frozen' && rune !== '$derived' && rune !== '$props')
+		if (
+			rune !== '$state' &&
+			rune !== '$state.frozen' &&
+			rune !== '$derived' &&
+			rune !== '$derived.fn' &&
+			rune !== '$props'
+		)
 			return;
 
 		for (const path of extract_paths(node.id)) {
@@ -711,7 +723,7 @@ const runes_scope_tweaker = {
 					? 'state'
 					: rune === '$state.frozen'
 						? 'frozen_state'
-						: rune === '$derived'
+						: rune === '$derived' || rune === '$derived.fn'
 							? 'derived'
 							: path.is_rest
 								? 'rest_prop'
