@@ -1,35 +1,35 @@
 {
 	"css": {
 		"type": "Style",
-		"start": 0,
-		"end": 137,
+		"start": 36,
+		"end": 174,
 		"attributes": [],
 		"children": [
 			{
 				"type": "Atrule",
-				"start": 9,
-				"end": 97,
+				"start": 45,
+				"end": 135,
 				"name": "import",
-				"prelude": "url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap')",
+				"prelude": "url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\")",
 				"block": null
 			},
 			{
 				"type": "Rule",
 				"prelude": {
 					"type": "SelectorList",
-					"start": 100,
-					"end": 102,
+					"start": 137,
+					"end": 139,
 					"children": [
 						{
 							"type": "Selector",
-							"start": 100,
-							"end": 102,
+							"start": 137,
+							"end": 139,
 							"children": [
 								{
 									"type": "TypeSelector",
 									"name": "h1",
-									"start": 100,
-									"end": 102
+									"start": 137,
+									"end": 139
 								}
 							]
 						}
@@ -37,35 +37,63 @@
 				},
 				"block": {
 					"type": "Block",
-					"start": 103,
-					"end": 128,
+					"start": 140,
+					"end": 165,
 					"children": [
 						{
 							"type": "Declaration",
-							"start": 107,
-							"end": 124,
+							"start": 144,
+							"end": 161,
 							"property": "font-weight",
 							"value": "bold"
 						}
 					]
 				},
-				"start": 100,
-				"end": 128
+				"start": 137,
+				"end": 165
 			}
 		],
 		"content": {
-			"start": 7,
-			"end": 129,
-			"styles": "\n\t@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');\n\n\th1 {\n\t\tfont-weight: bold;\n\t}\n"
+			"start": 43,
+			"end": 166,
+			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t}\n"
 		}
 	},
 	"js": [],
-	"start": null,
-	"end": null,
+	"start": 0,
+	"end": 35,
 	"type": "Root",
 	"fragment": {
 		"type": "Fragment",
-		"nodes": [],
+		"nodes": [
+			{
+				"type": "RegularElement",
+				"start": 0,
+				"end": 35,
+				"name": "h1",
+				"attributes": [],
+				"fragment": {
+					"type": "Fragment",
+					"nodes": [
+						{
+							"type": "Text",
+							"start": 4,
+							"end": 30,
+							"raw": "\n\tSemicolon inside quotes\n",
+							"data": "\n\tSemicolon inside quotes\n"
+						}
+					],
+					"transparent": true
+				}
+			},
+			{
+				"type": "Text",
+				"start": 35,
+				"end": 36,
+				"raw": "\n",
+				"data": "\n"
+			}
+		],
 		"transparent": false
 	},
 	"options": null
