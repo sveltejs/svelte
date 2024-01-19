@@ -174,7 +174,7 @@ const runes = {
 	'invalid-derived-location': () =>
 		`$derived() can only be used as a variable declaration initializer or a class field`,
 	'invalid-state-location': () =>
-		`$state() can only be used as a variable declaration initializer, a class field or a return statement if passed an object or array`,
+		`$state() can only be used as a variable declaration initializer, a class field or if passed an object or array, can be used as an expression`,
 	'invalid-state-frozen-location': () =>
 		`$state.frozen() can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,

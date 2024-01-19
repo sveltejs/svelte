@@ -719,12 +719,12 @@ function validate_call_expression(node, scope, path) {
 	if (rune === '$state' || rune === '$derived') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (
-			parent.type === 'ReturnStatement' &&
 			node.arguments.length === 1 &&
 			node.arguments[0].type !== 'SpreadElement' &&
 			should_proxy_or_freeze(node.arguments[0])
-		)
+		) {
 			return;
+		}
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');
 	}

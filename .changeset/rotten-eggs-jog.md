@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: loosen restrictions on $state rune for return statements
+fix: loosen restrictions on $state rune when passed objects or arrays
