@@ -13,7 +13,7 @@ export async function load({ params }) {
 	const data = await get_docs_data();
 	const processed_page = await get_parsed_docs(data, params.slug);
 
-	if (!processed_page) throw error(404);
+	if (!processed_page) error(404);
 
 	return { page: processed_page };
 }

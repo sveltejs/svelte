@@ -14,9 +14,10 @@
   "devDependencies": {
     "@fontsource/fira-mono": "^5.0.8",
     "@sveltejs/adapter-static": "^3.0.1",
-    "@sveltejs/adapter-vercel": "^5.1.0",
+    "@sveltejs/adapter-vercel": "^4.0.0",
     "@sveltejs/kit": "^2.4.1",
     "@sveltejs/site-kit": "5.2.2",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@types/marked": "^6.0.0",
     "esrap": "^1.2.1",
     "marked": "^9.0.0",

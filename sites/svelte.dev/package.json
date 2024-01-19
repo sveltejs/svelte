@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.0",
-    "@sveltejs/adapter-vercel": "^5.1.0",
+    "@sveltejs/adapter-vercel": "^4.0.0",
     "@sveltejs/kit": "^2.4.1",
     "@sveltejs/site-kit": "5.2.2",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
