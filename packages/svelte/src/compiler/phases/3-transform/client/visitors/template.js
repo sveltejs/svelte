@@ -2581,7 +2581,7 @@ export const template_visitors = {
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
 		const expression = unwrap_ts_expression(node.expression);
-		const getter = b.thunk(/** @type {import('estree').Expression} */ (expression));
+		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
 		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
