@@ -1,4 +1,3 @@
-import { error } from '../errors.js';
 import * as b from '../utils/builders.js';
 
 /**
@@ -7,10 +6,13 @@ import * as b from '../utils/builders.js';
  * @returns {import('estree').Identifier | null}
  */
 export function object(expression) {
+	expression = unwrap_ts_expression(expression);
+
 	while (expression.type === 'MemberExpression') {
 		expression = /** @type {import('estree').MemberExpression | import('estree').Identifier} */ (
 			expression.object
 		);
+		expression = unwrap_ts_expression(expression);
 	}
 
 	if (expression.type !== 'Identifier') {
@@ -270,6 +272,9 @@ function _extract_paths(assignments = [], param, expression, update_expression) 
  * The Acorn TS plugin defines `foo!` as a `TSNonNullExpression` node, and
  * `foo as Bar` as a `TSAsExpression` node. This function unwraps those.
  *
+ * We can't just remove the typescript AST nodes in the parser stage because subsequent
+ * parsing would fail, since AST start/end nodes would point at the wrong positions.
+ *
  * @template {import('#compiler').SvelteNode | undefined | null} T
  * @param {T} node
  * @returns {T}
@@ -279,8 +284,14 @@ export function unwrap_ts_expression(node) {
 		return node;
 	}
 
-	// @ts-expect-error these types don't exist on the base estree types
-	if (node.type === 'TSNonNullExpression' || node.type === 'TSAsExpression') {
+	if (
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSNonNullExpression' ||
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSAsExpression' ||
+		// @ts-expect-error these types don't exist on the base estree types
+		node.type === 'TSSatisfiesExpression'
+	) {
 		// @ts-expect-error
 		return node.expression;
 	}
