@@ -1711,12 +1711,13 @@ export const template_visitors = {
 		const declaration = node.declaration.declarations[0];
 		// TODO we can almost certainly share some code with $derived(...)
 		if (declaration.id.type === 'Identifier') {
+			// debugger
 			state.init.push(
 				b.const(
 					declaration.id,
 					b.call(
 						'$.derived',
-						b.thunk(/** @type {import('estree').Expression} */ (visit(declaration.init)))
+						b.arrow([], /** @type {import('estree').Expression} */ (visit(declaration.init)))
 					)
 				)
 			);
