@@ -85,11 +85,14 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.proxy', init) : init)
+								? b.call(
+										'$.source',
+										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
+									)
 								: field.kind === 'frozen_state'
 									? b.call(
 											'$.source',
-											should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init
+											should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
 										)
 									: b.call('$.derived', b.thunk(init));
 					} else {
@@ -238,7 +241,7 @@ export const javascript_visitors_runes = {
 				 */
 				const create_state_declarator = (id, value) => {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					if (should_proxy_or_freeze(value)) {
+					if (should_proxy_or_freeze(value, state.scope)) {
 						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
 					}
 					if (is_state_source(binding, state)) {
