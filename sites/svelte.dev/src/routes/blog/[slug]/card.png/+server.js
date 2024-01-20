@@ -5,11 +5,14 @@ import satori from 'satori';
 import { html as toReactNode } from 'satori-html';
 import Card from './Card.svelte';
 import OverpassRegular from './Overpass-Regular.ttf';
+import { read } from '$app/server';
 
 const height = 630;
 const width = 1200;
 
 export const prerender = true;
+
+const font_data = await read(OverpassRegular).arrayBuffer();
 
 export async function GET({ params }) {
 	const post = await get_processed_blog_post(await get_blog_data(), params.slug);
@@ -24,7 +27,7 @@ export async function GET({ params }) {
 		fonts: [
 			{
 				name: 'Overpass',
-				data: Buffer.from(OverpassRegular),
+				data: font_data,
 				style: 'normal',
 				weight: 400
 			}

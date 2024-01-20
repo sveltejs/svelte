@@ -1,9 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { browserslistToTargets } from 'lightningcss';
-import { readFile } from 'node:fs/promises';
 import browserslist from 'browserslist';
 
-const plugins = [raw(['.ttf']), sveltekit()];
+/** @type {any[]} */
+const plugins = [sveltekit()];
 
 // Only enable sharp if we're not in a webcontainer env
 if (!process.versions.webcontainer) {
@@ -18,22 +18,6 @@ if (!process.versions.webcontainer) {
 			}
 		})
 	);
-}
-
-/**
- * @param {string[]} ext
- * @returns {import("vite").Plugin}
- */
-function raw(ext) {
-	return {
-		name: 'vite-plugin-raw',
-		async transform(_, id) {
-			if (ext.some((e) => id.endsWith(e))) {
-				const buffer = await readFile(id);
-				return { code: `export default ${JSON.stringify(buffer)}`, map: null };
-			}
-		}
-	};
 }
 
 /** @type {import('vite').UserConfig} */
