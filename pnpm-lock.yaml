@@ -175,10 +175,10 @@ importers:
   sites/svelte-5-preview:
     dependencies:
       '@codemirror/autocomplete':
-        specifier: ^6.12.0
+        specifier: ^6.9.1
         version: 6.12.0(@codemirror/language@6.10.0)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0)(@lezer/common@1.2.1)
       '@codemirror/commands':
-        specifier: ^6.3.3
+        specifier: ^6.3.0
         version: 6.3.3
       '@codemirror/lang-css':
         specifier: ^6.2.1
@@ -190,29 +190,29 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       '@codemirror/lang-markdown':
-        specifier: ^6.2.4
+        specifier: ^6.2.1
         version: 6.2.4
       '@codemirror/language':
-        specifier: ^6.10.0
+        specifier: ^6.9.1
         version: 6.10.0
       '@codemirror/lint':
         specifier: ^6.4.2
         version: 6.4.2
       '@codemirror/state':
-        specifier: ^6.4.0
+        specifier: ^6.2.1
         version: 6.4.0
       '@codemirror/view':
-        specifier: ^6.23.0
+        specifier: ^6.21.2
         version: 6.23.0
       '@jridgewell/sourcemap-codec':
         specifier: ^1.4.15
         version: 1.4.15
       '@lezer/highlight':
-        specifier: ^1.2.0
+        specifier: ^1.1.6
         version: 1.2.0
       '@neocodemirror/svelte':
-        specifier: 0.0.17
-        version: 0.0.17(@codemirror/autocomplete@6.12.0)(@codemirror/commands@6.3.3)(@codemirror/language@6.10.0)(@codemirror/lint@6.4.2)(@codemirror/search@6.5.5)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0)
+        specifier: 0.0.15
+        version: 0.0.15(@codemirror/autocomplete@6.12.0)(@codemirror/commands@6.3.3)(@codemirror/language@6.10.0)(@codemirror/lint@6.4.2)(@codemirror/search@6.5.5)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0)
       '@replit/codemirror-lang-svelte':
         specifier: ^6.0.0
         version: 6.0.0(@codemirror/autocomplete@6.12.0)(@codemirror/lang-css@6.2.1)(@codemirror/lang-html@6.4.7)(@codemirror/lang-javascript@6.2.1)(@codemirror/language@6.10.0)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0)(@lezer/common@1.2.1)(@lezer/highlight@1.2.0)(@lezer/javascript@1.4.13)(@lezer/lr@1.3.14)
@@ -223,7 +223,7 @@ importers:
         specifier: ^3.28.0
         version: 3.29.4
       acorn:
-        specifier: ^8.11.3
+        specifier: ^8.10.0
         version: 8.11.3
       codemirror:
         specifier: ^6.0.1
@@ -232,13 +232,13 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       marked:
-        specifier: ^11.1.1
-        version: 11.1.1
+        specifier: ^7.0.2
+        version: 7.0.5
       resolve.exports:
         specifier: ^2.0.2
         version: 2.0.2
       svelte-json-tree:
-        specifier: ^2.2.0
+        specifier: ^2.1.0
         version: 2.2.0(svelte@4.2.9)
       zimmerframe:
         specifier: ^1.1.0
@@ -1734,28 +1734,6 @@ packages:
       nanostores: 0.8.1
     dev: false
 
-  /@neocodemirror/svelte@0.0.17(@codemirror/autocomplete@6.12.0)(@codemirror/commands@6.3.3)(@codemirror/language@6.10.0)(@codemirror/lint@6.4.2)(@codemirror/search@6.5.5)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0):
-    resolution: {integrity: sha512-595s74TS8X602LLjgAiGJ7dDdCUJuUuBsvPpDSHoIoTCBJpImSG/ySEtKN0RdzCM8dOLK8ZSYJ4eqxpshg+ZWA==}
-    peerDependencies:
-      '@codemirror/autocomplete': ^6.8.1
-      '@codemirror/commands': ^6.2.4
-      '@codemirror/language': ^6.8.0
-      '@codemirror/lint': ^6.4.0
-      '@codemirror/search': ^6.5.0
-      '@codemirror/state': ^6.2.1
-      '@codemirror/view': ^6.14.0
-    dependencies:
-      '@codemirror/autocomplete': 6.12.0(@codemirror/language@6.10.0)(@codemirror/state@6.4.0)(@codemirror/view@6.23.0)(@lezer/common@1.2.1)
-      '@codemirror/commands': 6.3.3
-      '@codemirror/language': 6.10.0
-      '@codemirror/lint': 6.4.2
-      '@codemirror/search': 6.5.5
-      '@codemirror/state': 6.4.0
-      '@codemirror/view': 6.23.0
-      csstype: 3.1.3
-      nanostores: 0.9.5
-    dev: false
-
   /@nodelib/fs.scandir@2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -2459,7 +2437,7 @@ packages:
     resolution: {integrity: sha512-jmjpa4BwUsmhxcfsgUit/7A9KbrC48Q0q8KvnY107ogcjGgTFDlIL3RpihNpx2Mu1hM4mdFQjoVc4O6JoGKHsA==}
     deprecated: This is a stub types definition. marked provides its own type definitions, so you do not need this installed.
     dependencies:
-      marked: 11.1.1
+      marked: 7.0.5
     dev: true
 
   /@types/minimist@1.2.5:
@@ -5255,12 +5233,18 @@ packages:
     resolution: {integrity: sha512-EgxRjgK9axsQuUa/oKMx5DEY8oXpKJfk61rT5iY3aRlgU6QJtUcxU5OAymdhCvWvhYcd9FKmO5eQoX8m9VGJXg==}
     engines: {node: '>= 18'}
     hasBin: true
+    dev: true
 
   /marked@5.1.2:
     resolution: {integrity: sha512-ahRPGXJpjMjwSOlBoTMZAK7ATXkli5qCPxZ21TG44rx1KEo44bii4ekgTDQPNRQ4Kh7JMb9Ub1PVk1NxRSsorg==}
     engines: {node: '>= 16'}
     hasBin: true
     dev: false
+
+  /marked@7.0.5:
+    resolution: {integrity: sha512-lwNAFTfXgqpt/XvK17a/8wY9/q6fcSPZT1aP6QW0u74VwaJF/Z9KbRcX23sWE4tODM+AolJNcUtErTkgOeFP/Q==}
+    engines: {node: '>= 16'}
+    hasBin: true
 
   /mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
@@ -5453,11 +5437,6 @@ packages:
   /nanostores@0.8.1:
     resolution: {integrity: sha512-1ZCfQtII2XeFDrtqXL2cdQ/diGrLxzRB3YMyQjn8m7GSGQrJfGST2iuqMpWnS/ZlifhtjgR/SX0Jy6Uij6lRLA==}
     engines: {node: ^16.0.0 || >=18.0.0}
-    dev: false
-
-  /nanostores@0.9.5:
-    resolution: {integrity: sha512-Z+p+g8E7yzaWwOe5gEUB2Ox0rCEeXWYIZWmYvw/ajNYX8DlXdMvMDj8DWfM/subqPAcsf8l8Td4iAwO1DeIIRQ==}
-    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     dev: false
 
   /natural-compare@1.4.0:
