@@ -46,7 +46,7 @@
     "@neocodemirror/svelte": "0.0.17",
     "@replit/codemirror-lang-svelte": "^6.0.0",
     "@rich_harris/svelte-split-pane": "^1.1.1",
-    "@rollup/browser": "^4.9.5",
+    "@rollup/browser": "^3.28.0",
     "acorn": "^8.11.3",
     "codemirror": "^6.0.1",
     "esm-env": "^1.0.0",

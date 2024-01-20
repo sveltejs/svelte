@@ -220,8 +220,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(svelte@4.2.9)
       '@rollup/browser':
-        specifier: ^4.9.5
-        version: 4.9.5
+        specifier: ^3.28.0
+        version: 3.29.4
       acorn:
         specifier: ^8.11.3
         version: 8.11.3
@@ -1968,12 +1968,6 @@ packages:
 
   /@rollup/browser@3.29.4:
     resolution: {integrity: sha512-qkWkilNBn+90/9Xn2stuwFpXYhG/mZVPlDkTIPdQSEtJES0NS4o4atceEqeGeHOjQREY2jaIv7ld3IajA/Bmfw==}
-    dev: false
-
-  /@rollup/browser@4.9.5:
-    resolution: {integrity: sha512-9oJvxHyYEVCedoHmMGg5abu/Ph+euRIqxC8REzqo8Dn1ajoGUfrs68aE0wzJEEVBS/Ll/PsixyZKJrQbr7Se0A==}
-    dependencies:
-      '@types/estree': 1.0.5
     dev: false
 
   /@rollup/plugin-commonjs@25.0.7(rollup@4.9.5):
