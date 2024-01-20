@@ -137,12 +137,8 @@ declare module 'svelte' {
 	 * <Component on:close={handleCloseEvent} />
 	 * ```
 	 */
-	export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
-		any,
-		infer Events
-	>
-		? Events
-		: never;
+	export type ComponentEvents<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 	/**
 	 * Convenience type to get the props the given component expects. Example:
@@ -155,9 +151,8 @@ declare module 'svelte' {
 	 * </script>
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
-		? Props
-		: never;
+	export type ComponentProps<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<infer Props> ? Props : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -1985,9 +1980,8 @@ declare module 'svelte/store' {
 		| Array<Readable<any>>;
 
 	/** One or more values from `Readable` stores. */
-	type StoresValues<T> = T extends Readable<infer U>
-		? U
-		: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+	type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
