@@ -104,8 +104,17 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				let anchor = block.a;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 				if (is_controlled) {
-					anchor = empty();
-					block.a.appendChild(anchor);
+					// If the each block is controlled, then the anchor node will be the surrounding
+					// element in which the each block is rendered, which requires certain handling
+					// depending on whether we're in hydration mode or not
+					if (current_hydration_fragment === null) {
+						// Create a new anchor on the fly because there's none due to the optimization
+						anchor = empty();
+						block.a.appendChild(anchor);
+					} else {
+						// In case of hydration the anchor will be the first child of the surrounding element
+						anchor = /** @type {Comment} */ (anchor.firstChild);
+					}
 				}
 				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
 				fallback.d = block.d;
