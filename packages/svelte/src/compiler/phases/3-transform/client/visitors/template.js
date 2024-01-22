@@ -1554,8 +1554,6 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				// Optimization path for each blocks. If the parent isn't a fragment and it only has
-				// a single child, then we can classify the block as being "controlled".
 				if (
 					node.type === 'EachBlock' &&
 					nodes.length === 1 &&
