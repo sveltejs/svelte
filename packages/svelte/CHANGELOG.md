@@ -6,7 +6,7 @@
 
 - fix: skip certain slot validations for custom elements ([#10207](https://github.com/sveltejs/svelte/pull/10207))
 
-- fix: add compiler error for invalid <p> contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
+- fix: add compiler error for invalid `<p>` contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
 
 - fix: correctly apply event.currentTarget ([#10216](https://github.com/sveltejs/svelte/pull/10216))
 
