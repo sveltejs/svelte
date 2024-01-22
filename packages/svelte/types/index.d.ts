@@ -137,12 +137,8 @@ declare module 'svelte' {
 	 * <Component on:close={handleCloseEvent} />
 	 * ```
 	 */
-	export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
-		any,
-		infer Events
-	>
-		? Events
-		: never;
+	export type ComponentEvents<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 	/**
 	 * Convenience type to get the props the given component expects. Example:
@@ -155,9 +151,8 @@ declare module 'svelte' {
 	 * </script>
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
-		? Props
-		: never;
+	export type ComponentProps<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<infer Props> ? Props : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -1983,6 +1978,10 @@ declare module 'svelte/store' {
 		| Readable<any>
 		| [Readable<any>, ...Array<Readable<any>>]
 		| Array<Readable<any>>;
+
+	/** One or more values from `Readable` stores. */
+	type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -1999,8 +1998,20 @@ declare module 'svelte/store' {
 	 * @param value initial value
 	 * */
 	export function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
-
-	export function derived<S extends Stores, T>(stores: S, fn: Function, initial_value?: T | undefined): Readable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *

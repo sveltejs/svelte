@@ -13,6 +13,5 @@ export type Stores =
 	| Array<Readable<any>>;
 
 /** One or more values from `Readable` stores. */
-export type StoresValues<T> = T extends Readable<infer U>
-	? U
-	: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+export type StoresValues<T> =
+	T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };

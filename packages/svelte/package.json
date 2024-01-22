@@ -99,16 +99,16 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.19",
+    "@jridgewell/trace-mapping": "^0.3.22",
     "@playwright/test": "^1.35.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
-    "@types/aria-query": "^5.0.3",
-    "dts-buddy": "^0.4.3",
-    "esbuild": "^0.19.2",
-    "rollup": "^4.1.5",
+    "@types/aria-query": "^5.0.4",
+    "dts-buddy": "^0.4.4",
+    "esbuild": "^0.19.11",
+    "rollup": "^4.9.5",
     "source-map": "^0.7.4",
     "tiny-glob": "^0.2.9"
   },
@@ -116,15 +116,15 @@
     "@ampproject/remapping": "^2.2.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "@types/estree": "^1.0.5",
-    "acorn": "^8.10.0",
+    "acorn": "^8.11.3",
     "acorn-typescript": "^1.4.13",
     "aria-query": "^5.3.0",
     "axobject-query": "^4.0.0",
     "esm-env": "^1.0.0",
     "esrap": "^1.2.1",
-    "is-reference": "^3.0.1",
+    "is-reference": "^3.0.2",
     "locate-character": "^3.0.0",
-    "magic-string": "^0.30.4",
+    "magic-string": "^0.30.5",
     "zimmerframe": "^1.1.0"
   }
 }
