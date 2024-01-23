@@ -1966,7 +1966,11 @@ function deep_read(value, visited = new Set()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		visited.add(value);
 		for (let key in value) {
-			deep_read(value[key], visited);
+			try {
+				deep_read(value[key], visited);
+			} catch (e) {
+				// continue
+			}
 		}
 		const proto = Object.getPrototypeOf(value);
 		if (
@@ -1980,7 +1984,11 @@ function deep_read(value, visited = new Set()) {
 			for (let key in descriptors) {
 				const get = descriptors[key].get;
 				if (get) {
-					get.call(value);
+					try {
+						get.call(value);
+					} catch (e) {
+						// continue
+					}
 				}
 			}
 		}
