@@ -76,7 +76,7 @@ Assignments to destructured parts of a `@const` declaration are no longer allowe
 
 ### Stricter CSS `:global` selector validation
 
-Previously, a selector like `.foo :global(bar).baz` was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
+Previously, a compound selector starting with a global modifier which has universal or type selectors (like `:global(span).foo`) was valid. In Svelte 5, this is a validation error instead. The reason is that in this selector the resulting CSS would be equivalent to one without `:global` - in other words, `:global` is ignored in this case.
 
 ### CSS hash position no longer deterministic
 
