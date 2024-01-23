@@ -320,7 +320,9 @@ export function readonly(value) {
 	) {
 		const proxy = new Proxy(
 			value,
-			/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject<U>>} */ (readonly_handler)
+			/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject<U>>} */ (
+				readonly_proxy_handler
+			)
 		);
 		define_property(value, READONLY_SYMBOL, { value: proxy, writable: false });
 		return proxy;
@@ -341,7 +343,7 @@ const readonly_error = (_, prop) => {
 };
 
 /** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject>} */
-const readonly_handler = {
+const readonly_proxy_handler = {
 	defineProperty: readonly_error,
 	deleteProperty: readonly_error,
 	set: readonly_error,
