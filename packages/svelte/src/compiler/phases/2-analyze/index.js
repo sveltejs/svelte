@@ -924,6 +924,7 @@ const common_visitors = {
 				((binding.kind === 'state' &&
 					(binding.reassigned ||
 						(binding.initial?.type === 'CallExpression' &&
+							binding.initial.arguments.length === 1 &&
 							binding.initial.arguments[0].type !== 'SpreadElement' &&
 							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||

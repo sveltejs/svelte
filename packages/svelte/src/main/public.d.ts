@@ -136,8 +136,12 @@ export class SvelteComponentTyped<
  * <Component on:close={handleCloseEvent} />
  * ```
  */
-export type ComponentEvents<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<any, infer Events> ? Events : never;
+export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
+	any,
+	infer Events
+>
+	? Events
+	: never;
 
 /**
  * Convenience type to get the props the given component expects. Example:
@@ -150,8 +154,9 @@ export type ComponentEvents<Comp extends SvelteComponent> =
  * </script>
  * ```
  */
-export type ComponentProps<Comp extends SvelteComponent> =
-	Comp extends SvelteComponent<infer Props> ? Props : never;
+export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
+	? Props
+	: never;
 
 /**
  * Convenience type to get the type of a Svelte component. Useful for example in combination with
