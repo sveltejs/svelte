@@ -244,26 +244,32 @@ const handler = {
 		const is_array = metadata.a;
 		const not_has = !(prop in target);
 
+		// variable.length = value -> clear all signals with index >= value
 		if (is_array && prop === 'length') {
 			for (let i = value; i < target.length; i += 1) {
 				const s = metadata.s.get(i + '');
 				if (s !== undefined) set(s, UNINITIALIZED);
 			}
 		}
-		if (not_has) {
-			update(metadata.v);
-		}
+
+		// Set the new value before updating any signals so that any listeners get the new value
 		// @ts-ignore
 		target[prop] = value;
 
-		// If we have mutated an array directly, we might need to
-		// signal that length has also changed too.
-		if (is_array && not_has) {
-			const ls = metadata.s.get('length');
-			const length = target.length;
-			if (ls !== undefined && ls.v !== length) {
-				set(ls, length);
+		if (not_has) {
+			// If we have mutated an array directly, we might need to
+			// signal that length has also changed. Do it before updating metadata
+			// to ensure that iterating over the array as a result of a metadata update
+			// will not cause the length to be out of sync.
+			if (is_array) {
+				const ls = metadata.s.get('length');
+				const length = target.length;
+				if (ls !== undefined && ls.v !== length) {
+					set(ls, length);
+				}
 			}
+
+			update(metadata.v);
 		}
 
 		return true;
