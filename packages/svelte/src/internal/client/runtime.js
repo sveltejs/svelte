@@ -126,7 +126,7 @@ function is_runes(context) {
 }
 
 /**
- * @param {import("./proxy.js").StateObject} target
+ * @param {import('./types.js').ProxyStateObject} target
  * @param {string | symbol} prop
  * @param {any} receiver
  */
@@ -2119,9 +2119,9 @@ if (DEV) {
 
 /**
  * Expects a value that was wrapped with `freeze` and makes it frozen.
- * @template {import('./proxy.js').StateObject} T
+ * @template T
  * @param {T} value
- * @returns {Readonly<Record<string | symbol, any>>}
+ * @returns {Readonly<T>}
  */
 export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
