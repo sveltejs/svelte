@@ -17,8 +17,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../constants.js';
-import { readonly } from './proxy/readonly.js';
-import { READONLY_SYMBOL, STATE_SYMBOL, proxy, unstate } from './proxy/proxy.js';
+import { READONLY_SYMBOL, STATE_SYMBOL, proxy, readonly, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
 
 export const SOURCE = 1;
@@ -127,7 +126,7 @@ function is_runes(context) {
 }
 
 /**
- * @param {import("./proxy/proxy.js").StateObject} target
+ * @param {import('./types.js').ProxyStateObject} target
  * @param {string | symbol} prop
  * @param {any} receiver
  */
@@ -2120,9 +2119,9 @@ if (DEV) {
 
 /**
  * Expects a value that was wrapped with `freeze` and makes it frozen.
- * @template {import('./proxy/proxy.js').StateObject} T
+ * @template T
  * @param {T} value
- * @returns {Readonly<Record<string | symbol, any>>}
+ * @returns {Readonly<T>}
  */
 export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {

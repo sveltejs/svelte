@@ -9,7 +9,7 @@ import {
 	UNINITIALIZED,
 	mutable_source,
 	batch_inspect
-} from '../runtime.js';
+} from './runtime.js';
 import {
 	array_prototype,
 	define_property,
@@ -20,36 +20,40 @@ import {
 	is_frozen,
 	object_keys,
 	object_prototype
-} from '../utils.js';
-
-/** @typedef {{ s: Map<string | symbol, import('../types.js').SourceSignal<any>>; v: import('../types.js').SourceSignal<number>; a: boolean, i: boolean, p: StateObject }} Metadata */
-/** @typedef {Record<string | symbol, any> & { [STATE_SYMBOL]: Metadata }} StateObject */
+} from './utils.js';
 
 export const STATE_SYMBOL = Symbol('$state');
 export const READONLY_SYMBOL = Symbol('readonly');
+
 /**
- * @template {StateObject} T
+ * @template T
  * @param {T} value
  * @param {boolean} [immutable]
- * @returns {T}
+ * @returns {import('./types.js').ProxyStateObject<T> | T}
  */
 export function proxy(value, immutable = true) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {
 		if (STATE_SYMBOL in value) {
-			return /** @type {T} */ (value[STATE_SYMBOL].p);
+			return /** @type {import('./types.js').ProxyMetadata<T>} */ (value[STATE_SYMBOL]).p;
 		}
 
 		const prototype = get_prototype_of(value);
 
 		// TODO handle Map and Set as well
 		if (prototype === object_prototype || prototype === array_prototype) {
-			const proxy = new Proxy(value, handler);
+			const proxy = new Proxy(
+				value,
+				/** @type {ProxyHandler<import('./types.js').ProxyStateObject<T>>} */ (state_proxy_handler)
+			);
 			define_property(value, STATE_SYMBOL, {
-				value: init(value, proxy, immutable),
+				value: init(
+					/** @type {import('./types.js').ProxyStateObject<T>} */ (value),
+					/** @type {import('./types.js').ProxyStateObject<T>} */ (proxy),
+					immutable
+				),
 				writable: false
 			});
 
-			// @ts-expect-error not sure how to fix this
 			return proxy;
 		}
 	}
@@ -58,7 +62,7 @@ export function proxy(value, immutable = true) {
 }
 
 /**
- * @template {StateObject} T
+ * @template {import('./types.js').ProxyStateObject} T
  * @param {T} value
  * @param {Map<T, Record<string | symbol, any>>} already_unwrapped
  * @returns {Record<string | symbol, any>}
@@ -104,14 +108,14 @@ function unwrap(value, already_unwrapped = new Map()) {
  * @returns {T}
  */
 export function unstate(value) {
-	return /** @type {T} */ (unwrap(/** @type {StateObject} */ (value)));
+	return /** @type {T} */ (unwrap(/** @type {import('./types.js').ProxyStateObject} */ (value)));
 }
 
 /**
- * @param {StateObject} value
- * @param {StateObject} proxy
+ * @param {import('./types.js').ProxyStateObject} value
+ * @param {import('./types.js').ProxyStateObject} proxy
  * @param {boolean} immutable
- * @returns {Metadata}
+ * @returns {import('./types.js').ProxyMetadata}
  */
 function init(value, proxy, immutable) {
 	return {
@@ -123,8 +127,8 @@ function init(value, proxy, immutable) {
 	};
 }
 
-/** @type {ProxyHandler<StateObject>} */
-const handler = {
+/** @type {ProxyHandler<import('./types.js').ProxyStateObject>} */
+const state_proxy_handler = {
 	defineProperty(target, prop, descriptor) {
 		if (descriptor.value) {
 			const metadata = target[STATE_SYMBOL];
@@ -290,9 +294,67 @@ export function observe(object) {
 }
 
 if (DEV) {
-	handler.setPrototypeOf = () => {
+	state_proxy_handler.setPrototypeOf = () => {
 		throw new Error('Cannot set prototype of $state object');
 	};
 }
 
-export { readonly } from './readonly.js';
+/**
+ * Expects a value that was wrapped with `proxy` and makes it readonly.
+ *
+ * @template {Record<string | symbol, any>} T
+ * @template {import('./types.js').ProxyReadonlyObject<T> | T} U
+ * @param {U} value
+ * @returns {Proxy<U> | U}
+ */
+export function readonly(value) {
+	const proxy = value && value[READONLY_SYMBOL];
+	if (proxy) return proxy;
+
+	if (
+		typeof value === 'object' &&
+		value != null &&
+		!is_frozen(value) &&
+		STATE_SYMBOL in value && // TODO handle Map and Set as well
+		!(READONLY_SYMBOL in value)
+	) {
+		const proxy = new Proxy(
+			value,
+			/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject<U>>} */ (
+				readonly_proxy_handler
+			)
+		);
+		define_property(value, READONLY_SYMBOL, { value: proxy, writable: false });
+		return proxy;
+	}
+
+	return value;
+}
+
+/**
+ * @param {any}	_
+ * @param {string} prop
+ * @returns {never}
+ */
+const readonly_error = (_, prop) => {
+	throw new Error(
+		`Non-bound props cannot be mutated — to make the \`${prop}\` settable, ensure the object it is used within is bound as a prop \`bind:<prop>={...}\`. Fallback values can never be mutated.`
+	);
+};
+
+/** @type {ProxyHandler<import('./types.js').ProxyReadonlyObject>} */
+const readonly_proxy_handler = {
+	defineProperty: readonly_error,
+	deleteProperty: readonly_error,
+	set: readonly_error,
+
+	get(target, prop, receiver) {
+		const value = Reflect.get(target, prop, receiver);
+
+		if (!(prop in target)) {
+			return readonly(value);
+		}
+
+		return value;
+	}
+};

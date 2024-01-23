@@ -14,7 +14,7 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { clear_text_content, map_get, map_set } from './operations.js';
-import { STATE_SYMBOL } from './proxy/proxy.js';
+import { STATE_SYMBOL } from './proxy.js';
 import { insert, remove } from './reconciler.js';
 import { empty } from './render.js';
 import {
