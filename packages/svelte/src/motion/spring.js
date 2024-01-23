@@ -61,7 +61,7 @@ export function spring(value, opts = {}) {
 	const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
 	/** @type {number} */
 	let last_time;
-	/** @type {import('../internal/client/private').Task | null} */
+	/** @type {import('../internal/client/types').Task | null} */
 	let task;
 	/** @type {object} */
 	let current_token;
@@ -120,7 +120,7 @@ export function spring(value, opts = {}) {
 			});
 		}
 		return new Promise((fulfil) => {
-			/** @type {import('../internal/client/private').Task} */ (task).promise.then(() => {
+			/** @type {import('../internal/client/types').Task} */ (task).promise.then(() => {
 				if (token === current_token) fulfil();
 			});
 		});
