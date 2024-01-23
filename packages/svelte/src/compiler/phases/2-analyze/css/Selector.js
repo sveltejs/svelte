@@ -177,18 +177,15 @@ export default class Selector {
 
 	validate_global_compound_selector() {
 		for (const block of this.blocks) {
+			if (block.selectors.length === 1) continue;
+
 			for (let i = 0; i < block.selectors.length; i++) {
 				const selector = block.selectors[i];
-				if (
-					selector.type === 'PseudoClassSelector' &&
-					selector.name === 'global' &&
-					block.selectors.length !== 1 &&
-					(i === block.selectors.length - 1 ||
-						block.selectors
-							.slice(i + 1)
-							.some((s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'))
-				) {
-					error(selector, 'invalid-css-global-selector-list');
+				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
+					const child = selector.args?.children[0].children[0];
+					if (child?.type === 'TypeSelector' && !/[.:#]/.test(child.name[0])) {
+						error(selector, 'invalid-css-global-selector-list');
+					}
 				}
 			}
 		}
