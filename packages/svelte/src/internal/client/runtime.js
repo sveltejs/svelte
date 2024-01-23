@@ -59,6 +59,9 @@ let current_queued_pre_and_render_effects = [];
 /** @type {import('./types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
+/** @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null} */
+let current_derived_proxy_property = null;
+
 /** @type {Array<() => void>} */
 let current_queued_tasks = [];
 /** @type {Array<() => void>} */
@@ -79,6 +82,7 @@ let current_dependencies_index = 0;
 let current_untracked_writes = null;
 /** @type {null | import('./types.js').SignalDebug} */
 let last_inspected_signal = null;
+
 /** If `true`, `get`ting the signal should not register it as a dependency */
 export let current_untracking = false;
 /** Exists to opt out of the mutation validation for stores which may be set for the first time during a derivation */
@@ -337,6 +341,7 @@ function execute_signal_fn(signal) {
 	const previous_skip_consumer = current_skip_consumer;
 	const is_render_effect = (flags & RENDER_EFFECT) !== 0;
 	const previous_untracking = current_untracking;
+	const previous_derived_proxy_property = current_derived_proxy_property;
 	current_dependencies = /** @type {null | import('./types.js').Signal[]} */ (null);
 	current_dependencies_index = 0;
 	current_untracked_writes = null;
@@ -345,6 +350,7 @@ function execute_signal_fn(signal) {
 	current_component_context = signal.x;
 	current_skip_consumer = !is_flushing_effect && (flags & UNOWNED) !== 0;
 	current_untracking = false;
+	current_derived_proxy_property = null;
 
 	// Render effects are invoked when the UI is about to be updated - run beforeUpdate at that point
 	if (is_render_effect && current_component_context?.u != null) {
@@ -364,6 +370,9 @@ function execute_signal_fn(signal) {
 				);
 		} else {
 			res = /** @type {() => V} */ (init)();
+		}
+		if (current_derived_proxy_property !== null) {
+			capture_fine_grain_derived_property();
 		}
 		let dependencies = /** @type {import('./types.js').Signal<unknown>[]} **/ (signal.d);
 		if (current_dependencies !== null) {
@@ -435,6 +444,7 @@ function execute_signal_fn(signal) {
 		current_component_context = previous_component_context;
 		current_skip_consumer = previous_skip_consumer;
 		current_untracking = previous_untracking;
+		current_derived_proxy_property = previous_derived_proxy_property;
 	}
 }
 
@@ -526,7 +536,7 @@ export function execute_effect(signal) {
 	if ((signal.f & DESTROYED) !== 0) {
 		return;
 	}
-	const teardown = signal.v;
+	const teardown = /** @type {null | (() => void)} */ (signal.v);
 	const previous_effect = current_effect;
 	current_effect = signal;
 
@@ -826,16 +836,30 @@ export async function tick() {
  * @returns {void}
  */
 function update_derived(signal, force_schedule) {
+	let derived_value =
+		/** @type {import('./types.js').DerivedSignalValue<V> | typeof UNINITIALIZED} */ (signal.v);
+	if (derived_value === UNINITIALIZED) {
+		signal.v = derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ ({
+			p: null,
+			v: UNINITIALIZED,
+			o: null
+		});
+	}
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
+	if (derived_value.p !== null) {
+		derived_value.p = null;
+		derived_value.o?.clear();
+	}
 	destroy_references(signal);
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status = current_skip_consumer || (signal.f & UNOWNED) !== 0 ? DIRTY : CLEAN;
 	set_signal_status(signal, status);
 	const equals = /** @type {import('./types.js').EqualsFunctions} */ (signal.e);
-	if (!equals(value, signal.v)) {
-		signal.v = value;
+
+	if (!equals(value, derived_value.v)) {
+		derived_value.v = value;
 		mark_signal_consumers(signal, DIRTY, force_schedule);
 
 		// @ts-expect-error
@@ -936,11 +960,48 @@ export function unsubscribe_on_destroy(stores) {
 }
 
 /**
+ * If the `current_derived_proxy_property` is not `null` then that means we should look at the current
+ * property on the object and see if actually need original derived object dependency. For example,
+ * if you had this:
+ *
+ * a.b.c
+ *
+ * Under-the-hood, `a` might be a derived signal, so we'd call get() on it. Resulting in `a` being a dependency
+ * for the currently active effect. The accessors to `b` and `c` would result in the `current_derived_proxy_property`
+ * changing to include ['b', 'c'] in the `current_derived_proxy_property.p` paths property. We can then use that to
+ * determine a new derived temporary signal that encapsulates a.b.c. This temporarly signal then becomes the dependency
+ * and we no longer need to the original depdency to `a` for the current effect. Thus making
+ */
+function capture_fine_grain_derived_property() {
+	const derived_property =
+		/** @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> }} */ (
+			current_derived_proxy_property
+		);
+	if (is_last_current_dependency(derived_property.s)) {
+		if (current_dependencies === null) {
+			current_dependencies_index--;
+		} else {
+			current_dependencies.pop();
+		}
+	}
+	const derived_prop = derived(() => {
+		let value = /** @type {any} */ (get(derived_property.s, true));
+		const property_path = derived_property.p;
+		for (let i = 0; i < property_path.length; i++) {
+			value = value?.[property_path[i]];
+		}
+		return value;
+	});
+	current_derived_proxy_property = null;
+	get(derived_prop, true);
+}
+
+/**
  * @template V
  * @param {import('./types.js').Signal<V>} signal
  * @returns {V}
  */
-export function get(signal) {
+export function get(signal, skip_derived_proxy = false) {
 	// @ts-expect-error
 	if (DEV && signal.inspect && inspect_fn) {
 		/** @type {import('./types.js').SignalDebug} */ (signal).inspect.add(inspect_fn);
@@ -949,8 +1010,16 @@ export function get(signal) {
 	}
 
 	const flags = signal.f;
+	const is_derived = (flags & DERIVED) !== 0;
+	let value = signal.v;
 	if ((flags & DESTROYED) !== 0) {
-		return signal.v;
+		return /** @type {V} */ (
+			is_derived ? /** @type {import('./types.js').DerivedSignalValue<V>} */ (value).v : value
+		);
+	}
+
+	if (current_derived_proxy_property !== null) {
+		capture_fine_grain_derived_property();
 	}
 
 	if (is_signals_recorded) {
@@ -990,18 +1059,47 @@ export function get(signal) {
 		}
 	}
 
-	if ((flags & DERIVED) !== 0 && is_signal_dirty(signal)) {
-		if (DEV) {
-			// we want to avoid tracking indirect dependencies
-			const previous_inspect_fn = inspect_fn;
-			inspect_fn = null;
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
-			inspect_fn = previous_inspect_fn;
-		} else {
-			update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+	if (is_derived) {
+		if (is_signal_dirty(signal)) {
+			if (DEV) {
+				// we want to avoid tracking indirect dependencies
+				const previous_inspect_fn = inspect_fn;
+				inspect_fn = null;
+				update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+				inspect_fn = previous_inspect_fn;
+			} else {
+				update_derived(/** @type {import('./types.js').ComputationSignal<V>} **/ (signal), false);
+			}
 		}
+		const derived_signal_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (
+			signal.v
+		);
+		const value = derived_signal_value.v;
+		// If we are working with a derived that might be an object or array, then we might also want to
+		// apply the fine-grain derived property heuristic to them. However, we only need this heuristic in some cases:
+		// - inside a user effect ($effect or $effect.pre)
+		// - inside another derived ($derived)
+		// Else we don't need to bother doing this as render effects and the rest of the internal architecture applys
+		// diffing which is more optimal than creating many derived signals. However, we can't do diffing inside user
+		// effects (far too many complications with cleanup functions etc).
+		if (
+			!skip_derived_proxy &&
+			is_runes(signal.x) &&
+			effect_active_and_not_render_effect() &&
+			should_proxy_derived_value(value)
+		) {
+			let proxy = derived_signal_value.p;
+			if (proxy === null) {
+				proxy = derived_signal_value.p = create_derived_proxy(
+					/** @type {import('./types.js').ComputationSignal<V>} **/ (signal),
+					value
+				);
+			}
+			return proxy;
+		}
+		return value;
 	}
-	return signal.v;
+	return /** @type {V} */ (signal.v);
 }
 
 /**
@@ -1308,6 +1406,132 @@ export function derived(init) {
 }
 
 /**
+ * @param {any} value
+ */
+function should_proxy_derived_value(value) {
+	let prototype;
+	return (
+		(typeof value === 'object' &&
+			value !== null &&
+			(prototype = get_prototype_of(value)) === object_prototype) ||
+		prototype === array_prototype
+	);
+}
+
+/**
+ * @param {import("./types.js").SourceSignal<unknown>} signal
+ */
+function is_last_current_dependency(signal) {
+	if (current_dependencies !== null) {
+		return current_dependencies[current_dependencies.length - 1] === signal;
+	} else if (current_consumer !== null && current_dependencies_index > 0) {
+		return current_consumer.d?.[current_dependencies_index - 1] === signal;
+	}
+	return false;
+}
+
+/**
+ * @template V
+ * @param {import("./types.js").ComputationSignal<V>} signal
+ * @param {V} value
+ * @param {ProxyHandler<any>} handler
+ * @param {(string | symbol)[]} path
+ * @returns {V}
+ */
+function proxify_object(signal, value, handler, path) {
+	const keys = new Set(Reflect.ownKeys(/** @type {object} */ (value)));
+	const proxy = new Proxy(value, handler);
+	const derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (signal.v);
+	let proxied_objects = derived_value.o;
+	if (proxied_objects === null) {
+		derived_value.o = proxied_objects = new Map();
+	}
+	proxied_objects.set(value, {
+		x: proxy,
+		k: keys,
+		p: path
+	});
+	return proxy;
+}
+
+/**
+ * @param {any} value
+ */
+function is_primitive_or_function_or_state_object(value) {
+	const type = typeof value;
+	return (
+		value == null ||
+		type === 'function' ||
+		type === 'string' ||
+		type === 'number' ||
+		type === 'boolean' ||
+		type === 'symbol' ||
+		type === 'bigint' ||
+		STATE_SYMBOL in value
+	);
+}
+
+/**
+ * @template V
+ * @param {import("./types.js").ComputationSignal<V>} signal
+ * @param {V} derived_value
+ * @returns {V}
+ */
+function create_derived_proxy(signal, derived_value) {
+	const handler = {
+		/**
+		 * @param {any} target
+		 * @param {string | symbol} prop
+		 * @param {any} receiver
+		 */
+		get(target, prop, receiver) {
+			const value = Reflect.get(target, prop, receiver);
+			const derived_value = /** @type {import('./types.js').DerivedSignalValue<V>} */ (signal.v);
+			const proxied_objects = /** @type {any} */ (derived_value.o);
+			const proxied_object = proxied_objects.get(target);
+			if (proxied_object === undefined) {
+				return value;
+			}
+			const { k: keys, p: path } = proxied_object;
+
+			// Only apply the proxing when we really need it. Otherwise avoid it entirely.
+			if (
+				effect_active_and_not_render_effect() &&
+				keys.has(prop) &&
+				is_last_current_dependency(signal)
+			) {
+				// Avoid generating the new_path array until we know it needed to avoid CPU cycles.
+				let new_path;
+				// We only track paths for primitives, functions or state objects, to avoid tracking objects
+				// that likely change often between derived calls. We might need to tweak this heuristic if
+				// it doesn't feel right.
+				if (is_primitive_or_function_or_state_object(value)) {
+					new_path = [...path, prop];
+					if (current_derived_proxy_property !== null) {
+						capture_fine_grain_derived_property();
+					} else {
+						current_derived_proxy_property = { s: signal, p: new_path };
+					}
+				}
+				if (should_proxy_derived_value(value)) {
+					const possible_proxy = proxied_objects.get(value);
+					if (possible_proxy !== undefined) {
+						return possible_proxy.x;
+					}
+					if (!new_path) {
+						new_path = [...path, prop];
+					}
+					return proxify_object(signal, value, handler, new_path);
+				}
+			}
+			return value;
+		}
+	};
+
+	return proxify_object(signal, derived_value, handler, []);
+}
+
+/**
  * @template V
  * @param {() => V} init
  * @returns {import('./types.js').ComputationSignal<V>}
@@ -1390,6 +1614,13 @@ function internal_create_effect(type, init, sync, block, schedule) {
  */
 export function effect_active() {
 	return current_effect ? (current_effect.f & MANAGED) === 0 : false;
+}
+
+/**
+ * @returns {boolean}
+ */
+function effect_active_and_not_render_effect() {
+	return current_effect ? (current_effect.f & (MANAGED | RENDER_EFFECT)) === 0 : false;
 }
 
 /**

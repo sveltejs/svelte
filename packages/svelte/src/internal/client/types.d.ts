@@ -84,6 +84,12 @@ export type SourceSignalDebug = {
 	inspect: Set<Function>;
 };
 
+export type DerivedSignalValue<V> = {
+	v: V;
+	p: null | V;
+	o: null | Map<any, { x: any; k: Set<string | symbol>; p: Array<string | symbol> }>;
+};
+
 export type ComputationSignal<V = unknown> = {
 	/** block: The block associated with this effect/computed */
 	b: null | Block;
@@ -108,7 +114,7 @@ export type ComputationSignal<V = unknown> = {
 	/** references: Anything that a signal owns */
 	r: null | ComputationSignal[];
 	/** value: The latest value for this signal, doubles as the teardown for effects */
-	v: V;
+	v: V | DerivedSignalValue<V>;
 	/** level: the depth from the root signal, used for ordering render/pre-effects topologically **/
 	l: number;
 };
