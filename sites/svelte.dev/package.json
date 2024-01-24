@@ -29,7 +29,7 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.0",
     "@sveltejs/adapter-vercel": "^4.0.0",
-    "@sveltejs/kit": "^2.4.1",
+    "@sveltejs/kit": "^2.4.3",
     "@sveltejs/site-kit": "6.0.0-next.59",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@types/cookie": "^0.6.0",
