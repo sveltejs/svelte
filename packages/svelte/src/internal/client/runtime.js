@@ -498,6 +498,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
+				destroy_references(reference);
 				remove_consumers(reference, 0);
 				reference.d = null;
 			}
@@ -823,6 +824,7 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
+	destroy_references(signal);
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status = current_skip_consumer || (signal.f & UNOWNED) !== 0 ? DIRTY : CLEAN;
@@ -1304,8 +1306,8 @@ export function derived(init) {
 	signal.i = init;
 	signal.x = current_component_context;
 	signal.e = default_equals;
-	if (!is_unowned) {
-		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
+	if (current_consumer !== null) {
+		push_reference(current_consumer, signal);
 	}
 	return signal;
 }

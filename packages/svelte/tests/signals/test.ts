@@ -1,5 +1,6 @@
 import { describe, assert, it } from 'vitest';
 import * as $ from '../../src/internal/client/runtime';
+import type { ComputationSignal } from '../../src/internal/client/types';
 
 /**
  * @param runes runes mode
@@ -196,6 +197,38 @@ describe('signals', () => {
 			// Ensure we're not leaking consumers
 			assert.deepEqual(count.c?.length, 1);
 			assert.deepEqual(log, [0, 1, 2, 3]);
+		};
+	});
+
+	test('correctly cleanup onowned nested derived values', () => {
+		return () => {
+			const nested: ComputationSignal<string>[] = [];
+
+			const a = $.source(0);
+			const b = $.source(0);
+			const c = $.derived(() => {
+				const a_2 = $.derived(() => $.get(a) + '!');
+				const b_2 = $.derived(() => $.get(b) + '?');
+				nested.push(a_2, b_2);
+
+				return { a: $.get(a_2), b: $.get(b_2) };
+			});
+
+			$.get(c);
+
+			$.flushSync(() => $.set(a, 1));
+
+			$.get(c);
+
+			$.flushSync(() => $.set(b, 1));
+
+			$.get(c);
+
+			// Ensure we're not leaking dependencies
+			assert.deepEqual(
+				nested.slice(0, -2).map((s) => s.d),
+				[null, null, null, null]
+			);
 		};
 	});
 
