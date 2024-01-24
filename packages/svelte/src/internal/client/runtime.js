@@ -498,6 +498,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
+				destroy_references(reference);
 				remove_consumers(reference, 0);
 				reference.d = null;
 			}
