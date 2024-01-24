@@ -3,10 +3,12 @@
 	import SvelteLogotype from './svelte-logotype.svg';
 	// @ts-ignore
 	import MachineDesktop from './svelte-machine-desktop.png?w=1200;2000;2800;4400&format=avif;webp;png;&as=picture';
+	// console.log(MachineDesktop)
 	// @ts-ignore
 	import MachineMobile from './svelte-machine-mobile.png?w=960&format=avif;webp;png;&as=picture';
 
-	const srcset = (sources) => sources.map(({ src, w }) => `${src} ${w}w`).join(', ');
+	// const srcset = (sources) => sources.map(({ src, w }) => `${src} ${w}w`).join(', ');
+	const srcset = (sources) => sources;
 </script>
 
 <div class="hero">
