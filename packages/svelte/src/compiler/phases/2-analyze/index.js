@@ -21,6 +21,7 @@ import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
 import { DelegatedEvents } from '../../../constants.js';
+import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 
 /**
  * @param {import('#compiler').Script | null} script
@@ -918,7 +919,14 @@ const common_visitors = {
 
 			if (
 				node !== binding.node &&
-				(binding.kind === 'state' ||
+				// If we have $state that can be proxied or frozen and isn't re-assigned, then that means
+				// it's likely not using a primitive value and thus this warning isn't that helpful.
+				((binding.kind === 'state' &&
+					(binding.reassigned ||
+						(binding.initial?.type === 'CallExpression' &&
+							binding.initial.arguments.length === 1 &&
+							binding.initial.arguments[0].type !== 'SpreadElement' &&
+							!should_proxy_or_freeze(binding.initial.arguments[0], context.state.scope)))) ||
 					binding.kind === 'frozen_state' ||
 					binding.kind === 'derived') &&
 				context.state.function_depth === binding.scope.function_depth
