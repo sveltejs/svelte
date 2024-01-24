@@ -94,6 +94,11 @@ function get_delegated_event(event_name, handler, context) {
 	} else if (handler.type === 'Identifier') {
 		binding = context.state.scope.get(handler.name);
 
+		if (context.state.analysis.module.scope.references.has(handler.name)) {
+			// If a binding with the same name is referenced in the module scope (even if not declared there), bail-out
+			return non_hoistable;
+		}
+
 		if (binding != null) {
 			for (const { path } of binding.references) {
 				const parent = path.at(-1);
