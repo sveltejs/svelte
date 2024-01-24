@@ -18,7 +18,7 @@ All three sections — script, styles and markup — are optional.
 </style>
 ```
 
-## &lt;script&gt;
+## `<script>`
 
 A `<script>` block contains JavaScript that runs when a component instance is created. Variables declared (or imported) at the top level are 'visible' from the component's markup. There are four additional rules:
 
@@ -250,7 +250,7 @@ You can create your own stores without relying on [`svelte/store`](/docs/svelte-
 
 For interoperability with RxJS Observables, the `.subscribe` method is also allowed to return an object with an `.unsubscribe` method, rather than return the unsubscription function directly. Note however that unless `.subscribe` synchronously calls the subscription (which is not required by the Observable spec), Svelte will see the value of the store as `undefined` until it does.
 
-## &lt;script context="module"&gt;
+## `<script context="module">`
 
 A `<script>` tag with a `context="module"` attribute runs once when the module first evaluates, rather than for each component instance. Values declared in this block are accessible from a regular `<script>` (and the component markup) but not vice versa.
 
@@ -277,7 +277,7 @@ You cannot `export default`, since the default export is the component itself.
 </script>
 ```
 
-## &lt;style&gt;
+## `<style>`
 
 CSS inside a `<style>` block will be scoped to that component.
 
