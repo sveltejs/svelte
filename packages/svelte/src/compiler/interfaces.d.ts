@@ -345,7 +345,7 @@ export interface CompileOptions {
 	 */
 	preserveWhitespace?: boolean;
 	/**
-	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
 	 * @default true
 	 */
