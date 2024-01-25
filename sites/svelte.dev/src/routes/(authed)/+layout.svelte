@@ -11,7 +11,7 @@
 			);
 
 			window.addEventListener('message', function handler(event) {
-				if (event.data.source !== 'auth') return;
+				if (event.data.source !== 'svelte-auth') return;
 				login_window.close();
 				window.removeEventListener('message', handler);
 				invalidateAll();

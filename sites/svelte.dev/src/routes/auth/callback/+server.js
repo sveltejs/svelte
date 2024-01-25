@@ -39,7 +39,7 @@ export async function GET({ url }) {
 			`
 			<script>
 				window.opener.postMessage({
-					source: 'auth',
+					source: 'svelte-auth',
 					user: ${uneval(user)}
 				}, window.location.origin);
 			</script>
