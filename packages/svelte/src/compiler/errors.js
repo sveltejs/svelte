@@ -435,10 +435,6 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_subscription: {
-	// 	code: 'illegal-subscription',
-	// 	message: 'Cannot reference store value inside <script context="module">'
-	// },
 	// illegal_global: /** @param {string} name */ (name) => ({
 	// 	code: 'illegal-global',
 	// 	message: `${name} is an illegal variable name`
