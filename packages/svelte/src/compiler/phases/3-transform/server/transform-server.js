@@ -1355,15 +1355,13 @@ const template_visitors = {
 		// and continue hydration without having to re-render everything from scratch.
 
 		const consequent = create_block(node, node.consequent.nodes, context);
-		consequent.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:true-->')))
-		);
+		consequent.unshift(b.stmt(b.assignment('+=', b.id('$$payload.out'), b.id('$.SSR_IF_TRUE'))));
 
 		const alternate = node.alternate
 			? /** @type {import('estree').BlockStatement} */ (context.visit(node.alternate))
 			: b.block([]);
 		alternate.body.unshift(
-			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.literal('<!--ssr:if:false-->')))
+			b.stmt(b.assignment('+=', b.id('$$payload.out'), b.id('$.SSR_IF_FALSE')))
 		);
 
 		state.template.push(
