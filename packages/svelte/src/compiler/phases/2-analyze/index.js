@@ -306,11 +306,13 @@ export function analyze_component(root, options) {
 			}
 
 			if (module.ast) {
-				// if the reference is inside context="module", error. this is a bit hacky but it works
-				for (const { node } of references) {
+				for (const { node, path } of references) {
+					// if the reference is inside context="module", error. this is a bit hacky but it works
 					if (
 						/** @type {number} */ (node.start) > /** @type {number} */ (module.ast.start) &&
-						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end)
+						/** @type {number} */ (node.end) < /** @type {number} */ (module.ast.end) &&
+						// const state = $state(0) is valid
+						get_rune(/** @type {import('estree').Node} */ (path.at(-1)), module.scope) === null
 					) {
 						error(node, 'illegal-subscription');
 					}
