@@ -181,9 +181,19 @@ export default class Selector {
 
 			for (let i = 0; i < block.selectors.length; i++) {
 				const selector = block.selectors[i];
+
 				if (selector.type === 'PseudoClassSelector' && selector.name === 'global') {
 					const child = selector.args?.children[0].children[0];
-					if (child?.type === 'TypeSelector' && !/[.:#]/.test(child.name[0])) {
+					if (
+						child?.type === 'TypeSelector' &&
+						!/[.:#]/.test(child.name[0]) &&
+						(i !== 0 ||
+							block.selectors
+								.slice(1)
+								.some(
+									(s) => s.type !== 'PseudoElementSelector' && s.type !== 'PseudoClassSelector'
+								))
+					) {
 						error(selector, 'invalid-css-global-selector-list');
 					}
 				}
