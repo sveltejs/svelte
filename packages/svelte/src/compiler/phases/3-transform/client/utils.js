@@ -1,5 +1,10 @@
 import * as b from '../../../utils/builders.js';
-import { extract_paths, is_simple_expression, unwrap_ts_expression } from '../../../utils/ast.js';
+import {
+	extract_paths,
+	is_simple_expression,
+	object,
+	unwrap_ts_expression
+} from '../../../utils/ast.js';
 import { error } from '../../../errors.js';
 import {
 	PROPS_IS_LAZY_INITIAL,
@@ -280,12 +285,13 @@ export function serialize_set_binding(node, context, fallback, options) {
 		error(node, 'INTERNAL', `Unexpected assignment type ${assignee.type}`);
 	}
 
-	let left = assignee;
-
 	// Handle class private/public state assignment cases
-	while (left.type === 'MemberExpression') {
-		if (left.object.type === 'ThisExpression' && left.property.type === 'PrivateIdentifier') {
-			const private_state = context.state.private_state.get(left.property.name);
+	if (assignee.type === 'MemberExpression') {
+		if (
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'PrivateIdentifier'
+		) {
+			const private_state = context.state.private_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 			if (private_state !== undefined) {
 				if (state.in_constructor) {
@@ -307,7 +313,7 @@ export function serialize_set_binding(node, context, fallback, options) {
 				} else {
 					return b.call(
 						'$.set',
-						left,
+						assignee,
 						context.state.analysis.runes &&
 							!options?.skip_proxy_and_freeze &&
 							should_proxy_or_freeze(value, context.state.scope)
@@ -319,11 +325,11 @@ export function serialize_set_binding(node, context, fallback, options) {
 				}
 			}
 		} else if (
-			left.object.type === 'ThisExpression' &&
-			left.property.type === 'Identifier' &&
+			assignee.object.type === 'ThisExpression' &&
+			assignee.property.type === 'Identifier' &&
 			state.in_constructor
 		) {
-			const public_state = context.state.public_state.get(left.property.name);
+			const public_state = context.state.public_state.get(assignee.property.name);
 			const value = get_assignment_value(node, context);
 			// See if we should wrap value in $.proxy
 			if (
@@ -342,11 +348,11 @@ export function serialize_set_binding(node, context, fallback, options) {
 				}
 			}
 		}
-		// @ts-expect-error
-		left = unwrap_ts_expression(left.object);
 	}
 
-	if (left.type !== 'Identifier') {
+	const left = object(assignee);
+
+	if (left === null) {
 		return fallback();
 	}
 
