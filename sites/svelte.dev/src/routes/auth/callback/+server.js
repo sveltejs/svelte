@@ -33,13 +33,13 @@ export async function GET({ url }) {
 			github_login: profile.login,
 			github_avatar_url: profile.avatar_url
 		};
-
 		const { sessionid, expires } = await session.create(user);
 
 		return new Response(
 			`
 			<script>
 				window.opener.postMessage({
+					source: 'auth',
 					user: ${uneval(user)}
 				}, window.location.origin);
 			</script>
