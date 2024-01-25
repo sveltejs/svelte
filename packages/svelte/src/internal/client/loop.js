@@ -17,14 +17,6 @@ function run_tasks(now) {
 }
 
 /**
- * For testing purposes only!
- * @returns {void}
- */
-export function clear_loops() {
-	tasks.clear();
-}
-
-/**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
  * @param {import('./types.js').TaskCallback} callback
