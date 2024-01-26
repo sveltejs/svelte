@@ -1594,7 +1594,7 @@ export function element(anchor_node, tag_fn, namespace, render_fn) {
 	/** @type {string} */
 	let tag;
 
-	/** @type {null | HTMLElement | SVGElement} */
+	/** @type {null | Element} */
 	let element = null;
 	const element_effect = render_effect(
 		() => {
@@ -1610,13 +1610,13 @@ export function element(anchor_node, tag_fn, namespace, render_fn) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
-			const ns = namespace ?? tag === 'svg' ? namespace_svg : null;
+			const ns = namespace ?? (tag === 'svg' ? namespace_svg : null);
 			const next_element = tag
 				? current_hydration_fragment !== null
-					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
+					? /** @type {Element} */ (current_hydration_fragment[0])
 					: ns
-					? document.createElementNS(ns, tag)
-					: document.createElement(tag)
+						? document.createElementNS(ns, tag)
+						: document.createElement(tag)
 				: null;
 			const prev_element = element;
 			if (prev_element !== null) {
