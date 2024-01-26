@@ -1,12 +1,52 @@
 # svelte
 
+## 5.0.0-next.39
+
+### Patch Changes
+
+- fix: handle deep assignments to `$state()` class properties correctly ([#10289](https://github.com/sveltejs/svelte/pull/10289))
+
+- fix: prevent false positive store error in module script ([#10291](https://github.com/sveltejs/svelte/pull/10291))
+
+- fix: allow type selector in `:global()` when it's at a start of a compound selector ([#10287](https://github.com/sveltejs/svelte/pull/10287))
+
+## 5.0.0-next.38
+
+### Patch Changes
+
+- chore: improve should_proxy_or_freeze logic internally ([#10249](https://github.com/sveltejs/svelte/pull/10249))
+
+- fix: add back `derived` type overload ([`776ac3c1762da5f8147c457a997a417cfae67e4c`](https://github.com/sveltejs/svelte/commit/776ac3c1762da5f8147c457a997a417cfae67e4c))
+
+- fix: more robust url equality check at dev time ([`14d7b26897cbfa129847c446b0ecf9557d77ef7c`](https://github.com/sveltejs/svelte/commit/14d7b26897cbfa129847c446b0ecf9557d77ef7c))
+
+- fix: correct increment/decrement code generation ([`2861ad66e054d2b14f382aaada4512e3e5d56db8`](https://github.com/sveltejs/svelte/commit/2861ad66e054d2b14f382aaada4512e3e5d56db8))
+
+- fix: sanitize component event names ([#10235](https://github.com/sveltejs/svelte/pull/10235))
+
+- fix: don't hoist function when already referenced in module scope ([`1538264bd5ed431d3048d54efe9c83c4db7fb42a`](https://github.com/sveltejs/svelte/commit/1538264bd5ed431d3048d54efe9c83c4db7fb42a))
+
+- fix: try-catch deep read during `$inspect` ([#10270](https://github.com/sveltejs/svelte/pull/10270))
+
+- fix: allow ts casts in bindings ([#10181](https://github.com/sveltejs/svelte/pull/10181))
+
+- fix: allow `:global(..)` in compound selectors ([#10266](https://github.com/sveltejs/svelte/pull/10266))
+
+- fix: hydrate controlled each blocks correctly ([#10259](https://github.com/sveltejs/svelte/pull/10259))
+
+- chore: improve $state static reference warning heuristics ([#10275](https://github.com/sveltejs/svelte/pull/10275))
+
+- fix: correctly cleanup unowned derived dependency memory ([#10280](https://github.com/sveltejs/svelte/pull/10280))
+
+- fix: ensure proxy is updated before notifying listeners ([#10267](https://github.com/sveltejs/svelte/pull/10267))
+
 ## 5.0.0-next.37
 
 ### Patch Changes
 
 - fix: skip certain slot validations for custom elements ([#10207](https://github.com/sveltejs/svelte/pull/10207))
 
-- fix: add compiler error for invalid <p> contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
+- fix: add compiler error for invalid `<p>` contents ([#10201](https://github.com/sveltejs/svelte/pull/10201))
 
 - fix: correctly apply event.currentTarget ([#10216](https://github.com/sveltejs/svelte/pull/10216))
 

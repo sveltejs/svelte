@@ -26,22 +26,22 @@
     "changeset:publish": "changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.26.1",
-    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
+    "@changesets/cli": "^2.27.1",
     "@sveltejs/eslint-config": "^6.0.4",
-    "@types/node": "^18.18.8",
-    "@typescript-eslint/eslint-plugin": "^5.22.0",
-    "@vitest/coverage-v8": "^0.34.6",
-    "concurrently": "^8.2.0",
+    "@svitejs/changesets-changelog-github-compact": "^1.1.0",
+    "@types/node": "^20.11.5",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@vitest/coverage-v8": "^1.2.1",
+    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "eslint": "^8.49.0",
-    "eslint-plugin-lube": "^0.1.7",
+    "eslint": "^8.56.0",
+    "eslint-plugin-lube": "^0.4.3",
     "jsdom": "22.0.0",
     "playwright": "^1.35.1",
-    "prettier": "^3.1.1",
+    "prettier": "^3.2.4",
     "prettier-plugin-svelte": "^3.1.2",
-    "typescript": "^5.2.2",
-    "vitest": "^0.34.6"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
   },
   "pnpm": {
     "overrides": {

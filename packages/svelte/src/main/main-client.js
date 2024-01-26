@@ -215,10 +215,7 @@ export function beforeUpdate(fn) {
 		throw new Error('beforeUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.u === null) {
-		component_context.u = init_update_callbacks();
-	}
-	component_context.u.b.push(fn);
+	(component_context.u ??= init_update_callbacks()).b.push(fn);
 }
 
 /**
@@ -239,10 +236,7 @@ export function afterUpdate(fn) {
 		throw new Error('afterUpdate can only be used during component initialisation.');
 	}
 
-	if (component_context.u === null) {
-		component_context.u = init_update_callbacks();
-	}
-	component_context.u.a.push(fn);
+	(component_context.u ??= init_update_callbacks()).a.push(fn);
 }
 
 // TODO bring implementations in here

@@ -57,7 +57,7 @@ import {
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { proxy } from './proxy/proxy.js';
+import { proxy } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -2295,9 +2295,6 @@ export function attr(dom, attribute, value) {
 	}
 }
 
-/** @type {HTMLAnchorElement | undefined} */
-let src_url_equal_anchor;
-
 /**
  * @param {string} element_src
  * @param {string} url
@@ -2305,12 +2302,7 @@ let src_url_equal_anchor;
  */
 function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
-	if (!src_url_equal_anchor) {
-		src_url_equal_anchor = document.createElement('a');
-	}
-	// This is actually faster than doing URL(..).href
-	src_url_equal_anchor.href = url;
-	return element_src === src_url_equal_anchor.href;
+	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
 /** @param {string} srcset */

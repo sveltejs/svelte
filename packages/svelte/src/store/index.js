@@ -123,12 +123,38 @@ function run_all(fns) {
 }
 
 /**
- * @template {import('./private').Stores} S
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * https://svelte.dev/docs/svelte-store#derived
+ * @template {import('./private.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores
+ * @param {(values: import('./private.js').StoresValues<S>) => T} fn
+ * @param {T} [initial_value]
+ * @returns {import('./public.js').Readable<T>}
+ */
+/**
+ * Derived value store by synchronizing one or more readable stores and
+ * applying an aggregation function over its input values.
+ *
+ * https://svelte.dev/docs/svelte-store#derived
+ * @template {import('./private.js').Stores} S
+ * @template T
+ * @overload
+ * @param {S} stores
+ * @param {(values: import('./private.js').StoresValues<S>, set: (value: T) => void, update: (fn: import('./public.js').Updater<T>) => void) => import('./public.js').Unsubscriber | void} fn
+ * @param {T} [initial_value]
+ * @returns {import('./public.js').Readable<T>}
+ */
+/**
+ * @template {import('./private.js').Stores} S
  * @template T
  * @param {S} stores
  * @param {Function} fn
  * @param {T} [initial_value]
- * @returns {import('./public').Readable<T>}
+ * @returns {import('./public.js').Readable<T>}
  */
 export function derived(stores, fn, initial_value) {
 	const single = !Array.isArray(stores);

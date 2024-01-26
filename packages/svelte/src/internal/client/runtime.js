@@ -17,8 +17,7 @@ import {
 	PROPS_IS_RUNES,
 	PROPS_IS_UPDATED
 } from '../../constants.js';
-import { readonly } from './proxy/readonly.js';
-import { READONLY_SYMBOL, STATE_SYMBOL, proxy, unstate } from './proxy/proxy.js';
+import { READONLY_SYMBOL, STATE_SYMBOL, proxy, readonly, unstate } from './proxy.js';
 import { EACH_BLOCK, IF_BLOCK } from './block.js';
 
 export const SOURCE = 1;
@@ -127,7 +126,7 @@ function is_runes(context) {
 }
 
 /**
- * @param {import("./proxy/proxy.js").StateObject} target
+ * @param {import('./types.js').ProxyStateObject} target
  * @param {string | symbol} prop
  * @param {any} receiver
  */
@@ -379,13 +378,15 @@ function execute_signal_fn(signal) {
 				// If we have more than 16 elements in the array then use a Set for faster performance
 				// TODO: evaluate if we should always just use a Set or not here?
 				const full_current_dependencies_set =
-					current_dep_length > 16 ? new Set(full_current_dependencies) : null;
+					current_dep_length > 16 && deps_length - current_dependencies_index > 1
+						? new Set(full_current_dependencies)
+						: null;
 				for (i = current_dependencies_index; i < deps_length; i++) {
 					const dependency = dependencies[i];
 					if (
-						(full_current_dependencies_set !== null &&
-							!full_current_dependencies_set.has(dependency)) ||
-						!full_current_dependencies.includes(dependency)
+						full_current_dependencies_set !== null
+							? !full_current_dependencies_set.has(dependency)
+							: !full_current_dependencies.includes(dependency)
 					) {
 						remove_consumer(signal, dependency);
 					}
@@ -497,6 +498,7 @@ function destroy_references(signal) {
 			if ((reference.f & IS_EFFECT) !== 0) {
 				destroy_signal(reference);
 			} else {
+				destroy_references(reference);
 				remove_consumers(reference, 0);
 				reference.d = null;
 			}
@@ -822,6 +824,7 @@ export async function tick() {
 function update_derived(signal, force_schedule) {
 	const previous_updating_derived = updating_derived;
 	updating_derived = true;
+	destroy_references(signal);
 	const value = execute_signal_fn(signal);
 	updating_derived = previous_updating_derived;
 	const status = current_skip_consumer || (signal.f & UNOWNED) !== 0 ? DIRTY : CLEAN;
@@ -1084,7 +1087,7 @@ function mark_subtree_children_inert(signal, inert, visited_blocks) {
 		for (i = 0; i < references.length; i++) {
 			const reference = references[i];
 			if ((reference.f & IS_EFFECT) !== 0) {
-				mark_subtree_inert(references[i], inert, visited_blocks);
+				mark_subtree_inert(reference, inert, visited_blocks);
 			}
 		}
 	}
@@ -1303,8 +1306,8 @@ export function derived(init) {
 	signal.i = init;
 	signal.x = current_component_context;
 	signal.e = default_equals;
-	if (!is_unowned) {
-		push_reference(/** @type {import('./types.js').EffectSignal} */ (current_effect), signal);
+	if (current_consumer !== null) {
+		push_reference(current_consumer, signal);
 	}
 	return signal;
 }
@@ -1417,13 +1420,10 @@ export function user_effect(init) {
 		!apply_component_effect_heuristics
 	);
 	if (apply_component_effect_heuristics) {
-		let effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-			.e;
-		if (effects === null) {
-			effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context).e =
-				[];
-		}
-		effects.push(effect);
+		const context = /** @type {import('./types.js').ComponentContext} */ (
+			current_component_context
+		);
+		(context.e ??= []).push(effect);
 	}
 	return effect;
 }
@@ -1741,12 +1741,7 @@ export function get_or_init_context_map() {
 				(DEV ? 'Context can only be used during component initialisation.' : '')
 		);
 	}
-	let context_map = component_context.c;
-	if (context_map === null) {
-		const parent_context = get_parent_context(component_context);
-		context_map = component_context.c = new Map(parent_context || undefined);
-	}
-	return context_map;
+	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
 }
 
 /**
@@ -1964,7 +1959,11 @@ function deep_read(value, visited = new Set()) {
 	if (typeof value === 'object' && value !== null && !visited.has(value)) {
 		visited.add(value);
 		for (let key in value) {
-			deep_read(value[key], visited);
+			try {
+				deep_read(value[key], visited);
+			} catch (e) {
+				// continue
+			}
 		}
 		const proto = Object.getPrototypeOf(value);
 		if (
@@ -1978,7 +1977,11 @@ function deep_read(value, visited = new Set()) {
 			for (let key in descriptors) {
 				const get = descriptors[key].get;
 				if (get) {
-					get.call(value);
+					try {
+						get.call(value);
+					} catch (e) {
+						// continue
+					}
 				}
 			}
 		}
@@ -2118,9 +2121,9 @@ if (DEV) {
 
 /**
  * Expects a value that was wrapped with `freeze` and makes it frozen.
- * @template {import('./proxy/proxy.js').StateObject} T
+ * @template T
  * @param {T} value
- * @returns {Readonly<Record<string | symbol, any>>}
+ * @returns {Readonly<T>}
  */
 export function freeze(value) {
 	if (typeof value === 'object' && value != null && !is_frozen(value)) {

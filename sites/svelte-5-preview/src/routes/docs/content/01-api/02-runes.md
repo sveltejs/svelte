@@ -116,7 +116,7 @@ As with `$state`, you can mark class fields as `$derived`.
 
 ### What this replaces
 
-The non-runes equivalent would be `$: double = count * 2`. There are some important differences to be aware of:
+If the value of a reactive variable is being computed it should be replaced with `$derived` whether it previously took the form of `$: double = count * 2` or `$: { double = count * 2; }` There are some important differences to be aware of:
 
 - With the `$derived` rune, the value of `double` is always current (for example if you update `count` then immediately `console.log(double)`). With `$:` declarations, values are not updated until right before Svelte updates the DOM
 - In non-runes mode, Svelte determines the dependencies of `double` by statically analysing the `count * 2` expression. If you refactor it...
@@ -136,7 +136,7 @@ The non-runes equivalent would be `$: double = count * 2`. There are some import
 
 ## `$effect`
 
-To run code whenever specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
+To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:
 
 ```diff
 <script>
@@ -167,13 +167,13 @@ To run code whenever specific values change, or when a component is mounted to t
 
 ### What this replaces
 
-The `$effect` rune is roughly equivalent to `$:` when it's being used for side-effects (as opposed to declarations). There are some important differences:
+The portions of `$: {}` that are triggering side-effects can be replaced with `$effect` while being careful to migrate updates of reactive variables to use `$derived`. There are some important differences:
 
 - Effects only run in the browser, not during server-side rendering
 - They run after the DOM has been updated, whereas `$:` statements run immediately _before_
 - You can return a cleanup function that will be called whenever the effect refires
 
-Additionally, you will most likely find you can use effects in all the places where you previously used `onMount` and `afterUpdate` (the latter of which will be deprecated in Svelte 5).
+Additionally, you may prefer to use effects in some places where you previously used `onMount` and `afterUpdate` (the latter of which will be deprecated in Svelte 5). There are some differences between these APIs as `$effect` should not be used to compute reactive values and will be triggered each time a referenced reactive variable changes (unless using `untrack`).
 
 ## `$effect.pre`
 

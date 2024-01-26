@@ -3,7 +3,8 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object
+	object,
+	unwrap_ts_expression
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -870,14 +871,10 @@ function serialize_inline_component(node, component_name, context) {
 	if (Object.keys(events).length > 0) {
 		const events_expression = b.object(
 			Object.keys(events).map((name) =>
-				b.prop(
-					'init',
-					b.id(name),
-					events[name].length > 1 ? b.array(events[name]) : events[name][0]
-				)
+				b.init(name, events[name].length > 1 ? b.array(events[name]) : events[name][0])
 			)
 		);
-		push_prop(b.prop('init', b.id('$$events'), events_expression));
+		push_prop(b.init('$$events', events_expression));
 	}
 
 	/** @type {import('estree').Statement[]} */
@@ -931,19 +928,18 @@ function serialize_inline_component(node, component_name, context) {
 
 		if (slot_name === 'default') {
 			push_prop(
-				b.prop(
-					'init',
-					b.id('children'),
+				b.init(
+					'children',
 					context.state.options.dev ? b.call('$.add_snippet_symbol', slot_fn) : slot_fn
 				)
 			);
 		} else {
-			serialized_slots.push(b.prop('init', b.key(slot_name), slot_fn));
+			serialized_slots.push(b.init(slot_name, slot_fn));
 		}
 	}
 
 	if (serialized_slots.length > 0) {
-		push_prop(b.prop('init', b.id('$$slots'), b.object(serialized_slots)));
+		push_prop(b.init('$$slots', b.object(serialized_slots)));
 	}
 
 	const props_expression =
@@ -1558,8 +1554,6 @@ function process_children(nodes, parent, { visit, state }) {
 				// get hoisted inside clean_nodes?
 				visit(node, state);
 			} else {
-				// Optimization path for each blocks. If the parent isn't a fragment and it only has
-				// a single child, then we can classify the block as being "controlled".
 				if (
 					node.type === 'EachBlock' &&
 					nodes.length === 1 &&
@@ -2579,24 +2573,9 @@ export const template_visitors = {
 	},
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
-
-		/** @type {import('estree').Expression[]} */
-		const properties = [];
-
-		let expression = node.expression;
-		while (expression.type === 'MemberExpression') {
-			properties.unshift(
-				expression.computed
-					? /** @type {import('estree').Expression} */ (expression.property)
-					: b.literal(/** @type {import('estree').Identifier} */ (expression.property).name)
-			);
-			expression = /** @type {import('estree').Identifier | import('estree').MemberExpression} */ (
-				expression.object
-			);
-		}
-
-		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(node.expression)));
-		const assignment = b.assignment('=', node.expression, b.id('$$value'));
+		const expression = unwrap_ts_expression(node.expression);
+		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
+		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
 			[b.id('$$value')],
 			serialize_set_binding(
@@ -2716,7 +2695,7 @@ export const template_visitors = {
 						setter,
 						/** @type {import('estree').Expression} */ (
 							// if expression is not an identifier, we know it can't be a signal
-							node.expression.type === 'Identifier' ? node.expression : undefined
+							expression.type === 'Identifier' ? expression : undefined
 						)
 					);
 					break;
@@ -2765,7 +2744,7 @@ export const template_visitors = {
 							group_getter = b.thunk(
 								b.block([
 									b.stmt(serialize_attribute_value(value, context)[1]),
-									b.return(/** @type {import('estree').Expression} */ (visit(node.expression)))
+									b.return(/** @type {import('estree').Expression} */ (visit(expression)))
 								])
 							);
 						}

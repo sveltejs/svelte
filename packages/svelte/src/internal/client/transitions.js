@@ -683,10 +683,7 @@ function if_block_transition(transition) {
 	const block = this;
 	// block.value === true
 	if (block.v) {
-		let consequent_transitions = block.c;
-		if (consequent_transitions === null) {
-			consequent_transitions = block.c = new Set();
-		}
+		const consequent_transitions = (block.c ??= new Set());
 		consequent_transitions.add(transition);
 		transition.f(() => {
 			const c = /** @type {Set<import('./types.js').Transition>} */ (consequent_transitions);
@@ -697,10 +694,7 @@ function if_block_transition(transition) {
 			}
 		});
 	} else {
-		let alternate_transitions = block.a;
-		if (alternate_transitions === null) {
-			alternate_transitions = block.a = new Set();
-		}
+		const alternate_transitions = (block.a ??= new Set());
 		alternate_transitions.add(transition);
 		transition.f(() => {
 			const a = /** @type {Set<import('./types.js').Transition>} */ (alternate_transitions);
@@ -732,24 +726,19 @@ function each_item_transition(transition) {
 	if (transition.r === 'key' && (each_block.f & EACH_IS_ANIMATED) === 0) {
 		each_block.f |= EACH_IS_ANIMATED;
 	}
-	let transitions = block.s;
-	if (transitions === null) {
-		block.s = transitions = new Set();
-	}
+	const transitions = (block.s ??= new Set());
 	transition.f(() => {
-		if (transitions !== null) {
-			transitions.delete(transition);
-			if (transition.r !== 'key') {
-				for (let other of transitions) {
-					const type = other.r;
-					if (type === 'key' || type === 'in') {
-						transitions.delete(other);
-					}
+		transitions.delete(transition);
+		if (transition.r !== 'key') {
+			for (let other of transitions) {
+				const type = other.r;
+				if (type === 'key' || type === 'in') {
+					transitions.delete(other);
 				}
-				if (transitions.size === 0) {
-					block.s = null;
-					destroy_each_item_block(block, null, true);
-				}
+			}
+			if (transitions.size === 0) {
+				block.s = null;
+				destroy_each_item_block(block, null, true);
 			}
 		}
 	});

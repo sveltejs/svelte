@@ -368,6 +368,11 @@ export interface EachBlock extends BaseNode {
 		item_name: string;
 		/** List of bindings that are referenced within the expression */
 		references: Binding[];
+		/**
+		 * Optimization path for each blocks: If the parent isn't a fragment and
+		 * it only has a single child, then we can classify the block as being "controlled".
+		 * This saves us from creating an extra comment and insertion being faster.
+		 */
 		is_controlled: boolean;
 	};
 }
