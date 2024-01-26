@@ -9,7 +9,6 @@ const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
 const REGEX_NTH_OF =
 	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
@@ -79,7 +78,7 @@ function read_at_rule(parser) {
 
 	const name = read_identifier(parser);
 
-	const prelude = parser.read_until(REGEX_BRACE_OR_SEMICOLON).trim();
+	const prelude = read_value(parser);
 
 	/** @type {import('#compiler').Css.Block | null} */
 	let block = null;
@@ -398,7 +397,7 @@ function read_declaration(parser) {
 	parser.eat(':');
 	parser.allow_whitespace();
 
-	const value = read_declaration_value(parser);
+	const value = read_value(parser);
 
 	const end = parser.index;
 
@@ -419,7 +418,7 @@ function read_declaration(parser) {
  * @param {import('../index.js').Parser} parser
  * @returns {string}
  */
-function read_declaration_value(parser) {
+function read_value(parser) {
 	let value = '';
 	let escaped = false;
 	let in_url = false;
@@ -443,7 +442,7 @@ function read_declaration_value(parser) {
 			quote_mark = char;
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
-		} else if ((char === ';' || char === '}') && !in_url && !quote_mark) {
+		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
 		}
 
