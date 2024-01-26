@@ -1261,14 +1261,7 @@ export function destroy_signal(signal) {
 	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumers(signal, 0);
-	signal.i =
-		signal.r =
-		signal.y =
-		signal.x =
-		signal.b =
-		signal.d =
-		signal.c =
-			null;
+	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {
