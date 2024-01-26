@@ -1420,13 +1420,10 @@ export function user_effect(init) {
 		!apply_component_effect_heuristics
 	);
 	if (apply_component_effect_heuristics) {
-		let effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context)
-			.e;
-		if (effects === null) {
-			effects = /** @type {import('./types.js').ComponentContext} */ (current_component_context).e =
-				[];
-		}
-		effects.push(effect);
+		const context = /** @type {import('./types.js').ComponentContext} */ (
+			current_component_context
+		);
+		(context.e ??= []).push(effect);
 	}
 	return effect;
 }
@@ -1744,12 +1741,7 @@ export function get_or_init_context_map() {
 				(DEV ? 'Context can only be used during component initialisation.' : '')
 		);
 	}
-	let context_map = component_context.c;
-	if (context_map === null) {
-		const parent_context = get_parent_context(component_context);
-		context_map = component_context.c = new Map(parent_context || undefined);
-	}
-	return context_map;
+	return (component_context.c ??= new Map(get_parent_context(component_context) || undefined));
 }
 
 /**
