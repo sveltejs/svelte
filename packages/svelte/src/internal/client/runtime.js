@@ -495,6 +495,7 @@ function destroy_references(signal) {
 		let i;
 		for (i = 0; i < references.length; i++) {
 			destroy_signal(references[i]);
+		}
 	}
 }
 
