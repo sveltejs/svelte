@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-fix: improve at-rule parsing
+fix: correctly parse at-rules containing special characters in strings
