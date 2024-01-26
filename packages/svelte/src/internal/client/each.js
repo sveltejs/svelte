@@ -14,7 +14,7 @@ import {
 	set_current_hydration_fragment
 } from './hydration.js';
 import { clear_text_content, map_get, map_set } from './operations.js';
-import { STATE_SYMBOL } from './proxy/proxy.js';
+import { STATE_SYMBOL } from './proxy.js';
 import { insert, remove } from './reconciler.js';
 import { empty } from './render.js';
 import {
@@ -25,7 +25,6 @@ import {
 	mutable_source,
 	push_destroy_fn,
 	render_effect,
-	schedule_task,
 	set_signal_value,
 	source
 } from './runtime.js';
@@ -105,8 +104,17 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 				let anchor = block.a;
 				const is_controlled = (block.f & EACH_IS_CONTROLLED) !== 0;
 				if (is_controlled) {
-					anchor = empty();
-					block.a.appendChild(anchor);
+					// If the each block is controlled, then the anchor node will be the surrounding
+					// element in which the each block is rendered, which requires certain handling
+					// depending on whether we're in hydration mode or not
+					if (current_hydration_fragment === null) {
+						// Create a new anchor on the fly because there's none due to the optimization
+						anchor = empty();
+						block.a.appendChild(anchor);
+					} else {
+						// In case of hydration the anchor will be the first child of the surrounding element
+						anchor = /** @type {Comment} */ (anchor.firstChild);
+					}
 				}
 				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
 				fallback.d = block.d;
@@ -134,8 +142,8 @@ function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, re
 			array = is_array(maybe_array)
 				? maybe_array
 				: maybe_array == null
-				? []
-				: Array.from(maybe_array);
+					? []
+					: Array.from(maybe_array);
 			if (key_fn !== null) {
 				keys = array.map(key_fn);
 			} else if ((flags & EACH_KEYED) === 0) {
@@ -351,12 +359,7 @@ function reconcile_tracked_array(
 ) {
 	var a_blocks = each_block.v;
 	const is_computed_key = keys !== null;
-	var is_proxied_array = STATE_SYMBOL in array && /** @type {any} */ (array[STATE_SYMBOL]).i;
 	var active_transitions = each_block.s;
-
-	if (is_proxied_array) {
-		flags &= ~EACH_ITEM_REACTIVE;
-	}
 
 	/** @type {number | void} */
 	var a = a_blocks.length;
@@ -422,7 +425,9 @@ function reconcile_tracked_array(
 				insert_each_item_block(block, dom, is_controlled, null);
 			}
 		} else {
-			var should_update_block = (flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0;
+			var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
+			var should_update_block =
+				(flags & (EACH_ITEM_REACTIVE | EACH_INDEX_REACTIVE)) !== 0 || is_animated;
 			var start = 0;
 
 			/** @type {null | Text | Element | Comment} */
@@ -489,6 +494,17 @@ function reconcile_tracked_array(
 					key = is_computed_key ? keys[a] : item;
 					map_set(item_index, key, a);
 				}
+				// If keys are animated, we need to do updates before actual moves
+				if (is_animated) {
+					for (b = start; b <= a_end; ++b) {
+						a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
+						if (a !== undefined) {
+							item = array[a];
+							block = a_blocks[b];
+							update_each_item_block(block, item, a, flags);
+						}
+					}
+				}
 				for (b = start; b <= a_end; ++b) {
 					a = map_get(item_index, /** @type {V} */ (a_blocks[b].k));
 					block = a_blocks[b];
@@ -504,23 +520,9 @@ function reconcile_tracked_array(
 				if (pos === MOVED_BLOCK) {
 					mark_lis(sources);
 				}
-				// If keys are animated, we need to do updates before actual moves
-				var is_animated = (flags & EACH_IS_ANIMATED) !== 0;
-				var should_create;
-				if (is_animated) {
-					var i = b_length;
-					while (i-- > 0) {
-						b_end = i + start;
-						a = sources[i];
-						if (pos === MOVED_BLOCK) {
-							block = b_blocks[b_end];
-							item = array[b_end];
-							update_each_item_block(block, item, b_end, flags);
-						}
-					}
-				}
 				var last_block;
 				var last_sibling;
+				var should_create;
 				while (b_length-- > 0) {
 					b_end = b_length + start;
 					a = sources[b_length];
@@ -719,7 +721,7 @@ function update_each_item_block(block, item, index, type) {
 	// Handle each item animations
 	const each_animation = block.a;
 	if (transitions !== null && (type & EACH_KEYED) !== 0 && each_animation !== null) {
-		each_animation(block, transitions, index, index_is_reactive);
+		each_animation(block, transitions);
 	}
 	if (index_is_reactive) {
 		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.i), index);
@@ -784,8 +786,8 @@ function each_item_block(item, key, index, render_fn, flags) {
 	const item_value = each_item_not_reactive
 		? item
 		: (flags & EACH_IS_IMMUTABLE) === 0
-		? mutable_source(item)
-		: source(item);
+			? mutable_source(item)
+			: source(item);
 
 	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
 	const block = create_each_item_block(item_value, index_value, key);

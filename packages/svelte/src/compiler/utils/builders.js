@@ -1,4 +1,5 @@
 import { regex_is_valid_identifier } from '../phases/patterns.js';
+import { sanitize_template_string } from './sanitize_template_string.js';
 
 /**
  * @param {Array<import('estree').Expression | import('estree').SpreadElement | null>} elements
@@ -41,6 +42,23 @@ export function arrow(params, body) {
  */
 export function assignment(operator, left, right) {
 	return { type: 'AssignmentExpression', operator, left, right };
+}
+
+/**
+ * @template T
+ * @param {T & import('estree').BaseFunction} func
+ * @returns {T & import('estree').BaseFunction}
+ */
+export function async(func) {
+	return { ...func, async: true };
+}
+
+/**
+ * @param {import('estree').Expression} argument
+ * @returns {import('estree').AwaitExpression}
+ */
+export function await_builder(argument) {
+	return { type: 'AwaitExpression', argument };
 }
 
 /**
@@ -314,7 +332,7 @@ export function prop_def(key, value, computed = false, is_static = false) {
  * @returns {import('estree').TemplateElement}
  */
 export function quasi(cooked, tail = false) {
-	const raw = cooked.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+	const raw = sanitize_template_string(cooked);
 	return { type: 'TemplateElement', value: { raw, cooked }, tail };
 }
 
@@ -572,6 +590,7 @@ export function throw_error(str) {
 }
 
 export {
+	await_builder as await,
 	new_builder as new,
 	let_builder as let,
 	const_builder as const,

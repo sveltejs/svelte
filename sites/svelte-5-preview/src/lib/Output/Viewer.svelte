@@ -111,26 +111,30 @@
 
 					${styles}
 
-					const styles = document.querySelectorAll('style[id^=svelte-]');
+					{
+						const styles = document.querySelectorAll('style[id^=svelte-]');
 
-					let i = styles.length;
-					while (i--) styles[i].parentNode.removeChild(styles[i]);
+						let i = styles.length;
+						while (i--) styles[i].parentNode.removeChild(styles[i]);
 
-					if (window.unmount) {
-						try {
-							window.unmount();
-						} catch (err) {
-							console.error(err);
+						if (window.__unmount_previous) {
+							try {
+								window.__unmount_previous();
+							} catch (err) {
+								console.error(err);
+							}
 						}
+
+						document.body.innerHTML = '';
+						window._svelteTransitionManager = null;
 					}
 
-					document.body.innerHTML = '';
-					window._svelteTransitionManager = null;
-
-					const { mount, App } = ${$bundle.client?.code};
-					const [, destroy] = mount(App, { target: document.body });
-
-					window.unmount = destroy;
+					const __repl_exports = ${$bundle.client?.code};
+					{
+						const { mount, App } = __repl_exports;
+						const [, destroy] = mount(App, { target: document.body });
+						window.__unmount_previous = destroy;
+					}
 					//# sourceURL=playground:output
 				`);
 				error = null;

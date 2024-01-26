@@ -53,11 +53,18 @@ class Animation {
 		this.onfinish = () => {};
 		this.pending = true;
 		this.currentTime = 0;
+		this.playState = 'running';
+		this.effect = {
+			setKeyframes: (/** @type {Keyframe[]} */ keyframes) => {
+				this.#keyframes = keyframes;
+			}
+		};
 	}
 
 	play() {
 		this.#paused = false;
 		raf.animations.add(this);
+		this.playState = 'running';
 		this._update();
 	}
 
@@ -107,6 +114,7 @@ class Animation {
 		if (this.#reversed) {
 			raf.animations.delete(this);
 		}
+		this.playState = 'idle';
 	}
 
 	cancel() {
@@ -118,11 +126,13 @@ class Animation {
 
 	pause() {
 		this.#paused = true;
+		this.playState = 'paused';
 	}
 
 	reverse() {
 		this.#timeline_offset = this.currentTime;
 		this.#reversed = !this.#reversed;
+		this.playState = 'running';
 	}
 }
 

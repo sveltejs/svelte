@@ -21,6 +21,13 @@ interface BaseElement extends BaseNode {
 	children: Array<LegacyElementLike>;
 }
 
+export interface LegacyRoot extends BaseNode {
+	html: LegacySvelteNode;
+	css?: any;
+	instance?: any;
+	module?: any;
+}
+
 export interface LegacyAction extends BaseNode {
 	type: 'Action';
 	/** The 'x' in `use:x` */

@@ -229,7 +229,6 @@ describe('derived', () => {
 	it('maps a single store', () => {
 		const a = writable(1);
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(a, (n) => n * 2);
 
 		const values: number[] = [];
@@ -251,7 +250,6 @@ describe('derived', () => {
 		const a = writable(2);
 		const b = writable(3);
 
-		// @ts-expect-error TODO feels like inference should work here
 		const c = derived([a, b], ([a, b]) => a * b);
 
 		const values: number[] = [];
@@ -343,10 +341,8 @@ describe('derived', () => {
 	it('prevents glitches', () => {
 		const lastname = writable('Jekyll');
 
-		// @ts-expect-error TODO feels like inference should work here
 		const firstname = derived(lastname, (n) => (n === 'Jekyll' ? 'Henry' : 'Edward'));
 
-		// @ts-expect-error TODO feels like inference should work here
 		const fullname = derived([firstname, lastname], (names) => names.join(' '));
 
 		const values: string[] = [];
@@ -367,17 +363,14 @@ describe('derived', () => {
 
 		const values: string[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const a = derived(count, ($count) => {
 			return 'a' + $count;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived(count, ($count) => {
 			return 'b' + $count;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const combined = derived([a, b], ([a, b]) => {
 			return a + b;
 		});
@@ -399,12 +392,10 @@ describe('derived', () => {
 
 		const values: string[] = [];
 
-		// @ts-expect-error TODO feels like inference should work here
 		const a = derived(root, ($root) => {
 			return 'a' + $root.a;
 		});
 
-		// @ts-expect-error TODO feels like inference should work here
 		const b = derived([a, root], ([$a, $root]) => {
 			return 'b' + $root.b + $a;
 		});
@@ -426,7 +417,6 @@ describe('derived', () => {
 
 		const number = writable(1);
 
-		// @ts-expect-error TODO feels like inference should work here
 		const numbers = derived(number, ($number) => {
 			arr[0] = $number;
 			return arr;
@@ -507,7 +497,6 @@ describe('derived', () => {
 		const a = writable('one');
 		const b = writable(1);
 
-		// @ts-expect-error TODO feels like inference should work here
 		const c = derived([a, b], ([a, b]) => `${a} ${b}`);
 
 		assert.deepEqual(get(c), 'one 1');

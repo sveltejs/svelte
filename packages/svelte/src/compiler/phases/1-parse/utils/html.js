@@ -121,12 +121,12 @@ function validate_code(code) {
 
 // based on http://developers.whatwg.org/syntax.html#syntax-tag-omission
 
-const interactive_elements = new Set([
+// while `input` is also an interactive element, it is never moved by the browser, so we don't need to check for it
+export const interactive_elements = new Set([
 	'a',
 	'button',
 	'iframe',
 	'embed',
-	'input',
 	'select',
 	'textarea'
 ]);
@@ -152,6 +152,36 @@ const disallowed_contents = {
 	td: new Set(['td', 'th', 'tr']),
 	th: new Set(['td', 'th', 'tr'])
 };
+
+export const disallowed_parapgraph_contents = [
+	'address',
+	'article',
+	'aside',
+	'blockquote',
+	'details',
+	'div',
+	'dl',
+	'fieldset',
+	'figcapture',
+	'figure',
+	'footer',
+	'form',
+	'h1',
+	'h2',
+	'h3',
+	'h4',
+	'h5',
+	'h6',
+	'header',
+	'hr',
+	'menu',
+	'nav',
+	'ol',
+	'pre',
+	'section',
+	'table',
+	'ul'
+];
 
 for (const interactive_element of interactive_elements) {
 	disallowed_contents[interactive_element] = interactive_elements;

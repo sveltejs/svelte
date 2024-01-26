@@ -63,7 +63,7 @@ import {
 } from './utils.js';
 import { is_promise } from '../common.js';
 import { bind_transition, trigger_transitions } from './transitions.js';
-import { proxy } from './proxy/proxy.js';
+import { proxy } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -325,7 +325,15 @@ export function event(event_name, dom, handler, capture, passive) {
 		capture,
 		passive
 	};
-	const target_handler = handler;
+	/**
+	 * @this {EventTarget}
+	 */
+	function target_handler(/** @type {Event} */ event) {
+		handle_event_propagation(dom, event);
+		if (!event.cancelBubble) {
+			return handler.call(this, event);
+		}
+	}
 	dom.addEventListener(event_name, target_handler, options);
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -879,8 +887,8 @@ export function bind_resize_observer(dom, type, update) {
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
 			: type === 'borderBoxSize'
-			? resize_observer_border_box
-			: resize_observer_device_pixel_content_box;
+				? resize_observer_border_box
+				: resize_observer_device_pixel_content_box;
 	const unsub = observer.observe(dom, /** @param {any} entry */ (entry) => update(entry[type]));
 	render_effect(() => unsub);
 }
@@ -932,30 +940,48 @@ export function selected(dom) {
 }
 
 /**
- * @param {Element} dom
+ * @param {HTMLInputElement} dom
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
 	dom.addEventListener('input', () => {
-		// @ts-ignore
+		/** @type {any} */
 		let value = dom.value;
-		// @ts-ignore
-		const type = dom.type;
-		if (type === 'number' || type === 'range') {
-			value = value === '' ? null : +value;
+		if (is_numberlike_input(dom)) {
+			value = to_number(value);
 		}
 		update(value);
 	});
+
 	render_effect(() => {
 		const value = get_value();
-		const coerced_value = value == null ? null : value + '';
-		// @ts-ignore
-		dom.value = coerced_value;
 		// @ts-ignore
 		dom.__value = value;
+
+		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
+			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+			return;
+		}
+
+		dom.value = stringify(value);
 	});
+}
+
+/**
+ * @param {HTMLInputElement} dom
+ */
+function is_numberlike_input(dom) {
+	const type = dom.type;
+	return type === 'number' || type === 'range';
+}
+
+/**
+ * @param {string} value
+ */
+function to_number(value) {
+	return value === '' ? null : +value;
 }
 
 /**
@@ -1286,6 +1312,10 @@ function handle_event_propagation(root_element, event) {
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
+		if (at_idx !== -1 && root_element === document) {
+			// This is the fallback document listener but the event was already handled -> ignore
+			return;
+		}
 		if (at_idx < path.indexOf(root_element)) {
 			path_idx = at_idx;
 		}
@@ -1323,6 +1353,8 @@ function handle_event_propagation(root_element, event) {
 
 	// @ts-expect-error is used above
 	event.__root = root_element;
+	// @ts-expect-error is used above
+	current_target = root_element;
 }
 
 /**
@@ -1359,7 +1391,10 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let alternate_dom = null;
 	let has_mounted = false;
-	let has_mounted_branch = false;
+	/**
+	 * @type {import("./types.js").EffectSignal | null}
+	 */
+	let current_branch_effect = null;
 
 	const if_effect = render_effect(
 		() => {
@@ -1416,20 +1451,24 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	// Managed effect
 	const consequent_effect = render_effect(
-		() => {
-			if (consequent_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
+		) => {
+			const result = block.v;
+			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.v) {
+			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = consequent_effect;
+				consequent_dom = block.d;
 			}
-			consequent_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -1438,22 +1477,26 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
-		() => {
-			if (alternate_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
+		) => {
+			const result = block.v;
+			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.v) {
+			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = alternate_effect;
+				alternate_dom = block.d;
 			}
-			alternate_dom = block.d;
 			block.d = null;
 		},
 		block,
@@ -2259,9 +2302,6 @@ export function attr(dom, attribute, value) {
 	}
 }
 
-/** @type {HTMLAnchorElement | undefined} */
-let src_url_equal_anchor;
-
 /**
  * @param {string} element_src
  * @param {string} url
@@ -2269,12 +2309,7 @@ let src_url_equal_anchor;
  */
 function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
-	if (!src_url_equal_anchor) {
-		src_url_equal_anchor = document.createElement('a');
-	}
-	// This is actually faster than doing URL(..).href
-	src_url_equal_anchor.href = url;
-	return element_src === src_url_equal_anchor.href;
+	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
 /** @param {string} srcset */
@@ -2432,9 +2467,25 @@ function get_setters(element) {
 }
 
 /**
+ * Like `spread_attributes` but self-contained
+ * @param {Element & ElementCSSInlineStyle} dom
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {string} css_hash
+ */
+export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
+	});
+}
+
+/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string, unknown> | null} prev
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {boolean} lowercase_attributes
  * @param {string} css_hash
@@ -2531,18 +2582,30 @@ export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_ha
 
 /**
  * @param {Element} node
- * @param {Record<string, unknown> | null} prev
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {string} css_hash
+ */
+export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
+	});
+}
+
+/**
+ * @param {Element} node
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
  */
 export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	if (node.tagName.includes('-')) {
 		const next = object_assign({}, ...attrs);
-		if (prev !== null) {
-			for (const key in prev) {
-				if (!(key in next)) {
-					next[key] = null;
-				}
+		for (const key in prev) {
+			if (!(key in next)) {
+				next[key] = null;
 			}
 		}
 		for (const key in next) {
@@ -2621,8 +2684,13 @@ const spread_props_handler = {
 			if (typeof p === 'object' && p !== null && key in p) return p[key];
 		}
 	},
-	getOwnPropertyDescriptor() {
-		return { enumerable: true, configurable: true };
+	getOwnPropertyDescriptor(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+		}
 	},
 	has(target, key) {
 		for (let p of target.props) {
@@ -2755,7 +2823,7 @@ export function mount(component, options) {
 					).c = options.context;
 				}
 				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {}, options.events || {});
+				accessors = component(anchor, options.props || {});
 				if (options.context) {
 					pop();
 				}
@@ -2785,6 +2853,7 @@ export function mount(component, options) {
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
 	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -2792,13 +2861,27 @@ export function mount(component, options) {
 			const event_name = events[i];
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
 				container.addEventListener(
 					event_name,
 					bound_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
+						: undefined
+				);
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(
+					event_name,
+					bound_document_event_listener,
+					PassiveDelegatedEvents.includes(event_name)
+						? {
+								passive: true
+							}
 						: undefined
 				);
 			}

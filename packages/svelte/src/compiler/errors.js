@@ -78,7 +78,7 @@ const parse = {
 	 * @param {string} reason
 	 */
 	'invalid-closing-tag-after-autoclose': (name, reason) =>
-		`</${name}> attempted to close element that was already automatically closed by <${reason}>`,
+		`</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`,
 	'invalid-dollar-binding': () =>
 		`The $ name is reserved, and cannot be used for variables and imports`,
 	'invalid-dollar-prefix': () =>
@@ -100,7 +100,7 @@ const css = {
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
 	'invalid-css-global-selector-list': () =>
-		`:global(...) cannot be used to modify a selector, or be modified by another selector`,
+		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
 };
@@ -234,8 +234,8 @@ const attributes = {
 		type === 'no-each'
 			? `An element that uses the animate directive must be the immediate child of a keyed each block`
 			: type === 'each-key'
-			? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
-			: `An element that uses the animate directive must be the sole child of a keyed each block`,
+				? `An element that uses the animate directive must be used inside a keyed each block. Did you forget to add a key to your each block?`
+				: `An element that uses the animate directive must be the sole child of a keyed each block`,
 	'duplicate-animation': () => `An element can only have one 'animate' directive`,
 	/** @param {string[] | undefined} [modifiers] */
 	'invalid-event-modifier': (modifiers) =>
@@ -262,7 +262,7 @@ const attributes = {
 			? `An element can only have one '${directive1}' directive`
 			: `An element cannot have both ${describe(directive1)} directive and ${describe(
 					directive2
-			  )} directive`;
+				)} directive`;
 	},
 	'invalid-let-directive-placement': () => 'let directive at invalid position'
 };
@@ -435,10 +435,6 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_subscription: {
-	// 	code: 'illegal-subscription',
-	// 	message: 'Cannot reference store value inside <script context="module">'
-	// },
 	// illegal_global: /** @param {string} name */ (name) => ({
 	// 	code: 'illegal-global',
 	// 	message: `${name} is an illegal variable name`
@@ -447,19 +443,6 @@ const errors = {
 	// 	code: 'illegal-variable-declaration',
 	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
 	// },
-	// css_invalid_global_selector: {
-	// 	code: 'css-invalid-global-selector',
-	// 	message: ':global(...) must contain a single selector'
-	// },
-	// css_invalid_global_selector_position: {
-	// 	code: 'css-invalid-global-selector-position',
-	// 	message:
-	// 		':global(...) not at the start of a selector sequence should not contain type or universal selectors'
-	// },
-	// css_invalid_selector: /** @param {string} selector */ (selector) => ({
-	// 	code: 'css-invalid-selector',
-	// 	message: `Invalid selector "${selector}"`
-	// }),
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:

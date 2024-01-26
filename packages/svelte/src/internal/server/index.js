@@ -407,6 +407,32 @@ export function mutate_store(store_values, store_name, store, expression) {
 	return expression;
 }
 
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store(store_values, store_name, store, d = 1) {
+	let store_value = store_get(store_values, store_name, store);
+	store.set(store_value + d);
+	return store_value;
+}
+
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store_pre(store_values, store_name, store, d = 1) {
+	const value = store_get(store_values, store_name, store) + d;
+	store.set(value);
+	return value;
+}
+
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
 	for (const store_name in store_values) {

@@ -7,6 +7,7 @@ import {
 } from '../../utils/ast.js';
 import { warn } from '../../warnings.js';
 import fuzzymatch from '../1-parse/utils/fuzzymatch.js';
+import { disallowed_parapgraph_contents, interactive_elements } from '../1-parse/utils/html.js';
 import { binding_properties } from '../bindings.js';
 import { ContentEditableBindings, EventModifiers, SVGElements } from '../constants.js';
 import { is_custom_element_node } from '../nodes.js';
@@ -171,31 +172,37 @@ function validate_slot_attribute(context, attribute) {
 			error(attribute, 'invalid-slot-attribute');
 		}
 
-		if (owner.type === 'Component' || owner.type === 'SvelteComponent') {
+		if (
+			owner.type === 'Component' ||
+			owner.type === 'SvelteComponent' ||
+			owner.type === 'SvelteSelf'
+		) {
 			if (owner !== context.path.at(-2)) {
 				error(attribute, 'invalid-slot-placement');
 			}
-		}
 
-		const name = attribute.value[0].data;
-		if (context.state.component_slots.has(name)) {
-			error(attribute, 'duplicate-slot-name', name, owner.name);
-		}
-		context.state.component_slots.add(name);
+			const name = attribute.value[0].data;
 
-		if (name === 'default') {
-			for (const node of owner.fragment.nodes) {
-				if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
-					continue;
-				}
+			if (context.state.component_slots.has(name)) {
+				error(attribute, 'duplicate-slot-name', name, owner.name);
+			}
 
-				if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
-					if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+			context.state.component_slots.add(name);
+
+			if (name === 'default') {
+				for (const node of owner.fragment.nodes) {
+					if (node.type === 'Text' && regex_only_whitespaces.test(node.data)) {
 						continue;
 					}
-				}
 
-				error(node, 'invalid-default-slot-content');
+					if (node.type === 'RegularElement' || node.type === 'SvelteFragment') {
+						if (node.attributes.some((a) => a.type === 'Attribute' && a.name === 'slot')) {
+							continue;
+						}
+					}
+
+					error(node, 'invalid-default-slot-content');
+				}
 			}
 		}
 	} else {
@@ -331,9 +338,11 @@ export const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 
-		let left = node.expression;
+		const assignee = unwrap_ts_expression(node.expression);
+		let left = assignee;
+
 		while (left.type === 'MemberExpression') {
-			left = /** @type {import('estree').MemberExpression} */ (left.object);
+			left = unwrap_ts_expression(/** @type {import('estree').MemberExpression} */ (left.object));
 		}
 
 		if (left.type !== 'Identifier') {
@@ -341,7 +350,7 @@ export const validation = {
 		}
 
 		if (
-			node.expression.type === 'Identifier' &&
+			assignee.type === 'Identifier' &&
 			node.name !== 'this' // bind:this also works for regular variables
 		) {
 			const binding = context.state.scope.get(left.name);
@@ -349,6 +358,7 @@ export const validation = {
 			if (
 				!binding ||
 				(binding.kind !== 'state' &&
+					binding.kind !== 'frozen_state' &&
 					binding.kind !== 'prop' &&
 					binding.kind !== 'each' &&
 					binding.kind !== 'store_sub' &&
@@ -529,6 +539,28 @@ export const validation = {
 			}
 		}
 
+		if (interactive_elements.has(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (
+					parent.type === 'RegularElement' &&
+					parent.name === node.name &&
+					interactive_elements.has(parent.name)
+				) {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
+		if (disallowed_parapgraph_contents.includes(node.name)) {
+			const path = context.path;
+			for (let parent of path) {
+				if (parent.type === 'RegularElement' && parent.name === 'p') {
+					error(node, 'invalid-node-placement', `<${node.name}>`, parent.name);
+				}
+			}
+		}
+
 		context.next({
 			...context.state,
 			parent_element: node.name
@@ -661,7 +693,7 @@ function validate_export(node, scope, name) {
 		error(node, 'invalid-derived-export');
 	}
 
-	if (binding.kind === 'state' && binding.reassigned) {
+	if ((binding.kind === 'state' || binding.kind === 'frozen_state') && binding.reassigned) {
 		error(node, 'invalid-state-export');
 	}
 }
@@ -835,7 +867,9 @@ function validate_no_const_assignment(node, argument, scope, is_binding) {
 				is_binding,
 				// This takes advantage of the fact that we don't assign initial for let directives and then/catch variables.
 				// If we start doing that, we need another property on the binding to differentiate, or give up on the more precise error message.
-				binding.kind !== 'state' && (binding.kind !== 'normal' || !binding.initial)
+				binding.kind !== 'state' &&
+					binding.kind !== 'frozen_state' &&
+					(binding.kind !== 'normal' || !binding.initial)
 			);
 		}
 	}
@@ -851,19 +885,19 @@ function validate_assignment(node, argument, state) {
 
 	let left = /** @type {import('estree').Expression | import('estree').Super} */ (argument);
 
+	if (left.type === 'Identifier') {
+		const binding = state.scope.get(left.name);
+		if (binding?.kind === 'derived') {
+			error(node, 'invalid-derived-assignment');
+		}
+	}
+
 	/** @type {import('estree').Expression | import('estree').PrivateIdentifier | null} */
 	let property = null;
 
 	while (left.type === 'MemberExpression') {
 		property = left.property;
 		left = left.object;
-	}
-
-	if (left.type === 'Identifier') {
-		const binding = state.scope.get(left.name);
-		if (binding?.kind === 'derived') {
-			error(node, 'invalid-derived-assignment');
-		}
 	}
 
 	if (left.type === 'ThisExpression' && property?.type === 'PrivateIdentifier') {

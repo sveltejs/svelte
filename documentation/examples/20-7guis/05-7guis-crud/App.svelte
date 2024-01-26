@@ -16,7 +16,7 @@
 		? people.filter((person) => {
 				const name = `${person.last}, ${person.first}`;
 				return name.toLowerCase().startsWith(prefix.toLowerCase());
-		  })
+			})
 		: people;
 
 	$: selected = filteredPeople[i];
