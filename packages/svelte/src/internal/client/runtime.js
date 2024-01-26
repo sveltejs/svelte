@@ -494,14 +494,7 @@ function destroy_references(signal) {
 	if (references !== null) {
 		let i;
 		for (i = 0; i < references.length; i++) {
-			const reference = references[i];
-			if ((reference.f & IS_EFFECT) !== 0) {
-				destroy_signal(reference);
-			} else {
-				destroy_references(reference);
-				remove_consumers(reference, 0);
-				reference.d = null;
-			}
+			destroy_signal(references[i]);
 		}
 	}
 }
@@ -1268,16 +1261,7 @@ export function destroy_signal(signal) {
 	const flags = signal.f;
 	destroy_references(signal);
 	remove_consumers(signal, 0);
-	signal.i =
-		signal.r =
-		signal.y =
-		signal.x =
-		signal.b =
-		// @ts-expect-error - this is fine, since we're assigning to null to clear out a destroyed signal
-		signal.v =
-		signal.d =
-		signal.c =
-			null;
+	signal.i = signal.r = signal.y = signal.x = signal.b = signal.d = signal.c = null;
 	set_signal_status(signal, DESTROYED);
 	if (destroy !== null) {
 		if (is_array(destroy)) {
