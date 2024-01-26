@@ -2,7 +2,7 @@
 	"css": {
 		"type": "Style",
 		"start": 36,
-		"end": 174,
+		"end": 205,
 		"attributes": [],
 		"children": [
 			{
@@ -38,7 +38,7 @@
 				"block": {
 					"type": "Block",
 					"start": 140,
-					"end": 165,
+					"end": 196,
 					"children": [
 						{
 							"type": "Declaration",
@@ -46,17 +46,24 @@
 							"end": 161,
 							"property": "font-weight",
 							"value": "bold"
+						},
+						{
+							"type": "Declaration",
+							"start": 165,
+							"end": 192,
+							"property": "background",
+							"value": "url(\"whatever\")"
 						}
 					]
 				},
 				"start": 137,
-				"end": 165
+				"end": 196
 			}
 		],
 		"content": {
 			"start": 43,
-			"end": 166,
-			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t}\n"
+			"end": 197,
+			"styles": "\n\t@import url(\"https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap\");\n\th1 {\n\t\tfont-weight: bold;\n\t\tbackground: url(\"whatever\");\n\t}\n"
 		}
 	},
 	"js": [],
