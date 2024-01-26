@@ -269,7 +269,7 @@ function open(parser) {
 		const snippet_declaration_end = find_matching_bracket(parser.template, parser.index, '{');
 
 		if (!snippet_declaration_end) {
-			error(start, 'TODO', 'Expected a closing curly bracket');
+			error(parser.template.length, 'unexpected-eof');
 		}
 
 		// we'll eat this later, so save it
