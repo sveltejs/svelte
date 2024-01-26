@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.39
+
+### Patch Changes
+
+- fix: handle deep assignments to `$state()` class properties correctly ([#10289](https://github.com/sveltejs/svelte/pull/10289))
+
+- fix: prevent false positive store error in module script ([#10291](https://github.com/sveltejs/svelte/pull/10291))
+
+- fix: allow type selector in `:global()` when it's at a start of a compound selector ([#10287](https://github.com/sveltejs/svelte/pull/10287))
+
 ## 5.0.0-next.38
 
 ### Patch Changes
