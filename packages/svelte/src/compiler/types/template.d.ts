@@ -14,7 +14,11 @@ import type {
 	ObjectExpression,
 	Pattern,
 	Program,
-	SpreadElement
+	SpreadElement,
+	CallExpression,
+	ChainExpression,
+	BaseExpression,
+	SimpleCallExpression
 } from 'estree';
 
 export interface BaseNode {
@@ -144,11 +148,15 @@ export interface DebugTag extends BaseNode {
 	identifiers: Identifier[];
 }
 
+export interface ChainCallExpression extends BaseExpression {
+	type: 'ChainExpression';
+	expression: SimpleCallExpression;
+}
+
 /** A `{@render foo(...)} tag */
 export interface RenderTag extends BaseNode {
 	type: 'RenderTag';
-	expression: Identifier;
-	arguments: (Expression | SpreadElement)[];
+	expression: SimpleCallExpression | ChainCallExpression;
 }
 
 type Tag = ExpressionTag | HtmlTag | ConstTag | DebugTag | RenderTag;

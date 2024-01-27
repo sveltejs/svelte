@@ -6,6 +6,7 @@ import { walk } from 'zimmerframe';
 import { parse, parse_expression_at } from '../acorn.js';
 import { find_matching_bracket } from '../utils/bracket.js';
 import full_char_code_at from '../utils/full_char_code_at.js';
+import { isChainCallExpression } from '../utils/is-chain-call-expression.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -598,8 +599,16 @@ function special(parser) {
 
 		const expression = read_expression(parser);
 
-		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
+		const is_chained_call_expression = isChainCallExpression(expression);
+		const is_regular_call_expression = expression.type === 'CallExpression';
+
+		// The expression needs to, at some point, be a call expression.
+		// - snippet()
+		// - snippet?.()
+		// - (snippet ?? fallback)()
+		// - (snippet ?? fallback)?.()
+		if (!(is_chained_call_expression || is_regular_call_expression)) {
+			error(expression, 'TODO', `Expected a call expression.`);
 		}
 
 		parser.allow_whitespace();
@@ -610,8 +619,7 @@ function special(parser) {
 				type: 'RenderTag',
 				start,
 				end: parser.index,
-				expression: expression.callee,
-				arguments: expression.arguments
+				expression: expression
 			})
 		);
 	}

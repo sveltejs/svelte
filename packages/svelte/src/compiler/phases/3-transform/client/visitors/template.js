@@ -1775,12 +1775,12 @@ export const template_visitors = {
 	},
 	RenderTag(node, context) {
 		context.state.template.push('<!>');
-		const binding = context.state.scope.get(node.expression.name);
-		const is_reactive = binding?.kind !== 'normal' || node.expression.type !== 'Identifier';
+		const call_expression =
+			node.expression.type === 'CallExpression' ? node.expression : node.expression.expression;
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		for (const arg of node.arguments) {
+		for (const arg of call_expression.arguments) {
 			if (arg.type === 'SpreadElement') {
 				// this is a spread operation, meaning we need to thunkify all of its members, which we can't
 				// do until runtime
@@ -1801,13 +1801,10 @@ export const template_visitors = {
 			snippet_function = b.call('$.validate_snippet', snippet_function);
 		}
 
-		if (is_reactive) {
-			context.state.after_update.push(
-				b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
-			);
-		} else {
-			context.state.after_update.push(b.stmt(b.call(snippet_function, ...args)));
-		}
+		// TODO: Add back is_reactive analysis
+		context.state.after_update.push(
+			b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+		);
 	},
 	AnimateDirective(node, { state, visit }) {
 		const expression =

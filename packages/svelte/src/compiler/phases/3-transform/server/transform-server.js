@@ -1126,8 +1126,10 @@ const template_visitors = {
 		const snippet_function = state.options.dev
 			? b.call('$.validate_snippet', expression)
 			: expression;
+		const call_expression =
+			node.expression.type === 'CallExpression' ? node.expression : node.expression.expression;
 
-		const snippet_args = node.arguments.map((arg) => {
+		const snippet_args = call_expression.arguments.map((arg) => {
 			return /** @type {import('estree').Expression} */ (context.visit(arg));
 		});
 
