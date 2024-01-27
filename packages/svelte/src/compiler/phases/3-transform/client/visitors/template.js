@@ -1803,7 +1803,7 @@ export const template_visitors = {
 
 		// TODO: Add back is_reactive analysis
 		context.state.after_update.push(
-			b.stmt(b.call('$.snippet_effect', b.thunk(snippet_function), ...args))
+			b.stmt(b.call('$.snippet_effect', b.arrow([], snippet_function), ...args))
 		);
 	},
 	AnimateDirective(node, { state, visit }) {
