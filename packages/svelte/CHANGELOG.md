@@ -1,5 +1,15 @@
 # svelte
 
+## 5.0.0-next.40
+
+### Patch Changes
+
+- chore: cleanup derived destruction ([#10303](https://github.com/sveltejs/svelte/pull/10303))
+
+- fix: correctly parse at-rules containing special characters in strings ([#10221](https://github.com/sveltejs/svelte/pull/10221))
+
+- fix: Add missing `miter-clip` and `arcs` values to `stroke-linejoin` attribute ([#10141](https://github.com/sveltejs/svelte/pull/10141))
+
 ## 5.0.0-next.39
 
 ### Patch Changes
