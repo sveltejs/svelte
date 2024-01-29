@@ -1,5 +1,13 @@
 # svelte
 
+## 5.0.0-next.41
+
+### Patch Changes
+
+- fix: handle event delegation correctly when having sibling event listeners ([#10307](https://github.com/sveltejs/svelte/pull/10307))
+
+- chore: add $derived.call rune ([#10240](https://github.com/sveltejs/svelte/pull/10240))
+
 ## 5.0.0-next.40
 
 ### Patch Changes
