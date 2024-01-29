@@ -17,6 +17,7 @@ So let's dive in to check out what's new and see what the rest of the community 
 - `$env/static/public` is now exposed in service workers (**2.2.0**, [Docs](https://kit.svelte.dev/docs/modules#env-static-public), [#10994](https://github.com/sveltejs/kit/pull/10994))
 - `style-src-elem` is now supported in environments with a Content Security Policy (**2.2.1**, [Docs](https://kit.svelte.dev/docs/types#private-types-cspdirectives), [#11562](https://github.com/sveltejs/kit/pull/11562))
 - The new `reroute` hook allows you to change how URLs are translated into routes (**2.3.0**, [Docs](https://kit.svelte.dev/docs/hooks#universal-hooks-reroute), [#11537](https://github.com/sveltejs/kit/pull/11537))
+- The `read` function is now available in the `$app/server` module - allowing you to read assets from filesystem (**2.4.0**, [Docs](https://kit.svelte.dev/docs/modules#app-server-read), [#11649](https://github.com/sveltejs/kit/pull/11649))
 - Adapters can now provide an `emulate` for dev and preview servers. This is useful for providing access to e.g. KV namespaces in development (**2.5.0**, [Docs](https://kit.svelte.dev/docs/writing-adapters), [#11730](https://github.com/sveltejs/kit/pull/11730))
 
 
