@@ -40,15 +40,12 @@ export {
 	unwrap,
 	freeze
 } from './client/runtime.js';
-
 export * from './client/each.js';
 export * from './client/render.js';
 export * from './client/validate.js';
 export { raf } from './client/timing.js';
 export { proxy, readonly, unstate } from './client/proxy.js';
-
 export { create_custom_element } from './client/custom-element.js';
-
 export {
 	child,
 	child_frag,

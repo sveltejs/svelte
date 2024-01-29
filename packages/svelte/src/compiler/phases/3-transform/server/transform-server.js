@@ -15,7 +15,7 @@ import {
 } from '../../constants.js';
 import {
 	clean_nodes,
-	determine_element_namespace,
+	determine_namespace_for_children,
 	escape_html,
 	infer_namespace,
 	transform_inspect_rune
@@ -482,11 +482,7 @@ function serialize_set_binding(node, context, fallback) {
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		element.type === 'RegularElement' &&
-		!element.metadata.svg &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -761,10 +757,10 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.type !== 'RegularElement' || element.metadata.svg || is_custom_element_node(element)
+		element.metadata.svg || (element.type === 'RegularElement' && is_custom_element_node(element))
 			? b.false
 			: b.true;
-	const is_svg = element.type === 'RegularElement' && element.metadata.svg ? b.true : b.false;
+	const is_svg = element.metadata.svg ? b.true : b.false;
 	/** @type {import('estree').Expression[]} */
 	const args = [
 		b.array(values),
@@ -1165,7 +1161,7 @@ const template_visitors = {
 	RegularElement(node, context) {
 		const metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 
 		context.state.template.push(t_string(`<${node.name}`));
@@ -1255,11 +1251,16 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		}
 
+		const metadata = {
+			...context.state.metadata,
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+		};
 		/** @type {import('./types').ComponentContext} */
 		const inner_context = {
 			...context,
 			state: {
 				...context.state,
+				metadata,
 				template: [],
 				init: []
 			}
@@ -1276,7 +1277,10 @@ const template_visitors = {
 		inner_context.state.template.push(t_string('>'));
 
 		const before = serialize_template(inner_context.state.template);
-		const main = create_block(node, node.fragment.nodes, context);
+		const main = create_block(node, node.fragment.nodes, {
+			...context,
+			state: { ...context.state, metadata }
+		});
 		const after = serialize_template([
 			t_expression(inner_id),
 			t_string('</'),

@@ -85,3 +85,6 @@ export const DOMBooleanAttributes = [
 	'seamless',
 	'selected'
 ];
+
+export const namespace_svg = 'http://www.w3.org/2000/svg';
+export const namespace_html = 'http://www.w3.org/1999/xhtml';

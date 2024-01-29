@@ -308,6 +308,13 @@ export interface SvelteElement extends BaseElement {
 	type: 'SvelteElement';
 	name: 'svelte:element';
 	tag: Expression;
+	metadata: {
+		/**
+		 * `true`/`false` if this is definitely (not) an svg element.
+		 * `null` means we can't know statically.
+		 */
+		svg: boolean | null;
+	};
 }
 
 export interface SvelteFragment extends BaseElement {

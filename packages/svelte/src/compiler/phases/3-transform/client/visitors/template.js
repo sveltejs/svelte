@@ -9,7 +9,7 @@ import {
 import { binding_properties } from '../../../bindings.js';
 import {
 	clean_nodes,
-	determine_element_namespace,
+	determine_namespace_for_children,
 	escape_html,
 	infer_namespace
 } from '../../utils.js';
@@ -43,11 +43,7 @@ import { sanitize_template_string } from '../../../../utils/sanitize_template_st
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		element.type === 'RegularElement' &&
-		!element.metadata.svg &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		if (name in AttributeAliases) {
 			name = AttributeAliases[name];
@@ -1854,7 +1850,7 @@ export const template_visitors = {
 		const metadata = context.state.metadata;
 		const child_metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 
 		context.state.template.push(`<${node.name}`);
@@ -2079,9 +2075,6 @@ export const template_visitors = {
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
-		/** @type {string | null} */
-		let namespace = null;
-
 		// Create a temporary context which picks up the init/update statements.
 		// They'll then be added to the function parameter of $.element
 		const element_id = b.id(context.state.scope.generate('$$element'));
@@ -2102,9 +2095,6 @@ export const template_visitors = {
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
 				attributes.push(attribute);
-				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
-					namespace = attribute.value[0].data;
-				}
 			} else if (attribute.type === 'SpreadAttribute') {
 				attributes.push(attribute);
 			} else if (attribute.type === 'ClassDirective') {
@@ -2153,19 +2143,32 @@ export const template_visitors = {
 			}
 		}
 		inner.push(...inner_context.state.after_update);
-		inner.push(...create_block(node, 'dynamic_element', node.fragment.nodes, context));
+		inner.push(
+			...create_block(node, 'dynamic_element', node.fragment.nodes, {
+				...context,
+				state: {
+					...context.state,
+					metadata: {
+						...context.state.metadata,
+						namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
+					}
+				}
+			})
+		);
 		context.state.after_update.push(
 			b.stmt(
 				b.call(
 					'$.element',
 					context.state.node,
 					get_tag,
+					node.metadata.svg === true
+						? b.true
+						: node.metadata.svg === false
+							? b.false
+							: b.literal(null),
 					inner.length === 0
 						? /** @type {any} */ (undefined)
-						: b.arrow([element_id, b.id('$$anchor')], b.block(inner)),
-					namespace === 'http://www.w3.org/2000/svg'
-						? b.literal(true)
-						: /** @type {any} */ (undefined)
+						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
 				)
 			)
 		);

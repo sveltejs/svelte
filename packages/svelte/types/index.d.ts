@@ -1342,6 +1342,13 @@ declare module 'svelte/compiler' {
 		type: 'SvelteElement';
 		name: 'svelte:element';
 		tag: Expression;
+		metadata: {
+			/**
+			 * `true`/`false` if this is definitely (not) an svg element.
+			 * `null` means we can't know statically.
+			 */
+			svg: boolean | null;
+		};
 	}
 
 	interface SvelteFragment extends BaseElement {

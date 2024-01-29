@@ -20,7 +20,7 @@ import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents } from '../../../constants.js';
+import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 
 /**
@@ -1104,8 +1104,47 @@ const common_visitors = {
 
 		context.state.analysis.elements.push(node);
 	},
-	SvelteElement(node, { state }) {
-		state.analysis.elements.push(node);
+	SvelteElement(node, context) {
+		context.state.analysis.elements.push(node);
+
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.tag.type === 'Literal' &&
+			typeof node.tag.value === 'string' &&
+			SVGElements.includes(node.tag.value)
+		) {
+			node.metadata.svg = true;
+			return;
+		}
+
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'Attribute') {
+				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
+					node.metadata.svg = attribute.value[0].data === namespace_svg;
+					return;
+				}
+			}
+		}
+
+		for (let i = context.path.length - 1; i >= 0; i--) {
+			const ancestor = context.path[i];
+			if (
+				ancestor.type === 'Component' ||
+				ancestor.type === 'SvelteComponent' ||
+				ancestor.type === 'SvelteFragment' ||
+				ancestor.type === 'SnippetBlock'
+			) {
+				// Inside a slot or a snippet -> this resets the namespace, so we can't determine it
+				return;
+			}
+			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
+				node.metadata.svg =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.svg;
+				return;
+			}
+		}
 	}
 };
 

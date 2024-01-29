@@ -139,7 +139,10 @@ export default function tag(parser) {
 					name,
 					attributes: [],
 					fragment: create_fragment(true),
-					parent: null
+					parent: null,
+					metadata: {
+						svg: false
+					}
 				};
 
 	parser.allow_whitespace();
