@@ -155,30 +155,6 @@ Sometimes you need to create complex derivations which don't fit inside a short 
 </button>
 ```
 
-`$derived.fn` passes the previous derived value as a single argument to the derived function. This can be useful for when
-you might want to compare the latest derived value with the previous derived value. Furthermore, you might want to pluck out
-specific properties of derived state to use in the new derived state given a certain condition – which can be useful when dealing
-with more complex state machines.
-
-```svelte
-<script>
-	let items = $state([1, 1, 1]);
-
-	let reversed = $derived.fn((prev) => {
-		const reversed = items.toReversed();
-		// Naive deep equals comparison
-		if (JSON.stringify(reversed) === JSON.stringify(prev)) {
-			return prev;
-		}
-		return reversed;
-	});
-</script>
-
-<button on:click={() => items.push(1)}>
-	{reversed}
-</button>
-```
-
 ## `$effect`
 
 To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:

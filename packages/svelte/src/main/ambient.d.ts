@@ -75,14 +75,9 @@ declare namespace $derived {
 	 * });
 	 * ```
 	 *
-	 * `$derived.fn` passes the previous derived value as a single argument to the derived function. This can be useful for when
-	 * you might want to compare the latest derived value with the previous derived value. Furthermore, you might want to pluck out
-	 * specific properties of derived state to use in the new derived state given a certain condition – which can be useful when dealing
-	 * with more complex state machines.
-	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-fn
 	 */
-	export function fn<T>(fn: (prev: T) => T): void;
+	export function fn<T>(fn: () => T): void;
 }
 
 /**
