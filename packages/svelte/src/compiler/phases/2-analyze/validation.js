@@ -950,16 +950,6 @@ export const validation_runes = merge(validation, a11y_validators, {
 
 		const args = /** @type {import('estree').CallExpression} */ (init).arguments;
 
-		if (rune === '$derived') {
-			const arg = args[0];
-			if (
-				arg.type === 'CallExpression' &&
-				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
-			) {
-				warn(state.analysis.warnings, node, path, 'derived-iife');
-			}
-		}
-
 		// TODO some of this is duplicated with above, seems off
 		if ((rune === '$derived' || rune === '$derived.call') && args.length !== 1) {
 			error(node, 'invalid-rune-args-length', rune, [1]);
@@ -997,6 +987,16 @@ export const validation_runes = merge(validation, a11y_validators, {
 						error(property, 'invalid-props-pattern');
 					}
 				}
+			}
+		}
+
+		if (rune === '$derived') {
+			const arg = args[0];
+			if (
+				arg.type === 'CallExpression' &&
+				(arg.callee.type === 'ArrowFunctionExpression' || arg.callee.type === 'FunctionExpression')
+			) {
+				warn(state.analysis.warnings, node, path, 'derived-iife');
 			}
 		}
 	},
