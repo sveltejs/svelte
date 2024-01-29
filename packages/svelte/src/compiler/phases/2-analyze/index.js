@@ -20,7 +20,7 @@ import { warn } from '../../warnings.js';
 import check_graph_for_cycles from './utils/check_graph_for_cycles.js';
 import { regex_starts_with_newline } from '../patterns.js';
 import { create_attribute, is_element_node } from '../nodes.js';
-import { DelegatedEvents } from '../../../constants.js';
+import { DelegatedEvents, namespace_svg } from '../../../constants.js';
 import { should_proxy_or_freeze } from '../3-transform/client/utils.js';
 
 /**
@@ -1095,24 +1095,20 @@ const common_visitors = {
 	SvelteElement(node, context) {
 		context.state.analysis.elements.push(node);
 
-		const is_svg_element =
-			(node.tag.type === 'Identifier' && node.tag.name && SVGElements.includes(node.tag.name)) ||
-			(node.tag.type === 'Literal' &&
-				node.tag.value &&
-				SVGElements.includes(node.tag.value.toString()));
-
-		const metadata = node.metadata;
-		metadata.svg = !!is_svg_element;
-
-		if (metadata.svg) {
+		if (
+			context.state.options.namespace !== 'foreign' &&
+			node.tag.type === 'Literal' &&
+			typeof node.tag.value === 'string' &&
+			SVGElements.includes(node.tag.value)
+		) {
+			node.metadata.svg = true;
 			return;
 		}
 
-		for (const ancestor of context.path) {
-			if (ancestor.type === 'RegularElement' || ancestor.type === 'SvelteElement') {
-				metadata.svg = ancestor.metadata.svg;
-
-				if (metadata.svg) {
+		for (const attribute of node.attributes) {
+			if (attribute.type === 'Attribute') {
+				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
+					node.metadata.svg = attribute.value[0].data === namespace_svg;
 					break;
 				}
 			}

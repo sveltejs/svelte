@@ -44,11 +44,7 @@ import { sanitize_template_string } from '../../../../utils/sanitize_template_st
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		element.type === 'RegularElement' &&
-		!element.metadata.svg &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		if (name in AttributeAliases) {
 			name = AttributeAliases[name];
@@ -2080,8 +2076,11 @@ export const template_visitors = {
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
-		/** @type {string | null} */
-		let namespace = null;
+		const namespace = determine_element_namespace(
+			node,
+			context.state.metadata.namespace,
+			context.path
+		);
 
 		// Create a temporary context which picks up the init/update statements.
 		// They'll then be added to the function parameter of $.element
@@ -2099,8 +2098,6 @@ export const template_visitors = {
 				after_update: []
 			}
 		};
-
-		namespace = node.metadata.svg ? namespace_svg : null;
 
 		for (const attribute of node.attributes) {
 			if (attribute.type === 'Attribute') {
@@ -2133,7 +2130,7 @@ export const template_visitors = {
 
 		const get_tag = b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.tag)));
 
-		if (context.state.options.dev && context.state.metadata.namespace !== 'foreign') {
+		if (context.state.options.dev && namespace !== 'foreign') {
 			if (node.fragment.nodes.length > 0) {
 				context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 			}
@@ -2153,14 +2150,25 @@ export const template_visitors = {
 			}
 		}
 		inner.push(...inner_context.state.after_update);
-		inner.push(...create_block(node, 'dynamic_element', node.fragment.nodes, context));
+		inner.push(
+			...create_block(node, 'dynamic_element', node.fragment.nodes, {
+				...context,
+				state: {
+					...context.state,
+					metadata: {
+						...context.state.metadata,
+						namespace
+					}
+				}
+			})
+		);
 		context.state.after_update.push(
 			b.stmt(
 				b.call(
 					'$.element',
 					context.state.node,
 					get_tag,
-					b.literal(namespace),
+					namespace === 'svg' ? b.id('$.namespace_svg') : b.literal(null),
 					inner.length === 0
 						? /** @type {any} */ (undefined)
 						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))

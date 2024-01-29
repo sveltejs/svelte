@@ -229,7 +229,7 @@ export function infer_namespace(namespace, parent, nodes, path) {
  */
 function check_nodes_for_namespace(nodes, namespace) {
 	for (const node of nodes) {
-		if (node.type === 'RegularElement') {
+		if (node.type === 'RegularElement' || node.type === 'SvelteElement') {
 			if (!node.metadata.svg) {
 				namespace = 'html';
 				break;
@@ -279,19 +279,31 @@ function check_nodes_for_namespace(nodes, namespace) {
 }
 
 /**
- * @param {import('#compiler').RegularElement} node
+ * @param {import('#compiler').RegularElement | import('#compiler').SvelteElement} node
  * @param {import('#compiler').Namespace} namespace
  * @param {import('#compiler').SvelteNode[]} path
  * @returns {import('#compiler').Namespace}
  */
 export function determine_element_namespace(node, namespace, path) {
 	if (namespace !== 'foreign') {
-		let parent = path.at(-1);
-		if (parent?.type === 'Fragment') {
-			parent = path.at(-2);
+		let parent;
+		for (let i = path.length - 1; i >= 0; i--) {
+			parent = path[i];
+			if (parent.type === 'Fragment') {
+				parent = path[i - 1];
+				i--;
+			}
+			if (
+				parent?.type !== 'EachBlock' &&
+				parent?.type !== 'IfBlock' &&
+				parent?.type !== 'KeyBlock' &&
+				parent?.type !== 'AwaitBlock'
+			) {
+				break;
+			}
 		}
 
-		if (node.name === 'foreignObject') {
+		if (parent?.type === 'RegularElement' && parent.name === 'foreignObject') {
 			return 'html';
 		} else if (
 			namespace !== 'svg' ||

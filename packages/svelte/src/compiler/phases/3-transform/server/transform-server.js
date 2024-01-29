@@ -482,11 +482,7 @@ function serialize_set_binding(node, context, fallback) {
  */
 function get_attribute_name(element, attribute, context) {
 	let name = attribute.name;
-	if (
-		element.type === 'RegularElement' &&
-		!element.metadata.svg &&
-		context.state.metadata.namespace !== 'foreign'
-	) {
+	if (!element.metadata.svg && context.state.metadata.namespace !== 'foreign') {
 		name = name.toLowerCase();
 		// don't lookup boolean aliases here, the server runtime function does only
 		// check for the lowercase variants of boolean attributes
@@ -742,10 +738,10 @@ function serialize_element_spread_attributes(
 	}
 
 	const lowercase_attributes =
-		element.type !== 'RegularElement' || element.metadata.svg || is_custom_element_node(element)
+		element.metadata.svg || (element.type === 'RegularElement' && is_custom_element_node(element))
 			? b.false
 			: b.true;
-	const is_svg = element.type === 'RegularElement' && element.metadata.svg ? b.true : b.false;
+	const is_svg = element.metadata.svg ? b.true : b.false;
 	/** @type {import('estree').Expression[]} */
 	const args = [
 		b.array(values),
@@ -1222,6 +1218,11 @@ const template_visitors = {
 		}
 	},
 	SvelteElement(node, context) {
+		const metadata = {
+			...context.state.metadata,
+			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+		};
+
 		let tag = /** @type {import('estree').Expression} */ (context.visit(node.tag));
 		if (tag.type !== 'Identifier') {
 			const tag_id = context.state.scope.generate('$$tag');
