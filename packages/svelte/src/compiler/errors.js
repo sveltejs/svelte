@@ -508,7 +508,7 @@ export class CompileError extends Error {
 }
 
 /**
- * @template {keyof typeof errors} T
+ * @template {Exclude<keyof typeof errors, 'TODO'>} T
  * @param {NodeLike | number | null} node
  * @param {T} code
  * @param  {Parameters<typeof errors[T]>} args
