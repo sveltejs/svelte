@@ -171,10 +171,9 @@ const runes = {
 		`$props() assignment must not contain nested properties or computed keys`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
-	'invalid-derived-location': () =>
-		`$derived() can only be used as a variable declaration initializer or a class field`,
-	'invalid-state-location': () =>
-		`$state() can only be used as a variable declaration initializer or a class field`,
+	/** @param {string} rune */
+	'invalid-state-location': (rune) =>
+		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
 	/**
 	 * @param {boolean} is_binding
