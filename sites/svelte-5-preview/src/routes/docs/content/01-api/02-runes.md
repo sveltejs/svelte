@@ -134,6 +134,29 @@ If the value of a reactive variable is being computed it should be replaced with
   ```
   ...`double` will be calculated first despite the source order. In runes mode, `triple` cannot reference `double` before it has been declared.
 
+## `$derived.call`
+
+Sometimes you need to create complex derivations that don't fit inside a short expression. In these cases, you can use `$derived.call` which accepts a function as its argument.
+
+```svelte
+<script>
+	let numbers = $state([1, 2, 3]);
+	let total = $derived.call(() => {
+		let total = 0;
+		for (const n of numbers) {
+			total += n;
+		}
+		return total;
+	});
+</script>
+
+<button on:click={() => numbers.push(numbers.length + 1)}>
+	{numbers.join(' + ')} = {total}
+</button>
+```
+
+In essence, `$derived(expression)` is equivalent to `$derived.call(() => expression)`.
+
 ## `$effect`
 
 To run side-effects like logging or analytics whenever some specific values change, or when a component is mounted to the DOM, we can use the `$effect` rune:

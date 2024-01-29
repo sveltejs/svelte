@@ -558,6 +558,15 @@ const javascript_visitors_runes = {
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
 				};
 			}
+			if (rune === '$derived.call') {
+				return {
+					...node,
+					value:
+						node.value.arguments.length === 0
+							? null
+							: b.call(/** @type {import('estree').Expression} */ (visit(node.value.arguments[0])))
+				};
+			}
 		}
 		next();
 	},
@@ -582,6 +591,16 @@ const javascript_visitors_runes = {
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
+
+			if (rune === '$derived.call') {
+				declarations.push(
+					b.declarator(
+						/** @type {import('estree').Pattern} */ (visit(declarator.id)),
+						b.call(value)
+					)
+				);
+				continue;
+			}
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));
