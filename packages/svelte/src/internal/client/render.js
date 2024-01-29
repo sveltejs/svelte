@@ -1636,7 +1636,7 @@ export function element(anchor_node, tag_fn, namespace, render_fn) {
 				namespace ??
 				(tag === 'svg'
 					? namespace_svg
-					: anchor_node.parentElement?.tagName === 'FOREIGNOBJECT'
+					: anchor_node.parentElement?.tagName === 'foreignObject'
 						? null
 						: anchor_node.parentElement?.namespaceURI ?? null);
 			const next_element = tag

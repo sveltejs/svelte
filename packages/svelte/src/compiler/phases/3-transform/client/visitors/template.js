@@ -9,7 +9,7 @@ import {
 import { binding_properties } from '../../../bindings.js';
 import {
 	clean_nodes,
-	determine_element_namespace,
+	determine_namespace_for_children,
 	escape_html,
 	infer_namespace
 } from '../../utils.js';
@@ -1683,6 +1683,7 @@ export const template_visitors = {
 		context.state.template.push(`<!--${node.data}-->`);
 	},
 	HtmlTag(node, context) {
+		console.log('html tag');
 		context.state.template.push('<!>');
 
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
@@ -1851,7 +1852,7 @@ export const template_visitors = {
 		const metadata = context.state.metadata;
 		const child_metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 
 		context.state.template.push(`<${node.name}`);
@@ -2076,11 +2077,7 @@ export const template_visitors = {
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
-		const namespace = determine_element_namespace(
-			node,
-			context.state.metadata.namespace,
-			context.path
-		);
+		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
 
 		// Create a temporary context which picks up the init/update statements.
 		// They'll then be added to the function parameter of $.element

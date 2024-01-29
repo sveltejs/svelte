@@ -1109,8 +1109,28 @@ const common_visitors = {
 			if (attribute.type === 'Attribute') {
 				if (attribute.name === 'xmlns' && is_text_attribute(attribute)) {
 					node.metadata.svg = attribute.value[0].data === namespace_svg;
-					break;
+					return;
 				}
+			}
+		}
+
+		for (let i = context.path.length - 1; i >= 0; i--) {
+			const ancestor = context.path[i];
+			if (
+				ancestor.type === 'Component' ||
+				ancestor.type === 'SvelteComponent' ||
+				ancestor.type === 'SvelteFragment' ||
+				ancestor.type === 'SnippetBlock'
+			) {
+				// Inside a slot or a snippet -> this resets the namespace, so we can't determine it
+				return;
+			}
+			if (ancestor.type === 'SvelteElement' || ancestor.type === 'RegularElement') {
+				node.metadata.svg =
+					ancestor.type === 'RegularElement' && ancestor.name === 'foreignObject'
+						? false
+						: ancestor.metadata.svg;
+				return;
 			}
 		}
 	}

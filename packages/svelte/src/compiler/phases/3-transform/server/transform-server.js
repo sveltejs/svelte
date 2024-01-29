@@ -15,7 +15,7 @@ import {
 } from '../../constants.js';
 import {
 	clean_nodes,
-	determine_element_namespace,
+	determine_namespace_for_children,
 	escape_html,
 	infer_namespace,
 	transform_inspect_rune
@@ -1142,7 +1142,7 @@ const template_visitors = {
 	RegularElement(node, context) {
 		const metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 
 		context.state.template.push(t_string(`<${node.name}`));
@@ -1234,7 +1234,7 @@ const template_visitors = {
 
 		const metadata = {
 			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+			namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 		};
 		/** @type {import('./types').ComponentContext} */
 		const inner_context = {
