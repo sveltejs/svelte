@@ -1344,10 +1344,10 @@ declare module 'svelte/compiler' {
 		tag: Expression;
 		metadata: {
 			/**
-			 * `true` if this is definitely an svg element.
-			 * `false` could still mean that it is one, but we can't know statically.
+			 * `true`/`false` if this is definitely (not) an svg element.
+			 * `null` means we can't know statically.
 			 */
-			svg: boolean;
+			svg: boolean | null;
 		};
 	}
 

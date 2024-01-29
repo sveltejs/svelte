@@ -1601,11 +1601,11 @@ function swap_block_dom(block, from, to) {
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
- * @param {null | string} namespace
+ * @param {boolean | null} is_svg `null` == not statically known
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, namespace, render_fn) {
+export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;
@@ -1633,12 +1633,11 @@ export function element(anchor_node, tag_fn, namespace, render_fn) {
 			// but on the first render on the client (without hydration) the parent will be undefined,
 			// since the anchor is not attached to its parent / the dom yet.
 			const ns =
-				namespace ??
-				(tag === 'svg'
+				is_svg || tag === 'svg'
 					? namespace_svg
-					: anchor_node.parentElement?.tagName === 'foreignObject'
+					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
 						? null
-						: anchor_node.parentElement?.namespaceURI ?? null);
+						: anchor_node.parentElement?.namespaceURI ?? null;
 			const next_element = tag
 				? current_hydration_fragment !== null
 					? /** @type {Element} */ (current_hydration_fragment[0])

@@ -30,8 +30,7 @@ import {
 	EACH_IS_CONTROLLED,
 	EACH_IS_IMMUTABLE,
 	EACH_ITEM_REACTIVE,
-	EACH_KEYED,
-	namespace_svg
+	EACH_KEYED
 } from '../../../../../constants.js';
 import { regex_is_valid_identifier } from '../../../patterns.js';
 import { javascript_visitors_runes } from './javascript-runes.js';
@@ -2076,8 +2075,6 @@ export const template_visitors = {
 		/** @type {import('estree').ExpressionStatement[]} */
 		const lets = [];
 
-		const namespace = determine_namespace_for_children(node, context.state.metadata.namespace);
-
 		// Create a temporary context which picks up the init/update statements.
 		// They'll then be added to the function parameter of $.element
 		const element_id = b.id(context.state.scope.generate('$$element'));
@@ -2126,7 +2123,7 @@ export const template_visitors = {
 
 		const get_tag = b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.tag)));
 
-		if (context.state.options.dev && namespace !== 'foreign') {
+		if (context.state.options.dev && context.state.metadata.namespace !== 'foreign') {
 			if (node.fragment.nodes.length > 0) {
 				context.state.init.push(b.stmt(b.call('$.validate_void_dynamic_element', get_tag)));
 			}
@@ -2153,7 +2150,7 @@ export const template_visitors = {
 					...context.state,
 					metadata: {
 						...context.state.metadata,
-						namespace
+						namespace: determine_namespace_for_children(node, context.state.metadata.namespace)
 					}
 				}
 			})
@@ -2164,7 +2161,11 @@ export const template_visitors = {
 					'$.element',
 					context.state.node,
 					get_tag,
-					namespace === 'svg' ? b.id('$.namespace_svg') : b.literal(null),
+					node.metadata.svg === true
+						? b.true
+						: node.metadata.svg === false
+							? b.false
+							: b.literal(null),
 					inner.length === 0
 						? /** @type {any} */ (undefined)
 						: b.arrow([element_id, b.id('$$anchor')], b.block(inner))
