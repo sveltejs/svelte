@@ -1683,7 +1683,6 @@ export const template_visitors = {
 		context.state.template.push(`<!--${node.data}-->`);
 	},
 	HtmlTag(node, context) {
-		console.log('html tag');
 		context.state.template.push('<!>');
 
 		// push into init, so that bindings run afterwards, which might trigger another run and override hydration
