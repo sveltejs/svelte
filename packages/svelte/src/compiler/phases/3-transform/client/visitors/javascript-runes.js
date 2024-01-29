@@ -302,13 +302,9 @@ export const javascript_visitors_runes = {
 							b.id(id),
 							b.call(
 								'$.derived',
-								b.arrow(
-									[b.id('$$derived')],
+								b.thunk(
 									b.block([
-										b.let(
-											declarator.id,
-											rune === '$derived.call' ? b.call(value, b.id('$$derived')) : value
-										),
+										b.let(declarator.id, rune === '$derived.call' ? b.call(value) : value),
 										b.return(b.array(bindings.map((binding) => binding.node)))
 									])
 								)
