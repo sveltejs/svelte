@@ -1629,7 +1629,16 @@ export function element(anchor_node, tag_fn, namespace, render_fn) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
-			const ns = namespace ?? (tag === 'svg' ? namespace_svg : null);
+			// We try our best infering the namespace in case it's not possible to determine statically,
+			// but on the first render on the client (without hydration) the parent will be undefined,
+			// since the anchor is not attached to its parent / the dom yet.
+			const ns =
+				namespace ??
+				(tag === 'svg'
+					? namespace_svg
+					: anchor_node.parentElement?.tagName === 'FOREIGNOBJECT'
+						? null
+						: anchor_node.parentElement?.namespaceURI ?? null);
 			const next_element = tag
 				? current_hydration_fragment !== null
 					? /** @type {Element} */ (current_hydration_fragment[0])

@@ -1218,11 +1218,6 @@ const template_visitors = {
 		}
 	},
 	SvelteElement(node, context) {
-		const metadata = {
-			...context.state.metadata,
-			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
-		};
-
 		let tag = /** @type {import('estree').Expression} */ (context.visit(node.tag));
 		if (tag.type !== 'Identifier') {
 			const tag_id = context.state.scope.generate('$$tag');
@@ -1237,11 +1232,16 @@ const template_visitors = {
 			context.state.init.push(b.stmt(b.call('$.validate_dynamic_element_tag', b.thunk(tag))));
 		}
 
+		const metadata = {
+			...context.state.metadata,
+			namespace: determine_element_namespace(node, context.state.metadata.namespace, context.path)
+		};
 		/** @type {import('./types').ComponentContext} */
 		const inner_context = {
 			...context,
 			state: {
 				...context.state,
+				metadata,
 				template: [],
 				init: []
 			}
@@ -1258,7 +1258,10 @@ const template_visitors = {
 		inner_context.state.template.push(t_string('>'));
 
 		const before = serialize_template(inner_context.state.template);
-		const main = create_block(node, node.fragment.nodes, context);
+		const main = create_block(node, node.fragment.nodes, {
+			...context,
+			state: { ...context.state, metadata }
+		});
 		const after = serialize_template([
 			t_expression(inner_id),
 			t_string('</'),
