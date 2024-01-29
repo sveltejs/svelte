@@ -78,7 +78,7 @@ const parse = {
 	 * @param {string} reason
 	 */
 	'invalid-closing-tag-after-autoclose': (name, reason) =>
-		`</${name}> attempted to close element that was already automatically closed by <${reason}>`,
+		`</${name}> attempted to close element that was already automatically closed by <${reason}> (cannot nest <${reason}> inside <${name}>)`,
 	'invalid-dollar-binding': () =>
 		`The $ name is reserved, and cannot be used for variables and imports`,
 	'invalid-dollar-prefix': () =>
@@ -88,7 +88,9 @@ const parse = {
 	'illegal-subscription': () => `Cannot reference store value inside <script context="module">`,
 	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
 	'duplicate-script-element': () =>
-		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`
+		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
+	'invalid-render-expression': () => 'expected an identifier followed by (...)',
+	'invalid-render-arguments': () => 'expected at most one argument'
 };
 
 /** @satisfies {Errors} */
@@ -100,7 +102,7 @@ const css = {
 		`:global(...) can be at the start or end of a selector sequence, but not in the middle`,
 	'invalid-css-global-selector': () => `:global(...) must contain exactly one selector`,
 	'invalid-css-global-selector-list': () =>
-		`:global(...) cannot be used to modify a selector, or be modified by another selector`,
+		`:global(...) must not contain type or universal selectors when used in a compound selector`,
 	'invalid-css-selector': () => `Invalid selector`,
 	'invalid-css-identifier': () => 'Expected a valid CSS identifier'
 };
@@ -171,10 +173,9 @@ const runes = {
 		`$props() assignment must not contain nested properties or computed keys`,
 	'invalid-props-location': () =>
 		`$props() can only be used at the top level of components as a variable declaration initializer`,
-	'invalid-derived-location': () =>
-		`$derived() can only be used as a variable declaration initializer or a class field`,
-	'invalid-state-location': () =>
-		`$state() can only be used as a variable declaration initializer or a class field`,
+	/** @param {string} rune */
+	'invalid-state-location': (rune) =>
+		`${rune}(...) can only be used as a variable declaration initializer or a class field`,
 	'invalid-effect-location': () => `$effect() can only be used as an expression statement`,
 	/**
 	 * @param {boolean} is_binding
@@ -435,10 +436,6 @@ const errors = {
 	// 	code: 'illegal-declaration',
 	// 	message: 'The $ prefix is reserved, and cannot be used for variable and import names'
 	// },
-	// illegal_subscription: {
-	// 	code: 'illegal-subscription',
-	// 	message: 'Cannot reference store value inside <script context="module">'
-	// },
 	// illegal_global: /** @param {string} name */ (name) => ({
 	// 	code: 'illegal-global',
 	// 	message: `${name} is an illegal variable name`
@@ -447,19 +444,6 @@ const errors = {
 	// 	code: 'illegal-variable-declaration',
 	// 	message: 'Cannot declare same variable name which is imported inside <script context="module">'
 	// },
-	// css_invalid_global_selector: {
-	// 	code: 'css-invalid-global-selector',
-	// 	message: ':global(...) must contain a single selector'
-	// },
-	// css_invalid_global_selector_position: {
-	// 	code: 'css-invalid-global-selector-position',
-	// 	message:
-	// 		':global(...) not at the start of a selector sequence should not contain type or universal selectors'
-	// },
-	// css_invalid_selector: /** @param {string} selector */ (selector) => ({
-	// 	code: 'css-invalid-selector',
-	// 	message: `Invalid selector "${selector}"`
-	// }),
 	// invalid_directive_value: {
 	// 	code: 'invalid-directive-value',
 	// 	message:
@@ -526,7 +510,7 @@ export class CompileError extends Error {
 }
 
 /**
- * @template {keyof typeof errors} T
+ * @template {Exclude<keyof typeof errors, 'TODO'>} T
  * @param {NodeLike | number | null} node
  * @param {T} code
  * @param  {Parameters<typeof errors[T]>} args

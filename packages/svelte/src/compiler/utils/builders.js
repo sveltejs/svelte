@@ -395,6 +395,7 @@ export function thunk(expression) {
 		expression.type === 'CallExpression' &&
 		expression.callee.type !== 'Super' &&
 		expression.callee.type !== 'MemberExpression' &&
+		expression.callee.type !== 'CallExpression' &&
 		expression.arguments.length === 0
 	) {
 		return expression.callee;

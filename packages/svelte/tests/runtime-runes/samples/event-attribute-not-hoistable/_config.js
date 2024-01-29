@@ -1,18 +1,25 @@
 import { test } from '../../test';
 
-// Checks that event handlers are not hoisted when one of them is not delegateable
 export default test({
-	html: `<button>0</button>`,
+	html: `<button>0</button><button>x0</button><button>y0</button>`,
 
 	async test({ assert, target }) {
-		const [button] = target.querySelectorAll('button');
+		const [btn1, btn2, btn3] = target.querySelectorAll('button');
 
-		button.click();
+		btn1.click();
 		await Promise.resolve();
-		assert.htmlEqual(target.innerHTML, '<button>1</button>');
+		assert.htmlEqual(target.innerHTML, '<button>1</button><button>x0</button><button>y0</button>');
 
-		button.dispatchEvent(new MouseEvent('mouseenter'));
+		btn1.dispatchEvent(new MouseEvent('mouseenter'));
 		await Promise.resolve();
-		assert.htmlEqual(target.innerHTML, '<button>2</button>');
+		assert.htmlEqual(target.innerHTML, '<button>2</button><button>x0</button><button>y0</button>');
+
+		btn2.click();
+		await Promise.resolve();
+		assert.htmlEqual(target.innerHTML, '<button>2</button><button>x1</button><button>y0</button>');
+
+		btn3.click();
+		await Promise.resolve();
+		assert.htmlEqual(target.innerHTML, '<button>2</button><button>x1</button><button>y1</button>');
 	}
 });

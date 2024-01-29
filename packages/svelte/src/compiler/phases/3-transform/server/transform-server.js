@@ -511,24 +511,17 @@ const global_visitors = {
 		const { state, next } = context;
 		const argument = node.argument;
 
-		if (argument.type === 'Identifier') {
-			const binding = state.scope.get(argument.name);
-			const is_store = binding?.kind === 'store_sub';
-			const name = is_store ? argument.name.slice(1) : argument.name;
-			// use runtime functions for smaller output
-			if (is_store) {
-				let fn = node.operator === '++' ? '$.increment' : '$.decrement';
-				if (node.prefix) fn += '_pre';
+		if (argument.type === 'Identifier' && state.scope.get(argument.name)?.kind === 'store_sub') {
+			let fn = '$.update_store';
+			if (node.prefix) fn += '_pre';
 
-				if (is_store) {
-					fn += '_store';
-					return b.call(fn, serialize_get_binding(b.id(name), state), b.call('$' + name));
-				} else {
-					return b.call(fn, b.id(name));
-				}
-			} else {
-				return next();
+			/** @type {import('estree').Expression[]} */
+			const args = [b.id('$$store_subs'), b.literal(argument.name), b.id(argument.name.slice(1))];
+			if (node.operator === '--') {
+				args.push(b.literal(-1));
 			}
+
+			return b.call(fn, ...args);
 		}
 		return next();
 	}
@@ -565,6 +558,15 @@ const javascript_visitors_runes = {
 							: /** @type {import('estree').Expression} */ (visit(node.value.arguments[0]))
 				};
 			}
+			if (rune === '$derived.call') {
+				return {
+					...node,
+					value:
+						node.value.arguments.length === 0
+							? null
+							: b.call(/** @type {import('estree').Expression} */ (visit(node.value.arguments[0])))
+				};
+			}
 		}
 		next();
 	},
@@ -589,6 +591,16 @@ const javascript_visitors_runes = {
 				args.length === 0
 					? b.id('undefined')
 					: /** @type {import('estree').Expression} */ (visit(args[0]));
+
+			if (rune === '$derived.call') {
+				declarations.push(
+					b.declarator(
+						/** @type {import('estree').Pattern} */ (visit(declarator.id)),
+						b.call(value)
+					)
+				);
+				continue;
+			}
 
 			if (declarator.id.type === 'Identifier') {
 				declarations.push(b.declarator(declarator.id, value));

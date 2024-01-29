@@ -27,11 +27,11 @@ export function clear_loops() {
 /**
  * Creates a new task that runs on each raf frame
  * until it returns a falsy value or is aborted
- * @param {import('./private.js').TaskCallback} callback
- * @returns {import('./private.js').Task}
+ * @param {import('./types.js').TaskCallback} callback
+ * @returns {import('./types.js').Task}
  */
 export function loop(callback) {
-	/** @type {import('./private.js').TaskEntry} */
+	/** @type {import('./types.js').TaskEntry} */
 	let task;
 	if (tasks.size === 0) raf.tick(run_tasks);
 	return {

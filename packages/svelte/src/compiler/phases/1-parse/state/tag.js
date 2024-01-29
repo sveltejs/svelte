@@ -599,7 +599,7 @@ function special(parser) {
 		const expression = read_expression(parser);
 
 		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
+			error(expression, 'invalid-render-expression');
 		}
 
 		parser.allow_whitespace();

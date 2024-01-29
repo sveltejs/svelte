@@ -59,6 +59,27 @@ declare namespace $state {
  */
 declare function $derived<T>(expression: T): T;
 
+declare namespace $derived {
+	/**
+	 * Sometimes you need to create complex derivations that don't fit inside a short expression.
+	 * In these cases, you can use `$derived.call` which accepts a function as its argument.
+	 *
+	 * Example:
+	 * ```ts
+	 * let total = $derived.call(() => {
+	 *   let result = 0;
+	 *	 for (const n of numbers) {
+	 *	   result += n;
+	 *   }
+	 *   return result;
+	 * });
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
+	 */
+	export function fn<T>(fn: () => T): void;
+}
+
 /**
  * Runs code when a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
  * The timing of the execution is after the DOM has been updated.

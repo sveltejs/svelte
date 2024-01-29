@@ -29,11 +29,22 @@ export const javascript_visitors_runes = {
 
 				if (definition.value?.type === 'CallExpression') {
 					const rune = get_rune(definition.value, state.scope);
-					if (rune === '$state' || rune === '$state.frozen' || rune === '$derived') {
+					if (
+						rune === '$state' ||
+						rune === '$state.frozen' ||
+						rune === '$derived' ||
+						rune === '$derived.call'
+					) {
 						/** @type {import('../types.js').StateField} */
 						const field = {
 							kind:
-								rune === '$state' ? 'state' : rune === '$state.frozen' ? 'frozen_state' : 'derived',
+								rune === '$state'
+									? 'state'
+									: rune === '$state.frozen'
+										? 'frozen_state'
+										: rune === '$derived.call'
+											? 'derived_call'
+											: 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
 						};
@@ -85,13 +96,18 @@ export const javascript_visitors_runes = {
 
 						value =
 							field.kind === 'state'
-								? b.call('$.source', should_proxy_or_freeze(init) ? b.call('$.proxy', init) : init)
+								? b.call(
+										'$.source',
+										should_proxy_or_freeze(init, state.scope) ? b.call('$.proxy', init) : init
+									)
 								: field.kind === 'frozen_state'
 									? b.call(
 											'$.source',
-											should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init
+											should_proxy_or_freeze(init, state.scope) ? b.call('$.freeze', init) : init
 										)
-									: b.call('$.derived', b.thunk(init));
+									: field.kind === 'derived_call'
+										? b.call('$.derived', init)
+										: b.call('$.derived', b.thunk(init));
 					} else {
 						// if no arguments, we know it's state as `$derived()` is a compile error
 						value = b.call('$.source');
@@ -133,7 +149,7 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if (field.kind === 'derived' && state.options.dev) {
+						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
 							body.push(
 								b.method(
 									'set',
@@ -238,7 +254,7 @@ export const javascript_visitors_runes = {
 				 */
 				const create_state_declarator = (id, value) => {
 					const binding = /** @type {import('#compiler').Binding} */ (state.scope.get(id.name));
-					if (should_proxy_or_freeze(value)) {
+					if (should_proxy_or_freeze(value, state.scope)) {
 						value = b.call(rune === '$state' ? '$.proxy' : '$.freeze', value);
 					}
 					if (is_state_source(binding, state)) {
@@ -273,9 +289,14 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$derived') {
+			if (rune === '$derived' || rune === '$derived.call') {
 				if (declarator.id.type === 'Identifier') {
-					declarations.push(b.declarator(declarator.id, b.call('$.derived', b.thunk(value))));
+					declarations.push(
+						b.declarator(
+							declarator.id,
+							b.call('$.derived', rune === '$derived.call' ? value : b.thunk(value))
+						)
+					);
 				} else {
 					const bindings = state.scope.get_bindings(declarator);
 					const id = state.scope.generate('derived_value');
@@ -286,7 +307,7 @@ export const javascript_visitors_runes = {
 								'$.derived',
 								b.thunk(
 									b.block([
-										b.let(declarator.id, value),
+										b.let(declarator.id, rune === '$derived.call' ? b.call(value) : value),
 										b.return(b.array(bindings.map((binding) => binding.node)))
 									])
 								)

@@ -129,12 +129,8 @@ declare module 'svelte' {
 	 * <Component on:close={handleCloseEvent} />
 	 * ```
 	 */
-	export type ComponentEvents<Comp extends SvelteComponent> = Comp extends SvelteComponent<
-		any,
-		infer Events
-	>
-		? Events
-		: never;
+	export type ComponentEvents<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<any, infer Events> ? Events : never;
 
 	/**
 	 * Convenience type to get the props the given component expects. Example:
@@ -147,9 +143,8 @@ declare module 'svelte' {
 	 * </script>
 	 * ```
 	 */
-	export type ComponentProps<Comp extends SvelteComponent> = Comp extends SvelteComponent<infer Props>
-		? Props
-		: never;
+	export type ComponentProps<Comp extends SvelteComponent> =
+		Comp extends SvelteComponent<infer Props> ? Props : never;
 
 	/**
 	 * Convenience type to get the type of a Svelte component. Useful for example in combination with
@@ -647,7 +642,7 @@ declare module 'svelte/compiler' {
 		 */
 		runes?: boolean | undefined;
 		/**
-		 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 		 *
 		 * @default true
 		 */
@@ -1410,6 +1405,11 @@ declare module 'svelte/compiler' {
 			item_name: string;
 			/** List of bindings that are referenced within the expression */
 			references: Binding[];
+			/**
+			 * Optimization path for each blocks: If the parent isn't a fragment and
+			 * it only has a single child, then we can classify the block as being "controlled".
+			 * This saves us from creating an extra comment and insertion being faster.
+			 */
 			is_controlled: boolean;
 		};
 	}
@@ -1990,6 +1990,10 @@ declare module 'svelte/store' {
 		| Readable<any>
 		| [Readable<any>, ...Array<Readable<any>>]
 		| Array<Readable<any>>;
+
+	/** One or more values from `Readable` stores. */
+	type StoresValues<T> =
+		T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 	/**
 	 * Creates a `Readable` store that allows reading by subscription.
 	 *
@@ -2006,8 +2010,20 @@ declare module 'svelte/store' {
 	 * @param value initial value
 	 * */
 	export function writable<T>(value?: T | undefined, start?: StartStopNotifier<T> | undefined): Writable<T>;
-
-	export function derived<S extends Stores, T>(stores: S, fn: Function, initial_value?: T | undefined): Readable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initial_value?: T | undefined): Readable<T>;
+	/**
+	 * Derived value store by synchronizing one or more readable stores and
+	 * applying an aggregation function over its input values.
+	 *
+	 * https://svelte.dev/docs/svelte-store#derived
+	 * */
+	export function derived<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | void, initial_value?: T | undefined): Readable<T>;
 	/**
 	 * Takes a store and returns a new one derived from the old one that is readable.
 	 *
@@ -2320,7 +2336,7 @@ declare module 'svelte/types/compiler/interfaces' {
 		 */
 		runes?: boolean | undefined;
 		/**
-		 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+		 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 		 *
 		 * @default true
 		 */
@@ -2450,6 +2466,27 @@ declare namespace $state {
  * @param expression The derived state expression
  */
 declare function $derived<T>(expression: T): T;
+
+declare namespace $derived {
+	/**
+	 * Sometimes you need to create complex derivations that don't fit inside a short expression.
+	 * In these cases, you can use `$derived.call` which accepts a function as its argument.
+	 *
+	 * Example:
+	 * ```ts
+	 * let total = $derived.call(() => {
+	 *   let result = 0;
+	 *	 for (const n of numbers) {
+	 *	   result += n;
+	 *   }
+	 *   return result;
+	 * });
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
+	 */
+	export function fn<T>(fn: () => T): void;
+}
 
 /**
  * Runs code when a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.

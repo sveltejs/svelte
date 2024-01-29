@@ -1,7 +1,7 @@
 [
 	{
 		"code": "invalid-css-global-selector-list",
-		"message": ":global(...) cannot be used to modify a selector, or be modified by another selector",
+		"message": ":global(...) must not contain type or universal selectors when used in a compound selector",
 		"start": {
 			"line": 2,
 			"column": 5

@@ -1639,7 +1639,15 @@ export interface SVGAttributes<T extends EventTarget> extends AriaAttributes, DO
 	'stroke-dasharray'?: string | number | undefined | null;
 	'stroke-dashoffset'?: string | number | undefined | null;
 	'stroke-linecap'?: 'butt' | 'round' | 'square' | 'inherit' | undefined | null;
-	'stroke-linejoin'?: 'miter' | 'round' | 'bevel' | 'inherit' | undefined | null;
+	'stroke-linejoin'?:
+		| 'arcs'
+		| 'miter-clip'
+		| 'miter'
+		| 'round'
+		| 'bevel'
+		| 'inherit'
+		| undefined
+		| null;
 	'stroke-miterlimit'?: string | undefined | null;
 	'stroke-opacity'?: number | string | undefined | null;
 	'stroke-width'?: number | string | undefined | null;
