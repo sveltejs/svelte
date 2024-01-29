@@ -988,15 +988,15 @@ declare module 'svelte/compiler' {
 		filename?: string | undefined;
 	} | undefined): Promise<Processed>;
 	export class CompileError extends Error {
-		
+
 		constructor(code: string, message: string, position: [number, number] | undefined);
-		
+
 		filename: CompileError_1['filename'];
-		
+
 		position: CompileError_1['position'];
-		
+
 		start: CompileError_1['start'];
-		
+
 		end: CompileError_1['end'];
 		code: string;
 	}
@@ -1007,9 +1007,9 @@ declare module 'svelte/compiler' {
 	 * */
 	export const VERSION: string;
 	class Scope {
-		
+
 		constructor(root: ScopeRoot, parent: Scope | null, porous: boolean);
-		
+
 		root: ScopeRoot;
 		/**
 		 * A map of every identifier declared by this scope, and all the
@@ -1033,25 +1033,25 @@ declare module 'svelte/compiler' {
 		 * which is usually an error. Block statements do not increase this value
 		 */
 		function_depth: number;
-		
+
 		declare(node: import('estree').Identifier, kind: Binding['kind'], declaration_kind: DeclarationKind, initial?: null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | EachBlock): Binding;
 		child(porous?: boolean): Scope;
-		
+
 		generate(preferred_name: string): string;
-		
+
 		get(name: string): Binding | null;
-		
+
 		get_bindings(node: import('estree').VariableDeclarator | LetDirective): Binding[];
-		
+
 		owner(name: string): Scope | null;
-		
+
 		reference(node: import('estree').Identifier, path: SvelteNode[]): void;
 		#private;
 	}
 	class ScopeRoot {
-		
+
 		conflicts: Set<string>;
-		
+
 		unique(preferred_name: string): import("estree").Identifier;
 	}
 	interface BaseNode {
@@ -2464,11 +2464,11 @@ declare function $derived<T>(expression: T): T;
 declare namespace $derived {
 	/**
 	 * Sometimes you need to create complex derivations which don't fit inside a short expression.
-	 * In this case, you can resort to `$derived.fn` which accepts a function as its argument and returns its value.
+	 * In this case, you can resort to `$derived.call` which accepts a function as its argument and returns its value.
 	 *
 	 * Example:
 	 * ```ts
-	 * $derived.fn(() => {
+	 * $derived.call(() => {
 	 *   let tmp = count;
 	 *	 if (count > 10) {
 	 *	   tmp += 100;

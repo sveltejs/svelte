@@ -208,8 +208,8 @@
 				{ label: '$state', type: 'keyword', boost: 10 },
 				{ label: '$props', type: 'keyword', boost: 9 },
 				{ label: '$derived', type: 'keyword', boost: 8 },
-				snip('$derived.fn(() => {\n\t${}\n});', {
-					label: '$derived.fn',
+				snip('$derived.call(() => {\n\t${}\n});', {
+					label: '$derived.call',
 					type: 'keyword',
 					boost: 7
 				}),

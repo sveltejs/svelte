@@ -62,11 +62,11 @@ declare function $derived<T>(expression: T): T;
 declare namespace $derived {
 	/**
 	 * Sometimes you need to create complex derivations which don't fit inside a short expression.
-	 * In this case, you can resort to `$derived.fn` which accepts a function as its argument and returns its value.
+	 * In this case, you can resort to `$derived.call` which accepts a function as its argument and returns its value.
 	 *
 	 * Example:
 	 * ```ts
-	 * $derived.fn(() => {
+	 * $derived.call(() => {
 	 *   let tmp = count;
 	 *	 if (count > 10) {
 	 *	   tmp += 100;

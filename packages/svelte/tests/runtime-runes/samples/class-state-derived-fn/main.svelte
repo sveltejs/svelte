@@ -1,7 +1,7 @@
 <script>
 	class Counter {
 		count = $state(0);
-		doubled = $derived.fn(() => this.count * 2);
+		doubled = $derived.call(() => this.count * 2);
 	}
 
 	const counter = new Counter();

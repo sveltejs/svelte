@@ -33,7 +33,7 @@ export const javascript_visitors_runes = {
 						rune === '$state' ||
 						rune === '$state.frozen' ||
 						rune === '$derived' ||
-						rune === '$derived.fn'
+						rune === '$derived.call'
 					) {
 						/** @type {import('../types.js').StateField} */
 						const field = {
@@ -42,8 +42,8 @@ export const javascript_visitors_runes = {
 									? 'state'
 									: rune === '$state.frozen'
 										? 'frozen_state'
-										: rune === '$derived.fn'
-											? 'derived_fn'
+										: rune === '$derived.call'
+											? 'derived_call'
 											: 'derived',
 							// @ts-expect-error this is set in the next pass
 							id: is_private ? definition.key : null
@@ -102,7 +102,7 @@ export const javascript_visitors_runes = {
 											'$.source',
 											should_proxy_or_freeze(init) ? b.call('$.freeze', init) : init
 										)
-									: field.kind === 'derived_fn'
+									: field.kind === 'derived_call'
 										? b.call('$.derived', init)
 										: b.call('$.derived', b.thunk(init));
 					} else {
@@ -146,7 +146,7 @@ export const javascript_visitors_runes = {
 							);
 						}
 
-						if ((field.kind === 'derived' || field.kind === 'derived_fn') && state.options.dev) {
+						if ((field.kind === 'derived' || field.kind === 'derived_call') && state.options.dev) {
 							body.push(
 								b.method(
 									'set',
@@ -286,12 +286,12 @@ export const javascript_visitors_runes = {
 				continue;
 			}
 
-			if (rune === '$derived' || rune === '$derived.fn') {
+			if (rune === '$derived' || rune === '$derived.call') {
 				if (declarator.id.type === 'Identifier') {
 					declarations.push(
 						b.declarator(
 							declarator.id,
-							b.call('$.derived', rune === '$derived.fn' ? value : b.thunk(value))
+							b.call('$.derived', rune === '$derived.call' ? value : b.thunk(value))
 						)
 					);
 				} else {
@@ -307,7 +307,7 @@ export const javascript_visitors_runes = {
 									b.block([
 										b.let(
 											declarator.id,
-											rune === '$derived.fn' ? b.call(value, b.id('$$derived')) : value
+											rune === '$derived.call' ? b.call(value, b.id('$$derived')) : value
 										),
 										b.return(b.array(bindings.map((binding) => binding.node)))
 									])

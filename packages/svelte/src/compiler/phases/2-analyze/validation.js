@@ -715,7 +715,7 @@ function validate_call_expression(node, scope, path) {
 		error(node, 'invalid-props-location');
 	}
 
-	if (rune === '$state' || rune === '$derived' || rune === '$derived.fn') {
+	if (rune === '$state' || rune === '$derived' || rune === '$derived.call') {
 		if (parent.type === 'VariableDeclarator') return;
 		if (parent.type === 'PropertyDefinition' && !parent.static && !parent.computed) return;
 		error(node, rune === '$derived' ? 'invalid-derived-location' : 'invalid-state-location');

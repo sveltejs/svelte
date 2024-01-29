@@ -2,4 +2,4 @@
 "svelte": patch
 ---
 
-chore: add $derived.fn rune
+chore: add $derived.call rune
