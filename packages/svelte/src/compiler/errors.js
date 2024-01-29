@@ -88,7 +88,9 @@ const parse = {
 	'illegal-subscription': () => `Cannot reference store value inside <script context="module">`,
 	'duplicate-style-element': () => `A component can have a single top-level <style> element`,
 	'duplicate-script-element': () =>
-		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`
+		`A component can have a single top-level <script> element and/or a single top-level <script context="module"> element`,
+	'invalid-render-expression': () => 'expected an identifier followed by (...)',
+	'invalid-render-arguments': () => 'expected at most one argument'
 };
 
 /** @satisfies {Errors} */

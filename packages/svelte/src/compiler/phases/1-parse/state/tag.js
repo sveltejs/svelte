@@ -586,11 +586,11 @@ function special(parser) {
 		const expression = read_expression(parser);
 
 		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
+			error(expression, 'invalid-render-expression');
 		}
 
 		if (expression.arguments.length > 1) {
-			error(expression.arguments[1], 'TODO', 'expected at most one argument');
+			error(expression.arguments[1], 'invalid-render-arguments');
 		}
 
 		parser.allow_whitespace();
