@@ -1279,11 +1279,11 @@ export function delegate(events) {
 }
 
 /**
- * @param {Node} root_element
+ * @param {Node} handler_element
  * @param {Event} event
  * @returns {void}
  */
-function handle_event_propagation(root_element, event) {
+function handle_event_propagation(handler_element, event) {
 	const event_name = event.type;
 	const path = event.composedPath?.() || [];
 	let current_target = /** @type {null | Element} */ (path[0] || event.target);
@@ -1298,22 +1298,37 @@ function handle_event_propagation(root_element, event) {
 	// We check __root to skip all nodes below it in case this is a
 	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
-	// We're deliberately not skipping if the index is the same or higher, because
-	// someone could create an event programmatically and emit it multiple times,
-	// in which case we want to handle the whole propagation chain properly each time.
 	let path_idx = 0;
 	// @ts-expect-error is added below
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
-		if (at_idx !== -1 && root_element === document) {
-			// This is the fallback document listener but the event was already handled -> ignore
+		if (at_idx !== -1 && handler_element === document) {
+			// This is the fallback document listener but the event was already handled
+			// -> ignore, but set handle_at to document so that we're resetting the event
+			// chain in case someone manually dispatches the same event object again.
+			// @ts-expect-error
+			event.__root = document;
 			return;
 		}
-		if (at_idx < path.indexOf(root_element)) {
-			path_idx = at_idx;
+		// We're deliberately not skipping if the index is higher, because
+		// someone could create an event programmatically and emit it multiple times,
+		// in which case we want to handle the whole propagation chain properly each time.
+		// (this will only be a false negative if the event is dispatched multiple times and
+		// the fallback document listener isn't reached in between, but that's super rare)
+		const handler_idx = path.indexOf(handler_element);
+		if (handler_idx === -1) {
+			// handle_idx can theoretically be -1 (happened in some JSDOM testing scenarios with an event listener on the window object)
+			// so guard against that, too, and assume that everything was handled at this point.
+			return;
+		}
+		if (at_idx <= handler_idx) {
+			// +1 because at_idx is the element which was already handled, and there can only be one delegated event per element.
+			// Avoids on:click and onclick on the same event resulting in onclick being fired twice.
+			path_idx = at_idx + 1;
 		}
 	}
+
 	current_target = /** @type {Element} */ (path[path_idx] || event.target);
 	// Proxy currentTarget to correct target
 	define_property(event, 'currentTarget', {
@@ -1339,16 +1354,20 @@ function handle_event_propagation(root_element, event) {
 				delegated.call(current_target, event);
 			}
 		}
-		if (event.cancelBubble || parent_element === root_element) {
+		if (
+			event.cancelBubble ||
+			parent_element === handler_element ||
+			current_target === handler_element
+		) {
 			break;
 		}
 		current_target = parent_element;
 	}
 
 	// @ts-expect-error is used above
-	event.__root = root_element;
+	event.__root = handler_element;
 	// @ts-expect-error is used above
-	current_target = root_element;
+	current_target = handler_element;
 }
 
 /**
