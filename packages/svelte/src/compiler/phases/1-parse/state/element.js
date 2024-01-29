@@ -143,7 +143,7 @@ export default function tag(parser) {
 					metadata: {
 						svg: false
 					}
-			  };
+				};
 
 	parser.allow_whitespace();
 
