@@ -97,7 +97,7 @@ export default function read_context(parser) {
  * @param {import('../index.js').Parser} parser
  * @returns {any}
  */
-export function read_type_annotation(parser) {
+function read_type_annotation(parser) {
 	const start = parser.index;
 	parser.allow_whitespace();
 
