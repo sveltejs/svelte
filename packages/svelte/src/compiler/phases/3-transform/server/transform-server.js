@@ -1446,7 +1446,7 @@ const template_visitors = {
 		// TODO hoist where possible
 		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$payload')];
-		for (const arg of node.context.elements) {
+		for (const arg of node.parameters) {
 			if (arg) args.push(arg);
 		}
 

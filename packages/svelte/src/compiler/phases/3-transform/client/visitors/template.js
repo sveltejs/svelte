@@ -2475,8 +2475,8 @@ export const template_visitors = {
 		/** @type {import('estree').Statement[]} */
 		const declarations = [];
 
-		for (let i = 0; i < node.context.elements.length; i++) {
-			const argument = node.context.elements[i];
+		for (let i = 0; i < node.parameters.length; i++) {
+			const argument = node.parameters[i];
 
 			if (!argument) continue;
 

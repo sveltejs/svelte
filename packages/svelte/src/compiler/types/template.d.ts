@@ -418,7 +418,7 @@ export interface KeyBlock extends BaseNode {
 export interface SnippetBlock extends BaseNode {
 	type: 'SnippetBlock';
 	expression: Identifier;
-	context: ArrayPattern;
+	parameters: Pattern[];
 	body: Fragment;
 }
 

@@ -274,7 +274,7 @@ function open(parser) {
 		parser.allow_whitespace();
 
 		/** @type {import('estree').Pattern[]} */
-		const elements = [];
+		const parameters = [];
 
 		while (!parser.match(')')) {
 			let pattern = read_context(parser);
@@ -289,7 +289,7 @@ function open(parser) {
 				};
 			}
 
-			elements.push(pattern);
+			parameters.push(pattern);
 
 			if (!parser.eat(',')) break;
 			parser.allow_whitespace();
@@ -312,10 +312,7 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context: {
-					type: 'ArrayPattern',
-					elements
-				},
+				parameters,
 				body: create_fragment()
 			})
 		);
