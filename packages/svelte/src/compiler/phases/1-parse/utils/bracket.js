@@ -1,5 +1,3 @@
-import full_char_code_at from './full_char_code_at.js';
-
 const SQUARE_BRACKET_OPEN = '['.charCodeAt(0);
 const SQUARE_BRACKET_CLOSE = ']'.charCodeAt(0);
 const CURLY_BRACKET_OPEN = '{'.charCodeAt(0);
@@ -123,48 +121,42 @@ function count_leading_backslashes(string, search_start_index) {
  * Finds the corresponding closing bracket, ignoring brackets found inside comments, strings, or regex expressions.
  * @param {string} template The string to search.
  * @param {number} index The index to begin the search at.
- * @param {string} open The opening bracket (ex: `'{'` will search for `'}'`).
+ * @param {'{' | '['} open The opening bracket (ex: `'{'` will search for `'}'`).
  * @returns {number | undefined} The index of the closing bracket, or undefined if not found.
  */
 export function find_matching_bracket(template, index, open) {
-	const open_code = full_char_code_at(open, 0);
-	const close_code = get_bracket_close(open_code);
+	const close = open === '{' ? '}' : ']';
 	let brackets = 1;
 	let i = index;
 	while (brackets > 0 && i < template.length) {
-		const char = template[i];
+		const char = template[i++];
 		switch (char) {
 			case "'":
 			case '"':
 			case '`':
-				i = find_string_end(template, i + 1, char) + 1;
+				i = find_string_end(template, i, char) + 1;
 				continue;
 			case '/': {
-				const next_char = template[i + 1];
+				const next_char = template[i];
 				if (!next_char) continue;
 				if (next_char === '/') {
-					i = infinity_if_negative(template.indexOf('\n', i + 1)) + '\n'.length;
+					i = infinity_if_negative(template.indexOf('\n', i)) + '\n'.length;
 					continue;
 				}
 				if (next_char === '*') {
-					i = infinity_if_negative(template.indexOf('*/', i + 1)) + '*/'.length;
+					i = infinity_if_negative(template.indexOf('*/', i)) + '*/'.length;
 					continue;
 				}
-				i = find_regex_end(template, i + 1) + '/'.length;
+				i = find_regex_end(template, i) + '/'.length;
 				continue;
 			}
-			default: {
-				const code = full_char_code_at(template, i);
-				if (code === open_code) {
-					brackets++;
-				} else if (code === close_code) {
-					brackets--;
-				}
-				if (brackets === 0) {
-					return i;
-				}
-				i++;
-			}
+			case open:
+				brackets++;
+				continue;
+			case close:
+				brackets--;
+				if (brackets === 0) return i - 1;
+				continue;
 		}
 	}
 	return undefined;
