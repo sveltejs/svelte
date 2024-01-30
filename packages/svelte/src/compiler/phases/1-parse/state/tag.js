@@ -291,19 +291,16 @@ function open(parser) {
 		);
 
 		if (snippet_expression.type !== 'FunctionExpression') {
-			error(snippet_expression, 'TODO', 'expected a function expression');
+			// this can't happen, but the types are easier this way
+			error(snippet_expression, 'INTERNAL', 'expected a function expression');
 		}
 
 		if (!snippet_expression.id) {
-			error(snippet_expression, 'TODO', 'expected a snippet name');
+			error(snippet_expression, 'expected-identifier');
 		}
 
 		if (snippet_expression.params.at(-1)?.type === 'RestElement') {
-			error(
-				snippet_expression,
-				'TODO',
-				'snippets do not support rest parameters; use an array instead'
-			);
+			error(snippet_expression, 'invalid-snippet-rest-parameter');
 		}
 
 		// slice the `{#` off the beginning since it's already been eaten
