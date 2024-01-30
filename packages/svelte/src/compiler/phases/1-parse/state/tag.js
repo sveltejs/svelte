@@ -3,8 +3,6 @@ import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
 import { walk } from 'zimmerframe';
-import { parse, parse_expression_at } from '../acorn.js';
-import { find_matching_bracket } from '../utils/bracket.js';
 import full_char_code_at from '../utils/full_char_code_at.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
