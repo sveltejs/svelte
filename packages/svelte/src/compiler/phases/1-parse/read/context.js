@@ -115,6 +115,13 @@ export function read_type_annotation(parser) {
 		parser.template.slice(parser.index);
 	let expression = parse_expression_at(template, parser.ts, a);
 
+	// `foo: bar = baz` gets mangled — fix it
+	if (expression.type === 'AssignmentExpression') {
+		let b = expression.right.start;
+		while (template[b] !== '=') b -= 1;
+		expression = parse_expression_at(template.slice(0, b), parser.ts, a);
+	}
+
 	// `array as item: string, index` becomes `string, index`, which is mistaken as a sequence expression - fix that
 	if (expression.type === 'SequenceExpression') {
 		expression = expression.expressions[0];

@@ -554,31 +554,18 @@ function special(parser) {
 		return;
 	}
 
-	if (parser.match('const')) {
-		// {@const a = b}
-		const start_index = parser.index;
+	if (parser.eat('const')) {
+		parser.allow_whitespace();
 
-		let end_index = find_matching_bracket(parser.template, start_index, '{');
-		if (!end_index) {
-			error(start, 'invalid-const');
-		}
+		const id = read_context(parser);
+		parser.allow_whitespace();
 
-		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
-		let declaration = parse(
-			dummy_spaces + parser.template.substring(start_index, end_index),
-			parser.ts
-		).body[0];
+		parser.eat('=', true);
+		parser.allow_whitespace();
 
-		if (
-			declaration === undefined ||
-			declaration.type !== 'VariableDeclaration' ||
-			declaration.declarations.length !== 1 ||
-			declaration.declarations[0].init === undefined
-		) {
-			error(start, 'invalid-const');
-		}
+		const init = read_expression(parser);
+		parser.allow_whitespace();
 
-		parser.index = end_index;
 		parser.eat('}', true);
 
 		parser.append(
@@ -586,7 +573,11 @@ function special(parser) {
 				type: 'ConstTag',
 				start,
 				end: parser.index,
-				declaration
+				declaration: {
+					type: 'VariableDeclaration',
+					kind: 'const',
+					declarations: [{ type: 'VariableDeclarator', id, init }]
+				}
 			})
 		);
 	}
