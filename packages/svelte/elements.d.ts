@@ -179,6 +179,7 @@ export interface DOMAttributes<T extends EventTarget> {
 
 	// UI Events
 	'on:scroll'?: UIEventHandler<T> | undefined | null;
+	'on:scrollend'?: UIEventHandler<T> | undefined | null;
 	'on:resize'?: UIEventHandler<T> | undefined | null;
 
 	// Wheel Events
