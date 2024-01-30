@@ -52,6 +52,7 @@ _Featuring Svelte Contributors and Ambassadors_
 - [Tan Li Hau's new book](https://packt.link/Z4hXD), _Real-World Svelte_ is out now
 - [Svelte Society San Diego - January 2024](https://www.youtube.com/watch?v=oH7XFAKh6W8): Attila covers the latest updates on Svelte 5 and also SvelteKit.
 - [Svelte London - January 2024](https://www.youtube.com/watch?v=eswNQiq4T2w): featuring talks from both Rich Harris and pngwn
+- [Svelte 5: Speed, Simplicity & Size](https://syntax.fm/show/723/svelte-5-speed-simplicity-and-size) by Syntax.FM
 - This Week in Svelte:
   - [12 Jan 2024](https://www.youtube.com/watch?v=86NNiIG_ncU): A deep dive into the SvelteKit Changelog
   - [19 Jan 2024](https://www.youtube.com/watch?v=AWL_xCPT-5Q): Showcasing a new library from Paolo Ricciuti
