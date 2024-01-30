@@ -38,7 +38,6 @@ export {
 	user_root_effect,
 	inspect,
 	unwrap,
-	thunkspread,
 	maybe_call,
 	freeze
 } from './client/runtime.js';

@@ -2110,20 +2110,6 @@ if (DEV) {
 }
 
 /**
- * @template {unknown} TItems
- * @template {Iterable<TItems>} TIterator
- * @param {TIterator} iterable
- * @returns {(() => TItems)[]}
- */
-export function thunkspread(iterable) {
-	const thunks = [];
-	for (const item of iterable) {
-		thunks.push(() => item);
-	}
-	return thunks;
-}
-
-/**
  * @template {Function | undefined} T
  * @param {T} fn
  * @returns {ReturnType<T> | undefined}
