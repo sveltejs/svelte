@@ -68,6 +68,7 @@ export function proxy(value, immutable = true) {
 		is_frozen(value) &&
 		STATE_SYMBOL in value
 	) {
+		// eslint-disable-next-line no-console
 		console.warn(
 			'Object passed to $state was frozen after being passed to $state before. Consider using $state.frozen instead, or unfreeze the object.'
 		);
