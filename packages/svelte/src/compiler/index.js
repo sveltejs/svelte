@@ -7,6 +7,7 @@ import { walk } from 'zimmerframe';
 import { validate_component_options, validate_module_options } from './validate-options.js';
 import { convert } from './legacy.js';
 import { CompileError } from './errors.js';
+import { strip_ts_assertions } from './phases/1-parse/strip_ts_assertions.js';
 export { default as preprocess } from './preprocess/index.js';
 
 /**
@@ -20,14 +21,24 @@ export { default as preprocess } from './preprocess/index.js';
 export function compile(source, options) {
 	try {
 		const validated = validate_component_options(options, '');
-		const parsed = _parse(source);
+		let parsed = _parse(source);
 
 		const combined_options = /** @type {import('#compiler').ValidatedCompileOptions} */ ({
 			...validated,
 			...parsed.options
 		});
 
+		if (parsed.metadata.ts) {
+			parsed = {
+				...parsed,
+				fragment: parsed.fragment && strip_ts_assertions(parsed.fragment),
+				instance: parsed.instance && strip_ts_assertions(parsed.instance),
+				module: parsed.module && strip_ts_assertions(parsed.module)
+			};
+		}
+
 		const analysis = analyze_component(parsed, combined_options);
+
 		const result = transform_component(analysis, source, combined_options);
 		return result;
 	} catch (e) {

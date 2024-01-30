@@ -56,6 +56,10 @@ export interface Root extends BaseNode {
 	instance: Script | null;
 	/** The parsed `<script context="module">` element, if exists */
 	module: Script | null;
+	metadata: {
+		/** Whether the component was parsed with typescript */
+		ts: boolean;
+	}
 }
 
 export interface SvelteOptions {
