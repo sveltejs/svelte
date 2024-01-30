@@ -265,46 +265,43 @@ function open(parser) {
 		return;
 	}
 
-	if (parser.match('snippet')) {
-		const snippet_declaration_end = find_matching_bracket(parser.template, parser.index, '{');
+	if (parser.eat('snippet')) {
+		parser.require_whitespace();
 
-		if (!snippet_declaration_end) {
-			error(parser.template.length, 'unexpected-eof');
+		const name_start = parser.index;
+		const name = parser.read_identifier();
+		const name_end = parser.index;
+
+		parser.eat('(', true);
+
+		parser.allow_whitespace();
+
+		/** @type {import('estree').Pattern[]} */
+		const elements = [];
+
+		while (!parser.match(')')) {
+			let pattern = read_context(parser);
+
+			parser.allow_whitespace();
+			if (parser.eat('=')) {
+				parser.allow_whitespace();
+				pattern = {
+					type: 'AssignmentPattern',
+					left: pattern,
+					right: read_expression(parser)
+				};
+			}
+
+			elements.push(pattern);
+
+			if (!parser.eat(',')) break;
+			parser.allow_whitespace();
 		}
 
-		// we'll eat this later, so save it
-		const raw_snippet_declaration = parser.template.slice(start, snippet_declaration_end + 1);
-		const start_subtractions = '{#snippet ';
-		const end_subtractions = '}';
+		parser.eat(')', true);
 
-		// now the snippet declaration is just a function declaration (`function snipName() {}`)
-		const snippet_declaration = `function ${raw_snippet_declaration.slice(
-			start_subtractions.length,
-			raw_snippet_declaration.length - end_subtractions.length
-		)} {}`;
-
-		// we offset the index by one because `function` takes the same space as `#snippet`
-		const snippet_expression = parse_expression_at(
-			`${parser.template.slice(0, parser.index - 1)}${snippet_declaration}`,
-			parser.ts,
-			parser.index - 1
-		);
-
-		if (snippet_expression.type !== 'FunctionExpression') {
-			// this can't happen, but the types are easier this way
-			error(snippet_expression, 'INTERNAL', 'expected a function expression');
-		}
-
-		if (!snippet_expression.id) {
-			error(snippet_expression, 'expected-identifier');
-		}
-
-		if (snippet_expression.params.at(-1)?.type === 'RestElement') {
-			error(snippet_expression, 'invalid-snippet-rest-parameter');
-		}
-
-		// slice the `{#` off the beginning since it's already been eaten
-		parser.eat(raw_snippet_declaration.slice(2), true);
+		parser.allow_whitespace();
+		parser.eat('}', true);
 
 		const block = parser.append(
 			/** @type {Omit<import('#compiler').SnippetBlock, 'parent'>} */
@@ -312,10 +309,15 @@ function open(parser) {
 				type: 'SnippetBlock',
 				start,
 				end: -1,
-				expression: snippet_expression.id,
+				expression: {
+					type: 'Identifier',
+					start: name_start,
+					end: name_end,
+					name
+				},
 				context: {
 					type: 'ArrayPattern',
-					elements: snippet_expression.params
+					elements
 				},
 				body: create_fragment()
 			})
