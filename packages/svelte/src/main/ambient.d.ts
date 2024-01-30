@@ -77,7 +77,7 @@ declare namespace $derived {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
 	 */
-	export function fn<T>(fn: () => T): void;
+	export function call<T>(fn: () => T): void;
 }
 
 /**

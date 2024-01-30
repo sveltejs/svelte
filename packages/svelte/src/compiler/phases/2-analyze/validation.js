@@ -334,7 +334,7 @@ function is_tag_valid_with_parent(tag, parent_tag) {
 /**
  * @type {import('zimmerframe').Visitors<import('#compiler').SvelteNode, import('./types.js').AnalysisState>}
  */
-export const validation = {
+const validation = {
 	BindDirective(node, context) {
 		validate_no_const_assignment(node, node.expression, context.state.scope, true);
 

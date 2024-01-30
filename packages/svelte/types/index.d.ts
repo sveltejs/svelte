@@ -1345,6 +1345,13 @@ declare module 'svelte/compiler' {
 		type: 'SvelteElement';
 		name: 'svelte:element';
 		tag: Expression;
+		metadata: {
+			/**
+			 * `true`/`false` if this is definitely (not) an svg element.
+			 * `null` means we can't know statically.
+			 */
+			svg: boolean | null;
+		};
 	}
 
 	interface SvelteFragment extends BaseElement {
@@ -2485,7 +2492,7 @@ declare namespace $derived {
 	 *
 	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
 	 */
-	export function fn<T>(fn: () => T): void;
+	export function call<T>(fn: () => T): void;
 }
 
 /**

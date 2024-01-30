@@ -19,7 +19,13 @@ import {
 	create_dynamic_component_block,
 	create_snippet_block
 } from './block.js';
-import { PassiveDelegatedEvents, DelegatedEvents, AttributeAliases } from '../../constants.js';
+import {
+	PassiveDelegatedEvents,
+	DelegatedEvents,
+	AttributeAliases,
+	namespace_svg,
+	namespace_html
+} from '../../constants.js';
 import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
 import {
 	render_effect,
@@ -1595,11 +1601,11 @@ function swap_block_dom(block, from, to) {
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
+ * @param {boolean | null} is_svg `null` == not statically known
  * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
- * @param {any} is_svg
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
+export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;
@@ -1607,7 +1613,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	/** @type {string} */
 	let tag;
 
-	/** @type {null | HTMLElement | SVGElement} */
+	/** @type {null | Element} */
 	let element = null;
 	const element_effect = render_effect(
 		() => {
@@ -1623,11 +1629,20 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
+			// We try our best infering the namespace in case it's not possible to determine statically,
+			// but on the first render on the client (without hydration) the parent will be undefined,
+			// since the anchor is not attached to its parent / the dom yet.
+			const ns =
+				is_svg || tag === 'svg'
+					? namespace_svg
+					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
+						? null
+						: anchor_node.parentElement?.namespaceURI ?? null;
 			const next_element = tag
 				? current_hydration_fragment !== null
-					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
-					: is_svg
-						? document.createElementNS('http://www.w3.org/2000/svg', tag)
+					? /** @type {Element} */ (current_hydration_fragment[0])
+					: ns
+						? document.createElementNS(ns, tag)
 						: document.createElement(tag)
 				: null;
 			const prev_element = element;
@@ -2098,7 +2113,7 @@ export function cssProps(anchor, is_html, props, component) {
 			tag = document.createElement('div');
 			tag.style.display = 'contents';
 		} else {
-			tag = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			tag = document.createElementNS(namespace_svg, 'g');
 		}
 		insert(tag, null, anchor);
 		component_anchor = empty();
@@ -2629,7 +2644,7 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			/** @type {Element & ElementCSSInlineStyle} */ (node),
 			prev,
 			attrs,
-			node.namespaceURI !== 'http://www.w3.org/2000/svg',
+			node.namespaceURI !== namespace_svg,
 			css_hash
 		);
 	}

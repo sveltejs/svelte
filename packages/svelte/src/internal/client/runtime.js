@@ -623,8 +623,14 @@ function process_microtask() {
 export function schedule_effect(signal, sync) {
 	const flags = signal.f;
 	if (sync) {
-		execute_effect(signal);
-		set_signal_status(signal, CLEAN);
+		const previously_flushing_effect = is_flushing_effect;
+		try {
+			is_flushing_effect = true;
+			execute_effect(signal);
+			set_signal_status(signal, CLEAN);
+		} finally {
+			is_flushing_effect = previously_flushing_effect;
+		}
 	} else {
 		if (current_scheduler_mode === FLUSH_MICROTASK) {
 			if (!is_micro_task_queued) {

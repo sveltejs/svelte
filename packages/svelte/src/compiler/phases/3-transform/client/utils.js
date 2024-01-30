@@ -524,6 +524,16 @@ function get_hoistable_params(node, context) {
 				params.push(b.id(binding.node.name.slice(1)));
 				params.push(b.id(binding.node.name));
 			} else if (
+				// If it's a destructured derived binding, then we can extract the derived signal reference and use that.
+				binding.expression !== null &&
+				binding.expression.type === 'MemberExpression' &&
+				binding.expression.object.type === 'CallExpression' &&
+				binding.expression.object.callee.type === 'Identifier' &&
+				binding.expression.object.callee.name === '$.get' &&
+				binding.expression.object.arguments[0].type === 'Identifier'
+			) {
+				params.push(b.id(binding.expression.object.arguments[0].name));
+			} else if (
 				// If we are referencing a simple $$props value, then we need to reference the object property instead
 				binding.kind === 'prop' &&
 				!binding.reassigned &&
