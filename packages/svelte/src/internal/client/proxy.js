@@ -88,6 +88,7 @@ function unwrap(value, already_unwrapped = new Map()) {
 			const descriptors = get_descriptors(value);
 			already_unwrapped.set(value, obj);
 			for (const key of keys) {
+				if (key === STATE_SYMBOL || (DEV && key === READONLY_SYMBOL)) continue;
 				if (descriptors[key].get) {
 					define_property(obj, key, descriptors[key]);
 				} else {
