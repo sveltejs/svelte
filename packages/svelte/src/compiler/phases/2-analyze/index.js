@@ -7,8 +7,7 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
-	unwrap_ts_expression
+	object
 } from '../../utils/ast.js';
 import * as b from '../../utils/builders.js';
 import { ReservedKeywords, Runes, SVGElements } from '../constants.js';
@@ -706,7 +705,7 @@ const runes_scope_tweaker = {
 		}
 	},
 	VariableDeclarator(node, { state }) {
-		const init = unwrap_ts_expression(node.init);
+		const init = node.init;
 		if (!init || init.type !== 'CallExpression') return;
 		const rune = get_rune(init, state.scope);
 		if (rune === null) return;

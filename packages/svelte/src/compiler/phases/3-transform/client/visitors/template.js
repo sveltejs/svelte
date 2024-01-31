@@ -3,8 +3,7 @@ import {
 	extract_paths,
 	is_event_attribute,
 	is_text_attribute,
-	object,
-	unwrap_ts_expression
+	object
 } from '../../../../utils/ast.js';
 import { binding_properties } from '../../../bindings.js';
 import {
@@ -2575,7 +2574,7 @@ export const template_visitors = {
 	},
 	BindDirective(node, context) {
 		const { state, path, visit } = context;
-		const expression = unwrap_ts_expression(node.expression);
+		const expression = node.expression;
 		const getter = b.thunk(/** @type {import('estree').Expression} */ (visit(expression)));
 		const assignment = b.assignment('=', expression, b.id('$$value'));
 		const setter = b.arrow(
