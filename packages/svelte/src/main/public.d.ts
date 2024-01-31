@@ -18,6 +18,14 @@ export interface ComponentConstructorOptions<
 	$$inline?: boolean;
 }
 
+// Utility type for ensuring backwards compatibility on a type level: If there's a default slot, add 'children' to the props if it doesn't exist there already
+type PropsWithChildren<Props, Slots> = Props &
+	(Props extends { children?: any }
+		? {}
+		: Slots extends { default: any }
+			? { children?: Snippet<[]> }
+			: {});
+
 /**
  * Can be used to create strongly typed Svelte components.
  *
