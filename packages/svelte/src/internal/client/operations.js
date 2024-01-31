@@ -214,13 +214,31 @@ export function child_frag(node, is_text) {
 /**
  * @template {Node} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function sibling(node) {
+export function sibling(node, is_text = false) {
 	const next_sibling = next_sibling_get.call(node);
-	if (current_hydration_fragment !== null && next_sibling !== null) {
-		return capture_fragment_from_node(next_sibling);
+	if (current_hydration_fragment !== null) {
+		if (is_text && next_sibling?.nodeType !== 3) {
+			const text = document.createTextNode('');
+			if (next_sibling) {
+				const index = current_hydration_fragment.indexOf(
+					/** @type {Text | Comment | Element} */ (next_sibling)
+				);
+				current_hydration_fragment.splice(index, 0, text);
+				/** @type {DocumentFragment} */ (next_sibling.parentNode).insertBefore(text, next_sibling);
+			} else {
+				current_hydration_fragment.push(text);
+			}
+
+			return text;
+		}
+
+		if (next_sibling !== null) {
+			return capture_fragment_from_node(next_sibling);
+		}
 	}
 	return next_sibling;
 }

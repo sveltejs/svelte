@@ -23,11 +23,11 @@ export default function State_proxy_literal($$anchor, $$props) {
 
 	$.remove_input_attr_defaults(input);
 
-	var input_1 = $.sibling($.sibling(input));
+	var input_1 = $.sibling($.sibling(input, true));
 
 	$.remove_input_attr_defaults(input_1);
 
-	var button = $.sibling($.sibling(input_1));
+	var button = $.sibling($.sibling(input_1, true));
 
 	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
 	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));

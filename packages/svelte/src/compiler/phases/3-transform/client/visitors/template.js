@@ -1100,25 +1100,29 @@ function create_block(parent, name, nodes, context) {
 	} else if (trimmed.length > 0) {
 		const id = b.id(context.state.scope.generate('fragment'));
 
-		const first = trimmed[0];
-		const first_is_text = first.type === 'Text' || first.type === 'ExpressionTag';
-		const name = first_is_text ? 'text' : first.type === 'RegularElement' ? first.name : 'node';
-		const node_id = b.id(context.state.scope.generate(name));
-
-		process_children(trimmed, () => node_id, false, {
-			...context,
-			state
-		});
-
 		const use_space_template =
 			trimmed.some((node) => node.type === 'ExpressionTag') &&
 			trimmed.every((node) => node.type === 'Text' || node.type === 'ExpressionTag');
 
 		if (use_space_template) {
 			// special case
-			body.push(b.var(node_id, b.call('$.space', b.id('$$anchor'))), ...state.init);
-			close = b.stmt(b.call('$.close', b.id('$$anchor'), node_id));
+			const id = b.id(context.state.scope.generate('text'));
+
+			process_children(trimmed, () => id, false, {
+				...context,
+				state
+			});
+
+			body.push(b.var(id, b.call('$.space', b.id('$$anchor'))), ...state.init);
+			close = b.stmt(b.call('$.close', b.id('$$anchor'), id));
 		} else {
+			/** @type {(is_text: boolean) => import('estree').Expression} */
+			const expression = (is_text) =>
+				is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id);
+
+			process_children(trimmed, expression, false, { ...context, state });
+
+			// in many cases, we can use `$.comment` instead of creating a unique template
 			const use_comment_template = state.template.length === 1 && state.template[0] === '<!>';
 
 			if (use_comment_template) {
@@ -1145,15 +1149,6 @@ function create_block(parent, name, nodes, context) {
 					)
 				);
 			}
-
-			// if the first node is a text node, we may need to insert it during hydration,
-			// hence the `true` argument
-			body.push(
-				b.var(
-					node_id,
-					first_is_text ? b.call('$.child_frag', id, b.true) : b.call('$.child_frag', id)
-				)
-			);
 
 			body.push(...state.init);
 
@@ -1431,7 +1426,7 @@ function serialize_event_attribute(node, context) {
  * (e.g. `{a} b {c}`) into a single update function. Along the way it creates
  * corresponding template node references these updates are applied to.
  * @param {import('#compiler').SvelteNode[]} nodes
- * @param {() => import('estree').Expression} expression
+ * @param {(is_text: boolean) => import('estree').Expression} expression
  * @param {boolean} is_element
  * @param {import('../types.js').ComponentContext} context
  */
@@ -1452,14 +1447,14 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 
 			if (node.type === 'Text') {
 				let prev = expression;
-				expression = () => b.call('$.sibling', prev());
+				expression = () => b.call('$.sibling', prev(true));
 				state.template.push(node.raw);
 				return;
 			}
 
 			state.template.push(' ');
 
-			const text_id = get_node_id(expression(), state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
 
 			const singular = b.stmt(
 				b.call(
@@ -1497,9 +1492,10 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				);
 			}
 
-			expression = () => b.call('$.sibling', text_id);
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		} else {
-			const text_id = get_node_id(expression(), state, 'text');
+			const text_id = get_node_id(expression(true), state, 'text');
 
 			state.template.push(' ');
 
@@ -1524,7 +1520,8 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 				state.init.push(init);
 			}
 
-			expression = () => b.call('$.sibling', text_id);
+			expression = (is_text) =>
+				is_text ? b.call('$.sibling', text_id, b.true) : b.call('$.sibling', text_id);
 		}
 	}
 
@@ -1554,12 +1551,13 @@ function process_children(nodes, expression, is_element, { visit, state }) {
 					visit(node, state);
 				} else {
 					const id = get_node_id(
-						expression(),
+						expression(false),
 						state,
 						node.type === 'RegularElement' ? node.name : 'node'
 					);
 
-					expression = () => b.call('$.sibling', id);
+					expression = (is_text) =>
+						is_text ? b.call('$.sibling', id, b.true) : b.call('$.sibling', id);
 
 					visit(node, {
 						...state,

@@ -14,11 +14,11 @@ export default function Main($$anchor, $$props) {
 	/* Init */
 	var fragment = $.open_frag($$anchor, false, frag);
 	var div = $.child_frag(fragment);
-	var svg = $.sibling($.sibling(div));
-	var custom_element = $.sibling($.sibling(svg));
-	var div_1 = $.sibling($.sibling(custom_element));
-	var svg_1 = $.sibling($.sibling(div_1));
-	var custom_element_1 = $.sibling($.sibling(svg_1));
+	var svg = $.sibling($.sibling(div, true));
+	var custom_element = $.sibling($.sibling(svg, true));
+	var div_1 = $.sibling($.sibling(custom_element, true));
+	var svg_1 = $.sibling($.sibling(div_1, true));
+	var custom_element_1 = $.sibling($.sibling(svg_1, true));
 
 	/* Update */
 	$.attr_effect(div_1, "foobar", y);
