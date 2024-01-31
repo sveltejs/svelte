@@ -592,8 +592,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const child_scope = state.scope.child();
 			scopes.set(node, child_scope);
 
-			if (node.context) {
-				for (const id of extract_identifiers(node.context)) {
+			for (const param of node.parameters) {
+				for (const id of extract_identifiers(param)) {
 					child_scope.declare(id, 'each', 'let');
 				}
 			}

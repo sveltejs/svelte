@@ -1498,13 +1498,7 @@ function process_children(nodes, parent, { visit, state }) {
 		);
 		const assignment = serialize_template_literal(sequence, visit, state)[1];
 		const init = b.stmt(b.assignment('=', b.member(text_id, b.id('nodeValue')), assignment));
-		const singular = b.stmt(
-			b.call(
-				'$.text_effect',
-				text_id,
-				b.thunk(serialize_template_literal(sequence, visit, state)[1])
-			)
-		);
+		const singular = b.stmt(b.call('$.text_effect', text_id, b.thunk(assignment)));
 
 		if (contains_call_expression && !within_bound_contenteditable) {
 			state.update_effects.push(singular);
@@ -1776,8 +1770,8 @@ export const template_visitors = {
 
 		/** @type {import('estree').Expression[]} */
 		const args = [context.state.node];
-		if (node.argument) {
-			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(node.argument))));
+		for (const arg of node.arguments) {
+			args.push(b.thunk(/** @type {import('estree').Expression} */ (context.visit(arg))));
 		}
 
 		let snippet_function = /** @type {import('estree').Expression} */ (
@@ -2472,60 +2466,66 @@ export const template_visitors = {
 	},
 	SnippetBlock(node, context) {
 		// TODO hoist where possible
+		/** @type {import('estree').Pattern[]} */
 		const args = [b.id('$$anchor')];
 
 		/** @type {import('estree').BlockStatement} */
 		let body;
 
-		if (node.context) {
-			const id = node.context.type === 'Identifier' ? node.context : b.id('$$context');
-			args.push(id);
+		/** @type {import('estree').Statement[]} */
+		const declarations = [];
 
-			/** @type {import('estree').Statement[]} */
-			const declarations = [];
+		for (let i = 0; i < node.parameters.length; i++) {
+			const argument = node.parameters[i];
 
-			// some of this is duplicated with EachBlock — TODO dedupe?
-			if (node.context.type === 'Identifier') {
+			if (!argument) continue;
+
+			if (argument.type === 'Identifier') {
+				args.push({
+					type: 'AssignmentPattern',
+					left: argument,
+					right: b.id('$.noop')
+				});
 				const binding = /** @type {import('#compiler').Binding} */ (
-					context.state.scope.get(id.name)
+					context.state.scope.get(argument.name)
 				);
-				binding.expression = b.call(id);
-			} else {
-				const paths = extract_paths(node.context);
-
-				for (const path of paths) {
-					const name = /** @type {import('estree').Identifier} */ (path.node).name;
-					const binding = /** @type {import('#compiler').Binding} */ (
-						context.state.scope.get(name)
-					);
-					declarations.push(
-						b.let(
-							path.node,
-							b.thunk(
-								/** @type {import('estree').Expression} */ (
-									context.visit(path.expression?.(b.call('$$context')))
-								)
-							)
-						)
-					);
-
-					// we need to eagerly evaluate the expression in order to hit any
-					// 'Cannot access x before initialization' errors
-					if (context.state.options.dev) {
-						declarations.push(b.stmt(b.call(name)));
-					}
-
-					binding.expression = b.call(name);
-				}
+				binding.expression = b.call(argument);
+				continue;
 			}
 
-			body = b.block([
-				...declarations,
-				.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
-			]);
-		} else {
-			body = /** @type {import('estree').BlockStatement} */ (context.visit(node.body));
+			let arg_alias = `$$arg${i}`;
+			args.push(b.id(arg_alias));
+
+			const paths = extract_paths(argument);
+
+			for (const path of paths) {
+				const name = /** @type {import('estree').Identifier} */ (path.node).name;
+				const binding = /** @type {import('#compiler').Binding} */ (context.state.scope.get(name));
+				declarations.push(
+					b.let(
+						path.node,
+						b.thunk(
+							/** @type {import('estree').Expression} */ (
+								context.visit(path.expression?.(b.maybe_call(b.id(arg_alias))))
+							)
+						)
+					)
+				);
+
+				// we need to eagerly evaluate the expression in order to hit any
+				// 'Cannot access x before initialization' errors
+				if (context.state.options.dev) {
+					declarations.push(b.stmt(b.call(name)));
+				}
+
+				binding.expression = b.call(name);
+			}
 		}
+
+		body = b.block([
+			...declarations,
+			.../** @type {import('estree').BlockStatement} */ (context.visit(node.body)).body
+		]);
 
 		const path = context.path;
 		// If we're top-level, then we can create a function for the snippet so that it can be referenced
