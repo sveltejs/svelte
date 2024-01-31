@@ -5,12 +5,13 @@ import { client_component, client_module } from './client/transform-client.js';
 import { getLocator } from 'locate-character';
 
 /**
+ * @param {import('#compiler').Root} ast
  * @param {import('../types').ComponentAnalysis} analysis
  * @param {string} source
  * @param {import('#compiler').ValidatedCompileOptions} options
  * @returns {import('#compiler').CompileResult}
  */
-export function transform_component(analysis, source, options) {
+export function transform_component(ast, analysis, source, options) {
 	if (options.generate === false) {
 		return {
 			js: /** @type {any} */ (null),
@@ -18,7 +19,8 @@ export function transform_component(analysis, source, options) {
 			warnings: transform_warnings(source, options.filename, analysis.warnings),
 			metadata: {
 				runes: analysis.runes
-			}
+			},
+			ast
 		};
 	}
 
@@ -50,7 +52,8 @@ export function transform_component(analysis, source, options) {
 		warnings: transform_warnings(source, options.filename, analysis.warnings),
 		metadata: {
 			runes: analysis.runes
-		}
+		},
+		ast
 	};
 }
 
@@ -58,13 +61,12 @@ export function transform_component(analysis, source, options) {
  * @param {import('../types').Analysis} analysis
  * @param {string} source
  * @param {import('#compiler').ValidatedModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @returns {import('#compiler').ModuleCompileResult}
  */
 export function transform_module(analysis, source, options) {
 	if (options.generate === false) {
 		return {
 			js: /** @type {any} */ (null),
-			css: null,
 			warnings: transform_warnings(source, analysis.name, analysis.warnings),
 			metadata: {
 				runes: true
@@ -89,7 +91,6 @@ export function transform_module(analysis, source, options) {
 
 	return {
 		js: print(program, {}),
-		css: null,
 		warnings: transform_warnings(source, analysis.name, analysis.warnings),
 		metadata: {
 			runes: true

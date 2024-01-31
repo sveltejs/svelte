@@ -28,7 +28,7 @@ export function compile(source, options) {
 		});
 
 		const analysis = analyze_component(parsed, combined_options);
-		const result = transform_component(analysis, source, combined_options);
+		const result = transform_component(parsed, analysis, source, combined_options);
 		return result;
 	} catch (e) {
 		if (e instanceof CompileError) {
@@ -45,7 +45,7 @@ export function compile(source, options) {
  * https://svelte.dev/docs/svelte-compiler#svelte-compile
  * @param {string} source The component source code
  * @param {import('#compiler').ModuleCompileOptions} options
- * @returns {import('#compiler').CompileResult}
+ * @returns {import('#compiler').ModuleCompileResult}
  */
 export function compileModule(source, options) {
 	try {
