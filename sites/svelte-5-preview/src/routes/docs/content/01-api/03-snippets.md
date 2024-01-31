@@ -58,7 +58,7 @@ Snippets, and _render tags_, are a way to create reusable chunks of markup insid
 {/each}
 ```
 
-A snippet behaves pretty much like a regular function declaration: It can have multiple parameters, those parameters can be destructured, and they can have default values. However, you cannot use `...rest` params. ([demo](/#H4sIAAAAAAAAE2WO0YrCQAxFfyXGhVoo9L3Wot9hF6xt1IHpTJikggzz78tI2YX1MTecc2_Em7Ek2JwjumEmbPDEjBXqi_MhT7JKWKH4JYw5aWUMhrXrXa-WFCLMJDLcCQ5wMVoIOK8gHu6BBgX1IETw8ssFEhzgi4Nn2ZX73rX1n8rFrTjDTAoPstbv8pjqQ_3hLFPe0XL3piBmLG0grmDatDV3vYv1ak_vrmMgN1FYq4rBmpGKrPr_ufpr8buiTFjh7CdzMzRho2Gh9J1-AFhYxBNCAQAA)):
+Snippet parameters can be destructured ([demo](/#H4sIAAAAAAAAE5VTYW-bMBD9KyeiKYlEY4jWfSAk2n5H6QcXDmwVbMs2SzuL_z6DTRqp2rQJ2Ycfd_ced2eXtLxHkxRPLhF0wKRIfiiVpIl9V_PB_MTeoj8bOep6RkpTa67spRKV7dECH2iHBs7wNCOVdcFU1ui6gC2zVpmCEMVrMw4HxaSVhnzLMnLMsm26Ol95Y1kBHr9BDHnHbAHHO6ymynIpfF7LuAncwKgBCj0Xrx_5mMb2jh3f6KB6PNRy2AaXKf1fuY__KPfxj3KlQGikL5aQdpUxm-dTJUryUVdRsvwSqEviX2fIbYzgSvmCt7wbNe4ceMUpRIoUFkkpBBkw7ZfMZXC-BLKSDx3Q3p5djJrA-SR-X4K9DdHT6u-jo-flFlKSO3ThIDcSR6LIKUhGWrN1QGhs16LLbXgbjoe5U1PkozCfzu7uy2WtpfuuUTSo1_9ffPZrJKGLoyuwNxjBv0Q4wmdSR2aFi9jS2Pc-FIrlEKeilcI-GP4LfVtxOM1gyO1XSLp6vtD6tdNyFE0BV8YtngKuaNNw0RWQx_jKDlR33M9E5h-PQhZxfxEt6gIaLdWDYbSR191RvcFXv_LMb7p7obssXZ5Dvt_f9HgzdzZKibOZZ9mXmHkdTTpaefqsd4OIay4_hksd_I0fZMNbjk1SWD3i9Dz9BpdEPu8sBAAA)):
 
 ```svelte
 {#snippet figure({ src, caption, width, height })}
@@ -68,6 +68,8 @@ A snippet behaves pretty much like a regular function declaration: It can have m
 	</figure>
 {/snippet}
 ```
+
+Like function declarations, snippets can have an arbitrary number of parameters, which can have default values. You cannot use rest parameters however.
 
 ## Snippet scope
 
