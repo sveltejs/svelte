@@ -19,18 +19,18 @@ export default function State_proxy_literal($$anchor, $$props) {
 	let tpl = $.source(``);
 	/* Init */
 	var fragment = $.open_frag($$anchor, true, frag);
-	var node = $.child_frag(fragment);
-
-	$.remove_input_attr_defaults(node);
-
-	var input = $.sibling($.sibling(node));
+	var input = $.child_frag(fragment);
 
 	$.remove_input_attr_defaults(input);
 
-	var button = $.sibling($.sibling(input));
+	var input_1 = $.sibling($.sibling(input, true));
 
-	$.bind_value(node, () => $.get(str), ($$value) => $.set(str, $$value));
-	$.bind_value(input, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
+	$.remove_input_attr_defaults(input_1);
+
+	var button = $.sibling($.sibling(input_1, true));
+
+	$.bind_value(input, () => $.get(str), ($$value) => $.set(str, $$value));
+	$.bind_value(input_1, () => $.get(tpl), ($$value) => $.set(tpl, $$value));
 	button.__click = [reset, str, tpl];
 	$.close_frag($$anchor, fragment);
 	$.pop();

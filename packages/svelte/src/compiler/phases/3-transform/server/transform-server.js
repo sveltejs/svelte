@@ -167,7 +167,7 @@ function process_children(nodes, parent, { visit, state }) {
 			}
 
 			const expression = b.call(
-				'$.escape_text',
+				'$.escape',
 				/** @type {import('estree').Expression} */ (visit(node.expression))
 			);
 			state.template.push(t_expression(expression));
