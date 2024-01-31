@@ -1090,7 +1090,7 @@ declare module 'svelte/compiler' {
 		metadata: {
 			/** Whether the component was parsed with typescript */
 			ts: boolean;
-		}
+		};
 	}
 
 	interface SvelteOptions {
