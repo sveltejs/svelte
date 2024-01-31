@@ -67,7 +67,7 @@ export default test({
 		`
 		);
 
-		component.selected = [values[1], values[2]];
+		component.selected = [component.values[1], component.values[2]];
 		assert.equal(inputs[0].checked, false);
 		assert.equal(inputs[1].checked, true);
 		assert.equal(inputs[2].checked, true);

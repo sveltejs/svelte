@@ -58,7 +58,7 @@ Snippets, and _render tags_, are a way to create reusable chunks of markup insid
 {/each}
 ```
 
-A snippet can have at most one parameter. You can destructure it, just like a function argument ([demo](/#H4sIAAAAAAAAE5VTYW-bMBD9KyeiKYlEY4jWfSAk2n5H6QcXDmwVbMs2SzuL_z6DTRqp2rQJ2Ycfd_ced2eXtLxHkxRPLhF0wKRIfiiVpIl9V_PB_MTeoj8bOep6RkpTa67spRKV7dECH2iHBs7wNCOVdcFU1ui6gC2zVpmCEMVrMw4HxaSVhnzLMnLMsm26Ol95Y1kBHr9BDHnHbAHHO6ymynIpfF7LuAncwKgBCj0Xrx_5mMb2jh3f6KB6PNRy2AaXKf1fuY__KPfxj3KlQGikL5aQdpUxm-dTJUryUVdRsvwSqEviX2fIbYzgSvmCt7wbNe4ceMUpRIoUFkkpBBkw7ZfMZXC-BLKSDx3Q3p5djJrA-SR-X4K9DdHT6u-jo-flFlKSO3ThIDcSR6LIKUhGWrN1QGhs16LLbXgbjoe5U1PkozCfzu7uy2WtpfuuUTSo1_9ffPZrJKGLoyuwNxjBv0Q4wmdSR2aFi9jS2Pc-FIrlEKeilcI-GP4LfVtxOM1gyO1XSLp6vtD6tdNyFE0BV8YtngKuaNNw0RWQx_jKDlR33M9E5h-PQhZxfxEt6gIaLdWDYbSR191RvcFXv_LMb7p7obssXZ5Dvt_f9HgzdzZKibOZZ9mXmHkdTTpaefqsd4OIay4_hksd_I0fZMNbjk1SWD3i9Dz9BpdEPu8sBAAA)):
+Snippet parameters can be destructured ([demo](/#H4sIAAAAAAAAE5VTYW-bMBD9KyeiKYlEY4jWfSAk2n5H6QcXDmwVbMs2SzuL_z6DTRqp2rQJ2Ycfd_ced2eXtLxHkxRPLhF0wKRIfiiVpIl9V_PB_MTeoj8bOep6RkpTa67spRKV7dECH2iHBs7wNCOVdcFU1ui6gC2zVpmCEMVrMw4HxaSVhnzLMnLMsm26Ol95Y1kBHr9BDHnHbAHHO6ymynIpfF7LuAncwKgBCj0Xrx_5mMb2jh3f6KB6PNRy2AaXKf1fuY__KPfxj3KlQGikL5aQdpUxm-dTJUryUVdRsvwSqEviX2fIbYzgSvmCt7wbNe4ceMUpRIoUFkkpBBkw7ZfMZXC-BLKSDx3Q3p5djJrA-SR-X4K9DdHT6u-jo-flFlKSO3ThIDcSR6LIKUhGWrN1QGhs16LLbXgbjoe5U1PkozCfzu7uy2WtpfuuUTSo1_9ffPZrJKGLoyuwNxjBv0Q4wmdSR2aFi9jS2Pc-FIrlEKeilcI-GP4LfVtxOM1gyO1XSLp6vtD6tdNyFE0BV8YtngKuaNNw0RWQx_jKDlR33M9E5h-PQhZxfxEt6gIaLdWDYbSR191RvcFXv_LMb7p7obssXZ5Dvt_f9HgzdzZKibOZZ9mXmHkdTTpaefqsd4OIay4_hksd_I0fZMNbjk1SWD3i9Dz9BpdEPu8sBAAA)):
 
 ```svelte
 {#snippet figure({ src, caption, width, height })}
@@ -68,6 +68,8 @@ A snippet can have at most one parameter. You can destructure it, just like a fu
 	</figure>
 {/snippet}
 ```
+
+Like function declarations, snippets can have an arbitrary number of parameters, which can have default values. You cannot use rest parameters however.
 
 ## Snippet scope
 
@@ -156,7 +158,7 @@ Within the template, snippets are values just like any other. As such, they can 
 <Table data={fruits} {header} {row} />
 ```
 
-As an authoring convenience, snippets declare directly _inside_ a component implicitly become props _on_ the component ([demo](/#H4sIAAAAAAAAE41Sy27bMBD8lYVcwHYrW4kBXxRFaP-htzgHSqQsojLJkuu2BqF_74qUrfhxCHQRh7MzO9z1SSM74ZL8zSeKHUSSJz-MSdIET2Y4uD-iQ0Fnp4-2HpDC1VYaLHdqh_JgtEX4yapOQGP1AebrLJzWsXD-QjQi1lo5JMZRooNXeBuwHXoYLHOYM2OoiXkKv_GUwzYFY2VNFxvo0xtqxRR9F-7z04X8fE-uW2GtnJQ3E_tpvYV-oL9Ti0U2hVJFjMMZslcfW-5DWj9zShojEFrBuLCLZR_9CmzLQCwy-psw8rxBgvkNhhpZd8F8NppE7Stbq_8u-GTKS8_XQ9Keqnl5BZP1AzTYP2bDV7i7_9hLEeda0iocNJeNFDzJ0R5Fn142JzA-uzsdBfLhldPxPdMhIPS0H1-M1cYtlnejwdBDfBXZjHXTFOg4BhuOtvTfrVDEmAZG2ew5ezYV-Ew2fVzVAivNTyPHzwSr29AlMAe8f6g-zuWDts-GusAmdBSkv3P7qnB4GpMEEHwsRPEPV6yTe5VDJxp8iXClLRmtnGG1VHva3oCPHQd9QJsrbFd1Kzu-2Khvz8uzZsXqX3urj4rnMBNCXNUG83zf6Yp1C2yXKdxA_KJjGOfRfb0Vh7MKDShEuV-M9_4_nq6svF4EAAA=)):
+As an authoring convenience, snippets declared directly _inside_ a component implicitly become props _on_ the component ([demo](/#H4sIAAAAAAAAE41Sy27bMBD8lYVcwHYrW4kBXxRFaP-htzgHSqQsojLJkuu2BqF_74qUrfhxCHQRh7MzO9z1SSM74ZL8zSeKHUSSJz-MSdIET2Y4uD-iQ0Fnp4-2HpDC1VYaLHdqh_JgtEX4yapOQGP1AebrLJzWsXD-QjQi1lo5JMZRooNXeBuwHXoYLHOYM2OoiXkKv_GUwzYFY2VNFxvo0xtqxRR9F-7z04X8fE-uW2GtnJQ3E_tpvYV-oL9Ti0U2hVJFjMMZslcfW-5DWj9zShojEFrBuLCLZR_9CmzLQCwy-psw8rxBgvkNhhpZd8F8NppE7Stbq_8u-GTKS8_XQ9Keqnl5BZP1AzTYP2bDV7i7_9hLEeda0iocNJeNFDzJ0R5Fn142JzA-uzsdBfLhldPxPdMhIPS0H1-M1cYtlnejwdBDfBXZjHXTFOg4BhuOtvTfrVDEmAZG2ew5ezYV-Ew2fVzVAivNTyPHzwSr29AlMAe8f6g-zuWDts-GusAmdBSkv3P7qnB4GpMEEHwsRPEPV6yTe5VDJxp8iXClLRmtnGG1VHva3oCPHQd9QJsrbFd1Kzu-2Khvz8uzZsXqX3urj4rnMBNCXNUG83zf6Yp1C2yXKdxA_KJjGOfRfb0Vh7MKDShEuV-M9_4_nq6svF4EAAA=)):
 
 ```svelte
 <!-- this is semantically the same as the above -->
@@ -217,12 +219,45 @@ Any content inside the component tags that is _not_ a snippet declaration implic
 
 > Note that you cannot have a prop called `children` if you also have content inside the component — for this reason, you should avoid having props with that name
 
+## Typing snippets
+
+Snippets implement the `Snippet` interface imported from `'svelte'`:
+
+```diff
+-<script>
+-	let { data, children, row } = $props();
++<script lang="ts">
++	import type { Snippet } from 'svelte';
++
++	let { data, children, row } = $props<{
++		data: any[];
++		children: Snippet;
++		row: Snippet<[any]>;
++	}>();
+</script>
+```
+
+With this change, red squigglies will appear if you try and use the component without providing a `data` prop and a `row` snippet. Notice that the type argument provided to `Snippet` is a tuple, since snippets can have multiple parameters.
+
+We can tighten things up further by declaring a generic, so that `data` and `row` refer to the same type:
+
+```diff
+-<script lang="ts">
++<script lang="ts" generics="T">
+	import type { Snippet } from 'svelte';
+
+	let { data, children, row } = $props<{
+-		data: any[];
++		data: T[];
+		children: Snippet;
+-		row: Snippet<[any]>;
++		row: Snippet<[T]>;
+	}>();
+</script>
+```
+
 ## Snippets and slots
 
 In Svelte 4, content can be passed to components using [slots](https://svelte.dev/docs/special-elements#slot). Snippets are more powerful and flexible, and as such slots are deprecated in Svelte 5.
 
 They continue to work, however, and you can mix and match snippets and slots in your components.
-
-## Typing snippets
-
-Right now, it's not possible to add types for snippets and their parameters. This is something we hope to address before we ship Svelte 5.

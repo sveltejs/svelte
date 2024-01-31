@@ -109,8 +109,7 @@
 												"type": "Block",
 												"value": " another comment ",
 												"start": 163,
-												"end": 184,
-												"has_trailing_newline": true
+												"end": 184
 											}
 										]
 									}
@@ -121,8 +120,7 @@
 									"type": "Line",
 									"value": " comment",
 									"start": 141,
-									"end": 151,
-									"has_trailing_newline": true
+									"end": 151
 								}
 							]
 						}
@@ -222,8 +220,7 @@
 							"type": "Line",
 							"value": " a leading comment",
 							"start": 10,
-							"end": 30,
-							"has_trailing_newline": true
+							"end": 30
 						}
 					],
 					"trailingComments": [
@@ -290,8 +287,7 @@
 							"type": "Block",
 							"value": "* a comment ",
 							"start": 72,
-							"end": 88,
-							"has_trailing_newline": true
+							"end": 88
 						}
 					]
 				}

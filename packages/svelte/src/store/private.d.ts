@@ -27,7 +27,7 @@ export type StoresValues<T> = T extends Readable<infer U> | ExternalReadable<inf
 	? U
 	: {
 			[K in keyof T]: T[K] extends Readable<infer U> | ExternalReadable<infer U> ? U : never;
-	  };
+		};
 
 /** A special case of `OnStart` created by `derived` when subscribing to other stores created by
  * this module. */

@@ -1,0 +1,150 @@
+{
+	"html": {
+		"type": "Fragment",
+		"start": 79,
+		"end": 101,
+		"children": [
+			{
+				"type": "Text",
+				"start": 77,
+				"end": 79,
+				"raw": "\n\n",
+				"data": "\n\n"
+			},
+			{
+				"type": "Element",
+				"start": 79,
+				"end": 101,
+				"name": "h1",
+				"attributes": [],
+				"children": [
+					{
+						"type": "Text",
+						"start": 83,
+						"end": 89,
+						"raw": "Hello ",
+						"data": "Hello "
+					},
+					{
+						"type": "MustacheTag",
+						"start": 89,
+						"end": 95,
+						"expression": {
+							"type": "Identifier",
+							"start": 90,
+							"end": 94,
+							"loc": {
+								"start": {
+									"line": 5,
+									"column": 11
+								},
+								"end": {
+									"line": 5,
+									"column": 15
+								}
+							},
+							"name": "name"
+						}
+					},
+					{
+						"type": "Text",
+						"start": 95,
+						"end": 96,
+						"raw": "!",
+						"data": "!"
+					}
+				]
+			}
+		]
+	},
+	"instance": {
+		"type": "Script",
+		"start": 0,
+		"end": 77,
+		"context": "default",
+		"content": {
+			"type": "Program",
+			"start": 46,
+			"end": 68,
+			"loc": {
+				"start": {
+					"line": 1,
+					"column": 0
+				},
+				"end": {
+					"line": 3,
+					"column": 0
+				}
+			},
+			"body": [
+				{
+					"type": "VariableDeclaration",
+					"start": 48,
+					"end": 67,
+					"loc": {
+						"start": {
+							"line": 2,
+							"column": 1
+						},
+						"end": {
+							"line": 2,
+							"column": 20
+						}
+					},
+					"declarations": [
+						{
+							"type": "VariableDeclarator",
+							"start": 52,
+							"end": 66,
+							"loc": {
+								"start": {
+									"line": 2,
+									"column": 5
+								},
+								"end": {
+									"line": 2,
+									"column": 19
+								}
+							},
+							"id": {
+								"type": "Identifier",
+								"start": 52,
+								"end": 56,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 5
+									},
+									"end": {
+										"line": 2,
+										"column": 9
+									}
+								},
+								"name": "name"
+							},
+							"init": {
+								"type": "Literal",
+								"start": 59,
+								"end": 66,
+								"loc": {
+									"start": {
+										"line": 2,
+										"column": 12
+									},
+									"end": {
+										"line": 2,
+										"column": 19
+									}
+								},
+								"value": "world",
+								"raw": "'world'"
+							}
+						}
+					],
+					"kind": "let"
+				}
+			],
+			"sourceType": "module"
+		}
+	}
+}

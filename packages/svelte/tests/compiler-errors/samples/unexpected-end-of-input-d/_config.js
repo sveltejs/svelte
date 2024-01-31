@@ -4,6 +4,6 @@ export default test({
 	error: {
 		code: 'unclosed-block',
 		message: 'Block was left open',
-		position: [0, 0]
+		position: [0, 1]
 	}
 });

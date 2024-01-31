@@ -1,6 +1,6 @@
 [
 	{
-		"code": "parse-error",
+		"code": "js-parse-error",
 		"message": "Unexpected keyword 'case'",
 		"start": {
 			"line": 1,

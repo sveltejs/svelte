@@ -1,5 +1,3 @@
-import { EMPTY_FUNC } from '../internal/common.js';
-
 const value_key = Symbol('value');
 const is_derived_key = Symbol('is_derived');
 const is_syncing_key = Symbol('is_syncing');
@@ -7,6 +5,7 @@ const subscribers_key = Symbol('subscribers');
 const notify_key = Symbol('notify');
 const set_key = Symbol('set');
 const update_key = Symbol('update');
+import { noop } from '../internal/common.js';
 
 /**
  * Extended `symbol` properties of `Store` that cannot be defined outside of
@@ -37,10 +36,6 @@ const update_key = Symbol('update');
  * @typedef {import('./public.js').Writable<T> & StoreSymbols<T>} Writable
  */
 
-/** @returns {void} */
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function noop() {}
-
 /**
  * Return `true` if `a` and `b` are unequal. Unlike usual, identical `Function`s
  * and non-`null` `Object`s are considered to be unequal to themselves.
@@ -54,7 +49,7 @@ export function safe_not_equal(a, b) {
 	// eslint-disable-next-line eqeqeq
 	return a != a
 		? // eslint-disable-next-line eqeqeq
-		  b == b
+			b == b
 		: a !== b || (a && typeof a === 'object') || typeof a === 'function';
 }
 
@@ -491,7 +486,6 @@ export function readonly(/** @type {Readable<T>} */ store) {
  */
 export function get_store_value(store, allow_stale = false) {
 	if (allow_stale && store.hasOwnProperty(set_key)) {
-		// @ts-expect-error TypeScript does not narrow types on `Object.hasOwnProperty`, and so cannot
 		// differentiate `Readable<T>` and `ExternalReadable<T>`.
 		return store[value_key];
 	}
@@ -523,7 +517,7 @@ export function subscribe_to_store(store, run, invalidate) {
 		// @ts-expect-error
 		if (invalidate) invalidate(undefined);
 
-		return EMPTY_FUNC;
+		return noop;
 	}
 
 	// @ts-expect-error `SubscriberInvalidator<T>` is not public.

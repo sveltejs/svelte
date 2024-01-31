@@ -10,6 +10,6 @@ export default test({
 		});
 		await Promise.resolve();
 
-		assert.htmlEqual(target.innerHTML, '{"visible":true,"foo":"bar"} {"foo":"bar"}');
+		assert.htmlEqual(target.innerHTML, '{"foo":"bar","visible":true} {"foo":"bar"}');
 	}
 });

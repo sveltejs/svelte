@@ -1,20 +1,20 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 17,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 17,
-				"type": "Element",
 				"name": "span",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Text",
 						"start": 6,
 						"end": 10,
-						"type": "Text",
 						"raw": "test",
 						"data": "test"
 					}

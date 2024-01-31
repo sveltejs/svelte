@@ -1,14 +1,14 @@
 import { error } from '../../../errors.js';
 
 const REGEX_MATCHER = /^[~^$*|]?=/;
-const REGEX_CLOSING_PAREN = /\)/;
 const REGEX_CLOSING_BRACKET = /[\s\]]/;
 const REGEX_ATTRIBUTE_FLAGS = /^[a-zA-Z]+/; // only `i` and `s` are valid today, but make it future-proof
 const REGEX_COMBINATOR_WHITESPACE = /^\s*(\+|~|>|\|\|)\s*/;
 const REGEX_COMBINATOR = /^(\+|~|>|\|\|)/;
 const REGEX_PERCENTAGE = /^\d+(\.\d+)?%/;
+const REGEX_NTH_OF =
+	/^(even|odd|\+?(\d+|\d*n(\s*[+-]\s*\d+)?)|-\d*n(\s*\+\s*\d+))((?=\s*[,)])|\s+of\s+)/;
 const REGEX_WHITESPACE_OR_COLON = /[\s:]/;
-const REGEX_BRACE_OR_SEMICOLON = /[{;]/;
 const REGEX_LEADING_HYPHEN_OR_DIGIT = /-?\d/;
 const REGEX_VALID_IDENTIFIER_CHAR = /[a-zA-Z0-9_-]/;
 const REGEX_COMMENT_CLOSE = /\*\//;
@@ -78,7 +78,7 @@ function read_at_rule(parser) {
 
 	const name = read_identifier(parser);
 
-	const prelude = parser.read_until(REGEX_BRACE_OR_SEMICOLON).trim();
+	const prelude = read_value(parser);
 
 	/** @type {import('#compiler').Css.Block | null} */
 	let block = null;
@@ -145,22 +145,25 @@ function read_rule(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} [inside_pseudo_class]
  * @returns {import('#compiler').Css.SelectorList}
  */
-function read_selector_list(parser) {
+function read_selector_list(parser, inside_pseudo_class = false) {
 	/** @type {import('#compiler').Css.Selector[]} */
 	const children = [];
+
+	allow_comment_or_whitespace(parser);
 
 	const start = parser.index;
 
 	while (parser.index < parser.template.length) {
-		children.push(read_selector(parser));
+		children.push(read_selector(parser, inside_pseudo_class));
 
 		const end = parser.index;
 
 		parser.allow_whitespace();
 
-		if (parser.match('{')) {
+		if (inside_pseudo_class ? parser.match(')') : parser.match('{')) {
 			return {
 				type: 'SelectorList',
 				start,
@@ -178,9 +181,10 @@ function read_selector_list(parser) {
 
 /**
  * @param {import('../index.js').Parser} parser
+ * @param {boolean} [inside_pseudo_class]
  * @returns {import('#compiler').Css.Selector}
  */
-function read_selector(parser) {
+function read_selector(parser, inside_pseudo_class = false) {
 	const list_start = parser.index;
 
 	/** @type {Array<import('#compiler').Css.SimpleSelector | import('#compiler').Css.Combinator>} */
@@ -190,9 +194,16 @@ function read_selector(parser) {
 		const start = parser.index;
 
 		if (parser.eat('*')) {
+			let name = '*';
+			if (parser.match('|')) {
+				// * is the namespace (which we ignore)
+				parser.index++;
+				name = read_identifier(parser);
+			}
+
 			children.push({
 				type: 'TypeSelector',
-				name: '*',
+				name,
 				start,
 				end: parser.index
 			});
@@ -217,15 +228,23 @@ function read_selector(parser) {
 				start,
 				end: parser.index
 			});
+			// We read the inner selectors of a pseudo element to ensure it parses correctly,
+			// but we don't do anything with the result.
+			if (parser.eat('(')) {
+				read_selector_list(parser, true);
+				parser.eat(')', true);
+			}
 		} else if (parser.eat(':')) {
 			const name = read_identifier(parser);
 
-			/** @type {string | null} */
+			/** @type {null | import('#compiler').Css.SelectorList} */
 			let args = null;
 
 			if (parser.eat('(')) {
-				args = parser.read_until(REGEX_CLOSING_PAREN);
+				args = read_selector_list(parser, true);
 				parser.eat(')', true);
+			} else if (name === 'global') {
+				error(parser.index, 'invalid-css-global-selector');
 			}
 
 			children.push({
@@ -266,6 +285,15 @@ function read_selector(parser) {
 				value,
 				flags
 			});
+		} else if (inside_pseudo_class && parser.match_regex(REGEX_NTH_OF)) {
+			// nth of matcher must come before combinator matcher to prevent collision else the '+' in '+2n-1' would be parsed as a combinator
+
+			children.push({
+				type: 'Nth',
+				value: /**@type {string} */ (parser.read(REGEX_NTH_OF)),
+				start,
+				end: parser.index
+			});
 		} else if (parser.match_regex(REGEX_COMBINATOR_WHITESPACE)) {
 			parser.allow_whitespace();
 			const start = parser.index;
@@ -284,9 +312,15 @@ function read_selector(parser) {
 				end: parser.index
 			});
 		} else {
+			let name = read_identifier(parser);
+			if (parser.match('|')) {
+				// we ignore the namespace when trying to find matching element classes
+				parser.index++;
+				name = read_identifier(parser);
+			}
 			children.push({
 				type: 'TypeSelector',
-				name: read_identifier(parser),
+				name,
 				start,
 				end: parser.index
 			});
@@ -295,7 +329,7 @@ function read_selector(parser) {
 		const index = parser.index;
 		parser.allow_whitespace();
 
-		if (parser.match('{') || parser.match(',')) {
+		if (parser.match(',') || (inside_pseudo_class ? parser.match(')') : parser.match('{'))) {
 			parser.index = index;
 
 			return {
@@ -363,7 +397,7 @@ function read_declaration(parser) {
 	parser.eat(':');
 	parser.allow_whitespace();
 
-	const value = read_declaration_value(parser);
+	const value = read_value(parser);
 
 	const end = parser.index;
 
@@ -384,7 +418,7 @@ function read_declaration(parser) {
  * @param {import('../index.js').Parser} parser
  * @returns {string}
  */
-function read_declaration_value(parser) {
+function read_value(parser) {
 	let value = '';
 	let escaped = false;
 	let in_url = false;
@@ -408,7 +442,7 @@ function read_declaration_value(parser) {
 			quote_mark = char;
 		} else if (char === '(' && value.slice(-3) === 'url') {
 			in_url = true;
-		} else if ((char === ';' || char === '}') && !in_url && !quote_mark) {
+		} else if ((char === ';' || char === '{' || char === '}') && !in_url && !quote_mark) {
 			return value.trim();
 		}
 

@@ -2,6 +2,8 @@ import read_context from '../read/context.js';
 import read_expression from '../read/expression.js';
 import { error } from '../../../errors.js';
 import { create_fragment } from '../utils/create.js';
+import { walk } from 'zimmerframe';
+import { parse } from '../acorn.js';
 
 const regex_whitespace_with_closing_curly_brace = /^\s*}/;
 
@@ -67,10 +69,73 @@ function open(parser) {
 	if (parser.eat('each')) {
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		const template = parser.template;
+		let end = parser.template.length;
+
+		/** @type {import('estree').Expression | undefined} */
+		let expression;
+
+		// we have to do this loop because `{#each x as { y = z }}` fails to parse —
+		// the `as { y = z }` is treated as an Expression but it's actually a Pattern.
+		// the 'fix' is to backtrack and hide everything from the `as` onwards, until
+		// we get a valid expression
+		while (!expression) {
+			try {
+				expression = read_expression(parser);
+			} catch (err) {
+				end = /** @type {any} */ (err).position[0] - 2;
+
+				while (end > start && parser.template.slice(end, end + 2) !== 'as') {
+					end -= 1;
+				}
+
+				if (end <= start) throw err;
+
+				// @ts-expect-error parser.template is meant to be readonly, this is a special case
+				parser.template = template.slice(0, end);
+			}
+		}
+
+		// @ts-expect-error
+		parser.template = template;
+
 		parser.allow_whitespace();
 
 		// {#each} blocks must declare a context – {#each list as item}
+		if (!parser.match('as')) {
+			// this could be a TypeScript assertion that was erroneously eaten.
+
+			if (expression.type === 'SequenceExpression') {
+				expression = expression.expressions[0];
+			}
+
+			let assertion = null;
+			let end = expression.end;
+
+			expression = walk(expression, null, {
+				// @ts-expect-error
+				TSAsExpression(node, context) {
+					if (node.end === /** @type {import('estree').Expression} */ (expression).end) {
+						assertion = node;
+						end = node.expression.end;
+						return node.expression;
+					}
+
+					context.next();
+				}
+			});
+
+			expression.end = end;
+
+			if (assertion) {
+				// we can't reset `parser.index` to `expression.expression.end` because
+				// it will ignore any parentheses — we need to jump through this hoop
+				let end = /** @type {any} */ (/** @type {any} */ (assertion).typeAnnotation).start - 2;
+				while (parser.template.slice(end, end + 2) !== 'as') end -= 1;
+
+				parser.index = end;
+			}
+		}
 		parser.eat('as', true);
 		parser.require_whitespace();
 
@@ -209,9 +274,28 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const context = parser.match(')') ? null : read_context(parser);
+		/** @type {import('estree').Pattern[]} */
+		const parameters = [];
 
-		parser.allow_whitespace();
+		while (!parser.match(')')) {
+			let pattern = read_context(parser);
+
+			parser.allow_whitespace();
+			if (parser.eat('=')) {
+				parser.allow_whitespace();
+				pattern = {
+					type: 'AssignmentPattern',
+					left: pattern,
+					right: read_expression(parser)
+				};
+			}
+
+			parameters.push(pattern);
+
+			if (!parser.eat(',')) break;
+			parser.allow_whitespace();
+		}
+
 		parser.eat(')', true);
 
 		parser.allow_whitespace();
@@ -229,7 +313,7 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context,
+				parameters,
 				body: create_fragment()
 			})
 		);
@@ -250,7 +334,7 @@ function next(parser) {
 	const block = parser.current(); // TODO type should not be TemplateNode, that's much too broad
 
 	if (block.type === 'IfBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else} or {:else if}');
 		if (parser.eat('if')) error(start, 'invalid-elseif');
 
 		parser.allow_whitespace();
@@ -294,7 +378,7 @@ function next(parser) {
 	}
 
 	if (block.type === 'EachBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else}');
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -310,7 +394,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				error(start, 'TODO', 'duplicate then');
+				error(start, 'duplicate-block-part', '{:then}');
 			}
 
 			if (!parser.eat('}')) {
@@ -329,7 +413,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				error(start, 'TODO', 'duplicate catch');
+				error(start, 'duplicate-block-part', '{:catch}');
 			}
 
 			if (!parser.eat('}')) {
@@ -348,6 +432,8 @@ function next(parser) {
 
 		error(start, 'expected-token', '{:then ...} or {:catch ...}');
 	}
+
+	error(start, 'invalid-continuing-block-placement');
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -465,15 +551,41 @@ function special(parser) {
 
 	if (parser.eat('const')) {
 		// {@const a = b}
+		const start_index = parser.index - 5;
 		parser.require_whitespace();
 
-		const expression = read_expression(parser);
+		let end_index = parser.index;
+		/** @type {import('estree').VariableDeclaration | undefined} */
+		let declaration = undefined;
 
-		if (!(expression.type === 'AssignmentExpression' && expression.operator === '=')) {
+		// Can't use parse_expression_at here, so we try to parse until we find the correct range
+		const dummy_spaces = parser.template.substring(0, start_index).replace(/[^\n]/g, ' ');
+		while (true) {
+			end_index = parser.template.indexOf('}', end_index + 1);
+			if (end_index === -1) break;
+			try {
+				const node = parse(
+					dummy_spaces + parser.template.substring(start_index, end_index),
+					parser.ts
+				).body[0];
+				if (node?.type === 'VariableDeclaration') {
+					declaration = node;
+					break;
+				}
+			} catch (e) {
+				continue;
+			}
+		}
+
+		if (
+			declaration === undefined ||
+			declaration.declarations.length !== 1 ||
+			declaration.declarations[0].init === undefined
+		) {
 			error(start, 'invalid-const');
 		}
 
-		parser.allow_whitespace();
+		parser.index = end_index;
 		parser.eat('}', true);
 
 		parser.append(
@@ -481,7 +593,7 @@ function special(parser) {
 				type: 'ConstTag',
 				start,
 				end: parser.index,
-				expression
+				declaration
 			})
 		);
 	}
@@ -493,11 +605,7 @@ function special(parser) {
 		const expression = read_expression(parser);
 
 		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
-		}
-
-		if (expression.arguments.length > 1) {
-			error(expression.arguments[1], 'TODO', 'expected at most one argument');
+			error(expression, 'invalid-render-expression');
 		}
 
 		parser.allow_whitespace();
@@ -509,7 +617,7 @@ function special(parser) {
 				start,
 				end: parser.index,
 				expression: expression.callee,
-				argument: expression.arguments[0] ?? null
+				arguments: expression.arguments
 			})
 		);
 	}

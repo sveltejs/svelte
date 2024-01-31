@@ -71,7 +71,7 @@ const { test, run } = suite<HydrationTest>(async (config, cwd) => {
 		const error = console.error;
 		let got_hydration_error = false;
 		console.error = (message: any) => {
-			if (typeof message === 'string' && message.startsWith('Hydration failed')) {
+			if (typeof message === 'string' && message.startsWith('ERR_SVELTE_HYDRATION_MISMATCH')) {
 				got_hydration_error = true;
 				if (!config.expect_hydration_error) {
 					error(message);

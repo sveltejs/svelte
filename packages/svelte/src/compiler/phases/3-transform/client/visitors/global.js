@@ -7,28 +7,28 @@ export const global_visitors = {
 	Identifier(node, { path, state }) {
 		if (is_reference(node, /** @type {import('estree').Node} */ (path.at(-1)))) {
 			if (node.name === '$$props') {
-				return b.call('$.get', b.id('$$sanitized_props'));
+				return b.id('$$sanitized_props');
 			}
 			return serialize_get_binding(node, state);
 		}
 	},
 	MemberExpression(node, { state, next }) {
 		if (node.object.type === 'ThisExpression') {
-			// rewrite `this.#foo` as `this.#foo.value` inside a constructor
+			// rewrite `this.#foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'PrivateIdentifier') {
 				const field = state.private_state.get(node.property.name);
 
 				if (field) {
-					return state.in_constructor ? b.member(node, b.id('value')) : b.call('$.get', node);
+					return state.in_constructor ? b.member(node, b.id('v')) : b.call('$.get', node);
 				}
 			}
 
-			// rewrite `this.foo` as `this.#foo.value` inside a constructor
+			// rewrite `this.foo` as `this.#foo.v` inside a constructor
 			if (node.property.type === 'Identifier' && !node.computed) {
 				const field = state.public_state.get(node.property.name);
 
 				if (field && state.in_constructor) {
-					return b.member(b.member(b.this, field.id), b.id('value'));
+					return b.member(b.member(b.this, field.id), b.id('v'));
 				}
 			}
 		}
@@ -45,34 +45,54 @@ export const global_visitors = {
 			const binding = state.scope.get(argument.name);
 			const is_store = binding?.kind === 'store_sub';
 			const name = is_store ? argument.name.slice(1) : argument.name;
+
 			// use runtime functions for smaller output
 			if (
 				binding?.kind === 'state' ||
+				binding?.kind === 'frozen_state' ||
 				binding?.kind === 'each' ||
 				binding?.kind === 'legacy_reactive' ||
 				binding?.kind === 'prop' ||
 				is_store
 			) {
-				let fn = node.operator === '++' ? '$.increment' : '$.decrement';
+				/** @type {import('estree').Expression[]} */
+				const args = [];
+
+				let fn = '$.update';
 				if (node.prefix) fn += '_pre';
 
 				if (is_store) {
 					fn += '_store';
-					return b.call(fn, serialize_get_binding(b.id(name), state), b.call('$' + name));
+					args.push(serialize_get_binding(b.id(name), state), b.call('$' + name));
 				} else {
-					return b.call(fn, b.id(name));
+					if (binding.kind === 'prop') fn += '_prop';
+					args.push(b.id(name));
 				}
-			} else {
-				return next();
+
+				if (node.operator === '--') {
+					args.push(b.literal(-1));
+				}
+
+				return b.call(fn, ...args);
 			}
+
+			return next();
 		} else if (
 			argument.type === 'MemberExpression' &&
 			argument.object.type === 'ThisExpression' &&
 			argument.property.type === 'PrivateIdentifier' &&
 			context.state.private_state.has(argument.property.name)
 		) {
-			let fn = node.operator === '++' ? '$.increment' : '$.decrement';
-			return b.call(fn, argument);
+			let fn = '$.update';
+			if (node.prefix) fn += '_pre';
+
+			/** @type {import('estree').Expression[]} */
+			const args = [argument];
+			if (node.operator === '--') {
+				args.push(b.literal(-1));
+			}
+
+			return b.call(fn, ...args);
 		} else {
 			// turn it into an IIFEE assignment expression: i++ -> (() => { const $$value = i; i+=1; return $$value; })
 			const assignment = b.assignment(

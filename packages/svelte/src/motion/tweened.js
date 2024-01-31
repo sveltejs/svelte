@@ -82,7 +82,7 @@ function get_interpolator(a, b) {
  */
 export function tweened(value, defaults = {}) {
 	const store = writable(value);
-	/** @type {import('../internal/client/private').Task} */
+	/** @type {import('../internal/client/types').Task} */
 	let task;
 	let target_value = value;
 	/**
@@ -97,7 +97,7 @@ export function tweened(value, defaults = {}) {
 			return Promise.resolve();
 		}
 
-		/** @type {import('../internal/client/private').Task | null} */
+		/** @type {import('../internal/client/types').Task | null} */
 		let previous_task = task;
 
 		let started = false;

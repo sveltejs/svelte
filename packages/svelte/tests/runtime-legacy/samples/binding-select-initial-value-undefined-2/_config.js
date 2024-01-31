@@ -8,7 +8,7 @@ export default test({
 
 		<select>
 			<option>a</option>
-			<option>b</option>
+			<option selected="">b</option>
 			<option>c</option>
 		</select>
 

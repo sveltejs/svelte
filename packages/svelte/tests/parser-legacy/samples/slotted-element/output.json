@@ -1,26 +1,26 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 45,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "InlineComponent",
 				"start": 0,
 				"end": 45,
-				"type": "InlineComponent",
 				"name": "Component",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Element",
 						"start": 11,
 						"end": 33,
-						"type": "Element",
 						"name": "div",
 						"attributes": [
 							{
+								"type": "Attribute",
 								"start": 16,
 								"end": 26,
-								"type": "Attribute",
 								"name": "slot",
 								"value": [
 									{

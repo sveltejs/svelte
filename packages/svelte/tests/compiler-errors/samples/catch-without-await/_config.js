@@ -2,8 +2,9 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-catch-placement',
-		message: 'Cannot have an {:catch} block outside an {#await ...} block',
-		position: [7, 7]
+		code: 'invalid-continuing-block-placement',
+		message:
+			'{:...} block is invalid at this position (did you forget to close the preceeding element or block?)',
+		position: [1, 1]
 	}
 });

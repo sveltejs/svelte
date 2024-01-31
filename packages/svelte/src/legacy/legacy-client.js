@@ -34,7 +34,7 @@ export function createClassComponent(options) {
  * @template {Record<string, any>} Slots
  *
  * @param {import('../main/public.js').SvelteComponent<Props, Events, Slots>} component
- * @returns {typeof import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports}
+ * @returns {import('../main/public.js').ComponentType<import('../main/public.js').SvelteComponent<Props, Events, Slots> & Exports>}
  */
 export function asClassComponent(component) {
 	// @ts-expect-error $$prop_def etc are not actually defined
@@ -68,7 +68,6 @@ class Svelte4Component {
 			target: options.target,
 			props: { ...options.props, $$events: this.#events },
 			context: options.context,
-			immutable: options.immutable,
 			intro: options.intro,
 			recover: options.recover
 		});

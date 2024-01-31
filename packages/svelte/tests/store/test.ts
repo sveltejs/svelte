@@ -730,7 +730,25 @@ describe('derived', () => {
 		unsubscribe();
 	});
 
-	it('does not restart when unsubscribed from another store with a shared ancestor', () => {
+	it('allows derived with different types', () => {
+		const a = writable('one');
+		const b = writable(1);
+
+		const c = derived([a, b], ([a, b]) => `${a} ${b}`);
+
+		assert.deepEqual(get(c), 'one 1');
+
+		a.set('two');
+		b.set(2);
+		assert.deepEqual(get(c), 'two 2');
+	});
+
+	it('works with RxJS-style observables', () => {
+		const d = derived(fake_observable, (_) => _);
+		assert.equal(get(d), 42);
+	});
+
+	it("doesn't restart when unsubscribed from another store with a shared ancestor", () => {
 		const a = writable(true);
 		let b_started = false;
 

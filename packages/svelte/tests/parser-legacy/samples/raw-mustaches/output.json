@@ -1,27 +1,27 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 34,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 34,
-				"type": "Element",
 				"name": "p",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Text",
 						"start": 3,
 						"end": 4,
-						"type": "Text",
 						"raw": " ",
 						"data": " "
 					},
 					{
+						"type": "RawMustacheTag",
 						"start": 4,
 						"end": 16,
-						"type": "RawMustacheTag",
 						"expression": {
 							"type": "Identifier",
 							"start": 11,
@@ -40,16 +40,16 @@
 						}
 					},
 					{
+						"type": "Text",
 						"start": 16,
 						"end": 17,
-						"type": "Text",
 						"raw": " ",
 						"data": " "
 					},
 					{
+						"type": "RawMustacheTag",
 						"start": 17,
 						"end": 29,
-						"type": "RawMustacheTag",
 						"expression": {
 							"type": "Identifier",
 							"start": 24,
@@ -68,9 +68,9 @@
 						}
 					},
 					{
+						"type": "Text",
 						"start": 29,
 						"end": 30,
-						"type": "Text",
 						"raw": " ",
 						"data": " "
 					}

@@ -1,7 +1,8 @@
 import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
-import { is_promise } from '../common.js';
+import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/index.js';
+import { DOMBooleanAttributes } from '../../constants.js';
 
 export * from '../client/validate.js';
 
@@ -30,37 +31,6 @@ const CONTENT_REGEX = /[&<]/g;
 // https://infra.spec.whatwg.org/#noncharacter
 const INVALID_ATTR_NAME_CHAR_REGEX =
 	/[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-
-// This is duplicated from the compiler, but we need it at runtime too.
-const DOMBooleans = [
-	'allowfullscreen',
-	'async',
-	'autofocus',
-	'autoplay',
-	'checked',
-	'controls',
-	'default',
-	'disabled',
-	'formnovalidate',
-	'hidden',
-	'indeterminate',
-	'ismap',
-	'loop',
-	'multiple',
-	'muted',
-	'nomodule',
-	'novalidate',
-	'open',
-	'playsinline',
-	'readonly',
-	'required',
-	'reversed',
-	'seamless',
-	'selected'
-];
-
-/** @type {Set<string>} */
-export const DOMBooleanAttributes = new Set(DOMBooleans);
 
 export const VoidElements = new Set([
 	'area',
@@ -124,9 +94,8 @@ export function render(component, options) {
 
 	if (options.context) {
 		$.push({});
-		/** @type {import('../client/types.js').ComponentContext} */ (
-			$.current_component_context
-		).context = options.context;
+		/** @type {import('../client/types.js').ComponentContext} */ ($.current_component_context).c =
+			options.context;
 	}
 	component(payload, options.props, {}, {});
 	if (options.context) {
@@ -146,10 +115,9 @@ export function render(component, options) {
 
 /**
  * @param {boolean} runes
- * @param {boolean} [immutable]
  */
-export function push(runes, immutable) {
-	$.push({}, runes, immutable);
+export function push(runes) {
+	$.push({}, runes);
 }
 
 export function pop() {
@@ -229,11 +197,13 @@ export function css_props(payload, is_html, props, component) {
 
 /**
  * @param {Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {boolean} is_svg
  * @param {string} class_hash
  * @param {{ styles: Record<string, string> | null; classes: string }} [additional]
  * @returns {string}
  */
-export function spread_attributes(attrs, class_hash, additional) {
+export function spread_attributes(attrs, lowercase_attributes, is_svg, class_hash, additional) {
 	/** @type {Record<string, unknown>} */
 	const merged_attrs = {};
 	let key;
@@ -280,7 +250,10 @@ export function spread_attributes(attrs, class_hash, additional) {
 
 	for (name in merged_attrs) {
 		if (INVALID_ATTR_NAME_CHAR_REGEX.test(name)) continue;
-		const is_boolean = DOMBooleanAttributes.has(name);
+		if (lowercase_attributes) {
+			name = name.toLowerCase();
+		}
+		const is_boolean = !is_svg && DOMBooleanAttributes.includes(name);
 		attr_str += attr(name, merged_attrs[name], is_boolean);
 	}
 
@@ -423,6 +396,32 @@ export function mutate_store(store_values, store_name, store, expression) {
 	return expression;
 }
 
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store(store_values, store_name, store, d = 1) {
+	let store_value = store_get(store_values, store_name, store);
+	store.set(store_value + d);
+	return store_value;
+}
+
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store_pre(store_values, store_name, store, d = 1) {
+	const value = store_get(store_values, store_name, store) + d;
+	store.set(value);
+	return value;
+}
+
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
 	for (const store_name in store_values) {
@@ -513,10 +512,6 @@ export function bind_props(props_parent, props_now) {
 	}
 }
 
-function noop() {
-	// noop
-}
-
 /**
  * @template V
  * @param {Promise<V>} promise
@@ -567,4 +562,13 @@ export function loop_guard(timeout) {
 			throw new Error('Infinite loop detected');
 		}
 	};
+}
+
+/**
+ * @param {any[]} args
+ * @param {Function} [inspect]
+ */
+// eslint-disable-next-line no-console
+export function inspect(args, inspect = console.log) {
+	inspect('init', ...args);
 }

@@ -14,14 +14,14 @@ export default function Class_state_field_constructor_assignment($$anchor, $$pro
 		}
 
 		set a(value) {
-			$.set(this.#a, value);
+			$.set(this.#a, $.proxy(value));
 		}
 
 		#b = $.source();
 
 		constructor() {
-			this.#a.value = 1;
-			this.#b.value = 2;
+			this.#a.v = 1;
+			this.#b.v = 2;
 		}
 	}
 

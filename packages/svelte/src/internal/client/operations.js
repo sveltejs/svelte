@@ -1,46 +1,109 @@
 import { current_hydration_fragment, get_hydration_fragment } from './hydration.js';
 import { get_descriptor } from './utils.js';
 
-/** This file is also loaded in server environments, so we need guard against eagerly accessing browser globals  */
-const has_browser_globals = typeof window !== 'undefined';
+// We cache the Node and Element prototype methods, so that we can avoid doing
+// expensive prototype chain lookups.
 
-// We cache the Node and Element prototype methods, so that subsequent calls-sites are monomorphic rather
-// than megamorphic.
-const node_prototype = /** @type {Node} */ (has_browser_globals ? Node.prototype : {});
-const element_prototype = /** @type {Element} */ (has_browser_globals ? Element.prototype : {});
-const text_prototype = /** @type {Text} */ (has_browser_globals ? Text.prototype : {});
-const map_prototype = Map.prototype;
-const append_child_method = node_prototype.appendChild;
-const clone_node_method = node_prototype.cloneNode;
-const map_set_method = map_prototype.set;
-const map_get_method = map_prototype.get;
-const map_delete_method = map_prototype.delete;
-// @ts-expect-error improve perf of expando on DOM events
-element_prototype.__click = undefined;
-// @ts-expect-error improve perf of expando on DOM text updates
-text_prototype.__nodeValue = ' ';
-// @ts-expect-error improve perf of expando on DOM className updates
-element_prototype.__className = '';
+/** @type {Node} */
+var node_prototype;
 
-const first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
-	// @ts-ignore
-	has_browser_globals ? get_descriptor(node_prototype, 'firstChild').get : null
-);
+/** @type {Element} */
+var element_prototype;
 
-const next_sibling_get = /** @type {(this: Node) => ChildNode | null} */ (
-	// @ts-ignore
-	has_browser_globals ? get_descriptor(node_prototype, 'nextSibling').get : null
-);
+/** @type {Text} */
+var text_prototype;
 
-const text_content_set = /** @type {(this: Node, text: string ) => void} */ (
-	// @ts-ignore
-	has_browser_globals ? get_descriptor(node_prototype, 'textContent').set : null
-);
+/** @type {Map<any, any>} */
+var map_prototype;
 
-const class_name_set = /** @type {(this: Element, class_name: string) => void} */ (
-	// @ts-ignore
-	has_browser_globals ? get_descriptor(element_prototype, 'className').set : null
-);
+/** @type {typeof Node.prototype.appendChild} */
+var append_child_method;
+
+/** @type {typeof Node.prototype.cloneNode} */
+var clone_node_method;
+
+/** @type {typeof Map.prototype.set} */
+var map_set_method;
+
+/** @type {typeof Map.prototype.get} */
+var map_get_method;
+
+/** @type {typeof Map.prototype.delete} */
+var map_delete_method;
+
+/** @type {(this: Node) => ChildNode | null} */
+var first_child_get;
+
+/** @type {(this: Node) => ChildNode | null} */
+var next_sibling_get;
+
+/** @type {(this: Node, text: string ) => void} */
+var text_content_set;
+
+/** @type {(this: Element, class_name: string) => void} */
+var class_name_set;
+
+// export these for reference in the compiled code, making global name deduplication unnecessary
+/**
+ * @type {Window}
+ */
+export var $window;
+/**
+ * @type {Document}
+ */
+export var $document;
+
+/**
+ * Initialize these lazily to avoid issues when using the runtime in a server context
+ * where these globals are not available while avoiding a separate server entry point
+ */
+export function init_operations() {
+	if (node_prototype !== undefined) {
+		return;
+	}
+
+	node_prototype = Node.prototype;
+	element_prototype = Element.prototype;
+	text_prototype = Text.prototype;
+	map_prototype = Map.prototype;
+
+	append_child_method = node_prototype.appendChild;
+	clone_node_method = node_prototype.cloneNode;
+	map_set_method = map_prototype.set;
+	map_get_method = map_prototype.get;
+	map_delete_method = map_prototype.delete;
+
+	$window = window;
+	$document = document;
+
+	// the following assignments improve perf of lookups on DOM nodes
+	// @ts-expect-error
+	element_prototype.__click = undefined;
+	// @ts-expect-error
+	text_prototype.__nodeValue = ' ';
+	// @ts-expect-error
+	element_prototype.__className = '';
+
+	first_child_get = /** @type {(this: Node) => ChildNode | null} */ (
+		// @ts-ignore
+		get_descriptor(node_prototype, 'firstChild').get
+	);
+
+	next_sibling_get = /** @type {(this: Node) => ChildNode | null} */ (
+		// @ts-ignore
+		get_descriptor(node_prototype, 'nextSibling').get
+	);
+
+	text_content_set = /** @type {(this: Node, text: string ) => void} */ (
+		// @ts-ignore
+		get_descriptor(node_prototype, 'textContent').set
+	);
+
+	class_name_set = /** @type {(this: Element, class_name: string) => void} */ (
+		// @ts-ignore
+		get_descriptor(element_prototype, 'className').set
+	);
+}
 
 /**
  * @template {Element} E
@@ -119,30 +182,63 @@ export function child(node) {
 /**
  * @template {Node | Node[]} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function child_frag(node) {
+export function child_frag(node, is_text) {
 	if (current_hydration_fragment !== null) {
 		const first_node = /** @type {Node[]} */ (node)[0];
-		if (current_hydration_fragment !== null && first_node !== null) {
+
+		// if an {expression} is empty during SSR, there might be no
+		// text node to hydrate — we must therefore create one
+		if (is_text && first_node?.nodeType !== 3) {
+			const text = document.createTextNode('');
+			current_hydration_fragment.unshift(text);
+			if (first_node) {
+				/** @type {DocumentFragment} */ (first_node.parentNode).insertBefore(text, first_node);
+			}
+			return text;
+		}
+
+		if (first_node !== null) {
 			return capture_fragment_from_node(first_node);
 		}
+
 		return first_node;
 	}
+
 	return first_child_get.call(/** @type {Node} */ (node));
 }
 
 /**
  * @template {Node} N
  * @param {N} node
+ * @param {boolean} is_text
  * @returns {Node | null}
  */
 /*#__NO_SIDE_EFFECTS__*/
-export function sibling(node) {
+export function sibling(node, is_text = false) {
 	const next_sibling = next_sibling_get.call(node);
-	if (current_hydration_fragment !== null && next_sibling !== null) {
-		return capture_fragment_from_node(next_sibling);
+	if (current_hydration_fragment !== null) {
+		if (is_text && next_sibling?.nodeType !== 3) {
+			const text = document.createTextNode('');
+			if (next_sibling) {
+				const index = current_hydration_fragment.indexOf(
+					/** @type {Text | Comment | Element} */ (next_sibling)
+				);
+				current_hydration_fragment.splice(index, 0, text);
+				/** @type {DocumentFragment} */ (next_sibling.parentNode).insertBefore(text, next_sibling);
+			} else {
+				current_hydration_fragment.push(text);
+			}
+
+			return text;
+		}
+
+		if (next_sibling !== null) {
+			return capture_fragment_from_node(next_sibling);
+		}
 	}
 	return next_sibling;
 }
@@ -191,7 +287,3 @@ function capture_fragment_from_node(node) {
 	}
 	return node;
 }
-
-// export these for reference in the compiled code, making global name deduplication unnecessary
-export const $window = has_browser_globals ? window : undefined;
-export const $document = has_browser_globals ? document : undefined;

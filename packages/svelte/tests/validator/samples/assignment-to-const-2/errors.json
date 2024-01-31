@@ -1,7 +1,7 @@
 [
 	{
-		"code": "assignment-to-const",
-		"message": "You are assigning to a const",
+		"code": "invalid-const-assignment",
+		"message": "Invalid assignment to const variable",
 		"start": {
 			"line": 13,
 			"column": 24

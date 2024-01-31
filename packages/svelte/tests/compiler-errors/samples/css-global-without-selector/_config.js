@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'css-syntax-error',
-		message: ':global() must contain a selector',
-		position: [9, 9]
+		code: 'invalid-css-global-selector',
+		message: ':global(...) must contain exactly one selector',
+		position: [16, 16]
 	}
 });

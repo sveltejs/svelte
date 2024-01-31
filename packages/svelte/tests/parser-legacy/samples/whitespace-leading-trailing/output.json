@@ -1,27 +1,27 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 6,
 		"end": 36,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Text",
 				"start": 0,
 				"end": 6,
-				"type": "Text",
 				"raw": "\n\n\t\t\t\t",
 				"data": "\n\n\t\t\t\t"
 			},
 			{
+				"type": "Element",
 				"start": 6,
 				"end": 36,
-				"type": "Element",
 				"name": "p",
 				"attributes": [],
 				"children": [
 					{
+						"type": "Text",
 						"start": 9,
 						"end": 32,
-						"type": "Text",
 						"raw": "just chillin' over here",
 						"data": "just chillin' over here"
 					}

@@ -4,14 +4,13 @@ import {
 	child,
 	clone_node,
 	create_element,
+	init_operations,
 	map_get,
 	map_set,
 	set_class_name
 } from './operations.js';
 import {
 	create_root_block,
-	create_each_item_block,
-	create_each_block,
 	create_if_block,
 	create_key_block,
 	create_await_block,
@@ -21,48 +20,30 @@ import {
 	create_snippet_block
 } from './block.js';
 import {
-	EACH_KEYED,
-	EACH_IS_CONTROLLED,
-	EACH_INDEX_REACTIVE,
-	EACH_ITEM_REACTIVE,
-	EACH_IS_ANIMATED,
 	PassiveDelegatedEvents,
-	DelegatedEvents
+	DelegatedEvents,
+	AttributeAliases,
+	namespace_svg,
+	namespace_html
 } from '../../constants.js';
-import {
-	create_fragment_from_html,
-	insert,
-	reconcile_tracked_array,
-	reconcile_html,
-	remove,
-	reconcile_indexed_array
-} from './reconciler.js';
+import { create_fragment_from_html, insert, reconcile_html, remove } from './reconciler.js';
 import {
 	render_effect,
 	destroy_signal,
 	get,
 	is_signal,
 	push_destroy_fn,
-	set,
 	execute_effect,
 	UNINITIALIZED,
-	derived,
 	untrack,
 	effect,
 	flushSync,
-	expose,
 	safe_not_equal,
-	managed_pre_effect,
 	current_block,
-	set_signal_value,
-	source,
 	managed_effect,
-	mark_subtree_inert,
-	safe_equal,
 	push,
 	current_component_context,
-	pop,
-	schedule_task
+	pop
 } from './runtime.js';
 import {
 	current_hydration_fragment,
@@ -70,9 +51,19 @@ import {
 	hydrate_block_anchor,
 	set_current_hydration_fragment
 } from './hydration.js';
-import { array_from, define_property, get_descriptor, get_descriptors, is_array } from './utils.js';
+import {
+	array_from,
+	define_property,
+	get_descriptor,
+	get_descriptors,
+	is_array,
+	is_function,
+	object_assign,
+	object_keys
+} from './utils.js';
 import { is_promise } from '../common.js';
-import { bind_transition } from './transitions.js';
+import { bind_transition, trigger_transitions } from './transitions.js';
+import { proxy } from './proxy.js';
 
 /** @type {Set<string>} */
 const all_registerd_events = new Set();
@@ -81,7 +72,7 @@ const all_registerd_events = new Set();
 const root_event_handles = new Set();
 
 /** @returns {Text} */
-function empty() {
+export function empty() {
 	return document.createTextNode('');
 }
 
@@ -135,7 +126,7 @@ export function svg_replace(node) {
  * @param {boolean} is_fragment
  * @param {boolean} use_clone_node
  * @param {null | Text | Comment | Element} anchor
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 function open_template(is_fragment, use_clone_node, anchor, template_element_fn) {
@@ -158,7 +149,7 @@ function open_template(is_fragment, use_clone_node, anchor, template_element_fn)
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
@@ -169,12 +160,31 @@ export function open(anchor, use_clone_node, template_element_fn) {
 /**
  * @param {null | Text | Comment | Element} anchor
  * @param {boolean} use_clone_node
- * @param {() => Element} [template_element_fn]
+ * @param {() => Node} [template_element_fn]
  * @returns {Element | DocumentFragment | Node[]}
  */
 /*#__NO_SIDE_EFFECTS__*/
 export function open_frag(anchor, use_clone_node, template_element_fn) {
 	return open_template(true, use_clone_node, anchor, template_element_fn);
+}
+
+const space_template = template(' ', false);
+const comment_template = template('<!>', true);
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function space(anchor) {
+	return open(anchor, true, space_template);
+}
+
+/**
+ * @param {null | Text | Comment | Element} anchor
+ */
+/*#__NO_SIDE_EFFECTS__*/
+export function comment(anchor) {
+	return open_frag(anchor, true, comment_template);
 }
 
 /**
@@ -192,10 +202,12 @@ function close_template(dom, is_fragment, anchor) {
 			? dom
 			: /** @type {import('./types.js').TemplateNode[]} */ (Array.from(dom.childNodes))
 		: dom;
-	if (anchor !== null && current_hydration_fragment === null) {
-		insert(current, null, anchor);
+	if (anchor !== null) {
+		if (current_hydration_fragment === null) {
+			insert(current, null, anchor);
+		}
 	}
-	block.dom = current;
+	block.d = current;
 }
 
 /**
@@ -217,7 +229,7 @@ export function close_frag(anchor, dom) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function trusted(fn) {
@@ -225,13 +237,13 @@ export function trusted(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		if (event.isTrusted) {
 			// @ts-ignore
-			unwrap(fn).apply(this, args);
+			fn.apply(this, args);
 		}
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function self(fn) {
@@ -240,13 +252,13 @@ export function self(fn) {
 		// @ts-ignore
 		if (event.target === this) {
 			// @ts-ignore
-			unwrap(fn).apply(this, args);
+			fn.apply(this, args);
 		}
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function stopPropagation(fn) {
@@ -254,12 +266,12 @@ export function stopPropagation(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.stopPropagation();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function once(fn) {
@@ -270,12 +282,12 @@ export function once(fn) {
 		}
 		ran = true;
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function stopImmediatePropagation(fn) {
@@ -283,12 +295,12 @@ export function stopImmediatePropagation(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.stopImmediatePropagation();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<(event: Event, ...args: Array<unknown>) => void>} fn
+ * @param {(event: Event, ...args: Array<unknown>) => void} fn
  * @returns {(event: Event, ...args: unknown[]) => void}
  */
 export function preventDefault(fn) {
@@ -296,7 +308,7 @@ export function preventDefault(fn) {
 		const event = /** @type {Event} */ (args[0]);
 		event.preventDefault();
 		// @ts-ignore
-		return unwrap(fn).apply(this, args);
+		return fn.apply(this, args);
 	};
 }
 
@@ -313,7 +325,15 @@ export function event(event_name, dom, handler, capture, passive) {
 		capture,
 		passive
 	};
-	const target_handler = handler;
+	/**
+	 * @this {EventTarget}
+	 */
+	function target_handler(/** @type {Event} */ event) {
+		handle_event_propagation(dom, event);
+		if (!event.cancelBubble) {
+			return handler.call(this, event);
+		}
+	}
 	dom.addEventListener(event_name, target_handler, options);
 	// @ts-ignore
 	if (dom === document.body || dom === window || dom === document) {
@@ -371,10 +391,7 @@ export function class_name(dom, value) {
  * @returns {void}
  */
 export function text_effect(dom, value) {
-	render_effect(() => {
-		const string = value();
-		text(dom, string);
-	});
+	render_effect(() => text(dom, value()));
 }
 
 /**
@@ -441,25 +458,41 @@ export function class_toggle(dom, class_name, value) {
 		dom.classList.remove(class_name);
 	}
 }
+
+/**
+ * @param {Element} dom
+ * @param {string} class_name
+ * @param {() => boolean} value
+ * @returns {void}
+ */
+export function class_toggle_effect(dom, class_name, value) {
+	render_effect(() => {
+		const string = value();
+		class_toggle(dom, class_name, string);
+	});
+}
+
 /**
  * Selects the correct option(s) (depending on whether this is a multiple select)
  * @template V
  * @param {HTMLSelectElement} select
  * @param {V} value
+ * @param {boolean} [mounting]
  */
-export function select_option(select, value) {
+export function select_option(select, value, mounting) {
 	if (select.multiple) {
 		return select_options(select, value);
 	}
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		const option_value = get_option_value(option);
 		if (option_value === value) {
 			option.selected = true;
 			return;
 		}
 	}
-	select.value = '';
+	if (!mounting || value !== undefined) {
+		select.selectedIndex = -1; // no option should be selected
+	}
 }
 
 /**
@@ -468,8 +501,7 @@ export function select_option(select, value) {
  * @param {V} value
  */
 function select_options(select, value) {
-	for (let i = 0; i < select.options.length; i += 1) {
-		const option = select.options[i];
+	for (const option of select.options) {
 		// @ts-ignore
 		option.selected = ~value.indexOf(get_option_value(option));
 	}
@@ -625,7 +657,7 @@ export function bind_playback_rate(media, get_value, update) {
 	// Needs to happen after the element is inserted into the dom, else playback will be set back to 1 by the browser.
 	// For hydration we could do it immediately but the additional code is not worth the lost microtask.
 
-	/** @type {import('./types.js').Signal | undefined} */
+	/** @type {import('./types.js').ComputationSignal | undefined} */
 	let render;
 	let destroyed = false;
 	const effect = managed_effect(() => {
@@ -855,8 +887,8 @@ export function bind_resize_observer(dom, type, update) {
 		type === 'contentRect' || type === 'contentBoxSize'
 			? resize_observer_content_box
 			: type === 'borderBoxSize'
-			? resize_observer_border_box
-			: resize_observer_device_pixel_content_box;
+				? resize_observer_border_box
+				: resize_observer_device_pixel_content_box;
 	const unsub = observer.observe(dom, /** @param {any} entry */ (entry) => update(entry[type]));
 	render_effect(() => unsub);
 }
@@ -882,9 +914,10 @@ export function bind_window_size(type, update) {
 	const callback = () => update(window[type]);
 	listen_to_events(window, ['resize'], callback);
 }
+
 /**
  * Finds the containing `<select>` element and potentially updates its `selected` state.
- * @param {Element} dom
+ * @param {HTMLOptionElement} dom
  * @returns {void}
  */
 export function selected(dom) {
@@ -898,44 +931,57 @@ export function selected(dom) {
 			}
 			select = select.parentNode;
 		}
-		if (select != null) {
-			// @ts-ignore
-			const select_value = select.__value;
-			// @ts-ignore
-			const option_value = dom.__value;
-			// @ts-ignore
-			dom.selected = select_value === option_value;
-			// @ts-ignore
-			dom.value = option_value;
+		// @ts-ignore
+		if (select != null && dom.__value === select.__value) {
+			// never set to false, since this causes browser to select default option
+			dom.selected = true;
 		}
 	});
 }
 
 /**
- * @param {Element} dom
+ * @param {HTMLInputElement} dom
  * @param {() => unknown} get_value
  * @param {(value: unknown) => void} update
  * @returns {void}
  */
 export function bind_value(dom, get_value, update) {
 	dom.addEventListener('input', () => {
-		// @ts-ignore
+		/** @type {any} */
 		let value = dom.value;
-		// @ts-ignore
-		const type = dom.type;
-		if (type === 'number' || type === 'range') {
-			value = value === '' ? null : +value;
+		if (is_numberlike_input(dom)) {
+			value = to_number(value);
 		}
 		update(value);
 	});
+
 	render_effect(() => {
 		const value = get_value();
-		const coerced_value = value == null ? null : value + '';
-		// @ts-ignore
-		dom.value = coerced_value;
 		// @ts-ignore
 		dom.__value = value;
+
+		if (is_numberlike_input(dom) && value === to_number(dom.value)) {
+			// handles 0 vs 00 case (see https://github.com/sveltejs/svelte/issues/9959)
+			return;
+		}
+
+		dom.value = stringify(value);
 	});
+}
+
+/**
+ * @param {HTMLInputElement} dom
+ */
+function is_numberlike_input(dom) {
+	const type = dom.type;
+	return type === 'number' || type === 'range';
+}
+
+/**
+ * @param {string} value
+ */
+function to_number(value) {
+	return value === '' ? null : +value;
 }
 
 /**
@@ -945,7 +991,7 @@ export function bind_value(dom, get_value, update) {
  * @returns {void}
  */
 export function bind_select_value(dom, get_value, update) {
-	let mounted = false;
+	let mounting = true;
 	dom.addEventListener('change', () => {
 		/** @type {unknown} */
 		let value;
@@ -958,39 +1004,21 @@ export function bind_select_value(dom, get_value, update) {
 		}
 		update(value);
 	});
-	render_effect(() => {
-		const value = get_value();
-		if (value == null && !mounted) {
+	// Needs to be an effect, not a render_effect, so that in case of each loops the logic runs after the each block has updated
+	effect(() => {
+		let value = get_value();
+		select_option(dom, value, mounting);
+		if (mounting && value === undefined) {
 			/** @type {HTMLOptionElement | null} */
-			let selected_option = value === undefined ? dom.querySelector(':checked') : null;
-			if (selected_option === null) {
-				dom.value = '';
+			let selected_option = dom.querySelector(':checked');
+			if (selected_option !== null) {
+				value = get_option_value(selected_option);
+				update(value);
 			}
-			const options = dom.querySelectorAll('option');
-			for (const option of options) {
-				if (get_option_value(option) === value || option.hasAttribute('selected')) {
-					if (option.disabled) {
-						option.value = '';
-					}
-					option.selected = true;
-					selected_option = option;
-					break;
-				}
-			}
-			if (selected_option != null) {
-				const non_null_value = get_option_value(selected_option);
-				update(non_null_value);
-				if (selected_option.hasAttribute('selected')) {
-					selected_option.removeAttribute('selected');
-					selected_option.selected = true;
-				}
-			}
-		} else {
-			select_option(dom, value);
-			// @ts-ignore
-			dom.__value = value;
 		}
-		mounted = true;
+		// @ts-ignore
+		dom.__value = value;
+		mounting = false;
 	});
 }
 
@@ -1199,43 +1227,45 @@ export function bind_property(property, event_name, type, dom, get_value, update
 		}
 	});
 }
+
 /**
  * Makes an `export`ed (non-prop) variable available on the `$$props` object
  * so that consumers can do `bind:x` on the component.
  * @template V
- * @param {import('./types.js').MaybeSignal<Record<string, unknown>>} props
+ * @param {Record<string, unknown>} props
  * @param {string} prop
  * @param {V} value
  * @returns {void}
  */
 export function bind_prop(props, prop, value) {
-	/** @param {V | null} value */
-	const update = (value) => {
-		const current_props = unwrap(props);
-		const signal = expose(() => current_props[prop]);
-		if (is_signal(signal)) {
-			set(signal, value);
-		} else if (Object.getOwnPropertyDescriptor(current_props, prop)?.set !== undefined) {
-			current_props[prop] = value;
-		}
-	};
-	update(value);
-	render_effect(() => () => {
-		update(null);
-	});
+	const desc = get_descriptor(props, prop);
+
+	if (desc && desc.set) {
+		props[prop] = value;
+		render_effect(() => () => {
+			props[prop] = null;
+		});
+	}
 }
 
 /**
  * @param {Element} element_or_component
  * @param {(value: unknown) => void} update
+ * @param {import('./types.js').MaybeSignal} binding
  * @returns {void}
  */
-export function bind_this(element_or_component, update) {
+export function bind_this(element_or_component, update, binding) {
 	untrack(() => {
 		update(element_or_component);
 		render_effect(() => () => {
-			untrack(() => {
-				update(null);
+			// Defer to the next tick so that all updates can be reconciled first.
+			// This solves the case where one variable is shared across multiple this-bindings.
+			render_effect(() => {
+				untrack(() => {
+					if (!is_signal(binding) || binding.v === element_or_component) {
+						update(null);
+					}
+				});
 			});
 		});
 	});
@@ -1255,11 +1285,11 @@ export function delegate(events) {
 }
 
 /**
- * @param {Node} root_element
+ * @param {Node} handler_element
  * @param {Event} event
  * @returns {void}
  */
-function handle_event_propagation(root_element, event) {
+function handle_event_propagation(handler_element, event) {
 	const event_name = event.type;
 	const path = event.composedPath?.() || [];
 	let current_target = /** @type {null | Element} */ (path[0] || event.target);
@@ -1274,18 +1304,37 @@ function handle_event_propagation(root_element, event) {
 	// We check __root to skip all nodes below it in case this is a
 	// parent of the __root node, which indicates that there's nested
 	// mounted apps. In this case we don't want to trigger events multiple times.
-	// We're deliberately not skipping if the index is the same or higher, because
-	// someone could create an event programmatically and emit it multiple times,
-	// in which case we want to handle the whole propagation chain properly each time.
 	let path_idx = 0;
 	// @ts-expect-error is added below
 	const handled_at = event.__root;
 	if (handled_at) {
 		const at_idx = path.indexOf(handled_at);
-		if (at_idx < path.indexOf(root_element)) {
-			path_idx = at_idx;
+		if (at_idx !== -1 && handler_element === document) {
+			// This is the fallback document listener but the event was already handled
+			// -> ignore, but set handle_at to document so that we're resetting the event
+			// chain in case someone manually dispatches the same event object again.
+			// @ts-expect-error
+			event.__root = document;
+			return;
+		}
+		// We're deliberately not skipping if the index is higher, because
+		// someone could create an event programmatically and emit it multiple times,
+		// in which case we want to handle the whole propagation chain properly each time.
+		// (this will only be a false negative if the event is dispatched multiple times and
+		// the fallback document listener isn't reached in between, but that's super rare)
+		const handler_idx = path.indexOf(handler_element);
+		if (handler_idx === -1) {
+			// handle_idx can theoretically be -1 (happened in some JSDOM testing scenarios with an event listener on the window object)
+			// so guard against that, too, and assume that everything was handled at this point.
+			return;
+		}
+		if (at_idx <= handler_idx) {
+			// +1 because at_idx is the element which was already handled, and there can only be one delegated event per element.
+			// Avoids on:click and onclick on the same event resulting in onclick being fired twice.
+			path_idx = at_idx + 1;
 		}
 	}
+
 	current_target = /** @type {Element} */ (path[path_idx] || event.target);
 	// Proxy currentTarget to correct target
 	define_property(event, 'currentTarget', {
@@ -1311,14 +1360,20 @@ function handle_event_propagation(root_element, event) {
 				delegated.call(current_target, event);
 			}
 		}
-		if (event.cancelBubble || parent_element === root_element) {
+		if (
+			event.cancelBubble ||
+			parent_element === handler_element ||
+			current_target === handler_element
+		) {
 			break;
 		}
 		current_target = parent_element;
 	}
 
 	// @ts-expect-error is used above
-	event.__root = root_element;
+	event.__root = handler_element;
+	// @ts-expect-error is used above
+	current_target = handler_element;
 }
 
 /**
@@ -1348,8 +1403,6 @@ export function slot(anchor_node, slot_fn, slot_props, fallback_fn) {
 function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	const block = create_if_block();
 	hydrate_block_anchor(anchor_node);
-	const consequent_transitions = new Set();
-	const alternate_transitions = new Set();
 	const previous_hydration_fragment = current_hydration_fragment;
 
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
@@ -1357,66 +1410,37 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	/** @type {null | import('./types.js').TemplateNode | Array<import('./types.js').TemplateNode>} */
 	let alternate_dom = null;
 	let has_mounted = false;
-	let has_mounted_branch = false;
+	/**
+	 * @type {import("./types.js").EffectSignal | null}
+	 */
+	let current_branch_effect = null;
 
-	block.transition =
-		/**
-		 * @param {import('./types.js').Transition} transition
-		 * @returns {void}
-		 */
-		(transition) => {
-			if (block.current) {
-				consequent_transitions.add(transition);
-				transition.finished(() => {
-					consequent_transitions.delete(transition);
-					for (let other of consequent_transitions) {
-						if (other.direction === 'in') {
-							consequent_transitions.delete(other);
-						}
-					}
-					if (consequent_transitions.size === 0) {
-						execute_effect(consequent_effect);
-					}
-				});
-			} else {
-				alternate_transitions.add(transition);
-				transition.finished(() => {
-					alternate_transitions.delete(transition);
-					for (let other of alternate_transitions) {
-						if (other.direction === 'in') {
-							alternate_transitions.delete(other);
-						}
-					}
-					if (alternate_transitions.size === 0) {
-						execute_effect(alternate_effect);
-					}
-				});
-			}
-		};
 	const if_effect = render_effect(
 		() => {
 			const result = !!condition_fn();
-			if (block.current !== result || !has_mounted) {
-				block.current = result;
+			if (block.v !== result || !has_mounted) {
+				block.v = result;
 				if (has_mounted) {
+					const consequent_transitions = block.c;
+					const alternate_transitions = block.a;
 					if (result) {
-						if (alternate_transitions.size === 0) {
+						if (alternate_transitions === null || alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'out');
 						}
-						if (consequent_transitions.size === 0) {
+						if (consequent_transitions === null || consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'in');
 						}
 					} else {
-						if (consequent_transitions.size === 0) {
+						if (consequent_transitions === null || consequent_transitions.size === 0) {
 							execute_effect(consequent_effect);
 						} else {
 							trigger_transitions(consequent_transitions, 'out');
 						}
-						if (alternate_transitions.size === 0) {
+						if (alternate_transitions === null || alternate_transitions.size === 0) {
 							execute_effect(alternate_effect);
 						} else {
 							trigger_transitions(alternate_transitions, 'in');
@@ -1425,9 +1449,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 				} else if (current_hydration_fragment !== null) {
 					const comment_text = /** @type {Comment} */ (current_hydration_fragment?.[0])?.data;
 					if (
-						(!comment_text &&
-							// Can happen when a svelte:element that is turned into a void element has an if block inside
-							current_hydration_fragment[0] !== null) ||
+						!comment_text ||
 						(comment_text === 'ssr:if:true' && !result) ||
 						(comment_text === 'ssr:if:false' && result)
 					) {
@@ -1448,48 +1470,58 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 	);
 	// Managed effect
 	const consequent_effect = render_effect(
-		() => {
-			if (consequent_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ consequent_effect
+		) => {
+			const result = block.v;
+			if (!result && consequent_dom !== null) {
 				remove(consequent_dom);
 				consequent_dom = null;
 			}
-			if (block.current) {
+			if (result && current_branch_effect !== consequent_effect) {
 				consequent_fn(anchor_node);
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = consequent_effect;
+				consequent_dom = block.d;
 			}
-			consequent_dom = block.dom;
-			block.dom = null;
+			block.d = null;
 		},
 		block,
 		true
 	);
+	block.ce = consequent_effect;
 	// Managed effect
 	const alternate_effect = render_effect(
-		() => {
-			if (alternate_dom !== null) {
+		(
+			/** @type {any} */ _,
+			/** @type {import("./types.js").EffectSignal | null} */ alternate_effect
+		) => {
+			const result = block.v;
+			if (result && alternate_dom !== null) {
 				remove(alternate_dom);
 				alternate_dom = null;
 			}
-			if (!block.current) {
+			if (!result && current_branch_effect !== alternate_effect) {
 				if (alternate_fn !== null) {
 					alternate_fn(anchor_node);
 				}
-				if (!has_mounted_branch) {
+				if (current_branch_effect === null) {
 					// Restore previous fragment so that Svelte continues to operate in hydration mode
 					set_current_hydration_fragment(previous_hydration_fragment);
-					has_mounted_branch = true;
 				}
+				current_branch_effect = alternate_effect;
+				alternate_dom = block.d;
 			}
-			alternate_dom = block.dom;
-			block.dom = null;
+			block.d = null;
 		},
 		block,
 		true
 	);
+	block.ae = alternate_effect;
 	push_destroy_fn(if_effect, () => {
 		if (consequent_dom !== null) {
 			remove(consequent_dom);
@@ -1500,7 +1532,7 @@ function if_block(anchor_node, condition_fn, consequent_fn, alternate_fn) {
 		destroy_signal(consequent_effect);
 		destroy_signal(alternate_effect);
 	});
-	block.effect = if_effect;
+	block.e = if_effect;
 }
 export { if_block as if };
 
@@ -1519,10 +1551,10 @@ export function head(render_fn) {
 	try {
 		const head_effect = render_effect(
 			() => {
-				const current = block.dom;
+				const current = block.d;
 				if (current !== null) {
 					remove(current);
-					block.dom = null;
+					block.d = null;
 				}
 				let anchor = null;
 				if (current_hydration_fragment === null) {
@@ -1535,12 +1567,12 @@ export function head(render_fn) {
 			false
 		);
 		push_destroy_fn(head_effect, () => {
-			const current = block.dom;
+			const current = block.d;
 			if (current !== null) {
 				remove(current);
 			}
 		});
-		block.effect = head_effect;
+		block.e = head_effect;
 	} finally {
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
@@ -1553,7 +1585,7 @@ export function head(render_fn) {
  * @returns {void}
  */
 function swap_block_dom(block, from, to) {
-	const dom = block.dom;
+	const dom = block.d;
 	if (is_array(dom)) {
 		for (let i = 0; i < dom.length; i++) {
 			if (dom[i] === from) {
@@ -1562,18 +1594,18 @@ function swap_block_dom(block, from, to) {
 			}
 		}
 	} else if (dom === from) {
-		block.dom = to;
+		block.d = to;
 	}
 }
 
 /**
  * @param {Comment} anchor_node
  * @param {() => string} tag_fn
- * @param {null | ((element: Element, anchor: Node) => void)} render_fn
- * @param {any} is_svg
+ * @param {boolean | null} is_svg `null` == not statically known
+ * @param {undefined | ((element: Element, anchor: Node) => void)} render_fn
  * @returns {void}
  */
-export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
+export function element(anchor_node, tag_fn, is_svg, render_fn) {
 	const block = create_dynamic_element_block();
 	hydrate_block_anchor(anchor_node);
 	let has_mounted = false;
@@ -1581,7 +1613,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	/** @type {string} */
 	let tag;
 
-	/** @type {null | HTMLElement | SVGElement} */
+	/** @type {null | Element} */
 	let element = null;
 	const element_effect = render_effect(
 		() => {
@@ -1597,19 +1629,28 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	// Managed effect
 	const render_effect_signal = render_effect(
 		() => {
+			// We try our best infering the namespace in case it's not possible to determine statically,
+			// but on the first render on the client (without hydration) the parent will be undefined,
+			// since the anchor is not attached to its parent / the dom yet.
+			const ns =
+				is_svg || tag === 'svg'
+					? namespace_svg
+					: is_svg === false || anchor_node.parentElement?.tagName === 'foreignObject'
+						? null
+						: anchor_node.parentElement?.namespaceURI ?? null;
 			const next_element = tag
 				? current_hydration_fragment !== null
-					? /** @type {HTMLElement | SVGElement} */ (current_hydration_fragment[0])
-					: is_svg
-					? document.createElementNS('http://www.w3.org/2000/svg', tag)
-					: document.createElement(tag)
+					? /** @type {Element} */ (current_hydration_fragment[0])
+					: ns
+						? document.createElementNS(ns, tag)
+						: document.createElement(tag)
 				: null;
 			const prev_element = element;
 			if (prev_element !== null) {
-				block.dom = null;
+				block.d = null;
 			}
 			element = next_element;
-			if (element !== null && render_fn !== null) {
+			if (element !== null && render_fn !== undefined) {
 				let anchor;
 				if (current_hydration_fragment !== null) {
 					// Use the existing ssr comment as the anchor so that the inner open and close
@@ -1628,7 +1669,7 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 			if (element !== null) {
 				insert(element, null, anchor_node);
 				if (has_prev_element) {
-					const parent_block = block.parent;
+					const parent_block = block.p;
 					swap_block_dom(parent_block, prev_element, element);
 				}
 			}
@@ -1639,12 +1680,12 @@ export function element(anchor_node, tag_fn, render_fn, is_svg = false) {
 	push_destroy_fn(element_effect, () => {
 		if (element !== null) {
 			remove(element);
-			block.dom = null;
+			block.d = null;
 			element = null;
 		}
 		destroy_signal(render_effect_signal);
 	});
-	block.effect = element_effect;
+	block.e = element_effect;
 }
 
 /**
@@ -1663,30 +1704,25 @@ export function component(anchor_node, component_fn, render_fn) {
 
 	/** @type {null | ((props: P) => void)} */
 	let component = null;
-	block.transition =
+	block.r =
 		/**
 		 * @param {import('./types.js').Transition} transition
 		 * @returns {void}
 		 */
 		(transition) => {
 			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.transitions;
+			const transitions = render.s;
 			transitions.add(transition);
-			transition.finished(() => {
+			transition.f(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
 				if (transitions.size === 0) {
-					if (render.effect !== null) {
-						if (render.dom !== null) {
-							remove(render.dom);
-							render.dom = null;
+					if (render.e !== null) {
+						if (render.d !== null) {
+							remove(render.d);
+							render.d = null;
 						}
-						destroy_signal(render.effect);
-						render.effect = null;
+						destroy_signal(render.e);
+						render.e = null;
 					}
 				}
 			});
@@ -1694,29 +1730,29 @@ export function component(anchor_node, component_fn, render_fn) {
 	const create_render_effect = () => {
 		/** @type {import('./types.js').Render} */
 		const render = {
-			dom: null,
-			effect: null,
-			transitions: new Set(),
-			prev: current_render
+			d: null,
+			e: null,
+			s: new Set(),
+			p: current_render
 		};
 		// Managed effect
 		const effect = render_effect(
 			() => {
-				const current = block.dom;
+				const current = block.d;
 				if (current !== null) {
 					remove(current);
-					block.dom = null;
+					block.d = null;
 				}
 				if (component) {
 					render_fn(component);
 				}
-				render.dom = block.dom;
-				block.dom = null;
+				render.d = block.d;
+				block.d = null;
 			},
 			block,
 			true
 		);
-		render.effect = effect;
+		render.e = effect;
 		current_render = render;
 	};
 	const render = () => {
@@ -1725,14 +1761,14 @@ export function component(anchor_node, component_fn, render_fn) {
 			create_render_effect();
 			return;
 		}
-		const transitions = render.transitions;
+		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.dom !== null) {
-				remove(render.dom);
-				render.dom = null;
+			if (render.d !== null) {
+				remove(render.d);
+				render.d = null;
 			}
-			if (render.effect) {
-				execute_effect(render.effect);
+			if (render.e) {
+				execute_effect(render.e);
 			} else {
 				create_render_effect();
 			}
@@ -1755,24 +1791,24 @@ export function component(anchor_node, component_fn, render_fn) {
 	push_destroy_fn(component_effect, () => {
 		let render = current_render;
 		while (render !== null) {
-			const dom = render.dom;
+			const dom = render.d;
 			if (dom !== null) {
 				remove(dom);
 			}
-			const effect = render.effect;
+			const effect = render.e;
 			if (effect !== null) {
 				destroy_signal(effect);
 			}
-			render = render.prev;
+			render = render.p;
 		}
 	});
-	block.effect = component_effect;
+	block.e = component_effect;
 }
 
 /**
  * @template V
  * @param {Comment} anchor_node
- * @param {import('./types.js').Signal<Promise<V>> | Promise<V> | (() => Promise<V>)} input
+ * @param {(() => Promise<V>)} input
  * @param {null | ((anchor: Node) => void)} pending_fn
  * @param {null | ((anchor: Node, value: V) => void)} then_fn
  * @param {null | ((anchor: Node, error: unknown) => void)} catch_fn
@@ -1794,30 +1830,25 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 	/** @type {unknown} */
 	let error = UNINITIALIZED;
 	let pending = false;
-	block.transition =
+	block.r =
 		/**
 		 * @param {import('./types.js').Transition} transition
 		 * @returns {void}
 		 */
 		(transition) => {
 			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.transitions;
+			const transitions = render.s;
 			transitions.add(transition);
-			transition.finished(() => {
+			transition.f(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
 				if (transitions.size === 0) {
-					if (render.effect !== null) {
-						if (render.dom !== null) {
-							remove(render.dom);
-							render.dom = null;
+					if (render.e !== null) {
+						if (render.d !== null) {
+							remove(render.d);
+							render.d = null;
 						}
-						destroy_signal(render.effect);
-						render.effect = null;
+						destroy_signal(render.e);
+						render.e = null;
 					}
 				}
 			});
@@ -1825,35 +1856,38 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 	const create_render_effect = () => {
 		/** @type {import('./types.js').Render} */
 		const render = {
-			dom: null,
-			effect: null,
-			transitions: new Set(),
-			prev: current_render
+			d: null,
+			e: null,
+			s: new Set(),
+			p: current_render
 		};
 		const effect = render_effect(
 			() => {
 				if (error === UNINITIALIZED) {
 					if (resolved_value === UNINITIALIZED) {
-						block.pending = true;
+						// pending = true
+						block.n = true;
 						if (pending_fn !== null) {
 							pending_fn(anchor_node);
 						}
 					} else if (then_fn !== null) {
-						block.pending = false;
+						// pending = false
+						block.n = false;
 						then_fn(anchor_node, resolved_value);
 					}
 				} else if (catch_fn !== null) {
-					block.pending = false;
+					// pending = false
+					block.n = false;
 					catch_fn(anchor_node, error);
 				}
-				render.dom = block.dom;
-				block.dom = null;
+				render.d = block.d;
+				block.d = null;
 			},
 			block,
 			true,
 			true
 		);
-		render.effect = effect;
+		render.e = effect;
 		current_render = render;
 	};
 	const render = () => {
@@ -1862,14 +1896,14 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 			create_render_effect();
 			return;
 		}
-		const transitions = render.transitions;
+		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.dom !== null) {
-				remove(render.dom);
-				render.dom = null;
+			if (render.d !== null) {
+				remove(render.d);
+				render.d = null;
 			}
-			if (render.effect) {
-				execute_effect(render.effect);
+			if (render.e) {
+				execute_effect(render.e);
 			} else {
 				create_render_effect();
 			}
@@ -1882,7 +1916,7 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		() => {
 			const token = {};
 			latest_token = token;
-			const promise = is_signal(input) ? get(input) : typeof input === 'function' ? input() : input;
+			const promise = input();
 			if (is_promise(promise)) {
 				promise.then(
 					/** @param {V} v */
@@ -1924,18 +1958,18 @@ function await_block(anchor_node, input, pending_fn, then_fn, catch_fn) {
 		let render = current_render;
 		latest_token = {};
 		while (render !== null) {
-			const dom = render.dom;
+			const dom = render.d;
 			if (dom !== null) {
 				remove(dom);
 			}
-			const effect = render.effect;
+			const effect = render.e;
 			if (effect !== null) {
 				destroy_signal(effect);
 			}
-			render = render.prev;
+			render = render.p;
 		}
 	});
-	block.effect = await_effect;
+	block.e = await_effect;
 }
 export { await_block as await };
 
@@ -1956,30 +1990,25 @@ export function key(anchor_node, key, render_fn) {
 	/** @type {V | typeof UNINITIALIZED} */
 	let key_value = UNINITIALIZED;
 	let mounted = false;
-	block.transition =
+	block.r =
 		/**
 		 * @param {import('./types.js').Transition} transition
 		 * @returns {void}
 		 */
 		(transition) => {
 			const render = /** @type {import('./types.js').Render} */ (current_render);
-			const transitions = render.transitions;
+			const transitions = render.s;
 			transitions.add(transition);
-			transition.finished(() => {
+			transition.f(() => {
 				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
 				if (transitions.size === 0) {
-					if (render.effect !== null) {
-						if (render.dom !== null) {
-							remove(render.dom);
-							render.dom = null;
+					if (render.e !== null) {
+						if (render.d !== null) {
+							remove(render.d);
+							render.d = null;
 						}
-						destroy_signal(render.effect);
-						render.effect = null;
+						destroy_signal(render.e);
+						render.e = null;
 					}
 				}
 			});
@@ -1987,22 +2016,22 @@ export function key(anchor_node, key, render_fn) {
 	const create_render_effect = () => {
 		/** @type {import('./types.js').Render} */
 		const render = {
-			dom: null,
-			effect: null,
-			transitions: new Set(),
-			prev: current_render
+			d: null,
+			e: null,
+			s: new Set(),
+			p: current_render
 		};
 		const effect = render_effect(
 			() => {
 				render_fn(anchor_node);
-				render.dom = block.dom;
-				block.dom = null;
+				render.d = block.d;
+				block.d = null;
 			},
 			block,
 			true,
 			true
 		);
-		render.effect = effect;
+		render.e = effect;
 		current_render = render;
 	};
 	const render = () => {
@@ -2011,14 +2040,14 @@ export function key(anchor_node, key, render_fn) {
 			create_render_effect();
 			return;
 		}
-		const transitions = render.transitions;
+		const transitions = render.s;
 		if (transitions.size === 0) {
-			if (render.dom !== null) {
-				remove(render.dom);
-				render.dom = null;
+			if (render.d !== null) {
+				remove(render.d);
+				render.d = null;
 			}
-			if (render.effect) {
-				execute_effect(render.effect);
+			if (render.e) {
+				execute_effect(render.e);
 			} else {
 				create_render_effect();
 			}
@@ -2045,400 +2074,18 @@ export function key(anchor_node, key, render_fn) {
 	push_destroy_fn(key_effect, () => {
 		let render = current_render;
 		while (render !== null) {
-			const dom = render.dom;
+			const dom = render.d;
 			if (dom !== null) {
 				remove(dom);
 			}
-			const effect = render.effect;
+			const effect = render.e;
 			if (effect !== null) {
 				destroy_signal(effect);
 			}
-			render = render.prev;
+			render = render.p;
 		}
 	});
-	block.effect = key_effect;
-}
-
-/**
- * @param {import('./types.js').Block} block
- * @returns {Text | Element | Comment}
- */
-function get_first_element(block) {
-	const current = block.dom;
-	if (is_array(current)) {
-		for (let i = 0; i < current.length; i++) {
-			const node = current[i];
-			if (node.nodeType !== 8) {
-				return node;
-			}
-		}
-	}
-	return /** @type {Text | Element | Comment} */ (current);
-}
-
-/**
- * @param {import('./types.js').EachItemBlock} block
- * @param {any} item
- * @param {number} index
- * @param {number} type
- * @returns {void}
- */
-export function update_each_item_block(block, item, index, type) {
-	if ((type & EACH_ITEM_REACTIVE) !== 0) {
-		set_signal_value(block.item, item);
-	}
-	const transitions = block.transitions;
-	const index_is_reactive = (type & EACH_INDEX_REACTIVE) !== 0;
-	// Handle each item animations
-	if (transitions !== null && (type & EACH_KEYED) !== 0) {
-		let prev_index = block.index;
-		if (index_is_reactive) {
-			prev_index = /** @type {import('./types.js').Signal<number>} */ (prev_index).value;
-		}
-		const items = block.parent.items;
-		if (prev_index !== index && /** @type {number} */ (index) < items.length) {
-			const from_dom = /** @type {Element} */ (get_first_element(block));
-			const from = from_dom.getBoundingClientRect();
-			schedule_task(() => {
-				trigger_transitions(transitions, 'key', from);
-			});
-		}
-	}
-	if (index_is_reactive) {
-		set_signal_value(/** @type {import('./types.js').Signal<number>} */ (block.index), index);
-	} else {
-		block.index = index;
-	}
-}
-
-/**
- * @param {import('./types.js').EachItemBlock} block
- * @param {null | Array<import('./types.js').Block>} transition_block
- * @param {boolean} apply_transitions
- * @param {any} controlled
- * @returns {void}
- */
-export function destroy_each_item_block(
-	block,
-	transition_block,
-	apply_transitions,
-	controlled = false
-) {
-	const transitions = block.transitions;
-	if (apply_transitions && transitions !== null) {
-		trigger_transitions(transitions, 'out');
-		if (transition_block !== null) {
-			transition_block.push(block);
-		}
-	} else {
-		const dom = block.dom;
-		if (!controlled && dom !== null) {
-			remove(dom);
-		}
-		destroy_signal(/** @type {import('./types.js').Signal} */ (block.effect));
-	}
-}
-
-/**
- * @this {import('./types.js').EachItemBlock}
- * @param {import('./types.js').Transition} transition
- * @returns {void}
- */
-function each_item_transition(transition) {
-	const block = this;
-	const each_block = block.parent;
-	const is_controlled = (each_block.flags & EACH_IS_CONTROLLED) !== 0;
-	// Disable optimization
-	if (is_controlled) {
-		const anchor = empty();
-		each_block.flags ^= EACH_IS_CONTROLLED;
-		append_child(/** @type {Element} */ (each_block.anchor), anchor);
-		each_block.anchor = anchor;
-	}
-	if (transition.direction === 'key' && (each_block.flags & EACH_IS_ANIMATED) === 0) {
-		each_block.flags |= EACH_IS_ANIMATED;
-	}
-	let transitions = block.transitions;
-	if (transitions === null) {
-		block.transitions = transitions = new Set();
-	}
-	transition.finished(() => {
-		if (transitions !== null) {
-			transitions.delete(transition);
-			if (transition.direction !== 'key') {
-				for (let other of transitions) {
-					if (other.direction === 'key' || other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
-				if (transitions.size === 0) {
-					block.transitions = null;
-					destroy_each_item_block(block, null, true);
-				}
-			}
-		}
-	});
-	transitions.add(transition);
-}
-
-/**
- * @param {Set<import('./types.js').Transition>} transitions
- * @param {'in' | 'out' | 'key'} target_direction
- * @param {DOMRect} [from]
- * @returns {void}
- */
-export function trigger_transitions(transitions, target_direction, from) {
-	/** @type {Array<() => void>} */
-	const outros = [];
-	for (const transition of transitions) {
-		const direction = transition.direction;
-		if (target_direction === 'in') {
-			if (direction === 'in' || direction === 'both') {
-				if (direction === 'in') {
-					transition.cancel();
-				}
-				transition.in();
-			} else {
-				transition.cancel();
-			}
-			transition.dom.inert = false;
-			mark_subtree_inert(transition.effect, false);
-		} else if (target_direction === 'key') {
-			if (direction === 'key') {
-				transition.payload = transition.init(/** @type {DOMRect} */ (from));
-				transition.in();
-			}
-		} else {
-			if (direction === 'out' || direction === 'both') {
-				transition.payload = transition.init();
-				outros.push(transition.out);
-			}
-			transition.dom.inert = true;
-			mark_subtree_inert(transition.effect, true);
-		}
-	}
-	if (outros.length > 0) {
-		// Defer the outros to a microtask
-		const e = managed_pre_effect(() => {
-			destroy_signal(e);
-			const e2 = managed_effect(() => {
-				destroy_signal(e2);
-				outros.forEach(/** @param {any} o */ (o) => o());
-			});
-		}, false);
-	}
-}
-
-/**
- * @template V
- * @param {V} item
- * @param {unknown} key
- * @param {number} index
- * @param {(anchor: null, item: V, index: number | import('./types.js').Signal<number>) => void} render_fn
- * @param {number} flags
- * @returns {import('./types.js').EachItemBlock}
- */
-export function each_item_block(item, key, index, render_fn, flags) {
-	const item_value = (flags & EACH_ITEM_REACTIVE) === 0 ? item : source(item);
-	const index_value = (flags & EACH_INDEX_REACTIVE) === 0 ? index : source(index);
-	const block = create_each_item_block(item_value, index_value, key);
-	block.transition = each_item_transition;
-	const effect = render_effect(
-		/** @param {import('./types.js').EachItemBlock} block */
-		(block) => {
-			render_fn(null, block.item, block.index);
-		},
-		block,
-		true
-	);
-	block.effect = effect;
-	return block;
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @param {typeof reconcile_indexed_array | reconcile_tracked_array} reconcile_fn
- * @returns {void}
- */
-function each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_fn) {
-	const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-	const block = create_each_block(flags, anchor_node);
-
-	/** @type {null | import('./types.js').Render} */
-	let current_fallback = null;
-	hydrate_block_anchor(anchor_node, is_controlled);
-
-	/** @type {V[]} */
-	let array;
-
-	/** @type {Array<string> | null} */
-	let keys = null;
-
-	/** @type {null | import('./types.js').EffectSignal} */
-	let render = null;
-	block.transition =
-		/** @param {import('./types.js').Transition} transition */
-		(transition) => {
-			const fallback = /** @type {import('./types.js').Render} */ (current_fallback);
-			const transitions = fallback.transitions;
-			transitions.add(transition);
-			transition.finished(() => {
-				transitions.delete(transition);
-				for (let other of transitions) {
-					if (other.direction === 'in') {
-						transitions.delete(other);
-					}
-				}
-				if (transitions.size === 0) {
-					if (fallback.effect !== null) {
-						if (fallback.dom !== null) {
-							remove(fallback.dom);
-							fallback.dom = null;
-						}
-						destroy_signal(fallback.effect);
-						fallback.effect = null;
-					}
-				}
-			});
-		};
-	const create_fallback_effect = () => {
-		/** @type {import('./types.js').Render} */
-		const fallback = {
-			dom: null,
-			effect: null,
-			transitions: new Set(),
-			prev: current_fallback
-		};
-		// Managed effect
-		const effect = render_effect(
-			() => {
-				const dom = block.dom;
-				if (dom !== null) {
-					remove(dom);
-					block.dom = null;
-				}
-				let anchor = block.anchor;
-				const is_controlled = (block.flags & EACH_IS_CONTROLLED) !== 0;
-				if (is_controlled) {
-					anchor = empty();
-					block.anchor.appendChild(anchor);
-				}
-				/** @type {(anchor: Node) => void} */ (fallback_fn)(anchor);
-				fallback.dom = block.dom;
-				block.dom = null;
-			},
-			block,
-			true
-		);
-		fallback.effect = effect;
-		current_fallback = fallback;
-	};
-	const each = render_effect(
-		() => {
-			/** @type {V[]} */
-			const maybe_array = collection();
-			array = is_array(maybe_array)
-				? maybe_array
-				: maybe_array == null
-				? []
-				: Array.from(maybe_array);
-			if (key_fn !== null) {
-				const length = array.length;
-				keys = Array(length);
-				for (let i = 0; i < length; i++) {
-					keys[i] = key_fn(array[i]);
-				}
-			}
-			if (fallback_fn !== null) {
-				if (array.length === 0) {
-					if (block.items.length !== 0 || render === null) {
-						create_fallback_effect();
-					}
-				} else if (block.items.length === 0 && current_fallback !== null) {
-					const fallback = current_fallback;
-					const transitions = fallback.transitions;
-					if (transitions.size === 0) {
-						if (fallback.dom !== null) {
-							remove(fallback.dom);
-							fallback.dom = null;
-						}
-					} else {
-						trigger_transitions(transitions, 'out');
-					}
-				}
-			}
-			if (render !== null) {
-				execute_effect(render);
-			}
-		},
-		block,
-		false
-	);
-	render = render_effect(
-		/** @param {import('./types.js').EachBlock} block */
-		(block) => {
-			const flags = block.flags;
-			const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-			const anchor_node = block.anchor;
-			reconcile_fn(array, block, anchor_node, is_controlled, render_fn, flags, true, keys);
-		},
-		block,
-		true
-	);
-	push_destroy_fn(each, () => {
-		const flags = block.flags;
-		const is_controlled = (flags & EACH_IS_CONTROLLED) !== 0;
-		const anchor_node = block.anchor;
-		let fallback = current_fallback;
-		while (fallback !== null) {
-			const dom = fallback.dom;
-			if (dom !== null) {
-				remove(dom);
-			}
-			const effect = fallback.effect;
-			if (effect !== null) {
-				destroy_signal(effect);
-			}
-			fallback = fallback.prev;
-		}
-		// Clear the array
-		reconcile_fn([], block, anchor_node, is_controlled, render_fn, flags, false, keys);
-		destroy_signal(/** @type {import('./types.js').EffectSignal} */ (render));
-	});
-	block.effect = each;
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {null | ((item: V) => string)} key_fn
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @returns {void}
- */
-export function each_keyed(anchor_node, collection, flags, key_fn, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, key_fn, render_fn, fallback_fn, reconcile_tracked_array);
-}
-
-/**
- * @template V
- * @param {Element | Comment} anchor_node
- * @param {() => V[]} collection
- * @param {number} flags
- * @param {(anchor: null, item: V, index: import('./types.js').MaybeSignal<number>) => void} render_fn
- * @param {null | ((anchor: Node) => void)} fallback_fn
- * @returns {void}
- */
-export function each_indexed(anchor_node, collection, flags, render_fn, fallback_fn) {
-	each(anchor_node, collection, flags, null, render_fn, fallback_fn, reconcile_indexed_array);
+	block.e = key_effect;
 }
 
 /**
@@ -2466,7 +2113,7 @@ export function cssProps(anchor, is_html, props, component) {
 			tag = document.createElement('div');
 			tag.style.display = 'contents';
 		} else {
-			tag = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			tag = document.createElementNS(namespace_svg, 'g');
 		}
 		insert(tag, null, anchor);
 		component_anchor = empty();
@@ -2530,49 +2177,49 @@ export function html(dom, get_value, svg) {
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-export function transition(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'both', global);
+export function transition(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'both', global);
 }
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @returns {void}
  */
-export function animate(dom, transition_fn, props) {
-	bind_transition(dom, transition_fn, props, 'key', false);
+export function animate(dom, get_transition_fn, props) {
+	bind_transition(dom, get_transition_fn, props, 'key', false);
 }
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-function in_fn(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'in', global);
+function in_fn(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'in', global);
 }
 export { in_fn as in };
 
 /**
  * @template P
  * @param {HTMLElement} dom
- * @param {import('./types.js').TransitionFn<P | undefined>} transition_fn
+ * @param {() => import('./types.js').TransitionFn<P | undefined>} get_transition_fn
  * @param {(() => P) | null} props
  * @param {any} global
  * @returns {void}
  */
-export function out(dom, transition_fn, props, global = false) {
-	bind_transition(dom, transition_fn, props, 'out', global);
+export function out(dom, get_transition_fn, props, global = false) {
+	bind_transition(dom, get_transition_fn, props, 'out', global);
 }
 
 /**
@@ -2592,7 +2239,7 @@ export function action(dom, action, value_fn) {
 			const value = value_fn();
 			untrack(() => {
 				if (payload === undefined) {
-					payload = action(dom, value);
+					payload = action(dom, value) || {};
 				} else {
 					const update = payload.update;
 					if (typeof update === 'function') {
@@ -2657,9 +2304,12 @@ export function attr_effect(dom, attribute, value) {
  * @param {string | null} value
  */
 export function attr(dom, attribute, value) {
+	value = value == null ? null : value + '';
+
 	if (DEV) {
 		check_src_in_dev_hydration(dom, attribute, value);
 	}
+
 	if (
 		current_hydration_fragment === null ||
 		(dom.getAttribute(attribute) !== value &&
@@ -2668,9 +2318,10 @@ export function attr(dom, attribute, value) {
 			// (we can't just compare the strings as they can be different between client and server but result in the
 			// same url, so we would need to create hidden anchor elements to compare them)
 			attribute !== 'src' &&
+			attribute !== 'href' &&
 			attribute !== 'srcset')
 	) {
-		if (value == null) {
+		if (value === null) {
 			dom.removeAttribute(attribute);
 		} else {
 			dom.setAttribute(attribute, value);
@@ -2678,22 +2329,14 @@ export function attr(dom, attribute, value) {
 	}
 }
 
-/** @type {HTMLAnchorElement | undefined} */
-let src_url_equal_anchor;
-
 /**
  * @param {string} element_src
  * @param {string} url
  * @returns {boolean}
  */
-export function src_url_equal(element_src, url) {
+function src_url_equal(element_src, url) {
 	if (element_src === url) return true;
-	if (!src_url_equal_anchor) {
-		src_url_equal_anchor = document.createElement('a');
-	}
-	// This is actually faster than doing URL(..).href
-	src_url_equal_anchor.href = url;
-	return element_src === src_url_equal_anchor.href;
+	return new URL(element_src, document.baseURI).href === new URL(url, document.baseURI).href;
 }
 
 /** @param {string} srcset */
@@ -2702,13 +2345,13 @@ function split_srcset(srcset) {
 }
 
 /**
- * @param {HTMLSourceElement | HTMLImageElement} element_srcset
+ * @param {HTMLSourceElement | HTMLImageElement} element
  * @param {string | undefined | null} srcset
  * @returns {boolean}
  */
-export function srcset_url_equal(element_srcset, srcset) {
-	const element_urls = split_srcset(element_srcset.srcset);
-	const urls = split_srcset(srcset || '');
+export function srcset_url_equal(element, srcset) {
+	const element_urls = split_srcset(element.srcset);
+	const urls = split_srcset(srcset ?? '');
 
 	return (
 		urls.length === element_urls.length &&
@@ -2731,22 +2374,20 @@ export function srcset_url_equal(element_srcset, srcset) {
  * @param {string | null} value
  */
 function check_src_in_dev_hydration(dom, attribute, value) {
-	if (current_hydration_fragment !== null && (attribute === 'src' || attribute === 'srcset')) {
-		if (
-			(attribute === 'src' && !src_url_equal(dom.getAttribute('src') || '', value || '')) ||
-			(attribute === 'srcset' &&
-				!srcset_url_equal(/** @type {HTMLImageElement | HTMLSourceElement} */ (dom), value || ''))
-		) {
-			// eslint-disable-next-line no-console
-			console.error(
-				'Detected a src/srcset attribute value change during hydration. This will not be repaired during hydration, ' +
-					'the src/srcset value that came from the server will be used. Related element:',
-				dom,
-				' Differing value:',
-				value
-			);
-		}
-	}
+	if (!current_hydration_fragment) return;
+	if (attribute !== 'src' && attribute !== 'href' && attribute !== 'srcset') return;
+
+	if (attribute === 'srcset' && srcset_url_equal(dom, value)) return;
+	if (src_url_equal(dom.getAttribute(attribute) ?? '', value ?? '')) return;
+
+	// eslint-disable-next-line no-console
+	console.error(
+		`Detected a ${attribute} attribute value change during hydration. This will not be repaired during hydration, ` +
+			`the ${attribute} value that came from the server will be used. Related element:`,
+		dom,
+		' Differing value:',
+		value
+	);
 }
 
 /**
@@ -2801,11 +2442,29 @@ export function set_custom_element_data(node, prop, value) {
  * @param {boolean} [important]
  */
 export function style(dom, key, value, important) {
+	const style = dom.style;
+	const prev_value = style.getPropertyValue(key);
 	if (value == null) {
-		dom.style.removeProperty(key);
-	} else {
-		dom.style.setProperty(key, value, important ? 'important' : '');
+		if (prev_value !== '') {
+			style.removeProperty(key);
+		}
+	} else if (prev_value !== value) {
+		style.setProperty(key, value, important ? 'important' : '');
 	}
+}
+
+/**
+ * @param {HTMLElement} dom
+ * @param {string} key
+ * @param {() => string} value
+ * @param {boolean} [important]
+ * @returns {void}
+ */
+export function style_effect(dom, key, value, important) {
+	render_effect(() => {
+		const string = value();
+		style(dom, key, string, important);
+	});
 }
 
 /**
@@ -2835,15 +2494,32 @@ function get_setters(element) {
 }
 
 /**
+ * Like `spread_attributes` but self-contained
+ * @param {Element & ElementCSSInlineStyle} dom
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
+ * @param {string} css_hash
+ */
+export function spread_attributes_effect(dom, attrs, lowercase_attributes, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_attributes(dom, current, attrs(), lowercase_attributes, css_hash);
+	});
+}
+
+/**
  * Spreads attributes onto a DOM element, taking into account the currently set attributes
  * @param {Element & ElementCSSInlineStyle} dom
- * @param {Record<string, unknown> | null} prev
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
+ * @param {boolean} lowercase_attributes
  * @param {string} css_hash
  * @returns {Record<string, unknown>}
  */
-export function spread_attributes(dom, prev, attrs, css_hash) {
-	const next = Object.assign({}, ...attrs);
+export function spread_attributes(dom, prev, attrs, lowercase_attributes, css_hash) {
+	const next = object_assign({}, ...attrs);
 	const has_hash = css_hash.length !== 0;
 	for (const key in prev) {
 		if (!(key in next)) {
@@ -2861,13 +2537,13 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 		let value = next[key];
 		if (value === prev?.[key]) continue;
 
-		const prefix = key.slice(0, 2);
+		const prefix = key[0] + key[1]; // this is faster than key.slice(0, 2)
 		if (prefix === '$$') continue;
 
 		if (prefix === 'on') {
 			/** @type {{ capture?: true }} */
 			const opts = {};
-			let event_name = key.slice(2).toLowerCase();
+			let event_name = key.slice(2);
 			const delegated = DelegatedEvents.includes(event_name);
 
 			if (
@@ -2899,25 +2575,33 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 		} else if (key === '__value' || key === 'value') {
 			// @ts-ignore
 			dom.value = dom[key] = dom.__value = value;
-		} else if (setters.includes(key)) {
-			if (DEV) {
-				check_src_in_dev_hydration(dom, key, value);
-			}
-			if (
-				current_hydration_fragment === null ||
-				//  @ts-ignore see attr method for an explanation of src/srcset
-				(dom[key] !== value && key !== 'src' && key !== 'srcset')
-			) {
-				// @ts-ignore
-				dom[key] = value;
-			}
-		} else if (typeof value !== 'function') {
-			if (has_hash && key === 'class') {
-				if (value) value += ' ';
-				value += css_hash;
+		} else {
+			let name = key;
+			if (lowercase_attributes) {
+				name = name.toLowerCase();
+				name = AttributeAliases[name] || name;
 			}
 
-			attr(dom, key, value);
+			if (setters.includes(name)) {
+				if (DEV) {
+					check_src_in_dev_hydration(dom, name, value);
+				}
+				if (
+					current_hydration_fragment === null ||
+					//  @ts-ignore see attr method for an explanation of src/srcset
+					(dom[name] !== value && name !== 'src' && name !== 'href' && name !== 'srcset')
+				) {
+					// @ts-ignore
+					dom[name] = value;
+				}
+			} else if (typeof value !== 'function') {
+				if (has_hash && name === 'class') {
+					if (value) value += ' ';
+					value += css_hash;
+				}
+
+				attr(dom, name, value);
+			}
 		}
 	}
 	return next;
@@ -2925,18 +2609,30 @@ export function spread_attributes(dom, prev, attrs, css_hash) {
 
 /**
  * @param {Element} node
- * @param {Record<string, unknown> | null} prev
+ * @param {() => Record<string, unknown>[]} attrs
+ * @param {string} css_hash
+ */
+export function spread_dynamic_element_attributes_effect(node, attrs, css_hash) {
+	/** @type {Record<string, any> | undefined} */
+	let current = undefined;
+
+	render_effect(() => {
+		current = spread_dynamic_element_attributes(node, current, attrs(), css_hash);
+	});
+}
+
+/**
+ * @param {Element} node
+ * @param {Record<string, unknown> | undefined} prev
  * @param {Record<string, unknown>[]} attrs
  * @param {string} css_hash
  */
 export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 	if (node.tagName.includes('-')) {
-		const next = Object.assign({}, ...attrs);
-		if (prev !== null) {
-			for (const key in prev) {
-				if (!(key in next)) {
-					next[key] = null;
-				}
+		const next = object_assign({}, ...attrs);
+		for (const key in prev) {
+			if (!(key in next)) {
+				next[key] = null;
 			}
 		}
 		for (const key in next) {
@@ -2948,88 +2644,110 @@ export function spread_dynamic_element_attributes(node, prev, attrs, css_hash) {
 			/** @type {Element & ElementCSSInlineStyle} */ (node),
 			prev,
 			attrs,
+			node.namespaceURI !== namespace_svg,
 			css_hash
 		);
 	}
 }
 
 /**
- * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props_signal
+ * The proxy handler for rest props (i.e. `const { x, ...rest } = $props()`).
+ * Is passed the full `$$props` object and excludes the named props.
+ * @type {ProxyHandler<{ props: Record<string | symbol, unknown>, exclude: Array<string | symbol> }>}}
+ */
+const rest_props_handler = {
+	get(target, key) {
+		if (target.exclude.includes(key)) return;
+		return target.props[key];
+	},
+	getOwnPropertyDescriptor(target, key) {
+		if (target.exclude.includes(key)) return;
+		if (key in target.props) {
+			return {
+				enumerable: true,
+				configurable: true,
+				value: target.props[key]
+			};
+		}
+	},
+	has(target, key) {
+		if (target.exclude.includes(key)) return false;
+		return key in target.props;
+	},
+	ownKeys(target) {
+		/** @type {Array<string | symbol>} */
+		const keys = [];
+
+		for (let key in target.props) {
+			if (!target.exclude.includes(key)) keys.push(key);
+		}
+
+		return keys;
+	}
+};
+
+/**
+ * @param {import('./types.js').Signal<Record<string, unknown>> | Record<string, unknown>} props
  * @param {string[]} rest
  * @returns {Record<string, unknown>}
  */
-export function rest_props(props_signal, rest) {
-	return derived(() => {
-		var props = unwrap(props_signal);
-
-		/** @type {Record<string, unknown>} */
-		var rest_props = {};
-
-		for (var key in props) {
-			if (rest.includes(key)) continue;
-
-			const { get, value, enumerable } = /** @type {PropertyDescriptor} */ (
-				get_descriptor(props, key)
-			);
-
-			define_property(rest_props, key, get ? { get, enumerable } : { value, enumerable });
-		}
-
-		return rest_props;
-	});
+export function rest_props(props, rest) {
+	return new Proxy({ props, exclude: rest }, rest_props_handler);
 }
 
 /**
- * @param {Record<string, unknown>[] | (() => Record<string, unknown>[])} props
- * @returns {any}
+ * The proxy handler for spread props. Handles the incoming array of props
+ * that looks like `() => { dynamic: props }, { static: prop }, ..` and wraps
+ * them so that the whole thing is passed to the component as the `$$props` argument.
+ * @template {Record<string | symbol, unknown>} T
+ * @type {ProxyHandler<{ props: Array<T | (() => T)> }>}}
  */
-export function spread_props(props) {
-	if (typeof props === 'function') {
-		return derived(() => {
-			return spread_props(props());
-		});
-	}
+const spread_props_handler = {
+	get(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return p[key];
+		}
+	},
+	getOwnPropertyDescriptor(target, key) {
+		let i = target.props.length;
+		while (i--) {
+			let p = target.props[i];
+			if (is_function(p)) p = p();
+			if (typeof p === 'object' && p !== null && key in p) return get_descriptor(p, key);
+		}
+	},
+	has(target, key) {
+		for (let p of target.props) {
+			if (is_function(p)) p = p();
+			if (key in p) return true;
+		}
 
-	/** @type {Record<string, unknown>} */
-	const merged_props = {};
-	let key;
-	for (let i = 0; i < props.length; i++) {
-		const obj = props[i];
-		for (key in obj) {
-			const desc = /** @type {PropertyDescriptor} */ (get_descriptor(obj, key));
-			const getter = desc.get;
-			if (getter !== undefined) {
-				define_property(merged_props, key, {
-					enumerable: true,
-					configurable: true,
-					get: getter
-				});
-			} else if (desc.get !== undefined) {
-				merged_props[key] = obj[key];
-			} else {
-				define_property(merged_props, key, {
-					enumerable: true,
-					configurable: true,
-					value: obj[key]
-				});
+		return false;
+	},
+	ownKeys(target) {
+		/** @type {Array<string | symbol>} */
+		const keys = [];
+
+		for (let p of target.props) {
+			if (is_function(p)) p = p();
+			for (const key in p) {
+				if (!keys.includes(key)) keys.push(key);
 			}
 		}
+
+		return keys;
 	}
-	return merged_props;
-}
+};
 
 /**
- * @template V
- * @param {V} value
- * @returns {import('./types.js').UnwrappedSignal<V>}
+ * @param {Array<Record<string, unknown> | (() => Record<string, unknown>)>} props
+ * @returns {any}
  */
-export function unwrap(value) {
-	if (is_signal(value)) {
-		// @ts-ignore
-		return get(value);
-	}
-	// @ts-ignore
-	return value;
+export function spread_props(...props) {
+	return new Proxy({ props }, spread_props_handler);
 }
 
 /**
@@ -3041,100 +2759,31 @@ export function unwrap(value) {
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
+ * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		immutable?: boolean;
  * 		recover?: false;
  * 	}} options
  * @returns {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }}
  */
 export function createRoot(component, options) {
-	// The following definitions aren't duplicative. We need _sources to update single props and
-	// _props in case the component uses $$props / $$restProps / const { x, ...rest } = $props().
-	/** @type {any} */
-	const _props = {};
-	/** @type {any} */
-	const _sources = {};
+	const props = proxy(/** @type {any} */ (options.props) || {}, false);
 
-	/**
-	 * @param {string} name
-	 * @param {any} value
-	 */
-	function add_prop(name, value) {
-		const prop = source(
-			value,
-			options.immutable
-				? /**
-				   * @param {any} a
-				   * @param {any} b
-				   */ (a, b) => a === b
-				: safe_equal
-		);
-		_sources[name] = prop;
-		define_property(_props, name, {
-			get() {
-				return get(prop);
-			},
-			enumerable: true
-		});
-	}
-
-	for (const prop in options.props || {}) {
-		add_prop(
-			prop,
-			// @ts-expect-error TS doesn't understand this properly
-			options.props[prop]
-		);
-	}
-
-	// The proxy ensures that we can add new signals on the fly when a prop signal is accessed from within the component
-	// but no corresponding prop value was set from the outside. The whole things becomes a _propsSignal
-	// so that adding new props is reflected in the component if it uses $$props or $$restProps.
-	const props_proxy = new Proxy(_props, {
-		/**
-		 * @param {any} target
-		 * @param {any} property
-		 */
-		get: (target, property) => {
-			if (typeof property !== 'string') return target[property];
-			if (!(property in _sources)) {
-				add_prop(property, undefined);
-			}
-			return _props[property];
-		}
-	});
-	const props_source = source(
-		props_proxy,
-		// We're resetting the same proxy instance for updates, therefore bypass equality checks
-		() => false
-	);
-
-	let [accessors, $destroy] = mount(component, {
-		...options,
-		// @ts-expect-error We hide the "the props object could be a signal" fact from the public typings
-		props: props_source
-	});
+	let [accessors, $destroy] = mount(component, { ...options, props });
 
 	const result =
 		/** @type {Exports & { $destroy: () => void; $set: (props: Partial<Props>) => void; }} */ ({
-			$set: (props) => {
-				for (const [prop, value] of Object.entries(props)) {
-					if (prop in _sources) {
-						set(_sources[prop], value);
-					} else {
-						add_prop(prop, value);
-						set(props_source, props_proxy);
-					}
-				}
+			$set: (next) => {
+				object_assign(props, next);
 			},
 			$destroy
 		});
 
-	for (const key of Object.keys(accessors || {})) {
+	for (const key of object_keys(accessors || {})) {
 		define_property(result, key, {
 			get() {
 				// @ts-expect-error TS doesn't know key exists on accessor
@@ -3143,7 +2792,7 @@ export function createRoot(component, options) {
 			/** @param {any} value */
 			set(value) {
 				// @ts-expect-error TS doesn't know key exists on accessor
-				accessors[key] = value;
+				flushSync(() => (accessors[key] = value));
 			},
 			enumerable: true
 		});
@@ -3155,27 +2804,27 @@ export function createRoot(component, options) {
 /**
  * Mounts the given component to the given target and returns the accessors of the component and a function to destroy it.
  *
- * If you need to interact with the component after mounting, use `create` instead.
+ * If you need to interact with the component after mounting, use `createRoot` instead.
  *
  * @template {Record<string, any>} Props
  * @template {Record<string, any> | undefined} Exports
  * @template {Record<string, any>} Events
- * @param {import('../../main/public.js').SvelteComponent<Props, Events>} component
+ * @param {import('../../main/public.js').ComponentType<import('../../main/public.js').SvelteComponent<Props, Events>>} component
  * @param {{
  * 		target: Node;
  * 		props?: Props;
  * 		events?: Events;
  *  	context?: Map<any, any>;
  * 		intro?: boolean;
- * 		immutable?: boolean;
  * 		recover?: false;
  * 	}} options
  * @returns {[Exports, () => void]}
  */
 export function mount(component, options) {
+	init_operations();
 	const registered_events = new Set();
 	const container = options.target;
-	const block = create_root_block(container, options.intro || false);
+	const block = create_root_block(options.intro || false);
 	const first_child = /** @type {ChildNode} */ (container.firstChild);
 	const hydration_fragment = get_hydration_fragment(first_child);
 	const previous_hydration_fragment = current_hydration_fragment;
@@ -3198,10 +2847,10 @@ export function mount(component, options) {
 					push({});
 					/** @type {import('../client/types.js').ComponentContext} */ (
 						current_component_context
-					).context = options.context;
+					).c = options.context;
 				}
 				// @ts-expect-error the public typings are not what the actual function looks like
-				accessors = component(anchor, options.props || {}, options.events || {});
+				accessors = component(anchor, options.props || {});
 				if (options.context) {
 					pop();
 				}
@@ -3209,12 +2858,15 @@ export function mount(component, options) {
 			block,
 			true
 		);
-		block.effect = effect;
+		block.e = effect;
 	} catch (error) {
 		if (options.recover !== false && hydration_fragment !== null) {
 			// eslint-disable-next-line no-console
 			console.error(
-				'Hydration failed because the initial UI does not match what was rendered on the server.',
+				'ERR_SVELTE_HYDRATION_MISMATCH' +
+					(DEV
+						? ': Hydration failed because the initial UI does not match what was rendered on the server.'
+						: ''),
 				error
 			);
 			remove(hydration_fragment);
@@ -3228,6 +2880,7 @@ export function mount(component, options) {
 		set_current_hydration_fragment(previous_hydration_fragment);
 	}
 	const bound_event_listener = handle_event_propagation.bind(null, container);
+	const bound_document_event_listener = handle_event_propagation.bind(null, document);
 
 	/** @param {Array<string>} events */
 	const event_handle = (events) => {
@@ -3235,13 +2888,27 @@ export function mount(component, options) {
 			const event_name = events[i];
 			if (!registered_events.has(event_name)) {
 				registered_events.add(event_name);
+				// Add the event listener to both the container and the document.
+				// The container listener ensures we catch events from within in case
+				// the outer content stops propagation of the event.
 				container.addEventListener(
 					event_name,
 					bound_event_listener,
 					PassiveDelegatedEvents.includes(event_name)
 						? {
 								passive: true
-						  }
+							}
+						: undefined
+				);
+				// The document listener ensures we catch events that originate from elements that were
+				// manually moved outside of the container (e.g. via manual portals).
+				document.addEventListener(
+					event_name,
+					bound_document_event_listener,
+					PassiveDelegatedEvents.includes(event_name)
+						? {
+								passive: true
+							}
 						: undefined
 				);
 			}
@@ -3257,14 +2924,14 @@ export function mount(component, options) {
 				container.removeEventListener(event_name, bound_event_listener);
 			}
 			root_event_handles.delete(event_handle);
-			const dom = block.dom;
+			const dom = block.d;
 			if (dom !== null) {
 				remove(dom);
 			}
 			if (hydration_fragment !== null) {
 				remove(hydration_fragment);
 			}
-			destroy_signal(/** @type {import('./types.js').Signal} */ (block.effect));
+			destroy_signal(/** @type {import('./types.js').EffectSignal} */ (block.e));
 		}
 	];
 }
@@ -3281,27 +2948,31 @@ export function access_props(props) {
 }
 
 /**
- * @param {import('./types.js').MaybeSignal<Record<string, any>>} props
+ * @param {Record<string, any>} props
  * @returns {Record<string, any>}
  */
 export function sanitize_slots(props) {
-	props = unwrap(props);
 	const sanitized = { ...props.$$slots };
 	if (props.children) sanitized.default = props.children;
 	return sanitized;
 }
 
 /**
- * @param {() => void} create_snippet
+ * @param {() => Function} get_snippet
+ * @param {Node} node
+ * @param {(() => any)[]} args
  * @returns {void}
  */
-export function snippet_effect(create_snippet) {
+export function snippet_effect(get_snippet, node, ...args) {
 	const block = create_snippet_block();
 	render_effect(() => {
-		create_snippet();
+		// Only rerender when the snippet function itself changes,
+		// not when an eagerly-read prop inside the snippet function changes
+		const snippet = get_snippet();
+		untrack(() => snippet(node, ...args));
 		return () => {
-			if (block.dom !== null) {
-				remove(block.dom);
+			if (block.d !== null) {
+				remove(block.d);
 			}
 		};
 	}, block);
@@ -3336,58 +3007,4 @@ function get_root_for_style(node) {
 		return /** @type {ShadowRoot} */ (root);
 	}
 	return /** @type {Document} */ (node.ownerDocument);
-}
-
-/**
- * @param {string} message
- * @param {string} filename
- * @param {Array<{ line: number; highlight: boolean; source: string }>} [code_highlights]
- * @returns {void}
- */
-export function compile_error(message, filename, code_highlights) {
-	// Construct error page
-	const page = document.createElement('div');
-	const container = document.createElement('div');
-	const pre = document.createElement('pre');
-	const h1 = document.createElement('h1');
-	const h2 = document.createElement('h2');
-	const p = document.createElement('p');
-	h1.textContent = 'Compilation Error';
-	h2.textContent = message;
-	p.textContent = filename;
-	pre.appendChild(h1);
-	pre.appendChild(h2);
-	if (code_highlights) {
-		const code_container = document.createElement('div');
-		for (const line of code_highlights) {
-			const code_line = document.createElement('div');
-			const code_line_number = document.createElement('span');
-			code_line_number.textContent = String(line.line);
-			const code_source = document.createElement('span');
-			code_source.textContent = line.source;
-			if (line.highlight) {
-				code_line.style.cssText = 'padding:8px;background:#333;color:#fff';
-			} else {
-				code_line.style.cssText = 'padding:8px;background:#000;color:#999';
-			}
-			code_line_number.style.cssText = 'color:#888;padding:0 15px 0 5px;text-align:right;';
-			code_line.appendChild(code_line_number);
-			code_line.appendChild(code_source);
-			code_container.appendChild(code_line);
-		}
-		pre.appendChild(code_container);
-	}
-	h1.style.cssText = 'color:#ff5555;font-weight:normal;margin-top:0;padding:0;font-size:20px;';
-	h2.style.cssText =
-		'color:#ccc;font-weight:normal;margin-top:0;padding:0;font-size:16px;white-space:normal;';
-	p.style.cssText = 'color: #999;';
-	page.style.cssText =
-		'z-index:9999;margin:0;position:fixed;top: 0;left: 0;height:100%;width:100%;background:rgba(0,0,0,0.66)';
-	container.style.cssText = `background:#181818;margin:30px auto;padding:25px 40px;position:relative;color:#d8d8d8;border-radius:6px 6px 8px 8px;width:800px;font-family:'SF Mono', SFMono-Regular, ui-monospace,'DejaVu Sans Mono', Menlo, Consolas, monospace;;border-top:8px solid #ff5555;`;
-	pre.appendChild(p);
-	container.appendChild(pre);
-	page.appendChild(container);
-	document.body.appendChild(page);
-	// eslint-disable-next-line no-console
-	console.error('[Compilation Error] ' + message);
 }

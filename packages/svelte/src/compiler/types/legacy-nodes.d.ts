@@ -1,6 +1,7 @@
 import type { StyleDirective as LegacyStyleDirective, Text } from '#compiler';
 import type {
 	ArrayExpression,
+	AssignmentExpression,
 	Expression,
 	Identifier,
 	MemberExpression,
@@ -18,6 +19,13 @@ interface BaseElement extends BaseNode {
 	name: string;
 	attributes: Array<LegacyAttributeLike>;
 	children: Array<LegacyElementLike>;
+}
+
+export interface LegacyRoot extends BaseNode {
+	html: LegacySvelteNode;
+	css?: any;
+	instance?: any;
+	module?: any;
 }
 
 export interface LegacyAction extends BaseNode {
@@ -168,6 +176,11 @@ export interface LegacyTitle extends BaseElement {
 	name: 'title';
 }
 
+export interface LegacyConstTag extends BaseNode {
+	type: 'ConstTag';
+	expression: AssignmentExpression;
+}
+
 export interface LegacyTransition extends BaseNode {
 	type: 'Transition';
 	/** The 'x' in `transition:x` */
@@ -215,6 +228,7 @@ export type LegacyElementLike =
 	| LegacyWindow;
 
 export type LegacySvelteNode =
+	| LegacyConstTag
 	| LegacyElementLike
 	| LegacyAttributeLike
 	| LegacyAttributeShorthand

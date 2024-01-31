@@ -1,13 +1,46 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 70,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "EachBlock",
 				"start": 0,
 				"end": 70,
-				"type": "EachBlock",
+				"children": [
+					{
+						"type": "Element",
+						"start": 33,
+						"end": 62,
+						"name": "div",
+						"attributes": [
+							{
+								"start": 38,
+								"end": 50,
+								"type": "Animation",
+								"name": "flip",
+								"modifiers": [],
+								"expression": null
+							}
+						],
+						"children": [
+							{
+								"type": "Text",
+								"start": 51,
+								"end": 56,
+								"raw": "flips",
+								"data": "flips"
+							}
+						]
+					}
+				],
+				"context": {
+					"type": "Identifier",
+					"name": "thing",
+					"start": 17,
+					"end": 22
+				},
 				"expression": {
 					"type": "Identifier",
 					"start": 7,
@@ -23,39 +56,6 @@
 						}
 					},
 					"name": "things"
-				},
-				"children": [
-					{
-						"start": 33,
-						"end": 62,
-						"type": "Element",
-						"name": "div",
-						"attributes": [
-							{
-								"start": 38,
-								"end": 50,
-								"type": "Animation",
-								"name": "flip",
-								"modifiers": [],
-								"expression": null
-							}
-						],
-						"children": [
-							{
-								"start": 51,
-								"end": 56,
-								"type": "Text",
-								"raw": "flips",
-								"data": "flips"
-							}
-						]
-					}
-				],
-				"context": {
-					"type": "Identifier",
-					"name": "thing",
-					"start": 17,
-					"end": 22
 				},
 				"key": {
 					"type": "Identifier",
