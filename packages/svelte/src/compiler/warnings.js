@@ -22,11 +22,10 @@ const runes = {
 		`It looks like you're using the $${name} rune, but there is a local binding called ${name}. ` +
 		`Referencing a local variable with a $ prefix will create a store subscription. Please rename ${name} to avoid the ambiguity.`,
 	/** @param {string} name */
-	'state-not-mutated': (name) =>
-		`${name} is declared with $state(...) but is never updated. Did you mean to create a function that changes its value?`,
-	/** @param {string} name */
 	'non-state-reference': (name) =>
-		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`
+		`${name} is updated, but is not declared with $state(...). Changing its value will not correctly trigger updates.`,
+	'derived-iife': () =>
+		`Use \`$derived.call(() => {...})\` instead of \`$derived((() => {...})());\``
 };
 
 /** @satisfies {Warnings} */
@@ -202,13 +201,27 @@ const performance = {
 };
 
 /** @satisfies {Warnings} */
+const components = {
+	/** @param {string} name */
+	'component-name-lowercase': (name) =>
+		`<${name}> will be treated as an HTML element unless it begins with a capital letter`
+};
+
+const legacy = {
+	'no-reactive-declaration': () =>
+		`Reactive declarations only exist at the top level of the instance script`
+};
+
+/** @satisfies {Warnings} */
 const warnings = {
 	...css,
 	...attributes,
 	...runes,
 	...a11y,
 	...performance,
-	...state
+	...state,
+	...components,
+	...legacy
 };
 
 /** @typedef {typeof warnings} AllWarnings */

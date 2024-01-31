@@ -1,7 +1,33 @@
 import { is_hoistable_function } from '../../utils.js';
 import * as b from '../../../../utils/builders.js';
 import { extract_paths } from '../../../../utils/ast.js';
-import { create_state_declarators, get_props_method, serialize_get_binding } from '../utils.js';
+import { get_prop_source, serialize_get_binding } from '../utils.js';
+
+/**
+ * Creates the output for a state declaration.
+ * @param {import('estree').VariableDeclarator} declarator
+ * @param {import('../../../scope.js').Scope} scope
+ * @param {import('estree').Expression} value
+ */
+function create_state_declarators(declarator, scope, value) {
+	if (declarator.id.type === 'Identifier') {
+		return [b.declarator(declarator.id, b.call('$.mutable_source', value))];
+	}
+
+	const tmp = scope.generate('tmp');
+	const paths = extract_paths(declarator.id);
+	return [
+		b.declarator(b.id(tmp), value),
+		...paths.map((path) => {
+			const value = path.expression?.(b.id(tmp));
+			const binding = scope.get(/** @type {import('estree').Identifier} */ (path.node).name);
+			return b.declarator(
+				path.node,
+				binding?.kind === 'state' ? b.call('$.mutable_source', value) : value
+			);
+		})
+	];
+}
 
 /** @type {import('../types.js').ComponentVisitors} */
 export const javascript_visitors_legacy = {
@@ -54,8 +80,8 @@ export const javascript_visitors_legacy = {
 						declarations.push(
 							b.declarator(
 								path.node,
-								binding.kind === 'prop' || binding.kind === 'rest_prop'
-									? get_props_method(binding, state, binding.prop_alias ?? name, value)
+								binding.kind === 'prop'
+									? get_prop_source(binding, state, binding.prop_alias ?? name, value)
 									: value
 							)
 						);
@@ -67,17 +93,24 @@ export const javascript_visitors_legacy = {
 					state.scope.get(declarator.id.name)
 				);
 
-				declarations.push(
-					b.declarator(
-						declarator.id,
-						get_props_method(
-							binding,
-							state,
-							binding.prop_alias ?? declarator.id.name,
-							declarator.init && /** @type {import('estree').Expression} */ (visit(declarator.init))
+				if (
+					state.analysis.accessors ||
+					(state.analysis.immutable ? binding.reassigned : binding.mutated) ||
+					declarator.init
+				) {
+					declarations.push(
+						b.declarator(
+							declarator.id,
+							get_prop_source(
+								binding,
+								state,
+								binding.prop_alias ?? declarator.id.name,
+								declarator.init &&
+									/** @type {import('estree').Expression} */ (visit(declarator.init))
+							)
 						)
-					)
-				);
+					);
+				}
 
 				continue;
 			}
@@ -101,17 +134,21 @@ export const javascript_visitors_legacy = {
 		};
 	},
 	LabeledStatement(node, context) {
-		if (context.path.length > 1) return;
-		if (node.label.name !== '$') return;
+		if (context.path.length > 1 || node.label.name !== '$') {
+			context.next();
+			return;
+		}
+
 		const state = context.state;
-
-		// TODO bail out if we're in module context
-
 		// To recreate Svelte 4 behaviour, we track the dependencies
 		// the compiler can 'see', but we untrack the effect itself
-		const { dependencies } = /** @type {import('#compiler').ReactiveStatement} */ (
+		const reactive_stmt = /** @type {import('#compiler').ReactiveStatement} */ (
 			state.analysis.reactive_statements.get(node)
 		);
+
+		if (!reactive_stmt) return; // not the instance context
+
+		const { dependencies } = reactive_stmt;
 
 		let serialized_body = /** @type {import('estree').Statement} */ (context.visit(node.body));
 

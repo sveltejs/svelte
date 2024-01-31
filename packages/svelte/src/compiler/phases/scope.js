@@ -4,7 +4,7 @@ import { is_element_node } from './nodes.js';
 import * as b from '../utils/builders.js';
 import { error } from '../errors.js';
 import { extract_identifiers, extract_identifiers_from_expression } from '../utils/ast.js';
-import { Runes } from './constants.js';
+import { JsKeywords, Runes } from './constants.js';
 
 export class Scope {
 	/** @type {ScopeRoot} */
@@ -65,7 +65,7 @@ export class Scope {
 	 * @param {import('estree').Identifier} node
 	 * @param {import('#compiler').Binding['kind']} kind
 	 * @param {import('#compiler').DeclarationKind} declaration_kind
-	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration} initial
+	 * @param {null | import('estree').Expression | import('estree').FunctionDeclaration | import('estree').ClassDeclaration | import('estree').ImportDeclaration | import('../types/template.js').EachBlock} initial
 	 * @returns {import('#compiler').Binding}
 	 */
 	declare(node, kind, declaration_kind, initial = null) {
@@ -73,7 +73,13 @@ export class Scope {
 			error(node, 'invalid-dollar-binding');
 		}
 
-		if (node.name.startsWith('$') && declaration_kind !== 'synthetic' && this.function_depth <= 1) {
+		if (
+			node.name.startsWith('$') &&
+			declaration_kind !== 'synthetic' &&
+			declaration_kind !== 'param' &&
+			declaration_kind !== 'rest_param' &&
+			this.function_depth <= 1
+		) {
 			error(node, 'invalid-dollar-prefix');
 		}
 
@@ -85,6 +91,11 @@ export class Scope {
 			if (declaration_kind === 'import') {
 				return this.#parent.declare(node, kind, declaration_kind, initial);
 			}
+		}
+
+		if (this.declarations.has(node.name)) {
+			// This also errors on var/function types, but that's arguably a good thing
+			error(node, 'duplicate-declaration', node.name);
 		}
 
 		/** @type {import('#compiler').Binding} */
@@ -100,7 +111,8 @@ export class Scope {
 			is_called: false,
 			prop_alias: null,
 			expression: null,
-			mutation: null
+			mutation: null,
+			reassigned: false
 		};
 		this.declarations.set(node.name, binding);
 		this.root.conflicts.add(node.name);
@@ -127,7 +139,8 @@ export class Scope {
 		while (
 			this.references.has(name) ||
 			this.declarations.has(name) ||
-			this.root.conflicts.has(name)
+			this.root.conflicts.has(name) ||
+			JsKeywords.includes(name)
 		) {
 			name = `${preferred_name}_${n++}`;
 		}
@@ -170,6 +183,7 @@ export class Scope {
 	 * @param {import('#compiler').SvelteNode[]} path
 	 */
 	reference(node, path) {
+		path = [...path]; // ensure that mutations to path afterwards don't affect this reference
 		let references = this.references.get(node.name);
 		if (!references) this.references.set(node.name, (references = []));
 
@@ -249,7 +263,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 	function add_params(scope, params) {
 		for (const param of params) {
 			for (const node of extract_identifiers(param)) {
-				scope.declare(node, 'normal', 'param');
+				scope.declare(node, 'normal', param.type === 'RestElement' ? 'rest_param' : 'param');
 			}
 		}
 	}
@@ -356,7 +370,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			}
 
 			const scope = analyze_let_directives(node, state.scope);
-			scopes.set(node, scope);
 
 			for (const child of node.fragment.nodes) {
 				if (
@@ -368,9 +381,15 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 					// <div slot="..."> inherits the scope above the component, because slots are hella weird
 					scopes.set(child, state.scope);
 					visit(child);
-				} else if (child.type === 'SnippetBlock') {
-					visit(child);
 				} else {
+					if (child.type === 'ExpressionTag') {
+						// expression tag is a special case — we don't visit it directly, but via process_children,
+						// so we need to set the scope on the expression rather than the tag itself
+						scopes.set(child.expression, scope);
+					} else {
+						scopes.set(child, scope);
+					}
+
 					visit(child, { scope });
 				}
 			}
@@ -504,7 +523,7 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				const is_keyed =
 					node.key &&
 					(node.key.type !== 'Identifier' || !node.index || node.key.name !== node.index);
-				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const');
+				scope.declare(b.id(node.index), is_keyed ? 'derived' : 'normal', 'const', node);
 			}
 			if (node.key) visit(node.key, { scope });
 
@@ -573,8 +592,8 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 			const child_scope = state.scope.child();
 			scopes.set(node, child_scope);
 
-			if (node.context) {
-				for (const id of extract_identifiers(node.context)) {
+			for (const param of node.parameters) {
+				for (const id of extract_identifiers(param)) {
 					child_scope.declare(id, 'each', 'let');
 				}
 			}
@@ -596,18 +615,6 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 				)
 			]);
 			context.next();
-		},
-
-		ConstTag(node, { state, next }) {
-			const declaration = node.declaration.declarations[0];
-			for (const identifier of extract_identifiers(declaration.id)) {
-				state.scope.declare(
-					/** @type {import('estree').Identifier} */ (identifier),
-					'derived',
-					'const'
-				);
-			}
-			next();
 		}
 
 		// TODO others
@@ -638,7 +645,10 @@ export function create_scopes(ast, root, allow_reactive_declarations, parent) {
 		} else {
 			extract_identifiers(node).forEach((identifier) => {
 				const binding = scope.get(identifier.name);
-				if (binding) binding.mutated = true;
+				if (binding) {
+					binding.mutated = true;
+					binding.reassigned = true;
+				}
 			});
 		}
 	}
@@ -670,7 +680,7 @@ export function set_scope(scopes) {
 
 /**
  * Returns the name of the rune if the given expression is a `CallExpression` using a rune.
- * @param {import('estree').Node | null | undefined} node
+ * @param {import('estree').Node | import('../types/template.js').EachBlock | null | undefined} node
  * @param {Scope} scope
  * @returns {Runes[number] | null}
  */
@@ -689,6 +699,11 @@ export function get_rune(node, scope) {
 		n = n.object;
 	}
 
+	if (n.type === 'CallExpression' && n.callee.type === 'Identifier') {
+		joined = '()' + joined;
+		n = n.callee;
+	}
+
 	if (n.type !== 'Identifier') return null;
 
 	joined = n.name + joined;
@@ -697,5 +712,5 @@ export function get_rune(node, scope) {
 	const binding = scope.get(n.name);
 	if (binding !== null) return null; // rune name, but references a variable or store
 
-	return /** @type {Runes[number] | null} */ (joined);
+	return /** @type {typeof Runes[number] | null} */ (joined);
 }

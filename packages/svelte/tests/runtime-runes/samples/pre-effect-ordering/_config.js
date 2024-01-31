@@ -1,12 +1,13 @@
 import { flushSync } from 'svelte';
 import { test } from '../../test';
+import { log } from './log.js';
 
 export default test({
-	get props() {
-		return { log: [] };
+	before_test() {
+		log.length = 0;
 	},
 
-	async test({ assert, target, component }) {
+	async test({ assert, target }) {
 		const [b1] = target.querySelectorAll('button');
 
 		flushSync(() => {
@@ -16,7 +17,7 @@ export default test({
 			b1.click();
 		});
 
-		assert.deepEqual(component.log, [
+		assert.deepEqual(log, [
 			'Outer Effect Start (0)',
 			'Outer Effect End (0)',
 			'Inner Effect (0)',

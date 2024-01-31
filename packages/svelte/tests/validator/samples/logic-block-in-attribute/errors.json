@@ -1,7 +1,7 @@
 [
 	{
-		"code": "invalid-logic-block-placement",
-		"message": "{#if} logic block cannot be in attribute value",
+		"code": "invalid-block-placement",
+		"message": "{#if ...} block cannot be in attribute value",
 		"start": { "line": 1, "column": 12 },
 		"end": { "line": 1, "column": 12 }
 	}

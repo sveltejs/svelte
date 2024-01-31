@@ -11,7 +11,7 @@ import type { SourceMap } from 'magic-string';
 import type { Context } from 'zimmerframe';
 import type { Scope } from '../phases/scope.js';
 import * as Css from './css.js';
-import type { Namespace, SvelteNode } from './template.js';
+import type { EachBlock, Namespace, SvelteNode } from './template.js';
 
 /** The return value of `compile` from `svelte/compiler` */
 export interface CompileResult {
@@ -142,7 +142,7 @@ export interface CompileOptions extends ModuleCompileOptions {
 	 */
 	runes?: boolean | undefined;
 	/**
-	 *  If `true`, exposes the Svelte major version on the global `window` object in the browser.
+	 *  If `true`, exposes the Svelte major version in the browser by adding it to a `Set` stored in the global `window.__svelte.v`.
 	 *
 	 * @default true
 	 */
@@ -237,6 +237,7 @@ export type DeclarationKind =
 	| 'function'
 	| 'import'
 	| 'param'
+	| 'rest_param'
 	| 'synthetic';
 
 export interface Binding {
@@ -250,25 +251,35 @@ export interface Binding {
 	 * - `each`: An each block context variable
 	 * - `store_sub`: A $store value
 	 * - `legacy_reactive`: A `$:` declaration
+	 * - `legacy_reactive_import`: An imported binding that is mutated inside the component
 	 */
 	kind:
 		| 'normal'
 		| 'prop'
 		| 'rest_prop'
 		| 'state'
+		| 'frozen_state'
 		| 'derived'
 		| 'each'
 		| 'store_sub'
-		| 'legacy_reactive';
+		| 'legacy_reactive'
+		| 'legacy_reactive_import';
 	declaration_kind: DeclarationKind;
 	/**
 	 * What the value was initialized with.
 	 * For destructured props such as `let { foo = 'bar' } = $props()` this is `'bar'` and not `$props()`
 	 */
-	initial: null | Expression | FunctionDeclaration | ClassDeclaration | ImportDeclaration;
+	initial:
+		| null
+		| Expression
+		| FunctionDeclaration
+		| ClassDeclaration
+		| ImportDeclaration
+		| EachBlock;
 	is_called: boolean;
 	references: { node: Identifier; path: SvelteNode[] }[];
 	mutated: boolean;
+	reassigned: boolean;
 	scope: Scope;
 	/** For `legacy_reactive`: its reactive dependencies */
 	legacy_dependencies: Binding[];

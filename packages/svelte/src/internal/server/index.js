@@ -1,6 +1,6 @@
 import * as $ from '../client/runtime.js';
 import { set_is_ssr } from '../client/runtime.js';
-import { is_promise } from '../common.js';
+import { is_promise, noop } from '../common.js';
 import { subscribe_to_store } from '../../store/utils.js';
 import { DOMBooleanAttributes } from '../../constants.js';
 
@@ -115,10 +115,9 @@ export function render(component, options) {
 
 /**
  * @param {boolean} runes
- * @param {boolean} [immutable]
  */
-export function push(runes, immutable) {
-	$.push({}, runes, immutable);
+export function push(runes) {
+	$.push({}, runes);
 }
 
 export function pop() {
@@ -397,6 +396,32 @@ export function mutate_store(store_values, store_name, store, expression) {
 	return expression;
 }
 
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store(store_values, store_name, store, d = 1) {
+	let store_value = store_get(store_values, store_name, store);
+	store.set(store_value + d);
+	return store_value;
+}
+
+/**
+ * @param {Record<string, [any, any, any]>} store_values
+ * @param {string} store_name
+ * @param {import('../client/types.js').Store<number>} store
+ * @param {1 | -1} [d]
+ * @returns {number}
+ */
+export function update_store_pre(store_values, store_name, store, d = 1) {
+	const value = store_get(store_values, store_name, store) + d;
+	store.set(value);
+	return value;
+}
+
 /** @param {Record<string, [any, any, any]>} store_values */
 export function unsubscribe_stores(store_values) {
 	for (const store_name in store_values) {
@@ -487,10 +512,6 @@ export function bind_props(props_parent, props_now) {
 	}
 }
 
-function noop() {
-	// noop
-}
-
 /**
  * @template V
  * @param {Promise<V>} promise
@@ -541,4 +562,13 @@ export function loop_guard(timeout) {
 			throw new Error('Infinite loop detected');
 		}
 	};
+}
+
+/**
+ * @param {any[]} args
+ * @param {Function} [inspect]
+ */
+// eslint-disable-next-line no-console
+export function inspect(args, inspect = console.log) {
+	inspect('init', ...args);
 }

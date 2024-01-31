@@ -274,9 +274,28 @@ function open(parser) {
 
 		parser.allow_whitespace();
 
-		const context = parser.match(')') ? null : read_context(parser);
+		/** @type {import('estree').Pattern[]} */
+		const parameters = [];
 
-		parser.allow_whitespace();
+		while (!parser.match(')')) {
+			let pattern = read_context(parser);
+
+			parser.allow_whitespace();
+			if (parser.eat('=')) {
+				parser.allow_whitespace();
+				pattern = {
+					type: 'AssignmentPattern',
+					left: pattern,
+					right: read_expression(parser)
+				};
+			}
+
+			parameters.push(pattern);
+
+			if (!parser.eat(',')) break;
+			parser.allow_whitespace();
+		}
+
 		parser.eat(')', true);
 
 		parser.allow_whitespace();
@@ -294,7 +313,7 @@ function open(parser) {
 					end: name_end,
 					name
 				},
-				context,
+				parameters,
 				body: create_fragment()
 			})
 		);
@@ -315,7 +334,7 @@ function next(parser) {
 	const block = parser.current(); // TODO type should not be TemplateNode, that's much too broad
 
 	if (block.type === 'IfBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else} or {:else if}');
 		if (parser.eat('if')) error(start, 'invalid-elseif');
 
 		parser.allow_whitespace();
@@ -359,7 +378,7 @@ function next(parser) {
 	}
 
 	if (block.type === 'EachBlock') {
-		if (!parser.eat('else')) error(start, 'expected-token', 'else');
+		if (!parser.eat('else')) error(start, 'expected-token', '{:else}');
 
 		parser.allow_whitespace();
 		parser.eat('}', true);
@@ -375,7 +394,7 @@ function next(parser) {
 	if (block.type === 'AwaitBlock') {
 		if (parser.eat('then')) {
 			if (block.then) {
-				error(start, 'TODO', 'duplicate then');
+				error(start, 'duplicate-block-part', '{:then}');
 			}
 
 			if (!parser.eat('}')) {
@@ -394,7 +413,7 @@ function next(parser) {
 
 		if (parser.eat('catch')) {
 			if (block.catch) {
-				error(start, 'TODO', 'duplicate catch');
+				error(start, 'duplicate-block-part', '{:catch}');
 			}
 
 			if (!parser.eat('}')) {
@@ -413,6 +432,8 @@ function next(parser) {
 
 		error(start, 'expected-token', '{:then ...} or {:catch ...}');
 	}
+
+	error(start, 'invalid-continuing-block-placement');
 }
 
 /** @param {import('../index.js').Parser} parser */
@@ -584,11 +605,7 @@ function special(parser) {
 		const expression = read_expression(parser);
 
 		if (expression.type !== 'CallExpression' || expression.callee.type !== 'Identifier') {
-			error(expression, 'TODO', 'expected an identifier followed by (...)');
-		}
-
-		if (expression.arguments.length > 1) {
-			error(expression.arguments[1], 'TODO', 'expected at most one argument');
+			error(expression, 'invalid-render-expression');
 		}
 
 		parser.allow_whitespace();
@@ -600,7 +617,7 @@ function special(parser) {
 				start,
 				end: parser.index,
 				expression: expression.callee,
-				argument: expression.arguments[0] ?? null
+				arguments: expression.arguments
 			})
 		);
 	}

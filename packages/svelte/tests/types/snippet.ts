@@ -20,18 +20,18 @@ const d: Snippet<boolean> = (a: string, b: number) => {
 const e: Snippet = (a: string) => {
 	return return_type;
 };
+// @ts-expect-error
 const f: Snippet = (a) => {
-	// @ts-expect-error
 	a?.x;
 	return return_type;
 };
-const g: Snippet<boolean> = (a) => {
+const g: Snippet<[boolean]> = (a) => {
 	// @ts-expect-error
 	a === '';
 	a === true;
 	return return_type;
 };
-const h: Snippet<{ a: true }> = (a) => {
+const h: Snippet<[{ a: true }]> = (a) => {
 	a.a === true;
 	return return_type;
 };

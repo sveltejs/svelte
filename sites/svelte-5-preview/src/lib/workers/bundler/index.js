@@ -535,7 +535,7 @@ async function bundle({ uid, files }) {
 						exports: 'named'
 						// sourcemap: 'inline'
 					})
-			  )?.output?.[0]
+				)?.output?.[0]
 			: null;
 
 		return {

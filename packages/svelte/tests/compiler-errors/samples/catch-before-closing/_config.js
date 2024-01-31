@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'invalid-catch-placement',
-		message: 'Expected to close {#each} block before seeing {:catch} block',
-		position: [41, 41]
+		code: 'expected-token',
+		message: 'Expected token {:else}',
+		position: [35, 35]
 	}
 });

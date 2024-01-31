@@ -2,8 +2,8 @@ import { test } from '../../test';
 
 export default test({
 	error: {
-		code: 'unclosed-style',
-		message: '<style> must have a closing tag',
+		code: 'expected-token',
+		message: 'Expected token </style',
 		position: [31, 31]
 	}
 });

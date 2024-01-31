@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 148,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "IfBlock",
 				"start": 0,
 				"end": 33,
-				"type": "IfBlock",
 				"expression": {
 					"type": "Literal",
 					"start": 5,
@@ -27,32 +27,32 @@
 				},
 				"children": [
 					{
+						"type": "Element",
 						"start": 12,
 						"end": 19,
-						"type": "Element",
 						"name": "input",
 						"attributes": [],
 						"children": []
 					}
 				],
 				"else": {
+					"type": "ElseBlock",
 					"start": 27,
 					"end": 28,
-					"type": "ElseBlock",
 					"children": []
 				}
 			},
 			{
+				"type": "Text",
 				"start": 33,
 				"end": 35,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "IfBlock",
 				"start": 35,
 				"end": 65,
-				"type": "IfBlock",
 				"expression": {
 					"type": "Literal",
 					"start": 40,
@@ -72,32 +72,32 @@
 				},
 				"children": [
 					{
+						"type": "Element",
 						"start": 47,
 						"end": 51,
-						"type": "Element",
 						"name": "br",
 						"attributes": [],
 						"children": []
 					}
 				],
 				"else": {
+					"type": "ElseBlock",
 					"start": 59,
 					"end": 60,
-					"type": "ElseBlock",
 					"children": []
 				}
 			},
 			{
+				"type": "Text",
 				"start": 65,
 				"end": 67,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "AwaitBlock",
 				"start": 67,
 				"end": 108,
-				"type": "AwaitBlock",
 				"expression": {
 					"type": "Literal",
 					"start": 75,
@@ -123,29 +123,29 @@
 				},
 				"error": null,
 				"pending": {
+					"type": "PendingBlock",
 					"start": 80,
 					"end": 90,
-					"type": "PendingBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 80,
 							"end": 82,
-							"type": "Text",
 							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
+							"type": "Element",
 							"start": 82,
 							"end": 89,
-							"type": "Element",
 							"name": "input",
 							"attributes": [],
 							"children": []
 						},
 						{
+							"type": "Text",
 							"start": 89,
 							"end": 90,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -153,14 +153,14 @@
 					"skip": false
 				},
 				"then": {
+					"type": "ThenBlock",
 					"start": 90,
 					"end": 100,
-					"type": "ThenBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 99,
 							"end": 100,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -168,24 +168,24 @@
 					"skip": false
 				},
 				"catch": {
+					"type": "CatchBlock",
 					"start": null,
 					"end": null,
-					"type": "CatchBlock",
 					"children": [],
 					"skip": true
 				}
 			},
 			{
+				"type": "Text",
 				"start": 108,
 				"end": 110,
-				"type": "Text",
 				"raw": "\n\n",
 				"data": "\n\n"
 			},
 			{
+				"type": "AwaitBlock",
 				"start": 110,
 				"end": 148,
-				"type": "AwaitBlock",
 				"expression": {
 					"type": "Literal",
 					"start": 118,
@@ -211,29 +211,29 @@
 				},
 				"error": null,
 				"pending": {
+					"type": "PendingBlock",
 					"start": 123,
 					"end": 130,
-					"type": "PendingBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 123,
 							"end": 125,
-							"type": "Text",
 							"raw": "\n\t",
 							"data": "\n\t"
 						},
 						{
+							"type": "Element",
 							"start": 125,
 							"end": 129,
-							"type": "Element",
 							"name": "br",
 							"attributes": [],
 							"children": []
 						},
 						{
+							"type": "Text",
 							"start": 129,
 							"end": 130,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -241,14 +241,14 @@
 					"skip": false
 				},
 				"then": {
+					"type": "ThenBlock",
 					"start": 130,
 					"end": 140,
-					"type": "ThenBlock",
 					"children": [
 						{
+							"type": "Text",
 							"start": 139,
 							"end": 140,
-							"type": "Text",
 							"raw": "\n",
 							"data": "\n"
 						}
@@ -256,9 +256,9 @@
 					"skip": false
 				},
 				"catch": {
+					"type": "CatchBlock",
 					"start": null,
 					"end": null,
-					"type": "CatchBlock",
 					"children": [],
 					"skip": true
 				}

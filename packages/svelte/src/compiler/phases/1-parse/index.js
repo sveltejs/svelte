@@ -11,7 +11,7 @@ import read_options from './read/options.js';
 const regex_position_indicator = / \(\d+:\d+\)$/;
 
 const regex_lang_attribute =
-	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/;
+	/<!--[^]*?-->|<script\s+(?:[^>]*|(?:[^=>'"/]+=(?:"[^"]*"|'[^']*'|[^>\s]+)\s+)*)lang=(["'])?([^"' >]+)\1[^>]*>/g;
 
 export class Parser {
 	/**
@@ -49,7 +49,14 @@ export class Parser {
 
 		this.template = template.trimRight();
 
-		this.ts = regex_lang_attribute.exec(template)?.[2] === 'ts';
+		let match_lang;
+
+		do match_lang = regex_lang_attribute.exec(template);
+		while (match_lang && match_lang[0][1] !== 's'); // ensure it starts with '<s' to match script tags
+
+		regex_lang_attribute.lastIndex = 0; // reset matched index to pass tests - otherwise declare the regex inside the constructor
+
+		this.ts = match_lang?.[2] === 'ts';
 
 		this.root = {
 			css: null,
@@ -77,8 +84,10 @@ export class Parser {
 			const current = this.current();
 
 			if (current.type === 'RegularElement') {
+				current.end = current.start + 1;
 				error(current, 'unclosed-element', current.name);
 			} else {
+				current.end = current.start + 1;
 				error(current, 'unclosed-block');
 			}
 		}
@@ -145,7 +154,7 @@ export class Parser {
 
 		if (required) {
 			if (this.index === this.template.length) {
-				error(this.index, 'unexpected-eof');
+				error(this.index, 'unexpected-eof', str);
 			} else {
 				error(this.index, 'expected-token', str);
 			}
@@ -156,7 +165,13 @@ export class Parser {
 
 	/** @param {string} str */
 	match(str) {
-		return this.template.slice(this.index, this.index + str.length) === str;
+		const length = str.length;
+		if (length === 1) {
+			// more performant than slicing
+			return this.template[this.index] === str;
+		}
+
+		return this.template.slice(this.index, this.index + length) === str;
 	}
 
 	/**

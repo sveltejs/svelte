@@ -7,3 +7,5 @@
 
 <input bind:value={$name}>
 <p>hello {$name}</p>
+<textarea bind:value={$name} />
+<div contenteditable="true" bind:innerHTML={$name}></div>

@@ -28,57 +28,18 @@ export const VoidElements = [
 
 export const PassiveEvents = ['wheel', 'touchstart', 'touchmove', 'touchend', 'touchcancel'];
 
-// TODO this is currently unused
-export const ElementBindings = [
-	'this',
-	'value',
-	'checked',
-	'files',
-	'group',
-	'visibilityState',
-	'fullscreenElement',
-	'innerWidth',
-	'innerHeight',
-	'outerWidth',
-	'outerHeight',
-	'scrollX',
-	'scrollY',
-	'online',
-	'devicePixelRatio',
-	'naturalWidth',
-	'naturalHeight',
-	'clientWidth',
-	'clientHeight',
-	'offsetWidth',
-	'offsetHeight',
-	'duration',
-	'buffered',
-	'played',
-	'seekable',
-	'seeking',
-	'ended',
-	'readyState',
-	'currentTime',
-	'playbackRate',
-	'paused',
-	'volume',
-	'muted',
-	'innerHTML',
-	'innerText',
-	'textContent',
-	'open',
-	'indeterminate'
-];
-
 export const Runes = /** @type {const} */ ([
 	'$state',
+	'$state.frozen',
 	'$props',
 	'$derived',
+	'$derived.call',
 	'$effect',
 	'$effect.pre',
 	'$effect.active',
 	'$effect.root',
-	'$inspect'
+	'$inspect',
+	'$inspect().with'
 ]);
 
 /**
@@ -183,4 +144,56 @@ export const SVGElements = [
 	'use',
 	'view',
 	'vkern'
+];
+
+export const EventModifiers = [
+	'preventDefault',
+	'stopPropagation',
+	'stopImmediatePropagation',
+	'capture',
+	'once',
+	'passive',
+	'nonpassive',
+	'self',
+	'trusted'
+];
+
+export const JsKeywords = [
+	'class',
+	'break',
+	'const',
+	'let',
+	'var',
+	'continue',
+	'if',
+	'for',
+	'while',
+	'do',
+	'new',
+	'static',
+	'true',
+	'false',
+	'void',
+	'with',
+	'yield',
+	'await',
+	'typeof',
+	'throw',
+	'throws',
+	'null',
+	'delete',
+	'default',
+	'catch',
+	'debugger',
+	'case',
+	'arguments',
+	'else',
+	'extends',
+	'export',
+	'import',
+	'extends',
+	'switch',
+	'instanceof',
+	'return',
+	'this'
 ];

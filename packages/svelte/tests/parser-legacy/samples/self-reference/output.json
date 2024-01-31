@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 57,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "IfBlock",
 				"start": 0,
 				"end": 57,
-				"type": "IfBlock",
 				"expression": {
 					"type": "BinaryExpression",
 					"start": 5,
@@ -59,21 +59,21 @@
 				},
 				"children": [
 					{
-						"start": 17,
-						"end": 51,
 						"type": "InlineComponent",
 						"name": "svelte:self",
+						"start": 17,
+						"end": 51,
 						"attributes": [
 							{
+								"type": "Attribute",
 								"start": 30,
 								"end": 49,
-								"type": "Attribute",
 								"name": "depth",
 								"value": [
 									{
+										"type": "MustacheTag",
 										"start": 37,
 										"end": 48,
-										"type": "MustacheTag",
 										"expression": {
 											"type": "BinaryExpression",
 											"start": 38,

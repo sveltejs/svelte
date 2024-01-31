@@ -1,13 +1,13 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 33,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "Element",
 				"start": 0,
 				"end": 33,
-				"type": "Element",
 				"name": "div",
 				"attributes": [
 					{
@@ -18,9 +18,9 @@
 						"modifiers": [],
 						"value": [
 							{
+								"type": "MustacheTag",
 								"start": 17,
 								"end": 26,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 18,

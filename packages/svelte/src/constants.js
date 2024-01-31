@@ -1,8 +1,16 @@
 export const EACH_ITEM_REACTIVE = 1;
 export const EACH_INDEX_REACTIVE = 1 << 1;
 export const EACH_KEYED = 1 << 2;
+
+/** See EachBlock interface metadata.is_controlled for an explanation what this is */
 export const EACH_IS_CONTROLLED = 1 << 3;
 export const EACH_IS_ANIMATED = 1 << 4;
+export const EACH_IS_IMMUTABLE = 1 << 6;
+
+export const PROPS_IS_IMMUTABLE = 1;
+export const PROPS_IS_RUNES = 1 << 1;
+export const PROPS_IS_UPDATED = 1 << 2;
+export const PROPS_IS_LAZY_INITIAL = 1 << 3;
 
 /** List of Element events that will be delegated */
 export const DelegatedEvents = [
@@ -77,3 +85,6 @@ export const DOMBooleanAttributes = [
 	'seamless',
 	'selected'
 ];
+
+export const namespace_svg = 'http://www.w3.org/2000/svg';
+export const namespace_html = 'http://www.w3.org/1999/xhtml';

@@ -59,10 +59,10 @@ export function bounceOut(t) {
 	return t < a
 		? 7.5625 * t2
 		: t < b
-		? 9.075 * t2 - 9.9 * t + 3.4
-		: t < c
-		? ca * t2 - cb * t + cc
-		: 10.8 * t * t - 20.52 * t + 10.72;
+			? 9.075 * t2 - 9.9 * t + 3.4
+			: t < c
+				? ca * t2 - cb * t + cc
+				: 10.8 * t * t - 20.52 * t + 10.72;
 }
 
 /**
@@ -180,8 +180,8 @@ export function expoInOut(t) {
 	return t === 0.0 || t === 1.0
 		? t
 		: t < 0.5
-		? +0.5 * Math.pow(2.0, 20.0 * t - 10.0)
-		: -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
+			? +0.5 * Math.pow(2.0, 20.0 * t - 10.0)
+			: -0.5 * Math.pow(2.0, 10.0 - t * 20.0) + 1.0;
 }
 
 /**

@@ -41,13 +41,16 @@ export const remove_types = {
 	TSAsExpression(node, context) {
 		return context.visit(node.expression);
 	},
+	TSSatisfiesExpression(node, context) {
+		return context.visit(node.expression);
+	},
 	TSNonNullExpression(node, context) {
 		return context.visit(node.expression);
 	},
-	TSInterfaceDeclaration(node, context) {
+	TSInterfaceDeclaration() {
 		return b.empty;
 	},
-	TSTypeAliasDeclaration(node, context) {
+	TSTypeAliasDeclaration() {
 		return b.empty;
 	}
 };

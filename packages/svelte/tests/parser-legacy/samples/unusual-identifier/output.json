@@ -1,41 +1,25 @@
 {
 	"html": {
+		"type": "Fragment",
 		"start": 0,
 		"end": 41,
-		"type": "Fragment",
 		"children": [
 			{
+				"type": "EachBlock",
 				"start": 0,
 				"end": 41,
-				"type": "EachBlock",
-				"expression": {
-					"type": "Identifier",
-					"start": 7,
-					"end": 13,
-					"loc": {
-						"start": {
-							"line": 1,
-							"column": 7
-						},
-						"end": {
-							"line": 1,
-							"column": 13
-						}
-					},
-					"name": "things"
-				},
 				"children": [
 					{
+						"type": "Element",
 						"start": 22,
 						"end": 33,
-						"type": "Element",
 						"name": "p",
 						"attributes": [],
 						"children": [
 							{
+								"type": "MustacheTag",
 								"start": 25,
 								"end": 29,
-								"type": "MustacheTag",
 								"expression": {
 									"type": "Identifier",
 									"start": 26,
@@ -61,6 +45,22 @@
 					"name": "𐊧",
 					"start": 17,
 					"end": 19
+				},
+				"expression": {
+					"type": "Identifier",
+					"start": 7,
+					"end": 13,
+					"loc": {
+						"start": {
+							"line": 1,
+							"column": 7
+						},
+						"end": {
+							"line": 1,
+							"column": 13
+						}
+					},
+					"name": "things"
 				}
 			}
 		]

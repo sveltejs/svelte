@@ -17,6 +17,33 @@ declare module '*.svelte' {
 declare function $state<T>(initial: T): T;
 declare function $state<T>(): T | undefined;
 
+declare namespace $state {
+	/**
+	 * Declares reactive read-only state that is shallowly immutable.
+	 *
+	 * Example:
+	 * ```ts
+	 * <script>
+	 *   let items = $state.frozen([0]);
+	 *
+	 *   const addItem = () => {
+	 *     items = [...items, items.length];
+	 *   };
+	 * </script>
+	 *
+	 * <button on:click={addItem}>
+	 *   {items.join(', ')}
+	 * </button>
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$state-raw
+	 *
+	 * @param initial The initial value
+	 */
+	export function frozen<T>(initial: T): Readonly<T>;
+	export function frozen<T>(): Readonly<T> | undefined;
+}
+
 /**
  * Declares derived state, i.e. one that depends on other state variables.
  * The expression inside `$derived(...)` should be free of side-effects.
@@ -31,6 +58,27 @@ declare function $state<T>(): T | undefined;
  * @param expression The derived state expression
  */
 declare function $derived<T>(expression: T): T;
+
+declare namespace $derived {
+	/**
+	 * Sometimes you need to create complex derivations that don't fit inside a short expression.
+	 * In these cases, you can use `$derived.call` which accepts a function as its argument.
+	 *
+	 * Example:
+	 * ```ts
+	 * let total = $derived.call(() => {
+	 *   let result = 0;
+	 *	 for (const n of numbers) {
+	 *	   result += n;
+	 *   }
+	 *   return result;
+	 * });
+	 * ```
+	 *
+	 * https://svelte-5-preview.vercel.app/docs/runes#$derived-call
+	 */
+	export function call<T>(fn: () => T): void;
+}
 
 /**
  * Runs code when a component is mounted to the DOM, and then whenever its dependencies change, i.e. `$state` or `$derived` values.
@@ -132,12 +180,23 @@ declare namespace $effect {
 declare function $props<T>(): T;
 
 /**
- * Logs the arguments whenever they, or the properties they contain, change. Example:
+ * Inspects one or more values whenever they, or the properties they contain, change. Example:
  *
  * ```ts
  * $inspect(someValue, someOtherValue)
  * ```
  *
+ * `$inspect` returns a `with` function, which you can invoke with a callback function that
+ * will be called with the value and the event type (`'init'` or `'update'`) on every change.
+ * By default, the values will be logged to the console.
+ *
+ * ```ts
+ * $inspect(x).with(console.trace);
+ * $inspect(x, y).with(() => { debugger; });
+ * ```
+ *
  * https://svelte-5-preview.vercel.app/docs/runes#$inspect
  */
-declare function $inspect(): void;
+declare function $inspect<T extends any[]>(
+	...values: T
+): { with: (fn: (type: 'init' | 'update', ...values: T) => void) => void };
