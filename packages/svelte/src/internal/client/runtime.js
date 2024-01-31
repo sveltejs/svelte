@@ -59,9 +59,11 @@ let current_queued_pre_and_render_effects = [];
 /** @type {import('./types.js').EffectSignal[]} */
 let current_queued_effects = [];
 
-// Tracks the current property access to a derived signal object, e.g.
-// `a.b.c` for each property access, we'd get on the derived proxy object `a`.
-/** @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null} */
+/**
+ * Tracks the current property access to a derived signal object, e.g.
+ * for each property access in `a.b.c`, we'd get on the derived proxy object `a`.
+ * @type {{ s: import('./types.js').ComputationSignal, p: Array<string | symbol> } | null}
+ */
 let current_derived_proxy_property = null;
 
 /** @type {Array<() => void>} */
